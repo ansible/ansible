@@ -52,6 +52,7 @@ class DocCLI(CLI):
 
     # default ignore list for detailed views
     IGNORE = ('module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs')
+    JSON_IGNORE = ('attributes',)
 
     def __init__(self, args):
 
@@ -214,13 +215,19 @@ class DocCLI(CLI):
             if do_json:
                 # Some changes to how json docs are formatted
                 for plugin, doc_data in plugin_docs.items():
+
+                    for forbid in DocCLI.JSON_IGNORE:
+                        try:
+                            del plugin_docs[plugin]['doc'][forbid]
+                        except (KeyError, TypeError):
+                            pass
+
                     try:
                         doc_data['return'] = yaml.load(doc_data['return'])
                     except Exception:
                         pass
 
                 jdump(plugin_docs)
-
             else:
                 # Some changes to how plain text docs are formatted
                 text = []
@@ -233,7 +240,6 @@ class DocCLI(CLI):
 
                 if text:
                     DocCLI.pager(''.join(text))
-
         return 0
 
     @staticmethod
