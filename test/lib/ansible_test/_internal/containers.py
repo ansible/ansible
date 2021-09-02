@@ -70,8 +70,10 @@ from .host_configs import (
     ControllerConfig,
     DockerConfig,
     OriginConfig,
+    PosixSshConfig,
     PythonConfig,
     RemoteConfig,
+    WindowsInventoryConfig,
 )
 
 # information about support containers provisioned by the current ansible-test instance
@@ -385,7 +387,7 @@ def create_container_database(args):  # type: (EnvironmentConfig) -> ContainerDa
             control_context = control.setdefault(container.context, {})
             control_context[name] = published_access
 
-        if issubclass(args.target_type, RemoteConfig):
+        if issubclass(args.target_type, (RemoteConfig, WindowsInventoryConfig, PosixSshConfig)):
             pass  # SSH forwarding required
         elif '-controller-' in name or '-target-' in name:
             pass  # hack to avoid exposing the controller and target containers to the target
