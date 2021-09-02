@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import enum
+import os
 import types
 import typing as t
 
@@ -466,9 +467,9 @@ def default_targets(
 ):  # type: (...) -> t.List[HostConfig]
     """Return a list of default targets for the given target mode."""
     if mode == TargetMode.WINDOWS_INTEGRATION:
-        targets = [WindowsInventoryConfig()]
+        targets = [WindowsInventoryConfig(path=os.path.abspath('test/integration/inventory.winrm'))]
     elif mode == TargetMode.NETWORK_INTEGRATION:
-        targets = [NetworkInventoryConfig()]
+        targets = [NetworkInventoryConfig(path=os.path.abspath('test/integration/inventory.networking'))]
     elif mode.multiple_pythons:
         targets = controller.get_default_targets(HostContext(controller_config=controller))
     else:
