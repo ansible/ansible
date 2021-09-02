@@ -4,7 +4,4 @@
     dest: "{{ remote_tmp_dir }}/pexpect-constraints.txt"
 
 - name: Install pexpect
-  pip:
-    name: pexpect
-    extra_args: '--constraint "{{ remote_tmp_dir }}/pexpect-constraints.txt"'
-    state: present
+  command: "{{ ansible_python_interpreter }} -m pip.__main__ install pexpect --disable-pip-version-check --constraint '{{ remote_tmp_dir }}/pexpect-constraints.txt'"
