@@ -1,2 +1,2 @@
 bugfixes:
-  - pip - If ``executable`` and ``virtualenv`` are not specified, the ``pip`` Python module for the Ansible Python interpreter will be used if available.
+  - "``pip`` now uses the ``pip`` Python module installed for the Ansible module's Python interpreter, if available, unless ``executable`` or ``virtualenv`` were specified."
