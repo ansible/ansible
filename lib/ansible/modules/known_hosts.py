@@ -40,6 +40,7 @@ options:
   path:
     description:
       - The known_hosts file to edit.
+      - The known_hosts file will be created if needed. The rest of the path must exist prior to running the module.
     default: "~/.ssh/known_hosts"
     type: path
   hash_host:
