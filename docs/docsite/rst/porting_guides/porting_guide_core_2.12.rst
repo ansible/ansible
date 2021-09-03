@@ -64,6 +64,7 @@ Modules
 * ``cron`` no longer allows a ``reboot`` parameter. Use ``special_time: reboot`` instead.
 * ``hostname`` - On FreeBSD, the ``before`` result will no longer be ``"temporarystub"`` if permanent hostname file does not exist. It will instead be ``""`` (empty string) for consistency with other systems.
 * ``hostname`` - On OpenRC and Solaris based systems, the ``before`` result will no longer be ``"UNKNOWN"`` if the permanent hostname file does not exist. It will instead be ``""`` (empty string) for consistency with other systems.
+* ``pip`` now uses the ``pip`` Python module installed for the Ansible module's Python interpreter, if available, unless ``executable`` or ``virtualenv`` were specified.
 
 
 Modules removed
