@@ -15,6 +15,8 @@ description:
 version_added: "2.7"
 requirements:
 - pypsrp (Python library)
+extends_documentation_fragment:
+    - connection_pipelining
 options:
   # transport options
   remote_addr:
