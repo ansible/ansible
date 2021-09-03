@@ -7,7 +7,8 @@
     cached_hosts_key: "http://{{ foreman_stub_host }}:{{ foreman_stub_port }}{{ foreman_stub_api_path }}/hosts"
   tasks:
     - name: make sure jmespath is installed
-      command: "{{ ansible_playbook_python }} -m pip install jmespath --disable-pip-version-check"
+      pip:
+        name: jmespath
 
     - name: verify a cache file was created
       find:
