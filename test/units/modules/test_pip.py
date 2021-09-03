@@ -15,6 +15,8 @@ pytestmark = pytest.mark.usefixtures('patch_ansible_module')
 
 @pytest.mark.parametrize('patch_ansible_module', [{'name': 'six'}], indirect=['patch_ansible_module'])
 def test_failure_when_pip_absent(mocker, capfd):
+    mocker.patch('ansible.modules.pip._have_pip_module').return_value = False
+
     get_bin_path = mocker.patch('ansible.module_utils.basic.AnsibleModule.get_bin_path')
     get_bin_path.return_value = None
 
