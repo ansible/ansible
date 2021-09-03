@@ -1,0 +1,2 @@
+bugfixes:
+  - "``pip`` now uses the ``pip`` Python module installed for the Ansible module's Python interpreter, if available, unless ``executable`` or ``virtualenv`` were specified."
