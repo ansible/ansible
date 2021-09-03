@@ -1,2 +1,2 @@
 shippable/posix/group5
-skip/aix
+context/controller  # this is a controller-only action, the module is just for documentation
