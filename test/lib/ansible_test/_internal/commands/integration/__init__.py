@@ -924,11 +924,17 @@ def command_integration_filter(args,  # type: TIntegrationConfig
     if args.list_targets:
         raise ListTargets([target.name for target in internal_targets])
 
-    host_state = prepare_profiles(args, targets_use_pypi=True)  # integration, windows-integration, network-integration
+    # requirements are installed using a callback since the windows-integration and network-integration host status checks depend on them
+    host_state = prepare_profiles(args, targets_use_pypi=True, requirements=requirements)  # integration, windows-integration, network-integration
 
     if args.delegate:
         raise Delegate(host_state=host_state, require=require, exclude=exclude)
 
+    return host_state, internal_targets
+
+
+def requirements(args, host_state):  # type: (IntegrationConfig, HostState) -> None
+    """Install requirements."""
     target_profile = host_state.target_profiles[0]
 
     configure_pypi_proxy(args, host_state.controller_profile)  # integration, windows-integration, network-integration
@@ -943,5 +949,3 @@ def command_integration_filter(args,  # type: TIntegrationConfig
 
     install_controller_requirements(args, host_state.controller_profile.python)  # integration, windows-integration, network-integration
     install_command_requirements(args, host_state.controller_profile.python, extra_requirements=reqs)  # integration, windows-integration, network-integration
-
-    return host_state, internal_targets

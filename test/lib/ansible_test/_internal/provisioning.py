@@ -41,6 +41,7 @@ from .pypi_proxy import (
 )
 
 THostProfile = t.TypeVar('THostProfile', bound=HostProfile)
+TEnvironmentConfig = t.TypeVar('TEnvironmentConfig', bound=EnvironmentConfig)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -88,8 +89,16 @@ class HostState:
         return self.target_profiles
 
 
-def prepare_profiles(args, targets_use_pypi=False, skip_setup=False):  # type: (EnvironmentConfig, bool, bool) -> HostState
-    """Create new profiles, or load existing ones, and return them."""
+def prepare_profiles(
+        args,  # type: TEnvironmentConfig
+        targets_use_pypi=False,  # type: bool
+        skip_setup=False,  # type: bool
+        requirements=None,  # type: t.Optional[t.Callable[[TEnvironmentConfig, HostState], None]]
+):  # type: (...) -> HostState
+    """
+    Create new profiles, or load existing ones, and return them.
+    If a requirements callback was provided, it will be used before configuring hosts if delegation has already been performed.
+    """
     if args.host_path:
         host_state = HostState.deserialize(args, os.path.join(args.host_path, 'state.dat'))
     else:
@@ -115,6 +124,9 @@ def prepare_profiles(args, targets_use_pypi=False, skip_setup=False):  # type: (
 
     if not args.delegate:
         check_controller_python(args, host_state)
+
+        if requirements:
+            requirements(args, host_state)
 
         def configure(profile):  # type: (HostProfile) -> None
             """Configure the given profile."""
