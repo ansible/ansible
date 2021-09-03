@@ -444,3 +444,95 @@
   file:
     path: "{{ output_dir_test }}/afile.txt"
     state: absent
+
+- name: test warning with command
+  command:
+    cmd: "rm -h"
+    warn: yes
+  ignore_errors: yes
+  register: warn_result
+
+- name: assert warning exists
+  assert:
+    that:
+      - warn_result.warnings | length == 1
+      - "'Consider using the file module with state=absent rather than running \\'rm\\'' in warn_result.warnings[0]"
+
+- name: test warning with shell
+  shell: "sed -h"
+  args:
+    warn: yes
+  ignore_errors: yes
+  register: warn_result
+
+- name: assert warning exists
+  assert:
+    that:
+      - warn_result.warnings | length == 1
+      - "'Consider using the replace, lineinfile or template module rather than running \\'sed\\'' in warn_result.warnings[0]"
+
+- name: test become warning
+  command:
+    cmd: "sudo true"
+    warn: yes
+  ignore_errors: yes
+  register: warn_result
+
+- name: assert warning exists
+  assert:
+    that:
+      - warn_result.warnings | length == 1
+      - "'Consider using \\'become\\', \\'become_method\\', and \\'become_user\\' rather than running sudo' in warn_result.warnings[0]"
+
+- name: test check mode skip message
+  command:
+    cmd: "true"
+  check_mode: yes
+  register: result
+
+- name: assert check message exists
+  assert:
+    that:
+      - "'Command would have run if not in check mode' in result.msg"
+
+- name: test check mode creates/removes message
+  command:
+    cmd: "true"
+    creates: yes
+  check_mode: yes
+  register: result
+
+- name: assert check message exists
+  assert:
+    that:
+      - "'Command would have run if not in check mode' in result.msg"
+
+- name: command symlink handling
+  block:
+  - name: Create target folders
+    file:
+      path: '{{output_dir}}/www_root/site'
+      state: directory
+
+  - name: Create symlink
+    file:
+      path: '{{output_dir}}/www'
+      state: link
+      src: '{{output_dir}}/www_root'
+
+  - name: check parent using chdir
+    shell: dirname "$PWD"
+    args:
+      chdir: '{{output_dir}}/www/site'
+    register: parent_dir_chdir
+
+  - name: check parent using cd
+    shell: cd "{{output_dir}}/www/site" && dirname "$PWD"
+    register: parent_dir_cd
+
+  - name: check expected outputs
+    assert:
+      that:
+        - parent_dir_chdir.stdout != parent_dir_cd.stdout
+        - 'parent_dir_cd.stdout == "{{output_dir}}/www"'
+        - 'parent_dir_chdir.stdout == "{{output_dir}}/www_root"'
