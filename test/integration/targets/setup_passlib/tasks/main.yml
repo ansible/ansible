@@ -1,2 +1,4 @@
 - name: Install passlib
-  command: "{{ ansible_python_interpreter }} -m pip.__main__ install passlib --disable-pip-version-check"
+  pip:
+    name: passlib
+    state: present
