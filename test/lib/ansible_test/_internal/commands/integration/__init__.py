@@ -633,6 +633,11 @@ def command_integration_role(
         hosts = 'testhost'
         gather_facts = True
 
+    if 'gather_facts/yes/' in target.aliases:
+        gather_facts = True
+    elif 'gather_facts/no/' in target.aliases:
+        gather_facts = False
+
     if not isinstance(args, NetworkIntegrationConfig):
         cloud_environment = get_cloud_environment(args, target)
 
