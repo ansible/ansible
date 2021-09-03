@@ -116,9 +116,21 @@ _ANSIBALLZ_WRAPPER = True # For test-module.py script to tell this is a ANSIBALL
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 def _ansiballz_main():
-%(rlimit)s
     import os
     import os.path
+
+    # Access to the working directory is required by Python when using pipelining, as well as for the coverage module.
+    # Some platforms, such as macOS, may not allow querying the working directory when using become to drop privileges.
+    try:
+        os.getcwd()
+    except OSError:
+        try:
+            os.chdir(os.path.expanduser('~'))
+        except OSError:
+            os.chdir('/')
+
+%(rlimit)s
+
     import sys
     import __main__
 
@@ -335,13 +347,6 @@ if __name__ == '__main__':
 '''
 
 ANSIBALLZ_COVERAGE_TEMPLATE = '''
-        # Access to the working directory is required by coverage.
-        # Some platforms, such as macOS, may not allow querying the working directory when using become to drop privileges.
-        try:
-            os.getcwd()
-        except OSError:
-            os.chdir('/')
-
         os.environ['COVERAGE_FILE'] = '%(coverage_output)s'
 
         import atexit
