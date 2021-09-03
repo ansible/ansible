@@ -48,6 +48,7 @@ from .util import (
     cache,
     display,
     get_type_map,
+    sanitize_host_name,
     sorted_versions,
 )
 
@@ -469,7 +470,7 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
         if not isinstance(self.args, IntegrationConfig):
             return  # skip extended checks unless we're running integration tests
 
-        inventory = Inventory.create_single_host(f'{self.config.platform}-{self.config.version.replace(".", "-")}', self.get_inventory_variables())
+        inventory = Inventory.create_single_host(sanitize_host_name(self.config.name), self.get_inventory_variables())
         env = ansible_environment(self.args)
         module_name = f'{self.config.collection + "." if self.config.collection else ""}{self.config.platform}_command'
 
@@ -702,7 +703,7 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
         if not isinstance(self.args, IntegrationConfig):
             return  # skip extended checks unless we're running integration tests
 
-        inventory = Inventory.create_single_host(f'windows_{self.config.version}', self.get_inventory_variables())
+        inventory = Inventory.create_single_host(sanitize_host_name(self.config.name), self.get_inventory_variables())
         env = ansible_environment(self.args)
         module_name = 'ansible.windows.win_ping'
 

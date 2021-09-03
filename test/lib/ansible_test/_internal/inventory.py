@@ -96,7 +96,7 @@ def create_network_inventory(args, path, target_hosts):  # type: (EnvironmentCon
     host_groups = {target_host.config.platform: {} for target_host in target_hosts}
 
     for target_host in target_hosts:
-        host_groups[target_host.config.platform][target_host.config.name.replace('.', '-')] = target_host.get_inventory_variables()
+        host_groups[target_host.config.platform][sanitize_host_name(target_host.config.name)] = target_host.get_inventory_variables()
 
     inventory = Inventory(
         host_groups=host_groups,
