@@ -103,9 +103,9 @@ def create_network_inventory(args, path, target_hosts):  # type: (EnvironmentCon
         # The `net` group was added to support platform agnostic testing. It may not longer be needed.
         # see: https://github.com/ansible/ansible/pull/34661
         # see: https://github.com/ansible/ansible/pull/34707
-        extra_groups=dict(
-            net=sorted(host_groups),
-        ),
+        extra_groups={
+            'net:children': sorted(host_groups),
+        },
     )
 
     inventory.write(args, path)
