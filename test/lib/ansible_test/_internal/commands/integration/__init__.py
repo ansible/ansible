@@ -85,6 +85,7 @@ from .cloud import (
     cloud_filter,
     cloud_init,
     get_cloud_environment,
+    get_cloud_platforms,
 )
 
 from ...data import (
@@ -935,7 +936,12 @@ def command_integration_filter(args,  # type: TIntegrationConfig
     if not isinstance(target_profile, ControllerProfile):
         configure_pypi_proxy(args, target_profile)  # integration, windows-integration, network-integration
 
+    reqs = []
+
+    for cloud_platform in get_cloud_platforms(args):
+        reqs.append('%s.cloud.%s' % (args.command, cloud_platform))
+
     install_controller_requirements(args, host_state.controller_profile.python)  # integration, windows-integration, network-integration
-    install_command_requirements(args, host_state.controller_profile.python)  # integration, windows-integration, network-integration
+    install_command_requirements(args, host_state.controller_profile.python, extra_requirements=reqs)  # integration, windows-integration, network-integration
 
     return host_state, internal_targets
