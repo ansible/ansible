@@ -22,13 +22,13 @@ The Right Level of Testing
 ``````````````````````````
 
 Ansible resources are models of desired-state.  As such, it should not be necessary to test that services are started, packages are
-installed, or other such things.  Ansible is the system that will ensure these things are declaratively true.   Instead, assert these
+installed, or other such things. Ansible is the system that will ensure these things are declaratively true.   Instead, assert these
 things in your playbooks.
 
 .. code-block:: yaml
 
    tasks:
-     - service:
+     - ansible.builtin.service:
          name: foo
          state: started
          enabled: yes
@@ -54,7 +54,7 @@ want certain steps to execute in normal mode even when the `--check` flag is use
      - webserver
 
    tasks:
-     - script: verify.sh
+     - ansible.builtin.script: verify.sh
        check_mode: no
 
 Modules That Are Useful for Testing
@@ -64,7 +64,7 @@ Certain playbook modules are particularly good for testing.  Below is an example
 
    tasks:
 
-     - wait_for:
+     - ansible.builtin.wait_for:
          host: "{{ inventory_hostname }}"
          port: 22
        delegate_to: localhost
@@ -84,8 +84,8 @@ It's easy to push an arbitrary script (in any language) on a remote host and the
 
    tasks:
 
-     - script: test_script1
-     - script: test_script2 --parameter value --parameter2 value
+     - ansible.builtin.script: test_script1
+     - ansible.builtin.script: test_script2 --parameter value --parameter2 value
 
 If using roles (you should be, roles are great!), scripts pushed by the script module can live in the 'files/' directory of a role.
 
@@ -93,10 +93,10 @@ And the assert module makes it very easy to validate various kinds of truth::
 
    tasks:
 
-      - shell: /usr/bin/some-command --parameter value
+      - ansible.builtin.shell: /usr/bin/some-command --parameter value
         register: cmd_result
 
-      - assert:
+      - ansible.builtin.assert:
           that:
             - "'not ready' not in cmd_result.stderr"
             - "'gizmo enabled' in cmd_result.stdout"
@@ -105,11 +105,11 @@ Should you feel the need to test for the existence of files that are not declara
 
    tasks:
 
-      - stat:
+      - ansible.builtin.stat:
           path: /path/to/something
         register: p
 
-      - assert:
+      - ansible.builtin.assert:
           that:
             - p.stat.exists and p.stat.isdir
 
@@ -139,7 +139,7 @@ Something like an integration test battery should be written by your QA team if 
 things like Selenium tests or automated API tests and would usually not be something embedded into your Ansible playbooks.
 
 However, it does make sense to include some basic health checks into your playbooks, and in some cases it may be possible to run
-a subset of the QA battery against remote nodes.   This is what the next section covers.
+a subset of the QA battery against remote nodes. This is what the next section covers.
 
 Integrating Testing With Rolling Updates
 ````````````````````````````````````````
@@ -157,7 +157,7 @@ This is the great culmination of embedded tests::
       pre_tasks:
 
         - name: take out of load balancer pool
-          command: /usr/bin/take_out_of_pool {{ inventory_hostname }}
+          ansible.builtin.command: /usr/bin/take_out_of_pool {{ inventory_hostname }}
           delegate_to: 127.0.0.1
 
       roles:
@@ -167,9 +167,9 @@ This is the great culmination of embedded tests::
          - apply_testing_checks
 
       post_tasks:
-  
+
         - name: add back to load balancer pool
-          command: /usr/bin/add_back_to_pool {{ inventory_hostname }}
+          ansible.builtin.command: /usr/bin/add_back_to_pool {{ inventory_hostname }}
           delegate_to: 127.0.0.1
 
 Of course in the above, the "take out of the pool" and "add back" steps would be replaced with a call to an Ansible load balancer
@@ -192,7 +192,7 @@ This above approach can also be modified to run a step from a testing machine re
       pre_tasks:
 
         - name: take out of load balancer pool
-          command: /usr/bin/take_out_of_pool {{ inventory_hostname }}
+          ansible.builtin.command: /usr/bin/take_out_of_pool {{ inventory_hostname }}
           delegate_to: 127.0.0.1
 
       roles:
@@ -201,13 +201,13 @@ This above approach can also be modified to run a step from a testing machine re
          - webserver
 
       tasks:
-         - script: /srv/qa_team/app_testing_script.sh --server {{ inventory_hostname }}
+         - ansible.builtin.script: /srv/qa_team/app_testing_script.sh --server {{ inventory_hostname }}
            delegate_to: testing_server
 
       post_tasks:
 
         - name: add back to load balancer pool
-          command: /usr/bin/add_back_to_pool {{ inventory_hostname }}
+          ansible.builtin.command: /usr/bin/add_back_to_pool {{ inventory_hostname }}
           delegate_to: 127.0.0.1
 
 In the above example, a script is run from the testing server against a remote node prior to bringing it back into
