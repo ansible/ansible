@@ -466,6 +466,7 @@ def list_dict_option_schema(for_collection, plugin_type):
         cli_schema = All(
             Schema({
                 Required('name'): Any(*string_types),
+                'option': Any(*string_types),
                 'deprecated': deprecated_schema,
                 'version_added': version(for_collection),
                 'version_added_collection': collection_name,
