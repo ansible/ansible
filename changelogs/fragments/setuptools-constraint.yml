@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+    ansible_test - add additional constraint for ``setuptools`` due to a bug
+    in the recently released version of ``setuptools`` (https://github.com/ansible/ansible/pull/75651)
