@@ -1,0 +1,9 @@
+- hosts: testhost
+  gather_facts: false
+  strategy: free
+  tasks:
+    - block:
+        - name: EXPECTED FAILURE
+          fail:
+      always:
+        - include_tasks: last_include_tasks.yml

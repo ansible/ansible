@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix executing includes in the always section in the free strategy (https://github.com/ansible/ansible/issues/75642)
