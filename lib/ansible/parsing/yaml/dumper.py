@@ -25,6 +25,7 @@ from ansible.module_utils.six import PY3, text_type, binary_type
 from ansible.module_utils.common.yaml import SafeDumper
 from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping, AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
+from ansible.template import AnsibleUndefined
 from ansible.vars.hostvars import HostVars, HostVarsVars
 from ansible.vars.manager import VarsWithSources
 
@@ -57,6 +58,13 @@ else:
 
     def represent_binary(self, data):
         return yaml.representer.SafeRepresenter.represent_str(self, binary_type(data))
+
+
+def represent_undefined(self, data):
+    # Here bool will ensure _fail_with_undefined_error happens
+    # if the value is Undefined.
+    # This happens because Jinja sets __bool__ on StrictUndefined
+    return bool(data)
 
 
 AnsibleDumper.add_representer(
@@ -102,4 +110,9 @@ AnsibleDumper.add_representer(
 AnsibleDumper.add_representer(
     AnsibleVaultEncryptedUnicode,
     represent_vault_encrypted_unicode,
+)
+
+AnsibleDumper.add_representer(
+    AnsibleUndefined,
+    represent_undefined,
 )
