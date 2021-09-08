@@ -192,6 +192,11 @@ bootstrap_remote_macos()
     if [ "${controller}" ]; then
         echo "cd ~/ansible/" >> ~/.bashrc
     fi
+
+    # Make sure commands like 'brew' can be found.
+    # This affects users with the 'zsh' shell, as well as 'root' accessed using 'sudo' from a user with 'zsh' for a shell.
+    # shellcheck disable=SC2016
+    echo 'PATH="/usr/local/bin:$PATH"' > /etc/zshenv
 }
 
 bootstrap_remote_rhel_7()
