@@ -56,7 +56,7 @@
     - ansible_chocolatey.sources[0].disabled == False
     - ansible_chocolatey.sources[0].name == 'chocolatey'
     - ansible_chocolatey.sources[0].priority == 0
-    - ansible_chocolatey.sources[0].source == 'https://chocolatey.org/api/v2/'
+    - ansible_chocolatey.sources[0].source == 'https://community.chocolatey.org/api/v2/'
     - ansible_chocolatey.sources[0].source_username == None
     - ansible_chocolatey.sources[1].admin_only == True
     - ansible_chocolatey.sources[1].allow_self_service == True
