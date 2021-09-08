@@ -666,7 +666,7 @@ The batch size is defined by ``serial``, when not set it is equivalent to the wh
 
 ``ansible_check_mode`` is a boolean, set to ``True`` if you run Ansible with ``--check``.
 
-``ansible_delegatd_host`` is a sting, containing the ``inventory_hostname`` of the host you are delegating to in the task, only defined if doing delegation. ``inventory_hostname`` always reflects the original host the task targeted.
+``ansible_delegated_host`` is a string, containing the ``inventory_hostname`` of the host you are delegating to in the task. This is only defined if you are doing delegation.  The ``inventory_hostname`` always reflects the original host the task targeted.
 
 .. _ansible_version:
 
