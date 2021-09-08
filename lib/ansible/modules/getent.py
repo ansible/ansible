@@ -158,10 +158,8 @@ def main():
         for line in out.splitlines():
             record = line.split(split)
 
-            # more than one result for same key
             if record[0] in seen:
-
-                # ensure we store in a list
+                # more than one result for same key, ensure we store in a list
                 if seen[record[0]] == 1:
                     results[dbtree][record[0]] = [results[dbtree][record[0]]]
 
