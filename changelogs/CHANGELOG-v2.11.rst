@@ -5,6 +5,36 @@ ansible-core 2.11 "Hey Hey, What Can I Do" Release Notes
 .. contents:: Topics
 
 
+v2.11.5rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-09-08
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Fix templating task action with host-specific vars (https://github.com/ansible/ansible/issues/75568)
+- Since ansible/2.11 doc site was removed, the current relative messages point to a 404 url, this fixes it by chainging the target to ansible-core/2.11
+- ansible-galaxy - Fix a bug with build_ignore when installing collections from source (https://github.com/ansible/ansible/issues/75528).
+- ansible-galaxy - Improve error message from dependency resolution when a candidate has inconsistent requirements (https://github.com/ansible/ansible/issues/75139).
+- ansible-playbook, more robust handling of --list-hosts and undefined vars in hosts keyword.
+- command module, clarify order of remove/creates checks.
+- command module, correctly handles chdir to symlinks.
+- command module, move to standarized messages in 'msg' vs abusing 'stdout'.
+- command module, now all options work in ad-hoc execution.
+- command module, now always returns what we documented as 'returns always'.
+- get_bin_path, clarify with quotes what the missing required executable is.
+- make previous versions compatible we new attributres w/o implementing them.
+- paramiko_ssh - mark connection as connected when ``_connect()`` is called (https://github.com/ansible/ansible/issues/74081)
+- setup module should now not truncate hpux interface names.
+- validate_argument_spec, correct variable precedence and merge method and add missing examples
+- variable manager, avoid sourcing delegated variables when no inventory hostname is present. This affects scenarios like syntax check and imports.
+
 v2.11.4
 =======
 
