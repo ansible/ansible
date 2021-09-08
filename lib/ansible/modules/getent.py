@@ -89,6 +89,22 @@ EXAMPLES = '''
     var: getent_shadow
 
 '''
+
+RETURN = '''
+ansible_facts:
+  description: Facts to add to ansible_facts.
+  returned: always
+  type: dict
+  contains:
+    getent_<database>:
+      description:
+        - A list of results or a single result as a list of the fields the db provides
+        - The list elements depend on the database queried, see getent man page for the structure
+        - Starting at 2.11 it now returns multiple duplicate entries, previouslly it only returned the last one
+      returned: always
+      type: list
+'''
+
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
