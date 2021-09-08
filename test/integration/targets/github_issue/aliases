@@ -1,2 +1,3 @@
 destructive
 shippable/posix/group1
+disabled  # disabled to avoid burning through IP based GitHub rate limits and causing CI failures
