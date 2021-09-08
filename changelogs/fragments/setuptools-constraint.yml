@@ -1,5 +1,0 @@
-bugfixes:
-  - >-
-    ansible_test - add additional constraint for ``setuptools`` on Python >= 3.5 due to a bug
-    in the recently released version of ``setuptools`` related to the 'use_2to3' feature
-    (https://github.com/ansible/ansible/pull/75651)
