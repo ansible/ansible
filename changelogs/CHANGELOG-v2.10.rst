@@ -5,6 +5,27 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
+v2.10.14rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2021-09-08
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Restructured pipelining settings to be at the connection plugins leaving base config as global and for backwards compatiblity.
+- command module, clarify order of remove/creates checks.
+- command module, correctly handles chdir to symlinks.
+- command module, move to standarized messages in 'msg' vs abusing 'stdout'.
+- command module, now all options work in ad-hoc execution.
+- command module, now always returns what we documented as 'returns always'.
+- make previous versions compatible we new attributres w/o implementing them.
+
 v2.10.13
 ========
 
