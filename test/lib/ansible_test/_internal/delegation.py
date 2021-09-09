@@ -143,40 +143,40 @@ def delegate_command(args, host_state, exclude, require):  # type: (EnvironmentC
         if not args.allow_destructive:
             options.append('--allow-destructive')
 
-    # Run unit tests unprivileged to prevent stray writes to the source tree.
-    # Also disconnect from the network once requirements have been installed.
-    if isinstance(args, UnitsConfig) and isinstance(con, DockerConnection):
-        pytest_user = 'pytest'
-
-        writable_dirs = [
-            os.path.join(content_root, ResultType.JUNIT.relative_path),
-            os.path.join(content_root, ResultType.COVERAGE.relative_path),
-        ]
-
-        con.run(['mkdir', '-p'] + writable_dirs)
-        con.run(['chmod', '777'] + writable_dirs)
-        con.run(['chmod', '755', working_directory])
-        con.run(['chmod', '644', os.path.join(content_root, args.metadata_path)])
-        con.run(['useradd', pytest_user, '--create-home'])
-        con.run(insert_options(command, ['--requirements-mode', 'only']))
-
-        container = con.inspect()
-        networks = container.get_network_names()
-
-        if networks is not None:
-            for network in networks:
-                con.disconnect_network(network)
-        else:
-            display.warning('Network disconnection is not supported (this is normal under podman). '
-                            'Tests will not be isolated from the network. Network-related tests may misbehave.')
-
-        options.extend(['--requirements-mode', 'skip'])
-
-        con.user = pytest_user
-
     with support_container_context(args, ssh) as containers:
         if containers:
             options.extend(['--containers', json.dumps(containers.to_dict())])
+
+        # Run unit tests unprivileged to prevent stray writes to the source tree.
+        # Also disconnect from the network once requirements have been installed.
+        if isinstance(args, UnitsConfig) and isinstance(con, DockerConnection):
+            pytest_user = 'pytest'
+
+            writable_dirs = [
+                os.path.join(content_root, ResultType.JUNIT.relative_path),
+                os.path.join(content_root, ResultType.COVERAGE.relative_path),
+            ]
+
+            con.run(['mkdir', '-p'] + writable_dirs)
+            con.run(['chmod', '777'] + writable_dirs)
+            con.run(['chmod', '755', working_directory])
+            con.run(['chmod', '644', os.path.join(content_root, args.metadata_path)])
+            con.run(['useradd', pytest_user, '--create-home'])
+            con.run(insert_options(command, options + ['--requirements-mode', 'only']))
+
+            container = con.inspect()
+            networks = container.get_network_names()
+
+            if networks is not None:
+                for network in networks:
+                    con.disconnect_network(network)
+            else:
+                display.warning('Network disconnection is not supported (this is normal under podman). '
+                                'Tests will not be isolated from the network. Network-related tests may misbehave.')
+
+            options.extend(['--requirements-mode', 'skip'])
+
+            con.user = pytest_user
 
         success = False
 
