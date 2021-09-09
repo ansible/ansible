@@ -62,7 +62,7 @@ uses key=value escaping which has not changed.  The other option is to check for
       old_message: >
         Testing
         some things
-      message: "{{ old_messsage[:-1] }}"
+      message: "{{ old_message[:-1] }}"
     - debug:
         msg: "{{ message }}"
     # Output
