@@ -134,7 +134,7 @@
     repo: "{{ repo_submodules }}"
     dest: "{{ checkout_dir }}/test.gitdir"
     version: 45c6c07ef10fd9e453d90207e63da1ce5bd3ae1e
-    recursive: no
+    recursive: yes
 
 - name: SUBMODULES | Test that cloning submodule with .git in directory name works
   git:
