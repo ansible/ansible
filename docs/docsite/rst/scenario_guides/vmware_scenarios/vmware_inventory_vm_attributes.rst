@@ -1139,7 +1139,7 @@ The property is valid if snapshots have been created for the virtual machine.
 currentSnapshot (vim.vm.Snapshot, optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    Current snapshot of the virtual machine This property is set by calling ``Snapshot.revert`` or ``VirtualMachine.createSnapshot``.
+    Current snapshot of the virtual machine. This property is set by calling ``Snapshot.revert`` or ``VirtualMachine.createSnapshot``.
     This property will be empty when the working snapshot is at the root of the snapshot tree.
 
 rootSnapshotList (vim.vm.SnapshotTree)
