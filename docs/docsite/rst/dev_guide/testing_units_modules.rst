@@ -270,7 +270,7 @@ Ansible special cases for unit testing
 There are a number of special cases for unit testing the environment of an Ansible module.
 The most common are documented below, and suggestions for others can be found by looking
 at the source code of the existing unit tests or asking on the Ansible chat channel or mailing
-lists. For more infomration on joining chat channels and subscribing to mailing lists, see :ref:`communication`.
+lists. For more information on joining chat channels and subscribing to mailing lists, see :ref:`communication`.
 
 Module argument processing
 --------------------------
