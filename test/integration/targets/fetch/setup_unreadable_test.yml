@@ -11,6 +11,7 @@
         # and the fact that contains the path are needed in a separate ansible-playbook run.
         setup_remote_tmp_dir_skip_cleanup: yes
         setup_remote_tmp_dir_cache_path: yes
+        skip_cleanup: yes
 
     # This prevents ssh access. It is fixed in some container images but not all.
     # https://github.com/ansible/distro-test-containers/pull/70

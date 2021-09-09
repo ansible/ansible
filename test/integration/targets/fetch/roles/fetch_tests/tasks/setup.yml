@@ -8,12 +8,19 @@
       paths:
         - "{{ role_path }}/vars"
 
+- name: Work-around for locked users on Alpine
+  # see https://github.com/ansible/ansible/issues/68676
+  set_fact:
+    password: '*'
+  when: ansible_distribution == 'Alpine'
+
 - name: Create test user
   user:
     name: fetcher
     create_home: yes
     groups: "{{ _fetch_additional_groups | default(omit) }}"
     append: "{{ True if _fetch_additional_groups else False }}"
+    password: "{{ password | default(omit) }}"
   become: yes
   notify:
     - remove test user
