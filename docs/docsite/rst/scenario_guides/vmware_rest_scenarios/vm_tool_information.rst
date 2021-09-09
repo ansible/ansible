@@ -79,7 +79,7 @@ ______
 Network routes
 --------------
 
-Use ``vcenter_vm_guest_networking_routes_info`` to explore the route table of your vitual machine.
+Use ``vcenter_vm_guest_networking_routes_info`` to explore the route table of your virtual machine.
 
 .. literalinclude:: task_outputs/Get_guest_network_routes_information.task.yaml
 
