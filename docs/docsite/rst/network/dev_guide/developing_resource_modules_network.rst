@@ -484,7 +484,7 @@ We use Zuul as the CI to run the integration test.
 
 * To view the report, click :guilabel:`Details` on the CI comment in the PR
 * To view a failure report,  click :guilabel:`ansible/check` and select the failed test.
-* To view logs while the test is running, check for your PR number in the `Zull status board <https://dashboard.zuul.ansible.com/t/ansible/status>`_.
+* To view logs while the test is running, check for your PR number in the `Zuul status board <https://dashboard.zuul.ansible.com/t/ansible/status>`_.
 * To fix static test failure locally, run the  :command:`tox -e black` **inside the root folder of collection**.
 
 To view The Ansible run logs and debug test failures:
