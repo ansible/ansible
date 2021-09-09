@@ -343,6 +343,14 @@
   hosts: localhost
   gather_facts: false
   tasks:
-    - name: Import role with empty argument_specs.yml
+    - name: Import role with an empty argument_specs.yml
       import_role:
-        name: empty
+        name: empty_file
+
+- name: "New play to reset vars: Test empty argument_specs key"
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Import role with an empty argument_specs key
+      import_role:
+        name: empty_argspec
