@@ -591,7 +591,7 @@ cisco.nxos
 
 - Deprecated `nxos_bgp` and `nxos_bgp_neighbor` modules in favor of `nxos_bgp_global` resource module.
 - Deprecated `nxos_interface_ospf` in favor of `nxos_ospf_interfaces` Resource Module.
-- Deprecated `nxos_smu` in favour of `nxos_rpm` module.
+- Deprecated `nxos_smu` in favor of `nxos_rpm` module.
 - The `nxos_ospf_vrf` module is deprecated by `nxos_ospfv2` and `nxos_ospfv3` Resource Modules.
 
 community.aws
