@@ -115,6 +115,7 @@
         name: '{{ remote_unprivileged_user }}'
         state: absent
         remove: yes
+        force: yes
 
     - name: Remove sudoers.d file
       file:

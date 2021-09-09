@@ -181,6 +181,8 @@
       user:
         name: '{{ remote_unprivileged_user }}'
         state: absent
+        force: yes
+        remove: yes
 
     - name: Delete unprivileged user home and tempdir
       file:
