@@ -263,3 +263,26 @@
         state: absent
       when:
         - aptitude_status.stdout.find('ii') == -1
+
+- block:
+   - name: Install the foo package with diff=yes
+     apt:
+       name: foo
+       allow_unauthenticated: yes
+     diff: yes
+     register: apt_result
+
+   - debug:
+      var: apt_result
+
+   - name: Check the content of diff.prepared
+     assert:
+       that:
+         - apt_result is success
+         - "'The following NEW packages will be installed:\n  foo' in apt_result.diff.prepared"
+  always:
+    - name: Clean up
+      apt:
+        name: foo
+        state: absent
+        allow_unauthenticated: yes
