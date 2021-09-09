@@ -101,7 +101,7 @@ To enable the task debugger with an environment variable, pass the variable when
 
     ANSIBLE_ENABLE_TASK_DEBUGGER=True ansible-playbook -i hosts site.yml
 
-When you enable the debugger globally, every failed task invokes the debugger, unless the role, play, block, or task explicity disables the debugger. If you need more granular control over what conditions trigger the debugger, use the ``debugger`` keyword.
+When you enable the debugger globally, every failed task invokes the debugger, unless the role, play, block, or task explicitly disables the debugger. If you need more granular control over what conditions trigger the debugger, use the ``debugger`` keyword.
 
 Enabling the debugger as a strategy
 -----------------------------------
