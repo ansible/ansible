@@ -1,5 +1,7 @@
 bugfixes:
-  - ansible-galaxy - Fix attempting all Galaxy servers until a collection is found.
+  - >-
+    ansible-galaxy - Fix handling HTTP exceptions from Galaxy servers.
+    Continue to the next server in the list until the collection is found.
 minor_changes:
   - >-
     ansible-galaxy - Non-HTTP exceptions from Galaxy servers are now a warning and only fatal if
