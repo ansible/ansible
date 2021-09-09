@@ -374,7 +374,7 @@ def create_inventory(
             create_controller_inventory(args, inventory_path, host_state.controller_profile)
         elif target.target_type == IntegrationTargetType.TARGET:
             display.info('Configuring target inventory.', verbosity=1)
-            create_posix_inventory(args, inventory_path, host_state.target_profiles)
+            create_posix_inventory(args, inventory_path, host_state.target_profiles, 'needs/ssh/' in target.aliases)
         else:
             raise Exception(f'Unhandled test type for target "{target.name}": {target.target_type.name.lower()}')
     elif isinstance(args, WindowsIntegrationConfig):

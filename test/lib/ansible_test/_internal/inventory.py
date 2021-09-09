@@ -10,6 +10,7 @@ from .config import (
 
 from .util import (
     sanitize_host_name,
+    exclude_none_values,
 )
 
 from .host_profiles import (
@@ -111,7 +112,7 @@ def create_network_inventory(args, path, target_hosts):  # type: (EnvironmentCon
     inventory.write(args, path)
 
 
-def create_posix_inventory(args, path, target_hosts):  # type: (EnvironmentConfig, str, t.List[HostProfile]) -> None
+def create_posix_inventory(args, path, target_hosts, needs_ssh=False):  # type: (EnvironmentConfig, str, t.List[HostProfile], bool) -> None
     """Create and return inventory for use in POSIX integration tests."""
     target_hosts = t.cast(t.List[SshTargetHostProfile], target_hosts)
 
@@ -120,7 +121,7 @@ def create_posix_inventory(args, path, target_hosts):  # type: (EnvironmentConfi
 
     target_host = target_hosts[0]
 
-    if isinstance(target_host, ControllerProfile):
+    if isinstance(target_host, ControllerProfile) and not needs_ssh:
         inventory = Inventory(
             host_groups=dict(
                 testgroup=dict(
@@ -145,7 +146,7 @@ def create_posix_inventory(args, path, target_hosts):  # type: (EnvironmentConfi
             ansible_pipelining='yes',
             ansible_python_interpreter=ssh.settings.python_interpreter,
             ansible_host=ssh.settings.host,
-            ansible_port=str(ssh.settings.port),
+            ansible_port=ssh.settings.port,
             ansible_user=ssh.settings.user,
             ansible_ssh_private_key=ssh.settings.identity_file,
         )
@@ -155,6 +156,8 @@ def create_posix_inventory(args, path, target_hosts):  # type: (EnvironmentConfi
                 ansible_become='yes',
                 ansible_become_method=ssh.become.method,
             )
+
+        testhost = exclude_none_values(testhost)
 
         inventory = Inventory(
             host_groups=dict(
