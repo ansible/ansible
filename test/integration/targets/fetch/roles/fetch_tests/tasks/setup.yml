@@ -14,6 +14,7 @@
     create_home: yes
     groups: "{{ _fetch_additional_groups | default(omit) }}"
     append: "{{ True if _fetch_additional_groups else False }}"
+    password: '*'  # work-around for locked users on Alpine, see https://github.com/ansible/ansible/issues/68676
   become: yes
   notify:
     - remove test user
