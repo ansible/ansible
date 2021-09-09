@@ -6,6 +6,15 @@
   gather_facts: no
 
   tasks:
+    - name: Check connectivity
+      command: whoami
+      register: whoami
+
+    - name: Verify user
+      assert:
+        that:
+          - whoami.stdout == 'fetcher'
+
     - name: Try to fetch a file inside an inaccessible directory
       fetch:
         src: "{{ remote_tmp_dir }}/noaccess/file1"
