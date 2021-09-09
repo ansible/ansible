@@ -207,7 +207,7 @@ We generate changelogs based on fragments. When creating new features for existi
 
 To add changelog fragments to Collections in the Ansible community package, we recommend the `antsibull-changelog utility <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst>`_.
 
-To add changelog fragments for new features and bux fixes in ``ansible-core``, see the :ref:`changelog examples and instructions<changelogs_how_to>` in the Community Guide.
+To add changelog fragments for new features and bug fixes in ``ansible-core``, see the :ref:`changelog examples and instructions<changelogs_how_to>` in the Community Guide.
 
 Deprecation cycles
 ==================
