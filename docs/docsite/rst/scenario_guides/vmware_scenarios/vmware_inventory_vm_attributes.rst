@@ -196,7 +196,7 @@ poweredOnMonitorTypeChangeSupported (bool)
 seSparseDiskSupported (bool)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    Indicates whether the virtual machine supports the Flex-SE (space-efficent, sparse) format for virtual disks.
+    Indicates whether the virtual machine supports the Flex-SE (space-efficient, sparse) format for virtual disks.
 
 nestedHVSupported (bool)
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -254,7 +254,7 @@ uuid (str)
 instanceUuid (str, optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    VirtualCenter-specific 128-bit UUID of a virtual machine, represented as a hexademical string. This identifier is used by VirtualCenter to uniquely identify all virtual machine instances, including those that may share the same SMBIOS UUID.
+    VirtualCenter-specific 128-bit UUID of a virtual machine, represented as a hexadecimal string. This identifier is used by VirtualCenter to uniquely identify all virtual machine instances, including those that may share the same SMBIOS UUID.
 
 npivNodeWorldWideName (long, optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -552,7 +552,7 @@ disk (vim.vm.FileLayoutEx.DiskLayout, optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Layout of each virtual disk attached to the virtual machine.
-    For a virtual machine with snaphots, this property gives only those disks that are attached to it at the current point of running.
+    For a virtual machine with snapshots, this property gives only those disks that are attached to it at the current point of running.
 
 snapshot (vim.vm.FileLayoutEx.SnapshotLayout, optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1000,7 +1000,7 @@ appState (str, optional)
 guestOperationsReady (bool, optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    Guest Operations availability. If true, the vitrual machine is ready to process guest operations.
+    Guest Operations availability. If true, the virtual machine is ready to process guest operations.
 
 interactiveGuestOperationsReady (bool, optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1139,7 +1139,7 @@ The property is valid if snapshots have been created for the virtual machine.
 currentSnapshot (vim.vm.Snapshot, optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    Current snapshot of the virtual machineThis property is set by calling ``Snapshot.revert`` or ``VirtualMachine.createSnapshot``.
+    Current snapshot of the virtual machine. This property is set by calling ``Snapshot.revert`` or ``VirtualMachine.createSnapshot``.
     This property will be empty when the working snapshot is at the root of the snapshot tree.
 
 rootSnapshotList (vim.vm.SnapshotTree)

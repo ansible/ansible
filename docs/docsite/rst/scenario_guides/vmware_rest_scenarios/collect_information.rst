@@ -22,8 +22,7 @@ In this scenario we've got a vCenter with an ESXi host.
 Our environment is pre-initialized with the following elements:
 
 - A datacenter called ``my_dc``
-- A cluster called ``my_cluser``
-- A cluster called ``my_cluser``
+- A cluster called ``my_cluster``
 - An ESXi host called ``esxi1`` is in the cluster
 - Two datastores on the ESXi: ``rw_datastore`` and ``ro_datastore``
 - A dvswitch based guest network

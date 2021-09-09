@@ -113,7 +113,7 @@ Once the AnsibleModule object has been initiated, the necessary parameter values
     object_prop3 = module.params['object_prop3']
     if object_prop3 is not None and object_prop3 not in range(x, y):
         module.fail_json(msg='Valid object_prop3 values are between x and (y-1)')
-    child_object_id = module.params[' child_objec_id']
+    child_object_id = module.params['child_object_id']
     child_object_prop = module.params['child_object_prop']
     state = module.params['state']
 
