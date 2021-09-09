@@ -266,9 +266,9 @@ Deprecated Features
 ansible.windows
 ~~~~~~~~~~~~~~~
 
-- win_updates - Deprecated the ``filtered_reason`` return value for each filtered up in favour of ``filtered_reasons``. This has been done to show all the reasons why an update was filtered and not just the first reason.
+- win_updates - Deprecated the ``filtered_reason`` return value for each filtered up in favor of ``filtered_reasons``. This has been done to show all the reasons why an update was filtered and not just the first reason.
 - win_updates - Deprecated the ``use_scheduled_task`` option as it is no longer used.
-- win_updates - Deprecated the ``whitelist`` and ``blacklist`` options in favour of ``accept_list`` and ``reject_list`` respectively to conform to the new standards used in Ansible for these types of options.
+- win_updates - Deprecated the ``whitelist`` and ``blacklist`` options in favor of ``accept_list`` and ``reject_list`` respectively to conform to the new standards used in Ansible for these types of options.
 
 community.general
 ~~~~~~~~~~~~~~~~~
@@ -698,8 +698,8 @@ ansible.netcommon
 cisco.nxos
 ~~~~~~~~~~
 
-- Deprecated nxos_bgp_af in favour of nxos_bgp_address_family resource module.
-- Deprecated nxos_bgp_neighbor_af in favour of nxos_bgp_neighbor_address_family resource module.
+- Deprecated nxos_bgp_af in favor of nxos_bgp_address_family resource module.
+- Deprecated nxos_bgp_neighbor_af in favor of nxos_bgp_neighbor_address_family resource module.
 
 cloudscale_ch.cloud
 ~~~~~~~~~~~~~~~~~~~

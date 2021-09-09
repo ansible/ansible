@@ -13,7 +13,7 @@ something like this:
     try:
         raise IOError('test')
     except IOError:
-        e = get_excetion()
+        e = get_exception()
         do_something(e)
     except:
         e = get_exception()

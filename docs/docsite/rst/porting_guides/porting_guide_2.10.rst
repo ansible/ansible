@@ -436,7 +436,7 @@ Deprecated Features
 cisco.nxos
 ~~~~~~~~~~
 
-- Deprecated `nxos_smu` in favour of `nxos_rpm` module.
+- Deprecated `nxos_smu` in favor of `nxos_rpm` module.
 - The `nxos_ospf_vrf` module is deprecated by `nxos_ospfv2` and `nxos_ospfv3` Resource Modules.
 
 Porting Guide for v2.10.0
@@ -834,7 +834,7 @@ community.vmware
 community.windows
 ~~~~~~~~~~~~~~~~~
 
-- win_disk_image - removed the deprecated return value ``mount_path`` in favour of ``mount_paths``.
+- win_disk_image - removed the deprecated return value ``mount_path`` in favor of ``mount_paths``.
 - win_psexec - removed the deprecated ``extra_opts`` option.
 
 f5networks.f5_modules
@@ -945,7 +945,7 @@ community.vmware
 
 - The vmware_dns_config module has been deprecated and will be removed in a later release; use vmware_host_dns instead.
 - vca - vca_fw, vca_nat, vca_app are deprecated since these modules rely on deprecated part of Pyvcloud library.
-- vmware_dns_config - Deprecate in favour of new module vmware_host_dns.
+- vmware_dns_config - Deprecate in favor of new module vmware_host_dns.
 - vmware_guest - deprecate specifying CDROM configuration as a dict, instead use a list.
 - vmware_tag_info - in a later release, the module will not return ``tag_facts`` since it does not return multiple tags with the same name and different category id. To maintain the existing behavior use ``tag_info`` which is a list of tag metadata.
 
