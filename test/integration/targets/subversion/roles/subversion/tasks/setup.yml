@@ -44,19 +44,19 @@
     chdir: '{{ subversion_server_dir }}'
     creates: '{{ subversion_server_dir }}/{{ subversion_repo_name }}'
 
-- name: apply ownership for all SVN directories
-  file:
-    path: '{{ subversion_server_dir }}'
-    owner: '{{ apache_user }}'
-    group: '{{ apache_group }}'
-    recurse: True
-
 - name: add test user to htpasswd for Subversion site
   htpasswd:
     path: '{{ subversion_server_dir }}/svn-auth-users'
     name: '{{ subversion_username }}'
     password: '{{ subversion_password }}'
     state: present
+
+- name: apply ownership for all SVN directories
+  file:
+    path: '{{ subversion_server_dir }}'
+    owner: '{{ apache_user }}'
+    group: '{{ apache_group }}'
+    recurse: True
 
 - name: start test Apache SVN site - non Red Hat
   command: apachectl -k start -f {{ subversion_server_dir }}/subversion.conf
