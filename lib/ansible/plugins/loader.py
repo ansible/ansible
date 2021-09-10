@@ -449,7 +449,7 @@ class PluginLoader:
             entry = collection_meta.get('plugin_routing', {}).get(plugin_type, {}).get(subdir_qualified_resource, None)
         return entry
 
-    def _find_fq_plugin(self, fq_name, extension, plugin_load_context):
+    def _find_fq_plugin(self, fq_name, extension, plugin_load_context, ignore_deprecated=False):
         """Search builtin paths to find a plugin. No external paths are searched,
         meaning plugins inside roles inside collections will be ignored.
         """
@@ -468,7 +468,8 @@ class PluginLoader:
             deprecation = routing_metadata.get('deprecation', None)
 
             # this will no-op if there's no deprecation metadata for this plugin
-            plugin_load_context.record_deprecation(fq_name, deprecation, acr.collection)
+            if not ignore_deprecated:
+                plugin_load_context.record_deprecation(fq_name, deprecation, acr.collection)
 
             tombstone = routing_metadata.get('tombstone', None)
 
@@ -622,7 +623,8 @@ class PluginLoader:
                                                                        plugin_load_context, ignore_deprecated, check_aliases, suffix)
                     else:
                         # 'ansible.builtin' should be handled here. This means only internal, or builtin, paths are searched.
-                        plugin_load_context = self._find_fq_plugin(candidate_name, suffix, plugin_load_context=plugin_load_context)
+                        plugin_load_context = self._find_fq_plugin(candidate_name, suffix, plugin_load_context=plugin_load_context,
+                                                                   ignore_deprecated=ignore_deprecated)
 
                         # Pending redirects are added to the redirect_list at the beginning of _resolve_plugin_step.
                         # Once redirects are resolved, ensure the final FQCN is added here.
@@ -754,7 +756,8 @@ class PluginLoader:
         # last ditch, if it's something that can be redirected, look for a builtin redirect before giving up
         candidate_fqcr = 'ansible.builtin.{0}'.format(name)
         if '.' not in name and AnsibleCollectionRef.is_valid_fqcr(candidate_fqcr):
-            return self._find_fq_plugin(fq_name=candidate_fqcr, extension=suffix, plugin_load_context=plugin_load_context)
+            return self._find_fq_plugin(fq_name=candidate_fqcr, extension=suffix, plugin_load_context=plugin_load_context,
+                                        ignore_deprecated=ignore_deprecated)
 
         return plugin_load_context.nope('{0} is not eligible for last-chance resolution'.format(name))
 

@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-doc - ignore plugin deprecation warnings (https://github.com/ansible/ansible/issues/75671)
