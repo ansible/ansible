@@ -320,30 +320,30 @@ def get_legacy_host_config(
 
             if docker_config.controller_supported:
                 if controller_python(options.python) or not options.python:
-                    controller = DockerConfig(image=options.docker, python=native_python(options),
+                    controller = DockerConfig(name=options.docker, python=native_python(options),
                                               privileged=options.docker_privileged, seccomp=options.docker_seccomp, memory=options.docker_memory)
                     targets = controller_targets(mode, options, controller)
                 else:
                     controller_fallback = f'docker:{options.docker}', f'--docker {options.docker} --python {options.python}', FallbackReason.PYTHON
-                    controller = DockerConfig(image=options.docker)
+                    controller = DockerConfig(name=options.docker)
                     targets = controller_targets(mode, options, controller)
             else:
                 controller_fallback = f'docker:{docker_fallback}', f'--docker {options.docker}', FallbackReason.ENVIRONMENT
-                controller = DockerConfig(image=docker_fallback)
-                targets = [DockerConfig(image=options.docker, python=native_python(options),
+                controller = DockerConfig(name=docker_fallback)
+                targets = [DockerConfig(name=options.docker, python=native_python(options),
                                         privileged=options.docker_privileged, seccomp=options.docker_seccomp, memory=options.docker_memory)]
         else:
             if not options.python:
                 raise PythonVersionUnspecifiedError(f'--docker {options.docker}')
 
             if controller_python(options.python):
-                controller = DockerConfig(image=options.docker, python=native_python(options),
+                controller = DockerConfig(name=options.docker, python=native_python(options),
                                           privileged=options.docker_privileged, seccomp=options.docker_seccomp, memory=options.docker_memory)
                 targets = controller_targets(mode, options, controller)
             else:
                 controller_fallback = f'docker:{docker_fallback}', f'--docker {options.docker} --python {options.python}', FallbackReason.PYTHON
-                controller = DockerConfig(image=docker_fallback)
-                targets = [DockerConfig(image=options.docker, python=native_python(options),
+                controller = DockerConfig(name=docker_fallback)
+                targets = [DockerConfig(name=options.docker, python=native_python(options),
                                         privileged=options.docker_privileged, seccomp=options.docker_seccomp, memory=options.docker_memory)]
     elif options.remote:
         remote_config = filter_completion(REMOTE_COMPLETION).get(options.remote)
@@ -386,7 +386,7 @@ def get_legacy_host_config(
         if not controller:
             if docker_available():
                 controller_fallback = f'docker:{docker_fallback}', context, reason
-                controller = DockerConfig(image=docker_fallback)
+                controller = DockerConfig(name=docker_fallback)
             else:
                 controller_fallback = f'remote:{remote_fallback}', context, reason
                 controller = PosixRemoteConfig(name=remote_fallback)
