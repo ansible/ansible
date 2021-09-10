@@ -280,6 +280,7 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
         return filter_completion(DOCKER_COMPLETION).get(self.name) or DockerCompletionConfig(
             name=self.name,
             image=self.name,
+            placeholder=True,
         )
 
     def get_default_targets(self, context):  # type: (HostContext) -> t.List[ControllerConfig]
@@ -328,6 +329,7 @@ class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
         """Return the default settings."""
         return filter_completion(REMOTE_COMPLETION).get(self.name) or REMOTE_COMPLETION.get(self.platform) or PosixRemoteCompletionConfig(
             name=self.name,
+            placeholder=True,
         )
 
     def get_default_targets(self, context):  # type: (HostContext) -> t.List[ControllerConfig]
@@ -426,9 +428,8 @@ class ControllerConfig(PosixConfig):
         """Apply default settings."""
         self.controller = context.controller_config
 
-        if not self.python:
-            # The user did not specify a target Python so match the controller Python.
-            # This works because the controller always has a Python, either specified by the user or applied as a default.
+        if not self.python and not defaults.supported_pythons:
+            # The user did not specify a target Python and supported Pythons are unknown, so use the controller Python specified by the user instead.
             self.python = context.controller_config.python
 
         super().apply_defaults(context, defaults)

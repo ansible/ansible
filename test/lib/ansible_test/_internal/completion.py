@@ -131,6 +131,7 @@ class DockerCompletionConfig(PythonCompletionConfig):
     """Configuration for Docker containers."""
     image: str = ''
     seccomp: str = 'default'
+    placeholder: bool = False
 
     @property
     def is_default(self):
@@ -141,7 +142,7 @@ class DockerCompletionConfig(PythonCompletionConfig):
         if not self.image:
             raise Exception(f'Docker completion entry "{self.name}" must provide an "image" setting.')
 
-        if not self.supported_pythons:
+        if not self.supported_pythons and not self.placeholder:
             raise Exception(f'Docker completion entry "{self.name}" must provide a "python" setting.')
 
 
@@ -155,9 +156,11 @@ class NetworkRemoteCompletionConfig(RemoteCompletionConfig):
 @dataclasses.dataclass(frozen=True)
 class PosixRemoteCompletionConfig(RemoteCompletionConfig, PythonCompletionConfig):
     """Configuration for remote POSIX platforms."""
+    placeholder: bool = False
+
     def __post_init__(self):
         if not self.supported_pythons:
-            if self.version:
+            if self.version and not self.placeholder:
                 raise Exception(f'POSIX remote completion entry "{self.name}" must provide a "python" setting.')
         else:
             if not self.version:
@@ -185,6 +188,7 @@ def load_completion(name, completion_type):  # type: (str, t.Type[TCompletionCon
 
     for item in items.values():
         item.pop('context', None)
+        item.pop('placeholder', None)
 
     completion = {name: completion_type(name=name, **data) for name, data in items.items()}
 
