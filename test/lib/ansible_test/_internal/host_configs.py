@@ -277,15 +277,14 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
 
     def get_defaults(self, context):  # type: (HostContext) -> DockerCompletionConfig
         """Return the default settings."""
-        return filter_completion(DOCKER_COMPLETION).get(self.image) or DockerCompletionConfig(
-            name=self.image,
-            image=self.image,
-            python=','.join(SUPPORTED_PYTHON_VERSIONS),
+        return filter_completion(DOCKER_COMPLETION).get(self.name) or DockerCompletionConfig(
+            name=self.name,
+            image=self.name,
         )
 
     def get_default_targets(self, context):  # type: (HostContext) -> t.List[ControllerConfig]
         """Return the default targets for this host config."""
-        if self.image in filter_completion(DOCKER_COMPLETION):
+        if self.name in filter_completion(DOCKER_COMPLETION):
             defaults = self.get_defaults(context)
             pythons = {version: defaults.get_python_path(version) for version in defaults.supported_pythons}
         else:
@@ -329,7 +328,6 @@ class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
         """Return the default settings."""
         return filter_completion(REMOTE_COMPLETION).get(self.name) or REMOTE_COMPLETION.get(self.platform) or PosixRemoteCompletionConfig(
             name=self.name,
-            python=','.join(SUPPORTED_PYTHON_VERSIONS),
         )
 
     def get_default_targets(self, context):  # type: (HostContext) -> t.List[ControllerConfig]

@@ -21,9 +21,9 @@ from ...host_configs import (
 )
 
 
-def get_docker_pythons(image, controller, strict):  # type: (str, bool, bool) -> t.List[str]
+def get_docker_pythons(name, controller, strict):  # type: (str, bool, bool) -> t.List[str]
     """Return a list of docker instance Python versions supported by the specified host config."""
-    image_config = filter_completion(DOCKER_COMPLETION).get(image)
+    image_config = filter_completion(DOCKER_COMPLETION).get(name)
     available_pythons = CONTROLLER_PYTHON_VERSIONS if controller else SUPPORTED_PYTHON_VERSIONS
 
     if not image_config:
@@ -50,7 +50,7 @@ def get_remote_pythons(name, controller, strict):  # type: (str, bool, bool) -> 
 def get_controller_pythons(controller_config, strict):  # type: (HostConfig, bool) -> t.List[str]
     """Return a list of controller Python versions supported by the specified host config."""
     if isinstance(controller_config, DockerConfig):
-        pythons = get_docker_pythons(controller_config.image, False, strict)
+        pythons = get_docker_pythons(controller_config.name, False, strict)
     elif isinstance(controller_config, PosixRemoteConfig):
         pythons = get_remote_pythons(controller_config.name, False, strict)
     else:

@@ -108,8 +108,8 @@ class DockerParser(PairParser):
 
     def get_left_parser(self, state):  # type: (ParserState) -> Parser
         """Return the parser for the left side."""
-        return NamespaceWrappedParser('image', ChoicesParser(list(filter_completion(DOCKER_COMPLETION, controller_only=self.controller)),
-                                                             conditions=MatchConditions.CHOICE | MatchConditions.ANY))
+        return NamespaceWrappedParser('name', ChoicesParser(list(filter_completion(DOCKER_COMPLETION, controller_only=self.controller)),
+                                                            conditions=MatchConditions.CHOICE | MatchConditions.ANY))
 
     def get_right_parser(self, choice):  # type: (t.Any) -> Parser
         """Return the parser for the right side."""
@@ -119,8 +119,8 @@ class DockerParser(PairParser):
         """Parse the input from the given state and return the result."""
         value = super().parse(state)  # type: DockerConfig
 
-        if not value.python and not get_docker_pythons(value.image, self.controller, True):
-            raise ParserError(f'Python version required for docker image: {value.image}')
+        if not value.python and not get_docker_pythons(value.name, self.controller, True):
+            raise ParserError(f'Python version required for docker image: {value.name}')
 
         return value
 
