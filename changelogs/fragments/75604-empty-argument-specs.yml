@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - roles - fix unexpected ``AttributeError`` when an empty ``argument_specs.yml`` is present (https://github.com/ansible/ansible/pull/75604).

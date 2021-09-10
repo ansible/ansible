@@ -294,7 +294,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             if self._loader.path_exists(full_path):
                 # Note: _load_role_yaml() takes care of rebuilding the path.
                 argument_specs = self._load_role_yaml('meta', main='argument_specs')
-                return argument_specs.get('argument_specs', {})
+                try:
+                    return argument_specs.get('argument_specs') or {}
+                except AttributeError:
+                    return {}
 
         # We did not find the meta/argument_specs.[yml|yaml] file, so use the spec
         # dict from the role meta data, if it exists. Ansible 2.11 and later will
