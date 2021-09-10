@@ -494,7 +494,10 @@ class ConfigManager(object):
                 # env vars are next precedence
                 if value is None and defs[config].get('env'):
                     value, origin = self._loop_entries(py3compat.environ, defs[config]['env'])
-                    origin = 'env: %s' % origin
+                    if value == 'AnsibleUndefined':
+                        value = None
+                    else:
+                        origin = 'env: %s' % origin
 
                 # try config file entries next, if we have one
                 if self._parsers.get(cfile, None) is None:
@@ -534,15 +537,18 @@ class ConfigManager(object):
 
             # ensure correct type, can raise exceptions on mismatched types
             try:
-                value = ensure_type(value, defs[config].get('type'), origin=origin)
+                try:
+                    value = ensure_type(value, defs[config].get('type'), origin=origin)
+                except ValueError:
+                    if origin.startswith('env:') and value == '':
+                        # this is empty env var for non string so we can set to default
+                        origin = 'default'
+                        value = ensure_type(defs[config].get('default'), defs[config].get('type'), origin=origin)
+                    else:
+                        raise
             except ValueError as e:
-                if origin.startswith('env:') and value == '':
-                    # this is empty env var for non string so we can set to default
-                    origin = 'default'
-                    value = ensure_type(defs[config].get('default'), defs[config].get('type'), origin=origin)
-                else:
-                    raise AnsibleOptionsError('Invalid type for configuration option %s: %s' %
-                                              (to_native(_get_entry(plugin_type, plugin_name, config)), to_native(e)))
+                raise AnsibleOptionsError('Invalid type for configuration option %s: %s' %
+                                          (to_native(_get_entry(plugin_type, plugin_name, config)), to_native(e)))
 
             # deal with restricted values
             if value is not None and 'choices' in defs[config] and defs[config]['choices'] is not None:
