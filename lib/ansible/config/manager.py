@@ -628,7 +628,10 @@ class ConfigManager:
             # env vars are next precedence
             if value is None and defs[config].get('env'):
                 value, origin = self._loop_entries(os.environ, defs[config]['env'])
-                origin = 'env: %s' % origin
+                if value == 'AnsibleUndefined':
+                    value = None
+                else:
+                    origin = 'env: %s' % origin
 
             # try config file entries next, if we have one
             if self._parsers.get(cfile, None) is None:
