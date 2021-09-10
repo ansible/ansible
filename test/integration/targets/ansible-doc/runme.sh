@@ -101,4 +101,4 @@ expected_out="$(sed 's/ *"filename": "[^"]*",$//' noop_vars_plugin.output)"
 test "$current_out" == "$expected_out"
 
 # just ensure it runs
-ansible-doc --metadata-dump
+ANSIBLE_LIBRARY='' ansible-doc --metadata-dump
