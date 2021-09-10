@@ -60,9 +60,13 @@
 
 - name: start test Apache SVN site - non Red Hat
   command: apachectl -k start -f {{ subversion_server_dir }}/subversion.conf
+  async: 3600  # We kill apache manually in the clean up phase
+  poll: 0
   when: ansible_os_family not in ['RedHat', 'Alpine']
 
 # On Red Hat based OS', we can't use apachectl to start up own instance, just use the raw httpd
 - name: start test Apache SVN site - Red Hat
   command: httpd -k start -f {{ subversion_server_dir }}/subversion.conf
+  async: 3600  # We kill apache manually in the clean up phase
+  poll: 0
   when: ansible_os_family in ['RedHat', 'Alpine']
