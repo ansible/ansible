@@ -8,7 +8,7 @@ Python API
 
 .. note:: This API is intended for internal Ansible use. Ansible may make changes to this API at any time that could break backward compatibility with older versions of the API. Because of this, external use is not supported by Ansible. If you want to use Python API only for executing playbooks or modules, consider `ansible-runner <https://ansible-runner.readthedocs.io/en/latest/>`_ first.
 
-There are several ways to use Ansible from an API perspective.   You can use
+There are several ways to use Ansible from an API perspective.  You can use
 the Ansible Python API to control nodes, you can extend Ansible to respond to various Python events, you can
 write plugins, and you can plug in inventory data from external data sources.  This document
 gives a basic overview and examples of the Ansible execution and playbook API.
