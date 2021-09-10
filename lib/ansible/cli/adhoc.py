@@ -52,6 +52,7 @@ class AdHocCLI(CLI):
                                  help="Name of the action to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
                                  default=C.DEFAULT_MODULE_NAME)
         self.parser.add_argument('args', metavar='pattern', help='host pattern')
+        self.parser.add_argument('-G', dest='gather_facts', action='store_true', help='Force fact gathering before running the adhoc task', default=False)
 
     def post_process_args(self, options):
         '''Post process and validate options for bin/ansible '''
@@ -77,7 +78,7 @@ class AdHocCLI(CLI):
         return dict(
             name="Ansible Ad-Hoc",
             hosts=pattern,
-            gather_facts='no',
+            gather_facts=context.CLIARGS['gather_facts'],
             tasks=[mytask])
 
     def run(self):
