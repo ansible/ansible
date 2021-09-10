@@ -155,6 +155,8 @@
       user:
         name: testuser
         state: absent
+        remove: yes
+        force: yes
 
     - name: Remove testgroup
       group:

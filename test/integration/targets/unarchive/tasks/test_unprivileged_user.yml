@@ -75,7 +75,8 @@
         name: unarchivetest1
         state: absent
         remove: yes
-      become: no
+      become: yes
+      become_user: root
 
     - name: Remove user home directory on macOS
       file:
