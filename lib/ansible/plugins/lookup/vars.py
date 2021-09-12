@@ -43,6 +43,12 @@ EXAMPLES = """
 - name: find several related variables
   debug: msg="{{ lookup('vars', 'ansible_play_hosts', 'ansible_play_batch', 'ansible_play_hosts_all') }}"
 
+# Added in Ansible 2.12
+- name: find several related variables (using a list)
+  debug: msg="{{ lookup('vars', variablenames) }}"
+  vars:
+    variablenames: ['ansible_play_hosts', 'ansible_play_batch', 'ansible_play_hosts_all']
+
 - name: Access nested variables
   debug: msg="{{ lookup('vars', 'variabl' + myvar).sub_var }}"
   ignore_errors: True
@@ -82,19 +88,26 @@ class LookupModule(LookupBase):
         self.set_options(var_options=variables, direct=kwargs)
         default = self.get_option('default')
 
-        ret = []
+        names = []
         for term in terms:
-            if not isinstance(term, string_types):
-                raise AnsibleError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
+            if isinstance(term, list):
+                names += term
+            else:
+                names.append(term)
+
+        ret = []
+        for name in names:
+            if not isinstance(name, string_types):
+                raise AnsibleError('Invalid setting identifier, "%s" is not a string, its a %s' % (name, type(name)))
 
             try:
                 try:
-                    value = myvars[term]
+                    value = myvars[name]
                 except KeyError:
                     try:
-                        value = myvars['hostvars'][myvars['inventory_hostname']][term]
+                        value = myvars['hostvars'][myvars['inventory_hostname']][name]
                     except KeyError:
-                        raise AnsibleUndefinedVariable('No variable found with this name: %s' % term)
+                        raise AnsibleUndefinedVariable('No variable found with this name: %s' % name)
 
                 ret.append(self._templar.template(value, fail_on_undefined=True))
             except AnsibleUndefinedVariable:
