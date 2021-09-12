@@ -177,6 +177,13 @@
       z: z
       key: z
 
+    l1:
+      - item1
+    l2:
+      - item2
+    l3:
+      - item3
+
     # Most complicated combine dicts from the documentation
     default:
       a:
@@ -234,6 +241,10 @@
       - "(x | combine(y, z)) == {'x': 'x', 'y': 'y', 'z': 'z', 'key': 'z'}"
       - "([x, y, z] | combine) == {'x': 'x', 'y': 'y', 'z': 'z', 'key': 'z'}"
       - "([x, y] | combine(z)) == {'x': 'x', 'y': 'y', 'z': 'z', 'key': 'z'}"
+      - "([l1, l2, l3] | combine) == ['item1', 'item2', 'item3']"
+      - "([l1, l2] | combine([l3])) == ['item1', 'item2', 'item3']"
+      - "([l1] | combine([l2, l3])) == ['item1', 'item2', 'item3']"
+      - "([l1] | combine([l2], [l3])) == ['item1', 'item2', 'item3']"
       - "None|combine == {}"
       # more advanced dict combination tests are done in the "merge_hash" function unit tests
       # but even though it's redundant with those unit tests, we do at least the most complicated example of the documentation here
@@ -246,7 +257,7 @@
   ignore_errors: yes
   register: result
 
-- name: Ensure combining objects which aren't dictionaries throws an error
+- name: Ensure combining mixed objects throws an error
   assert:
     that:
       - "result.msg.startswith(\"failed to combine variables, expected dicts but got\")"

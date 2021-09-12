@@ -311,31 +311,41 @@ def combine(*terms, **kwargs):
     if kwargs:
         raise AnsibleFilterError("'recursive' and 'list_merge' are the only valid keyword arguments")
 
-    # allow the user to do `[dict1, dict2, ...] | combine`
-    dictionaries = flatten(terms, levels=1)
+    # allow the user to do `[dict1, dict2, ...] | combine` or `[list1, list2, ...] | combine`
+    items = flatten(terms, levels=1)
 
     # recursively check that every elements are defined (for jinja2)
-    recursive_check_defined(dictionaries)
+    recursive_check_defined(items)
 
-    if not dictionaries:
+    if not items:
         return {}
 
-    if len(dictionaries) == 1:
-        return dictionaries[0]
+    if len(items) == 1:
+        return items[0]
 
-    # merge all the dicts so that the dict at the end of the array have precedence
-    # over the dict at the beginning.
-    # we merge the dicts from the highest to the lowest priority because there is
-    # a huge probability that the lowest priority dict will be the biggest in size
-    # (as the low prio dict will hold the "default" values and the others will be "patches")
-    # and merge_hash create a copy of it's first argument.
-    # so high/right -> low/left is more efficient than low/left -> high/right
-    high_to_low_prio_dict_iterator = reversed(dictionaries)
-    result = next(high_to_low_prio_dict_iterator)
-    for dictionary in high_to_low_prio_dict_iterator:
-        result = merge_hash(dictionary, result, recursive, list_merge)
+    # if all items to be merged are of the type 'list' then merge them together Python style otherwise assume a dict
+    if all(isinstance(item, list) for item in items):
+        result = []
+        for item in items:
+            if isinstance(item, list):
+                result += item
+            else:
+                result += [item]
+        return result
+    else:
+        # merge all the dicts so that the dict at the end of the array have precedence
+        # over the dict at the beginning.
+        # we merge the dicts from the highest to the lowest priority because there is
+        # a huge probability that the lowest priority dict will be the biggest in size
+        # (as the low prio dict will hold the "default" values and the others will be "patches")
+        # and merge_hash create a copy of it's first argument.
+        # so high/right -> low/left is more efficient than low/left -> high/right
+        high_to_low_prio_dict_iterator = reversed(items)
+        result = next(high_to_low_prio_dict_iterator)
+        for dictionary in high_to_low_prio_dict_iterator:
+            result = merge_hash(dictionary, result, recursive, list_merge)
 
-    return result
+        return result
 
 
 def comment(text, style='plain', **kw):

@@ -392,12 +392,12 @@ You can use the transformed data with ``loop`` to iterate over the same subeleme
 
 .. _combine_filter:
 
-Combining hashes/dictionaries
------------------------------
+Combining hashes/dictionaries/lists
+-----------------------------------
 
 .. versionadded:: 2.0
 
-The ``combine`` filter allows hashes to be merged. For example, the following would override keys in one hash::
+The ``combine`` filter allows hashes and lists to be merged. For example, the following would override keys in one hash::
 
     {{ {'a':1, 'b':2} | combine({'b':3}) }}
 
@@ -411,6 +411,17 @@ The filter can also take multiple arguments to merge::
     {{ [a, b, c, d] | combine }}
 
 In this case, keys in ``d`` would override those in ``c``, which would override those in ``b``, and so on.
+
+Next to merging dictionaries, the filter also accepts merging lists:
+
+    {{ [['item1'], ['item2']] | combine(['item3']) }}
+
+The resulting list would be:
+
+    ['item1', 'item2', 'item3']
+
+Merging lists can normally be done with ``['item1'] + ['item2']`` as well, but in some cases (e.g. where the variables
+are not known upfront) the combine filter provides this option as well.
 
 The filter also accepts two optional parameters: ``recursive`` and ``list_merge``.
 
