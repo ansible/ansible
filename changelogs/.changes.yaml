@@ -1921,6 +1921,11 @@ releases:
     - unsafe_writes_fix.yml
     - v2.9.25rc1_summary.yaml
     release_date: '2021-08-10'
+  2.9.26:
+    codename: Immigrant Song
+    fragments:
+    - v2.9.26_summary.yaml
+    release_date: '2021-09-13'
   2.9.26rc1:
     codename: Immigrant Song
     fragments:
