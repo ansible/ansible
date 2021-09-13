@@ -1971,6 +1971,17 @@ releases:
     - unsafe_writes_env.yml
     - v2.10.13rc1_summary.yaml
     release_date: '2021-08-10'
+  2.10.14:
+    changes:
+      release_summary: '| Release Date: 2021-09-13
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - v2.10.14_summary.yaml
+    release_date: '2021-09-13'
   2.10.14rc1:
     changes:
       bugfixes:
