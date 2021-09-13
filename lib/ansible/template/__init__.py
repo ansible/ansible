@@ -1069,12 +1069,12 @@ class Templar:
 
         return ran
 
-    def _make_undefined(self, msg=None):
+    def _make_undefined(self, hint=None):
         from jinja2.runtime import Undefined
 
-        if msg is None or isinstance(msg, Undefined) or msg == '':
-            msg = "Mandatory variable has not been overridden"
-        return AnsibleUndefined(msg)
+        if hint is None or isinstance(hint, Undefined) or hint == '':
+            hint = "Mandatory variable has not been overridden"
+        return AnsibleUndefined(hint)
 
     def do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, disable_lookups=False):
         if self.jinja2_native and not isinstance(data, string_types):
