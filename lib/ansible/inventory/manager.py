@@ -28,11 +28,11 @@ import traceback
 
 from operator import attrgetter
 from random import shuffle
-from pyparsing import pyparsing_common, Word, Literal, Combine, Optional, ZeroOrMore, alphas, alphanums, nums, opAssoc, infixNotation, oneOf
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.inventory.data import InventoryData
+from ansible.inventory.host import Host
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.utils.addresses import parse_address
@@ -62,6 +62,15 @@ PATTERN_WITH_SUBSCRIPT = re.compile(
         $
     ''', re.X
 )
+
+HAS_PYPARSING = False
+if sys.version_info[0] == 3 and sys.version_info[1] >= 6:
+    try:
+        from pyparsing import pyparsing_common, Word, Literal, Combine, Optional, ZeroOrMore, alphas, alphanums, nums, opAssoc, infixNotation, oneOf
+        HAS_PYPARSING = True
+        display.debug("pyparsing successfully imported, using Pyparsing Pattern Parser!")
+    except ImportError:
+        display.warning("Failed to import pyparsing or python version is too low. Continuing using standard Ansible Pattern Parser.")
 
 
 def order_patterns(patterns):
@@ -163,7 +172,10 @@ class InventoryManager(object):
         else:
             self._sources = sources
 
-        self._parser = PatternParser(self)
+        if HAS_PYPARSING:
+            self._parser = PyparsingPatternParser(self)
+        else:
+            self._parser = AnsiblePatternParser(self)
 
         # get to work!
         if parse:
@@ -393,13 +405,12 @@ class InventoryManager(object):
 
             if pattern_hash not in self._hosts_patterns_cache:
 
-                patterns = split_host_pattern(pattern)
-                hosts = self._evaluate_patterns(patterns)
+                hosts = self._parser._evaluate_patterns(pattern)
 
                 # mainly useful for hostvars[host] access
                 if not ignore_limits and self._subset:
                     # exclude hosts not in a subset, if defined
-                    subset_uuids = set(s._uuid for s in self._evaluate_patterns(self._subset))
+                    subset_uuids = set(s._uuid for s in self._parser._evaluate_patterns(self._subset))
                     hosts = [h for h in hosts if h._uuid in subset_uuids]
 
                 if not ignore_restrictions and self._restriction:
@@ -421,78 +432,6 @@ class InventoryManager(object):
                     raise AnsibleOptionsError("Invalid 'order' specified for inventory hosts: %s" % order)
 
         return hosts
-
-    def _evaluate_patterns(self, pattern):
-        """
-        Takes a list of patterns and returns a list of matching host names,
-        """
-        try:
-            patterns = order_patterns(pattern)
-        except TypeError:
-            patterns = pattern
-
-        hosts = []
-
-        for p in patterns:
-            # avoid resolving a pattern that is a plain host
-            if p in self._inventory.hosts:
-                hosts.append(self._inventory.get_host(p))
-            else:
-                that = self._match_one_pattern(p)
-                if p[0] == "!":
-                    that = set(that)
-                    hosts = [h for h in hosts if h not in that]
-                elif p[0] == "&":
-                    that = set(that)
-                    hosts = [h for h in hosts if h in that]
-                else:
-                    existing_hosts = set(y.name for y in hosts)
-                    hosts.extend([h for h in that if h.name not in existing_hosts])
-        return hosts
-
-    def _match_one_pattern(self, pattern):
-        """
-        Takes a single pattern and returns a list of matching host names.
-        Ignores intersection (&) and exclusion (!) specifiers.
-        The pattern may be:
-            1. A regex starting with ~, e.g. '~[abc]*'
-            2. A shell glob pattern with ?/*/[chars]/[!chars], e.g. 'foo*'
-            3. An ordinary word that matches itself only, e.g. 'foo'
-        The pattern is matched using the following rules:
-            1. If it's 'all', it matches all hosts in all groups.
-            2. Otherwise, for each known group name:
-                (a) if it matches the group name, the results include all hosts
-                    in the group or any of its children.
-                (b) otherwise, if it matches any hosts in the group, the results
-                    include the matching hosts.
-        This means that 'foo*' may match one or more groups (thus including all
-        hosts therein) but also hosts in other groups.
-        The built-in groups 'all' and 'ungrouped' are special. No pattern can
-        match these group names (though 'all' behaves as though it matches, as
-        described above). The word 'ungrouped' can match a host of that name,
-        and patterns like 'ungr*' and 'al*' can match either hosts or groups
-        other than all and ungrouped.
-        If the pattern matches one or more group names according to these rules,
-        it may have an optional range suffix to select a subset of the results.
-        This is allowed only if the pattern is not a regex, i.e. '~foo[1]' does
-        not work (the [1] is interpreted as part of the regex), but 'foo*[1]'
-        would work if 'foo*' matched the name of one or more groups.
-        Duplicate matches are always eliminated from the results.
-        """
-
-        if pattern[0] in ("&", "!"):
-            pattern = pattern[1:]
-
-        if pattern not in self._pattern_cache:
-            (expr, slice) = self._split_subscript(pattern)
-            hosts = self._enumerate_matches(expr)
-            try:
-                hosts = self._apply_subscript(hosts, slice)
-            except IndexError:
-                raise AnsibleError("No hosts matched the subscripted pattern '%s'" % pattern)
-            self._pattern_cache[pattern] = hosts
-
-        return self._pattern_cache[pattern]
 
     def _split_subscript(self, pattern):
         """
@@ -579,7 +518,7 @@ class InventoryManager(object):
                 display.warning(msg)
             elif C.HOST_PATTERN_MISMATCH == 'error':
                 raise AnsibleError(msg)
-            # no need to write 'ignore' state
+
         return results
 
     def list_hosts(self, pattern="all"):
@@ -616,14 +555,7 @@ class InventoryManager(object):
         a previous 'hosts' selection that only select roles, or vice versa.
         Corresponds to --limit parameter to ansible-playbook
         """
-        if not subset_pattern or subset_pattern is None:
-            self._subset = None
-        else:
-            pattern = self._parser.parse_string(subset_pattern)
-            self._subset = pattern
-            if subset_pattern in C.LOCALHOST and pattern[0] not in list(self._inventory.hosts.keys()):
-                self._subset = None
-                raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
+        self._subset = self._parser._subset(subset_pattern)
 
     def remove_restriction(self):
         """ Do not restrict list operations """
@@ -633,7 +565,105 @@ class InventoryManager(object):
         self._pattern_cache = {}
 
 
-class PatternParser:
+class AnsiblePatternParser:
+    def __init__(self, inventory_manager):
+        self.inventory_manager = inventory_manager
+
+    def _evaluate_patterns(self, pattern):
+        """
+        Takes a list of patterns and returns a list of matching host names,
+        """
+        pattern = split_host_pattern(pattern)
+        patterns = order_patterns(pattern)
+
+        hosts = []
+
+        for p in patterns:
+            # avoid resolving a pattern that is a plain host
+            if p in self.inventory_manager._inventory.hosts:
+                hosts.append(self.inventory_manager._inventory.get_host(p))
+            else:
+                that = self._match_one_pattern(p)
+                if p[0] == "!":
+                    that = set(that)
+                    hosts = [h for h in hosts if h not in that]
+                elif p[0] == "&":
+                    that = set(that)
+                    hosts = [h for h in hosts if h in that]
+                else:
+                    existing_hosts = set(y.name for y in hosts)
+                    hosts.extend([h for h in that if h.name not in existing_hosts])
+        return hosts
+
+    def _match_one_pattern(self, pattern):
+        """
+        Takes a single pattern and returns a list of matching host names.
+        Ignores intersection (&) and exclusion (!) specifiers.
+        The pattern may be:
+            1. A regex starting with ~, e.g. '~[abc]*'
+            2. A shell glob pattern with ?/*/[chars]/[!chars], e.g. 'foo*'
+            3. An ordinary word that matches itself only, e.g. 'foo'
+        The pattern is matched using the following rules:
+            1. If it's 'all', it matches all hosts in all groups.
+            2. Otherwise, for each known group name:
+                (a) if it matches the group name, the results include all hosts
+                    in the group or any of its children.
+                (b) otherwise, if it matches any hosts in the group, the results
+                    include the matching hosts.
+        This means that 'foo*' may match one or more groups (thus including all
+        hosts therein) but also hosts in other groups.
+        The built-in groups 'all' and 'ungrouped' are special. No pattern can
+        match these group names (though 'all' behaves as though it matches, as
+        described above). The word 'ungrouped' can match a host of that name,
+        and patterns like 'ungr*' and 'al*' can match either hosts or groups
+        other than all and ungrouped.
+        If the pattern matches one or more group names according to these rules,
+        it may have an optional range suffix to select a subset of the results.
+        This is allowed only if the pattern is not a regex, i.e. '~foo[1]' does
+        not work (the [1] is interpreted as part of the regex), but 'foo*[1]'
+        would work if 'foo*' matched the name of one or more groups.
+        Duplicate matches are always eliminated from the results.
+        """
+
+        if pattern[0] in ("&", "!"):
+            pattern = pattern[1:]
+
+        if pattern not in self.inventory_manager._pattern_cache:
+            (expr, slice) = self.inventory_manager._split_subscript(pattern)
+            hosts = self.inventory_manager._enumerate_matches(expr)
+            try:
+                hosts = self.inventory_manager._apply_subscript(hosts, slice)
+            except IndexError:
+                raise AnsibleError("No hosts matched the subscripted pattern '%s'" % pattern)
+            self.inventory_manager._pattern_cache[pattern] = hosts
+
+        return self.inventory_manager._pattern_cache[pattern]
+
+    def _subset(self, subset_pattern):
+        if not subset_pattern or subset_pattern is None:
+            results = None
+        else:
+            subset_patterns = split_host_pattern(subset_pattern)
+            results = []
+            # allow Unix style @filename data
+            for x in subset_patterns:
+                if not x:
+                    continue
+
+                if x[0] == "@":
+                    b_limit_file = to_bytes(x[1:])
+                    if not os.path.exists(b_limit_file):
+                        raise AnsibleError(u'Unable to find limit file %s' % b_limit_file)
+                    if not os.path.isfile(b_limit_file):
+                        raise AnsibleError(u'Limit starting with "@" must be a file, not a directory: %s' % b_limit_file)
+                    with open(b_limit_file) as fd:
+                        results.extend([to_text(l.strip()) for l in fd.read().split("\n")])
+                else:
+                    results.append(to_text(x))
+        return results
+
+
+class PyparsingPatternParser:
     '''
     Mainly added to support nested expressions when selecting hosts using pyparsing library.
     Should still support all other ansible pattern features.
@@ -660,8 +690,8 @@ class PatternParser:
         and_ = oneOf("&& & :&")
         or_ = Combine(ZeroOrMore(Literal(',') | Literal(':')))
 
-        term.setParseAction(self.get_values)
-        special_term.setParseAction(self.get_special_values)
+        term.setParseAction(self._get_values)
+        special_term.setParseAction(self._get_special_values)
 
         self.bnf = infixNotation(term | special_term,
                                  [
@@ -672,46 +702,42 @@ class PatternParser:
                                  ])
         return
 
-    def get_values(self, self_parser):
+    def _get_values(self, self_parser):
         """
         ParseAction function used for the PatternParser.
         Responsible for returning all matching hosts from inventory according to input.
         Needs to be returned as sets, in case NOT, OR and/or AND are being used (exception: 'all').
         """
-        try:
-            if self_parser.host in C.LOCALHOST or self_parser.host == 'all' or any(special in self_parser.host for special in ('?', '*')):
-                result = self.get_special_values(self_parser)
+        results = []
+        if self_parser.host in C.LOCALHOST or self_parser.host == 'all' or any(special in self_parser.host for special in ('?', '*')):
+            results = self._get_special_values(self_parser)
 
-            # case: indexing a hostgroup / subscript
-            elif self_parser.index:
-                result = self.get_subscript(self_parser)
+        # case: indexing a hostgroup / subscript
+        elif self_parser.index:
+            results = self._get_subscript(self_parser)
 
-            # case: plain host, hostgroup or ip host
-            elif (self_parser[0] in [self_parser.host, self_parser.ipv_6, self_parser.ipv_4]) or self_parser[0]:
-                pattern = self_parser[0]
-                try:
-                    result = [pattern] if pattern in self.inventory_manager._inventory.hosts else self.inventory_manager._inventory.get_groups_dict()[pattern]
-                except KeyError:
-                    result = ''
+        # case: plain host, hostgroup or ip host
+        elif (self_parser[0] in [self_parser.host, self_parser.ipv_6, self_parser.ipv_4]) or self_parser[0]:
+            pattern = self_parser[0]
+            try:
+                results = [self.inventory_manager._inventory.get_host(
+                    pattern)] if pattern in self.inventory_manager._inventory.hosts else self.inventory_manager.groups[pattern].get_hosts()
+            except KeyError:
+                results = ''
 
-        except AttributeError:
-            result = [self_parser[0]] if self_parser[0] in self.inventory_manager._inventory.hosts else self.inventory_manager._inventory.get_groups_dict()[
-                self_parser[0]]
+        if results and (isinstance(results, (list, set))):
+            results = set(results)
 
-        if result and (isinstance(result, (list, set))):
-            result = set(result)
         else:
             msg = "Could not match supplied host pattern, ignoring: %s" % self_parser[0]
             display.debug(msg)
             if C.HOST_PATTERN_MISMATCH == 'warning':
                 display.warning(msg)
-            elif C.HOST_PATTERN_MISMATCH == 'error':
-                raise AnsibleError(msg)
             return ''
 
-        return result
+        return results
 
-    def get_special_values(self, self_parser):
+    def _get_special_values(self, self_parser):
         """
         ParseAction function used for the PatternParser.
         Used to support all other available ansible pattern functionalities such as wildcards, regular expressions etc.
@@ -719,16 +745,14 @@ class PatternParser:
         results = []
 
         if (len(self_parser) == 1 and self_parser[0] == '*') or self_parser[0] == 'all':
-            return list(self.inventory_manager._inventory.hosts)
+            return [self.inventory_manager._inventory.get_host(i) for i in self.inventory_manager._inventory.hosts]
 
         if any(special in self_parser[0] for special in [':', ',', '&', '!']):
-            pattern = [self_parser[1]]
+            pattern = self_parser[1]
             try:
                 if any(self_parser[0] == special for special in [':!', '!', '!!']):
-                    pattern.insert(0, '!')
-                    results = self._not(pattern)
-                else:
-                    results = self.get_values(pattern)
+                    pattern = '!' + pattern
+                results = self._parse_string(pattern)
                 return results
             except KeyError:
                 pattern = pattern[0]
@@ -742,17 +766,15 @@ class PatternParser:
                 raise AnsibleError(u'Limit starting with "@" must be a file, not a directory: %s' % b_limit_file)
             with open(b_limit_file) as fd:
                 results.extend([(to_text(l.strip())) for l in fd.read().split("\n")])
-                if not results[0]:
+                results = list(filter(None, results))
+                if not results:
                     results = ['all']
-                return [self.get_values(results)]
+                return [self._get_values(results)]
 
         else:
             pattern = self_parser[0] if isinstance(self_parser, list) else self_parser
             pattern = ''.join(str(e) for e in pattern)
-            result_cache = self.inventory_manager._enumerate_matches(pattern)
-            if result_cache:
-                for match in result_cache:
-                    results.append(str(match))
+            results = self.inventory_manager._enumerate_matches(pattern)
 
         if results and (isinstance(results, (list, set))):
             results = set(results)
@@ -762,32 +784,31 @@ class PatternParser:
             display.debug(msg)
             if C.HOST_PATTERN_MISMATCH == 'warning':
                 display.warning(msg)
-            elif C.HOST_PATTERN_MISMATCH == 'error':
-                raise AnsibleError(msg)
 
         return results
 
-    def get_subscript(self, self_parser):
+    def _get_subscript(self, self_parser):
         """
         applies subscript on host and returns all matches
         """
-
+        result = []
         index = self_parser[1].strip("[").strip("]").split(":")
         if not index[0]:
-            raise AnsibleError("Empty subscript! No hosts matched the subscripted pattern '%s'" % self_parser[0] + self_parser[1])
+            raise AnsibleError("Empty subscript! No hosts matched the subscripted pattern '%s'" % str(self_parser[0] + self_parser[1]))
 
         try:
             start = int(index[0]) if index[0] else None
             # e.g. host[1]
             if len(index) == 1:
-                result = [self.inventory_manager._inventory.get_groups_dict()[self_parser[0]][start]]
+                result.append(self.inventory_manager.groups[self_parser[0]].get_hosts()[start])
 
             # e.g. host[0:3] or host[:2] or host[1:]
             else:
                 stopp = int(index[1]) if index[1] else None
-                result = self.inventory_manager._inventory.get_groups_dict()[self_parser[0]][start:stopp]
+                result.extend(self.inventory_manager.groups[self_parser[0]].get_hosts()[start:stopp])
+
         except IndexError:
-            raise AnsibleError("No hosts matched the subscripted pattern '%s'" % self_parser[0] + self_parser[1])
+            raise AnsibleError("No hosts matched the subscripted pattern '%s'" % str(self_parser[0] + self_parser[1]))
 
         return result
 
@@ -798,7 +819,7 @@ class PatternParser:
         '''
 
         operands = tokens[0][::2]
-        all_hosts = set(self.inventory_manager._inventory.hosts.keys())
+        all_hosts = set([self.inventory_manager._inventory.get_host(i) for i in self.inventory_manager._inventory.hosts])
         operands[1] = all_hosts.difference(operands[1])
         return set.intersection(*operands)
 
@@ -809,7 +830,7 @@ class PatternParser:
         '''
 
         operands = tokens[0][1::2]
-        all_hosts = set(self.inventory_manager._inventory.hosts.keys())
+        all_hosts = set([self.inventory_manager._inventory.get_host(i) for i in self.inventory_manager._inventory.hosts])
         return all_hosts.difference(*operands)
 
     def _and(self, tokens):
@@ -834,16 +855,16 @@ class PatternParser:
             return test
         return set.union(*operands)
 
-    def parse_string(self, lines):
+    def _parse_string(self, lines):
         """
         Parses pattern string and prints the result set. If it's empty, gives ERROR.
         """
-        if lines == 'all':
-            return list(self.inventory_manager._inventory.hosts.keys())
-
         if isinstance(lines, list):
             # already done
-            return lines
+            if len(lines) == 1:
+                lines = lines[0]
+            else:
+                return lines
 
         if isinstance(lines, str):
             lines = lines.replace(" ", "")
@@ -867,5 +888,33 @@ class PatternParser:
         else:
             if not result:
                 raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
-            data = list(result) if isinstance(result, set) else result
-            return data
+            return result
+
+    def _evaluate_patterns(self, pattern):
+        result = self._parse_string(pattern)
+        result = list(result) if isinstance(result, set) else result
+        hosts = []
+        for match in result:
+            if not match:
+                continue
+            else:
+                if isinstance(match, Host):
+                    hosts.append(match)
+                elif match in self.inventory_manager._inventory.hosts:
+                    hosts.append(self.inventory_manager._inventory.get_host(match))
+        return hosts
+
+    def _subset(self, subset_pattern):
+
+        if not subset_pattern or subset_pattern is None:
+            results = None
+        else:
+            result_cache = self._evaluate_patterns(subset_pattern)
+            results = []
+            for match in result_cache:
+                results.append(str(match))
+
+            if subset_pattern in C.LOCALHOST and results[0] not in list(self.inventory_manager._inventory.hosts):
+                results = None
+                raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
+        return results
