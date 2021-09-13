@@ -1,0 +1,2 @@
+bugfixes:
+- PowerShell - Ignore environment variables when compiling C# Ansible code

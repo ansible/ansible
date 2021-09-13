@@ -332,7 +332,27 @@ Function Add-CSharpType {
 
         # compile the code together and check for errors
         $provider = New-Object -TypeName Microsoft.CSharp.CSharpCodeProvider
+
+        # This calls csc.exe which can take compiler options from environment variables. To avoid being affected by
+        # env vars the code will unset all of them except for the ones it needs.
+        $originalEnv = [System.Environment]::GetEnvironmentVariables()
+        try {
+            foreach ($kvp in $originalEnv.GetEnumerator()) {
+                if ($kvp.Key -notin @("TEMP", "SystemRoot")) {
+                    Remove-Item -LiteralPath "Env:\$($kvp.Key)"
+                }
+            }
+
+            $compile = $provider.CompileAssemblyFromDom($compile_parameters, $compile_units)
+        }
+        finally {
+            foreach ($kvp in $originalEnv.GetEnumerator()) {
+                [System.Environment]::SetEnvironmentVariable($kvp.Key, $kvp.Value, "Process")
+            }
+        }
+
         $compile = $provider.CompileAssemblyFromDom($compile_parameters, $compile_units)
+
         if ($compile.Errors.HasErrors) {
             $msg = "Failed to compile C# code: "
             foreach ($e in $compile.Errors) {
