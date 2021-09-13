@@ -405,15 +405,19 @@ set of privileges and groups.
 To determine the type of token that Ansible was able to get, run the following
 task:
 
-.. code-block:: yaml
+.. dropdown:: Task
+    :open:
 
-    - Check my user name
-      ansible.windows.win_whoami:
-      become: yes
+    .. code-block:: yaml
 
-The output will look something similar to the below:
+      - Check my user name
+        ansible.windows.win_whoami:
+        become: yes
 
-.. code-block:: ansible-output
+
+.. dropdown:: Task output
+
+  .. code-block:: ansible-output
 
     ok: [windows] => {
         "account": {
@@ -499,7 +503,7 @@ The output will look something similar to the below:
         "user_flags": []
     }
 
-Under the ``label`` key, the ``account_name`` entry determines whether the user
+Under the ``label`` key in the task output, the ``account_name`` entry determines whether the user
 has Administrative rights. Here are the labels that can be returned and what
 they represent:
 
