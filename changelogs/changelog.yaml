@@ -1936,6 +1936,17 @@ releases:
     - v2.11.4rc1_summary.yaml
     - when-eval-native-py310.yml
     release_date: '2021-08-10'
+  2.11.5:
+    changes:
+      release_summary: '| Release Date: 2021-09-13
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - v2.11.5_summary.yaml
+    release_date: '2021-09-13'
   2.11.5rc1:
     changes:
       bugfixes:
