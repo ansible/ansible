@@ -25,12 +25,24 @@
         "ERROR! 'file' type is not supported. The format namespace.name is expected." in verify.stderr
 
 - name: install the collection from the server
-  command: ansible-galaxy collection install ansible_test.verify:1.0.0
+  command: ansible-galaxy collection install ansible_test.verify:1.0.0 -s {{ test_api_fallback }} {{ galaxy_verbosity }}
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
 
+- name: verify the collection against the first valid server
+  command: ansible-galaxy collection verify ansible_test.verify:1.0.0 -vvv {{ galaxy_verbosity }}
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
+  register: verify
+
+- assert:
+    that:
+      - verify is success
+      - >-
+        "Found API version '{{ test_api_fallback_versions }}' with Galaxy server {{ test_api_fallback }}" in verify.stdout
+
 - name: verify the installed collection against the server
-  command: ansible-galaxy collection verify ansible_test.verify:1.0.0
+  command: ansible-galaxy collection verify ansible_test.verify:1.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
   register: verify
@@ -41,12 +53,12 @@
       - "'Collection ansible_test.verify contains modified content' not in verify.stdout"
 
 - name: verify the installed collection against the server, with unspecified version in CLI
-  command: ansible-galaxy collection verify ansible_test.verify
+  command: ansible-galaxy collection verify ansible_test.verify -s {{ test_name }} {{ galaxy_verbosity }}
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
 
 - name: verify a collection that doesn't appear to be installed
-  command: ansible-galaxy collection verify ansible_test.verify:1.0.0
+  command: ansible-galaxy collection verify ansible_test.verify:1.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
   register: verify
   failed_when: verify.rc == 0
 
@@ -82,7 +94,7 @@
     chdir: '{{ galaxy_dir }}'
 
 - name: verify a version of a collection that isn't installed
-  command: ansible-galaxy collection verify ansible_test.verify:2.0.0
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
   register: verify
@@ -94,12 +106,12 @@
       - '"ansible_test.verify has the version ''1.0.0'' but is being compared to ''2.0.0''" in verify.stdout'
 
 - name: install the new version from the server
-  command: ansible-galaxy collection install ansible_test.verify:2.0.0 --force
+  command: ansible-galaxy collection install ansible_test.verify:2.0.0 --force -s {{ test_name }} {{ galaxy_verbosity }}
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
 
 - name: verify the installed collection against the server
-  command: ansible-galaxy collection verify ansible_test.verify:2.0.0
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
   register: verify
@@ -145,7 +157,7 @@
       - "updated_file.stat.checksum != file.stat.checksum"
 
 - name: test verifying checksumes of the modified collection
-  command: ansible-galaxy collection verify ansible_test.verify:2.0.0
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
   register: verify
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
@@ -165,7 +177,7 @@
   diff: true
 
 - name: ensure a modified FILES.json is validated
-  command: ansible-galaxy collection verify ansible_test.verify:2.0.0
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
   register: verify
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
@@ -189,7 +201,7 @@
     line: ' "chksum_sha256": "{{ manifest_info.stat.checksum }}",'
 
 - name: ensure the MANIFEST.json is validated against the uncorrupted file from the server
-  command: ansible-galaxy collection verify ansible_test.verify:2.0.0
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
   register: verify
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
@@ -219,7 +231,7 @@
     dest: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/galaxy.yml'
 
 - name: test we only verify collections containing a MANIFEST.json with the version on the server
-  command: ansible-galaxy collection verify ansible_test.verify:2.0.0
+  command: ansible-galaxy collection verify ansible_test.verify:2.0.0 -s {{ test_name }} {{ galaxy_verbosity }}
   register: verify
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
