@@ -1,0 +1,2 @@
+minor_changes:
+  - apt - added an ``allow_downgrade`` option to enable safe downgrade of packages without using ``force`` which doesn't verify signatures (https://github.com/ansible/ansible/issues/29451, https://github.com/ansible/ansible/pull/74852).
