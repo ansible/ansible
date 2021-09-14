@@ -314,7 +314,7 @@ try {
     Add-CSharpType -Reference $lib_set
 }
 finally {
-    Remove-Item env:\LIB
+    Remove-Item -LiteralPath env:\LIB
 }
 Assert-Equals -actual ([Namespace12.Class12]::GetString()) -expected "b"
 
