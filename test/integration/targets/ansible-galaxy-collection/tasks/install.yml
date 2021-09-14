@@ -4,6 +4,38 @@
     path: '{{ galaxy_dir }}/ansible_collections'
     state: directory
 
+- name: install simple collection from first accessible server
+  command: ansible-galaxy collection install namespace1.name1 {{ galaxy_verbosity }}
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+  register: from_first_good_server
+
+- name: get installed files of install simple collection from first good server
+  find:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1'
+    file_type: file
+  register: install_normal_files
+
+- name: get the manifest of install simple collection from first good server
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1/MANIFEST.json'
+  register: install_normal_manifest
+
+- name: assert install simple collection from first good server
+  assert:
+    that:
+    - '"Installing ''namespace1.name1:1.0.9'' to" in from_first_good_server.stdout'
+    - install_normal_files.files | length == 3
+    - install_normal_files.files[0].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']
+    - install_normal_files.files[1].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']
+    - install_normal_files.files[2].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']
+    - (install_normal_manifest.content | b64decode | from_json).collection_info.version == '1.0.9'
+
+- name: Remove the collection
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1'
+    state: absent
+
 - name: install simple collection with implicit path - {{ test_name }}
   command: ansible-galaxy collection install namespace1.name1 -s '{{ test_name }}' {{ galaxy_verbosity }}
   environment:

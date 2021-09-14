@@ -1,0 +1,9 @@
+bugfixes:
+  - >-
+    ansible-galaxy - Fix handling HTTP exceptions from Galaxy servers.
+    Continue to the next server in the list until the collection is found.
+minor_changes:
+  - >-
+    ansible-galaxy - Non-HTTP exceptions from Galaxy servers are now a warning and only fatal if
+    the collection to download|install|verify is not available from any of the servers
+    (https://github.com/ansible/ansible/issues/75443).
