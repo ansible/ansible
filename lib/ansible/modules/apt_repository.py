@@ -19,6 +19,7 @@ description:
     - Add or remove an APT repositories in Ubuntu and Debian.
 extends_documentation_fragment:
 - action_common_attributes
+- action_common_attributes.ansible_core_defaults
 attributes:
     check_mode:
         support: full

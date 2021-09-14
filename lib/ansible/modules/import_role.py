@@ -59,6 +59,7 @@ options:
     version_added: '2.11'
 extends_documentation_fragment:
 - action_common_attributes
+- action_common_attributes.ansible_core_defaults
 attributes:
     async:
         support: none

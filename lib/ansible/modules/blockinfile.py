@@ -92,6 +92,7 @@ notes:
   - When more then one block should be handled in one file you must change the I(marker) per task.
 extends_documentation_fragment:
 - action_common_attributes
+- action_common_attributes.ansible_core_defaults
 - files
 - validate
 attributes:

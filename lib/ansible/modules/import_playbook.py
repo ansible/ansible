@@ -24,6 +24,7 @@ options:
       - The name of the imported playbook is specified directly without any other option.
 extends_documentation_fragment:
 - action_common_attributes
+- action_common_attributes.ansible_core_defaults
 attributes:
     async:
         support: none

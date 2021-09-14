@@ -141,6 +141,7 @@ author:
   - Luca Berruti (@lberruti)
 extends_documentation_fragment:
 - action_common_attributes
+- action_common_attributes.ansible_core_defaults
 attributes:
     check_mode:
         support: full

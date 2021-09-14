@@ -31,6 +31,7 @@ options:
     aliases: [ group, groupname ]
 extends_documentation_fragment:
 - action_common_attributes
+- action_common_attributes.ansible_core_defaults
 attributes:
     action:
         support: full

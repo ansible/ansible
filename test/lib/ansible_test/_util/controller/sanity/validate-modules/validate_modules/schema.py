@@ -541,7 +541,7 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
             Schema({
                 any_string_types: {
                     Required('description'): any_string_types,
-                    Required('support'): Any('full', 'partial', 'none'),
+                    Required('support'): Any('unknown', 'full', 'partial', 'none'),
                     'version_added_collection': collection_name,
                     'version_added': version(for_collection=for_collection),
                 },

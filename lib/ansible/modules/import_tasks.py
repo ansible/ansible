@@ -24,6 +24,7 @@ options:
       - If you need any of those to apply, use M(ansible.builtin.include_tasks) instead.
 extends_documentation_fragment:
 - action_common_attributes
+- action_common_attributes.ansible_core_defaults
 attributes:
     async:
         support: none

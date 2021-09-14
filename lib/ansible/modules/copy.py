@@ -122,6 +122,7 @@ extends_documentation_fragment:
 - files
 - validate
 - action_common_attributes
+- action_common_attributes.ansible_core_defaults
 notes:
 - The M(ansible.builtin.copy) module recursively copy facility does not scale to lots (>hundreds) of files.
 seealso:

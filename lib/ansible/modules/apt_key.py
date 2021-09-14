@@ -21,6 +21,7 @@ description:
     - Add or remove an I(apt) key, optionally downloading it.
 extends_documentation_fragment:
 - action_common_attributes
+- action_common_attributes.ansible_core_defaults
 attributes:
     check_mode:
         support: full
