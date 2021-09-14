@@ -393,7 +393,8 @@ class TaskExecutor:
             else:
                 if getattr(self._task, 'diff', False):
                     self._final_q.send_callback('v2_on_file_diff', tr)
-                self._final_q.send_callback('v2_runner_item_on_ok', tr)
+                if self._task.action not in ('add_host', 'group_by'):
+                    self._final_q.send_callback('v2_runner_item_on_ok', tr)
 
             results.append(res)
             del task_vars[loop_var]
