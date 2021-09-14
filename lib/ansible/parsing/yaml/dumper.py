@@ -49,6 +49,7 @@ def represent_vault_encrypted_unicode(self, data):
 def represent_unicode(self, data):
     return yaml.representer.SafeRepresenter.represent_str(self, text_type(data))
 
+
 def represent_binary(self, data):
     return yaml.representer.SafeRepresenter.represent_binary(self, binary_type(data))
 
