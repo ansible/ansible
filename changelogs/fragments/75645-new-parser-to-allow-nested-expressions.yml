@@ -1,0 +1,13 @@
+minor_changes:
+  - inventory - added new class 'PyparsingPatternParser' to allow nested pattern expressions when selecting hosts by using the pyparsing library.
+    Applies to lookup plugins, within 'hosts:' in playbooks and when using --limit.
+  - inventory - added class 'AnsiblePatternParser' and moved all functions that are specifically used for parsing patterns the 'ansible way'.
+    Used in case the pyparsing library cannot be imported, or if python version is below 3.6 (noted as variable HAS_PYPARSING).
+  - inventory - added attribute self._parser to InventoryManager to change between the two beforementioned parsers,
+    if dependencies can be installed.
+    (https://github.com/ansible/ansible/pull/75645)
+
+known_issues:
+  - does not parse patterns in the order they are written (which is how it was parsed before) but due to the use of infix notation
+    it is parsed in this order - NAND > NOT > AND > OR.
+    Either change order by using parentheses or PyparsingPatternParser has to be modified to ignore infix notation.
