@@ -75,7 +75,7 @@ options:
     type: bool
   force:
     description:
-      - 'Corresponds to the C(--force-yes) to I(apt-get) and implies C(allow_unauthenticated: yes)'
+      - 'Corresponds to the C(--force-yes) to I(apt-get) and implies C(allow_unauthenticated: yes) and C(allow_downgrade: yes)'
       - "This option will disable checking both the packages' signatures and the certificates of the
         web servers they are downloaded from."
       - 'This option *is not* the equivalent of passing the C(-f) flag to I(apt-get) on the command line'
@@ -91,6 +91,16 @@ options:
     type: bool
     default: 'no'
     version_added: "2.1"
+  allow_downgrade:
+    description:
+      - Corresponds to the C(--allow-downgrades) option for I(apt).
+      - This option enables the named package and version to replace an already installed higher version of that package.
+      - Note that setting I(allow_downgrade=true) can make this module behave in a non-idempotent way.
+      - (The task could end up with a set of packages that does not match the complete list of specified packages to install).
+    aliases: [ allow-downgrade, allow_downgrades, allow-downgrades ]
+    type: bool
+    default: 'no'
+    version_added: "2.12"
   upgrade:
     description:
       - If yes or safe, performs an aptitude safe-upgrade.
@@ -224,6 +234,12 @@ EXAMPLES = '''
     state: latest
     default_release: squeeze-backports
     update_cache: yes
+
+- name: Install the version '1.18.0' of package "nginx" and allow potential downgrades
+  apt:
+    name: nginx=1.18.0
+    state: present
+    allow_downgrade: yes
 
 - name: Install zfsutils-linux with ensuring conflicted packages (e.g. zfs-fuse) will not be removed.
   apt:
@@ -650,7 +666,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
             build_dep=False, fixed=False, autoremove=False, fail_on_autoremove=False, only_upgrade=False,
-            allow_unauthenticated=False):
+            allow_unauthenticated=False, allow_downgrade=False):
     pkg_list = []
     packages = ""
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
@@ -725,6 +741,9 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         if allow_unauthenticated:
             cmd += " --allow-unauthenticated"
 
+        if allow_downgrade:
+            cmd += " --allow-downgrades"
+
         with PolicyRcD(m):
             rc, out, err = m.run_command(cmd)
 
@@ -761,7 +780,7 @@ def get_field_of_deb(m, deb_file, field="Version"):
     return to_native(stdout).strip('\n')
 
 
-def install_deb(m, debs, cache, force, fail_on_autoremove, install_recommends, allow_unauthenticated, dpkg_options):
+def install_deb(m, debs, cache, force, fail_on_autoremove, install_recommends, allow_unauthenticated, allow_downgrade, dpkg_options):
     changed = False
     deps_to_install = []
     pkgs_to_install = []
@@ -785,8 +804,11 @@ def install_deb(m, debs, cache, force, fail_on_autoremove, install_recommends, a
                 # Must not be installed, continue with installation
                 pass
             # Check if package is installable
-            if not pkg.check() and not force:
-                m.fail_json(msg=pkg._failure_string)
+            if not pkg.check():
+                if force or ("later version" in pkg._failure_string and allow_downgrade):
+                    pass
+                else:
+                    m.fail_json(msg=pkg._failure_string)
 
             # add any missing deps to the list of deps we need
             # to install so they're all done in one shot
@@ -805,6 +827,7 @@ def install_deb(m, debs, cache, force, fail_on_autoremove, install_recommends, a
                                      install_recommends=install_recommends,
                                      fail_on_autoremove=fail_on_autoremove,
                                      allow_unauthenticated=allow_unauthenticated,
+                                     allow_downgrade=allow_downgrade,
                                      dpkg_options=expand_dpkg_options(dpkg_options))
         if not success:
             m.fail_json(**retvals)
@@ -935,6 +958,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
             use_apt_get=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False, fail_on_autoremove=False,
             allow_unauthenticated=False,
+            allow_downgrade=False,
             ):
 
     if autoremove:
@@ -982,6 +1006,8 @@ def upgrade(m, mode="yes", force=False, default_release=None,
 
     allow_unauthenticated = '--allow-unauthenticated' if allow_unauthenticated else ''
 
+    allow_downgrade = '--allow-downgrades' if allow_downgrade else ''
+
     if apt_cmd is None:
         if use_apt_get:
             apt_cmd = APT_GET_CMD
@@ -990,7 +1016,16 @@ def upgrade(m, mode="yes", force=False, default_release=None,
                             "to have APTITUDE in path or use 'force_apt_get=True'")
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
 
-    cmd = '%s -y %s %s %s %s %s %s' % (apt_cmd_path, dpkg_options, force_yes, fail_on_autoremove, allow_unauthenticated, check_arg, upgrade_command)
+    cmd = '%s -y %s %s %s %s %s %s %s' % (
+        apt_cmd_path,
+        dpkg_options,
+        force_yes,
+        fail_on_autoremove,
+        allow_unauthenticated,
+        allow_downgrade,
+        check_arg,
+        upgrade_command,
+    )
 
     if default_release:
         cmd += " -t '%s'" % (default_release,)
@@ -1081,6 +1116,7 @@ def main():
             only_upgrade=dict(type='bool', default=False),
             force_apt_get=dict(type='bool', default=False),
             allow_unauthenticated=dict(type='bool', default=False, aliases=['allow-unauthenticated']),
+            allow_downgrade=dict(type='bool', default=False, aliases=['allow-downgrade', 'allow_downgrades', 'allow-downgrades']),
             lock_timeout=dict(type='int', default=60),
         ),
         mutually_exclusive=[['deb', 'package', 'upgrade']],
@@ -1177,6 +1213,7 @@ def main():
     updated_cache_time = 0
     install_recommends = p['install_recommends']
     allow_unauthenticated = p['allow_unauthenticated']
+    allow_downgrade = p['allow_downgrade']
     dpkg_options = expand_dpkg_options(p['dpkg_options'])
     autoremove = p['autoremove']
     fail_on_autoremove = p['fail_on_autoremove']
@@ -1247,7 +1284,18 @@ def main():
             force_yes = p['force']
 
             if p['upgrade']:
-                upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, fail_on_autoremove, allow_unauthenticated)
+                upgrade(
+                    module,
+                    p['upgrade'],
+                    force_yes,
+                    p['default_release'],
+                    use_apt_get,
+                    dpkg_options,
+                    autoremove,
+                    fail_on_autoremove,
+                    allow_unauthenticated,
+                    allow_downgrade
+                )
 
             if p['deb']:
                 if p['state'] != 'present':
@@ -1257,6 +1305,7 @@ def main():
                 install_deb(module, p['deb'], cache,
                             install_recommends=install_recommends,
                             allow_unauthenticated=allow_unauthenticated,
+                            allow_downgrade=allow_downgrade,
                             force=force_yes, fail_on_autoremove=fail_on_autoremove, dpkg_options=p['dpkg_options'])
 
             unfiltered_packages = p['package'] or ()
@@ -1267,7 +1316,18 @@ def main():
             if latest and all_installed:
                 if packages:
                     module.fail_json(msg='unable to install additional packages when upgrading all installed packages')
-                upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, fail_on_autoremove, allow_unauthenticated)
+                upgrade(
+                    module,
+                    'yes',
+                    force_yes,
+                    p['default_release'],
+                    use_apt_get,
+                    dpkg_options,
+                    autoremove,
+                    fail_on_autoremove,
+                    allow_unauthenticated,
+                    allow_downgrade
+                )
 
             if packages:
                 for package in packages:
@@ -1307,7 +1367,8 @@ def main():
                     autoremove=autoremove,
                     fail_on_autoremove=fail_on_autoremove,
                     only_upgrade=p['only_upgrade'],
-                    allow_unauthenticated=allow_unauthenticated
+                    allow_unauthenticated=allow_unauthenticated,
+                    allow_downgrade=allow_downgrade
                 )
 
                 # Store if the cache has been updated
