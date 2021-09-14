@@ -543,7 +543,7 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
                 any_string_types: {
                     Required('description'): any_string_types,
                     'support': Any('full', 'partial', 'none', 'unknown'),
-                    Required('default_support_value'): Any('full', 'partial', 'none'),
+                    Required('default_support_value'): Any('full', 'partial', 'none', 'unknown'),
                     'version_added_collection': collection_name,
                     'version_added': version(for_collection=for_collection),
                 },
