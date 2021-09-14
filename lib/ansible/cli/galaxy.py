@@ -55,6 +55,16 @@ from ansible.utils.plugin_docs import get_versioned_doclink
 display = Display()
 urlparse = six.moves.urllib.parse.urlparse
 
+SERVER_DEF = [
+    ('url', True),
+    ('username', False),
+    ('password', False),
+    ('token', False),
+    ('auth_url', False),
+    ('v3', False),
+    ('validate_certs', False)
+]
+
 
 def with_collection_artifacts_manager(wrapped_method):
     """Inject an artifacts manager if not passed explicitly.
@@ -466,8 +476,6 @@ class GalaxyCLI(CLI):
                 ],
                 'required': required,
             }
-        server_def = [('url', True), ('username', False), ('password', False), ('token', False),
-                      ('auth_url', False), ('v3', False), ('validate_certs', False)]
 
         validate_certs_fallback = not context.CLIARGS['ignore_certs']
         galaxy_options = {}
@@ -482,7 +490,7 @@ class GalaxyCLI(CLI):
         for server_priority, server_key in enumerate(server_list, start=1):
             # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
             # section [galaxy_server.<server>] for the values url, username, password, and token.
-            config_dict = dict((k, server_config_def(server_key, k, req)) for k, req in server_def)
+            config_dict = dict((k, server_config_def(server_key, k, req)) for k, req in SERVER_DEF)
             defs = AnsibleLoader(yaml_dump(config_dict)).get_single_data()
             C.config.initialize_plugin_configuration_definitions('galaxy_server', server_key, defs)
 
