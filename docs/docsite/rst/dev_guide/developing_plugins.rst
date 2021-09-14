@@ -507,7 +507,7 @@ Include the ``vars_plugin_staging`` documentation fragment to allow users to det
 .. code-block:: python
 
     DOCUMENTATION = '''
-        vars: custom_hostvars
+        name: custom_hostvars
         version_added: "2.10"  # for collections, use the collection version, not the Ansible version
         short_description: Load custom host vars
         description: Load custom host vars
