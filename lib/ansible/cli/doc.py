@@ -333,8 +333,8 @@ def augment_attributes(attributes):
     for attribute, data in attributes.items():
         default_value = data.pop('default_support_value')
         support = data.get('support')
-        if support == default_value:
-            data['support'] = '%s (default)' % support
+        if support == default_value or support is None:
+            data['support'] = '%s (default)' % default_value
     return attributes
 
 
