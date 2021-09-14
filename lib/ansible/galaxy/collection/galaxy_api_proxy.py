@@ -24,6 +24,11 @@ if TYPE_CHECKING:
     )
 
 from ansible.galaxy.api import GalaxyAPI, GalaxyError
+from ansible.module_utils._text import to_text
+from ansible.utils.display import Display
+
+
+display = Display()
 
 
 class MultiGalaxyAPIProxy:
@@ -34,6 +39,47 @@ class MultiGalaxyAPIProxy:
         """Initialize the target APIs list."""
         self._apis = apis
         self._concrete_art_mgr = concrete_artifacts_manager
+
+    def _get_collection_versions(self, requirement):
+        # type: (Requirement, Iterator[GalaxyAPI]) -> Iterator[Tuple[GalaxyAPI, str]]
+        """Helper for get_collection_versions.
+
+        Yield api, version pairs for all APIs,
+        and reraise the last error if no valid API was found.
+        """
+        found_api = False
+        last_error = None
+
+        api_lookup_order = (
+            (requirement.src, )
+            if isinstance(requirement.src, GalaxyAPI)
+            else self._apis
+        )
+
+        for api in api_lookup_order:
+            try:
+                versions = api.get_collection_versions(requirement.namespace, requirement.name)
+            except GalaxyError as api_err:
+                last_error = api_err
+            except Exception as unknown_err:
+                display.warning(
+                    "Skipping Galaxy server {server!s}. "
+                    "Got an unexpected error when getting "
+                    "available versions of collection {fqcn!s}: {err!s}".
+                    format(
+                        server=api.api_server,
+                        fqcn=requirement.fqcn,
+                        err=to_text(unknown_err),
+                    )
+                )
+                last_error = unknown_err
+            else:
+                found_api = True
+                for version in versions:
+                    yield api, version
+
+        if not found_api and last_error is not None:
+            raise last_error
 
     def get_collection_versions(self, requirement):
         # type: (Requirement) -> Iterable[Tuple[str, GalaxyAPI]]
@@ -54,9 +100,8 @@ class MultiGalaxyAPIProxy:
         )
         return set(
             (version, api)
-            for api in api_lookup_order
-            for version in api.get_collection_versions(
-                requirement.namespace, requirement.name,
+            for api, version in self._get_collection_versions(
+                requirement,
             )
         )
 
@@ -78,6 +123,21 @@ class MultiGalaxyAPIProxy:
                 )
             except GalaxyError as api_err:
                 last_err = api_err
+            except Exception as unknown_err:
+                # `verify` doesn't use `get_collection_versions` since the version is already known.
+                # Do the same as `install` and `download` by trying all APIs before failing.
+                # Warn for debugging purposes, since the Galaxy server may be unexpectedly down.
+                last_err = unknown_err
+                display.warning(
+                    "Skipping Galaxy server {server!s}. "
+                    "Got an unexpected error when getting "
+                    "available versions of collection {fqcn!s}: {err!s}".
+                    format(
+                        server=api.api_server,
+                        fqcn=collection_candidate.fqcn,
+                        err=to_text(unknown_err),
+                    )
+                )
             else:
                 self._concrete_art_mgr.save_collection_source(
                     collection_candidate,

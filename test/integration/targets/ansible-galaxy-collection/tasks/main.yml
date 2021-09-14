@@ -176,9 +176,10 @@
       environment:
         ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
   vars:
+    test_api_fallback: 'pulp_v2'
+    test_api_fallback_versions: 'v1, v2'
     test_name: 'galaxy_ng'
     test_server: '{{ galaxy_ng_server }}'
-    vX: "v3/"
 
 - name: run ansible-galaxy collection list tests
   include_tasks: list.yml
