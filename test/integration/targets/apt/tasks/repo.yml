@@ -210,6 +210,8 @@
     - name: Restore ubuntu repos
       command: mv /etc/apt/sources.list.backup /etc/apt/sources.list
 
+- name: Downgrades
+  import_tasks: "downgrade.yml"
 
 - name: Upgrades
   block:
