@@ -329,6 +329,15 @@ class RoleMixin(object):
         return result
 
 
+def augment_attributes(attributes):
+    for attribute, data in attributes.items():
+        default_value = data.pop('default_support_value')
+        support = data.get('support')
+        if support == default_value:
+            data['support'] = '%s (default)' % support
+    return attributes
+
+
 class DocCLI(CLI, RoleMixin):
     ''' displays information on modules installed in Ansible libraries.
         It displays a terse listing of plugins and their short descriptions,
@@ -1152,7 +1161,7 @@ class DocCLI(CLI, RoleMixin):
 
             if doc.get('attributes'):
                 text.append("ATTRIBUTES:\n")
-                text.append(DocCLI._dump_yaml(doc.pop('attributes'), opt_indent))
+                text.append(DocCLI._dump_yaml(augment_attributes(doc.pop('attributes')), opt_indent))
                 text.append('')
 
             # generic elements we will handle identically
@@ -1226,7 +1235,7 @@ class DocCLI(CLI, RoleMixin):
 
         if doc.get('attributes', False):
             text.append("ATTRIBUTES:\n")
-            text.append(DocCLI._dump_yaml(doc.pop('attributes'), opt_indent))
+            text.append(DocCLI._dump_yaml(augment_attributes(doc.pop('attributes')), opt_indent))
             text.append('')
 
         if doc.get('notes', False):
