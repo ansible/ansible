@@ -107,7 +107,7 @@ to the relevant host(s). Consider the following inventory group:
 
 You can create `group_vars/gatewayed.yml` with the following contents::
 
-    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q user@gateway.example.com"'
+    ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q user@gateway.example.com"'
 
 Ansible will append these arguments to the command line when trying to
 connect to any hosts in the group ``gatewayed``. (These arguments are used
