@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-galaxy - Allow validate_certs to be configured for individual Galaxy servers (https://github.com/ansible/ansible/issues/75677).

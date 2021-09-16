@@ -17,8 +17,9 @@ from hashlib import sha256
 from io import BytesIO
 from units.compat.mock import MagicMock, mock_open, patch
 
+import ansible.constants as C
 from ansible import context
-from ansible.cli.galaxy import GalaxyCLI
+from ansible.cli.galaxy import GalaxyCLI, SERVER_DEF
 from ansible.errors import AnsibleError
 from ansible.galaxy import api, collection, token
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -196,6 +197,48 @@ def manifest(manifest_info):
     with patch.object(builtins, 'open', mock_open(read_data=b_data)) as m:
         with open('MANIFEST.json', mode='rb') as fake_file:
             yield fake_file, sha256(b_data).hexdigest()
+
+
+@pytest.fixture()
+def server_config(monkeypatch):
+    monkeypatch.setattr(C, 'GALAXY_SERVER_LIST', ['server1', 'server2', 'server3'])
+
+    default_options = dict((k, None) for k, v in SERVER_DEF)
+
+    server1 = dict(default_options)
+    server1.update({'url': 'https://galaxy.ansible.com/api/', 'validate_certs': False})
+
+    server2 = dict(default_options)
+    server2.update({'url': 'https://galaxy.ansible.com/api/', 'validate_certs': True})
+
+    server3 = dict(default_options)
+    server3.update({'url': 'https://galaxy.ansible.com/api/'})
+
+    return server1, server2, server3
+
+
+@pytest.mark.parametrize('global_ignore_certs', [True, False])
+def test_validate_certs(global_ignore_certs, server_config, monkeypatch):
+    get_plugin_options = MagicMock(side_effect=server_config)
+    monkeypatch.setattr(C.config, 'get_plugin_options', get_plugin_options)
+
+    cli_args = [
+        'ansible-galaxy',
+        'collection',
+        'install',
+        'namespace.collection:1.0.0',
+    ]
+    if global_ignore_certs:
+        cli_args.append('--ignore-certs')
+
+    galaxy_cli = GalaxyCLI(args=cli_args)
+    mock_execute_install = MagicMock()
+    monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
+    galaxy_cli.run()
+
+    assert galaxy_cli.api_servers[0].validate_certs is False
+    assert galaxy_cli.api_servers[1].validate_certs is True
+    assert galaxy_cli.api_servers[2].validate_certs is not global_ignore_certs
 
 
 def test_build_collection_no_galaxy_yaml():
