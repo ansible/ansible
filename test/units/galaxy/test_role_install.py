@@ -12,7 +12,6 @@ import pytest
 import tempfile
 
 from io import StringIO
-from units.compat.mock import MagicMock
 from ansible import context
 from ansible.cli.galaxy import GalaxyCLI
 from ansible.galaxy import api, role, Galaxy
@@ -52,10 +51,10 @@ def init_role_dir(tmp_path_factory):
     call_galaxy_cli(['init', '%s.%s' % (namespace, role), '-c', '--init-path', test_dir, '--role-skeleton', skeleton_path])
 
 
-def mock_NamedTemporaryFile(**args):
-    mock_ntf = MagicMock()
-    mock_ntf.write = MagicMock()
-    mock_ntf.close = MagicMock()
+def mock_NamedTemporaryFile(mocker, **args):
+    mock_ntf = mocker.MagicMock()
+    mock_ntf.write = mocker.MagicMock()
+    mock_ntf.close = mocker.MagicMock()
     mock_ntf.name = None
     return mock_ntf
 
