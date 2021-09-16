@@ -757,7 +757,8 @@ def get_repo_path(dest, bare):
         if os.path.isabs(gitdir):
             repo_path = gitdir
         else:
-            repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
+            # Use original destination directory with data from .git file.
+            repo_path = os.path.join(dest, gitdir)
         if not os.path.isdir(repo_path):
             raise ValueError('%s is not a directory' % repo_path)
     return repo_path

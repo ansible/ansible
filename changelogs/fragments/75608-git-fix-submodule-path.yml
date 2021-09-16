@@ -1,0 +1,2 @@
+bugfixes:
+  - git - Fix git path used when .git file is present (https://github.com/ansible/ansible/issues/75608).
