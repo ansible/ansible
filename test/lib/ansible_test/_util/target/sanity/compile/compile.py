@@ -10,6 +10,7 @@ Text = type(u'')
 
 
 def main():
+    """Main program entry point."""
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
         with open(path, 'rb') as source_fd:
             source = source_fd.read()

@@ -77,7 +77,7 @@ class Connection(metaclass=abc.ABCMeta):
 
         if exclude:
             # This will not work on AIX.
-            # However, AIX isn't supported as a controller, which is where this would be needd.
+            # However, AIX isn't supported as a controller, which is where this would be needed.
             tar_cmd += ['--exclude', exclude]
 
         tar_cmd.append(name)

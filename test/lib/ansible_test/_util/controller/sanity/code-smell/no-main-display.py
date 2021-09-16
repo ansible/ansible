@@ -8,8 +8,8 @@ MAIN_DISPLAY_IMPORT = 'from __main__ import display'
 
 def main():
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        with open(path, 'r') as f:
-            for i, line in enumerate(f.readlines()):
+        with open(path, 'r') as file:
+            for i, line in enumerate(file.readlines()):
                 if MAIN_DISPLAY_IMPORT in line:
                     lineno = i + 1
                     colno = line.index(MAIN_DISPLAY_IMPORT) + 1

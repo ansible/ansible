@@ -1,3 +1,4 @@
+"""Ansible specific pylint plugin for checking format string usage."""
 # (c) 2018, Matt Martz <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # -*- coding: utf-8 -*-
@@ -41,6 +42,7 @@ class AnsibleStringFormatChecker(BaseChecker):
 
     @check_messages(*(MSGS.keys()))
     def visit_call(self, node):
+        """Visit a call node."""
         func = utils.safe_infer(node.func)
         if (isinstance(func, astroid.BoundMethod)
                 and isinstance(func.bound, astroid.Instance)
