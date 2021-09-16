@@ -122,3 +122,29 @@
 - name: SUBMODULES | Enusre submodule2 is at the appropriate commit
   assert:
     that: '{{ submodule2.stdout_lines | length }} == 4'
+
+- name: SUBMODULES | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+
+- name: SUBMODULES | Clone main submodule repository
+  git:
+    repo: "{{ repo_submodules }}"
+    dest: "{{ checkout_dir }}/test.gitdir"
+    version: 45c6c07ef10fd9e453d90207e63da1ce5bd3ae1e
+    recursive: yes
+
+- name: SUBMODULES | Test that cloning submodule with .git in directory name works
+  git:
+    repo: "{{ repo_submodule1 }}"
+    dest: "{{ checkout_dir }}/test.gitdir/submodule1"
+
+- name: SUBMODULES | List submodule1
+  command: 'ls -1a {{ checkout_dir }}/test.gitdir/submodule1'
+  register: submodule1
+
+- name: SUBMODULES | Ensure submodule1 is at the appropriate commit
+  assert:
+    that: '{{ submodule1.stdout_lines | length }} == 4'
