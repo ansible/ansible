@@ -290,7 +290,7 @@ Webpage
 Correct. Do not use "web page" or "Web page."
 
 Web server
-^^^^^^^^^
+^^^^^^^^^^
 Correct. Do not use "webserver". For example, "The Apache HTTP Server is the default Web server..."
  
 Website
