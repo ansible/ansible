@@ -11,6 +11,3 @@ status_command:
 default_user_group:
   openSUSE Leap: users
   MacOSX: admin
-
-default_local_user_group:
-  MacOSX: admin
