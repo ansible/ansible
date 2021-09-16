@@ -1,4 +1,3 @@
-#!/usr/bin/env pwsh
 param (
     [Switch]
     $IsContainer

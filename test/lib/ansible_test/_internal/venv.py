@@ -150,11 +150,11 @@ def iterate_real_pythons(args, version):  # type: (EnvironmentConfig, str) -> t.
         yield found_python
 
 
-def get_python_real_prefix(args, path):  # type: (EnvironmentConfig, str) -> t.Optional[str]
+def get_python_real_prefix(args, python_path):  # type: (EnvironmentConfig, str) -> t.Optional[str]
     """
     Return the real prefix of the specified interpreter or None if the interpreter is not a virtual environment created by 'virtualenv'.
     """
-    cmd = [path, os.path.join(os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'virtualenvcheck.py'))]
+    cmd = [python_path, os.path.join(os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'virtualenvcheck.py'))]
     check_result = json.loads(run_command(args, cmd, capture=True, always=True)[0])
     real_prefix = check_result['real_prefix']
     return real_prefix

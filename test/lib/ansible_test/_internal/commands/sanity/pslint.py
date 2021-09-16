@@ -65,9 +65,9 @@ class PslintTest(SanityVersionNeutral):
         cmds = []
 
         if args.requirements:
-            cmds.append([os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'sanity.ps1')])
+            cmds.append(['pwsh', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'sanity.pslint.ps1')])
 
-        cmds.append([os.path.join(SANITY_ROOT, 'pslint', 'pslint.ps1')] + paths)
+        cmds.append(['pwsh', os.path.join(SANITY_ROOT, 'pslint', 'pslint.ps1')] + paths)
 
         stdout = ''
 

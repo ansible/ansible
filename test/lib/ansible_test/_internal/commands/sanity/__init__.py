@@ -260,7 +260,6 @@ def collect_code_smell_tests():  # type: () -> t.Tuple[SanityTest, ...]
         skip_tests = read_lines_without_comments(os.path.join(ansible_code_smell_root, 'skip.txt'), remove_blank_lines=True, optional=True)
         paths.extend(path for path in glob.glob(os.path.join(ansible_code_smell_root, '*.py')) if os.path.basename(path) not in skip_tests)
 
-    paths = sorted(p for p in paths if os.access(p, os.X_OK) and os.path.isfile(p))
     tests = tuple(SanityCodeSmellTest(p) for p in paths)
 
     return tests
