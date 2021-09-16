@@ -272,5 +272,28 @@ try {
 }
 Assert-Equals -actual $failed -expected $true
 
+$lib_set = @'
+using System;
+
+namespace Namespace12
+{
+    public class Class12
+    {
+        public static string GetString()
+        {
+            return "b";
+        }
+    }
+}
+'@
+$env:LIB = "C:\fake\folder\path"
+try {
+    Add-CSharpType -Reference $lib_set
+}
+finally {
+    Remove-Item -LiteralPath env:\LIB
+}
+Assert-Equals -actual ([Namespace12.Class12]::GetString()) -expected "b"
+
 $result.res = "success"
 Exit-Json -obj $result
