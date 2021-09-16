@@ -68,9 +68,9 @@ if sys.version_info[0] == 3 and sys.version_info[1] >= 6:
     try:
         from pyparsing import pyparsing_common, Word, Literal, Combine, Optional, ZeroOrMore, alphas, alphanums, nums, opAssoc, infixNotation, oneOf
         HAS_PYPARSING = True
-        display.debug("pyparsing successfully imported, using Pyparsing Pattern Parser!")
+        display.debug("Pyparsing successfully imported, using Pyparsing Pattern Parser!")
     except ImportError:
-        display.warning("Failed to import pyparsing or python version is too low. Continuing using standard Ansible Pattern Parser.")
+        display.warning("Failed to import pyparsing or python version below 3.6, continuing with standard Ansible Pattern Parser.")
 
 
 def order_patterns(patterns):
@@ -701,6 +701,11 @@ class PyparsingPatternParser:
                                      (or_, 2, opAssoc.LEFT, self._or)
                                  ])
 
+    def __getstate__(self):
+        d = dict(self.__dict__)
+        del d['bnf']
+        return d
+
     def _get_values(self, self_parser):
         """
         ParseAction function used for the PatternParser.
@@ -725,6 +730,9 @@ class PyparsingPatternParser:
                 results = ''
 
         if results and isinstance(results, (list, dict)):
+            if self_parser[0] not in self.inventory_manager._pattern_cache:
+                self.inventory_manager._pattern_cache[self_parser[0]] = results
+
             results = dict.fromkeys(results)
         else:
             msg = "Could not match supplied host pattern, ignoring: %s" % self_parser[0]
@@ -779,6 +787,9 @@ class PyparsingPatternParser:
             results = self.inventory_manager._enumerate_matches(pattern)
 
         if results and isinstance(results, (list, dict)):
+            if pattern not in self.inventory_manager._pattern_cache:
+                self.inventory_manager._pattern_cache[pattern] = results
+
             results = dict.fromkeys(results)
 
         return results
@@ -900,6 +911,7 @@ class PyparsingPatternParser:
             return result
 
     def evaluate_patterns(self, pattern):
+
         result = self._parse_string(pattern)
         if not result:
             return []
