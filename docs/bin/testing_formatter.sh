@@ -23,10 +23,10 @@ EOF
 # By default use sha1sum which exists on Linux, if not present select the correct binary
 # based on platform defaults
 SHA_CMD="sha1sum"
-if ! which ${SHA_CMD} > /dev/null 2>&1; then
-    if which sha1 > /dev/null 2>&1; then
+if ! command -v ${SHA_CMD} > /dev/null 2>&1; then
+    if command -v sha1 > /dev/null 2>&1; then
         SHA_CMD="sha1"
-    elif which shasum > /dev/null 2>&1; then
+    elif command -v shasum > /dev/null 2>&1; then
         SHA_CMD="shasum"
     else
         # exit early with an error if no hashing binary can be found since it is required later
