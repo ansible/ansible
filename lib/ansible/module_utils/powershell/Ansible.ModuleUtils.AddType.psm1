@@ -332,7 +332,28 @@ Function Add-CSharpType {
 
         # compile the code together and check for errors
         $provider = New-Object -TypeName Microsoft.CSharp.CSharpCodeProvider
-        $compile = $provider.CompileAssemblyFromDom($compile_parameters, $compile_units)
+
+        # This calls csc.exe which can take compiler options from environment variables. Currently these env vars
+        # are known to have problems so they are unset:
+        #   LIB - additional library paths will fail the compilation if they are invalid
+        $originalEnv = @{}
+        try {
+            'LIB' | ForEach-Object -Process {
+                $value = Get-Item -LiteralPath "Env:\$_" -ErrorAction SilentlyContinue
+                if ($value) {
+                    $originalEnv[$_] = $value
+                    Remove-Item -LiteralPath "Env:\$_"
+                }
+            }
+
+            $compile = $provider.CompileAssemblyFromDom($compile_parameters, $compile_units)
+        }
+        finally {
+            foreach ($kvp in $originalEnv.GetEnumerator()) {
+                [System.Environment]::SetEnvironmentVariable($kvp.Key, $kvp.Value, "Process")
+            }
+        }
+
         if ($compile.Errors.HasErrors) {
             $msg = "Failed to compile C# code: "
             foreach ($e in $compile.Errors) {
