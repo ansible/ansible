@@ -1,0 +1,2 @@
+bugfixes:
+- PowerShell - Ignore the ``LIB`` environment variable when compiling C# Ansible code
