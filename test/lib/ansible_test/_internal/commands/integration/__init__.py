@@ -27,8 +27,7 @@ from ...executor import (
 )
 
 from ...python_requirements import (
-    install_command_requirements,
-    install_controller_requirements,
+    install_requirements,
 )
 
 from ...ci import (
@@ -97,8 +96,10 @@ from ...host_configs import (
 )
 
 from ...host_profiles import (
-    HostProfile,
     ControllerProfile,
+    HostProfile,
+    PosixProfile,
+    SshTargetHostProfile,
 )
 
 from ...provisioning import (
@@ -415,7 +416,7 @@ def command_integration_filtered(
     if setup_errors:
         raise ApplicationError('Found %d invalid setup aliases:\n%s' % (len(setup_errors), '\n'.join(setup_errors)))
 
-    check_pyyaml(args, host_state.controller_profile.python)
+    check_pyyaml(host_state.controller_profile.python)
 
     test_dir = os.path.join(ResultType.TMP.path, 'output_dir')
 
@@ -437,6 +438,17 @@ def command_integration_filtered(
     start_at_task = args.start_at_task
 
     results = {}
+
+    target_profile = host_state.target_profiles[0]
+
+    if isinstance(target_profile, PosixProfile):
+        target_python = target_profile.python
+
+        if isinstance(target_profile, ControllerProfile):
+            if host_state.controller_profile.python.path != target_profile.python.path:
+                install_requirements(args, target_python, command=True)  # integration
+        elif isinstance(target_profile, SshTargetHostProfile):
+            install_requirements(args, target_python, command=True, connection=target_profile.get_controller_target_connections()[0])  # integration
 
     coverage_manager = CoverageManager(args, host_state, inventory_path)
     coverage_manager.setup()
@@ -939,13 +951,7 @@ def requirements(args, host_state):  # type: (IntegrationConfig, HostState) -> N
 
     configure_pypi_proxy(args, host_state.controller_profile)  # integration, windows-integration, network-integration
 
-    if not isinstance(target_profile, ControllerProfile):
-        configure_pypi_proxy(args, target_profile)  # integration, windows-integration, network-integration
+    if isinstance(target_profile, PosixProfile) and not isinstance(target_profile, ControllerProfile):
+        configure_pypi_proxy(args, target_profile)  # integration
 
-    reqs = []
-
-    for cloud_platform in get_cloud_platforms(args):
-        reqs.append('%s.cloud.%s' % (args.command, cloud_platform))
-
-    install_controller_requirements(args, host_state.controller_profile.python)  # integration, windows-integration, network-integration
-    install_command_requirements(args, host_state.controller_profile.python, extra_requirements=reqs)  # integration, windows-integration, network-integration
+    install_requirements(args, host_state.controller_profile.python, ansible=True, command=True)  # integration, windows-integration, network-integration

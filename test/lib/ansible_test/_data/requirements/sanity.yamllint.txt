@@ -1,5 +1,5 @@
 yamllint == 1.26.0
 
 # dependencies
-pathspec  # not frozen since it should not impact test results
-pyyaml  # not frozen due to usage outside sanity tests
+pathspec == 0.9.0
+pyyaml == 5.4.1

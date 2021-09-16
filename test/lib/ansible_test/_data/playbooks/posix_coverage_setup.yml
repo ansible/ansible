@@ -2,11 +2,6 @@
   hosts: all
   gather_facts: no
   tasks:
-    - name: Install coverage
-      # avoid the pip module so the correct interpreter is used
-      raw: "{{ pip_command }}"
-      when: pip_command
-
     - name: Create coverage temporary directory
       file:
         path: "{{ common_temp_dir }}"

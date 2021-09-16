@@ -107,7 +107,6 @@ class EnvironmentConfig(CommonConfig):
         self.remote_terminate = args.remote_terminate  # type: t.Optional[TerminateMode]
 
         self.requirements = args.requirements  # type: bool
-        self.pip_check = args.pip_check  # type: bool
 
         self.delegate_args = []  # type: t.List[str]
 
@@ -126,6 +125,9 @@ class EnvironmentConfig(CommonConfig):
 
         if args.docker_no_pull:
             display.warning('The --docker-no-pull option is deprecated and has no effect. It will be removed in a future version of ansible-test.')
+
+        if args.no_pip_check:
+            display.warning('The --no-pip-check option is deprecated and has no effect. It will be removed in a future version of ansible-test.')
 
     @property
     def controller(self):  # type: () -> ControllerHostConfig

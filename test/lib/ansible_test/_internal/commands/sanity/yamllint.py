@@ -9,7 +9,6 @@ from . import (
     SanitySingleVersion,
     SanityMessage,
     SanityFailure,
-    SanitySkipped,
     SanitySuccess,
     SanityTargets,
     SANITY_ROOT,
@@ -31,7 +30,6 @@ from ...util import (
 
 from ...util_common import (
     run_command,
-    check_pyyaml,
 )
 
 from ...config import (
@@ -54,6 +52,11 @@ class YamllintTest(SanitySingleVersion):
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'ansible-test'
 
+    @property
+    def require_libyaml(self):  # type: () -> bool
+        """True if the test requires PyYAML to have libyaml support."""
+        return True
+
     def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         yaml_targets = [target for target in targets if os.path.splitext(target.path)[1] in ('.yml', '.yaml')]
@@ -70,12 +73,6 @@ class YamllintTest(SanitySingleVersion):
         return yaml_targets
 
     def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
-        pyyaml_presence = check_pyyaml(args, python, quiet=True)
-        if not pyyaml_presence['cloader']:
-            display.warning("Skipping sanity test '%s' due to missing libyaml support in PyYAML."
-                            % self.name)
-            return SanitySkipped(self.name)
-
         settings = self.load_processor(args)
 
         paths = [target.path for target in targets.include]

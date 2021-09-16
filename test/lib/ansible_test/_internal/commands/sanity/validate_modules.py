@@ -91,7 +91,7 @@ class ValidateModulesTest(SanitySingleVersion):
             cmd.extend(['--collection', data_context().content.collection.directory])
 
             try:
-                collection_detail = get_collection_detail(args)
+                collection_detail = get_collection_detail(args, python)
 
                 if collection_detail.version:
                     cmd.extend(['--collection-version', collection_detail.version])

@@ -31,6 +31,7 @@ from .util import (
 )
 
 from .io import (
+    make_dirs,
     write_text_file,
     write_json_file,
 )
@@ -139,6 +140,15 @@ class CommonConfig:
     def get_ansible_config(self):  # type: () -> str
         """Return the path to the Ansible config for the given config."""
         return os.path.join(ANSIBLE_TEST_DATA_ROOT, 'ansible.cfg')
+
+
+def create_result_directories(args):  # type: (CommonConfig) -> None
+    """Create result directories."""
+    if args.explain:
+        return
+
+    make_dirs(ResultType.COVERAGE.path)
+    make_dirs(ResultType.DATA.path)
 
 
 def handle_layout_messages(messages):  # type: (t.Optional[LayoutMessages]) -> None
@@ -301,7 +311,11 @@ def intercept_python(
         cwd=None,  # type: t.Optional[str]
         always=False,  # type: bool
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
-    """Run a command while intercepting invocations of Python to control the version used."""
+    """
+    Run a command while intercepting invocations of Python to control the version used.
+    If the specified Python is an ansible-test managed virtual environment, it will be added to PATH to activate it.
+    Otherwise a temporary directory will be created to ensure the correct Python can be found in PATH.
+    """
     env = env.copy()
     cmd = list(cmd)
     inject_path = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'injector')
@@ -312,9 +326,7 @@ def intercept_python(
     else:
         python_path = get_python_path(python.path)
 
-    inject_path = python_path + os.path.pathsep + inject_path
-
-    env['PATH'] = inject_path + os.path.pathsep + env['PATH']
+    env['PATH'] = os.path.pathsep.join([inject_path, python_path, env['PATH']])
     env['ANSIBLE_TEST_PYTHON_VERSION'] = python.version
     env['ANSIBLE_TEST_PYTHON_INTERPRETER'] = python.path
 
@@ -343,28 +355,38 @@ def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=
                        cmd_verbosity=cmd_verbosity, str_errors=str_errors, error_callback=error_callback)
 
 
-def check_pyyaml(args, python, required=True, quiet=False):  # type: (CommonConfig, PythonConfig, bool, bool) -> t.Dict[str, t.Any]
-    """Query the specified Python and return information about the installed PyYAML."""
+def yamlcheck(python):
+    """Return True if PyYAML has libyaml support, False if it does not and None if it was not found."""
+    result = json.loads(raw_command([python.path, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'yamlcheck.py')], capture=True)[0])
+
+    if not result['yaml']:
+        return None
+
+    return result['cloader']
+
+
+def check_pyyaml(python, required=True, quiet=False):  # type: (PythonConfig, bool, bool) -> t.Optional[bool]
+    """
+    Return True if PyYAML has libyaml support, False if it does not and None if it was not found.
+    The result is cached if True or required.
+    """
     try:
         return CHECK_YAML_VERSIONS[python.path]
     except KeyError:
         pass
 
-    stdout, _dummy = run_command(args, [python.path, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'yamlcheck.py')], capture=True, always=True)
-    result = json.loads(stdout)
+    state = yamlcheck(python)
 
-    yaml = result['yaml']
-    cloader = result['cloader']
-
-    if yaml or required:
+    if state is not None or required:
         # results are cached only if pyyaml is required or present
         # it is assumed that tests will not uninstall/re-install pyyaml -- if they do, those changes will go undetected
-        CHECK_YAML_VERSIONS[python.path] = result
+        CHECK_YAML_VERSIONS[python.path] = state
 
     if not quiet:
-        if not yaml and required:
-            display.warning('PyYAML is not installed for interpreter: %s' % python.path)
-        elif not cloader:
+        if state is None:
+            if required:
+                display.warning('PyYAML is not installed for interpreter: %s' % python.path)
+        elif not state:
             display.warning('PyYAML will be slow due to installation without libyaml support for interpreter: %s' % python.path)
 
-    return result
+    return state

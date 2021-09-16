@@ -7,7 +7,7 @@ import re
 import typing as t
 
 from ...constants import (
-    COVERAGE_RECOMMENDED_VERSION,
+    COVERAGE_REQUIRED_VERSION,
 )
 
 from ...encoding import (
@@ -36,7 +36,7 @@ from ...config import (
 )
 
 from ...python_requirements import (
-    install_command_requirements,
+    install_requirements,
 )
 
 from ... target import (
@@ -72,7 +72,7 @@ class CoverageConfig(EnvironmentConfig):
 def initialize_coverage(args, host_state):  # type: (CoverageConfig, HostState) -> coverage_module
     """Delegate execution if requested, install requirements, then import and return the coverage module. Raises an exception if coverage is not available."""
     configure_pypi_proxy(args, host_state.controller_profile)  # coverage
-    install_command_requirements(args, host_state.controller_profile.python)  # coverage
+    install_requirements(args, host_state.controller_profile.python, coverage=True)  # coverage
 
     try:
         import coverage
@@ -80,23 +80,10 @@ def initialize_coverage(args, host_state):  # type: (CoverageConfig, HostState) 
         coverage = None
 
     if not coverage:
-        raise ApplicationError('You must install the "coverage" python module to use this command.')
+        raise ApplicationError(f'Version {COVERAGE_REQUIRED_VERSION} of the Python "coverage" module must be installed to use this command.')
 
-    coverage_version_string = coverage.__version__
-    coverage_version = tuple(int(v) for v in coverage_version_string.split('.'))
-
-    min_version = (4, 2)
-    max_version = (5, 0)
-
-    supported_version = True
-    recommended_version = COVERAGE_RECOMMENDED_VERSION
-
-    if coverage_version < min_version or coverage_version >= max_version:
-        supported_version = False
-
-    if not supported_version:
-        raise ApplicationError('Version %s of "coverage" is not supported. Version %s is known to work and is recommended.' % (
-            coverage_version_string, recommended_version))
+    if coverage.__version__ != COVERAGE_REQUIRED_VERSION:
+        raise ApplicationError(f'Version {COVERAGE_REQUIRED_VERSION} of the Python "coverage" module is required. Version {coverage.__version__} was found.')
 
     return coverage
 

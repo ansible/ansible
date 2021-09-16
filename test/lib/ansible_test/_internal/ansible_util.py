@@ -44,7 +44,11 @@ from .data import (
 )
 
 from .python_requirements import (
-    install_controller_requirements,
+    install_requirements,
+)
+
+from .host_configs import (
+    PythonConfig,
 )
 
 
@@ -261,13 +265,12 @@ class CollectionDetailError(ApplicationError):
         self.reason = reason
 
 
-def get_collection_detail(args):  # type: (EnvironmentConfig) -> CollectionDetail
+def get_collection_detail(args, python):  # type: (EnvironmentConfig, PythonConfig) -> CollectionDetail
     """Return collection detail."""
     collection = data_context().content.collection
     directory = os.path.join(collection.root, collection.directory)
 
-    stdout = run_command(args, [args.controller_python.path, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'collection_detail.py'), directory], capture=True,
-                         always=True)[0]
+    stdout = run_command(args, [python.path, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'collection_detail.py'), directory], capture=True, always=True)[0]
     result = json.loads(stdout)
     error = result.get('error')
 
@@ -299,6 +302,6 @@ def run_playbook(
     if args.verbosity:
         cmd.append('-%s' % ('v' * args.verbosity))
 
-    install_controller_requirements(args, args.controller_python)  # run_playbook()
+    install_requirements(args, args.controller_python, ansible=True)  # run_playbook()
     env = ansible_environment(args)
     intercept_python(args, args.controller_python, cmd, env, capture=capture)

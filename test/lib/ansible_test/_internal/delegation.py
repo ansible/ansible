@@ -280,9 +280,6 @@ def generate_command(
     cmd += list(filter_options(args, args.host_settings.filtered_args, options, exclude, require))
     cmd += ['--color', 'yes' if args.color else 'no']
 
-    if args.controller.is_managed or args.controller.python.is_managed:
-        cmd += ['--requirements']
-
     if isinstance(args, SanityConfig):
         base_branch = args.base_branch or get_ci_provider().get_base_branch()
 
@@ -305,7 +302,6 @@ def filter_options(args, argv, options, exclude, require):
     """
     options = options.copy()
 
-    options['--requirements'] = 0
     options['--truncate'] = 1
     options['--redact'] = 0
     options['--no-redact'] = 0
@@ -332,7 +328,6 @@ def filter_options(args, argv, options, exclude, require):
     if isinstance(args, IntegrationConfig):
         options.update({
             '--no-temp-unicode': 0,
-            '--no-pip-check': 0,
         })
 
     for arg in filter_args(argv, options):
@@ -363,6 +358,3 @@ def filter_options(args, argv, options, exclude, require):
     if isinstance(args, IntegrationConfig):
         if args.no_temp_unicode:
             yield '--no-temp-unicode'
-
-        if not args.pip_check:
-            yield '--no-pip-check'

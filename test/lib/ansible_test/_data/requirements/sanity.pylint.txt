@@ -1,5 +1,5 @@
 pylint == 2.9.3
-pyyaml  # needed for collection_detail.py
+pyyaml == 5.4.1  # needed for collection_detail.py
 
 # dependencies
 astroid == 2.6.6

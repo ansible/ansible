@@ -714,11 +714,6 @@ class PathMapper:
         if path.startswith('changelogs/'):
             return minimal
 
-        if path.startswith('contrib/'):
-            return {
-                'units': 'test/units/contrib/'
-            }
-
         if path.startswith('docs/'):
             return minimal
 
@@ -751,22 +746,6 @@ class PathMapper:
             return minimal
 
         if path.startswith('packaging/'):
-            if path.startswith('packaging/requirements/'):
-                if name.startswith('requirements-') and ext == '.txt':
-                    component = name.split('-', 1)[1]
-
-                    candidates = (
-                        'cloud/%s/' % component,
-                    )
-
-                    for candidate in candidates:
-                        if candidate in self.integration_targets_by_alias:
-                            return {
-                                'integration': candidate,
-                            }
-
-                return all_tests(self.args)  # broad impact, run all tests
-
             return minimal
 
         if path.startswith('test/ansible_test/'):
@@ -825,14 +804,6 @@ class PathMapper:
                 return {
                     name: 'all',
                 }
-
-            if name.startswith('integration.cloud.'):
-                cloud_target = 'cloud/%s/' % name.split('.')[2]
-
-                if cloud_target in self.integration_targets_by_alias:
-                    return {
-                        'integration': cloud_target,
-                    }
 
         if path.startswith('test/lib/ansible_test/_util/controller/sanity/') or path.startswith('test/lib/ansible_test/_util/target/sanity/'):
             return {

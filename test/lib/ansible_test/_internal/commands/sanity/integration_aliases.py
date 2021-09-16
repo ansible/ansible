@@ -7,7 +7,7 @@ import os
 import typing as t
 
 from . import (
-    SanityVersionNeutral,
+    SanitySingleVersion,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
@@ -49,8 +49,12 @@ from ...util_common import (
     ResultType,
 )
 
+from ...host_configs import (
+    PythonConfig,
+)
 
-class IntegrationAliasesTest(SanityVersionNeutral):
+
+class IntegrationAliasesTest(SanitySingleVersion):
     """Sanity test to evaluate integration test aliases."""
     CI_YML = '.azure-pipelines/azure-pipelines.yml'
     TEST_ALIAS_PREFIX = 'shippable'  # this will be changed at some point in the future
@@ -111,10 +115,10 @@ class IntegrationAliasesTest(SanityVersionNeutral):
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return True
 
-    def load_ci_config(self, args):  # type: (SanityConfig) -> t.Dict[str, t.Any]
+    def load_ci_config(self, python):  # type: (PythonConfig) -> t.Dict[str, t.Any]
         """Load and return the CI YAML configuration."""
         if not self._ci_config:
-            self._ci_config = self.load_yaml(args, self.CI_YML)
+            self._ci_config = self.load_yaml(python, self.CI_YML)
 
         return self._ci_config
 
@@ -193,12 +197,12 @@ class IntegrationAliasesTest(SanityVersionNeutral):
 
         return alias
 
-    def load_yaml(self, args, path):  # type: (SanityConfig, str) -> t.Dict[str, t.Any]
+    def load_yaml(self, python, path):  # type: (PythonConfig, str) -> t.Dict[str, t.Any]
         """Load the specified YAML file and return the contents."""
         yaml_to_json_path = os.path.join(SANITY_ROOT, self.name, 'yaml_to_json.py')
-        return json.loads(raw_command([args.controller_python.path, yaml_to_json_path], data=read_text_file(path), capture=True)[0])
+        return json.loads(raw_command([python.path, yaml_to_json_path], data=read_text_file(path), capture=True)[0])
 
-    def test(self, args, targets):  # type: (SanityConfig, SanityTargets) -> TestResult
+    def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
         if args.explain:
             return SanitySuccess(self.name)
 
@@ -213,7 +217,7 @@ class IntegrationAliasesTest(SanityVersionNeutral):
             labels={},
         )
 
-        self.load_ci_config(args)
+        self.load_ci_config(python)
         self.check_changes(args, results)
 
         write_json_test_results(ResultType.BOT, 'data-sanity-ci.json', results)

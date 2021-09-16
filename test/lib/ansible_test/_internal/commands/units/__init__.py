@@ -61,8 +61,7 @@ from ...executor import (
 )
 
 from ...python_requirements import (
-    install_command_requirements,
-    install_controller_requirements,
+    install_requirements,
 )
 
 from ...content_config import (
@@ -230,10 +229,7 @@ def command_units(args):
         controller = any(test_context == TestContext.controller for test_context, python, paths, env in final_candidates)
 
         if args.requirements_mode != 'skip':
-            if controller:
-                install_controller_requirements(args, target_profile.python)  # units
-
-            install_command_requirements(args, target_profile.python)  # units
+            install_requirements(args, target_profile.python, ansible=controller, command=True)  # units
 
         test_sets.extend(final_candidates)
 

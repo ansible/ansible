@@ -136,10 +136,9 @@ def add_global_options(
 
     global_parser.add_argument(
         '--no-pip-check',
-        dest='pip_check',
-        default=True,
-        action='store_false',
-        help='do not run "pip check" to verify requirements')
+        action='store_true',
+        help=argparse.SUPPRESS,  # deprecated, kept for now (with a warning) for backwards compatibility
+    )
 
     add_global_remote(global_parser, controller_mode)
     add_global_docker(global_parser, controller_mode)

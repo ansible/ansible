@@ -64,7 +64,7 @@ class PslintTest(SanityVersionNeutral):
 
         cmds = []
 
-        if args.requirements:
+        if args.controller.is_managed or args.requirements:
             cmds.append(['pwsh', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'sanity.pslint.ps1')])
 
         cmds.append(['pwsh', os.path.join(SANITY_ROOT, 'pslint', 'pslint.ps1')] + paths)

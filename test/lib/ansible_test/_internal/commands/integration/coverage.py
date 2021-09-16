@@ -8,10 +8,6 @@ import tempfile
 import typing as t
 import zipfile
 
-from ...constants import (
-    COVERAGE_RECOMMENDED_VERSION,
-)
-
 from ...io import (
     write_text_file,
 )
@@ -41,7 +37,6 @@ from ...util import (
 
 from ...util_common import (
     ResultType,
-    run_command,
 )
 
 from ...coverage_util import (
@@ -181,12 +176,9 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
             return
 
         if isinstance(self.target_profile, ControllerProfile):
-            pip_command = self.get_target_coverage_install_command()
+            return
 
-            if pip_command:
-                run_command(self.args, pip_command, capture=True)
-        else:
-            self.run_playbook('posix_coverage_setup.yml', self.get_playbook_variables())
+        self.run_playbook('posix_coverage_setup.yml', self.get_playbook_variables())
 
     def teardown_controller(self):  # type: () -> None
         """Perform teardown for code coverage on the controller."""
@@ -255,25 +247,8 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
         """Create inventory."""
         create_posix_inventory(self.args, self.inventory_path, self.host_state.target_profiles)
 
-    def get_target_coverage_install_command(self):  # type: () -> t.Optional[t.List[str]]
-        """Return the pip command needed to install coverage for the target, or None if it should not be installed."""
-        if self.args.requirements or self.target_profile.config.is_managed:
-            pip_command = [
-                self.target_profile.python.path,
-                '-m', 'pip.__main__',
-                'install', f'coverage=={COVERAGE_RECOMMENDED_VERSION}',
-                '--disable-pip-version-check',
-                '--quiet',
-            ]
-        else:
-            pip_command = None
-
-        return pip_command
-
     def get_playbook_variables(self):  # type: () -> t.Dict[str, str]
         """Return a dictionary of variables for setup and teardown of POSIX coverage."""
-        pip_command = self.get_target_coverage_install_command()
-
         return dict(
             common_temp_dir=self.common_temp_path,
             coverage_config=generate_coverage_config(self.args),
@@ -282,7 +257,6 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
             mode_directory=f'{MODE_DIRECTORY:04o}',
             mode_directory_write=f'{MODE_DIRECTORY_WRITE:04o}',
             mode_file=f'{MODE_FILE:04o}',
-            pip_command=' '.join(pip_command),
         )
 
 

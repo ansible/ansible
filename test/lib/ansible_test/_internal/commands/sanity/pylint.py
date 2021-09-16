@@ -153,7 +153,7 @@ class PylintTest(SanitySingleVersion):
 
         if data_context().content.collection:
             try:
-                collection_detail = get_collection_detail(args)
+                collection_detail = get_collection_detail(args, python)
 
                 if not collection_detail.version:
                     display.warning('Skipping pylint collection version checks since no collection version was found.')

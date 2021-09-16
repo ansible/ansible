@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import abc
 import glob
+import hashlib
+import json
 import os
+import pathlib
 import re
 import collections
 import typing as t
@@ -14,8 +17,14 @@ from ...constants import (
     SUPPORTED_PYTHON_VERSIONS,
 )
 
+from ...encoding import (
+    to_bytes,
+)
+
 from ...io import (
     read_json_file,
+    write_json_file,
+    write_text_file,
 )
 
 from ...util import (
@@ -34,12 +43,14 @@ from ...util import (
     get_ansible_version,
     str_to_version,
     cache,
+    remove_tree,
 )
 
 from ...util_common import (
-    run_command,
     intercept_python,
     handle_layout_messages,
+    yamlcheck,
+    create_result_directories,
 )
 
 from ...ansible_util import (
@@ -59,7 +70,9 @@ from ...executor import (
 )
 
 from ...python_requirements import (
-    install_command_requirements,
+    PipInstall,
+    collect_requirements,
+    run_pip,
 )
 
 from ...config import (
@@ -85,6 +98,7 @@ from ...content_config import (
 from ...host_configs import (
     PosixConfig,
     PythonConfig,
+    VirtualPythonConfig,
 )
 
 from ...host_profiles import (
@@ -99,6 +113,10 @@ from ...pypi_proxy import (
     configure_pypi_proxy,
 )
 
+from ...venv import (
+    create_virtual_environment,
+)
+
 COMMAND = 'sanity'
 SANITY_ROOT = os.path.join(ANSIBLE_TEST_CONTROLLER_ROOT, 'sanity')
 TARGET_SANITY_ROOT = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'sanity')
@@ -108,6 +126,8 @@ def command_sanity(args):
     """
     :type args: SanityConfig
     """
+    create_result_directories(args)
+
     target_configs = t.cast(t.List[PosixConfig], args.targets)
     target_versions = {target.python.version: target for target in target_configs}  # type: t.Dict[str, PosixConfig]
 
@@ -132,7 +152,7 @@ def command_sanity(args):
     if args.skip_test:
         tests = [target for target in tests if target.name not in args.skip_test]
 
-    targets_use_pypi = any(isinstance(test, SanityMultipleVersion) and test.needs_pypi for test in tests)
+    targets_use_pypi = any(isinstance(test, SanityMultipleVersion) and test.needs_pypi for test in tests) and not args.list_tests
     host_state = prepare_profiles(args, targets_use_pypi=targets_use_pypi)  # sanity
 
     if args.delegate:
@@ -220,8 +240,22 @@ def command_sanity(args):
                     elif isinstance(test, SanitySingleVersion):
                         # single version sanity tests use the controller python
                         test_profile = host_state.controller_profile
-                        install_command_requirements(args, test_profile.python, context=test.name, enable_pyyaml_check=True, skip_coverage=True)  # sanity
-                        result = test.test(args, sanity_targets, test_profile.python)
+                        virtualenv_python = create_sanity_virtualenv(args, test_profile.python, test.name, context=test.name)
+
+                        if virtualenv_python:
+                            virtualenv_yaml = check_sanity_virtualenv_yaml(virtualenv_python)
+
+                            if test.require_libyaml and not virtualenv_yaml:
+                                result = SanitySkipped(test.name)
+                                result.reason = f'Skipping sanity test "{test.name}" on Python {version} due to missing libyaml support in PyYAML.'
+                            else:
+                                if virtualenv_yaml is False:
+                                    display.warning(f'Sanity test "{test.name}" on Python {version} may be slow due to missing libyaml support in PyYAML.')
+
+                                result = test.test(args, sanity_targets, virtualenv_python)
+                        else:
+                            result = SanitySkipped(test.name, version)
+                            result.reason = f'Skipping sanity test "{test.name}" on Python {version} due to missing virtual environment support.'
                     elif isinstance(test, SanityVersionNeutral):
                         # version neutral sanity tests handle their own requirements (if any)
                         result = test.test(args, sanity_targets)
@@ -754,6 +788,11 @@ class SanityTest(metaclass=abc.ABCMeta):
 
 class SanitySingleVersion(SanityTest, metaclass=abc.ABCMeta):
     """Base class for sanity test plugins which should run on a single python version."""
+    @property
+    def require_libyaml(self):  # type: () -> bool
+        """True if the test requires PyYAML to have libyaml support."""
+        return False
+
     @abc.abstractmethod
     def test(self, args, targets, python):
         """
@@ -792,7 +831,6 @@ class SanityCodeSmellTest(SanitySingleVersion):
             self.files = self.config.get('files')  # type: t.List[str]
             self.text = self.config.get('text')  # type: t.Optional[bool]
             self.ignore_self = self.config.get('ignore_self')  # type: bool
-            self.intercept = self.config.get('intercept')  # type: bool
             self.minimum_python_version = self.config.get('minimum_python_version')  # type: t.Optional[str]
 
             self.__all_targets = self.config.get('all_targets')  # type: bool
@@ -807,7 +845,6 @@ class SanityCodeSmellTest(SanitySingleVersion):
             self.files = []
             self.text = None  # type: t.Optional[bool]
             self.ignore_self = False
-            self.intercept = False
             self.minimum_python_version = None  # type: t.Optional[str]
 
             self.__all_targets = False
@@ -928,11 +965,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
                 display.info(data, verbosity=4)
 
         try:
-            if self.intercept:
-                stdout, stderr = intercept_python(args, args.controller_python, cmd, data=data, env=env, capture=True)
-            else:
-                stdout, stderr = run_command(args, cmd, data=data, env=env, capture=True)
-
+            stdout, stderr = intercept_python(args, python, cmd, data=data, env=env, capture=True)
             status = 0
         except SubprocessError as ex:
             stdout = ex.stdout
@@ -1051,3 +1084,81 @@ def sanity_get_tests():  # type: () -> t.Tuple[SanityTest, ...]
     sanity_tests = tuple(plugin() for plugin in sanity_plugins.values() if data_context().content.is_ansible or not plugin.ansible_only)
     sanity_tests = tuple(sorted(sanity_tests + collect_code_smell_tests(), key=lambda k: k.name))
     return sanity_tests
+
+
+def create_sanity_virtualenv(
+        args,  # type: SanityConfig
+        python,  # type: PythonConfig
+        name,  # type: str
+        ansible=False,  # type: bool
+        coverage=False,  # type: bool
+        minimize=False,  # type: bool
+        context=None,  # type: t.Optional[str]
+):  # type: (...) -> t.Optional[VirtualPythonConfig]
+    """Return an existing sanity virtual environment matching the requested parameters or create a new one."""
+    commands = collect_requirements(  # create_sanity_virtualenv()
+        python=python,
+        controller=True,
+        virtualenv=False,
+        command=None,
+        # used by import tests
+        ansible=ansible,
+        cryptography=ansible,
+        coverage=coverage,
+        minimize=minimize,
+        # used by non-import tests
+        sanity=context,
+    )
+
+    if commands:
+        label = f'sanity.{name}'
+    else:
+        label = 'sanity'  # use a single virtualenv name for tests which have no requirements
+
+    # The path to the virtual environment must be kept short to avoid the 127 character shebang length limit on Linux.
+    # If the limit is exceeded, generated entry point scripts from pip installed packages will fail with syntax errors.
+    virtualenv_install = json.dumps([command.serialize() for command in commands], indent=4)
+    virtualenv_hash = hashlib.sha256(to_bytes(virtualenv_install)).hexdigest()[:8]
+    virtualenv_cache = os.path.join(os.path.expanduser('~/.ansible/test/venv'))
+    virtualenv_path = os.path.join(virtualenv_cache, label, f'{python.version}', virtualenv_hash)
+    virtualenv_marker = os.path.join(virtualenv_path, 'marker.txt')
+
+    meta_install = os.path.join(virtualenv_path, 'meta.install.json')
+    meta_yaml = os.path.join(virtualenv_path, 'meta.yaml.json')
+
+    virtualenv_python = VirtualPythonConfig(
+        version=python.version,
+        path=os.path.join(virtualenv_path, 'bin', 'python'),
+    )
+
+    if not os.path.exists(virtualenv_marker):
+        # a virtualenv without a marker is assumed to have been partially created
+        remove_tree(virtualenv_path)
+
+        if not create_virtual_environment(args, python, virtualenv_path):
+            return None
+
+        run_pip(args, virtualenv_python, commands, None)  # create_sanity_virtualenv()
+
+        write_text_file(meta_install, virtualenv_install)
+
+        if any(isinstance(command, PipInstall) and command.has_package('pyyaml') for command in commands):
+            virtualenv_yaml = yamlcheck(virtualenv_python)
+        else:
+            virtualenv_yaml = None
+
+        write_json_file(meta_yaml, virtualenv_yaml)
+
+    # touch the marker to keep track of when the virtualenv was last used
+    pathlib.Path(virtualenv_marker).touch()
+
+    return virtualenv_python
+
+
+def check_sanity_virtualenv_yaml(python):  # type: (VirtualPythonConfig) -> t.Optional[bool]
+    """Return True if PyYAML has libyaml support for the given sanity virtual environment, False if it does not and None if it was not found."""
+    virtualenv_path = os.path.dirname(os.path.dirname(python.path))
+    meta_yaml = os.path.join(virtualenv_path, 'meta.yaml.json')
+    virtualenv_yaml = read_json_file(meta_yaml)
+
+    return virtualenv_yaml
