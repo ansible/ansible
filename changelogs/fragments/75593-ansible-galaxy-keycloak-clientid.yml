@@ -1,2 +1,2 @@
 minor_changes:
-  - Allow specification of client_id override value for Keycloak Token interaction with ansible-galaxy
+  - ansible-galaxy - Allow specification of client_id override value for Keycloak Token (https://github.com/ansible/ansible/issues/75593).
