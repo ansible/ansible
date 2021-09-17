@@ -18,17 +18,6 @@ class ActionModule(ActionBase):
         # async directory based on the shell option
         async_dir = self.get_shell_option('async_dir', default="~/.ansible_async")
 
-        # for backwards compatibility we need to get the dir from
-        # ANSIBLE_ASYNC_DIR that is defined in the environment. This is
-        # deprecated and will be removed in favour of shell options
-        env_async_dir = [e for e in self._task.environment if "ANSIBLE_ASYNC_DIR" in e]
-        if len(env_async_dir) > 0:
-            async_dir = env_async_dir[0]['ANSIBLE_ASYNC_DIR']
-            msg = "Setting the async dir from the environment keyword " \
-                  "ANSIBLE_ASYNC_DIR is deprecated. Set the async_dir " \
-                  "shell option instead"
-            self._display.deprecated(msg, "2.12", collection_name='ansible.builtin')
-
         return self._remote_expand_user(async_dir)
 
     def run(self, tmp=None, task_vars=None):

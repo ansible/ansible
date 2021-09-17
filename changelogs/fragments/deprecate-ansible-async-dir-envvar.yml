@@ -1,0 +1,2 @@
+minor_changes:
+  - "async tasks - the use of the task-level ``ANSIBLE_ASYNC_DIR`` variable within ``environment:`` is no longer valid. Use the shell configuration variable ``async_dir`` instead."
