@@ -66,7 +66,7 @@ PATTERN_WITH_SUBSCRIPT = re.compile(
 HAS_PYPARSING = False
 if sys.version_info[0] == 3 and sys.version_info[1] >= 6:
     try:
-        from pyparsing import pyparsing_common, Word, Literal, Combine, Optional, ZeroOrMore, alphas, alphanums, nums, opAssoc, infixNotation, oneOf
+        from pyparsing import pyparsing_common, Word, Literal, Combine, Optional, ZeroOrMore, nums, pyparsing_unicode, opAssoc, infixNotation, oneOf
         HAS_PYPARSING = True
         display.debug("Pyparsing successfully imported, using Pyparsing Pattern Parser!")
     except ImportError:
@@ -405,6 +405,7 @@ class InventoryManager(object):
 
             if pattern_hash not in self._hosts_patterns_cache:
 
+                # Using parser according to declared self._parser in __init__
                 hosts = self._parser.evaluate_patterns(pattern)
 
                 # mainly useful for hostvars[host] access
@@ -487,7 +488,8 @@ class InventoryManager(object):
     def _enumerate_matches(self, pattern):
         """
         Returns a list of host names matching the given pattern according to the
-        rules explained above in _match_one_pattern.
+        rules explained in AnsiblePatternParser's _match_one_pattern.
+        Also used within PyparsingPatternParser for implicit loclahost and for wildcard parsing.
         """
         results = []
         # check if pattern matches group
@@ -554,7 +556,9 @@ class InventoryManager(object):
         pattern, such as to select a given geographic of numeric slice amongst
         a previous 'hosts' selection that only select roles, or vice versa.
         Corresponds to --limit parameter to ansible-playbook
+        See subset method of according parser.
         """
+
         self._subset = self._parser.subset(subset_pattern)
 
     def remove_restriction(self):
@@ -566,7 +570,13 @@ class InventoryManager(object):
 
 
 class AnsiblePatternParser:
+    """
+    Standard way of how Ansible parses through patterns. The functions that are responsible for that are saved within this class.
+    If Pyparsing cannot be imported, Ansible falls back to this class (meaning nested pattern expression cannot be parsed!).
+    """
+
     def __init__(self, inventory_manager):
+        # reference to InventoryManager, needed to use parsed inventory
         self.inventory_manager = inventory_manager
 
     def evaluate_patterns(self, pattern):
@@ -640,6 +650,10 @@ class AnsiblePatternParser:
         return self.inventory_manager._pattern_cache[pattern]
 
     def subset(self, subset_pattern):
+        """
+        Subset function for AnsiblePatternParser.
+        Corresponds to --limit parameter for ansible-playbook.
+        """
         if not subset_pattern or subset_pattern is None:
             results = None
         else:
@@ -665,25 +679,34 @@ class AnsiblePatternParser:
 
 class PyparsingPatternParser:
     '''
-    Mainly added to support nested expressions when selecting hosts using pyparsing library.
-    Should still support all other ansible pattern features.
-    Defines grammar for patterns and returns all matches according to input. (Used in evaluate_patterns() and subset())
+    Parser used to support nested expressions when selecting hosts by using the pyparsing library, if the depencies for such are met.
+    Defines grammar for patterns and returns all matches according to input.
     Evaluates in this order: NAND > NOT > AND > OR
     To manipulate order, use parentheses.
     '''
 
     def __init__(self, inventory_manager):
+        # reference to InventoryManager, needed to use parsed inventory
         self.inventory_manager = inventory_manager
 
-        """  Defines grammar for input of expression and what ParseAction to use. """
+        """
+        Defines grammar for input and what ParseAction function to use.
+        With this grammar, PyparsingPatternParser can parse:
+        hostgroup: any hostname and hostgroup including subscripts, starting with underscore or any alphanumeric unicode character
+        ipv_4: IPV4 addresses
+        ipv_6: IPV6 addresses
+        special_term: any input starting with one of these special characters '@ ~ ? :& :! : :: , ,, & ! && !!',
+         are handled separately from general terms like the ones mentioned above.
+        """
 
-        host = Word(alphas + "*_", alphanums + "-_*^`/.?+@~#<>$%;=") | Word(nums + "*_", alphanums + "-_*^`/.?+@~#<>$%;=")
+        host = Word(pyparsing_unicode.alphas + "*_", pyparsing_unicode.alphanums +
+                    "-_*^`/.?+@~#<>$%;=") | Word(nums + "*_", pyparsing_unicode.alphanums + "-_*^`/.?+@~#<>$%;=")
         number = Optional('-') + Word(nums)
         index = Combine(Literal('[') + Optional(number) + Optional(":") + Optional(number) + Literal(']'))
         hostgroup = host.setResultsName('host') + Optional(index).setResultsName('index')
 
         term = hostgroup | pyparsing_common.ipv4_address.setResultsName('ipv_4') | pyparsing_common.ipv6_address.setResultsName('ipv_6')
-        special_term = (oneOf('@ ~ ? :& :! : :: , ,, & ! && !!') + Word(alphanums + "()-_*^`/|.?+@~#<>$%;=\\")) | Literal('*')
+        special_term = (oneOf('@ ~ ? :& :! : :: , ,, & ! && !!') + Word(pyparsing_unicode.alphanums + "()-_*^`/|.?+@~#<>$%;=\\")) | Literal('*')
 
         nand_ = Literal(':!')
         not_ = oneOf("!! !")
@@ -693,6 +716,7 @@ class PyparsingPatternParser:
         term.setParseAction(self._get_values)
         special_term.setParseAction(self._get_special_values)
 
+        # allows correct parsing when using any of the NAND, NOT, AND, OR operators.
         self.bnf = infixNotation(term | special_term,
                                  [
                                      (nand_, 2, opAssoc.LEFT, self._nand),
@@ -702,17 +726,18 @@ class PyparsingPatternParser:
                                  ])
 
     def __getstate__(self):
+        # pyparsing functions are unpickable for now, thus need to be deleted during that process.
         d = dict(self.__dict__)
         del d['bnf']
         return d
 
     def _get_values(self, self_parser):
         """
-        ParseAction function used for the PatternParser.
-        Responsible for returning all matching hosts from inventory according to input.
-        Needs to be returned as sets, in case NOT, OR and/or AND are being used (exception: 'all').
+        ParseAction function used for returning all matching hosts from inventory according to a simple input.
+        Needs to be returned as dict to retain order.
         """
         results = []
+        # case: implicit host, all hosts or wildcards are given to _get_special_values()
         if self_parser[0] in C.LOCALHOST or self_parser.host == 'all' or any(special in self_parser.host for special in ('?', '*')):
             results = self._get_special_values(self_parser)
 
@@ -729,11 +754,14 @@ class PyparsingPatternParser:
             except KeyError:
                 results = ''
 
+        # every result is saved in _pattern_cache from the InventoryManager
+        # and converted to a dict before returning (retains order and allows all outputs to be returned as the same type)
         if results and isinstance(results, (list, dict)):
             if self_parser[0] not in self.inventory_manager._pattern_cache:
                 self.inventory_manager._pattern_cache[self_parser[0]] = results
 
             results = dict.fromkeys(results)
+
         else:
             msg = "Could not match supplied host pattern, ignoring: %s" % self_parser[0]
             display.debug(msg)
@@ -747,14 +775,16 @@ class PyparsingPatternParser:
 
     def _get_special_values(self, self_parser):
         """
-        ParseAction function used for the PatternParser.
-        Used to support all other available ansible pattern functionalities such as wildcards, regular expressions etc.
+        ParseAction function used to support all other available ansible pattern functionalities such as wildcards, regular expressions,
+        reading from files, implicit localhosts and special cases.
         """
         results = []
 
+        # case: all or *
         if (len(self_parser) == 1 and self_parser[0] == '*') or self_parser[0] == 'all':
             return [self.inventory_manager._inventory.get_host(i) for i in self.inventory_manager._inventory.hosts]
 
+        # special case: starting input with an operator
         if any(special in self_parser[0] for special in [':', ',', '&', '!']) and self_parser[0] is not self_parser.ipv_6:
             pattern = self_parser[1]
             if any(self_parser[0] == special for special in [':!', '!', '!!']):
@@ -762,6 +792,7 @@ class PyparsingPatternParser:
             results = self._parse_string(pattern)
             return results
 
+        # case: reading from files
         if self_parser[0] == '@':
             b_limit_file = to_bytes(self_parser[1])
             if not os.path.exists(b_limit_file):
@@ -782,10 +813,13 @@ class PyparsingPatternParser:
                     display.warning(msg)
 
         else:
+            # case: wildcards, implicit localhost and regular expressions
             pattern = self_parser[0] if isinstance(self_parser, list) else self_parser
             pattern = ''.join(str(e) for e in pattern)
             results = self.inventory_manager._enumerate_matches(pattern)
 
+        # every result is saved in _pattern_cache from the InventoryManager
+        # and converted to a dict before returning (retains order and allows all outputs to be returned as the same type)
         if results and isinstance(results, (list, dict)):
             if pattern not in self.inventory_manager._pattern_cache:
                 self.inventory_manager._pattern_cache[pattern] = results
@@ -852,6 +886,8 @@ class PyparsingPatternParser:
         Returns intersection of a pattern using any of the declared AND tokens.
         '''
         operands = tokens[0][::2]
+
+        # in case any empty tokens are in operands
         test = [x for x in operands if x]
         if not test or len(test) == 1:
             return test[0] if len(test) == 1 else test
@@ -867,6 +903,8 @@ class PyparsingPatternParser:
         Returns union of a pattern using any of the declared OR tokens.
         '''
         operands = tokens[0][::2]
+
+        # in case any empty tokens are in operands
         test = [x for x in operands if x]
         if not test or len(test) == 1:
             return test[0] if len(test) == 1 else test
@@ -878,7 +916,8 @@ class PyparsingPatternParser:
 
     def _parse_string(self, lines):
         """
-        Parses pattern string and prints the result set. If it's empty, gives ERROR.
+        Parses pattern string and prepares the input for parsing.
+        Returns the matching result dict should there be no errors.
         """
 
         if isinstance(lines, list):
@@ -889,6 +928,7 @@ class PyparsingPatternParser:
                 return lines
 
         if isinstance(lines, str):
+            # removing white space
             lines = lines.replace(" ", "")
 
             # only special characters in lines
@@ -911,11 +951,15 @@ class PyparsingPatternParser:
             return result
 
     def evaluate_patterns(self, pattern):
+        """
+        Takes a list of patterns, gives it to _parse_string and returns a list of matching host names.
+        """
 
         result = self._parse_string(pattern)
         if not result:
             return []
         result = list(result.keys()) if isinstance(result, dict) else result
+
         hosts = []
         for match in result:
             if not match:
@@ -927,6 +971,10 @@ class PyparsingPatternParser:
         return hosts
 
     def subset(self, subset_pattern):
+        """
+        Subset function for PyparsingPatternParser.
+        Corresponds to --limit parameter for ansible-playbook.
+        """
 
         if not subset_pattern or subset_pattern is None:
             results = None
@@ -936,6 +984,7 @@ class PyparsingPatternParser:
             for match in result_cache:
                 results.append(str(match))
 
+            # in case implicit localhost is used in --limit
             if not results or (subset_pattern in C.LOCALHOST and results[0] not in list(self.inventory_manager._inventory.hosts)):
                 results = None
                 raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
