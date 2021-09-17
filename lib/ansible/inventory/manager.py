@@ -64,13 +64,12 @@ PATTERN_WITH_SUBSCRIPT = re.compile(
 )
 
 HAS_PYPARSING = False
-if sys.version_info[0] == 3 and sys.version_info[1] >= 6:
-    try:
-        from pyparsing import pyparsing_common, Word, Literal, Combine, Optional, ZeroOrMore, nums, pyparsing_unicode, opAssoc, infixNotation, oneOf
-        HAS_PYPARSING = True
-        display.debug("Pyparsing successfully imported, using Pyparsing Pattern Parser!")
-    except ImportError:
-        display.warning("Failed to import pyparsing or python version below 3.6, continuing with standard Ansible Pattern Parser.")
+try:
+    from pyparsing import pyparsing_common, Word, Literal, Combine, Optional, ZeroOrMore, nums, pyparsing_unicode, opAssoc, infixNotation, oneOf
+    HAS_PYPARSING = True
+    display.debug("Pyparsing successfully imported, using Pyparsing Pattern Parser!")
+except ImportError:
+    display.warning("Failed to import pyparsing or python version below 3.6, continuing with standard Ansible Pattern Parser.")
 
 
 def order_patterns(patterns):
@@ -702,7 +701,7 @@ class PyparsingPatternParser:
         host = Word(pyparsing_unicode.alphas + "*_", pyparsing_unicode.alphanums +
                     "-_*^`/.?+@~#<>$%;=") | Word(nums + "*_", pyparsing_unicode.alphanums + "-_*^`/.?+@~#<>$%;=")
         number = Optional('-') + Word(nums)
-        index = Combine(Literal('[') + Optional(number) + Optional(":") + Optional(number) + Literal(']'))
+        index = Combine(Literal('[') + Optional(number) + (Optional(":") + Optional("-")) + Optional(number) + Literal(']'))
         hostgroup = host.setResultsName('host') + Optional(index).setResultsName('index')
 
         term = hostgroup | pyparsing_common.ipv4_address.setResultsName('ipv_4') | pyparsing_common.ipv6_address.setResultsName('ipv_6')
@@ -737,16 +736,18 @@ class PyparsingPatternParser:
         Needs to be returned as dict to retain order.
         """
         results = []
-        # case: implicit host, all hosts or wildcards are given to _get_special_values()
-        if self_parser[0] in C.LOCALHOST or self_parser.host == 'all' or any(special in self_parser.host for special in ('?', '*')):
-            results = self._get_special_values(self_parser)
+        pattern = ''.join(str(e) for e in self_parser)
 
         # case: indexing a hostgroup / subscript
-        elif self_parser.index:
-            results = self._get_subscript(self_parser)
+        if self_parser.index:
+            results = self._get_subscript(pattern)
+
+        # case: implicit host, all hosts or wildcards are given to _get_special_values()
+        elif self_parser[0] in C.LOCALHOST or self_parser.host == 'all' or any(special in self_parser.host for special in ('?', '*')):
+            results = self._get_special_values(self_parser)
 
         # case: plain host, hostgroup or ip host
-        elif (self_parser[0] in [self_parser.host, self_parser.ipv_6, self_parser.ipv_4]) or self_parser[0]:
+        elif not self_parser.index and ((self_parser[0] in [self_parser.host, self_parser.ipv_6, self_parser.ipv_4]) or self_parser[0]):
             pattern = self_parser[0]
             try:
                 results = [self.inventory_manager._inventory.get_host(
@@ -754,20 +755,16 @@ class PyparsingPatternParser:
             except KeyError:
                 results = ''
 
-        # every result is saved in _pattern_cache from the InventoryManager
-        # and converted to a dict before returning (retains order and allows all outputs to be returned as the same type)
+        # every result is converted to a dict before returning (retains order and allows all outputs to be returned as the same type)
         if results and isinstance(results, (list, dict)):
-            if self_parser[0] not in self.inventory_manager._pattern_cache:
-                self.inventory_manager._pattern_cache[self_parser[0]] = results
-
             results = dict.fromkeys(results)
 
         else:
-            msg = "Could not match supplied host pattern, ignoring: %s" % self_parser[0]
+            msg = "Could not match supplied host pattern, ignoring: %s" % pattern
             display.debug(msg)
-            if C.HOST_PATTERN_MISMATCH == 'warning' and self_parser[0] != 'all':
+            if C.HOST_PATTERN_MISMATCH == 'warning' and pattern != 'all':
                 display.warning(msg)
-            elif C.HOST_PATTERN_MISMATCH == 'error' and self_parser[0] != 'all':
+            elif C.HOST_PATTERN_MISMATCH == 'error' and pattern != 'all':
                 raise AnsibleError(msg)
             return ''
 
@@ -818,40 +815,27 @@ class PyparsingPatternParser:
             pattern = ''.join(str(e) for e in pattern)
             results = self.inventory_manager._enumerate_matches(pattern)
 
-        # every result is saved in _pattern_cache from the InventoryManager
-        # and converted to a dict before returning (retains order and allows all outputs to be returned as the same type)
+        # every result is converted to a dict before returning (retains order and allows all outputs to be returned as the same type)
         if results and isinstance(results, (list, dict)):
-            if pattern not in self.inventory_manager._pattern_cache:
-                self.inventory_manager._pattern_cache[pattern] = results
-
             results = dict.fromkeys(results)
 
         return results
 
-    def _get_subscript(self, self_parser):
+    def _get_subscript(self, pattern):
         """
         applies subscript on host and returns all matches
         """
-        result = []
-        index = self_parser[1].strip("[").strip("]").split(":")
-        if not index[0]:
-            raise AnsibleError("Empty subscript! No hosts matched the subscripted pattern '%s'" % str(self_parser[0] + self_parser[1]))
 
-        try:
-            start = int(index[0]) if index[0] else None
-            # e.g. host[1]
-            if len(index) == 1:
-                result.append(self.inventory_manager.groups[self_parser[0]].get_hosts()[start])
+        if pattern not in self.inventory_manager._pattern_cache:
+            (expr, slice) = self.inventory_manager._split_subscript(pattern)
+            hosts = self.inventory_manager._enumerate_matches(expr)
+            try:
+                hosts = self.inventory_manager._apply_subscript(hosts, slice)
+            except IndexError:
+                raise AnsibleError("No hosts matched the subscripted pattern '%s'" % pattern)
+            self.inventory_manager._pattern_cache[pattern] = hosts
 
-            # e.g. host[0:3] or host[:2] or host[1:]
-            else:
-                stopp = int(index[1]) if index[1] else None
-                result.extend(self.inventory_manager.groups[self_parser[0]].get_hosts()[start:stopp])
-
-        except IndexError:
-            raise AnsibleError("No hosts matched the subscripted pattern '%s'" % str(self_parser[0] + self_parser[1]))
-
-        return result
+        return self.inventory_manager._pattern_cache[pattern]
 
     def _nand(self, tokens):
         '''
@@ -948,6 +932,9 @@ class PyparsingPatternParser:
             raise AnsibleError("unexpected error")
 
         else:
+            if not result:
+                return []
+            result = list(result.keys()) if isinstance(result, dict) else result
             return result
 
     def evaluate_patterns(self, pattern):
@@ -958,7 +945,6 @@ class PyparsingPatternParser:
         result = self._parse_string(pattern)
         if not result:
             return []
-        result = list(result.keys()) if isinstance(result, dict) else result
 
         hosts = []
         for match in result:
