@@ -30,10 +30,10 @@ PING_MODULE_PATH="../../../../lib/ansible/modules/ping.py"
 ../../../../hacking/test-module.py -m "$PING_MODULE_PATH"
 
 # ensure test-module.py script works well
-../../../../hacking/test-module.py -m "$PING_MODULE_PATH" -I ansible_python_interpreter="$(which python)"
+../../../../hacking/test-module.py -m "$PING_MODULE_PATH" -I ansible_python_interpreter="${ANSIBLE_TEST_PYTHON_INTERPRETER}"
 
 # ensure module.ansible_version is defined when using test-module.py
-../../../../hacking/test-module.py -m library/test.py -I ansible_python_interpreter="$(which python)" <<< '{"ANSIBLE_MODULE_ARGS": {}}'
+../../../../hacking/test-module.py -m library/test.py -I ansible_python_interpreter="${ANSIBLE_TEST_PYTHON_INTERPRETER}" <<< '{"ANSIBLE_MODULE_ARGS": {}}'
 
 # ensure exercising module code locally works
 python -m ansible.modules.file  <<< '{"ANSIBLE_MODULE_ARGS": {"path": "/path/to/file", "state": "absent"}}'
