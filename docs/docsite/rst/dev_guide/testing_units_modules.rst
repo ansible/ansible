@@ -207,7 +207,7 @@ integration testing section, which run against the actual API. There are several
 where the unit tests are likely to work better.
 
 Defining a module against an API specification
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This case is especially important for modules interacting with web services, which provide
 an API that Ansible uses but which are beyond the control of the user.
@@ -254,7 +254,7 @@ potentially unusual that it would be impossible to reliably trigger through the
 integration tests but which happen unpredictably in reality.
 
 Defining a module to work against multiple API versions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This case is especially important for modules interacting with many different versions of
 software; for example, package installation modules that might be expected to work with

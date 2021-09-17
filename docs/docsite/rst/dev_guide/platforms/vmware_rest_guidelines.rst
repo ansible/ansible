@@ -58,7 +58,7 @@ All the modules are covered by a functional test. The tests are located in the :
 To run the tests, you will need a vcenter instance and an ESXi.
 
 black code formatter
-~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^
 
 We follow the coding style of `Black <https://github.com/psf/black>`.
 You can run the code formatter with the following command.
@@ -69,7 +69,7 @@ You can run the code formatter with the following command.
     tox -e black
 
 sanity tests
-~~~~~~~~~~~~
+^^^^^^^^^^^^
 
 Here we use Python 3.8, the minimal version is 3.6.
 
@@ -80,7 +80,7 @@ Here we use Python 3.8, the minimal version is 3.6.
 
 
 integration tests
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 
 These tests should be run against your test environment.
 

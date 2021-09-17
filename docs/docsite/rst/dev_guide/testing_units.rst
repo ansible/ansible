@@ -98,7 +98,7 @@ Extending unit tests
 
 
 Structuring Unit Tests
-``````````````````````
+----------------------
 
 Ansible drives unit tests through `pytest <https://docs.pytest.org/en/latest/>`_. This
 means that tests can either be written a simple functions which are included in any file
@@ -151,7 +151,7 @@ directory, which is then included directly.
 
 
 Module test case common code
-````````````````````````````
+----------------------------
 
 Keep common code as specific as possible within the `test/units/` directory structure.
 Don't import common unit test code from directories outside the current or parent directories.
@@ -161,7 +161,7 @@ files that aren't themselves tests.
 
 
 Fixtures files
-``````````````
+--------------
 
 To mock out fetching results from devices, or provide other complex data structures that
 come from external libraries, you can use ``fixtures`` to read in pre-generated data.
@@ -174,7 +174,7 @@ If you are simulating APIs you may find that Python placebo is useful.  See
 
 
 Code Coverage For New or Updated Unit Tests
-```````````````````````````````````````````
+-------------------------------------------
 New code will be missing from the codecov.io coverage reports (see :ref:`developing_testing`), so
 local reporting is needed.  Most ``ansible-test`` commands allow you to collect code
 coverage; this is particularly useful when to indicate where to extend testing.
