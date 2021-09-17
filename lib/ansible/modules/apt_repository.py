@@ -22,6 +22,8 @@ extends_documentation_fragment:
 attributes:
     check_mode:
         support: full
+    diff_mode:
+        support: full
 notes:
     - This module works on Debian, Ubuntu and their derivatives.
     - This module supports Debian Squeeze (version 6) as well as its successors.
