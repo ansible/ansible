@@ -65,11 +65,12 @@ PATTERN_WITH_SUBSCRIPT = re.compile(
 
 HAS_PYPARSING = False
 try:
-    from pyparsing import pyparsing_common, Word, Literal, Combine, Optional, ZeroOrMore, nums, pyparsing_unicode, opAssoc, infixNotation, oneOf
-    HAS_PYPARSING = True
-    display.debug("Pyparsing successfully imported, using Pyparsing Pattern Parser!")
-except ImportError:
-    display.warning("Failed to import pyparsing or python version below 3.6, continuing with standard Ansible Pattern Parser.")
+    if sys.version_info[0] >= 2 and sys.version_info[1] >= 8:
+        from pyparsing import pyparsing_common, Word, Literal, Combine, Optional, ZeroOrMore, pyparsing_unicode, nums, opAssoc, infixNotation, oneOf
+        HAS_PYPARSING = True
+        display.debug("Pyparsing successfully imported, using Pyparsing Pattern Parser!")
+except (ImportError, SyntaxError) as e:
+    display.debug("Failed to import pyparsing, continuing with standard Ansible Pattern Parser.")
 
 
 def order_patterns(patterns):
@@ -557,7 +558,6 @@ class InventoryManager(object):
         Corresponds to --limit parameter to ansible-playbook
         See subset method of according parser.
         """
-
         self._subset = self._parser.subset(subset_pattern)
 
     def remove_restriction(self):
@@ -705,7 +705,8 @@ class PyparsingPatternParser:
         hostgroup = host.setResultsName('host') + Optional(index).setResultsName('index')
 
         term = hostgroup | pyparsing_common.ipv4_address.setResultsName('ipv_4') | pyparsing_common.ipv6_address.setResultsName('ipv_6')
-        special_term = (oneOf('@ ~ ? :& :! : :: , ,, & ! && !!') + Word(pyparsing_unicode.alphanums + "()-_*^`/|.?+@~#<>$%;=\\")) | Literal('*')
+        special_term = (oneOf('@ ~ ? :& :! : :: , ,, & ! && !!') +
+                        Word(pyparsing_unicode.alphanums + "()-_*^`/|.?+@~#<>$%;=\\")) | Literal('*')
 
         nand_ = Literal(':!')
         not_ = oneOf("!! !")
@@ -789,7 +790,7 @@ class PyparsingPatternParser:
             results = self._parse_string(pattern)
             return results
 
-        # case: reading from files
+        # case: reading patterns from files
         if self_parser[0] == '@':
             b_limit_file = to_bytes(self_parser[1])
             if not os.path.exists(b_limit_file):
@@ -844,11 +845,14 @@ class PyparsingPatternParser:
         '''
 
         operands = tokens[0][::2]
+        if not operands[0]:
+            return []
+
         all_hosts = [self.inventory_manager._inventory.get_host(i) for i in self.inventory_manager._inventory.hosts]
         for i, val in enumerate(operands):
             operands[i] = list(val)
-        operands[1] = sorted(set(all_hosts).difference(set(operands[1])), key=all_hosts.index)
 
+        operands[1] = sorted(set(all_hosts).difference(set(operands[1])), key=all_hosts.index)
         return dict.fromkeys(sorted(set.intersection(set(operands[0]), set(operands[1])), key=operands[0].index))
 
     def _not(self, tokens):
@@ -894,9 +898,9 @@ class PyparsingPatternParser:
             return test[0] if len(test) == 1 else test
 
         for i, val in enumerate(operands):
-            operands[i] = list(val)
+            operands[i] = set(val)
 
-        return dict.fromkeys(operands[0] + [i for i in operands[1] if i not in operands[0]])  # union
+        return dict.fromkeys(set.union(*operands))
 
     def _parse_string(self, lines):
         """
@@ -918,8 +922,10 @@ class PyparsingPatternParser:
             # only special characters in lines
             if re.match(r'^[\W_]+$', lines):
                 lines = re.sub('[^a-zA-Z0-9 \n\\.]', '', lines)
-                if not lines and self.inventory_manager._inventory.hosts:
+                if not lines:
                     lines = 'all'
+        else:
+            lines = str(lines)
 
         try:
             result = self.bnf.parseString(lines)[0]
@@ -929,12 +935,9 @@ class PyparsingPatternParser:
             raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
         except Exception:
             traceback.print_exc()
-            raise AnsibleError("unexpected error")
+            raise AnsibleError("Unexpected Error!")
 
         else:
-            if not result:
-                return []
-            result = list(result.keys()) if isinstance(result, dict) else result
             return result
 
     def evaluate_patterns(self, pattern):
@@ -945,6 +948,7 @@ class PyparsingPatternParser:
         result = self._parse_string(pattern)
         if not result:
             return []
+        result = list(result.keys()) if isinstance(result, dict) else result
 
         hosts = []
         for match in result:
@@ -961,7 +965,6 @@ class PyparsingPatternParser:
         Subset function for PyparsingPatternParser.
         Corresponds to --limit parameter for ansible-playbook.
         """
-
         if not subset_pattern or subset_pattern is None:
             results = None
         else:
@@ -970,8 +973,15 @@ class PyparsingPatternParser:
             for match in result_cache:
                 results.append(str(match))
 
+            # in case inventory empty
+            if not self.inventory_manager._inventory.hosts:
+                if subset_pattern == 'all':
+                    results = subset_pattern
+                return results
+
             # in case implicit localhost is used in --limit
             if not results or (subset_pattern in C.LOCALHOST and results[0] not in list(self.inventory_manager._inventory.hosts)):
                 results = None
                 raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
+
         return results
