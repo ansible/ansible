@@ -1,5 +1,5 @@
 Resources
-````````````````
+^^^^^^^^^
 * Follow the style of the :ref:`Ansible Documentation<ansible_documentation>`
 * Ask for advice on the ``#ansible-devel`` chat channel (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_)
 * Review these online style guides:
