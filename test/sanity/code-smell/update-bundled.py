@@ -140,6 +140,9 @@ def main():
     files_with_bundled_metadata = get_files_with_bundled_metadata(paths)
 
     for filename in files_with_bundled_metadata.difference(bundled_libs):
+        if filename.startswith('test/support/'):
+            continue  # bundled support code does not need to be updated or tracked
+
         print('{0}: ERROR: File contains _BUNDLED_METADATA but needs to be added to'
               ' test/sanity/code-smell/update-bundled.py'.format(filename))
 
