@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -eux
+
 FILENAME=../docsite/rst/dev_guide/testing/sanity/index.rst
 
 cat <<- EOF >$FILENAME.new
@@ -35,6 +37,6 @@ if ! command -v ${SHA_CMD} > /dev/null 2>&1; then
 fi
 
 # Put file into place if it has changed
-if [ "$(${SHA_CMD} <$FILENAME)" != "$(${SHA_CMD} <$FILENAME.new)" ]; then
+if [ ! -f "${FILENAME}" ] || [ "$(${SHA_CMD} <$FILENAME)" != "$(${SHA_CMD} <$FILENAME.new)" ]; then
     mv -f $FILENAME.new $FILENAME
 fi
