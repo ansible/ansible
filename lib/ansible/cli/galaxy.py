@@ -62,7 +62,8 @@ SERVER_DEF = [
     ('token', False),
     ('auth_url', False),
     ('v3', False),
-    ('validate_certs', False)
+    ('validate_certs', False),
+    ('client_id', False),
 ]
 
 
@@ -498,6 +499,7 @@ class GalaxyCLI(CLI):
             # auth_url is used to create the token, but not directly by GalaxyAPI, so
             # it doesn't need to be passed as kwarg to GalaxyApi
             auth_url = server_options.pop('auth_url', None)
+            client_id = server_options.pop('client_id', None)
             token_val = server_options['token'] or NoTokenSentinel
             username = server_options['username']
             available_api_versions = None
@@ -524,7 +526,8 @@ class GalaxyCLI(CLI):
                     if auth_url:
                         server_options['token'] = KeycloakToken(access_token=token_val,
                                                                 auth_url=auth_url,
-                                                                validate_certs=validate_certs)
+                                                                validate_certs=validate_certs,
+                                                                client_id=client_id)
                     else:
                         # The galaxy v1 / github / django / 'Token'
                         server_options['token'] = GalaxyToken(token=token_val)
