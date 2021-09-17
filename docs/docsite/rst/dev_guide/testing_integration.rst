@@ -153,7 +153,7 @@ Container Images
 ----------------
 
 Python 2
-````````
+^^^^^^^^
 
 Most container images are for testing with Python 2:
 
@@ -162,7 +162,7 @@ Most container images are for testing with Python 2:
   - opensuse15py2
 
 Python 3
-````````
+^^^^^^^^
 
 To test with Python 3 use the following images:
 

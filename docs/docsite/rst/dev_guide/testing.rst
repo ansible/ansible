@@ -175,7 +175,7 @@ Some ideas of what to test are:
 * Test on different operating systems, or against different library versions
 
 Run sanity tests
-````````````````
+^^^^^^^^^^^^^^^^
 
 .. code:: shell
 
@@ -184,7 +184,7 @@ Run sanity tests
 More information: :ref:`testing_sanity`
 
 Run unit tests
-``````````````
+^^^^^^^^^^^^^^
 
 .. code:: shell
 
@@ -193,7 +193,7 @@ Run unit tests
 More information: :ref:`testing_units`
 
 Run integration tests
-`````````````````````
+^^^^^^^^^^^^^^^^^^^^^
 
 .. code:: shell
 
@@ -220,7 +220,7 @@ If the PR does not resolve the issue, or if you see any failures from the unit/i
    |   \```
 
 Code Coverage Online
-````````````````````
+^^^^^^^^^^^^^^^^^^^^
 
 `The online code coverage reports <https://codecov.io/gh/ansible/ansible>`_ are a good way
 to identify areas for testing improvement in Ansible.  By following red colors you can
