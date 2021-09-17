@@ -46,10 +46,10 @@ Requirements
     - `pyvmomi <https://github.com/vmware/pyvmomi/tree/master/pyVmomi>`_
     - `requests <https://2.python-requests.org/en/master/>`_
 
-If you want to deploy your test environment in a hypervisor, both `VMware or Libvirt <https://github.com/goneri/vmware-on-libvirt>`_ works well.
+If you want to deploy your test environment in a hypervisor, both `VMware or Libvirt <https://github.com/goneri/vmware-on-libvirt>`_ work well.
 
 NFS server configuration
-~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Your NFS server must expose the following directory structure:
 
@@ -182,7 +182,7 @@ Functional tests
 ----------------
 
 Writing new tests
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 
 If you are writing a new collection of integration tests, there are a few VMware-specific things to note beyond
 the standard Ansible :ref:`integration testing<testing_integration>` process.
@@ -200,19 +200,19 @@ The resources defined there are automatically created by importing that role at 
 This will give you a ready to use cluster, datacenter, datastores, folder, switch, dvswitch, ESXi hosts, and VMs.
 
 No need to create too much resources
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Most of the time, it's not necessary to use ``with_items`` to create multiple resources. By avoiding it,
 you speed up the test execution and you simplify the clean up afterwards.
 
 VM names should be predictable
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you need to create a new VM during your test, you can use ``test_vm1``, ``test_vm2`` or ``test_vm3``. This
 way it will be automatically clean up for you.
 
 Avoid the common boiler plate code in your test playbook
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 From Ansible 2.10, the test suite uses `modules_defaults`. This module
 allow us to preinitialize the following default keys of the VMware modules:
