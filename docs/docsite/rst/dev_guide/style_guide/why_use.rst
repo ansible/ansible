@@ -1,7 +1,7 @@
 :orphan:
 
 Why Use a Style Guide?
-`````````````````````````````````
+""""""""""""""""""""""
 
 Style guides are important because they ensure consistency in the content, look, and feel of a book or a website.
 

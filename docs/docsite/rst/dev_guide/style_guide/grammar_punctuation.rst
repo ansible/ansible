@@ -1,12 +1,12 @@
 
 Grammar and Punctuation 
-``````````````````````````````````````
+=======================
 
 Common Styles and Usage, and Common Mistakes
 ----------------------------------------------------
 
 Ansible
-~~~~~~~~~
+^^^^^^^
 * Write "Ansible." Not "Ansible, Inc." or "AnsibleWorks The only exceptions to this rule are when we're writing legal or financial statements.
 
 * Never use the logotype by itself in body text. Always keep the same font you are using the rest of the sentence.
@@ -15,11 +15,11 @@ Ansible
 
 
 Capitalization
-~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^
 If it's not a real product, service, or department at Ansible, don't capitalize it. Not even if it seems important. Capitalize only the first letter of the first word in headlines.
 
 Colon
-~~~~~~~~~~~~~~~~~
+^^^^^
 A colon is generally used before a list or series:
 - The Triangle Area consists of three cities: Raleigh, Durham, and Chapel Hill.
 
@@ -42,7 +42,7 @@ Use a colon to introduce a bullet list (or dash, or icon/symbol of your choice):
 
 
 Commas
-~~~~~~~~~~~
+^^^^^^
 Use serial commas, the comma before the "and" in a series of three or more items: 
 
 - "Item 1, item 2, and item 3."
@@ -63,11 +63,11 @@ If that does not convince you, maybe this will:
 
 
 Contractions
-~~~~~~~~~~~~~
+^^^^^^^^^^^^
 Do not use contractions in Ansible documents.
 
 Em dashes
-~~~~~~~~~~
+^^^^^^^^^
 When possible, use em-dashes with no space on either side. When full em-dashes aren't available, use double-dashes with no spaces on either side--like this.
 
 A pair of em dashes can be used in place of commas to enhance readability. Note, however, that dashes are always more emphatic than commas.
@@ -94,11 +94,11 @@ When used in place of parentheses at the end of a sentence, only a single dash i
 
 
 Exclamation points (!)
-~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^
 Do not use them at the end of sentences. An exclamation point can be used when referring to a command, such as the bang (!) command.
 
 Gender References
-~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 Do not use gender-specific pronouns in documentation. It is far less awkward to read a sentence that uses "they" and "their" rather than "he/she" and "his/hers." 
 
 It is fine to use "you" when giving instructions and "the user," "new users," and so on. in more general explanations. 
@@ -109,7 +109,7 @@ Never use "we" when writing. "We" aren't doing anything on the user side. Ansibl
 
 
 Hyphen
-~~~~~~~~~~~~~~
+^^^^^^
 The hyphen's primary function is the formation of certain compound terms. Do not use a hyphen unless it serves a purpose. If a compound adjective cannot be misread or, as with many psychological terms, its meaning is established, a hyphen is not necessary.
 
 Use hyphens to avoid ambiguity or confusion:
@@ -136,7 +136,7 @@ In professionally printed material (particularly books, magazines, and newspaper
 
 
 Lists
-~~~~~~~
+^^^^^
 Keep the structure of bulleted lists equivalent and consistent. If one bullet is a verb phrase, they should all be verb phrases. If one is a complete sentence, they should all be complete sentences, and so on.
 
 Capitalize the first word of each bullet. Unless it is obvious that it is just a list of items, such as a list of items like:
@@ -153,7 +153,7 @@ When giving instructional steps, use numbered lists instead of bulleted lists.
 
 
 Months and States
-~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 Abbreviate months and states according to AP. Months are only abbreviated if they are used in conjunction with a day. Example: "The President visited in January 1999." or "The President visited Jan. 12."
 
 Months: Jan., Feb., March, April, May, June, July, Aug., Sept., Nov., Dec.
@@ -161,17 +161,17 @@ Months: Jan., Feb., March, April, May, June, July, Aug., Sept., Nov., Dec.
 States: Ala., Ariz., Ark., Calif., Colo., Conn., Del., Fla., Ga., Ill., Ind., Kan., Ky., La., Md., Mass., Mich., Minn., Miss., Mo., Mont., Neb., Nev., NH, NJ, NM, NY, NC, ND, Okla., Ore., Pa., RI, SC, SD, Tenn., Vt., Va., Wash., W.Va., Wis., Wyo.
 
 Numbers
-~~~~~~~~~
+^^^^^^^
 Numbers between one and nine are written out. 10 and above are numerals. The exception to this is writing "4 million" or "4 GB." It's also acceptable to use numerals in tables and charts.
 
 Phone Numbers
-+++++++++++++++
+^^^^^^^^^^^^^
 
 Phone number style: 1 (919) 555-0123 x002 and 1 888-GOTTEXT
 
 
 Quotations (Using Quotation Marks and Writing Quotes)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      "Place the punctuation inside the quotes," the editor said.
 
 Except in rare instances, use only "said" or "says" because anything else just gets in the way of the quote itself, and also tends to editorialize.
@@ -184,7 +184,7 @@ Not:
 
 
 Semicolon
-~~~~~~~~~~~~~~~
+^^^^^^^^^
 Use a semicolon to separate items in a series if the items contain commas:
 
 - Everyday I have coffee, toast, and fruit for breakfast; a salad for lunch; and a peanut butter sandwich, cookies, ice cream, and chocolate cake for dinner.
@@ -193,9 +193,9 @@ Use a semicolon before a conjunctive adverb (however, therefore, otherwise, name
 - I think; therefore, I am.
 
 Spacing after sentences
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^
 Use only a single space after a sentence.
 
 Time
-~~~~~~~~
+^^^^
 * Time of day is written as "4 p.m."
