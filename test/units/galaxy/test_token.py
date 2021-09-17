@@ -8,8 +8,10 @@ __metaclass__ = type
 
 import os
 import pytest
+from units.compat.mock import MagicMock
 
 import ansible.constants as C
+from ansible.cli.galaxy import GalaxyCLI, SERVER_DEF
 from ansible.galaxy.token import GalaxyToken, NoTokenSentinel
 from ansible.module_utils._text import to_bytes, to_text
 
@@ -30,6 +32,47 @@ def b_token_file(request, tmp_path_factory):
         yield b_token_path
     finally:
         C.GALAXY_TOKEN_PATH = orig_token_path
+
+
+def test_client_id(monkeypatch):
+    monkeypatch.setattr(C, 'GALAXY_SERVER_LIST', ['server1', 'server2'])
+
+    test_server_config = {option[0]: None for option in SERVER_DEF}
+    test_server_config.update(
+        {
+            'url': 'http://my_galaxy_ng:8000/api/automation-hub/',
+            'auth_url': 'http://my_keycloak:8080/auth/realms/myco/protocol/openid-connect/token',
+            'client_id': 'galaxy-ng',
+            'token': 'access_token',
+        }
+    )
+
+    test_server_default = {option[0]: None for option in SERVER_DEF}
+    test_server_default.update(
+        {
+            'url': 'https://cloud.redhat.com/api/automation-hub/',
+            'auth_url': 'https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token',
+            'token': 'access_token',
+        }
+    )
+
+    get_plugin_options = MagicMock(side_effect=[test_server_config, test_server_default])
+    monkeypatch.setattr(C.config, 'get_plugin_options', get_plugin_options)
+
+    cli_args = [
+        'ansible-galaxy',
+        'collection',
+        'install',
+        'namespace.collection:1.0.0',
+    ]
+
+    galaxy_cli = GalaxyCLI(args=cli_args)
+    mock_execute_install = MagicMock()
+    monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
+    galaxy_cli.run()
+
+    assert galaxy_cli.api_servers[0].token.client_id == 'galaxy-ng'
+    assert galaxy_cli.api_servers[1].token.client_id == 'cloud-services'
 
 
 def test_token_explicit(b_token_file):

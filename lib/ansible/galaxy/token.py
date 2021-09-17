@@ -50,14 +50,18 @@ class KeycloakToken(object):
 
     token_type = 'Bearer'
 
-    def __init__(self, access_token=None, auth_url=None, validate_certs=True):
+    def __init__(self, access_token=None, auth_url=None, validate_certs=True, client_id=None):
         self.access_token = access_token
         self.auth_url = auth_url
         self._token = None
         self.validate_certs = validate_certs
+        self.client_id = client_id
+        if self.client_id is None:
+            self.client_id = 'cloud-services'
 
     def _form_payload(self):
-        return 'grant_type=refresh_token&client_id=cloud-services&refresh_token=%s' % self.access_token
+        return 'grant_type=refresh_token&client_id=%s&refresh_token=%s' % (self.client_id,
+                                                                           self.access_token)
 
     def get(self):
         if self._token:

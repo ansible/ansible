@@ -28,7 +28,7 @@ The following example shows how to configure multiple servers:
 .. code-block:: ini
 
     [galaxy]
-    server_list = automation_hub, my_org_hub, release_galaxy, test_galaxy
+    server_list = automation_hub, my_org_hub, release_galaxy, test_galaxy, my_galaxy_ng
 
     [galaxy_server.automation_hub]
     url=https://cloud.redhat.com/api/automation-hub/
@@ -47,6 +47,12 @@ The following example shows how to configure multiple servers:
     [galaxy_server.test_galaxy]
     url=https://galaxy-dev.ansible.com/
     token=my_test_token
+
+    [galaxy_server.my_galaxy_ng]
+    url=http://my_galaxy_ng:8000/api/automation-hub/
+    auth_url=http://my_keycloak:8080/auth/realms/myco/protocol/openid-connect/token
+    client_id=galaxy-ng
+    token=my_keycloak_access_token
 
 .. note::
     You can use the ``--server`` command line argument to select an explicit Galaxy server in the ``server_list`` and
@@ -67,6 +73,7 @@ define the following keys:
 * ``password``: The password to use, in conjunction with ``username``, for basic authentication.
 * ``auth_url``: The URL of a Keycloak server 'token_endpoint' if using SSO authentication (for example, Automation Hub). Mutually exclusive with ``username``. Requires ``token``.
 * ``validate_certs``: Whether or not to verify TLS certificates for the Galaxy server. This defaults to True unless the ``--ignore-certs`` option is provided or ``GALAXY_IGNORE_CERTS`` is configured to True.
+* ``client_id``: The Keycloak token's client_id to use for authentication. Requires ``auth_url`` and ``token``. The default ``client_id`` is cloud-services to work with Red Hat SSO.
 
 As well as defining these server options in the ``ansible.cfg`` file, you can also define them as environment variables.
 The environment variable is in the form ``ANSIBLE_GALAXY_SERVER_{{ id }}_{{ key }}`` where ``{{ id }}`` is the upper
