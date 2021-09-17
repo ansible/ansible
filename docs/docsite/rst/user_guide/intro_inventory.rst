@@ -545,7 +545,7 @@ ansible_port
 ansible_user
     The user name to use when connecting to the host
 ansible_password
-    The password to use to authenticate to the host (never store this variable in plain text; always use a vault. See :ref:`tip_for_variables_and_vaults`)
+    The password to use to authenticate to the host (never store this variable in plain text; always use a vault. See :ref:`rotecting_sensitive_variables_with_ansible-vault`)
 
 
 Specific to the SSH connection:
