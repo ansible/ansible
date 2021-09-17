@@ -66,6 +66,7 @@ define the following keys:
 * ``username``: The username to use for basic authentication against the Galaxy instance. Mutually exclusive with ``token``.
 * ``password``: The password to use, in conjunction with ``username``, for basic authentication.
 * ``auth_url``: The URL of a Keycloak server 'token_endpoint' if using SSO authentication (for example, Automation Hub). Mutually exclusive with ``username``. Requires ``token``.
+* ``validate_certs``: Whether or not to verify TLS certificates for the Galaxy server. This defaults to True unless the ``--ignore-certs`` option is provided or ``GALAXY_IGNORE_CERTS`` is configured to True.
 
 As well as defining these server options in the ``ansible.cfg`` file, you can also define them as environment variables.
 The environment variable is in the form ``ANSIBLE_GALAXY_SERVER_{{ id }}_{{ key }}`` where ``{{ id }}`` is the upper
