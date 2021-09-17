@@ -89,6 +89,22 @@ EXAMPLES = '''
     var: ansible_facts.getent_shadow
 
 '''
+
+RETURN = '''
+ansible_facts:
+  description: Facts to add to ansible_facts.
+  returned: always
+  type: dict
+  contains:
+    getent_<database>:
+      description:
+        - A list of results or a single result as a list of the fields the db provides
+        - The list elements depend on the database queried, see getent man page for the structure
+        - Starting at 2.11 it now returns multiple duplicate entries, previouslly it only returned the last one
+      returned: always
+      type: list
+'''
+
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
@@ -138,9 +154,21 @@ def main():
     results = {dbtree: {}}
 
     if rc == 0:
+        seen = {}
         for line in out.splitlines():
             record = line.split(split)
-            results[dbtree][record[0]] = record[1:]
+
+            if record[0] in seen:
+                # more than one result for same key, ensure we store in a list
+                if seen[record[0]] == 1:
+                    results[dbtree][record[0]] = [results[dbtree][record[0]]]
+
+                results[dbtree][record[0]].append(record[1:])
+                seen[record[0]] += 1
+            else:
+                # new key/value, just assign
+                results[dbtree][record[0]] = record[1:]
+                seen[record[0]] = 1
 
         module.exit_json(ansible_facts=results)
 
