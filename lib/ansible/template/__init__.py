@@ -693,7 +693,7 @@ class Templar:
         self.environment.globals['query'] = self.environment.globals['q'] = self._query_lookup
         self.environment.globals['now'] = self._now_datetime
         self.environment.globals['finalize'] = self._finalize
-        self.environment.globals['Undef'] = self._make_undefined
+        self.environment.globals['undef'] = self._make_undefined
 
         # the current rendering context under which the templar class is working
         self.cur_context = None
