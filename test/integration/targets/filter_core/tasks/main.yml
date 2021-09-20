@@ -494,6 +494,39 @@
       - mandatory_2 is failed
       - "mandatory_2.msg == 'You did not give me a variable. I am a sad wolf.'"
 
+- name: Verify undef throws if resolved
+  set_fact:
+    foo: '{{ fail_foo }}'
+  vars:
+    fail_foo: '{{ undef("Expected failure") }}'
+  ignore_errors: yes
+  register: fail_1
+
+- name: Setup fail_foo for overriding in test
+  block:
+    - name: Verify undef not executed if overridden
+      set_fact:
+        foo: '{{ fail_foo }}'
+      vars:
+        fail_foo: 'overridden value'
+      register: fail_2
+  vars:
+    fail_foo: '{{ undef(hint="Expected failure") }}'
+
+- name: Verify undef is inspectable
+  debug:
+    var: fail_foo
+  vars:
+    fail_foo: '{{ undef("Expected failure") }}'
+  register: fail_3
+
+- name: Verify undef
+  assert:
+    that:
+      - fail_1 is failed
+      - not (fail_2 is failed)
+      - not (fail_3 is failed)
+
 - name: Verify comment
   assert:
     that:
