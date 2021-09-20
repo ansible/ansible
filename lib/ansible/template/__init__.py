@@ -693,6 +693,7 @@ class Templar:
         self.environment.globals['query'] = self.environment.globals['q'] = self._query_lookup
         self.environment.globals['now'] = self._now_datetime
         self.environment.globals['finalize'] = self._finalize
+        self.environment.globals['undef'] = self._make_undefined
 
         # the current rendering context under which the templar class is working
         self.cur_context = None
@@ -1067,6 +1068,13 @@ class Templar:
                     ran = wrap_var(ran)
 
         return ran
+
+    def _make_undefined(self, hint=None):
+        from jinja2.runtime import Undefined
+
+        if hint is None or isinstance(hint, Undefined) or hint == '':
+            hint = "Mandatory variable has not been overridden"
+        return AnsibleUndefined(hint)
 
     def do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, disable_lookups=False):
         if self.jinja2_native and not isinstance(data, string_types):

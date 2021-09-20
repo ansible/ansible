@@ -1,0 +1,2 @@
+minor_changes:
+  - adds the ``undef`` keyword to the templating environment. This allows for directly creating Undefined values in templates. It is most useful for providing a hint for variables which must be overridden.
