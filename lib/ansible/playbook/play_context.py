@@ -125,9 +125,6 @@ class PlayContext(Base):
     # "PlayContext.force_handlers should not be used, the calling code should be using play itself instead"
     _force_handlers = FieldAttribute(isa='bool', default=False)
 
-    # Holds the class name for the active task in task executor
-    _action = None
-
     def __init__(self, play=None, passwords=None, connection_lockfd=None):
         # Note: play is really not optional.  The only time it could be omitted is when we create
         # a PlayContext just so we can invoke its deserialize method to load it from a serialized
