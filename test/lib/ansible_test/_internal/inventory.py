@@ -128,7 +128,7 @@ def create_posix_inventory(args, path, target_hosts, needs_ssh=False):  # type: 
                     testhost=dict(
                         ansible_connection='local',
                         ansible_pipelining='yes',
-                        ansible_python_interpreter=target_host.config.python.path,
+                        ansible_python_interpreter=target_host.python.path,
                     ),
                 ),
             ),
