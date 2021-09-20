@@ -199,9 +199,6 @@ class PlayContext(Base):
 
         new_info = self.copy()
 
-        # store current task type
-        new_info._action = task.action
-
         # loop through a subset of attributes on the task object and set
         # connection fields based on their values
         for attr in TASK_ATTRIBUTE_OVERRIDES:
