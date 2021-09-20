@@ -11,7 +11,8 @@
 
     - assert:
         that:
-          - '"%r"|format(undef) == "AnsibleUndefined"'
+          - '"%r"|format(an_undefined_var) == "AnsibleUndefined"'
+          - '"%r"|format(undef()) == "AnsibleUndefined"'
           # The existence of AnsibleUndefined in a templating result
           # prevents safe_eval from turning the value into a python object
           - names is string
