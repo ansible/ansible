@@ -58,17 +58,7 @@ class AnsibleBaseYAMLObject(object):
     ansible_pos = property(_get_ansible_position, _set_ansible_position)
 
 
-# try to always use orderddict with yaml, after py3.6 the dict type already does this
-odict = dict
-if sys.version_info[:2] < (3, 7):
-    # if python 2.7 or py3 < 3.7
-    try:
-        from collections import OrderedDict as odict
-    except ImportError:
-        pass
-
-
-class AnsibleMapping(AnsibleBaseYAMLObject, odict):
+class AnsibleMapping(AnsibleBaseYAMLObject, dict):
     ''' sub class for dictionaries '''
     pass
 
