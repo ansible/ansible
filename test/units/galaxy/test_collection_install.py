@@ -171,6 +171,63 @@ def galaxy_server():
     return galaxy_api
 
 
+@pytest.mark.parametrize(
+    'url,version,trailing_slash',
+    [
+        ('https://github.com/org/repo', 'commitish', False),
+        ('https://github.com/org/repo,commitish', None, False),
+        ('https://github.com/org/repo/,commitish', None, True),
+        ('https://github.com/org/repo#,commitish', None, False),
+    ]
+)
+def test_concrete_artifact_manager_scm_cmd(url, version, trailing_slash, monkeypatch):
+    mock_subprocess_check_call = MagicMock()
+    monkeypatch.setattr(collection.concrete_artifact_manager.subprocess, 'check_call', mock_subprocess_check_call)
+    mock_mkdtemp = MagicMock(return_value='')
+    monkeypatch.setattr(collection.concrete_artifact_manager, 'mkdtemp', mock_mkdtemp)
+
+    collection.concrete_artifact_manager._extract_collection_from_git(url, version, b'path')
+
+    assert mock_subprocess_check_call.call_count == 2
+
+    repo = 'https://github.com/org/repo'
+    if trailing_slash:
+        repo += '/'
+    clone_cmd = ('git', 'clone', repo, '')
+
+    assert mock_subprocess_check_call.call_args_list[0].args[0] == clone_cmd
+    assert mock_subprocess_check_call.call_args_list[1].args[0] == ('git', 'checkout', 'commitish')
+
+
+@pytest.mark.parametrize(
+    'url,version,trailing_slash',
+    [
+        ('https://github.com/org/repo', 'HEAD', False),
+        ('https://github.com/org/repo,HEAD', None, False),
+        ('https://github.com/org/repo/,HEAD', None, True),
+        ('https://github.com/org/repo#,HEAD', None, False),
+        ('https://github.com/org/repo', None, False),
+    ]
+)
+def test_concrete_artifact_manager_scm_cmd_shallow(url, version, trailing_slash, monkeypatch):
+    mock_subprocess_check_call = MagicMock()
+    monkeypatch.setattr(collection.concrete_artifact_manager.subprocess, 'check_call', mock_subprocess_check_call)
+    mock_mkdtemp = MagicMock(return_value='')
+    monkeypatch.setattr(collection.concrete_artifact_manager, 'mkdtemp', mock_mkdtemp)
+
+    collection.concrete_artifact_manager._extract_collection_from_git(url, version, b'path')
+
+    assert mock_subprocess_check_call.call_count == 2
+
+    repo = 'https://github.com/org/repo'
+    if trailing_slash:
+        repo += '/'
+    shallow_clone_cmd = ('git', 'clone', '--depth=1', repo, '')
+
+    assert mock_subprocess_check_call.call_args_list[0].args[0] == shallow_clone_cmd
+    assert mock_subprocess_check_call.call_args_list[1].args[0] == ('git', 'checkout', 'HEAD')
+
+
 def test_build_requirement_from_path(collection_artifact):
     tmp_path = os.path.join(os.path.split(collection_artifact[1])[0], b'temp')
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(tmp_path, validate_certs=False)
