@@ -82,6 +82,7 @@ stages:
             - test: 2012-R2
             - test: 2016
             - test: 2019
+            - test: 2022
   - stage: Remote
     dependsOn: []
     jobs:
@@ -220,6 +221,7 @@ stages:
             - test: 2012-R2
             - test: 2016
             - test: 2019
+            - test: 2022
   - stage: Incidental
     dependsOn: []
     jobs:
