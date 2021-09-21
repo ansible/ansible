@@ -132,7 +132,7 @@ def get_podman_host_ip():  # type: () -> str
 
 
 @cache
-def get_podman_default_hostname():  # type -> str
+def get_podman_default_hostname():  # type: () -> str
     """Return the default hostname of the Podman service."""
     try:
         stdout = raw_command(['podman', 'system', 'connection', 'list', '--format=json'], capture=True)[0]
