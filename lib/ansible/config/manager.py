@@ -19,7 +19,7 @@ from ansible.errors import AnsibleOptionsError, AnsibleError
 from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.common.yaml import yaml_load
-from ansible.module_utils.six import PY3, string_types
+from ansible.module_utils.six import string_types
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.quoting import unquote
@@ -323,21 +323,14 @@ class ConfigManager(object):
         ftype = get_config_type(cfile)
         if cfile is not None:
             if ftype == 'ini':
-                kwargs = {}
-                if PY3:
-                    kwargs['inline_comment_prefixes'] = (';',)
-                self._parsers[cfile] = configparser.ConfigParser(**kwargs)
+                self._parsers[cfile] = configparser.ConfigParser(inline_comment_prefixes=(';',))
                 with open(to_bytes(cfile), 'rb') as f:
                     try:
                         cfg_text = to_text(f.read(), errors='surrogate_or_strict')
                     except UnicodeError as e:
                         raise AnsibleOptionsError("Error reading config file(%s) because the config file was not utf8 encoded: %s" % (cfile, to_native(e)))
                 try:
-                    if PY3:
-                        self._parsers[cfile].read_string(cfg_text)
-                    else:
-                        cfg_file = io.StringIO(cfg_text)
-                        self._parsers[cfile].readfp(cfg_file)
+                    self._parsers[cfile].read_string(cfg_text)
                 except configparser.Error as e:
                     raise AnsibleOptionsError("Error reading config file (%s): %s" % (cfile, to_native(e)))
             # FIXME: this should eventually handle yaml config files

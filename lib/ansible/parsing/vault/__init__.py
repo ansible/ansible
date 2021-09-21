@@ -54,7 +54,7 @@ except ImportError:
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible import constants as C
-from ansible.module_utils.six import PY3, binary_type
+from ansible.module_utils.six import binary_type
 # Note: on py2, this zip is izip not the list based zip() builtin
 from ansible.module_utils.six.moves import zip
 from ansible.module_utils._text import to_bytes, to_text, to_native
@@ -1017,10 +1017,7 @@ class VaultEditor:
 
         try:
             if filename == '-':
-                if PY3:
-                    data = sys.stdin.buffer.read()
-                else:
-                    data = sys.stdin.read()
+                data = sys.stdin.buffer.read()
             else:
                 with open(filename, "rb") as fh:
                     data = fh.read()
@@ -1260,10 +1257,7 @@ class VaultAES256:
 
         result = 0
         for b_x, b_y in zip(b_a, b_b):
-            if PY3:
-                result |= b_x ^ b_y
-            else:
-                result |= ord(b_x) ^ ord(b_y)
+            result |= b_x ^ b_y
         return result == 0
 
     @classmethod

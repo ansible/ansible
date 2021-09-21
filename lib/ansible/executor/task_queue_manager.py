@@ -32,7 +32,7 @@ from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
-from ansible.module_utils.six import PY3, string_types
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.play_context import PlayContext
 from ansible.playbook.task import Task
@@ -60,8 +60,7 @@ class CallbackSend:
 
 class FinalQueue(multiprocessing.queues.Queue):
     def __init__(self, *args, **kwargs):
-        if PY3:
-            kwargs['ctx'] = multiprocessing_context
+        kwargs['ctx'] = multiprocessing_context
         super(FinalQueue, self).__init__(*args, **kwargs)
 
     def send_callback(self, method_name, *args, **kwargs):

@@ -1,0 +1,3 @@
+major_changes:
+- Python Controller Requirement - Python 3.8 or newer is required for the control node (the machine that runs Ansible)
+  (https://github.com/ansible/ansible/pull/74013)

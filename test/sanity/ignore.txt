@@ -8,7 +8,6 @@ examples/scripts/my_test_info.py shebang # example module but not in a normal mo
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
 lib/ansible/cli/console.py pylint:disallowed-name
-lib/ansible/cli/scripts/ansible_cli_stub.py pylint:ansible-deprecated-version
 lib/ansible/cli/scripts/ansible_cli_stub.py shebang
 lib/ansible/cli/scripts/ansible_connection_cli_stub.py shebang
 lib/ansible/config/base.yml no-unwanted-files
