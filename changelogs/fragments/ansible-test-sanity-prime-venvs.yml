@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Add ``--prime-venvs`` option to create virtual environments without running tests.

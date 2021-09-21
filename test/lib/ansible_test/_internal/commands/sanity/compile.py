@@ -10,6 +10,7 @@ from . import (
     SanityFailure,
     SanitySuccess,
     SanityTargets,
+    SanitySkipped,
     TARGET_SANITY_ROOT,
 )
 
@@ -48,6 +49,9 @@ class CompileTest(SanityMultipleVersion):
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' or is_subdir(target.path, 'bin')]
 
     def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
+        if args.prime_venvs:
+            return SanitySkipped(self.name, python_version=python.version)
+
         settings = self.load_processor(args, python.version)
 
         paths = [target.path for target in targets.include]
