@@ -449,7 +449,7 @@
 - name: Verify password_hash
   assert:
     that:
-      - "'what in the WORLD is up?'|password_hash|length == 106"
+      - "'what in the WORLD is up?'|password_hash|length == 120 or 'what in the WORLD is up?'|password_hash|length == 106"
       # This throws a vastly different error on py2 vs py3, so we just check
       # that it's a failure, not a substring of the exception.
       - password_hash_1 is failed
