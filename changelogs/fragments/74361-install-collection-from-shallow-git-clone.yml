@@ -1,0 +1,5 @@
+minor_changes:
+- >-
+  ansible-galaxy - Installing a collection from a git repository
+  without specifying a version (or using the version ``HEAD``)
+  will clone the repository using --depth=1.
