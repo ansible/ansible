@@ -40,11 +40,11 @@ def assert_hash(expected, secret, algorithm, **settings):
 @pytest.mark.skipif(sys.platform.startswith('darwin'), reason='macOS requires passlib')
 def test_encrypt_with_rounds_no_passlib():
     with passlib_off():
-        assert_hash("$5$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7",
+        assert_hash("$5$rounds=5000$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7",
                     secret="123", algorithm="sha256_crypt", salt="12345678", rounds=5000)
         assert_hash("$5$rounds=10000$12345678$JBinliYMFEcBeAXKZnLjenhgEhTmJBvZn3aR8l70Oy/",
                     secret="123", algorithm="sha256_crypt", salt="12345678", rounds=10000)
-        assert_hash("$6$12345678$LcV9LQiaPekQxZ.OfkMADjFdSO2k9zfbDQrHPVcYjSLqSdjLYpsgqviYvTEP/R41yPmhH3CCeEDqVhW1VHr3L.",
+        assert_hash("$6$rounds=5000$12345678$LcV9LQiaPekQxZ.OfkMADjFdSO2k9zfbDQrHPVcYjSLqSdjLYpsgqviYvTEP/R41yPmhH3CCeEDqVhW1VHr3L.",
                     secret="123", algorithm="sha512_crypt", salt="12345678", rounds=5000)
 
 
@@ -58,7 +58,7 @@ def test_encrypt_with_ident():
                 secret="123", algorithm="bcrypt", salt='1234567890123456789012', ident='2a')
     assert_hash("$2b$12$123456789012345678901ugbM1PeTfRQ0t6dCJu5lQA8hwrZOYgDu",
                 secret="123", algorithm="bcrypt", salt='1234567890123456789012', ident='2b')
-    assert_hash("$2a$12$123456789012345678901ugbM1PeTfRQ0t6dCJu5lQA8hwrZOYgDu",
+    assert_hash("$2b$12$123456789012345678901ugbM1PeTfRQ0t6dCJu5lQA8hwrZOYgDu",
                 secret="123", algorithm="bcrypt", salt='1234567890123456789012')
     # negative test: sha256_crypt does not take ident as parameter so ignore it
     assert_hash("$5$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7",
@@ -94,9 +94,9 @@ def test_encrypt_default_rounds_no_passlib():
 def test_encrypt_default_rounds():
     assert_hash("$1$12345678$tRy4cXc3kmcfRZVj4iFXr/",
                 secret="123", algorithm="md5_crypt", salt="12345678")
-    assert_hash("$5$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7",
+    assert_hash("$5$rounds=535000$12345678$uy3TurUPaY71aioJi58HvUY8jkbhSQU8HepbyaNngv.",
                 secret="123", algorithm="sha256_crypt", salt="12345678")
-    assert_hash("$6$12345678$LcV9LQiaPekQxZ.OfkMADjFdSO2k9zfbDQrHPVcYjSLqSdjLYpsgqviYvTEP/R41yPmhH3CCeEDqVhW1VHr3L.",
+    assert_hash("$6$rounds=656000$12345678$InMy49UwxyCh2pGJU1NpOhVSElDDzKeyuC6n6E9O34BCUGVNYADnI.rcA3m.Vro9BiZpYmjEoNhpREqQcbvQ80",
                 secret="123", algorithm="sha512_crypt", salt="12345678")
 
     assert encrypt.PasslibHash("md5_crypt").hash("123")
@@ -118,8 +118,8 @@ def test_password_hash_filter_passlib():
     with pytest.raises(AnsibleFilterError):
         get_encrypted_password("123", "sha257", salt="12345678")
 
-    # Uses 5000 rounds by default for sha256 matching crypt behaviour
-    assert get_encrypted_password("123", "sha256", salt="12345678") == "$5$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7"
+    # Uses passlib default rounds value for sha256 matching crypt behaviour
+    assert get_encrypted_password("123", "sha256", salt="12345678") == "$5$rounds=535000$12345678$uy3TurUPaY71aioJi58HvUY8jkbhSQU8HepbyaNngv."
     assert get_encrypted_password("123", "sha256", salt="12345678", rounds=5000) == "$5$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7"
 
     assert (get_encrypted_password("123", "sha256", salt="12345678", rounds=10000) ==
@@ -154,8 +154,8 @@ def test_do_encrypt_passlib():
     with pytest.raises(AnsibleError):
         encrypt.do_encrypt("123", "sha257_crypt", salt="12345678")
 
-    # Uses 5000 rounds by default for sha256 matching crypt behaviour.
-    assert encrypt.do_encrypt("123", "sha256_crypt", salt="12345678") == "$5$12345678$uAZsE3BenI2G.nA8DpTl.9Dc8JiqacI53pEqRr5ppT7"
+    # Uses passlib default rounds value for sha256 matching crypt behaviour.
+    assert encrypt.do_encrypt("123", "sha256_crypt", salt="12345678") == "$5$rounds=535000$12345678$uy3TurUPaY71aioJi58HvUY8jkbhSQU8HepbyaNngv."
 
     assert encrypt.do_encrypt("123", "md5_crypt", salt="12345678") == "$1$12345678$tRy4cXc3kmcfRZVj4iFXr/"
 
