@@ -109,19 +109,22 @@ class ImportTest(SanityMultipleVersion):
 
             data = '\n'.join([path for path in paths if test(path)])
 
-            if not data:
+            if not data and not args.prime_venvs:
                 continue
 
             virtualenv_python = create_sanity_virtualenv(args, python, f'{self.name}.{import_type}', ansible=controller, coverage=args.coverage, minimize=True)
 
             if not virtualenv_python:
-                display.warning(f'Skipping sanity test "{self.name}" ({import_type}) on Python {python.version} due to missing virtual environment support.')
+                display.warning(f'Skipping sanity test "{self.name}" on Python {python.version} due to missing virtual environment support.')
                 return SanitySkipped(self.name, python.version)
 
             virtualenv_yaml = check_sanity_virtualenv_yaml(virtualenv_python)
 
             if virtualenv_yaml is False:
                 display.warning(f'Sanity test "{self.name}" ({import_type}) on Python {python.version} may be slow due to missing libyaml support in PyYAML.')
+
+            if args.prime_venvs:
+                continue
 
             env = ansible_environment(args, color=False)
 
@@ -169,6 +172,9 @@ class ImportTest(SanityMultipleVersion):
                     line=int(r['line']),
                     column=int(r['column']),
                 ) for r in parsed]
+
+        if args.prime_venvs:
+            return SanitySkipped(self.name, python_version=python.version)
 
         results = settings.process_errors(messages, paths)
 
