@@ -1,15 +1,15 @@
 
-.. _porting_2.12_guide:
+.. _porting_2.12_guide_core:
 
-**************************
-Ansible 2.12 Porting Guide
-**************************
+*******************************
+Ansible-core 2.12 Porting Guide
+*******************************
 
-This section discusses the behavioral changes between Ansible 2.11 and Ansible 2.12.
+This section discusses the behavioral changes between ``ansible-core`` 2.11 and ``ansible-core`` 2.12.
 
 It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
 
-We suggest you read this page along with `Ansible Changelog for 2.12 <https://github.com/ansible/ansible/blob/devel/changelogs/CHANGELOG-v2.12.rst>`_ to understand what updates you may need to make.
+We suggest you read this page along with `ansible-core Changelog for 2.12 <https://github.com/ansible/ansible/blob/devel/changelogs/CHANGELOG-v2.12.rst>`_ to understand what updates you may need to make.
 
 This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
@@ -45,8 +45,8 @@ See :ref:`interpreter discovery documentation <interpreter_discovery>` for more 
 Command Line
 ============
 
+* Python 3.8 on the controller node is a hard requirement for this release. The command line scripts will not function with a lower Python version.
 * ``ansible-vault`` no longer supports ``PyCrypto`` and requires ``cryptography``.
-
 
 Deprecated
 ==========
