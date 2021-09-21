@@ -1,0 +1,45 @@
+- hosts: localhost
+  gather_facts: no
+  vars:
+    reset_color: '\x1b\[0m'
+    color: '\x1b\[[0-9];[0-9]{2}m'
+    base_environment:
+      ANSIBLE_INVENTORY_PLUGINS: ./plugins/inventory
+      ANSIBLE_INVENTORY_ENABLED: test
+      ANSIBLE_INVENTORY_CACHE: true
+      ANSIBLE_CACHE_PLUGINS: ./plugins/cache
+      ANSIBLE_CACHE_PLUGIN_CONNECTION: localhost:6379:0
+      ANSIBLE_CACHE_PLUGIN_PREFIX: 'ansible_inventory_'
+    legacy_cache:
+      ANSIBLE_INVENTORY_CACHE_PLUGIN: legacy_redis
+    updated_cache:
+      ANSIBLE_INVENTORY_CACHE_PLUGIN: configurable_redis
+  tasks:
+    - name: legacy-style cache plugin should cause a warning
+      command: ansible-inventory -i inventory_config --graph
+      register: result
+      environment: "{{ base_environment | combine(legacy_cache) }}"
+
+    - name: test warning message
+      assert:
+        that:
+          - expected_warning in warning
+          - "'No inventory was parsed, only implicit localhost is available' in warning"
+      vars:
+        warning: "{{ result.stderr | regex_replace(reset_color) | regex_replace(color) | regex_replace('\\n', ' ') }}"
+        expected_warning: "Cache options were provided but may not reconcile correctly unless set via set_options"
+
+    - name: cache plugin updated to use config manager should work
+      command: ansible-inventory -i inventory_config --graph
+      register: result
+      environment: "{{ base_environment | combine(updated_cache) }}"
+
+    - name: test warning message
+      assert:
+        that:
+          - unexpected_warning not in warning
+          - "'No inventory was parsed, only implicit localhost is available' not in warning"
+          - '"host1" in result.stdout'
+      vars:
+        warning: "{{ result.stderr | regex_replace(reset_color) | regex_replace(color) | regex_replace('\\n', ' ') }}"
+        unexpected_warning: "Cache options were provided but may not reconcile correctly unless set via set_options"

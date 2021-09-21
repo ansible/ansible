@@ -1,0 +1,36 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    json_cache: "{{ cache.stdout | from_json }}"
+  tasks:
+    - command: redis-cli get ansible_facts_localhost
+      register: cache
+      tags:
+        - always
+
+    - name: test that the cache only contains the set_fact var
+      assert:
+        that:
+          - "json_cache | length  == 1"
+          - "json_cache.foo ==  ansible_facts.foo"
+      tags:
+        - set_fact
+
+    - name: test that the cache contains gathered facts and the var
+      assert:
+        that:
+          - "json_cache | length  > 1"
+          - "json_cache.foo == 'bar'"
+          - "json_cache.ansible_distribution is defined"
+      tags:
+        - additive_gather_facts
+
+    - name: test that the cache contains only gathered facts
+      assert:
+        that:
+          - "json_cache | length > 1"
+          - "json_cache.foo is undefined"
+          - "json_cache.ansible_distribution is defined"
+      tags:
+        - gather_facts
