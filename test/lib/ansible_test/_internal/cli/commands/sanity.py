@@ -110,4 +110,10 @@ def do_sanity(
         help='exit successfully on failed tests after saving results',
     )
 
+    sanity.add_argument(
+        '--prime-venvs',
+        action='store_true',
+        help='prepare virtual environments without running tests'
+    )
+
     add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.SANITY)  # sanity

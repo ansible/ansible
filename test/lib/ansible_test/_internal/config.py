@@ -259,7 +259,8 @@ class SanityConfig(TestConfig):
         self.list_tests = args.list_tests  # type: bool
         self.allow_disabled = args.allow_disabled  # type: bool
         self.enable_optional_errors = args.enable_optional_errors  # type: bool
-        self.keep_git = args.keep_git
+        self.keep_git = args.keep_git  # type: bool
+        self.prime_venvs = args.prime_venvs  # type: bool
 
         self.info_stderr = self.lint
 
