@@ -15,7 +15,7 @@ from jinja2.runtime import StrictUndefined
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common.collections import is_sequence, Mapping
 from ansible.module_utils.common.text.converters import container_to_text
-from ansible.module_utils.six import PY2, text_type, string_types
+from ansible.module_utils.six import text_type, string_types
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.native_jinja import NativeJinjaText
 
@@ -84,9 +84,6 @@ def ansible_native_concat(nodes):
 
     try:
         out = literal_eval(out)
-        if PY2:
-            # ensure bytes are not returned back into Ansible from templating
-            out = container_to_text(out)
         return out
     except (ValueError, SyntaxError, MemoryError):
         return out

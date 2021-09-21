@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import yaml
 
-from ansible.module_utils.six import PY3, text_type, binary_type
+from ansible.module_utils.six import text_type, binary_type
 from ansible.module_utils.common.yaml import SafeDumper
 from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping, AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
@@ -46,18 +46,12 @@ def represent_vault_encrypted_unicode(self, data):
     return self.represent_scalar(u'!vault', data._ciphertext.decode(), style='|')
 
 
-if PY3:
-    def represent_unicode(self, data):
-        return yaml.representer.SafeRepresenter.represent_str(self, text_type(data))
+def represent_unicode(self, data):
+    return yaml.representer.SafeRepresenter.represent_str(self, text_type(data))
 
-    def represent_binary(self, data):
-        return yaml.representer.SafeRepresenter.represent_binary(self, binary_type(data))
-else:
-    def represent_unicode(self, data):
-        return yaml.representer.SafeRepresenter.represent_unicode(self, text_type(data))
 
-    def represent_binary(self, data):
-        return yaml.representer.SafeRepresenter.represent_str(self, binary_type(data))
+def represent_binary(self, data):
+    return yaml.representer.SafeRepresenter.represent_binary(self, binary_type(data))
 
 
 def represent_undefined(self, data):
