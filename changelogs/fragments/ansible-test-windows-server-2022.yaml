@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Add support for Windows Server 2022.
