@@ -1,2 +1,0 @@
-pyyaml  # required for the collection loader to parse yaml for plugin routing
-virtualenv ; python_version <= '2.7'  # virtualenv required on Python 2.x, but on Python 3.x we can use the built-in venv instead

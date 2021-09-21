@@ -700,7 +700,7 @@
     content: |
       [main]
       exclude=lsof*
-    dest: '{{ output_dir }}/test-dnf.conf'
+    dest: '{{ remote_tmp_dir }}/test-dnf.conf'
   register: test_dnf_copy
 
 - block:
@@ -728,7 +728,7 @@
   always:
   - name: remove exclude lsof conf file
     file:
-      path: '{{ output_dir }}/test-dnf.conf'
+      path: '{{ remote_tmp_dir }}/test-dnf.conf'
       state: absent
 
 # end test case where disable_excludes is supported

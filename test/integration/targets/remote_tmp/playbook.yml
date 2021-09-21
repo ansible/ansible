@@ -31,13 +31,16 @@
   hosts: testhost
   gather_facts: false
   tasks:
+    - import_role:
+        name: ../setup_remote_tmp_dir
+
     - file:
         state: touch
-        path: "{{ output_dir }}/65393"
+        path: "{{ remote_tmp_dir }}/65393"
 
     - copy:
-        src: "{{ output_dir }}/65393"
-        dest: "{{ output_dir }}/65393.2"
+        src: "{{ remote_tmp_dir }}/65393"
+        dest: "{{ remote_tmp_dir }}/65393.2"
         remote_src: true
 
     - find:
@@ -52,6 +55,5 @@
 
     - assert:
         that:
-          # Should only be AnsiballZ_find.py because find is actively running
-          - result.files|length == 1
-          - result.files[0].path.endswith('/AnsiballZ_find.py')
+          # Should find nothing since pipelining is used
+          - result.files|length == 0

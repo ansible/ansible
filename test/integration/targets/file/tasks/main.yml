@@ -91,7 +91,10 @@
       - "file2_result.state == 'absent'"
 
 - name: verify we can touch a file
-  file: path={{output_dir}}/baz.txt state=touch
+  file:
+    path: "{{output_dir}}/baz.txt"
+    state: touch
+    mode: '0644'
   register: file3_result
 
 - name: verify that the file was marked as changed

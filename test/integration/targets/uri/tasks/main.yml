@@ -366,10 +366,25 @@
   with_items: "{{ uri_os_packages[ansible_os_family].step2 | default([]) }}"
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
+- name: create constraints path
+  set_fact:
+    remote_constraints: "{{ remote_tmp_dir }}/constraints.txt"
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: create constraints file
+  copy:
+    content: |
+      cryptography == 2.1.4
+      idna == 2.5
+      pyopenssl == 17.5.0
+      six == 1.13.0
+      urllib3 == 1.23
+    dest: "{{ remote_constraints }}"
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
 - name: install urllib3 and pyopenssl via pip
   pip:
     name: "{{ item }}"
-    state: latest
     extra_args: "-c {{ remote_constraints }}"
   with_items:
     - urllib3

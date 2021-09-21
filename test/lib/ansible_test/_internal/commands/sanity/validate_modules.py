@@ -1,18 +1,21 @@
 """Sanity test using validate-modules."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import os
-
-from ... import types as t
+import typing as t
 
 from . import (
     SanitySingleVersion,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
+    SanityTargets,
     SANITY_ROOT,
+)
+
+from ...test import (
+    TestResult,
 )
 
 from ...target import (
@@ -22,7 +25,6 @@ from ...target import (
 from ...util import (
     SubprocessError,
     display,
-    find_python,
 )
 
 from ...util_common import (
@@ -47,12 +49,17 @@ from ...data import (
     data_context,
 )
 
+from ...host_configs import (
+    PythonConfig,
+)
+
 
 class ValidateModulesTest(SanitySingleVersion):
     """Sanity test using validate-modules."""
 
     def __init__(self):
-        super(ValidateModulesTest, self).__init__()
+        super().__init__()
+
         self.optional_error_codes.update([
             'deprecated-date',
         ])
@@ -66,23 +73,15 @@ class ValidateModulesTest(SanitySingleVersion):
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if target.module]
 
-    def test(self, args, targets, python_version):
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :type python_version: str
-        :rtype: TestResult
-        """
+    def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
         env = ansible_environment(args, color=False)
 
         settings = self.load_processor(args)
 
         paths = [target.path for target in targets.include]
 
-        python = find_python(python_version)
-
         cmd = [
-            python,
+            python.path,
             os.path.join(SANITY_ROOT, 'validate-modules', 'validate-modules'),
             '--format', 'json',
             '--arg-spec',
@@ -136,7 +135,6 @@ class ValidateModulesTest(SanitySingleVersion):
                     path=filename,
                     line=int(item['line']) if 'line' in item else 0,
                     column=int(item['column']) if 'column' in item else 0,
-                    level='error',
                     code='%s' % item['code'],
                     message=item['msg'],
                 ))

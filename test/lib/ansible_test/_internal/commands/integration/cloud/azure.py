@@ -1,10 +1,10 @@
 """Azure plugin for integration tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import configparser
 import os
-
-from .... import types as t
+import urllib.parse
+import typing as t
 
 from ....io import (
     read_text_file,
@@ -12,7 +12,6 @@ from ....io import (
 
 from ....util import (
     ApplicationError,
-    ConfigParser,
     display,
 )
 
@@ -26,9 +25,6 @@ from ....target import (
 
 from ....http import (
     HttpClient,
-    parse_qs,
-    urlparse,
-    urlunparse,
 )
 
 from ....core_ci import (
@@ -47,7 +43,7 @@ class AzureCloudProvider(CloudProvider):
     SHERLOCK_CONFIG_PATH = os.path.expanduser('~/.ansible-sherlock-ci.cfg')
 
     def __init__(self, args):  # type: (IntegrationConfig) -> None
-        super(AzureCloudProvider, self).__init__(args)
+        super().__init__(args)
 
         self.aci = None
 
@@ -63,11 +59,11 @@ class AzureCloudProvider(CloudProvider):
         if os.path.isfile(self.SHERLOCK_CONFIG_PATH):
             return
 
-        super(AzureCloudProvider, self).filter(targets, exclude)
+        super().filter(targets, exclude)
 
     def setup(self):  # type: () -> None
         """Setup the cloud resource before delegation and register a cleanup callback."""
-        super(AzureCloudProvider, self).setup()
+        super().setup()
 
         if not self._use_static_config():
             self._setup_dynamic()
@@ -79,7 +75,7 @@ class AzureCloudProvider(CloudProvider):
         if self.aci:
             self.aci.stop()
 
-        super(AzureCloudProvider, self).cleanup()
+        super().cleanup()
 
     def _setup_dynamic(self):  # type: () -> None
         """Request Azure credentials through Sherlock."""
@@ -91,9 +87,9 @@ class AzureCloudProvider(CloudProvider):
         if os.path.isfile(self.SHERLOCK_CONFIG_PATH):
             sherlock_uri = read_text_file(self.SHERLOCK_CONFIG_PATH).splitlines()[0].strip() + '&rgcount=2'
 
-            parts = urlparse(sherlock_uri)
-            query_string = parse_qs(parts.query)
-            base_uri = urlunparse(parts[:4] + ('', ''))
+            parts = urllib.parse.urlparse(sherlock_uri)
+            query_string = urllib.parse.parse_qs(parts.query)
+            base_uri = urllib.parse.urlunparse(parts[:4] + ('', ''))
 
             if 'code' not in query_string:
                 example_uri = 'https://example.azurewebsites.net/api/sandbox-provisioning'
@@ -137,7 +133,7 @@ class AzureCloudProvider(CloudProvider):
 
     def _create_ansible_core_ci(self):  # type: () -> AnsibleCoreCI
         """Return an Azure instance of AnsibleCoreCI."""
-        return AnsibleCoreCI(self.args, 'azure', 'azure', persist=False, stage=self.args.remote_stage, provider='azure', internal=True)
+        return AnsibleCoreCI(self.args, 'azure', 'azure', 'azure', persist=False)
 
 
 class AzureCloudEnvironment(CloudEnvironment):
@@ -168,7 +164,7 @@ class AzureCloudEnvironment(CloudEnvironment):
 
 def get_config(config_path):    # type: (str) -> t.Dict[str, str]
     """Return a configuration dictionary parsed from the given configuration path."""
-    parser = ConfigParser()
+    parser = configparser.ConfigParser()
     parser.read(config_path)
 
     config = dict((key.upper(), value) for key, value in parser.items('default'))

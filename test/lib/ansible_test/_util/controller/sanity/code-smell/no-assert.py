@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -10,8 +9,8 @@ ASSERT_RE = re.compile(r'^\s*assert[^a-z0-9_:]')
 
 def main():
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        with open(path, 'r') as f:
-            for i, line in enumerate(f.readlines()):
+        with open(path, 'r') as file:
+            for i, line in enumerate(file.readlines()):
                 matches = ASSERT_RE.findall(line)
 
                 if matches:

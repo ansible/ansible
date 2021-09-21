@@ -1,6 +1,5 @@
 """Foreman plugin for integration tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -9,6 +8,7 @@ from ....config import (
 )
 
 from ....containers import (
+    CleanupMode,
     run_support_container,
 )
 
@@ -33,7 +33,7 @@ class ForemanProvider(CloudProvider):
     DOCKER_IMAGE = 'quay.io/ansible/foreman-test-container:1.4.0'
 
     def __init__(self, args):  # type: (IntegrationConfig) -> None
-        super(ForemanProvider, self).__init__(args)
+        super().__init__(args)
 
         self.__container_from_env = os.environ.get('ANSIBLE_FRMNSIM_CONTAINER')
         """
@@ -48,7 +48,7 @@ class ForemanProvider(CloudProvider):
 
     def setup(self):  # type: () -> None
         """Setup cloud resource before delegation and reg cleanup callback."""
-        super(ForemanProvider, self).setup()
+        super().setup()
 
         if self._use_static_config():
             self._setup_static()
@@ -63,17 +63,15 @@ class ForemanProvider(CloudProvider):
             foreman_port,
         ]
 
-        descriptor = run_support_container(
+        run_support_container(
             self.args,
             self.platform,
             self.image,
             self.DOCKER_SIMULATOR_NAME,
             ports,
             allow_existing=True,
-            cleanup=True,
+            cleanup=CleanupMode.YES,
         )
-
-        descriptor.register(self.args)
 
         self._set_cloud_config('FOREMAN_HOST', self.DOCKER_SIMULATOR_NAME)
         self._set_cloud_config('FOREMAN_PORT', str(foreman_port))

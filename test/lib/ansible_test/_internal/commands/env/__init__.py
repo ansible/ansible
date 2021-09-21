@@ -1,29 +1,23 @@
 """Show information about the test environment."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import datetime
-import functools
 import os
 import platform
-import signal
 import sys
-import time
+import typing as t
 
 from ...config import (
     CommonConfig,
-    TestConfig,
 )
 
 from ...io import (
     write_json_file,
-    read_json_file,
 )
 
 from ...util import (
     display,
     SubprocessError,
-    ApplicationError,
     get_ansible_version,
     get_available_python_versions,
 )
@@ -40,16 +34,8 @@ from ...docker_util import (
     docker_version
 )
 
-from ...thread import (
-    WrappedThread,
-)
-
 from ...constants import (
     TIMEOUT_PATH,
-)
-
-from ...test import (
-    TestTimeout,
 )
 
 from ...ci import (
@@ -58,12 +44,9 @@ from ...ci import (
 
 
 class EnvConfig(CommonConfig):
-    """Configuration for the tools command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(EnvConfig, self).__init__(args, 'env')
+    """Configuration for the `env` command."""
+    def __init__(self, args):  # type: (t.Any) -> None
+        super().__init__(args, 'env')
 
         self.show = args.show
         self.dump = args.dump
@@ -75,19 +58,15 @@ class EnvConfig(CommonConfig):
             self.show = True
 
 
-def command_env(args):
-    """
-    :type args: EnvConfig
-    """
+def command_env(args):  # type: (EnvConfig) -> None
+    """Entry point for the `env` command."""
     show_dump_env(args)
     list_files_env(args)
     set_timeout(args)
 
 
-def show_dump_env(args):
-    """
-    :type args: EnvConfig
-    """
+def show_dump_env(args):  # type: (EnvConfig) -> None
+    """Show information about the current environment and/or write the information to disk."""
     if not args.show and not args.dump:
         return
 
@@ -137,10 +116,8 @@ def list_files_env(args):  # type: (EnvConfig) -> None
         display.info(path)
 
 
-def set_timeout(args):
-    """
-    :type args: EnvConfig
-    """
+def set_timeout(args):  # type: (EnvConfig) -> None
+    """Set an execution timeout for subsequent ansible-test invocations."""
     if args.timeout is None:
         return
 
@@ -167,79 +144,8 @@ def set_timeout(args):
         os.remove(TIMEOUT_PATH)
 
 
-def get_timeout():
-    """
-    :rtype: dict[str, any] | None
-    """
-    if not os.path.exists(TIMEOUT_PATH):
-        return None
-
-    data = read_json_file(TIMEOUT_PATH)
-    data['deadline'] = datetime.datetime.strptime(data['deadline'], '%Y-%m-%dT%H:%M:%SZ')
-
-    return data
-
-
-def configure_timeout(args):
-    """
-    :type args: CommonConfig
-    """
-    if isinstance(args, TestConfig):
-        configure_test_timeout(args)  # only tests are subject to the timeout
-
-
-def configure_test_timeout(args):
-    """
-    :type args: TestConfig
-    """
-    timeout = get_timeout()
-
-    if not timeout:
-        return
-
-    timeout_start = datetime.datetime.utcnow()
-    timeout_duration = timeout['duration']
-    timeout_deadline = timeout['deadline']
-    timeout_remaining = timeout_deadline - timeout_start
-
-    test_timeout = TestTimeout(timeout_duration)
-
-    if timeout_remaining <= datetime.timedelta():
-        test_timeout.write(args)
-
-        raise ApplicationError('The %d minute test timeout expired %s ago at %s.' % (
-            timeout_duration, timeout_remaining * -1, timeout_deadline))
-
-    display.info('The %d minute test timeout expires in %s at %s.' % (
-        timeout_duration, timeout_remaining, timeout_deadline), verbosity=1)
-
-    def timeout_handler(_dummy1, _dummy2):
-        """Runs when SIGUSR1 is received."""
-        test_timeout.write(args)
-
-        raise ApplicationError('Tests aborted after exceeding the %d minute time limit.' % timeout_duration)
-
-    def timeout_waiter(timeout_seconds):
-        """
-        :type timeout_seconds: int
-        """
-        time.sleep(timeout_seconds)
-        os.kill(os.getpid(), signal.SIGUSR1)
-
-    signal.signal(signal.SIGUSR1, timeout_handler)
-
-    instance = WrappedThread(functools.partial(timeout_waiter, timeout_remaining.seconds))
-    instance.daemon = True
-    instance.start()
-
-
-def show_dict(data, verbose, root_verbosity=0, path=None):
-    """
-    :type data: dict[str, any]
-    :type verbose: dict[str, int]
-    :type root_verbosity: int
-    :type path: list[str] | None
-    """
+def show_dict(data, verbose, root_verbosity=0, path=None):  # type: (t.Dict[str, t.Any], t.Dict[str, int], int, t.Optional[t.List[str]]) -> None
+    """Show a dict with varying levels of verbosity."""
     path = path if path else []
 
     for key, value in sorted(data.items()):
@@ -260,11 +166,8 @@ def show_dict(data, verbose, root_verbosity=0, path=None):
             display.info(indent + '%s: %s' % (key, value), verbosity=verbosity)
 
 
-def get_docker_details(args):
-    """
-    :type args: CommonConfig
-    :rtype: dict[str, any]
-    """
+def get_docker_details(args):  # type: (EnvConfig) -> t.Dict[str, str]
+    """Return details about docker."""
     docker = get_docker_command()
 
     executable = None

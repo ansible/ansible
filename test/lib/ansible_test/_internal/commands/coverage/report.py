@@ -1,6 +1,5 @@
 """Generate console code coverage reports."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -14,6 +13,10 @@ from ...util import (
 
 from ...data import (
     data_context,
+)
+
+from ...provisioning import (
+    prepare_profiles,
 )
 
 from .combine import (
@@ -30,6 +33,7 @@ def command_coverage_report(args):
     """
     :type args: CoverageReportConfig
     """
+    host_state = prepare_profiles(args)  # coverage report
     output_files = command_coverage_combine(args)
 
     for output_file in output_files:
@@ -50,7 +54,7 @@ def command_coverage_report(args):
             if args.omit:
                 options.extend(['--omit', args.omit])
 
-            run_coverage(args, output_file, 'report', options)
+            run_coverage(args, host_state, output_file, 'report', options)
 
 
 def _generate_powershell_output_report(args, coverage_file):
@@ -149,7 +153,7 @@ class CoverageReportConfig(CoverageCombineConfig):
         """
         :type args: any
         """
-        super(CoverageReportConfig, self).__init__(args)
+        super().__init__(args)
 
         self.show_missing = args.show_missing  # type: bool
         self.include = args.include  # type: str

@@ -1,13 +1,11 @@
 """Functions for disk IO."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import errno
 import io
 import json
 import os
-
-from . import types as t
+import typing as t
 
 from .encoding import (
     ENCODING,
@@ -42,11 +40,11 @@ def make_dirs(path):  # type: (str) -> None
 
 
 def write_json_file(path,  # type: str
-                    content,  # type: t.Union[t.List[t.Any], t.Dict[str, t.Any]]
+                    content,  # type: t.Any
                     create_directories=False,  # type: bool
                     formatted=True,  # type: bool
                     encoder=None,  # type: t.Optional[t.Callable[[t.Any], t.Any]]
-                    ):  # type: (...) -> None
+                    ):  # type: (...) -> str
     """Write the given json content to the specified path, optionally creating missing directories."""
     text_content = json.dumps(content,
                               sort_keys=formatted,
@@ -56,6 +54,8 @@ def write_json_file(path,  # type: str
                               ) + '\n'
 
     write_text_file(path, text_content, create_directories=create_directories)
+
+    return text_content
 
 
 def write_text_file(path, content, create_directories=False):  # type: (str, str, bool) -> None
@@ -88,6 +88,7 @@ def open_binary_file(path, mode='rb'):  # type: (str, str) -> t.BinaryIO
 class SortedSetEncoder(json.JSONEncoder):
     """Encode sets as sorted lists."""
     def default(self, o):
+        """Return a serialized version of the `o` object."""
         if isinstance(o, set):
             return sorted(o)
 

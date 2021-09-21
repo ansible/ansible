@@ -2,6 +2,10 @@
 
 set -eux
 
+source virtualenv.sh
+
+python -m pip install boto3 boto
+
 # ensure test config is empty
 ansible-playbook playbooks/empty_inventory_config.yml "$@"
 

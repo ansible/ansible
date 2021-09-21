@@ -1,6 +1,5 @@
 """ACME plugin for integration tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -9,6 +8,7 @@ from ....config import (
 )
 
 from ....containers import (
+    CleanupMode,
     run_support_container,
 )
 
@@ -24,7 +24,7 @@ class ACMEProvider(CloudProvider):
     DOCKER_SIMULATOR_NAME = 'acme-simulator'
 
     def __init__(self, args):  # type: (IntegrationConfig) -> None
-        super(ACMEProvider, self).__init__(args)
+        super().__init__(args)
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
         if os.environ.get('ANSIBLE_ACME_CONTAINER'):
@@ -36,7 +36,7 @@ class ACMEProvider(CloudProvider):
 
     def setup(self):  # type: () -> None
         """Setup the cloud resource before delegation and register a cleanup callback."""
-        super(ACMEProvider, self).setup()
+        super().setup()
 
         if self._use_static_config():
             self._setup_static()
@@ -50,17 +50,15 @@ class ACMEProvider(CloudProvider):
             14000,  # Pebble ACME CA
         ]
 
-        descriptor = run_support_container(
+        run_support_container(
             self.args,
             self.platform,
             self.image,
             self.DOCKER_SIMULATOR_NAME,
             ports,
             allow_existing=True,
-            cleanup=True,
+            cleanup=CleanupMode.YES,
         )
-
-        descriptor.register(self.args)
 
         self._set_cloud_config('acme_host', self.DOCKER_SIMULATOR_NAME)
 

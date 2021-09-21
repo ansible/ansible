@@ -3,7 +3,7 @@
 set -eux
 
 function cleanup {
-    ansible-playbook -i hosts.yml cleanup.yml -e "output_dir=${OUTPUT_DIR}" -b "$@"
+    ansible-playbook -i "${INVENTORY_PATH}" cleanup.yml -e "output_dir=${OUTPUT_DIR}" -b "$@"
     unset ANSIBLE_CACHE_PLUGIN
     unset ANSIBLE_CACHE_PLUGIN_CONNECTION
 }
@@ -28,7 +28,7 @@ ansible-playbook -i ../../inventory injection/avoid_slurp_return.yml -e "output_
 export ANSIBLE_CACHE_PLUGIN=jsonfile
 export ANSIBLE_CACHE_PLUGIN_CONNECTION="${OUTPUT_DIR}/cache"
 # Create a non-root user account and configure SSH acccess for that account
-ansible-playbook -i hosts.yml setup_unreadable_test.yml -e "output_dir=${OUTPUT_DIR}" "$@"
+ansible-playbook -i "${INVENTORY_PATH}" setup_unreadable_test.yml -e "output_dir=${OUTPUT_DIR}" "$@"
 
 # Run the tests as the unprivileged user without become to test the use of the stat module from the fetch module
-ansible-playbook --user fetcher -i hosts.yml test_unreadable_with_stat.yml -e "output_dir=${OUTPUT_DIR}" "$@"
+ansible-playbook -i "${INVENTORY_PATH}" test_unreadable_with_stat.yml -e ansible_user=fetcher -e ansible_become=no -e "output_dir=${OUTPUT_DIR}" "$@"

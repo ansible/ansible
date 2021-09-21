@@ -1,10 +1,8 @@
 """Layout provider for Ansible source."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
-
-from ... import types as t
+import typing as t
 
 from . import (
     ContentLayout,

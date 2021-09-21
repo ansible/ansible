@@ -1,13 +1,11 @@
 """Classify changes in Ansible code."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import collections
 import os
 import re
 import time
-
-from .. import types as t
+import typing as t
 
 from ..target import (
     walk_module_targets,
@@ -160,7 +158,7 @@ def categorize_changes(args, paths, verbose_command=None):
         targets.discard('none')
 
         if any(target == 'all' for target in targets):
-            commands[command] = set(['all'])
+            commands[command] = {'all'}
 
     commands = dict((c, sorted(targets)) for c, targets in commands.items() if targets)
     focused_commands = dict((c, sorted(targets)) for c, targets in focused_commands.items())
@@ -716,11 +714,6 @@ class PathMapper:
         if path.startswith('changelogs/'):
             return minimal
 
-        if path.startswith('contrib/'):
-            return {
-                'units': 'test/units/contrib/'
-            }
-
         if path.startswith('docs/'):
             return minimal
 
@@ -753,22 +746,6 @@ class PathMapper:
             return minimal
 
         if path.startswith('packaging/'):
-            if path.startswith('packaging/requirements/'):
-                if name.startswith('requirements-') and ext == '.txt':
-                    component = name.split('-', 1)[1]
-
-                    candidates = (
-                        'cloud/%s/' % component,
-                    )
-
-                    for candidate in candidates:
-                        if candidate in self.integration_targets_by_alias:
-                            return {
-                                'integration': candidate,
-                            }
-
-                return all_tests(self.args)  # broad impact, run all tests
-
             return minimal
 
         if path.startswith('test/ansible_test/'):
@@ -827,14 +804,6 @@ class PathMapper:
                 return {
                     name: 'all',
                 }
-
-            if name.startswith('integration.cloud.'):
-                cloud_target = 'cloud/%s/' % name.split('.')[2]
-
-                if cloud_target in self.integration_targets_by_alias:
-                    return {
-                        'integration': cloud_target,
-                    }
 
         if path.startswith('test/lib/ansible_test/_util/controller/sanity/') or path.startswith('test/lib/ansible_test/_util/target/sanity/'):
             return {

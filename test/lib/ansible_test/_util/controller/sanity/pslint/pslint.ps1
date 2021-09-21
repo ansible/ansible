@@ -1,4 +1,3 @@
-#!/usr/bin/env pwsh
 #Requires -Version 6
 #Requires -Modules PSScriptAnalyzer, PSSA-PSCustomUseLiteralPath
 

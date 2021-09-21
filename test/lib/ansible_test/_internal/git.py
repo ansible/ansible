@@ -1,10 +1,8 @@
 """Wrapper around git command-line tools."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
-
-from . import types as t
+import typing as t
 
 from .util import (
     SubprocessError,

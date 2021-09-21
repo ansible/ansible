@@ -1,12 +1,10 @@
 """Analyze python import statements."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import ast
 import os
 import re
-
-from .. import types as t
+import typing as t
 
 from ..io import (
     read_binary_file,
@@ -22,9 +20,9 @@ from ..data import (
     data_context,
 )
 
-VIRTUAL_PACKAGES = set([
+VIRTUAL_PACKAGES = {
     'ansible.module_utils.six',
-])
+}
 
 
 def get_python_module_utils_imports(compile_targets):
@@ -48,9 +46,9 @@ def get_python_module_utils_imports(compile_targets):
         display.info('module_utils import: %s%s' % ('  ' * depth, import_name), verbosity=4)
 
         if seen is None:
-            seen = set([import_name])
+            seen = {import_name}
 
-        results = set([import_name])
+        results = {import_name}
 
         # virtual packages depend on the modules they contain instead of the reverse
         if import_name in VIRTUAL_PACKAGES:
@@ -104,7 +102,7 @@ def get_python_module_utils_imports(compile_targets):
                         display.info('%s inherits import %s via %s' % (target_path, module_util_import, module_util), verbosity=6)
                         modules.add(module_util_import)
 
-    imports = dict([(module_util, set()) for module_util in module_utils | virtual_utils])
+    imports = {module_util: set() for module_util in module_utils | virtual_utils}  # type: t.Dict[str, t.Set[str]]
 
     for target_path, modules in imports_by_target_path.items():
         for module_util in modules:

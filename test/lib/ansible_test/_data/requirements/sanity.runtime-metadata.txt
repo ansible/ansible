@@ -1,2 +1,2 @@
-pyyaml  # not frozen due to usage outside sanity tests
+pyyaml == 5.4.1
 voluptuous == 0.12.1

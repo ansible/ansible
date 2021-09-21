@@ -1,6 +1,5 @@
 """Galaxy (ansible-galaxy) plugin for integration tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import tempfile
@@ -79,7 +78,7 @@ class GalaxyProvider(CloudProvider):
     The pulp source itself resides at: https://github.com/pulp/pulp-oci-images
     """
     def __init__(self, args):  # type: (IntegrationConfig) -> None
-        super(GalaxyProvider, self).__init__(args)
+        super().__init__(args)
 
         # Cannot use the latest container image as either galaxy_ng 4.2.0rc2 or pulp 0.5.0 has sporatic issues with
         # dropping published collections in CI. Try running the tests multiple times when updating. Will also need to
@@ -94,7 +93,7 @@ class GalaxyProvider(CloudProvider):
 
     def setup(self):  # type: () -> None
         """Setup cloud resource before delegation and reg cleanup callback."""
-        super(GalaxyProvider, self).setup()
+        super().setup()
 
         galaxy_port = 80
         pulp_host = 'ansible-ci-pulp'
@@ -114,7 +113,6 @@ class GalaxyProvider(CloudProvider):
             ports,
             start=False,
             allow_existing=True,
-            cleanup=None,
         )
 
         if not descriptor.running:
@@ -132,8 +130,6 @@ class GalaxyProvider(CloudProvider):
                     docker_cp_to(self.args, pulp_id, temp_fd.name, path)
 
             descriptor.start(self.args)
-
-        descriptor.register(self.args)
 
         self._set_cloud_config('PULP_HOST', pulp_host)
         self._set_cloud_config('PULP_PORT', str(pulp_port))

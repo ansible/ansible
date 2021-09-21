@@ -1,11 +1,9 @@
 """Combine code coverage files."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import json
-
-from ... import types as t
+import typing as t
 
 from ...target import (
     walk_compile_targets,
@@ -37,6 +35,16 @@ from ...data import (
     data_context,
 )
 
+from ...host_configs import (
+    DockerConfig,
+    RemoteConfig,
+)
+
+from ...provisioning import (
+    HostState,
+    prepare_profiles,
+)
+
 from . import (
     enumerate_python_arcs,
     enumerate_powershell_lines,
@@ -58,8 +66,13 @@ def command_coverage_combine(args):
     :type args: CoverageCombineConfig
     :rtype: list[str]
     """
+    host_state = prepare_profiles(args)  # coverage combine
+
     if args.delegate:
-        if args.docker or args.remote:
+        raise Delegate(host_state)
+
+    if args.delegate:
+        if isinstance(args.controller, (DockerConfig, RemoteConfig)):
             paths = get_all_coverage_files()
             exported_paths = [path for path in paths if os.path.basename(path).split('=')[-1].split('.')[:2] == ['coverage', 'combined']]
 
@@ -75,9 +88,9 @@ def command_coverage_combine(args):
 
             data_context().register_payload_callback(coverage_callback)
 
-        raise Delegate()
+        raise Delegate(host_state=host_state)
 
-    paths = _command_coverage_combine_powershell(args) + _command_coverage_combine_python(args)
+    paths = _command_coverage_combine_powershell(args) + _command_coverage_combine_python(args, host_state)
 
     for path in paths:
         display.info('Generated combined output: %s' % path, verbosity=1)
@@ -88,18 +101,15 @@ def command_coverage_combine(args):
 class ExportedCoverageDataNotFound(ApplicationError):
     """Exception when no combined coverage data is present yet is required."""
     def __init__(self):
-        super(ExportedCoverageDataNotFound, self).__init__(
+        super().__init__(
             'Coverage data must be exported before processing with the `--docker` or `--remote` option.\n'
             'Export coverage with `ansible-test coverage combine` using the `--export` option.\n'
             'The exported files must be in the directory: %s/' % ResultType.COVERAGE.relative_path)
 
 
-def _command_coverage_combine_python(args):
-    """
-    :type args: CoverageCombineConfig
-    :rtype: list[str]
-    """
-    coverage = initialize_coverage(args)
+def _command_coverage_combine_python(args, host_state):  # type: (CoverageCombineConfig, HostState) -> t.List[str]
+    """Combine Python coverage files and return a list of the output files."""
+    coverage = initialize_coverage(args, host_state)
 
     modules = get_python_modules()
 
@@ -350,7 +360,7 @@ def get_coverage_group(args, coverage_file):
 class CoverageCombineConfig(CoverageConfig):
     """Configuration for the coverage combine command."""
     def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageCombineConfig, self).__init__(args)
+        super().__init__(args)
 
         self.group_by = frozenset(args.group_by) if args.group_by else frozenset()  # type: t.FrozenSet[str]
         self.all = args.all  # type: bool

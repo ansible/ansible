@@ -1,16 +1,14 @@
 """Python threading tools."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import threading
+import functools
 import sys
+import threading
+import queue
+import typing as t
 
-try:
-    # noinspection PyPep8Naming
-    import Queue as queue
-except ImportError:
-    # noinspection PyUnresolvedReferences
-    import queue  # pylint: disable=locally-disabled, import-error
+
+TCallable = t.TypeVar('TCallable', bound=t.Callable)
 
 
 class WrappedThread(threading.Thread):
@@ -19,8 +17,7 @@ class WrappedThread(threading.Thread):
         """
         :type action: () -> any
         """
-        # noinspection PyOldStyleClasses
-        super(WrappedThread, self).__init__()
+        super().__init__()
         self._result = queue.Queue()
         self.action = action
         self.result = None
@@ -55,3 +52,16 @@ class WrappedThread(threading.Thread):
         self.result = result
 
         return result
+
+
+def mutex(func):  # type: (TCallable) -> TCallable
+    """Enforce exclusive access on a decorated function."""
+    lock = threading.Lock()
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        """Wrapper around `func` which uses a lock to provide exclusive access to the function."""
+        with lock:
+            return func(*args, **kwargs)
+
+    return wrapper

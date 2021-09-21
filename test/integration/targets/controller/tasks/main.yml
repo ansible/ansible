@@ -1,0 +1,9 @@
+- name: Verify testhost is control host
+  stat:
+    path: "{{ output_dir }}"
+- name: Get control host details
+  setup:
+  register: control_host
+- name: Show control host details
+  debug:
+    msg: "{{ control_host.ansible_facts.ansible_distribution }} {{ control_host.ansible_facts.ansible_distribution_version }}"

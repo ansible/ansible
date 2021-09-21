@@ -504,11 +504,11 @@
   when: ansible_facts.python_version is version('3', '>=')
 
 - name: run command with strip
-  command: '{{ ansible_playbook_python}} -c "import sys; msg=''hello \n \r''; print(msg); {{ print_error_command }}"'
+  command: '{{ ansible_python_interpreter }} -c "import sys; msg=''hello \n \r''; print(msg); {{ print_error_command }}"'
   register: command_strip
 
 - name: run command without strip
-  command: '{{ ansible_playbook_python}} -c "import sys; msg=''hello \n \r''; print(msg); {{ print_error_command }}"'
+  command: '{{ ansible_python_interpreter }} -c "import sys; msg=''hello \n \r''; print(msg); {{ print_error_command }}"'
   args:
     strip_empty_ends: no
   register: command_no_strip

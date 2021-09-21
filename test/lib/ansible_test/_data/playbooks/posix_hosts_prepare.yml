@@ -1,4 +1,5 @@
-- hosts: all
+- name: Prepare POSIX hosts file
+  hosts: all
   gather_facts: no
   tasks:
     - name: Add container hostname(s) to hosts file

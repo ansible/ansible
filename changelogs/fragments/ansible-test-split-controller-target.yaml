@@ -1,0 +1,38 @@
+breaking_changes:
+  - ansible-test - Automatic installation of requirements for "cloud" test plugins no longer occurs. The affected test plugins are
+                   ``aws``, ``azure``, ``cs``, ``hcloud``, ``nios``, ``opennebula``, ``openshift`` and ``vcenter``. Collections should instead use one of the
+                   supported integration test requirements files, such as the ``tests/integration/requirements.txt`` file.
+major_changes:
+  - ansible-test - Python 3.8 - 3.10 are now required to run ``ansible-test``, thus matching the Ansible controller Python requirements.
+                   Older Python versions (2.6 - 2.7 and 3.5 - 3.10) can still be the target for relevant tests.
+  - ansible-test - New ``--controller`` and ``--target`` / ``--target-python`` options have been added to allow more control over test environments.
+  - ansible-test - Integration tests run with the ``integration`` command can now be executed on two separate hosts instead of always running on the controller.
+                   The target host can be one provided by ``ansible-test`` or by the user, as long as it is accessible using SSH.
+  - ansible-test - Collections can now specify controller and target specific integration test requirements and constraints.
+                   If provided, they take precedence over the previously available requirements and constraints files.
+  - ansible-test - Sanity tests always run in isolated Python virtual environments specific to the requirements of each test. The environments are cached.
+  - ansible-test - Sanity tests now use fully pinned requirements that are independent of each other and other test types.
+  - ansible-test - Sanity tests are now separated into two categories, controller and target. All tests except ``import`` and ``compile`` are controller tests.
+                   The controller tests always run using the same Python version used to run ``ansible-test``.
+                   The target tests use the Python version(s) specified by the user, or all available Python versions.
+  - junit callback - The ``junit_xml`` and ``ordereddict`` Python modules are no longer required to use the ``junit`` callback plugin.
+minor_changes:
+  - ansible-test - Using an unknown ``--docker`` or ``--remote`` environment now requires specifying a Python version.
+  - ansible-test - The ``--docker-keep-git`` option (used only for testing ansible-core) has been renamed to ``--keep-git``.
+  - ansible-test - A new ``base`` test container is available.
+                   It is similar to the ``default`` test container, but contains no pre-installed Python packages other than ``pip`` and its dependencies.
+  - ansible-test - Default settings are now applied to unknown versions of known ``--remote`` platforms.
+  - ansible-test - Constraints provided by ``ansible-test`` for Python package installs have been reduced.
+  - ansible-test - Command line help has been updated to hide the ``--remote`` option (and related options) when the user lacks an API key to use the feature.
+  - ansible-test - The ``--python`` option can be used without another delegation option such as the ``--venv`` or ``--docker`` options.
+  - ansible-test - Environment checking (``pip``, ``python``, ``~/.ssh/known_hosts``, etc.) is no longer performed when running integration tests.
+  - ansible-test - Most scripts used internally by ``ansible-test`` no longer have a shebang or the executable bit set.
+bugfixes:
+  - ansible-test - Tab completion after options like ``--docker`` which accept an optional argument will no longer provide incorrect completions.
+  - ansible-test - The ``--python`` and ``--venv`` options are no longer ignored by some commands, such as ``coverage``.
+known_issues:
+  - ansible-test - Tab completion anywhere other than the end of the command with the new composite options will provide incorrect results.
+                   See https://github.com/kislyuk/argcomplete/issues/351 for additional details.
+deprecated_features:
+  - ansible-test - The ``--docker-no-pull`` option is deprecated and has no effect.
+  - ansible-test - The ``--no-pip-check`` option is deprecated and has no effect.

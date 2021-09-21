@@ -1,6 +1,5 @@
 """Generate XML code coverage reports."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import time
@@ -34,6 +33,10 @@ from ...data import (
     data_context,
 )
 
+from ...provisioning import (
+    prepare_profiles,
+)
+
 from .combine import (
     command_coverage_combine,
     CoverageCombineConfig,
@@ -48,6 +51,7 @@ def command_coverage_xml(args):
     """
     :type args: CoverageXmlConfig
     """
+    host_state = prepare_profiles(args)  # coverage xml
     output_files = command_coverage_combine(args)
 
     for output_file in output_files:
@@ -63,7 +67,7 @@ def command_coverage_xml(args):
         else:
             xml_path = os.path.join(ResultType.REPORTS.path, xml_name)
             make_dirs(ResultType.REPORTS.path)
-            run_coverage(args, output_file, 'xml', ['-i', '-o', xml_path])
+            run_coverage(args, host_state, output_file, 'xml', ['-i', '-o', xml_path])
 
 
 def _generate_powershell_xml(coverage_file):

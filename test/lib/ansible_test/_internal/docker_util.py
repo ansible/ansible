@@ -1,17 +1,15 @@
 """Functions for accessing docker via the docker cli."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import os
 import random
 import socket
 import time
-
-from . import types as t
+import urllib.parse
+import typing as t
 
 from .io import (
-    open_binary_file,
     read_text_file,
 )
 
@@ -21,10 +19,7 @@ from .util import (
     display,
     find_executable,
     SubprocessError,
-)
-
-from .http import (
-    urlparse,
+    cache,
 )
 
 from .util_common import (
@@ -35,8 +30,6 @@ from .util_common import (
 from .config import (
     EnvironmentConfig,
 )
-
-BUFFER_SIZE = 256 * 256
 
 DOCKER_COMMANDS = [
     'docker',
@@ -75,45 +68,43 @@ class DockerCommand:
         return None
 
 
-def get_docker_command(required=False):  # type: (bool) -> t.Optional[DockerCommand]
+def require_docker():  # type: () -> DockerCommand
     """Return the docker command to invoke. Raises an exception if docker is not available."""
-    try:
-        return get_docker_command.cmd
-    except AttributeError:
-        get_docker_command.cmd = DockerCommand.detect()
+    if command := get_docker_command():
+        return command
 
-    if required and not get_docker_command.cmd:
-        raise ApplicationError("No container runtime detected. Supported commands: %s" % ', '.join(DOCKER_COMMANDS))
-
-    return get_docker_command.cmd
+    raise ApplicationError(f'No container runtime detected. Supported commands: {", ".join(DOCKER_COMMANDS)}')
 
 
+@cache
+def get_docker_command():  # type: () -> t.Optional[DockerCommand]
+    """Return the docker command to invoke, or None if docker is not available."""
+    return DockerCommand.detect()
+
+
+def docker_available():  # type: () -> bool
+    """Return True if docker is available, otherwise return False."""
+    return bool(get_docker_command())
+
+
+@cache
 def get_docker_host_ip():  # type: () -> str
     """Return the IP of the Docker host."""
-    try:
-        return get_docker_host_ip.ip
-    except AttributeError:
-        pass
-
-    docker_host_ip = get_docker_host_ip.ip = socket.gethostbyname(get_docker_hostname())
+    docker_host_ip = socket.gethostbyname(get_docker_hostname())
 
     display.info('Detected docker host IP: %s' % docker_host_ip, verbosity=1)
 
     return docker_host_ip
 
 
+@cache
 def get_docker_hostname():  # type: () -> str
     """Return the hostname of the Docker service."""
-    try:
-        return get_docker_hostname.hostname
-    except AttributeError:
-        pass
-
     docker_host = os.environ.get('DOCKER_HOST')
 
     if docker_host and docker_host.startswith('tcp://'):
         try:
-            hostname = urlparse(docker_host)[1].split(':')[0]
+            hostname = urllib.parse.urlparse(docker_host)[1].split(':')[0]
             display.info('Detected Docker host: %s' % hostname, verbosity=1)
         except ValueError:
             hostname = 'localhost'
@@ -122,20 +113,12 @@ def get_docker_hostname():  # type: () -> str
         hostname = 'localhost'
         display.info('Assuming Docker is available on localhost.', verbosity=1)
 
-    get_docker_hostname.hostname = hostname
-
     return hostname
 
 
-def get_docker_container_id():
-    """
-    :rtype: str | None
-    """
-    try:
-        return get_docker_container_id.container_id
-    except AttributeError:
-        pass
-
+@cache
+def get_docker_container_id():  # type: () -> t.Optional[str]
+    """Return the current container ID if running in a container, otherwise return None."""
     path = '/proc/self/cpuset'
     container_id = None
 
@@ -151,8 +134,6 @@ def get_docker_container_id():
 
         if cgroup_path in ('/docker', '/azpl_job'):
             container_id = cgroup_name
-
-    get_docker_container_id.container_id = container_id
 
     if container_id:
         display.info('Detected execution in Docker container: %s' % container_id, verbosity=1)
@@ -200,12 +181,12 @@ def docker_pull(args, image):
     :type args: EnvironmentConfig
     :type image: str
     """
-    if ('@' in image or ':' in image) and docker_image_exists(args, image):
-        display.info('Skipping docker pull of existing image with tag or digest: %s' % image, verbosity=2)
+    if '@' not in image and ':' not in image:
+        display.info('Skipping pull of image without tag or digest: %s' % image, verbosity=2)
         return
 
-    if not args.docker_pull:
-        display.warning('Skipping docker pull for "%s". Image may be out-of-date.' % image)
+    if docker_image_exists(args, image):
+        display.info('Skipping pull of existing image: %s' % image, verbosity=2)
         return
 
     for _iteration in range(1, 10):
@@ -222,32 +203,6 @@ def docker_pull(args, image):
 def docker_cp_to(args, container_id, src, dst):  # type: (EnvironmentConfig, str, str, str) -> None
     """Copy a file to the specified container."""
     docker_command(args, ['cp', src, '%s:%s' % (container_id, dst)])
-
-
-def docker_put(args, container_id, src, dst):
-    """
-    :type args: EnvironmentConfig
-    :type container_id: str
-    :type src: str
-    :type dst: str
-    """
-    # avoid 'docker cp' due to a bug which causes 'docker rm' to fail
-    with open_binary_file(src) as src_fd:
-        docker_exec(args, container_id, ['dd', 'of=%s' % dst, 'bs=%s' % BUFFER_SIZE],
-                    options=['-i'], stdin=src_fd, capture=True)
-
-
-def docker_get(args, container_id, src, dst):
-    """
-    :type args: EnvironmentConfig
-    :type container_id: str
-    :type src: str
-    :type dst: str
-    """
-    # avoid 'docker cp' due to a bug which causes 'docker rm' to fail
-    with open_binary_file(dst, 'wb') as dst_fd:
-        docker_exec(args, container_id, ['dd', 'if=%s' % src, 'bs=%s' % BUFFER_SIZE],
-                    options=['-i'], stdout=dst_fd, capture=True)
 
 
 def docker_run(args, image, options, cmd=None, create_only=False):
@@ -331,7 +286,7 @@ class DockerError(Exception):
 class ContainerNotFoundError(DockerError):
     """The container identified by `identifier` was not found."""
     def __init__(self, identifier):
-        super(ContainerNotFoundError, self).__init__('The container "%s" was not found.' % identifier)
+        super().__init__('The container "%s" was not found.' % identifier)
 
         self.identifier = identifier
 
@@ -480,25 +435,6 @@ def docker_image_exists(args, image):  # type: (EnvironmentConfig, str) -> bool
     return True
 
 
-def docker_network_inspect(args, network):
-    """
-    :type args: EnvironmentConfig
-    :type network: str
-    :rtype: list[dict]
-    """
-    if args.explain:
-        return []
-
-    try:
-        stdout = docker_command(args, ['network', 'inspect', network], capture=True)[0]
-        return json.loads(stdout)
-    except SubprocessError as ex:
-        try:
-            return json.loads(ex.stdout)
-        except Exception:
-            raise ex
-
-
 def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None, stdout=None, data=None):
     """
     :type args: EnvironmentConfig
@@ -514,7 +450,7 @@ def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None
     if not options:
         options = []
 
-    if data:
+    if data or stdin or stdout:
         options.append('-i')
 
     return docker_command(args, ['exec'] + options + [container_id] + cmd, capture=capture, stdin=stdin, stdout=stdout, data=data)
@@ -550,7 +486,7 @@ def docker_command(args, cmd, capture=False, stdin=None, stdout=None, always=Fal
     :rtype: str | None, str | None
     """
     env = docker_environment()
-    command = get_docker_command(required=True).command
+    command = require_docker().command
     return run_command(args, [command] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always, data=data)
 
 

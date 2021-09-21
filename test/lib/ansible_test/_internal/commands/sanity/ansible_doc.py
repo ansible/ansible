@@ -1,17 +1,20 @@
 """Sanity test for ansible-doc."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import collections
 import os
 import re
-
-from ... import types as t
+import typing as t
 
 from . import (
     SanitySingleVersion,
     SanityFailure,
     SanitySuccess,
+    SanityTargets,
+)
+
+from ...test import (
+    TestResult,
 )
 
 from ...target import (
@@ -24,12 +27,9 @@ from ...util import (
     is_subdir,
 )
 
-from ...util_common import (
-    intercept_command,
-)
-
 from ...ansible_util import (
     ansible_environment,
+    intercept_python,
 )
 
 from ...config import (
@@ -40,8 +40,8 @@ from ...data import (
     data_context,
 )
 
-from ...coverage_util import (
-    coverage_context,
+from ...host_configs import (
+    PythonConfig,
 )
 
 
@@ -50,7 +50,7 @@ class AnsibleDocTest(SanitySingleVersion):
     def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         # This should use documentable plugins from constants instead
-        unsupported_plugin_types = set([
+        unsupported_plugin_types = {
             # not supported by ansible-doc
             'action',
             'doc_fragments',
@@ -62,7 +62,7 @@ class AnsibleDocTest(SanitySingleVersion):
             # (https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#modules--plugins)
             'plugin_utils',
             'sub_plugins',
-        ])
+        }
 
         plugin_paths = [plugin_path for plugin_type, plugin_path in data_context().content.plugin_paths.items() if plugin_type not in unsupported_plugin_types]
 
@@ -72,13 +72,7 @@ class AnsibleDocTest(SanitySingleVersion):
                 and any(is_subdir(target.path, path) for path in plugin_paths)
                 ]
 
-    def test(self, args, targets, python_version):
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :type python_version: str
-        :rtype: TestResult
-        """
+    def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
         settings = self.load_processor(args)
 
         paths = [target.path for target in targets.include]
@@ -113,9 +107,7 @@ class AnsibleDocTest(SanitySingleVersion):
                 cmd.extend(sorted(doc_targets[doc_type]))
 
                 try:
-                    with coverage_context(args):
-                        stdout, stderr = intercept_command(args, cmd, target_name='ansible-doc', env=env, capture=True, python_version=python_version)
-
+                    stdout, stderr = intercept_python(args, python, cmd, env, capture=True)
                     status = 0
                 except SubprocessError as ex:
                     stdout = ex.stdout

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Wrapper around yamllint that supports YAML embedded in Ansible modules."""
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -29,9 +28,9 @@ def main():
 
 
 class TestConstructor(SafeConstructor):
-    """Yaml Safe Constructor that knows about Ansible tags"""
-
+    """Yaml Safe Constructor that knows about Ansible tags."""
     def construct_yaml_unsafe(self, node):
+        """Construct an unsafe tag."""
         try:
             constructor = getattr(node, 'id', 'object')
             if constructor is not None:
@@ -60,6 +59,7 @@ TestConstructor.add_constructor(
 
 
 class TestLoader(CParser, TestConstructor, Resolver):
+    """Custom YAML loader that recognizes custom Ansible tags."""
     def __init__(self, stream):
         CParser.__init__(self, stream)
         TestConstructor.__init__(self)
@@ -92,8 +92,8 @@ class YamlChecker:
         for path in paths:
             extension = os.path.splitext(path)[1]
 
-            with open(path) as f:
-                contents = f.read()
+            with open(path) as file:
+                contents = file.read()
 
             if extension in ('.yml', '.yaml'):
                 self.check_yaml(yaml_conf, path, contents)
@@ -150,12 +150,12 @@ class YamlChecker:
         """
         try:
             yaml.load(contents, Loader=TestLoader)
-        except MarkedYAMLError as e:
+        except MarkedYAMLError as ex:
             self.messages += [{'code': 'unparsable-with-libyaml',
-                               'message': '%s - %s' % (e.args[0], e.args[2]),
+                               'message': '%s - %s' % (ex.args[0], ex.args[2]),
                                'path': path,
-                               'line': e.problem_mark.line + lineno,
-                               'column': e.problem_mark.column + 1,
+                               'line': ex.problem_mark.line + lineno,
+                               'column': ex.problem_mark.column + 1,
                                'level': 'error',
                                }]
 

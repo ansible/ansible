@@ -1,3 +1,7 @@
-jinja2  # ansible-core requirement
-pyyaml  # ansible-core requirement
-packaging  # ansible-doc requirement
+jinja2 == 3.0.1  # ansible-core requirement
+pyyaml == 5.4.1  # ansible-core requirement
+packaging == 21.0  # ansible-doc requirement
+
+# dependencies
+MarkupSafe == 2.0.1
+pyparsing == 2.4.7

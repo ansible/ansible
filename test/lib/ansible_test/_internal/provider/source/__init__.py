@@ -1,10 +1,8 @@
 """Common code for source providers."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import abc
-
-from ... import types as t
+import typing as t
 
 from .. import (
     PathProvider,

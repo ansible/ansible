@@ -1,6 +1,5 @@
 """Plugin system for cloud providers and environments for use in integration tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import abc
 import atexit
@@ -9,8 +8,7 @@ import os
 import re
 import tempfile
 import time
-
-from .... import types as t
+import typing as t
 
 from ....encoding import (
     to_bytes,
@@ -21,12 +19,12 @@ from ....io import (
 )
 
 from ....util import (
-    ABC,
     ANSIBLE_TEST_CONFIG_ROOT,
     ApplicationError,
     display,
     import_plugins,
     load_plugins,
+    cache,
 )
 
 from ....util_common import (
@@ -52,19 +50,34 @@ from ....data import (
 )
 
 from ....docker_util import (
-    get_docker_command,
+    docker_available,
 )
 
-PROVIDERS = {}
-ENVIRONMENTS = {}
 
-
-def initialize_cloud_plugins():  # type: () -> None
+@cache
+def get_cloud_plugins():  # type: () -> t.Tuple[t.Dict[str, t.Type[CloudProvider]], t.Dict[str, t.Type[CloudEnvironment]]]
     """Import cloud plugins and load them into the plugin dictionaries."""
     import_plugins('commands/integration/cloud')
 
-    load_plugins(CloudProvider, PROVIDERS)
-    load_plugins(CloudEnvironment, ENVIRONMENTS)
+    providers = {}
+    environments = {}
+
+    load_plugins(CloudProvider, providers)
+    load_plugins(CloudEnvironment, environments)
+
+    return providers, environments
+
+
+@cache
+def get_provider_plugins():  # type: () -> t.Dict[str, t.Type[CloudProvider]]
+    """Return a dictionary of the available cloud provider plugins."""
+    return get_cloud_plugins()[0]
+
+
+@cache
+def get_environment_plugins():  # type: () -> t.Dict[str, t.Type[CloudEnvironment]]
+    """Return a dictionary of the available cloud environment plugins."""
+    return get_cloud_plugins()[1]
 
 
 def get_cloud_platforms(args, targets=None):  # type: (TestConfig, t.Optional[t.Tuple[IntegrationTarget, ...]]) -> t.List[str]
@@ -93,7 +106,7 @@ def get_cloud_platform(target):  # type: (IntegrationTarget) -> t.Optional[str]
     if len(cloud_platforms) == 1:
         cloud_platform = cloud_platforms.pop()
 
-        if cloud_platform not in PROVIDERS:
+        if cloud_platform not in get_provider_plugins():
             raise ApplicationError('Target %s aliases contains unknown cloud platform: %s' % (target.name, cloud_platform))
 
         return cloud_platform
@@ -103,7 +116,7 @@ def get_cloud_platform(target):  # type: (IntegrationTarget) -> t.Optional[str]
 
 def get_cloud_providers(args, targets=None):  # type: (IntegrationConfig, t.Optional[t.Tuple[IntegrationTarget, ...]]) -> t.List[CloudProvider]
     """Return a list of cloud providers for the given targets."""
-    return [PROVIDERS[p](args) for p in get_cloud_platforms(args, targets)]
+    return [get_provider_plugins()[p](args) for p in get_cloud_platforms(args, targets)]
 
 
 def get_cloud_environment(args, target):  # type: (IntegrationConfig, IntegrationTarget) -> t.Optional[CloudEnvironment]
@@ -113,7 +126,7 @@ def get_cloud_environment(args, target):  # type: (IntegrationConfig, Integratio
     if not cloud_platform:
         return None
 
-    return ENVIRONMENTS[cloud_platform](args)
+    return get_environment_plugins()[cloud_platform](args)
 
 
 def cloud_filter(args, targets):  # type: (IntegrationConfig, t.Tuple[IntegrationTarget, ...]) -> t.List[str]
@@ -162,10 +175,8 @@ def cloud_init(args, targets):  # type: (IntegrationConfig, t.Tuple[IntegrationT
         write_json_test_results(ResultType.DATA, result_name, data)
 
 
-class CloudBase(ABC):
+class CloudBase(metaclass=abc.ABCMeta):
     """Base class for cloud plugins."""
-    __metaclass__ = abc.ABCMeta
-
     _CONFIG_PATH = 'config_path'
     _RESOURCE_PREFIX = 'resource_prefix'
     _MANAGED = 'managed'
@@ -244,7 +255,7 @@ class CloudBase(ABC):
 class CloudProvider(CloudBase):
     """Base class for cloud provider plugins. Sets up cloud resources before delegation."""
     def __init__(self, args, config_extension='.ini'):  # type: (IntegrationConfig, str) -> None
-        super(CloudProvider, self).__init__(args)
+        super().__init__(args)
 
         self.ci_provider = get_ci_provider()
         self.remove_config = False
@@ -261,7 +272,7 @@ class CloudProvider(CloudBase):
         if not self.uses_docker and not self.uses_config:
             return
 
-        if self.uses_docker and get_docker_command():
+        if self.uses_docker and docker_available():
             return
 
         if self.uses_config and os.path.exists(self.config_static_path):
