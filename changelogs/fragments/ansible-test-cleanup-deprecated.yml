@@ -1,0 +1,3 @@
+minor_changes:
+  - ansible-test - Remove deprecated container ``fedora32``.
+  - ansible-test - Remove deprecated remote platforms ``freebsd/11.4`` and ``rhel/8.3```.
