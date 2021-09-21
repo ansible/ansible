@@ -122,6 +122,60 @@ def get_docker_hostname():  # type: () -> str
 
 
 @cache
+def get_podman_host_ip():  # type: () -> str
+    """Return the IP of the Podman host."""
+    podman_host_ip = socket.gethostbyname(get_podman_hostname())
+
+    display.info('Detected Podman host IP: %s' % podman_host_ip, verbosity=1)
+
+    return podman_host_ip
+
+
+@cache
+def get_podman_default_hostname():  # type -> str
+    """Return the default hostname of the Podman service."""
+    try:
+        stdout = raw_command(['podman', 'system', 'connection', 'list', '--format=json'], capture=True)[0]
+    except SubprocessError:
+        stdout = '[]'
+
+    connections = json.loads(stdout)
+
+    for connection in connections:
+        if connection['Name'][-1] == '*':
+            return connection['URI']
+    else:
+        return None
+
+
+@cache
+def get_podman_hostname():  # type: () -> str
+    """Return the hostname of the Podman service."""
+    # URL value resolution precedence:
+    # - command line value
+    # - environment variable CONTAINER_HOST
+    # - containers.conf
+    # - unix://run/podman/podman.sock
+    podman_host = os.environ.get('CONTAINER_HOST')
+    if not podman_host:
+        podman_host = get_podman_default_hostname()
+
+    if podman_host and '://' in podman_host:
+        try:
+            hostname = urllib.parse.urlparse(podman_host).hostname
+            display.info('Detected Podman host: %s' % hostname, verbosity=1)
+        except ValueError:
+            hostname = 'localhost'
+            display.warning('Could not parse podman URI "%s", falling back to localhost.' % podman_host)
+    else:
+        hostname = 'localhost'
+        display.info('Assuming Podman is available on localhost.', verbosity=1)
+
+    return hostname
+
+
+
+@cache
 def get_docker_container_id():  # type: () -> t.Optional[str]
     """Return the current container ID if running in a container, otherwise return None."""
     path = '/proc/self/cpuset'
@@ -485,5 +539,5 @@ def docker_command(
 def docker_environment():  # type: () -> t.Dict[str, str]
     """Return a dictionary of docker related environment variables found in the current environment."""
     env = common_environment()
-    env.update(dict((key, os.environ[key]) for key in os.environ if key.startswith('DOCKER_')))
+    env.update(dict((key, os.environ[key]) for key in os.environ if key.startswith('DOCKER_') or key.startswith('CONTAINER_')))
     return env

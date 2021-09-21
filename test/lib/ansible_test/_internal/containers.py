@@ -43,6 +43,7 @@ from .docker_util import (
     docker_start,
     get_docker_container_id,
     get_docker_host_ip,
+    get_podman_host_ip,
     require_docker,
 )
 
@@ -350,8 +351,12 @@ def create_container_database(args):  # type: (EnvironmentConfig) -> ContainerDa
 
     for name, container in support_containers.items():
         if container.details.published_ports:
+            if require_docker().command == 'podman':
+                host_ip_func = get_podman_host_ip
+            else:
+                host_ip_func  = get_docker_host_ip
             published_access = ContainerAccess(
-                host_ip=get_docker_host_ip(),
+                host_ip=host_ip_func(),
                 names=container.aliases,
                 ports=None,
                 forwards=dict((port, published_port) for port, published_port in container.details.published_ports.items()),
@@ -370,7 +375,7 @@ def create_container_database(args):  # type: (EnvironmentConfig) -> ContainerDa
         elif require_docker().command == 'podman':
             # published ports for rootless podman containers should be accessible from the host's IP
             container_access = ContainerAccess(
-                host_ip=get_host_ip(),
+                host_ip=get_podman_host_ip(),
                 names=container.aliases,
                 ports=None,
                 forwards=dict((port, published_port) for port, published_port in container.details.published_ports.items()),
