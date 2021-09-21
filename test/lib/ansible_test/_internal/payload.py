@@ -1,6 +1,5 @@
 """Payload management for sending Ansible files and test content to other systems (VMs, containers)."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import atexit
 import os
@@ -8,8 +7,7 @@ import stat
 import tarfile
 import tempfile
 import time
-
-from . import types as t
+import typing as t
 
 from .config import (
     IntegrationConfig,
@@ -47,7 +45,7 @@ ANSIBLE_BIN_SYMLINK_MAP = {
     'ansible-inventory': 'ansible',
     'ansible-playbook': 'ansible',
     'ansible-pull': 'ansible',
-    'ansible-test': '../test/lib/ansible_test/_util/controller/cli/ansible_test_cli_stub.py',
+    'ansible-test': '../test/lib/ansible_test/_util/target/cli/ansible_test_cli_stub.py',
     'ansible-vault': 'ansible',
 }
 

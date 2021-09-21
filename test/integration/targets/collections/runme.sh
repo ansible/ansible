@@ -8,10 +8,6 @@ export ANSIBLE_GATHER_SUBSET=minimal
 export ANSIBLE_HOST_PATTERN_MISMATCH=error
 unset ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH
 
-# FUTURE: just use INVENTORY_PATH as-is once ansible-test sets the right dir
-ipath=../../$(basename "${INVENTORY_PATH:-../../inventory}")
-export INVENTORY_PATH="$ipath"
-
 # ensure we can call collection module
 ansible localhost -m testns.testcoll.testmodule
 

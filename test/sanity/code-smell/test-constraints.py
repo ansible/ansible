@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -12,11 +11,8 @@ def main():
     requirements = {}
 
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        if path == 'test/lib/ansible_test/_data/requirements/sanity.import-plugins.txt':
-            # This file is an exact copy of requirements.txt that is used in the import
-            # sanity test.  There is a code-smell test which ensures that the two files
-            # are identical, and it is only used inside an empty venv, so we can ignore
-            # it here.
+        if path == 'test/lib/ansible_test/_data/requirements/ansible.txt':
+            # This file is an exact copy of the ansible requirements.txt and should not conflict with other constraints.
             continue
         with open(path, 'r') as path_fd:
             requirements[path] = parse_requirements(path_fd.read().splitlines())
@@ -38,7 +34,7 @@ def main():
             comment = requirement.group('comment')
 
             is_sanity = path.startswith('test/lib/ansible_test/_data/requirements/sanity.') or path.startswith('test/sanity/code-smell/')
-            is_pinned = re.search('^ *== *[0-9.]+$', constraints)
+            is_pinned = re.search('^ *== *[0-9.]+(\\.post[0-9]+)?$', constraints)
             is_constraints = path == constraints_path
 
             if is_sanity:
@@ -63,11 +59,6 @@ def main():
                         print('%s:%d:%d: put the constraint (%s%s) in `%s`' % (path, lineno, 1, name, raw_constraints, constraints_path))
 
     for name, requirements in frozen_sanity.items():
-        for req in requirements:
-            if name in non_sanity_requirements and req[3].group('constraints').strip():
-                print('%s:%d:%d: sanity constraint (%s) for package `%s` is not allowed because `%s` is used outside sanity tests' % (
-                    req[0], req[1], req[3].start('constraints') + 1, req[3].group('constraints'), name, name))
-
         if len(set(req[3].group('constraints').strip() for req in requirements)) != 1:
             for req in requirements:
                 print('%s:%d:%d: sanity constraint (%s) does not match others for package `%s`' % (

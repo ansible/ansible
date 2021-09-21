@@ -1,20 +1,22 @@
 """Sanity test to check integration test aliases."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import textwrap
 import os
-
-from ... import types as t
+import typing as t
 
 from . import (
-    SanityVersionNeutral,
+    SanitySingleVersion,
     SanityMessage,
     SanityFailure,
     SanitySuccess,
     SanityTargets,
     SANITY_ROOT,
+)
+
+from ...test import (
+    TestResult,
 )
 
 from ...config import (
@@ -39,7 +41,6 @@ from ...io import (
 
 from ...util import (
     display,
-    find_python,
     raw_command,
 )
 
@@ -48,8 +49,12 @@ from ...util_common import (
     ResultType,
 )
 
+from ...host_configs import (
+    PythonConfig,
+)
 
-class IntegrationAliasesTest(SanityVersionNeutral):
+
+class IntegrationAliasesTest(SanitySingleVersion):
     """Sanity test to evaluate integration test aliases."""
     CI_YML = '.azure-pipelines/azure-pipelines.yml'
     TEST_ALIAS_PREFIX = 'shippable'  # this will be changed at some point in the future
@@ -95,7 +100,7 @@ class IntegrationAliasesTest(SanityVersionNeutral):
     ansible_only = True
 
     def __init__(self):
-        super(IntegrationAliasesTest, self).__init__()
+        super().__init__()
 
         self._ci_config = {}  # type: t.Dict[str, t.Any]
         self._ci_test_groups = {}  # type: t.Dict[str, t.List[int]]
@@ -110,10 +115,10 @@ class IntegrationAliasesTest(SanityVersionNeutral):
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return True
 
-    def load_ci_config(self, args):  # type: (SanityConfig) -> t.Dict[str, t.Any]
+    def load_ci_config(self, python):  # type: (PythonConfig) -> t.Dict[str, t.Any]
         """Load and return the CI YAML configuration."""
         if not self._ci_config:
-            self._ci_config = self.load_yaml(args, self.CI_YML)
+            self._ci_config = self.load_yaml(python, self.CI_YML)
 
         return self._ci_config
 
@@ -192,19 +197,12 @@ class IntegrationAliasesTest(SanityVersionNeutral):
 
         return alias
 
-    def load_yaml(self, args, path):  # type: (SanityConfig, str) -> t.Dict[str, t.Any]
+    def load_yaml(self, python, path):  # type: (PythonConfig, str) -> t.Dict[str, t.Any]
         """Load the specified YAML file and return the contents."""
         yaml_to_json_path = os.path.join(SANITY_ROOT, self.name, 'yaml_to_json.py')
-        python = find_python(args.python_version)
+        return json.loads(raw_command([python.path, yaml_to_json_path], data=read_text_file(path), capture=True)[0])
 
-        return json.loads(raw_command([python, yaml_to_json_path], data=read_text_file(path), capture=True)[0])
-
-    def test(self, args, targets):
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :rtype: TestResult
-        """
+    def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
         if args.explain:
             return SanitySuccess(self.name)
 
@@ -219,7 +217,7 @@ class IntegrationAliasesTest(SanityVersionNeutral):
             labels={},
         )
 
-        self.load_ci_config(args)
+        self.load_ci_config(python)
         self.check_changes(args, results)
 
         write_json_test_results(ResultType.BOT, 'data-sanity-ci.json', results)
@@ -244,7 +242,7 @@ class IntegrationAliasesTest(SanityVersionNeutral):
         clouds = get_cloud_platforms(args, posix_targets)
         cloud_targets = ['cloud/%s/' % cloud for cloud in clouds]
 
-        all_cloud_targets = tuple(filter_targets(posix_targets, ['cloud/'], include=True, directories=False, errors=False))
+        all_cloud_targets = tuple(filter_targets(posix_targets, ['cloud/'], directories=False, errors=False))
         invalid_cloud_targets = tuple(filter_targets(all_cloud_targets, cloud_targets, include=False, directories=False, errors=False))
 
         messages = []
@@ -258,15 +256,13 @@ class IntegrationAliasesTest(SanityVersionNeutral):
                     messages.append(SanityMessage('invalid alias `%s`' % alias, '%s/aliases' % target.path))
 
         messages += self.check_ci_group(
-            targets=tuple(filter_targets(posix_targets, ['cloud/', '%s/generic/' % self.TEST_ALIAS_PREFIX], include=False,
-                                         directories=False, errors=False)),
+            targets=tuple(filter_targets(posix_targets, ['cloud/', '%s/generic/' % self.TEST_ALIAS_PREFIX], include=False, directories=False, errors=False)),
             find=self.format_test_group_alias('linux').replace('linux', 'posix'),
             find_incidental=['%s/posix/incidental/' % self.TEST_ALIAS_PREFIX],
         )
 
         messages += self.check_ci_group(
-            targets=tuple(filter_targets(posix_targets, ['%s/generic/' % self.TEST_ALIAS_PREFIX], include=True, directories=False,
-                                         errors=False)),
+            targets=tuple(filter_targets(posix_targets, ['%s/generic/' % self.TEST_ALIAS_PREFIX], directories=False, errors=False)),
             find=self.format_test_group_alias('generic'),
         )
 
@@ -279,7 +275,7 @@ class IntegrationAliasesTest(SanityVersionNeutral):
                 find_incidental = ['%s/%s/incidental/' % (self.TEST_ALIAS_PREFIX, cloud), '%s/cloud/incidental/' % self.TEST_ALIAS_PREFIX]
 
             messages += self.check_ci_group(
-                targets=tuple(filter_targets(posix_targets, ['cloud/%s/' % cloud], include=True, directories=False, errors=False)),
+                targets=tuple(filter_targets(posix_targets, ['cloud/%s/' % cloud], directories=False, errors=False)),
                 find=find,
                 find_incidental=find_incidental,
             )
@@ -310,11 +306,11 @@ class IntegrationAliasesTest(SanityVersionNeutral):
         :rtype: list[SanityMessage]
         """
         all_paths = set(target.path for target in targets)
-        supported_paths = set(target.path for target in filter_targets(targets, [find], include=True, directories=False, errors=False))
-        unsupported_paths = set(target.path for target in filter_targets(targets, [self.UNSUPPORTED], include=True, directories=False, errors=False))
+        supported_paths = set(target.path for target in filter_targets(targets, [find], directories=False, errors=False))
+        unsupported_paths = set(target.path for target in filter_targets(targets, [self.UNSUPPORTED], directories=False, errors=False))
 
         if find_incidental:
-            incidental_paths = set(target.path for target in filter_targets(targets, find_incidental, include=True, directories=False, errors=False))
+            incidental_paths = set(target.path for target in filter_targets(targets, find_incidental, directories=False, errors=False))
         else:
             incidental_paths = set()
 

@@ -73,8 +73,7 @@ DOCUMENTATION = '''
         env:
           - name: JUNIT_TEST_CASE_PREFIX
     requirements:
-      - whitelist in configuration
-      - junit_xml (python lib)
+      - enable in configuration
 '''
 
 import os
@@ -84,31 +83,13 @@ import re
 from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
-
-try:
-    from junit_xml import TestSuite, TestCase
-
-    # the junit_xml API is changing in version 2.0.0
-    # TestSuite.to_xml_string is being replaced with to_xml_report_string
-    # see: https://github.com/kyrus/python-junit-xml/blob/63db26da353790500642fd02cae1543eb41aab8b/junit_xml/__init__.py#L249-L261
-    try:
-        from junit_xml import to_xml_report_string
-    except ImportError:
-        to_xml_report_string = TestSuite.to_xml_string
-
-    HAS_JUNIT_XML = True
-except ImportError:
-    HAS_JUNIT_XML = False
-
-try:
-    from collections import OrderedDict
-    HAS_ORDERED_DICT = True
-except ImportError:
-    try:
-        from ordereddict import OrderedDict
-        HAS_ORDERED_DICT = True
-    except ImportError:
-        HAS_ORDERED_DICT = False
+from ansible.utils._junit_xml import (
+    TestCase,
+    TestError,
+    TestFailure,
+    TestSuite,
+    TestSuites,
+)
 
 
 class CallbackModule(CallbackBase):
@@ -142,10 +123,6 @@ class CallbackModule(CallbackBase):
         JUNIT_TEST_CASE_PREFIX (optional): Consider a task only as test case if it has this value as prefix. Additionaly failing tasks are recorded as failed
                                      test cases.
                                      Default: <empty>
-
-    Requires:
-        junit_xml
-
     """
 
     CALLBACK_VERSION = 2.0
@@ -171,17 +148,7 @@ class CallbackModule(CallbackBase):
 
         self.disabled = False
 
-        if not HAS_JUNIT_XML:
-            self.disabled = True
-            self._display.warning('The `junit_xml` python module is not installed. '
-                                  'Disabling the `junit` callback plugin.')
-
-        if HAS_ORDERED_DICT:
-            self._task_data = OrderedDict()
-        else:
-            self.disabled = True
-            self._display.warning('The `ordereddict` python module is not installed. '
-                                  'Disabling the `junit` callback plugin.')
+        self._task_data = {}
 
         if not os.path.exists(self._output_dir):
             os.makedirs(self._output_dir)
@@ -250,7 +217,7 @@ class CallbackModule(CallbackBase):
             junit_classname = re.sub(r'\.yml:[0-9]+$', '', junit_classname)
 
         if host_data.status == 'included':
-            return TestCase(name, junit_classname, duration, host_data.result)
+            return TestCase(name=name, classname=junit_classname, time=duration, system_out=str(host_data.result))
 
         res = host_data.result._result
         rc = res.get('rc', 0)
@@ -258,26 +225,26 @@ class CallbackModule(CallbackBase):
         dump = self._cleanse_string(dump)
 
         if host_data.status == 'ok':
-            return TestCase(name, junit_classname, duration, dump)
+            return TestCase(name=name, classname=junit_classname, time=duration, system_out=dump)
 
-        test_case = TestCase(name, junit_classname, duration)
+        test_case = TestCase(name=name, classname=junit_classname, time=duration)
 
         if host_data.status == 'failed':
             if 'exception' in res:
                 message = res['exception'].strip().split('\n')[-1]
                 output = res['exception']
-                test_case.add_error_info(message, output)
+                test_case.errors.append(TestError(message=message, output=output))
             elif 'msg' in res:
                 message = res['msg']
-                test_case.add_failure_info(message, dump)
+                test_case.failures.append(TestFailure(message=message, output=dump))
             else:
-                test_case.add_failure_info('rc=%s' % rc, dump)
+                test_case.failures.append(TestFailure(message='rc=%s' % rc, output=dump))
         elif host_data.status == 'skipped':
             if 'skip_reason' in res:
                 message = res['skip_reason']
             else:
                 message = 'skipped'
-            test_case.add_skipped_info(message)
+            test_case.skipped = message
 
         return test_case
 
@@ -297,8 +264,9 @@ class CallbackModule(CallbackBase):
             for host_uuid, host_data in task_data.host_data.items():
                 test_cases.append(self._build_test_case(task_data, host_data))
 
-        test_suite = TestSuite(self._playbook_name, test_cases)
-        report = to_xml_report_string([test_suite])
+        test_suite = TestSuite(name=self._playbook_name, cases=test_cases)
+        test_suites = TestSuites(suites=[test_suite])
+        report = test_suites.to_pretty_xml()
 
         output_file = os.path.join(self._output_dir, '%s-%s.xml' % (self._playbook_name, time.time()))
 
@@ -354,7 +322,7 @@ class TaskData:
         self.path = path
         self.play = play
         self.start = None
-        self.host_data = OrderedDict()
+        self.host_data = {}
         self.start = time.time()
         self.action = action
 

@@ -1,13 +1,19 @@
 """Identify aggregated coverage in one file missing from another."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
-
-from ..... import types as t
+import typing as t
 
 from .....encoding import (
     to_bytes,
+)
+
+from .....executor import (
+    Delegate,
+)
+
+from .....provisioning import (
+    prepare_profiles,
 )
 
 from . import (
@@ -28,7 +34,7 @@ if t.TYPE_CHECKING:
 class CoverageAnalyzeTargetsMissingConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets missing` command."""
     def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageAnalyzeTargetsMissingConfig, self).__init__(args)
+        super().__init__(args)
 
         self.from_file = args.from_file  # type: str
         self.to_file = args.to_file  # type: str
@@ -40,6 +46,11 @@ class CoverageAnalyzeTargetsMissingConfig(CoverageAnalyzeTargetsConfig):
 
 def command_coverage_analyze_targets_missing(args):  # type: (CoverageAnalyzeTargetsMissingConfig) -> None
     """Identify aggregated coverage in one file missing from another."""
+    host_state = prepare_profiles(args)  # coverage analyze targets missing
+
+    if args.delegate:
+        raise Delegate(host_state=host_state)
+
     from_targets, from_path_arcs, from_path_lines = read_report(args.from_file)
     to_targets, to_path_arcs, to_path_lines = read_report(args.to_file)
     target_indexes = {}

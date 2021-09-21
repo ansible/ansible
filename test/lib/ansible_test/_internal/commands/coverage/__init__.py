@@ -1,12 +1,14 @@
 """Common logic for the coverage subcommand."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import errno
 import os
 import re
+import typing as t
 
-from ... import types as t
+from ...constants import (
+    COVERAGE_REQUIRED_VERSION,
+)
 
 from ...encoding import (
     to_bytes,
@@ -25,7 +27,7 @@ from ...util import (
 )
 
 from ...util_common import (
-    intercept_command,
+    intercept_python,
     ResultType,
 )
 
@@ -33,9 +35,8 @@ from ...config import (
     EnvironmentConfig,
 )
 
-from ...executor import (
-    Delegate,
-    install_command_requirements,
+from ...python_requirements import (
+    install_requirements,
 )
 
 from ... target import (
@@ -44,6 +45,14 @@ from ... target import (
 
 from ...data import (
     data_context,
+)
+
+from ...pypi_proxy import (
+    configure_pypi_proxy,
+)
+
+from ...provisioning import (
+    HostState,
 )
 
 if t.TYPE_CHECKING:
@@ -57,16 +66,13 @@ COVERAGE_OUTPUT_FILE_NAME = 'coverage'
 class CoverageConfig(EnvironmentConfig):
     """Configuration for the coverage command."""
     def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageConfig, self).__init__(args, 'coverage')
+        super().__init__(args, 'coverage')
 
 
-def initialize_coverage(args):  # type: (CoverageConfig) -> coverage_module
+def initialize_coverage(args, host_state):  # type: (CoverageConfig, HostState) -> coverage_module
     """Delegate execution if requested, install requirements, then import and return the coverage module. Raises an exception if coverage is not available."""
-    if args.delegate:
-        raise Delegate()
-
-    if args.requirements:
-        install_command_requirements(args)
+    configure_pypi_proxy(args, host_state.controller_profile)  # coverage
+    install_requirements(args, host_state.controller_profile.python, coverage=True)  # coverage
 
     try:
         import coverage
@@ -74,35 +80,22 @@ def initialize_coverage(args):  # type: (CoverageConfig) -> coverage_module
         coverage = None
 
     if not coverage:
-        raise ApplicationError('You must install the "coverage" python module to use this command.')
+        raise ApplicationError(f'Version {COVERAGE_REQUIRED_VERSION} of the Python "coverage" module must be installed to use this command.')
 
-    coverage_version_string = coverage.__version__
-    coverage_version = tuple(int(v) for v in coverage_version_string.split('.'))
-
-    min_version = (4, 2)
-    max_version = (5, 0)
-
-    supported_version = True
-    recommended_version = '4.5.4'
-
-    if coverage_version < min_version or coverage_version >= max_version:
-        supported_version = False
-
-    if not supported_version:
-        raise ApplicationError('Version %s of "coverage" is not supported. Version %s is known to work and is recommended.' % (
-            coverage_version_string, recommended_version))
+    if coverage.__version__ != COVERAGE_REQUIRED_VERSION:
+        raise ApplicationError(f'Version {COVERAGE_REQUIRED_VERSION} of the Python "coverage" module is required. Version {coverage.__version__} was found.')
 
     return coverage
 
 
-def run_coverage(args, output_file, command, cmd):  # type: (CoverageConfig, str, str, t.List[str]) -> None
+def run_coverage(args, host_state, output_file, command, cmd):  # type: (CoverageConfig, HostState, str, str, t.List[str]) -> None
     """Run the coverage cli tool with the specified options."""
     env = common_environment()
     env.update(dict(COVERAGE_FILE=output_file))
 
     cmd = ['python', '-m', 'coverage.__main__', command, '--rcfile', COVERAGE_CONFIG_PATH] + cmd
 
-    intercept_command(args, target_name='coverage', env=env, cmd=cmd, disable_coverage=True)
+    intercept_python(args, host_state.controller_profile.python, cmd, env)
 
 
 def get_all_coverage_files():  # type: () -> t.List[str]

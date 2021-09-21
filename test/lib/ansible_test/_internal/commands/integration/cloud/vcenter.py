@@ -1,12 +1,11 @@
 """VMware vCenter plugin for integration tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import configparser
 import os
 
 from ....util import (
     ApplicationError,
-    ConfigParser,
     display,
 )
 
@@ -15,6 +14,7 @@ from ....config import (
 )
 
 from ....containers import (
+    CleanupMode,
     run_support_container,
 )
 
@@ -30,7 +30,7 @@ class VcenterProvider(CloudProvider):
     DOCKER_SIMULATOR_NAME = 'vcenter-simulator'
 
     def __init__(self, args):  # type: (IntegrationConfig) -> None
-        super(VcenterProvider, self).__init__(args)
+        super().__init__(args)
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
         if os.environ.get('ANSIBLE_VCSIM_CONTAINER'):
@@ -51,7 +51,7 @@ class VcenterProvider(CloudProvider):
 
     def setup(self):  # type: () -> None
         """Setup the cloud resource before delegation and register a cleanup callback."""
-        super(VcenterProvider, self).setup()
+        super().setup()
 
         self._set_cloud_config('vmware_test_platform', self.vmware_test_platform)
 
@@ -73,17 +73,15 @@ class VcenterProvider(CloudProvider):
             5000,  # control port for flask app in simulator
         ]
 
-        descriptor = run_support_container(
+        run_support_container(
             self.args,
             self.platform,
             self.image,
             self.DOCKER_SIMULATOR_NAME,
             ports,
             allow_existing=True,
-            cleanup=True,
+            cleanup=CleanupMode.YES,
         )
-
-        descriptor.register(self.args)
 
         self._set_cloud_config('vcenter_hostname', self.DOCKER_SIMULATOR_NAME)
 
@@ -99,7 +97,7 @@ class VcenterEnvironment(CloudEnvironment):
         try:
             # We may be in a container, so we cannot just reach VMWARE_TEST_PLATFORM,
             # We do a try/except instead
-            parser = ConfigParser()
+            parser = configparser.ConfigParser()
             parser.read(self.config_path)  # static
 
             env_vars = dict()

@@ -1,9 +1,9 @@
 """Analyze C# import statements."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import re
+import typing as t
 
 from ..io import (
     open_text_file,
@@ -13,7 +13,7 @@ from ..util import (
     display,
 )
 
-from ..util_common import (
+from .common import (
     resolve_csharp_ps_util,
 )
 
@@ -39,7 +39,7 @@ def get_csharp_module_utils_imports(powershell_targets, csharp_targets):
     for target in csharp_targets:
         imports_by_target_path[target.path] = extract_csharp_module_utils_imports(target.path, module_utils, True)
 
-    imports = dict([(module_util, set()) for module_util in module_utils])
+    imports = {module_util: set() for module_util in module_utils}  # type: t.Dict[str, t.Set[str]]
 
     for target_path, modules in imports_by_target_path.items():
         for module_util in modules:

@@ -1,3 +1,4 @@
+"""Ansible specific plyint plugin for checking deprecations."""
 # (c) 2018, Matt Martz <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # -*- coding: utf-8 -*-
@@ -106,6 +107,7 @@ def _get_expr_name(node):
 
 
 def parse_isodate(value):
+    """Parse an ISO 8601 date string."""
     msg = 'Expected ISO 8601 date string (YYYY-MM-DD)'
     if not isinstance(value, string_types):
         raise ValueError(msg)
@@ -146,10 +148,10 @@ class AnsibleDeprecatedChecker(BaseChecker):
     def __init__(self, *args, **kwargs):
         self.collection_version = None
         self.collection_name = None
-        super(AnsibleDeprecatedChecker, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def set_option(self, optname, value, action=None, optdict=None):
-        super(AnsibleDeprecatedChecker, self).set_option(optname, value, action, optdict)
+        super().set_option(optname, value, action, optdict)
         if optname == 'collection-version' and value is not None:
             self.collection_version = SemanticVersion(self.config.collection_version)
         if optname == 'collection-name' and value is not None:
@@ -202,6 +204,7 @@ class AnsibleDeprecatedChecker(BaseChecker):
 
     @check_messages(*(MSGS.keys()))
     def visit_call(self, node):
+        """Visit a call node."""
         version = None
         date = None
         collection_name = None

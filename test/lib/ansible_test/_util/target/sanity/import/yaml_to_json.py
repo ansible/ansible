@@ -18,6 +18,7 @@ ISO_DATE_MARKER = 'isodate:f23983df-f3df-453c-9904-bcd08af468cc:'
 
 
 def default(value):
+    """Custom default serializer which supports datetime.date types."""
     if isinstance(value, datetime.date):
         return '%s%s' % (ISO_DATE_MARKER, value.isoformat())
 

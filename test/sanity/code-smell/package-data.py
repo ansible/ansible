@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -33,6 +32,11 @@ def assemble_files_to_ship(complete_file_list):
         'test/utils/*',
         'test/utils/*/*',
         'test/utils/*/*/*',
+        'test/results/.tmp/*',
+        'test/results/.tmp/*/*',
+        'test/results/.tmp/*/*/*',
+        'test/results/.tmp/*/*/*/*',
+        'test/results/.tmp/*/*/*/*/*',
         '.git*',
     )
     ignore_files = frozenset((

@@ -1,3 +1,6 @@
-jinja2  # ansible-core requirement
-pyyaml  # needed for collection_detail.py
+jinja2 == 3.0.1 # ansible-core requirement
+pyyaml == 5.4.1  # needed for collection_detail.py
 voluptuous == 0.12.1
+
+# dependencies
+MarkupSafe == 2.0.1

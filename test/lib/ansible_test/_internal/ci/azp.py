@@ -1,12 +1,11 @@
 """Support code for working with Azure Pipelines."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import tempfile
 import uuid
-
-from .. import types as t
+import typing as t
+import urllib.parse
 
 from ..encoding import (
     to_bytes,
@@ -23,7 +22,6 @@ from ..git import (
 
 from ..http import (
     HttpClient,
-    urlencode,
 )
 
 from ..util import (
@@ -32,7 +30,6 @@ from ..util import (
 )
 
 from . import (
-    AuthContext,
     ChangeDetectionNotSupported,
     CIProvider,
     CryptographyAuthHelper,
@@ -105,11 +102,11 @@ class AzurePipelines(CIProvider):
 
         return result.paths
 
-    def supports_core_ci_auth(self, context):  # type: (AuthContext) -> bool
+    def supports_core_ci_auth(self):  # type: () -> bool
         """Return True if Ansible Core CI is supported."""
         return True
 
-    def prepare_core_ci_auth(self, context):  # type: (AuthContext) -> t.Dict[str, t.Any]
+    def prepare_core_ci_auth(self):  # type: () -> t.Dict[str, t.Any]
         """Return authentication details for Ansible Core CI."""
         try:
             request = dict(
@@ -227,7 +224,7 @@ class AzurePipelinesChanges:
             repositoryId='%s/%s' % (self.org, self.project),
         )
 
-        url = '%s%s/_apis/build/builds?api-version=6.0&%s' % (self.org_uri, self.project, urlencode(parameters))
+        url = '%s%s/_apis/build/builds?api-version=6.0&%s' % (self.org_uri, self.project, urllib.parse.urlencode(parameters))
 
         http = HttpClient(self.args, always=True)
         response = http.get(url)

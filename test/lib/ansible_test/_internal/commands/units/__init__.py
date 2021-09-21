@@ -1,9 +1,16 @@
 """Execute unit tests using pytest."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import sys
+import typing as t
+
+from ...constants import (
+    CONTROLLER_MIN_PYTHON_VERSION,
+    CONTROLLER_PYTHON_VERSIONS,
+    REMOTE_ONLY_PYTHON_VERSIONS,
+    SUPPORTED_PYTHON_VERSIONS,
+)
 
 from ...io import (
     write_text_file,
@@ -13,19 +20,13 @@ from ...io import (
 from ...util import (
     ANSIBLE_TEST_DATA_ROOT,
     display,
-    get_available_python_versions,
     is_subdir,
     SubprocessError,
-    SUPPORTED_PYTHON_VERSIONS,
-    CONTROLLER_MIN_PYTHON_VERSION,
-    CONTROLLER_PYTHON_VERSIONS,
-    REMOTE_ONLY_PYTHON_VERSIONS,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_TARGET_ROOT,
 )
 
 from ...util_common import (
-    intercept_command,
     ResultType,
     handle_layout_messages,
     create_temp_dir,
@@ -33,7 +34,6 @@ from ...util_common import (
 
 from ...ansible_util import (
     ansible_environment,
-    check_pyyaml,
     get_ansible_python_path,
 )
 
@@ -47,7 +47,7 @@ from ...config import (
 )
 
 from ...coverage_util import (
-    coverage_context,
+    cover_python,
 )
 
 from ...data import (
@@ -58,11 +58,30 @@ from ...executor import (
     AllTargetsSkipped,
     Delegate,
     get_changes_filter,
-    install_command_requirements,
+)
+
+from ...python_requirements import (
+    install_requirements,
 )
 
 from ...content_config import (
     get_content_config,
+)
+
+from ...host_configs import (
+    PosixConfig,
+)
+
+from ...provisioning import (
+    prepare_profiles,
+)
+
+from ...pypi_proxy import (
+    configure_pypi_proxy,
+)
+
+from ...host_profiles import (
+    PosixProfile,
 )
 
 
@@ -110,31 +129,68 @@ def command_units(args):
     if not paths:
         raise AllTargetsSkipped()
 
-    if args.python and args.python in REMOTE_ONLY_PYTHON_VERSIONS:
-        if args.python not in supported_remote_python_versions:
-            display.warning('Python %s is not supported by this collection. Supported Python versions are: %s' % (
-                args.python, ', '.join(content_config.python_versions)))
+    targets = t.cast(t.List[PosixConfig], args.targets)
+    target_versions = {target.python.version: target for target in targets}  # type: t.Dict[str, PosixConfig]
+    skipped_versions = args.host_settings.skipped_python_versions
+    warn_versions = []
+
+    # requested python versions that are remote-only and not supported by this collection
+    test_versions = [version for version in target_versions if version in REMOTE_ONLY_PYTHON_VERSIONS and version not in supported_remote_python_versions]
+
+    if test_versions:
+        for version in test_versions:
+            display.warning(f'Skipping unit tests on Python {version} because it is not supported by this collection.'
+                            f' Supported Python versions are: {", ".join(content_config.python_versions)}')
+
+        warn_versions.extend(test_versions)
+
+        if warn_versions == list(target_versions):
             raise AllTargetsSkipped()
 
-        if not remote_paths:
-            display.warning('Python %s is only supported by module and module_utils unit tests, but none were selected.' % args.python)
-            raise AllTargetsSkipped()
+    if not remote_paths:
+        # all selected unit tests are controller tests
 
-    if args.python and args.python not in supported_remote_python_versions and not controller_paths:
-        display.warning('Python %s is not supported by this collection for modules/module_utils. Supported Python versions are: %s' % (
-            args.python, ', '.join(supported_remote_python_versions)))
-        raise AllTargetsSkipped()
+        # requested python versions that are remote-only
+        test_versions = [version for version in target_versions if version in REMOTE_ONLY_PYTHON_VERSIONS and version not in warn_versions]
+
+        if test_versions:
+            for version in test_versions:
+                display.warning(f'Skipping unit tests on Python {version} because it is only supported by module/module_utils unit tests.'
+                                ' No module/module_utils unit tests were selected.')
+
+            warn_versions.extend(test_versions)
+
+            if warn_versions == list(target_versions):
+                raise AllTargetsSkipped()
+
+    if not controller_paths:
+        # all selected unit tests are remote tests
+
+        # requested python versions that are not supported by remote tests for this collection
+        test_versions = [version for version in target_versions if version not in supported_remote_python_versions and version not in warn_versions]
+
+        if test_versions:
+            for version in test_versions:
+                display.warning(f'Skipping unit tests on Python {version} because it is not supported by module/module_utils unit tests of this collection.'
+                                f' Supported Python versions are: {", ".join(supported_remote_python_versions)}')
+
+            warn_versions.extend(test_versions)
+
+            if warn_versions == list(target_versions):
+                raise AllTargetsSkipped()
+
+    host_state = prepare_profiles(args, targets_use_pypi=True)  # units
 
     if args.delegate:
-        raise Delegate(require=changes, exclude=args.exclude)
+        raise Delegate(host_state=host_state, require=changes, exclude=args.exclude)
 
     test_sets = []
 
-    available_versions = sorted(get_available_python_versions().keys())
+    if args.requirements_mode != 'skip':
+        configure_pypi_proxy(args, host_state.controller_profile)  # units
 
     for version in SUPPORTED_PYTHON_VERSIONS:
-        # run all versions unless version given, in which case run only that version
-        if args.python and version != args.python_version:
+        if version not in target_versions and version not in skipped_versions:
             continue
 
         test_candidates = []
@@ -157,25 +213,30 @@ def command_units(args):
                 ANSIBLE_CONTROLLER_MIN_PYTHON_VERSION=CONTROLLER_MIN_PYTHON_VERSION,
             )
 
-            test_candidates.append((test_context, version, paths, env))
+            test_candidates.append((test_context, paths, env))
 
         if not test_candidates:
             continue
 
-        if not args.python and version not in available_versions:
-            display.warning("Skipping unit tests on Python %s due to missing interpreter." % version)
+        if version in skipped_versions:
+            display.warning("Skipping unit tests on Python %s because it could not be found." % version)
             continue
 
-        if args.requirements_mode != 'skip':
-            install_command_requirements(args, version)
-            check_pyyaml(args, version)
+        target_profiles = {profile.config.python.version: profile for profile in host_state.targets(PosixProfile)}  # type: t.Dict[str, PosixProfile]
+        target_profile = target_profiles[version]
 
-        test_sets.extend(test_candidates)
+        final_candidates = [(test_context, target_profile.python, paths, env) for test_context, paths, env in test_candidates]
+        controller = any(test_context == TestContext.controller for test_context, python, paths, env in final_candidates)
+
+        if args.requirements_mode != 'skip':
+            install_requirements(args, target_profile.python, ansible=controller, command=True)  # units
+
+        test_sets.extend(final_candidates)
 
     if args.requirements_mode == 'only':
         sys.exit()
 
-    for test_context, version, paths, env in test_sets:
+    for test_context, python, paths, env in test_sets:
         cmd = [
             'pytest',
             '--boxed',
@@ -185,13 +246,13 @@ def command_units(args):
             'yes' if args.color else 'no',
             '-p', 'no:cacheprovider',
             '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest.ini'),
-            '--junit-xml', os.path.join(ResultType.JUNIT.path, 'python%s-%s-units.xml' % (version, test_context)),
+            '--junit-xml', os.path.join(ResultType.JUNIT.path, 'python%s-%s-units.xml' % (python.version, test_context)),
         ]
 
         if not data_context().content.collection:
             cmd.append('--durations=25')
 
-        if version != '2.6':
+        if python.version != '2.6':
             # added in pytest 4.5.0, which requires python 2.7+
             cmd.append('--strict-markers')
 
@@ -215,11 +276,10 @@ def command_units(args):
 
         cmd.extend(paths)
 
-        display.info('Unit test %s with Python %s' % (test_context, version))
+        display.info('Unit test %s with Python %s' % (test_context, python.version))
 
         try:
-            with coverage_context(args):
-                intercept_command(args, cmd, target_name=test_context, env=env, python_version=version)
+            cover_python(args, python, cmd, test_context, env)
         except SubprocessError as ex:
             # pytest exits with status code 5 when all tests are skipped, which isn't an error for our use case
             if ex.status != 5:

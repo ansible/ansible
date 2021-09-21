@@ -1,8 +1,5 @@
-cryptography
-jinja2
 mock
 pytest
 pytest-mock
 pytest-xdist
-pyyaml
-resolvelib
+pyyaml  # required by the collection loader (only needed for collections)

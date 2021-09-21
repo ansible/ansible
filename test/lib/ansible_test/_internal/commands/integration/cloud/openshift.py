@@ -1,6 +1,5 @@
 """OpenShift plugin for integration tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import re
 
@@ -17,6 +16,7 @@ from ....config import (
 )
 
 from ....containers import (
+    CleanupMode,
     run_support_container,
     wait_for_file,
 )
@@ -33,7 +33,7 @@ class OpenShiftCloudProvider(CloudProvider):
     DOCKER_CONTAINER_NAME = 'openshift-origin'
 
     def __init__(self, args):  # type: (IntegrationConfig) -> None
-        super(OpenShiftCloudProvider, self).__init__(args, config_extension='.kubeconfig')
+        super().__init__(args, config_extension='.kubeconfig')
 
         # The image must be pinned to a specific version to guarantee CI passes with the version used.
         self.image = 'openshift/origin:v3.9.0'
@@ -43,7 +43,7 @@ class OpenShiftCloudProvider(CloudProvider):
 
     def setup(self):  # type: () -> None
         """Setup the cloud resource before delegation and register a cleanup callback."""
-        super(OpenShiftCloudProvider, self).setup()
+        super().setup()
 
         if self._use_static_config():
             self._setup_static()
@@ -69,18 +69,16 @@ class OpenShiftCloudProvider(CloudProvider):
 
         cmd = ['start', 'master', '--listen', 'https://0.0.0.0:%d' % port]
 
-        descriptor = run_support_container(
+        run_support_container(
             self.args,
             self.platform,
             self.image,
             self.DOCKER_CONTAINER_NAME,
             ports,
             allow_existing=True,
-            cleanup=True,
+            cleanup=CleanupMode.YES,
             cmd=cmd,
         )
-
-        descriptor.register(self.args)
 
         if self.args.explain:
             config = '# Unknown'

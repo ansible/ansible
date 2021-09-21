@@ -1,9 +1,13 @@
-docutils
-jinja2
-packaging
-pyyaml  # ansible-core requirement
-resolvelib  # ansible-core requirement
-rstcheck
-setuptools
-straight.plugin
+docutils == 0.17.1
+jinja2 == 3.0.1
+packaging == 21.0
+pyyaml == 5.4.1  # ansible-core requirement
+resolvelib == 0.5.4  # ansible-core requirement
+rstcheck == 3.3.1
+straight.plugin == 1.5.0
 antsibull-changelog == 0.9.0
+
+# dependencies
+MarkupSafe == 2.0.1
+pyparsing == 2.4.7
+semantic-version == 2.8.5
