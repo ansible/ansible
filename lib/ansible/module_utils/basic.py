@@ -804,9 +804,8 @@ class AnsibleModule(object):
             changed = True
         return changed
 
-    def set_owner_if_different(self, path, owner, changed, diff=None, expand=True):
-
-        if owner is None:
+    def chown_if_different(self, path, owner, group, changed, diff=None, expand=True):
+        if owner is None and group is None:
             return changed
 
         b_path = to_bytes(path, errors='surrogate_or_strict')
@@ -818,48 +817,17 @@ class AnsibleModule(object):
 
         orig_uid, orig_gid = self.user_and_group(b_path, expand)
         try:
-            uid = int(owner)
+            # -1 is treated as leave unchanged by chown() and lchown()
+            uid = int(owner) if owner is not None else -1
         except ValueError:
             try:
                 uid = pwd.getpwnam(owner).pw_uid
             except KeyError:
                 path = to_text(b_path)
                 self.fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
-
-        if orig_uid != uid:
-            if diff is not None:
-                if 'before' not in diff:
-                    diff['before'] = {}
-                diff['before']['owner'] = orig_uid
-                if 'after' not in diff:
-                    diff['after'] = {}
-                diff['after']['owner'] = uid
-
-            if self.check_mode:
-                return True
-            try:
-                os.lchown(b_path, uid, -1)
-            except (IOError, OSError) as e:
-                path = to_text(b_path)
-                self.fail_json(path=path, msg='chown failed: %s' % (to_text(e)))
-            changed = True
-        return changed
-
-    def set_group_if_different(self, path, group, changed, diff=None, expand=True):
-
-        if group is None:
-            return changed
-
-        b_path = to_bytes(path, errors='surrogate_or_strict')
-        if expand:
-            b_path = os.path.expanduser(os.path.expandvars(b_path))
-
-        if self.check_file_absent_if_check_mode(b_path):
-            return True
-
-        orig_uid, orig_gid = self.user_and_group(b_path, expand)
         try:
-            gid = int(group)
+            # -1 is treated as leave unchanged by chown() and lchown()
+            gid = int(group) if group is not None else -1
         except ValueError:
             try:
                 gid = grp.getgrnam(group).gr_gid
@@ -867,7 +835,20 @@ class AnsibleModule(object):
                 path = to_text(b_path)
                 self.fail_json(path=path, msg='chgrp failed: failed to look up group %s' % group)
 
-        if orig_gid != gid:
+        if orig_uid == uid and orig_gid == gid:
+            return changed
+
+        if uid not in (-1, orig_uid):
+            if diff is not None:
+                if 'before' not in diff:
+                    diff['before'] = {}
+                diff['before']['owner'] = orig_uid
+                if 'after' not in diff:
+                    diff['after'] = {}
+                diff['after']['owner'] = uid
+            changed = True
+
+        if gid not in (-1, orig_gid):
             if diff is not None:
                 if 'before' not in diff:
                     diff['before'] = {}
@@ -875,16 +856,25 @@ class AnsibleModule(object):
                 if 'after' not in diff:
                     diff['after'] = {}
                 diff['after']['group'] = gid
-
-            if self.check_mode:
-                return True
-            try:
-                os.lchown(b_path, -1, gid)
-            except OSError:
-                path = to_text(b_path)
-                self.fail_json(path=path, msg='chgrp failed')
             changed = True
+
+        if self.check_mode:
+            return changed
+
+        try:
+            os.lchown(b_path, uid, gid)
+        except (IOError, OSError) as e:
+            path = to_text(b_path)
+            op = 'chown' if uid != -1 else 'chgrp'
+            self.fail_json(path=path, msg='%s failed: %s' % (op, to_text(e)))
+
         return changed
+
+    def set_owner_if_different(self, path, owner, changed, diff=None, expand=True):
+        return self.chown_if_different(path, owner, None, changed, diff, expand)
+
+    def set_group_if_different(self, path, group, changed, diff=None, expand=True):
+        return self.chown_if_different(path, None, group, changed, diff, expand)
 
     def set_mode_if_different(self, path, mode, changed, diff=None, expand=True):
 
