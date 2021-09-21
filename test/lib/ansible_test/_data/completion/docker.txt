@@ -5,7 +5,6 @@ alpine3 image=quay.io/ansible/alpine3-test-container:2.0.2 python=3.8
 centos6 image=quay.io/ansible/centos6-test-container:2.0.2 python=2.6 seccomp=unconfined
 centos7 image=quay.io/ansible/centos7-test-container:2.0.2 python=2.7 seccomp=unconfined
 centos8 image=quay.io/ansible/centos8-test-container:2.0.2 python=3.6 seccomp=unconfined
-fedora32 image=quay.io/ansible/fedora32-test-container:2.1.0 python=3.8
 fedora33 image=quay.io/ansible/fedora33-test-container:2.1.0 python=3.9
 fedora34 image=quay.io/ansible/fedora34-test-container:2.1.0 python=3.9 seccomp=unconfined
 opensuse15py2 image=quay.io/ansible/opensuse15py2-test-container:2.0.2 python=2.7
