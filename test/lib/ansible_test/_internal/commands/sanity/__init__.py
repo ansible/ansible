@@ -215,7 +215,7 @@ def command_sanity(args):
                 usable_targets = settings.filter_skipped_targets(usable_targets)
                 sanity_targets = SanityTargets(tuple(all_targets), tuple(usable_targets))
 
-                test_needed = bool(usable_targets or test.no_targets)
+                test_needed = bool(usable_targets or test.no_targets or args.prime_venvs)
                 result = None
 
                 if test_needed and version in args.host_settings.skipped_python_versions:
@@ -252,13 +252,19 @@ def command_sanity(args):
                                 if virtualenv_yaml is False:
                                     display.warning(f'Sanity test "{test.name}" on Python {version} may be slow due to missing libyaml support in PyYAML.')
 
-                                result = test.test(args, sanity_targets, virtualenv_python)
+                                if args.prime_venvs:
+                                    result = SanitySkipped(test.name)
+                                else:
+                                    result = test.test(args, sanity_targets, virtualenv_python)
                         else:
                             result = SanitySkipped(test.name, version)
                             result.reason = f'Skipping sanity test "{test.name}" on Python {version} due to missing virtual environment support.'
                     elif isinstance(test, SanityVersionNeutral):
-                        # version neutral sanity tests handle their own requirements (if any)
-                        result = test.test(args, sanity_targets)
+                        if args.prime_venvs:
+                            result = SanitySkipped(test.name)
+                        else:
+                            # version neutral sanity tests handle their own requirements (if any)
+                            result = test.test(args, sanity_targets)
                     else:
                         raise Exception('Unsupported test type: %s' % type(test))
                 elif result:
