@@ -1,2 +1,5 @@
-jinja2  # ansible-core requirement
-pyyaml
+jinja2 == 3.0.1 # ansible-core requirement
+pyyaml == 5.4.1
+
+# dependencies
+MarkupSafe == 2.0.1

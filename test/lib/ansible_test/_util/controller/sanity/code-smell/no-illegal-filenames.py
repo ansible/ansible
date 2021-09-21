@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # a script to check for illegal filenames on various Operating Systems. The
 # main rules are derived from restrictions on Windows
 # https://msdn.microsoft.com/en-us/library/aa365247#naming_conventions

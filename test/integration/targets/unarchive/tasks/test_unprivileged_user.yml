@@ -75,6 +75,7 @@
         name: unarchivetest1
         state: absent
         remove: yes
+        force: yes
       become: yes
       become_user: root
 

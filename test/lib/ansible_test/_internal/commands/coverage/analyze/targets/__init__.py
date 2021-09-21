@@ -1,10 +1,8 @@
 """Analyze integration test target code coverage."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
-
-from ..... import types as t
+import typing as t
 
 from .....io import (
     read_json_file,
@@ -33,7 +31,7 @@ if t.TYPE_CHECKING:
 class CoverageAnalyzeTargetsConfig(CoverageAnalyzeConfig):
     """Configuration for the `coverage analyze targets` command."""
     def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageAnalyzeTargetsConfig, self).__init__(args)
+        super().__init__(args)
 
         self.info_stderr = True
 
@@ -121,7 +119,7 @@ def get_target_index(name, target_indexes):  # type: (str, TargetIndexes) -> int
 def expand_indexes(
         source_data,  # type: IndexedPoints
         source_index,  # type: t.List[str]
-        format_func,  # type: t.Callable[t.Tuple[t.Any], str]
+        format_func,  # type: t.Callable[[TargetKey], str]
 ):  # type: (...) -> NamedPoints
     """Expand indexes from the source into target names for easier processing of the data (arcs or lines)."""
     combined_data = {}  # type: t.Dict[str, t.Dict[t.Any, t.Set[str]]]

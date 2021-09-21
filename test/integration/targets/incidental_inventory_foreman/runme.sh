@@ -43,8 +43,8 @@ password: secure
 validate_certs: False
 FOREMAN_YAML
 
-ansible-playbook test_foreman_inventory.yml --connection=local "$@"
-ansible-playbook inspect_cache.yml --connection=local "$@"
+ansible-playbook test_foreman_inventory.yml --connection=local -e 'ansible_python_interpreter={{ ansible_playbook_python }}' "$@"
+ansible-playbook inspect_cache.yml --connection=local -e 'ansible_python_interpreter={{ ansible_playbook_python }}' "$@"
 
 # remove inventory cache
 rm -r ./foreman_cache

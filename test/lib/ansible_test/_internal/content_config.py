@@ -1,10 +1,13 @@
 """Content configuration."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
+import typing as t
 
-from . import types as t
+from .constants import (
+    CONTROLLER_PYTHON_VERSIONS,
+    SUPPORTED_PYTHON_VERSIONS,
+)
 
 from .compat.packaging import (
     PACKAGING_IMPORT_ERROR,
@@ -23,10 +26,9 @@ from .io import (
 
 from .util import (
     ApplicationError,
-    CONTROLLER_PYTHON_VERSIONS,
-    SUPPORTED_PYTHON_VERSIONS,
     display,
     str_to_version,
+    cache,
 )
 
 from .data import (
@@ -47,7 +49,7 @@ class BaseConfig:
 class ModulesConfig(BaseConfig):
     """Configuration for modules."""
     def __init__(self, data):  # type: (t.Any) -> None
-        super(ModulesConfig, self).__init__(data)
+        super().__init__(data)
 
         python_requires = data.get('python_requires', MISSING)
 
@@ -62,7 +64,7 @@ class ModulesConfig(BaseConfig):
 class ContentConfig(BaseConfig):
     """Configuration for all content."""
     def __init__(self, data):  # type: (t.Any) -> None
-        super(ContentConfig, self).__init__(data)
+        super().__init__(data)
 
         # Configuration specific to modules/module_utils.
         self.modules = ModulesConfig(data.get('modules', {}))
@@ -103,17 +105,13 @@ def load_config(path):  # type: (str) -> t.Optional[ContentConfig]
     return config
 
 
+@cache
 def get_content_config():  # type: () -> ContentConfig
     """
     Parse and return the content configuration (if any) for the current collection.
     For ansible-core, a default configuration is used.
     Results are cached.
     """
-    try:
-        return get_content_config.config
-    except AttributeError:
-        pass
-
     collection_config_path = 'tests/config.yml'
 
     config = None
@@ -127,8 +125,6 @@ def get_content_config():  # type: () -> ContentConfig
                 python_requires='default',
             ),
         ))
-
-    get_content_config.config = config
 
     if not config.modules.python_versions:
         raise ApplicationError('This collection does not declare support for modules/module_utils on any known Python version.\n'

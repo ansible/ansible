@@ -1,10 +1,8 @@
 """Analyze code coverage data to determine which integration test targets provide coverage for each arc or line."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
-
-from ..... import types as t
+import typing as t
 
 from .....encoding import (
     to_text,
@@ -16,6 +14,15 @@ from .....data import (
 
 from .....util_common import (
     ResultType,
+)
+
+from .....executor import (
+    Delegate,
+)
+
+from .....provisioning import (
+    prepare_profiles,
+    HostState,
 )
 
 from ... import (
@@ -47,7 +54,7 @@ if t.TYPE_CHECKING:
 class CoverageAnalyzeTargetsGenerateConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets generate` command."""
     def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageAnalyzeTargetsGenerateConfig, self).__init__(args)
+        super().__init__(args)
 
         self.input_dir = args.input_dir or ResultType.COVERAGE.path  # type: str
         self.output_file = args.output_file  # type: str
@@ -55,9 +62,14 @@ class CoverageAnalyzeTargetsGenerateConfig(CoverageAnalyzeTargetsConfig):
 
 def command_coverage_analyze_targets_generate(args):  # type: (CoverageAnalyzeTargetsGenerateConfig) -> None
     """Analyze code coverage data to determine which integration test targets provide coverage for each arc or line."""
+    host_state = prepare_profiles(args)  # coverage analyze targets generate
+
+    if args.delegate:
+        raise Delegate(host_state)
+
     root = data_context().content.root
     target_indexes = {}
-    arcs = dict((os.path.relpath(path, root), data) for path, data in analyze_python_coverage(args, args.input_dir, target_indexes).items())
+    arcs = dict((os.path.relpath(path, root), data) for path, data in analyze_python_coverage(args, host_state, args.input_dir, target_indexes).items())
     lines = dict((os.path.relpath(path, root), data) for path, data in analyze_powershell_coverage(args, args.input_dir, target_indexes).items())
     report = make_report(target_indexes, arcs, lines)
     write_report(args, report, args.output_file)
@@ -65,6 +77,7 @@ def command_coverage_analyze_targets_generate(args):  # type: (CoverageAnalyzeTa
 
 def analyze_python_coverage(
         args,  # type: CoverageAnalyzeTargetsGenerateConfig
+        host_state,  # type: HostState
         path,  # type: str
         target_indexes,  # type: TargetIndexes
 ):  # type: (...) -> Arcs
@@ -73,7 +86,7 @@ def analyze_python_coverage(
     collection_search_re, collection_sub_re = get_collection_path_regexes()
     modules = get_python_modules()
     python_files = get_python_coverage_files(path)
-    coverage = initialize_coverage(args)
+    coverage = initialize_coverage(args, host_state)
 
     for python_file in python_files:
         if not is_integration_coverage_file(python_file):

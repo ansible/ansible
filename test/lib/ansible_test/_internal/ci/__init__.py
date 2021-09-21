@@ -1,15 +1,12 @@
 """Support code for CI environments."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import abc
 import base64
 import json
 import os
 import tempfile
-
-
-from .. import types as t
+import typing as t
 
 from ..encoding import (
     to_bytes,
@@ -27,12 +24,12 @@ from ..config import (
 )
 
 from ..util import (
-    ABC,
     ApplicationError,
     display,
     get_subclasses,
     import_plugins,
     raw_command,
+    cache,
 )
 
 
@@ -40,13 +37,7 @@ class ChangeDetectionNotSupported(ApplicationError):
     """Exception for cases where change detection is not supported."""
 
 
-class AuthContext:
-    """Context information required for Ansible Core CI authentication."""
-    def __init__(self):  # type: () -> None
-        pass
-
-
-class CIProvider(ABC):
+class CIProvider(metaclass=abc.ABCMeta):
     """Base class for CI provider plugins."""
     priority = 500
 
@@ -78,11 +69,11 @@ class CIProvider(ABC):
         """Initialize change detection."""
 
     @abc.abstractmethod
-    def supports_core_ci_auth(self, context):  # type: (AuthContext) -> bool
+    def supports_core_ci_auth(self):  # type: () -> bool
         """Return True if Ansible Core CI is supported."""
 
     @abc.abstractmethod
-    def prepare_core_ci_auth(self, context):  # type: (AuthContext) -> t.Dict[str, t.Any]
+    def prepare_core_ci_auth(self):  # type: () -> t.Dict[str, t.Any]
         """Return authentication details for Ansible Core CI."""
 
     @abc.abstractmethod
@@ -90,13 +81,9 @@ class CIProvider(ABC):
         """Return details about git in the current environment."""
 
 
+@cache
 def get_ci_provider():  # type: () -> CIProvider
     """Return a CI provider instance for the current environment."""
-    try:
-        return get_ci_provider.provider
-    except AttributeError:
-        pass
-
     provider = None
 
     import_plugins('ci')
@@ -111,12 +98,10 @@ def get_ci_provider():  # type: () -> CIProvider
     if provider.code:
         display.info('Detected CI provider: %s' % provider.name)
 
-    get_ci_provider.provider = provider
-
     return provider
 
 
-class AuthHelper(ABC):
+class AuthHelper(metaclass=abc.ABCMeta):
     """Public key based authentication helper for Ansible Core CI."""
     def sign_request(self, request):  # type: (t.Dict[str, t.Any]) -> None
         """Sign the given auth request and make the public key available."""
@@ -154,7 +139,7 @@ class AuthHelper(ABC):
         """Generate a new key pair, publishing the public key and returning the private key."""
 
 
-class CryptographyAuthHelper(AuthHelper, ABC):  # pylint: disable=abstract-method
+class CryptographyAuthHelper(AuthHelper, metaclass=abc.ABCMeta):
     """Cryptography based public key based authentication helper for Ansible Core CI."""
     def sign_bytes(self, payload_bytes):  # type: (bytes) -> bytes
         """Sign the given payload and return the signature, initializing a new key pair if required."""
@@ -199,7 +184,7 @@ class CryptographyAuthHelper(AuthHelper, ABC):  # pylint: disable=abstract-metho
         return private_key_pem
 
 
-class OpenSSLAuthHelper(AuthHelper, ABC):  # pylint: disable=abstract-method
+class OpenSSLAuthHelper(AuthHelper, metaclass=abc.ABCMeta):
     """OpenSSL based public key based authentication helper for Ansible Core CI."""
     def sign_bytes(self, payload_bytes):  # type: (bytes) -> bytes
         """Sign the given payload and return the signature, initializing a new key pair if required."""

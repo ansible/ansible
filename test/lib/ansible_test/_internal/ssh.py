@@ -1,14 +1,14 @@
 """High level functions for working with SSH."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import dataclasses
 import json
 import os
 import random
 import re
 import subprocess
-
-from . import types as t
+import shlex
+import typing as t
 
 from .encoding import (
     to_bytes,
@@ -17,9 +17,7 @@ from .encoding import (
 
 from .util import (
     ApplicationError,
-    cmd_quote,
     common_environment,
-    devnull,
     display,
     exclude_none_values,
     sanitize_host_name,
@@ -30,24 +28,19 @@ from .config import (
 )
 
 
+@dataclasses.dataclass
 class SshConnectionDetail:
     """Information needed to establish an SSH connection to a host."""
-    def __init__(self,
-                 name,  # type: str
-                 host,  # type: str
-                 port,  # type: t.Optional[int]
-                 user,  # type: str
-                 identity_file,  # type: str
-                 python_interpreter=None,  # type: t.Optional[str]
-                 shell_type=None,  # type: t.Optional[str]
-                 ):  # type: (...) -> None
-        self.name = sanitize_host_name(name)
-        self.host = host
-        self.port = port
-        self.user = user
-        self.identity_file = identity_file
-        self.python_interpreter = python_interpreter
-        self.shell_type = shell_type
+    name: str
+    host: str
+    port: t.Optional[int]
+    user: str
+    identity_file: str
+    python_interpreter: t.Optional[str] = None
+    shell_type: t.Optional[str] = None
+
+    def __post_init__(self):
+        self.name = sanitize_host_name(self.name)
 
 
 class SshProcess:
@@ -183,7 +176,7 @@ def run_ssh_command(
     cmd = create_ssh_command(ssh, options, cli_args, command)
     env = common_environment()
 
-    cmd_show = ' '.join([cmd_quote(c) for c in cmd])
+    cmd_show = ' '.join([shlex.quote(c) for c in cmd])
     display.info('Run background command: %s' % cmd_show, verbosity=1, truncate=True)
 
     cmd_bytes = [to_bytes(c) for c in cmd]
@@ -193,7 +186,7 @@ def run_ssh_command(
         process = SshProcess(None)
     else:
         process = SshProcess(subprocess.Popen(cmd_bytes, env=env_bytes, bufsize=-1,  # pylint: disable=consider-using-with
-                                              stdin=devnull(), stdout=subprocess.PIPE, stderr=subprocess.PIPE))
+                                              stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE))
 
     return process
 

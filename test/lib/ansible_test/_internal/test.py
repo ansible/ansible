@@ -1,11 +1,9 @@
 """Classes for storing and processing test results."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import datetime
 import re
-
-from . import types as t
+import typing as t
 
 from .util import (
     display,
@@ -21,6 +19,8 @@ from .util_common import (
 from .config import (
     TestConfig,
 )
+
+from . import junit_xml
 
 
 def calculate_best_confidence(choices, metadata):
@@ -79,17 +79,8 @@ class TestResult:
         if self.python_version:
             self.name += '-python-%s' % self.python_version
 
-        try:
-            import junit_xml
-        except ImportError:
-            junit_xml = None
-
-        self.junit = junit_xml
-
-    def write(self, args):
-        """
-        :type args: TestConfig
-        """
+    def write(self, args):  # type: (TestConfig) -> None
+        """Write the test results to various locations."""
         self.write_console()
         self.write_bot(args)
 
@@ -97,10 +88,7 @@ class TestResult:
             self.write_lint()
 
         if args.junit:
-            if self.junit:
-                self.write_junit(args)
-            else:
-                display.warning('Skipping junit xml output because the `junit-xml` python package was not found.', unique=True)
+            self.write_junit(args)
 
     def write_console(self):
         """Write results to console."""
@@ -135,32 +123,19 @@ class TestResult:
 
         return name
 
-    def save_junit(self, args, test_case, properties=None):
-        """
-        :type args: TestConfig
-        :type test_case: junit_xml.TestCase
-        :type properties: dict[str, str] | None
-        :rtype: str | None
-        """
-        test_suites = [
-            self.junit.TestSuite(
-                name='ansible-test',
-                test_cases=[test_case],
-                timestamp=datetime.datetime.utcnow().replace(microsecond=0).isoformat(),
-                properties=properties,
-            ),
-        ]
+    def save_junit(self, args, test_case):  # type: (TestConfig, junit_xml.TestCase) -> None
+        """Save the given test case results to disk as JUnit XML."""
+        suites = junit_xml.TestSuites(
+            suites=[
+                junit_xml.TestSuite(
+                    name='ansible-test',
+                    cases=[test_case],
+                    timestamp=datetime.datetime.utcnow(),
+                ),
+            ],
+        )
 
-        # the junit_xml API is changing in version 2.0.0
-        # TestSuite.to_xml_string is being replaced with to_xml_report_string
-        # see: https://github.com/kyrus/python-junit-xml/blob/63db26da353790500642fd02cae1543eb41aab8b/junit_xml/__init__.py#L249-L261
-        try:
-            to_xml_string = self.junit.to_xml_report_string
-        except AttributeError:
-            # noinspection PyDeprecation
-            to_xml_string = self.junit.TestSuite.to_xml_string
-
-        report = to_xml_string(test_suites=test_suites, prettyprint=True, encoding='utf-8')
+        report = suites.to_pretty_xml()
 
         if args.explain:
             return
@@ -174,7 +149,7 @@ class TestTimeout(TestResult):
         """
         :type timeout_duration: int
         """
-        super(TestTimeout, self).__init__(command='timeout', test='')
+        super().__init__(command='timeout', test='')
 
         self.timeout_duration = timeout_duration
 
@@ -198,21 +173,31 @@ One or more of the following situations may be responsible:
 
         output += '\n\nConsult the console log for additional details on where the timeout occurred.'
 
-        timestamp = datetime.datetime.utcnow().replace(microsecond=0).isoformat()
+        timestamp = datetime.datetime.utcnow()
 
-        # hack to avoid requiring junit-xml, which may not be pre-installed outside our test containers
-        xml = '''
-<?xml version="1.0" encoding="utf-8"?>
-<testsuites disabled="0" errors="1" failures="0" tests="1" time="0.0">
-\t<testsuite disabled="0" errors="1" failures="0" file="None" log="None" name="ansible-test" skipped="0" tests="1" time="0" timestamp="%s" url="None">
-\t\t<testcase classname="timeout" name="timeout">
-\t\t\t<error message="%s" type="error">%s</error>
-\t\t</testcase>
-\t</testsuite>
-</testsuites>
-''' % (timestamp, message, output)
+        suites = junit_xml.TestSuites(
+            suites=[
+                junit_xml.TestSuite(
+                    name='ansible-test',
+                    timestamp=timestamp,
+                    cases=[
+                        junit_xml.TestCase(
+                            name='timeout',
+                            classname='timeout',
+                            errors=[
+                                junit_xml.TestError(
+                                    message=message,
+                                ),
+                            ],
+                        ),
+                    ],
+                )
+            ],
+        )
 
-        write_text_test_results(ResultType.JUNIT, self.create_result_name('.xml'), xml.lstrip())
+        report = suites.to_pretty_xml()
+
+        write_text_test_results(ResultType.JUNIT, self.create_result_name('.xml'), report)
 
 
 class TestSuccess(TestResult):
@@ -221,7 +206,7 @@ class TestSuccess(TestResult):
         """
         :type args: TestConfig
         """
-        test_case = self.junit.TestCase(classname=self.command, name=self.name)
+        test_case = junit_xml.TestCase(classname=self.command, name=self.name)
 
         self.save_junit(args, test_case)
 
@@ -234,7 +219,7 @@ class TestSkipped(TestResult):
         :type test: str
         :type python_version: str
         """
-        super(TestSkipped, self).__init__(command, test, python_version)
+        super().__init__(command, test, python_version)
 
         self.reason = None  # type: t.Optional[str]
 
@@ -249,8 +234,11 @@ class TestSkipped(TestResult):
         """
         :type args: TestConfig
         """
-        test_case = self.junit.TestCase(classname=self.command, name=self.name)
-        test_case.add_skipped_info(self.reason or 'No tests applicable.')
+        test_case = junit_xml.TestCase(
+            classname=self.command,
+            name=self.name,
+            skipped=self.reason or 'No tests applicable.',
+        )
 
         self.save_junit(args, test_case)
 
@@ -265,7 +253,7 @@ class TestFailure(TestResult):
         :type messages: list[TestMessage] | None
         :type summary: unicode | None
         """
-        super(TestFailure, self).__init__(command, test, python_version)
+        super().__init__(command, test, python_version)
 
         if messages:
             messages = sorted(messages)
@@ -282,7 +270,7 @@ class TestFailure(TestResult):
         if args.metadata.changes:
             self.populate_confidence(args.metadata)
 
-        super(TestFailure, self).write(args)
+        super().write(args)
 
     def write_console(self):
         """Write results to console."""
@@ -322,11 +310,16 @@ class TestFailure(TestResult):
         title = self.format_title()
         output = self.format_block()
 
-        test_case = self.junit.TestCase(classname=self.command, name=self.name)
-
-        # Include a leading newline to improve readability on Shippable "Tests" tab.
-        # Without this, the first line becomes indented.
-        test_case.add_failure_info(message=title, output='\n%s' % output)
+        test_case = junit_xml.TestCase(
+            classname=self.command,
+            name=self.name,
+            failures=[
+                junit_xml.TestFailure(
+                    message=title,
+                    output=output,
+                ),
+            ],
+        )
 
         self.save_junit(args, test_case)
 

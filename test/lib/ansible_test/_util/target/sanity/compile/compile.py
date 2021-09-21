@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Python syntax checker with lint friendly output."""
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -11,6 +10,7 @@ Text = type(u'')
 
 
 def main():
+    """Main program entry point."""
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
         with open(path, 'rb') as source_fd:
             source = source_fd.read()

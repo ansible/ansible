@@ -1,6 +1,5 @@
 """Access Ansible Core CI remote services."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import os
@@ -9,8 +8,7 @@ import traceback
 import uuid
 import errno
 import time
-
-from . import types as t
+import typing as t
 
 from .http import (
     HttpClient,
@@ -29,6 +27,7 @@ from .util import (
     ApplicationError,
     display,
     ANSIBLE_TEST_TARGET_ROOT,
+    mutex,
 )
 
 from .util_common import (
@@ -41,7 +40,6 @@ from .config import (
 )
 
 from .ci import (
-    AuthContext,
     get_ci_provider,
 )
 
@@ -54,58 +52,20 @@ class AnsibleCoreCI:
     """Client for Ansible Core CI services."""
     DEFAULT_ENDPOINT = 'https://ansible-core-ci.testing.ansible.com'
 
-    # Assign a default provider for each VM platform supported.
-    # This is used to determine the provider from the platform when no provider is specified.
-    # The keys here also serve as the list of providers which users can select from the command line.
-    #
-    # Entries can take one of two formats:
-    #   {platform}
-    #   {platform} arch={arch}
-    #
-    # Entries with an arch are only used as a default if the value for --remote-arch matches the {arch} specified.
-    # This allows arch specific defaults to be distinct from the default used when no arch is specified.
-
-    PROVIDERS = dict(
-        aws=(
-            'freebsd',
-            'ios',
-            'rhel',
-            'vyos',
-            'windows',
-        ),
-        azure=(
-        ),
-        ibmps=(
-            'aix',
-        ),
-        parallels=(
-            'macos',
-            'osx',
-        ),
-    )
-
-    # Currently ansible-core-ci has no concept of arch selection. This effectively means each provider only supports one arch.
-    # The list below identifies which platforms accept an arch, and which one. These platforms can only be used with the specified arch.
-    PROVIDER_ARCHES = dict(
-    )
-
-    def __init__(self, args, platform, version, stage='prod', persist=True, load=True, provider=None, arch=None, internal=False):
+    def __init__(self, args, platform, version, provider, persist=True, load=True, suffix=None):
         """
         :type args: EnvironmentConfig
         :type platform: str
         :type version: str
-        :type stage: str
+        :type provider: str
         :type persist: bool
         :type load: bool
-        :type provider: str | None
-        :type arch: str | None
-        :type internal: bool
+        :type suffix: str | None
         """
         self.args = args
-        self.arch = arch
         self.platform = platform
         self.version = version
-        self.stage = stage
+        self.stage = args.remote_stage
         self.client = HttpClient(args)
         self.connection = None
         self.instance_id = None
@@ -113,51 +73,13 @@ class AnsibleCoreCI:
         self.default_endpoint = args.remote_endpoint or self.DEFAULT_ENDPOINT
         self.retries = 3
         self.ci_provider = get_ci_provider()
-        self.auth_context = AuthContext()
+        self.provider = provider
+        self.name = '%s-%s' % (self.platform, self.version)
 
-        if self.arch:
-            self.name = '%s-%s-%s' % (self.arch, self.platform, self.version)
-        else:
-            self.name = '%s-%s' % (self.platform, self.version)
-
-        if provider:
-            # override default provider selection (not all combinations are valid)
-            self.provider = provider
-        else:
-            self.provider = None
-
-            for candidate, platforms in self.PROVIDERS.items():
-                choices = [
-                    platform,
-                    '%s arch=%s' % (platform, arch),
-                ]
-
-                if any(choice in platforms for choice in choices):
-                    # assign default provider based on platform
-                    self.provider = candidate
-                    break
-
-        # If a provider has been selected, make sure the correct arch (or none) has been selected.
-        if self.provider:
-            required_arch = self.PROVIDER_ARCHES.get(self.provider)
-
-            if self.arch != required_arch:
-                if required_arch:
-                    if self.arch:
-                        raise ApplicationError('Provider "%s" requires the "%s" arch instead of "%s".' % (self.provider, required_arch, self.arch))
-
-                    raise ApplicationError('Provider "%s" requires the "%s" arch.' % (self.provider, required_arch))
-
-                raise ApplicationError('Provider "%s" does not support specification of an arch.' % self.provider)
+        if suffix:
+            self.name += '-' + suffix
 
         self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s-%s' % (self.name, self.provider, self.stage))
-
-        if self.provider not in self.PROVIDERS and not internal:
-            if self.arch:
-                raise ApplicationError('Provider not detected for platform "%s" on arch "%s".' % (self.platform, self.arch))
-
-            raise ApplicationError('Provider not detected for platform "%s" with no arch specified.' % self.platform)
-
         self.ssh_key = SshKey(args)
 
         if persist and load and self._load():
@@ -199,7 +121,7 @@ class AnsibleCoreCI:
     @property
     def available(self):
         """Return True if Ansible Core CI is supported."""
-        return self.ci_provider.supports_core_ci_auth(self.auth_context)
+        return self.ci_provider.supports_core_ci_auth()
 
     def start(self):
         """Start instance."""
@@ -208,7 +130,7 @@ class AnsibleCoreCI:
                          verbosity=1)
             return None
 
-        return self._start(self.ci_provider.prepare_core_ci_auth(self.auth_context))
+        return self._start(self.ci_provider.prepare_core_ci_auth())
 
     def stop(self):
         """Stop instance."""
@@ -272,7 +194,7 @@ class AnsibleCoreCI:
                 running=True,
                 hostname='cloud.example.com',
                 port=12345,
-                username='username',
+                username='root',
                 password='password' if self.platform == 'windows' else None,
             )
         else:
@@ -357,12 +279,7 @@ class AnsibleCoreCI:
 
         return response.json()
 
-    def _start_endpoint(self, data, headers):
-        """
-        :type data: dict[str, any]
-        :type headers: dict[str, str]
-        :rtype: HttpResponse
-        """
+    def _start_endpoint(self, data, headers):  # type: (t.Dict[str, t.Any], t.Dict[str, str]) -> HttpResponse
         tries = self.retries
         sleep = 15
 
@@ -481,7 +398,7 @@ class CoreHttpError(HttpError):
         :type remote_message: str
         :type remote_stack_trace: str
         """
-        super(CoreHttpError, self).__init__(status, '%s%s' % (remote_message, remote_stack_trace))
+        super().__init__(status, '%s%s' % (remote_message, remote_stack_trace))
 
         self.remote_message = remote_message
         self.remote_stack_trace = remote_stack_trace
@@ -493,6 +410,7 @@ class SshKey:
     KEY_NAME = 'id_%s' % KEY_TYPE
     PUB_NAME = '%s.pub' % KEY_NAME
 
+    @mutex
     def __init__(self, args):
         """
         :type args: EnvironmentConfig
@@ -523,6 +441,15 @@ class SshKey:
         else:
             self.pub_contents = read_text_file(self.pub).strip()
             self.key_contents = read_text_file(self.key).strip()
+
+    @staticmethod
+    def get_relative_in_tree_private_key_path():  # type: () -> str
+        """Return the ansible-test SSH private key path relative to the content tree."""
+        temp_dir = ResultType.TMP.relative_path
+
+        key = os.path.join(temp_dir, SshKey.KEY_NAME)
+
+        return key
 
     def get_in_tree_key_pair_paths(self):  # type: () -> t.Optional[t.Tuple[str, str]]
         """Return the ansible-test SSH key pair paths from the content tree."""

@@ -1,1 +1,4 @@
-packaging
+packaging == 21.0
+
+# dependencies
+pyparsing == 2.4.7

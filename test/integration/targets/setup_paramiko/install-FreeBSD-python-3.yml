@@ -1,0 +1,6 @@
+- name: Setup remote constraints
+  include_tasks: setup-remote-constraints.yml
+- name: Install Paramiko for Python 3 on FreeBSD
+  pip: # no package in pkg, just use pip
+    name: paramiko
+    extra_args: "-c {{ remote_constraints }}"

@@ -1,4 +1,5 @@
-- hosts: all
+- name: Restore POSIX hosts file
+  hosts: all
   gather_facts: no
   tasks:
     - name: Remove container hostname(s) from hosts file

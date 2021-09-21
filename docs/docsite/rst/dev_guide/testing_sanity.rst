@@ -24,7 +24,7 @@ How to run
 
 .. note::
    When using docker and the ``--base-branch`` argument,
-   also use the ``--docker-keep-git`` argument to avoid git related errors.
+   also use the ``--keep-git`` argument to avoid git related errors.
 
 .. code:: shell
 

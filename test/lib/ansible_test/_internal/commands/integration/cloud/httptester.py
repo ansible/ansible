@@ -1,6 +1,5 @@
 """HTTP Tester plugin for integration tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -14,6 +13,7 @@ from ....config import (
 )
 
 from ....containers import (
+    CleanupMode,
     run_support_container,
 )
 
@@ -29,7 +29,7 @@ KRB5_PASSWORD_ENV = 'KRB5_PASSWORD'
 class HttptesterProvider(CloudProvider):
     """HTTP Tester provider plugin. Sets up resources before delegation."""
     def __init__(self, args):  # type: (IntegrationConfig) -> None
-        super(HttptesterProvider, self).__init__(args)
+        super().__init__(args)
 
         self.image = os.environ.get('ANSIBLE_HTTP_TEST_CONTAINER', 'quay.io/ansible/http-test-container:1.3.0')
 
@@ -37,7 +37,7 @@ class HttptesterProvider(CloudProvider):
 
     def setup(self):  # type: () -> None
         """Setup resources before delegation."""
-        super(HttptesterProvider, self).setup()
+        super().setup()
 
         ports = [
             80,
@@ -61,15 +61,12 @@ class HttptesterProvider(CloudProvider):
             'http-test-container',
             ports,
             aliases=aliases,
-            start=True,
             allow_existing=True,
-            cleanup=True,
+            cleanup=CleanupMode.YES,
             env={
                 KRB5_PASSWORD_ENV: generate_password(),
             },
         )
-
-        descriptor.register(self.args)
 
         # Read the password from the container environment.
         # This allows the tests to work when re-using an existing container.

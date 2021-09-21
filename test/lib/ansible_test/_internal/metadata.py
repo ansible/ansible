@@ -1,8 +1,6 @@
 """Test metadata for passing data to delegated tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
-from . import types as t
+from __future__ import annotations
+import typing as t
 
 from .util import (
     display,
@@ -25,7 +23,6 @@ class Metadata:
         """Initialize metadata."""
         self.changes = {}  # type: t.Dict[str, t.Tuple[t.Tuple[int, int]]]
         self.cloud_config = None  # type: t.Optional[t.Dict[str, str]]
-        self.instance_config = None  # type: t.Optional[t.List[t.Dict[str, str]]]
         self.change_description = None  # type: t.Optional[ChangeDescription]
         self.ci_provider = None  # type: t.Optional[str]
 
@@ -57,7 +54,6 @@ class Metadata:
         return dict(
             changes=self.changes,
             cloud_config=self.cloud_config,
-            instance_config=self.instance_config,
             ci_provider=self.ci_provider,
             change_description=self.change_description.to_dict(),
         )
@@ -90,7 +86,6 @@ class Metadata:
         metadata = Metadata()
         metadata.changes = data['changes']
         metadata.cloud_config = data['cloud_config']
-        metadata.instance_config = data['instance_config']
         metadata.ci_provider = data['ci_provider']
         metadata.change_description = ChangeDescription.from_dict(data['change_description'])
 

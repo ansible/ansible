@@ -1,3 +1,2 @@
 shippable/posix/group4
-skip/aix
-skip/python2.6  # ansible-galaxy uses tarfile with features not available until 2.7
+context/controller

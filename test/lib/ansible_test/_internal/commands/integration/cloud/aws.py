@@ -1,15 +1,13 @@
 """AWS plugin for integration tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import uuid
-
-from .... import types as t
+import configparser
+import typing as t
 
 from ....util import (
     ApplicationError,
-    ConfigParser,
     display,
 )
 
@@ -25,6 +23,10 @@ from ....core_ci import (
     AnsibleCoreCI,
 )
 
+from ....host_configs import (
+    OriginConfig,
+)
+
 from . import (
     CloudEnvironment,
     CloudEnvironmentConfig,
@@ -35,7 +37,7 @@ from . import (
 class AwsCloudProvider(CloudProvider):
     """AWS cloud provider plugin. Sets up cloud resources before delegation."""
     def __init__(self, args):  # type: (IntegrationConfig) -> None
-        super(AwsCloudProvider, self).__init__(args)
+        super().__init__(args)
 
         self.uses_config = True
 
@@ -46,15 +48,15 @@ class AwsCloudProvider(CloudProvider):
         if aci.available:
             return
 
-        super(AwsCloudProvider, self).filter(targets, exclude)
+        super().filter(targets, exclude)
 
     def setup(self):  # type: () -> None
         """Setup the cloud resource before delegation and register a cleanup callback."""
-        super(AwsCloudProvider, self).setup()
+        super().setup()
 
         aws_config_path = os.path.expanduser('~/.aws')
 
-        if os.path.exists(aws_config_path) and not self.args.docker and not self.args.remote:
+        if os.path.exists(aws_config_path) and isinstance(self.args.controller, OriginConfig):
             raise ApplicationError('Rename "%s" or use the --docker or --remote option to isolate tests.' % aws_config_path)
 
         if not self._use_static_config():
@@ -89,14 +91,14 @@ class AwsCloudProvider(CloudProvider):
 
     def _create_ansible_core_ci(self):  # type: () -> AnsibleCoreCI
         """Return an AWS instance of AnsibleCoreCI."""
-        return AnsibleCoreCI(self.args, 'aws', 'aws', persist=False, stage=self.args.remote_stage, provider='aws', internal=True)
+        return AnsibleCoreCI(self.args, 'aws', 'aws', 'aws', persist=False)
 
 
 class AwsCloudEnvironment(CloudEnvironment):
     """AWS cloud environment plugin. Updates integration test environment after delegation."""
     def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
         """Return environment configuration for use in the test environment after delegation."""
-        parser = ConfigParser()
+        parser = configparser.ConfigParser()
         parser.read(self.config_path)
 
         ansible_vars = dict(

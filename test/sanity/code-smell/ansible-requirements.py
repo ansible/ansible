@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -17,7 +16,7 @@ def read_file(path):
 
 def main():
     ORIGINAL_FILE = 'requirements.txt'
-    VENDORED_COPY = 'test/lib/ansible_test/_data/requirements/sanity.import-plugins.txt'
+    VENDORED_COPY = 'test/lib/ansible_test/_data/requirements/ansible.txt'
 
     original_requirements = read_file(ORIGINAL_FILE)
     vendored_requirements = read_file(VENDORED_COPY)

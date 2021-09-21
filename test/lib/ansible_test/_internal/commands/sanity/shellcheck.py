@@ -1,15 +1,13 @@
 """Sanity test using shellcheck."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
+import typing as t
 
 from xml.etree.ElementTree import (
     fromstring,
     Element,
 )
-
-from ... import types as t
 
 from . import (
     SanityVersionNeutral,
@@ -17,7 +15,12 @@ from . import (
     SanityFailure,
     SanitySuccess,
     SanitySkipped,
+    SanityTargets,
     SANITY_ROOT,
+)
+
+from ...test import (
+    TestResult,
 )
 
 from ...target import (
@@ -50,12 +53,7 @@ class ShellcheckTest(SanityVersionNeutral):
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if os.path.splitext(target.path)[1] == '.sh']
 
-    def test(self, args, targets):
-        """
-        :type args: SanityConfig
-        :type targets: SanityTargets
-        :rtype: TestResult
-        """
+    def test(self, args, targets):  # type: (SanityConfig, SanityTargets) -> TestResult
         exclude_file = os.path.join(SANITY_ROOT, 'shellcheck', 'exclude.txt')
         exclude = set(read_lines_without_comments(exclude_file, remove_blank_lines=True, optional=True))
 

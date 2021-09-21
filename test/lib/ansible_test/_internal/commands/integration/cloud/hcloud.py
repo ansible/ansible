@@ -1,11 +1,10 @@
 """Hetzner Cloud plugin for integration tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from .... import types as t
+import configparser
+import typing as t
 
 from ....util import (
-    ConfigParser,
     display,
 )
 
@@ -31,7 +30,7 @@ from . import (
 class HcloudCloudProvider(CloudProvider):
     """Hetzner Cloud provider plugin. Sets up cloud resources before delegation."""
     def __init__(self, args):  # type: (IntegrationConfig) -> None
-        super(HcloudCloudProvider, self).__init__(args)
+        super().__init__(args)
 
         self.uses_config = True
 
@@ -42,11 +41,11 @@ class HcloudCloudProvider(CloudProvider):
         if aci.available:
             return
 
-        super(HcloudCloudProvider, self).filter(targets, exclude)
+        super().filter(targets, exclude)
 
     def setup(self):  # type: () -> None
         """Setup the cloud resource before delegation and register a cleanup callback."""
-        super(HcloudCloudProvider, self).setup()
+        super().setup()
 
         if not self._use_static_config():
             self._setup_dynamic()
@@ -79,14 +78,14 @@ class HcloudCloudProvider(CloudProvider):
 
     def _create_ansible_core_ci(self):  # type: () -> AnsibleCoreCI
         """Return a Heztner instance of AnsibleCoreCI."""
-        return AnsibleCoreCI(self.args, 'hetzner', 'hetzner', persist=False, stage=self.args.remote_stage, provider='hetzner', internal=True)
+        return AnsibleCoreCI(self.args, 'hetzner', 'hetzner', 'hetzner', persist=False)
 
 
 class HcloudCloudEnvironment(CloudEnvironment):
     """Hetzner Cloud cloud environment plugin. Updates integration test environment after delegation."""
     def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
         """Return environment configuration for use in the test environment after delegation."""
-        parser = ConfigParser()
+        parser = configparser.ConfigParser()
         parser.read(self.config_path)
 
         env_vars = dict(

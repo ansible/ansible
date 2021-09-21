@@ -4,11 +4,11 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 """Cloudscale plugin for integration tests."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
+
+import configparser
 
 from ....util import (
-    ConfigParser,
     display,
 )
 
@@ -26,13 +26,13 @@ from . import (
 class CloudscaleCloudProvider(CloudProvider):
     """Cloudscale cloud provider plugin. Sets up cloud resources before delegation."""
     def __init__(self, args):  # type: (IntegrationConfig) -> None
-        super(CloudscaleCloudProvider, self).__init__(args)
+        super().__init__(args)
 
         self.uses_config = True
 
     def setup(self):  # type: () -> None
         """Setup the cloud resource before delegation and register a cleanup callback."""
-        super(CloudscaleCloudProvider, self).setup()
+        super().setup()
 
         self._use_static_config()
 
@@ -41,7 +41,7 @@ class CloudscaleCloudEnvironment(CloudEnvironment):
     """Cloudscale cloud environment plugin. Updates integration test environment after delegation."""
     def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
         """Return environment configuration for use in the test environment after delegation."""
-        parser = ConfigParser()
+        parser = configparser.ConfigParser()
         parser.read(self.config_path)
 
         env_vars = dict(

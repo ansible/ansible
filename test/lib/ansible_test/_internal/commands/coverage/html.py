@@ -1,6 +1,5 @@
 """Generate HTML code coverage reports."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -14,6 +13,10 @@ from ...util import (
 
 from ...util_common import (
     ResultType,
+)
+
+from ...provisioning import (
+    prepare_profiles,
 )
 
 from .combine import (
@@ -30,6 +33,7 @@ def command_coverage_html(args):
     """
     :type args: CoverageHtmlConfig
     """
+    host_state = prepare_profiles(args)  # coverage html
     output_files = command_coverage_combine(args)
 
     for output_file in output_files:
@@ -40,7 +44,7 @@ def command_coverage_html(args):
 
         dir_name = os.path.join(ResultType.REPORTS.path, os.path.basename(output_file))
         make_dirs(dir_name)
-        run_coverage(args, output_file, 'html', ['-i', '-d', dir_name])
+        run_coverage(args, host_state, output_file, 'html', ['-i', '-d', dir_name])
 
         display.info('HTML report generated: file:///%s' % os.path.join(dir_name, 'index.html'))
 

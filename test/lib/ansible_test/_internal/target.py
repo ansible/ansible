@@ -1,14 +1,13 @@
 """Test target identification, iteration and inclusion/exclusion."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import collections
+import enum
 import os
 import re
 import itertools
 import abc
-
-from . import types as t
+import typing as t
 
 from .encoding import (
     to_bytes,
@@ -28,6 +27,7 @@ from .util import (
 
 from .data import (
     data_context,
+    content_plugins,
 )
 
 MODULE_EXTENSIONS = '.py', '.ps1'
@@ -45,16 +45,16 @@ except AttributeError:
     TIntegrationTarget = None  # pylint: disable=invalid-name
 
 
-def find_target_completion(target_func, prefix):
+def find_target_completion(target_func, prefix, short):
     """
     :type target_func: () -> collections.Iterable[CompletionTarget]
     :type prefix: unicode
+    :type short: bool
     :rtype: list[str]
     """
     try:
         targets = target_func()
-        short = os.environ.get('COMP_TYPE') == '63'  # double tab completion from bash
-        matches = walk_completion_targets(targets, prefix, short)
+        matches = list(walk_completion_targets(targets, prefix, short))
         return matches
     except Exception as ex:  # pylint: disable=locally-disabled, broad-except
         return [u'%s' % ex]
@@ -95,14 +95,14 @@ def walk_internal_targets(targets, includes=None, excludes=None, requires=None):
     """
     targets = tuple(targets)
 
-    include_targets = sorted(filter_targets(targets, includes, errors=True, directories=False), key=lambda include_target: include_target.name)
+    include_targets = sorted(filter_targets(targets, includes, directories=False), key=lambda include_target: include_target.name)
 
     if requires:
-        require_targets = set(filter_targets(targets, requires, errors=True, directories=False))
+        require_targets = set(filter_targets(targets, requires, directories=False))
         include_targets = [require_target for require_target in include_targets if require_target in require_targets]
 
     if excludes:
-        list(filter_targets(targets, excludes, errors=True, include=False, directories=False))
+        list(filter_targets(targets, excludes, include=False, directories=False))
 
     internal_targets = set(filter_targets(include_targets, excludes, errors=False, include=False, directories=False))
     return tuple(sorted(internal_targets, key=lambda sort_target: sort_target.name))
@@ -453,10 +453,8 @@ def analyze_integration_target_dependencies(integration_targets):
     return dependencies
 
 
-class CompletionTarget:
+class CompletionTarget(metaclass=abc.ABCMeta):
     """Command-line argument completion target base class."""
-    __metaclass__ = abc.ABCMeta
-
     def __init__(self):
         self.name = None
         self.path = None
@@ -496,7 +494,7 @@ class DirectoryTarget(CompletionTarget):
         :type path: str
         :type modules: tuple[str]
         """
-        super(DirectoryTarget, self).__init__()
+        super().__init__()
 
         self.name = path
         self.path = path
@@ -513,7 +511,7 @@ class TestTarget(CompletionTarget):
         :type base_path: str
         :type symlink: bool | None
         """
-        super(TestTarget, self).__init__()
+        super().__init__()
 
         if symlink is None:
             symlink = os.path.islink(to_bytes(path.rstrip(os.path.sep)))
@@ -544,6 +542,67 @@ class TestTarget(CompletionTarget):
         self.aliases = tuple(sorted(aliases))
 
 
+class IntegrationTargetType(enum.Enum):
+    """Type of integration test target."""
+    CONTROLLER = enum.auto()
+    TARGET = enum.auto()
+    UNKNOWN = enum.auto()
+    CONFLICT = enum.auto()
+
+
+def extract_plugin_references(name, aliases):  # type: (str, t.List[str]) -> t.List[t.Tuple[str, str]]
+    """Return a list of plugin references found in the given integration test target name and aliases."""
+    plugins = content_plugins()
+    found = []  # type: t.List[t.Tuple[str, str]]
+
+    for alias in [name] + aliases:
+        plugin_type = 'modules'
+        plugin_name = alias
+
+        if plugin_name in plugins.get(plugin_type, {}):
+            found.append((plugin_type, plugin_name))
+
+        parts = alias.split('_')
+
+        for type_length in (1, 2):
+            if len(parts) > type_length:
+                plugin_type = '_'.join(parts[:type_length])
+                plugin_name = '_'.join(parts[type_length:])
+
+                if plugin_name in plugins.get(plugin_type, {}):
+                    found.append((plugin_type, plugin_name))
+
+    return found
+
+
+def categorize_integration_test(name, aliases, force_target):  # type: (str, t.List[str], bool) -> t.Tuple[IntegrationTargetType, IntegrationTargetType]
+    """Return the integration test target types (used and actual) based on the given target name and aliases."""
+    context_controller = f'context/{IntegrationTargetType.CONTROLLER.name.lower()}' in aliases
+    context_target = f'context/{IntegrationTargetType.TARGET.name.lower()}' in aliases or force_target
+    actual_type = None
+    strict_mode = data_context().content.is_ansible
+
+    if context_controller and context_target:
+        target_type = IntegrationTargetType.CONFLICT
+    elif context_controller and not context_target:
+        target_type = IntegrationTargetType.CONTROLLER
+    elif context_target and not context_controller:
+        target_type = IntegrationTargetType.TARGET
+    else:
+        target_types = {IntegrationTargetType.TARGET if plugin_type in ('modules', 'module_utils') else IntegrationTargetType.CONTROLLER
+                        for plugin_type, plugin_name in extract_plugin_references(name, aliases)}
+
+        if len(target_types) == 1:
+            target_type = target_types.pop()
+        elif not target_types:
+            actual_type = IntegrationTargetType.UNKNOWN
+            target_type = actual_type if strict_mode else IntegrationTargetType.TARGET
+        else:
+            target_type = IntegrationTargetType.CONFLICT
+
+    return target_type, actual_type or target_type
+
+
 class IntegrationTarget(CompletionTarget):
     """Integration test target."""
     non_posix = frozenset((
@@ -564,7 +623,7 @@ class IntegrationTarget(CompletionTarget):
         :type modules: frozenset[str]
         :type prefixes: dict[str, str]
         """
-        super(IntegrationTarget, self).__init__()
+        super().__init__()
 
         self.relative_path = os.path.relpath(path, data_context().content.integration_targets_path)
         self.name = self.relative_path.replace(os.path.sep, '.')
@@ -665,6 +724,24 @@ class IntegrationTarget(CompletionTarget):
         if not any(g in self.non_posix for g in groups):
             groups.append('posix')
 
+        # target type
+
+        # targets which are non-posix test against the target, even if they also support posix
+        force_target = any(group in self.non_posix for group in groups)
+
+        target_type, actual_type = categorize_integration_test(self.name, list(static_aliases), force_target)
+
+        self._remove_group(groups, 'context')
+
+        groups.extend(['context/', f'context/{target_type.name.lower()}'])
+
+        if target_type != actual_type:
+            # allow users to query for the actual type
+            groups.extend(['context/', f'context/{actual_type.name.lower()}'])
+
+        self.target_type = target_type
+        self.actual_type = actual_type
+
         # aliases
 
         aliases = [self.name] + \
@@ -682,6 +759,10 @@ class IntegrationTarget(CompletionTarget):
         self.setup_always = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('setup/always/'))))
         self.needs_target = tuple(sorted(set(g.split('/')[2] for g in groups if g.startswith('needs/target/'))))
 
+    @staticmethod
+    def _remove_group(groups, group):
+        return [g for g in groups if g != group and not g.startswith('%s/' % group)]
+
 
 class TargetPatternsNotMatched(ApplicationError):
     """One or more targets were not matched when a match was required."""
@@ -696,4 +777,4 @@ class TargetPatternsNotMatched(ApplicationError):
         else:
             message = 'Target pattern not matched: %s' % self.patterns[0]
 
-        super(TargetPatternsNotMatched, self).__init__(message)
+        super().__init__(message)

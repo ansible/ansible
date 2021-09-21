@@ -1,6 +1,5 @@
 shippable/posix/incidental
-skip/aix
-skip/power/centos
+context/controller
 skip/osx
 skip/macos
 skip/freebsd

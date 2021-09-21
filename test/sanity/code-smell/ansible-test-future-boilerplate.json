@@ -1,0 +1,9 @@
+{
+    "extensions": [
+        ".py"
+    ],
+    "prefixes": [
+        "test/lib/ansible_test/_internal/"
+    ],
+    "output": "path-message"
+}

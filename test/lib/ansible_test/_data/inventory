@@ -1,6 +1,0 @@
-# Do not put test specific entries in this inventory file.
-# For script based test targets (using runme.sh) put the inventory file in the test's directory instead.
-
-[testgroup]
-# ansible_python_interpreter must be set to avoid interpreter discovery
-testhost ansible_connection=local ansible_python_interpreter="{{ ansible_playbook_python }}"

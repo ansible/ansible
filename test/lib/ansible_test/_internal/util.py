@@ -1,8 +1,6 @@
 """Miscellaneous utility functions and classes."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import contextlib
 import errno
 import fcntl
 import hashlib
@@ -17,34 +15,13 @@ import stat
 import string
 import subprocess
 import sys
-import tempfile
 import time
-import zipfile
+import functools
+import shlex
+import typing as t
 
 from struct import unpack, pack
 from termios import TIOCGWINSZ
-
-try:
-    from abc import ABC
-except ImportError:
-    from abc import ABCMeta
-    ABC = ABCMeta('ABC', (), {})
-
-try:
-    # noinspection PyCompatibility
-    from configparser import ConfigParser
-except ImportError:
-    # noinspection PyCompatibility,PyUnresolvedReferences
-    from ConfigParser import SafeConfigParser as ConfigParser
-
-try:
-    # noinspection PyProtectedMember
-    from shlex import quote as cmd_quote
-except ImportError:
-    # noinspection PyProtectedMember
-    from pipes import quote as cmd_quote
-
-from . import types as t
 
 from .encoding import (
     to_bytes,
@@ -58,11 +35,18 @@ from .io import (
     read_text_file,
 )
 
-try:
-    C = t.TypeVar('C')
-except AttributeError:
-    C = None
+from .thread import (
+    mutex,
+)
 
+from .constants import (
+    SUPPORTED_PYTHON_VERSIONS,
+)
+
+C = t.TypeVar('C')
+TType = t.TypeVar('TType')
+TKey = t.TypeVar('TKey')
+TValue = t.TypeVar('TValue')
 
 PYTHON_PATHS = {}  # type: t.Dict[str, str]
 
@@ -71,13 +55,6 @@ try:
     MAXFD = subprocess.MAXFD
 except AttributeError:
     MAXFD = -1
-
-try:
-    TKey = t.TypeVar('TKey')
-    TValue = t.TypeVar('TValue')
-except AttributeError:
-    TKey = None  # pylint: disable=invalid-name
-    TValue = None  # pylint: disable=invalid-name
 
 COVERAGE_CONFIG_NAME = 'coveragerc'
 
@@ -119,26 +96,47 @@ MODE_FILE_WRITE = MODE_FILE | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
 MODE_DIRECTORY = MODE_READ | stat.S_IWUSR | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 MODE_DIRECTORY_WRITE = MODE_DIRECTORY | stat.S_IWGRP | stat.S_IWOTH
 
-CONTROLLER_MIN_PYTHON_VERSION = '3.8'
 
-SUPPORTED_PYTHON_VERSIONS = (
-    '2.6',
-    '2.7',
-    '3.5',
-    '3.6',
-    '3.7',
-    '3.8',
-    '3.9',
-    '3.10',
-)
+def cache(func):  # type: (t.Callable[[], TValue]) -> t.Callable[[], TValue]
+    """Enforce exclusive access on a decorated function and cache the result."""
+    storage = {}  # type: t.Dict[None, TValue]
+    sentinel = object()
+
+    @functools.wraps(func)
+    def cache_func():
+        """Cache the return value from func."""
+        if (value := storage.get(None, sentinel)) is sentinel:
+            value = storage[None] = func()
+
+        return value
+
+    wrapper = mutex(cache_func)
+
+    return wrapper
 
 
-def remove_file(path):
-    """
-    :type path: str
-    """
-    if os.path.isfile(path):
-        os.remove(path)
+def filter_args(args, filters):  # type: (t.List[str], t.Dict[str, int]) -> t.List[str]
+    """Return a filtered version of the given command line arguments."""
+    remaining = 0
+    result = []
+
+    for arg in args:
+        if not arg.startswith('-') and remaining:
+            remaining -= 1
+            continue
+
+        remaining = 0
+
+        parts = arg.split('=', 1)
+        key = parts[0]
+
+        if key in filters:
+            remaining = filters[key] - len(parts) + 1
+            continue
+
+        result.append(arg)
+
+    return result
 
 
 def read_lines_without_comments(path, remove_blank_lines=False, optional=False):  # type: (str, bool, bool) -> t.List[str]
@@ -224,7 +222,7 @@ def find_python(version, path=None, required=True):
     :type required: bool
     :rtype: str
     """
-    version_info = tuple(int(n) for n in version.split('.'))
+    version_info = str_to_version(version)
 
     if not path and version_info == sys.version_info[:len(version_info)]:
         python_bin = sys.executable
@@ -234,13 +232,9 @@ def find_python(version, path=None, required=True):
     return python_bin
 
 
+@cache
 def get_ansible_version():  # type: () -> str
     """Return the Ansible version."""
-    try:
-        return get_ansible_version.version
-    except AttributeError:
-        pass
-
     # ansible may not be in our sys.path
     # avoids a symlink to release.py since ansible placement relative to ansible-test may change during delegation
     load_module(os.path.join(ANSIBLE_LIB_ROOT, 'release.py'), 'ansible_release')
@@ -248,30 +242,13 @@ def get_ansible_version():  # type: () -> str
     # noinspection PyUnresolvedReferences
     from ansible_release import __version__ as ansible_version  # pylint: disable=import-error
 
-    get_ansible_version.version = ansible_version
-
     return ansible_version
 
 
+@cache
 def get_available_python_versions():  # type: () -> t.Dict[str, str]
     """Return a dictionary indicating which supported Python versions are available."""
-    try:
-        return get_available_python_versions.result
-    except AttributeError:
-        pass
-
-    get_available_python_versions.result = dict((version, path) for version, path in
-                                                ((version, find_python(version, required=False)) for version in SUPPORTED_PYTHON_VERSIONS) if path)
-
-    return get_available_python_versions.result
-
-
-def generate_pip_command(python):
-    """
-    :type python: str
-    :rtype: list[str]
-    """
-    return [python, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'quiet_pip.py')]
+    return dict((version, path) for version, path in ((version, find_python(version, required=False)) for version in SUPPORTED_PYTHON_VERSIONS) if path)
 
 
 def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False, stdin=None, stdout=None,
@@ -298,7 +275,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
 
     cmd = list(cmd)
 
-    escaped_cmd = ' '.join(cmd_quote(c) for c in cmd)
+    escaped_cmd = ' '.join(shlex.quote(c) for c in cmd)
 
     display.info('Run command: %s' % escaped_cmd, verbosity=cmd_verbosity, truncate=True)
     display.info('Working directory: %s' % cwd, verbosity=2)
@@ -438,27 +415,6 @@ def pass_vars(required, optional):
     return env
 
 
-def deepest_path(path_a, path_b):
-    """Return the deepest of two paths, or None if the paths are unrelated.
-    :type path_a: str
-    :type path_b: str
-    :rtype: str | None
-    """
-    if path_a == '.':
-        path_a = ''
-
-    if path_b == '.':
-        path_b = ''
-
-    if path_a.startswith(path_b):
-        return path_a or '.'
-
-    if path_b.startswith(path_a):
-        return path_b or '.'
-
-    return None
-
-
 def remove_tree(path):
     """
     :type path: str
@@ -475,7 +431,7 @@ def is_binary_file(path):
     :type path: str
     :rtype: bool
     """
-    assume_text = set([
+    assume_text = {
         '.cfg',
         '.conf',
         '.crt',
@@ -497,9 +453,9 @@ def is_binary_file(path):
         '.xml',
         '.yaml',
         '.yml',
-    ])
+    }
 
-    assume_binary = set([
+    assume_binary = {
         '.bin',
         '.eot',
         '.gz',
@@ -515,7 +471,7 @@ def is_binary_file(path):
         '.woff',
         '.woff2',
         '.zip',
-    ])
+    }
 
     ext = os.path.splitext(path)[1]
 
@@ -528,6 +484,11 @@ def is_binary_file(path):
     with open_binary_file(path) as path_fd:
         # noinspection PyTypeChecker
         return b'\0' in path_fd.read(4096)
+
+
+def generate_name(length=8):  # type: (int) -> str
+    """Generate and return a random name."""
+    return ''.join(random.choice(string.ascii_letters + string.digits) for _idx in range(length))
 
 
 def generate_password():
@@ -686,7 +647,7 @@ class SubprocessError(ApplicationError):
         :type runtime: float | None
         :type error_callback: t.Optional[t.Callable[[SubprocessError], None]]
         """
-        message = 'Command "%s" returned exit status %s.\n' % (' '.join(cmd_quote(c) for c in cmd), status)
+        message = 'Command "%s" returned exit status %s.\n' % (' '.join(shlex.quote(c) for c in cmd), status)
 
         if stderr:
             message += '>>> Standard Error\n'
@@ -708,7 +669,7 @@ class SubprocessError(ApplicationError):
 
         self.message = self.message.strip()
 
-        super(SubprocessError, self).__init__(self.message)
+        super().__init__(self.message)
 
 
 class MissingEnvironmentVariable(ApplicationError):
@@ -717,9 +678,20 @@ class MissingEnvironmentVariable(ApplicationError):
         """
         :type name: str
         """
-        super(MissingEnvironmentVariable, self).__init__('Missing environment variable: %s' % name)
+        super().__init__('Missing environment variable: %s' % name)
 
         self.name = name
+
+
+def retry(func, ex_type=SubprocessError, sleep=10, attempts=10):
+    """Retry the specified function on failure."""
+    for dummy in range(1, attempts):
+        try:
+            return func()
+        except ex_type:
+            time.sleep(sleep)
+
+    return func()
 
 
 def parse_to_list_of_dict(pattern, value):
@@ -745,8 +717,8 @@ def parse_to_list_of_dict(pattern, value):
     return matched
 
 
-def get_subclasses(class_type):  # type: (t.Type[C]) -> t.Set[t.Type[C]]
-    """Returns the set of types that are concrete subclasses of the given type."""
+def get_subclasses(class_type):  # type: (t.Type[C]) -> t.List[t.Type[C]]
+    """Returns a list of types that are concrete subclasses of the given type."""
     subclasses = set()  # type: t.Set[t.Type[C]]
     queue = [class_type]  # type: t.List[t.Type[C]]
 
@@ -759,7 +731,7 @@ def get_subclasses(class_type):  # type: (t.Type[C]) -> t.Set[t.Type[C]]
                     subclasses.add(child)
                 queue.append(child)
 
-    return subclasses
+    return sorted(subclasses, key=lambda sc: sc.__name__)
 
 
 def is_subdir(candidate_path, path):  # type: (str, str) -> bool
@@ -797,6 +769,11 @@ def str_to_version(version):  # type: (str) -> t.Tuple[int, ...]
 def version_to_str(version):  # type: (t.Tuple[int, ...]) -> str
     """Return a version string from a version tuple."""
     return '.'.join(str(n) for n in version)
+
+
+def sorted_versions(versions):  # type: (t.List[str]) -> t.List[str]
+    """Return a sorted copy of the given list of versions."""
+    return [version_to_str(version) for version in sorted(str_to_version(version) for version in versions)]
 
 
 def import_plugins(directory, root=None):  # type: (str, t.Optional[str]) -> None
@@ -851,35 +828,9 @@ def load_module(path, name):  # type: (str, str) -> None
             imp.load_module(name, module_file, path, ('.py', 'r', imp.PY_SOURCE))
 
 
-@contextlib.contextmanager
-def tempdir():  # type: () -> str
-    """Creates a temporary directory that is deleted outside the context scope."""
-    temp_path = tempfile.mkdtemp()
-    yield temp_path
-    shutil.rmtree(temp_path)
-
-
-@contextlib.contextmanager
-def open_zipfile(path, mode='r'):
-    """Opens a zip file and closes the file automatically."""
-    zib_obj = zipfile.ZipFile(path, mode=mode)
-    yield zib_obj
-    zib_obj.close()
-
-
 def sanitize_host_name(name):
     """Return a sanitized version of the given name, suitable for use as a hostname."""
     return re.sub('[^A-Za-z0-9]+', '-', name)[:63].strip('-')
-
-
-def devnull():
-    """Return a file descriptor for /dev/null, using a previously cached version if available."""
-    try:
-        return devnull.fd
-    except AttributeError:
-        devnull.fd = os.open('/dev/null', os.O_RDONLY)
-
-    return devnull.fd
 
 
 def get_hash(path):
@@ -897,13 +848,9 @@ def get_hash(path):
     return file_hash.hexdigest()
 
 
+@cache
 def get_host_ip():
     """Return the host's IP address."""
-    try:
-        return get_host_ip.ip
-    except AttributeError:
-        pass
-
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         sock.connect(('10.255.255.255', 22))
         host_ip = get_host_ip.ip = sock.getsockname()[0]
@@ -913,7 +860,37 @@ def get_host_ip():
     return host_ip
 
 
-display = Display()  # pylint: disable=locally-disabled, invalid-name
+def get_generic_type(base_type, generic_base_type):  # type: (t.Type, t.Type[TType]) -> t.Optional[t.Type[TType]]
+    """Return the generic type arg derived from the generic_base_type type that is associated with the base_type type, if any, otherwise return None."""
+    # noinspection PyUnresolvedReferences
+    type_arg = t.get_args(base_type.__orig_bases__[0])[0]
+    return None if isinstance(type_arg, generic_base_type) else type_arg
 
-CONTROLLER_PYTHON_VERSIONS = tuple(version for version in SUPPORTED_PYTHON_VERSIONS if str_to_version(version) >= str_to_version(CONTROLLER_MIN_PYTHON_VERSION))
-REMOTE_ONLY_PYTHON_VERSIONS = tuple(version for version in SUPPORTED_PYTHON_VERSIONS if str_to_version(version) < str_to_version(CONTROLLER_MIN_PYTHON_VERSION))
+
+def get_type_associations(base_type, generic_base_type):  # type: (t.Type[TType], t.Type[TValue]) -> t.List[t.Tuple[t.Type[TValue], t.Type[TType]]]
+    """Create and return a list of tuples associating generic_base_type derived types with a corresponding base_type derived type."""
+    return [item for item in [(get_generic_type(sc_type, generic_base_type), sc_type) for sc_type in get_subclasses(base_type)] if item[1]]
+
+
+def get_type_map(base_type, generic_base_type):  # type: (t.Type[TType], t.Type[TValue]) -> t.Dict[t.Type[TValue], t.Type[TType]]
+    """Create and return a mapping of generic_base_type derived types to base_type derived types."""
+    return {item[0]: item[1] for item in get_type_associations(base_type, generic_base_type)}
+
+
+def verify_sys_executable(path):  # type: (str) -> t.Optional[str]
+    """Verify that the given path references the current Python interpreter. If not, return the expected path, otherwise return None."""
+    if path == sys.executable:
+        return None
+
+    if os.path.realpath(path) == os.path.realpath(sys.executable):
+        return None
+
+    expected_executable = raw_command([path, '-c', 'import sys; print(sys.executable)'], capture=True)[0]
+
+    if expected_executable == sys.executable:
+        return None
+
+    return expected_executable
+
+
+display = Display()  # pylint: disable=locally-disabled, invalid-name

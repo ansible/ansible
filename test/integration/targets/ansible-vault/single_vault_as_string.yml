@@ -27,7 +27,7 @@
           - vaulted_value|forceescape == 'foo bar'
           - vaulted_value|first == 'f'
           - "'%s'|format(vaulted_value) == 'foo bar'"
-          - vaulted_value|indent(indentfirst=True) == '    foo bar'
+          - vaulted_value|indent(first=True) == '    foo bar'
           - vaulted_value.split() == ['foo', 'bar']
           - vaulted_value|join('-') == 'f-o-o- -b-a-r'
           - vaulted_value|last == 'r'

@@ -1,12 +1,18 @@
 """Expand target names in an aggregated coverage file."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
-from ..... import types as t
+from __future__ import annotations
+import typing as t
 
 from .....io import (
     SortedSetEncoder,
     write_json_file,
+)
+
+from .....executor import (
+    Delegate,
+)
+
+from .....provisioning import (
+    prepare_profiles,
 )
 
 from . import (
@@ -20,7 +26,7 @@ from . import (
 class CoverageAnalyzeTargetsExpandConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets expand` command."""
     def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageAnalyzeTargetsExpandConfig, self).__init__(args)
+        super().__init__(args)
 
         self.input_file = args.input_file  # type: str
         self.output_file = args.output_file  # type: str
@@ -28,6 +34,11 @@ class CoverageAnalyzeTargetsExpandConfig(CoverageAnalyzeTargetsConfig):
 
 def command_coverage_analyze_targets_expand(args):  # type: (CoverageAnalyzeTargetsExpandConfig) -> None
     """Expand target names in an aggregated coverage file."""
+    host_state = prepare_profiles(args)  # coverage analyze targets expand
+
+    if args.delegate:
+        raise Delegate(host_state=host_state)
+
     covered_targets, covered_path_arcs, covered_path_lines = read_report(args.input_file)
 
     report = dict(

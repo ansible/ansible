@@ -1,12 +1,10 @@
 """Code for finding content."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import abc
 import collections
 import os
-
-from ... import types as t
+import typing as t
 
 from ...util import (
     ANSIBLE_SOURCE_ROOT,
@@ -94,7 +92,7 @@ class ContentLayout(Layout):
                  unit_module_utils_path,  # type: str
                  unit_messages,  # type: t.Optional[LayoutMessages]
                  ):  # type: (...) -> None
-        super(ContentLayout, self).__init__(root, paths)
+        super().__init__(root, paths)
 
         self.plugin_paths = plugin_paths
         self.collection = collection

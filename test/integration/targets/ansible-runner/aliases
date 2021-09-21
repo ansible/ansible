@@ -1,6 +1,5 @@
 shippable/posix/group3
-skip/python2  # ansible-runner is for controller and deprecated python2 support
-skip/aix
+context/controller
 skip/osx
 skip/macos
 skip/freebsd
