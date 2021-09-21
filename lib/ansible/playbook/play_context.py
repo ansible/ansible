@@ -84,7 +84,7 @@ class PlayContext(Base):
 
     # base
     _module_compression = FieldAttribute(isa='string', default=C.DEFAULT_MODULE_COMPRESSION)
-    _shell = FieldAttribute(isa='string')
+    _shell = FieldAttribute(isa='string', always_post_validate=True)
     _executable = FieldAttribute(isa='string', default=C.DEFAULT_EXECUTABLE)
 
     # connection fields, some are inherited from Base:

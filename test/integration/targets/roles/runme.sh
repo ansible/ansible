@@ -17,3 +17,6 @@ set -eux
 
 # ensure role data is merged correctly
 ansible-playbook data_integrity.yml -i ../../inventory "$@"
+
+# include_role should work in rescue, even if error is from magic variable templating
+ansible-playbook issue75240.yml -i ../../inventory "$@"

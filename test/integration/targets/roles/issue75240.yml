@@ -1,0 +1,15 @@
+- hosts: testhost
+  gather_facts: no
+  vars:
+    ansible_connection: "ssh"
+    ansible_user: "{{ lookup('file', '/etc/some_auth_token') }}"
+  tasks:
+    - name: "Init"
+      block:
+        - name: "Setup"
+          setup:
+            gather_subset: "!All"
+      rescue:
+        - name: "Error handler"
+          include_role:
+            name: "error_handler"

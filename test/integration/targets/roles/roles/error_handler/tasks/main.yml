@@ -1,0 +1,6 @@
+- assert:
+    that:
+      - ansible_failed_task.name == "Setup"
+      - ansible_failed_task.action == "setup"
+  vars:
+    ansible_connection: local
