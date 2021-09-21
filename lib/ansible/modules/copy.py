@@ -360,62 +360,34 @@ def chown_recursive(path, module):
     owner = module.params['owner']
     group = module.params['group']
 
-    if owner is not None:
-        if not module.check_mode:
-            for dirpath, dirnames, filenames in os.walk(path):
-                owner_changed = module.set_owner_if_different(dirpath, owner, False)
-                if owner_changed is True:
-                    changed = owner_changed
-                for dir in [os.path.join(dirpath, d) for d in dirnames]:
-                    owner_changed = module.set_owner_if_different(dir, owner, False)
-                    if owner_changed is True:
-                        changed = owner_changed
-                for file in [os.path.join(dirpath, f) for f in filenames]:
-                    owner_changed = module.set_owner_if_different(file, owner, False)
-                    if owner_changed is True:
-                        changed = owner_changed
-        else:
-            uid = pwd.getpwnam(owner).pw_uid
-            for dirpath, dirnames, filenames in os.walk(path):
-                owner_changed = (os.stat(dirpath).st_uid != uid)
-                if owner_changed is True:
-                    changed = owner_changed
-                for dir in [os.path.join(dirpath, d) for d in dirnames]:
-                    owner_changed = (os.stat(dir).st_uid != uid)
-                    if owner_changed is True:
-                        changed = owner_changed
-                for file in [os.path.join(dirpath, f) for f in filenames]:
-                    owner_changed = (os.stat(file).st_uid != uid)
-                    if owner_changed is True:
-                        changed = owner_changed
-    if group is not None:
-        if not module.check_mode:
-            for dirpath, dirnames, filenames in os.walk(path):
-                group_changed = module.set_group_if_different(dirpath, group, False)
-                if group_changed is True:
-                    changed = group_changed
-                for dir in [os.path.join(dirpath, d) for d in dirnames]:
-                    group_changed = module.set_group_if_different(dir, group, False)
-                    if group_changed is True:
-                        changed = group_changed
-                for file in [os.path.join(dirpath, f) for f in filenames]:
-                    group_changed = module.set_group_if_different(file, group, False)
-                    if group_changed is True:
-                        changed = group_changed
-        else:
-            gid = grp.getgrnam(group).gr_gid
-            for dirpath, dirnames, filenames in os.walk(path):
-                group_changed = (os.stat(dirpath).st_gid != gid)
-                if group_changed is True:
-                    changed = group_changed
-                for dir in [os.path.join(dirpath, d) for d in dirnames]:
-                    group_changed = (os.stat(dir).st_gid != gid)
-                    if group_changed is True:
-                        changed = group_changed
-                for file in [os.path.join(dirpath, f) for f in filenames]:
-                    group_changed = (os.stat(file).st_gid != gid)
-                    if group_changed is True:
-                        changed = group_changed
+    if owner is None and group is None:
+        return changed
+
+    if module.check_mode:
+        uid = pwd.getpwnam(owner).pw_uid if owner is not None else None
+        gid = grp.getgrnam(group).gr_gid if group is not None else None
+
+        for dirpath, dirnames, filenames in os.walk(path):
+            stat = os.stat(dirpath)
+            changed = changed or (uid is not None and uid != stat.st_uid)
+            changed = changed or (gid is not None and gid != stat.st_gid)
+
+            for filename in filenames:
+                filepath = os.path.join(dirpath, filename)
+                stat = os.stat(filepath)
+                changed = changed or (uid is not None and uid != stat.st_uid)
+                changed = changed or (gid is not None and gid != stat.st_gid)
+
+        return changed
+
+    for dirpath, dirnames, filenames in os.walk(path):
+        changed = module.set_owner_if_different(dirpath, owner, changed)
+        changed = module.set_group_if_different(dirpath, group, changed)
+
+        for filename in filenames:
+            filepath = os.path.join(dirpath, filename)
+            changed = module.set_owner_if_different(filepath, owner, changed)
+            changed = module.set_group_if_different(filepath, group, changed)
 
     return changed
 
