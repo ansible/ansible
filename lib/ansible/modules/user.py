@@ -659,8 +659,8 @@ class User(object):
             # errors from useradd trying to create a group when
             # USERGROUPS_ENAB is set in /etc/login.defs.
             if os.path.exists('/etc/redhat-release'):
-                dist = distro.linux_distribution(full_distribution_name=False)
-                major_release = int(dist[1].split('.')[0])
+                dist = distro.version()
+                major_release = int(dist.split('.')[0])
                 if major_release <= 5 or self.local:
                     cmd.append('-n')
                 else:
@@ -668,8 +668,8 @@ class User(object):
             elif os.path.exists('/etc/SuSE-release'):
                 # -N did not exist in useradd before SLE 11 and did not
                 # automatically create a group
-                dist = distro.linux_distribution(full_distribution_name=False)
-                major_release = int(dist[1].split('.')[0])
+                dist = distro.version()
+                major_release = int(dist.split('.')[0])
                 if major_release >= 12:
                     cmd.append('-N')
             else:
