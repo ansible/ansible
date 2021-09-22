@@ -1,0 +1,5 @@
+- debug:
+    msg: "Var is {{ my_var | default('undefined') }}"
+
+- debug:
+    msg: "Default is {{ my_default | default('undefined') }}"
