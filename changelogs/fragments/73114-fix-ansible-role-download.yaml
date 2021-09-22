@@ -1,0 +1,2 @@
+minor_changes:
+  - galaxy - support role artifact download from API response ``download_url`` location (https://github.com/ansible/ansible/issues/73103).
