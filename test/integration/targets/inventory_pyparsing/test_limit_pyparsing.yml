@@ -1,0 +1,174 @@
+---
+- name: limit pattern test
+  hosts: localhost
+  gather_facts: no
+  vars:
+    all_pattern:
+      pattern:
+        - "all"
+        - "*"
+        - ",,"
+        - "host*"
+        - "@test_file_empty.txt"
+      result: "hosts (10)"
+    one_host:
+      pattern:
+        - "host1"
+        - "hostgroup1:!hostgroup2"
+        - "hostgroup4[-1]"
+        - ":&hostgroup5"
+        - ":hostgroup5"
+        - "hostgroup*:&*9"
+        - "*st1"
+        - "@test_file.txt"
+      result: "hosts (1)"
+    two_hosts:
+      pattern:
+        - "hostgroup1:&hostgroup2"
+        - "hostgroup2[1:2]"
+        - "host1:((hostgroup3:&hostgroup4):!hostgroup2)"
+      result: "hosts (2)"
+    three_hosts:
+      pattern:
+        - "hostgroup1"
+        - "((hostgroup1:hostgroup2):!hostgroup4):!host5"
+      result: "hosts (3)"
+    four_hosts:
+      pattern:
+        - ":!hostgroup2"
+        - "((hostgroup1:&hostgroup2):(hostgroup3:&hostgroup4)):!host2:host10"
+      result: "hosts (4)"
+    error_pattern:
+      pattern:
+        - "localhost"
+        - "hostgroup1:&hostgroup5"
+        - "@inv"
+        - "host"
+    skipped:
+      pattern:
+        - "localhost"
+        - "all"
+      result: "hosts (0)"
+    implicit:
+      pattern:
+        - "localhost"
+        - "::1"
+        - "127.0.0.1"
+      result: "hosts (1)"
+
+
+  tasks:
+    - name: limit return all
+      command: ansible -i inventory all --limit {{item}} --list-hosts
+      register: r
+      with_items: "{{ all_pattern.pattern }}"
+
+    - assert:
+        that:
+          - item.stdout is contains('{{all_pattern.result}}')
+        quiet: yes
+      with_items: "{{r.results}}"
+      loop_control:
+        label: "{{ item.stdout }}"
+
+
+    - name: limit pattern returns only one host
+      command: ansible -i inventory all --limit {{item}} --list-hosts
+      register: r
+      with_items: "{{ one_host.pattern }}"
+
+    - assert:
+        that:
+          - item.stdout is contains('{{one_host.result}}')
+        quiet: yes
+      with_items: "{{r.results}}"
+      loop_control:
+        label: "{{ item.stdout }}"
+
+
+    - name: limit pattern returns two hosts
+      command: ansible -i inventory all --limit {{item}} --list-hosts
+      register: r
+      with_items: "{{ two_hosts.pattern }}"
+
+    - assert:
+        that:
+          - item.stdout is contains('{{two_hosts.result}}')
+        quiet: yes
+      with_items: "{{r.results}}"
+      loop_control:
+        label: "{{ item.stdout }}"
+
+
+    - name: limit pattern returns three hosts
+      command: ansible -i inventory all --limit {{item}} --list-hosts
+      register: r
+      with_items: "{{ three_hosts.pattern }}"
+
+    - assert:
+        that:
+          - item.stdout is contains('{{three_hosts.result}}')
+        quiet: yes
+      with_items: "{{r.results}}"
+      loop_control:
+        label: "{{ item.stdout }}"
+
+
+    - name: limit pattern returns four hosts
+      command: ansible -i inventory all --limit {{item}} --list-hosts
+      register: r
+      with_items: "{{ four_hosts.pattern }}"
+
+    - assert:
+        that:
+          - item.stdout is contains('{{four_hosts.result}}')
+        quiet: yes
+      with_items: "{{r.results}}"
+      loop_control:
+        label: "{{ item.stdout }}"
+
+
+    - name: limit pattern returns error
+      command: ansible -i inventory all --limit {{item}} --list-hosts
+      register: r
+      ignore_errors: yes
+      with_items: "{{ error_pattern.pattern }}"
+
+    - assert:
+        that:
+          - r is failed
+          - item.stdout | length == 0
+        quiet: yes
+      with_items: "{{r.results}}"
+      loop_control:
+        label: "{{ item.stdout }}"
+
+
+    - name: limit pattern skip when inventory empty
+      command: ansible -i test_file_empty.txt all --limit {{item}} --list-hosts
+      register: r
+      ignore_errors: yes
+      with_items: "{{ skipped.pattern }}"
+
+    - assert:
+        that:
+          - item.stdout is contains('{{skipped.result}}')
+        quiet: yes
+      with_items: "{{r.results}}"
+      loop_control:
+        label: "{{ item.stdout }}"
+
+
+    - name: limit pattern implicit localhost should not skip or return error
+      command: ansible -i test_file_empty.txt localhost --limit {{item}} --list-hosts
+      register: r
+      ignore_errors: yes
+      with_items: "{{ implicit.pattern }}"
+
+    - assert:
+        that:
+          - item.stdout is contains('{{implicit.result}}')
+        quiet: yes
+      with_items: "{{r.results}}"
+      loop_control:
+        label: "{{ item.stdout }}"

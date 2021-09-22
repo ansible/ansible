@@ -5,6 +5,7 @@ minor_changes:
     Used in case the pyparsing library cannot be imported, or if python version is below 2.8 (noted as variable HAS_PYPARSING).
   - inventory - added attribute self._parser to InventoryManager to change between the two beforementioned parsers,
     if dependencies can be installed.
+  - test - added integration test inventory_pyparsing
     (https://github.com/ansible/ansible/pull/75645)
 
 known_issues:

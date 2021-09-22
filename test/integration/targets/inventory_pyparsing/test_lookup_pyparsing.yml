@@ -1,0 +1,26 @@
+---
+- name: lookup pattern test
+  hosts: localhost
+  gather_facts: no
+  vars:
+    pattern:
+      - "localhost"
+      - "all"
+      - "host1"
+      - "hostgroup*"
+      - "((hostgroup1:hostgroup5:hostgroup2):&hostgroup3):!hostgroup4"
+
+  tasks:
+    - name: patterns should not return error and should not be empty
+      command: ansible -i inventory {{item}} -m debug -a msg="{{ q('env', 'PWD') }}"
+      register: r
+      with_items: "{{ pattern }}"
+
+    - assert:
+        that:
+          - r is succeeded
+          - item.stdout | length != 0
+        quiet: yes
+      with_items: "{{r.results}}"
+      loop_control:
+        label: "{{ item.stdout }}"
