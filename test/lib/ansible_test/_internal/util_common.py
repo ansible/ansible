@@ -281,9 +281,15 @@ def set_shebang(script, executable):  # type: (str, str) -> str
     prefix = '#!'
     shebang = prefix + executable
 
+    overwrite = (
+        prefix,
+        '# auto-shebang',
+        '# shellcheck shell=',
+    )
+
     lines = script.splitlines()
 
-    if lines[0].startswith(prefix):
+    if any(lines[0].startswith(value) for value in overwrite):
         lines[0] = shebang
     else:
         lines.insert(0, shebang)
