@@ -15,7 +15,6 @@ from .util import (
     ApplicationError,
     SubprocessError,
     display,
-    get_host_ip,
     sanitize_host_name,
 )
 
@@ -354,7 +353,7 @@ def create_container_database(args):  # type: (EnvironmentConfig) -> ContainerDa
             if require_docker().command == 'podman':
                 host_ip_func = get_podman_host_ip
             else:
-                host_ip_func  = get_docker_host_ip
+                host_ip_func = get_docker_host_ip
             published_access = ContainerAccess(
                 host_ip=host_ip_func(),
                 names=container.aliases,

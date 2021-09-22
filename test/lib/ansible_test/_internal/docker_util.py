@@ -143,9 +143,12 @@ def get_podman_default_hostname():  # type: () -> str
 
     for connection in connections:
         if connection['Name'][-1] == '*':
-            return connection['URI']
+            hostname = connection['URI']
+            break
     else:
-        return None
+        hostname = None
+
+    return hostname
 
 
 @cache
@@ -172,7 +175,6 @@ def get_podman_hostname():  # type: () -> str
         display.info('Assuming Podman is available on localhost.', verbosity=1)
 
     return hostname
-
 
 
 @cache
