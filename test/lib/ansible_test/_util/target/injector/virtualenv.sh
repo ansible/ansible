@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+# shellcheck shell=bash
 # Create and activate a fresh virtual environment with `source virtualenv.sh`.
 
 rm -rf "${OUTPUT_DIR}/venv"

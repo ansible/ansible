@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# auto-shebang
 """Provides an entry point for python scripts and python modules on the controller with the current python interpreter and optional code coverage collection."""
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -46,21 +46,24 @@ def main():
             sys.exit('ERROR: Use `python -c` instead of `python.py -c` to avoid errors when code coverage is collected.')
     elif name == 'pytest':
         args += ['-m', 'pytest']
+    elif name == 'importer.py':
+        args += [find_program(name, False)]
     else:
-        args += [find_executable(name)]
+        args += [find_program(name, True)]
 
     args += sys.argv[1:]
 
     os.execv(args[0], args)
 
 
-def find_executable(name):
+def find_program(name, executable):  # type: (str, bool) -> str
     """
-    :type name: str
-    :rtype: str
+    Find and return the full path to the named program, optionally requiring it to be executable.
+    Raises an exception if the program is not found.
     """
     path = os.environ.get('PATH', os.path.defpath)
     seen = set([os.path.abspath(__file__)])
+    mode = os.F_OK | os.X_OK if executable else os.F_OK
 
     for base in path.split(os.path.pathsep):
         candidate = os.path.abspath(os.path.join(base, name))
@@ -70,7 +73,7 @@ def find_executable(name):
 
         seen.add(candidate)
 
-        if os.path.exists(candidate) and os.access(candidate, os.F_OK | os.X_OK):
+        if os.path.exists(candidate) and os.access(candidate, mode):
             return candidate
 
     raise Exception('Executable "%s" not found in path: %s' % (name, path))

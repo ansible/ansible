@@ -1,4 +1,4 @@
-#!/bin/sh
+# shellcheck shell=sh
 
 set -eu
 
