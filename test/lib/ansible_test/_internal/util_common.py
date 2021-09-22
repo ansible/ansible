@@ -12,15 +12,21 @@ import tempfile
 import textwrap
 import typing as t
 
+from .constants import (
+    ANSIBLE_BIN_SYMLINK_MAP,
+)
+
 from .encoding import (
     to_bytes,
 )
 
 from .util import (
+    cache,
     display,
     remove_tree,
     MODE_DIRECTORY,
     MODE_FILE_EXECUTE,
+    MODE_FILE,
     PYTHON_PATHS,
     raw_command,
     ANSIBLE_TEST_DATA_ROOT,
@@ -32,6 +38,7 @@ from .util import (
 
 from .io import (
     make_dirs,
+    read_text_file,
     write_text_file,
     write_json_file,
 )
@@ -226,6 +233,72 @@ def write_text_test_results(category, name, content):  # type: (ResultType, str,
     write_text_file(path, content, create_directories=True)
 
 
+@cache
+def get_injector_path():  # type: () -> str
+    """Return the path to a directory which contains a `python.py` executable and associated injector scripts."""
+    injector_path = tempfile.mkdtemp(prefix='ansible-test-', suffix='-injector', dir='/tmp')
+
+    display.info(f'Initializing "{injector_path}" as the temporary injector directory.', verbosity=1)
+
+    injector_names = sorted(list(ANSIBLE_BIN_SYMLINK_MAP) + [
+        'importer.py',
+        'pytest',
+    ])
+
+    scripts = (
+        ('python.py', '/usr/bin/env python', MODE_FILE_EXECUTE),
+        ('virtualenv.sh', '/usr/bin/env bash', MODE_FILE),
+    )
+
+    source_path = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'injector')
+
+    for name in injector_names:
+        os.symlink('python.py', os.path.join(injector_path, name))
+
+    for name, shebang, mode in scripts:
+        src = os.path.join(source_path, name)
+        dst = os.path.join(injector_path, name)
+
+        script = read_text_file(src)
+        script = set_shebang(script, shebang)
+
+        write_text_file(dst, script)
+        os.chmod(dst, mode)
+
+    os.chmod(injector_path, MODE_DIRECTORY)
+
+    def cleanup_injector():
+        """Remove the temporary injector directory."""
+        remove_tree(injector_path)
+
+    atexit.register(cleanup_injector)
+
+    return injector_path
+
+
+def set_shebang(script, executable):  # type: (str, str) -> str
+    """Return the given script with the specified executable used for the shebang."""
+    prefix = '#!'
+    shebang = prefix + executable
+
+    overwrite = (
+        prefix,
+        '# auto-shebang',
+        '# shellcheck shell=',
+    )
+
+    lines = script.splitlines()
+
+    if any(lines[0].startswith(value) for value in overwrite):
+        lines[0] = shebang
+    else:
+        lines.insert(0, shebang)
+
+    script = '\n'.join(lines)
+
+    return script
+
+
 def get_python_path(interpreter):  # type: (str) -> str
     """Return the path to a directory which contains a `python` executable that runs the specified interpreter."""
     python_path = PYTHON_PATHS.get(interpreter)
@@ -318,7 +391,7 @@ def intercept_python(
     """
     env = env.copy()
     cmd = list(cmd)
-    inject_path = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'injector')
+    inject_path = get_injector_path()
 
     # make sure scripts (including injector.py) find the correct Python interpreter
     if isinstance(python, VirtualPythonConfig):

@@ -12,6 +12,10 @@ from . import (
     SanityTargets,
 )
 
+from ...constants import (
+    __file__ as symlink_map_full_path,
+)
+
 from ...test import (
     TestResult,
 )
@@ -26,12 +30,10 @@ from ...data import (
 
 from ...payload import (
     ANSIBLE_BIN_SYMLINK_MAP,
-    __file__ as symlink_map_full_path,
 )
 
 from ...util import (
     ANSIBLE_BIN_PATH,
-    ANSIBLE_TEST_TARGET_ROOT,
 )
 
 
@@ -53,9 +55,6 @@ class BinSymlinksTest(SanityVersionNeutral):
         bin_root = ANSIBLE_BIN_PATH
         bin_names = os.listdir(bin_root)
         bin_paths = sorted(os.path.join(bin_root, path) for path in bin_names)
-
-        injector_root = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'injector')
-        injector_names = os.listdir(injector_root)
 
         errors = []  # type: t.List[t.Tuple[str, str]]
 
@@ -94,10 +93,6 @@ class BinSymlinksTest(SanityVersionNeutral):
             if bin_name not in bin_names:
                 bin_path = os.path.join(bin_root, bin_name)
                 errors.append((bin_path, 'missing symlink to "%s" defined in ANSIBLE_BIN_SYMLINK_MAP in file "%s"' % (dest, symlink_map_path)))
-
-            if bin_name not in injector_names:
-                injector_path = os.path.join(injector_root, bin_name)
-                errors.append((injector_path, 'missing symlink to "python.py"'))
 
         messages = [SanityMessage(message=message, path=os.path.relpath(path, data_context().content.root), confidence=100) for path, message in errors]
 
