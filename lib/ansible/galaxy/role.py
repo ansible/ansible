@@ -65,6 +65,7 @@ class GalaxyRole(object):
         self.name = name
         self.version = version
         self.src = src or name
+        self.download_url = None
         self.scm = scm
         self.paths = [os.path.join(x, self.name) for x in galaxy.roles_paths]
 
@@ -190,7 +191,9 @@ class GalaxyRole(object):
         if role_data:
 
             # first grab the file and save it to a temp location
-            if "github_user" in role_data and "github_repo" in role_data:
+            if self.download_url is not None:
+                archive_url = self.download_url
+            elif "github_user" in role_data and "github_repo" in role_data:
                 archive_url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (role_data["github_user"], role_data["github_repo"], self.version)
             else:
                 archive_url = self.src
@@ -259,10 +262,12 @@ class GalaxyRole(object):
                                                                                                                                          self.name,
                                                                                                                                          role_versions))
 
-                # check if there's a source link for our role_version
+                # check if there's a source link/url for our role_version
                 for role_version in role_versions:
                     if role_version['name'] == self.version and 'source' in role_version:
                         self.src = role_version['source']
+                    if role_version['name'] == self.version and 'download_url' in role_version:
+                        self.download_url = role_version['download_url']
 
                 tmp_file = self.fetch(role_data)
 
