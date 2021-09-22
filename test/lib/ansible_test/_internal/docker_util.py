@@ -163,7 +163,7 @@ def get_podman_hostname():  # type: () -> str
     if not podman_host:
         podman_host = get_podman_default_hostname()
 
-    if podman_host and '://' in podman_host:
+    if podman_host and podman_host.startswith('ssh://'):
         try:
             hostname = urllib.parse.urlparse(podman_host).hostname
             display.info('Detected Podman host: %s' % hostname, verbosity=1)
