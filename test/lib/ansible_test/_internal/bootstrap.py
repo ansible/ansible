@@ -15,6 +15,7 @@ from .util import (
 
 from .util_common import (
     ShellScriptTemplate,
+    set_shebang,
 )
 
 from .core_ci import (
@@ -48,7 +49,10 @@ class Bootstrap:
     def get_script(self):  # type: () -> str
         """Return a shell script to bootstrap the specified host."""
         path = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'bootstrap.sh')
+
         content = read_text_file(path)
+        content = set_shebang(content, '/bin/sh')
+
         template = ShellScriptTemplate(content)
 
         variables = self.get_variables()

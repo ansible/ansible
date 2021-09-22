@@ -43,3 +43,20 @@ SECCOMP_CHOICES = [
     'default',
     'unconfined',
 ]
+
+# This bin symlink map must exactly match the contents of the bin directory.
+# It is necessary for payload creation to reconstruct the bin directory when running ansible-test from an installed version of ansible.
+# It is also used to construct the injector directory at runtime.
+ANSIBLE_BIN_SYMLINK_MAP = {
+    'ansible': '../lib/ansible/cli/scripts/ansible_cli_stub.py',
+    'ansible-config': 'ansible',
+    'ansible-connection': '../lib/ansible/cli/scripts/ansible_connection_cli_stub.py',
+    'ansible-console': 'ansible',
+    'ansible-doc': 'ansible',
+    'ansible-galaxy': 'ansible',
+    'ansible-inventory': 'ansible',
+    'ansible-playbook': 'ansible',
+    'ansible-pull': 'ansible',
+    'ansible-test': '../test/lib/ansible_test/_util/target/cli/ansible_test_cli_stub.py',
+    'ansible-vault': 'ansible',
+}

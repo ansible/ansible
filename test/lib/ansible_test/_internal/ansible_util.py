@@ -20,7 +20,6 @@ from .util import (
     ANSIBLE_TEST_DATA_ROOT,
     ANSIBLE_BIN_PATH,
     ANSIBLE_SOURCE_ROOT,
-    ANSIBLE_TEST_TARGET_ROOT,
     ANSIBLE_TEST_TOOLS_ROOT,
     get_ansible_version,
 )
@@ -30,6 +29,7 @@ from .util_common import (
     run_command,
     ResultType,
     intercept_python,
+    get_injector_path,
 )
 
 from .config import (
@@ -117,7 +117,7 @@ def ansible_environment(args, color=True, ansible_config=None):
         # ansible-connection only requires the injector for code coverage
         # the correct python interpreter is already selected using the sys.executable used to invoke ansible
         ansible.update(dict(
-            ANSIBLE_CONNECTION_PATH=os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'injector', 'ansible-connection'),
+            ANSIBLE_CONNECTION_PATH=os.path.join(get_injector_path(), 'ansible-connection'),
         ))
 
     if isinstance(args, PosixIntegrationConfig):
