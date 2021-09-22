@@ -28,11 +28,6 @@ class TestDistro():
         assert isinstance(info, dict), \
             'distro.info() returned %s (%s) which is not a dist' % (info, type(info))
 
-    def test_linux_distribution(self):
-        linux_dist = distro.linux_distribution()
-        assert isinstance(linux_dist, tuple), \
-            'linux_distrution() returned %s (%s) which is not a tuple' % (linux_dist, type(linux_dist))
-
     def test_id(self):
         id = distro.id()
         assert isinstance(id, string_types), 'distro.id() returned %s (%s) which is not a string' % (id, type(id))

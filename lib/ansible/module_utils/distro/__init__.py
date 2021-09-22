@@ -23,7 +23,7 @@ __metaclass__ = type
 Compat distro library.
 '''
 # The following makes it easier for us to script updates of the bundled code
-_BUNDLED_METADATA = {"pypi_name": "distro", "version": "1.5.0"}
+_BUNDLED_METADATA = {"pypi_name": "distro", "version": "1.6.0"}
 
 # The following additional changes have been made:
 # * Remove optparse since it is not needed for our use.
