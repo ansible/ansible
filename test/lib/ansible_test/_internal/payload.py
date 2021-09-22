@@ -9,6 +9,10 @@ import tempfile
 import time
 import typing as t
 
+from .constants import (
+    ANSIBLE_BIN_SYMLINK_MAP,
+)
+
 from .config import (
     IntegrationConfig,
     ShellConfig,
@@ -32,22 +36,6 @@ from .util_common import (
 # improve performance by disabling uid/gid lookups
 tarfile.pwd = None
 tarfile.grp = None
-
-# this bin symlink map must exactly match the contents of the bin directory
-# it is necessary for payload creation to reconstruct the bin directory when running ansible-test from an installed version of ansible
-ANSIBLE_BIN_SYMLINK_MAP = {
-    'ansible': '../lib/ansible/cli/scripts/ansible_cli_stub.py',
-    'ansible-config': 'ansible',
-    'ansible-connection': '../lib/ansible/cli/scripts/ansible_connection_cli_stub.py',
-    'ansible-console': 'ansible',
-    'ansible-doc': 'ansible',
-    'ansible-galaxy': 'ansible',
-    'ansible-inventory': 'ansible',
-    'ansible-playbook': 'ansible',
-    'ansible-pull': 'ansible',
-    'ansible-test': '../test/lib/ansible_test/_util/target/cli/ansible_test_cli_stub.py',
-    'ansible-vault': 'ansible',
-}
 
 
 def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
