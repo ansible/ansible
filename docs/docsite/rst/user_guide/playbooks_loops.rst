@@ -410,6 +410,8 @@ Variable                    Description
       loop_control:
         extended: yes
 
+.. note:: When using ``loop_control.extended`` more memory will be utilized on the control node. This is a result of ``ansible_loop.allitems`` containing a reference to the full loop data for every loop. When serializing the results to communicate with the main ansible process, these references will be dereferenced causing memory usage to increase.
+
 Accessing the name of your loop_var
 -----------------------------------
 .. versionadded:: 2.8
