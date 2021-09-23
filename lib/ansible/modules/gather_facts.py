@@ -48,7 +48,7 @@ attributes:
         platforms: all
 notes:
     - This is mostly a wrapper around other fact gathering modules.
-    - Options passed to into this action must be supported by all the underlying fact modules configured.
+    - Options passed into this action must be supported by all the underlying fact modules configured.
     - Facts returned by each module will be merged, conflicts will favor 'last merged'.
       Order is not guaranteed, when doing parallel gathering on multiple modules.
 author:
