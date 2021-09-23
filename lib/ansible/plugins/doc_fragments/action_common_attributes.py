@@ -56,7 +56,7 @@ attributes:
     action:
       description: Indicates this has a corresponding action plugin so some parts of the options can be executed on the controller
     async:
-      description: Supports being used with the ``async`` keyword
+      description: Supports being used with the C(async) keyword
     bypass_host_loop:
       description:
             - Forces a 'global' task that does not execute per host, this bypasses per host templating and serial,
