@@ -30,6 +30,7 @@ from .thread import (
 
 from .host_profiles import (
     ControllerHostProfile,
+    DockerProfile,
     HostProfile,
     SshConnection,
     SshTargetHostProfile,
@@ -42,6 +43,10 @@ from .pypi_proxy import (
 
 THostProfile = t.TypeVar('THostProfile', bound=HostProfile)
 TEnvironmentConfig = t.TypeVar('TEnvironmentConfig', bound=EnvironmentConfig)
+
+
+class PrimeContainers(ApplicationError):
+    """Exception raised to end execution early after priming containers."""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -108,6 +113,13 @@ def prepare_profiles(
             controller_profile=t.cast(ControllerHostProfile, create_host_profile(args, args.controller, True)),
             target_profiles=[create_host_profile(args, target, False) for target in args.targets],
         )
+
+        if args.prime_containers:
+            for host_profile in host_state.profiles:
+                if isinstance(host_profile, DockerProfile):
+                    host_profile.provision()
+
+            raise PrimeContainers()
 
         atexit.register(functools.partial(cleanup_profiles, host_state))
 
