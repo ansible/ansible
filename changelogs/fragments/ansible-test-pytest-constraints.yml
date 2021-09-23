@@ -1,0 +1,4 @@
+minor_changes:
+  - ansible-test - Set minimum version constraints for ``pytest``.
+bugfixes:
+  - ansible-test - Use ``--strict`` for ``pytest`` on Python 2.6 since ``--strict-markers`` is not available.
