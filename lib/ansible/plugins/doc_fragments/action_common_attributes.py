@@ -61,7 +61,7 @@ attributes:
       description:
             - Forces a 'global' task that does not execute per host, this bypasses per host templating and serial,
               throttle and other loop considerations
-            - Conditionals will work as if ``run_once`` is being used, variables used will be from the first available host
+            - Conditionals will work as if C(run_once) is being used, variables used will be from the first available host
             - This action will not work normally outside of lockstep strategies
 '''
     RAW = r'''
