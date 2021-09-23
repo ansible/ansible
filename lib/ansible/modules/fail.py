@@ -44,7 +44,7 @@ attributes:
     diff_mode:
         support: none
     delegation:
-        details: Aside from ``register`` and/or in combination with ``delegate_facts``, it has little effect.
+        details: Aside from C(register) and/or in combination with C(delegate_facts), it has little effect.
         support:  partial
     platform:
         platforms: all
