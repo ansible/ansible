@@ -40,7 +40,7 @@ attributes:
     FACTS = r'''
 attributes:
     facts:
-      description: Action returns an ``ansible_facts`` dictionary that will update existing host facts
+      description: Action returns an C(ansible_facts) dictionary that will update existing host facts
 '''
 
     FILES = r'''
