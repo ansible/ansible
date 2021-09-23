@@ -62,7 +62,7 @@ attributes:
       details: Only some options support conditionals and when they do they act 'bypassing the host loop', taking the values from first available host
       support: partial
     connection:
-      details: most options in this action do not use a connection, except C(reset_connection) which still does not connect to the remote
+      details: Most options in this action do not use a connection, except C(reset_connection) which still does not connect to the remote
       support: partial
 notes:
     - C(clear_facts) will remove the persistent facts from M(ansible.builtin.set_fact) using C(cacheable=True),
