@@ -72,9 +72,9 @@ attributes:
     bypass_task_loop:
       support: none
     delegation:
-      details: since there are no connection nor facts, there is no sense in delegating includes
+      details: Since there are no connection nor facts, there is no sense in delegating includes
       support: none
     tags:
-      details: tags are interpreted by this action but are not automatically inherited by the include tasks, see ``apply``
+      details: Tags are interpreted by this action but are not automatically inherited by the include tasks, see C(apply)
       support: partial
 '''
