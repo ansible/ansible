@@ -385,6 +385,7 @@ def add_global_docker(
             docker_no_pull=False,
             docker_network=None,
             docker_terminate=None,
+            prime_containers=False,
         )
 
         return
@@ -408,6 +409,12 @@ def add_global_docker(
         type=TerminateMode,
         action=EnumAction,
         help='terminate the container: %(choices)s (default: %(default)s)',
+    )
+
+    parser.add_argument(
+        '--prime-containers',
+        action='store_true',
+        help='download containers without running tests',
     )
 
 

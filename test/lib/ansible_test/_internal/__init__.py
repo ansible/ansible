@@ -42,6 +42,10 @@ from .cli import (
     parse_args,
 )
 
+from .provisioning import (
+    PrimeContainers,
+)
+
 
 def main():
     """Main program function."""
@@ -64,6 +68,8 @@ def main():
 
         try:
             args.func(config)
+        except PrimeContainers:
+            pass
         except ListTargets as ex:
             # save target_names for use once we exit the exception handler
             target_names = ex.target_names

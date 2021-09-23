@@ -69,7 +69,7 @@ class OpenShiftCloudProvider(CloudProvider):
 
         cmd = ['start', 'master', '--listen', 'https://0.0.0.0:%d' % port]
 
-        run_support_container(
+        descriptor = run_support_container(
             self.args,
             self.platform,
             self.image,
@@ -79,6 +79,9 @@ class OpenShiftCloudProvider(CloudProvider):
             cleanup=CleanupMode.YES,
             cmd=cmd,
         )
+
+        if not descriptor:
+            return
 
         if self.args.explain:
             config = '# Unknown'

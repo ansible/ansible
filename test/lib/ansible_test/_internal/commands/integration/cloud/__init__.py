@@ -151,7 +151,10 @@ def cloud_init(args, targets):  # type: (IntegrationConfig, t.Tuple[IntegrationT
 
     results = {}
 
-    for provider in get_cloud_providers(args, targets):
+    for provider in get_cloud_providers(args, targets):  # type: CloudProvider
+        if args.prime_containers and not provider.uses_docker:
+            continue
+
         args.metadata.cloud_config[provider.platform] = {}
 
         start_time = time.time()
