@@ -24,7 +24,7 @@ attributes:
       support: none
     ignore_conditional:
       support: none
-      description: The action is not subject to conditional execution so it will ignore the ``when:`` keyword
+      description: The action is not subject to conditional execution so it will ignore the C(when:) keyword
     platform:
       support: full
       platforms: all
