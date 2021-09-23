@@ -51,9 +51,10 @@ class PSModuleDepFinder(object):
             # '#AnsibleRequires -CSharpUtil Ansible.{name}'
             # '#AnsibleRequires -CSharpUtil ansible_collections.{namespace}.{collection}.plugins.module_utils.{name}'
             # '#AnsibleRequires -CSharpUtil ..module_utils.{name}'
-            re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+((Ansible\..+)|'
+            # Can have '-Optional' at the end to denote the util is optional
+            re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+((Ansible\.[\w\.]+)|'
                                 r'(ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+)|'
-                                r'(\.[\w\.]+))')),
+                                r'(\.[\w\.]+))(?P<optional>\s+-Optional){0,1}')),
         ]
 
         self._re_ps_module = [
@@ -64,9 +65,10 @@ class PSModuleDepFinder(object):
             # '#AnsibleRequires -PowerShell Ansible.ModuleUtils.{name}'
             # '#AnsibleRequires -PowerShell ansible_collections.{namespace}.{collection}.plugins.module_utils.{name}'
             # '#AnsibleRequires -PowerShell ..module_utils.{name}'
-            re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-powershell\s+((Ansible\.ModuleUtils\..+)|'
+            # Can have '-Optional' at the end to denote the util is optional
+            re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-powershell\s+((Ansible\.ModuleUtils\.[\w\.]+)|'
                                 r'(ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+)|'
-                                r'(\.[\w\.]+))')),
+                                r'(\.[\w\.]+))(?P<optional>\s+-Optional){0,1}')),
         ]
 
         self._re_wrapper = re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-wrapper\s+(\w*)'))
@@ -104,9 +106,11 @@ class PSModuleDepFinder(object):
                         # tolerate windows line endings by stripping any remaining
                         # newline chars
                         module_util_name = to_text(match.group(1).rstrip())
+                        match_dict = match.groupdict()
+                        optional = match_dict.get('optional', None) is not None
 
                         if module_util_name not in check[1].keys():
-                            module_utils.add((module_util_name, check[2], fqn))
+                            module_utils.add((module_util_name, check[2], fqn, optional))
 
                         break
 
@@ -133,7 +137,7 @@ class PSModuleDepFinder(object):
         # recursively drill into each Requires to see if there are any more
         # requirements
         for m in set(module_utils):
-            self._add_module(m, wrapper=wrapper)
+            self._add_module(*m, wrapper=wrapper)
 
     def scan_exec_script(self, name):
         # scans lib/ansible/executor/powershell for scripts used in the module
@@ -157,9 +161,8 @@ class PSModuleDepFinder(object):
         self.exec_scripts[name] = to_bytes(exec_script)
         self.scan_module(b_data, wrapper=True, powershell=True)
 
-    def _add_module(self, name, wrapper=False):
-        m, ext, fqn = name
-        m = to_text(m)
+    def _add_module(self, name, ext, fqn, optional, wrapper=False):
+        m = to_text(name)
 
         util_fqn = None
 
@@ -168,6 +171,9 @@ class PSModuleDepFinder(object):
             mu_path = ps_module_utils_loader.find_plugin(m, ext)
 
             if not mu_path:
+                if optional:
+                    return
+
                 raise AnsibleError('Could not find imported module support code '
                                    'for \'%s\'' % m)
 
@@ -190,8 +196,11 @@ class PSModuleDepFinder(object):
 
             try:
                 module_util = import_module(n_package_name)
-                module_util_data = to_bytes(pkgutil.get_data(n_package_name, n_resource_name),
-                                            errors='surrogate_or_strict')
+                pkg_data = pkgutil.get_data(n_package_name, n_resource_name)
+                if pkg_data is None:
+                    raise ImportError("No package data found")
+
+                module_util_data = to_bytes(pkg_data, errors='surrogate_or_strict')
                 util_fqn = to_text("%s.%s " % (n_package_name, submodules[-1]), errors='surrogate_or_strict')
 
                 # Get the path of the util which is required for coverage collection.
@@ -201,10 +210,14 @@ class PSModuleDepFinder(object):
                     raise AnsibleError("Internal error: Referenced module_util package '%s' contains 0 or multiple "
                                        "import locations when we only expect 1." % n_package_name)
                 mu_path = os.path.join(resource_paths[0], n_resource_name)
-            except OSError as err:
-                if err.errno == errno.ENOENT:
+            except (ImportError, OSError) as err:
+                if getattr(err, "errno", errno.ENOENT) == errno.ENOENT:
+                    if optional:
+                        return
+
                     raise AnsibleError('Could not find collection imported module support code for \'%s\''
                                        % to_native(m))
+
                 else:
                     raise
 
@@ -345,7 +358,7 @@ def _create_powershell_wrapper(b_module_data, module_path, module_args,
 
     # make sure Ansible.ModuleUtils.AddType is added if any C# utils are used
     if len(finder.cs_utils_wrapper) > 0 or len(finder.cs_utils_module) > 0:
-        finder._add_module((b"Ansible.ModuleUtils.AddType", ".psm1", None),
+        finder._add_module(b"Ansible.ModuleUtils.AddType", ".psm1", None, False,
                            wrapper=False)
 
     # exec_wrapper is only required to be part of the payload if using
