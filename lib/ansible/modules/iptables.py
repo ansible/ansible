@@ -24,6 +24,14 @@ description:
     only manipulates the current rules that are present in memory. This is the
     same as the behaviour of the C(iptables) and C(ip6tables) command which
     this module uses internally.
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: linux
 notes:
   - This module just deals with individual rules.If you need advanced
     chaining of rules the recommended way is to template the iptables restore

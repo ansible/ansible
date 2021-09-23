@@ -527,7 +527,8 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
 
     def add_default_attributes(more=None):
         schema = {
-            'description': any_string_types,
+            'description': Any(list_string_types, *string_types),
+            'details': Any(list_string_types, *string_types),
             'support': any_string_types,
             'version_added_collection': any_string_types,
             'version_added': any_string_types,
@@ -540,8 +541,9 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
         All(
             Schema({
                 any_string_types: {
-                    Required('description'): any_string_types,
+                    Required('description'): Any(list_string_types, *string_types),
                     Required('support'): Any('full', 'partial', 'none'),
+                    'details': Any(list_string_types, *string_types),
                     'version_added_collection': collection_name,
                     'version_added': version(for_collection=for_collection),
                 },
@@ -555,8 +557,8 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
                 'forced_action_plugin': add_default_attributes({
                     Required('action_plugin'): any_string_types,
                 }),
-                'proprietary': add_default_attributes({
-                    Required('platforms'): list_string_types,
+                'platform': add_default_attributes({
+                    Required('platforms'): Any(list_string_types, *string_types)
                 }),
             }, extra=PREVENT_EXTRA),
         )

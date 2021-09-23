@@ -41,20 +41,29 @@ options:
     default: no
     version_added: "2.8"
 extends_documentation_fragment:
-- action_common_attributes
+  - action_common_attributes
+  - action_common_attributes.conn
+  - action_common_attributes.flow
 attributes:
     action:
         support: full
     async:
         support: none
+    become:
+        support: none
+    bypass_host_loop:
+        support: none
     connection:
+        support: none
+    check_mode:
+        support: none
+    diff_mode:
         support: none
     delegation:
         support: none
-    proprietary:
-        support: full
-    windows:
-        support: full
+        details: Aside from C(register) and/or in combination with C(delegate_facts), it has little effect.
+    platform:
+        platforms: all
 seealso:
 - module: ansible.builtin.debug
 - module: ansible.builtin.fail

@@ -79,6 +79,14 @@ attributes:
       support: full
     async:
       support: none
+    bypass_host_loop:
+      support: none
+    check_mode:
+      support: none
+    diff_mode:
+      support: full
+    platform:
+      platforms: posix
     safe_file_operations:
       support: full
     vault:
@@ -91,9 +99,11 @@ seealso:
 author:
 - Stephen Fromm (@sfromm)
 extends_documentation_fragment:
-- action_common_attributes
-- decrypt
-- files
+    - action_common_attributes
+    - action_common_attributes.flow
+    - action_common_attributes.files
+    - decrypt
+    - files
 '''
 
 EXAMPLES = r'''

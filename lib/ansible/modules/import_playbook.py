@@ -23,26 +23,18 @@ options:
     description:
       - The name of the imported playbook is specified directly without any other option.
 extends_documentation_fragment:
-- action_common_attributes
+  - action_common_attributes
+  - action_common_attributes.conn
+  - action_common_attributes.flow
+  - action_core
+  - action_core.import
 attributes:
-    async:
-        support: none
-    become:
-        support: none
-    bypass_host_loop:
+    check_mode:
         support: full
-    conditional:
+    diff_mode:
         support: none
-    connection:
-        support: none
-    delegation:
-        support: none
-    loops:
-        support: none
-    tags:
-        support: none
-    until:
-        support: none
+    platform:
+        platforms: all
 notes:
   - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
 seealso:

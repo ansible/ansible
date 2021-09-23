@@ -29,6 +29,16 @@ options:
         choices: [ 'install', 'hold', 'deinstall', 'purge' ]
         required: true
         type: str
+extends_documentation_fragment:
+- action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    platform:
+        support: full
+        platforms: debian
 notes:
     - This module won't cause any packages to be installed/removed/purged, use the C(apt) module for that.
 '''

@@ -19,11 +19,14 @@ version_added: "1.0"
 short_description: Add or remove an apt key
 description:
     - Add or remove an I(apt) key, optionally downloading it.
-extends_documentation_fragment:
-- action_common_attributes
+extends_documentation_fragment: action_common_attributes
 attributes:
     check_mode:
         support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: debian
 notes:
     - The apt-key command has been deprecated and suggests to 'manage keyring files in trusted.gpg.d instead'. See the Debian wiki for details.
       This module is kept for backwards compatiblity for systems that still use apt-key as the main way to manage apt repository keys.

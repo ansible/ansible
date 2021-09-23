@@ -26,6 +26,20 @@ description:
        or use C(cmd) parameter.
      - Either a free form command or C(cmd) parameter is required, see the examples.
      - For Windows targets, use the M(ansible.windows.win_command) module instead.
+extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.raw
+attributes:
+    check_mode:
+        details: while the command itself is arbitrary and cannot be subject to the check mode semantics it adds C(creates)/C(removes) options as a workaround
+        support: partial
+    diff_mode:
+        support: none
+    platform:
+      support: full
+      platforms: posix
+    raw:
+      support: full
 options:
   free_form:
     description:
