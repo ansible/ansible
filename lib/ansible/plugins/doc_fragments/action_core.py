@@ -65,7 +65,7 @@ attributes:
     INCLUDE = r'''
 attributes:
     action:
-      details: while this action executes locally on the controller it is not governed by an action plugin
+      details: While this action executes locally on the controller it is not governed by an action plugin
       support: none
     bypass_host_loop:
       support: none
