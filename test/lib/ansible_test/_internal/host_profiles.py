@@ -349,6 +349,9 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
             cleanup=CleanupMode.NO,
         )
 
+        if not container:
+            return
+
         self.container_name = container.name
 
     def setup(self):  # type: () -> None

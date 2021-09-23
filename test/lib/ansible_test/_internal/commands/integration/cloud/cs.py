@@ -91,7 +91,7 @@ class CsCloudProvider(CloudProvider):
             self.port,
         ]
 
-        run_support_container(
+        descriptor = run_support_container(
             self.args,
             self.platform,
             self.image,
@@ -100,6 +100,9 @@ class CsCloudProvider(CloudProvider):
             allow_existing=True,
             cleanup=CleanupMode.YES,
         )
+
+        if not descriptor:
+            return
 
         # apply work-around for OverlayFS issue
         # https://github.com/docker/for-linux/issues/72#issuecomment-319904698
