@@ -252,7 +252,10 @@ def command_units(args):
         if not data_context().content.collection:
             cmd.append('--durations=25')
 
-        if python.version != '2.6':
+        if python.version == '2.6':
+            # same as --strict-markers in older versions of pytest which still support python 2.6
+            cmd.append('--strict')
+        else:
             # added in pytest 4.5.0, which requires python 2.7+
             cmd.append('--strict-markers')
 
