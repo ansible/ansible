@@ -46,13 +46,13 @@ attributes:
     action:
       support: none
     bypass_host_loop:
-      details: some of the subactions ignore the host loop, see the description above for each specific action for the exceptions
+      details: Some of the subactions ignore the host loop, see the description above for each specific action for the exceptions
       support: partial
     bypass_task_loop:
-      details: most of the subactions ignore the task loop, see the description above for each specific action for the exceptions
+      details: Most of the subactions ignore the task loop, see the description above for each specific action for the exceptions
       support: partial
     check_mode:
-      details: while these actions don't modify the targets directly they do change possible states of the target within the run
+      details: While these actions don't modify the targets directly they do change possible states of the target within the run
       support: partial
     delegation:
       support: none
