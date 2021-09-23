@@ -24,8 +24,30 @@ options:
     - If omitted, fail will simply bail out with a generic message.
     type: str
     default: Failed as requested from task
-notes:
-    - This module is also supported for Windows targets.
+extends_documentation_fragment:
+  - action_common_attributes
+  - action_common_attributes.conn
+  - action_common_attributes.flow
+attributes:
+    action:
+        support: full
+    async:
+        support: none
+    become:
+        support: none
+    bypass_host_loop:
+        support: none
+    connection:
+        support: none
+    check_mode:
+        support: none
+    diff_mode:
+        support: none
+    delegation:
+        details: Aside from C(register) and/or in combination with C(delegate_facts), it has little effect.
+        support:  partial
+    platform:
+        platforms: all
 seealso:
 - module: ansible.builtin.assert
 - module: ansible.builtin.debug

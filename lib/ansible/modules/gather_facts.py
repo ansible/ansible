@@ -12,6 +12,10 @@ DOCUMENTATION = '''
 module: gather_facts
 version_added: 2.8
 short_description: Gathers facts about remote hosts
+extends_documentation_fragment:
+  -  action_common_attributes
+  -  action_common_attributes.facts
+  -  action_common_attributes.flow
 description:
      - This module takes care of executing the R(configured facts modules,FACTS_MODULES), the default is to use the M(ansible.builtin.setup) module.
      - This module is automatically called by playbooks to gather useful variables about remote hosts that can be used in playbooks.
@@ -24,9 +28,27 @@ options:
               This can guarantee the merge order of module facts at the expense of performance.
             - By default it will be true if more than one fact module is used.
         type: bool
+attributes:
+    action:
+        support: full
+    async:
+        details: multiple modules can be executed in parallel or serially, but the action itself will not be async
+        support: partial
+    bypass_host_loop:
+        support: none
+    check_mode:
+        details: since this action should just query the target system info it always runs in check mode
+        support: full
+    diff_mode:
+        support: none
+    facts:
+        support: full
+    platform:
+        details: The action plugin should be able to automatically select the specific platform modules automatically or can be configured manually
+        platforms: all
 notes:
-    - This module is mostly a wrapper around other fact gathering modules.
-    - Options passed to this module must be supported by all the underlying fact modules configured.
+    - This is mostly a wrapper around other fact gathering modules.
+    - Options passed into this action must be supported by all the underlying fact modules configured.
     - Facts returned by each module will be merged, conflicts will favor 'last merged'.
       Order is not guaranteed, when doing parallel gathering on multiple modules.
 author:

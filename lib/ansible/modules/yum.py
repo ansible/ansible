@@ -242,6 +242,23 @@ options:
     default: "no"
     type: bool
     version_added: "2.12"
+extends_documentation_fragment:
+- action_common_attributes
+- action_common_attributes.flow
+attributes:
+    action:
+        details: In the case of yum, it has 2 action plugins that use it under the hood, M(yum) and M(package).
+        support: partial
+    async:
+        support: none
+    bypass_host_loop:
+        support: none
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    platform:
+        platforms: rhel
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.

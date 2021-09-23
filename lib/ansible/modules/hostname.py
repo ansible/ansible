@@ -25,7 +25,6 @@ notes:
       or M(ansible.builtin.replace).
     - On macOS, this module uses C(scutil) to set C(HostName), C(ComputerName), and C(LocalHostName). Since C(LocalHostName)
       cannot contain spaces or most special characters, this module will replace characters when setting C(LocalHostName).
-    - Supports C(check_mode).
 options:
     name:
         description:
@@ -42,6 +41,18 @@ options:
         choices: ['alpine', 'debian', 'freebsd', 'generic', 'macos', 'macosx', 'darwin', 'openbsd', 'openrc', 'redhat', 'sles', 'solaris', 'systemd']
         type: str
         version_added: '2.9'
+extends_documentation_fragment:
+- action_common_attributes
+- action_common_attributes.facts
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    facts:
+        support: full
+    platform:
+        platforms: posix
 '''
 
 EXAMPLES = '''

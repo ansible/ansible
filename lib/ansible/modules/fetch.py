@@ -57,6 +57,27 @@ options:
     - If using multiple hosts with the same filename, the file will be overwritten for each host.
     type: bool
     default: no
+extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.files
+    - action_common_attributes.flow
+attributes:
+  action:
+    support: full
+  async:
+    support: none
+  bypass_host_loop:
+    support: none
+  check_mode:
+    support: full
+  diff_mode:
+    support: full
+  platform:
+    platforms: posix
+  safe_file_operations:
+    support: none
+  vault:
+    support: none
 notes:
 - When running fetch with C(become), the M(ansible.builtin.slurp) module will also be
   used to fetch the contents of the file for determining the remote

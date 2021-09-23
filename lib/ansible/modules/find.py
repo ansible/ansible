@@ -129,6 +129,15 @@ options:
             - Default is unlimited depth.
         type: int
         version_added: "2.6"
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        details: since this action does not modify the target it just executes normally during check mode
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 seealso:
 - module: ansible.windows.win_find
 '''

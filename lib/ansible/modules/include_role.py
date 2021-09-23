@@ -73,11 +73,19 @@ options:
     type: bool
     default: yes
     version_added: '2.11'
+extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.conn
+    - action_common_attributes.flow
+    - action_core
+    - action_core.include
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
 notes:
-  - Handlers are made available to the whole play.
-  - Before Ansible 2.4, as with C(include), this task could be static or dynamic, If static, it implied that it won't
-    need templating, loops or conditionals and will show included tasks in the C(--list) options. Ansible would try to
-    autodetect what is needed, but you can set C(static) to C(yes) or C(no) at task level to control this.
+  - Handlers and are made available to the whole play.
   - After Ansible 2.4, you can use M(ansible.builtin.import_role) for C(static) behaviour and this action for C(dynamic) one.
 seealso:
 - module: ansible.builtin.import_playbook

@@ -38,8 +38,32 @@ options:
     type: int
     default: 0
     version_added: '2.1'
-notes:
-    - This module is also supported for Windows targets.
+extends_documentation_fragment:
+- action_common_attributes
+- action_common_attributes.conn
+- action_common_attributes.flow
+
+attributes:
+    action:
+        support: full
+    async:
+        support: none
+    bypass_host_loop:
+        support: none
+    become:
+        support: none
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    connection:
+        support: none
+    delegation:
+        details: Aside from C(register) and/or in combination with C(delegate_facts), it has little effect.
+        support:  partial
+    platform:
+        support: full
+        platforms: all
 seealso:
 - module: ansible.builtin.assert
 - module: ansible.builtin.fail

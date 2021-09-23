@@ -44,7 +44,18 @@ options:
             - If a supplied key is missing this will make the task fail if C(yes).
         type: bool
         default: 'yes'
-
+extends_documentation_fragment:
+  - action_common_attributes
+  - action_common_attributes.facts
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    facts:
+        support: full
+    platform:
+        platforms: posix
 notes:
    - Not all databases support enumeration, check system documentation for details.
 author:
