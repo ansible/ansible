@@ -38,7 +38,9 @@
 - name: Install python gssapi
   pip:
     name:
-    - gssapi
+    - decorator < 5.0.0 ; python_version < '3.5' # decorator 5.0.5 and later require python 3.5 or later
+    - gssapi < 1.6.0 ; python_version <= '2.7' # gssapi 1.6.0 and later require python 3 or later
+    - gssapi ; python_version > '2.7'
     - importlib ; python_version < '2.7'
     state: present
     extra_args: '-c {{ remote_constraints }}'
