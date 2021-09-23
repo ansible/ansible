@@ -47,16 +47,16 @@ attributes:
                use an include instead for those cases
       support: partial
     bypass_task_loop:
-      details: the task itself is not looped, but the loop is applied to each imported task
+      details: The task itself is not looped, but the loop is applied to each imported task
       support: partial
     delegation:
-      details: since there are no connection nor facts, there is no sense in delegating imports
+      details: Since there are no connection nor facts, there is no sense in delegating imports
       support: none
     ignore_conditional:
-      details: while the action itself will ignore the conditional, it will be inherited by the imported tasks themselves
+      details: While the action itself will ignore the conditional, it will be inherited by the imported tasks themselves
       support: partial
     tags:
-      details: tags are not interpreted for this action, they are applied to the imported tasks
+      details: Tags are not interpreted for this action, they are applied to the imported tasks
       support: none
     until:
       support: none
