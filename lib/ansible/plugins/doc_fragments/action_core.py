@@ -40,7 +40,7 @@ attributes:
     IMPORT = r'''
 attributes:
     action:
-      details: while this action executes locally on the controller it is not governed by an action plugin
+      details: While this action executes locally on the controller it is not governed by an action plugin
       support: none
     bypass_host_loop:
       details: While the import can be host specific and runs per host it is not dealing with all available host variables,
