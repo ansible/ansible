@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Distribution specific test containers have been updated to version 3.0.0.
