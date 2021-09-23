@@ -113,11 +113,15 @@ def run_support_container(
         env=None,  # type: t.Optional[t.Dict[str, str]]
         options=None,  # type: t.Optional[t.List[str]]
         publish_ports=True,  # type: bool
-):  # type: (...) -> ContainerDescriptor
+):  # type: (...) -> t.Optional[ContainerDescriptor]
     """
     Start a container used to support tests, but not run them.
     Containers created this way will be accessible from tests.
     """
+    if args.prime_containers:
+        docker_pull(args, image)
+        return None
+
     # SSH is required for publishing ports, as well as modifying the hosts file.
     # Initializing the SSH key here makes sure it is available for use after delegation.
     SshKey(args)

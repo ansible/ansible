@@ -68,6 +68,9 @@ class HttptesterProvider(CloudProvider):
             },
         )
 
+        if not descriptor:
+            return
+
         # Read the password from the container environment.
         # This allows the tests to work when re-using an existing container.
         # The password is marked as sensitive, since it may differ from the one we generated.

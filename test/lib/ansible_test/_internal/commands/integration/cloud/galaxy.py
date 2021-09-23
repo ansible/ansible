@@ -115,6 +115,9 @@ class GalaxyProvider(CloudProvider):
             allow_existing=True,
         )
 
+        if not descriptor:
+            return
+
         if not descriptor.running:
             pulp_id = descriptor.container_id
 

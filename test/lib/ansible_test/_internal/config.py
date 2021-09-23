@@ -106,6 +106,8 @@ class EnvironmentConfig(CommonConfig):
         self.remote_stage = args.remote_stage  # type: t.Optional[str]
         self.remote_terminate = args.remote_terminate  # type: t.Optional[TerminateMode]
 
+        self.prime_containers = args.prime_containers  # type: bool
+
         self.requirements = args.requirements  # type: bool
 
         self.delegate_args = []  # type: t.List[str]
