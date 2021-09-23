@@ -61,7 +61,7 @@ attributes:
         support: none
     delegation:
         support: none
-        details: Aside from ``register`` and/or in combination with ``delegate_facts``, it has little effect.
+        details: Aside from C(register) and/or in combination with C(delegate_facts), it has little effect.
     platform:
         platforms: all
 seealso:
