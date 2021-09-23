@@ -18,6 +18,7 @@ version_added: "0.0.1"
 short_description: Deploy software (or files) from git checkouts
 description:
     - Manage I(git) checkouts of repositories to deploy files or software.
+extends_documentation_fragment: action_common_attributes
 options:
     repo:
         description:
@@ -213,14 +214,19 @@ options:
 
 requirements:
     - git>=1.7.1 (the command line tool)
-
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    platform:
+        platforms: posix
 notes:
     - "If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt,
       one solution is to use the option accept_hostkey. Another solution is to
       add the remote host public key in C(/etc/ssh/ssh_known_hosts) before calling
       the git module, with the following command: ssh-keyscan -H remote_host.com >> /etc/ssh/ssh_known_hosts."
-    - Supports C(check_mode).
 '''
 
 EXAMPLES = '''

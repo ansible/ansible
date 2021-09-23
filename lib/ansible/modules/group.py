@@ -57,13 +57,19 @@ options:
         type: bool
         default: no
         version_added: "2.8"
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 seealso:
 - module: ansible.builtin.user
 - module: ansible.windows.win_group
 author:
 - Stephen Fromm (@sfromm)
-notes:
-- Supports C(check_mode).
 '''
 
 EXAMPLES = '''

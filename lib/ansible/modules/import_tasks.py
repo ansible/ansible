@@ -23,28 +23,18 @@ options:
       - Most keywords, including loops and conditionals, only applied to the imported tasks, not to this statement itself.
       - If you need any of those to apply, use M(ansible.builtin.include_tasks) instead.
 extends_documentation_fragment:
-- action_common_attributes
+    - action_common_attributes
+    - action_common_attributes.conn
+    - action_common_attributes.flow
+    - action_core
+    - action_core.import
 attributes:
-    async:
-        support: none
-    become:
-        support: none
-    bypass_host_loop:
-        support: partial
-    conditional:
-        support: none
-    connection:
-        support: none
-    delegation:
-        support: none
-    loops:
-        support: none
-    tags:
-        support: none
-    until:
-        support: none
+    check_mode:
+      support: none
+    diff_mode:
+      support: none
 notes:
-  - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
+  - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module
 seealso:
 - module: ansible.builtin.import_playbook
 - module: ansible.builtin.import_role

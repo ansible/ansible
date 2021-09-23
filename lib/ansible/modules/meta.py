@@ -37,13 +37,37 @@ options:
           Note that with C(serial=0) or undefined this behaves the same as C(end_play).
     choices: [ clear_facts, clear_host_errors, end_host, end_play, flush_handlers, noop, refresh_inventory, reset_connection, end_batch ]
     required: true
+extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.conn
+    - action_common_attributes.flow
+    - action_core
+attributes:
+    action:
+      support: none
+    bypass_host_loop:
+      details: Some of the subactions ignore the host loop, see the description above for each specific action for the exceptions
+      support: partial
+    bypass_task_loop:
+      details: Most of the subactions ignore the task loop, see the description above for each specific action for the exceptions
+      support: partial
+    check_mode:
+      details: While these actions don't modify the targets directly they do change possible states of the target within the run
+      support: partial
+    delegation:
+      support: none
+    diff_mode:
+      support: none
+    ignore_conditional:
+      details: Only some options support conditionals and when they do they act 'bypassing the host loop', taking the values from first available host
+      support: partial
+    connection:
+      details: Most options in this action do not use a connection, except C(reset_connection) which still does not connect to the remote
+      support: partial
 notes:
-    - C(meta) is not really a module nor action_plugin as such it cannot be overwritten.
     - C(clear_facts) will remove the persistent facts from M(ansible.builtin.set_fact) using C(cacheable=True),
       but not the current host variable it creates for the current run.
-    - Looping on meta tasks is not supported.
     - Skipping C(meta) tasks with tags is not supported before Ansible 2.11.
-    - This module is also supported for Windows targets.
 seealso:
 - module: ansible.builtin.assert
 - module: ansible.builtin.fail

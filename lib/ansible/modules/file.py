@@ -14,7 +14,7 @@ DOCUMENTATION = r'''
 module: file
 version_added: historical
 short_description: Manage files and file properties
-extends_documentation_fragment: files
+extends_documentation_fragment: [files, action_common_attributes]
 description:
 - Set attributes of files, symlinks or directories.
 - Alternatively, remove files, symlinks or directories.
@@ -111,8 +111,14 @@ seealso:
 - module: ansible.builtin.stat
 - module: ansible.builtin.template
 - module: ansible.windows.win_file
-notes:
-- Supports C(check_mode).
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        details: permissions and ownership will be shown but file contents on absent/touch will not.
+        support: partial
+    platform:
+        platforms: posix
 author:
 - Ansible Core Team
 - Michael DeHaan

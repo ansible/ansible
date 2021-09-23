@@ -118,29 +118,37 @@ options:
     type: str
     version_added: '2.5'
 extends_documentation_fragment:
-- decrypt
-- files
-- validate
-- action_common_attributes
+    - decrypt
+    - files
+    - validate
+    - action_common_attributes
+    - action_common_attributes.files
+    - action_common_attributes.flow
 notes:
-- The M(ansible.builtin.copy) module recursively copy facility does not scale to lots (>hundreds) of files.
+    - The M(ansible.builtin.copy) module recursively copy facility does not scale to lots (>hundreds) of files.
 seealso:
-- module: ansible.builtin.assemble
-- module: ansible.builtin.fetch
-- module: ansible.builtin.file
-- module: ansible.builtin.template
-- module: ansible.posix.synchronize
-- module: ansible.windows.win_copy
+    - module: ansible.builtin.assemble
+    - module: ansible.builtin.fetch
+    - module: ansible.builtin.file
+    - module: ansible.builtin.template
+    - module: ansible.posix.synchronize
+    - module: ansible.windows.win_copy
 author:
-- Ansible Core Team
-- Michael DeHaan
+    - Ansible Core Team
+    - Michael DeHaan
 attributes:
   action:
     support: full
+  async:
+    support: none
+  bypass_host_loop:
+    support: none
   check_mode:
     support: full
   diff_mode:
     support: full
+  platform:
+    platforms: posix
   safe_file_operations:
       support: full
   vault:

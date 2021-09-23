@@ -30,26 +30,33 @@ options:
     type: list
     aliases: [ group, groupname ]
 extends_documentation_fragment:
-- action_common_attributes
+  - action_common_attributes
+  - action_common_attributes.conn
+  - action_common_attributes.flow
+  - action_core
 attributes:
     action:
         support: full
-    async:
-        support: none
+    core:
+      details: While parts of this action are implemented in core, other parts are still available as normal plugins and can be partially overridden
+      support: partial
     become:
-        support: none
+      support: none
     bypass_host_loop:
         support: full
+    bypass_task_loop:
+        support: none
     check_mode:
-        support: full
+        details: While this makes no changes to target systems the 'in memory' inventory will still be altered
+        support: partial
     connection:
         support: none
     delegation:
         support: none
-    proprietary:
-        support: full
-    windows:
-        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: all
 notes:
 - The alias C(host) of the parameter C(name) is only available on Ansible 2.4 and newer.
 - Since Ansible 2.4, the C(inventory_dir) variable is now set to C(None) instead of the 'global inventory source',

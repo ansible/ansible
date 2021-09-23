@@ -91,9 +91,10 @@ notes:
   - Option I(follow) has been removed in Ansible 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
   - When more then one block should be handled in one file you must change the I(marker) per task.
 extends_documentation_fragment:
-- action_common_attributes
-- files
-- validate
+    - action_common_attributes
+    - action_common_attributes.files
+    - files
+    - validate
 attributes:
     check_mode:
         support: full
@@ -101,6 +102,11 @@ attributes:
         support: full
     safe_file_operations:
       support: full
+    platform:
+      support: full
+      platforms: posix
+    vault:
+      support: none
 '''
 
 EXAMPLES = r'''

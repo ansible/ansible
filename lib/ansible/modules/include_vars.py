@@ -82,8 +82,31 @@ options:
     description:
       - This module allows you to specify the 'file' option directly without any other options.
       - There is no 'free-form' option, this is just an indicator, see example below.
-notes:
-  - This module is also supported for Windows targets.
+extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.conn
+    - action_common_attributes.flow
+    - action_core
+attributes:
+    action:
+        details: While the action plugin does do some of the work it relies on the core engine to actually create the variables, that part cannot be overriden
+        support: partial
+    bypass_host_loop:
+        support: none
+    bypass_task_loop:
+        support: none
+    check_mode:
+        support: full
+    delegation:
+        details:
+            - while variable assignment can be delegated to a different host the execution context is always the current invenotory_hostname
+            - connection variables, if set at all, would reflect the host it would target, even if we are not connecting at all in this case
+        support: partial
+    diff_mode:
+        support: none
+    core:
+        details: While parts of this action are implemented in core, other parts are still available as normal plugins and can be partially overridden
+        support: partial
 seealso:
 - module: ansible.builtin.set_fact
 - ref: playbooks_delegation

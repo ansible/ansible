@@ -31,13 +31,21 @@ options:
     default: status
 extends_documentation_fragment:
 - action_common_attributes
+- action_common_attributes.flow
 attributes:
     action:
         support: full
     async:
         support: none
-    windows:
+    check_mode:
+        support: none
+    diff_mode:
+        support: none
+    bypass_host_loop:
+        support: none
+    platform:
         support: full
+        platforms: posix, windows
 seealso:
 - ref: playbooks_async
   description: Detailed information on how to use asynchronous actions and polling.
