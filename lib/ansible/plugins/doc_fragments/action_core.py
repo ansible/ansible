@@ -16,7 +16,7 @@ attributes:
     become:
       support: none
     bypass_task_loop:
-      description: these tasks ignore the ``loop`` and ``with_`` keywords
+      description: These tasks ignore the C(loop) and C(with_) keywords
     core:
       description: This is a 'core engine' feature and is not implemented like most task actions, so it is not overridable in any way via the plugin system.
       support: full
