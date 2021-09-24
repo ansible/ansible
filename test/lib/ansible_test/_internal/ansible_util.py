@@ -69,13 +69,8 @@ def get_hosts(inventory, group_name):  # type: (t.Dict[str, t.Any], str) -> t.Di
     return hosts
 
 
-def ansible_environment(args, color=True, ansible_config=None):
-    """
-    :type args: CommonConfig
-    :type color: bool
-    :type ansible_config: str | None
-    :rtype: dict[str, str]
-    """
+def ansible_environment(args, color=True, ansible_config=None):  # type: (CommonConfig, bool, t.Optional[str]) -> t.Dict[str, str]
+    """Return a dictionary of environment variables to use when running Ansible commands."""
     env = common_environment()
     path = env['PATH']
 

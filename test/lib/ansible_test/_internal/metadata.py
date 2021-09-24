@@ -26,10 +26,8 @@ class Metadata:
         self.change_description = None  # type: t.Optional[ChangeDescription]
         self.ci_provider = None  # type: t.Optional[str]
 
-    def populate_changes(self, diff):
-        """
-        :type diff: list[str] | None
-        """
+    def populate_changes(self, diff):  # type: (t.Optional[t.List[str]]) -> None
+        """Populate the changeset using the given diff."""
         patches = parse_diff(diff)
         patches = sorted(patches, key=lambda k: k.new.path)  # type: t.List[FileDiff]
 
@@ -47,10 +45,8 @@ class Metadata:
             # failed tests involving deleted files should be using line 0 since there is no content remaining
             self.changes[path] = ((0, 0),)
 
-    def to_dict(self):
-        """
-        :rtype: dict[str, any]
-        """
+    def to_dict(self):  # type: () -> t.Dict[str, t.Any]
+        """Return a dictionary representation of the metadata."""
         return dict(
             changes=self.changes,
             cloud_config=self.cloud_config,
@@ -58,10 +54,8 @@ class Metadata:
             change_description=self.change_description.to_dict(),
         )
 
-    def to_file(self, path):
-        """
-        :type path: path
-        """
+    def to_file(self, path):  # type: (str) -> None
+        """Write the metadata to the specified file."""
         data = self.to_dict()
 
         display.info('>>> Metadata: %s\n%s' % (path, data), verbosity=3)
@@ -69,20 +63,14 @@ class Metadata:
         write_json_file(path, data)
 
     @staticmethod
-    def from_file(path):
-        """
-        :type path: str
-        :rtype: Metadata
-        """
+    def from_file(path):  # type: (str) -> Metadata
+        """Return metadata loaded from the specified file."""
         data = read_json_file(path)
         return Metadata.from_dict(data)
 
     @staticmethod
-    def from_dict(data):
-        """
-        :type data: dict[str, any]
-        :rtype: Metadata
-        """
+    def from_dict(data):  # type: (t.Dict[str, t.Any]) -> Metadata
+        """Return metadata loaded from the specified dictionary."""
         metadata = Metadata()
         metadata.changes = data['changes']
         metadata.cloud_config = data['cloud_config']
@@ -103,23 +91,17 @@ class ChangeDescription:
         self.no_integration_paths = []  # type: t.List[str]
 
     @property
-    def targets(self):
-        """
-        :rtype: list[str] | None
-        """
+    def targets(self):  # type: () -> t.Optional[t.List[str]]
+        """Optional list of target names."""
         return self.regular_command_targets.get(self.command)
 
     @property
-    def focused_targets(self):
-        """
-        :rtype: list[str] | None
-        """
+    def focused_targets(self):  # type: () -> t.Optional[t.List[str]]
+        """Optional list of focused target names."""
         return self.focused_command_targets.get(self.command)
 
-    def to_dict(self):
-        """
-        :rtype: dict[str, any]
-        """
+    def to_dict(self):  # type: () -> t.Dict[str, t.Any]
+        """Return a dictionary representation of the change description."""
         return dict(
             command=self.command,
             changed_paths=self.changed_paths,
@@ -130,11 +112,8 @@ class ChangeDescription:
         )
 
     @staticmethod
-    def from_dict(data):
-        """
-        :param data: dict[str, any]
-        :rtype: ChangeDescription
-        """
+    def from_dict(data):  # type: (t.Dict[str, t.Any]) -> ChangeDescription
+        """Return a change description loaded from the given dictionary."""
         changes = ChangeDescription()
         changes.command = data['command']
         changes.changed_paths = data['changed_paths']

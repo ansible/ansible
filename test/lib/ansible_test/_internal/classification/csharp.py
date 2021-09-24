@@ -21,14 +21,13 @@ from ..data import (
     data_context,
 )
 
+from ..target import (
+    TestTarget,
+)
 
-def get_csharp_module_utils_imports(powershell_targets, csharp_targets):
-    """Return a dictionary of module_utils names mapped to sets of powershell file paths.
-    :type powershell_targets: list[TestTarget] - C# files
-    :type csharp_targets: list[TestTarget] - PS files
-    :rtype: dict[str, set[str]]
-    """
 
+def get_csharp_module_utils_imports(powershell_targets, csharp_targets):  # type: (t.List[TestTarget], t.List[TestTarget]) -> t.Dict[str, t.Set[str]]
+    """Return a dictionary of module_utils names mapped to sets of powershell file paths."""
     module_utils = enumerate_module_utils()
 
     imports_by_target_path = {}
@@ -66,22 +65,15 @@ def get_csharp_module_utils_name(path):  # type: (str) -> str
     return name
 
 
-def enumerate_module_utils():
-    """Return a list of available module_utils imports.
-    :rtype: set[str]
-    """
+def enumerate_module_utils():  # type: () -> t.Set[str]
+    """Return a set of available module_utils imports."""
     return set(get_csharp_module_utils_name(p)
                for p in data_context().content.walk_files(data_context().content.module_utils_csharp_path)
                if os.path.splitext(p)[1] == '.cs')
 
 
-def extract_csharp_module_utils_imports(path, module_utils, is_pure_csharp):
-    """Return a list of module_utils imports found in the specified source file.
-    :type path: str
-    :type module_utils: set[str]
-    :type is_pure_csharp: bool
-    :rtype: set[str]
-    """
+def extract_csharp_module_utils_imports(path, module_utils, is_pure_csharp):  # type: (str, t.Set[str], bool) -> t.Set[str]
+    """Return a set of module_utils imports found in the specified source file."""
     imports = set()
     if is_pure_csharp:
         pattern = re.compile(r'(?i)^using\s((?:Ansible|AnsibleCollections)\..+);$')

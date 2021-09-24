@@ -176,10 +176,11 @@ def is_docker_user_defined_network(network):  # type: (str) -> bool
     return network and network != 'bridge'
 
 
-def docker_pull(args, image):
+def docker_pull(args, image):  # type: (EnvironmentConfig, str) -> None
     """
-    :type args: EnvironmentConfig
-    :type image: str
+    Pull the specified image if it is not available.
+    Images without a tag or digest will not be pulled.
+    Retries up to 10 times if the pull fails.
     """
     if '@' not in image and ':' not in image:
         display.info('Skipping pull of image without tag or digest: %s' % image, verbosity=2)
@@ -265,11 +266,8 @@ def docker_start(args, container_id, options=None):  # type: (EnvironmentConfig,
     raise ApplicationError('Failed to run docker container "%s".' % container_id)
 
 
-def docker_rm(args, container_id):
-    """
-    :type args: EnvironmentConfig
-    :type container_id: str
-    """
+def docker_rm(args, container_id):  # type: (EnvironmentConfig, str) -> None
+    """Remove the specified container."""
     try:
         docker_command(args, ['rm', '-f', container_id], capture=True)
     except SubprocessError as ex:

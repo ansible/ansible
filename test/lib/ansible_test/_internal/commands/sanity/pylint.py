@@ -57,7 +57,6 @@ from ...host_configs import (
 
 class PylintTest(SanitySingleVersion):
     """Sanity test using pylint."""
-
     def __init__(self):
         super().__init__()
         self.optional_error_codes.update([
@@ -98,26 +97,16 @@ class PylintTest(SanitySingleVersion):
         contexts = []
         remaining_paths = set(paths)
 
-        def add_context(available_paths, context_name, context_filter):
-            """
-            :type available_paths: set[str]
-            :type context_name: str
-            :type context_filter: (str) -> bool
-            """
+        def add_context(available_paths, context_name, context_filter):  # type: (t.Set[str], str, t.Callable[[str], bool]) -> None
+            """Add the specified context to the context list, consuming available paths that match the given context filter."""
             filtered_paths = set(p for p in available_paths if context_filter(p))
             contexts.append((context_name, sorted(filtered_paths)))
             available_paths -= filtered_paths
 
-        def filter_path(path_filter=None):
-            """
-            :type path_filter: str
-            :rtype: (str) -> bool
-            """
-            def context_filter(path_to_filter):
-                """
-                :type path_to_filter: str
-                :rtype: bool
-                """
+        def filter_path(path_filter=None):  # type: (str) -> t.Callable[[str], bool]
+            """Return a function that filters out paths which are not a subdirectory of the given path."""
+            def context_filter(path_to_filter):  # type: (str) -> bool
+                """Return true if the given path matches, otherwise return False."""
                 return is_subdir(path_to_filter, path_filter)
 
             return context_filter

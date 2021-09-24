@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import time
+import typing as t
 
 from xml.etree.ElementTree import (
     Comment,
@@ -47,10 +48,8 @@ from . import (
 )
 
 
-def command_coverage_xml(args):
-    """
-    :type args: CoverageXmlConfig
-    """
+def command_coverage_xml(args):  # type: (CoverageXmlConfig) -> None
+    """Generate an XML coverage report."""
     host_state = prepare_profiles(args)  # coverage xml
     output_files = combine_coverage_files(args, host_state)
 
@@ -70,11 +69,8 @@ def command_coverage_xml(args):
             run_coverage(args, host_state, output_file, 'xml', ['-i', '-o', xml_path])
 
 
-def _generate_powershell_xml(coverage_file):
-    """
-    :type coverage_file: str
-    :rtype: Element
-    """
+def _generate_powershell_xml(coverage_file):  # type: (str) -> Element
+    """Generate a PowerShell coverage report XML element from the specified coverage file and return it."""
     coverage_info = read_json_file(coverage_file)
 
     content_root = data_context().content.root
@@ -135,13 +131,8 @@ def _generate_powershell_xml(coverage_file):
     return elem_coverage
 
 
-def _add_cobertura_package(packages, package_name, package_data):
-    """
-    :type packages: SubElement
-    :type package_name: str
-    :type package_data: Dict[str, Dict[str, int]]
-    :rtype: Tuple[int, int]
-    """
+def _add_cobertura_package(packages, package_name, package_data):  # type: (SubElement, str, t.Dict[str, t.Dict[str, int]]) -> t.Tuple[int, int]
+    """Add a package element to the given packages element."""
     elem_package = SubElement(packages, 'package')
     elem_classes = SubElement(elem_package, 'classes')
 

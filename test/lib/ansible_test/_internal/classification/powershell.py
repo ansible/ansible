@@ -21,13 +21,13 @@ from ..data import (
     data_context,
 )
 
+from ..target import (
+    TestTarget,
+)
 
-def get_powershell_module_utils_imports(powershell_targets):
-    """Return a dictionary of module_utils names mapped to sets of powershell file paths.
-    :type powershell_targets: list[TestTarget]
-    :rtype: dict[str, set[str]]
-    """
 
+def get_powershell_module_utils_imports(powershell_targets):  # type: (t.List[TestTarget]) -> t.Dict[str, t.Set[str]]
+    """Return a dictionary of module_utils names mapped to sets of powershell file paths."""
     module_utils = enumerate_module_utils()
 
     imports_by_target_path = {}
@@ -62,21 +62,15 @@ def get_powershell_module_utils_name(path):  # type: (str) -> str
     return name
 
 
-def enumerate_module_utils():
-    """Return a list of available module_utils imports.
-    :rtype: set[str]
-    """
+def enumerate_module_utils():  # type: () -> t.Set[str]
+    """Return a set of available module_utils imports."""
     return set(get_powershell_module_utils_name(p)
                for p in data_context().content.walk_files(data_context().content.module_utils_powershell_path)
                if os.path.splitext(p)[1] == '.psm1')
 
 
-def extract_powershell_module_utils_imports(path, module_utils):
-    """Return a list of module_utils imports found in the specified source file.
-    :type path: str
-    :type module_utils: set[str]
-    :rtype: set[str]
-    """
+def extract_powershell_module_utils_imports(path, module_utils):  # type: (str, t.Set[str]) -> t.Set[str]
+    """Return a set of module_utils imports found in the specified source file."""
     imports = set()
 
     code = read_text_file(path)

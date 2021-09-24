@@ -92,10 +92,8 @@ class TestContext:
     module_utils = 'module_utils'
 
 
-def command_units(args):
-    """
-    :type args: UnitsConfig
-    """
+def command_units(args):  # type: (UnitsConfig) -> None
+    """Run unit tests."""
     handle_layout_messages(data_context().content.unit_messages)
 
     changes = get_changes_filter(args)
