@@ -479,10 +479,10 @@ Role dependencies are stored in the ``meta/main.yml`` file within the role direc
 
 Ansible always executes roles listed in ``dependencies`` before the role that lists them. Ansible executes this pattern recursively when you use the ``roles`` keyword. For example, if you list role ``foo`` under ``roles:``, role ``foo`` lists role ``bar`` under ``dependencies`` in its meta/main.yml file, and role ``bar`` lists role ``baz`` under ``dependencies`` in its meta/main.yml, Ansible executes ``baz``, then ``bar``, then ``foo``.
 
-Running role dependencies multiple times in one playbook
---------------------------------------------------------
+Running role dependencies multiple times in one play
+----------------------------------------------------
 
-Ansible treats duplicate role dependencies like duplicate roles listed under ``roles:``: Ansible only executes role dependencies once, even if defined multiple times, unless the parameters, tags, or when clause defined on the role are different for each definition. If two roles in a playbook both list a third role as a dependency, Ansible only runs that role dependency once, unless you pass different parameters, tags, when clause, or use ``allow_duplicates: true`` in the role you want to run multiple times. See :ref:`Galaxy role dependencies <galaxy_dependencies>` for more details.
+Ansible treats duplicate role dependencies like duplicate roles listed under ``roles:``: Ansible only executes role dependencies once, even if defined multiple times, unless the parameters, tags, or when clause defined on the role are different for each definition. If two roles in a play both list a third role as a dependency, Ansible only runs that role dependency once, unless you pass different parameters, tags, when clause, or use ``allow_duplicates: true`` in the role you want to run multiple times. See :ref:`Galaxy role dependencies <galaxy_dependencies>` for more details.
 
 .. note::
 
@@ -539,6 +539,7 @@ To use ``allow_duplicates: true`` with role dependencies, you must specify it fo
 
 .. note::
    See :ref:`playbooks_variables` for details on how Ansible chooses among variable values defined in different places (variable inheritance and scope).
+   Also deduplication happens ONLY at the play level, so multiple plays in the same playbook may rerun the roles.
 
 .. _embedding_modules_and_plugins_in_roles:
 
