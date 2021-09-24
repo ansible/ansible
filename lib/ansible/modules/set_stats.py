@@ -32,10 +32,31 @@ options:
         - Whether the provided value is aggregated to the existing stat C(yes) or will replace it C(no).
     type: bool
     default: yes
+extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.conn
+    - action_common_attributes.flow
+    - action_core
+attributes:
+    action:
+        details: While the action plugin does do some of the work it relies on the core engine to actually create the variables, that part cannot be overriden
+        support: partial
+    bypass_host_loop:
+        support: none
+    bypass_task_loop:
+        support: none
+    core:
+        details: While parts of this action are implemented in core, other parts are still available as normal plugins and can be partially overridden
+        support: partial
+    check_mode:
+        support: full
+    delegation:
+        support: none
+    diff_mode:
+        support: none
 notes:
     - In order for custom stats to be displayed, you must set C(show_custom_stats) in section C([defaults]) in C(ansible.cfg)
-      or by defining environment variable C(ANSIBLE_SHOW_CUSTOM_STATS) to C(yes).
-    - This module is also supported for Windows targets.
+      or by defining environment variable C(ANSIBLE_SHOW_CUSTOM_STATS) to C(yes). See the C(default) callback plugin for details.
 version_added: "2.3"
 '''
 

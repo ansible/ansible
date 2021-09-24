@@ -16,7 +16,18 @@ description:
      - Return service state information as fact data for various service management utilities.
 version_added: "2.5"
 requirements: ["Any of the following supported init systems: systemd, sysv, upstart, AIX SRC"]
-
+extends_documentation_fragment:
+  -  action_common_attributes
+  -  action_common_attributes.facts
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    facts:
+        support: full
+    platform:
+        platforms: posix
 notes:
   - When accessing the C(ansible_facts.services) facts collected by this module,
     it is recommended to not use "dot notation" because services can have a C(-)
@@ -25,8 +36,6 @@ notes:
     using the string value of the service name as the key in order to obtain
     the fact data value like C(ansible_facts.services['zuul-gateway'])
   - AIX SRC was added in version 2.11.
-  - Supports C(check_mode).
-
 author:
   - Adam Miller (@maxamillion)
 '''

@@ -25,6 +25,29 @@ options:
         - A dictionary of the arguments that will be validated according to argument_spec
 author:
     - Ansible Core Team
+extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.conn
+    - action_common_attributes.flow
+attributes:
+    action:
+        support: full
+    async:
+        support: none
+    become:
+        support: none
+    bypass_host_loop:
+        support: none
+    connection:
+        support: none
+    check_mode:
+        support: none
+    delegation:
+        support: none
+    diff_mode:
+        support: none
+    platform:
+        platforms: all
 '''
 
 EXAMPLES = r'''

@@ -112,6 +112,15 @@ options:
         to specify desired umask mode as an octal string, (e.g., "0022").
     type: str
     version_added: "2.1"
+extends_documentation_fragment:
+  -  action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 notes:
    - The virtualenv (U(http://www.virtualenv.org/)) must be
      installed on the remote host if the virtualenv parameter is specified and

@@ -24,11 +24,18 @@ options:
     type: path
     required: true
     aliases: [ path ]
+extends_documentation_fragment:
+    - action_common_attributes
+attributes:
+  check_mode:
+    support: full
+  diff_mode:
+    support: none
+  platform:
+    platforms: posix, windows
 notes:
    - This module returns an 'in memory' base64 encoded version of the file, take
      into account that this will require at least twice the RAM as the original file size.
-   - This module is also supported for Windows targets.
-   - Supports C(check_mode).
 seealso:
 - module: ansible.builtin.fetch
 author:

@@ -66,8 +66,17 @@ options:
               tty or the service dying when the task is over as the connection
               closes the session.
         default: no
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 notes:
     - One option other than name is required.
+    - The service names might vary by specific OS/distribution
 requirements:
     - That the service managed has a corresponding init script.
 '''

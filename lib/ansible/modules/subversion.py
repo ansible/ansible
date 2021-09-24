@@ -17,9 +17,6 @@ description:
 version_added: "0.7"
 author:
 - Dane Summers (@dsummersl) <njharman@gmail.com>
-notes:
-   - This module does not handle externals.
-   - Supports C(check_mode).
 options:
   repo:
     description:
@@ -98,6 +95,16 @@ options:
     default: "no"
     version_added: "2.11"
     type: bool
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
+notes:
+   - This module does not handle externals.
 
 requirements:
     - subversion (the command line tool with C(svn) entrypoint)

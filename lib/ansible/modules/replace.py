@@ -14,8 +14,21 @@ DOCUMENTATION = r'''
 module: replace
 author: Evan Kaufman (@EvanK)
 extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.files
     - files
     - validate
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    platform:
+        platforms: posix
+    safe_file_operations:
+        support: full
+    vault:
+        support: none
 short_description: Replace all instances of a particular string in a
                    file using a back-referenced regular expression
 description:
@@ -95,7 +108,6 @@ notes:
     previous incorrect behavior, you may be need to adjust your tasks.
     See U(https://github.com/ansible/ansible/issues/31354) for details.
   - Option I(follow) has been removed in Ansible 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
-  - Supports C(check_mode).
 '''
 
 EXAMPLES = r'''
