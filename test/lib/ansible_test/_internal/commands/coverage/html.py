@@ -29,10 +29,8 @@ from . import (
 )
 
 
-def command_coverage_html(args):
-    """
-    :type args: CoverageHtmlConfig
-    """
+def command_coverage_html(args):  # type: (CoverageHtmlConfig) -> None
+    """Generate an HTML coverage report."""
     host_state = prepare_profiles(args)  # coverage html
     output_files = combine_coverage_files(args, host_state)
 

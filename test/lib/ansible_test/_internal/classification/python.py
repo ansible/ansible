@@ -20,17 +20,17 @@ from ..data import (
     data_context,
 )
 
+from ..target import (
+    TestTarget,
+)
+
 VIRTUAL_PACKAGES = {
     'ansible.module_utils.six',
 }
 
 
-def get_python_module_utils_imports(compile_targets):
-    """Return a dictionary of module_utils names mapped to sets of python file paths.
-    :type compile_targets: list[TestTarget]
-    :rtype: dict[str, set[str]]
-    """
-
+def get_python_module_utils_imports(compile_targets):  # type: (t.List[TestTarget]) -> t.Dict[str, t.Set[str]]
+    """Return a dictionary of module_utils names mapped to sets of python file paths."""
     module_utils = enumerate_module_utils()
 
     virtual_utils = set(m for m in module_utils if any(m.startswith('%s.' % v) for v in VIRTUAL_PACKAGES))
@@ -163,12 +163,8 @@ def enumerate_module_utils():
     return set(module_utils)
 
 
-def extract_python_module_utils_imports(path, module_utils):
-    """Return a list of module_utils imports found in the specified source file.
-    :type path: str
-    :type module_utils: set[str]
-    :rtype: set[str]
-    """
+def extract_python_module_utils_imports(path, module_utils):  # type: (str, t.Set[str]) -> t.Set[str]
+    """Return a list of module_utils imports found in the specified source file."""
     # Python code must be read as bytes to avoid a SyntaxError when the source uses comments to declare the file encoding.
     # See: https://www.python.org/dev/peps/pep-0263
     # Specifically: If a Unicode string with a coding declaration is passed to compile(), a SyntaxError will be raised.
@@ -237,11 +233,7 @@ def relative_to_absolute(name, level, module, path, lineno):  # type: (str, int,
 
 class ModuleUtilFinder(ast.NodeVisitor):
     """AST visitor to find valid module_utils imports."""
-    def __init__(self, path, module_utils):
-        """Return a list of module_utils imports found in the specified source file.
-        :type path: str
-        :type module_utils: set[str]
-        """
+    def __init__(self, path, module_utils):  # type: (str, t.Set[str]) -> None
         self.path = path
         self.module_utils = module_utils
         self.imports = set()
@@ -287,10 +279,8 @@ class ModuleUtilFinder(ast.NodeVisitor):
 
     # noinspection PyPep8Naming
     # pylint: disable=locally-disabled, invalid-name
-    def visit_Import(self, node):
-        """
-        :type node: ast.Import
-        """
+    def visit_Import(self, node):  # type: (ast.Import) -> None
+        """Visit an import node."""
         self.generic_visit(node)
 
         # import ansible.module_utils.MODULE[.MODULE]
@@ -299,10 +289,8 @@ class ModuleUtilFinder(ast.NodeVisitor):
 
     # noinspection PyPep8Naming
     # pylint: disable=locally-disabled, invalid-name
-    def visit_ImportFrom(self, node):
-        """
-        :type node: ast.ImportFrom
-        """
+    def visit_ImportFrom(self, node):  # type: (ast.ImportFrom) -> None
+        """Visit an import from node."""
         self.generic_visit(node)
 
         if not node.module:
@@ -319,11 +307,8 @@ class ModuleUtilFinder(ast.NodeVisitor):
         # from ansible_collections.{ns}.{col}.plugins.module_utils.MODULE[.MODULE] import MODULE[, MODULE]
         self.add_imports(['%s.%s' % (module, alias.name) for alias in node.names], node.lineno)
 
-    def add_import(self, name, line_number):
-        """
-        :type name: str
-        :type line_number: int
-        """
+    def add_import(self, name, line_number):  # type: (str, int) -> None
+        """Record the specified import."""
         import_name = name
 
         while self.is_module_util_name(name):

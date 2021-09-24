@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import typing as t
 
 from ...io import (
     read_json_file,
@@ -29,10 +30,8 @@ from . import (
 )
 
 
-def command_coverage_report(args):
-    """
-    :type args: CoverageReportConfig
-    """
+def command_coverage_report(args):  # type: (CoverageReportConfig) -> None
+    """Generate a console coverage report."""
     host_state = prepare_profiles(args)  # coverage report
     output_files = combine_coverage_files(args, host_state)
 
@@ -57,12 +56,8 @@ def command_coverage_report(args):
             run_coverage(args, host_state, output_file, 'report', options)
 
 
-def _generate_powershell_output_report(args, coverage_file):
-    """
-    :type args: CoverageReportConfig
-    :type coverage_file: str
-    :rtype: str
-    """
+def _generate_powershell_output_report(args, coverage_file):  # type: (CoverageReportConfig, str) -> str
+    """Generate and return a PowerShell coverage report for the given coverage file."""
     coverage_info = read_json_file(coverage_file)
 
     root_path = data_context().content.root + '/'
@@ -149,10 +144,7 @@ def _generate_powershell_output_report(args, coverage_file):
 
 class CoverageReportConfig(CoverageCombineConfig):
     """Configuration for the coverage report command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
+    def __init__(self, args):  # type: (t.Any) -> None
         super().__init__(args)
 
         self.show_missing = args.show_missing  # type: bool
