@@ -61,11 +61,8 @@ from . import (
 )
 
 
-def command_coverage_combine(args):
-    """Patch paths in coverage files and merge into a single file.
-    :type args: CoverageCombineConfig
-    :rtype: list[str]
-    """
+def command_coverage_combine(args):  # type: (CoverageCombineConfig) -> None
+    """Patch paths in coverage files and merge into a single file."""
     host_state = prepare_profiles(args)  # coverage combine
     combine_coverage_files(args, host_state)
 
@@ -184,11 +181,8 @@ def _command_coverage_combine_python(args, host_state):  # type: (CoverageCombin
     return sorted(output_files)
 
 
-def _command_coverage_combine_powershell(args):
-    """
-    :type args: CoverageCombineConfig
-    :rtype: list[str]
-    """
+def _command_coverage_combine_powershell(args):  # type: (CoverageCombineConfig) -> t.List[str]
+    """Combine PowerShell coverage files and return a list of the output files."""
     coverage_files = get_powershell_coverage_files()
 
     def _default_stub_value(source_paths):
@@ -265,12 +259,8 @@ def _command_coverage_combine_powershell(args):
     return sorted(output_files)
 
 
-def _get_coverage_targets(args, walk_func):
-    """
-    :type args: CoverageCombineConfig
-    :type walk_func: Func
-    :rtype: list[tuple[str, int]]
-    """
+def _get_coverage_targets(args, walk_func):  # type: (CoverageCombineConfig, t.Callable) -> t.List[t.Tuple[str, int]]
+    """Return a list of files to cover and the number of lines in each file, using the given function as the source of the files."""
     sources = []
 
     if args.all or args.stub:
@@ -321,12 +311,8 @@ def _build_stub_groups(args, sources, default_stub_value):
     return groups
 
 
-def get_coverage_group(args, coverage_file):
-    """
-    :type args: CoverageCombineConfig
-    :type coverage_file: str
-    :rtype: str
-    """
+def get_coverage_group(args, coverage_file):  # type: (CoverageCombineConfig, str) -> t.Optional[str]
+    """Return the name of the coverage group for the specified coverage file, or None if no group was found."""
     parts = os.path.basename(coverage_file).split('=', 4)
 
     # noinspection PyTypeChecker
