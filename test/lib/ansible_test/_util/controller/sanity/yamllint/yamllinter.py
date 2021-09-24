@@ -7,6 +7,7 @@ import json
 import os
 import re
 import sys
+import typing as t
 
 import yaml
 from yaml.resolver import Resolver
@@ -79,10 +80,8 @@ class YamlChecker:
 
         print(json.dumps(report, indent=4, sort_keys=True))
 
-    def check(self, paths):
-        """
-        :type paths: t.List[str]
-        """
+    def check(self, paths):  # type: (t.List[str]) -> None
+        """Check the specified paths."""
         config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config')
 
         yaml_conf = YamlLintConfig(file=os.path.join(config_path, 'default.yml'))
@@ -107,21 +106,13 @@ class YamlChecker:
             else:
                 raise Exception('unsupported extension: %s' % extension)
 
-    def check_yaml(self, conf, path, contents):
-        """
-        :type conf: YamlLintConfig
-        :type path: str
-        :type contents: str
-        """
+    def check_yaml(self, conf, path, contents):  # type: (YamlLintConfig, str, str) -> None
+        """Check the given YAML."""
         self.check_parsable(path, contents)
         self.messages += [self.result_to_message(r, path) for r in linter.run(contents, conf, path)]
 
-    def check_module(self, conf, path, contents):
-        """
-        :type conf: YamlLintConfig
-        :type path: str
-        :type contents: str
-        """
+    def check_module(self, conf, path, contents):  # type: (YamlLintConfig, str, str) -> None
+        """Check the given module."""
         docs = self.get_module_docs(path, contents)
 
         for key, value in docs.items():
@@ -142,12 +133,8 @@ class YamlChecker:
 
             self.messages += [self.result_to_message(r, path, lineno - 1, key) for r in messages]
 
-    def check_parsable(self, path, contents, lineno=1):
-        """
-        :type path: str
-        :type contents: str
-        :type lineno: int
-        """
+    def check_parsable(self, path, contents, lineno=1):  # type: (str, str, int) -> None
+        """Check the given contents to verify they can be parsed as YAML."""
         try:
             yaml.load(contents, Loader=TestLoader)
         except MarkedYAMLError as ex:
@@ -160,14 +147,8 @@ class YamlChecker:
                                }]
 
     @staticmethod
-    def result_to_message(result, path, line_offset=0, prefix=''):
-        """
-        :type result: any
-        :type path: str
-        :type line_offset: int
-        :type prefix: str
-        :rtype: dict[str, any]
-        """
+    def result_to_message(result, path, line_offset=0, prefix=''):  # type: (t.Any, str, int, str) -> t.Dict[str, t.Any]
+        """Convert the given result to a dictionary and return it."""
         if prefix:
             prefix = '%s: ' % prefix
 
@@ -180,12 +161,8 @@ class YamlChecker:
             level=result.level,
         )
 
-    def get_module_docs(self, path, contents):
-        """
-        :type path: str
-        :type contents: str
-        :rtype: dict[str, any]
-        """
+    def get_module_docs(self, path, contents):  # type: (str, str) -> t.Dict[str, t.Any]
+        """Return the module documentation for the given module contents."""
         module_doc_types = [
             'DOCUMENTATION',
             'EXAMPLES',
@@ -240,12 +217,8 @@ class YamlChecker:
 
         return docs
 
-    def parse_module(self, path, contents):
-        """
-        :type path: str
-        :type contents: str
-        :rtype: ast.Module | None
-        """
+    def parse_module(self, path, contents):  # type: (str, str) -> t.Optional[ast.Module]
+        """Parse the given contents and return a module if successful, otherwise return None."""
         try:
             return ast.parse(contents)
         except SyntaxError as ex:

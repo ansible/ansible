@@ -4,6 +4,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import typing as t
 
 import astroid
 
@@ -16,24 +17,20 @@ ANSIBLE_TEST_MODULE_UTILS_PATH = os.environ['ANSIBLE_TEST_MODULE_UTILS_PATH']
 
 class UnwantedEntry:
     """Defines an unwanted import."""
-    def __init__(self, alternative, modules_only=False, names=None, ignore_paths=None):
-        """
-        :type alternative: str
-        :type modules_only: bool
-        :type names: tuple[str] | None
-        :type ignore_paths: tuple[str] | None
-        """
+    def __init__(
+            self,
+            alternative,  # type: str
+            modules_only=False,  # type: bool
+            names=None,  # type: t.Optional[t.Tuple[str, ...]]
+            ignore_paths=None,  # type: t.Optional[t.Tuple[str, ...]]
+    ):  # type: (...) -> None
         self.alternative = alternative
         self.modules_only = modules_only
         self.names = set(names) if names else set()
         self.ignore_paths = ignore_paths
 
-    def applies_to(self, path, name=None):
-        """
-        :type path: str
-        :type name: str | None
-        :rtype: bool
-        """
+    def applies_to(self, path, name=None):  # type: (str, t.Optional[str]) -> bool
+        """Return True if this entry applies to the given path, otherwise return False."""
         if self.names:
             if not name:
                 return False
@@ -50,11 +47,8 @@ class UnwantedEntry:
         return True
 
 
-def is_module_path(path):
-    """
-    :type path: str
-    :rtype: bool
-    """
+def is_module_path(path):  # type: (str) -> bool
+    """Return True if the given path is a module or module_utils path, otherwise return False."""
     return path.startswith(ANSIBLE_TEST_MODULES_PATH) or path.startswith(ANSIBLE_TEST_MODULE_UTILS_PATH)
 
 
@@ -136,23 +130,17 @@ class AnsibleUnwantedChecker(BaseChecker):
                                         modules_only=True),
     }
 
-    def visit_import(self, node):
-        """
-        :type node: astroid.node_classes.Import
-        """
+    def visit_import(self, node):  # type: (astroid.node_classes.Import) -> None
+        """Visit an import node."""
         for name in node.names:
             self._check_import(node, name[0])
 
-    def visit_importfrom(self, node):
-        """
-        :type node: astroid.node_classes.ImportFrom
-        """
+    def visit_importfrom(self, node):  # type: (astroid.node_classes.ImportFrom) -> None
+        """Visit an import from node."""
         self._check_importfrom(node, node.modname, node.names)
 
-    def visit_attribute(self, node):
-        """
-        :type node: astroid.node_classes.Attribute
-        """
+    def visit_attribute(self, node):  # type: (astroid.node_classes.Attribute) -> None
+        """Visit an attribute node."""
         last_child = node.last_child()
 
         # this is faster than using type inference and will catch the most common cases
@@ -167,10 +155,8 @@ class AnsibleUnwantedChecker(BaseChecker):
             if entry.applies_to(self.linter.current_file, node.attrname):
                 self.add_message(self.BAD_IMPORT_FROM, args=(node.attrname, entry.alternative, module), node=node)
 
-    def visit_call(self, node):
-        """
-        :type node: astroid.node_classes.Call
-        """
+    def visit_call(self, node):  # type: (astroid.node_classes.Call) -> None
+        """Visit a call node."""
         try:
             for i in node.func.inferred():
                 func = None
@@ -188,11 +174,8 @@ class AnsibleUnwantedChecker(BaseChecker):
         except astroid.exceptions.InferenceError:
             pass
 
-    def _check_import(self, node, modname):
-        """
-        :type node: astroid.node_classes.Import
-        :type modname: str
-        """
+    def _check_import(self, node, modname):  # type: (astroid.node_classes.Import, str) -> None
+        """Check the imports on the specified import node."""
         self._check_module_import(node, modname)
 
         entry = self.unwanted_imports.get(modname)
@@ -203,12 +186,8 @@ class AnsibleUnwantedChecker(BaseChecker):
         if entry.applies_to(self.linter.current_file):
             self.add_message(self.BAD_IMPORT, args=(entry.alternative, modname), node=node)
 
-    def _check_importfrom(self, node, modname, names):
-        """
-        :type node: astroid.node_classes.ImportFrom
-        :type modname: str
-        :type names:  list[str[
-        """
+    def _check_importfrom(self, node, modname, names):  # type: (astroid.node_classes.ImportFrom, str, t.List[str]) -> None
+        """Check the imports on the specified import from node."""
         self._check_module_import(node, modname)
 
         entry = self.unwanted_imports.get(modname)
@@ -220,11 +199,8 @@ class AnsibleUnwantedChecker(BaseChecker):
             if entry.applies_to(self.linter.current_file, name[0]):
                 self.add_message(self.BAD_IMPORT_FROM, args=(name[0], entry.alternative, modname), node=node)
 
-    def _check_module_import(self, node, modname):
-        """
-        :type node: astroid.node_classes.Import | astroid.node_classes.ImportFrom
-        :type modname: str
-        """
+    def _check_module_import(self, node, modname):  # type: (t.Union[astroid.node_classes.Import, astroid.node_classes.ImportFrom], str) -> None
+        """Check the module import on the given import or import from node."""
         if not is_module_path(self.linter.current_file):
             return
 

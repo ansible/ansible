@@ -11,13 +11,6 @@ from ..util import (
 )
 
 
-try:
-    # noinspection PyTypeChecker
-    TPathProvider = t.TypeVar('TPathProvider', bound='PathProvider')
-except AttributeError:
-    TPathProvider = None  # pylint: disable=invalid-name
-
-
 def get_path_provider_classes(provider_type):  # type: (t.Type[TPathProvider]) -> t.List[t.Type[TPathProvider]]
     """Return a list of path provider classes of the given type."""
     return sorted(get_subclasses(provider_type), key=lambda c: (c.priority, c.__name__))
@@ -74,3 +67,6 @@ class PathProvider(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def is_content_root(path):  # type: (str) -> bool
         """Return True if the given path is a content root for this provider."""
+
+
+TPathProvider = t.TypeVar('TPathProvider', bound=PathProvider)

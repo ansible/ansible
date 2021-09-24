@@ -29,6 +29,7 @@ from ...target import (
     walk_windows_integration_targets,
     walk_integration_targets,
     walk_module_targets,
+    CompletionTarget,
 )
 
 from ..integration.cloud import (
@@ -169,12 +170,8 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         return self._ci_test_groups
 
-    def format_test_group_alias(self, name, fallback=''):
-        """
-        :type name: str
-        :type fallback: str
-        :rtype: str
-        """
+    def format_test_group_alias(self, name, fallback=''):  # type: (str, str) -> str
+        """Return a test group alias using the given name and fallback."""
         group_numbers = self.ci_test_groups.get(name, None)
 
         if group_numbers:
@@ -232,11 +229,8 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         return SanitySuccess(self.name)
 
-    def check_posix_targets(self, args):
-        """
-        :type args: SanityConfig
-        :rtype: list[SanityMessage]
-        """
+    def check_posix_targets(self, args):  # type: (SanityConfig) -> t.List[SanityMessage]
+        """Check POSIX integration test targets and return messages with any issues found."""
         posix_targets = tuple(walk_posix_integration_targets())
 
         clouds = get_cloud_platforms(args, posix_targets)
@@ -298,13 +292,13 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         return messages
 
-    def check_ci_group(self, targets, find, find_incidental=None):
-        """
-        :type targets: tuple[CompletionTarget]
-        :type find: str
-        :type find_incidental: list[str] | None
-        :rtype: list[SanityMessage]
-        """
+    def check_ci_group(
+            self,
+            targets,  # type: t.Tuple[CompletionTarget, ...]
+            find,  # type: str
+            find_incidental=None,  # type: t.Optional[t.List[str]]
+    ):  # type: (...) -> t.List[SanityMessage]
+        """Check the CI groups set in the provided targets and return a list of messages with any issues found."""
         all_paths = set(target.path for target in targets)
         supported_paths = set(target.path for target in filter_targets(targets, [find], directories=False, errors=False))
         unsupported_paths = set(target.path for target in filter_targets(targets, [self.UNSUPPORTED], directories=False, errors=False))
@@ -330,11 +324,8 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         return messages
 
-    def check_changes(self, args, results):
-        """
-        :type args: SanityConfig
-        :type results: dict[str, any]
-        """
+    def check_changes(self, args, results):  # type: (SanityConfig, t.Dict[str, t.Any]) -> None
+        """Check changes and store results in the provided results dictionary."""
         integration_targets = list(walk_integration_targets())
         module_targets = list(walk_module_targets())
 
@@ -381,12 +372,8 @@ class IntegrationAliasesTest(SanitySingleVersion):
         results['comments'] += comments
         results['labels'].update(labels)
 
-    def format_comment(self, template, targets):
-        """
-        :type template: str
-        :type targets: list[str]
-        :rtype: str | None
-        """
+    def format_comment(self, template, targets):  # type: (str, t.List[str]) -> t.Optional[str]
+        """Format and return a comment based on the given template and targets, or None if there are no targets."""
         if not targets:
             return None
 
