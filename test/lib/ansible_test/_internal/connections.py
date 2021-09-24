@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import abc
-import functools
 import shlex
 import sys
 import tempfile
@@ -160,6 +159,10 @@ class SshConnection(Connection):
             options.append(f'{self.settings.user}@{self.settings.host}')
             options.append(' '.join(shlex.quote(cmd) for cmd in command))
 
+            def error_callback(ex):  # type: (SubprocessError) -> None
+                """Error handler."""
+                self.capture_log_details(ssh_logfile.name, ex)
+
             return run_command(
                 args=self.args,
                 cmd=['ssh'] + options,
@@ -167,7 +170,7 @@ class SshConnection(Connection):
                 data=data,
                 stdin=stdin,
                 stdout=stdout,
-                error_callback=functools.partial(self.capture_log_details, ssh_logfile.name),
+                error_callback=error_callback,
             )
 
     @staticmethod

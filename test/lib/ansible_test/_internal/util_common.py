@@ -33,6 +33,7 @@ from .util import (
     ANSIBLE_TEST_TARGET_ROOT,
     ANSIBLE_TEST_TOOLS_ROOT,
     ApplicationError,
+    SubprocessError,
     generate_name,
 )
 
@@ -402,23 +403,21 @@ def intercept_python(
     return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd, always=always)
 
 
-def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=False, stdin=None, stdout=None,
-                cmd_verbosity=1, str_errors='strict', error_callback=None):
-    """
-    :type args: CommonConfig
-    :type cmd: collections.Iterable[str]
-    :type capture: bool
-    :type env: dict[str, str] | None
-    :type data: str | None
-    :type cwd: str | None
-    :type always: bool
-    :type stdin: file | None
-    :type stdout: file | None
-    :type cmd_verbosity: int
-    :type str_errors: str
-    :type error_callback: t.Callable[[SubprocessError], None]
-    :rtype: str | None, str | None
-    """
+def run_command(
+        args,  # type: CommonConfig
+        cmd,  # type: t.Iterable[str]
+        capture=False,  # type: bool
+        env=None,  # type: t.Optional[t.Dict[str, str]]
+        data=None,  # type: t.Optional[str]
+        cwd=None,  # type: t.Optional[str]
+        always=False,  # type: bool
+        stdin=None,  # type: t.Optional[t.BinaryIO]
+        stdout=None,  # type: t.Optional[t.BinaryIO]
+        cmd_verbosity=1,  # type: int
+        str_errors='strict',  # type: str
+        error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
+):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+    """Run the specified command and return stdout and stderr as a tuple."""
     explain = args.explain and not always
     return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout,
                        cmd_verbosity=cmd_verbosity, str_errors=str_errors, error_callback=error_callback)
