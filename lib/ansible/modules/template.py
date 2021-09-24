@@ -43,7 +43,6 @@ extends_documentation_fragment:
 - template_common
 - validate
 attributes:
-attributes:
     action:
       support: full
     async:
