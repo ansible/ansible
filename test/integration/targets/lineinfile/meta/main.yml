@@ -18,3 +18,4 @@
 
 dependencies:
   - prepare_tests
+  - setup_remote_tmp_dir
