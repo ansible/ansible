@@ -1,5 +1,0 @@
-- debug:
-    msg: 'role1'
-
-- include_role:
-    name: 39543_role2

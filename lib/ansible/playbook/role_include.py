@@ -100,7 +100,11 @@ class IncludeRole(TaskInclude):
 
         # compile role with parent roles as dependencies to ensure they inherit
         # variables
-        dep_chain = self.get_dep_chain() or []
+        if not self._parent_role:
+            dep_chain = []
+        else:
+            dep_chain = list(self._parent_role._parents)
+            dep_chain.append(self._parent_role)
 
         p_block = self.build_parent_block()
 
