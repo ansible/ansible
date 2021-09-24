@@ -96,6 +96,7 @@ from ...content_config import (
 )
 
 from ...host_configs import (
+    DockerConfig,
     PosixConfig,
     PythonConfig,
     VirtualPythonConfig,
@@ -120,6 +121,8 @@ from ...venv import (
 COMMAND = 'sanity'
 SANITY_ROOT = os.path.join(ANSIBLE_TEST_CONTROLLER_ROOT, 'sanity')
 TARGET_SANITY_ROOT = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'sanity')
+
+created_venvs = []  # type: t.List[str]
 
 
 def command_sanity(args):
@@ -278,6 +281,12 @@ def command_sanity(args):
 
             if isinstance(result, SanityFailure):
                 failed.append(result.test + options)
+
+    controller = args.controller
+
+    if created_venvs and isinstance(controller, DockerConfig) and controller.name == 'default' and not args.prime_venvs:
+        names = ', '.join(created_venvs)
+        display.warning(f'There following sanity test virtual environments are out-of-date in the "default" container: {names}')
 
     if failed:
         message = 'The %d sanity test(s) listed below (out of %d) failed. See error output above for details.\n%s' % (
@@ -1154,6 +1163,8 @@ def create_sanity_virtualenv(
             virtualenv_yaml = None
 
         write_json_file(meta_yaml, virtualenv_yaml)
+
+        created_venvs.append(f'{label}-{python.version}')
 
     # touch the marker to keep track of when the virtualenv was last used
     pathlib.Path(virtualenv_marker).touch()
