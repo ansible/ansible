@@ -71,16 +71,26 @@ options:
     type: bool
     default: yes
     version_added: "2.8"
+extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.raw
+attributes:
+    check_mode:
+        details: while the command itself is arbitrary and cannot be subject to the check mode semantics it adds C(creates)/C(removes) options as a workaround
+        support: partial
+    diff_mode:
+        support: none
+    platform:
+      support: full
+      platforms: posix
+    raw:
+      support: full
 notes:
   - If you want to execute a command securely and predictably, it may be
     better to use the M(ansible.builtin.command) module instead. Best practices
     when writing playbooks will follow the trend of using M(ansible.builtin.command)
     unless the M(ansible.builtin.shell) module is explicitly required. When running ad-hoc
     commands, use your best judgement.
-  - Check mode is supported when passing C(creates) or C(removes). If running
-    in check mode and either of these are specified, the module will check for
-    the existence of the file and report the correct changed status. If these
-    are not supplied, the task will be skipped.
   - To sanitize any variables passed to the shell module, you should use
     C({{ var | quote }}) instead of just C({{ var }}) to make sure they
     do not include evil things like semicolons.

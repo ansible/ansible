@@ -73,6 +73,18 @@ description:
       available to a host. Ansible provides many I(facts) about the system,
       automatically.
     - This module is also supported for Windows targets.
+extends_documentation_fragment:
+  -  action_common_attributes
+  -  action_common_attributes.facts
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    facts:
+        support: full
+    platform:
+        platforms: posix, windows
 notes:
     - More ansible facts will be added with successive releases. If I(facter) or
       I(ohai) are installed, variables from these programs will also be snapshotted
@@ -84,9 +96,7 @@ notes:
     - The filter option filters only the first level subkey below ansible_facts.
     - If the target host is Windows, you will not currently have the ability to use
       C(filter) as this is provided by a simpler implementation of the module.
-    - This module is also supported for Windows targets.
     - This module should be run with elevated privileges on BSD systems to gather facts like ansible_product_version.
-    - Supports C(check_mode).
     - For more information about delegated facts,
       please check U(https://docs.ansible.com/ansible/latest/user_guide/playbooks_delegation.html#delegating-facts).
 author:

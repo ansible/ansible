@@ -28,14 +28,21 @@ options:
       - If this parameter is set to C(crash), the module will cause an exception.
     type: str
     default: pong
+extends_documentation_fragment:
+    - action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 seealso:
   - module: ansible.netcommon.net_ping
   - module: ansible.windows.win_ping
 author:
   - Ansible Core Team
   - Michael DeHaan
-notes:
-  - Supports C(check_mode).
 '''
 
 EXAMPLES = '''

@@ -57,11 +57,11 @@ attributes:
         support: none
     check_mode:
         support: none
-    diff_mode:
-        support: none
     delegation:
         support: none
         details: Aside from C(register) and/or in combination with C(delegate_facts), it has little effect.
+    diff_mode:
+        support: none
     platform:
         platforms: all
 seealso:

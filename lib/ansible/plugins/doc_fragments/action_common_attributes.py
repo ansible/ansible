@@ -16,14 +16,14 @@ attributes:
       description: Will return details on what has changed (or possibly needs changing in check_mode), when in diff mode
     platform:
       description: Target OS/families that can be operated against
-      support: full
+      support: N/A
 '''
 
     ACTIONGROUPS = r'''
 attributes:
     action_group:
       description: Action is part of action_group(s), for convenient setting of module_defaults.
-      support: none
+      support: N/A
       membership: []
 '''
 

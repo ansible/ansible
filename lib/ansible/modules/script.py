@@ -47,7 +47,6 @@ notes:
     stderr is sent to stdout. If you depend on separated stdout and stderr result keys, please switch to a copy+command set of tasks instead of using script.
   - If the path to the local script contains spaces, it needs to be quoted.
   - This module is also supported for Windows targets.
-  - Does not support C(check_mode).
 seealso:
   - module: ansible.builtin.shell
   - module: ansible.windows.win_shell
@@ -55,7 +54,24 @@ author:
   - Ansible Core Team
   - Michael DeHaan
 extends_documentation_fragment:
-  - decrypt
+    - action_common_attributes
+    - action_common_attributes.files
+    - action_common_attributes.raw
+    - decrypt
+attributes:
+    check_mode:
+        support: none
+    diff_mode:
+        support: none
+    platform:
+        details: This action is one of the few that requires no Python on the remote as it passes the command directly into the connection string
+        platforms: all
+    raw:
+      support: full
+    safe_file_operations:
+        support: none
+    vault:
+        support: full
 '''
 
 EXAMPLES = r'''

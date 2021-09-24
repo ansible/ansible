@@ -35,10 +35,30 @@ author:
 - Ansible Core Team
 - Michael DeHaan
 extends_documentation_fragment:
+- action_common_attributes
+- action_common_attributes.flow
+- action_common_attributes.files
 - backup
 - files
 - template_common
 - validate
+attributes:
+    action:
+      support: full
+    async:
+      support: none
+    bypass_host_loop:
+      support: none
+    check_mode:
+      support: full
+    diff_mode:
+      support: full
+    platform:
+      platforms: posix
+    safe_file_operations:
+      support: full
+    vault:
+      support: full
 '''
 
 EXAMPLES = r'''

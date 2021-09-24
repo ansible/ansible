@@ -44,6 +44,25 @@ options:
     default: auto
 requirements:
     - Whatever is required for the package plugins specific for each system.
+extends_documentation_fragment:
+  -  action_common_attributes
+  -  action_common_attributes.flow
+attributes:
+    action:
+        support: full
+    async:
+        support: full
+    bypass_host_loop:
+        support: none
+    check_mode:
+        details: support depends on the underlying plugin invoked
+        support: N/A
+    diff_mode:
+        details: support depends on the underlying plugin invoked
+        support: N/A
+    platform:
+        details: The support depends on the availability for the specific plugin for each platform and if fact gathering is able to detect it
+        platforms: all
 notes:
     - While `package` abstracts package managers to ease dealing with multiple distributions, package name often differs for the same software.
 
