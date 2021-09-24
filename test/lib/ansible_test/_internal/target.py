@@ -32,26 +32,9 @@ from .data import (
 
 MODULE_EXTENSIONS = '.py', '.ps1'
 
-try:
-    # noinspection PyTypeChecker
-    TCompletionTarget = t.TypeVar('TCompletionTarget', bound='CompletionTarget')
-except AttributeError:
-    TCompletionTarget = None  # pylint: disable=invalid-name
 
-try:
-    # noinspection PyTypeChecker
-    TIntegrationTarget = t.TypeVar('TIntegrationTarget', bound='IntegrationTarget')
-except AttributeError:
-    TIntegrationTarget = None  # pylint: disable=invalid-name
-
-
-def find_target_completion(target_func, prefix, short):
-    """
-    :type target_func: () -> collections.Iterable[CompletionTarget]
-    :type prefix: unicode
-    :type short: bool
-    :rtype: list[str]
-    """
+def find_target_completion(target_func, prefix, short):  # type: (t.Callable[[], t.Iterable[CompletionTarget]], str, bool) -> t.List[str]
+    """Return a list of targets from the given target function which match the given prefix."""
     try:
         targets = target_func()
         matches = list(walk_completion_targets(targets, prefix, short))
@@ -60,13 +43,8 @@ def find_target_completion(target_func, prefix, short):
         return [u'%s' % ex]
 
 
-def walk_completion_targets(targets, prefix, short=False):
-    """
-    :type targets: collections.Iterable[CompletionTarget]
-    :type prefix: str
-    :type short: bool
-    :rtype: tuple[str]
-    """
+def walk_completion_targets(targets, prefix, short=False):  # type: (t.Iterable[CompletionTarget], str, bool) -> t.Tuple[str, ...]
+    """Return a tuple of targets from the given target iterable which match the given prefix."""
     aliases = set(alias for target in targets for alias in target.aliases)
 
     if prefix.endswith('/') and prefix in aliases:
@@ -85,14 +63,13 @@ def walk_completion_targets(targets, prefix, short=False):
     return tuple(sorted(matches))
 
 
-def walk_internal_targets(targets, includes=None, excludes=None, requires=None):
-    """
-    :type targets: collections.Iterable[T <= CompletionTarget]
-    :type includes: list[str]
-    :type excludes: list[str]
-    :type requires: list[str]
-    :rtype: tuple[T <= CompletionTarget]
-    """
+def walk_internal_targets(
+        targets,  # type: t.Iterable[TCompletionTarget]
+        includes=None,  # type: t.Optional[t.List[str]]
+        excludes=None,  # type: t.Optional[t.List[str]]
+        requires=None,  # type: t.Optional[t.List[str]]
+):  # type: (...) -> t.Tuple[TCompletionTarget, ...]
+    """Return a tuple of matching completion targets."""
     targets = tuple(targets)
 
     include_targets = sorted(filter_targets(targets, includes, directories=False), key=lambda include_target: include_target.name)
@@ -173,69 +150,49 @@ def walk_module_targets():
         yield target
 
 
-def walk_units_targets():
-    """
-    :rtype: collections.Iterable[TestTarget]
-    """
+def walk_units_targets():  # type: () -> t.Iterable[TestTarget]
+    """Return an iterable of units targets."""
     return walk_test_targets(path=data_context().content.unit_path, module_path=data_context().content.unit_module_path, extensions=('.py',), prefix='test_')
 
 
-def walk_compile_targets(include_symlinks=True):
-    """
-    :type include_symlinks: bool
-    :rtype: collections.Iterable[TestTarget]
-    """
+def walk_compile_targets(include_symlinks=True):  # type: (bool) -> t.Iterable[TestTarget, ...]
+    """Return an iterable of compile targets."""
     return walk_test_targets(module_path=data_context().content.module_path, extensions=('.py',), extra_dirs=('bin',), include_symlinks=include_symlinks)
 
 
-def walk_powershell_targets(include_symlinks=True):
-    """
-    :rtype: collections.Iterable[TestTarget]
-    """
+def walk_powershell_targets(include_symlinks=True):  # type: (bool) -> t.Iterable[TestTarget]
+    """Return an iterable of PowerShell targets."""
     return walk_test_targets(module_path=data_context().content.module_path, extensions=('.ps1', '.psm1'), include_symlinks=include_symlinks)
 
 
-def walk_sanity_targets():
-    """
-    :rtype: collections.Iterable[TestTarget]
-    """
+def walk_sanity_targets():  # type: () -> t.Iterable[TestTarget]
+    """Return an iterable of sanity targets."""
     return walk_test_targets(module_path=data_context().content.module_path, include_symlinks=True, include_symlinked_directories=True)
 
 
-def walk_posix_integration_targets(include_hidden=False):
-    """
-    :type include_hidden: bool
-    :rtype: collections.Iterable[IntegrationTarget]
-    """
+def walk_posix_integration_targets(include_hidden=False):  # type: (bool) -> t.Iterable[IntegrationTarget]
+    """Return an iterable of POSIX integration targets."""
     for target in walk_integration_targets():
         if 'posix/' in target.aliases or (include_hidden and 'hidden/posix/' in target.aliases):
             yield target
 
 
-def walk_network_integration_targets(include_hidden=False):
-    """
-    :type include_hidden: bool
-    :rtype: collections.Iterable[IntegrationTarget]
-    """
+def walk_network_integration_targets(include_hidden=False):  # type: (bool) -> t.Iterable[IntegrationTarget]
+    """Return an iterable of network integration targets."""
     for target in walk_integration_targets():
         if 'network/' in target.aliases or (include_hidden and 'hidden/network/' in target.aliases):
             yield target
 
 
-def walk_windows_integration_targets(include_hidden=False):
-    """
-    :type include_hidden: bool
-    :rtype: collections.Iterable[IntegrationTarget]
-    """
+def walk_windows_integration_targets(include_hidden=False):  # type: (bool) -> t.Iterable[IntegrationTarget]
+    """Return an iterable of windows integration targets."""
     for target in walk_integration_targets():
         if 'windows/' in target.aliases or (include_hidden and 'hidden/windows/' in target.aliases):
             yield target
 
 
-def walk_integration_targets():
-    """
-    :rtype: collections.Iterable[IntegrationTarget]
-    """
+def walk_integration_targets():  # type: () -> t.Iterable[IntegrationTarget]
+    """Return an iterable of integration targets."""
     path = data_context().content.integration_targets_path
     modules = frozenset(target.module for target in walk_module_targets())
     paths = data_context().content.walk_files(path)
@@ -305,17 +262,16 @@ def load_integration_prefixes():
     return prefixes
 
 
-def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None, extra_dirs=None, include_symlinks=False, include_symlinked_directories=False):
-    """
-    :type path: str | None
-    :type module_path: str | None
-    :type extensions: tuple[str] | None
-    :type prefix: str | None
-    :type extra_dirs: tuple[str] | None
-    :type include_symlinks: bool
-    :type include_symlinked_directories: bool
-    :rtype: collections.Iterable[TestTarget]
-    """
+def walk_test_targets(
+        path=None,  # type: t.Optional[str]
+        module_path=None,  # type: t.Optional[str]
+        extensions=None,  # type: t.Optional[t.Tuple[str, ...]]
+        prefix=None,  # type: t.Optional[str]
+        extra_dirs=None,  # type: t.Optional[t.Tuple[str, ...]]
+        include_symlinks=False,  # type: bool
+        include_symlinked_directories=False,  # type: bool
+):  # type: (...) -> t.Iterable[TestTarget]
+    """Iterate over available test targets."""
     if path:
         file_paths = data_context().content.walk_files(path, include_symlinked_directories=include_symlinked_directories)
     else:
@@ -486,11 +442,7 @@ class CompletionTarget(metaclass=abc.ABCMeta):
 
 class DirectoryTarget(CompletionTarget):
     """Directory target."""
-    def __init__(self, path, modules):
-        """
-        :type path: str
-        :type modules: tuple[str]
-        """
+    def __init__(self, path, modules):  # type: (str, t.Tuple[str, ...]) -> None
         super().__init__()
 
         self.name = path
@@ -500,14 +452,14 @@ class DirectoryTarget(CompletionTarget):
 
 class TestTarget(CompletionTarget):
     """Generic test target."""
-    def __init__(self, path, module_path, module_prefix, base_path, symlink=None):
-        """
-        :type path: str
-        :type module_path: str | None
-        :type module_prefix: str | None
-        :type base_path: str
-        :type symlink: bool | None
-        """
+    def __init__(
+            self,
+            path,  # type: str
+            module_path,  # type: t.Optional[str]
+            module_prefix,  # type: t.Optional[str]
+            base_path,  # type: str
+            symlink=None,  # type: t.Optional[bool]
+    ):
         super().__init__()
 
         if symlink is None:
@@ -614,12 +566,7 @@ class IntegrationTarget(CompletionTarget):
         'skip',
     )))
 
-    def __init__(self, path, modules, prefixes):
-        """
-        :type path: str
-        :type modules: frozenset[str]
-        :type prefixes: dict[str, str]
-        """
+    def __init__(self, path, modules, prefixes):  # type: (str, t.FrozenSet[str], t.Dict[str, str]) -> None
         super().__init__()
 
         self.relative_path = os.path.relpath(path, data_context().content.integration_targets_path)
@@ -763,10 +710,7 @@ class IntegrationTarget(CompletionTarget):
 
 class TargetPatternsNotMatched(ApplicationError):
     """One or more targets were not matched when a match was required."""
-    def __init__(self, patterns):
-        """
-        :type patterns: set[str]
-        """
+    def __init__(self, patterns):  # type: (t.Set[str]) -> None
         self.patterns = sorted(patterns)
 
         if len(patterns) > 1:
@@ -775,3 +719,7 @@ class TargetPatternsNotMatched(ApplicationError):
             message = 'Target pattern not matched: %s' % self.patterns[0]
 
         super().__init__(message)
+
+
+TCompletionTarget = t.TypeVar('TCompletionTarget', bound=CompletionTarget)
+TIntegrationTarget = t.TypeVar('TIntegrationTarget', bound=IntegrationTarget)

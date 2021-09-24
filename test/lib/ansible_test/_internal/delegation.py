@@ -291,15 +291,14 @@ def generate_command(
     return cmd
 
 
-def filter_options(args, argv, options, exclude, require):
-    """
-    :type args: EnvironmentConfig
-    :type argv: list[str]
-    :type options: dict[str, int]
-    :type exclude: list[str]
-    :type require: list[str]
-    :rtype: collections.Iterable[str]
-    """
+def filter_options(
+        args,  # type: EnvironmentConfig
+        argv,  # type: t.List[str]
+        options,  # type: t.Dict[str, int]
+        exclude,  # type: t.List[str]
+        require,  # type: t.List[str]
+):  # type: (...) -> t.Iterable[str]
+    """Return an iterable that filters out unwanted CLI options and injects new ones as requested."""
     options = options.copy()
 
     options['--truncate'] = 1

@@ -246,22 +246,20 @@ def get_available_python_versions():  # type: () -> t.Dict[str, str]
     return dict((version, path) for version, path in ((version, find_python(version, required=False)) for version in SUPPORTED_PYTHON_VERSIONS) if path)
 
 
-def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False, stdin=None, stdout=None,
-                cmd_verbosity=1, str_errors='strict', error_callback=None):
-    """
-    :type cmd: collections.Iterable[str]
-    :type capture: bool
-    :type env: dict[str, str] | None
-    :type data: str | None
-    :type cwd: str | None
-    :type explain: bool
-    :type stdin: file | None
-    :type stdout: file | None
-    :type cmd_verbosity: int
-    :type str_errors: str
-    :type error_callback: t.Callable[[SubprocessError], None]
-    :rtype: str | None, str | None
-    """
+def raw_command(
+        cmd,  # type: t.Iterable[str]
+        capture=False,  # type: bool
+        env=None,  # type: t.Optional[t.Dict[str, str]]
+        data=None,  # type: t.Optional[str]
+        cwd=None,  # type: t.Optional[str]
+        explain=False,  # type: bool
+        stdin=None,  # type: t.Optional[t.BinaryIO]
+        stdout=None,  # type: t.Optional[t.BinaryIO]
+        cmd_verbosity=1,  # type: int
+        str_errors='strict',  # type: str
+        error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
+):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+    """Run the specified command and return stdout and stderr as a tuple."""
     if not cwd:
         cwd = os.getcwd()
 
@@ -389,12 +387,8 @@ def common_environment():
     return env
 
 
-def pass_vars(required, optional):
-    """
-    :type required: collections.Iterable[str]
-    :type optional: collections.Iterable[str]
-    :rtype: dict[str, str]
-    """
+def pass_vars(required, optional):  # type: (t.Collection[str], t.Collection[str]) -> t.Dict[str, str]
+    """Return a filtered dictionary of environment variables based on the current environment."""
     env = {}
 
     for name in required:
@@ -572,13 +566,14 @@ class Display:
             color = self.verbosity_colors.get(verbosity, self.yellow)
             self.print_message(message, color=color, fd=sys.stderr if self.info_stderr else sys.stdout, truncate=truncate)
 
-    def print_message(self, message, color=None, fd=sys.stdout, truncate=False):  # pylint: disable=locally-disabled, invalid-name
-        """
-        :type message: str
-        :type color: str | None
-        :type fd: t.IO[str]
-        :type truncate: bool
-        """
+    def print_message(  # pylint: disable=locally-disabled, invalid-name
+            self,
+            message,  # type: str
+            color=None,  # type: t.Optional[str]
+            fd=sys.stdout,  # type: t.TextIO
+            truncate=False,  # type: bool
+    ):  # type: (...) -> None
+        """Display a message."""
         if self.redact and self.sensitive:
             for item in self.sensitive:
                 if not item:
@@ -612,15 +607,15 @@ class ApplicationWarning(Exception):
 
 class SubprocessError(ApplicationError):
     """Error resulting from failed subprocess execution."""
-    def __init__(self, cmd, status=0, stdout=None, stderr=None, runtime=None, error_callback=None):
-        """
-        :type cmd: list[str]
-        :type status: int
-        :type stdout: str | None
-        :type stderr: str | None
-        :type runtime: float | None
-        :type error_callback: t.Optional[t.Callable[[SubprocessError], None]]
-        """
+    def __init__(
+            self,
+            cmd,  # type: t.List[str]
+            status=0,  # type: int
+            stdout=None,  # type: t.Optional[str]
+            stderr=None,  # type: t.Optional[str]
+            runtime=None,  # type: t.Optional[float]
+            error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
+    ):  # type: (...) -> None
         message = 'Command "%s" returned exit status %s.\n' % (' '.join(shlex.quote(c) for c in cmd), status)
 
         if stderr:
