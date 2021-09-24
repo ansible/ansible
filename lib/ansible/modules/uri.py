@@ -201,6 +201,14 @@ options:
     type: bool
     default: no
     version_added: '2.11'
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        support: none
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.

@@ -258,7 +258,14 @@ options:
             - Requires C(local) is omitted or False.
         type: str
         version_added: "2.12"
-
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 notes:
   - There are specific requirements per platform on user management utilities. However
     they generally come pre-installed with the system and Ansible will require they
@@ -272,7 +279,6 @@ notes:
     C(pw userdel) remove, C(pw lock) to lock, and C(pw unlock) to unlock accounts.
   - On all other platforms, this module uses C(useradd) to create, C(usermod) to modify, and
     C(userdel) to remove accounts.
-  - Supports C(check_mode).
 seealso:
 - module: ansible.posix.authorized_key
 - module: ansible.builtin.group

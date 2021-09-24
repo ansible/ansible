@@ -41,6 +41,14 @@ options:
       - Suffix of file/directory name created by module.
     type: str
     default: ""
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        support: none
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 seealso:
 - module: ansible.builtin.file
 - module: ansible.windows.win_tempfile

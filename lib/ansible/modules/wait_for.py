@@ -98,6 +98,14 @@ options:
       - This overrides the normal error message from a failure to meet the required conditions.
     type: str
     version_added: "2.4"
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 notes:
   - The ability to use search_regex with a port connection was added in Ansible 1.7.
   - Prior to Ansible 2.4, testing for the absence of a directory or UNIX socket did not work correctly.

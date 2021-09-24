@@ -77,12 +77,20 @@ options:
         type: bool
         default: no
         version_added: "2.3"
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 notes:
     - Since 2.4, one of the following options is required C(state), C(enabled), C(masked), C(daemon_reload), (C(daemon_reexec) since 2.8),
       and all except C(daemon_reload) and (C(daemon_reexec) since 2.8) also require C(name).
     - Before 2.4 you always required C(name).
     - Globs are not supported in name, i.e ``postgres*.service``.
-    - Supports C(check_mode).
+    - The service names might vary by specific OS/distribution
 requirements:
     - A system managed by systemd.
 '''
