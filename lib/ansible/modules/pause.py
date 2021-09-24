@@ -38,9 +38,31 @@ options:
     default: 'yes'
     version_added: 2.5
 author: "Tim Bielawa (@tbielawa)"
+extends_documentation_fragment:
+  -  action_common_attributes
+  -  action_common_attributes.conn
+  -  action_common_attributes.flow
+attributes:
+    action:
+        support: full
+    async:
+        support: none
+    become:
+        support: none
+    bypass_host_loop:
+        support: full
+    check_mode:
+        support: none
+    connection:
+        support: none
+    delegation:
+        support: none
+    diff_mode:
+        support: none
+    platform:
+        platforms: all
 notes:
       - Starting in 2.2,  if you specify 0 or negative for minutes or seconds, it will wait for 1 second, previously it would wait indefinitely.
-      - This module is also supported for Windows targets.
       - User input is not captured or echoed, regardless of echo setting, when minutes or seconds is specified.
 '''
 

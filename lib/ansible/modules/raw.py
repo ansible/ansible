@@ -39,6 +39,19 @@ description:
      - This module does not require python on the remote system, much like
        the M(ansible.builtin.script) module.
      - This module is also supported for Windows targets.
+extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.raw
+attributes:
+    check_mode:
+        support: none
+    diff_mode:
+        support: none
+    platform:
+        details: This action is one of the few that requires no Python on the remote as it passes the command directly into the connection string
+        platforms: all
+    raw:
+      support: full
 notes:
     - "If using raw from a playbook, you may need to disable fact gathering
       using C(gather_facts: no) if you're using C(raw) to bootstrap python
@@ -48,7 +61,6 @@ notes:
     - The C(environment) keyword does not work with raw normally, it requires a shell
       which means it only works if C(executable) is set or using the module
       with privilege escalation (C(become)).
-    - This module is also supported for Windows targets.
 seealso:
 - module: ansible.builtin.command
 - module: ansible.builtin.shell

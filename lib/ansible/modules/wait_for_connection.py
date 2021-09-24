@@ -40,8 +40,23 @@ options:
     - Maximum number of seconds to wait for.
     type: int
     default: 600
-notes:
-- This module is also supported for Windows targets.
+extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.flow
+attributes:
+    action:
+        support: full
+    async:
+        support: none
+    bypass_host_loop:
+        support: none
+    check_mode:
+        support: none
+    diff_mode:
+        support: none
+    platform:
+        details: As long as there is a connection plugin
+        platforms: all
 seealso:
 - module: ansible.builtin.wait_for
 - module: ansible.windows.win_wait_for

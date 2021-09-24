@@ -109,8 +109,29 @@ options:
     default: yes
     version_added: "2.2"
 extends_documentation_fragment:
+- action_common_attributes
+- action_common_attributes.flow
+- action_common_attributes.files
 - decrypt
 - files
+attributes:
+    action:
+      support: full
+    async:
+      support: none
+    bypass_host_loop:
+      support: none
+    check_mode:
+      support: full
+    diff_mode:
+      support: partial
+      details: Uses gtar's C(--diff) arg to calculate if changed or not. If this C(arg) is not supported, it will always unpack the archive.
+    platform:
+      platforms: posix
+    safe_file_operations:
+      support: none
+    vault:
+      support: full
 todo:
     - Re-implement tar support using native tarfile module.
     - Re-implement zip support using native zipfile module.
@@ -119,13 +140,10 @@ notes:
     - Requires C(zstd) command on target host to expand I(.tar.zst) files.
     - Can handle I(.zip) files using C(unzip) as well as I(.tar), I(.tar.gz), I(.tar.bz2), I(.tar.xz), and I(.tar.zst) files using C(gtar).
     - Does not handle I(.gz) files, I(.bz2) files, I(.xz), or I(.zst) files that do not contain a I(.tar) archive.
-    - Uses gtar's C(--diff) arg to calculate if changed or not. If this C(arg) is not
-      supported, it will always unpack the archive.
     - Existing files/directories in the destination which are not in the archive
       are not touched. This is the same behavior as a normal archive extraction.
     - Existing files/directories in the destination which are not in the archive
       are ignored for purposes of deciding if the archive should be unpacked or not.
-    - Supports C(check_mode).
 seealso:
 - module: community.general.archive
 - module: community.general.iso_extract

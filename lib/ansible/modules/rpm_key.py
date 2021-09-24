@@ -44,8 +44,15 @@ options:
         - This will be used to verify the specified key.
       type: str
       version_added: 2.9
-notes:
-  - Supports C(check_mode).
+extends_documentation_fragment:
+    - action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: rhel
 '''
 
 EXAMPLES = '''

@@ -61,11 +61,18 @@ options:
     default: yes
     aliases: [ attr, attributes ]
     version_added: "2.3"
+extends_documentation_fragment:
+  -  action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 seealso:
 - module: ansible.builtin.file
 - module: ansible.windows.win_stat
-notes:
-- Supports C(check_mode).
 author: Bruce Pennypacker (@bpennypacker)
 '''
 

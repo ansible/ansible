@@ -85,9 +85,27 @@ options:
         type: str
         default: auto
         version_added: 2.2
+extends_documentation_fragment:
+  -  action_common_attributes
+  -  action_common_attributes.flow
+attributes:
+    action:
+        support: full
+    async:
+        support: full
+    bypass_host_loop:
+        support: none
+    check_mode:
+        details: support depends on the underlying plugin invoked
+        support: N/A
+    diff_mode:
+        details: support depends on the underlying plugin invoked
+        support: N/A
+    platform:
+        details: The support depends on the availability for the specific plugin for each platform and if fact gathering is able to detect it
+        platforms: all
 notes:
     - For AIX, group subsystem names can be used.
-    - Supports C(check_mode).
 seealso:
     - module: ansible.windows.win_service
 author:
