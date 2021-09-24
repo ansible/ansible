@@ -16,22 +16,15 @@ class Git:
         self.git = 'git'
         self.root = root
 
-    def get_diff(self, args, git_options=None):
-        """
-        :type args: list[str]
-        :type git_options: list[str] | None
-        :rtype: list[str]
-        """
+    def get_diff(self, args, git_options=None):  # type: (t.List[str], t.Optional[t.List[str]]) -> t.List[str]
+        """Run `git diff` and return the result as a list."""
         cmd = ['diff'] + args
         if git_options is None:
             git_options = ['-c', 'core.quotePath=']
         return self.run_git_split(git_options + cmd, '\n', str_errors='replace')
 
-    def get_diff_names(self, args):
-        """
-        :type args: list[str]
-        :rtype: list[str]
-        """
+    def get_diff_names(self, args):  # type: (t.List[str]) -> t.List[str]
+        """Return a list of file names from the `git diff` command."""
         cmd = ['diff', '--name-only', '--no-renames', '-z'] + args
         return self.run_git_split(cmd, '\0')
 
@@ -52,34 +45,23 @@ class Git:
 
         return submodule_paths
 
-    def get_file_names(self, args):
-        """
-        :type args: list[str]
-        :rtype: list[str]
-        """
+    def get_file_names(self, args):  # type: (t.List[str]) -> t.List[str]
+        """Return a list of file names from the `git ls-files` command."""
         cmd = ['ls-files', '-z'] + args
         return self.run_git_split(cmd, '\0')
 
-    def get_branches(self):
-        """
-        :rtype: list[str]
-        """
+    def get_branches(self):  # type: () -> t.List[str]
+        """Return the list of branches."""
         cmd = ['for-each-ref', 'refs/heads/', '--format', '%(refname:strip=2)']
         return self.run_git_split(cmd)
 
-    def get_branch(self):
-        """
-        :rtype: str
-        """
+    def get_branch(self):  # type: () -> str
+        """Return the current branch name."""
         cmd = ['symbolic-ref', '--short', 'HEAD']
         return self.run_git(cmd).strip()
 
-    def get_rev_list(self, commits=None, max_count=None):
-        """
-        :type commits: list[str] | None
-        :type max_count: int | None
-        :rtype: list[str]
-        """
+    def get_rev_list(self, commits=None, max_count=None):  # type: (t.Optional[t.List[str]], t.Optional[int]) -> t.List[str]
+        """Return the list of results from the `git rev-list` command."""
         cmd = ['rev-list']
 
         if commits:
@@ -92,19 +74,13 @@ class Git:
 
         return self.run_git_split(cmd)
 
-    def get_branch_fork_point(self, branch):
-        """
-        :type branch: str
-        :rtype: str
-        """
+    def get_branch_fork_point(self, branch):  # type: (str) -> str
+        """Return a reference to the point at which the given branch was forked."""
         cmd = ['merge-base', '--fork-point', branch]
         return self.run_git(cmd).strip()
 
-    def is_valid_ref(self, ref):
-        """
-        :type ref: str
-        :rtype: bool
-        """
+    def is_valid_ref(self, ref):  # type: (str) -> bool
+        """Return True if the given reference is valid, otherwise return False."""
         cmd = ['show', ref]
         try:
             self.run_git(cmd, str_errors='replace')
@@ -112,13 +88,8 @@ class Git:
         except SubprocessError:
             return False
 
-    def run_git_split(self, cmd, separator=None, str_errors='strict'):
-        """
-        :type cmd: list[str]
-        :type separator: str | None
-        :type str_errors: str
-        :rtype: list[str]
-        """
+    def run_git_split(self, cmd, separator=None, str_errors='strict'):  # type: (t.List[str], t.Optional[str], str) -> t.List[str]
+        """Run the given `git` command and return the results as a list."""
         output = self.run_git(cmd, str_errors=str_errors).strip(separator)
 
         if not output:
@@ -126,10 +97,6 @@ class Git:
 
         return output.split(separator)
 
-    def run_git(self, cmd, str_errors='strict'):
-        """
-        :type cmd: list[str]
-        :type str_errors: str
-        :rtype: str
-        """
+    def run_git(self, cmd, str_errors='strict'):  # type: (t.List[str], str) -> str
+        """Run the given `git` command and return the results as a string."""
         return raw_command([self.git] + cmd, cwd=self.root, capture=True, str_errors=str_errors)[0]

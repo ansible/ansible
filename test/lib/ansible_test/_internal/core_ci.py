@@ -52,16 +52,16 @@ class AnsibleCoreCI:
     """Client for Ansible Core CI services."""
     DEFAULT_ENDPOINT = 'https://ansible-core-ci.testing.ansible.com'
 
-    def __init__(self, args, platform, version, provider, persist=True, load=True, suffix=None):
-        """
-        :type args: EnvironmentConfig
-        :type platform: str
-        :type version: str
-        :type provider: str
-        :type persist: bool
-        :type load: bool
-        :type suffix: str | None
-        """
+    def __init__(
+            self,
+            args,  # type: EnvironmentConfig
+            platform,  # type: str
+            version,  # type: str
+            provider,  # type: str
+            persist=True,  # type: bool
+            load=True,  # type: bool
+            suffix=None,  # type: t.Optional[str]
+    ):  # type: (...) -> None
         self.args = args
         self.platform = platform
         self.version = version
@@ -155,14 +155,8 @@ class AnsibleCoreCI:
 
         raise self._create_http_error(response)
 
-    def get(self, tries=3, sleep=15, always_raise_on=None):
-        """
-        Get instance connection information.
-        :type tries: int
-        :type sleep: int
-        :type always_raise_on: list[int] | None
-        :rtype: InstanceConnection
-        """
+    def get(self, tries=3, sleep=15, always_raise_on=None):  # type: (int, int, t.Optional[t.List[int]]) -> t.Optional[InstanceConnection]
+        """Get instance connection information."""
         if not self.started:
             display.info('Skipping invalid %s/%s instance %s.' % (self.platform, self.version, self.instance_id),
                          verbosity=1)
@@ -329,11 +323,8 @@ class AnsibleCoreCI:
 
         return self.load(config)
 
-    def load(self, config):
-        """
-        :type config: dict[str, str]
-        :rtype: bool
-        """
+    def load(self, config):  # type: (t.Dict[str, str]) -> bool
+        """Load the instance from the provided dictionary."""
         self.instance_id = str(config['instance_id'])
         self.endpoint = config['endpoint']
         self.started = True
@@ -342,7 +333,7 @@ class AnsibleCoreCI:
 
         return True
 
-    def _save(self):
+    def _save(self):  # type: () -> None
         """Save instance information."""
         if self.args.explain:
             return
@@ -351,10 +342,8 @@ class AnsibleCoreCI:
 
         write_json_file(self.path, config, create_directories=True)
 
-    def save(self):
-        """
-        :rtype: dict[str, str]
-        """
+    def save(self):  # type: () -> t.Dict[str, str]
+        """Save instance details and return as a dictionary."""
         return dict(
             platform_version='%s/%s' % (self.platform, self.version),
             instance_id=self.instance_id,
@@ -362,11 +351,8 @@ class AnsibleCoreCI:
         )
 
     @staticmethod
-    def _create_http_error(response):
-        """
-        :type response: HttpResponse
-        :rtype: ApplicationError
-        """
+    def _create_http_error(response):  # type: (HttpResponse) -> ApplicationError
+        """Return an exception created from the given HTTP resposne."""
         response_json = response.json()
         stack_trace = ''
 
@@ -392,12 +378,7 @@ class AnsibleCoreCI:
 
 class CoreHttpError(HttpError):
     """HTTP response as an error."""
-    def __init__(self, status, remote_message, remote_stack_trace):
-        """
-        :type status: int
-        :type remote_message: str
-        :type remote_stack_trace: str
-        """
+    def __init__(self, status, remote_message, remote_stack_trace):  # type: (int, str, str) -> None
         super().__init__(status, '%s%s' % (remote_message, remote_stack_trace))
 
         self.remote_message = remote_message
@@ -411,10 +392,7 @@ class SshKey:
     PUB_NAME = '%s.pub' % KEY_NAME
 
     @mutex
-    def __init__(self, args):
-        """
-        :type args: EnvironmentConfig
-        """
+    def __init__(self, args):  # type: (EnvironmentConfig) -> None
         key_pair = self.get_key_pair()
 
         if not key_pair:
