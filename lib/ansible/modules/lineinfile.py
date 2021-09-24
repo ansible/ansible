@@ -133,11 +133,23 @@ options:
       - All arguments accepted by the M(ansible.builtin.file) module also work here.
     type: str
 extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.files
     - files
     - validate
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    platform:
+        platforms: posix
+    safe_file_operations:
+        support: full
+    vault:
+        support: none
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
-  - Supports C(check_mode).
 seealso:
 - module: ansible.builtin.blockinfile
 - module: ansible.builtin.copy

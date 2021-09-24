@@ -14,8 +14,21 @@ DOCUMENTATION = r'''
 module: replace
 author: Evan Kaufman (@EvanK)
 extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.files
     - files
     - validate
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    platform:
+        platforms: posix
+    safe_file_operations:
+        support: full
+    vault:
+        support: none
 short_description: Replace all instances of a particular string in a
                    file using a back-referenced regular expression
 description:

@@ -39,6 +39,31 @@ options:
     type: bool
     default: no
     version_added: "2.4"
+extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.conn
+    - action_common_attributes.flow
+    - action_core
+attributes:
+    action:
+        details: While the action plugin does do some of the work it relies on the core engine to actually create the variables, that part cannot be overriden
+        support: partial
+    bypass_host_loop:
+        support: none
+    bypass_task_loop:
+        support: none
+    check_mode:
+        support: full
+    core:
+        details: While parts of this action are implemented in core, other parts are still available as normal plugins and can be partially overridden
+        support: partial
+    delegation:
+        details:
+            - while variable assignment can be delegated to a different host the execution context is always the current invenotory_hostname
+            - connection variables, if set at all, would reflect the host it would target, even if we are not connecting at all in this case
+        support: partial
+    diff_mode:
+        support: none
 notes:
     - Because of the nature of tasks, set_fact will produce 'static' values for a variable.
       Unlike normal 'lazy' variables, the value gets evaluated and templated on assignment.
@@ -48,7 +73,6 @@ notes:
       Using the setting will restrict k=v to strings, but will allow you to specify string or boolean in YAML.
     - "To create lists/arrays or dictionary/hashes use YAML notation C(var: [val1, val2])."
     - Since 'cacheable' is now a module param, 'cacheable' is no longer a valid fact name.
-    - This action does not use a connection and always executes on the controller.
 seealso:
 - module: ansible.builtin.include_vars
 - ref: ansible_variable_precedence

@@ -55,7 +55,24 @@ author:
   - Ansible Core Team
   - Michael DeHaan
 extends_documentation_fragment:
-  - decrypt
+    - action_common_attributes
+    - action_common_attributes.files
+    - action_common_attributes.raw
+    - decrypt
+attributes:
+    check_mode:
+        support: none
+    diff_mode:
+        support: none
+    platform:
+        details: This action is one of the few that requires no Python on the remote as it passes the command directly into the connection string
+        platforms: all
+    raw:
+      support: full
+    safe_file_operations:
+        support: none
+    vault:
+        support: full
 '''
 
 EXAMPLES = r'''
