@@ -142,6 +142,36 @@ You can specify a pattern as a regular expression by starting the pattern with `
 
     ~(web|db).*\.example\.com
 
+Patterns and ad-hoc commands
+----------------------------
+
+You can change the behavior of the patterns defined in ad-hoc commands using command-line options.
+You can also limit the hosts you target on a particular run with the ``--limit`` flag.
+
+* Limit to one host
+
+.. code-block:: bash
+
+    $ ansible -m [module] -a "[module options]" --limit "host1"
+
+* Limit to multiple hosts
+
+.. code-block:: bash
+
+    $ ansible -m [module] -a "[module options]" --limit "host1,host2"
+
+* Negated limit. Note that single quotes MUST be used to prevent bash interpolation.
+
+.. code-block:: bash
+
+    $ ansible -m [module] -a "[module options]" --limit 'all:!host1'
+
+* Limit to host group
+
+.. code-block:: bash
+
+    $ ansible -m [module] -a "[module options]" --limit 'group1'
+
 Patterns and ansible-playbook flags
 -----------------------------------
 
