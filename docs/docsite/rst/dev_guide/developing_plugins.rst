@@ -67,11 +67,17 @@ To define configurable options for your plugin, describe them in the ``DOCUMENTA
         ini:
           - section: section_of_ansible.cfg_where_this_config_option_is_defined
             key: key_used_in_ansible.cfg
+        vars:
+          - name: name_of_ansible_var
+          - name: name_of_second_var
+            version_added: X.x
         required: True/False
         type: boolean/float/integer/list/none/path/pathlist/pathspec/string/tmppath
         version_added: X.x
 
 To access the configuration settings in your plugin, use ``self.get_option(<option_name>)``. For the plugin types (such as 'become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', and 'vars') that support embedded documentation, the controller pre-populates the settings. If you need to populate settings explicitly, use a ``self.set_options()`` call.
+
+Configuration sources follow the precedence rules for values in Ansible. When there are multiple values from the same category, the value defined last takes precedence. For example, in the above configuration block, if both ``name_of_ansible_var`` and ``name_of_second_var`` are defined, the value of the ``option_name`` option will be the value of ``name_of_second_var``. Refer to :ref:`general_precedence_rules` for further information.
 
 Plugins that support embedded documentation (see :ref:`ansible-doc` for the list) should include well-formed doc strings. If you inherit from a plugin, you must document the options it takes, either via a documentation fragment or as a copy. See :ref:`module_documenting` for more information on correct documentation. Thorough documentation is a good idea even if you're developing a plugin for local use.
 
