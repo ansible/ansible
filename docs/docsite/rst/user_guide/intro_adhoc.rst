@@ -190,6 +190,12 @@ Facts represent discovered variables about a system. You can use facts to implem
 
 You can also filter this output to display only certain facts, see the :ref:`ansible.builtin.setup <setup_module>` module documentation for details.
 
+Patterns and ad-hoc commands
+----------------------------
+
+See the :ref:`patterns <intro_patterns>` documentation for details on all of the available options, including
+how to limit using patterns in ad-hoc commands.
+
 Now that you understand the basic elements of Ansible execution, you are ready to learn to automate repetitive tasks using :ref:`Ansible Playbooks <playbooks_intro>`.
 
 .. seealso::
