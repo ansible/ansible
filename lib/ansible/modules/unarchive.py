@@ -109,6 +109,7 @@ options:
     default: yes
     version_added: "2.2"
 extends_documentation_fragment:
+- action_common_attributes
 - decrypt
 - files
 attributes:
