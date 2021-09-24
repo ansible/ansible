@@ -1,4 +1,0 @@
-bugfixes:
-  - include_role - Only inherit from role parents in the current task dependency chain (https://github.com/ansible/ansible/issues/39543).
-  - include_role - Inherit from role parents beyond a depth of 3 (https://github.com/ansible/ansible/issues/47023).
-  - include_role - Inherit from role parents in the order of the task dependency chain.
