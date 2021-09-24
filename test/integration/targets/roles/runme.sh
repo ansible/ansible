@@ -17,14 +17,3 @@ set -eux
 
 # ensure role data is merged correctly
 ansible-playbook data_integrity.yml -i ../../inventory "$@"
-
-
-# ensure role vars are inherited correctly
-ANSIBLE_PRIVATE_ROLE_VARS=True ansible-playbook 39543.yml -i ../../inventory "$@" | tee out.txt
-test "$(grep '"msg": "role1"' -c out.txt)" = "1"
-test "$(grep '"msg": "role2"' -c out.txt)" = "1"
-test "$(grep '"msg": "role3"' -c out.txt)" = "0"
-
-
-# test nested includes get parent roles greater than a depth of 3
-[ "$(ansible-playbook 47023.yml -i ../../inventory "$@" | grep '\<\(Default\|Var\)\>' | grep -c 'is defined')" = "2" ]

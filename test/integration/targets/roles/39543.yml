@@ -1,7 +1,0 @@
----
-- hosts: all
-  gather_facts: no
-  roles:
-    - 39543_role1
-    - role: 39543_role3
-      when: false
