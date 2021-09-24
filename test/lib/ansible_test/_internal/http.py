@@ -31,37 +31,20 @@ class HttpClient:
         self.username = None
         self.password = None
 
-    def get(self, url):
-        """
-        :type url: str
-        :rtype: HttpResponse
-        """
+    def get(self, url):  # type: (str) -> HttpResponse
+        """Perform an HTTP GET and return the response."""
         return self.request('GET', url)
 
-    def delete(self, url):
-        """
-        :type url: str
-        :rtype: HttpResponse
-        """
+    def delete(self, url):  # type: (str) -> HttpResponse
+        """Perform an HTTP DELETE and return the response."""
         return self.request('DELETE', url)
 
-    def put(self, url, data=None, headers=None):
-        """
-        :type url: str
-        :type data: str | None
-        :type headers: dict[str, str] | None
-        :rtype: HttpResponse
-        """
+    def put(self, url, data=None, headers=None):  # type: (str, t.Optional[str], t.Optional[t.Dict[str, str]]) -> HttpResponse
+        """Perform an HTTP PUT and return the response."""
         return self.request('PUT', url, data, headers)
 
-    def request(self, method, url, data=None, headers=None):
-        """
-        :type method: str
-        :type url: str
-        :type data: str | None
-        :type headers: dict[str, str] | None
-        :rtype: HttpResponse
-        """
+    def request(self, method, url, data=None, headers=None):  # type: (str, str, t.Optional[str], t.Optional[t.Dict[str, str]]) -> HttpResponse
+        """Perform an HTTP request and return the response."""
         cmd = ['curl', '-s', '-S', '-i', '-X', method]
 
         if self.insecure:
@@ -130,22 +113,14 @@ class HttpClient:
 
 class HttpResponse:
     """HTTP response from curl."""
-    def __init__(self, method, url, status_code, response):
-        """
-        :type method: str
-        :type url: str
-        :type status_code: int
-        :type response: str
-        """
+    def __init__(self, method, url, status_code, response):  # type: (str, str, int, str) -> None
         self.method = method
         self.url = url
         self.status_code = status_code
         self.response = response
 
-    def json(self):
-        """
-        :rtype: any
-        """
+    def json(self):  # type: () -> t.Any
+        """Return the response parsed as JSON, raising an exception if parsing fails."""
         try:
             return json.loads(self.response)
         except ValueError:
@@ -154,10 +129,6 @@ class HttpResponse:
 
 class HttpError(ApplicationError):
     """HTTP response as an error."""
-    def __init__(self, status, message):
-        """
-        :type status: int
-        :type message: str
-        """
+    def __init__(self, status, message):  # type: (int, str) -> None
         super().__init__('%s: %s' % (status, message))
         self.status = status
