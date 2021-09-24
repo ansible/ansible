@@ -5,7 +5,7 @@
 - name: Deploy the teststring.conf file
   copy:
     src: teststring.conf
-    dest: "{{ output_dir }}/teststring.conf"
+    dest: "{{ remote_tmp_dir }}/teststring.conf"
   register: result
 
 - name: Assert that the teststring.conf file was deployed
@@ -18,7 +18,7 @@
 # Test instertafter
 - name: Insert lines after with string
   lineinfile:
-    path: "{{ output_dir }}/teststring.conf"
+    path: "{{ remote_tmp_dir }}/teststring.conf"
     search_string: "{{ item.regexp }}"
     line: "{{ item.line }}"
     insertafter: "{{ item.after }}"
@@ -27,7 +27,7 @@
 
 - name: Do the same thing again and check for changes
   lineinfile:
-    path: "{{ output_dir }}/teststring.conf"
+    path: "{{ remote_tmp_dir }}/teststring.conf"
     search_string: "{{ item.regexp }}"
     line: "{{ item.line }}"
     insertafter: "{{ item.after }}"
@@ -45,7 +45,7 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/teststring.conf"
+    path: "{{ remote_tmp_dir }}/teststring.conf"
   register: result
 
 - name: Assert that the file contents match what is expected
@@ -55,7 +55,7 @@
 
 - name: Do the same thing a third time without string and check for changes
   lineinfile:
-    path: "{{ output_dir }}/teststring.conf"
+    path: "{{ remote_tmp_dir }}/teststring.conf"
     line: "{{ item.line }}"
     insertafter: "{{ item.after }}"
   with_items: "{{ test_befaf_regexp }}"
@@ -63,7 +63,7 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/teststring.conf"
+    path: "{{ remote_tmp_dir }}/teststring.conf"
   register: result
 
 - name: Assert that the file was changed when no string was provided
@@ -74,7 +74,7 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/teststring.conf"
+    path: "{{ remote_tmp_dir }}/teststring.conf"
   register: result
 
 - name: Assert that the file contents match what is expected
@@ -86,7 +86,7 @@
 - name: Deploy the test.conf file
   copy:
     src: teststring.conf
-    dest: "{{ output_dir }}/teststring.conf"
+    dest: "{{ remote_tmp_dir }}/teststring.conf"
   register: result
 
 - name: Assert that the teststring.conf file was deployed
@@ -98,7 +98,7 @@
 
 - name: Insert lines before with string
   lineinfile:
-    path: "{{ output_dir }}/teststring.conf"
+    path: "{{ remote_tmp_dir }}/teststring.conf"
     search_string: "{{ item.regexp }}"
     line: "{{ item.line }}"
     insertbefore: "{{ item.before }}"
@@ -107,7 +107,7 @@
 
 - name: Do the same thing again and check for changes
   lineinfile:
-    path: "{{ output_dir }}/teststring.conf"
+    path: "{{ remote_tmp_dir }}/teststring.conf"
     search_string: "{{ item.regexp }}"
     line: "{{ item.line }}"
     insertbefore: "{{ item.before }}"
@@ -125,7 +125,7 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/teststring.conf"
+    path: "{{ remote_tmp_dir }}/teststring.conf"
   register: result
 
 - name: Assert that the file contents match what is expected
@@ -135,7 +135,7 @@
 
 - name: Do the same thing a third time without string and check for changes
   lineinfile:
-    path: "{{ output_dir }}/teststring.conf"
+    path: "{{ remote_tmp_dir }}/teststring.conf"
     line: "{{ item.line }}"
     insertbefore: "{{ item.before }}"
   with_items: "{{ test_befaf_regexp }}"
@@ -143,7 +143,7 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/teststring.conf"
+    path: "{{ remote_tmp_dir }}/teststring.conf"
   register: result
 
 - name: Assert that the file was changed when no string was provided
@@ -154,7 +154,7 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/teststring.conf"
+    path: "{{ remote_tmp_dir }}/teststring.conf"
   register: result
 
 - name: Assert that the file contents match what is expected
