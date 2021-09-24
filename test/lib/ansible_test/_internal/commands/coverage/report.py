@@ -20,7 +20,7 @@ from ...provisioning import (
 )
 
 from .combine import (
-    command_coverage_combine,
+    combine_coverage_files,
     CoverageCombineConfig,
 )
 
@@ -34,7 +34,7 @@ def command_coverage_report(args):
     :type args: CoverageReportConfig
     """
     host_state = prepare_profiles(args)  # coverage report
-    output_files = command_coverage_combine(args)
+    output_files = combine_coverage_files(args, host_state)
 
     for output_file in output_files:
         if args.group_by or args.stub:

@@ -67,10 +67,11 @@ def command_coverage_combine(args):
     :rtype: list[str]
     """
     host_state = prepare_profiles(args)  # coverage combine
+    combine_coverage_files(args, host_state)
 
-    if args.delegate:
-        raise Delegate(host_state)
 
+def combine_coverage_files(args, host_state):  # type: (CoverageCombineConfig, HostState) -> t.List[str]
+    """Combine coverage and return a list of the resulting files."""
     if args.delegate:
         if isinstance(args.controller, (DockerConfig, RemoteConfig)):
             paths = get_all_coverage_files()
