@@ -77,9 +77,29 @@ To specify more arguments, use the following syntax::
             body: "{{ mail_body }}"
           run_once: True
 
+.. note::
+    - The `ansible_host` variable and other connection variables, if present, reflects information about the host a task is delegated to, not the inventory_hostname.
+
 .. warning::
 
  Although you can ``delegate_to`` a host that does not exist in inventory (by adding IP address, DNS name or whatever requirement the connection plugin has), doing so does not add the host to your inventory and might cause issues. Hosts delegated to in this way do not inherit variables from the "all" group', so variables like connection user and key are missing. If you must ``delegate_to`` a non-inventory host, use the :ref:`add host module <add_host_module>`.
+
+
+.. _delegate_parallel:
+
+Delegation and parallel execution
+---------------------------------
+By default Ansible tasks are executed in parallel. Delegating a task does not change this and does not handle concurrency issues (multiple forks writing to the same file).
+Most commonly, users are affected by this when updating a single file on a single delegated to host for all hosts (using the ``copy``, ``template``, or ``lineinfile`` modules, for example). They will still operate in parallel forks (default 5) and overwrite each other.
+
+This can be handled in several ways::
+
+    - name: "handle concurrency with a loop on the hosts with `run_once: true`"
+      lineinfile: "<options here>"
+      run_once: true
+      loop: '{{ ansible_play_hosts_all }}'
+
+By using an intermediate play with  `serial: 1` or using  `throttle: 1` at task level, for more detail see :ref:`playbooks_strategies`
 
 .. _delegate_facts:
 
