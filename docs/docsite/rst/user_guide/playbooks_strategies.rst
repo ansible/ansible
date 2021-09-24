@@ -38,6 +38,8 @@ Using keywords to control execution
 
 In addition to strategies, several :ref:`keywords<playbook_keywords>` also affect play execution. You can set a number, a percentage, or a list of numbers of hosts you want to manage at a time with ``serial``. Ansible completes the play on the specified number or percentage of hosts before starting the next batch of hosts. You can restrict the number of workers allotted to a block or task with ``throttle``. You can control how Ansible selects the next host in a group to execute against with ``order``. You can run a task on a single host with ``run_once``. These keywords are not strategies. They are directives or options applied to a play, block, or task.
 
+Other keywords that affect play execution include ``ignore_errors``, ``ignore_unreachable``, and ``any_errors_fatal``. These options are documented in :ref:`playbooks_error_handling`.
+
 .. _rolling_update_batch_size:
 
 Setting the batch size with ``serial``
@@ -70,7 +72,7 @@ In the above example, if we had 6 hosts in the group 'webservers', Ansible would
     TASK [second task] ***************************************
     changed: [web1]
     changed: [web2]
-    changed: [web3]    
+    changed: [web3]
 
     PLAY [webservers] ****************************************
 
@@ -154,9 +156,9 @@ Ordering execution based on inventory
 The ``order`` keyword controls the order in which hosts are run. Possible values for order are:
 
 inventory:
-    (default) The order provided in the inventory
+    (default) The order provided by the inventory for the selection requested (see note below)
 reverse_inventory:
-    The reverse of the order provided by the inventory
+    The same as above, but reversing the returned list
 sorted:
     Sorted alphabetically sorted by name
 reverse_sorted:
@@ -164,7 +166,8 @@ reverse_sorted:
 shuffle:
     Randomly ordered on each run
 
-Other keywords that affect play execution include ``ignore_errors``, ``ignore_unreachable``, and ``any_errors_fatal``. These options are documented in :ref:`playbooks_error_handling`.
+.. note::
+    the 'inventory' order does not equate to the order in which hosts/groups are defined in the inventory source file, but the 'order in which a selection is returned from the compiled inventory'. This is a backwards compatible option and while reproducible it is not normally predictable. Due to the nature of inventory, host patterns, limits, inventory plugins and the ability to allow multiple sources it is almost impossible to return such an order. For simple cases this might happen to match the file definition order, but that is not guaranteed.
 
 .. _run_once:
 
