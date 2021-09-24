@@ -201,7 +201,7 @@ options:
     type: bool
     default: no
     version_added: '2.11'
-extends_documentation_fragment: action_common_attributes
+extends_documentation_fragment: action_common_attributes, files
 attributes:
     check_mode:
         support: none
@@ -218,7 +218,6 @@ seealso:
 - module: ansible.windows.win_uri
 author:
 - Romeo Theriault (@romeotheriault)
-extends_documentation_fragment: files
 '''
 
 EXAMPLES = r'''
