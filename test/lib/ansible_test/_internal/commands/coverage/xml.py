@@ -38,7 +38,7 @@ from ...provisioning import (
 )
 
 from .combine import (
-    command_coverage_combine,
+    combine_coverage_files,
     CoverageCombineConfig,
 )
 
@@ -52,7 +52,7 @@ def command_coverage_xml(args):
     :type args: CoverageXmlConfig
     """
     host_state = prepare_profiles(args)  # coverage xml
-    output_files = command_coverage_combine(args)
+    output_files = combine_coverage_files(args, host_state)
 
     for output_file in output_files:
         xml_name = '%s.xml' % os.path.basename(output_file)

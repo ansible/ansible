@@ -369,6 +369,9 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
     def deprovision(self):  # type: () -> None
         """Deprovision the host after delegation has completed."""
+        if not self.container_name:
+            return  # provision was never called or did not succeed, so there is no container to remove
+
         if self.args.docker_terminate == TerminateMode.ALWAYS or (self.args.docker_terminate == TerminateMode.SUCCESS and self.args.success):
             docker_rm(self.args, self.container_name)
 
