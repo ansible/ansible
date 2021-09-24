@@ -28,6 +28,7 @@ from .util_common import (
 )
 
 from .config import (
+    CommonConfig,
     EnvironmentConfig,
 )
 
@@ -206,15 +207,14 @@ def docker_cp_to(args, container_id, src, dst):  # type: (EnvironmentConfig, str
     docker_command(args, ['cp', src, '%s:%s' % (container_id, dst)])
 
 
-def docker_run(args, image, options, cmd=None, create_only=False):
-    """
-    :type args: EnvironmentConfig
-    :type image: str
-    :type options: list[str] | None
-    :type cmd: list[str] | None
-    :type create_only[bool] | False
-    :rtype: str
-    """
+def docker_run(
+        args,  # type: EnvironmentConfig
+        image,  # type: str
+        options,  # type: t.Optional[t.List[str]]
+        cmd=None,  # type: t.Optional[t.List[str]]
+        create_only=False,  # type: bool
+):  # type: (...) -> str
+    """Run a container using the given docker image."""
     if not options:
         options = []
 
@@ -414,12 +414,8 @@ def docker_inspect(args, identifier, always=False):  # type: (EnvironmentConfig,
     raise ContainerNotFoundError(identifier)
 
 
-def docker_network_disconnect(args, container_id, network):
-    """
-    :param args: EnvironmentConfig
-    :param container_id: str
-    :param network: str
-    """
+def docker_network_disconnect(args, container_id, network):  # type: (EnvironmentConfig, str, str) -> None
+    """Disconnect the specified docker container from the given network."""
     docker_command(args, ['network', 'disconnect', network, container_id], capture=True)
 
 
@@ -433,18 +429,17 @@ def docker_image_exists(args, image):  # type: (EnvironmentConfig, str) -> bool
     return True
 
 
-def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None, stdout=None, data=None):
-    """
-    :type args: EnvironmentConfig
-    :type container_id: str
-    :type cmd: list[str]
-    :type options: list[str] | None
-    :type capture: bool
-    :type stdin: BinaryIO | None
-    :type stdout: BinaryIO | None
-    :type data: str | None
-    :rtype: str | None, str | None
-    """
+def docker_exec(
+        args,  # type: EnvironmentConfig
+        container_id,  # type: str
+        cmd,  # type: t.List[str]
+        options=None,  # type: t.Optional[t.List[str]]
+        capture=False,  # type: bool
+        stdin=None,  # type: t.Optional[t.BinaryIO]
+        stdout=None,  # type: t.Optional[t.BinaryIO]
+        data=None,  # type: t.Optional[str]
+):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+    """Execute the given command in the specified container."""
     if not options:
         options = []
 
@@ -454,44 +449,35 @@ def docker_exec(args, container_id, cmd, options=None, capture=False, stdin=None
     return docker_command(args, ['exec'] + options + [container_id] + cmd, capture=capture, stdin=stdin, stdout=stdout, data=data)
 
 
-def docker_info(args):
-    """
-    :param args: CommonConfig
-    :rtype: dict[str, any]
-    """
+def docker_info(args):  # type: (CommonConfig) -> t.Dict[str, t.Any]
+    """Return a dictionary containing details from the `docker info` command."""
     stdout, _dummy = docker_command(args, ['info', '--format', '{{json .}}'], capture=True, always=True)
     return json.loads(stdout)
 
 
-def docker_version(args):
-    """
-    :param args: CommonConfig
-    :rtype: dict[str, any]
-    """
+def docker_version(args):  # type: (CommonConfig) -> t.Dict[str, t.Any]
+    """Return a dictionary containing details from the `docker version` command."""
     stdout, _dummy = docker_command(args, ['version', '--format', '{{json .}}'], capture=True, always=True)
     return json.loads(stdout)
 
 
-def docker_command(args, cmd, capture=False, stdin=None, stdout=None, always=False, data=None):
-    """
-    :type args: CommonConfig
-    :type cmd: list[str]
-    :type capture: bool
-    :type stdin: file | None
-    :type stdout: file | None
-    :type always: bool
-    :type data: str | None
-    :rtype: str | None, str | None
-    """
+def docker_command(
+        args,  # type: CommonConfig
+        cmd,  # type: t.List[str]
+        capture=False,  # type: bool
+        stdin=None,  # type: t.Optional[t.BinaryIO]
+        stdout=None,  # type: t.Optional[t.BinaryIO]
+        always=False,  # type: bool
+        data=None,  # type: t.Optional[str]
+):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+    """Run the specified docker command."""
     env = docker_environment()
     command = require_docker().command
     return run_command(args, [command] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always, data=data)
 
 
-def docker_environment():
-    """
-    :rtype: dict[str, str]
-    """
+def docker_environment():  # type: () -> t.Dict[str, str]
+    """Return a dictionary of docker related environment variables found in the current environment."""
     env = common_environment()
     env.update(dict((key, os.environ[key]) for key in os.environ if key.startswith('DOCKER_')))
     return env

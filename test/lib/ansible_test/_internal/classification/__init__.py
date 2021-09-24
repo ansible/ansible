@@ -53,13 +53,8 @@ from ..data import (
 FOCUSED_TARGET = '__focused__'
 
 
-def categorize_changes(args, paths, verbose_command=None):
-    """
-    :type args: TestConfig
-    :type paths: list[str]
-    :type verbose_command: str
-    :rtype: ChangeDescription
-    """
+def categorize_changes(args, paths, verbose_command=None):  # type: (TestConfig, t.List[str], t.Optional[str]) -> ChangeDescription
+    """Categorize the given list of changed paths and return a description of the changes."""
     mapper = PathMapper(args)
 
     commands = {
@@ -180,10 +175,7 @@ def categorize_changes(args, paths, verbose_command=None):
 
 class PathMapper:
     """Map file paths to test commands and targets."""
-    def __init__(self, args):
-        """
-        :type args: TestConfig
-        """
+    def __init__(self, args):  # type: (TestConfig) -> None
         self.args = args
         self.integration_all_target = get_integration_all_target(self.args)
 
@@ -226,11 +218,8 @@ class PathMapper:
 
                 self.paths_to_dependent_targets[path].add(target)
 
-    def get_dependent_paths(self, path):
-        """
-        :type path: str
-        :rtype: list[str]
-        """
+    def get_dependent_paths(self, path):  # type: (str) -> t.List[str]
+        """Return a list of paths which depend on the given path, recursively expanding dependent paths as well."""
         unprocessed_paths = set(self.get_dependent_paths_non_recursive(path))
         paths = set()
 
@@ -248,22 +237,16 @@ class PathMapper:
 
         return sorted(paths)
 
-    def get_dependent_paths_non_recursive(self, path):
-        """
-        :type path: str
-        :rtype: list[str]
-        """
+    def get_dependent_paths_non_recursive(self, path):  # type: (str) -> t.List[str]
+        """Return a list of paths which depend on the given path, including dependent integration test target paths."""
         paths = self.get_dependent_paths_internal(path)
         paths += [target.path + '/' for target in self.paths_to_dependent_targets.get(path, set())]
         paths = sorted(set(paths))
 
         return paths
 
-    def get_dependent_paths_internal(self, path):
-        """
-        :type path: str
-        :rtype: list[str]
-        """
+    def get_dependent_paths_internal(self, path):  # type: (str) -> t.List[str]
+        """Return a list of paths which depend on the given path."""
         ext = os.path.splitext(os.path.split(path)[1])[1]
 
         if is_subdir(path, data_context().content.module_utils_path):
@@ -281,11 +264,8 @@ class PathMapper:
 
         return []
 
-    def get_python_module_utils_usage(self, path):
-        """
-        :type path: str
-        :rtype: list[str]
-        """
+    def get_python_module_utils_usage(self, path):  # type: (str) -> t.List[str]
+        """Return a list of paths which depend on the given path which is a Python module_utils file."""
         if not self.python_module_utils_imports:
             display.info('Analyzing python module_utils imports...')
             before = time.time()
@@ -297,11 +277,8 @@ class PathMapper:
 
         return sorted(self.python_module_utils_imports[name])
 
-    def get_powershell_module_utils_usage(self, path):
-        """
-        :type path: str
-        :rtype: list[str]
-        """
+    def get_powershell_module_utils_usage(self, path):  # type: (str) -> t.List[str]
+        """Return a list of paths which depend on the given path which is a PowerShell module_utils file."""
         if not self.powershell_module_utils_imports:
             display.info('Analyzing powershell module_utils imports...')
             before = time.time()
@@ -313,11 +290,8 @@ class PathMapper:
 
         return sorted(self.powershell_module_utils_imports[name])
 
-    def get_csharp_module_utils_usage(self, path):
-        """
-        :type path: str
-        :rtype: list[str]
-        """
+    def get_csharp_module_utils_usage(self, path):  # type: (str) -> t.List[str]
+        """Return a list of paths which depend on the given path which is a C# module_utils file."""
         if not self.csharp_module_utils_imports:
             display.info('Analyzing C# module_utils imports...')
             before = time.time()
@@ -329,22 +303,16 @@ class PathMapper:
 
         return sorted(self.csharp_module_utils_imports[name])
 
-    def get_integration_target_usage(self, path):
-        """
-        :type path: str
-        :rtype: list[str]
-        """
+    def get_integration_target_usage(self, path):  # type: (str) -> t.List[str]
+        """Return a list of paths which depend on the given path which is an integration target file."""
         target_name = path.split('/')[3]
         dependents = [os.path.join(data_context().content.integration_targets_path, target) + os.path.sep
                       for target in sorted(self.integration_dependencies.get(target_name, set()))]
 
         return dependents
 
-    def classify(self, path):
-        """
-        :type path: str
-        :rtype: dict[str, str] | None
-        """
+    def classify(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
+        """Classify the given path and return an optional dictionary of the results."""
         result = self._classify(path)
 
         # run all tests when no result given
@@ -908,12 +876,8 @@ class PathMapper:
         )
 
 
-def all_tests(args, force=False):
-    """
-    :type args: TestConfig
-    :type force: bool
-    :rtype: dict[str, str]
-    """
+def all_tests(args, force=False):  # type: (TestConfig, bool) -> t.Dict[str, str]
+    """Return the targets for each test command when all tests should be run."""
     if force:
         integration_all_target = 'all'
     else:
@@ -928,11 +892,8 @@ def all_tests(args, force=False):
     }
 
 
-def get_integration_all_target(args):
-    """
-    :type args: TestConfig
-    :rtype: str
-    """
+def get_integration_all_target(args):  # type: (TestConfig) -> str
+    """Return the target to use when all tests should be run."""
     if isinstance(args, IntegrationConfig):
         return args.changed_all_target
 

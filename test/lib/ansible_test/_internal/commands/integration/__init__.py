@@ -129,11 +129,8 @@ from .coverage import (
 THostProfile = t.TypeVar('THostProfile', bound=HostProfile)
 
 
-def generate_dependency_map(integration_targets):
-    """
-    :type integration_targets: list[IntegrationTarget]
-    :rtype: dict[str, set[IntegrationTarget]]
-    """
+def generate_dependency_map(integration_targets):  # type: (t.List[IntegrationTarget]) -> t.Dict[str, t.Set[IntegrationTarget]]
+    """Analyze the given list of integration test targets and return a dictionary expressing target names and the targets on which they depend."""
     targets_dict = dict((target.name, target) for target in integration_targets)
     target_dependencies = analyze_integration_target_dependencies(integration_targets)
     dependency_map = {}
@@ -159,11 +156,8 @@ def generate_dependency_map(integration_targets):
     return dependency_map
 
 
-def get_files_needed(target_dependencies):
-    """
-    :type target_dependencies: list[IntegrationTarget]
-    :rtype: list[str]
-    """
+def get_files_needed(target_dependencies):  # type: (t.List[IntegrationTarget]) -> t.List[str]
+    """Return a list of files needed by the given list of target dependencies."""
     files_needed = []
 
     for target_dependency in target_dependencies:
@@ -230,12 +224,12 @@ def delegate_inventory(args, inventory_path_src):  # type: (IntegrationConfig, s
 
 
 @contextlib.contextmanager
-def integration_test_environment(args, target, inventory_path_src):
-    """
-    :type args: IntegrationConfig
-    :type target: IntegrationTarget
-    :type inventory_path_src: str
-    """
+def integration_test_environment(
+        args,  # type: IntegrationConfig
+        target,  # type: IntegrationTarget
+        inventory_path_src,  # type: str
+):  # type: (...) -> t.ContextManager[IntegrationEnvironment]
+    """Context manager that prepares the integration test environment and cleans it up."""
     ansible_config_src = args.get_ansible_config()
     ansible_config_relative = os.path.join(data_context().content.integration_path, '%s.cfg' % args.command)
 
@@ -333,12 +327,12 @@ def integration_test_environment(args, target, inventory_path_src):
 
 
 @contextlib.contextmanager
-def integration_test_config_file(args, env_config, integration_dir):
-    """
-    :type args: IntegrationConfig
-    :type env_config: CloudEnvironmentConfig
-    :type integration_dir: str
-    """
+def integration_test_config_file(
+        args,  # type: IntegrationConfig
+        env_config,  # type: CloudEnvironmentConfig
+        integration_dir,  # type: str
+):  # type: (...) -> t.ContextManager[t.Optional[str]]
+    """Context manager that provides a config file for integration tests, if needed."""
     if not env_config:
         yield None
         return
@@ -764,16 +758,15 @@ def run_setup_targets(
         targets_executed.add(target_name)
 
 
-def integration_environment(args, target, test_dir, inventory_path, ansible_config, env_config):
-    """
-    :type args: IntegrationConfig
-    :type target: IntegrationTarget
-    :type test_dir: str
-    :type inventory_path: str
-    :type ansible_config: str | None
-    :type env_config: CloudEnvironmentConfig | None
-    :rtype: dict[str, str]
-    """
+def integration_environment(
+        args,  # type: IntegrationConfig
+        target,  # type: IntegrationTarget
+        test_dir,  # type: str
+        inventory_path,  # type: str
+        ansible_config,  # type: t.Optional[str]
+        env_config,  # type: t.Optional[CloudEnvironmentConfig]
+):  # type: (...) -> t.Dict[str, str]
+    """Return a dictionary of environment variables to use when running the given integration test target."""
     env = ansible_environment(args, ansible_config=ansible_config)
 
     callback_plugins = ['junit'] + (env_config.callback_plugins or [] if env_config else [])

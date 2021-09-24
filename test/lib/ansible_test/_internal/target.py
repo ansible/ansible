@@ -353,11 +353,8 @@ def walk_test_targets(path=None, module_path=None, extensions=None, prefix=None,
         yield TestTarget(file_path, module_path, prefix, path, symlink)
 
 
-def analyze_integration_target_dependencies(integration_targets):
-    """
-    :type integration_targets: list[IntegrationTarget]
-    :rtype: dict[str,set[str]]
-    """
+def analyze_integration_target_dependencies(integration_targets):  # type: (t.List[IntegrationTarget]) -> t.Dict[str, t.Set[str]]
+    """Analyze the given list of integration test targets and return a dictionary expressing target names and the target names which depend on them."""
     real_target_root = os.path.realpath(data_context().content.integration_targets_path) + '/'
 
     role_targets = [target for target in integration_targets if target.type == 'role']
