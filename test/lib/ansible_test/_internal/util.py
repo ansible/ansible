@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import errno
 import fcntl
-import hashlib
 import inspect
 import os
 import pkgutil
@@ -31,7 +30,6 @@ from .encoding import (
 
 from .io import (
     open_binary_file,
-    read_binary_file,
     read_text_file,
 )
 
@@ -831,21 +829,6 @@ def load_module(path, name):  # type: (str, str) -> None
 def sanitize_host_name(name):
     """Return a sanitized version of the given name, suitable for use as a hostname."""
     return re.sub('[^A-Za-z0-9]+', '-', name)[:63].strip('-')
-
-
-def get_hash(path):
-    """
-    :type path: str
-    :rtype: str | None
-    """
-    if not os.path.exists(path):
-        return None
-
-    file_hash = hashlib.sha256()
-
-    file_hash.update(read_binary_file(path))
-
-    return file_hash.hexdigest()
 
 
 @cache
