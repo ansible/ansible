@@ -110,6 +110,8 @@ options:
     version_added: "2.2"
 extends_documentation_fragment:
 - action_common_attributes
+- action_common_attributes.flow
+- action_common_attributes.files
 - decrypt
 - files
 attributes:
