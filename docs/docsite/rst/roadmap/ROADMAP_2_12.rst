@@ -18,13 +18,13 @@ PRs must be raised well in advance of the dates below to have a chance of being 
 .. note:: There is no Alpha phase in 2.12.
 .. note:: Dates subject to change.
 
-- 2021-09-24 Feature Freeze
+- 2021-09-24 Feature Freeze (and ``stable-2.12`` branching from ``devel``)
   No new functionality (including modules/plugins) to any code
 
 - 2021-09-27 Beta 1
 - 2021-10-04 Beta 2 (if necessary)
 
-- 2021-10-18 Release Candidate 1 (and ``stable-2.12`` branching from ``devel``)
+- 2021-10-18 Release Candidate 1
 - 2021-10-25 Release Candidate 2 (if necessary)
 
 - 2021-11-08 Release
