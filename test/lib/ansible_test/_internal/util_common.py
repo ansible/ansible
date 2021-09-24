@@ -123,11 +123,7 @@ ResultType._populate()  # pylint: disable=protected-access
 
 class CommonConfig:
     """Configuration common to all commands."""
-    def __init__(self, args, command):
-        """
-        :type args: any
-        :type command: str
-        """
+    def __init__(self, args, command):  # type: (t.Any, str) -> None
         self.command = command
         self.success = None  # type: t.Optional[bool]
 
