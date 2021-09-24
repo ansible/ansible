@@ -41,7 +41,7 @@ options:
       Set to C(touch) or use the M(ansible.builtin.copy) or M(ansible.builtin.template) module if you want to create the file if it does not exist.
     - If C(hard), the hard link will be created or changed.
     - If C(link), the symbolic link will be created or changed.
-    - If C(touch) (new in 1.4), an empty file will be created if the C(path) does not
+    - If C(touch) (new in 1.4), an empty file will be created if the file does not
       exist, while an existing file or directory will receive updated file access and
       modification times (similar to the way C(touch) works from the command line).
     type: str
