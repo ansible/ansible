@@ -29,13 +29,13 @@ options:
     type: str
     default: pong
 extends_documentation_fragment:
-  -  action_common_attributes
+    - action_common_attributes
 attributes:
-    - check_mode:
+    check_mode:
         support: full
-    - diff_mode:
+    diff_mode:
         support: none
-    - platform:
+    platform:
         platforms: posix
 seealso:
   - module: ansible.netcommon.net_ping

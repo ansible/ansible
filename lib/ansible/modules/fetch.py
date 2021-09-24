@@ -73,7 +73,7 @@ attributes:
   diff_mode:
     support: full
   platform:
-    platforms: posix
+    platforms: posix, windows
   safe_file_operations:
     support: none
   vault:
@@ -91,8 +91,6 @@ notes:
   C(fail_when) or C(ignore_errors) to get this ability. They may
   also explicitly set C(fail_on_missing) to C(no) to get the
   non-failing behaviour.
-- This module is also supported for Windows targets.
-- Supports C(check_mode).
 seealso:
 - module: ansible.builtin.copy
 - module: ansible.builtin.slurp

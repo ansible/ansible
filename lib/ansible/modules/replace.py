@@ -108,7 +108,6 @@ notes:
     previous incorrect behavior, you may be need to adjust your tasks.
     See U(https://github.com/ansible/ansible/issues/31354) for details.
   - Option I(follow) has been removed in Ansible 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
-  - Supports C(check_mode).
 '''
 
 EXAMPLES = r'''
