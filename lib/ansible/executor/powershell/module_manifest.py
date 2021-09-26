@@ -42,8 +42,12 @@ class PSModuleDepFinder(object):
         self._re_cs_module = [
             # Reference C# module_util in another C# util, this must always be the fully qualified name.
             # 'using ansible_collections.{namespace}.{collection}.plugins.module_utils.{name}'
-            re.compile(to_bytes(r'(?i)^using\s((Ansible\..+)|'
-                                r'(ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+));\s*$')),
+            re.compile(to_bytes(
+                r'''(?ix)^
+using\s((Ansible\..+)|
+(ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+));
+\s*                                                                 # Allow trailing whitespace
+$''')),
         ]
 
         self._re_cs_in_ps_module = [
@@ -51,10 +55,23 @@ class PSModuleDepFinder(object):
             # '#AnsibleRequires -CSharpUtil Ansible.{name}'
             # '#AnsibleRequires -CSharpUtil ansible_collections.{namespace}.{collection}.plugins.module_utils.{name}'
             # '#AnsibleRequires -CSharpUtil ..module_utils.{name}'
-            # Can have '-Optional' at the end to denote the util is optional
-            re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+((Ansible\.[\w\.]+)|'
-                                r'(ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+)|'
-                                r'(\.[\w\.]+))(?P<optional>\s+-Optional){0,1}')),
+            re.compile(to_bytes(
+                r'''(?ix)^
+\#\s*AnsibleRequires
+\s+
+-CSharpUtil
+\s+
+(                                                                       # Start util name
+    (Ansible\.[\w\.]+)|                                                 # Ansible builtin import
+    (ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+)|    # FQDN collection import
+    (\.[\w\.]+)                                                         # Collection relative import
+)
+(?:                                                                     # Start import parameters
+    \s+                                                                 # Param must have a preceding space
+    (?P<optional>-Optional)?                                            # Do not fail if the util isn't present
+)*
+(?:\s+\#.*)*                                                            # Allow trailing comment
+$''')),
         ]
 
         self._re_ps_module = [
@@ -65,10 +82,23 @@ class PSModuleDepFinder(object):
             # '#AnsibleRequires -PowerShell Ansible.ModuleUtils.{name}'
             # '#AnsibleRequires -PowerShell ansible_collections.{namespace}.{collection}.plugins.module_utils.{name}'
             # '#AnsibleRequires -PowerShell ..module_utils.{name}'
-            # Can have '-Optional' at the end to denote the util is optional
-            re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-powershell\s+((Ansible\.ModuleUtils\.[\w\.]+)|'
-                                r'(ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+)|'
-                                r'(\.[\w\.]+))(?P<optional>\s+-Optional){0,1}')),
+            re.compile(to_bytes(
+                r'''(?ix)^
+\#\s*AnsibleRequires
+\s+
+-PowerShell
+\s+
+(                                                                       # Start util name
+    (Ansible\.ModuleUtils\.[\w\.]+)|                                    # Ansible builtin import
+    (ansible_collections\.\w+\.\w+\.plugins\.module_utils\.[\w\.]+)|    # FQDN collection import
+    (\.[\w\.]+)                                                         # Collection relative import
+)
+(?:                                                                     # Start import parameters
+    \s+                                                                 # Param must have a preceding space
+    (?P<optional>-Optional)?                                            # Do not fail if the util isn't present
+)*
+(?:\s+\#.*)*                                                            # Allow trailing comment
+$''')),
         ]
 
         self._re_wrapper = re.compile(to_bytes(r'(?i)^#\s*ansiblerequires\s+-wrapper\s+(\w*)'))

@@ -5,6 +5,7 @@
 #AnsibleRequires -CSharpUtil Ansible.Basic
 #AnsibleRequires -Powershell ansible_collections.testns.testcoll.plugins.module_utils.MyPSMU
 #AnsibleRequires -PowerShell ansible_collections.testns.testcoll.plugins.module_utils.subpkg.subps
+#AnsibleRequires -CSharpUtil ansible_collections.testns.testcoll.plugins.module_utils.MyMissingPSU -ShouldNotFireDueToUnknownOption
 
 $spec = @{
     options = @{
