@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Rewrite the ``compile`` sanity test to improve error handling and support Python 3.10.

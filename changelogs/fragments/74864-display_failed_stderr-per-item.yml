@@ -1,2 +1,0 @@
-bugfixes:
-  - Apply ``display_failed_stderr`` callback option on loop item results. (https://github.com/ansible/ansible/issues/74864)

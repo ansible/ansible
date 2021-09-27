@@ -1,2 +1,0 @@
-bugfixes:
-  - Ensure end_play ends play, not batch (https://github.com/ansible/ansible/issues/73971)

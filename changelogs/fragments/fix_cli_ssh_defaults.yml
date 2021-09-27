@@ -1,2 +1,0 @@
-bugfixes:
-  - cli defaults for ssh args set to None as '' was bypassing normal default.

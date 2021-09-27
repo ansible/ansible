@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - The "injector" scripts are now generated at runtime to avoid issues with symlinks and shebangs.

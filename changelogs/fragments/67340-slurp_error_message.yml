@@ -1,2 +1,0 @@
-bugfixes:
-- "slurp - Fix error messages for unreadable files and directories(https://github.com/ansible/ansible/issues/67340)."

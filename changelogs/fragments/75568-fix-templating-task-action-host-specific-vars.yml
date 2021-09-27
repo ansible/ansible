@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix templating task action with host-specific vars (https://github.com/ansible/ansible/issues/75568)

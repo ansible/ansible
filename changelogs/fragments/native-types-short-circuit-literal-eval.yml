@@ -1,2 +1,0 @@
-minor_changes:
-  - jinja2_native - short-circuit ``ast.literal_eval`` for non-string values

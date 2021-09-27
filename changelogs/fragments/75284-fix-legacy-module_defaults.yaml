@@ -1,2 +1,0 @@
-bugfixes:
-  - module_defaults - Fix action defaults for legacy actions/modules (https://github.com/ansible/ansible/issues/75279).

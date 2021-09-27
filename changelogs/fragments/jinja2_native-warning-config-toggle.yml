@@ -1,2 +1,0 @@
-minor_changes:
-  - Introduce a config option to enable/disable emitting warning about Jinja2 version being old for ``jinja2_native``. The option is on by default, only in CI it is off.

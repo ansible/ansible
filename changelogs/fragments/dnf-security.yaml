@@ -1,2 +1,0 @@
-bugfixes:
-  - Replace usage of private dnf.Base() attribute by future dnf API

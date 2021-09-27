@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-pull, restore other options to use as repo other than git.

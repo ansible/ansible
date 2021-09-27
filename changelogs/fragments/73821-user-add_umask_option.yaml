@@ -1,3 +1,0 @@
----
-minor_changes:
-  - user - Add ``umask`` option (https://github.com/ansible/ansible/issues/40359).

@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Removed the warning filter for ``PyYAML`` in the ``import`` sanity test.
