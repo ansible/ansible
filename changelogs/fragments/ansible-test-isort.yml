@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Update ``isort`` constraint from version 4.3.15 to 4.3.16 to prevent ``pylint`` from failing with warnings reported as errors.
