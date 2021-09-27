@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Remove CI provider support for Shippable, now that the service has been discontinued.

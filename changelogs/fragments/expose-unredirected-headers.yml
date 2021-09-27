@@ -1,5 +1,0 @@
-minor_changes:
-- >
-  ``uri``/``get_url`` - Expose ``unredirected_headers`` to modules to allow user control
-bugfixes:
-- urls - Fix logic in matching ``unredirected_headers`` to perform case insensitive matching

@@ -1,3 +1,0 @@
----
-minor_changes:
-- yaml dumper - YAML representer for AnsibleUndefined (https://github.com/ansible/ansible/issues/75072).

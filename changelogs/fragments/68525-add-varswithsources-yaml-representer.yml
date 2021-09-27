@@ -1,2 +1,0 @@
-bugfixes:
-- Add yaml representer for VarsWithSources (https://github.com/ansible/ansible/pull/68525).

@@ -1,2 +1,0 @@
-bugfixes:
-  - Solaris - correct version check in svcadm_supports_sync (https://github.com/ansible/ansible/pull/73860).

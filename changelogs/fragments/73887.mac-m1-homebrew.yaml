@@ -1,3 +1,0 @@
----
-bugfixes:
-  - facts - detect homebrew installed at /opt/homebrew/bin/brew

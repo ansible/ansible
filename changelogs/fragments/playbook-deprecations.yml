@@ -1,3 +1,0 @@
-minor_changes:
-  - playbook - Error if a playbook is an empty list instead of just skipping
-  - playbook - Error if using ``include`` instead of ``import_playbook``

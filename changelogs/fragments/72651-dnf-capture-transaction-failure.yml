@@ -1,2 +1,0 @@
-bugfixes:
-  - dnf - properly capture transaction error (https://github.com/ansible/ansible/issues/72651)

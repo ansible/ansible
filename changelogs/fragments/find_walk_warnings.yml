@@ -1,2 +1,0 @@
-bugfixes:
-  - find does not ignore errors from os.walk anymore and issues warnings as expected.

@@ -1,2 +1,0 @@
-bugfixes:
-- service - compare version without LooseVersion API (https://github.com/ansible/ansible/issues/74488).

@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Added a ``--prime-containers`` option to support downloading containers without running tests.

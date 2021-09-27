@@ -1,2 +1,0 @@
-bugfixes:
-  - get_bin_path, clarify with quotes what the missing required executable is.

@@ -1,3 +1,0 @@
----
-minor_changes:
-  - setup - add ``epoch_int`` option to date_time facts (https://github.com/ansible/ansible/pull/73822).
