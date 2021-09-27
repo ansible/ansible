@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Move code from ``_data`` directory to ``_util`` directory.

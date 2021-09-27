@@ -1,2 +1,0 @@
-bugfixes:
-  - plugin config now allows list type options to have multiple valid choices (#74225).

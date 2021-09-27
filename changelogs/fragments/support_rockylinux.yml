@@ -1,2 +1,0 @@
-bugfixes:
-  - Add RockyLinux to fact gathering (https://github.com/ansible/ansible/pull/74530).

@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Removed unused pip constraints. Collections may need to add their own constraints if they depended on any which were removed.
