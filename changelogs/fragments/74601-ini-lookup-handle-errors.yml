@@ -1,2 +1,0 @@
-bugfixes:
-  - ini lookup - handle errors for duplicate keys and missing sections (https://github.com/ansible/ansible/issues/74601)

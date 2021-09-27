@@ -1,3 +1,0 @@
----
-minor_changes:
-- ansible-test - aws creates and exposes a new tiny_prefix variable to provide a shorter prefix for the AWS tests. 

@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-playbook, more robust handling of --list-hosts and undefined vars in hosts keyword.

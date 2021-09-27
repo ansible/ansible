@@ -1,2 +1,0 @@
-bugfixes:
-  - netconf - catch and handle exception to prevent stack trace when running in FIPS mode

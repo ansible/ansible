@@ -1,3 +1,0 @@
-bugfixes:
-- script inventory plugin - Remove deprecated caching support
-  (https://github.com/ansible/ansible/issues/74143)

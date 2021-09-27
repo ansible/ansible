@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Fix docker container IP address detection. The ``bridge`` network is no longer assumed to be the default.

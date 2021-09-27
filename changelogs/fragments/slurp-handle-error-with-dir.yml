@@ -1,2 +1,0 @@
-bugfixes:
-- slurp - handle error when ``path`` is a directory and not a file (https://github.com/ansible/ansible/pull/74930).

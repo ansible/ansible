@@ -1,2 +1,0 @@
-minor_changes:
-  - cron, removed previously deprecated 'reboot' and now requires either 'name' as unique identifier.

@@ -1,3 +1,0 @@
-major_changes:
-  - ansible-test - Version neutral sanity tests now require Python 3.8 or later.
-  - ansible-test - Unit tests for controller-only code now require Python 3.8 or later.

@@ -1,2 +1,0 @@
-minor_changes:
-  - Make the code structure of ansible-doc's generic snippet feature more maintainable.

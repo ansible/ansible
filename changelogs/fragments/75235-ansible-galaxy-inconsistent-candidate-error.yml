@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-galaxy - Improve error message from dependency resolution when a candidate has inconsistent requirements (https://github.com/ansible/ansible/issues/75139).

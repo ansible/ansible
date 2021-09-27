@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-doc, fix output for internal metadata dump option

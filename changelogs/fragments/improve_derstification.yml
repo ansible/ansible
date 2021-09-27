@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-doc, improve handling of rstisms, try to make the display more meaningfull for the terminal users.

@@ -1,2 +1,0 @@
-bugfixes:
-  - Give a warning instead of an error if a handler name contains undefined variables and has no listen topics (https://github.com/ansible/ansible/issues/58841).
