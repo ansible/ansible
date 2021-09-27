@@ -3,4 +3,4 @@ pyyaml
 sphinx
 sphinx-notfound-page
 straight.plugin
-antsibull
+antsibull == 0.26.0
