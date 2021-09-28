@@ -1,0 +1,5 @@
+---
+security_fixes:
+  - Do not include params in exception when a call to ``set_options`` fails.
+    Additionally, block the exception that is returned from being displayed to stdout.
+    (CVE-2021-3620)
