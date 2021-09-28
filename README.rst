@@ -32,8 +32,6 @@ You can install a released version of Ansible with ``pip`` or a package manager.
 `installation guide <https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html>`_ for details on installing Ansible
 on a variety of platforms.
 
-Red Hat offers supported builds of `Ansible Engine <https://www.ansible.com/ansible-engine>`_.
-
 Power users and developers can run the ``devel`` branch, which has the latest
 features and fixes, directly. Although it is reasonably stable, you are more likely to encounter
 breaking changes when running the ``devel`` branch. We recommend getting involved
