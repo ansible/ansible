@@ -239,20 +239,6 @@ On CentOS:
     $ sudo yum install epel-release
     $ sudo yum install ansible
 
-RPMs for RHEL 7 and RHEL 8 are available from the `Ansible Engine repository <https://access.redhat.com/articles/3174981>`_.
-
-To enable the Ansible Engine repository for RHEL 8, run the following command:
-
-.. code-block:: bash
-
-    $ sudo subscription-manager repos --enable ansible-2.9-for-rhel-8-x86_64-rpms
-
-To enable the Ansible Engine repository for RHEL 7, run the following command:
-
-.. code-block:: bash
-
-    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.9-rpms
-
 RPMs for currently supported versions of RHEL and CentOS are also available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_.
 
 .. note::
