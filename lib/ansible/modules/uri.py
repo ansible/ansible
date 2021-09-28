@@ -427,7 +427,6 @@ url:
   sample: https://www.ansible.com/
 '''
 
-import cgi
 import datetime
 import json
 import os
@@ -441,7 +440,7 @@ from ansible.module_utils.six import PY2, binary_type, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Mapping, Sequence
-from ansible.module_utils.urls import fetch_url, get_response_filename, prepare_multipart, url_argument_spec
+from ansible.module_utils.urls import fetch_url, get_response_filename, parse_content_type, prepare_multipart, url_argument_spec
 
 JSON_CANDIDATES = ('text', 'json', 'javascript')
 
@@ -696,13 +695,16 @@ def main():
         filename = get_response_filename(r) or 'index.html'
         dest = os.path.join(dest, filename)
 
-    content_type = info.get('content-type')
-    content_encoding = 'utf-8'
-    if content_type:
-        content_type, params = cgi.parse_header(content_type)
-        content_encoding = params.get('charset') or content_encoding
 
-    maybe_json = content_type and any(candidate in content_type for candidate in JSON_CANDIDATES)
+    if r:
+        content_type, main_type, sub_type, content_encoding = parse_content_type(r)
+    else:
+        content_type = 'application/octet-stream'
+        main_type = 'aplication'
+        sub_type = 'octet-stream'
+        content_encoding = 'utf-8'
+
+    maybe_json = content_type and any(candidate in sub_type for candidate in JSON_CANDIDATES)
     maybe_output = maybe_json or return_content or info['status'] not in status_code
 
     resp = {}
@@ -719,7 +721,7 @@ def main():
         except AttributeError:
             # there was no content, but the error read()
             # may have been stored in the info as 'body'
-            content = info.pop('body', '')
+            content = info.pop('body', b'')
     elif r:
         content = r
 
@@ -747,18 +749,15 @@ def main():
         uresp['location'] = absolute_location(url, uresp['location'])
 
     # Default content_encoding to try
-    if maybe_output:
-        if content_type:
-            u_content = to_text(content, encoding=content_encoding)
-            if maybe_json:
-                try:
-                    js = json.loads(u_content)
-                    uresp['json'] = js
-                except Exception:
-                    if PY2:
-                        sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
-        else:
-            u_content = to_text(content, encoding=content_encoding)
+    if isinstance(content, binary_type):
+        u_content = to_text(content, encoding=content_encoding)
+        if maybe_json:
+            try:
+                js = json.loads(u_content)
+                uresp['json'] = js
+            except Exception:
+                if PY2:
+                    sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
     else:
         u_content = None
 
