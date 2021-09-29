@@ -41,6 +41,8 @@ Ansible does not currently work with Windows Nano Server, since it does
 not have access to the full .NET Framework that is used by the majority of the
 modules and internal components.
 
+.. _windows_faq_ansible:
+
 Can Ansible run on Windows?
 ```````````````````````````
 No, Ansible can only manage Windows hosts. Ansible cannot run on a Windows host
