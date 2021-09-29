@@ -9,10 +9,10 @@ __metaclass__ = type
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
 
+import json
 import os
 import shlex
 import subprocess
-import yaml
 
 from ansible import context
 import ansible.plugins.loader as plugin_loader
@@ -23,9 +23,10 @@ from ansible.config.manager import ConfigManager, Setting
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.common.json import AnsibleJSONEncoder
+from ansible.module_utils.common.yaml import yaml_dump
 from ansible.module_utils.six import string_types
 from ansible.parsing.quoting import is_quoted
-from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
@@ -78,6 +79,13 @@ class ConfigCLI(CLI):
                                  help='Output format for init')
         init_parser.add_argument('--disabled', dest='commented', action='store_true', default=False,
                                  help='Prefixes all entries with a comment character to disable them')
+
+        get_parser = subparsers.add_parser('get', help='Get a specific configuration value', parents=[common])
+        get_parser.add_argument('--setting', dest='setting', action='store', help='Name of the setting to fetch', default=None)
+        get_parser.add_argument('--format', '-f', dest='format', action='store', choices=['yaml', 'json', 'ini'], default='ini',
+                                 help='Output format for get')
+        get_parser.set_defaults(func=self.execute_get)
+
 
         # search_parser = subparsers.add_parser('find', help='Search configuration')
         # search_parser.set_defaults(func=self.execute_search)
@@ -229,7 +237,7 @@ class ConfigCLI(CLI):
         '''
 
         config_entries = self._list_entries_from_args()
-        self.pager(to_text(yaml.dump(config_entries, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
+        self.pager(to_text(yaml_dump(config_entries), errors='surrogate_or_strict'))
 
     def _get_settings_vars(self, settings, subkey):
 
@@ -482,3 +490,36 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+
+    def execute_get(self):
+
+        setting = context.CLIARGS['setting']
+        if not setting:
+            raise AnsibleOptionsError("No setting provided, but a specific setting is needed to return a value for")
+
+        ptype = context.CLIARGS['type']
+        plugin = context.CLIARGS['args']
+
+        if ptype in ["all", "base"]:
+            ptype = None
+            if plugin:
+                raise AnsibleOptionsError("Incompatible plugin type provided (none, all or base) , plugin name not supported")
+
+        # process for base config settings
+        if ptype is not None:
+            if not plugin:
+                raise AnsibleOptionsError("No plugin name provided, but plugin type specified, a setting cannot be for a plugin type also requires a plugin name")
+
+        res = self.config.get_config_value(setting, plugin_type=ptype, plugin_name=plugin)
+
+        f = context.CLIARGS['format']
+        if f == 'ini':
+            if isinstance(res, list):
+                res = ', '.join(res)
+        elif f == 'json':
+            res = json.dumps(res, cls=AnsibleJSONEncoder)
+        elif f == 'yaml':
+            res = yaml_dump(res)
+
+        display.display(to_text(res, errors='surrogate_or_strict'))
+>>>>>>> 1cb4b15f51 (add 'get' setting to ansbile-config)
