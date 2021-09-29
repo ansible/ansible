@@ -280,7 +280,7 @@ Debian users may use the same source as the Ubuntu PPA (using the following tabl
   :header-rows: 1
 
   * - Debian
-    - 
+    -
     - Ubuntu
   * - Debian 11 (Bullseye)
     - ->
@@ -294,7 +294,7 @@ Debian users may use the same source as the Ubuntu PPA (using the following tabl
   * - Debian 8 (Jessie)
     - ->
     - Ubuntu 14.04 (Trusty)
-    
+
 .. note::
 
     As of Ansible 4.0.0, new releases will only be generated for Ubuntu 18.04 (Bionic) or later releases.
@@ -304,7 +304,7 @@ Add the following line to ``/etc/apt/sources.list`` or ``/etc/apt/sources.list.d
 .. code-block:: bash
 
     deb http://ppa.launchpad.net/ansible/ansible/ubuntu MATCHING_UBUNTU_CODENAME_HERE main
-    
+
 Example for Debian 11 (Bullseye)
 
 .. code-block:: bash
@@ -442,6 +442,14 @@ Update of the software will be managed by the swupd tool::
 
 .. _from_pip_devel:
 .. _getting_ansible:
+
+.. _from_windows:
+
+Installing Ansible on Windows
+------------------------------
+
+See :ref:`windows_faq_ansible`
+
 
 Installing and running the ``devel`` branch from source
 =======================================================
