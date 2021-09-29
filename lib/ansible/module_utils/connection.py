@@ -163,6 +163,11 @@ class Connection(object):
         try:
             response = json.loads(out)
         except ValueError:
+            # set_option(s) has sensitive info, and the details are unlikely to matter anyway
+            if name.startswith("set_option"):
+                raise ConnectionError(
+                    "Unable to decode JSON from response to {0}. Received '{1}'.".format(name, out)
+                )
             params = [repr(arg) for arg in args] + ['{0}={1!r}'.format(k, v) for k, v in iteritems(kwargs)]
             params = ', '.join(params)
             raise ConnectionError(
