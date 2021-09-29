@@ -295,5 +295,28 @@ namespace Namespace11
 Add-CSharpType -Reference $arch_class
 Assert-Equals -actual ([Namespace11.Class11]::GetIntPtrSize()) -expected ([System.IntPtr]::Size)
 
+$lib_set = @'
+using System;
+
+namespace Namespace12
+{
+    public class Class12
+    {
+        public static string GetString()
+        {
+            return "b";
+        }
+    }
+}
+'@
+$env:LIB = "C:\fake\folder\path"
+try {
+    Add-CSharpType -Reference $lib_set
+}
+finally {
+    Remove-Item -LiteralPath env:\LIB
+}
+Assert-Equals -actual ([Namespace12.Class12]::GetString()) -expected "b"
+
 $result.res = "success"
 Exit-Json -obj $result
