@@ -209,11 +209,7 @@ class TestVaultCli(unittest.TestCase):
 @pytest.mark.parametrize('cli_args, expected', [
     (['ansible-vault', 'view', 'vault.txt'], 0),
     (['ansible-vault', 'view', 'vault.txt', '-vvv'], 3),
-    (['ansible-vault', '-vv', 'view', 'vault.txt'], 2),
-    # Due to our manual parsing we want to verify that -v set in the sub parser takes precedence. This behaviour is
-    # deprecated and tests should be removed when the code that handles it is removed
-    (['ansible-vault', '-vv', 'view', 'vault.txt', '-v'], 1),
-    (['ansible-vault', '-vv', 'view', 'vault.txt', '-vvvv'], 4),
+    (['ansible-vault', 'view', 'vault.txt', '-vv'], 2),
 ])
 def test_verbosity_arguments(cli_args, expected, tmp_path_factory, monkeypatch):
     # Add a password file so we don't get a prompt in the test
