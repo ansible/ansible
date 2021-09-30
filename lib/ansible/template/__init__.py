@@ -776,13 +776,6 @@ class Templar:
         self._available_variables = variables
         self._cached_result = {}
 
-    def set_available_variables(self, variables):
-        display.deprecated(
-            'set_available_variables is being deprecated. Use "@available_variables.setter" instead.',
-            version='2.13', collection_name='ansible.builtin'
-        )
-        self.available_variables = variables
-
     @contextmanager
     def set_temporary_context(self, **kwargs):
         """Context manager used to set temporary templating context, without having to worry about resetting
