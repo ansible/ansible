@@ -83,15 +83,15 @@ class ConfigCLI(CLI):
         get_parser = subparsers.add_parser('get', help='Get a specific configuration value', parents=[common])
         get_parser.add_argument('--setting', dest='setting', action='store', help='Name of the setting to fetch', default=None)
         get_parser.add_argument('--format', '-f', dest='format', action='store', choices=['yaml', 'json', 'ini'], default='ini',
-                                 help='Output format for get')
+                                help='Output format for get')
         get_parser.set_defaults(func=self.execute_get)
-
 
         # search_parser = subparsers.add_parser('find', help='Search configuration')
         # search_parser.set_defaults(func=self.execute_search)
         # search_parser.add_argument('args', help='Search term', metavar='<search term>')
 
     def post_process_args(self, options):
+
         options = super(ConfigCLI, self).post_process_args(options)
         display.verbosity = options.verbosity
 
@@ -287,7 +287,7 @@ class ConfigCLI(CLI):
                 if subkey == 'env':
                     data.append('%s%s=%s' % (prefix, entry, default))
                 elif subkey == 'vars':
-                    data.append(prefix + to_text(yaml.dump({entry: default}, Dumper=AnsibleDumper, default_flow_style=False), errors='surrogate_or_strict'))
+                    data.append(prefix + to_text(yaml_dump({entry: default}, default_flow_style=False), errors='surrogate_or_strict'))
                 data.append('')
 
         return data
@@ -510,7 +510,7 @@ if __name__ == '__main__':
         if ptype is not None:
 
             if not context.CLIARGS['args']:
-                raise AnsibleOptionsError("No plugin name provided, but plugin type specified, a setting cannot be for a plugin type also requires a plugin name")
+                raise AnsibleOptionsError("No plugin name provided, plugin type specified, a setting requires both or none")
 
             plugin = context.CLIARGS['args'][0]
             if len(context.CLIARGS['args']) > 1:
