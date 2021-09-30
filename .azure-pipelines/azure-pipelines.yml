@@ -62,7 +62,6 @@ stages:
           nameFormat: Python {0}
           testFormat: units/{0}
           targets:
-            - test: 2.6
             - test: 2.7
             - test: 3.5
             - test: 3.6
@@ -116,8 +115,6 @@ stages:
           targets:
             - name: Alpine 3
               test: alpine3
-            - name: CentOS 6
-              test: centos6
             - name: CentOS 7
               test: centos7
             - name: CentOS 8
@@ -190,8 +187,6 @@ stages:
         parameters:
           testFormat: i/linux/{0}
           targets:
-            - name: CentOS 6
-              test: centos6
             - name: CentOS 7
               test: centos7
             - name: CentOS 8

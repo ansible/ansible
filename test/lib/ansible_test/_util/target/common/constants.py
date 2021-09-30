@@ -13,7 +13,6 @@ SOFT_RLIMIT_NOFILE = 1024
 TIMEOUT_PATH = '.ansible-test-timeout.json'
 
 REMOTE_ONLY_PYTHON_VERSIONS = (
-    '2.6',
     '2.7',
     '3.5',
     '3.6',
