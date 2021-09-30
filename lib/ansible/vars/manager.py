@@ -462,7 +462,7 @@ class VariableManager:
 
         if play:
             # This is a list of all role names of all dependencies for all roles for this play
-            dependency_role_names = list(set([d.get_name() for r in play.roles for d in r.get_all_dependencies()]))
+            dependency_role_names = list({d.get_name() for r in play.roles for d in r.get_all_dependencies()})
             # This is a list of all role names of all roles for this play
             play_role_names = [r.get_name() for r in play.roles]
 

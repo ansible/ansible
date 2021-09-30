@@ -158,7 +158,7 @@ def main():
         data['finished'] = 0
 
     # Fix error: TypeError: exit_json() keywords must be strings
-    data = dict([(to_native(k), v) for k, v in iteritems(data)])
+    data = {to_native(k): v for k, v in iteritems(data)}
 
     module.exit_json(**data)
 

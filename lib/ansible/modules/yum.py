@@ -776,7 +776,7 @@ class YumModule(YumDnf):
             rc2, out2, err2 = self.module.run_command(cmd)
             if rc == 0 and rc2 == 0:
                 out += out2
-                pkgs = set([p for p in out.split('\n') if p.strip()])
+                pkgs = {p for p in out.split('\n') if p.strip()}
                 if not pkgs:
                     pkgs = self.is_installed(repoq, req_spec, qf=qf)
                 return pkgs
