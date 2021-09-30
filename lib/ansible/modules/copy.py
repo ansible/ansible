@@ -58,10 +58,8 @@ options:
     - Influence whether the remote file must always be replaced.
     - If C(yes), the remote file will be replaced when contents are different than the source.
     - If C(no), the file will only be transferred if the destination does not exist.
-    - Alias C(thirsty) has been deprecated and will be removed in 2.13.
     type: bool
     default: yes
-    aliases: [ thirsty ]
     version_added: '1.1'
   mode:
     description:
@@ -537,7 +535,7 @@ def main():
             content=dict(type='str', no_log=True),
             dest=dict(type='path', required=True),
             backup=dict(type='bool', default=False),
-            force=dict(type='bool', default=True, aliases=['thirsty']),
+            force=dict(type='bool', default=True),
             validate=dict(type='str'),
             directory_mode=dict(type='raw'),
             remote_src=dict(type='bool'),
@@ -548,10 +546,6 @@ def main():
         add_file_common_args=True,
         supports_check_mode=True,
     )
-
-    if module.params.get('thirsty'):
-        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead',
-                         version='2.13', collection_name='ansible.builtin')
 
     src = module.params['src']
     b_src = to_bytes(src, errors='surrogate_or_strict')
