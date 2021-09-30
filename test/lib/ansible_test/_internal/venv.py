@@ -96,10 +96,6 @@ def create_virtual_environment(args,  # type: EnvironmentConfig
             # virtualenv not available for this Python or we were unable to detect the version
             continue
 
-        if python.version == '2.6' and virtualenv_version >= (16, 0, 0):
-            # virtualenv 16.0.0 dropped python 2.6 support: https://virtualenv.pypa.io/en/latest/changes/#v16-0-0-2018-05-16
-            continue
-
         # try using 'virtualenv' from another Python to setup the desired version
         if run_virtualenv(args, available_python_interpreter, python.path, system_site_packages, pip, path):
             display.info('Created Python %s virtual environment using "virtualenv" on Python %s: %s' % (python.version, available_python_version, path),
