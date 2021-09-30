@@ -77,7 +77,6 @@ lib/ansible/modules/yum_repository.py validate-modules:undocumented-parameter
 lib/ansible/module_utils/compat/_selectors2.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py pylint:disallowed-name
-lib/ansible/module_utils/compat/selinux.py import-2.6!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-2.7!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.5!skip # pass/fail depends on presence of libselinux.so
 lib/ansible/module_utils/compat/selinux.py import-3.6!skip # pass/fail depends on presence of libselinux.so
