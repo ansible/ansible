@@ -274,7 +274,7 @@ class GalaxyCLI(CLI):
                                  help='The path in which the skeleton {0} will be created. The default is the '
                                       'current working directory.'.format(galaxy_type))
         init_parser.add_argument('--{0}-skeleton'.format(galaxy_type), dest='{0}_skeleton'.format(galaxy_type),
-                                 default=C.GALAXY_ROLE_SKELETON,
+                                 default=C.GALAXY_COLLECTION_SKELETON if galaxy_type == 'collection' else C.GALAXY_ROLE_SKELETON,
                                  help='The path to a {0} skeleton that the new {0} should be based '
                                       'upon.'.format(galaxy_type))
 
@@ -934,6 +934,7 @@ class GalaxyCLI(CLI):
                 dependencies=[],
             ))
 
+            skeleton_ignore_expressions = C.GALAXY_ROLE_SKELETON_IGNORE
             obj_path = os.path.join(init_path, obj_name)
         elif galaxy_type == 'collection':
             namespace, collection_name = obj_name.split('.', 1)
@@ -952,6 +953,7 @@ class GalaxyCLI(CLI):
                 build_ignore=[],
             ))
 
+            skeleton_ignore_expressions = C.GALAXY_COLLECTION_SKELETON_IGNORE
             obj_path = os.path.join(init_path, namespace, collection_name)
 
         b_obj_path = to_bytes(obj_path, errors='surrogate_or_strict')
@@ -967,7 +969,6 @@ class GalaxyCLI(CLI):
 
         if obj_skeleton is not None:
             own_skeleton = False
-            skeleton_ignore_expressions = C.GALAXY_ROLE_SKELETON_IGNORE
         else:
             own_skeleton = True
             obj_skeleton = self.galaxy.default_role_skeleton_path

@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - Add galaxy_collection_skeleton/galaxy_collection_skeleton_ignore configuration options
