@@ -21,23 +21,6 @@ LOGGING_MESSAGE_FILTER = re.compile("^("
 # [1] https://src.fedoraproject.org/rpms/python-pip/blob/master/f/emit-a-warning-when-running-with-root-privileges.patch
 
 WARNING_MESSAGE_FILTERS = (
-    # DEPRECATION: Python 2.6 is no longer supported by the Python core team, please upgrade your Python.
-    # A future version of pip will drop support for Python 2.6
-    'Python 2.6 is no longer supported by the Python core team, ',
-
-    # {path}/python2.6/lib/python2.6/site-packages/pip/_vendor/urllib3/util/ssl_.py:137: InsecurePlatformWarning:
-    # A true SSLContext object is not available. This prevents urllib3 from configuring SSL appropriately and may cause certain SSL connections to fail.
-    # You can upgrade to a newer version of Python to solve this.
-    # For more information, see https://urllib3.readthedocs.io/en/latest/advanced-usage.html#ssl-warnings
-    'A true SSLContext object is not available. ',
-
-    # {path}/python2.6/lib/python2.6/site-packages/pip/_vendor/urllib3/util/ssl_.py:339: SNIMissingWarning:
-    # An HTTPS request has been made, but the SNI (Subject Name Indication) extension to TLS is not available on this platform.
-    # This may cause the server to present an incorrect TLS certificate, which can cause validation failures.
-    # You can upgrade to a newer version of Python to solve this.
-    # For more information, see https://urllib3.readthedocs.io/en/latest/advanced-usage.html#ssl-warnings
-    'An HTTPS request has been made, but the SNI ',
-
     # DEPRECATION: Python 2.7 reached the end of its life on January 1st, 2020. Please upgrade your Python as Python 2.7 is no longer maintained.
     # pip 21.0 will drop support for Python 2.7 in January 2021.
     # More details about Python 2 support in pip, can be found at https://pip.pypa.io/en/latest/development/release-process/#python-2-support
@@ -65,7 +48,6 @@ def main():
 
     for message_filter in WARNING_MESSAGE_FILTERS:
         # Setting filterwarnings in code is necessary because of the following:
-        #   Python 2.6 does not support the PYTHONWARNINGS environment variable. It does support the -W option.
         #   Python 2.7 cannot use the -W option to match warning text after a colon. This makes it impossible to match specific warning messages.
         warnings.filterwarnings('ignore', message_filter)
 

@@ -367,9 +367,6 @@ def common_environment():
         # Example configuration for brew on macOS:
         # export LDFLAGS="-L$(brew --prefix openssl)/lib/     -L$(brew --prefix libyaml)/lib/"
         # export  CFLAGS="-I$(brew --prefix openssl)/include/ -I$(brew --prefix libyaml)/include/"
-        # However, this is not adequate for PyYAML 3.13, which is the latest version supported on Python 2.6.
-        # For that version the standard location must be used, or `pip install` must be invoked with additional options:
-        # --global-option=build_ext --global-option=-L{path_to_lib_dir}
         'LDFLAGS',
         'CFLAGS',
     )
