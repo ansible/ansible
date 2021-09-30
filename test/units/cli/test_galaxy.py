@@ -462,13 +462,7 @@ class TestGalaxyInitSkeleton(unittest.TestCase, ValidRoleTests):
 @pytest.mark.parametrize('cli_args, expected', [
     (['ansible-galaxy', 'collection', 'init', 'abc._def'], 0),
     (['ansible-galaxy', 'collection', 'init', 'abc._def', '-vvv'], 3),
-    (['ansible-galaxy', '-vv', 'collection', 'init', 'abc._def'], 2),
-    # Due to our manual parsing we want to verify that -v set in the sub parser takes precedence. This behaviour is
-    # deprecated and tests should be removed when the code that handles it is removed
-    (['ansible-galaxy', '-vv', 'collection', 'init', 'abc._def', '-v'], 1),
-    (['ansible-galaxy', '-vv', 'collection', 'init', 'abc._def', '-vvvv'], 4),
-    (['ansible-galaxy', '-vvv', 'init', 'name'], 3),
-    (['ansible-galaxy', '-vvvvv', 'init', '-v', 'name'], 1),
+    (['ansible-galaxy', 'collection', 'init', 'abc._def', '-vv'], 2),
 ])
 def test_verbosity_arguments(cli_args, expected, monkeypatch):
     # Mock out the functions so we don't actually execute anything
