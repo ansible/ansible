@@ -407,6 +407,11 @@ msg:
   returned: always
   type: str
   sample: OK (unknown bytes)
+path:
+  description: destination file/path
+  returned: dest is defined
+  type: str
+  sample: /path/to/file.txt
 redirected:
   description: Whether the request was redirected.
   returned: on success
