@@ -162,10 +162,8 @@ options:
   force:
     description:
       - If C(yes) do not get a cached copy.
-      - Alias C(thirsty) has been deprecated and will be removed in 2.13.
     type: bool
     default: no
-    aliases: [ thirsty ]
   use_proxy:
     description:
       - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
@@ -673,10 +671,6 @@ def main():
         add_file_common_args=True,
         mutually_exclusive=[['body', 'src']],
     )
-
-    if module.params.get('thirsty'):
-        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead',
-                         version='2.13', collection_name='ansible.builtin')
 
     url = module.params['url']
     body = module.params['body']
