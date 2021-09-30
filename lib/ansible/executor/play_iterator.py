@@ -159,7 +159,7 @@ class MetaPlayIterator(type):
     use those attributes. Deprecation warning is printed when old attr
     is redirected to new enum.
     """
-    def __getattribute__(self, name):
+    def __getattribute__(cls, name):
         return _redirect_to_enum(name)
 
 
