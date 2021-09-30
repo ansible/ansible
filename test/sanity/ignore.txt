@@ -8,7 +8,6 @@ examples/scripts/my_test.py shebang # example module but not in a normal module 
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
 lib/ansible/cli/console.py pylint:disallowed-name
-lib/ansible/cli/__init__.py pylint:ansible-deprecated-version
 lib/ansible/cli/scripts/ansible_cli_stub.py shebang
 lib/ansible/cli/scripts/ansible_connection_cli_stub.py shebang
 lib/ansible/config/base.yml no-unwanted-files
@@ -33,7 +32,6 @@ lib/ansible/modules/command.py validate-modules:doc-default-does-not-match-spec 
 lib/ansible/modules/command.py validate-modules:doc-missing-type
 lib/ansible/modules/command.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/command.py validate-modules:undocumented-parameter
-lib/ansible/modules/copy.py pylint:ansible-deprecated-version
 lib/ansible/modules/copy.py pylint:disallowed-name
 lib/ansible/modules/copy.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/copy.py validate-modules:nonexistent-parameter-documented
@@ -43,8 +41,6 @@ lib/ansible/modules/dnf.py validate-modules:parameter-invalid
 lib/ansible/modules/file.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/file.py validate-modules:undocumented-parameter
 lib/ansible/modules/find.py use-argspec-type-path # fix needed
-lib/ansible/modules/get_url.py pylint:ansible-deprecated-version
-lib/ansible/modules/get_url.py validate-modules:ansible-deprecated-version
 lib/ansible/modules/git.py pylint:disallowed-name
 lib/ansible/modules/git.py use-argspec-type-path
 lib/ansible/modules/git.py validate-modules:doc-missing-type
@@ -68,9 +64,7 @@ lib/ansible/modules/systemd.py validate-modules:parameter-invalid
 lib/ansible/modules/systemd.py validate-modules:return-syntax-error
 lib/ansible/modules/sysvinit.py validate-modules:return-syntax-error
 lib/ansible/modules/unarchive.py validate-modules:nonexistent-parameter-documented
-lib/ansible/modules/uri.py pylint:ansible-deprecated-version
 lib/ansible/modules/uri.py pylint:disallowed-name
-lib/ansible/modules/uri.py validate-modules:ansible-deprecated-version
 lib/ansible/modules/uri.py validate-modules:doc-required-mismatch
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/user.py validate-modules:doc-default-incompatible-type
@@ -133,7 +127,6 @@ lib/ansible/plugins/lookup/sequence.py pylint:disallowed-name
 lib/ansible/plugins/shell/cmd.py pylint:arguments-renamed
 lib/ansible/plugins/strategy/__init__.py pylint:disallowed-name
 lib/ansible/plugins/strategy/linear.py pylint:disallowed-name
-lib/ansible/template/__init__.py pylint:ansible-deprecated-version
 lib/ansible/utils/collection_loader/_collection_finder.py pylint:deprecated-class
 lib/ansible/utils/collection_loader/_collection_meta.py pylint:deprecated-class
 lib/ansible/vars/hostvars.py pylint:disallowed-name
@@ -192,7 +185,6 @@ test/integration/targets/win_script/files/test_script_with_splatting.ps1 pslint:
 test/lib/ansible_test/_data/requirements/sanity.pslint.ps1 pslint:PSCustomUseLiteralPath # Uses wildcards on purpose
 test/lib/ansible_test/_util/target/setup/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 test/support/integration/plugins/inventory/aws_ec2.py pylint:use-a-generator
-test/support/integration/plugins/modules/ec2_ami_info.py pylint:ansible-deprecated-version
 test/support/integration/plugins/modules/ec2_group.py pylint:use-a-generator
 test/support/integration/plugins/modules/lvg.py pylint:disallowed-name
 test/support/integration/plugins/modules/timezone.py pylint:disallowed-name
