@@ -1352,19 +1352,34 @@ GALAXY_IGNORE_CERTS:
   - {key: ignore_certs, section: galaxy}
   type: boolean
 GALAXY_ROLE_SKELETON:
-  name: Galaxy role or collection skeleton directory
-  description: Role or collection skeleton directory to use as a template for the ``init`` action in ``ansible-galaxy``, same as ``--role-skeleton``.
+  name: Galaxy role skeleton directory
+  description: Role skeleton directory to use as a template for the ``init`` action in ``ansible-galaxy``/``ansible-galaxy role``, same as ``--role-skeleton``.
   env: [{name: ANSIBLE_GALAXY_ROLE_SKELETON}]
   ini:
   - {key: role_skeleton, section: galaxy}
   type: path
 GALAXY_ROLE_SKELETON_IGNORE:
-  name: Galaxy skeleton ignore
+  name: Galaxy role skeleton ignore
   default: ["^.git$", "^.*/.git_keep$"]
   description: patterns of files to ignore inside a Galaxy role or collection skeleton directory
   env: [{name: ANSIBLE_GALAXY_ROLE_SKELETON_IGNORE}]
   ini:
   - {key: role_skeleton_ignore, section: galaxy}
+  type: list
+GALAXY_COLLECTION_SKELETON:
+  name: Galaxy collection skeleton directory
+  description: Collection skeleton directory to use as a template for the ``init`` action in ``ansible-galaxy collection``, same as ``--collection-skeleton``.
+  env: [{name: ANSIBLE_GALAXY_COLLECTION_SKELETON}]
+  ini:
+  - {key: collection_skeleton, section: galaxy}
+  type: path
+GALAXY_COLLECTION_SKELETON_IGNORE:
+  name: Galaxy collection skeleton ignore
+  default: ["^.git$", "^.*/.git_keep$"]
+  description: patterns of files to ignore inside a Galaxy collection skeleton directory
+  env: [{name: ANSIBLE_GALAXY_COLLECTION_SKELETON_IGNORE}]
+  ini:
+  - {key: collection_skeleton_ignore, section: galaxy}
   type: list
 # TODO: unused?
 #GALAXY_SCMS:
