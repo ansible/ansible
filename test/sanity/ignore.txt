@@ -187,6 +187,7 @@ test/support/integration/plugins/inventory/aws_ec2.py pylint:use-a-generator
 test/support/integration/plugins/modules/ec2_group.py pylint:use-a-generator
 test/support/integration/plugins/modules/lvg.py pylint:disallowed-name
 test/support/integration/plugins/modules/timezone.py pylint:disallowed-name
+test/support/integration/plugins/modules/x509_crl.py pylint:consider-using-set-comprehension
 test/support/integration/plugins/module_utils/aws/core.py pylint:property-with-parameters
 test/support/integration/plugins/module_utils/cloud.py future-import-boilerplate
 test/support/integration/plugins/module_utils/cloud.py metaclass-boilerplate
@@ -203,6 +204,7 @@ test/support/integration/plugins/module_utils/network/common/utils.py metaclass-
 test/support/integration/plugins/module_utils/network/common/utils.py pylint:use-a-generator
 test/support/integration/plugins/module_utils/postgres.py future-import-boilerplate
 test/support/integration/plugins/module_utils/postgres.py metaclass-boilerplate
+test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/filter/network.py pylint:consider-using-dict-comprehension
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/compat/ipaddress.py no-unicode-literals
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/compat/ipaddress.py pep8:E203
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/network/common/facts/facts.py pylint:unnecessary-comprehension

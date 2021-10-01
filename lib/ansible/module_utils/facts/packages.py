@@ -13,7 +13,7 @@ from ansible.module_utils.common._utils import get_all_subclasses
 
 def get_all_pkg_managers():
 
-    return dict([(obj.__name__.lower(), obj) for obj in get_all_subclasses(PkgMgr) if obj not in (CLIMgr, LibMgr)])
+    return {obj.__name__.lower(): obj for obj in get_all_subclasses(PkgMgr) if obj not in (CLIMgr, LibMgr)}
 
 
 class PkgMgr(with_metaclass(ABCMeta, object)):
