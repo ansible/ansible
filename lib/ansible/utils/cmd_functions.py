@@ -24,17 +24,10 @@ import shlex
 import subprocess
 import sys
 
-from ansible.module_utils.six import PY2, PY3
 from ansible.module_utils._text import to_bytes
 
 
 def run_cmd(cmd, live=False, readsize=10):
-
-    # readsize = 10
-
-    # On python2, shlex needs byte strings
-    if PY2:
-        cmd = to_bytes(cmd, errors='surrogate_or_strict')
     cmdargs = shlex.split(cmd)
 
     # subprocess should be passed byte strings.  (on python2.6 it must be
@@ -52,11 +45,7 @@ def run_cmd(cmd, live=False, readsize=10):
         if p.stdout in rfd:
             dat = os.read(p.stdout.fileno(), readsize)
             if live:
-                # On python3, stdout has a codec to go from text type to bytes
-                if PY3:
-                    sys.stdout.buffer.write(dat)
-                else:
-                    sys.stdout.write(dat)
+                sys.stdout.buffer.write(dat)
             stdout += dat
             if dat == b'':
                 rpipes.remove(p.stdout)
@@ -64,11 +53,7 @@ def run_cmd(cmd, live=False, readsize=10):
             dat = os.read(p.stderr.fileno(), readsize)
             stderr += dat
             if live:
-                # On python3, stdout has a codec to go from text type to bytes
-                if PY3:
-                    sys.stdout.buffer.write(dat)
-                else:
-                    sys.stdout.write(dat)
+                sys.stdout.buffer.write(dat)
             if dat == b'':
                 rpipes.remove(p.stderr)
         # only break out if we've emptied the pipes, or there is nothing to

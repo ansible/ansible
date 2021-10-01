@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import atexit
-import io
+import configparser
 import os
 import os.path
 import sys
@@ -20,7 +20,6 @@ from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.six import string_types
-from ansible.module_utils.six.moves import configparser
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.quoting import unquote
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode

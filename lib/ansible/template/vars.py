@@ -22,7 +22,6 @@ __metaclass__ = type
 from jinja2.utils import missing
 
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
-from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common._collections_compat import Mapping
 
@@ -51,7 +50,7 @@ class AnsibleJ2Vars(Mapping):
         self._globals = globals
         self._locals = dict()
         if isinstance(locals, dict):
-            for key, val in iteritems(locals):
+            for key, val in locals.items():
                 if val is not missing:
                     if key[:2] == 'l_':
                         self._locals[key[2:]] = val

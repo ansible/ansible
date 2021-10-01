@@ -12,9 +12,10 @@ import json
 import os
 import random
 import re
+import shlex
 import stat
 import tempfile
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
@@ -22,8 +23,7 @@ from ansible.executor.module_common import modify_module
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
 from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.json_utils import _filter_non_json_lines
-from ansible.module_utils.six import binary_type, string_types, text_type, iteritems, with_metaclass
-from ansible.module_utils.six.moves import shlex_quote
+from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.release import __version__
@@ -36,7 +36,7 @@ from ansible.utils.plugin_docs import get_versioned_doclink
 display = Display()
 
 
-class ActionBase(with_metaclass(ABCMeta, object)):
+class ActionBase(ABC):
 
     '''
     This class is the base class for all action plugins, and defines
@@ -1023,8 +1023,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # we need to dump the module args to a k=v string in a file on
                 # the remote system, which can be read and parsed by the module
                 args_data = ""
-                for k, v in iteritems(module_args):
-                    args_data += '%s=%s ' % (k, shlex_quote(text_type(v)))
+                for k, v in module_args.items():
+                    args_data += '%s=%s ' % (k, shlex.quote(text_type(v)))
                 self._transfer_data(args_file_path, args_data)
             elif module_style in ('non_native_want_json', 'binary'):
                 self._transfer_data(args_file_path, json.dumps(module_args))
@@ -1242,7 +1242,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # only applied for the default executable to avoid interfering with the raw action
                 cmd = self._connection._shell.append_command(cmd, 'sleep 0')
             if executable:
-                cmd = executable + ' -c ' + shlex_quote(cmd)
+                cmd = executable + ' -c ' + shlex.quote(cmd)
 
         display.debug("_low_level_execute_command(): executing: %s" % (cmd,))
 

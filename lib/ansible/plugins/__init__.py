@@ -21,12 +21,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from abc import ABCMeta
+from abc import ABC
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import with_metaclass, string_types
+from ansible.module_utils.six import string_types
 from ansible.utils.display import Display
 
 display = Display()
@@ -44,7 +44,7 @@ def get_plugin_class(obj):
         return obj.__class__.__name__.lower().replace('module', '')
 
 
-class AnsiblePlugin(with_metaclass(ABCMeta, object)):
+class AnsiblePlugin(ABC):
 
     # allow extra passthrough parameters
     allow_extras = False

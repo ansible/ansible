@@ -21,13 +21,12 @@ __metaclass__ = type
 
 import re
 
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils.six import with_metaclass
 
 
-class TerminalBase(with_metaclass(ABCMeta, object)):
+class TerminalBase(ABC):
     '''
     A base class for implementing cli connections
 

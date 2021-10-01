@@ -16,14 +16,15 @@ import tarfile
 import time
 import threading
 
+from urllib.error import HTTPError
+from urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljoin
+
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.api import retry_with_delays_and_condition
 from ansible.module_utils.api import generate_jittered_backoff
 from ansible.module_utils.six import string_types
-from ansible.module_utils.six.moves.urllib.error import HTTPError
-from ansible.module_utils.six.moves.urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljoin
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url, prepare_multipart
 from ansible.utils.display import Display

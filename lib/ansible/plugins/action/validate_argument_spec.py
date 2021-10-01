@@ -6,7 +6,7 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import string_types
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.module_utils.errors import AnsibleValidationErrorMultiple
 from ansible.utils.vars import combine_vars
@@ -30,7 +30,7 @@ class ActionModule(ActionBase):
         '''
         args = {}
 
-        for argument_name, argument_attrs in iteritems(argument_spec):
+        for argument_name, argument_attrs in argument_spec.items():
             if argument_name in task_vars:
                 args[argument_name] = task_vars[argument_name]
         args = self._templar.template(args)

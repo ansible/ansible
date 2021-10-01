@@ -28,11 +28,11 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import Container, Sequence
+from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.common.yaml import yaml_dump
 from ansible.module_utils.compat import importlib
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import string_types
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.dumper import AnsibleDumper
@@ -499,7 +499,7 @@ class DocCLI(CLI, RoleMixin):
         text = []
 
         for role in sorted(roles):
-            for entry_point, desc in iteritems(list_json[role]['entry_points']):
+            for entry_point, desc in list_json[role]['entry_points'].items():
                 if len(desc) > linelimit:
                     desc = desc[:linelimit] + '...'
                 text.append("%-*s %-*s %s" % (max_role_len, role,

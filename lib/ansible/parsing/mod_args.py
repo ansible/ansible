@@ -21,12 +21,11 @@ __metaclass__ = type
 
 import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleError, AnsibleAssertionError
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.plugins.loader import module_loader, action_loader
 from ansible.template import Templar
-from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.sentinel import Sentinel
 
@@ -294,10 +293,10 @@ class ModuleArgsParser:
         # module: <stuff> is the more new-style invocation
 
         # filter out task attributes so we're only querying unrecognized keys as actions/modules
-        non_task_ds = dict((k, v) for k, v in iteritems(self._task_ds) if (k not in self._task_attrs) and (not k.startswith('with_')))
+        non_task_ds = dict((k, v) for k, v in self._task_ds.items() if (k not in self._task_attrs) and (not k.startswith('with_')))
 
         # walk the filtered input dictionary to see if we recognize a module name
-        for item, value in iteritems(non_task_ds):
+        for item, value in non_task_ds.items():
             context = None
             is_action_candidate = False
             if item in BUILTIN_TASKS:
