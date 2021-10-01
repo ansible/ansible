@@ -148,7 +148,7 @@ def create_posix_inventory(args, path, target_hosts, needs_ssh=False):  # type: 
             ansible_host=ssh.settings.host,
             ansible_port=ssh.settings.port,
             ansible_user=ssh.settings.user,
-            ansible_ssh_private_key=ssh.settings.identity_file,
+            ansible_ssh_private_key_file=ssh.settings.identity_file,
         )
 
         if ssh.become:
