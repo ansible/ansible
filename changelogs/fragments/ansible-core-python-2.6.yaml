@@ -1,0 +1,2 @@
+deprecated_features:
+  - ansible-core - Remove support for Python 2.6.

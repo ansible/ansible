@@ -119,7 +119,7 @@ def get_ps_argument_spec(filename, collection):
     util_manifest = json.dumps({
         'module_path': to_text(module_path, errors='surrogiate_or_strict'),
         'ansible_basic': ps_dep_finder.cs_utils_module["Ansible.Basic"]['path'],
-        'ps_utils': dict([(name, info['path']) for name, info in ps_dep_finder.ps_modules.items()]),
+        'ps_utils': {name: info['path'] for name, info in ps_dep_finder.ps_modules.items()}
     })
 
     script_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ps_argspec.ps1')

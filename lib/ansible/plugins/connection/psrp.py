@@ -828,8 +828,7 @@ if ($bytes_read -gt 0) {
         supported_args = []
         for auth_kwarg in AUTH_KWARGS.values():
             supported_args.extend(auth_kwarg)
-        extra_args = set([v.replace('ansible_psrp_', '') for v in
-                          self.get_option('_extras')])
+        extra_args = {v.replace('ansible_psrp_', '') for v in self.get_option('_extras')}
         unsupported_args = extra_args.difference(supported_args)
 
         for arg in unsupported_args:

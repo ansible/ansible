@@ -30,7 +30,7 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
 
-    BUILTIN_PKG_MGR_MODULES = set([manager['name'] for manager in PKG_MGRS])
+    BUILTIN_PKG_MGR_MODULES = {manager['name'] for manager in PKG_MGRS}
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for package operations '''
