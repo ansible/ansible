@@ -1,3 +1,4 @@
 needs/root
 shippable/posix/group2
 destructive
+skip/osx  # brew no longer works due to SSL certificate issues, see: https://letsencrypt.org/docs/dst-root-ca-x3-expiration-september-2021/
