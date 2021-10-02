@@ -42,6 +42,11 @@ Installing a collection from a git repository
 
 .. include:: ../shared_snippets/installing_collections_git_repo.txt
 
+Installing a collection from source files
+-----------------------------------------
+
+.. include:: ../shared_snippets/installing_collections_file.rst
+
 .. _collection_requirements_file:
 
 Install multiple collections with a requirements file
