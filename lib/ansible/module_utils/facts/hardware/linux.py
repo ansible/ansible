@@ -717,7 +717,7 @@ class LinuxHardware(Hardware):
                 device = "/dev/%s" % (block)
                 rc, drivedata, err = self.module.run_command([sg_inq, device])
                 if rc == 0:
-                    serial = re.search(r"Unit serial number:\s+(\w+)", drivedata)
+                    serial = re.search(r"(?:Unit serial|Serial) number:\s+(\w+)", drivedata)
                     if serial:
                         d['serial'] = serial.group(1)
             else:
