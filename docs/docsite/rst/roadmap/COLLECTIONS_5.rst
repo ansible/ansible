@@ -31,7 +31,7 @@ Release schedule
 :2021-11-16: Ansible-5.0.0 beta2.
 :2021-11-23: Ansible-5.0.0 rc1 [2]_ [3]_ (weekly release candidates as needed; test and alert us to any blocker bugs).  Blocker bugs will slip release.
 :2021-11-30: Ansible-5.0.0 release.
-:2022-01-04: Release of Ansible-5.1.0 (bugfix + compatible features: every three weeks. Note: this comes 4 week after 5.0.0 due to the winter holiday season).
+:2021-12-21: Release of Ansible-5.1.0 (bugfix + compatible features: every three weeks.)
 
 .. [1] No new modules or major features accepted after this date. In practice, this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community.crypto 2.1.0; Ansible-5.0.0 could ship with community.crypto 2.1.1.  It would not ship with community.crypto 2.2.0.
 
