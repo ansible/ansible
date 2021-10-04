@@ -42,7 +42,9 @@ Ansible includes logging to help diagnose and troubleshoot issues regarding Ansi
 
 Because logging is very verbose, it is disabled by default. It can be enabled with the :envvar:`ANSIBLE_LOG_PATH` and :envvar:`ANSIBLE_DEBUG` options on the ansible-controller, that is the machine running ``ansible-playbook``.
 
-Before running ``ansible-playbook``, run the following commands to enable logging::
+Before running ``ansible-playbook``, run the following commands to enable logging:
+
+.. code:: shell
 
    # Specify the location for the log file
    export ANSIBLE_LOG_PATH=~/ansible.log
@@ -379,7 +381,9 @@ or
 
 You can tell Ansible to automatically accept the keys
 
-Environment variable method::
+Environment variable method:
+
+.. code-block:: shell
 
   export ANSIBLE_PARAMIKO_HOST_KEY_AUTO_ADD=True
   ansible-playbook ...
