@@ -313,14 +313,14 @@ We do **not** backport features.
 
 #. Prepare your devel, stable, and feature branches:
 
-   ::
+.. code-block:: shell
 
        git fetch upstream
        git checkout -b backport/2.11/[PR_NUMBER_FROM_DEVEL] upstream/stable-2.11
 
 #. Cherry pick the relevant commit SHA from the devel branch into your feature branch, handling merge conflicts as necessary:
 
-   ::
+.. code-block:: shell
 
        git cherry-pick -x [SHA_FROM_DEVEL]
 
@@ -328,7 +328,7 @@ We do **not** backport features.
 
 #. Push your feature branch to your fork on GitHub:
 
-   ::
+.. code-block:: shell
 
        git push origin backport/2.11/[PR_NUMBER_FROM_DEVEL]
 
