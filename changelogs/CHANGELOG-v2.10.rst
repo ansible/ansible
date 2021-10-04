@@ -5,6 +5,29 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
+v2.10.15rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2021-10-04
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Security Fixes
+--------------
+
+- Do not include params in exception when a call to ``set_options`` fails. Additionally, block the exception that is returned from being displayed to stdout. (CVE-2021-3620)
+
+Bugfixes
+--------
+
+- PowerShell - Ignore the ``LIB`` environment variable when compiling C# Ansible code
+- ansible-test - Remove obsolete ``--remote`` entry ``power/centos/7``
+- ansible-test - Update ``isort`` constraint from version 4.3.15 to 4.3.16 to prevent ``pylint`` from failing with warnings reported as errors.
+- netconf - catch and handle exception to prevent stack trace when running in FIPS mode
+
 v2.10.14
 ========
 

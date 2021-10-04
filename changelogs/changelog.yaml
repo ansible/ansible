@@ -2005,6 +2005,33 @@ releases:
     - pipelinig_to_plugins.yml
     - v2.10.14rc1_summary.yaml
     release_date: '2021-09-08'
+  2.10.15rc1:
+    changes:
+      bugfixes:
+      - PowerShell - Ignore the ``LIB`` environment variable when compiling C# Ansible
+        code
+      - ansible-test - Remove obsolete ``--remote`` entry ``power/centos/7``
+      - ansible-test - Update ``isort`` constraint from version 4.3.15 to 4.3.16 to
+        prevent ``pylint`` from failing with warnings reported as errors.
+      - netconf - catch and handle exception to prevent stack trace when running in
+        FIPS mode
+      release_summary: '| Release Date: 2021-10-04
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+      security_fixes:
+      - Do not include params in exception when a call to ``set_options`` fails. Additionally,
+        block the exception that is returned from being displayed to stdout. (CVE-2021-3620)
+    codename: When the Levee Breaks
+    fragments:
+    - ansible-test-isort.yml
+    - ansible-test-power-cleanup.yml
+    - avoid-set_options-leak.yaml
+    - fips-ncclient-import-error.yaml
+    - powershell-addtype-env-vars.yml
+    - v2.10.15rc1_summary.yaml
+    release_date: '2021-10-04'
   2.10.1rc1:
     changes:
       bugfixes:
