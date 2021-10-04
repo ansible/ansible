@@ -26,7 +26,9 @@ executed remotely on the device.  Once the task executes the command
 set, the ``wait_for`` argument can be used to evaluate the results before
 returning control to the Ansible playbook.
 
-For example::
+For example:
+
+.. code-block:: yaml
 
     ---
     - name: wait for interface to be admin enabled
@@ -45,7 +47,9 @@ until either the condition is satisfied or the number of retries has
 expired (by default, this is 10 retries at 1 second intervals).
 
 The commands module can also evaluate more than one set of command
-results in an interface.  For instance::
+results in an interface.  For instance:
+
+.. code-block:: yaml
 
     ---
     - name: wait for interfaces to be admin enabled
