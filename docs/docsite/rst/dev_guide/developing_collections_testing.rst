@@ -20,7 +20,9 @@ You must always execute ``ansible-test`` from the root directory of a collection
 Compile and sanity tests
 ------------------------
 
-To run all compile and sanity tests::
+To run all compile and sanity tests:
+
+.. code-block:: shell-session
 
     ansible-test sanity --docker default -v
 
@@ -31,15 +33,21 @@ Adding unit tests
 
 You must place unit tests in the appropriate ``tests/unit/plugins/`` directory. For example, you would place tests for ``plugins/module_utils/foo/bar.py`` in ``tests/unit/plugins/module_utils/foo/test_bar.py`` or ``tests/unit/plugins/module_utils/foo/bar/test_bar.py``. For examples, see the `unit tests in community.general <https://github.com/ansible-collections/community.general/tree/master/tests/unit/>`_.
 
-To run all unit tests for all supported Python versions::
+To run all unit tests for all supported Python versions:
+
+.. code-block:: shell-session
 
     ansible-test units --docker default -v
 
-To run all unit tests only for a specific Python version::
+To run all unit tests only for a specific Python version:
+
+.. code-block:: shell-session
 
     ansible-test units --docker default -v --python 3.6
 
-To run only a specific unit test::
+To run only a specific unit test:
+
+.. code-block:: shell-session
 
     ansible-test units --docker default -v --python 3.6 tests/unit/plugins/module_utils/foo/test_bar.py
 
@@ -59,13 +67,17 @@ For examples, see the `integration tests in community.general <https://github.co
 
 Since integration tests can install requirements, and set-up, start and stop services, we recommended running them in docker containers or otherwise restricted environments whenever possible. By default, ``ansible-test`` supports Docker images for several operating systems. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/docker.txt>`_ for all options. Use the ``default`` image mainly for platform-independent integration tests, such as those for cloud modules. The following examples use the ``centos8`` image.
 
-To execute all integration tests for a collection::
+To execute all integration tests for a collection:
+
+.. code-block:: shell-session
 
     ansible-test integration --docker centos8 -v
 
 If you want more detailed output, run the command with ``-vvv`` instead of ``-v``. Alternatively, specify ``--retry-on-error`` to automatically re-run failed tests with higher verbosity levels.
 
-To execute only the integration tests in a specific directory::
+To execute only the integration tests in a specific directory:
+
+.. code-block:: shell-session
 
     ansible-test integration --docker centos8 -v connection_bar
 

@@ -33,12 +33,16 @@ ansible-test command
 --------------------
 
 The example below assumes ``bin/`` is in your ``$PATH``. An easy way to achieve that
-is to initialize your environment with the ``env-setup`` command::
+is to initialize your environment with the ``env-setup`` command:
+
+.. code-block:: shell-session
 
     source hacking/env-setup
     ansible-test --help
 
-You can also call ``ansible-test`` with the full path::
+You can also call ``ansible-test`` with the full path:
+
+.. code-block:: shell-session
 
     bin/ansible-test --help
 
@@ -74,19 +78,27 @@ outside of those test subdirectories.  They will also not reconfigure or bounce 
 
    Use the ``--docker-no-pull`` option to avoid pulling the latest container image. This is required when using custom local images that are not available for download.
 
-Run as follows for all POSIX platform tests executed by our CI system in a fedora32 docker container::
+Run as follows for all POSIX platform tests executed by our CI system in a fedora32 docker container:
+
+.. code-block:: shell-session
 
     ansible-test integration shippable/ --docker fedora32
 
-You can target a specific tests as well, such as for individual modules::
+You can target a specific tests as well, such as for individual modules:
+
+.. code-block:: shell-session
 
     ansible-test integration ping
 
-You can use the ``-v`` option to make the output more verbose::
+You can use the ``-v`` option to make the output more verbose:
+
+.. code-block:: shell-session
 
     ansible-test integration lineinfile -vvv
 
-Use the following command to list all the available targets::
+Use the following command to list all the available targets:
+
+.. code-block:: shell-session
 
     ansible-test integration --list-targets
 
@@ -98,7 +110,9 @@ Destructive Tests
 =================
 
 These tests are allowed to install and remove some trivial packages.  You will likely want to devote these
-to a virtual environment, such as Docker.  They won't reformat your filesystem::
+to a virtual environment, such as Docker.  They won't reformat your filesystem:
+
+.. code-block:: shell-session
 
     ansible-test integration destructive/ --docker fedora32
 
@@ -112,16 +126,22 @@ for testing, and enable PowerShell Remoting to continue.
 Running these tests may result in changes to your Windows host, so don't run
 them against a production/critical Windows environment.
 
-Enable PowerShell Remoting (run on the Windows host via Remote Desktop)::
+Enable PowerShell Remoting (run on the Windows host via Remote Desktop):
+
+.. code-block:: shell-session
 
     Enable-PSRemoting -Force
 
-Define Windows inventory::
+Define Windows inventory:
+
+.. code-block:: shell-session
 
     cp inventory.winrm.template inventory.winrm
     ${EDITOR:-vi} inventory.winrm
 
-Run the Windows tests executed by our CI system::
+Run the Windows tests executed by our CI system:
+
+.. code-block:: shell-session
 
     ansible-test windows-integration -v shippable/
 
@@ -140,12 +160,16 @@ the Ansible continuous integration (CI) system is recommended.
 Running Integration Tests
 -------------------------
 
-To run all CI integration test targets for POSIX platforms in a Ubuntu 18.04 container::
+To run all CI integration test targets for POSIX platforms in a Ubuntu 18.04 container:
+
+.. code-block:: shell-session
 
     ansible-test integration shippable/ --docker ubuntu1804
 
 You can also run specific tests or select a different Linux distribution.
-For example, to run tests for the ``ping`` module on a Ubuntu 18.04 container::
+For example, to run tests for the ``ping`` module on a Ubuntu 18.04 container:
+
+.. code-block:: shell-session
 
     ansible-test integration ping --docker ubuntu1804
 

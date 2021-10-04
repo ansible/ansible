@@ -70,7 +70,9 @@ be written.  Online reports are available but only cover the ``devel`` branch (s
 Add the ``--coverage`` option to any test command to collect code coverage data.  If you
 aren't using the ``--venv`` or ``--docker`` options which create an isolated python
 environment then you may have to use the ``--requirements`` option to ensure that the
-correct version of the coverage module is installed::
+correct version of the coverage module is installed:
+
+.. code-block:: shell-session
 
    ansible-test coverage erase
    ansible-test units --coverage apt
@@ -84,6 +86,8 @@ Reports can be generated in several different formats:
 * ``ansible-test coverage html`` - HTML report.
 * ``ansible-test coverage xml`` - XML report.
 
-To clear data between test runs, use the ``ansible-test coverage erase`` command. For a full list of features see the online help::
+To clear data between test runs, use the ``ansible-test coverage erase`` command. For a full list of features see the online help:
+
+.. code-block:: shell-session
 
    ansible-test coverage --help

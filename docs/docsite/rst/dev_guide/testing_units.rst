@@ -53,7 +53,9 @@ If you are running unit tests against things other than modules, such as module 
 
    ansible-test units --docker -v test/units/module_utils/basic/test_imports.py
 
-For advanced usage see the online help::
+For advanced usage see the online help:
+
+.. code:: shell
 
    ansible-test units --help
 
@@ -104,35 +106,39 @@ Ansible drives unit tests through `pytest <https://docs.pytest.org/en/latest/>`_
 means that tests can either be written a simple functions which are included in any file
 name like ``test_<something>.py`` or as classes.
 
-Here is an example of a function::
+Here is an example of a function:
+
+.. code:: python
 
   #this function will be called simply because it is called test_*()
 
-  def test_add()
+  def test_add():
       a = 10
       b = 23
       c = 33
-      assert a + b = c
+      assert a + b == c
 
-Here is an example of a class::
+Here is an example of a class:
+
+.. code:: python
 
   import unittest
 
-  class AddTester(unittest.TestCase)
+  class AddTester(unittest.TestCase):
 
-      def SetUp()
+      def SetUp():
           self.a = 10
           self.b = 23
 
       # this function will
-      def test_add()
+      def test_add():
         c = 33
-        assert self.a + self.b = c
+        assert self.a + self.b == c
 
      # this function will
-      def test_subtract()
+      def test_subtract():
         c = -13
-        assert self.a - self.b = c
+        assert self.a - self.b == c
 
 Both methods work fine in most circumstances; the function-based interface is simpler and
 quicker and so that's probably where you should start when you are just trying to add a
