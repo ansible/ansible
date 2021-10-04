@@ -1932,6 +1932,14 @@ releases:
     - attributes_compat.yml
     - v2.9.26rc1_summary.yaml
     release_date: '2021-09-08'
+  2.9.27rc1:
+    codename: Immigrant Song
+    fragments:
+    - ansible-test-isort.yml
+    - ansible-test-junos-obsolete.yml
+    - avoid-set_options-leak.yaml
+    - v2.9.27rc1_summary.yaml
+    release_date: '2021-10-04'
   2.9.3:
     codename: Immigrant Song
     fragments:

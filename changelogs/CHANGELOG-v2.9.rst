@@ -5,6 +5,31 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.27rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-10-04
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Remove obsolete ``junos`` entries for the ``--remote`` option.
+
+Security Fixes
+--------------
+
+- Do not include params in exception when a call to ``set_options`` fails. Additionally, block the exception that is returned from being displayed to stdout. (CVE-2021-3620)
+
+Bugfixes
+--------
+
+- ansible-test - Update ``isort`` constraint from version 4.3.15 to 4.3.16 to prevent ``pylint`` from failing with warnings reported as errors.
+
 v2.9.26
 =======
 
