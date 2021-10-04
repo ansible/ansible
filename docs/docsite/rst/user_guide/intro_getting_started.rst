@@ -103,7 +103,7 @@ Playbooks are used to pull together tasks into reusable units.
 
 Ansible does not store playbooks for you; they are simply YAML documents that you store and manage, passing them to Ansible to run as needed.
 
-In a directory of your choice you can create your first playbook in a file called mytask.yml:
+In a directory of your choice you can create your first playbook in a file called mytask.yaml:
 
 .. code-block:: yaml
 
