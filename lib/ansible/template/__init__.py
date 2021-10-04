@@ -1112,7 +1112,7 @@ class Templar:
                 return res
 
             if not preserve_trailing_newlines and res[-1] == self.environment.newline_sequence:
-                res = res[:len(res)-1]
+                res = res[:len(res) - 1]
                 if unsafe:
                     res = wrap_var(res)
 
