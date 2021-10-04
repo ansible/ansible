@@ -31,7 +31,7 @@ from copy import deepcopy
 from ansible import constants as C
 from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.six import PY3, text_type
+from ansible.module_utils.six import text_type
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.parsing.yaml.objects import AnsibleUnicode
