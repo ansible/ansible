@@ -22,7 +22,7 @@ __metaclass__ = type
 import jinja2
 from units.compat import unittest
 
-from ansible.template import AnsibleUndefined, _escape_backslashes, _count_newlines_from_end
+from ansible.template import AnsibleUndefined, _escape_backslashes
 
 # These are internal utility functions only needed for templating.  They're
 # algorithmic so good candidates for unittesting by themselves
@@ -82,30 +82,6 @@ class TestBackslashEscape(unittest.TestCase):
             template = jinja2.Template(intermediate)
             args = test['args']
             self.assertEqual(template.render(**args), test['expectation'])
-
-
-class TestCountNewlines(unittest.TestCase):
-
-    def test_zero_length_string(self):
-        self.assertEqual(_count_newlines_from_end(u''), 0)
-
-    def test_short_string(self):
-        self.assertEqual(_count_newlines_from_end(u'The quick\n'), 1)
-
-    def test_one_newline(self):
-        self.assertEqual(_count_newlines_from_end(u'The quick brown fox jumped over the lazy dog' * 1000 + u'\n'), 1)
-
-    def test_multiple_newlines(self):
-        self.assertEqual(_count_newlines_from_end(u'The quick brown fox jumped over the lazy dog' * 1000 + u'\n\n\n'), 3)
-
-    def test_zero_newlines(self):
-        self.assertEqual(_count_newlines_from_end(u'The quick brown fox jumped over the lazy dog' * 1000), 0)
-
-    def test_all_newlines(self):
-        self.assertEqual(_count_newlines_from_end(u'\n' * 10), 10)
-
-    def test_mostly_newlines(self):
-        self.assertEqual(_count_newlines_from_end(u'The quick brown fox jumped over the lazy dog' + u'\n' * 1000), 1000)
 
 
 class TestAnsibleUndefined(unittest.TestCase):

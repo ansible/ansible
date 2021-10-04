@@ -42,11 +42,6 @@ try:
 except ImportError:
     HAS_UNIQUE = False
 
-try:
-    from jinja2.filters import do_max, do_min
-    HAS_MIN_MAX = True
-except ImportError:
-    HAS_MIN_MAX = False
 
 display = Display()
 
@@ -123,30 +118,6 @@ def union(environment, a, b):
     else:
         c = unique(environment, a + b, True)
     return c
-
-
-@environmentfilter
-def min(environment, a, **kwargs):
-    if HAS_MIN_MAX:
-        return do_min(environment, a, **kwargs)
-    else:
-        if kwargs:
-            raise AnsibleFilterError("Ansible's min filter does not support any keyword arguments. "
-                                     "You need Jinja2 2.10 or later that provides their version of the filter.")
-        _min = __builtins__.get('min')
-        return _min(a)
-
-
-@environmentfilter
-def max(environment, a, **kwargs):
-    if HAS_MIN_MAX:
-        return do_max(environment, a, **kwargs)
-    else:
-        if kwargs:
-            raise AnsibleFilterError("Ansible's max filter does not support any keyword arguments. "
-                                     "You need Jinja2 2.10 or later that provides their version of the filter.")
-        _max = __builtins__.get('max')
-        return _max(a)
 
 
 def logarithm(x, base=math.e):
@@ -251,10 +222,6 @@ class FilterModule(object):
 
     def filters(self):
         filters = {
-            # general math
-            'min': min,
-            'max': max,
-
             # exponents and logarithms
             'log': logarithm,
             'pow': power,
