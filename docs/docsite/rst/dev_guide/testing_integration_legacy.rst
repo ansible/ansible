@@ -41,7 +41,9 @@ In order to run cloud tests, you must provide access credentials in a file
 named ``credentials.yml``. A sample credentials file named
 ``credentials.template`` is available for syntax help.
 
-Provide cloud credentials::
+Provide cloud credentials:
+
+.. code-block:: shell-session
 
     cp credentials.template credentials.yml
     ${EDITOR:-vi} credentials.yml
@@ -85,11 +87,15 @@ Running Tests
 
 The tests are invoked via a ``Makefile``.
 
-If you haven't already got Ansible available use the local checkout by doing::
+If you haven't already got Ansible available use the local checkout by doing:
+
+.. code-block:: shell-session
 
   source hacking/env-setup
 
-Run the tests by doing::
+Run the tests by doing:
+
+.. code-block:: shell-session
 
   cd test/integration/
   # TARGET is the name of the test from the list at the top of this page

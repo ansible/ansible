@@ -579,7 +579,9 @@ are some steps that need to be followed to set this up:
     #!powershell
 
 You can add more args to ``$complex_args`` as required by the module or define the module options through a JSON file
-with the structure::
+with the structure:
+
+.. code-block:: json
 
     {
         "ANSIBLE_MODULE_ARGS": {

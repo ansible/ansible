@@ -60,7 +60,9 @@ Organization
 
 When Pull Requests (PRs) are created they are tested using Azure Pipelines, a Continuous Integration (CI) tool. Results are shown at the end of every PR.
 
-When Azure Pipelines detects an error and it can be linked back to a file that has been modified in the PR then the relevant lines will be added as a GitHub comment. For example::
+When Azure Pipelines detects an error and it can be linked back to a file that has been modified in the PR then the relevant lines will be added as a GitHub comment. For example:
+
+.. code-block:: text
 
    The test `ansible-test sanity --test pep8` failed with the following errors:
 
@@ -71,11 +73,15 @@ When Azure Pipelines detects an error and it can be linked back to a file that h
 
 From the above example we can see that ``--test pep8`` and ``--test validate-modules`` have identified an issue. The commands given allow you to run the same tests locally to ensure you've fixed all issues without having to push your changes to GitHub and wait for Azure Pipelines, for example:
 
-If you haven't already got Ansible available, use the local checkout by running::
+If you haven't already got Ansible available, use the local checkout by running:
+
+.. code-block:: shell-session
 
   source hacking/env-setup
 
-Then run the tests detailed in the GitHub comment::
+Then run the tests detailed in the GitHub comment:
+
+.. code-block:: shell-session
 
   ansible-test sanity --test pep8
   ansible-test sanity --test validate-modules
@@ -126,8 +132,9 @@ Here's how:
    other flavors, since some features (for example, package managers such as apt or yum) are specific to those OS versions.
 
 
-Create a fresh area to work::
+Create a fresh area to work:
 
+.. code-block:: shell-session
 
    git clone https://github.com/ansible/ansible.git ansible-pr-testing
    cd ansible-pr-testing
@@ -140,7 +147,9 @@ Next, find the pull request you'd like to test and make note of its number. It w
 
    It is important that the PR request target be ``ansible:devel``, as we do not accept pull requests into any other branch. Dot releases are cherry-picked manually by Ansible staff.
 
-Use the pull request number when you fetch the proposed changes and create your branch for testing::
+Use the pull request number when you fetch the proposed changes and create your branch for testing:
+
+.. code-block:: shell-session
 
    git fetch origin refs/pull/XXXX/head:testing_PRXXXX
    git checkout testing_PRXXXX
@@ -156,7 +165,9 @@ The first command fetches the proposed changes from the pull request and creates
 The Ansible source includes a script that allows you to use Ansible directly from source without requiring a
 full installation that is frequently used by developers on Ansible.
 
-Simply source it (to use the Linux/Unix terminology) to begin using it immediately::
+Simply source it (to use the Linux/Unix terminology) to begin using it immediately:
+
+.. code-block:: shell-session
 
    source ./hacking/env-setup
 

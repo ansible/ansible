@@ -153,7 +153,9 @@ Verifying your module code in a playbook
 The next step in verifying your new module is to consume it with an Ansible playbook.
 
 -  Create a playbook in any directory: ``$ touch testmod.yml``
--  Add the following to the new playbook file::
+-  Add the following to the new playbook file:
+
+.. code-block:: yaml
 
     - name: test my new module
       hosts: localhost
