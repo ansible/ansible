@@ -1994,3 +1994,38 @@ releases:
     - v2.11.5rc1_summary.yaml
     - vas_fixes.yml
     release_date: '2021-09-08'
+  2.11.6rc1:
+    changes:
+      bugfixes:
+      - PowerShell - Ignore the ``LIB`` environment variable when compiling C# Ansible
+        code
+      - ansible-galaxy - Fix handling HTTP exceptions from Galaxy servers. Continue
+        to the next server in the list until the collection is found.
+      - config - use ``callbacks_enabled`` instead ``callback_enabled`` in a deprecated
+        message (https://github.com/ansible/ansible/issues/70028).
+      - netconf - catch and handle exception to prevent stack trace when running in
+        FIPS mode
+      - roles - fix unexpected ``AttributeError`` when an empty ``argument_specs.yml``
+        is present (https://github.com/ansible/ansible/pull/75604).
+      minor_changes:
+      - ansible-galaxy - Non-HTTP exceptions from Galaxy servers are now a warning
+        and only fatal if the collection to download|install|verify is not available
+        from any of the servers (https://github.com/ansible/ansible/issues/75443).
+      release_summary: '| Release Date: 2021-10-04
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+      security_fixes:
+      - Do not include params in exception when a call to ``set_options`` fails. Additionally,
+        block the exception that is returned from being displayed to stdout. (CVE-2021-3620)
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - 70028-config-small-typo-fix.yml
+    - 75468_fix_galaxy_server_fallback.yaml
+    - 75604-empty-argument-specs.yml
+    - avoid-set_options-leak.yaml
+    - fips-ncclient-import-error.yaml
+    - powershell-addtype-env-vars.yml
+    - v2.11.6rc1_summary.yaml
+    release_date: '2021-10-04'

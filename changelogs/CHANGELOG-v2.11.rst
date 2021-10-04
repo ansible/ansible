@@ -5,6 +5,35 @@ ansible-core 2.11 "Hey Hey, What Can I Do" Release Notes
 .. contents:: Topics
 
 
+v2.11.6rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-10-04
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-galaxy - Non-HTTP exceptions from Galaxy servers are now a warning and only fatal if the collection to download|install|verify is not available from any of the servers (https://github.com/ansible/ansible/issues/75443).
+
+Security Fixes
+--------------
+
+- Do not include params in exception when a call to ``set_options`` fails. Additionally, block the exception that is returned from being displayed to stdout. (CVE-2021-3620)
+
+Bugfixes
+--------
+
+- PowerShell - Ignore the ``LIB`` environment variable when compiling C# Ansible code
+- ansible-galaxy - Fix handling HTTP exceptions from Galaxy servers. Continue to the next server in the list until the collection is found.
+- config - use ``callbacks_enabled`` instead ``callback_enabled`` in a deprecated message (https://github.com/ansible/ansible/issues/70028).
+- netconf - catch and handle exception to prevent stack trace when running in FIPS mode
+- roles - fix unexpected ``AttributeError`` when an empty ``argument_specs.yml`` is present (https://github.com/ansible/ansible/pull/75604).
+
 v2.11.5
 =======
 
