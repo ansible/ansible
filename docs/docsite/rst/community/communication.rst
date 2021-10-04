@@ -71,7 +71,9 @@ IRC chat supports:
 * simple text interface
 * bridging from Matrix
 
-Our IRC channels may require you to register your IRC nickname. If you receive an error when you connect or when posting a message, see `libera.chat's Nickname Registration guide <https://libera.chat/guides/registration>`_ for instructions. To find all ``ansible`` specific channels on the libera.chat network, use the following command in your IRC client::
+Our IRC channels may require you to register your IRC nickname. If you receive an error when you connect or when posting a message, see `libera.chat's Nickname Registration guide <https://libera.chat/guides/registration>`_ for instructions. To find all ``ansible`` specific channels on the libera.chat network, use the following command in your IRC client:
+
+.. code-block:: text
 
    /msg alis LIST #ansible* -min 5
 
