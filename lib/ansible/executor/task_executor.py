@@ -677,7 +677,7 @@ class TaskExecutor:
                 result = e.result
             except AnsibleConnectionFailure as e:
                 # we mostly want the 'failed' path in processing, but when we return we drop that key
-                result = dict(unreachable=True, msg=to_text(e), failed=True, changed=False)
+                result = dict(unreachable=True, msg=to_text(e), skipped=True, skip_reason='Target is unreachable', changed=False, failed=False)
             except TaskTimeoutError as e:
                 msg = 'The %s action failed to execute in the expected time frame (%d) and was terminated' % (self._task.action, self._task.timeout)
                 result = dict(failed=True, msg=msg, timedout={'frame': e.frame, 'period': self._task.timeout})
