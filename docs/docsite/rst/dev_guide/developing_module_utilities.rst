@@ -8,7 +8,9 @@ Ansible provides a number of module utilities, or snippets of shared code, that
 provide helper functions you can use when developing your own modules. The
 ``basic.py`` module utility provides the main entry point for accessing the
 Ansible library, and all Python Ansible modules must import something from
-``ansible.module_utils``. A common option is to import ``AnsibleModule``::
+``ansible.module_utils``. A common option is to import ``AnsibleModule``:
+
+.. code-block:: python
 
   from ansible.module_utils.basic import AnsibleModule
 

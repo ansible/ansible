@@ -25,16 +25,22 @@ Creating a PR
 
 
 
-* Create the directory ``~/dev/ansible/collections/ansible_collections/community``::
+* Create the directory ``~/dev/ansible/collections/ansible_collections/community``:
+
+.. code-block:: shell
 
     mkdir -p ~/dev/ansible/collections/ansible_collections/community
 
-* Clone `the community.general Git repository <https://github.com/ansible-collections/community.general/>`_ or a fork of it into the directory ``general``::
+* Clone `the community.general Git repository <https://github.com/ansible-collections/community.general/>`_ or a fork of it into the directory ``general``:
+
+.. code-block:: shell
 
     cd ~/dev/ansible/collections/ansible_collections/community
     git clone git@github.com:ansible-collections/community.general.git general
 
-* If you clone from a fork, add the original repository as a remote ``upstream``::
+* If you clone from a fork, add the original repository as a remote ``upstream``:
+
+.. code-block:: shell
 
     cd ~/dev/ansible/collections/ansible_collections/community/general
     git remote add upstream git@github.com:ansible-collections/community.general.git
