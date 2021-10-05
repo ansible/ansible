@@ -13,6 +13,7 @@ import json
 import os
 import shlex
 import subprocess
+import yaml
 
 from ansible import context
 import ansible.plugins.loader as plugin_loader
@@ -24,9 +25,9 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.common.json import AnsibleJSONEncoder
-from ansible.module_utils.common.yaml import yaml_dump
 from ansible.module_utils.six import string_types
 from ansible.parsing.quoting import is_quoted
+from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
@@ -237,7 +238,7 @@ class ConfigCLI(CLI):
         '''
 
         config_entries = self._list_entries_from_args()
-        self.pager(to_text(yaml_dump(config_entries), errors='surrogate_or_strict'))
+        self.pager(to_text(yaml.dump(config_entries, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
 
     def _get_settings_vars(self, settings, subkey):
 
@@ -287,7 +288,7 @@ class ConfigCLI(CLI):
                 if subkey == 'env':
                     data.append('%s%s=%s' % (prefix, entry, default))
                 elif subkey == 'vars':
-                    data.append(prefix + to_text(yaml_dump({entry: default}, default_flow_style=False), errors='surrogate_or_strict'))
+                    data.append(prefix + to_text(yaml.dump({entry: default}, default_flow_style=False, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
                 data.append('')
 
         return data
@@ -540,7 +541,7 @@ if __name__ == '__main__':
         elif f == 'json':
             res = json.dumps(res, cls=AnsibleJSONEncoder)
         elif f == 'yaml':
-            res = yaml_dump(res)
+            res = yaml.dump(res, Dumper=AnsibleDumper)
 
         # show it
         display.display(to_text(res, errors='surrogate_or_strict'))
