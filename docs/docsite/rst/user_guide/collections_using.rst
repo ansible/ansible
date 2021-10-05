@@ -371,6 +371,9 @@ A few recommendations when creating such playbooks, ``hosts:`` should be generic
 
 This will have an implied entry in the ``collections:`` keyword of ``my_namespace.my_collection`` just as with roles.
 
+.. note::
+    Like every other resource in a collections, playbooks have a restricted set of valid characters, for example they are not addressable when using certain characters in their names like ``-``, this is a limitation of the Python importer that is used to load colleciton resources.
+
 .. seealso::
 
    :ref:`developing_collections`
