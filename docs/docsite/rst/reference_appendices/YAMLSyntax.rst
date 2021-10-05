@@ -110,7 +110,7 @@ While in the above ``>`` example all newlines are folded into spaces, there are 
 
 Alternatively, it can be enforced by including newline ``\n`` characters::
 
-    same_as: "a b\nc d\n  e\nf\n"
+    fold_same_newlines: "a b\nc d\n  e\nf\n"
 
 Let's combine what we learned so far in an arbitrary YAML example.
 This really has nothing to do with Ansible, but will give you a feel for the format::
