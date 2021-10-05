@@ -182,6 +182,7 @@
     - /etc/ssl/certs/ca-certificates.crt
     - /var/lib/ca-certificates/ca-bundle.pem
     - /usr/local/share/certs/ca-root-nss.crt
+    - '{{ macos_cafile.stdout_lines|default(["/_i_dont_exist_ca.pem"])|first }}'
     - /etc/ssl/cert.pem
   register: ca_bundle_candidates
 
