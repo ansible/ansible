@@ -476,7 +476,7 @@ zKPZsZ2miVGclicJHzm5q080b1p/sZtuKIEZk6vZqEg=
 """
 
 b_PEM_CERT_RE = re.compile(
-    rb'^-----BEGIN CERTIFICATE-----\n.+?-----END CERTIFICATE-----$',
+    br'^-----BEGIN CERTIFICATE-----\n.+?-----END CERTIFICATE-----$',
     flags=re.M | re.S
 )
 
