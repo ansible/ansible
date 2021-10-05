@@ -662,17 +662,9 @@ class TaskExecutor:
                 else:
                     # TODO: cleaning of facts should eventually become part of taskresults instead of vars
                     af = wrap_var(result['ansible_facts'])
-                    if self._task.delegate_to and self._task.delegate_facts:
-                        if not '_ansible_delegated_vars' in vars_copy:
-                            vars_copy['_ansible_delegated_vars'] = {'ansible_facts': {}}
-                        vars_copy['_ansible_delegated_vars']['ansible_facts'] = \
-                            combine_vars(vars_copy['_ansible_delegated_vars'].get('ansible_facts', {}), namespace_facts(af))
-                        if C.INJECT_FACTS_AS_VARS:
-                            vars_copy['_ansible_delegated_vars'].update(clean_facts(af))
-                    else:
-                        vars_copy['ansible_facts'] = combine_vars(vars_copy.get('ansible_facts', {}), namespace_facts(af))
-                        if C.INJECT_FACTS_AS_VARS:
-                            vars_copy.update(clean_facts(af))
+                    vars_copy['ansible_facts'] = combine_vars(vars_copy.get('ansible_facts', {}), namespace_facts(af))
+                    if C.INJECT_FACTS_AS_VARS:
+                        vars_copy.update(clean_facts(af))
 
             # set the failed property if it was missing.
             if 'failed' not in result:
@@ -757,17 +749,9 @@ class TaskExecutor:
             else:
                 # TODO: cleaning of facts should eventually become part of taskresults instead of vars
                 af = wrap_var(result['ansible_facts'])
-                if self._task.delegate_to and self._task.delegate_facts:
-                    if not '_ansible_delegated_vars' in variables:
-                        variables['_ansible_delegated_vars'] = {'ansible_facts': {}}
-                    variables['_ansible_delegated_vars']['ansible_facts'] = \
-                        combine_vars(variables['_ansible_delegated_vars'].get('ansible_facts', {}), namespace_facts(af))
-                    if C.INJECT_FACTS_AS_VARS:
-                        variables['_ansible_delegated_vars'].update(clean_facts(af))
-                else:
-                    variables['ansible_facts'] = combine_vars(variables.get('ansible_facts', {}), namespace_facts(af))
-                    if C.INJECT_FACTS_AS_VARS:
-                        variables.update(clean_facts(af))
+                variables['ansible_facts'] = combine_vars(variables.get('ansible_facts', {}), namespace_facts(af))
+                if C.INJECT_FACTS_AS_VARS:
+                    variables.update(clean_facts(af))
 
         # save the notification target in the result, if it was specified, as
         # this task may be running in a loop in which case the notification
