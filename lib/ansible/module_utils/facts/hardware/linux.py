@@ -649,6 +649,14 @@ class LinuxHardware(Hardware):
                 else:
                     block_dev_dict['holders'].append(folder)
 
+    def _get_sg_inq_serial(self, sg_inq, block):
+        device = "/dev/%s" % (block)
+        rc, drivedata, err = self.module.run_command([sg_inq, device])
+        if rc == 0:
+            serial = re.search(r"(?:Unit serial|Serial) number:\s+(\w+)", drivedata)
+            if serial:
+                return serial.group(1)
+
     def get_device_facts(self):
         device_facts = {}
 
@@ -714,12 +722,9 @@ class LinuxHardware(Hardware):
             serial_path = "/sys/block/%s/device/serial" % (block)
 
             if sg_inq:
-                device = "/dev/%s" % (block)
-                rc, drivedata, err = self.module.run_command([sg_inq, device])
-                if rc == 0:
-                    serial = re.search(r"Unit serial number:\s+(\w+)", drivedata)
-                    if serial:
-                        d['serial'] = serial.group(1)
+                serial = self._get_sg_inq_serial(sg_inq, block)
+                if serial:
+                    d['serial'] = serial
             else:
                 serial = get_file_content(serial_path)
                 if serial:

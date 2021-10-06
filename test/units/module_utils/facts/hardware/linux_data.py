@@ -583,3 +583,51 @@ CPU_INFO_TEST_SCENARIOS = [
         },
     },
 ]
+
+SG_INQ_OUTPUTS = ["""
+Identify controller for /dev/nvme0n1:
+  Model number: Amazon Elastic Block Store
+  Serial number: vol0123456789
+  Firmware revision: 1.0
+  Version: 0.0
+  No optional admin command support
+  No optional NVM command support
+  PCI vendor ID VID/SSVID: 0x1d0f/0x1d0f
+  IEEE OUI Identifier: 0xa002dc
+  Controller ID: 0x0
+  Number of namespaces: 1
+  Maximum data transfer size: 64 pages
+  Namespace 1 (deduced from device name):
+    Namespace size/capacity: 62914560/62914560 blocks
+    Namespace utilization: 0 blocks
+    Number of LBA formats: 1
+    Index LBA size: 0
+    LBA format 0 support: <-- active
+      Logical block size: 512 bytes
+      Approximate namespace size: 32 GB
+      Metadata size: 0 bytes
+      Relative performance: Best [0x0]
+""", """
+Identify controller for /dev/nvme0n1:
+  Model number: Amazon Elastic Block Store
+  Unit serial number: vol0123456789
+  Firmware revision: 1.0
+  Version: 0.0
+  No optional admin command support
+  No optional NVM command support
+  PCI vendor ID VID/SSVID: 0x1d0f/0x1d0f
+  IEEE OUI Identifier: 0xa002dc
+  Controller ID: 0x0
+  Number of namespaces: 1
+  Maximum data transfer size: 64 pages
+  Namespace 1 (deduced from device name):
+    Namespace size/capacity: 62914560/62914560 blocks
+    Namespace utilization: 0 blocks
+    Number of LBA formats: 1
+    Index LBA size: 0
+    LBA format 0 support: <-- active
+      Logical block size: 512 bytes
+      Approximate namespace size: 32 GB
+      Metadata size: 0 bytes
+      Relative performance: Best [0x0]
+"""]
