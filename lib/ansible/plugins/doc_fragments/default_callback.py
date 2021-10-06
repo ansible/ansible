@@ -95,4 +95,15 @@ class ModuleDocFragment(object):
           - key: show_task_path_on_failure
             section: defaults
         version_added: '2.11'
+      show_per_item_start:
+        name: Show per item in task start
+        description: 'This adds output that shows when an item is started to execute in a task'
+        type: bool
+        default: no
+        env:
+          - name: ANSIBLE_SHOW_PER_ITEM_START
+        ini:
+          - key: show_per_item_start
+            section: defaults
+        version_added: '2.13'
 '''

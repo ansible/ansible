@@ -426,6 +426,9 @@ class CallbackBase(AnsiblePlugin):
     def v2_playbook_on_include(self, included_file):
         pass  # no v1 correspondence
 
+    def v2_runner_item_on_start(self, task, item):
+        pass
+
     def v2_runner_item_on_ok(self, result):
         pass
 

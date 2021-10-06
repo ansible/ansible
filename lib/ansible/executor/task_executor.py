@@ -302,6 +302,7 @@ class TaskExecutor:
         no_log = False
         items_len = len(items)
         for item_index, item in enumerate(items):
+            self._final_q.send_callback('v2_runner_item_on_start', self._task, item) 
             task_vars['ansible_loop_var'] = loop_var
 
             task_vars[loop_var] = item

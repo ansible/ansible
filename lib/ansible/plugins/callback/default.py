@@ -39,7 +39,8 @@ COMPAT_OPTIONS = (('display_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS),
                   ('show_custom_stats', C.SHOW_CUSTOM_STATS),
                   ('display_failed_stderr', False),
                   ('check_mode_markers', False),
-                  ('show_per_host_start', False))
+                  ('show_per_host_start', False),
+                  ('show_per_item_start', False))
 
 
 class CallbackModule(CallbackBase):
@@ -259,6 +260,10 @@ class CallbackModule(CallbackBase):
                 if self._last_task_banner != result._task._uuid:
                     self._print_task_banner(result._task)
                 self._display.display(diff)
+
+    def v2_runner_item_on_start(self, task, item):
+        if self.get_option('show_per_item_start'):
+            self._display.display(" [started item \"%s\" in %s]" % (item, task), color=C.COLOR_OK)
 
     def v2_runner_item_on_ok(self, result):
 

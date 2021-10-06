@@ -1,0 +1,2 @@
+minor_changes:
+  - Adds the ``v2_runner_item_on_start`` callback to callback plugins. (https://github.com/ansible/ansible/issues/75874)
