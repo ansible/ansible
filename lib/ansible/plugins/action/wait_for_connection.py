@@ -42,27 +42,24 @@ class ActionModule(ActionBase):
     DEFAULT_SLEEP = 1
     DEFAULT_TIMEOUT = 600
 
-    def do_until_success_or_timeout(self, what, timeout, ping_connect_timeout, what_desc, sleep=1):
+    def do_until_success_or_timeout(self, what, timeout, connect_timeout, what_desc, sleep=1):
         max_end_time = datetime.utcnow() + timedelta(seconds=timeout)
 
         error = ValueError("already timed out with timeout %s" % timeout)
-        # We check that there is at least 1 second remaining,
-        # since that's the minimum we can specify to a timeout to ping.
-        # If we pass 0 seconds as the timeout to ping, it never times out.
-        while int((max_end_time - datetime.utcnow()).total_seconds()) > 0:
-            # The effective timeout ensures that we don't exceed the timeout value
-            # as an example without it, if timeout is 10 and connect_timeout is 8,
-            # 2 attempts will be made with a timeout of 8s for a total of 16s, > timeout
-            # so we use effective timeout to have attempts of 8s and 2s < timeout
-            seconds_remaining = int((max_end_time - datetime.utcnow()).total_seconds())
-            if ping_connect_timeout == 0:
-                # this prevents the edge case of ping never timing out
-                effective_timeout = seconds_remaining
-            else:
-                effective_timeout = min(ping_connect_timeout, seconds_remaining)
+
+        while datetime.utcnow() < max_end_time:
+            attempt_timeout = connect_timeout
+            now = datetime.utcnow()
+            if (now + timedelta(seconds=attempt_timeout)) > max_end_time:
+                # connect_timeout is longer than the max time left, so use the remaining time instead
+                attempt_timeout = int((max_end_time - now).total_seconds())
+            if attempt_timeout < 1:
+                # invalid timeout or only a fraction of a second is left.
+                # fractional values don't work with many connection test plugins, such as ping
+                break
 
             try:
-                what(effective_timeout)
+                what(attempt_timeout)
                 if what_desc:
                     display.debug("wait_for_connection: %s success" % what_desc)
                 return
