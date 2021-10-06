@@ -340,7 +340,7 @@ class TaskExecutor:
                 ran_once = True
 
             self._final_q.send_callback('v2_runner_item_on_start', self._task, item)
-            
+
             try:
                 tmp_task = self._task.copy(exclude_parent=True, exclude_tasks=True)
                 tmp_task._parent = self._task._parent
