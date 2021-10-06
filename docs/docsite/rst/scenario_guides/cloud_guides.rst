@@ -8,7 +8,7 @@ The legacy guides in this section may be out of date. They cover using Ansible w
 
 Guides for using public clouds are moving into collections. We are migrating these guides into collections. Please update your links for the following guides:
 
-.. should work soon: :ref:`ansible_collections.amazon.aws.docsite.aws_intro`
+:ref:`ansible_collections.amazon.aws.docsite.aws_intro`
 
 .. toctree::
    :maxdepth: 1

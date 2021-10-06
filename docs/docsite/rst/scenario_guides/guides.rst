@@ -12,11 +12,11 @@ These guides cover integrating Ansible with a variety of platforms, products, an
 
 We are migrating these guides into collections. Please update your links for the following guides:
 
-.. should work soon: :ref:`ansible_collections.amazon.aws.docsite.aws_intro`
+:ref:`ansible_collections.amazon.aws.docsite.aws_intro`
 
 .. toctree::
    :maxdepth: 1
-   :caption: Public Cloud Guides
+   :caption: Legacy Public Cloud Guides
 
    guide_alicloud
    guide_cloudstack
