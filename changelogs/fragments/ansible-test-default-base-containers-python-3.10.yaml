@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Update the ``base`` and ``default`` containers from Python 3.10.0rc2 to 3.10.0.
