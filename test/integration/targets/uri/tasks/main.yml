@@ -179,7 +179,6 @@
   loop:
     - /etc/ssl/certs/ca-bundle.crt
     - /etc/ssl/certs/ca-certificates.crt
-    - /etc/ssl/certs/ca-certificates.crt
     - /var/lib/ca-certificates/ca-bundle.pem
     - /usr/local/share/certs/ca-root-nss.crt
     - '{{ macos_cafile.stdout_lines|default(["/_i_dont_exist_ca.pem"])|first }}'
