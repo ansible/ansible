@@ -25,7 +25,7 @@ from ansible.module_utils.facts import timeout
 
 from ansible.module_utils.facts.hardware import linux
 
-from . linux_data import LSBLK_OUTPUT, LSBLK_OUTPUT_2, LSBLK_UUIDS, MTAB, MTAB_ENTRIES, BIND_MOUNTS, STATVFS_INFO, UDEVADM_UUID, UDEVADM_OUTPUT
+from . linux_data import LSBLK_OUTPUT, LSBLK_OUTPUT_2, LSBLK_UUIDS, MTAB, MTAB_ENTRIES, BIND_MOUNTS, STATVFS_INFO, UDEVADM_UUID, UDEVADM_OUTPUT, SG_INQ_OUTPUTS
 
 with open(os.path.join(os.path.dirname(__file__), '../fixtures/findmount_output.txt')) as f:
     FINDMNT_OUTPUT = f.read()
@@ -173,3 +173,26 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         udevadm_uuid = lh._udevadm_uuid('mock_device')
 
         self.assertEqual(udevadm_uuid, '57b1a3e7-9019-4747-9809-7ec52bba9179')
+
+    def test_get_sg_inq_serial(self):
+        # Valid outputs
+        for sq_inq_output in SG_INQ_OUTPUTS:
+            module = Mock()
+            module.run_command = Mock(return_value=(0, sq_inq_output, ''))  # (rc, out, err)
+            lh = linux.LinuxHardware(module=module, load_on_init=False)
+            sg_inq_serial = lh._get_sg_inq_serial('/usr/bin/sg_inq', 'nvme0n1')
+            self.assertEqual(sg_inq_serial, 'vol0123456789')
+
+        # Invalid output
+        module = Mock()
+        module.run_command = Mock(return_value=(0, '', ''))  # (rc, out, err)
+        lh = linux.LinuxHardware(module=module, load_on_init=False)
+        sg_inq_serial = lh._get_sg_inq_serial('/usr/bin/sg_inq', 'nvme0n1')
+        self.assertEqual(sg_inq_serial, None)
+
+        # Non zero rc
+        module = Mock()
+        module.run_command = Mock(return_value=(42, '', 'Error 42'))  # (rc, out, err)
+        lh = linux.LinuxHardware(module=module, load_on_init=False)
+        sg_inq_serial = lh._get_sg_inq_serial('/usr/bin/sg_inq', 'nvme0n1')
+        self.assertEqual(sg_inq_serial, None)
