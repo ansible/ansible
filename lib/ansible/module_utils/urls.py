@@ -1842,6 +1842,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             body = e.read()
         except AttributeError:
             body = ''
+        else:
+            e.close()
 
         # Try to add exception info to the output but don't fail if we can't
         try:
@@ -1853,7 +1855,6 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         info.update({'msg': to_native(e), 'body': body, 'status': e.code})
 
     except urllib_error.URLError as e:
-        r = e
         code = int(getattr(e, 'code', -1))
         info.update(dict(msg="Request failed: %s" % to_native(e), status=code))
     except socket.error as e:

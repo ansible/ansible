@@ -436,7 +436,7 @@ import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule, sanitize_keys
-from ansible.module_utils.six import PY2, binary_type, iteritems, string_types
+from ansible.module_utils.six import PY2, PY3, binary_type, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Mapping, Sequence
@@ -691,6 +691,8 @@ def main():
     r, info = uri(module, url, dest, body, body_format, method,
                   dict_headers, socket_timeout, ca_path, unredirected_headers)
 
+    elapsed = (datetime.datetime.utcnow() - start).seconds
+
     if r and dest is not None and os.path.isdir(dest):
         filename = get_response_filename(r) or 'index.html'
         dest = os.path.join(dest, filename)
@@ -706,23 +708,25 @@ def main():
     maybe_json = content_type and any(candidate in sub_type for candidate in JSON_CANDIDATES)
     maybe_output = maybe_json or return_content or info['status'] not in status_code
 
-    resp = {}
-    resp['redirected'] = info['url'] != url
-    resp.update(info)
-
-    resp['elapsed'] = (datetime.datetime.utcnow() - start).seconds
-    resp['status'] = int(resp['status'])
-    resp['changed'] = False
-
     if maybe_output:
         try:
+            if PY3 and r.closed:
+                raise TypeError
             content = r.read()
-        except AttributeError:
+        except (AttributeError, TypeError):
             # there was no content, but the error read()
             # may have been stored in the info as 'body'
             content = info.pop('body', b'')
     elif r:
         content = r
+
+    resp = {}
+    resp['redirected'] = info['url'] != url
+    resp.update(info)
+
+    resp['elapsed'] = elapsed
+    resp['status'] = int(resp['status'])
+    resp['changed'] = False
 
     # Write the file out if requested
     if r and dest is not None:
