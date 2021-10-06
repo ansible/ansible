@@ -33,11 +33,6 @@ class TimedOutException(Exception):
     pass
 
 
-def _total_seconds(td):
-    """shim for total_seconds only existing after python 3.2 and after python 2.7"""
-    return (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
-
-
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
     _VALID_ARGS = frozenset(('connect_timeout', 'delay', 'sleep', 'timeout'))
@@ -54,12 +49,12 @@ class ActionModule(ActionBase):
         # We check that there is at least 1 second remaining,
         # since that's the minimum we can specify to a timeout to ping.
         # If we pass 0 seconds as the timeout to ping, it never times out.
-        while int(_total_seconds(max_end_time - datetime.utcnow())) > 0:
+        while int((max_end_time - datetime.utcnow()).total_seconds()) > 0:
             # The effective timeout ensures that we don't exceed the timeout value
             # as an example without it, if timeout is 10 and connect_timeout is 8,
             # 2 attempts will be made with a timeout of 8s for a total of 16s, > timeout
             # so we use effective timeout to have attempts of 8s and 2s < timeout
-            seconds_remaining = int(_total_seconds(max_end_time - datetime.utcnow()))
+            seconds_remaining = int((max_end_time - datetime.utcnow()).total_seconds())
             if ping_connect_timeout == 0:
                 # this prevents the edge case of ping never timing out
                 effective_timeout = seconds_remaining
