@@ -1,0 +1,2 @@
+minor_changes:
+  - systemd - add ``reload-or-restarted`` state (https://github.com/ansible/ansible/issues/71969)

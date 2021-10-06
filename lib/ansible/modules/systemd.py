@@ -28,8 +28,9 @@ options:
         description:
             - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
               C(restarted) will always bounce the unit. C(reloaded) will always reload.
+              C(reload-or-restarted) (available since 2.13) will always reload-or-restart.
         type: str
-        choices: [ reloaded, restarted, started, stopped ]
+        choices: [ reloaded, restarted, reload-or-restarted, started, stopped ]
     enabled:
         description:
             - Whether the unit should start on boot. B(At least one of state and enabled are required.)
@@ -339,7 +340,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', aliases=['service', 'unit']),
-            state=dict(type='str', choices=['reloaded', 'restarted', 'started', 'stopped']),
+            state=dict(type='str', choices=['reloaded', 'restarted', 'reload-or-restarted', 'started', 'stopped']),
             enabled=dict(type='bool'),
             force=dict(type='bool'),
             masked=dict(type='bool'),
@@ -543,7 +544,7 @@ def main():
                     if not is_running_service(result['status']):
                         action = 'start'
                     else:
-                        action = module.params['state'][:-2]  # remove 'ed' from restarted/reloaded
+                        action = module.params['state'][:-2]  # remove 'ed' from restarted/reloaded/reload-or-restarted
                     result['state'] = 'started'
 
                 if action:
