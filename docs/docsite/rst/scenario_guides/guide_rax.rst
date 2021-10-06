@@ -6,7 +6,7 @@ Rackspace Cloud Guide
 Introduction
 ````````````
 
-.. note:: Rackspace functionality in Ansible is not maintained and users should consider the `OpenStack collection <https://galaxy.ansible.com/openstack/cloud>` instead_.
+.. note:: Rackspace functionality in Ansible is not maintained and users should consider the `OpenStack collection <https://galaxy.ansible.com/openstack/cloud>`_ instead.
 
 Ansible contains a number of core modules for interacting with Rackspace Cloud.  
 
