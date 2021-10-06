@@ -695,7 +695,6 @@ def main():
         filename = get_response_filename(r) or 'index.html'
         dest = os.path.join(dest, filename)
 
-
     if r:
         content_type, main_type, sub_type, content_encoding = parse_content_type(r)
     else:
