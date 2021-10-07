@@ -83,6 +83,7 @@ class TestBackslashEscape(unittest.TestCase):
             args = test['args']
             self.assertEqual(template.render(**args), test['expectation'])
 
+
 class TestCountNewlines(unittest.TestCase):
 
     def test_zero_length_string(self):

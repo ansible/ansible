@@ -31,8 +31,8 @@ class TestVars(unittest.TestCase):
 
     def test_globals_empty(self):
         ajvars = AnsibleJ2Vars(self.mock_templar, {})
-        res29 = dict(ajvars)
-        self.assertIsInstance(res29, dict)
+        res = dict(ajvars)
+        self.assertIsInstance(res, dict)
 
     def test_globals(self):
         res = dict(AnsibleJ2Vars(self.mock_templar, {'foo': 'bar', 'blip': [1, 2, 3]}))
