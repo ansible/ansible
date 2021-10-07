@@ -239,20 +239,6 @@ On CentOS:
     $ sudo yum install epel-release
     $ sudo yum install ansible
 
-RPMs for RHEL 7 and RHEL 8 are available from the `Ansible Engine repository <https://access.redhat.com/articles/3174981>`_.
-
-To enable the Ansible Engine repository for RHEL 8, run the following command:
-
-.. code-block:: bash
-
-    $ sudo subscription-manager repos --enable ansible-2.9-for-rhel-8-x86_64-rpms
-
-To enable the Ansible Engine repository for RHEL 7, run the following command:
-
-.. code-block:: bash
-
-    $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.9-rpms
-
 RPMs for currently supported versions of RHEL and CentOS are also available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_.
 
 .. note::
@@ -294,7 +280,7 @@ Debian users may use the same source as the Ubuntu PPA (using the following tabl
   :header-rows: 1
 
   * - Debian
-    - 
+    -
     - Ubuntu
   * - Debian 11 (Bullseye)
     - ->
@@ -308,7 +294,7 @@ Debian users may use the same source as the Ubuntu PPA (using the following tabl
   * - Debian 8 (Jessie)
     - ->
     - Ubuntu 14.04 (Trusty)
-    
+
 .. note::
 
     As of Ansible 4.0.0, new releases will only be generated for Ubuntu 18.04 (Bionic) or later releases.
@@ -318,7 +304,7 @@ Add the following line to ``/etc/apt/sources.list`` or ``/etc/apt/sources.list.d
 .. code-block:: bash
 
     deb http://ppa.launchpad.net/ansible/ansible/ubuntu MATCHING_UBUNTU_CODENAME_HERE main
-    
+
 Example for Debian 11 (Bullseye)
 
 .. code-block:: bash
@@ -421,7 +407,7 @@ Ansible is available in the Community repository::
 
     $ pacman -S ansible
 
-The AUR has a PKGBUILD for pulling directly from GitHub called `ansible-git <https://aur.archlinux.org/packages/ansible-git>`_.
+The AUR has a PKGBUILD for pulling directly from GitHub called `ansible-core-git <https://aur.archlinux.org/packages/ansible-core-git>`_.
 
 Also see the `Ansible <https://wiki.archlinux.org/index.php/Ansible>`_ page on the ArchWiki.
 
@@ -456,6 +442,14 @@ Update of the software will be managed by the swupd tool::
 
 .. _from_pip_devel:
 .. _getting_ansible:
+
+.. _from_windows:
+
+Installing Ansible on Windows
+------------------------------
+
+See :ref:`windows_faq_ansible`
+
 
 Installing and running the ``devel`` branch from source
 =======================================================
