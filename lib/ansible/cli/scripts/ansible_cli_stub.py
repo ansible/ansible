@@ -24,6 +24,7 @@ __metaclass__ = type
 
 
 import errno
+import functools
 import os
 import shutil
 import sys
@@ -57,7 +58,7 @@ class LastResort(object):
         print(msg, file=sys.stderr)
 
 
-def main():
+def main(target='adhoc'):
     display = LastResort()
 
     try:  # bad ANSIBLE_CONFIG or config options can force ugly stacktrace
@@ -70,30 +71,15 @@ def main():
     initialize_locale()
 
     cli = None
-    me = Path(sys.argv[0]).name
 
     try:
         display = Display()
         display.debug("starting run")
 
-        sub = None
-        target = me.split('-')
-        if target[-1][0].isdigit():
-            # Remove any version or python version info as downstreams
-            # sometimes add that
-            target = target[:-1]
-
-        if len(target) > 1:
-            sub = target[1]
-            myclass = "%sCLI" % sub.capitalize()
-        elif target[0] == 'ansible':
-            sub = 'adhoc'
-            myclass = 'AdHocCLI'
-        else:
-            raise AnsibleError("Unknown Ansible alias: %s" % me)
+        myclass = "%sCLI" % target.capitalize()
 
         try:
-            mycli = getattr(__import__("ansible.cli.%s" % sub, fromlist=[myclass]), myclass)
+            mycli = getattr(__import__("ansible.cli.%s" % target, fromlist=[myclass]), myclass)
         except ImportError as e:
             # ImportError members have changed in py3
             if 'msg' in dir(e):
@@ -169,5 +155,11 @@ def main():
     sys.exit(exit_code)
 
 
-if __name__ == '__main__':
-    main()
+config = functools.partial(main, 'config')
+console = functools.partial(main, 'console')
+doc = functools.partial(main, 'doc')
+galaxy = functools.partial(main, 'galaxy')
+inventory = functools.partial(main, 'inventory')
+playbook = functools.partial(main, 'playbook')
+pull = functools.partial(main, 'pull')
+vault = functools.partial(main, 'vault')

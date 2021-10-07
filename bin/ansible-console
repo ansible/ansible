@@ -1,1 +1,3 @@
-ansible
+#!/usr/bin/env python
+from ansible.cli.scripts.ansible_cli_stub import main
+main('console')
