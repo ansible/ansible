@@ -24,11 +24,15 @@ Test syntax
 
 As of Ansible 2.5, using a jinja test as a filter will generate a warning.
 
-The syntax for using a jinja test is as follows::
+The syntax for using a jinja test is as follows
+
+.. code-block:: console
 
     variable is test_name
 
-Such as::
+Such as
+
+.. code-block:: console  
 
     result is failed
 
@@ -37,7 +41,9 @@ Such as::
 Testing strings
 ===============
 
-To match strings against a substring or a regular expression, use the ``match``, ``search`` or ``regex`` tests::
+To match strings against a substring or a regular expression, use the ``match``, ``search`` or ``regex`` tests
+
+.. code-block:: yaml
 
     vars:
       url: "https://example.com/users/foo/resources/bar"
@@ -139,29 +145,41 @@ Comparing versions
 To compare a version number, such as checking if the ``ansible_facts['distribution_version']``
 version is greater than or equal to '12.04', you can use the ``version`` test.
 
-The ``version`` test can also be used to evaluate the ``ansible_facts['distribution_version']``::
+The ``version`` test can also be used to evaluate the ``ansible_facts['distribution_version']``
+
+.. code-block:: yaml+jinja
 
     {{ ansible_facts['distribution_version'] is version('12.04', '>=') }}
 
 If ``ansible_facts['distribution_version']`` is greater than or equal to 12.04, this test returns True, otherwise False.
 
-The ``version`` test accepts the following operators::
+The ``version`` test accepts the following operators
+
+.. code-block:: console
 
     <, lt, <=, le, >, gt, >=, ge, ==, =, eq, !=, <>, ne
 
-This test also accepts a 3rd parameter, ``strict`` which defines if strict version parsing as defined by ``distutils.version.StrictVersion`` should be used.  The default is ``False`` (using ``distutils.version.LooseVersion``), ``True`` enables strict version parsing::
+This test also accepts a 3rd parameter, ``strict`` which defines if strict version parsing as defined by ``distutils.version.StrictVersion`` should be used.  The default is ``False`` (using ``distutils.version.LooseVersion``), ``True`` enables strict version parsing
+
+.. code-block:: yaml+jinja
 
     {{ sample_version_var is version('1.0', operator='lt', strict=True) }}
 
-As of Ansible 2.11 the ``version`` test accepts a ``version_type`` parameter which is mutually exclusive with ``strict``, and accepts the following values::
+As of Ansible 2.11 the ``version`` test accepts a ``version_type`` parameter which is mutually exclusive with ``strict``, and accepts the following values
+
+.. code-block:: console
 
     loose, strict, semver, semantic
 
-Using ``version_type`` to compare a semantic version would be achieved like the following::
+Using ``version_type`` to compare a semantic version would be achieved like the following
+
+.. code-block:: yaml+jinja
 
     {{ sample_semver_var is version('2.0.0-rc.1+build.123', 'lt', version_type='semver') }}
 
-When using ``version`` in a playbook or role, don't use ``{{ }}`` as described in the `FAQ <https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#when-should-i-use-also-how-to-interpolate-variables-or-dynamic-variable-names>`_::
+When using ``version`` in a playbook or role, don't use ``{{ }}`` as described in the `FAQ <https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#when-should-i-use-also-how-to-interpolate-variables-or-dynamic-variable-names>`_
+
+.. code-block:: yaml
 
     vars:
         my_version: 1.2.3
@@ -180,7 +198,9 @@ Set theory tests
 
 .. note:: In 2.5 ``issubset`` and ``issuperset`` were renamed to ``subset`` and ``superset``
 
-To see if a list includes or is included by another list, you can use 'subset' and 'superset'::
+To see if a list includes or is included by another list, you can use 'subset' and 'superset'
+
+.. code-block:: yaml
 
     vars:
         a: [1,2,3,4,5]
@@ -202,7 +222,9 @@ Testing if a list contains a value
 .. versionadded:: 2.8
 
 Ansible includes a ``contains`` test which operates similarly, but in reverse of the Jinja2 provided ``in`` test.
-The ``contains`` test is designed to work with the ``select``, ``reject``, ``selectattr``, and ``rejectattr`` filters::
+The ``contains`` test is designed to work with the ``select``, ``reject``, ``selectattr``, and ``rejectattr`` filters
+
+.. code-block:: yaml
 
     vars:
       lacp_groups:
@@ -235,7 +257,9 @@ The ``contains`` test is designed to work with the ``select``, ``reject``, ``sel
 Testing if a list value is True
 ===============================
 
-You can use `any` and `all` to check if any or all elements in a list are true or not::
+You can use `any` and `all` to check if any or all elements in a list are true or not
+
+.. code-block:: yaml
 
   vars:
     mylist:
@@ -262,7 +286,9 @@ Testing paths
 
 .. note:: In 2.5 the following tests were renamed to remove the ``is_`` prefix
 
-The following tests can provide information about a path on the controller::
+The following tests can provide information about a path on the controller
+
+.. code-block:: yaml
 
     - debug:
         msg: "path is a directory"
@@ -304,7 +330,9 @@ Human readable
 
 Asserts whether the given string is human readable or not.
 
-For example::
+For example
+
+.. code-block:: yaml+jinja
 
   - name: "Human Readable"
     assert:
@@ -316,7 +344,9 @@ For example::
         - '"0.10 GB" == 102400000|human_readable(unit="G")'
         - '"0.10 Gb" == 102400000|human_readable(isbits=True, unit="G")'
 
-This would result in::
+This would result in
+
+.. code-block:: json
 
     { "changed": false, "msg": "All assertions passed" }
 
@@ -325,7 +355,9 @@ Human to bytes
 
 Returns the given string in the Bytes format.
 
-For example::
+For example
+
+.. code-block:: yaml+jinja
 
   - name: "Human to Bytes"
     assert:
@@ -339,7 +371,9 @@ For example::
         - "{{  '1.1 GB'|human_to_bytes}} == 1181116006"
         - "{{'10.00 Kb'|human_to_bytes(isbits=True)}} == 10240"
 
-This would result in::
+This would result in
+
+.. code-block:: json
 
     { "changed": false, "msg": "All assertions passed" }
 
@@ -349,7 +383,9 @@ This would result in::
 Testing task results
 ====================
 
-The following tasks are illustrative of the tests meant to check the status of tasks::
+The following tasks are illustrative of the tests meant to check the status of tasks
+
+.. code-block:: yaml
 
     tasks:
 
