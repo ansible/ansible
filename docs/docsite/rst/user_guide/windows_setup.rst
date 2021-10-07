@@ -518,7 +518,7 @@ Ansible, select one of these installation options:
     # Make sure the role has been downloaded first
     ansible-galaxy install jborean93.win_openssh
 
-.. code-block:: yeaml
+.. code-block:: yaml
 
     # main.yml
     - name: install Win32-OpenSSH service
@@ -594,14 +594,13 @@ Here are the known ones:
 
 
 .. seealso::
-
-   :ref:`about_playbooks`
+    - :ref:`about_playbooks`
        An introduction to playbooks
-   :ref:`playbooks_best_practices`
+    - :ref:`playbooks_best_practices`
        Tips and tricks for playbooks
-   :ref:`List of Windows Modules <windows_modules>`
+    - :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell
-   `User Mailing List <https://groups.google.com/group/ansible-project>`_
+    - `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
-   :ref:`communication_irc`
+    - :ref:`communication_irc`
        How to join Ansible chat channels
