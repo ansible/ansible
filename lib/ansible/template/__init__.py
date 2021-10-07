@@ -234,6 +234,24 @@ def is_template(data, jinja_env):
     return False
 
 
+def _count_newlines_from_end(in_str):
+    '''
+    Counts the number of newlines at the end of a string. This is used during
+    the jinja2 templating to ensure the count matches the input, since some newlines
+    may be thrown away during the templating.
+    '''
+
+    try:
+        i = len(in_str)
+        j = i - 1
+        while in_str[j] == '\n':
+            j -= 1
+        return i - 1 - j
+    except IndexError:
+        # Uncommon cases: zero length string and string containing only newlines
+        return i
+
+
 def recursive_check_defined(item):
     from jinja2.runtime import Undefined
 
@@ -648,9 +666,8 @@ class Templar:
 
         self.environment = environment_class(
             trim_blocks=True,
-            keep_trailing_newline=True,
-            extensions=self._get_extensions(),
             undefined=AnsibleUndefined,
+            extensions=self._get_extensions(),
             finalize=self._finalize,
             loader=FileSystemLoader(self._basedir),
         )
@@ -1043,6 +1060,10 @@ class Templar:
         if self.jinja2_native and not isinstance(data, string_types):
             return data
 
+        # For preserving the number of input newlines in the output (used
+        # later in this method)
+        data_newlines = _count_newlines_from_end(data)
+
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
 
@@ -1111,10 +1132,18 @@ class Templar:
             if self.jinja2_native and not isinstance(res, string_types):
                 return res
 
-            if not preserve_trailing_newlines and res[-1] == self.environment.newline_sequence:
-                res = res[:len(res) - 1]
-                if unsafe:
-                    res = wrap_var(res)
+            if preserve_trailing_newlines:
+                # The low level calls above do not preserve the newline
+                # characters at the end of the input data, so we use the
+                # calculate the difference in newlines and append them
+                # to the resulting output for parity
+                #
+                # FIXME explaing why using keep_trailing_newline will not work
+                res_newlines = _count_newlines_from_end(res)
+                if data_newlines > res_newlines:
+                    res += self.environment.newline_sequence * (data_newlines - res_newlines)
+                    if unsafe:
+                        res = wrap_var(res)
 
             return res
         except (UndefinedError, AnsibleUndefinedVariable) as e:

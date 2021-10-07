@@ -23,10 +23,5 @@
     that:
       - "'bad' is not nan"
       - "1.1 | float is not nan"
-
-# Jinja2 versions prior to 2.10 will traceback when using: 'nan' | float
-- name: Assert nan tests work (Jinja2 2.10+)
-  assert:
-    that:
       - "'nan' | float is isnan"  # old name
       - "'nan' | float is nan"
