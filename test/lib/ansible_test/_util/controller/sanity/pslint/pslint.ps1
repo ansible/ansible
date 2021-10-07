@@ -38,4 +38,4 @@ $Results = @(ForEach ($Path in $Args) {
 
 # Since pwsh 7.1 results that exceed depth will produce a warning which fails the process.
 # Ignore warnings only for this step.
-ConvertTo-Json -InputObject $Results -Depth 2 -WarningAction SilentlyContinue
+ConvertTo-Json -InputObject $Results -Depth 1 -WarningAction SilentlyContinue
