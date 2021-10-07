@@ -7,7 +7,8 @@ set -o pipefail -eu
 
 output_path="$1"
 
-curl --silent --show-error https://ansible-ci-files.s3.us-east-1.amazonaws.com/codecov/codecov.sh > codecov.sh
+curl --silent --show-error https://ansible-ci-files.s3.amazonaws.com/codecov/linux/codecov > codecov
+chmod +x codecov
 
 for file in "${output_path}"/reports/coverage*.xml; do
     name="${file}"
@@ -15,13 +16,8 @@ for file in "${output_path}"/reports/coverage*.xml; do
     name="${name##coverage=}"  # remove 'coverage=' prefix if present
     name="${name%.xml}"  # remove '.xml' suffix
 
-    bash codecov.sh \
+    ./codecov \
         -f "${file}" \
         -n "${name}" \
-        -X coveragepy \
-        -X gcov \
-        -X fix \
-        -X search \
-        -X xcode \
         || echo "Failed to upload code coverage report to codecov.io: ${file}"
 done
