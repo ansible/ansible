@@ -21,7 +21,7 @@ import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle
 
-from jinja2.filters import environmentfilter, do_groupby as _do_groupby
+from jinja2.filters import environmentfilter
 
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.six import string_types, integer_types, reraise, text_type
@@ -32,7 +32,7 @@ from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.common.yaml import yaml_load, yaml_load_all
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.template import AnsibleUndefined, recursive_check_defined
+from ansible.template import recursive_check_defined
 from ansible.utils.display import Display
 from ansible.utils.encrypt import passlib_or_crypt
 from ansible.utils.hashing import md5s, checksum_s
@@ -437,26 +437,6 @@ def extract(environment, item, container, morekeys=None):
     return value
 
 
-@environmentfilter
-def do_groupby(environment, value, attribute):
-    """Overridden groupby filter for jinja2, to address an issue with
-    jinja2>=2.9.0,<2.9.5 where a namedtuple was returned which
-    has repr that prevents ansible.template.safe_eval.safe_eval from being
-    able to parse and eval the data.
-
-    jinja2<2.9.0,>=2.9.5 is not affected, as <2.9.0 uses a tuple, and
-    >=2.9.5 uses a standard tuple repr on the namedtuple.
-
-    The adaptation here, is to run the jinja2 `do_groupby` function, and
-    cast all of the namedtuples to a regular tuple.
-
-    See https://github.com/ansible/ansible/issues/20098
-
-    We may be able to remove this in the future.
-    """
-    return [tuple(t) for t in _do_groupby(environment, value, attribute)]
-
-
 def b64encode(string, encoding='utf-8'):
     return to_text(base64.b64encode(to_bytes(string, encoding=encoding, errors='surrogate_or_strict')))
 
@@ -571,9 +551,6 @@ class FilterModule(object):
 
     def filters(self):
         return {
-            # jinja2 overrides
-            'groupby': do_groupby,
-
             # base 64
             'b64decode': b64decode,
             'b64encode': b64encode,

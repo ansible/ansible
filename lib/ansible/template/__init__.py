@@ -1143,7 +1143,6 @@ class Templar:
                     res += self.environment.newline_sequence * (data_newlines - res_newlines)
                     if unsafe:
                         res = wrap_var(res)
-
             return res
         except (UndefinedError, AnsibleUndefinedVariable) as e:
             if fail_on_undefined:
