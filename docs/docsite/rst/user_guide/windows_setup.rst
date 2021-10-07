@@ -592,15 +592,15 @@ Here are the known ones:
 * Win32-OpenSSH versions older than ``v7.9.0.0p1-Beta`` do not work when ``powershell`` is the shell type
 * While SCP should work, SFTP is the recommended SSH file transfer mechanism to use when copying or fetching a file
 
-
 .. seealso::
-    - :ref:`about_playbooks`
+
+    :ref:`about_playbooks`
        An introduction to playbooks
-    - :ref:`playbooks_best_practices`
+    :ref:`playbooks_best_practices`
        Tips and tricks for playbooks
-    - :ref:`List of Windows Modules <windows_modules>`
+    :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell
-    - `User Mailing List <https://groups.google.com/group/ansible-project>`_
+    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
-    - :ref:`communication_irc`
+     :ref:`communication_irc`
        How to join Ansible chat channels
