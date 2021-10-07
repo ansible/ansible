@@ -50,6 +50,10 @@ from ..host_configs import (
     WindowsRemoteConfig,
 )
 
+from ..data import (
+    data_context,
+)
+
 
 def filter_python(version, versions):  # type: (t.Optional[str], t.Optional[t.List[str]]) -> t.Optional[str]
     """If a Python version is given and is in the given version list, return that Python version, otherwise return None."""
@@ -467,9 +471,9 @@ def default_targets(
 ):  # type: (...) -> t.List[HostConfig]
     """Return a list of default targets for the given target mode."""
     if mode == TargetMode.WINDOWS_INTEGRATION:
-        targets = [WindowsInventoryConfig(path=os.path.abspath('test/integration/inventory.winrm'))]
+        targets = [WindowsInventoryConfig(path=os.path.abspath(os.path.join(data_context().content.integration_path, 'inventory.winrm')))]
     elif mode == TargetMode.NETWORK_INTEGRATION:
-        targets = [NetworkInventoryConfig(path=os.path.abspath('test/integration/inventory.networking'))]
+        targets = [NetworkInventoryConfig(path=os.path.abspath(os.path.join(data_context().content.integration_path, 'inventory.networking')))]
     elif mode.multiple_pythons:
         targets = controller.get_default_targets(HostContext(controller_config=controller))
     else:
