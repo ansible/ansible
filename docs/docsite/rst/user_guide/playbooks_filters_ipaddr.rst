@@ -117,7 +117,7 @@ valid for a particular query
 .. code-block:: yaml+jinja
 
     # Example list of values
-    test_list = ['192.24.2.1', 'host.fqdn', '::1', '192.168.32.0/24', 'fe80::100/10', True, '', '42540766412265424405338506004571095040/64']
+    test_list: ['192.24.2.1', 'host.fqdn', '::1', '192.168.32.0/24', 'fe80::100/10', True, '', '42540766412265424405338506004571095040/64']
 
     # {{ test_list | ansible.netcommon.ipaddr }}
     ['192.24.2.1', '::1', '192.168.32.0/24', 'fe80::100/10', '2001:db8:32c:faad::/64']
@@ -176,7 +176,7 @@ Here's our test list again
 .. code-block:: yaml+jinja
 
     # Example list of values
-    test_list = ['192.24.2.1', 'host.fqdn', '::1', '192.168.32.0/24', 'fe80::100/10', True, '', '42540766412265424405338506004571095040/64']
+    test_list: ['192.24.2.1', 'host.fqdn', '::1', '192.168.32.0/24', 'fe80::100/10', True, '', '42540766412265424405338506004571095040/64']
 
 Let's take the list above and get only those elements that are host IP addresses
 and not network ranges
@@ -285,7 +285,7 @@ Here's an example set of two host prefixes (with some "control" values)
 
 .. code-block:: yaml+jinja
 
-    host_prefix = ['2001:db8:deaf:be11::ef3/64', '192.0.2.48/24', '127.0.0.1', '192.168.0.0/16']
+    host_prefix: ['2001:db8:deaf:be11::ef3/64', '192.0.2.48/24', '127.0.0.1', '192.168.0.0/16']
 
 First, let's make sure that we only work with correct host/prefix values, not
 just subnets or single IP addresses
@@ -370,7 +370,7 @@ First concatenate the network and netmask
 
 .. code-block:: yaml+jinja
 
-    net_mask = "{{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }}"
+    net_mask: "{{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }}"
     '192.168.0.0/255.255.255.0'
 
 This result can be converted to canonical form with ``ipaddr()`` to produce a subnet in CIDR format
@@ -394,7 +394,7 @@ Here's an example of IP address
 
 .. code-block:: yaml+jinja
 
-    ip_address = "{{ ansible_default_ipv4.address }}/{{ ansible_default_ipv4.netmask }}"
+    ip_address: "{{ ansible_default_ipv4.address }}/{{ ansible_default_ipv4.netmask }}"
     '192.168.0.11/255.255.255.0'
 
 This can be used to obtain the network address in CIDR notation format
@@ -413,7 +413,7 @@ Here's our test list again
 .. code-block:: yaml+jinja
 
     # Example list of values
-    test_list = ['192.24.2.1', 'host.fqdn', '::1', '192.168.32.0/24', 'fe80::100/10', True, '', '42540766412265424405338506004571095040/64']
+    test_list: ['192.24.2.1', 'host.fqdn', '::1', '192.168.32.0/24', 'fe80::100/10', True, '', '42540766412265424405338506004571095040/64']
 
 You can convert IPv4 addresses into IPv6 addresses
 
@@ -653,8 +653,8 @@ Here is an example IP address and subnet
 
 .. code-block:: yaml+jinja
 
-    address = '192.168.144.5'
-    subnet  = '192.168.0.0/16'
+    address: '192.168.144.5'
+    subnet: '192.168.0.0/16'
 
 To check if a given string is a subnet, pass it through the filter without any
 arguments. If the given string is an IP address, it will be converted into
@@ -803,7 +803,7 @@ convert it between various formats. Examples
 .. code-block:: yaml+jinja
 
     # Example MAC address
-    macaddress = '1a:2b:3c:4d:5e:6f'
+    macaddress: '1a:2b:3c:4d:5e:6f'
 
     # Check if given string is a MAC address
     # {{ macaddress | ansible.netcommon.hwaddr }}
