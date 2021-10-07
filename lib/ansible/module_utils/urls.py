@@ -475,6 +475,11 @@ zKPZsZ2miVGclicJHzm5q080b1p/sZtuKIEZk6vZqEg=
 -----END CERTIFICATE-----
 """
 
+b_PEM_CERT_RE = re.compile(
+    br'^-----BEGIN CERTIFICATE-----\n.+?-----END CERTIFICATE-----$',
+    flags=re.M | re.S
+)
+
 #
 # Exceptions
 #
@@ -745,6 +750,11 @@ def generic_urlparse(parts):
     return generic_parts
 
 
+def extract_pem_certs(b_data):
+    for match in b_PEM_CERT_RE.finditer(b_data):
+        yield match.group(0)
+
+
 class RequestWithMethod(urllib_request.Request):
     '''
     Workaround for using DELETE/PUT/etc with urllib2
@@ -918,11 +928,12 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             paths_checked = [self.ca_path]
             with open(to_bytes(self.ca_path, errors='surrogate_or_strict'), 'rb') as f:
                 if HAS_SSLCONTEXT:
-                    cadata.extend(
-                        ssl.PEM_cert_to_DER_cert(
-                            to_native(f.read(), errors='surrogate_or_strict')
+                    for b_pem in extract_pem_certs(f.read()):
+                        cadata.extend(
+                            ssl.PEM_cert_to_DER_cert(
+                                to_native(b_pem, errors='surrogate_or_strict')
+                            )
                         )
-                    )
             return self.ca_path, cadata, paths_checked
 
         if not HAS_SSLCONTEXT:
@@ -981,11 +992,12 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                                     b_cert = cert_file.read()
                                 if HAS_SSLCONTEXT:
                                     try:
-                                        cadata.extend(
-                                            ssl.PEM_cert_to_DER_cert(
-                                                to_native(b_cert, errors='surrogate_or_strict')
+                                        for b_pem in extract_pem_certs(b_cert):
+                                            cadata.extend(
+                                                ssl.PEM_cert_to_DER_cert(
+                                                    to_native(b_pem, errors='surrogate_or_strict')
+                                                )
                                             )
-                                        )
                                     except Exception:
                                         continue
                                 else:

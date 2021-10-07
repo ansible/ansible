@@ -173,6 +173,25 @@
       - result is failed
       - "'certificate verify failed' in result.msg"
 
+- name: Locate ca-bundle
+  stat:
+    path: '{{ item }}'
+  loop:
+    - /etc/ssl/certs/ca-bundle.crt
+    - /etc/ssl/certs/ca-certificates.crt
+    - /var/lib/ca-certificates/ca-bundle.pem
+    - /usr/local/share/certs/ca-root-nss.crt
+    - '{{ macos_cafile.stdout_lines|default(["/_i_dont_exist_ca.pem"])|first }}'
+    - /etc/ssl/cert.pem
+  register: ca_bundle_candidates
+
+- name: Test that ca_path can be a full bundle
+  uri:
+    url: "https://{{ httpbin_host }}/get"
+    ca_path: '{{ ca_bundle }}'
+  vars:
+    ca_bundle: '{{ ca_bundle_candidates.results|selectattr("stat.exists")|map(attribute="item")|first }}'
+
 - name: test redirect without follow_redirects
   uri:
     url: 'https://{{ httpbin_host }}/redirect/2'
