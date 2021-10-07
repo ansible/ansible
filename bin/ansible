@@ -1,1 +1,4 @@
-../lib/ansible/cli/scripts/ansible_cli_stub.py
+#!/usr/bin/env python3
+from ansible.cli.scripts.ansible_cli_stub import main
+
+main()

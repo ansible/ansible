@@ -32,6 +32,8 @@ from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.utils.display import Display
 from ansible.utils.jsonrpc import JsonRpcServer
 
+display = Display()
+
 
 def read_stream(byte_stream):
     size = int(byte_stream.readline().strip())
@@ -345,5 +347,4 @@ def main():
 
 
 if __name__ == '__main__':
-    display = Display()
     main()

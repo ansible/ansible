@@ -57,8 +57,7 @@ class LastResort(object):
         print(msg, file=sys.stderr)
 
 
-if __name__ == '__main__':
-
+def main():
     display = LastResort()
 
     try:  # bad ANSIBLE_CONFIG or config options can force ugly stacktrace
@@ -168,3 +167,7 @@ if __name__ == '__main__':
         exit_code = 250
 
     sys.exit(exit_code)
+
+
+if __name__ == '__main__':
+    main()
