@@ -14,7 +14,7 @@ Using check mode
 
 Check mode is just a simulation. It will not generate output for tasks that use :ref:`conditionals based on registered variables <conditionals_registered_vars>` (results of prior tasks). However, it is great for validating configuration management playbooks that run on one node at a time. To run a playbook in check mode:
 
-.. code-block: console
+.. code-block:: console
 
     ansible-playbook foo.yml --check
 
