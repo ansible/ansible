@@ -107,7 +107,9 @@ Use the 'serial' keyword to control how many machines you update at once in the 
 Handling OS and distro differences
 ----------------------------------
 
-Group variables files and the ``group_by`` module work together to help Ansible execute across a range of operating systems and distributions that require different settings, packages, and tools. The ``group_by`` module creates a dynamic group of hosts matching certain criteria. This group does not need to be defined in the inventory file. This approach lets you execute different tasks on different operating systems or distributions. For example::
+Group variables files and the ``group_by`` module work together to help Ansible execute across a range of operating systems and distributions that require different settings, packages, and tools. The ``group_by`` module creates a dynamic group of hosts matching certain criteria. This group does not need to be defined in the inventory file. This approach lets you execute different tasks on different operating systems or distributions. For example:
+
+.. code-block:: yaml
 
    ---
 
@@ -125,7 +127,9 @@ Group variables files and the ``group_by`` module work together to help Ansible 
       tasks:
         - # tasks that only happen on CentOS go in this play
 
-The first play categorizes all systems into dynamic groups based on the operating system name. Later plays can use these groups as patterns on the ``hosts`` line. You can also add group-specific settings in group vars files. All three names must match: the name created by the ``group_by`` task, the name of the pattern in subsequent plays, and the name of the group vars file. For example::
+The first play categorizes all systems into dynamic groups based on the operating system name. Later plays can use these groups as patterns on the ``hosts`` line. You can also add group-specific settings in group vars files. All three names must match: the name created by the ``group_by`` task, the name of the pattern in subsequent plays, and the name of the group vars file. For example:
+
+.. code-block:: yaml
 
     ---
     # file: group_vars/all
@@ -138,7 +142,9 @@ The first play categorizes all systems into dynamic groups based on the operatin
 In this example, CentOS machines get the value of '42' for asdf, but other machines get '10'.
 This can be used not only to set variables, but also to apply certain roles to only certain systems.
 
-You can use the same setup with ``include_vars`` when you only need OS-specific variables, not tasks::
+You can use the same setup with ``include_vars`` when you only need OS-specific variables, not tasks:
+
+.. code-block:: yaml
 
     - hosts: all
       tasks:
