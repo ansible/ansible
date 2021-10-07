@@ -17,7 +17,8 @@ for file in "${output_path}"/reports/coverage*.xml; do
     name="${name%.xml}"  # remove '.xml' suffix
 
     ./codecov \
-        -f "${file}" \
-        -n "${name}" \
+        --file "${file}" \
+        --name "${name}" \
+        --slug "ansible/ansible" \
         || echo "Failed to upload code coverage report to codecov.io: ${file}"
 done
