@@ -2,7 +2,6 @@
 #Requires -Version 6
 #Requires -Modules PSScriptAnalyzer, PSSA-PSCustomUseLiteralPath
 
-Set-StrictMode -Version 2.0
 $ErrorActionPreference = "Stop"
 $WarningPreference = "Stop"
 
@@ -21,14 +20,12 @@ $PSSAParams = @{
     Setting = (Join-Path -Path $PSScriptRoot -ChildPath "settings.psd1")
 }
 
-$Results = @()
-
-ForEach ($Path in $Args) {
+$Results = @(ForEach ($Path in $Args) {
     $Retries = 3
 
     Do {
         Try {
-            $Results += Invoke-ScriptAnalyzer -Path $Path @PSSAParams 3> $null
+            Invoke-ScriptAnalyzer -Path $Path @PSSAParams 3> $null
             $Retries = 0
         }
         Catch {
@@ -38,6 +35,8 @@ ForEach ($Path in $Args) {
         }
     }
     Until ($Retries -le 0)
-}
+})
 
-ConvertTo-Json -InputObject $Results
+# Since pwsh 7.1 results that exceed depth will produce a warning which fails the process.
+# Ignore warnings only for this step.
+ConvertTo-Json -InputObject $Results -Depth 1 -WarningAction SilentlyContinue
