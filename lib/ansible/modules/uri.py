@@ -22,7 +22,7 @@ options:
       - Whether to attempt to decompress gzip content-encoded responses
     type: bool
     default: true
-    version_added: '2.12'
+    version_added: '2.13'
   url:
     description:
       - HTTP or HTTPS URL in the form (http|https)://host.domain[:port]/path
