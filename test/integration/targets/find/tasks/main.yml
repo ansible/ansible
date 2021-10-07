@@ -259,16 +259,10 @@
     use_regex: true
     exclude: .*\.ogg
   register: find_test3
-# Note that currently sane ways of doing this with map() or
-# selectattr() aren't available in centos6 era jinja2 ...
+
 - set_fact:
-    find_test3_list: >-
-      [ {% for f in find_test3.files %}
-      {{ f.path }}
-      {% if not loop.last %},{% endif %}
-      {% endfor %}
-      ]
-- debug: var=find_test3_list
+    find_test3_list: "{{ find_test3.files|map(attribute='path') }}"
+
 - name: assert we skipped the ogg file
   assert:
     that:
