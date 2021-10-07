@@ -602,5 +602,5 @@ Here are the known ones:
        Windows specific module list, all implemented in PowerShell
     `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
-     :ref:`communication_irc`
+    :ref:`communication_irc`
        How to join Ansible chat channels
