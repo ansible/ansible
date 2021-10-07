@@ -9,7 +9,7 @@ This section describes release cycles, rules, and maintenance schedules for both
 ====================================================  ========================================================
 Ansible community package                             ansible-core
 ====================================================  ========================================================
-Uses new versioning (2.10, then 3.0.0)                Continues "classic Ansible" versioning (2.10, then 2.11)
+Uses new versioning (2.10, then 3.0.0)                Continues "classic Ansible" versioning (2.11, then 2.12)
 Follows semantic versioning rules                     Does not use semantic versioning
 Maintains only one version at a time                  Maintains latest version plus two older versions
 Includes language, runtime, and selected Collections  Includes language, runtime, and builtin plugins
@@ -109,9 +109,10 @@ significant changes in each minor release.
 ============================================= ======================================================
  ``ansible-core`` / ``ansible-base`` Release                          Status
 ============================================= ======================================================
-devel                                         In development (ansible-core 2.12 unreleased, trunk)
-`2.11 ansible-core Release Notes`_            Maintained (security **and** general bug fixes)
-`2.10 ansible-base Release Notes`_            Maintained (security **and** critical bug fixes)
+devel                                         In development (ansible-core 2.13 unreleased, trunk)
+`2.12 ansible-core Release Notes`_            Maintained (security **and** general bug fixes)
+`2.11 ansible-core Release Notes`_            Maintained (security **and** critical bug fixes)
+`2.10 ansible-base Release Notes`_            Maintained (security fixes only)
 `2.9 Release Notes`_                          Maintained (pre-collections) (security fixes only)
 `2.8 Release Notes`_                          Unmaintained (end of life)
 `2.7 Release Notes`_                          Unmaintained (end of life)
@@ -120,6 +121,8 @@ devel                                         In development (ansible-core 2.12 
 <2.5                                          Unmaintained (end of life)
 ============================================= ======================================================
 
+.. _2.12 ansible-core Release Notes:
+.. _2.12: https://github.com/ansible/ansible/blob/stable-2.12/changelogs/CHANGELOG-v2.12.rst
 .. _2.11 ansible-core Release Notes:
 .. _2.11: https://github.com/ansible/ansible/blob/stable-2.11/changelogs/CHANGELOG-v2.11.rst
 .. _2.10 ansible-base Release Notes:
