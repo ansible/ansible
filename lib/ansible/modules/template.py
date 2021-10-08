@@ -110,3 +110,46 @@ EXAMPLES = r'''
     validate: /usr/sbin/sshd -t -f %s
     backup: yes
 '''
+
+RETURN = r'''
+dest:
+    description: Destination file/path, equal to the value passed to I(dest).
+    returned: success
+    type: str
+    sample: /path/to/file.txt
+checksum:
+    description: SHA1 checksum of the rendered file
+    returned: success
+    type: str
+    sample: 373296322247ab85d26d5d1257772757e7afd172
+uid:
+    description: Numeric id representing the file owner
+    returned: success
+    type: int
+    sample: 1003
+gid:
+    description: Numeric id representing the group of the owner
+    returned: success
+    type: int
+    sample: 1003
+user:
+    description: User name of owner
+    returned: success
+    type: str
+    sample: httpd
+group:
+    description: Group name of owner
+    returned: success
+    type: str
+    sample: www-data
+mode:
+    description: Unix permissions of the file in octal representation as a string
+    returned: success
+    type: str
+    sample: 1755
+size:
+    description: Size of the rendered file in bytes
+    returned: success
+    type: int
+    sample: 42
+'''
