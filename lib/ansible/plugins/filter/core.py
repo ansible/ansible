@@ -21,7 +21,7 @@ import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle
 
-from jinja2.filters import environmentfilter
+from jinja2.filters import pass_environment
 
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.six import string_types, integer_types, reraise, text_type
@@ -217,7 +217,7 @@ def from_yaml_all(data):
     return data
 
 
-@environmentfilter
+@pass_environment
 def rand(environment, end, start=None, step=None, seed=None):
     if seed is None:
         r = SystemRandom()
@@ -421,7 +421,7 @@ def comment(text, style='plain', **kw):
         str_end)
 
 
-@environmentfilter
+@pass_environment
 def extract(environment, item, container, morekeys=None):
     if morekeys is None:
         keys = [item]

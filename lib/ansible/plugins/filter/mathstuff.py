@@ -26,7 +26,7 @@ __metaclass__ = type
 import itertools
 import math
 
-from jinja2.filters import environmentfilter
+from jinja2.filters import pass_environment
 
 from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.common.text import formatters
@@ -46,7 +46,7 @@ except ImportError:
 display = Display()
 
 
-@environmentfilter
+@pass_environment
 # Use case_sensitive=None as a sentinel value, so we raise an error only when
 # explicitly set and cannot be handle (by Jinja2 w/o 'unique' or fallback version)
 def unique(environment, a, case_sensitive=None, attribute=None):
@@ -83,7 +83,7 @@ def unique(environment, a, case_sensitive=None, attribute=None):
     return c
 
 
-@environmentfilter
+@pass_environment
 def intersect(environment, a, b):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) & set(b)
@@ -92,7 +92,7 @@ def intersect(environment, a, b):
     return c
 
 
-@environmentfilter
+@pass_environment
 def difference(environment, a, b):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) - set(b)
@@ -101,7 +101,7 @@ def difference(environment, a, b):
     return c
 
 
-@environmentfilter
+@pass_environment
 def symmetric_difference(environment, a, b):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) ^ set(b)
@@ -111,7 +111,7 @@ def symmetric_difference(environment, a, b):
     return c
 
 
-@environmentfilter
+@pass_environment
 def union(environment, a, b):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) | set(b)
