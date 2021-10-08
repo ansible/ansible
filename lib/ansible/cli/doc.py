@@ -337,6 +337,8 @@ class DocCLI(CLI, RoleMixin):
         provides a printout of their DOCUMENTATION strings,
         and it can create a short "snippet" which can be pasted into a playbook.  '''
 
+    name = 'ansible-doc'
+
     # default ignore list for detailed views
     IGNORE = ('module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs', 'collection')
 

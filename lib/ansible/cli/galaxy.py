@@ -136,6 +136,8 @@ def _get_collection_widths(collections):
 class GalaxyCLI(CLI):
     '''command to manage Ansible roles in shared repositories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.'''
 
+    name = 'ansible-galaxy'
+
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url")
 
     def __init__(self, args):

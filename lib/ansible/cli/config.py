@@ -35,6 +35,8 @@ display = Display()
 class ConfigCLI(CLI):
     """ Config command line class """
 
+    name = 'ansible-config'
+
     def __init__(self, args, callback=None):
 
         self.config_file = None

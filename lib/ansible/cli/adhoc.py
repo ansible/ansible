@@ -27,6 +27,8 @@ class AdHocCLI(CLI):
         this command allows you to define and run a single task 'playbook' against a set of hosts
     '''
 
+    name = 'ansible'
+
     def init_parser(self):
         ''' create an options parser for bin/ansible '''
         super(AdHocCLI, self).init_parser(usage='%prog <host-pattern> [options]',

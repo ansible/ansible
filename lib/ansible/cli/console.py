@@ -58,6 +58,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
        - `exit`: exit ansible-console
     '''
 
+    name = 'ansible-console'
     modules = []
     ARGUMENTS = {'host-pattern': 'A name of a group in the inventory, a shell-like glob '
                                  'selecting hosts in inventory or any combination of the two separated by commas.'}

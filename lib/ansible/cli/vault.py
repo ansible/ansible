@@ -34,6 +34,8 @@ class VaultCLI(CLI):
     If you'd like to not expose what variables you are using, you can keep an individual task file entirely encrypted.
     '''
 
+    name = 'ansible-vault'
+
     FROM_STDIN = "stdin"
     FROM_ARGS = "the command line args"
     FROM_PROMPT = "the interactive prompt"

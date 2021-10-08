@@ -42,6 +42,8 @@ class PullCLI(CLI):
         excellent way to gather and analyze remote logs from ansible-pull.
     '''
 
+    name = 'ansible-pull'
+
     DEFAULT_REPO_TYPE = 'git'
     DEFAULT_PLAYBOOK = 'local.yml'
     REPO_CHOICES = ('git', 'subversion', 'hg', 'bzr')

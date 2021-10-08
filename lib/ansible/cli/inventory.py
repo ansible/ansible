@@ -48,6 +48,8 @@ INTERNAL_VARS = frozenset(['ansible_diff_mode',
 class InventoryCLI(CLI):
     ''' used to display or dump the configured inventory as Ansible sees it '''
 
+    name = 'ansible-inventory'
+
     ARGUMENTS = {'host': 'The name of a host to match in the inventory, relevant when using --list',
                  'group': 'The name of a group in the inventory, relevant when using --graph', }
 
