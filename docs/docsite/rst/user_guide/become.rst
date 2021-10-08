@@ -410,7 +410,7 @@ task:
 
     .. code-block:: yaml
 
-      - Check my user name
+      - name: Check my user name
         ansible.windows.win_whoami:
         become: yes
 
