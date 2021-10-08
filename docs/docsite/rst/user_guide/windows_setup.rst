@@ -151,7 +151,9 @@ following command:
 
     winrm enumerate winrm/config/Listener
 
-This will output something like::
+This will output something like:
+
+.. code-block:: powershell
 
     Listener
         Address = *
@@ -194,7 +196,9 @@ the key options that are useful to understand are:
 * ``CertificateThumbprint``: If running over an HTTPS listener, this is the
   thumbprint of the certificate in the Windows Certificate Store that is used
   in the connection. To get the details of the certificate itself, run this
-  command with the relevant certificate thumbprint in PowerShell::
+  command with the relevant certificate thumbprint in PowerShell:
+
+.. code-block:: powershell
 
     $thumbprint = "E6CDAA82EEAF2ECE8546E05DB7F3E01AA47D76CE"
     Get-ChildItem -Path cert:\LocalMachine\My -Recurse | Where-Object { $_.Thumbprint -eq $thumbprint } | Select-Object *
@@ -238,7 +242,9 @@ There are three ways to set up a WinRM listener:
 
 Delete WinRM Listener
 +++++++++++++++++++++
-To remove a WinRM listener::
+To remove a WinRM listener:
+
+.. code-block:: powershell
 
     # Remove all listeners
     Remove-Item -Path WSMan:\localhost\Listener\* -Recurse -Force
@@ -263,7 +269,9 @@ following command:
     winrm get winrm/config/Service
     winrm get winrm/config/Winrs
 
-This will output something like::
+This will output something like:
+
+.. code-block:: powershell
 
     Service
         RootSDDL = O:NSG:BAD:P(A;;GA;;;BA)(A;;GR;;;IU)S:P(AU;FA;GA;;;WD)(AU;SA;GXGW;;;WD)
@@ -329,7 +337,9 @@ options are:
 * ``Winrs\MaxMemoryPerShellMB``: This is the maximum amount of memory allocated
   per shell, including the shell's child processes.
 
-To modify a setting under the ``Service`` key in PowerShell::
+To modify a setting under the ``Service`` key in PowerShell:
+
+.. code-block:: powershell
 
     # substitute {path} with the path to the option after winrm/config/Service
     Set-Item -Path WSMan:\localhost\Service\{path} -Value "value here"
@@ -337,7 +347,9 @@ To modify a setting under the ``Service`` key in PowerShell::
     # for example, to change Service\Auth\CbtHardeningLevel run
     Set-Item -Path WSMan:\localhost\Service\Auth\CbtHardeningLevel -Value Strict
 
-To modify a setting under the ``Winrs`` key in PowerShell::
+To modify a setting under the ``Winrs`` key in PowerShell:
+
+.. code-block:: powershell
 
     # Substitute {path} with the path to the option after winrm/config/Winrs
     Set-Item -Path WSMan:\localhost\Shell\{path} -Value "value here"
@@ -357,7 +369,9 @@ could in fact be issues with the host setup instead.
 
 One easy way to determine whether a problem is a host issue is to
 run the following command from another Windows host to connect to the
-target Windows host::
+target Windows host:
+
+.. code-block:: powershell
 
     # Test out HTTP
     winrs -r:http://server:5985/wsman -u:Username -p:Password ipconfig
@@ -481,11 +495,15 @@ Ansible, select one of these installation options:
 * Manually install the service, following the `install instructions <https://github.com/PowerShell/Win32-OpenSSH/wiki/Install-Win32-OpenSSH>`_
   from Microsoft.
 
-* Install the `openssh <https://chocolatey.org/packages/openssh>`_ package using Chocolatey::
+* Install the `openssh <https://chocolatey.org/packages/openssh>`_ package using Chocolatey:
+
+.. code-block:: powershell
 
     choco install --package-parameters=/SSHServerFeature openssh
 
-* Use ``win_chocolatey`` to install the service::
+* Use ``win_chocolatey`` to install the service
+
+.. code-block:: yaml
 
     - name: install the Win32-OpenSSH service
       win_chocolatey:
@@ -493,10 +511,14 @@ Ansible, select one of these installation options:
         package_params: /SSHServerFeature
         state: present
 
-* Use an existing Ansible Galaxy role like `jborean93.win_openssh <https://galaxy.ansible.com/jborean93/win_openssh>`_::
+* Use an existing Ansible Galaxy role like `jborean93.win_openssh <https://galaxy.ansible.com/jborean93/win_openssh>`_:
+
+.. code-block:: powershell
 
     # Make sure the role has been downloaded first
     ansible-galaxy install jborean93.win_openssh
+
+.. code-block:: yaml
 
     # main.yml
     - name: install Win32-OpenSSH service
@@ -515,7 +537,9 @@ Configuring the Win32-OpenSSH shell
 -----------------------------------
 
 By default ``Win32-OpenSSH`` will use ``cmd.exe`` as a shell. To configure a
-different shell, use an Ansible task to define the registry setting::
+different shell, use an Ansible task to define the registry setting:
+
+.. code-block:: yaml
 
     - name: set the default shell to PowerShell
       win_regedit:
@@ -568,16 +592,15 @@ Here are the known ones:
 * Win32-OpenSSH versions older than ``v7.9.0.0p1-Beta`` do not work when ``powershell`` is the shell type
 * While SCP should work, SFTP is the recommended SSH file transfer mechanism to use when copying or fetching a file
 
-
 .. seealso::
 
-   :ref:`about_playbooks`
+    :ref:`about_playbooks`
        An introduction to playbooks
-   :ref:`playbooks_best_practices`
+    :ref:`playbooks_best_practices`
        Tips and tricks for playbooks
-   :ref:`List of Windows Modules <windows_modules>`
+    :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell
-   `User Mailing List <https://groups.google.com/group/ansible-project>`_
+    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
-   :ref:`communication_irc`
+    :ref:`communication_irc`
        How to join Ansible chat channels
