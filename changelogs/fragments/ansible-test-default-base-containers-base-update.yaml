@@ -1,0 +1,5 @@
+minor_changes:
+  - ansible-test - Update the ``base`` and ``default`` containers from a Ubuntu 18.04 to Ubuntu 20.04 base image.
+  - ansible-test - Use Python 3.10 as the default Python version for the ``base`` and ``default`` containers.
+  - ansible-test - Shellcheck in the ``base`` and ``default`` containers has been upgraded to version 0.7.0.
+  - ansible-test - PowerShell in the ``base`` and ``default`` containers has been upgraded to version 7.1.4.
