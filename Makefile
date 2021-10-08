@@ -7,8 +7,6 @@
 #   make webdocs -------------- produce ansible doc at docs/docsite/_build/html
 #   make coredocs ------------- produce core doc at docs/docsite/_build/html
 #   make sdist ---------------- produce a tarball
-#   make deb-src -------------- produce a DEB source
-#   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
 #   make gettext -------------- produce POT files for docs
 #   make generate-po ---------- generate language specific po file
@@ -63,37 +61,6 @@ endif
 
 # Intenationalisation and Localisation
 LANGUAGES ?=
-
-# DEB build parameters
-DEBUILD_BIN ?= debuild
-DEBUILD_OPTS = --source-option="-I"
-DPUT_BIN ?= dput
-DPUT_OPTS ?=
-DEB_DATE := $(shell LC_TIME=C date +"%a, %d %b %Y %T %z")
-DEB_VERSION ?= $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --debversion)
-ifeq ($(OFFICIAL),yes)
-    DEB_RELEASE ?= $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --debrelease)ppa
-    # Sign OFFICIAL builds using 'DEBSIGN_KEYID'
-    # DEBSIGN_KEYID is required when signing
-    ifneq ($(DEBSIGN_KEYID),)
-        DEBUILD_OPTS += -k$(DEBSIGN_KEYID)
-    endif
-else
-    DEB_RELEASE ?= 100.git$(DATE)$(GITINFO)
-    # Do not sign unofficial builds
-    DEBUILD_OPTS += -uc -us
-    DPUT_OPTS += -u
-endif
-DEBUILD = $(DEBUILD_BIN) $(DEBUILD_OPTS)
-DEB_PPA ?= ppa
-# Choose the desired Ubuntu release: lucid precise saucy trusty
-DEB_DIST ?= unstable
-
-# pbuilder parameters
-PBUILDER_ARCH ?= amd64
-PBUILDER_CACHE_DIR = /var/cache/pbuilder
-PBUILDER_BIN ?= pbuilder
-PBUILDER_OPTS ?= --debootstrapopts --variant=buildd --architecture $(PBUILDER_ARCH) --debbuildopts -b
 
 # ansible-test parameters
 ANSIBLE_TEST ?= bin/ansible-test
@@ -161,9 +128,6 @@ clean:
 	find test/ -type f -name '*.retry' -delete
 	@echo "Cleaning up symlink cache"
 	rm -f SYMLINK_CACHE.json
-	@echo "Cleaning up Debian building stuff"
-	rm -rf debian
-	rm -rf deb-build
 	rm -rf docs/json
 	rm -rf docs/js
 	@echo "Cleaning up docsite"
@@ -205,73 +169,10 @@ sdist_upload: clean docs
 changelog:
 	PYTHONPATH=./lib antsibull-changelog release -vv --use-ansible-doc && PYTHONPATH=./lib antsibull-changelog generate -vv --use-ansible-doc
 
-.PHONY: debian
-debian: sdist
-	@for DIST in $(DEB_DIST) ; do \
-	    mkdir -p deb-build/$${DIST} ; \
-	    tar -C deb-build/$${DIST} -xvf dist/$(NAME)-$(VERSION).tar.gz ; \
-	    cp -a packaging/debian deb-build/$${DIST}/$(NAME)-$(VERSION)/ ; \
-        sed -ie "s|%VERSION%|$(DEB_VERSION)|g;s|%RELEASE%|$(DEB_RELEASE)|;s|%DIST%|$${DIST}|g;s|%DATE%|$(DEB_DATE)|g" deb-build/$${DIST}/$(NAME)-$(VERSION)/debian/changelog ; \
-	done
-
-.PHONY: deb
-deb: deb-src
-	@for DIST in $(DEB_DIST) ; do \
-	    PBUILDER_OPTS="$(PBUILDER_OPTS) --distribution $${DIST} --basetgz $(PBUILDER_CACHE_DIR)/$${DIST}-$(PBUILDER_ARCH)-base.tgz --buildresult $(CURDIR)/deb-build/$${DIST}" ; \
-	    $(PBUILDER_BIN) create $${PBUILDER_OPTS} --othermirror "deb http://archive.ubuntu.com/ubuntu $${DIST} universe" ; \
-	    $(PBUILDER_BIN) update $${PBUILDER_OPTS} ; \
-	    $(PBUILDER_BIN) build $${PBUILDER_OPTS} deb-build/$${DIST}/$(NAME)_$(DEB_VERSION)-$(DEB_RELEASE)~$${DIST}.dsc ; \
-	done
-	@echo "#############################################"
-	@echo "Ansible DEB artifacts:"
-	@for DIST in $(DEB_DIST) ; do \
-	    echo deb-build/$${DIST}/$(NAME)_$(DEB_VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
-	done
-	@echo "#############################################"
-
-# Build package outside of pbuilder, with locally installed dependencies.
-# Install BuildRequires as noted in packaging/debian/control.
-.PHONY: local_deb
-local_deb: debian
-	@for DIST in $(DEB_DIST) ; do \
-	    (cd deb-build/$${DIST}/$(NAME)-$(VERSION)/ && $(DEBUILD) -b) ; \
-	done
-	@echo "#############################################"
-	@echo "Ansible DEB artifacts:"
-	@for DIST in $(DEB_DIST) ; do \
-	    echo deb-build/$${DIST}/$(NAME)_$(DEB_VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
-	done
-	@echo "#############################################"
-
-.PHONY: deb-src
-deb-src: debian
-	@for DIST in $(DEB_DIST) ; do \
-	    (cd deb-build/$${DIST}/$(NAME)-$(VERSION)/ && $(DEBUILD) -S) ; \
-	done
-	@echo "#############################################"
-	@echo "Ansible DEB artifacts:"
-	@for DIST in $(DEB_DIST) ; do \
-	    echo deb-build/$${DIST}/$(NAME)_$(DEB_VERSION)-$(DEB_RELEASE)~$${DIST}_source.changes ; \
-	done
-	@echo "#############################################"
-
-.PHONY: deb-upload
-deb-upload: deb
-	@for DIST in $(DEB_DIST) ; do \
-	    $(DPUT_BIN) $(DPUT_OPTS) $(DEB_PPA) deb-build/$${DIST}/$(NAME)_$(DEB_VERSION)-$(DEB_RELEASE)~$${DIST}_amd64.changes ; \
-	done
-
-.PHONY: deb-src-upload
-deb-src-upload: deb-src
-	@for DIST in $(DEB_DIST) ; do \
-	    $(DPUT_BIN) $(DPUT_OPTS) $(DEB_PPA) deb-build/$${DIST}/$(NAME)_$(DEB_VERSION)-$(DEB_RELEASE)~$${DIST}_source.changes ; \
-	done
-
 .PHONY: epub
 epub:
 	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) epub)
 
-# for arch or gentoo, read instructions in the appropriate 'packaging' subdirectory directory
 .PHONY: webdocs
 webdocs:
 	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) docs)
