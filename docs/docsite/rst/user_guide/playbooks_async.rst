@@ -13,19 +13,19 @@ Asynchronous ad hoc tasks
 
 You can execute long-running operations in the background with :ref:`ad hoc tasks <intro_adhoc>`. For example, to execute ``long_running_operation`` asynchronously in the background, with a timeout (``-B``) of 3600 seconds, and without polling (``-P``):
 
-..code-block:: bash
+.. code-block:: bash
 
     $ ansible all -B 3600 -P 0 -a "/usr/bin/long_running_operation --do-stuff"
 
 To check on the job status later, use the ``async_status`` module, passing it the job ID that was returned when you ran the original job in the background:
 
-..code-block:: bash
+.. code-block:: bash
 
     $ ansible web1.example.com -m async_status -a "jid=488359678239.2844"
 
 Ansible can also check on the status of your long-running job automatically with polling. In most cases, Ansible will keep the connection to your remote node open between polls. To run for 30 minutes and poll for status every 60 seconds:
 
-..code-block:: bash
+.. code-block:: bash
 
     $ ansible all -B 1800 -P 60 -a "/usr/bin/long_running_operation --do-stuff"
 
@@ -45,7 +45,7 @@ If you want to set a longer timeout limit for a certain task in your playbook, u
 
 To avoid timeouts on a task, specify its maximum runtime and how frequently you would like to poll for status:
 
-..code-block:: yaml
+.. code-block:: yaml
 
     ---
 
@@ -81,7 +81,7 @@ If you want to run multiple tasks in a playbook concurrently, use ``async`` with
 
 To run a playbook task asynchronously:
 
-..code-block:: yaml
+.. code-block:: yaml
 
     ---
 
@@ -108,23 +108,23 @@ To run a playbook task asynchronously:
 
 If you need a synchronization point with an async task, you can register it to obtain its job ID and use the :ref:`async_status <async_status_module>` module to observe it in a later task. For example:
 
-..code-block:: yaml
+.. code-block:: yaml+jinja
 
-      - name: Run an async task
-        ansible.builtin.yum:
-          name: docker-io
-          state: present
-        async: 1000
-        poll: 0
-        register: yum_sleeper
+        - name: Run an async task
+          ansible.builtin.yum:
+            name: docker-io
+            state: present
+          async: 1000
+          poll: 0
+          register: yum_sleeper
 
-      - name: Check on an async task
-        async_status:
-          jid: "{{ yum_sleeper.ansible_job_id }}"
-        register: job_result
-        until: job_result.finished
-        retries: 100
-        delay: 10
+        - name: Check on an async task
+          async_status:
+            jid: "{{ yum_sleeper.ansible_job_id }}"
+          register: job_result
+          until: job_result.finished
+          retries: 100
+          delay: 10
 
 .. note::
    If the value of ``async:`` is not high enough, this will cause the
@@ -138,7 +138,7 @@ If you need a synchronization point with an async task, you can register it to o
 
 To run multiple asynchronous tasks while limiting the number of tasks running concurrently:
 
-..code-block:: yaml
+.. code-block:: yaml+jinja
 
     #####################
     # main.yml
