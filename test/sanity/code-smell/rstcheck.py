@@ -16,11 +16,16 @@ def main():
         'br',
     )
 
+    ignore_directives = (
+        'dropdown',
+    )
+
     cmd = [
         sys.executable,
         '-m', 'rstcheck',
         '--report', 'warning',
         '--ignore-substitutions', ','.join(ignore_substitutions),
+        '--ignore-directives', ','.join(ignore_directives),
     ] + paths
 
     process = subprocess.run(cmd,
