@@ -23,6 +23,7 @@ def assemble_files_to_ship(complete_file_list):
         '.azure-pipelines/*',
         '.github/*',
         '.github/*/*',
+        'bin/*',
         'changelogs/fragments/*',
         'hacking/backport/*',
         'hacking/azp/*',
@@ -74,22 +75,22 @@ def assemble_files_to_ship(complete_file_list):
         'hacking/env-setup',
         'hacking/env-setup.fish',
         'MANIFEST',
+        'setup.cfg',
     ))
 
     # These files are generated and then intentionally added to the sdist
 
     # Manpages
+    ignore_script = ('ansible-connection', 'ansible-test')
     manpages = ['docs/man/man1/ansible.1']
     for dirname, dummy, files in os.walk('bin'):
         for filename in files:
-            path = os.path.join(dirname, filename)
-            if os.path.islink(path):
-                if os.readlink(path) == 'ansible':
-                    manpages.append('docs/man/man1/%s.1' % filename)
+            if filename in ignore_script:
+                continue
+            manpages.append('docs/man/man1/%s.1' % filename)
 
     # Misc
     misc_generated_files = [
-        'SYMLINK_CACHE.json',
         'PKG-INFO',
     ]
 
@@ -256,10 +257,17 @@ def check_sdist_files_are_wanted(sdist_dir, to_ship_files):
             dirname = ''
 
         for filename in files:
+            if filename == 'setup.cfg':
+                continue
+
             path = os.path.join(dirname, filename)
             if path not in to_ship_files:
+
                 if fnmatch.fnmatch(path, 'changelogs/CHANGELOG-v2.[0-9]*.rst'):
                     # changelog files are expected
+                    continue
+
+                if fnmatch.fnmatch(path, 'lib/ansible_core.egg-info/*'):
                     continue
 
                 # FIXME: ansible-test doesn't pass the paths of symlinks to us so we aren't
@@ -282,7 +290,7 @@ def check_installed_contains_expected(install_dir, to_install_files):
 
 
 EGG_RE = re.compile('ansible[^/]+\\.egg-info/(PKG-INFO|SOURCES.txt|'
-                    'dependency_links.txt|not-zip-safe|requires.txt|top_level.txt)$')
+                    'dependency_links.txt|not-zip-safe|requires.txt|top_level.txt|entry_points.txt)$')
 
 
 def check_installed_files_are_wanted(install_dir, to_install_files):
