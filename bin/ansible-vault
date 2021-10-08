@@ -1,3 +1,5 @@
 #!/usr/bin/env python
-from ansible.cli.scripts.ansible_cli_stub import main
-main('vault')
+# WARNING: This script is only kept for source checkouts, and will not be installed.
+#          A normal installation process will install setuptools entry points
+from ansible.cli.vault import main
+main()

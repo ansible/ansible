@@ -5,6 +5,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.cli.scripts.ansible_cli_stub import cli_executor
+
 import datetime
 import os
 import platform
@@ -341,3 +343,11 @@ class PullCLI(CLI):
             if playbook is None:
                 display.warning("\n".join(errors))
             return playbook
+
+
+def main():
+    cli_executor(PullCLI)
+
+
+if __name__ == '__main__':
+    main()

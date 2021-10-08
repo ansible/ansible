@@ -58,7 +58,7 @@ class LastResort(object):
         print(msg, file=sys.stderr)
 
 
-def main(target='adhoc'):
+def cli_executor(cls):
     display = LastResort()
 
     try:  # bad ANSIBLE_CONFIG or config options can force ugly stacktrace
@@ -70,26 +70,9 @@ def main(target='adhoc'):
 
     initialize_locale()
 
-    cli = None
-
     try:
         display = Display()
         display.debug("starting run")
-
-        myclass = "%sCLI" % target.capitalize()
-
-        try:
-            mycli = getattr(__import__("ansible.cli.%s" % target, fromlist=[myclass]), myclass)
-        except ImportError as e:
-            # ImportError members have changed in py3
-            if 'msg' in dir(e):
-                msg = e.msg
-            else:
-                msg = e.message
-            if msg.endswith(' %s' % sub):
-                raise AnsibleError("Ansible sub-program not implemented: %s" % me)
-            else:
-                raise
 
         ansible_dir = Path("~/.ansible").expanduser()
         try:
@@ -109,7 +92,7 @@ def main(target='adhoc'):
             display.display(u"The full traceback was:\n\n%s" % to_text(traceback.format_exc()))
             exit_code = 6
         else:
-            cli = mycli(args)
+            cli = cls(args)
             exit_code = cli.run()
 
     except AnsibleOptionsError as e:
@@ -153,13 +136,3 @@ def main(target='adhoc'):
         exit_code = 250
 
     sys.exit(exit_code)
-
-
-config = functools.partial(main, 'config')
-console = functools.partial(main, 'console')
-doc = functools.partial(main, 'doc')
-galaxy = functools.partial(main, 'galaxy')
-inventory = functools.partial(main, 'inventory')
-playbook = functools.partial(main, 'playbook')
-pull = functools.partial(main, 'pull')
-vault = functools.partial(main, 'vault')

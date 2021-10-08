@@ -1,1 +1,5 @@
-../test/lib/ansible_test/_util/target/cli/ansible_test_cli_stub.py
+#!/usr/bin/env python
+# WARNING: This script is only kept for source checkouts, and will not be installed.
+#          A normal installation process will install setuptools entry points
+from ansible_test._util.target.cli.ansible_test_cli_stub import main
+main()

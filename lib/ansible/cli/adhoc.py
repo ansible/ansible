@@ -5,6 +5,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.cli.scripts.ansible_cli_stub import cli_executor
+
 from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
@@ -179,3 +181,11 @@ class AdHocCLI(CLI):
                 loader.cleanup_all_tmp_files()
 
         return result
+
+
+def main():
+    cli_executor(AdHocCLI)
+
+
+if __name__ == '__main__':
+    main()

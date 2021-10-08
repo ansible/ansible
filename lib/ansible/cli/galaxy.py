@@ -5,6 +5,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.cli.scripts.ansible_cli_stub import cli_executor
+
 import json
 import os.path
 import re
@@ -1679,3 +1681,11 @@ class GalaxyCLI(CLI):
         display.display(resp['status'])
 
         return True
+
+
+def main():
+    cli_executor(GalaxyCLI)
+
+
+if __name__ == '__main__':
+    main()

@@ -5,6 +5,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.cli.scripts.ansible_cli_stub import cli_executor
+
 import os
 import stat
 
@@ -215,3 +217,11 @@ class PlaybookCLI(CLI):
         for host in inventory.list_hosts():
             hostname = host.get_name()
             variable_manager.clear_facts(hostname)
+
+
+def main():
+    cli_executor(PlaybookCLI)
+
+
+if __name__ == '__main__':
+    main()

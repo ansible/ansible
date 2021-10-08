@@ -5,6 +5,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.cli.scripts.ansible_cli_stub import cli_executor
+
 import datetime
 import json
 import pkgutil
@@ -1383,3 +1385,11 @@ def _do_lookup_snippet(doc):
     text.append(snippet)
 
     return text
+
+
+def main():
+    cli_executor(DocCLI)
+
+
+if __name__ == '__main__':
+    main()

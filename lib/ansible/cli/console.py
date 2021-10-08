@@ -6,6 +6,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.cli.scripts.ansible_cli_stub import cli_executor
+
 import atexit
 import cmd
 import getpass
@@ -494,3 +496,11 @@ class ConsoleCLI(CLI, cmd.Cmd):
         atexit.register(readline.write_history_file, histfile)
         self.set_prompt()
         self.cmdloop()
+
+
+def main():
+    cli_executor(ConsoleCLI)
+
+
+if __name__ == '__main__':
+    main()

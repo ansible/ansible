@@ -4,6 +4,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.cli.scripts.ansible_cli_stub import cli_executor
+
 import os
 import shlex
 import subprocess
@@ -469,3 +471,11 @@ class ConfigCLI(CLI):
             text = self._get_plugin_configs(context.CLIARGS['type'], context.CLIARGS['args'])
 
         self.pager(to_text('\n'.join(text), errors='surrogate_or_strict'))
+
+
+def main():
+    cli_executor(ConfigCLI)
+
+
+if __name__ == '__main__':
+    main()

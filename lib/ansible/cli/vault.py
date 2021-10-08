@@ -5,6 +5,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.cli.scripts.ansible_cli_stub import cli_executor
+
 import os
 import sys
 
@@ -462,3 +464,11 @@ class VaultCLI(CLI):
                                    self.new_encrypt_vault_id)
 
         display.display("Rekey successful", stderr=True)
+
+
+def main():
+    cli_executor(VaultCLI)
+
+
+if __name__ == '__main__':
+    main()
