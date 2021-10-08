@@ -4,6 +4,7 @@ resolvelib == 0.5.4
 sphinx == 2.1.2
 sphinx-notfound-page == 0.7.1
 sphinx-ansible-theme == 0.8.0
+sphinx_design == 0.0.12
 straight.plugin == 1.5.0
 antsibull == 0.26.0
 
