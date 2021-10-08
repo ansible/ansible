@@ -32,7 +32,7 @@ To execute a playbook interactively, use ``--step``.
 
 With this option, Ansible stops on each task, and asks if it should execute that task. For example, if you have a task called "configure ssh", the playbook run will stop and ask.
 
-.. code-block::
+.. code-block:: shell
 
     Perform task: configure ssh (y/n/c):
 
