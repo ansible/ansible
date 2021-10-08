@@ -9,7 +9,9 @@ If you want your playbook to prompt the user for certain input, add a 'vars_prom
 .. contents::
    :local:
 
-Here is a most basic example::
+Here is a most basic example:
+
+.. code-block:: yaml
 
     ---
     - hosts: all
@@ -33,7 +35,9 @@ The user input is hidden by default but it can be made visible by setting ``priv
 .. note::
     Prompts for individual ``vars_prompt`` variables will be skipped for any variable that is already defined through the command line ``--extra-vars`` option, or when running from a non-interactive session (such as cron or Ansible AWX). See :ref:`passing_variables_on_the_command_line`.
 
-If you have a variable that changes infrequently, you can provide a default value that can be overridden::
+If you have a variable that changes infrequently, you can provide a default value that can be overridden.
+
+.. code-block:: yaml
 
    vars_prompt:
 
@@ -44,7 +48,9 @@ If you have a variable that changes infrequently, you can provide a default valu
 Encrypting values supplied by ``vars_prompt``
 ---------------------------------------------
 
-You can encrypt the entered value so you can use it, for instance, with the user module to define a password::
+You can encrypt the entered value so you can use it, for instance, with the user module to define a password:
+
+.. code-block:: yaml
 
    vars_prompt:
 
@@ -94,7 +100,9 @@ If you do not have Passlib installed, Ansible uses the `crypt <https://docs.pyth
 Allowing special characters in ``vars_prompt`` values
 -----------------------------------------------------
 
-Some special characters, such as ``{`` and ``%`` can create templating errors. If you need to accept special characters, use the ``unsafe`` option::
+Some special characters, such as ``{`` and ``%`` can create templating errors. If you need to accept special characters, use the ``unsafe`` option:
+
+.. code-block:: yaml
 
    vars_prompt:
      - name: my_password_with_weird_chars
