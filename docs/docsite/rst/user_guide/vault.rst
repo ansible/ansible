@@ -589,7 +589,7 @@ Format of files encrypted with Ansible Vault
 
 Ansible Vault creates UTF-8 encoded txt files. The file format includes a newline terminated header. For example:
 
- .. code-block:: bash
+ .. code-block:: text
 
     $ANSIBLE_VAULT;1.1;AES256
 
