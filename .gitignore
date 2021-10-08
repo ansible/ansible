@@ -52,9 +52,6 @@ docs/docsite/searchindex.js
 docs/docsite/_static/*.gif
 docs/docsite/_static/*.png
 docs/docsite/_static/websupport.js
-# deb building stuff...
-/debian/
-deb-build
 # Vim swap files
 *.swp
 *.swo
