@@ -35,15 +35,15 @@ SECCOMP_CHOICES = [
 # It is necessary for payload creation to reconstruct the bin directory when running ansible-test from an installed version of ansible.
 # It is also used to construct the injector directory at runtime.
 ANSIBLE_BIN_SYMLINK_MAP = {
-    'ansible': '../lib/ansible/cli/scripts/ansible_cli_stub.py',
-    'ansible-config': 'ansible',
+    'ansible': '../lib/ansible/cli/adhoc.py',
+    'ansible-config': '../lib/ansible/cli/config.py',
     'ansible-connection': '../lib/ansible/cli/scripts/ansible_connection_cli_stub.py',
-    'ansible-console': 'ansible',
-    'ansible-doc': 'ansible',
-    'ansible-galaxy': 'ansible',
-    'ansible-inventory': 'ansible',
-    'ansible-playbook': 'ansible',
-    'ansible-pull': 'ansible',
+    'ansible-console': '../lib/ansible/cli/console.py',
+    'ansible-doc': '../lib/ansible/cli/doc.py',
+    'ansible-galaxy': '../lib/ansible/cli/galaxy.py',
+    'ansible-inventory': '../lib/ansible/cli/inventory.py',
+    'ansible-playbook': '../lib/ansible/cli/playbook.py',
+    'ansible-pull': '../lib/ansible/cli/pull.py',
     'ansible-test': '../test/lib/ansible_test/_util/target/cli/ansible_test_cli_stub.py',
-    'ansible-vault': 'ansible',
+    'ansible-vault': '../lib/ansible/cli/vault.py',
 }
