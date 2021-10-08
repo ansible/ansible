@@ -47,13 +47,11 @@ fi
 FULL_PATH=$($PYTHON_BIN -c "import os; print(os.path.realpath('$HACKING_DIR'))")
 export ANSIBLE_HOME="$(dirname "$FULL_PATH")"
 
-PREFIX_ANSIBLE_TEST_PYTHONPATH="$ANSIBLE_HOME/test/lib"
 PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
 PREFIX_PATH="$ANSIBLE_HOME/bin"
 PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
 
 expr "$PYTHONPATH" : "${PREFIX_PYTHONPATH}.*" > /dev/null || prepend_path PYTHONPATH "$PREFIX_PYTHONPATH"
-expr "$PYTHONPATH" : "$PREFIX_ANSIBLE_TEST_PYTHONPATH}.*" > /dev/null || prepend_path PYTHONPATH "$PREFIX_ANSIBLE_TEST_PYTHONPATH"
 expr "$PATH" : "${PREFIX_PATH}.*" > /dev/null || prepend_path PATH "$PREFIX_PATH"
 expr "$MANPATH" : "${PREFIX_MANPATH}.*" > /dev/null || prepend_path MANPATH "$PREFIX_MANPATH"
 
