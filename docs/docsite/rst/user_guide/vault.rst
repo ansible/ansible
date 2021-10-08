@@ -595,7 +595,7 @@ Ansible Vault creates UTF-8 encoded txt files. The file format includes a newlin
 
 or
 
- .. code-block:: bash
+ .. code-block:: text
 
     $ANSIBLE_VAULT;1.2;AES256;vault-id-label
 
