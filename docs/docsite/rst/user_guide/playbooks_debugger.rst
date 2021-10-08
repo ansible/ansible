@@ -120,7 +120,7 @@ If you are running legacy playbooks or roles, you may see the debugger enabled a
 
 Or in ansible.cfg:
 
-.. code-block:: yaml
+.. code-block:: ini
 
     [defaults]
     strategy = debug
