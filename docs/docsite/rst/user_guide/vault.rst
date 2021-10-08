@@ -194,7 +194,7 @@ To encrypt the string 'foooodev', add the vault ID label 'dev' with the 'dev' va
 
 The command above creates this content:
 
- .. code-block:: bash
+ .. code-block:: yaml
 
     the_dev_secret: !vault |
               $ANSIBLE_VAULT;1.2;AES256;dev
