@@ -1137,7 +1137,11 @@ class Templar:
                 # calculate the difference in newlines and append them
                 # to the resulting output for parity
                 #
-                # FIXME explaing why using keep_trailing_newline will not work
+                # Using Environment's keep_trailing_newline instead would
+                # result in change in behavior when trailing newlines
+                # would be kept also for included templates, for example:
+                # "Hello {% include 'world.txt' %}!" would render as
+                # "Hello world\n!\n" instead of "Hello world!\n".
                 res_newlines = _count_newlines_from_end(res)
                 if data_newlines > res_newlines:
                     res += self.environment.newline_sequence * (data_newlines - res_newlines)
