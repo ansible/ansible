@@ -24,7 +24,6 @@ __metaclass__ = type
 
 
 import errno
-import functools
 import os
 import shutil
 import sys
