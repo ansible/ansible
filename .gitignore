@@ -58,6 +58,7 @@ deb-build
 # Vim swap files
 *.swp
 *.swo
+[._]*.un~
 credentials.yml
 # test output
 *.retry
