@@ -42,7 +42,7 @@ If you use multiple vault passwords, you can differentiate one password from ano
 
 When you pass a vault ID as an option to the :ref:`ansible-vault` command, you add a label (a hint or nickname) to the encrypted content. This label documents which password you used to encrypt it. The encrypted variable or file includes the vault ID label in plain text in the header. The vault ID is the last element before the encrypted content. For example:
 
-..code-block:: bash
+.. code-block:: bash
 
     my_encrypted_var: !vault |
               $ANSIBLE_VAULT;1.2;AES256;dev
@@ -216,7 +216,7 @@ To encrypt the string 'letmein' read from stdin, add the vault ID 'dev' using th
 
 The command above creates this output:
 
-..code-block:: bash
+.. code-block:: bash
 
     Reading plaintext input from stdin. (ctrl-d to end input, twice if your content does not already have a new line)
     db_password: !vault |
@@ -247,7 +247,7 @@ Type the string to encrypt (for example, 'hunter2'), hit ctrl-d, and wait.
 
 The sequence above creates this output::
 
-..code-block:: bash
+.. code-block:: bash
 
     new_user_password: !vault |
               $ANSIBLE_VAULT;1.2;AES256;dev
@@ -589,13 +589,13 @@ Format of files encrypted with Ansible Vault
 
 Ansible Vault creates UTF-8 encoded txt files. The file format includes a newline terminated header. For example:
 
-..code-block:: text
+.. code-block:: text
 
     $ANSIBLE_VAULT;1.1;AES256
 
 or:
 
-..code-block:: text
+.. code-block:: text
 
     $ANSIBLE_VAULT;1.2;AES256;vault-id-label
 
