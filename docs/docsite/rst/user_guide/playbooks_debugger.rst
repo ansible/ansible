@@ -100,7 +100,7 @@ To enable the task debugger from ansible.cfg, add this setting to the defaults s
 
 To enable the task debugger with an environment variable, pass the variable when you run your playbook:
 
-.. code-block::
+.. code-block:: shell
 
     ANSIBLE_ENABLE_TASK_DEBUGGER=True ansible-playbook -i hosts site.yml
 
