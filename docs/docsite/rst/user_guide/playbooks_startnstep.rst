@@ -26,7 +26,7 @@ Step mode
 
 To execute a playbook interactively, use ``--step``.
 
-.. code-block::
+.. code-block:: shell
 
     ansible-playbook playbook.yml --step
 
