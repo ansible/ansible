@@ -265,12 +265,6 @@ To configure the PPA on your machine and install Ansible run these commands:
 
 .. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties". You may want to use ``apt-get`` instead of ``apt`` in older versions. Also, be aware that only newer distributions (in other words, 18.04, 18.10, and so on) have a ``-u`` or ``--update`` flag, so adjust your script accordingly.
 
-Debian/Ubuntu packages can also be built from the source checkout, run:
-
-.. code-block:: bash
-
-    $ make deb
-
 Installing Ansible on Debian
 ----------------------------
 
