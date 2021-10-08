@@ -13,7 +13,7 @@ start-at-task
 
 To start executing your playbook at a particular task (usually the task that failed on the previous run), use the ``--start-at-task`` option.
 
-.. code-block::
+.. code-block:: shell
 
     ansible-playbook playbook.yml --start-at-task="install packages"
 
