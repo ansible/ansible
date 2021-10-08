@@ -176,7 +176,7 @@ For example, to encrypt the string 'foobar' using the only password stored in 'a
 
 The command above creates this content:
 
- .. code-block:: bash
+ .. code-block:: yaml
 
     the_secret: !vault |
           $ANSIBLE_VAULT;1.1;AES256
