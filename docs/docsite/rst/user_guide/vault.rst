@@ -216,7 +216,7 @@ To encrypt the string 'letmein' read from stdin, add the vault ID 'dev' using th
 
 The command above creates this output:
 
-.. code-block:: bash
+.. code-block:: bash+text
 
     Reading plaintext input from stdin. (ctrl-d to end input, twice if your content does not already have a new line)
     db_password: !vault |
