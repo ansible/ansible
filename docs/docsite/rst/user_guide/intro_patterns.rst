@@ -11,11 +11,15 @@ When you execute Ansible through an ad hoc command or by running a playbook, you
 Using patterns
 --------------
 
-You use a pattern almost any time you execute an ad hoc command or a playbook. The pattern is the only element of an :ref:`ad hoc command<intro_adhoc>` that has no flag. It is usually the second element::
+You use a pattern almost any time you execute an ad hoc command or a playbook. The pattern is the only element of an :ref:`ad hoc command<intro_adhoc>` that has no flag. It is usually the second element:
+
+.. code-block:: bash
 
     ansible <pattern> -m <module_name> -a "<module options>"
 
-For example::
+For example:
+
+.. code-block:: bash
 
     ansible webservers -m service -a "name=httpd state=restarted"
 
@@ -26,7 +30,9 @@ In a playbook the pattern is the content of the ``hosts:`` line for each play:
    - name: <play_name>
      hosts: <pattern>
 
-For example::
+For example:
+
+.. code-block:: yaml
 
     - name: restart webservers
       hosts: webservers
@@ -63,20 +69,26 @@ This table lists common patterns for targeting inventory hosts and groups.
 
 .. note:: You can use either a comma (``,``) or a colon (``:``) to separate a list of hosts. The comma is preferred when dealing with ranges and IPv6 addresses.
 
-Once you know the basic patterns, you can combine them. This example::
+Once you know the basic patterns, you can combine them. This example:
+
+.. code-block:: yaml
 
     webservers:dbservers:&staging:!phoenix
 
 targets all machines in the groups 'webservers' and 'dbservers' that are also in
 the group 'staging', except any machines in the group 'phoenix'.
 
-You can use wildcard patterns with FQDNs or IP addresses, as long as the hosts are named in your inventory by FQDN or IP address::
+You can use wildcard patterns with FQDNs or IP addresses, as long as the hosts are named in your inventory by FQDN or IP address:
+
+.. code-block:: yaml
 
    192.0.\*
    \*.example.com
    \*.com
 
-You can mix wildcard patterns and groups at the same time::
+You can mix wildcard patterns and groups at the same time:
+
+.. code-block:: yaml
 
     one*.com:dbservers
 
@@ -100,7 +112,9 @@ Your pattern must match your inventory syntax. If you define a host as an :ref:`
         maxRequestsPerChild: 808
         host: 127.0.0.2
 
-you must use the alias in your pattern. In the example above, you must use ``host1`` in your pattern. If you use the IP address, you will once again get the error::
+you must use the alias in your pattern. In the example above, you must use ``host1`` in your pattern. If you use the IP address, you will once again get the error:
+
+.. code-block:: console
 
    [WARNING]: Could not match supplied host pattern, ignoring: 127.0.0.2
 
@@ -112,21 +126,27 @@ The common patterns described above will meet most of your needs, but Ansible of
 Using variables in patterns
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can use variables to enable passing group specifiers via the ``-e`` argument to ansible-playbook::
+You can use variables to enable passing group specifiers via the ``-e`` argument to ansible-playbook:
+
+.. code-block:: bash
 
     webservers:!{{ excluded }}:&{{ required }}
 
 Using group position in patterns
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can define a host or subset of hosts by its position in a group. For example, given the following group::
+You can define a host or subset of hosts by its position in a group. For example, given the following group:
+
+.. code-block:: ini
 
     [webservers]
     cobweb
     webbing
     weber
 
-you can use subscripts to select individual hosts or ranges within the webservers group::
+you can use subscripts to select individual hosts or ranges within the webservers group:
+
+.. code-block:: yaml
 
     webservers[0]       # == cobweb
     webservers[-1]      # == weber
@@ -138,7 +158,9 @@ you can use subscripts to select individual hosts or ranges within the webserver
 Using regexes in patterns
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can specify a pattern as a regular expression by starting the pattern with ``~``::
+You can specify a pattern as a regular expression by starting the pattern with ``~``:
+
+.. code-block:: yaml
 
     ~(web|db).*\.example\.com
 
@@ -175,11 +197,15 @@ You can also limit the hosts you target on a particular run with the ``--limit``
 Patterns and ansible-playbook flags
 -----------------------------------
 
-You can change the behavior of the patterns defined in playbooks using command-line options. For example, you can run a playbook that defines ``hosts: all`` on a single host by specifying ``-i 127.0.0.2,`` (note the trailing comma). This works even if the host you target is not defined in your inventory. You can also limit the hosts you target on a particular run with the ``--limit`` flag::
+You can change the behavior of the patterns defined in playbooks using command-line options. For example, you can run a playbook that defines ``hosts: all`` on a single host by specifying ``-i 127.0.0.2,`` (note the trailing comma). This works even if the host you target is not defined in your inventory. You can also limit the hosts you target on a particular run with the ``--limit`` flag:
+
+.. code-block:: bash
 
     ansible-playbook site.yml --limit datacenter2
 
-Finally, you can use ``--limit`` to read the list of hosts from a file by prefixing the file name with ``@``::
+Finally, you can use ``--limit`` to read the list of hosts from a file by prefixing the file name with ``@``:
+
+.. code-block:: bash
 
     ansible-playbook site.yml --limit @retry_hosts.txt
 
