@@ -247,7 +247,7 @@ Type the string to encrypt (for example, 'hunter2'), hit ctrl-d, and wait.
 
 The sequence above creates this output:
 
- .. code-block:: bash
+ .. code-block:: yaml
 
     new_user_password: !vault |
               $ANSIBLE_VAULT;1.2;AES256;dev
