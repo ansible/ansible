@@ -1,5 +1,5 @@
 rstcheck == 3.3.1
-sphinx == 2.1.2  # required for full functionality
+sphinx == 3.0
 
 # dependencies
 Jinja2 == 3.0.1
