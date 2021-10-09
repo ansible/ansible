@@ -1,0 +1,2 @@
+bugfixes:
+  - hostname, fix module example using `strategy` instead of `use`.
