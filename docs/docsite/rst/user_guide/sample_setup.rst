@@ -16,7 +16,7 @@ Sample directory layout
 
 This layout organizes most tasks in roles, with a single inventory file for each environment and a few playbooks in the top-level directory:
 
-  .. code-block:: none
+  .. code-block:: console
 
     production                # inventory file for production servers
     staging                   # inventory file for staging environment
@@ -70,7 +70,7 @@ Alternative directory layout
 
 Alternatively you can put each inventory file with its ``group_vars``/``host_vars`` in a separate directory. This is particularly useful if your ``group_vars``/``host_vars`` don't have that much in common in different environments. The layout could look something like this:
 
-  .. code-block:: none
+  .. code-block:: console
 
     inventories/
        production/
