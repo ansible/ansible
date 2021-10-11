@@ -1029,6 +1029,35 @@ releases:
     - when-eval-native-py310.yml
     - winrm-kinit-env.yml
     - world_readable_fixes.yml
-    plugins:
-      filter: []
     release_date: '2021-09-27'
+  2.12.0b2:
+    changes:
+      bugfixes:
+      - ansible-test - Fix path to inventory file for ``windows-integration`` and
+        ``network-integration`` commands for collections.
+      - ansible-test - Update distribution test containers to version 3.1.0.
+      - ansible-test - Use the correct variable to reference the client's SSH key
+        when generating inventory.
+      - ansible-test pslint - Fix error when encountering validation results that
+        are highly nested - https://github.com/ansible/ansible/issues/74151
+      minor_changes:
+      - ansible-test - Update the ``base`` and ``default`` containers from Python
+        3.10.0rc2 to 3.10.0.
+      release_summary: '| Release Date: 2021-10-11
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+      security_fixes:
+      - Do not include params in exception when a call to ``set_options`` fails. Additionally,
+        block the exception that is returned from being displayed to stdout. (CVE-2021-3620)
+    codename: Dazed and Confused
+    fragments:
+    - ansible-test-default-base-containers-python-3.10.yaml
+    - ansible-test-distro-containers-3.1.0.yaml
+    - ansible-test-inventory-path.yaml
+    - ansible-test-inventory-ssh-key.yml
+    - avoid-set_options-leak.yaml
+    - pslint-sanity-warning.yml
+    - v2.12.0b2_summary.yaml
+    release_date: '2021-10-11'
