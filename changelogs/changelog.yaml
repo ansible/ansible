@@ -1994,6 +1994,21 @@ releases:
     - v2.11.5rc1_summary.yaml
     - vas_fixes.yml
     release_date: '2021-09-08'
+  2.11.6:
+    changes:
+      bugfixes:
+      - ansible-test pslint - Fix error when encountering validation results that
+        are highly nested - https://github.com/ansible/ansible/issues/74151
+      release_summary: '| Release Date: 2021-10-11
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - pslint-sanity-warning.yml
+    - v2.11.6_summary.yaml
+    release_date: '2021-10-11'
   2.11.6rc1:
     changes:
       bugfixes:
