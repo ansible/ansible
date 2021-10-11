@@ -74,7 +74,6 @@ Example of setting the ``debugger`` keyword at multiple levels:
 
 .. code-block:: yaml
 
-
     - name: Play
       hosts: all
       debugger: never
@@ -92,12 +91,16 @@ Enabling the debugger in configuration or an environment variable
 
 You can enable the task debugger globally with a setting in ansible.cfg or with an environment variable. The only options are ``True`` or ``False``. If you set the configuration option or environment variable to ``True``, Ansible runs the debugger on failed tasks by default.
 
-To enable the task debugger from ansible.cfg, add this setting to the defaults section::
+To enable the task debugger from ansible.cfg, add this setting to the defaults section:
+
+.. code-block:: yaml
 
     [defaults]
     enable_task_debugger = True
 
-To enable the task debugger with an environment variable, pass the variable when you run your playbook::
+To enable the task debugger with an environment variable, pass the variable when you run your playbook:
+
+.. code-block:: shell
 
     ANSIBLE_ENABLE_TASK_DEBUGGER=True ansible-playbook -i hosts site.yml
 
@@ -115,7 +118,9 @@ If you are running legacy playbooks or roles, you may see the debugger enabled a
      tasks:
      ...
 
-Or in ansible.cfg::
+Or in ansible.cfg:
+
+.. code-block:: ini
 
     [defaults]
     strategy = debug
@@ -142,7 +147,7 @@ After Ansible invokes the debugger, you can use the seven :ref:`debugger command
 
 If you run this playbook, Ansible invokes the debugger when the task fails. From the debug prompt, you can change the module arguments or the variables and run the task again.
 
-.. code-block:: none
+.. code-block:: ansible-output
 
     PLAY ***************************************************************************
 
@@ -213,7 +218,9 @@ For more details, see the individual descriptions and examples below.
 Print command
 -------------
 
-``print *task/task.args/task_vars/host/result*`` prints information about the task::
+``print *task/task.args/task_vars/host/result*`` prints information about the task.
+
+.. code-block:: ansible-output
 
     [192.0.2.10] TASK: install package (debug)> p task
     TASK: install package
@@ -240,7 +247,9 @@ Print command
 Update args command
 -------------------
 
-``task.args[*key*] = *value*`` updates a module argument. This sample playbook has an invalid package name::
+``task.args[*key*] = *value*`` updates a module argument. This sample playbook has an invalid package name.
+
+.. code-block:: yaml
 
     - hosts: test
       strategy: debug
@@ -251,7 +260,9 @@ Update args command
         - name: Install a package
           ansible.builtin.apt: name={{ pkg_name }}
 
-When you run the playbook, the invalid package name triggers an error, and Ansible invokes the debugger. You can fix the package name by viewing, then updating the module argument::
+When you run the playbook, the invalid package name triggers an error, and Ansible invokes the debugger. You can fix the package name by viewing, then updating the module argument.
+
+.. code-block:: ansible-output
 
     [192.0.2.10] TASK: install package (debug)> p task.args
     {u'name': u'{{ pkg_name }}'}
@@ -267,7 +278,9 @@ After you update the module argument, use ``redo`` to run the task again with th
 Update vars command
 -------------------
 
-``task_vars[*key*] = *value*`` updates the ``task_vars``. You could fix the playbook above by viewing, then updating the task variables instead of the module args::
+``task_vars[*key*] = *value*`` updates the ``task_vars``. You could fix the playbook above by viewing, then updating the task variables instead of the module args.
+
+.. code-block:: ansible-output
 
     [192.0.2.10] TASK: install package (debug)> p task_vars['pkg_name']
     u'not_exist'
