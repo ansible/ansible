@@ -5,7 +5,9 @@ Module defaults
 
 If you frequently call the same module with the same arguments, it can be useful to define default arguments for that particular module using the ``module_defaults`` keyword.
 
-Here is a basic example::
+Here is a basic example:
+
+.. code-block:: YAML
 
     - hosts: localhost
       module_defaults:
@@ -29,7 +31,9 @@ Here is a basic example::
             state: touch
             path: /tmp/file3
 
-The ``module_defaults`` keyword can be used at the play, block, and task level. Any module arguments explicitly specified in a task will override any established default for that module argument::
+The ``module_defaults`` keyword can be used at the play, block, and task level. Any module arguments explicitly specified in a task will override any established default for that module argument.
+
+.. code-block:: YAML
 
     - block:
         - name: Print a message
@@ -39,7 +43,9 @@ The ``module_defaults`` keyword can be used at the play, block, and task level. 
         ansible.builtin.debug:
           msg: "Default message"
 
-You can remove any previously established defaults for a module by specifying an empty dict::
+You can remove any previously established defaults for a module by specifying an empty dict.
+
+.. code-block:: YAML
 
     - name: Create file1
       ansible.builtin.file:
@@ -53,7 +59,9 @@ You can remove any previously established defaults for a module by specifying an
 
 Here are some more realistic use cases for this feature.
 
-Interacting with an API that requires auth::
+Interacting with an API that requires auth.
+
+.. code-block:: YAML
 
     - hosts: localhost
       module_defaults:
@@ -74,7 +82,9 @@ Interacting with an API that requires auth::
           ansible.builtin.uri:
             url: http://some.api.host/v1/whatever3
 
-Setting a default AWS region for specific EC2-related modules::
+Setting a default AWS region for specific EC2-related modules.
+
+.. code-block:: YAML
 
     - hosts: localhost
       vars:
