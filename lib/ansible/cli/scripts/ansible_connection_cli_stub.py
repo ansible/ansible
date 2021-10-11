@@ -340,10 +340,10 @@ def main(args=None):
     sys.stdout = saved_stdout
     if 'exception' in result:
         rc = 1
-        sys.stderr.write(jsonify(result)
+        sys.stderr.write(jsonify(result))
     else:
         rc = 0
-        sys.stdout.write(jsonify(result)
+        sys.stdout.write(jsonify(result))
 
     sys.exit(rc)
 
