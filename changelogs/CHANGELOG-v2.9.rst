@@ -5,13 +5,13 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
-v2.9.27rc1
-==========
+v2.9.27
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2021-10-04
+| Release Date: 2021-10-11
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
