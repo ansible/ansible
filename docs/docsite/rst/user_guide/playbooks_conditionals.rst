@@ -42,7 +42,9 @@ Often you want to execute or skip a task based on facts. Facts are attributes of
   - You can skip configuring a firewall on hosts with internal IP addresses.
   - You can perform cleanup tasks only when a filesystem is getting full.
 
-See :ref:`commonly_used_facts` for a list of facts that frequently appear in conditional statements. Not all facts exist for all hosts. For example, the 'lsb_major_release' fact used in an example below only exists when the lsb_release package is installed on the target host. To see what facts are available on your systems, add a debug task to your playbook::
+See :ref:`commonly_used_facts` for a list of facts that frequently appear in conditional statements. Not all facts exist for all hosts. For example, the 'lsb_major_release' fact used in an example below only exists when the lsb_release package is installed on the target host. To see what facts are available on your systems, add a debug task to your playbook:
+
+.. code-block:: yaml
 
     - name: Show facts available on the system
       ansible.builtin.debug:
@@ -67,7 +69,9 @@ If you have multiple conditions, you can group them with parentheses:
         when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "6") or
               (ansible_facts['distribution'] == "Debian" and ansible_facts['distribution_major_version'] == "7")
 
-You can use `logical operators <https://jinja.palletsprojects.com/en/latest/templates/#logic>`_ to combine conditions. When you have multiple conditions that all need to be true (that is, a logical ``and``), you can specify them as a list::
+You can use `logical operators <https://jinja.palletsprojects.com/en/latest/templates/#logic>`_ to combine conditions. When you have multiple conditions that all need to be true (that is, a logical ``and``), you can specify them as a list:
+
+.. code-block:: yaml
 
     tasks:
       - name: Shut down CentOS 6 systems
@@ -76,7 +80,9 @@ You can use `logical operators <https://jinja.palletsprojects.com/en/latest/temp
           - ansible_facts['distribution'] == "CentOS"
           - ansible_facts['distribution_major_version'] == "6"
 
-If a fact or variable is a string, and you need to run a mathematical comparison on it, use a filter to ensure that Ansible reads the value as an integer::
+If a fact or variable is a string, and you need to run a mathematical comparison on it, use a filter to ensure that Ansible reads the value as an integer:
+
+.. code-block:: yaml
 
     tasks:
       - ansible.builtin.shell: echo "only on Red Hat 6, derivatives, and later"
@@ -92,7 +98,9 @@ Often in a playbook you want to execute or skip a task based on the outcome of a
   #. Register the outcome of the earlier task as a variable.
   #. Create a conditional test based on the registered variable.
 
-You create the name of the registered variable using the ``register`` keyword. A registered variable always contains the status of the task that created it as well as any output that task generated. You can use registered variables in templates and action lines as well as in conditional ``when`` statements. You can access the string contents of the registered variable using ``variable.stdout``. For example::
+You create the name of the registered variable using the ``register`` keyword. A registered variable always contains the status of the task that created it as well as any output that task generated. You can use registered variables in templates and action lines as well as in conditional ``when`` statements. You can access the string contents of the registered variable using ``variable.stdout``. For example:
+
+.. code-block:: yaml
 
     - name: Test play
       hosts: all
@@ -107,7 +115,9 @@ You create the name of the registered variable using the ``register`` keyword. A
             ansible.builtin.shell: echo "motd contains the word hi"
             when: motd_contents.stdout.find('hi') != -1
 
-You can use registered results in the loop of a task if the variable is a list. If the variable is not a list, you can convert it into a list, with either ``stdout_lines`` or with ``variable.stdout.split()``. You can also split the lines by other fields::
+You can use registered results in the loop of a task if the variable is a list. If the variable is not a list, you can convert it into a list, with either ``stdout_lines`` or with ``variable.stdout.split()``. You can also split the lines by other fields:
+
+.. code-block:: yaml
 
     - name: Registered variable usage as a loop list
       hosts: all
@@ -270,7 +280,9 @@ You can use conditionals with re-usable tasks files, playbooks, or roles. Ansibl
 Conditionals with imports
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When you add a conditional to an import statement, Ansible applies the condition to all tasks within the imported file. This behavior is the equivalent of :ref:`tag_inheritance`. Ansible applies the condition to every task, and evaluates each task separately. For example, you might have a playbook called ``main.yml`` and a tasks file called ``other_tasks.yml``::
+When you add a conditional to an import statement, Ansible applies the condition to all tasks within the imported file. This behavior is the equivalent of :ref:`tag_inheritance`. Ansible applies the condition to every task, and evaluates each task separately. For example, you might have a playbook called ``main.yml`` and a tasks file called ``other_tasks.yml``:
+
+.. code-block:: yaml
 
     # all tasks within an imported file inherit the condition from the import statement
     # main.yml
@@ -286,7 +298,9 @@ When you add a conditional to an import statement, Ansible applies the condition
       ansible.builtin.debug:
         var: x
 
-Ansible expands this at execution time to the equivalent of::
+Ansible expands this at execution time to the equivalent of:
+
+.. code-block:: yaml
 
     - name: Set a variable if not defined
       ansible.builtin.set_fact:
@@ -309,7 +323,9 @@ You can apply conditions to ``import_playbook`` as well as to the other ``import
 Conditionals with includes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When you use a conditional on an ``include_*`` statement, the condition is applied only to the include task itself and not to any other tasks within the included file(s). To contrast with the example used for conditionals on imports above, look at the same playbook and tasks file, but using an include instead of an import::
+When you use a conditional on an ``include_*`` statement, the condition is applied only to the include task itself and not to any other tasks within the included file(s). To contrast with the example used for conditionals on imports above, look at the same playbook and tasks file, but using an include instead of an import:
+
+.. code-block:: yaml
 
     # Includes let you re-use a file to define a variable when it is not already defined
 
@@ -326,7 +342,9 @@ When you use a conditional on an ``include_*`` statement, the condition is appli
       ansible.builtin.debug:
         var: x
 
-Ansible expands this at execution time to the equivalent of::
+Ansible expands this at execution time to the equivalent of:
+
+.. code-block:: yaml
 
     # main.yml
     - include_tasks: other_tasks.yml
@@ -380,14 +398,18 @@ Ansible separates variables from tasks, keeping your playbooks from turning into
 Selecting variables files based on facts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can create a playbook that works on multiple platforms and OS versions with a minimum of syntax by placing your variable values in vars files and conditionally importing them. If you want to install Apache on some CentOS and some Debian servers, create variables files with YAML keys and values. For example::
+You can create a playbook that works on multiple platforms and OS versions with a minimum of syntax by placing your variable values in vars files and conditionally importing them. If you want to install Apache on some CentOS and some Debian servers, create variables files with YAML keys and values. For example:
+
+.. code-block:: yaml
 
     ---
     # for vars/RedHat.yml
     apache: httpd
     somethingelse: 42
 
-Then import those variables files based on the facts you gather on the hosts in your playbook::
+Then import those variables files based on the facts you gather on the hosts in your playbook:
+
+.. code-block:: yaml
 
     ---
     - hosts: webservers
@@ -408,7 +430,9 @@ Selecting files and templates based on facts
 
 You can use the same approach when different OS flavors or versions require different configuration files or templates. Select the appropriate file or template based on the variables assigned to each host. This approach is often much cleaner than putting a lot of conditionals into a single template to cover multiple OS or package versions.
 
-For example, you can template out a configuration file that is very different between, say, CentOS and Debian::
+For example, you can template out a configuration file that is very different between, say, CentOS and Debian:
+
+.. code-block:: yaml
 
     - name: Template a file
       ansible.builtin.template:
@@ -433,7 +457,9 @@ The following Ansible facts are frequently used in conditionals.
 ansible_facts['distribution']
 -----------------------------
 
-Possible values (sample, not complete list)::
+Possible values (sample, not complete list):
+
+.. code-block:: text
 
     Alpine
     Altlinux
@@ -471,7 +497,9 @@ The major version of the operating system. For example, the value is `16` for Ub
 ansible_facts['os_family']
 --------------------------
 
-Possible values (sample, not complete list)::
+Possible values (sample, not complete list):
+
+.. code-block:: text
 
     AIX
     Alpine
