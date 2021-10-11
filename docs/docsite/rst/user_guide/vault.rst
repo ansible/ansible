@@ -40,7 +40,9 @@ If you use multiple vault passwords, you can differentiate one password from ano
   * Include it wherever you store the password for that vault ID (see :ref:`storing_vault_passwords`)
   * Pass it with :option:`--vault-id <ansible-playbook --vault-id>` to the :ref:`ansible-playbook` command when you run a playbook that uses content you encrypted with that vault ID
 
-When you pass a vault ID as an option to the :ref:`ansible-vault` command, you add a label (a hint or nickname) to the encrypted content. This label documents which password you used to encrypt it. The encrypted variable or file includes the vault ID label in plain text in the header. The vault ID is the last element before the encrypted content. For example::
+When you pass a vault ID as an option to the :ref:`ansible-vault` command, you add a label (a hint or nickname) to the encrypted content. This label documents which password you used to encrypt it. The encrypted variable or file includes the vault ID label in plain text in the header. The vault ID is the last element before the encrypted content. For example:
+
+ .. code-block:: yaml
 
     my_encrypted_var: !vault |
               $ANSIBLE_VAULT;1.2;AES256;dev
@@ -172,7 +174,9 @@ For example, to encrypt the string 'foobar' using the only password stored in 'a
 
     ansible-vault encrypt_string --vault-password-file a_password_file 'foobar' --name 'the_secret'
 
-The command above creates this content::
+The command above creates this content:
+
+ .. code-block:: yaml
 
     the_secret: !vault |
           $ANSIBLE_VAULT;1.1;AES256
@@ -188,7 +192,9 @@ To encrypt the string 'foooodev', add the vault ID label 'dev' with the 'dev' va
 
     ansible-vault encrypt_string --vault-id dev@a_password_file 'foooodev' --name 'the_dev_secret'
 
-The command above creates this content::
+The command above creates this content:
+
+ .. code-block:: yaml
 
     the_dev_secret: !vault |
               $ANSIBLE_VAULT;1.2;AES256;dev
@@ -208,7 +214,9 @@ To encrypt the string 'letmein' read from stdin, add the vault ID 'dev' using th
 
    Typing secret content directly at the command line (without a prompt) leaves the secret string in your shell history. Do not do this outside of testing.
 
-The command above creates this output::
+The command above creates this output:
+
+ .. code-block:: console
 
     Reading plaintext input from stdin. (ctrl-d to end input, twice if your content does not already have a new line)
     db_password: !vault |
@@ -237,7 +245,9 @@ Type the string to encrypt (for example, 'hunter2'), hit ctrl-d, and wait.
 
    Do not press ``Enter`` after supplying the string to encrypt. That will add a newline to the encrypted value.
 
-The sequence above creates this output::
+The sequence above creates this output:
+
+ .. code-block:: yaml
 
     new_user_password: !vault |
               $ANSIBLE_VAULT;1.2;AES256;dev
@@ -577,11 +587,15 @@ In general, content you encrypt with Ansible Vault remains encrypted after execu
 Format of files encrypted with Ansible Vault
 ============================================
 
-Ansible Vault creates UTF-8 encoded txt files. The file format includes a newline terminated header. For example::
+Ansible Vault creates UTF-8 encoded txt files. The file format includes a newline terminated header. For example:
+
+ .. code-block:: text
 
     $ANSIBLE_VAULT;1.1;AES256
 
-or::
+or
+
+ .. code-block:: text
 
     $ANSIBLE_VAULT;1.2;AES256;vault-id-label
 
