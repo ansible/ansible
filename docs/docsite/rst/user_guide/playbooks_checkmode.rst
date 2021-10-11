@@ -12,7 +12,9 @@ Ansible provides two modes of execution that validate tasks: check mode and diff
 Using check mode
 ================
 
-Check mode is just a simulation. It will not generate output for tasks that use :ref:`conditionals based on registered variables <conditionals_registered_vars>` (results of prior tasks). However, it is great for validating configuration management playbooks that run on one node at a time. To run a playbook in check mode::
+Check mode is just a simulation. It will not generate output for tasks that use :ref:`conditionals based on registered variables <conditionals_registered_vars>` (results of prior tasks). However, it is great for validating configuration management playbooks that run on one node at a time. To run a playbook in check mode:
+
+.. code-block:: console
 
     ansible-playbook foo.yml --check
 
@@ -28,7 +30,9 @@ If you want certain tasks to run in check mode always, or never, regardless of w
   - To force a task to run in check mode, even when the playbook is called without ``--check``, set ``check_mode: yes``.
   - To force a task to run in normal mode and make changes to the system, even when the playbook is called with ``--check``, set ``check_mode: no``.
 
-For example::
+For example:
+
+.. code-block:: yaml
 
   tasks:
     - name: This task will always make changes to the system
@@ -52,7 +56,9 @@ Skipping tasks or ignoring errors in check mode
 
 .. versionadded:: 2.1
 
-If you want to skip a task or ignore errors on a task when you run Ansible in check mode, you can use a boolean magic variable ``ansible_check_mode``, which is set to ``True`` when Ansible runs in check mode. For example::
+If you want to skip a task or ignore errors on a task when you run Ansible in check mode, you can use a boolean magic variable ``ansible_check_mode``, which is set to ``True`` when Ansible runs in check mode. For example:
+
+.. code-block:: yaml
 
   tasks:
 
@@ -75,7 +81,9 @@ Using diff mode
 
 The ``--diff`` option for ansible-playbook can be used alone or with ``--check``. When you run in diff mode, any module that supports diff mode reports the changes made or, if used with ``--check``, the changes that would have been made. Diff mode is most common in modules that manipulate files (for example, the template module) but other modules might also show 'before and after' information (for example, the user module).
 
-Diff mode produces a large amount of output, so it is best used when checking a single host at a time. For example::
+Diff mode produces a large amount of output, so it is best used when checking a single host at a time. For example:
+
+.. code-block:: console
 
     ansible-playbook foo.yml --check --diff --limit foo.example.com
 
@@ -84,7 +92,9 @@ Diff mode produces a large amount of output, so it is best used when checking a 
 Enforcing or preventing diff mode on tasks
 ------------------------------------------
 
-Because the ``--diff`` option can reveal sensitive information, you can disable it for a task by specifying ``diff: no``. For example::
+Because the ``--diff`` option can reveal sensitive information, you can disable it for a task by specifying ``diff: no``. For example:
+
+.. code-block:: yaml
 
   tasks:
     - name: This task will not report a diff when the file changes
