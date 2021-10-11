@@ -270,12 +270,6 @@ def _json_encode_fallback(obj):
 
 def jsonify(data, **kwargs):
 
-    # for backwards compat with 'other' jsonify
-    if 'format' in kwargs:
-        if kwargs['format']:
-            kwargs['indent'] = 4
-        del kwargs['format']
-
     for encoding in ("utf-8", "latin-1"):
         try:
             return json.dumps(data, cls=AnsibleJSONEncoder, encoding=encoding, default=_json_encode_fallback, **kwargs)
