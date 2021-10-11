@@ -1,0 +1,35 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) Ansible project contributors
+# This file is distributed under the same license as the Ansible package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Ansible devel\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-08-05 13:48+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.0\n"
+
+#: ../../.templates/breadcrumbs.html:8 ../../.templates/breadcrumbs.html:16
+#: ../../.templates/breadcrumbs.html:19 ../../.templates/breadcrumbs.html:21
+msgid "Edit on GitHub"
+msgstr "GitHub で編集"
+
+#: ../../.templates/breadcrumbs.html:27 ../../.templates/breadcrumbs.html:29
+msgid "Edit on Bitbucket"
+msgstr "Bitbucket で編集"
+
+#: ../../.templates/breadcrumbs.html:34 ../../.templates/breadcrumbs.html:36
+msgid "Edit on GitLab"
+msgstr "GitLab で編集"
+
+#: ../../.templates/breadcrumbs.html:39 ../../.templates/breadcrumbs.html:41
+msgid "View page source"
+msgstr "ページソースの表示"
+

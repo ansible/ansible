@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-08 20:25+0100\n"
+"POT-Creation-Date: 2021-10-05 13:53+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,11 +26,11 @@ msgstr "コレクションのカスタムプラグインを使用して、既存
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:15
 msgid "Network connection plugins"
-msgstr "ネットワーク接続プラグイン"
+msgstr "ネットワークの connection プラグイン"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:16
 msgid "Each network connection plugin has a set of its own plugins which provide a specification of the connection for a particular set of devices. The specific plugin used is selected at runtime based on the value of the ``ansible_network_os`` variable assigned to the host. This variable should be set to the same value as the name of the plugin to be loaded. Thus, ``ansible_network_os=nxos`` will try to load a plugin in a file named ``nxos.py``, so it is important to name the plugin in a way that will be sensible to users."
-msgstr "各ネットワーク接続プラグインには、独自のプラグインセットがあります。これは、特定のデバイスセットの接続の仕様を提供します。使用される特定のプラグインは、ホストに割り当てられた ``ansible_network_os`` 変数の値に基づいてランタイム時に選択されます。この変数は、読み込むプラグインの名前と同じ値に設定する必要があります。そのため、``ansible_network_os=nxos`` は、``nxos.py`` という名前のファイルにプラグインを読み込もうとするため、ユーザーが適切な方法でプラグインに名前を付けることが重要です。"
+msgstr "各ネットワークの connection プラグインには、独自のプラグインセットがあります。これは、特定のデバイスセットの接続の仕様を提供します。使用される特定のプラグインは、ホストに割り当てられた ``ansible_network_os`` 変数の値に基づいてランタイム時に選択されます。この変数は、読み込むプラグインの名前と同じ値に設定する必要があります。そのため、``ansible_network_os=nxos`` は、``nxos.py`` という名前のファイルにプラグインを読み込もうとするため、ユーザーが適切な方法でプラグインに名前を付けることが重要です。"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:23
 msgid "Public methods of these plugins may be called from a module or module_utils with the connection proxy object just as other connection methods can. The following is a very simple example of using such a call in a module_utils file so it may be shared with other modules."
@@ -42,11 +42,11 @@ msgstr "httpapi プラグインの開発"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:47
 msgid ":ref:`httpapi plugins <httpapi_plugins>` serve as adapters for various HTTP(S) APIs for use with the ``httpapi`` connection plugin. They should implement a minimal set of convenience methods tailored to the API you are attempting to use."
-msgstr ":ref:`httpapi プラグイン <httpapi_plugins>` は、``httpapi`` 接続プラグインで使用するさまざまな HTTP(S) API のアダプターとして機能します。このプラグインは、使用しようとしている API に適した最小限の便利なメソッドを実装する必要があります。"
+msgstr ":ref:`httpapi プラグイン <httpapi_plugins>` は、``httpapi`` connection プラグインで使用するさまざまな HTTP(S) API のアダプターとして機能します。このプラグインは、使用しようとしている API に適した最小限の便利なメソッドを実装する必要があります。"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:49
 msgid "Specifically, there are a few methods that the ``httpapi`` connection plugin expects to exist."
-msgstr "具体的には、``httpapi`` 接続プラグインが存在することが必要なメソッドがいくつかあります。"
+msgstr "具体的には、``httpapi`` connection プラグインが存在することが必要なメソッドがいくつかあります。"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:52
 msgid "Making requests"
@@ -54,7 +54,7 @@ msgstr "要求の作成"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:54
 msgid "The ``httpapi`` connection plugin has a ``send()`` method, but an httpapi plugin needs a ``send_request(self, data, **message_kwargs)`` method as a higher-level wrapper to ``send()``. This method should prepare requests by adding fixed values like common headers or URL root paths. This method may do more complex work such as turning data into formatted payloads, or determining which path or method to request. It may then also unpack responses to be more easily consumed by the caller."
-msgstr "``httpapi`` 接続プラグインには ``send()`` メソッドがありますが、httpapi プラグインには、``send()`` への高レベルラッパーとして ``send_request(self, data, **message_kwargs)`` メソッドが必要です。このメソッドは、共通ヘッダーや URL ルートパスなどの固定値を追加することで要求を準備する必要があります。このメソッドは、フォーマットされたペイロードへのデータの切り替えや、リクエスト用のパスやメソッドの特定など、より複雑な作業を行うことがあります。その後、呼び出し元によって簡単に消費される応答が展開される可能性があります"
+msgstr "``httpapi`` connection プラグインには ``send()`` メソッドがありますが、httpapi プラグインには、``send()`` への高レベルラッパーとして ``send_request(self, data, **message_kwargs)`` メソッドが必要です。このメソッドは、共通ヘッダーや URL ルートパスなどの固定値を追加することで要求を準備する必要があります。このメソッドは、フォーマットされたペイロードへのデータの切り替えや、リクエスト用のパスやメソッドの特定など、より複雑な作業を行うことがあります。その後、呼び出し元によって簡単に消費される応答が展開される可能性があります"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:74
 msgid "Authenticating"
@@ -102,15 +102,15 @@ msgstr "NETCONF プラグインの開発"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:134
 msgid "The :ref:`netconf <netconf_connection>` connection plugin provides a connection to remote devices over the ``SSH NETCONF`` subsystem. Network devices typically use this connection plugin to send and receive ``RPC`` calls over ``NETCONF``."
-msgstr ":ref:`netconf <netconf_connection>` 接続プラグインは、``SSH NETCONF`` サブシステム経由でリモートデバイスへの接続を提供します。ネットワークデバイスは通常、この接続プラグインを使用して、``NETCONF`` で ``RPC`` 呼び出しを送受信します。"
+msgstr ":ref:`netconf <netconf_connection>` connection プラグインは、``SSH NETCONF`` サブシステム経由でリモートデバイスへの接続を提供します。ネットワークデバイスは通常、この connection プラグインを使用して、``NETCONF`` で ``RPC`` 呼び出しを送受信します。"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:136
 msgid "The ``netconf`` connection plugin uses the ``ncclient`` Python library under the hood to initiate a NETCONF session with a NETCONF-enabled remote network device. ``ncclient`` also executes NETCONF RPC requests and receives responses. You must install the ``ncclient`` on the local Ansible controller."
-msgstr "``netconf`` 接続プラグインは、Python ライブラリー ``ncclient`` を使用して、NETCONF が有効なリモートネットワークデバイスで NETCONF セッションを開始します。また、``ncclient`` は NETCONF RPC 要求を実行し、応答を受け取ります。ローカルの Ansible コントローラーに ``ncclient`` をインストールする必要があります。"
+msgstr "``netconf`` connection プラグインは、Python ライブラリー ``ncclient`` を使用して、NETCONF が有効なリモートネットワークデバイスで NETCONF セッションを開始します。また、``ncclient`` は NETCONF RPC 要求を実行し、応答を受け取ります。ローカルの Ansible コントローラーに ``ncclient`` をインストールする必要があります。"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:138
 msgid "To use the ``netconf`` connection plugin for network devices that support standard NETCONF (:RFC:`6241`) operations such as ``get``, ``get-config``, ``edit-config``, set ``ansible_network_os=default``. You can use :ref:`netconf_get <netconf_get_module>`, :ref:`netconf_config <netconf_config_module>` and :ref:`netconf_rpc <netconf_rpc_module>` modules to talk to a NETCONF enabled remote host."
-msgstr "``get``、``get-config``、``edit-config`` などの標準 NETCONF (:RFC:`6241`) 操作に対応するネットワークデバイスの ``netconf`` 接続プラグインを使用するには、``ansible_network_os=default`` を設定します。:ref:`netconf_get <netconf_get_module>` モジュール、:ref:`netconf_config <netconf_config_module>` モジュール、および :ref:`netconf_rpc <netconf_rpc_module>` モジュールを使用して、NETCONF が有効なリモートホストと通信できます。"
+msgstr "``get``、``get-config``、``edit-config`` などの標準 NETCONF (:RFC:`6241`) 操作に対応するネットワークデバイスの ``netconf`` connection プラグインを使用するには、``ansible_network_os=default`` を設定します。:ref:`netconf_get <netconf_get_module>` モジュール、:ref:`netconf_config <netconf_config_module>` モジュール、および :ref:`netconf_rpc <netconf_rpc_module>` モジュールを使用して、NETCONF が有効なリモートホストと通信できます。"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:141
 msgid "As a contributor and user, you should be able to use all the methods under the ``NetconfBase`` class if your device supports standard NETCONF. You can contribute a new plugin if the device you are working with has a vendor specific NETCONF RPC. To support a vendor specific NETCONF RPC, add the implementation in the network OS specific NETCONF plugin."
@@ -226,7 +226,7 @@ msgid "Converts the returned configuration into key-value pairs."
 msgstr "返された設定をキーと値のペアに変換します。"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:19
-msgid "Places those key-value pairs into an internal agnostic structured data format."
+msgid "Places those key-value pairs into an internal independent structured data format."
 msgstr "これらのキーと値のペアを内部に依存しない構造化データ形式に置きます。"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:21
@@ -315,7 +315,6 @@ msgid "parsed"
 msgstr "parsed"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:51
-#: ../../rst/network/user_guide/network_resource_modules.rst:37
 msgid "Ansible parses the configuration from the ``running_configuration`` option into Ansible structured data in the ``parsed`` key in the result. Note this does not gather the configuration from the network device so this state can be used offline."
 msgstr "Ansible は、``running_configuration`` オプションから、その結果内の ``parsed`` キーの Ansible 構造化データに設定を解析します。この設定は、ネットワークデバイスから設定が収集されないため、この状態をオフラインで使用できる点に注意してください。"
 
@@ -340,8 +339,8 @@ msgid "Developing network and security resource modules"
 msgstr "ネットワークおよびセキュリティーのリソースモジュールの開発"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:69
-msgid "The Ansible Engineering team ensures the module design and code pattern  within Ansible-maintained collections is uniform across resources and across platforms to give a vendor-agnostic feel and deliver good quality code. We recommend you use the `resource module builder <https://github.com/ansible-network/resource_module_builder>`_ to  develop a resource module."
-msgstr "Ansible Engineering チームは、Ansible が管理しているコレクション内のモジュール設計およびコードパターンがリソースやプラットフォーム全体で統一され、ベンダーに依存せず、適切な品質コードを提供します。`リソースモジュールビルダー <https://github.com/ansible-network/resource_module_builder>`_ を使用してリソースモジュールを開発することが推奨されます。"
+msgid "The Ansible Engineering team ensures the module design and code pattern  within Ansible-maintained collections is uniform across resources and across platforms to give a vendor-independent feel and deliver good quality code. We recommend you use the `resource module builder <https://github.com/ansible-network/resource_module_builder>`_ to  develop a resource module."
+msgstr "Ansible Engineering チームは、Ansible が管理しているコレクション内のモジュール設計およびコードパターンがリソースやプラットフォーム全体で統一され、ベンダーに依存せず、適切な品質コードを提供します。`resource module builder <https://github.com/ansible-network/resource_module_builder>`_ を使用してリソースモジュールを開発することが推奨されます。"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:72
 msgid "The highlevel process for developing a resource module is:"
@@ -718,8 +717,8 @@ msgid "To view a failure report,  click :guilabel:`ansible/check` and select the
 msgstr "障害レポートを表示するには、:guilabel:`ansible/check` をクリックし、失敗したテストを選択します。"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:487
-msgid "To view logs while the test is running, check for your PR number in the `Zull status board <https://dashboard.zuul.ansible.com/t/ansible/status>`_."
-msgstr "テストの実行中にログを表示するには、`Zull 状態ボード <https://dashboard.zuul.ansible.com/t/ansible/status>`_ で プル要求番号を確認します。"
+msgid "To view logs while the test is running, check for your PR number in the `Zuul status board <https://dashboard.zuul.ansible.com/t/ansible/status>`_."
+msgstr "テストの実行中にログを表示するには、`Zuul status board <https://dashboard.zuul.ansible.com/t/ansible/status>`_ で プル要求番号を確認します。"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:488
 msgid "To fix static test failure locally, run the  :command:`tox -e black` **inside the root folder of collection**."
@@ -789,19 +788,19 @@ msgstr "``test/integration/targets/vyos_l3_interfaces/tasks/main.yaml``"
 msgid "``test/integration/targets/vyos_l3_interfaces/tasks/cli.yaml``"
 msgstr "``test/integration/targets/vyos_l3_interfaces/tasks/cli.yaml``"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:552
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:559
 msgid "``test/integration/targets/vyos_l3_interfaces/tests/cli/overridden.yaml``"
 msgstr "``test/integration/targets/vyos_l3_interfaces/tests/cli/overridden.yaml``"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:620
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:627
 msgid "Detecting test resources at runtime"
 msgstr "ランタイム時のテストリソースの検出"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:622
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:629
 msgid "Your tests should detect resources (such as interfaces) at runtime rather than hard-coding them into the test. This allows the test to run on a variety of systems."
 msgstr "テストは、(インターフェースなどの) リソースをテストにハードコーディングするのではなく、ランタイム時にリソースを検出する必要があります。これにより、テストはさまざまなシステムで実行できます。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:624
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:631
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:203
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:262
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:298
@@ -810,157 +809,157 @@ msgstr "テストは、(インターフェースなどの) リソースをテス
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:405
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:611
 msgid "For example:"
-msgstr "たとえば、以下のようになります。"
+msgstr "例:"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:648
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:655
 msgid "See the complete test example of this at https://github.com/ansible-collections/cisco.nxos/blob/master/tests/integration/targets/prepare_nxos_tests/tasks/main.yml."
 msgstr "https://github.com/ansible-collections/cisco.nxos/blob/master/tests/integration/targets/prepare_nxos_tests/tasks/main.yml. で、このテストの完全例を参照してください。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:652
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:659
 msgid "Running network integration tests"
 msgstr "ネットワーク統合テストの実行"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:654
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:661
 msgid "Ansible uses Zuul to run an integration test suite on every PR, including new tests introduced by that PR. To find and fix problems in network modules, run the network integration test locally before you submit a PR."
 msgstr "Ansible は Zuul を使用して、すべてのプル要求で、プル要求によって導入された新規テストを含む統合テストスイートを実行します。ネットワークモジュールで問題を特定して修正するには、プル要求を送信する前にネットワーク統合テストをローカルで実行します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:657
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:664
 msgid "First, create an inventory file that points to your test machines. The inventory group should match the platform name (for example, ``eos``, ``ios``):"
 msgstr "まず、テストマシンを参照するインベントリーファイルを作成します。インベントリーグループは、プラットフォーム名と一致する必要があります (例: ``eos``、``ios``)。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:666
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:673
 msgid "To run these network integration tests, use ``ansible-test network-integration --inventory </path/to/inventory> <tests_to_run>``:"
 msgstr "これらのネットワーク統合テストを実行するには、``ansible-test network-integration --inventory </path/to/inventory> <tests_to_run>`` を使用します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:675
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:682
 msgid "To run all network tests for a particular platform:"
 msgstr "特定のプラットフォームでネットワークテストをすべて実行するには、次を実行します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:681
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:688
 msgid "This example will run against all ``vyos`` modules. Note that ``vyos_.*`` is a regex match, not a bash wildcard - include the `.` if you modify this example."
 msgstr "この例は、すべての ``vyos`` モジュールに対して実行します。``vyos_.*`` は、bash ワイルドカードではなく、正規表現一致であることに注意してください。この例を修正する場合は `.` を含むようにしてください。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:683
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:690
 msgid "To run integration tests for a specific module:"
 msgstr "特定のモジュールに対して統合テストを実行するには、次を実行します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:689
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:696
 msgid "To run a single test case on a specific module:"
 msgstr "特定のモジュールでテストケースを 1 つ実行するには、次を実行します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:696
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:703
 msgid "To run integration tests for a specific transport:"
 msgstr "特定のトランスポートで統合テストを実行するには、次を実行します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:706
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:713
 msgid "See `test/integration/targets/nxos_bgp/tasks/main.yaml <https://github.com/ansible-collections/cisco.nxos/blob/master/tests/integration/targets/nxos_bgp/tasks/main.yaml>`_ for how this is implemented in the tests."
 msgstr "テストに実装される方法は、「`test/integration/targets/nxos_bgp/tasks/main.yaml <https://github.com/ansible-collections/cisco.nxos/blob/master/tests/integration/targets/nxos_bgp/tasks/main.yaml>`_」を参照してください。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:708
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:715
 msgid "For more options:"
 msgstr "その他のオプション:"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:714
-msgid "If you need additional help or feedback, reach out in ``#ansible-network`` on Freenode."
-msgstr "本書で示したもの以外にヘルプやフィードバックが必要な場合は、Freenode の ``#ansible-network`` にアクセスしてください。"
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:721
+msgid "If you need additional help or feedback, reach out in the ``#ansible-network`` chat channel (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_)."
+msgstr "追加のサポートやフィードバックが必要な場合は、``#ansible-network`` チャットチャンネルから問い合わせしてください（ansible.im の表または `irc.libera.chat <https://libera.chat/>`_ の IRC を使用）。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:717
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:724
 msgid "Unit test requirements"
 msgstr "ユニットテストの要件"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:719
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:726
 msgid "High-level unit test requirements that new resource modules should follow:"
 msgstr "新しいリソースモジュールが従う高レベルのユニットテスト要件は以下のようになります。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:721
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:728
 msgid "Write test cases for all the states with all possible combinations of config values."
 msgstr "設定値の組み合わせ可能なすべての状態についてテストケースを作成します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:722
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:729
 msgid "Write test cases to test the error conditions ( negative scenarios)."
 msgstr "テストケースを作成し、エラー条件 (負のシナリオ) をテストします。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:723
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:730
 msgid "Check the  value of ``changed`` and ``commands`` keys in every test case."
 msgstr "すべてのテストケースで ``changed`` キーおよび ``commands`` キーの値を確認します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:725
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:732
 msgid "We run all unit test cases on our Zuul test suite, on the latest python version supported by our CI setup."
 msgstr "CI 設定でサポートされる最新の python バージョンで、Zuul テストスイートですべてのユニットテストケースを実行します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:727
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:734
 msgid "Use the :ref:`same procedure <using_zuul_resource_modules>` as the integration tests to view Zuul unit tests reports and logs."
 msgstr ":ref:`同じ手順 <using_zuul_resource_modules>` を統合テストとして使用し、Zuul ユニットテストのレポートおよびログを表示します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:729
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:736
 msgid "See  :ref:`unit module testing <testing_units_modules>` for general unit test details."
 msgstr "一般的なユニットテストの詳細は、「:ref:`ユニットモジュールのテスト <testing_units_modules>`」を参照してください。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:735
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:742
 msgid "Example: Unit testing Ansible network resource modules"
 msgstr "例: Ansible ネットワークリソースモジュールのユニットテスト"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:738
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:745
 msgid "This section walks through an example of how to develop unit tests for Ansible resource modules."
 msgstr "本セクションでは、Ansible リソースモジュールのユニットテストを開発する方法の例を説明します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:741
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:748
 msgid "See :ref:`testing_units` and :ref:`testing_units_modules` for general documentation on Ansible unit tests for modules. Please read those pages first to understand unit tests and why and when you should use them."
 msgstr "モジュール向けの Ansible ユニットテストの一般的なドキュメントは、「:ref:`testing_units`」および「:ref:`testing_units_modules`」を参照してください。ユニットテスト、および使用する理由およびその方法を理解するには、まずこれらのページをお読みください。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:746
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:753
 msgid "Using mock objects to unit test Ansible network resource modules"
 msgstr "モック (模擬) オブジェクトを使用した Ansible ネットワークリソースモジュールのユニットテスト"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:749
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:756
 msgid "`Mock objects <https://docs.python.org/3/library/unittest.mock.html>`_ can be very useful in building unit tests for special or difficult cases, but they can also lead to complex and confusing coding situations.  One good use for mocks would be to simulate an API. The ``mock`` Python package is bundled with Ansible (use ``import units.compat.mock``)."
 msgstr "`モックオブジェクト <https://docs.python.org/3/library/unittest.mock.html>`_ は、特殊なケースや難しいケースのユニットテストを構築するのに非常に便利ですが、複雑で理解しづらいコーディングになってしまうこともあります。モックの使用方法として適切なものの 1 つに、API のシミュレートがあります。``mock`` Python パッケージは、Ansible にバンドルされています (``import units.compat.mock`` を使用)。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:755
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:762
 msgid "You can mock the device connection and output from the device as follows:"
 msgstr "以下のように、デバイスの接続とデバイスからの出力を模倣できます。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:789
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:796
 msgid "The facts file of the module now includes a new method, ``get_device_data``. Call ``get_device_data`` here to emulate the device output."
 msgstr "モジュールのファクトファイルに新しいメソッド ``get_device_data`` が追加されました。ここで ``get_device_data`` を呼び出して、デバイスの出力をエミュレートします。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:793
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:800
 msgid "Mocking device data"
 msgstr "デバイスデータの模倣"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:795
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:802
 msgid "To mock fetching results from devices or provide other complex data structures that come from external libraries, you can use ``fixtures`` to read in pre-generated data. The text files for this pre-generated data live in ``test/units/modules/network/PLATFORM/fixtures/``. See for example the `eos_l2_interfaces.cfg file <https://github.com/ansible-collections/arista.eos/blob/master/tests/unit/modules/network/eos/fixtures/eos_l2_interfaces_config.cfg>`_."
 msgstr "デバイスからの結果の取得や、外部ライブラリーからの複雑なデータ構造の提供を模倣するために、``fixtures`` を使用して事前に生成されたデータを読み込むことができます。この事前に生成されたデータのテキストファイルは、``test/units/modules/network/PLATFORM/fixtures/`` にあります。たとえば、`eos_l2_interfaces.cfg file <https://github.com/ansible-collections/arista.eos/blob/master/tests/unit/modules/network/eos/fixtures/eos_l2_interfaces_config.cfg>`_ の例を参照してください。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:798
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:805
 msgid "Load data using the ``load_fixture`` method and set this data as the return value of the ``get_device_data`` method in the facts file:"
 msgstr "``load_fixture`` メソッドを使用してデータを読み込み、このデータをファクトファイルの ``get_device_data`` メソッドの戻り値として設定します。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:808
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:815
 msgid "See the unit test file `test_eos_l2_interfaces <https://github.com/ansible-collections/arista.eos/blob/master/tests/unit/modules/network/eos/test_eos_l2_interfaces.py>`_ for a practical example."
 msgstr "実用的な例は、ユニットテストファイル `test_eos_l2_interfaces <https://github.com/ansible-collections/arista.eos/blob/master/tests/unit/modules/network/eos/test_eos_l2_interfaces.py>`_ を参照してください。"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:814
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:821
 msgid ":ref:`testing_units`"
 msgstr ":ref:`testing_units`"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:815
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:822
 msgid "Deep dive into developing unit tests for Ansible modules"
 msgstr "Ansible モジュールのユニットテスト開発を深く掘り下げて調査"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:816
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:823
 msgid ":ref:`testing_running_locally`"
 msgstr ":ref:`testing_running_locally`"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:817
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:824
 msgid "Running tests locally including gathering and reporting coverage data"
 msgstr "カバレージデータの収集とレポートを含む、ローカルでのテストの実行"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:818
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:825
 msgid ":ref:`developing_modules_general`"
 msgstr ":ref:`developing_modules_general`"
 
-#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:819
+#: ../../rst/network/dev_guide/developing_resource_modules_network.rst:826
 msgid "Get started developing a module"
 msgstr "モジュール開発を始める"
 
@@ -1608,7 +1607,7 @@ msgid "How Network Automation is Different"
 msgstr "ネットワーク自動化の相違点"
 
 #: ../../rst/network/getting_started/network_differences.rst:5
-msgid "Network automation leverages the basic Ansible concepts, but there are important differences in how the network modules work. This introduction prepares you to understand the exercises in this guide."
+msgid "Network automation uses the basic Ansible concepts, but there are important differences in how the network modules work. This introduction prepares you to understand the exercises in this guide."
 msgstr "ネットワーク自動化は、基本的な Ansible の概念を利用しますが、ネットワークモジュールの動作には重要な相違点があります。本ガイドの演習を始める前に、このイントロダクションをお読みください。"
 
 #: ../../rst/network/getting_started/network_differences.rst:11
@@ -1660,6 +1659,7 @@ msgstr "ansible_connection の値"
 #: ../../rst/network/user_guide/platform_slxos.rst:22
 #: ../../rst/network/user_guide/platform_voss.rst:22
 #: ../../rst/network/user_guide/platform_vyos.rst:21
+#: ../../rst/network/user_guide/platform_weos4.rst:22
 msgid "Protocol"
 msgstr "プロトコル"
 
@@ -1708,7 +1708,7 @@ msgid "API over HTTP/HTTPS"
 msgstr "HTTP/HTTPS での API"
 
 #: ../../rst/network/getting_started/network_differences.rst:1
-#: ../../rst/network/user_guide/platform_index.rst:60
+#: ../../rst/network/user_guide/platform_index.rst:61
 msgid "local"
 msgstr "ローカル"
 
@@ -1837,20 +1837,20 @@ msgid "`Ansible collections <https://github.com/ansible-collections>`_ is the ma
 msgstr "`Ansible コレクション <https://github.com/ansible-collections>`_ は、Ansible が管理しているコレクションおよびコミュニティーコレクションの主なリポジトリーです。これにはネットワークデバイスのコレクションが含まれます。"
 
 #: ../../rst/network/getting_started/network_resources.rst:40
-msgid "IRC and Slack"
-msgstr "IRC および Slack"
+msgid "Chat channels"
+msgstr "チャットチャネル"
 
 #: ../../rst/network/getting_started/network_resources.rst:42
-msgid "Join us on:"
-msgstr "以下に参加してください。"
+msgid "Got questions? Chat with us on:"
+msgstr "質問がありますか？以下からチャットをご利用ください："
 
 #: ../../rst/network/getting_started/network_resources.rst:44
-msgid "Freenode IRC - ``#ansible-network`` Freenode channel"
-msgstr "Freenode IRC - ``#ansible-network`` Freenode チャンネル"
+msgid "the ``#ansible-network`` channel (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_)"
+msgstr "``#ansible-network`` チャットチャンネル（ansible.im の表を使用するか、`irc.libera.chat <https://libera.chat/>`_ で IRC を使用）"
 
 #: ../../rst/network/getting_started/network_resources.rst:46
-msgid "Slack - `<https://ansiblenetwork.slack.com>`_"
-msgstr "Slack - `<https://ansiblenetwork.slack.com>`_"
+msgid "`Ansible Network Slack <https://join.slack.com/t/ansiblenetwork/shared_invite/zt-3zeqmhhx-zuID9uJqbbpZ2KdVeTwvzw>`_ - Network & Security Automation Slack community.  Check out the #devel channel for discussions on module and plugin development."
+msgstr "`Ansible Network Slack <https://join.slack.com/t/ansiblenetwork/shared_invite/zt-3zeqmhhx-zuID9uJqbbpZ2KdVeTwvzw>`_ - ネットワークおよびセキュリティー自動化の Slack コミュニティー。モジュールおよびプラグインの開発に関する内容は、#devel チャンネルを確認してください。"
 
 #: ../../rst/network/getting_started/network_roles.rst:6
 msgid "Use Ansible network roles"
@@ -1977,8 +1977,8 @@ msgid "The result on the Cisco IOS XE router will only contain the highest prece
 msgstr "Cisco IOS XE ルーターの結果には、優先順位の最も高い 192.168.1.1 設定のみが含まれます。"
 
 #: ../../rst/network/getting_started/network_roles.rst:252
-msgid "How is this useful?  Why should you care?  Extra vars are commonly used by network operators to override defaults.  A powerful example of this is with Red Hat Ansible Tower and the Survey feature.  It is possible through the web UI to prompt a network operator to fill out parameters with a Web form.  This can be really simple for non-technical playbook writers to execute a playbook using their Web browser. See `Ansible Tower Job Template Surveys <https://docs.ansible.com/ansible-tower/latest/html/userguide/workflow_templates.html#surveys>`_ for more details."
-msgstr "これはどのように役立つのでしょうか。なぜ気にする必要があるのでしょうか。ネットワークオペレーターは通常、追加の変数を使用してデフォルトを上書きします。その良い例は、Red Hat Ansible Tower と Survey 機能です。Web UI を使用して、ネットワークオペレーターに Web フォームでパラメーターの入力を求めることができます。これは、技術に詳しくない Playbook 作成者が Web ブラウザーを使用して Playbook を実行する場合に非常に簡単です。詳細は、「`Ansible Tower ジョブテンプレートサーベイ <https://docs.ansible.com/ansible-tower/latest/html/userguide/workflow_templates.html#surveys>`_」を参照してください。"
+msgid "How is this useful?  Why should you care?  Extra vars are commonly used by network operators to override defaults.  A powerful example of this is with the Job Template Survey feature on AWX or the :ref:`ansible_platform`.  It is possible through the web UI to prompt a network operator to fill out parameters with a Web form.  This can be really simple for non-technical playbook writers to execute a playbook using their Web browser."
+msgstr "これはどのように役立つのでしょうか。なぜ気にする必要があるのでしょうか。ネットワークオペレーターは通常、追加の変数を使用してデフォルトを上書きします。これに関する適切な例は、AWX の Job Template Suvey 機能または :ref:`ansible_platform` です。Web UI を使用して、ネットワークオペレーターに Web フォームでパラメーターの入力を求めることができます。これは、技術に詳しくない Playbook 作成者が Web ブラウザーを使用して Playbook を実行する場合に非常に簡単です。"
 
 #: ../../rst/network/getting_started/network_roles.rst:256
 msgid "Update an installed role"
@@ -2017,16 +2017,16 @@ msgid "Parsing semi-structured text with Ansible"
 msgstr "Ansible を使用した半構造化テキストの解析"
 
 #: ../../rst/network/user_guide/cli_parsing.rst:7
-msgid "The :ref:`cli_parse <ansible_collections.ansible.netcommon.cli_parse_module>` module parses semi-structured data such as network configurations into structured data to allow programmatic use of the data from that device. You can pull information from a network device and update a CMDB in one playbook. Use cases include automated troubleshooting, creating dynamic documentation, updating IPAM (IP address management) tools and so on."
-msgstr ":ref:`cli_parse <ansible_collections.ansible.netcommon.cli_parse_module>` モジュールは、ネットワーク構成などの半構造化データを構造化データに解析して、そのデバイスからのデータをプログラムで使用できるようにします。ネットワークデバイスから情報を取得し、1 つの Playbook で CMDB を更新できます。ユースケースには、自動トラブルシューティング、動的ドキュメントの作成、IPAM (IPアドレス管理) ツールの更新などがあります。"
+msgid "The :ref:`cli_parse <ansible_collections.ansible.utils.cli_parse_module>` module parses semi-structured data such as network configurations into structured data to allow programmatic use of the data from that device. You can pull information from a network device and update a CMDB in one playbook. Use cases include automated troubleshooting, creating dynamic documentation, updating IPAM (IP address management) tools and so on."
+msgstr ":ref:`cli_parse <ansible_collections.ansible.utils.cli_parse_module>` モジュールは、ネットワーク構成などの半構造化データを構造化データに解析して、そのデバイスからのデータをプログラムで使用できるようにします。ネットワークデバイスから情報を取得し、1 つの Playbook で CMDB を更新できます。ユースケースには、自動トラブルシューティング、動的ドキュメントの作成、IPAM (IPアドレス管理) ツールの更新などがあります。"
 
 #: ../../rst/network/user_guide/cli_parsing.rst:15
 msgid "Understanding the CLI parser"
 msgstr "CLI パーサーについて"
 
 #: ../../rst/network/user_guide/cli_parsing.rst:17
-msgid "The `ansible.netcommon <https://galaxy.ansible.com/ansible/netcommon>`_ collection version 1.2.0 or later  includes the :ref:`cli_parse <ansible_collections.ansible.netcommon.cli_parse_module>` module that can run CLI commands and parse the semi-structured text output. You can use the ``cli_parse`` module on a device, host, or platform that only supports a command-line interface and the commands issued return semi-structured text. The ``cli_parse`` module can either run a CLI command on a device and return a parsed result or can simply parse any text document. The ``cli_parse`` module includes cli_parser plugins to interface with a variety of parsing engines."
-msgstr "`ansible.netcommon <https://galaxy.ansible.com/ansible/netcommon>`_ コレクションバージョン 1.2.0 以降には、CLI コマンドを実行し、半構造化テキスト出力を解析できる :ref:`cli_parse <ansible_collections.ansible.netcommon.cli_parse_module>` モジュールが含まれています。コマンドラインインタフェースのみをサポートするデバイス、ホスト、またはプラットフォームで ``cli_parse`` モジュールを使用でき、実行したコマンドは半構造化テキストを返します。``cli_parse`` モジュールは、デバイス上で CLI コマンドを実行して解析結果を返すことも、単純にテキストドキュメントを解析することもできます。``cli_parse`` モジュールには、さまざまな解析エンジンとのインタフェースとなる cli_parser プラグインが含まれています。"
+msgid "The `ansible.utils <https://galaxy.ansible.com/ansible/utils>`_ collection version 1.0.0 or later  includes the :ref:`cli_parse <ansible_collections.ansible.utils.cli_parse_module>` module that can run CLI commands and parse the semi-structured text output. You can use the ``cli_parse`` module on a device, host, or platform that only supports a command-line interface and the commands issued return semi-structured text. The ``cli_parse`` module can either run a CLI command on a device and return a parsed result or can simply parse any text document. The ``cli_parse`` module includes cli_parser plugins to interface with a variety of parsing engines."
+msgstr "`ansible.utils <https://galaxy.ansible.com/ansible/utils>`_ コレクションバージョン 1.0.0 以降には、CLI コマンドを実行し、半構造化テキスト出力を解析できる :ref:`cli_parse <ansible_collections.ansible.utils.cli_parse_module>` モジュールが含まれています。コマンドラインインタフェースのみをサポートするデバイス、ホスト、またはプラットフォームで ``cli_parse`` モジュールを使用でき、実行したコマンドは半構造化テキストを返します。``cli_parse`` モジュールは、デバイス上で CLI コマンドを実行して解析結果を返すことも、単純にテキストドキュメントを解析することもできます。``cli_parse`` モジュールには、さまざまな解析エンジンとのインタフェースとなる cli_parser プラグインが含まれています。"
 
 #: ../../rst/network/user_guide/cli_parsing.rst:20
 msgid "Why parse the text?"
@@ -2136,380 +2136,408 @@ msgstr "``pyats``"
 msgid "Uses the parsers included with the Cisco Test Automation & Validation Solution"
 msgstr "Cisco Test Automation & Validation Solution に含まれるパーサーを使用します。"
 
+#: ../../rst/network/user_guide/cli_parsing.rst:59
+msgid "``jc``"
+msgstr "``jc``"
+
 #: ../../rst/network/user_guide/cli_parsing.rst:60
+msgid "A python module that converts the output of dozens of popular Linux/UNIX/macOS/Windows commands and file types to python dictionaries or lists of dictionaries. Note: this filter plugin can be found in the ``community.general`` collection."
+msgstr "多数の一般的な Linux/UNIX/macOS/Windows コマンドとファイルタイプの出力を python ディクショナリーまたはディクショナリーの一覧に変換する Python モジュール。このフィルタープラグインは ``community.general`` コレクションにあります。"
+
+#: ../../rst/network/user_guide/cli_parsing.rst:62
 msgid "``json``"
 msgstr "``json``"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:60
+#: ../../rst/network/user_guide/cli_parsing.rst:62
 msgid "Converts JSON output at the CLI to an Ansible native data structure"
 msgstr "CLI での JSON 出力を Ansible ネイティブデータ構造に変換"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:62
-#: ../../rst/network/user_guide/cli_parsing.rst:589
+#: ../../rst/network/user_guide/cli_parsing.rst:64
+#: ../../rst/network/user_guide/cli_parsing.rst:614
 msgid "Although Ansible contains a number of plugins that can convert XML to Ansible native data structures, the ``cli_parse`` module runs the command on devices that return XML and returns the converted data in a single task."
 msgstr "Ansible には、XML を Ansible のネイティブデータ構造に変換できる多数のプラグインが含まれていますが、``cli_parse`` モジュールは XML を返すデバイスでコマンドを実行し、変換されたデータを 1 つのタスクで返します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:64
+#: ../../rst/network/user_guide/cli_parsing.rst:66
 msgid "Because ``cli_parse`` uses a plugin based architecture, it can use additional parsing engines from any Ansible collection."
 msgstr "``cli_parse`` はプラグインベースのアーキテクチャーを使用するため、任意の Ansible コレクションから追加の解析エンジンを使用できます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:68
-msgid "The ``ansible.netcommon.native``  and ``ansible.netcommon.json`` parsing engines are fully supported with a Red Hat Ansible Automation Platform subscription. Red Hat Ansible Automation Platform subscription support is limited to the use of the ``ntc_templates``, pyATS, ``textfsm``, ``xmltodict``, public APIs as documented."
-msgstr "解析エンジン ``ansible.netcommon.native`` および ``ansible.netcommon.json`` は、Red Hat Ansible Automation Platform サブスクリプションで完全にサポートされています。Red Hat Ansible Automation Platform サブスクリプションのサポートは、ドキュメントに記載されているように、``ntc_templates``、pyATS、``textfsm``、``xmltodict``、パブリック APIの使用に限定されます。"
+#: ../../rst/network/user_guide/cli_parsing.rst:70
+msgid "The ``ansible.netcommon.native``  and ``ansible.utils.json`` parsing engines are fully supported with a Red Hat Ansible Automation Platform subscription. Red Hat Ansible Automation Platform subscription support is limited to the use of the ``ntc_templates``, pyATS, ``textfsm``, ``xmltodict``, public APIs as documented."
+msgstr "解析エンジン ``ansible.netcommon.native`` および ``ansible.utils.json`` は、Red Hat Ansible Automation Platform サブスクリプションで完全にサポートされています。Red Hat Ansible Automation Platform サブスクリプションのサポートは、ドキュメントに記載されているように、``ntc_templates``、pyATS、``textfsm``、``xmltodict``、パブリック APIの使用に限定されます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:71
+#: ../../rst/network/user_guide/cli_parsing.rst:73
 msgid "Parsing with the native parsing engine"
 msgstr "ネイティブ解析エンジンを使用した解析"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:73
+#: ../../rst/network/user_guide/cli_parsing.rst:75
 msgid "The native parsing engine is included with the ``cli_parse`` module. It uses data captured using regular expressions to populate the parsed data structure. The native parsing engine requires a YAML template file to parse the command output."
 msgstr "ネイティブ解析エンジンは ``cli_parse`` モジュールに含まれています。正規表現を使用して取得されたデータを使用して、解析されたデータ構造を生成します。ネイティブ解析エンジンでは、コマンド出力を解析するために YAML テンプレートファイルが必要です。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:76
+#: ../../rst/network/user_guide/cli_parsing.rst:78
 msgid "Networking example"
 msgstr "ネットワークの例"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:78
+#: ../../rst/network/user_guide/cli_parsing.rst:80
 msgid "This example uses the output of a network device command and applies a native template to produce an output in Ansible structured data format."
 msgstr "この例では、ネットワークデバイスコマンドの出力を使用し、ネイティブテンプレートを適用して Ansible 構造のデータ形式で出力を生成します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:80
+#: ../../rst/network/user_guide/cli_parsing.rst:82
 msgid "The ``show interface`` command output from the network device looks as follows:"
 msgstr "ネットワークデバイスからの ``show interface`` コマンドの出力は以下のようになります。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:104
+#: ../../rst/network/user_guide/cli_parsing.rst:106
 msgid "Create the native template to match this output and store it as ``templates/nxos_show_interface.yaml``:"
 msgstr "この出力に一致するネイティブテンプレートを作成し、これを ``templates/nxos_show_interface.yaml`` として保存します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:134
+#: ../../rst/network/user_guide/cli_parsing.rst:136
 msgid "This native parser template is structured as a list of parsers, each containing the following key-value pairs:"
 msgstr "このネイティブパーサーテンプレートはパーサーのリストとして構成され、それぞれに以下のキーと値のペアが含まれます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:136
+#: ../../rst/network/user_guide/cli_parsing.rst:138
 msgid "``example`` - An example line of the text line to be parsed"
 msgstr "``example`` - 解析対象となるテキスト行の一例"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:137
+#: ../../rst/network/user_guide/cli_parsing.rst:139
 msgid "``getval`` - A regular expression using named capture groups to store the extracted data"
 msgstr "``getval`` - 展開したデータを保存するために名前付きキャプチャーグループを使用した正規表現"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:138
+#: ../../rst/network/user_guide/cli_parsing.rst:140
 msgid "``result`` - A data tree, populated as a template, from the parsed data"
 msgstr "``result`` - 解析されたデータからテンプレートとして生成されたデータツリー"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:139
+#: ../../rst/network/user_guide/cli_parsing.rst:141
 msgid "``shared`` - (optional) The shared key makes the parsed values available to the rest of the parser entries until matched again."
 msgstr "``shared`` - (任意) 共有キーは、再一致するまで、残りのパーサーエントリーに解析された値を利用できるようにします。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:141
+#: ../../rst/network/user_guide/cli_parsing.rst:143
 msgid "The following example task uses ``cli_parse`` with the native parser and the example template above to parse the ``show interface`` command from a Cisco NXOS device:"
 msgstr "以下のタスク例では、ネイティブパーサーで ``cli_parse`` と上記のテンプレートのサンプルを使用して、Cisco NXOS デバイスからの ``show interface`` コマンドを解析します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:152
-#: ../../rst/network/user_guide/cli_parsing.rst:300
-#: ../../rst/network/user_guide/cli_parsing.rst:326
-#: ../../rst/network/user_guide/cli_parsing.rst:386
-#: ../../rst/network/user_guide/cli_parsing.rst:495
+#: ../../rst/network/user_guide/cli_parsing.rst:154
+#: ../../rst/network/user_guide/cli_parsing.rst:302
+#: ../../rst/network/user_guide/cli_parsing.rst:328
+#: ../../rst/network/user_guide/cli_parsing.rst:388
+#: ../../rst/network/user_guide/cli_parsing.rst:497
 msgid "Taking a deeper dive into this task:"
 msgstr "このタスクをより深く掘り下げます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:154
+#: ../../rst/network/user_guide/cli_parsing.rst:156
 msgid "The ``command`` option provides the command you want to run on the device or host. Alternately, you can provide text from a previous command with the ``text`` option instead."
 msgstr "``command`` オプションは、デバイスまたはホストで実行するコマンドを提供します。代わりに、``text`` オプションを指定して、前のコマンドのテキストを指定することもできます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:155
+#: ../../rst/network/user_guide/cli_parsing.rst:157
 msgid "The ``parser`` option provides information specific to the parser engine."
 msgstr "``parser`` オプションは、パーサーエンジンに固有の情報を提供します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:156
+#: ../../rst/network/user_guide/cli_parsing.rst:158
 msgid "The ``name`` suboption provides the fully qualified collection name (FQCN) of the parsing engine (``ansible.netcommon.native``)."
 msgstr "``name`` サブオプションは、解析エンジン (``ansible.netcommon.native``) の完全修飾コレクション名 (FQCN) を提供します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:157
+#: ../../rst/network/user_guide/cli_parsing.rst:159
 msgid "The ``cli_parse`` module, by default, looks for the template in the templates directory as ``{{ short_os }}_{{ command }}.yaml``."
 msgstr "デフォルトでは、``cli_parse`` モジュールは、templates ディレクトリーで ``{{ short_os }}_{{ command }}.yaml`` と指定してテンプレートを検索します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:159
+#: ../../rst/network/user_guide/cli_parsing.rst:161
 msgid "The ``short_os`` in the template filename is derived from either the host ``ansible_network_os`` or ``ansible_distribution``."
 msgstr "テンプレートファイル名の ``short_os`` は、ホストの ``ansible_network_os`` または ``ansible_distribution`` から派生します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:160
+#: ../../rst/network/user_guide/cli_parsing.rst:162
 msgid "Spaces in the network or host command are replace with ``_`` in the ``command`` portion of the template filename. In this example, the ``show interfaces`` network CLI command becomes ``show_interfaces`` in the filename."
 msgstr "network または host コマンドのスペースは、テンプレートファイル名の ``command`` 部分にある ``_`` に置き換えます。この例では、``show interfaces`` network CLI コマンドはファイル名の ``show_interfaces`` になります。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:164
+#: ../../rst/network/user_guide/cli_parsing.rst:166
 msgid "``ansible.netcommon.native`` parsing engine is fully supported with a Red Hat Ansible Automation Platform subscription."
 msgstr "``ansible.netcommon.native`` エンジンの解析は、Red Hat Ansible Automation Platform サブスクリプションで完全にサポートされています。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:166
+#: ../../rst/network/user_guide/cli_parsing.rst:168
 msgid "Lastly in this task, the ``set_fact`` option sets the following ``interfaces`` fact for the device based on the now-structured data returned from ``cli_parse``:"
 msgstr "このタスクの最後で、``set_fact`` オプションは、``interfaces`` から返された現在構造化されているデータに基づいて、デバイスに以下の ``cli_parse`` ファクトを設定します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:184
+#: ../../rst/network/user_guide/cli_parsing.rst:186
 msgid "Linux example"
 msgstr "Linux の例"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:186
+#: ../../rst/network/user_guide/cli_parsing.rst:188
 msgid "You can also use the native parser to run commands and parse output from Linux hosts."
 msgstr "ネイティブパーサーを使用してコマンドを実行し、Linux ホストからの出力を解析することもできます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:188
+#: ../../rst/network/user_guide/cli_parsing.rst:190
 msgid "The output of a sample Linux  command (``ip addr show``) looks as follows:"
 msgstr "Linux コマンドの出力例 (``ip addr show``) は以下のようになります。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:203
+#: ../../rst/network/user_guide/cli_parsing.rst:205
 msgid "Create the native template to match this output and store it as ``templates/fedora_ip_addr_show.yaml``:"
 msgstr "この出力に一致するネイティブテンプレートを作成し、これを ``templates/fedora_ip_addr_show.yaml`` として保存します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:241
+#: ../../rst/network/user_guide/cli_parsing.rst:243
 msgid "The ``shared`` key in the parser template allows the interface name to be used in subsequent parser entries. The use of examples and free-spacing mode with the regular expressions makes the template easier to read."
 msgstr "パーサーテンプレートの ``shared`` キーを使用すると、インターフェース名を後続のパーサーエントリーで使用できます。正規表現で例とフリースペースモードを使用すると、テンプレートが読みやすくなります。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:243
+#: ../../rst/network/user_guide/cli_parsing.rst:245
 msgid "The following example task uses ``cli_parse`` with the native parser and the example template above to parse the Linux output:"
 msgstr "以下のタスク例では、ネイティブパーサーのある ``cli_parse`` と、上記のサンプルテンプレートを使用して Linux の出力を解析します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:254
+#: ../../rst/network/user_guide/cli_parsing.rst:256
 msgid "This task assumes you previously gathered facts to determine the ``ansible_distribution`` needed to locate the template. Alternately, you could provide the path in the  ``parser/template_path`` option."
 msgstr "このタスクでは、以前にファクトを収集してテンプレートを見つけるのに必要な ``ansible_distribution`` を決定することを仮定しています。あるいは、``parser/template_path`` オプションでパスを指定することもできます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:257
+#: ../../rst/network/user_guide/cli_parsing.rst:259
 msgid "Lastly in this task, the ``set_fact`` option sets the following ``interfaces`` fact for the host, based on the now-structured data returned from ``cli_parse``:"
 msgstr "このタスクの最後で、``set_fact`` オプションは、``interfaces`` から返された現在構造化されているデータに基づいて、ホストに以下の ``cli_parse`` ファクトを設定します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:285
+#: ../../rst/network/user_guide/cli_parsing.rst:287
 msgid "Parsing JSON"
 msgstr "JSON の解析"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:287
+#: ../../rst/network/user_guide/cli_parsing.rst:289
 msgid "Although Ansible will natively convert serialized JSON to Ansible native data when recognized, you can also use the ``cli_parse`` module for this conversion."
 msgstr "Ansible は、認識時にシリアライズされた JSON を Ansible ネイティブデータに変換しますが、この変換に ``cli_parse`` モジュールを使用することもできます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:289
-#: ../../rst/network/user_guide/cli_parsing.rst:315
-#: ../../rst/network/user_guide/cli_parsing.rst:374
+#: ../../rst/network/user_guide/cli_parsing.rst:291
+#: ../../rst/network/user_guide/cli_parsing.rst:317
+#: ../../rst/network/user_guide/cli_parsing.rst:376
 msgid "Example task:"
 msgstr "タスクの例:"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:302
+#: ../../rst/network/user_guide/cli_parsing.rst:304
 msgid "The ``show interface | json`` command is issued on the device."
 msgstr "``show interface | json`` コマンドはデバイスで発行されます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:303
+#: ../../rst/network/user_guide/cli_parsing.rst:305
 msgid "The output is set as the ``interfaces`` fact for the device."
 msgstr "この出力は、デバイスの ``interfaces`` ファクトとして設定されます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:304
+#: ../../rst/network/user_guide/cli_parsing.rst:306
 msgid "JSON support is provided primarily for playbook consistency."
 msgstr "JSON のサポートは、主に Playbook の一貫性のために提供されています。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:308
+#: ../../rst/network/user_guide/cli_parsing.rst:310
 msgid "The use of ``ansible.netcommon.json`` is fully supported with a Red Hat Ansible Automation Platform subscription"
 msgstr "``ansible.netcommon.json`` の使用は、Red Hat Ansible Automation Platform サブスクリプションで完全にサポートされています。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:311
+#: ../../rst/network/user_guide/cli_parsing.rst:313
 msgid "Parsing with ntc_templates"
 msgstr "ntc_templates での解析"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:313
+#: ../../rst/network/user_guide/cli_parsing.rst:315
 msgid "The ``ntc_templates`` python library includes pre-defined ``textfsm`` templates for parsing a variety of network device commands output."
 msgstr "``ntc_templates`` python ライブラリーには、さまざまなネットワークデバイスコマンドの出力を解析する事前定義済みの ``textfsm`` テンプレートが含まれています。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:328
+#: ../../rst/network/user_guide/cli_parsing.rst:330
 msgid "The ``ansible_network_os`` of the device is converted to the ntc_template format ``cisco_nxos``. Alternately, you can provide the ``os`` with the ``parser/os`` option instead."
 msgstr "デバイスの ``ansible_network_os`` は ntc_template 形式 ``cisco_nxos`` に変換されますが、代わりに ``parser/os`` オプションで ``os`` を指定することもできます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:329
+#: ../../rst/network/user_guide/cli_parsing.rst:331
 msgid "The ``cisco_nxos_show_interface.textfsm`` template, included with the ``ntc_templates`` package, parses the output."
 msgstr "``cisco_nxos_show_interface.textfsm`` パッケージに含まれる ``ntc_templates`` テンプレートは、出力を解析します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:330
+#: ../../rst/network/user_guide/cli_parsing.rst:332
 msgid "See `the ntc_templates README <https://github.com/networktocode/ntc-templates/blob/master/README.md>`_ for additional information about the ``ntc_templates`` python library."
 msgstr "``ntc_templates`` python ライブラリーに関する追加情報は、`ntc_templates の「README」 <https://github.com/networktocode/ntc-templates/blob/master/README.md>`_ を参照してください。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:334
+#: ../../rst/network/user_guide/cli_parsing.rst:336
 msgid "Red Hat Ansible Automation Platform subscription support is limited to the use of the ``ntc_templates`` public APIs as documented."
 msgstr "Red Hat Ansible Automation Platform のサブスクリプションのサポートは、文書化されている ``ntc_templates`` パブリック API の使用に限定されます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:337
+#: ../../rst/network/user_guide/cli_parsing.rst:339
 msgid "This task and and the predefined template sets the following fact as the ``interfaces`` fact for the host:"
 msgstr "このタスクおよび事前定義されたテンプレートは、以下のファクトをホストの ``interfaces`` ファクトとして設定します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:370
+#: ../../rst/network/user_guide/cli_parsing.rst:372
 msgid "Parsing with pyATS"
 msgstr "pyATS での解析"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:372
+#: ../../rst/network/user_guide/cli_parsing.rst:374
 msgid "``pyATS`` is part of the Cisco Test Automation & Validation Solution. It includes many predefined parsers for a number of network platforms and commands. You can use the predefined parsers that are part of the ``pyATS`` package with the ``cli_parse`` module."
 msgstr "``pyATS`` は、Cisco Test Automation & Validation Solution の一部です。これには、多数のネットワークプラットフォームおよびコマンド用の定義済みパーサーが多数含まれています。``cli_parse`` モジュールでは、``pyATS`` パッケージに同梱される定義済みパーサーを使用できます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:388
+#: ../../rst/network/user_guide/cli_parsing.rst:390
 msgid "The ``cli_parse`` modules converts the ``ansible_network_os`` automatically (in this example, ``ansible_network_os`` set to ``cisco.nxos.nxos``, converts to ``nxos`` for pyATS.  Alternately, you can set the OS with the ``parser/os`` option instead."
 msgstr "``cli_parse`` モジュールは、自動的に ``ansible_network_os`` を変換します (この例では、``ansible_network_os`` は ``cisco.nxos.nxos`` に設定されていますが、pyATS の場合は ``nxos`` に変換されます。代わりに、``parser/os`` オプションを使用して OS を設定することもできます)。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:389
+#: ../../rst/network/user_guide/cli_parsing.rst:391
 #, python-format
 msgid "Using a combination of the command and OS, the pyATS selects the following parser: https://pubhub.devnetcloud.com/media/genie-feature-browser/docs/#/parsers/show%2520interface."
 msgstr "コマンドと OS の組み合わせを使用して、pyATS がパーサー (https://pubhub.devnetcloud.com/media/genie-feature-browser/docs/#/parsers/show%2520interface) を選択します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:390
+#: ../../rst/network/user_guide/cli_parsing.rst:392
 msgid "The ``cli_parse`` module sets ``cisco.ios.ios`` to ``iosxe`` for pyATS. You can override this with the ``parser/os`` option."
 msgstr "``cli_parse`` モジュールは、pyATS に対して ``cisco.ios.ios`` を ``iosxe`` に設定します。``parser/os`` オプションでこれを上書きできます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:391
+#: ../../rst/network/user_guide/cli_parsing.rst:393
 msgid "``cli_parse`` only uses the predefined parsers in pyATS. See the `pyATS documentation <https://developer.cisco.com/docs/pyats/>`_ and the full list of `pyATS included parsers <https://pubhub.devnetcloud.com/media/genie-feature-browser/docs/#/parsers>`_."
 msgstr "``cli_parse`` は pyATS の定義済みパーサーのみを使用します。`pyATS ドキュメント <https://developer.cisco.com/docs/pyats/>`_ と、`pyATS が含まれるパーサー <https://pubhub.devnetcloud.com/media/genie-feature-browser/docs/#/parsers>`_ の完全なリストを参照してください。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:395
+#: ../../rst/network/user_guide/cli_parsing.rst:397
 msgid "Red Hat Ansible Automation Platform subscription support is limited to the use of the pyATS public APIs as documented."
 msgstr "Red Hat Ansible Automation Platform のサブスクリプションサポートは、文書化されている pyATS パブリック API の使用に限定されます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:398
-#: ../../rst/network/user_guide/cli_parsing.rst:506
+#: ../../rst/network/user_guide/cli_parsing.rst:400
+#: ../../rst/network/user_guide/cli_parsing.rst:508
 msgid "This task sets the following fact as the ``interfaces`` fact for the host:"
 msgstr "このタスクは、ホストの ``interfaces`` ファクトとして以下のファクトを設定します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:436
+#: ../../rst/network/user_guide/cli_parsing.rst:438
 msgid "Parsing with textfsm"
 msgstr "textfsm で解析"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:438
+#: ../../rst/network/user_guide/cli_parsing.rst:440
 msgid "``textfsm`` is a Python module which implements a template-based state machine for parsing semi-formatted text."
 msgstr "``textfsm`` は、半フォーマットのテキストを解析するためにテンプレートベースの状態マシンを実装する Python モジュールです。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:440
+#: ../../rst/network/user_guide/cli_parsing.rst:442
 msgid "The following sample``textfsm`` template is stored as ``templates/nxos_show_interface.textfsm``"
 msgstr "以下のサンプル ``textfsm`` テンプレートは、``templates/nxos_show_interface.textfsm`` の形式で保存されます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:484
+#: ../../rst/network/user_guide/cli_parsing.rst:486
 msgid "The following task uses the example template for ``textfsm`` with the ``cli_parse`` module."
 msgstr "以下のタスクでは、``textfsm`` モジュールで ``cli_parse`` のサンプルテンプレートを使用します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:497
+#: ../../rst/network/user_guide/cli_parsing.rst:499
 msgid "The ``ansible_network_os`` for the device (``cisco.nxos.nxos``) is converted to ``nxos``. Alternately you can provide the OS in the ``parser/os`` option instead."
 msgstr "デバイスの ``ansible_network_os`` (``cisco.nxos.nxos``) は ``nxos`` に変換されます。代わりに ``parser/os`` オプションに OS を指定することもできます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:498
+#: ../../rst/network/user_guide/cli_parsing.rst:500
 msgid "The textfsm template name defaulted to ``templates/nxos_show_interface.textfsm`` using a combination of the OS and command run. Alternately you can override the generated template path with the ``parser/template_path`` option."
 msgstr "textfsm のテンプレート名は、OS とコマンドランの組み合わせにより、デフォルトで``templates/nxos_show_interface.textfsm`` となっています。また、``parser/template_path`` オプションで、生成されたテンプレートのパスを上書きすることもできます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:499
+#: ../../rst/network/user_guide/cli_parsing.rst:501
 msgid "See the `textfsm README <https://github.com/google/textfsm>`_ for details."
 msgstr "詳細は、`textfsm README <https://github.com/google/textfsm>`_ を参照してください。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:500
+#: ../../rst/network/user_guide/cli_parsing.rst:502
 msgid "``textfsm`` was previously made available as a filter plugin. Ansible users should transition to the ``cli_parse`` module."
 msgstr "``textfsm`` は、以前はフィルタープラグインとして利用できました。Ansible ユーザーは、``cli_parse`` モジュールに移行する必要があります。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:504
+#: ../../rst/network/user_guide/cli_parsing.rst:506
 msgid "Red Hat Ansible Automation Platform subscription support is limited to the use of the ``textfsm`` public APIs as documented."
 msgstr "Red Hat Ansible Automation Platform のサブスクリプションのサポートは、文書化されている ``textfsm`` パブリック API の使用に限定されます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:537
+#: ../../rst/network/user_guide/cli_parsing.rst:539
 msgid "Parsing with TTP"
 msgstr "TTP での解析"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:539
+#: ../../rst/network/user_guide/cli_parsing.rst:541
 msgid "TTP is a Python library for semi-structured text parsing using templates. TTP uses a jinja-like syntax to limit the need for regular expressions. Users familiar with jinja templating may find the TTP template syntax familiar."
 msgstr "TTP は、テンプレートを使用した半構造化テキスト解析用の Python ライブラリーです。TTP は、正規表現の必要性を制限するために、jinja に似た構文を使用します。jinja のテンプレート化に精通しているユーザーは、TTP テンプレートの構文に親しみを感じるかもしれません。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:541
+#: ../../rst/network/user_guide/cli_parsing.rst:543
 msgid "The following is an example TTP template stored as ``templates/nxos_show_interface.ttp``:"
 msgstr "以下は、``templates/nxos_show_interface.ttp`` として保存された TTP テンプレートの例です。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:548
+#: ../../rst/network/user_guide/cli_parsing.rst:550
 msgid "The following task uses this template to parse the ``show interface`` command output:"
 msgstr "以下のタスクでは、このテンプレートを使用して ``show interface`` コマンドの出力を解析します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:559
+#: ../../rst/network/user_guide/cli_parsing.rst:561
 msgid "Taking a deeper dive in this task:"
 msgstr "このタスクをより深く掘り下げます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:561
+#: ../../rst/network/user_guide/cli_parsing.rst:563
 msgid "The default template path ``templates/nxos_show_interface.ttp`` was generated using the ``ansible_network_os`` for the host and ``command`` provided."
 msgstr "デフォルトのテンプレートパス ``templates/nxos_show_interface.ttp`` は、ホストの ``ansible_network_os`` と、指定した ``command`` を使用して生成されました。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:562
+#: ../../rst/network/user_guide/cli_parsing.rst:564
 msgid "TTP supports several additional variables that will be passed to the parser. These include:"
 msgstr "TTP は、パーサーに渡される追加変数をサポートします。これには以下が含まれます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:564
+#: ../../rst/network/user_guide/cli_parsing.rst:566
 msgid "``parser/vars/ttp_init`` -  Additional parameter passed when the parser is initialized."
 msgstr "``parser/vars/ttp_init`` - パーサーの初期化時に渡される追加のパラメーター。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:565
+#: ../../rst/network/user_guide/cli_parsing.rst:567
 msgid "``parser/vars/ttp_results`` -  Additional parameters used to influence the parser output."
 msgstr "``parser/vars/ttp_results`` - パーサーの出力に影響を与えるために使用される追加のパラメーター。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:566
+#: ../../rst/network/user_guide/cli_parsing.rst:568
 msgid "``parser/vars/ttp_vars`` -  Additional variables made available in the template."
 msgstr "``parser/vars/ttp_vars`` - テンプレートで利用可能な追加の変数"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:568
+#: ../../rst/network/user_guide/cli_parsing.rst:570
 msgid "See the `TTP documentation <https://ttp.readthedocs.io>`_ for details."
 msgstr "詳細は、`TTP documentation <https://ttp.readthedocs.io>`_ を参照してください。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:571
+#: ../../rst/network/user_guide/cli_parsing.rst:573
 msgid "The task sets the follow fact as the ``interfaces`` fact for the host:"
 msgstr "このタスクは、ホストの ``interfaces`` ファクトとして follow ファクトを設定します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:587
+#: ../../rst/network/user_guide/cli_parsing.rst:589
+msgid "Parsing with JC"
+msgstr "JC での解析"
+
+#: ../../rst/network/user_guide/cli_parsing.rst:591
+msgid "JC is a python library that converts the output of dozens of common Linux/UNIX/macOS/Windows command-line tools and file types to python dictionaries or lists of dictionaries for easier parsing. JC is available as a filter plugin in the ``community.general`` collection."
+msgstr "JC は、多数の一般的な Linux/UNIX/macOS/Windows コマンドラインツールおよびファイルタイプの出力を python ディクショナリーまたはディクショナリーの一覧に変換する python ライブラリーです。JC は、``community.general`` コレクションのフィルタープラグインとして利用できます。"
+
+#: ../../rst/network/user_guide/cli_parsing.rst:593
+msgid "The following is an example using JC to parse the output of the ``dig`` command:"
+msgstr "以下は、JC を使用して ``dig`` コマンドの出力を解析した例です。"
+
+#: ../../rst/network/user_guide/cli_parsing.rst:607
+msgid "The JC project and documentation can be found `here <https://github.com/kellyjonbrazil/jc/>`_."
+msgstr "JC プロジェクトおよびドキュメントは `here <https://github.com/kellyjonbrazil/jc/>`_ にあります。"
+
+#: ../../rst/network/user_guide/cli_parsing.rst:608
+msgid "See this `blog entry <https://blog.kellybrazil.com/2020/08/30/parsing-command-output-in-ansible-with-jc/>`_ for more information."
+msgstr "詳細は、`ブログ記事 <https://blog.kellybrazil.com/2020/08/30/parsing-command-output-in-ansible-with-jc/>` を参照してください。"
+
+#: ../../rst/network/user_guide/cli_parsing.rst:612
 msgid "Converting XML"
 msgstr "XML の変換"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:591
+#: ../../rst/network/user_guide/cli_parsing.rst:616
 msgid "This example task runs the ``show interface`` command and parses the output as XML:"
 msgstr "このサンプルタスクでは、``show interface`` コマンドを実行し、出力を XML として解析します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:604
+#: ../../rst/network/user_guide/cli_parsing.rst:629
 msgid "Red Hat Ansible Automation Platform subscription support is limited to the use of the ``xmltodict`` public APIs as documented."
 msgstr "Red Hat Ansible Automation Platform のサブスクリプションのサポートは、文書化されている ``xmltodict`` パブリック API の使用に限定されます。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:606
+#: ../../rst/network/user_guide/cli_parsing.rst:631
 msgid "This task sets the ``interfaces`` fact for the host based on this returned output:"
 msgstr "このタスクは、返された出力に基づいてホストの ``interfaces`` ファクトを設定します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:629
+#: ../../rst/network/user_guide/cli_parsing.rst:654
 msgid "Advanced use cases"
 msgstr "高度なユースケース"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:631
+#: ../../rst/network/user_guide/cli_parsing.rst:656
 msgid "The ``cli_parse`` module supports several features to support more complex uses cases."
 msgstr "``cli_parse`` モジュールは、より複雑なユースケースをサポートする複数の機能をサポートします。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:634
+#: ../../rst/network/user_guide/cli_parsing.rst:659
 msgid "Provide a full template path"
 msgstr "完全なテンプレートパスを提供"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:636
+#: ../../rst/network/user_guide/cli_parsing.rst:661
 msgid "Use the ``template_path`` option to override the default template path in the task:"
 msgstr "``template_path`` オプションを使用して、タスクのデフォルトのテンプレートパスを上書きします。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:649
+#: ../../rst/network/user_guide/cli_parsing.rst:674
 msgid "Provide command to parser different than the command run"
 msgstr "コマンド実行以外のパーサーを行うコマンドを指定"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:651
+#: ../../rst/network/user_guide/cli_parsing.rst:676
 msgid "Use the ``command`` suboption for the ``parser`` to configure the command the parser expects if it is different from the command ``cli_parse`` runs:"
 msgstr "``parser`` の ``command`` サブオプションを使用して、``cli_parse`` コマンドの実行とは異なる場合にパーサーが想定するコマンドを設定します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:663
+#: ../../rst/network/user_guide/cli_parsing.rst:688
 msgid "Provide a custom OS value"
 msgstr "カスタム OS 値を指定"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:665
+#: ../../rst/network/user_guide/cli_parsing.rst:690
 msgid "Use the ``os`` suboption to the parser to directly set the OS instead of using ``ansible_network_os`` or ``ansible_distribution`` to generate the template path or with the specified parser engine:"
 msgstr "テンプレートパスを生成する ``ansible_network_os`` や ``ansible_distribution``、または指定したパーサーエンジンを使用する代わりに、OS を直接設定するパーサーに ``os`` サブオプションを使用します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:685
+#: ../../rst/network/user_guide/cli_parsing.rst:710
 msgid "Parse existing text"
 msgstr "既存テキストの解析"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:687
+#: ../../rst/network/user_guide/cli_parsing.rst:712
 msgid "Use the ``text`` option  instead of ``command`` to parse text collected earlier in the playbook."
 msgstr "``command`` の代わりに ``text`` オプションを使用して、Playbook で以前に収集したテキストを解析します。"
 
-#: ../../rst/network/user_guide/cli_parsing.rst:719
+#: ../../rst/network/user_guide/cli_parsing.rst:744
 msgid ":ref:`develop_cli_parse_plugins`"
 msgstr ":ref:`develop_cli_parse_plugins`"
 
@@ -2830,44 +2858,44 @@ msgid "If `ansible-playbook` fails, please follow the debug steps in :ref:`netwo
 msgstr "`ansible-playbook` が失敗する場合は、:ref:`network_debug_troubleshooting` のデバッグ手順に従ってください。"
 
 #: ../../rst/network/user_guide/network_best_practices_2.5.rst:324
-msgid "Example 2: simplifying playbooks with network agnostic modules"
-msgstr "例 2: ネットワークに依存しないモジュールを使用した Playbook の単純化"
+msgid "Example 2: simplifying playbooks with platform-independent modules"
+msgstr "例 2: プラットフォームに依存しないモジュールを使用した Playbook の単純化"
 
 #: ../../rst/network/user_guide/network_best_practices_2.5.rst:326
 msgid "(This example originally appeared in the `Deep Dive on cli_command for Network Automation <https://www.ansible.com/blog/deep-dive-on-cli-command-for-network-automation>`_ blog post by Sean Cavanaugh -`@IPvSean <https://github.com/IPvSean>`_)."
 msgstr "(この例は、元々、Sean Cavanaugh (`@IPvSean <https://github.com/IPvSean>`_) 氏が投稿したブログ「`Deep Dive on cli_command for Network Automation <https://www.ansible.com/blog/deep-dive-on-cli-command-for-network-automation>`_」で紹介されました。)"
 
 #: ../../rst/network/user_guide/network_best_practices_2.5.rst:328
-msgid "If you have two or more network platforms in your environment, you can use the network agnostic modules to simplify your playbooks. You can use network agnostic modules such as ``ansible.netcommon.cli_command`` or ``ansible.netcommon.cli_config`` in place of the platform-specific modules such as ``arista.eos.eos_config``, ``cisco.ios.ios_config``, and ``junipernetworks.junos.junos_config``. This reduces the number of tasks and conditionals you need in your playbooks."
-msgstr "環境内に複数のネットワークプラットフォームがある場合は、ネットワークに依存しないモジュールを使用して、Playbook を簡素化できます。``arista.eos.eos_config``、``cisco.ios.ios_config``、``junipernetworks.junos.junos_config`` などのプラットフォーム固有のモジュールの代わりに、``ansible.netcommon.cli_command``、``ansible.netcommon.cli_config`` などのネットワークに依存しないモジュールを使用できます。これにより、Playbook に必要なタスクおよび条件の数が減ります。"
+msgid "If you have two or more network platforms in your environment, you can use the platform-independent modules to simplify your playbooks. You can use platform-independent modules such as ``ansible.netcommon.cli_command`` or ``ansible.netcommon.cli_config`` in place of the platform-specific modules such as ``arista.eos.eos_config``, ``cisco.ios.ios_config``, and ``junipernetworks.junos.junos_config``. This reduces the number of tasks and conditionals you need in your playbooks."
+msgstr "環境内に複数のネットワークプラットフォームがある場合は、プラットフォームに依存しないモジュールを使用して、Playbook を簡素化できます。``arista.eos.eos_config``、``cisco.ios.ios_config``、``junipernetworks.junos.junos_config`` などのプラットフォーム固有のモジュールの代わりに、``ansible.netcommon.cli_command``、``ansible.netcommon.cli_config`` などのプラットフォームに依存しないモジュールを使用できます。これにより、Playbook に必要なタスクおよび条件の数が減ります。"
 
 #: ../../rst/network/user_guide/network_best_practices_2.5.rst:331
-msgid "Network agnostic modules require the :ref:`ansible.netcommon.network_cli <ansible_collections.ansible.netcommon.network_cli_connection>` connection plugin."
-msgstr "ネットワークに依存しないモジュールには、:ref:`ansible.netcommon.network_cli <ansible_collections.ansible.netcommon.network_cli_connection>` 接続プラグインが必要です。"
+msgid "Platform-independent modules require the :ref:`ansible.netcommon.network_cli <ansible_collections.ansible.netcommon.network_cli_connection>` connection plugin."
+msgstr "プラットフォームに依存しないモジュールには、:ref:`ansible.netcommon.network_cli <ansible_collections.ansible.netcommon.network_cli_connection>` connection プラグインが必要です。"
 
 #: ../../rst/network/user_guide/network_best_practices_2.5.rst:335
 msgid "Sample playbook with platform-specific modules"
 msgstr "プラットフォーム固有のモジュールを含む Playbook のサンプル"
 
 #: ../../rst/network/user_guide/network_best_practices_2.5.rst:337
-msgid "This example assumes three platforms, Arista EOS, Cisco NXOS, and Juniper JunOS.  Without the network agnostic modules, a sample playbook might contain the following three tasks with platform-specific commands:"
-msgstr "この例では、Arista EOS、Cisco NXOS、Juniper JunOS の 3 つのプラットフォームを想定しています。ネットワークに依存しないモジュールを使用しないと、サンプル Playbook にはプラットフォーム固有のコマンドと共に、以下の 3 つのタスクが含まれる場合があります。"
+msgid "This example assumes three platforms, Arista EOS, Cisco NXOS, and Juniper JunOS.  Without the platform-independent modules, a sample playbook might contain the following three tasks with platform-specific commands:"
+msgstr "この例では、Arista EOS、Cisco NXOS、Juniper JunOS の 3 つのプラットフォームを想定しています。プラットフォームに依存しないモジュールを使用しないと、サンプル Playbook にはプラットフォーム固有のコマンドと共に、以下の 3 つのタスクが含まれる場合があります。"
 
 #: ../../rst/network/user_guide/network_best_practices_2.5.rst:358
-msgid "Simplified playbook with ``cli_command`` network agnostic module"
-msgstr "``cli_command`` ネットワークに依存しないモジュールを使用した Playbook の簡素化"
+msgid "Simplified playbook with ``cli_command`` platform-independent module"
+msgstr "``cli_command`` プラットフォームに依存しないモジュールを使用した Playbook の簡素化"
 
 #: ../../rst/network/user_guide/network_best_practices_2.5.rst:360
-msgid "You can replace these platform-specific modules with the network agnostic ``ansible.netcommon.cli_command`` module as follows:"
-msgstr "これらのプラットフォーム固有のモジュールは、以下のようにネットワークに依存しない ``ansible.netcommon.cli_command`` モジュールに置き換えることができます。"
+msgid "You can replace these platform-specific modules with the platform-independent ``ansible.netcommon.cli_command`` module as follows:"
+msgstr "これらのプラットフォーム固有のモジュールは、以下のようにプラットフォームに依存しない ``ansible.netcommon.cli_command`` モジュールに置き換えることができます。"
 
 #: ../../rst/network/user_guide/network_best_practices_2.5.rst:407
 msgid "If you use groups and group_vars by platform type, this playbook can be further simplified to :"
 msgstr "プラットフォームタイプ別にグループおよび group_vars を使用する場合は、この Playbook をさらに簡単にできます。"
 
 #: ../../rst/network/user_guide/network_best_practices_2.5.rst:423
-msgid "You can see a full example of this using group_vars and also a configuration backup example at `Network agnostic examples <https://github.com/network-automation/agnostic_example>`_."
-msgstr "group_vars の完全例と設定バックアップの例は、`ネットワークに依存しない例 <https://github.com/network-automation/agnostic_example>`_ で確認できます。"
+msgid "You can see a full example of this using group_vars and also a configuration backup example at `Platform-independent examples <https://github.com/network-automation/agnostic_example>`_."
+msgstr "group_vars の完全例と設定バックアップの例は、`Platform-independent examples <https://github.com/network-automation/agnostic_example>`_ で確認できます。"
 
 #: ../../rst/network/user_guide/network_best_practices_2.5.rst:426
 msgid "Using multiple prompts with the  ``ansible.netcommon.cli_command``"
@@ -3057,6 +3085,14 @@ msgstr "``using connection plugin network_cli`` 永続接続が使用されて�
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:80
 msgid "``connection established to veos01 in 0:00:22.580626`` Time taken to obtain a shell on the remote device"
 msgstr "``connection established to veos01 in 0:00:22.580626`` リモートデバイスでシェルの取得にかかった時間"
+
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:83
+msgid "Port None ``creating new control socket for host veos01:None``"
+msgstr "ポートなし ``ホスト veos01:22 の新しいコントロールソケットをユーザー管理者``"
+
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:85
+msgid "If the log reports the port as ``None`` this means that the default port is being used. A future Ansible release will improve this message so that the port is always logged."
+msgstr "ログでポートが ``None`` として報告される場合は、デフォルトのポートが使用されていることを意味します。今後の Ansible リリースでは、ポートが常にログに記録されるようにこのメッセージが改善されます。"
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:88
 msgid "Because the log files are verbose, you can use grep to look for specific information. For example, once you have identified the ``pid`` from the ``creating new control socket for host`` line you can search for other connection log entries::"
@@ -3379,7 +3415,7 @@ msgstr "``network_cli`` 接続タイプを持つプラットフォーム固有�
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:561
 msgid "In Ansible 2.9 and later, the network_cli connection plugin configuration options are added to handle the platform specific login menu. These options can be set as group/host or tasks variables."
-msgstr "Ansible 2.9 以降では、プラットフォーム固有のログインメニューを処理するために network_cli 接続プラグイン設定オプションが追加されました。これらのオプションは、グループ/ホストまたはタスク変数として設定できます。"
+msgstr "Ansible 2.9 以降では、プラットフォーム固有のログインメニューを処理するために network_cli connection プラグイン設定オプションが追加されました。これらのオプションは、グループ/ホストまたはタスク変数として設定できます。"
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:565
 msgid "Example: Handle single login menu prompts with host variables"
@@ -3515,7 +3551,7 @@ msgstr "``ansible.netcommon.network_cli`` 接続タイプの使用中に断続�
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:737
 msgid "If the command prompt received in response is not matched correctly within the ``ansible.netcommon.network_cli`` connection plugin the task might fail intermittently with truncated response or with the error message ``operation requires privilege escalation``. Starting in 2.7.1 a new buffer read timer is added to ensure prompts are matched properly and a complete response is send in output. The timer default value is 0.2 seconds and can be adjusted on a per task basis or can be set globally in seconds."
-msgstr "応答で受け取ったコマンドプロンプトが ``ansible.netcommon.network_cli`` 接続プラグイン内で正しく一致しないと、タスクが断続的に失敗し、応答が切り捨てられるか、エラーメッセージ ``operation requires privilege escalation`` が表示されることがあります。2.7.1 以降、プロンプトが正しく一致し、完全な応答が出力に送信されるように、新しいバッファ読み取りタイマーが追加されました。タイマーのデフォルト値は 0.2 秒で、タスクごとに調整することも、秒単位でグローバルに設定することもできます。"
+msgstr "応答で受け取ったコマンドプロンプトが ``ansible.netcommon.network_cli`` connection プラグイン内で正しく一致しないと、タスクが断続的に失敗し、応答が切り捨てられるか、エラーメッセージ ``operation requires privilege escalation`` が表示されることがあります。2.7.1 以降、プロンプトが正しく一致し、完全な応答が出力に送信されるように、新しいバッファ読み取りタイマーが追加されました。タイマーのデフォルト値は 0.2 秒で、タスクごとに調整することも、秒単位でグローバルに設定することもできます。"
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:744
 msgid "Example Per task timer setting"
@@ -3531,7 +3567,7 @@ msgstr "``ansible.netcommon.network_cli`` 接続タイプを使用したコマ�
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:769
 msgid "In Ansible 2.9 and later, the ``ansible.netcommon.network_cli`` connection plugin configuration options are added to handle the stdout and stderr regex to identify if the command execution response consist of a normal response or an error response. These options can be set group/host variables or as tasks variables."
-msgstr "Ansible 2.9 以降では、``ansible.netcommon.network_cli`` 接続プラグイン設定オプションが追加され、標準出力と標準エラーの正規表現を処理して、コマンド実行応答が通常の応答かエラー応答かを識別します。これらのオプションは、グループ/ホスト変数またはタスク変数として設定できます。"
+msgstr "Ansible 2.9 以降では、``ansible.netcommon.network_cli`` connection プラグイン設定オプションが追加され、標準出力と標準エラーの正規表現を処理して、コマンド実行応答が通常の応答かエラー応答かを識別します。これらのオプションは、グループ/ホスト変数またはタスク変数として設定できます。"
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:774
 msgid "Example: For mismatched error response"
@@ -3555,7 +3591,7 @@ msgstr "低速ネットワークまたはリモートターゲットホストに
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:818
 msgid "In Ansible 2.9 and later, the ``ansible.netcommon.network_cli`` connection plugin configuration option is added to control the number of attempts to connect to a remote host. The default number of attempts is three. After every retry attempt the delay between retries is increased by power of 2 in seconds until either the maximum attempts are exhausted or either the ``persistent_command_timeout`` or ``persistent_connect_timeout`` timers are triggered."
-msgstr "Ansible 2.9 以降では、リモートホストへの接続の試行回数を制御するために、``ansible.netcommon.network_cli`` 接続プラグイン設定オプションが追加されました。デフォルトの試行回数は 3 回です。再試行のたびに、最大試行回数がなくなるか、``persistent_command_timeout`` または ``persistent_connect_timeout`` タイマーのいずれかが発生するまで、再試行間の遅延は 2 の累乗 (秒) ずつ増加します。"
+msgstr "Ansible 2.9 以降では、リモートホストへの接続の試行回数を制御するために、``ansible.netcommon.network_cli`` connection プラグイン設定オプションが追加されました。デフォルトの試行回数は 3 回です。再試行のたびに、最大試行回数がなくなるか、``persistent_command_timeout`` または ``persistent_connect_timeout`` タイマーのいずれかが発生するまで、再試行間の遅延は 2 の累乗 (秒) ずつ増加します。"
 
 #: ../../rst/network/user_guide/network_resource_modules.rst:5
 msgid "Network Resource Modules"
@@ -3572,6 +3608,10 @@ msgstr "ネットワークリソースモジュールの状態"
 #: ../../rst/network/user_guide/network_resource_modules.rst:16
 msgid "You use the network resource modules by assigning a state to what you want the module to do. The resource modules support the following states:"
 msgstr "モジュールの動作に状態を割り当てて、ネットワークリソースモジュールを使用します。リソースモジュールは以下の状態をサポートします。"
+
+#: ../../rst/network/user_guide/network_resource_modules.rst:37
+msgid "Ansible parses the configuration from the ``running_config`` option into Ansible structured data in the ``parsed`` key in the result. Note this does not gather the configuration from the network device so this state can be used offline."
+msgstr "Ansible は、``running_config`` オプションから、その結果内の ``parsed`` キーの Ansible 構造化データに設定を解析します。この設定は、ネットワークデバイスから設定が収集されないため、この状態をオフラインで使用できる点に注意してください。"
 
 #: ../../rst/network/user_guide/network_resource_modules.rst:40
 msgid "Using network resource modules"
@@ -3715,7 +3755,7 @@ msgstr "ネットワークモジュールの条件"
 
 #: ../../rst/network/user_guide/network_working_with_command_output.rst:13
 msgid "Ansible allows you to use conditionals to control the flow of your playbooks. Ansible networking command modules use the following unique conditional statements."
-msgstr "Ansible では、条件を使用して Playbook のフローを制御できます。Ansible ネットワークコマンドモジュールは、以下の固有の条件付きステートメントを使用します。"
+msgstr "Ansible では、条件を使用して Playbook のフローを制御できます。Ansible ネットワークコマンドモジュールは、以下の固有の条件分岐文を使用します。"
 
 #: ../../rst/network/user_guide/network_working_with_command_output.rst:15
 msgid "``eq`` - Equal"
@@ -3845,6 +3885,7 @@ msgstr "CloudEngine CE OS は `community.network <https://galaxy.ansible.com/com
 #: ../../rst/network/user_guide/platform_slxos.rst:14
 #: ../../rst/network/user_guide/platform_voss.rst:14
 #: ../../rst/network/user_guide/platform_vyos.rst:13
+#: ../../rst/network/user_guide/platform_weos4.rst:14
 msgid "Connections available"
 msgstr "利用可能な接続"
 
@@ -3870,6 +3911,7 @@ msgstr "利用可能な接続"
 #: ../../rst/network/user_guide/platform_slxos.rst:20
 #: ../../rst/network/user_guide/platform_voss.rst:20
 #: ../../rst/network/user_guide/platform_vyos.rst:19
+#: ../../rst/network/user_guide/platform_weos4.rst:20
 msgid "CLI"
 msgstr "CLI"
 
@@ -3902,6 +3944,7 @@ msgstr "NETCONF"
 #: ../../rst/network/user_guide/platform_slxos.rst:22
 #: ../../rst/network/user_guide/platform_voss.rst:22
 #: ../../rst/network/user_guide/platform_vyos.rst:21
+#: ../../rst/network/user_guide/platform_weos4.rst:22
 msgid "SSH"
 msgstr "SSH"
 
@@ -3929,6 +3972,7 @@ msgstr "SSH"
 #: ../../rst/network/user_guide/platform_slxos.rst:24
 #: ../../rst/network/user_guide/platform_voss.rst:24
 #: ../../rst/network/user_guide/platform_vyos.rst:23
+#: ../../rst/network/user_guide/platform_weos4.rst:24
 msgid "Credentials"
 msgstr "認証情報"
 
@@ -3955,6 +3999,7 @@ msgstr "認証情報"
 #: ../../rst/network/user_guide/platform_slxos.rst:24
 #: ../../rst/network/user_guide/platform_voss.rst:24
 #: ../../rst/network/user_guide/platform_vyos.rst:23
+#: ../../rst/network/user_guide/platform_weos4.rst:24
 msgid "uses SSH keys / SSH-agent if present"
 msgstr "SSH キー/SSH-agent が存在する場合は使用します"
 
@@ -3981,6 +4026,7 @@ msgstr "SSH キー/SSH-agent が存在する場合は使用します"
 #: ../../rst/network/user_guide/platform_slxos.rst:26
 #: ../../rst/network/user_guide/platform_voss.rst:26
 #: ../../rst/network/user_guide/platform_vyos.rst:25
+#: ../../rst/network/user_guide/platform_weos4.rst:26
 msgid "accepts ``-u myuser -k`` if using password"
 msgstr "パスワードを使用する場合に ``-u myuser -k`` を受け入れます。"
 
@@ -4007,6 +4053,7 @@ msgstr "パスワードを使用する場合に ``-u myuser -k`` を受け入れ
 #: ../../rst/network/user_guide/platform_slxos.rst:28
 #: ../../rst/network/user_guide/platform_voss.rst:28
 #: ../../rst/network/user_guide/platform_vyos.rst:27
+#: ../../rst/network/user_guide/platform_weos4.rst:28
 msgid "Indirect Access"
 msgstr "間接アクセス"
 
@@ -4033,6 +4080,7 @@ msgstr "間接アクセス"
 #: ../../rst/network/user_guide/platform_slxos.rst:28
 #: ../../rst/network/user_guide/platform_voss.rst:28
 #: ../../rst/network/user_guide/platform_vyos.rst:27
+#: ../../rst/network/user_guide/platform_weos4.rst:28
 msgid "via a bastion (jump host)"
 msgstr "bastion (jump ホスト) を使用"
 
@@ -4060,6 +4108,7 @@ msgstr "bastion (jump ホスト) を使用"
 #: ../../rst/network/user_guide/platform_slxos.rst:30
 #: ../../rst/network/user_guide/platform_voss.rst:30
 #: ../../rst/network/user_guide/platform_vyos.rst:29
+#: ../../rst/network/user_guide/platform_weos4.rst:30
 msgid "Connection Settings"
 msgstr "接続設定"
 
@@ -4104,6 +4153,7 @@ msgstr "``ansible.netcommon.netconf``"
 #: ../../rst/network/user_guide/platform_slxos.rst:32
 #: ../../rst/network/user_guide/platform_voss.rst:32
 #: ../../rst/network/user_guide/platform_vyos.rst:31
+#: ../../rst/network/user_guide/platform_weos4.rst:32
 msgid "|enable_mode|"
 msgstr "|enable_mode|"
 
@@ -4134,6 +4184,7 @@ msgstr "ce OS ではサポートなし"
 #: ../../rst/network/user_guide/platform_slxos.rst:34
 #: ../../rst/network/user_guide/platform_voss.rst:35
 #: ../../rst/network/user_guide/platform_vyos.rst:33
+#: ../../rst/network/user_guide/platform_weos4.rst:34
 msgid "Returned Data Format"
 msgstr "返されるデータ形式"
 
@@ -4169,6 +4220,7 @@ msgstr "``ansible_connection: local`` は非推奨になりました。代わり
 #: ../../rst/network/user_guide/platform_slxos.rst:43
 #: ../../rst/network/user_guide/platform_voss.rst:44
 #: ../../rst/network/user_guide/platform_vyos.rst:42
+#: ../../rst/network/user_guide/platform_weos4.rst:42
 msgid "Using CLI in Ansible"
 msgstr "Ansible での CLI の使用"
 
@@ -4198,6 +4250,7 @@ msgstr "CLI インベントリーの例 ``[ce:vars]``"
 #: ../../rst/network/user_guide/platform_slxos.rst:57
 #: ../../rst/network/user_guide/platform_voss.rst:60
 #: ../../rst/network/user_guide/platform_vyos.rst:56
+#: ../../rst/network/user_guide/platform_weos4.rst:56
 msgid "If you are using SSH keys (including an ssh-agent) you can remove the ``ansible_password`` configuration."
 msgstr "SSH キー (ssh-agent を含む) を使用している場合は、``ansible_password`` 設定を削除できます。"
 
@@ -4223,6 +4276,7 @@ msgstr "SSH キー (ssh-agent を含む) を使用している場合は、``ansi
 #: ../../rst/network/user_guide/platform_slxos.rst:58
 #: ../../rst/network/user_guide/platform_voss.rst:61
 #: ../../rst/network/user_guide/platform_vyos.rst:57
+#: ../../rst/network/user_guide/platform_weos4.rst:57
 msgid "If you are accessing your host directly (not through a bastion/jump host) you can remove the ``ansible_ssh_common_args`` configuration."
 msgstr "(bastion/ジャンプホストを経由せず) ホストに直接アクセスしている場合は、``ansible_ssh_common_args`` 設定を削除できます。"
 
@@ -4248,6 +4302,7 @@ msgstr "(bastion/ジャンプホストを経由せず) ホストに直接アク�
 #: ../../rst/network/user_guide/platform_slxos.rst:59
 #: ../../rst/network/user_guide/platform_voss.rst:62
 #: ../../rst/network/user_guide/platform_vyos.rst:58
+#: ../../rst/network/user_guide/platform_weos4.rst:58
 msgid "If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords via environment variables."
 msgstr "bastion/ジャンプホストを介してホストにアクセスする場合は、``ProxyCommand`` ディレクティブに SSH パスワードを含めることができません。シークレットが漏洩するのを防ぐために (例: ``ps`` 出力)、SSH は環境変数によるパスワードの提供をサポートしません。"
 
@@ -4273,6 +4328,7 @@ msgstr "bastion/ジャンプホストを介してホストにアクセスする�
 #: ../../rst/network/user_guide/platform_slxos.rst:62
 #: ../../rst/network/user_guide/platform_voss.rst:65
 #: ../../rst/network/user_guide/platform_vyos.rst:61
+#: ../../rst/network/user_guide/platform_weos4.rst:61
 msgid "Example CLI task"
 msgstr "CLI タスクの例"
 
@@ -4369,6 +4425,7 @@ msgstr "パスワードをプレーンテキストで保存しないでくださ
 #: ../../rst/network/user_guide/platform_slxos.rst:77
 #: ../../rst/network/user_guide/platform_voss.rst:78
 #: ../../rst/network/user_guide/platform_vyos.rst:74
+#: ../../rst/network/user_guide/platform_weos4.rst:88
 msgid ":ref:`timeout_options`"
 msgstr ":ref:`timeout_options`"
 
@@ -4428,6 +4485,7 @@ msgstr "サポート対象: ``ansible_become: yes`` を、``ansible_become_metho
 #: ../../rst/network/user_guide/platform_routeros.rst:34
 #: ../../rst/network/user_guide/platform_slxos.rst:34
 #: ../../rst/network/user_guide/platform_voss.rst:35
+#: ../../rst/network/user_guide/platform_weos4.rst:34
 msgid "``stdout[0].``"
 msgstr "``stdout[0].``"
 
@@ -4713,43 +4771,42 @@ msgstr "プラットフォームのオプション"
 msgid "Some Ansible Network platforms support multiple connection types, privilege escalation (``enable`` mode), or other options. The pages in this section offer standardized guides to understanding available options on each network platform. We welcome contributions from community-maintained platforms to this section."
 msgstr "一部の Ansible Network プラットフォームは、複数の接続タイプ、権限エスカレーション (``enable`` モード) 、またはその他のオプションをサポートしています。本セクションのページでは、各ネットワークプラットフォームで利用可能なオプションを理解する標準ガイドが紹介されています。コミュニティーが管理するプラットフォームから、このセクションへの貢献を歓迎いたします。"
 
-#: ../../rst/network/user_guide/platform_index.rst:41
+#: ../../rst/network/user_guide/platform_index.rst:42
 msgid "Settings by Platform"
 msgstr "プラットフォーム別の設定"
 
-#: ../../rst/network/user_guide/platform_index.rst:58
+#: ../../rst/network/user_guide/platform_index.rst:59
 msgid "``ansible_connection:`` settings available"
 msgstr "``ansible_connection:`` 設定が利用可能"
 
-#: ../../rst/network/user_guide/platform_index.rst:60
+#: ../../rst/network/user_guide/platform_index.rst:61
 msgid "Network OS"
 msgstr "ネットワーク OS"
 
-#: ../../rst/network/user_guide/platform_index.rst:60
+#: ../../rst/network/user_guide/platform_index.rst:61
 msgid "``ansible_network_os:``"
 msgstr "``ansible_network_os:``"
 
-#: ../../rst/network/user_guide/platform_index.rst:60
+#: ../../rst/network/user_guide/platform_index.rst:61
 msgid "network_cli"
 msgstr "network_cli"
 
-#: ../../rst/network/user_guide/platform_index.rst:60
+#: ../../rst/network/user_guide/platform_index.rst:61
 msgid "netconf"
 msgstr "netconf"
 
-#: ../../rst/network/user_guide/platform_index.rst:60
+#: ../../rst/network/user_guide/platform_index.rst:61
 msgid "httpapi"
 msgstr "httpapi"
 
-#: ../../rst/network/user_guide/platform_index.rst:62
+#: ../../rst/network/user_guide/platform_index.rst:63
 msgid "`Arista EOS`_ `[†]`_"
 msgstr "`Arista EOS`_ `[†]`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:62
+#: ../../rst/network/user_guide/platform_index.rst:63
 msgid "``arista.eos.eos``"
 msgstr "``arista.eos.eos``"
 
-#: ../../rst/network/user_guide/platform_index.rst:62
 #: ../../rst/network/user_guide/platform_index.rst:63
 #: ../../rst/network/user_guide/platform_index.rst:64
 #: ../../rst/network/user_guide/platform_index.rst:65
@@ -4777,210 +4834,220 @@ msgstr "``arista.eos.eos``"
 #: ../../rst/network/user_guide/platform_index.rst:87
 #: ../../rst/network/user_guide/platform_index.rst:88
 #: ../../rst/network/user_guide/platform_index.rst:89
+#: ../../rst/network/user_guide/platform_index.rst:90
+#: ../../rst/network/user_guide/platform_index.rst:91
 msgid "✓"
 msgstr "✓"
 
-#: ../../rst/network/user_guide/platform_index.rst:63
+#: ../../rst/network/user_guide/platform_index.rst:64
 msgid "`Ciena SAOS6`_"
 msgstr "`Ciena SAOS6`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:63
+#: ../../rst/network/user_guide/platform_index.rst:64
 msgid "``ciena.saos6.saos6``"
 msgstr "``ciena.saos6.saos6``"
 
-#: ../../rst/network/user_guide/platform_index.rst:64
+#: ../../rst/network/user_guide/platform_index.rst:65
 msgid "`Cisco ASA`_ `[†]`_"
 msgstr "`Cisco ASA`_ `[†]`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:64
+#: ../../rst/network/user_guide/platform_index.rst:65
 msgid "``cisco.asa.asa``"
 msgstr "``cisco.asa.asa``"
 
-#: ../../rst/network/user_guide/platform_index.rst:65
+#: ../../rst/network/user_guide/platform_index.rst:66
 msgid "`Cisco IOS`_ `[†]`_"
 msgstr "`Cisco IOS`_ `[†]`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:65
+#: ../../rst/network/user_guide/platform_index.rst:66
 msgid "``cisco.ios.ios``"
 msgstr "``cisco.ios.ios``"
 
-#: ../../rst/network/user_guide/platform_index.rst:66
+#: ../../rst/network/user_guide/platform_index.rst:67
 msgid "`Cisco IOS XR`_ `[†]`_"
 msgstr "`Cisco IOS XR`_ `[†]`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:66
+#: ../../rst/network/user_guide/platform_index.rst:67
 msgid "``cisco.iosxr.iosxr``"
 msgstr "``cisco.iosxr.iosxr``"
 
-#: ../../rst/network/user_guide/platform_index.rst:67
+#: ../../rst/network/user_guide/platform_index.rst:68
 msgid "`Cisco NX-OS`_ `[†]`_"
 msgstr "`Cisco NX-OS`_ `[†]`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:67
+#: ../../rst/network/user_guide/platform_index.rst:68
 msgid "``cisco.nxos.nxos``"
 msgstr "``cisco.nxos.nxos``"
 
-#: ../../rst/network/user_guide/platform_index.rst:68
+#: ../../rst/network/user_guide/platform_index.rst:69
 msgid "`Cloudengine OS`_"
 msgstr "`Cloudengine OS`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:68
+#: ../../rst/network/user_guide/platform_index.rst:69
 msgid "``community.network.ce``"
 msgstr "``community.network.ce``"
 
-#: ../../rst/network/user_guide/platform_index.rst:69
+#: ../../rst/network/user_guide/platform_index.rst:70
 msgid "`Dell OS6`_"
 msgstr "`Dell OS6`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:69
+#: ../../rst/network/user_guide/platform_index.rst:70
 msgid "``dellemc.os6.os6``"
 msgstr "``dellemc.os6.os6``"
 
-#: ../../rst/network/user_guide/platform_index.rst:70
+#: ../../rst/network/user_guide/platform_index.rst:71
 msgid "`Dell OS9`_"
 msgstr "`Dell OS9`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:70
+#: ../../rst/network/user_guide/platform_index.rst:71
 msgid "``dellemc.os9.os9``"
 msgstr "``dellemc.os9.os9``"
 
-#: ../../rst/network/user_guide/platform_index.rst:71
+#: ../../rst/network/user_guide/platform_index.rst:72
 msgid "`Dell OS10`_"
 msgstr "`Dell OS10`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:71
+#: ../../rst/network/user_guide/platform_index.rst:72
 msgid "``dellemc.os10.os10``"
 msgstr "``dellemc.os10.os10``"
 
-#: ../../rst/network/user_guide/platform_index.rst:72
+#: ../../rst/network/user_guide/platform_index.rst:73
 msgid "`Ericsson ECCLI`_"
 msgstr "`Ericsson ECCLI`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:72
+#: ../../rst/network/user_guide/platform_index.rst:73
 msgid "``community.network.eric_eccli``"
 msgstr "``community.network.eric_eccli``"
 
-#: ../../rst/network/user_guide/platform_index.rst:73
+#: ../../rst/network/user_guide/platform_index.rst:74
 msgid "`Extreme EXOS`_"
 msgstr "`Extreme EXOS`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:73
+#: ../../rst/network/user_guide/platform_index.rst:74
 msgid "``community.network.exos``"
 msgstr "``community.network.exos``"
 
-#: ../../rst/network/user_guide/platform_index.rst:74
+#: ../../rst/network/user_guide/platform_index.rst:75
 msgid "`Extreme IronWare`_"
 msgstr "`Extreme IronWare`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:74
+#: ../../rst/network/user_guide/platform_index.rst:75
 msgid "``community.network.ironware``"
 msgstr "``community.network.ironware``"
 
-#: ../../rst/network/user_guide/platform_index.rst:75
+#: ../../rst/network/user_guide/platform_index.rst:76
 msgid "`Extreme NOS`_"
 msgstr "`Extreme NOS`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:75
+#: ../../rst/network/user_guide/platform_index.rst:76
 msgid "``community.network.nos``"
 msgstr "``community.network.nos``"
 
-#: ../../rst/network/user_guide/platform_index.rst:76
+#: ../../rst/network/user_guide/platform_index.rst:77
 msgid "`Extreme SLX-OS`_"
 msgstr "`Extreme SLX-OS`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:76
+#: ../../rst/network/user_guide/platform_index.rst:77
 msgid "``community.network.slxos``"
 msgstr "``community.network.slxos``"
 
-#: ../../rst/network/user_guide/platform_index.rst:77
+#: ../../rst/network/user_guide/platform_index.rst:78
 msgid "`Extreme VOSS`_"
 msgstr "`Extreme VOSS`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:77
+#: ../../rst/network/user_guide/platform_index.rst:78
 msgid "``community.network.voss``"
 msgstr "``community.network.voss``"
 
-#: ../../rst/network/user_guide/platform_index.rst:78
+#: ../../rst/network/user_guide/platform_index.rst:79
 msgid "`F5 BIG-IP`_"
 msgstr "`F5 BIG-IP`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:79
+#: ../../rst/network/user_guide/platform_index.rst:80
 msgid "`F5 BIG-IQ`_"
 msgstr "`F5 BIG-IQ`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:80
+#: ../../rst/network/user_guide/platform_index.rst:81
 msgid "`Junos OS`_ `[†]`_"
 msgstr "`Junos OS`_ `[†]`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:80
+#: ../../rst/network/user_guide/platform_index.rst:81
 msgid "``junipernetworks.junos.junos``"
 msgstr "``junipernetworks.junos.junos``"
 
-#: ../../rst/network/user_guide/platform_index.rst:81
+#: ../../rst/network/user_guide/platform_index.rst:82
 msgid "`Lenovo CNOS`_"
 msgstr "`Lenovo CNOS`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:81
+#: ../../rst/network/user_guide/platform_index.rst:82
 msgid "``community.network.cnos``"
 msgstr "``community.network.cnos``"
 
-#: ../../rst/network/user_guide/platform_index.rst:82
+#: ../../rst/network/user_guide/platform_index.rst:83
 msgid "`Lenovo ENOS`_"
 msgstr "`Lenovo ENOS`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:82
+#: ../../rst/network/user_guide/platform_index.rst:83
 msgid "``community.network.enos``"
 msgstr "``community.network.enos``"
 
-#: ../../rst/network/user_guide/platform_index.rst:83
+#: ../../rst/network/user_guide/platform_index.rst:84
 msgid "`Meraki`_"
 msgstr "`Meraki`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:84
+#: ../../rst/network/user_guide/platform_index.rst:85
 msgid "`MikroTik RouterOS`_"
 msgstr "`MikroTik RouterOS`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:84
+#: ../../rst/network/user_guide/platform_index.rst:85
 msgid "``community.network.routeros``"
 msgstr "``community.network.routeros``"
 
-#: ../../rst/network/user_guide/platform_index.rst:85
+#: ../../rst/network/user_guide/platform_index.rst:86
 msgid "`Nokia SR OS`_"
 msgstr "`Nokia SR OS`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:86
+#: ../../rst/network/user_guide/platform_index.rst:87
 msgid "`Pluribus Netvisor`_"
 msgstr "`Pluribus Netvisor`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:86
+#: ../../rst/network/user_guide/platform_index.rst:87
 msgid "``community.network.netvisor``"
 msgstr "``community.network.netvisor``"
 
-#: ../../rst/network/user_guide/platform_index.rst:87
+#: ../../rst/network/user_guide/platform_index.rst:88
 msgid "`Ruckus ICX`_"
 msgstr "`Ruckus ICX`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:87
+#: ../../rst/network/user_guide/platform_index.rst:88
 msgid "``community.network.icx``"
 msgstr "``community.network.icx``"
 
-#: ../../rst/network/user_guide/platform_index.rst:88
+#: ../../rst/network/user_guide/platform_index.rst:89
 msgid "`VyOS`_ `[†]`_"
 msgstr "`VyOS`_ `[†]`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:88
+#: ../../rst/network/user_guide/platform_index.rst:89
 msgid "``vyos.vyos.vyos``"
 msgstr "``vyos.vyos.vyos``"
 
-#: ../../rst/network/user_guide/platform_index.rst:89
+#: ../../rst/network/user_guide/platform_index.rst:90
+msgid "`Westermo WeOS 4`_"
+msgstr "`Westermo WeOS 4`_"
+
+#: ../../rst/network/user_guide/platform_index.rst:90
+msgid "``community.network.weos4``"
+msgstr "``community.network.weos4``"
+
+#: ../../rst/network/user_guide/platform_index.rst:91
 msgid "OS that supports Netconf `[†]`_"
 msgstr "Netconf に対応する OS `[†]`_"
 
-#: ../../rst/network/user_guide/platform_index.rst:89
+#: ../../rst/network/user_guide/platform_index.rst:91
 msgid "``<network-os>``"
 msgstr "``<network-os>``"
 
-#: ../../rst/network/user_guide/platform_index.rst:121
+#: ../../rst/network/user_guide/platform_index.rst:124
 msgid "**[†]** Maintained by Ansible Network Team"
 msgstr "**[†]** Ansible Network Team が管理"
 
@@ -5002,7 +5069,7 @@ msgstr "IOS-XR プラットフォームのオプション"
 
 #: ../../rst/network/user_guide/platform_iosxr.rst:7
 msgid "The `Cisco IOS-XR collection <https://galaxy.ansible.com/cisco/iosxr>`_ supports multiple connections. This page offers details on how each connection works in Ansible and how to use it."
-msgstr "`Cisco IOS-XR collection <https://galaxy.ansible.com/cisco/iosxr>`_ は複数の接続をサポートします。このページでは、Ansible での各接続がどのように機能するか、およびその使用方法を詳細に説明します。"
+msgstr "`Cisco IOS-XR collection <https://galaxy.ansible.com/cisco/iosxr>`_ は複数の接続をサポートします。このページでは、Ansible で各接続がどのように機能するか、およびその使用方法を詳細に説明します。"
 
 #: ../../rst/network/user_guide/platform_iosxr.rst:21
 msgid "only for modules ``iosxr_banner``, ``iosxr_interface``, ``iosxr_logging``, ``iosxr_system``, ``iosxr_user``"
@@ -5023,7 +5090,7 @@ msgstr "Cisco IOS-XR デバイスで NETCONF を有効にします。"
 
 #: ../../rst/network/user_guide/platform_iosxr.rst:88
 msgid "To enable NETCONF on a new switch via Ansible, use the ``cisco.iosxr.iosxr_netconf`` module through the CLI connection. Set up your platform-level variables just like in the CLI example above, then run a playbook task like this:"
-msgstr "Ansible を介して新しいスイッチで NETCONF を有効にするには、CLI 接続を介して ``cisco.iosxr.iosxr_netconf`` モジュールを使用します。上記の CLI の例のようにプラットフォームレベルの変数を設定し、次のような Playbook タスクを実行します。"
+msgstr "Ansible を介して新しいスイッチで NETCONF を有効にするには、CLI 接続を介して ``cisco.iosxr.iosxr_netconf`` モジュールを使用します。上記の CLI の例のようにプラットフォームレベルの変数を設定し、次のように Playbook タスクを実行します。"
 
 #: ../../rst/network/user_guide/platform_iosxr.rst:100
 msgid "Example NETCONF inventory ``[iosxr:vars]``"
@@ -5047,7 +5114,7 @@ msgstr "Junos OS プラットフォームのオプション"
 
 #: ../../rst/network/user_guide/platform_junos.rst:7
 msgid "The `Juniper Junos OS <https://galaxy.ansible.com/junipernetworks/junos>`_ supports multiple connections. This page offers details on how each connection works in Ansible and how to use it."
-msgstr "`Juniper Junos OS <https://galaxy.ansible.com/junipernetworks/junos>`_ は複数の接続をサポートします。このページでは、Ansible での各接続がどのように機能するか、およびその使用方法を詳細に説明します。"
+msgstr "`Juniper Junos OS <https://galaxy.ansible.com/junipernetworks/junos>`_ は複数の接続をサポートします。このページでは、Ansible で各接続がどのように機能するか、およびその使用方法を詳細に説明します。"
 
 #: ../../rst/network/user_guide/platform_junos.rst:21
 msgid "``junos_netconf`` & ``junos_command`` modules only"
@@ -5158,7 +5225,7 @@ msgstr "設定可能な変数を含む NETCONF タスクの例"
 
 #: ../../rst/network/user_guide/platform_netconf_enabled.rst:94
 msgid "Note: For netconf connection plugin configurable variables see :ref:`ansible.netcommon.netconf <ansible_collections.ansible.netcommon.netconf_connection>`."
-msgstr "注意: netconf 接続プラグインの設定可能な変数は、「:ref:`ansible.netcommon.netconf <ansible_collections.ansible.netcommon.netconf_connection>`」を参照してください。"
+msgstr "注意: netconf connection プラグインの設定可能な変数は、「:ref:`ansible.netcommon.netconf <ansible_collections.ansible.netcommon.netconf_connection>`」を参照してください。"
 
 #: ../../rst/network/user_guide/platform_netconf_enabled.rst:97
 msgid "Bastion/Jumphost configuration"
@@ -5237,6 +5304,7 @@ msgid "Extreme NOS is part of the `community.network <https://galaxy.ansible.com
 msgstr "Extreme NOS は `community.network <https://galaxy.ansible.com/community/network>`_ コレクションの一部で、現在は CLI 接続のみをサポートしています。将来的に ``httpapi`` モジュールが追加される可能性があります。このページでは、Ansible の NOS で ``ansible.netcommon.network_cli`` を使用する方法を詳細に説明します。"
 
 #: ../../rst/network/user_guide/platform_nos.rst:30
+#: ../../rst/network/user_guide/platform_weos4.rst:30
 msgid "``ansible_connection: community.netcommon.network_cli``"
 msgstr "``ansible_connection: community.netcommon.network_cli``"
 
@@ -5359,8 +5427,8 @@ msgid "Cisco Nexus MDS"
 msgstr "Cisco Nexus MDS"
 
 #: ../../rst/network/user_guide/platform_nxos.rst:147
-msgid "8.4(1) and later"
-msgstr "8.4(1) 以降"
+msgid "8.4(1) and later (Please see individual module documentation for compatibility)"
+msgstr "8.4(1)以降（互換性については、個別のモジュールドキュメントを確認してください）"
 
 #: ../../rst/network/user_guide/platform_nxos.rst:150
 msgid "Platform Models"
@@ -5502,6 +5570,138 @@ msgstr "`VyOS <https://galaxy.ansible.com/vyos/vyos>`_ コレクションは、`
 msgid "Example CLI ``group_vars/vyos.yml``"
 msgstr "CLI の例 ``group_vars/vyos.yml``"
 
+#: ../../rst/network/user_guide/platform_weos4.rst:5
+msgid "WeOS 4 Platform Options"
+msgstr "WeOS 4 プラットフォームオプション"
+
+#: ../../rst/network/user_guide/platform_weos4.rst:7
+msgid "Westermo WeOS 4 is part of the `community.network <https://galaxy.ansible.com/community/network>`_ collection and only supports CLI connections. This page offers details on how to use ``ansible.netcommon.network_cli`` on WeOS 4 in Ansible."
+msgstr "Westermo WeOS 4 は `community.network <https://galaxy.ansible.com/community/network>`_ コレクションの一部で、CLI 接続のみをサポートします。このページでは、Ansible の WeOS 4 で ``ansible.netcommon.network_cli`` を使用する方法を説明します。"
+
+#: ../../rst/network/user_guide/platform_weos4.rst:32
+msgid "not supported by WeOS 4"
+msgstr "WeOS 4 でサポート対象外"
+
+#: ../../rst/network/user_guide/platform_weos4.rst:39
+msgid "WeOS 4 does not support ``ansible_connection: local``. You must use ``ansible_connection: ansible.netcommon.network_cli``."
+msgstr "WeOS 4 は ``ansible_connection: local`` をサポートしません。``ansible_connection: ansible.netcommon.network_cli`` を使用する必要があります。"
+
+#: ../../rst/network/user_guide/platform_weos4.rst:45
+msgid "Example CLI ``group_vars/weos4.yml``"
+msgstr "CLI の例 ``group_vars/weos4.yml``"
+
+#: ../../rst/network/user_guide/platform_weos4.rst:72
+msgid "Example Configuration task"
+msgstr "設定タスクの例"
+
+#: ../../rst/network/user_guide/validate.rst:5
+msgid "Validate data against set criteria with Ansible"
+msgstr "Ansible を使用したセット基準に対するデータの検証"
+
+#: ../../rst/network/user_guide/validate.rst:7
+msgid "The :ref:`validate <ansible_collections.ansible.utils.validate_module>` module validates data against your predefined criteria using a validation engine. You can pull this data from a device or file, validate it against your defined criteria, and use the results to identify configuration or operational state drift and optionally take remedial action."
+msgstr ":ref:`validate <ansible_collections.ansible.utils.validate_module>` モジュールは、検証エンジンを使用して、事前定義の基準に対してデータを検証します。このデータをデバイスまたはファイルからプルし、定義した基準に対してデータを検証して、その結果を使用して設定または動作状態のドリフトを特定し、必要に応じて修正措置を取ることができます。"
+
+#: ../../rst/network/user_guide/validate.rst:14
+msgid "Understanding the validate plugin"
+msgstr "validate プラグインについて"
+
+#: ../../rst/network/user_guide/validate.rst:16
+msgid "The `ansible.utils <https://galaxy.ansible.com/ansible/utils>`_ collection includes the :ref:`validate <ansible_collections.ansible.utils.validate_module>` module."
+msgstr "`ansible.utils <https://galaxy.ansible.com/ansible/utils>`_ コレクションには :ref:`validate <ansible_collections.ansible.utils.validate_module>` モジュールが含まれます。"
+
+#: ../../rst/network/user_guide/validate.rst:18
+msgid "To validate data:"
+msgstr "データを検証するには、以下を実行します。"
+
+#: ../../rst/network/user_guide/validate.rst:20
+msgid "Pull in structured data or convert your data to structured format with the :ref:`cli_parse <ansible_collections.ansible.utils.cli_parse_module>` module."
+msgstr "構造化されたデータをプルするか、:ref:`cli_parse <ansible_collections.ansible.utils.cli_parse_module>` モジュールで構造化された形式に変換します。"
+
+#: ../../rst/network/user_guide/validate.rst:21
+msgid "Define the criteria to test that data against."
+msgstr "そのデータをテストする基準を定義します。"
+
+#: ../../rst/network/user_guide/validate.rst:22
+msgid "Select a validation engine and test the data to see if it is valid based on the selected criteria and validation engine."
+msgstr "検証エンジンを選択し、選択した基準と検証エンジンをもとにそのデータが有効かどうかをテストして確認します。"
+
+#: ../../rst/network/user_guide/validate.rst:24
+msgid "The structure of the data and the criteria depends on the validation engine you select. The examples here use the ``jsonschema`` validation engine provided in the `ansible.utils <https://galaxy.ansible.com/ansible/utils>`_ collection.Red Hat Ansible Automation Platform subscription supports limited use if jsonschema public APIs as documented."
+msgstr "データの構造と基準は、選択した検証エンジンによって異なります。この例では `ansible.utils <https://galaxy.ansible.com/ansible/utils>`_ コレクションで提供される ``jsonschema`` 検証エンジンを使用します。Red Hat Ansible Automation Platform サブスクリプションは、記載のとおり jsonschema のパブリック API がサポートされる場合に使用を限定してサポートします。"
+
+#: ../../rst/network/user_guide/validate.rst:27
+msgid "Structuring the data"
+msgstr "データの構造"
+
+#: ../../rst/network/user_guide/validate.rst:29
+msgid "You can pull previously structured data from a file, or use the :ref:`cli_parse <ansible_collections.ansible.utils.cli_parse_module>` module to structure your data."
+msgstr "以前に構造化されたデータをファイルからプルするか、:ref:`cli_parse <ansible_collections.ansible.utils.cli_parse_module>` モジュールを使用してデータを構築します。"
+
+#: ../../rst/network/user_guide/validate.rst:31
+msgid "The following example fetches the operational state of some network (Cisco NXOS) interfaces and translates that state to structured data using the ``ansible.netcommon.pyats`` parser."
+msgstr "以下の例では、一部のネットワーク(Cisco NXOS)インターフェースの運用状態を取得し、``ansible.netcommon.pyats`` パーサーを使用してその状態を構造化データに変換します。"
+
+#: ../../rst/network/user_guide/validate.rst:57
+msgid "This results in the following structured data."
+msgstr "これにより、以下の構造化データが生成されます。"
+
+#: ../../rst/network/user_guide/validate.rst:83
+msgid "See :ref:`cli_parsing` for details on how to parse semi-structured data into structured data."
+msgstr "半構造化データを構造化データに解析する方法は、「:ref:`cli_parsing`」を参照してください。"
+
+#: ../../rst/network/user_guide/validate.rst:86
+msgid "Defining the criteria to validate against"
+msgstr "検証対象の基準の定義"
+
+#: ../../rst/network/user_guide/validate.rst:88
+msgid "This example uses the `jsonschema <https://pypi.org/project/jsonschema/>`_ validation engine to parse the JSON structured data we created in the prior section. the criteria defines the state we want the data to conform to. In this instance, we can validate against a desired admin state of ``up`` for all the interfaces."
+msgstr "この例では、`jsonschema <https://pypi.org/project/jsonschema/>`_ 検証エンジンを使用して、前のセクションで作成した JSON 構造化データを解析します。基準では、データを適合させる状態を定義します。この例では、すべてのインターフェースに対して ``up`` の必要な管理状態をもとに検証できます。"
+
+#: ../../rst/network/user_guide/validate.rst:90
+msgid "The criteria for ``jsonschema`` in this example is as follows:"
+msgstr "この例の ``jsonschema`` の基準は次のとおりです。"
+
+#: ../../rst/network/user_guide/validate.rst:111
+msgid "Validating the data"
+msgstr "データの検証"
+
+#: ../../rst/network/user_guide/validate.rst:113
+msgid "Now that we have the structured data and the criteria, we can validate this data with the :ref:`validate <ansible_collections.ansible.utils.validate_module>` module."
+msgstr "これで構造化データと基準の準備ができたので、このデータを :ref:`validate <ansible_collections.ansible.utils.validate_module>` モジュールで検証できます。"
+
+#: ../../rst/network/user_guide/validate.rst:115
+msgid "The following tasks check if the current state of the interfaces match the desired state defined in the criteria file."
+msgstr "以下のタスクは、インターフェースの現在の状態が、基準ファイルで定義されている必要な状態と一致するかどうかを確認します。"
+
+#: ../../rst/network/user_guide/validate.rst:135
+msgid "In these tasks, we have:"
+msgstr "今回のタスクでは、以下を行いました。"
+
+#: ../../rst/network/user_guide/validate.rst:137
+msgid "Set ``data`` to  the structured JSON data from the :ref:`cli_parse <ansible_collections.ansible.utils.cli_parse_module>` module."
+msgstr "``data`` を :ref:`cli_parse <ansible_collections.ansible.utils.cli_parse_module>` モジュールから構造化 JSON データに設定する。"
+
+#: ../../rst/network/user_guide/validate.rst:138
+msgid "Set ``criteria`` to the JSON criteria file we defined."
+msgstr "``criteria`` を定義した JSON 条件ファイルに設定する。"
+
+#: ../../rst/network/user_guide/validate.rst:139
+msgid "Set the validate engine to ``jsonschema``."
+msgstr "検証エンジンを ``jsonschema`` に設定する。"
+
+#: ../../rst/network/user_guide/validate.rst:143
+msgid "The value of the criteria option can be a list and should be in a format that is defined by the validation engine used. You need to install the `jsonschema <https://pypi.org/project/jsonschema/>`_ on the control node for this example."
+msgstr "基準オプションの値には一覧を指定できるので、この値は、使用する検証エンジンで定義される形式である必要があります。今回の例のコントロールノードに、`jsonschema <https://pypi.org/project/jsonschema/>`_ をインストールする必要があります。"
+
+#: ../../rst/network/user_guide/validate.rst:145
+msgid "The tasks output a list of errors indicating interfaces that do not have admin value in ``up`` state."
+msgstr "タスクでは、管理値が ``up`` の状態にないインターフェースを示すエラーの一覧が出力されます。"
+
+#: ../../rst/network/user_guide/validate.rst:164
+msgid "This shows Ethernet2/1 and Ethernet2/10 are not in the desired state based on the defined criteria. You can create a report or take further action to remediate this to bring the interfaces to the desired state based on the defined criteria."
+msgstr "これにより、Ethernet2/1 および Ethernet2/10 は、定義された基準では希望の状態には到達していないことがわかります。レポートを作成するか、定義された基準に基づいてインターフェースを目的に状態にするための改善措置を取ることができます。"
+
 #~ msgid "The units of action in Ansible. You can execute a single task once with an ad-hoc command."
 #~ msgstr ""
 
@@ -5519,4 +5719,22 @@ msgstr "CLI の例 ``group_vars/vyos.yml``"
 
 #~ msgid "`ad-hoc` refers to running Ansible to perform some quick command using ``/usr/bin/ansible``, rather than the orchestration language, which is ``/usr/bin/ansible-playbook``. In this case we can ensure connectivity by attempting to execute a single command on the remote device::"
 #~ msgstr ""
+
+#~ msgid "IRC and Slack"
+#~ msgstr "IRC および Slack"
+
+#~ msgid "Join us on:"
+#~ msgstr "以下に参加してください。"
+
+#~ msgid "Freenode IRC - ``#ansible-network`` Freenode channel"
+#~ msgstr "Freenode IRC - ``#ansible-network`` Freenode チャンネル"
+
+#~ msgid "Slack - `<https://ansiblenetwork.slack.com>`_"
+#~ msgstr "Slack - `<https://ansiblenetwork.slack.com>`_"
+
+#~ msgid "If you have two or more network platforms in your environment, you can use the network agnostic modules to simplify your playbooks. You can use network agnostic modules such as ``ansible.netcommon.cli_command`` or ``ansible.netcommon.cli_config`` in place of the platform-specific modules such as ``arista.eos.eos_config``, ``cisco.ios.ios_config``, and ``junipernetworks.junos.junos_config``. This reduces the number of tasks and conditionals you need in your playbooks."
+#~ msgstr "環境内に複数のネットワークプラットフォームがある場合は、ネットワークに依存しないモジュールを使用して、Playbook を簡素化できます。``arista.eos.eos_config``、``cisco.ios.ios_config``、``junipernetworks.junos.junos_config`` などのプラットフォーム固有のモジュールの代わりに、``ansible.netcommon.cli_command``、``ansible.netcommon.cli_config`` などのネットワークに依存しないモジュールを使用できます。これにより、Playbook に必要なタスクおよび条件の数が減ります。"
+
+#~ msgid "8.4(1) and later"
+#~ msgstr "8.4(1) 以降"
 
