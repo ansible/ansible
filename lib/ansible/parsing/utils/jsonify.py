@@ -21,9 +21,17 @@ __metaclass__ = type
 
 import json
 
+from ansible.utils.display import Display
+
+
+display = Display()
+
 
 def jsonify(result, format=False):
     ''' format JSON output (uncompressed or uncompressed) '''
+
+    display.deprecated("A plugin/module is using an old copy of the 'jsonify' function, it should Use ansible.module_utils.common.text.converters.jsonify instead",
+                        version='2.17')
 
     if result is None:
         return "{}"

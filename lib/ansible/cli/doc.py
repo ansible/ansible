@@ -11,7 +11,6 @@ __metaclass__ = type
 from ansible.cli import CLI
 
 import datetime
-import json
 import pkgutil
 import os
 import os.path
@@ -29,7 +28,7 @@ from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Sequence
-from ansible.module_utils.common.json import AnsibleJSONEncoder
+from ansible.module_utils.common.text.converters import jsonify
 from ansible.module_utils.common.yaml import yaml_dump
 from ansible.module_utils.compat import importlib
 from ansible.module_utils.six import string_types
@@ -42,7 +41,6 @@ from ansible.utils.collection_loader._collection_finder import _get_collection_n
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import (
     REJECTLIST,
-    remove_current_collection_from_versions_and_dates,
     get_docstring,
     get_versioned_doclink,
 )
@@ -58,7 +56,7 @@ SNIPPETS = ['inventory', 'lookup', 'module']
 
 def jdump(text):
     try:
-        display.display(json.dumps(text, cls=AnsibleJSONEncoder, sort_keys=True, indent=4))
+        display.display(jsonify(text, sort_keys=True, indent=4))
     except TypeError as e:
         display.vvv(traceback.format_exc())
         raise AnsibleError('We could not convert all the documentation into JSON as there was a conversion issue: %s' % to_native(e))

@@ -42,7 +42,7 @@ import shutil
 from ansible.release import __version__
 import ansible.utils.vars as utils_vars
 from ansible.parsing.dataloader import DataLoader
-from ansible.parsing.utils.jsonify import jsonify
+from ansible.module_utils.common.text.converters import jsonify
 from ansible.parsing.splitter import parse_kv
 from ansible.executor import module_common
 import ansible.constants as C
@@ -248,7 +248,7 @@ def runtest(modfile, argspath, modname, module_style, interpreters):
 
     print("*" * 35)
     print("PARSED OUTPUT")
-    print(jsonify(results, format=True))
+    print(jsonify(results, indent=4))
 
 
 def rundebug(debugger, modfile, argspath, modname, module_style, interpreters):

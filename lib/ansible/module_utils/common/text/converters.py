@@ -11,6 +11,7 @@ import datetime
 import json
 
 from ansible.module_utils.common._collections_compat import Set
+from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.six import (
     PY3,
     binary_type,
@@ -268,16 +269,23 @@ def _json_encode_fallback(obj):
 
 
 def jsonify(data, **kwargs):
+
+    # for backwards compat with 'other' jsonify
+    if 'format' in kwargs:
+        if kwargs['format']:
+            kwargs['indent'] = 4
+        del kwargs['format']
+
     for encoding in ("utf-8", "latin-1"):
         try:
-            return json.dumps(data, encoding=encoding, default=_json_encode_fallback, **kwargs)
+            return json.dumps(data, cls=AnsibleJSONEncoder, encoding=encoding, default=_json_encode_fallback, **kwargs)
         # Old systems using old simplejson module does not support encoding keyword.
         except TypeError:
             try:
                 new_data = container_to_text(data, encoding=encoding)
             except UnicodeDecodeError:
                 continue
-            return json.dumps(new_data, default=_json_encode_fallback, **kwargs)
+            return json.dumps(new_data, cls=AnsibleJSONEncoder, default=_json_encode_fallback, **kwargs)
         except UnicodeDecodeError:
             continue
     raise UnicodeError('Invalid unicode encoding encountered')

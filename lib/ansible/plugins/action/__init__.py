@@ -8,7 +8,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
-import json
 import os
 import random
 import re
@@ -22,10 +21,10 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleAction
 from ansible.executor.module_common import modify_module
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
 from ansible.module_utils.common._collections_compat import Sequence
+from ansible.module_utils.common.text.converters import jsonify
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.parsing.utils.jsonify import jsonify
 from ansible.release import __version__
 from ansible.utils.collection_loader import resource_from_fqcr
 from ansible.utils.display import Display
@@ -1027,7 +1026,7 @@ class ActionBase(ABC):
                     args_data += '%s=%s ' % (k, shlex.quote(text_type(v)))
                 self._transfer_data(args_file_path, args_data)
             elif module_style in ('non_native_want_json', 'binary'):
-                self._transfer_data(args_file_path, json.dumps(module_args))
+                self._transfer_data(args_file_path, jsonify(module_args))
             display.debug("done transferring module to remote")
 
         environment_string = self._compute_environment_string()

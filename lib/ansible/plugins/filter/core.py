@@ -29,8 +29,9 @@ from ansible.module_utils.six import string_types, integer_types, reraise, text_
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.common.text.converters import jsonify
 from ansible.module_utils.common.yaml import yaml_load, yaml_load_all
-from ansible.parsing.ajson import AnsibleJSONEncoder
+from ansible.parsing.ajson import AnsibleJSONDecoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import recursive_check_defined
 from ansible.utils.display import Display
@@ -72,12 +73,20 @@ def to_json(a, *args, **kw):
     if 'preprocess_unsafe' not in kw:
         kw['preprocess_unsafe'] = False
 
-    return json.dumps(a, cls=AnsibleJSONEncoder, *args, **kw)
+    return jsonify(a, *args, **kw)
 
 
 def to_nice_json(a, indent=4, sort_keys=True, *args, **kw):
     '''Make verbose, human readable JSON'''
     return to_json(a, indent=indent, sort_keys=sort_keys, separators=(',', ': '), *args, **kw)
+
+
+def do_from_json(data_string):
+
+    if not isinstance(data_string, string_types):
+        raise AnsibleFilterError("from_json expects a string with JSON content, but got a '%s' instead" % type(data_string))
+
+    return json.loads(data_string, cls=AnsibleJSONDecoder)
 
 
 def to_bool(a):
@@ -568,7 +577,7 @@ class FilterModule(object):
             # json
             'to_json': to_json,
             'to_nice_json': to_nice_json,
-            'from_json': json.loads,
+            'from_json': do_from_json,
 
             # yaml
             'to_yaml': to_yaml,

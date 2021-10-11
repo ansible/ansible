@@ -39,7 +39,7 @@ import uuid
 
 from functools import partial
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.common.json import AnsibleJSONEncoder
+from ansible.module_utils.common.text.converters import jsonify
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import cPickle
 
@@ -144,7 +144,7 @@ class Connection(object):
             )
 
         try:
-            data = json.dumps(req, cls=AnsibleJSONEncoder)
+            data = jsonify(req)
         except TypeError as exc:
             raise ConnectionError(
                 "Failed to encode some variables as JSON for communication with ansible-connection. "

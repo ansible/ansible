@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import difflib
-import json
 import re
 import sys
 import textwrap
@@ -29,9 +28,8 @@ from copy import deepcopy
 
 from ansible import constants as C
 from ansible.module_utils.common._collections_compat import MutableMapping
-from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils.common.text.converters import to_text, jsonify
 from ansible.module_utils.six import text_type
-from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.parsing.yaml.objects import AnsibleUnicode
 from ansible.plugins import AnsiblePlugin, get_plugin_class
@@ -247,7 +245,7 @@ class CallbackBase(AnsiblePlugin):
 
         if result_format == 'json':
             try:
-                return json.dumps(abridged_result, cls=AnsibleJSONEncoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+                return jsonify(abridged_result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
             except TypeError:
                 # Python3 bug: throws an exception when keys are non-homogenous types:
                 # https://bugs.python.org/issue25457
@@ -322,7 +320,7 @@ class CallbackBase(AnsiblePlugin):
             pretty_results = None
 
         if result_format == 'json':
-            return json.dumps(diff, sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
+            return jsonify(diff, sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
         elif result_format == 'yaml':
             # None is a sentinel in this case that indicates default behavior
             # default behavior for yaml is to prettify results

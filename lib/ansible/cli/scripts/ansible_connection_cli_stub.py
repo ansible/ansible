@@ -27,7 +27,8 @@ from ansible.cli.arguments.option_helpers import AnsibleVersion
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.connection import Connection, ConnectionError, send_data, recv_data
 from ansible.module_utils.service import fork_process
-from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
+from ansible.module_utils.common.text.converters import jsonify
+from ansible.parsing.ajson import AnsibleJSONDecoder
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import connection_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
@@ -123,7 +124,7 @@ class ConnectionProcess(object):
             result['exception'] = traceback.format_exc()
         finally:
             result['messages'] = messages
-            self.fd.write(json.dumps(result, cls=AnsibleJSONEncoder))
+            self.fd.write(jsonify(result))
             self.fd.close()
 
     def run(self):
@@ -339,10 +340,10 @@ def main(args=None):
     sys.stdout = saved_stdout
     if 'exception' in result:
         rc = 1
-        sys.stderr.write(json.dumps(result, cls=AnsibleJSONEncoder))
+        sys.stderr.write(jsonify(result)
     else:
         rc = 0
-        sys.stdout.write(json.dumps(result, cls=AnsibleJSONEncoder))
+        sys.stdout.write(jsonify(result)
 
     sys.exit(rc)
 

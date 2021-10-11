@@ -45,7 +45,8 @@ DOCUMENTATION = '''
 import codecs
 import json
 
-from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
+from ansible.parsing.ajson import AnsibleJSONDecoder
+from ansible.module_utils.common.text.converters import jsonify
 from ansible.plugins.cache import BaseFileCacheModule
 
 
@@ -61,4 +62,4 @@ class CacheModule(BaseFileCacheModule):
 
     def _dump(self, value, filepath):
         with codecs.open(filepath, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(value, cls=AnsibleJSONEncoder, sort_keys=True, indent=4))
+            f.write(jsonify(value, sort_keys=True, indent=4))

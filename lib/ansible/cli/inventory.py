@@ -195,12 +195,11 @@ class InventoryCLI(CLI):
                     'change.' % e.args[0]
                 )
         else:
-            import json
-            from ansible.parsing.ajson import AnsibleJSONEncoder
+            from ansible.module_utils.common.text.converters import jsonify
             try:
-                results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=True, indent=4, preprocess_unsafe=True, ensure_ascii=False)
+                results = jsonify(stuff, sort_keys=True, indent=4, preprocess_unsafe=True, ensure_ascii=False)
             except TypeError as e:
-                results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=False, indent=4, preprocess_unsafe=True, ensure_ascii=False)
+                results = jsonify(stuff, sort_keys=False, indent=4, preprocess_unsafe=True, ensure_ascii=False)
                 display.warning("Could not sort JSON output due to issues while sorting keys: %s" % to_native(e))
 
         return results

@@ -10,7 +10,6 @@ __metaclass__ = type
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
 
-import json
 import os.path
 import re
 import shutil
@@ -45,6 +44,7 @@ from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoTokenSentinel
 from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils.common.collections import is_iterable
+from ansible.module_utils.common.text.converters import jsonify
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils import six
@@ -1523,7 +1523,7 @@ class GalaxyCLI(CLI):
             raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
 
         if output_format == 'json':
-            display.display(json.dumps(collections_in_paths))
+            display.display(jsonify(collections_in_paths))
         elif output_format == 'yaml':
             display.display(yaml_dump(collections_in_paths))
 
