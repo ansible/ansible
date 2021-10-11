@@ -5,13 +5,13 @@ ansible-core 2.11 "Hey Hey, What Can I Do" Release Notes
 .. contents:: Topics
 
 
-v2.11.6rc1
-==========
+v2.11.6
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2021-10-04
+| Release Date: 2021-10-11
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
@@ -30,6 +30,7 @@ Bugfixes
 
 - PowerShell - Ignore the ``LIB`` environment variable when compiling C# Ansible code
 - ansible-galaxy - Fix handling HTTP exceptions from Galaxy servers. Continue to the next server in the list until the collection is found.
+- ansible-test pslint - Fix error when encountering validation results that are highly nested - https://github.com/ansible/ansible/issues/74151
 - config - use ``callbacks_enabled`` instead ``callback_enabled`` in a deprecated message (https://github.com/ansible/ansible/issues/70028).
 - netconf - catch and handle exception to prevent stack trace when running in FIPS mode
 - roles - fix unexpected ``AttributeError`` when an empty ``argument_specs.yml`` is present (https://github.com/ansible/ansible/pull/75604).
