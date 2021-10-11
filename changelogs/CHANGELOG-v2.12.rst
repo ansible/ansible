@@ -5,6 +5,34 @@ ansible-core 2.12 "Dazed and Confused" Release Notes
 .. contents:: Topics
 
 
+v2.12.0b2
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2021-10-11
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Update the ``base`` and ``default`` containers from Python 3.10.0rc2 to 3.10.0.
+
+Security Fixes
+--------------
+
+- Do not include params in exception when a call to ``set_options`` fails. Additionally, block the exception that is returned from being displayed to stdout. (CVE-2021-3620)
+
+Bugfixes
+--------
+
+- ansible-test - Fix path to inventory file for ``windows-integration`` and ``network-integration`` commands for collections.
+- ansible-test - Update distribution test containers to version 3.1.0.
+- ansible-test - Use the correct variable to reference the client's SSH key when generating inventory.
+- ansible-test pslint - Fix error when encountering validation results that are highly nested - https://github.com/ansible/ansible/issues/74151
+
 v2.12.0b1
 =========
 
