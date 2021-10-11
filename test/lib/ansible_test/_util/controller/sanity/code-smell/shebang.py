@@ -70,7 +70,7 @@ def main():
                 is_module = True
             elif path == 'test/lib/ansible_test/_util/target/cli/ansible_test_cli_stub.py':
                 pass  # ansible-test entry point must be executable and have a shebang
-            elif re.search('^lib/ansible/cli/[^/]+\.py', path):
+            elif re.search(r'^lib/ansible/cli/[^/]+\.py', path):
                 pass  # cli entry points must be executable and have a shebang
             elif path.startswith('lib/') or path.startswith('test/lib/'):
                 if executable:
