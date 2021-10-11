@@ -27,7 +27,9 @@ Lookups and action plugins both use a special 'search magic' to find things, tak
 
 Using this magic, relative paths get attempted first with a 'files|templates|vars' appended (if not already present), depending on action being taken, 'files' is the default. (in other words, include_vars will use vars/).  The paths will be searched from most specific to most general (in other words, role before play).
 dependent roles WILL be traversed (in other words, task is in role2, role2 is a dependency of role1, role2 will be looked at first, then role1, then play).
-i.e ::
+i.e :
+
+.. code-block:: text
 
     role search path is rolename/{files|vars|templates}/, rolename/tasks/.
     play search path is playdir/{files|vars|templates}/, playdir/.
