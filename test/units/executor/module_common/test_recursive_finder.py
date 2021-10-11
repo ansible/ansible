@@ -37,8 +37,10 @@ from ansible.executor.module_common import recursive_finder
 # basic.py
 
 MODULE_UTILS_BASIC_FILES = frozenset(('ansible/__init__.py',
+                                      'ansible/release.py',
                                       'ansible/module_utils/__init__.py',
                                       'ansible/module_utils/_text.py',
+                                      'ansible/module_utils/ansible_release.py',
                                       'ansible/module_utils/basic.py',
                                       'ansible/module_utils/six/__init__.py',
                                       'ansible/module_utils/_text.py',
