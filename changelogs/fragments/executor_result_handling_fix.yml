@@ -1,0 +1,2 @@
+bugfixes:
+  - task executor results for unreachable and action exceptions are treated as normal and don't bypass the handling anymore
