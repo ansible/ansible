@@ -115,7 +115,7 @@ Instead, place variables in the task parameters of your handler. You can load th
           name: "{{ web_service_name | default('httpd') }}"
           state: restarted
 
-Handlers can also "listen" to generic topics, and tasks can notify those topics as follows
+Handlers can also "listen" to generic topics, and tasks can notify those topics as follows:
 
 .. code-block:: yaml
 
