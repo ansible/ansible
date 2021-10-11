@@ -11,7 +11,9 @@ Sometimes you want a task to run only when a change is made on a machine. For ex
 Handler example
 ---------------
 
-This playbook, ``verify-apache.yml``, contains a single play with a handler::
+This playbook, ``verify-apache.yml``, contains a single play with a handler.
+
+.. code-block:: yaml
 
     ---
     - name: Verify apache installation
@@ -44,7 +46,9 @@ This playbook, ``verify-apache.yml``, contains a single play with a handler::
             name: httpd
             state: restarted
 
-In this example playbook, the second task notifies the handler. A single task can notify more than one handler::
+In this example playbook, the second task notifies the handler. A single task can notify more than one handler.
+
+.. code-block:: yaml
 
     - name: Template configuration file
       ansible.builtin.template:
@@ -70,7 +74,9 @@ Controlling when handlers run
 
 By default, handlers run after all the tasks in a particular play have been completed. This approach is efficient, because the handler only runs once, regardless of how many tasks notify it. For example, if multiple tasks update a configuration file and notify a handler to restart Apache, Ansible only bounces Apache once to avoid unnecessary restarts.
 
-If you need handlers to run before the end of the play, add a task to flush them using the :ref:`meta module <meta_module>`, which executes Ansible actions::
+If you need handlers to run before the end of the play, add a task to flush them using the :ref:`meta module <meta_module>`, which executes Ansible actions.
+
+.. code-block:: yaml
 
     tasks:
       - name: Some tasks go here
@@ -109,7 +115,9 @@ Instead, place variables in the task parameters of your handler. You can load th
           name: "{{ web_service_name | default('httpd') }}"
           state: restarted
 
-Handlers can also "listen" to generic topics, and tasks can notify those topics as follows::
+Handlers can also "listen" to generic topics, and tasks can notify those topics as follows:
+
+.. code-block:: yaml
 
     handlers:
       - name: Restart memcached
