@@ -1932,6 +1932,11 @@ releases:
     - attributes_compat.yml
     - v2.9.26rc1_summary.yaml
     release_date: '2021-09-08'
+  2.9.27:
+    codename: Immigrant Song
+    fragments:
+    - v2.9.27_summary.yaml
+    release_date: '2021-10-11'
   2.9.27rc1:
     codename: Immigrant Song
     fragments:
