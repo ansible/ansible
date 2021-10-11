@@ -366,7 +366,9 @@ The first two methods above only work when the host has access to the internet.
 When a host does not have internet access, the module must first be installed
 using the methods above on another host with internet access and then copied
 across. To save a module to a local filepath, the following PowerShell cmdlet
-can be run::
+can be run:
+
+.. code-block:: powershell
 
     Save-Module -Name xWebAdministration -Path C:\temp
 

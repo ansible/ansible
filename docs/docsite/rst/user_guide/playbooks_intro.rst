@@ -37,7 +37,9 @@ A playbook runs in order from top to bottom. Within each play, tasks also run in
 
 	In Ansible 2.10 and later, we recommend you use the fully-qualified collection name in your playbooks to ensure the correct module is selected, because multiple collections can contain modules with the same name (for example, ``user``). See :ref:`collections_using_playbook`.
 
-In this example, the first play targets the web servers; the second play targets the database servers::
+In this example, the first play targets the web servers; the second play targets the database servers.
+
+.. code-block:: yaml
 
     ---
     - name: Update web servers
@@ -91,7 +93,9 @@ Most Ansible modules check whether the desired final state has already been achi
 Running playbooks
 -----------------
 
-To run your playbook, use the :ref:`ansible-playbook` command::
+To run your playbook, use the :ref:`ansible-playbook` command.
+
+.. code-block:: bash
 
     ansible-playbook playbook.yml -f 10
 
