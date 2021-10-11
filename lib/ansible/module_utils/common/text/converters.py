@@ -11,7 +11,6 @@ import datetime
 import json
 
 from ansible.module_utils.common._collections_compat import Set
-from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.six import (
     PY3,
     binary_type,
@@ -269,6 +268,8 @@ def _json_encode_fallback(obj):
 
 
 def jsonify(data, **kwargs):
+    # avoid circular
+    from ansible.module_utils.common.json import AnsibleJSONEncoder
 
     for encoding in ("utf-8", "latin-1"):
         try:
