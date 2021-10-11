@@ -226,7 +226,9 @@ def main():
     """
     parser = argparse.ArgumentParser(prog='ansible-connection', add_help=False)
     parser.add_argument('--version', action=AnsibleVersion, nargs=0)
-    parser.parse_args()
+    parser.add_argument('playbook_pid')
+    parser.add_argument('task_uuid')
+    args = parser.parse_args()
 
     rc = 0
     result = {}
@@ -268,8 +270,8 @@ def main():
 
     if rc == 0:
         ssh = connection_loader.get('ssh', class_only=True)
-        ansible_playbook_pid = sys.argv[1]
-        task_uuid = sys.argv[2]
+        ansible_playbook_pid = args.playbook_pid
+        task_uuid = args.task_uuid
         cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user, play_context.connection, ansible_playbook_pid)
         # create the persistent connection dir if need be and create the paths
         # which we will be using later
