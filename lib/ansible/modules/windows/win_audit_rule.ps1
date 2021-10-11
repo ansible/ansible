@@ -66,7 +66,7 @@ Catch {
 }
 
 #get the path type
-$ItemType = (Get-Item $path).GetType()
+$ItemType = (Get-Item $path -Force).GetType()
 switch ($ItemType)
 {
     ([Microsoft.Win32.RegistryKey]) {$registry = $true;  $result.path_type = 'registry'}
