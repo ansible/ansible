@@ -402,7 +402,9 @@ The YAML specification considers the following `escape sequences <https://yaml.o
 
 * ``\U........`` -- 8-digit hex escape
 
-Here are some examples on how to write Windows paths::
+Here are some examples on how to write Windows paths:
+
+.. code-block:: ini
 
     # GOOD
     tempdir: C:\Windows\Temp
@@ -423,7 +425,9 @@ This is an example which will fail:
     # FAILS
     tempdir: "C:\Windows\Temp"
 
-This example shows the use of single quotes when they are required::
+This example shows the use of single quotes when they are required:
+
+.. code-block:: yaml+jinja
 
     ---
     - name: Copy tomcat config

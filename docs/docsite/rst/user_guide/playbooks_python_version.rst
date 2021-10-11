@@ -23,7 +23,9 @@ In Python3, those methods return a :ref:`dictionary view <python3:dict-views>` o
 string representation that Jinja2 returns for dictionary views cannot be parsed back
 into a list by Ansible.  It is, however, easy to make this portable by
 using the :func:`list <jinja2:jinja-filters.list>` filter whenever using :meth:`dict.keys`,
-:meth:`dict.values`, or :meth:`dict.items`::
+:meth:`dict.values`, or :meth:`dict.items`.
+
+.. code-block:: yaml+jinja
 
     vars:
       hosts:
@@ -44,7 +46,9 @@ dict.iteritems()
 
 Python2 dictionaries have :meth:`~dict.iterkeys`, :meth:`~dict.itervalues`, and :meth:`~dict.iteritems` methods.
 
-Python3 dictionaries do not have these methods. Use :meth:`dict.keys`, :meth:`dict.values`, and :meth:`dict.items` to make your playbooks and templates compatible with both Python2 and Python3::
+Python3 dictionaries do not have these methods. Use :meth:`dict.keys`, :meth:`dict.values`, and :meth:`dict.items` to make your playbooks and templates compatible with both Python2 and Python3.
+
+.. code-block:: yaml+jinja
 
     vars:
       hosts:
