@@ -120,7 +120,9 @@ You can use the inventory script explicitly (by passing the `-i openstack_invent
 Explicit use of OpenStack inventory script
 ------------------------------------------
 
-Download the latest version of the OpenStack dynamic inventory script and make it executable::
+Download the latest version of the OpenStack dynamic inventory script and make it executable.
+
+.. code-block:: bash
 
     wget https://raw.githubusercontent.com/openstack/ansible-collections-openstack/master/scripts/inventory/openstack_inventory.py
     chmod +x openstack_inventory.py
@@ -144,7 +146,9 @@ You can confirm the file has been successfully sourced by running a simple comma
 
     The OpenStack command line clients are required to run the `nova list` command. For more information on how to install them, please refer to `Install the OpenStack command-line clients <https://docs.openstack.org/user-guide/common/cli_install_openstack_command_line_clients.html>`_.
 
-You can test the OpenStack dynamic inventory script manually to confirm it is working as expected::
+You can test the OpenStack dynamic inventory script manually to confirm it is working as expected:
+
+.. code-block:: bash
 
     ./openstack_inventory.py --list
 
