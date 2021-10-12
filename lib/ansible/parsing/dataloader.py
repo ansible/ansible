@@ -305,7 +305,7 @@ class DataLoader:
         elif source and (source.startswith('~') or source.startswith(os.path.sep)):
             # path is absolute, no relative needed, check existence and return source
             test_path = unfrackpath(b_source, follow=False)
-            if os.path.exists(to_bytes(test_path, errors='surrogate_or_strict')):
+            if self.path_exists(to_bytes(test_path, errors='surrogate_or_strict')):
                 result = test_path
         else:
             display.debug(u'evaluation_path:\n\t%s' % '\n\t'.join(paths))
@@ -333,7 +333,7 @@ class DataLoader:
             display.debug(u'search_path:\n\t%s' % to_text(b'\n\t'.join(search)))
             for b_candidate in search:
                 display.vvvvv(u'looking for "%s" at "%s"' % (source, to_text(b_candidate)))
-                if os.path.exists(b_candidate):
+                if self.path_exists(b_candidate):
                     result = to_text(b_candidate)
                     break
 
