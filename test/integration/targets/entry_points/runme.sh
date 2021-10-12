@@ -8,7 +8,7 @@ unset PYTHONPATH
 base_dir="$(dirname "$(dirname "$(dirname "$(dirname "${OUTPUT_DIR}")")")")"
 bin_dir="$(dirname "$(command -v pip)")"
 
-# --version doesn't require deps
+# deps are already installed, using --no-deps to avoid re-installing them
 pip install "${base_dir}" --disable-pip-version-check --no-deps
 # --use-feature=in-tree-build not available on all platforms
 
