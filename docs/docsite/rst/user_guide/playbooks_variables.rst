@@ -60,7 +60,7 @@ Referencing simple variables
 
 After you define a variable, use Jinja2 syntax to reference it. Jinja2 variables use double curly braces. For example, the expression ``My amp goes to {{ max_amp_value }}`` demonstrates the most basic form of variable substitution. You can use Jinja2 syntax in playbooks. For example:
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
     ansible.builtin.template:
       src: foo.cfg.j2
@@ -81,7 +81,7 @@ If you start a value with ``{{ foo }}``, you must quote the whole expression to 
 
 If you use a variable without quotes like this:
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
     - hosts: app_servers
       vars:
@@ -89,7 +89,7 @@ If you use a variable without quotes like this:
 
 You will see: ``ERROR! Syntax Error while loading YAML.`` If you add quotes, Ansible works correctly:
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
     - hosts: app_servers
       vars:
@@ -119,7 +119,7 @@ Referencing list variables
 
 When you use variables defined as a list (also called an array), you can use individual, specific fields from that list. The first item in a list is item 0, the second item is item 1. For example:
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
   region: "{{ region[0] }}"
 
@@ -194,13 +194,13 @@ Referencing nested variables
 
 Many registered variables (and :ref:`facts <vars_and_facts>`) are nested YAML or JSON data structures. You cannot access values from these nested data structures with the simple ``{{ foo }}`` syntax. You must use either bracket notation or dot notation. For example, to reference an IP address from your facts using the bracket notation:
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
     {{ ansible_facts["eth0"]["ipv4"]["address"] }}
 
 To reference an IP address from your facts using the dot notation:
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
     {{ ansible_facts.eth0.ipv4.address }}
 
@@ -298,14 +298,14 @@ Values passed in using the ``key=value`` syntax are interpreted as strings. Use 
 JSON string format
 ^^^^^^^^^^^^^^^^^^
 
-.. code-block:: text
+.. code-block:: shell
 
     ansible-playbook release.yml --extra-vars '{"version":"1.23.45","other_variable":"foo"}'
     ansible-playbook arcade.yml --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
 
 When passing variables with ``--extra-vars``, you must escape quotes and other special characters appropriately for both your markup (for example, JSON), and for your shell:
 
-.. code-block:: text
+.. code-block:: shell
 
     ansible-playbook arcade.yml --extra-vars "{\"name\":\"Conan O\'Brien\"}"
     ansible-playbook arcade.yml --extra-vars '{"name":"Conan O'\\\''Brien"}'
