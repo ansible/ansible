@@ -787,10 +787,10 @@ def install_deb(m, debs, cache, force, fail_on_autoremove, install_recommends, a
     pkgs_to_install = []
     for deb_file in debs.split(','):
         try:
-            pkg = apt.debfile.DebPackage(deb_file)
+            pkg = apt.debfile.DebPackage(deb_file, cache=apt.Cache())
             pkg_name = get_field_of_deb(m, deb_file, "Package")
             pkg_version = get_field_of_deb(m, deb_file, "Version")
-            if len(apt_pkg.get_architectures()) > 1:
+            if hasattr(apt_pkg, 'get_architectures') and len(apt_pkg.get_architectures()) > 1:
                 pkg_arch = get_field_of_deb(m, deb_file, "Architecture")
                 pkg_key = "%s:%s" % (pkg_name, pkg_arch)
             else:
