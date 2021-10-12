@@ -17,7 +17,7 @@ DOCUMENTATION = '''
       plugin:
          description: token that ensures this is a source file for the 'generator' plugin.
          required: True
-         choices: ['ansible.builtin.generator']
+         choices: ['ansible.builtin.generator', 'generator']
       hosts:
         description:
           - The C(name) key is a template used to generate

@@ -18,7 +18,7 @@ DOCUMENTATION = '''
         plugin:
             description: token that ensures this is a source file for the 'constructed' plugin.
             required: True
-            choices: ['ansible.builtin.constructed']
+            choices: ['ansible.builtin.constructed', 'constructed']
         use_vars_plugins:
             description:
                 - Normally, for performance reasons, vars plugins get executed after the inventory sources complete the base inventory,
