@@ -7,7 +7,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.cli.scripts.ansible_cli_stub import cli_executor
+from ansible.cli import CLI, cli_executor
 
 import json
 import os.path
@@ -21,7 +21,6 @@ from yaml.error import YAMLError
 
 import ansible.constants as C
 from ansible import context
-from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info

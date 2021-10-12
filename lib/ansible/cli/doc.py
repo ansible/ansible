@@ -7,7 +7,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.cli.scripts.ansible_cli_stub import cli_executor
+from ansible.cli import CLI, cli_executor
 
 import datetime
 import json
@@ -23,7 +23,6 @@ import ansible.plugins.loader as plugin_loader
 
 from ansible import constants as C
 from ansible import context
-from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError

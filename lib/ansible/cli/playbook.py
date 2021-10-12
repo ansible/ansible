@@ -7,14 +7,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.cli.scripts.ansible_cli_stub import cli_executor
+from ansible.cli import CLI, cli_executor
 
 import os
 import stat
 
 from ansible import constants as C
 from ansible import context
-from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError
 from ansible.executor.playbook_executor import PlaybookExecutor

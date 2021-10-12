@@ -7,7 +7,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.cli.scripts.ansible_cli_stub import cli_executor
+from ansible.cli import CLI, cli_executor
 
 import datetime
 import os
@@ -20,7 +20,6 @@ import time
 
 from ansible import constants as C
 from ansible import context
-from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
