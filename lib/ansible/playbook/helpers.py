@@ -220,7 +220,11 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                                 suppress_extended_error=True,
                                 orig_exc=e)
 
-                        include_file = loader.path_dwim_relative_stack(t.get_search_path(), subdir, include_target)
+                        try:
+                            include_file = loader.path_dwim_relative_stack(t.get_search_path(), subdir, include_target)
+                        except AnsibleFileNotFound as e:
+                            # ignore missing file, emty dict shoudl cause error below
+                            include_file = include_target
 
                     data = loader.load_from_file(include_file)
                     if not data:
