@@ -7,13 +7,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import errno
-import getpass
-import os
-import subprocess
 import sys
-import traceback
-from abc import ABCMeta, abstractmethod
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
@@ -24,6 +18,12 @@ if not _PY38_MIN:
         'Current version: %s' % ''.join(sys.version.splitlines())
     )
 
+import errno
+import getpass
+import os
+import subprocess
+import traceback
+from abc import ABCMeta, abstractmethod
 from pathlib import Path
 
 try:
