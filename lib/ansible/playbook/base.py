@@ -887,9 +887,13 @@ class Base(FieldAttributeBase):
         if dep_chain:
             path_stack.extend(reversed([x._role_path for x in dep_chain if hasattr(x, '_role_path')]))
 
-        # add path of task itself, unless it is already in the list
-        task_dir = os.path.dirname(self.get_path())
-        if task_dir not in path_stack:
-            path_stack.append(task_dir)
+        # add path of task itself,
+        task_path = self.get_path()
+        if task_path:
+            # unless its empty (virtual task?)
+            task_dir = os.path.dirname(task_path)
+            if task_dir not in path_stack:
+                # unless it is already in the list
+                path_stack.append(task_dir)
 
         return path_stack
