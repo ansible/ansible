@@ -14,7 +14,6 @@ import subprocess
 import sys
 import traceback
 from abc import ABCMeta, abstractmethod
-from pathlib import Path
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
@@ -24,6 +23,8 @@ if not _PY38_MIN:
         'ERROR: Ansible requires Python 3.8 or newer on the controller. '
         'Current version: %s' % ''.join(sys.version.splitlines())
     )
+
+from pathlib import Path
 
 try:
     from ansible import constants as C
