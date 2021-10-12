@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-07-12 10:48+0200\n"
+"POT-Creation-Date: 2021-10-11 16:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,11 +26,11 @@ msgstr "コレクションのカスタムプラグインを使用して、既存
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:15
 msgid "Network connection plugins"
-msgstr "ネットワーク接続プラグイン"
+msgstr "ネットワークの connection プラグイン"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:16
 msgid "Each network connection plugin has a set of its own plugins which provide a specification of the connection for a particular set of devices. The specific plugin used is selected at runtime based on the value of the ``ansible_network_os`` variable assigned to the host. This variable should be set to the same value as the name of the plugin to be loaded. Thus, ``ansible_network_os=nxos`` will try to load a plugin in a file named ``nxos.py``, so it is important to name the plugin in a way that will be sensible to users."
-msgstr "各ネットワーク接続プラグインには、独自のプラグインセットがあります。これは、特定のデバイスセットの接続の仕様を提供します。使用される特定のプラグインは、ホストに割り当てられた ``ansible_network_os`` 変数の値に基づいてランタイム時に選択されます。この変数は、読み込むプラグインの名前と同じ値に設定する必要があります。そのため、``ansible_network_os=nxos`` は、``nxos.py`` という名前のファイルにプラグインを読み込もうとするため、ユーザーが適切な方法でプラグインに名前を付けることが重要です。"
+msgstr "各ネットワークの connection プラグインには、独自のプラグインセットがあります。これは、特定のデバイスセットの接続の仕様を提供します。使用される特定のプラグインは、ホストに割り当てられた ``ansible_network_os`` 変数の値に基づいてランタイム時に選択されます。この変数は、読み込むプラグインの名前と同じ値に設定する必要があります。そのため、``ansible_network_os=nxos`` は、``nxos.py`` という名前のファイルにプラグインを読み込もうとするため、ユーザーが適切な方法でプラグインに名前を付けることが重要です。"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:23
 msgid "Public methods of these plugins may be called from a module or module_utils with the connection proxy object just as other connection methods can. The following is a very simple example of using such a call in a module_utils file so it may be shared with other modules."
@@ -42,11 +42,11 @@ msgstr "httpapi プラグインの開発"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:47
 msgid ":ref:`httpapi plugins <httpapi_plugins>` serve as adapters for various HTTP(S) APIs for use with the ``httpapi`` connection plugin. They should implement a minimal set of convenience methods tailored to the API you are attempting to use."
-msgstr ":ref:`httpapi プラグイン <httpapi_plugins>` は、``httpapi`` 接続プラグインで使用するさまざまな HTTP(S) API のアダプターとして機能します。このプラグインは、使用しようとしている API に適した最小限の便利なメソッドを実装する必要があります。"
+msgstr ":ref:`httpapi プラグイン <httpapi_plugins>` は、``httpapi`` connection プラグインで使用するさまざまな HTTP(S) API のアダプターとして機能します。このプラグインは、使用しようとしている API に適した最小限の便利なメソッドを実装する必要があります。"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:49
 msgid "Specifically, there are a few methods that the ``httpapi`` connection plugin expects to exist."
-msgstr "具体的には、``httpapi`` 接続プラグインが存在することが必要なメソッドがいくつかあります。"
+msgstr "具体的には、``httpapi`` connection プラグインが存在することが必要なメソッドがいくつかあります。"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:52
 msgid "Making requests"
@@ -54,7 +54,7 @@ msgstr "要求の作成"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:54
 msgid "The ``httpapi`` connection plugin has a ``send()`` method, but an httpapi plugin needs a ``send_request(self, data, **message_kwargs)`` method as a higher-level wrapper to ``send()``. This method should prepare requests by adding fixed values like common headers or URL root paths. This method may do more complex work such as turning data into formatted payloads, or determining which path or method to request. It may then also unpack responses to be more easily consumed by the caller."
-msgstr "``httpapi`` 接続プラグインには ``send()`` メソッドがありますが、httpapi プラグインには、``send()`` への高レベルラッパーとして ``send_request(self, data, **message_kwargs)`` メソッドが必要です。このメソッドは、共通ヘッダーや URL ルートパスなどの固定値を追加することで要求を準備する必要があります。このメソッドは、フォーマットされたペイロードへのデータの切り替えや、リクエスト用のパスやメソッドの特定など、より複雑な作業を行うことがあります。その後、呼び出し元によって簡単に消費される応答が展開される可能性があります"
+msgstr "``httpapi`` connection プラグインには ``send()`` メソッドがありますが、httpapi プラグインには、``send()`` への高レベルラッパーとして ``send_request(self, data, **message_kwargs)`` メソッドが必要です。このメソッドは、共通ヘッダーや URL ルートパスなどの固定値を追加することで要求を準備する必要があります。このメソッドは、フォーマットされたペイロードへのデータの切り替えや、リクエスト用のパスやメソッドの特定など、より複雑な作業を行うことがあります。その後、呼び出し元によって簡単に消費される応答が展開される可能性があります"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:74
 msgid "Authenticating"
@@ -102,15 +102,15 @@ msgstr "NETCONF プラグインの開発"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:134
 msgid "The :ref:`netconf <netconf_connection>` connection plugin provides a connection to remote devices over the ``SSH NETCONF`` subsystem. Network devices typically use this connection plugin to send and receive ``RPC`` calls over ``NETCONF``."
-msgstr ":ref:`netconf <netconf_connection>` 接続プラグインは、``SSH NETCONF`` サブシステム経由でリモートデバイスへの接続を提供します。ネットワークデバイスは通常、この接続プラグインを使用して、``NETCONF`` で ``RPC`` 呼び出しを送受信します。"
+msgstr ":ref:`netconf <netconf_connection>` connection プラグインは、``SSH NETCONF`` サブシステム経由でリモートデバイスへの接続を提供します。ネットワークデバイスは通常、この connection プラグインを使用して、``NETCONF`` で ``RPC`` 呼び出しを送受信します。"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:136
 msgid "The ``netconf`` connection plugin uses the ``ncclient`` Python library under the hood to initiate a NETCONF session with a NETCONF-enabled remote network device. ``ncclient`` also executes NETCONF RPC requests and receives responses. You must install the ``ncclient`` on the local Ansible controller."
-msgstr "``netconf`` 接続プラグインは、Python ライブラリー ``ncclient`` を使用して、NETCONF が有効なリモートネットワークデバイスで NETCONF セッションを開始します。また、``ncclient`` は NETCONF RPC 要求を実行し、応答を受け取ります。ローカルの Ansible コントローラーに ``ncclient`` をインストールする必要があります。"
+msgstr "``netconf`` connection プラグインは、Python ライブラリー ``ncclient`` を使用して、NETCONF が有効なリモートネットワークデバイスで NETCONF セッションを開始します。また、``ncclient`` は NETCONF RPC 要求を実行し、応答を受け取ります。ローカルの Ansible コントローラーに ``ncclient`` をインストールする必要があります。"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:138
 msgid "To use the ``netconf`` connection plugin for network devices that support standard NETCONF (:RFC:`6241`) operations such as ``get``, ``get-config``, ``edit-config``, set ``ansible_network_os=default``. You can use :ref:`netconf_get <netconf_get_module>`, :ref:`netconf_config <netconf_config_module>` and :ref:`netconf_rpc <netconf_rpc_module>` modules to talk to a NETCONF enabled remote host."
-msgstr "``get``、``get-config``、``edit-config`` などの標準 NETCONF (:RFC:`6241`) 操作に対応するネットワークデバイスの ``netconf`` 接続プラグインを使用するには、``ansible_network_os=default`` を設定します。:ref:`netconf_get <netconf_get_module>` モジュール、:ref:`netconf_config <netconf_config_module>` モジュール、および :ref:`netconf_rpc <netconf_rpc_module>` モジュールを使用して、NETCONF が有効なリモートホストと通信できます。"
+msgstr "``get``、``get-config``、``edit-config`` などの標準 NETCONF (:RFC:`6241`) 操作に対応するネットワークデバイスの ``netconf`` connection プラグインを使用するには、``ansible_network_os=default`` を設定します。:ref:`netconf_get <netconf_get_module>` モジュール、:ref:`netconf_config <netconf_config_module>` モジュール、および :ref:`netconf_rpc <netconf_rpc_module>` モジュールを使用して、NETCONF が有効なリモートホストと通信できます。"
 
 #: ../../rst/network/dev_guide/developing_plugins_network.rst:141
 msgid "As a contributor and user, you should be able to use all the methods under the ``NetconfBase`` class if your device supports standard NETCONF. You can contribute a new plugin if the device you are working with has a vendor specific NETCONF RPC. To support a vendor specific NETCONF RPC, add the implementation in the network OS specific NETCONF plugin."
@@ -315,7 +315,6 @@ msgid "parsed"
 msgstr "parsed"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:51
-#: ../../rst/network/user_guide/network_resource_modules.rst:37
 msgid "Ansible parses the configuration from the ``running_configuration`` option into Ansible structured data in the ``parsed`` key in the result. Note this does not gather the configuration from the network device so this state can be used offline."
 msgstr "Ansible は、``running_configuration`` オプションから、その結果内の ``parsed`` キーの Ansible 構造化データに設定を解析します。この設定は、ネットワークデバイスから設定が収集されないため、この状態をオフラインで使用できる点に注意してください。"
 
@@ -810,7 +809,7 @@ msgstr "テストは、(インターフェースなどの) リソースをテス
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:405
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:611
 msgid "For example:"
-msgstr "たとえば、以下のようになります。"
+msgstr "例:"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:648
 msgid "See the complete test example of this at https://github.com/ansible-collections/cisco.nxos/blob/master/tests/integration/targets/prepare_nxos_tests/tasks/main.yml."
@@ -1978,8 +1977,8 @@ msgid "The result on the Cisco IOS XE router will only contain the highest prece
 msgstr "Cisco IOS XE ルーターの結果には、優先順位の最も高い 192.168.1.1 設定のみが含まれます。"
 
 #: ../../rst/network/getting_started/network_roles.rst:252
-msgid "How is this useful?  Why should you care?  Extra vars are commonly used by network operators to override defaults.  A powerful example of this is with Red Hat Ansible Tower and the Survey feature.  It is possible through the web UI to prompt a network operator to fill out parameters with a Web form.  This can be really simple for non-technical playbook writers to execute a playbook using their Web browser. See `Ansible Tower Job Template Surveys <https://docs.ansible.com/ansible-tower/latest/html/userguide/workflow_templates.html#surveys>`_ for more details."
-msgstr "これはどのように役立つのでしょうか。なぜ気にする必要があるのでしょうか。ネットワークオペレーターは通常、追加の変数を使用してデフォルトを上書きします。その良い例は、Red Hat Ansible Tower と Survey 機能です。Web UI を使用して、ネットワークオペレーターに Web フォームでパラメーターの入力を求めることができます。これは、技術に詳しくない Playbook 作成者が Web ブラウザーを使用して Playbook を実行する場合に非常に簡単です。詳細は、「`Ansible Tower ジョブテンプレートサーベイ <https://docs.ansible.com/ansible-tower/latest/html/userguide/workflow_templates.html#surveys>`_」を参照してください。"
+msgid "How is this useful?  Why should you care?  Extra vars are commonly used by network operators to override defaults.  A powerful example of this is with the Job Template Survey feature on AWX or the :ref:`ansible_platform`.  It is possible through the web UI to prompt a network operator to fill out parameters with a Web form.  This can be really simple for non-technical playbook writers to execute a playbook using their Web browser."
+msgstr "これはどのように役立つのでしょうか。なぜ気にする必要があるのでしょうか。ネットワークオペレーターは通常、追加の変数を使用してデフォルトを上書きします。これに関する適切な例は、AWX の Job Template Suvey 機能または :ref:`ansible_platform` です。Web UI を使用して、ネットワークオペレーターに Web フォームでパラメーターの入力を求めることができます。これは、技術に詳しくない Playbook 作成者が Web ブラウザーを使用して Playbook を実行する場合に非常に簡単です。"
 
 #: ../../rst/network/getting_started/network_roles.rst:256
 msgid "Update an installed role"
@@ -2872,7 +2871,7 @@ msgstr "環境内に複数のネットワークプラットフォームがある
 
 #: ../../rst/network/user_guide/network_best_practices_2.5.rst:331
 msgid "Network agnostic modules require the :ref:`ansible.netcommon.network_cli <ansible_collections.ansible.netcommon.network_cli_connection>` connection plugin."
-msgstr "ネットワークに依存しないモジュールには、:ref:`ansible.netcommon.network_cli <ansible_collections.ansible.netcommon.network_cli_connection>` 接続プラグインが必要です。"
+msgstr "ネットワークに依存しないモジュールには、:ref:`ansible.netcommon.network_cli <ansible_collections.ansible.netcommon.network_cli_connection>` connection プラグインが必要です。"
 
 #: ../../rst/network/user_guide/network_best_practices_2.5.rst:335
 msgid "Sample playbook with platform-specific modules"
@@ -3408,7 +3407,7 @@ msgstr "``network_cli`` 接続タイプを持つプラットフォーム固有�
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:561
 msgid "In Ansible 2.9 and later, the network_cli connection plugin configuration options are added to handle the platform specific login menu. These options can be set as group/host or tasks variables."
-msgstr "Ansible 2.9 以降では、プラットフォーム固有のログインメニューを処理するために network_cli 接続プラグイン設定オプションが追加されました。これらのオプションは、グループ/ホストまたはタスク変数として設定できます。"
+msgstr "Ansible 2.9 以降では、プラットフォーム固有のログインメニューを処理するために network_cli connection プラグイン設定オプションが追加されました。これらのオプションは、グループ/ホストまたはタスク変数として設定できます。"
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:565
 msgid "Example: Handle single login menu prompts with host variables"
@@ -3544,7 +3543,7 @@ msgstr "``ansible.netcommon.network_cli`` 接続タイプの使用中に断続�
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:737
 msgid "If the command prompt received in response is not matched correctly within the ``ansible.netcommon.network_cli`` connection plugin the task might fail intermittently with truncated response or with the error message ``operation requires privilege escalation``. Starting in 2.7.1 a new buffer read timer is added to ensure prompts are matched properly and a complete response is send in output. The timer default value is 0.2 seconds and can be adjusted on a per task basis or can be set globally in seconds."
-msgstr "応答で受け取ったコマンドプロンプトが ``ansible.netcommon.network_cli`` 接続プラグイン内で正しく一致しないと、タスクが断続的に失敗し、応答が切り捨てられるか、エラーメッセージ ``operation requires privilege escalation`` が表示されることがあります。2.7.1 以降、プロンプトが正しく一致し、完全な応答が出力に送信されるように、新しいバッファ読み取りタイマーが追加されました。タイマーのデフォルト値は 0.2 秒で、タスクごとに調整することも、秒単位でグローバルに設定することもできます。"
+msgstr "応答で受け取ったコマンドプロンプトが ``ansible.netcommon.network_cli`` connection プラグイン内で正しく一致しないと、タスクが断続的に失敗し、応答が切り捨てられるか、エラーメッセージ ``operation requires privilege escalation`` が表示されることがあります。2.7.1 以降、プロンプトが正しく一致し、完全な応答が出力に送信されるように、新しいバッファ読み取りタイマーが追加されました。タイマーのデフォルト値は 0.2 秒で、タスクごとに調整することも、秒単位でグローバルに設定することもできます。"
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:744
 msgid "Example Per task timer setting"
@@ -3560,7 +3559,7 @@ msgstr "``ansible.netcommon.network_cli`` 接続タイプを使用したコマ�
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:769
 msgid "In Ansible 2.9 and later, the ``ansible.netcommon.network_cli`` connection plugin configuration options are added to handle the stdout and stderr regex to identify if the command execution response consist of a normal response or an error response. These options can be set group/host variables or as tasks variables."
-msgstr "Ansible 2.9 以降では、``ansible.netcommon.network_cli`` 接続プラグイン設定オプションが追加され、標準出力と標準エラーの正規表現を処理して、コマンド実行応答が通常の応答かエラー応答かを識別します。これらのオプションは、グループ/ホスト変数またはタスク変数として設定できます。"
+msgstr "Ansible 2.9 以降では、``ansible.netcommon.network_cli`` connection プラグイン設定オプションが追加され、標準出力と標準エラーの正規表現を処理して、コマンド実行応答が通常の応答かエラー応答かを識別します。これらのオプションは、グループ/ホスト変数またはタスク変数として設定できます。"
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:774
 msgid "Example: For mismatched error response"
@@ -3584,7 +3583,7 @@ msgstr "低速ネットワークまたはリモートターゲットホストに
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:818
 msgid "In Ansible 2.9 and later, the ``ansible.netcommon.network_cli`` connection plugin configuration option is added to control the number of attempts to connect to a remote host. The default number of attempts is three. After every retry attempt the delay between retries is increased by power of 2 in seconds until either the maximum attempts are exhausted or either the ``persistent_command_timeout`` or ``persistent_connect_timeout`` timers are triggered."
-msgstr "Ansible 2.9 以降では、リモートホストへの接続の試行回数を制御するために、``ansible.netcommon.network_cli`` 接続プラグイン設定オプションが追加されました。デフォルトの試行回数は 3 回です。再試行のたびに、最大試行回数がなくなるか、``persistent_command_timeout`` または ``persistent_connect_timeout`` タイマーのいずれかが発生するまで、再試行間の遅延は 2 の累乗 (秒) ずつ増加します。"
+msgstr "Ansible 2.9 以降では、リモートホストへの接続の試行回数を制御するために、``ansible.netcommon.network_cli`` connection プラグイン設定オプションが追加されました。デフォルトの試行回数は 3 回です。再試行のたびに、最大試行回数がなくなるか、``persistent_command_timeout`` または ``persistent_connect_timeout`` タイマーのいずれかが発生するまで、再試行間の遅延は 2 の累乗 (秒) ずつ増加します。"
 
 #: ../../rst/network/user_guide/network_resource_modules.rst:5
 msgid "Network Resource Modules"
@@ -3601,6 +3600,10 @@ msgstr "ネットワークリソースモジュールの状態"
 #: ../../rst/network/user_guide/network_resource_modules.rst:16
 msgid "You use the network resource modules by assigning a state to what you want the module to do. The resource modules support the following states:"
 msgstr "モジュールの動作に状態を割り当てて、ネットワークリソースモジュールを使用します。リソースモジュールは以下の状態をサポートします。"
+
+#: ../../rst/network/user_guide/network_resource_modules.rst:37
+msgid "Ansible parses the configuration from the ``running_config`` option into Ansible structured data in the ``parsed`` key in the result. Note this does not gather the configuration from the network device so this state can be used offline."
+msgstr "Ansible は、``running_config`` オプションから、その結果内の ``parsed`` キーの Ansible 構造化データに設定を解析します。この設定は、ネットワークデバイスから設定が収集されないため、この状態をオフラインで使用できる点に注意してください。"
 
 #: ../../rst/network/user_guide/network_resource_modules.rst:40
 msgid "Using network resource modules"
@@ -3744,7 +3747,7 @@ msgstr "ネットワークモジュールの条件"
 
 #: ../../rst/network/user_guide/network_working_with_command_output.rst:13
 msgid "Ansible allows you to use conditionals to control the flow of your playbooks. Ansible networking command modules use the following unique conditional statements."
-msgstr "Ansible では、条件を使用して Playbook のフローを制御できます。Ansible ネットワークコマンドモジュールは、以下の固有の条件付きステートメントを使用します。"
+msgstr "Ansible では、条件を使用して Playbook のフローを制御できます。Ansible ネットワークコマンドモジュールは、以下の固有の条件分岐文を使用します。"
 
 #: ../../rst/network/user_guide/network_working_with_command_output.rst:15
 msgid "``eq`` - Equal"
@@ -5214,7 +5217,7 @@ msgstr "設定可能な変数を含む NETCONF タスクの例"
 
 #: ../../rst/network/user_guide/platform_netconf_enabled.rst:94
 msgid "Note: For netconf connection plugin configurable variables see :ref:`ansible.netcommon.netconf <ansible_collections.ansible.netcommon.netconf_connection>`."
-msgstr "注意: netconf 接続プラグインの設定可能な変数は、「:ref:`ansible.netcommon.netconf <ansible_collections.ansible.netcommon.netconf_connection>`」を参照してください。"
+msgstr "注意: netconf connection プラグインの設定可能な変数は、「:ref:`ansible.netcommon.netconf <ansible_collections.ansible.netcommon.netconf_connection>`」を参照してください。"
 
 #: ../../rst/network/user_guide/platform_netconf_enabled.rst:97
 msgid "Bastion/Jumphost configuration"

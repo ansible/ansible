@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-06-10 10:44+0200\n"
+"POT-Creation-Date: 2021-10-11 16:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -835,7 +835,7 @@ msgstr "2.4.1 では、この動作を制御するためのトグルが追加さ
 
 #: ../../rst/porting_guides/porting_guide_2.4.rst:125
 msgid "Inventory plugins"
-msgstr "Inventory プラグイン"
+msgstr "inventory プラグイン"
 
 #: ../../rst/porting_guides/porting_guide_2.4.rst:127
 msgid "Developers should start migrating from hardcoded inventory with dynamic inventory scripts to the new Inventory Plugins. The scripts will still work via the ``script`` inventory plugin but Ansible development efforts will now concentrate on writing plugins rather than enhancing existing scripts."
@@ -1040,7 +1040,7 @@ msgstr "with_items"
 
 #: ../../rst/user_guide/shared_snippets/with2loop.txt:29
 msgid "``with_items`` is replaced by ``loop`` and the ``flatten`` filter."
-msgstr "``with_items`` は、``loop`` および ``flatten`` フィルターに置き換えられました。"
+msgstr "``with_items`` は、``loop`` フィルターおよび ``flatten`` フィルターに置き換えられました。"
 
 #: ../../rst/user_guide/shared_snippets/with2loop.txt:44
 msgid "with_indexed_items"
@@ -1056,7 +1056,7 @@ msgstr "with_flattened"
 
 #: ../../rst/user_guide/shared_snippets/with2loop.txt:65
 msgid "``with_flattened`` is replaced by ``loop`` and the ``flatten`` filter."
-msgstr "``with_flattened`` は、``loop`` および ``flatten`` フィルターに置き換えられました。"
+msgstr "``with_flattened`` は、``loop`` フィルターおよび ``flatten`` フィルターに置き換えられました。"
 
 #: ../../rst/user_guide/shared_snippets/with2loop.txt:80
 msgid "with_together"
@@ -1064,7 +1064,7 @@ msgstr "with_together"
 
 #: ../../rst/user_guide/shared_snippets/with2loop.txt:82
 msgid "``with_together`` is replaced by ``loop`` and the ``zip`` filter."
-msgstr "``with_together`` は、``loop`` および ``zip`` フィルターに置き換えられました。"
+msgstr "``with_together`` は、``loop`` フィルターおよび ``zip`` フィルターに置き換えられました。"
 
 #: ../../rst/user_guide/shared_snippets/with2loop.txt:98
 msgid "Another example with complex data"
@@ -1076,7 +1076,7 @@ msgstr "with_dict"
 
 #: ../../rst/user_guide/shared_snippets/with2loop.txt:115
 msgid "``with_dict`` can be substituted by ``loop`` and either the ``dictsort`` or ``dict2items`` filters."
-msgstr "``with_dict`` は、``loop`` と、``dictsort`` または``dict2items`` のいずれかのフィルターに置き換えられました。"
+msgstr "``with_dict`` は、``loop`` フィルターと、``dictsort`` フィルターまたは ``dict2items`` フィルターのいずれかのフィルターに置き換えられました。"
 
 #: ../../rst/user_guide/shared_snippets/with2loop.txt:135
 msgid "with_sequence"
@@ -1084,7 +1084,7 @@ msgstr "with_sequence"
 
 #: ../../rst/user_guide/shared_snippets/with2loop.txt:137
 msgid "``with_sequence`` is replaced by ``loop`` and the ``range`` function, and potentially the ``format`` filter."
-msgstr "``with_sequence`` は、``loop`` と``range`` の関数、そして潜在的には``format`` フィルターに置き換えられました。"
+msgstr "``with_sequence`` は、``loop`` 関数と ``range`` の関数、そして潜在的には ``format`` フィルターに置き換えられました。"
 
 #: ../../rst/user_guide/shared_snippets/with2loop.txt:153
 msgid "with_subelements"
@@ -1092,7 +1092,7 @@ msgstr "with_subelements"
 
 #: ../../rst/user_guide/shared_snippets/with2loop.txt:155
 msgid "``with_subelements`` is replaced by ``loop`` and the ``subelements`` filter."
-msgstr "``with_subelements`` は、``loop`` および ``subelements`` フィルターに置き換えられました。"
+msgstr "``with_subelements`` は、``loop`` フィルターおよび ``subelements`` フィルターに置き換えられました。"
 
 #: ../../rst/user_guide/shared_snippets/with2loop.txt:172
 msgid "with_nested/with_cartesian"
@@ -2259,8 +2259,8 @@ msgid "The ``foreman`` and ``katello`` modules replacement is officially part of
 msgstr "``foreman`` モジュールおよび ``katello`` モジュールの置き換えは、Foreman Community の一部であり、そこでサポートされます。"
 
 #: ../../rst/porting_guides/porting_guide_2.8.rst:418
-msgid "The ``tower_credential`` module originally required the ``ssh_key_data`` to be the path to a ssh_key_file. In order to work like Tower/AWX, ``ssh_key_data`` now contains the content of the file. The previous behavior can be achieved with ``lookup('file', '/path/to/file')``."
-msgstr "``tower_credential`` モジュールでは、もともと ``ssh_key_data`` に ssh_key_file のパスを指定する必要がありました。Tower/AWX のように動作させるために、``ssh_key_data`` にファイルの内容を含めるようになりました。以前の動作は ``lookup('file', '/path/to/file')`` で実現できます。"
+msgid "The ``tower_credential`` module originally required the ``ssh_key_data`` to be the path to a ssh_key_file. In order to work like AWX/Tower/RHAAP, ``ssh_key_data`` now contains the content of the file. The previous behavior can be achieved with ``lookup('file', '/path/to/file')``."
+msgstr "``tower_credential`` モジュールでは、もともと ``ssh_key_data`` に ssh_key_file のパスを指定する必要がありました。AWX/Tower/RHAAP のように動作させるために、``ssh_key_data`` にファイルの内容を含めるようになりました。以前の動作は ``lookup('file', '/path/to/file')`` で実現できます。"
 
 #: ../../rst/porting_guides/porting_guide_2.8.rst:421
 msgid "The ``win_scheduled_task`` module deprecated support for specifying a trigger repetition as a list and this format will be removed in Ansible 2.12. Instead specify the repetition as a dictionary value."
@@ -2388,11 +2388,11 @@ msgstr "ディスク上のファイルと、モジュールに渡すパラメー
 
 #: ../../rst/porting_guides/porting_guide_2.8.rst:513
 msgid "Ansible no longer defaults to the ``paramiko`` connection plugin when using macOS as the control node. Ansible will now use the ``ssh`` connection plugin by default on a macOS control node.  Since ``ssh`` supports connection persistence between tasks and playbook runs, it performs better than ``paramiko``. If you are using password authentication, you will need to install ``sshpass`` when using the ``ssh`` connection plugin. Or you can explicitly set the connection type to ``paramiko`` to maintain the pre-2.8 behavior on macOS."
-msgstr "Ansible は、macOS を制御ノードとして使用する場合は、``paramiko`` 接続プラグインをデフォルトで使用しなくなりました。Ansible は、macOS のコントロールノードではデフォルトで ``ssh`` の接続プラグインを使用するようになりました。``ssh`` は、タスクと Playbook の実行間の接続持続性をサポートしているため、``paramiko`` よりもパフォーマンスが高くなります。パスワード認証を使用している場合は、``ssh`` 接続プラグインを使用する際に ``sshpass`` をインストールする必要があります。または、接続タイプを明示的に ``paramiko`` に設定することで、macOS での 2.8 以前の動作を維持することができます。"
+msgstr "Ansible は、macOS を制御ノードとして使用する場合は、``paramiko`` connection プラグインをデフォルトで使用しなくなりました。Ansible は、macOS のコントロールノードではデフォルトで ``ssh`` connection プラグインを使用するようになりました。``ssh`` は、タスクと Playbook の実行間の接続持続性をサポートしているため、``paramiko`` よりもパフォーマンスが高くなります。パスワード認証を使用している場合は、``ssh`` connection プラグインを使用する際に ``sshpass`` をインストールする必要があります。または、接続タイプを明示的に ``paramiko`` に設定することで、macOS での 2.8 以前の動作を維持することができます。"
 
 #: ../../rst/porting_guides/porting_guide_2.8.rst:515
 msgid "Connection plugins have been standardized to allow use of ``ansible_<conn-type>_user`` and ``ansible_<conn-type>_password`` variables.  Variables such as ``ansible_<conn-type>_pass`` and ``ansible_<conn-type>_username`` are treated with lower priority than the standardized names and may be deprecated in the future.  In general, the ``ansible_user`` and ``ansible_password`` vars should be used unless there is a reason to use the connection-specific variables."
-msgstr "接続プラグインは、``ansible_<conn-type>_user`` 変数および ``ansible_<conn-type>_password`` 変数を使用できるように標準化されました。``ansible_<conn-type>_pass`` や ``ansible_<conn-type>_username`` のような変数は、標準化された名前よりも優先度が低く扱われ、将来的には非推奨になる可能性があります。一般的には、接続専用の変数を使用する理由がない限り、``ansible_user`` と ``ansible_password`` の変数を使用する必要があります。"
+msgstr "connection プラグインは、``ansible_<conn-type>_user`` 変数および ``ansible_<conn-type>_password`` 変数を使用できるように標準化されました。``ansible_<conn-type>_pass`` や ``ansible_<conn-type>_username`` のような変数は、標準化された名前よりも優先度が低く扱われ、将来的には非推奨になる可能性があります。一般的には、接続専用の変数を使用する理由がない限り、``ansible_user`` と ``ansible_password`` の変数を使用する必要があります。"
 
 #: ../../rst/porting_guides/porting_guide_2.8.rst:522
 msgid "The ``powershell`` shell plugin now uses ``async_dir`` to define the async path for the results file and the default has changed to ``%USERPROFILE%\\.ansible_async``. To control this path now, either set the ``ansible_async_dir`` variable or the ``async_dir`` value in the ``powershell`` section of the config ini."
@@ -2801,11 +2801,11 @@ msgstr "インベントリープラグイン - ``CachePluginAdjudicator.flush()`
 
 #: ../../rst/porting_guides/porting_guide_core_2.11.rst:130
 msgid "callback plugins - ``meta`` task execution is now sent to ``v2_playbook_on_task_start`` like any other task. By default, only explicit meta tasks are sent there. Callback plugins can opt-in to receiving internal, implicitly created tasks to act on those as well, as noted in the plugin development documentation."
-msgstr "callback plugins -``meta`` タスクの実行は、他のタスクと同様に ``v2_playbook_on_task_start`` に送られるようになりました。デフォルトでは、明示的なメタタスクのみが送信されます。コールバックプラグインは、プラグイン開発のドキュメントにあるように、内部で暗黙的に作成されたタスクを受け取って、それらにも対処することを選択できます。"
+msgstr "callback プラグイン - ``meta`` タスクの実行は、他のタスクと同様に ``v2_playbook_on_task_start`` に送られるようになりました。デフォルトでは、明示的なメタタスクのみが送信されます。コールバックプラグインは、プラグイン開発のドキュメントにあるように、内部で暗黙的に作成されたタスクを受け取って、それらにも対処することを選択できます。"
 
 #: ../../rst/porting_guides/porting_guide_core_2.11.rst:131
 msgid "The ``choices`` are now validated, so plugins that were using incorrect or incomplete choices issue an error in 2.11 if the value provided does not match. This has a simple fix: update the entries in ``choices`` to match reality."
-msgstr "``choices`` が検証されるようになったため、誤った選択、または不完全な選択を使用していたプラグインが、2.11 では提供された値が一致しない場合にエラーになるようになりました。この修正は単純です。現実に合わせて ``choices`` のエントリーを更新してください。"
+msgstr "``choices`` が検証されるようになったため、誤った選択、または不完全な選択を使用していたプラグインが、2.11 では提供された値が一致しない場合にエラーになるようになりました。これは簡単に修正できます。実際の設定に合わせて ``choices`` のエントリーを更新してください。"
 
 #: ../../rst/porting_guides/porting_guides.rst:5
 msgid "Ansible Porting Guides"
