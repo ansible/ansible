@@ -7,21 +7,9 @@ from setuptools import find_packages, setup
 
 here = pathlib.Path(__file__).parent.resolve()
 
-
-def get_version(path):
-    for line in path.read_text(encoding='utf-8').splitlines():
-        if line.startswith('__version__'):
-            # __version__ = "0.9"
-            delim = "'" if "'" in line else '"'
-            return line.split(delim)[1]
-    raise RuntimeError('Unable to find version string.')
-
-
 install_requires = (here / 'requirements.txt').read_text(encoding='utf-8').splitlines()
-version = get_version(here / 'lib' / 'ansible' / 'release.py')
 
 setup(
-    version=version,
     install_requires=install_requires,
     package_dir={'': 'lib',
                  'ansible_test': 'test/lib/ansible_test'},
