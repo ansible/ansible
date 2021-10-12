@@ -49,14 +49,18 @@ Simple variables combine a variable name with a single value. You can use this s
 Defining simple variables
 -------------------------
 
-You can define a simple variable using standard YAML syntax. For example::
+You can define a simple variable using standard YAML syntax. For example:
+
+.. code-block:: text
 
   remote_install_path: /opt/my_app_config
 
 Referencing simple variables
 ----------------------------
 
-After you define a variable, use Jinja2 syntax to reference it. Jinja2 variables use double curly braces. For example, the expression ``My amp goes to {{ max_amp_value }}`` demonstrates the most basic form of variable substitution. You can use Jinja2 syntax in playbooks. For example::
+After you define a variable, use Jinja2 syntax to reference it. Jinja2 variables use double curly braces. For example, the expression ``My amp goes to {{ max_amp_value }}`` demonstrates the most basic form of variable substitution. You can use Jinja2 syntax in playbooks. For example:
+
+.. code-block:: yaml+jinja
 
     ansible.builtin.template:
       src: foo.cfg.j2
@@ -75,13 +79,17 @@ When to quote variables (a YAML gotcha)
 
 If you start a value with ``{{ foo }}``, you must quote the whole expression to create valid YAML syntax. If you do not quote the whole expression, the YAML parser cannot interpret the syntax - it might be a variable or it might be the start of a YAML dictionary. For guidance on writing YAML, see the :ref:`yaml_syntax` documentation.
 
-If you use a variable without quotes like this::
+If you use a variable without quotes like this:
+
+.. code-block:: yaml+jinja
 
     - hosts: app_servers
       vars:
           app_path: {{ base_path }}/22
 
-You will see: ``ERROR! Syntax Error while loading YAML.`` If you add quotes, Ansible works correctly::
+You will see: ``ERROR! Syntax Error while loading YAML.`` If you add quotes, Ansible works correctly:
+
+.. code-block:: yaml+jinja
 
     - hosts: app_servers
       vars:
@@ -97,7 +105,9 @@ A list variable combines a variable name with multiple values. The multiple valu
 Defining variables as lists
 ---------------------------
 
-You can define variables with multiple values using YAML lists. For example::
+You can define variables with multiple values using YAML lists. For example:
+
+.. code-block:: yaml
 
   region:
     - northeast
@@ -107,7 +117,9 @@ You can define variables with multiple values using YAML lists. For example::
 Referencing list variables
 --------------------------
 
-When you use variables defined as a list (also called an array), you can use individual, specific fields from that list. The first item in a list is item 0, the second item is item 1. For example::
+When you use variables defined as a list (also called an array), you can use individual, specific fields from that list. The first item in a list is item 0, the second item is item 1. For example:
+
+.. code-block:: yaml+jinja
 
   region: "{{ region[0] }}"
 
@@ -123,7 +135,9 @@ A dictionary stores the data in key-value pairs. Usually, dictionaries are used 
 Defining variables as key:value dictionaries
 --------------------------------------------
 
-You can define more complex variables using YAML dictionaries. A YAML dictionary maps keys to values.  For example::
+You can define more complex variables using YAML dictionaries. A YAML dictionary maps keys to values.  For example:
+
+.. code-block:: yaml
 
   foo:
     field1: one
@@ -132,7 +146,9 @@ You can define more complex variables using YAML dictionaries. A YAML dictionary
 Referencing key:value dictionary variables
 ------------------------------------------
 
-When you use variables defined as a key:value dictionary (also called a hash), you can use individual, specific fields from that dictionary using either bracket notation or dot notation::
+When you use variables defined as a key:value dictionary (also called a hash), you can use individual, specific fields from that dictionary using either bracket notation or dot notation:
+
+.. code-block:: yaml
 
   foo['field1']
   foo.field1
@@ -146,7 +162,9 @@ Both of these examples reference the same value ("one"). Bracket notation always
 Registering variables
 =====================
 
-You can create variables from the output of an Ansible task with the task keyword ``register``. You can use registered variables in any later tasks in your play. For example::
+You can create variables from the output of an Ansible task with the task keyword ``register``. You can use registered variables in any later tasks in your play. For example:
+
+.. code-block:: yaml
 
    - hosts: web_servers
 
@@ -174,11 +192,15 @@ Registered variables are host-level variables. When you register a variable in a
 Referencing nested variables
 ============================
 
-Many registered variables (and :ref:`facts <vars_and_facts>`) are nested YAML or JSON data structures. You cannot access values from these nested data structures with the simple ``{{ foo }}`` syntax. You must use either bracket notation or dot notation. For example, to reference an IP address from your facts using the bracket notation::
+Many registered variables (and :ref:`facts <vars_and_facts>`) are nested YAML or JSON data structures. You cannot access values from these nested data structures with the simple ``{{ foo }}`` syntax. You must use either bracket notation or dot notation. For example, to reference an IP address from your facts using the bracket notation:
+
+.. code-block:: yaml+jinja
 
     {{ ansible_facts["eth0"]["ipv4"]["address"] }}
 
-To reference an IP address from your facts using the dot notation::
+To reference an IP address from your facts using the dot notation:
+
+.. code-block:: yaml+jinja
 
     {{ ansible_facts.eth0.ipv4.address }}
 
@@ -209,7 +231,9 @@ You can define different variables for each individual host, or set shared varia
 Defining variables in a play
 ----------------------------
 
-You can define variables directly in a playbook play::
+You can define variables directly in a playbook play:
+
+.. code-block:: yaml
 
    - hosts: webservers
      vars:
@@ -225,7 +249,9 @@ Defining variables in included files and roles
 
 You can define variables in reusable variables files and/or in reusable roles. When you define variables in reusable variable files, the sensitive variables are separated from playbooks. This separation enables you to store your playbooks in a source control software and even share the playbooks, without the risk of exposing passwords or other sensitive and personal data. For information about creating reusable files and roles, see :ref:`playbooks_reuse`.
 
-This example shows how you can include variables defined in an external file::
+This example shows how you can include variables defined in an external file:
+
+.. code-block:: yaml
 
     ---
 
@@ -241,7 +267,9 @@ This example shows how you can include variables defined in an external file::
       - name: This is just a placeholder
         ansible.builtin.command: /bin/echo foo
 
-The contents of each variables file is a simple YAML dictionary. For example::
+The contents of each variables file is a simple YAML dictionary. For example:
+
+.. code-block:: yaml
 
     ---
     # in the above example, this would be vars/external_vars.yml
@@ -270,12 +298,14 @@ Values passed in using the ``key=value`` syntax are interpreted as strings. Use 
 JSON string format
 ^^^^^^^^^^^^^^^^^^
 
-.. code-block:: text
+.. code-block:: shell
 
     ansible-playbook release.yml --extra-vars '{"version":"1.23.45","other_variable":"foo"}'
     ansible-playbook arcade.yml --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
 
-When passing variables with ``--extra-vars``, you must escape quotes and other special characters appropriately for both your markup (for example, JSON), and for your shell::
+When passing variables with ``--extra-vars``, you must escape quotes and other special characters appropriately for both your markup (for example, JSON), and for your shell:
+
+.. code-block:: shell
 
     ansible-playbook arcade.yml --extra-vars "{\"name\":\"Conan O\'Brien\"}"
     ansible-playbook arcade.yml --extra-vars '{"name":"Conan O'\\\''Brien"}'
@@ -369,47 +399,61 @@ You should choose where to define a variable based on the kind of control you mi
 
 Set variables in inventory that deal with geography or behavior. Since groups are frequently the entity that maps roles onto hosts, you can often set variables on the group instead of defining them on a role. Remember: child groups override parent groups, and host variables override group variables. See :ref:`define_variables_in_inventory` for details on setting host and group variables.
 
-Set common defaults in a ``group_vars/all`` file. See :ref:`splitting_out_vars` for details on how to organize host and group variables in your inventory. Group variables are generally placed alongside your inventory file, but they can also be returned by dynamic inventory (see :ref:`intro_dynamic_inventory`) or defined in AWX or on :ref:`ansible_platform` from the UI or API::
+Set common defaults in a ``group_vars/all`` file. See :ref:`splitting_out_vars` for details on how to organize host and group variables in your inventory. Group variables are generally placed alongside your inventory file, but they can also be returned by dynamic inventory (see :ref:`intro_dynamic_inventory`) or defined in AWX or on :ref:`ansible_platform` from the UI or API:
+
+.. code-block:: yaml
 
     ---
     # file: /etc/ansible/group_vars/all
     # this is the site wide default
     ntp_server: default-time.example.com
 
-Set location-specific variables in ``group_vars/my_location`` files. All groups are children of the ``all`` group, so variables set here override those set in ``group_vars/all``::
+Set location-specific variables in ``group_vars/my_location`` files. All groups are children of the ``all`` group, so variables set here override those set in ``group_vars/all``:
+
+.. code-block:: yaml
 
     ---
     # file: /etc/ansible/group_vars/boston
     ntp_server: boston-time.example.com
 
-If one host used a different NTP server, you could set that in a host_vars file, which would override the group variable::
+If one host used a different NTP server, you could set that in a host_vars file, which would override the group variable:
+
+.. code-block:: yaml
 
     ---
     # file: /etc/ansible/host_vars/xyz.boston.example.com
     ntp_server: override.example.com
 
-Set defaults in roles to avoid undefined-variable errors. If you share your roles, other users can rely on the reasonable defaults you added in the ``roles/x/defaults/main.yml`` file, or they can easily override those values in inventory or at the command line. See :ref:`playbooks_reuse_roles` for more info. For example::
+Set defaults in roles to avoid undefined-variable errors. If you share your roles, other users can rely on the reasonable defaults you added in the ``roles/x/defaults/main.yml`` file, or they can easily override those values in inventory or at the command line. See :ref:`playbooks_reuse_roles` for more info. For example:
+
+.. code-block:: yaml
 
     ---
     # file: roles/x/defaults/main.yml
     # if no other value is supplied in inventory or as a parameter, this value will be used
     http_port: 80
 
-Set variables in roles to ensure a value is used in that role, and is not overridden by inventory variables. If you are not sharing your role with others, you can define app-specific behaviors like ports this way, in ``roles/x/vars/main.yml``. If you are sharing roles with others, putting variables here makes them harder to override, although they still can by passing a parameter to the role or setting a variable with ``-e``::
+Set variables in roles to ensure a value is used in that role, and is not overridden by inventory variables. If you are not sharing your role with others, you can define app-specific behaviors like ports this way, in ``roles/x/vars/main.yml``. If you are sharing roles with others, putting variables here makes them harder to override, although they still can by passing a parameter to the role or setting a variable with ``-e``:
+
+.. code-block:: yaml
 
     ---
     # file: roles/x/vars/main.yml
     # this will absolutely be used in this role
     http_port: 80
 
-Pass variables as parameters when you call roles for maximum clarity, flexibility, and visibility. This approach overrides any defaults that exist for a role. For example::
+Pass variables as parameters when you call roles for maximum clarity, flexibility, and visibility. This approach overrides any defaults that exist for a role. For example:
+
+.. code-block:: yaml
 
     roles:
        - role: apache
          vars:
             http_port: 8080
 
-When you read this playbook it is clear that you have chosen to set a variable or override a default. You can also pass multiple values, which allows you to run the same role multiple times. See :ref:`run_role_twice` for more details. For example::
+When you read this playbook it is clear that you have chosen to set a variable or override a default. You can also pass multiple values, which allows you to run the same role multiple times. See :ref:`run_role_twice` for more details. For example:
+
+.. code-block:: yaml
 
     roles:
        - role: app_user
@@ -425,7 +469,9 @@ When you read this playbook it is clear that you have chosen to set a variable o
          vars:
            myname: John
 
-Variables set in one role are available to later roles. You can set variables in a ``roles/common_settings/vars/main.yml`` file and use them in other roles and elsewhere in your playbook::
+Variables set in one role are available to later roles. You can set variables in a ``roles/common_settings/vars/main.yml`` file and use them in other roles and elsewhere in your playbook:
+
+.. code-block:: yaml
 
      roles:
         - role: common_settings
