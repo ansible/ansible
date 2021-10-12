@@ -297,12 +297,7 @@
   register: result
 
 - set_fact:
-    astest_list: >-
-      [ {% for f in result.files %}
-      {{ f.path }}
-      {% if not loop.last %},{% endif %}
-      {% endfor %}
-      ]
+    astest_list: "{{ result.files|map(attribute='path') }}"
 
 - name: assert we only find the old file
   assert:
@@ -317,12 +312,7 @@
   register: result
 
 - set_fact:
-    astest_list: >-
-      [ {% for f in result.files %}
-      {{ f.path }}
-      {% if not loop.last %},{% endif %}
-      {% endfor %}
-      ]
+    astest_list: "{{ result.files|map(attribute='path') }}"
 
 - name: assert we only find the current file
   assert:
@@ -342,12 +332,7 @@
   register: result
 
 - set_fact:
-    astest_list: >-
-      [ {% for f in result.files %}
-      {{ f.path }}
-      {% if not loop.last %},{% endif %}
-      {% endfor %}
-      ]
+    astest_list: "{{ result.files|map(attribute='path') }}"
 
 - name: assert we only find the hello world file
   assert:
@@ -366,12 +351,7 @@
   register: result
 
 - set_fact:
-    astest_list: >-
-      [ {% for f in result.files %}
-      {{ f.path }}
-      {% if not loop.last %},{% endif %}
-      {% endfor %}
-      ]
+    astest_list: "{{ result.files|map(attribute='path') }}"
 
 - name: assert we do not find the hello world file and a checksum is present
   assert:
