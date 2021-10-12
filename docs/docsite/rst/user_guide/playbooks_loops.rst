@@ -31,17 +31,21 @@ Comparing ``loop`` and ``with_*``
     - [2,3]
     - 4
 
-you would need::
+you would need
 
-  loop: "{{ [1, [2,3] ,4] | flatten(1) }}"
+.. code-block:: yaml+jinja
+
+  loop: "{{ [1, [2, 3], 4] | flatten(1) }}"
 
 * Any ``with_*`` statement that requires using ``lookup`` within a loop should not be converted to use the ``loop`` keyword. For example, instead of doing:
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
   loop: "{{ lookup('fileglob', '*.txt', wantlist=True) }}"
 
-it's cleaner to keep::
+it's cleaner to keep
+
+.. code-block:: yaml
 
   with_fileglob: '*.txt'
 
@@ -53,7 +57,9 @@ Standard loops
 Iterating over a simple list
 ----------------------------
 
-Repeated tasks can be written as standard loops over a simple list of strings. You can define the list directly in the task::
+Repeated tasks can be written as standard loops over a simple list of strings. You can define the list directly in the task.
+
+.. code-block:: yaml+jinja
 
     - name: Add several users
       ansible.builtin.user:
@@ -64,11 +70,15 @@ Repeated tasks can be written as standard loops over a simple list of strings. Y
          - testuser1
          - testuser2
 
-You can define the list in a variables file, or in the 'vars' section of your play, then refer to the name of the list in the task::
+You can define the list in a variables file, or in the 'vars' section of your play, then refer to the name of the list in the task.
+
+.. code-block:: yaml+jinja
 
     loop: "{{ somelist }}"
 
-Either of these examples would be the equivalent of::
+Either of these examples would be the equivalent of
+
+.. code-block:: yaml
 
     - name: Add user testuser1
       ansible.builtin.user:
@@ -82,25 +92,29 @@ Either of these examples would be the equivalent of::
         state: present
         groups: "wheel"
 
-You can pass a list directly to a parameter for some plugins. Most of the packaging modules, like :ref:`yum <yum_module>` and :ref:`apt <apt_module>`, have this capability. When available, passing the list to a parameter is better than looping over the task. For example::
+You can pass a list directly to a parameter for some plugins. Most of the packaging modules, like :ref:`yum <yum_module>` and :ref:`apt <apt_module>`, have this capability. When available, passing the list to a parameter is better than looping over the task. For example
+
+.. code-block:: yaml+jinja
 
    - name: Optimal yum
      ansible.builtin.yum:
-       name: "{{  list_of_packages  }}"
+       name: "{{ list_of_packages }}"
        state: present
 
    - name: Non-optimal yum, slower and may cause issues with interdependencies
      ansible.builtin.yum:
-       name: "{{  item  }}"
+       name: "{{ item }}"
        state: present
-     loop: "{{  list_of_packages  }}"
+     loop: "{{ list_of_packages }}"
 
 Check the :ref:`module documentation <modules_by_category>` to see if you can pass a list to any particular module's parameter(s).
 
 Iterating over a list of hashes
 -------------------------------
 
-If you have a list of hashes, you can reference subkeys in a loop. For example::
+If you have a list of hashes, you can reference subkeys in a loop. For example:
+
+.. code-block:: yaml+jinja
 
     - name: Add several users
       ansible.builtin.user:
@@ -119,7 +133,7 @@ Iterating over a dictionary
 
 To loop over a dict, use the  :ref:`dict2items <dict_filter>`:
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
     - name: Using dict2items
       ansible.builtin.debug:
@@ -135,7 +149,9 @@ Here, we are iterating over `tag_data` and printing the key and the value from i
 Registering variables with a loop
 =================================
 
-You can register the output of a loop as a variable. For example::
+You can register the output of a loop as a variable. For example
+
+.. code-block:: yaml+jinja
 
    - name: Register loop output as a variable
      ansible.builtin.shell: "echo {{ item }}"
@@ -144,7 +160,9 @@ You can register the output of a loop as a variable. For example::
        - "two"
      register: echo
 
-When you use ``register`` with a loop, the data structure placed in the variable will contain a ``results`` attribute that is a list of all responses from the module. This differs from the data structure returned when using ``register`` without a loop::
+When you use ``register`` with a loop, the data structure placed in the variable will contain a ``results`` attribute that is a list of all responses from the module. This differs from the data structure returned when using ``register`` without a loop.
+
+.. code-block:: json
 
     {
         "changed": true,
@@ -183,7 +201,9 @@ When you use ``register`` with a loop, the data structure placed in the variable
         ]
     }
 
-Subsequent loops over the registered variable to inspect the results may look like::
+Subsequent loops over the registered variable to inspect the results may look like
+
+.. code-block:: yaml+jinja
 
     - name: Fail if return code is not 0
       ansible.builtin.fail:
@@ -191,7 +211,9 @@ Subsequent loops over the registered variable to inspect the results may look li
       when: item.rc != 0
       loop: "{{ echo.results }}"
 
-During iteration, the result of the current item will be placed in the variable::
+During iteration, the result of the current item will be placed in the variable.
+
+.. code-block:: yaml+jinja
 
     - name: Place the result of the current item in the variable
       ansible.builtin.shell: echo "{{ item }}"
@@ -209,7 +231,9 @@ Complex loops
 Iterating over nested lists
 ---------------------------
 
-You can use Jinja2 expressions to iterate over complex lists. For example, a loop can combine nested lists::
+You can use Jinja2 expressions to iterate over complex lists. For example, a loop can combine nested lists.
+
+.. code-block:: yaml+jinja
 
     - name: Give users access to multiple databases
       community.mysql.mysql_user:
@@ -217,7 +241,7 @@ You can use Jinja2 expressions to iterate over complex lists. For example, a loo
         priv: "{{ item[1] }}.*:ALL"
         append_privs: yes
         password: "foo"
-      loop: "{{ ['alice', 'bob'] |product(['clientdb', 'employeedb', 'providerdb'])|list }}"
+      loop: "{{ ['alice', 'bob'] | product(['clientdb', 'employeedb', 'providerdb']) | list }}"
 
 
 .. _do_until_loops:
@@ -227,7 +251,9 @@ Retrying a task until a condition is met
 
 .. versionadded:: 1.4
 
-You can use the ``until`` keyword to retry a task until a certain condition is met.  Here's an example::
+You can use the ``until`` keyword to retry a task until a certain condition is met. Here's an example:
+
+.. code-block:: yaml
 
     - name: Retry a task until a certain condition is met
       ansible.builtin.shell: /usr/bin/foo
@@ -247,7 +273,9 @@ When you run a task with ``until`` and register the result as a variable, the re
 Looping over inventory
 ----------------------
 
-To loop over your inventory, or just a subset of it, you can use a regular ``loop`` with the ``ansible_play_batch`` or ``groups`` variables::
+To loop over your inventory, or just a subset of it, you can use a regular ``loop`` with the ``ansible_play_batch`` or ``groups`` variables.
+
+.. code-block:: yaml+jinja
 
     - name: Show all the hosts in the inventory
       ansible.builtin.debug:
@@ -259,7 +287,9 @@ To loop over your inventory, or just a subset of it, you can use a regular ``loo
         msg: "{{ item }}"
       loop: "{{ ansible_play_batch }}"
 
-There is also a specific lookup plugin ``inventory_hostnames`` that can be used like this::
+There is also a specific lookup plugin ``inventory_hostnames`` that can be used like this
+
+.. code-block:: yaml+jinja
 
     - name: Show all the hosts in the inventory
       ansible.builtin.debug:
@@ -282,7 +312,9 @@ The ``loop`` keyword requires a list as input, but the ``lookup`` keyword return
 
 You can force ``lookup`` to return a list to ``loop`` by using ``wantlist=True``, or you can use ``query`` instead.
 
-These examples do the same thing::
+The following two examples do the same thing.
+
+.. code-block:: yaml+jinja
 
     loop: "{{ query('inventory_hostnames', 'all') }}"
 
@@ -301,7 +333,9 @@ Limiting loop output with ``label``
 -----------------------------------
 .. versionadded:: 2.2
 
-When looping over complex data structures, the console output of your task can be enormous. To limit the displayed output, use the ``label`` directive with ``loop_control``::
+When looping over complex data structures, the console output of your task can be enormous. To limit the displayed output, use the ``label`` directive with ``loop_control``.
+
+.. code-block:: yaml+jinja
 
     - name: Create servers
       digital_ocean:
@@ -326,7 +360,9 @@ Pausing within a loop
 ---------------------
 .. versionadded:: 2.2
 
-To control the time (in seconds) between the execution of each item in a task loop, use the ``pause`` directive with ``loop_control``::
+To control the time (in seconds) between the execution of each item in a task loop, use the ``pause`` directive with ``loop_control``.
+
+.. code-block:: yaml+jinja
 
     # main.yml
     - name: Create servers, pause 3s before creating next
@@ -343,7 +379,9 @@ Tracking progress through a loop with ``index_var``
 ---------------------------------------------------
 .. versionadded:: 2.5
 
-To keep track of where you are in a loop, use the ``index_var`` directive with ``loop_control``. This directive specifies a variable name to contain the current loop index::
+To keep track of where you are in a loop, use the ``index_var`` directive with ``loop_control``. This directive specifies a variable name to contain the current loop index.
+
+.. code-block:: yaml+jinja
 
   - name: Count our fruit
     ansible.builtin.debug:
@@ -362,7 +400,9 @@ Defining inner and outer variable names with ``loop_var``
 .. versionadded:: 2.1
 
 You can nest two looping tasks using ``include_tasks``. However, by default Ansible sets the loop variable ``item`` for each loop. This means the inner, nested loop will overwrite the value of ``item`` from the outer loop.
-You can specify the name of the variable for each loop using ``loop_var`` with ``loop_control``::
+You can specify the name of the variable for each loop using ``loop_var`` with ``loop_control``.
+
+.. code-block:: yaml+jinja
 
     # main.yml
     - include_tasks: inner.yml
@@ -418,7 +458,9 @@ Accessing the name of your loop_var
 
 As of Ansible 2.8 you can get the name of the value provided to ``loop_control.loop_var`` using the ``ansible_loop_var`` variable
 
-For role authors, writing roles that allow loops, instead of dictating the required ``loop_var`` value, you can gather the value via::
+For role authors, writing roles that allow loops, instead of dictating the required ``loop_var`` value, you can gather the value via the following
+
+.. code-block:: yaml+jinja
 
     "{{ lookup('vars', ansible_loop_var) }}"
 
