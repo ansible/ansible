@@ -193,8 +193,8 @@ Forcing the data type
 
 You can cast values as certain types. For example, if you expect the input "True" from a :ref:`vars_prompt <playbooks_prompts>` and you want Ansible to recognize it as a boolean value instead of a string::
 
-   - debug:
-     msg: test
+   - ansible.builtin.debug:
+        msg: test
      when: some_string_value | bool
 
 If you want to perform a mathematical comparison on a fact and you want Ansible to recognize it as an integer instead of a string::
@@ -300,7 +300,7 @@ To get a list combining the elements of other lists use ``zip``::
 
     - name: Give me list combo of two lists
       ansible.builtin.debug:
-       msg: "{{ [1,2,3,4,5,6] | zip(['a','b','c','d','e','f']) | list }}"
+        msg: "{{ [1,2,3,4,5,6] | zip(['a','b','c','d','e','f']) | list }}"
 
     # => [[1, "a"], [2, "b"], [3, "c"], [4, "d"], [5, "e"], [6, "f"]]
 
