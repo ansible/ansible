@@ -11,8 +11,7 @@ import sys
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
-_PY38_MIN = sys.version_info[:2] >= (3, 8)
-if not _PY38_MIN:
+if sys.version_info < (3, 8):
     raise SystemExit(
         'ERROR: Ansible requires Python 3.8 or newer on the controller. '
         'Current version: %s' % ''.join(sys.version.splitlines())
