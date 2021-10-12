@@ -8,7 +8,7 @@ Documenting new network platforms
 .. contents::
   :local:
 
-When you create network modules for a new platform, or modify the connections provided by an existing network platform(such as ``network_cli`` and ``httpapi``), you also need to update  the :ref:`settings_by_platform` table and add or modify the Platform Options file for your platform.
+When you create network modules for a new platform, or modify the connections provided by an existing network platform (such as ``network_cli`` and ``httpapi``), you also need to update  the :ref:`settings_by_platform` table and add or modify the Platform Options file for your platform.
 
 You should already have documented each module as described in :ref:`developing_modules_documenting`.
 
