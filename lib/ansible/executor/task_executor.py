@@ -293,9 +293,9 @@ class TaskExecutor:
             label = '{{' + loop_var + '}}'
 
         if loop_var in task_vars:
-            display.warning(u"The loop variable '%s' is already in use. "
+            display.warning(u"%s: The loop variable '%s' is already in use. "
                             u"You should set the `loop_var` value in the `loop_control` option for the task"
-                            u" to something else to avoid variable collisions and unexpected behavior." % loop_var)
+                            u" to something else to avoid variable collisions and unexpected behavior." % (self._task, loop_var))
 
         ran_once = False
 
