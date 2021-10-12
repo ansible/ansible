@@ -195,9 +195,13 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                             raise
 
                         include_target = templar.template(t.args['_raw_params'])
-                        include_file = loader.path_dwim_relative_stack(t.get_search_path(), subdir, include_target)
+                        try:
+                            include_file = loader.path_dwim_relative_stack(t.get_search_path(), subdir, include_target)
+                        except AnsibleFileNotFound as e:
+                            # ignore missing file for now
+                            include_file = None
 
-                        if os.path.exists(include_file):
+                        if include_file is not None and os.path.exists(include_file):
                             found = True
                             break
                         else:
