@@ -171,7 +171,6 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     # handle relative includes by walking up the list of parent include
                     # tasks and checking the relative result to see if it exists
                     parent_include = block
-                    cumulative_path = None
 
                     found = False
                     subdir = 'tasks'
@@ -194,16 +193,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                                     orig_exc=e
                                 )
                             raise
-                        if cumulative_path is None:
-                            cumulative_path = parent_include_dir
-                        elif not os.path.isabs(cumulative_path):
-                            cumulative_path = os.path.join(parent_include_dir, cumulative_path)
+
                         include_target = templar.template(t.args['_raw_params'])
-                        if t._role:
-                            new_basedir = os.path.join(t._role._role_path, subdir, cumulative_path)
-                            include_file = loader.path_dwim_relative(new_basedir, subdir, include_target)
-                        else:
-                            include_file = loader.path_dwim_relative(loader.get_basedir(), cumulative_path, include_target)
+                        include_file = loader.path_dwim_relative_stack(t.get_search_path(), subdir, include_target)
 
                         if os.path.exists(include_file):
                             found = True
@@ -223,10 +215,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                                 obj=task_ds,
                                 suppress_extended_error=True,
                                 orig_exc=e)
-                        if t._role:
-                            include_file = loader.path_dwim_relative(t._role._role_path, subdir, include_target)
-                        else:
-                            include_file = loader.path_dwim(include_target)
+
+                        include_file = loader.path_dwim_relative_stack(t.get_search_path(), subdir, include_target)
 
                     data = loader.load_from_file(include_file)
                     if not data:
