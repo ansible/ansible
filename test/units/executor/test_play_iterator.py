@@ -172,11 +172,11 @@ class TestPlayIterator(unittest.TestCase):
         self.assertEqual(task.name, "role always task")
         self.assertIsNotNone(task._role)
         # role include task
-        # (host_state, task) = itr.get_next_task_for_host(hosts[0])
-        # self.assertIsNotNone(task)
-        # self.assertEqual(task.action, 'debug')
-        # self.assertEqual(task.name, "role included task")
-        # self.assertIsNotNone(task._role)
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.action, 'debug')
+        self.assertEqual(task.name, "role included task")
+        self.assertIsNotNone(task._role)
         # role task after include
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNotNone(task)
