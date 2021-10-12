@@ -1,7 +1,7 @@
 antsibull-changelog == 0.9.0
 
 # dependencies
-pyyaml == 5.4.1
+pyyaml==6.0b1
 docutils == 0.17.1
 packaging == 21.0
 pyparsing == 2.4.7

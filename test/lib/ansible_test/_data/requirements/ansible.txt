@@ -4,7 +4,8 @@
 # packages, not optional ones, and with the widest range of versions that could
 # be suitable)
 jinja2
-PyYAML
+pyyaml==6.0b1
+cffi==1.15.0rc2
 cryptography
 packaging
 # NOTE: resolvelib 0.x version bumps should be considered major/breaking

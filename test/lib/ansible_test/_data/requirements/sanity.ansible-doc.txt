@@ -1,5 +1,5 @@
 jinja2 == 3.0.1  # ansible-core requirement
-pyyaml == 5.4.1  # ansible-core requirement
+pyyaml == 6.0b1  # ansible-core requirement
 packaging == 21.0  # ansible-doc requirement
 
 # dependencies

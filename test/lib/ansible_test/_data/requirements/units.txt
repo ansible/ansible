@@ -2,4 +2,4 @@ mock
 pytest
 pytest-mock
 pytest-xdist
-pyyaml  # required by the collection loader (only needed for collections)
+pyyaml==6.0b1  # required by the collection loader (only needed for collections)

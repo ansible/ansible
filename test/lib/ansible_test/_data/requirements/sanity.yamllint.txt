@@ -2,4 +2,4 @@ yamllint == 1.26.0
 
 # dependencies
 pathspec == 0.9.0
-pyyaml == 5.4.1
+pyyaml==6.0b1
