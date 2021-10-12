@@ -32,7 +32,7 @@ import pkgutil
 from ast import AST, Import, ImportFrom
 from io import BytesIO
 
-from ansible.release import __version__, __author__, __codename__
+from ansible.release import __version__, __author__
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
@@ -927,44 +927,15 @@ def recursive_finder(name, module_fqn, module_data, zf):
     # FIXME: do we actually want ns pkg behavior for these? Seems like they should just be forced to emptyish pkg stubs
     py_module_cache = {
         ('ansible',): (
-            to_bytes(
-                'from pkgutil import extend_path\n'
-                '__path__ = extend_path(__path__,__name__)\n'
-                f'__version__ = {__version__!r}\n'
-                f'__author__ = "{__author__!r}"\n'
-            ),
-            'ansible/__init__.py'
-        ),
-        ('ansible', 'release'): (
-            to_bytes(
-                f'__version__ = {__version__!r}\n'
-                f'__author__ = "{__author__!r}"\n'
-                f'__codename__ = {__codename__!r}\n'
-            ),
-            'ansible/release.py'
-        ),
+            b'from pkgutil import extend_path\n'
+            b'__path__=extend_path(__path__,__name__)\n'
+            b'__version__="' + to_bytes(__version__) +
+            b'"\n__author__="' + to_bytes(__author__) + b'"\n',
+            'ansible/__init__.py'),
         ('ansible', 'module_utils'): (
-            to_bytes(
-                'from pkgutil import extend_path\n'
-                '__path__ = extend_path(__path__,__name__)\n'
-            ),
-            'ansible/module_utils/__init__.py'
-        ),
-        ('ansible', 'module_utils', 'ansible_release'): (
-            to_bytes(
-                'from ansible.module_utils.common.warnings import deprecate\n'
-                f'__version__ = {__version__!r}\n'
-                f'__author__ = {__author__!r}\n'
-                f'__codename__ = {__codename__!r}\n'
-                'deprecate(\n'
-                '    "`ansible.module_utils.ansible_release` is deprecated. "\n'
-                '    "Please make use of `ansible.release` or `module.ansible_version` for module code.",\n'
-                '    version="2.16"\n'
-                ')\n'
-            ),
-            'ansible/module_utils/ansible_release.py'
-        ),
-    }
+            b'from pkgutil import extend_path\n'
+            b'__path__=extend_path(__path__,__name__)\n',
+            'ansible/module_utils/__init__.py')}
 
     module_utils_paths = [p for p in module_utils_loader._get_paths(subdirs=False) if os.path.isdir(p)]
     module_utils_paths.append(_MODULE_UTILS_PATH)

@@ -73,14 +73,6 @@ lib/ansible/modules/yum.py validate-modules:parameter-invalid
 lib/ansible/modules/yum_repository.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/yum_repository.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/yum_repository.py validate-modules:undocumented-parameter
-lib/ansible/module_utils/ansible_release.py pylint:ansible-bad-module-import # overridden by module_common for module context
-lib/ansible/module_utils/ansible_release.py import-2.7!skip # overridden by module_common for module context
-lib/ansible/module_utils/ansible_release.py import-3.5!skip # overridden by module_common for module context
-lib/ansible/module_utils/ansible_release.py import-3.6!skip # overridden by module_common for module context
-lib/ansible/module_utils/ansible_release.py import-3.7!skip # overridden by module_common for module context
-lib/ansible/module_utils/ansible_release.py import-3.8!skip # overridden by module_common for module context
-lib/ansible/module_utils/ansible_release.py import-3.9!skip # overridden by module_common for module context
-lib/ansible/module_utils/ansible_release.py import-3.10!skip # overridden by module_common for module context
 lib/ansible/module_utils/compat/_selectors2.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py pylint:disallowed-name
