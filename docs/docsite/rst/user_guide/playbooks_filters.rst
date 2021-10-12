@@ -45,7 +45,7 @@ Making variables optional
 
 By default Ansible requires values for all variables in a templated expression. However, you can make specific variables optional. For example, you might want to use a system default for some items and control the value for others. To make a variable optional, set the default value to the special variable ``omit``:
 
-.. code-block:: jinja
+.. code-block:: yaml+jinja
 
     - name: Touch files with an optional mode
       ansible.builtin.file:
