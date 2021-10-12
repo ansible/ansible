@@ -8,14 +8,12 @@ __metaclass__ = type
 
 from ast import literal_eval
 from itertools import islice, chain
-import types
 
 from jinja2.runtime import StrictUndefined
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common.collections import is_sequence, Mapping
-from ansible.module_utils.common.text.converters import container_to_text
-from ansible.module_utils.six import text_type, string_types
+from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.native_jinja import NativeJinjaText
 
@@ -78,12 +76,9 @@ def ansible_native_concat(nodes):
         if not isinstance(out, string_types):
             return out
     else:
-        if isinstance(nodes, types.GeneratorType):
-            nodes = chain(head, nodes)
-        out = u''.join([to_text(_fail_on_undefined(v)) for v in nodes])
+        out = ''.join([to_text(_fail_on_undefined(v)) for v in chain(head, nodes)])
 
     try:
-        out = literal_eval(out)
-        return out
+        return literal_eval(out)
     except (ValueError, SyntaxError, MemoryError):
         return out
