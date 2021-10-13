@@ -23,7 +23,6 @@ def assemble_files_to_ship(complete_file_list):
         '.azure-pipelines/*',
         '.github/*',
         '.github/*/*',
-        'bin/*',
         'changelogs/fragments/*',
         'hacking/backport/*',
         'hacking/azp/*',
