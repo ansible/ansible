@@ -12,10 +12,6 @@ target="shippable/windows/incidental/"
 stage="${S:-prod}"
 provider="${P:-default}"
 
-# python versions to test in order
-IFS=' ' read -r -a python_versions <<< \
-    "$(PYTHONPATH="${PWD}/test/lib" python -c 'from ansible_test._internal import constants; print(" ".join(constants.CONTROLLER_PYTHON_VERSIONS))')"
-
 # python version to run full tests on while other versions run minimal tests
 python_default="$(PYTHONPATH="${PWD}/test/lib" python -c 'from ansible_test._internal import constants; print(constants.CONTROLLER_MIN_PYTHON_VERSION)')"
 
@@ -49,25 +45,8 @@ else
     )
 fi
 
-for version in "${python_versions[@]}"; do
-    if [ "${version}" == "${python_default}" ]; then
-        # full tests
-        ci="${target}"
-    else
-        # minimal tests for other python versions
-        ci="incidental_win_ping"
-    fi
-
-    # terminate remote instances on the final python version tested
-    if [ "${version}" = "${python_versions[-1]}" ]; then
-        terminate="always"
-    else
-        terminate="never"
-    fi
-
-    # shellcheck disable=SC2086
-    ansible-test windows-integration --color -v --retry-on-error "${ci}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
-        "${platforms[@]}" \
-        --docker default --python "${version}" \
-        --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
-done
+# shellcheck disable=SC2086
+ansible-test windows-integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
+    "${platforms[@]}" \
+    --docker default --python "${python_default}" \
+    --remote-terminate always --remote-stage "${stage}" --remote-provider "${provider}"
