@@ -78,7 +78,7 @@ from ansible.module_utils.basic import (
 )
 from ansible.module_utils.common.sys_info import get_platform_subclass
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
-from ansible.module_utils.facts.utils import get_file_lines
+from ansible.module_utils.facts.utils import get_file_lines, get_file_content
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.six import PY3, text_type
 
@@ -290,9 +290,13 @@ class RedHatStrategy(BaseStrategy):
     def get_permanent_hostname(self):
         try:
             for line in get_file_lines(self.NETWORK_FILE):
+                line = to_native(line).strip()
                 if line.startswith('HOSTNAME'):
                     k, v = line.split('=')
                     return v.strip()
+            self.module.fail_json(
+                "Unable to locate HOSTNAME entry in %s" % self.NETWORK_FILE
+            )
         except Exception as e:
             self.module.fail_json(
                 msg="failed to read hostname: %s" % to_native(e),
@@ -302,8 +306,10 @@ class RedHatStrategy(BaseStrategy):
         try:
             lines = []
             found = False
-            for line in get_file_lines(self.NETWORK_FILE):
-                if line.startswith('HOSTNAME'):
+            content = get_file_content(self.NETWORK_FILE, strip=False) or ""
+            for line in content.splitlines(True):
+                line = to_native(line)
+                if line.strip().startswith('HOSTNAME'):
                     lines.append("HOSTNAME=%s\n" % name)
                     found = True
                 else:
