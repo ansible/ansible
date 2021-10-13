@@ -149,7 +149,6 @@ test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.0/DSCResources/AN
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.0/xTestDsc.psd1 pslint!skip
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.1/DSCResources/ANSIBLE_xTestResource/ANSIBLE_xTestResource.psm1 pslint!skip
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.1/xTestDsc.psd1 pslint!skip
-test/integration/targets/incidental_win_ping/library/win_ping_syntax_error.ps1 pslint!skip
 test/integration/targets/incidental_win_reboot/templates/post_reboot.ps1 pslint!skip
 test/integration/targets/json_cleanup/library/bad_json shebang
 test/integration/targets/lookup_csvfile/files/crlf.csv line-endings
