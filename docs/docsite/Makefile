@@ -45,7 +45,7 @@ endif
 
 DOC_PLUGINS ?= become cache callback cliconf connection httpapi inventory lookup netconf shell strategy vars
 
-PYTHON=python
+PYTHON ?= python
 # fetch version from project release.py as single source-of-truth
 VERSION := $(shell $(PYTHON) ../../packaging/release/versionhelper/version_helper.py --raw || echo error)
 ifeq ($(findstring error,$(VERSION)), error)
