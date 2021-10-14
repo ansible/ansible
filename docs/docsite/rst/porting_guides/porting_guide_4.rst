@@ -132,6 +132,40 @@ Porting custom scripts
 
 No notable changes
 
+Porting Guide for v4.7.0
+========================
+
+Major Changes
+-------------
+
+openvswitch.openvswitch
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- By mistake we tagged the repo to 2.0.0 and as it wasn't intended and cannot be reverted we're releasing 2.0.1 to make the community aware of the major version update.
+
+Deprecated Features
+-------------------
+
+cisco.ios
+~~~~~~~~~
+
+- Deprecated ios_ntp modules.
+
+cisco.nxos
+~~~~~~~~~~
+
+- Deprecated `nxos_ntp`, `nxos_ntp_options`, `nxos_ntp_auth` modules.
+
+community.vmware
+~~~~~~~~~~~~~~~~
+
+- vmware_guest_vnc -  Sphere 7.0 removed the built-in VNC server (https://docs.vmware.com/en/VMware-vSphere/7.0/rn/vsphere-esxi-vcenter-server-70-release-notes.html#productsupport).
+
+junipernetworks.junos
+~~~~~~~~~~~~~~~~~~~~~
+
+- Deprecated router_id from ospfv2 resource module.
+
 Porting Guide for v4.6.0
 ========================
 
@@ -564,6 +598,11 @@ netapp.ontap
 ~~~~~~~~~~~~
 
 - na_ontap_autosupport - Added REST support to the module.
+
+openvswitch.openvswitch
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- There is no major changes for this particular release and it was tagged by mistake and cannot be reverted.
 
 servicenow.servicenow
 ~~~~~~~~~~~~~~~~~~~~~
