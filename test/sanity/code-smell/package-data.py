@@ -53,7 +53,6 @@ def assemble_files_to_ship(complete_file_list):
         'hacking/report.py',
         'hacking/return_skeleton_generator.py',
         'hacking/test-module',
-        'hacking/test-module.py',
         'test/support/README.md',
         '.cherry_picker.toml',
         '.mailmap',
