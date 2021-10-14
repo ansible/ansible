@@ -20,7 +20,7 @@ from .compat import (
 )
 
 
-def parse_args(argv=None):  # type: (t.Optional[t.List[str]],) -> argparse.Namespace
+def parse_args(argv=None):  # type: (t.Optional[t.List[str]]) -> argparse.Namespace
     """Parse command line arguments."""
     completer = CompositeActionCompletionFinder()
 

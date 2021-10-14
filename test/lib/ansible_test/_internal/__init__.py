@@ -47,7 +47,7 @@ from .provisioning import (
 )
 
 
-def main(cli_args=None):
+def main(cli_args=None):  # type: (t.Optional[t.List[str]]) -> None
     """Main program function."""
     try:
         os.chdir(data_context().content.root)
