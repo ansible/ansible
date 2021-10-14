@@ -88,7 +88,7 @@ Defining different values for true/false/null (ternary)
 
 You can create a test, then define one value to use when the test returns true and another when the test returns false (new in version 1.9):
 
-.. code-block:: jinja
+.. code-block:: yaml+jinja
 
     {{ (status == 'needs_restart') | ternary('restart', 'continue') }}
 
