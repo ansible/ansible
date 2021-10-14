@@ -16,6 +16,7 @@
           invalid2: ../invalid
           out_of_tree_circle: /tmp/ansible-test-link-dir/out_of_tree_circle
           subdir3: ../subdir2/subdir3
+          bar.txt: ../bar.txt
 
     - file: path={{local_temp_dir}} state=directory
       name: ensure temp dir exists
