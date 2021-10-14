@@ -1697,7 +1697,7 @@ The filter can also be applied to any Ansible variable. For example to
 make the output of the ``ansible_managed`` variable more readable, we can
 change the definition in the ``ansible.cfg`` file to this:
 
-.. code-block:: yaml+jinja
+.. code-block:: ini
 
     [defaults]
 
