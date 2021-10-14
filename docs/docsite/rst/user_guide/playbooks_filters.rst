@@ -1806,7 +1806,7 @@ Getting Kubernetes resource names
 Use the "k8s_config_resource_name" filter to obtain the name of a Kubernetes ConfigMap or Secret,
 including its hash::
 
-    {{ configmap_resource_definition | kuberernetes.core.k8s_config_resource_name }}
+    {{ configmap_resource_definition | kubernetes.core.k8s_config_resource_name }}
 
 This can then be used to reference hashes in Pod specifications::
 
@@ -1823,7 +1823,7 @@ This can then be used to reference hashes in Pod specifications::
             containers:
             - envFrom:
                 - secretRef:
-                    name: {{ my_secret | kuberernetes.core.k8s_config_resource_name }}
+                    name: {{ my_secret | kubernetes.core.k8s_config_resource_name }}
 
 .. versionadded:: 2.8
 
