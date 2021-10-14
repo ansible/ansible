@@ -70,7 +70,7 @@ Defining mandatory values
 
 If you configure Ansible to ignore undefined variables, you may want to define some values as mandatory. By default, Ansible fails if a variable in your playbook or command is undefined. You can configure Ansible to allow undefined variables by setting :ref:`DEFAULT_UNDEFINED_VAR_BEHAVIOR` to ``false``. In that case, you may want to require some variables to be defined. You can do this with:
 
-.. code-block:: jinja
+.. code-block:: yaml+jinja
 
     {{ variable | mandatory }}
 
