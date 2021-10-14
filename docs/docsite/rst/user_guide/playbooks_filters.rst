@@ -2062,7 +2062,7 @@ To create a namespaced UUIDv5:
 
 To create a namespaced UUIDv5 using the default Ansible namespace '361E6D51-FAEC-444A-9079-341386DA8E2E':
 
-.. code-block:: jinja
+.. code-block:: yaml+jinja
 
     {{ string | to_uuid }}
 
