@@ -6,7 +6,7 @@ Rackspace Cloud Guide
 Introduction
 ````````````
 
-.. note:: This section of the documentation is under construction. We are in the process of adding more examples about the Rackspace modules and how they work together.  Once complete, there will also be examples for Rackspace Cloud in `ansible-examples <https://github.com/ansible/ansible-examples/>`_.
+.. note:: Rackspace functionality in Ansible is not maintained and users should consider the `OpenStack collection <https://galaxy.ansible.com/openstack/cloud>`_ instead.
 
 Ansible contains a number of core modules for interacting with Rackspace Cloud.  
 
