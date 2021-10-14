@@ -98,7 +98,8 @@ options:
     version_added: "1.2"
   skip_broken:
     description:
-      - Skip packages with broken dependencies(devsolve) and are causing problems.
+      - Skip all unavailable packages or packages with broken dependencies
+        without raising an error. Equivalent to passing the --skip-broken option.
     type: bool
     default: "no"
     version_added: "2.3"
