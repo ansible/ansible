@@ -2080,7 +2080,7 @@ Handling dates and times
 
 To get a date object from a string use the `to_datetime` filter:
 
-.. code-block:: jinja
+.. code-block:: yaml+jinja
 
     # Get total amount of seconds between two dates. Default date format is %Y-%m-%d %H:%M:%S but you can pass your own format
     {{ (("2016-08-14 20:00:12" | to_datetime) - ("2015-12-25" | to_datetime('%Y-%m-%d'))).total_seconds()  }}
