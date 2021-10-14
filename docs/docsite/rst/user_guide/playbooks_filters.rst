@@ -23,7 +23,7 @@ Providing default values
 
 You can provide default values for variables directly in your templates using the Jinja2 'default' filter. This is often a better approach than failing if a variable is not defined:
 
-.. code-block:: jinja
+.. code-block:: yaml+jinja
 
     {{ some_variable | default(5) }}
 
