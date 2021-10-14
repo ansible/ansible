@@ -2098,7 +2098,7 @@ To get a date object from a string use the `to_datetime` filter:
 
 To format a date using a string (like with the shell date command), use the "strftime" filter:
 
-.. code-block:: jinja
+.. code-block:: yaml+jinja
 
     # Display year-month-day
     {{ '%Y-%m-%d' | strftime }}
