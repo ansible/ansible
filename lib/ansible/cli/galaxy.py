@@ -1686,8 +1686,8 @@ class GalaxyCLI(CLI):
         return True
 
 
-def main():
-    cli_executor(GalaxyCLI)
+def main(args=None):
+    cli_executor(GalaxyCLI, args)
 
 
 if __name__ == '__main__':

@@ -500,8 +500,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.cmdloop()
 
 
-def main():
-    cli_executor(ConsoleCLI)
+def main(args=None):
+    cli_executor(ConsoleCLI, args)
 
 
 if __name__ == '__main__':

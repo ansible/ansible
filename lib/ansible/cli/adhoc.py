@@ -185,8 +185,8 @@ class AdHocCLI(CLI):
         return result
 
 
-def main():
-    cli_executor(AdHocCLI)
+def main(args=None):
+    cli_executor(AdHocCLI, args)
 
 
 if __name__ == '__main__':

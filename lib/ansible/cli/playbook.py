@@ -222,8 +222,8 @@ class PlaybookCLI(CLI):
             variable_manager.clear_facts(hostname)
 
 
-def main():
-    cli_executor(PlaybookCLI)
+def main(args=None):
+    cli_executor(PlaybookCLI, args)
 
 
 if __name__ == '__main__':

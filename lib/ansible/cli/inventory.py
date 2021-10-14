@@ -409,8 +409,8 @@ class InventoryCLI(CLI):
         return results
 
 
-def main():
-    cli_executor(InventoryCLI)
+def main(args=None):
+    cli_executor(InventoryCLI, args)
 
 
 if __name__ == '__main__':

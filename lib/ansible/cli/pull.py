@@ -348,8 +348,8 @@ class PullCLI(CLI):
             return playbook
 
 
-def main():
-    cli_executor(PullCLI)
+def main(args=None):
+    cli_executor(PullCLI, args)
 
 
 if __name__ == '__main__':

@@ -549,7 +549,10 @@ class CLI(with_metaclass(ABCMeta, object)):
         return to_unsafe_text(secret)
 
 
-def cli_executor(cls):
+def cli_executor(cls, args=None):
+    if args is None:
+        args = sys.argv
+
     try:
         display.debug("starting run")
 
@@ -565,7 +568,7 @@ def cli_executor(cls):
             display.debug("Created the '%s' directory" % ansible_dir)
 
         try:
-            args = [to_text(a, errors='surrogate_or_strict') for a in sys.argv]
+            args = [to_text(a, errors='surrogate_or_strict') for a in args]
         except UnicodeError:
             display.error('Command line args are not in utf-8, unable to continue.  Ansible currently only understands utf-8')
             display.display(u"The full traceback was:\n\n%s" % to_text(traceback.format_exc()))

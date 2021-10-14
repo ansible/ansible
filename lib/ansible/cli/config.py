@@ -476,8 +476,8 @@ class ConfigCLI(CLI):
         self.pager(to_text('\n'.join(text), errors='surrogate_or_strict'))
 
 
-def main():
-    cli_executor(ConfigCLI)
+def main(args=None):
+    cli_executor(ConfigCLI, args)
 
 
 if __name__ == '__main__':

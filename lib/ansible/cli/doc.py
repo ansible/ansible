@@ -1390,8 +1390,8 @@ def _do_lookup_snippet(doc):
     return text
 
 
-def main():
-    cli_executor(DocCLI)
+def main(args=None):
+    cli_executor(DocCLI, args)
 
 
 if __name__ == '__main__':

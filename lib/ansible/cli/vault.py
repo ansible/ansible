@@ -469,8 +469,8 @@ class VaultCLI(CLI):
         display.display("Rekey successful", stderr=True)
 
 
-def main():
-    cli_executor(VaultCLI)
+def main(args=None):
+    cli_executor(VaultCLI, args)
 
 
 if __name__ == '__main__':
