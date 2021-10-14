@@ -94,7 +94,7 @@ You can create a test, then define one value to use when the test returns true a
 
 In addition, you can define a one value to use on true, one value on false and a third value on null (new in version 2.8):
 
-.. code-block:: jinja
+.. code-block:: yaml+jinja
 
    {{ enabled | ternary('no shutdown', 'shutdown', omit) }}
 
