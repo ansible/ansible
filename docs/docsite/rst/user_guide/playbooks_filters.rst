@@ -490,7 +490,7 @@ The ``combine`` filter allows hashes to be merged. For example, the following wo
 
 The resulting hash would be:
 
-.. code-block:: yaml+jinja
+.. code-block:: text
 
     {'a':1, 'b':3}
 
