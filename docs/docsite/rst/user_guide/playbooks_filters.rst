@@ -34,7 +34,7 @@ a default with a value in a nested data structure (in other words, :code:`{{ foo
 
 If you want to use the default value when variables evaluate to false or an empty string you have to set the second parameter to ``true``:
 
-.. code-block:: jinja
+.. code-block:: yaml+jinja
 
     {{ lookup('env', 'MY_USER') | default('admin', true) }}
 
