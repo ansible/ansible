@@ -7,7 +7,7 @@ from importlib.metadata import distribution
 
 def main():
     dist = distribution('ansible-core')
-    ep_map = {ep.name: ep for ep in dist.entry_points.select(group='console_scripts')}
+    ep_map = {ep.name: ep for ep in dist.entry_points if ep.group == 'console_scripts'}
 
     parser = argparse.ArgumentParser(prog='python -m ansible')
     parser.add_argument('entry_point', choices=list(ep_map))
