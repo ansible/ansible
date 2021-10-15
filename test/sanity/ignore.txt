@@ -179,9 +179,7 @@ test/lib/ansible_test/_data/requirements/sanity.pslint.ps1 pslint:PSCustomUseLit
 test/lib/ansible_test/_util/target/setup/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 test/support/integration/plugins/inventory/aws_ec2.py pylint:use-a-generator
 test/support/integration/plugins/modules/ec2_group.py pylint:use-a-generator
-test/support/integration/plugins/modules/lvg.py pylint:disallowed-name
 test/support/integration/plugins/modules/timezone.py pylint:disallowed-name
-test/support/integration/plugins/modules/x509_crl.py pylint:consider-using-set-comprehension
 test/support/integration/plugins/module_utils/aws/core.py pylint:property-with-parameters
 test/support/integration/plugins/module_utils/cloud.py future-import-boilerplate
 test/support/integration/plugins/module_utils/cloud.py metaclass-boilerplate
