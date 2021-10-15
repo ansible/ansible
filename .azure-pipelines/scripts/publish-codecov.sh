@@ -19,6 +19,5 @@ for file in "${output_path}"/reports/coverage*.xml; do
     ./codecov \
         --file "${file}" \
         --name "${name}" \
-        --slug "${BUILD_REPOSITORY_NAME}" \
         || echo "Failed to upload code coverage report to codecov.io: ${file}"
 done
