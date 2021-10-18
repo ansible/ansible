@@ -134,3 +134,27 @@ class TestOtherFilesystem(ModuleTestCase):
 
         with patch('os.lchown', side_effect=OSError) as m:
             self.assertRaises(SystemExit, am.set_group_if_different, '/path/to/file', 'root', False)
+
+    def test_module_utils_basic_ansible_module_set_directory_attributes_if_different(self):
+        from ansible.module_utils import basic
+        basic._ANSIBLE_ARGS = None
+
+        am = basic.AnsibleModule(
+            argument_spec=dict(),
+        )
+
+        file_args = {
+            'path': '/path/to/file',
+            'mode': None,
+            'owner': None,
+            'group': None,
+            'seuser': None,
+            'serole': None,
+            'setype': None,
+            'selevel': None,
+            'secontext': [None, None, None],
+            'attributes': None,
+        }
+
+        self.assertEqual(am.set_directory_attributes_if_different(file_args, True), True)
+        self.assertEqual(am.set_directory_attributes_if_different(file_args, False), False)
