@@ -33,7 +33,24 @@
   with_items:
     - "{{ unarchive00.results }}"
 
+- name: verify that archive extraction did not skip non-excluded files
+  assert:
+    that:
+      - "'include/include-1.txt' in item.stdout"
+      - "'include/include-2.txt' in item.stdout"
+      - "'include/include-3.txt' in item.stdout"
+      - "'other/include-1.ext' in item.stdout"
+      - "'other/include-2.ext' in item.stdout"
+      - "'other/exclude-2.ext' in item.stdout"
+      - "'other/other-1.ext' in item.stdout"
+      - "'other/other-2.ext' in item.stdout"
+  with_items:
+    - "{{ unarchive00.results }}"
+
 - name: remove our zip unarchive destination
   file:
-    path: '{{remote_tmp_dir}}/test-unarchive-zip'
     state: absent
+    path: "{{ remote_tmp_dir }}/exclude-{{ item }}"
+  with_items:
+    - zip
+    - tar
