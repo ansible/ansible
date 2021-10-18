@@ -15,13 +15,16 @@ pip install "${base_dir}" --disable-pip-version-check --no-deps
 for bin in "${bin_dir}/ansible"*; do
     name="$(basename "${bin}")"
 
-    echo "=== ${name}=${bin} ==="
+    entry_point="${name//ansible-/}"
+    entry_point="${entry_point//ansible/adhoc}"
+
+    echo "=== ${name} (${entry_point})=${bin} ==="
 
     if [ "${name}" == "ansible-test" ]; then
         "${bin}" --help | tee /dev/stderr | grep -Eo "^usage:\ ansible-test\ .*"
-        python -m ansible "${name}" --help | tee /dev/stderr | grep -Eo "^usage:\ ansible-test\ .*"
+        python -m ansible "${entry_point}" --help | tee /dev/stderr | grep -Eo "^usage:\ ansible-test\ .*"
     else
         "${bin}" --version | tee /dev/stderr | grep -Eo "(^${name}\ \[core\ .*|executable location = ${bin}$)"
-        python -m ansible "${name}" --version | tee /dev/stderr | grep -Eo "(^${name}\ \[core\ .*|executable location = ${bin}$)"
+        python -m ansible "${entry_point}" --version | tee /dev/stderr | grep -Eo "(^${name}\ \[core\ .*|executable location = ${bin}$)"
     fi
 done
