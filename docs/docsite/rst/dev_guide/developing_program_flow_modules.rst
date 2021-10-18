@@ -425,7 +425,9 @@ _ansible_selinux_special_fs
 
 List. Names of filesystems which should have a special SELinux
 context. They are used by the `AnsibleModule` methods which operate on
-files (changing attributes, moving, and copying). To set, add a comma separated string of filesystem names in :file:`ansible.cfg`::
+files (changing attributes, moving, and copying). To set, add a comma separated string of filesystem names in :file:`ansible.cfg`:
+
+.. code-block:: ini
 
   # ansible.cfg
   [selinux]

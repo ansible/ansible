@@ -14,17 +14,23 @@ Rebasing the branch used to create your PR will resolve both of these issues.
 Configuring your remotes
 ========================
 
-Before you can rebase your PR, you need to make sure you have the proper remotes configured. These instructions apply to any repository on GitHub, including collections repositories. On other platforms (bitbucket, gitlab), the same principles and commands apply but the syntax may be different. We use the ansible/ansible repository here as an example. In other repositories, the branch names may be different. Assuming you cloned your fork in the usual fashion, the ``origin`` remote will point to your fork::
+Before you can rebase your PR, you need to make sure you have the proper remotes configured. These instructions apply to any repository on GitHub, including collections repositories. On other platforms (bitbucket, gitlab), the same principles and commands apply but the syntax may be different. We use the ansible/ansible repository here as an example. In other repositories, the branch names may be different. Assuming you cloned your fork in the usual fashion, the ``origin`` remote will point to your fork:
+
+.. code-block:: shell-session
 
    $ git remote -v
    origin  git@github.com:YOUR_GITHUB_USERNAME/ansible.git (fetch)
    origin  git@github.com:YOUR_GITHUB_USERNAME/ansible.git (push)
 
-However, you also need to add a remote which points to the upstream repository::
+However, you also need to add a remote which points to the upstream repository:
+
+.. code-block:: shell-session
 
    $ git remote add upstream https://github.com/ansible/ansible.git
 
-Which should leave you with the following remotes::
+Which should leave you with the following remotes:
+
+.. code-block:: shell-session
 
    $ git remote -v
    origin  git@github.com:YOUR_GITHUB_USERNAME/ansible.git (fetch)
@@ -32,7 +38,9 @@ Which should leave you with the following remotes::
    upstream        https://github.com/ansible/ansible.git (fetch)
    upstream        https://github.com/ansible/ansible.git (push)
 
-Checking the status of your branch should show your fork is up-to-date with the ``origin`` remote::
+Checking the status of your branch should show your fork is up-to-date with the ``origin`` remote:
+
+.. code-block:: shell-session
 
    $ git status
    On branch YOUR_BRANCH
@@ -42,14 +50,18 @@ Checking the status of your branch should show your fork is up-to-date with the 
 Rebasing your branch
 ====================
 
-Once you have an ``upstream`` remote configured, you can rebase the branch for your PR::
+Once you have an ``upstream`` remote configured, you can rebase the branch for your PR:
+
+.. code-block:: shell-session
 
    $ git pull --rebase upstream devel
 
 This will replay the changes in your branch on top of the changes made in the upstream ``devel`` branch.
 If there are merge conflicts, you will be prompted to resolve those before you can continue.
 
-After you rebase, the status of your branch changes::
+After you rebase, the status of your branch changes:
+
+.. code-block:: shell-session
 
    $ git status
    On branch YOUR_BRANCH
@@ -65,7 +77,9 @@ Updating your pull request
 
 Now that you've rebased your branch, you need to push your changes to GitHub to update your PR.
 
-Since rebasing re-writes git history, you will need to use a force push::
+Since rebasing re-writes git history, you will need to use a force push:
+
+.. code-block:: shell-session
 
    $ git push --force-with-lease
 

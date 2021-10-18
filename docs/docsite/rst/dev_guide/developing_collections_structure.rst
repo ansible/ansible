@@ -13,7 +13,9 @@ A collection is a simple data structure. None of the directories are required un
 Collection directories and files
 ================================
 
-A collection can contain these directories and files::
+A collection can contain these directories and files:
+
+.. code-block:: shell-session
 
     collection/
     ├── docs/
