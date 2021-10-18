@@ -19,7 +19,9 @@ for bin in "${bin_dir}/ansible"*; do
 
     if [ "${name}" == "ansible-test" ]; then
         "${bin}" --help | tee /dev/stderr | grep -Eo "^usage:\ ansible-test\ .*"
+        python -m ansible "${name}" --help | tee /dev/stderr | grep -Eo "^usage:\ ansible-test\ .*"
     else
         "${bin}" --version | tee /dev/stderr | grep -Eo "(^${name}\ \[core\ .*|executable location = ${bin}$)"
+        python -m ansible "${name}" --version | tee /dev/stderr | grep -Eo "(^${name}\ \[core\ .*|executable location = ${bin}$)"
     fi
 done

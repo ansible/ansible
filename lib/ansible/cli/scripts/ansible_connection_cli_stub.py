@@ -221,14 +221,14 @@ class ConnectionProcess(object):
         display.display('shutdown complete', log_only=True)
 
 
-def main():
+def main(args=None):
     """ Called to initiate the connect to the remote device
     """
     parser = argparse.ArgumentParser(prog='ansible-connection', add_help=False)
     parser.add_argument('--version', action=AnsibleVersion, nargs=0)
     parser.add_argument('playbook_pid')
     parser.add_argument('task_uuid')
-    args = parser.parse_args()
+    args = parser.parse_args(args[1:] if args is not None else args)
 
     rc = 0
     result = {}
