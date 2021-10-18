@@ -26,7 +26,10 @@ setup(
             'ansible-pull=ansible.cli.pull:main',
             'ansible-vault=ansible.cli.vault:main',
             'ansible-connection=ansible.cli.scripts.ansible_connection_cli_stub:main',
-            'ansible-test=ansible_test._util.target.cli.ansible_test_cli_stub:main',
         ],
     },
+    # keep ansible-test as a verbatim script to work with editable installs, since it needs to do its
+    # own package redirection magic that's beyond the scope of the normal `ansible` path redirection
+    # done by setuptools `develop`
+    scripts=['bin/ansible-test'],
 )
