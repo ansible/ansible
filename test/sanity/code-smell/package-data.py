@@ -29,6 +29,7 @@ def assemble_files_to_ship(complete_file_list):
         'hacking/tests/*',
         'hacking/ticket_stubs/*',
         'test/sanity/code-smell/botmeta.*',
+        'test/sanity/code-smell/release-names.*',
         'test/utils/*',
         'test/utils/*/*',
         'test/utils/*/*/*',
@@ -54,6 +55,8 @@ def assemble_files_to_ship(complete_file_list):
         'hacking/return_skeleton_generator.py',
         'hacking/test-module',
         'test/support/README.md',
+        'test/lib/ansible_test/_internal/commands/sanity/bin_symlinks.py',
+        'test/lib/ansible_test/_internal/commands/sanity/integration_aliases.py',
         '.cherry_picker.toml',
         '.mailmap',
         # Generated as part of a build step
@@ -74,6 +77,11 @@ def assemble_files_to_ship(complete_file_list):
         'hacking/env-setup.fish',
         'MANIFEST',
         'setup.cfg',
+        # docs for test files not included in sdist
+        'docs/docsite/rst/dev_guide/testing/sanity/bin-symlinks.rst',
+        'docs/docsite/rst/dev_guide/testing/sanity/botmeta.rst',
+        'docs/docsite/rst/dev_guide/testing/sanity/integration-aliases.rst',
+        'docs/docsite/rst/dev_guide/testing/sanity/release-names.rst',
     ))
 
     # These files are generated and then intentionally added to the sdist
@@ -109,7 +117,11 @@ def assemble_files_to_install(complete_file_list):
     """
     This looks for all of the files which should show up in an installation of ansible
     """
-    ignore_patterns = tuple()
+    ignore_patterns = (
+        # Tests excluded from sdist
+        'test/lib/ansible_test/_internal/commands/sanity/bin_symlinks.py',
+        'test/lib/ansible_test/_internal/commands/sanity/integration_aliases.py',
+    )
 
     pkg_data_files = []
     for path in complete_file_list:
