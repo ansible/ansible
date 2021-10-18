@@ -2259,3 +2259,29 @@
          - "dest_dir_readwrite_stat.stat.mode == '0644'"
          - "dest_dir_executable_stat.stat.mode == '0755'"
          - "dest_dir_readonly_stat.stat.mode == '0444'"
+
+- name: fail to copy an encrypted file without the password set
+  copy:
+    src: '{{role_path}}/files-different/vault/vault-file'
+    dest: '{{output_dir}}/file'
+  register: fail_copy_encrypted_file
+  ignore_errors: yes # weird failed_when doesn't work in this case
+
+- name: assert failure message when copying an encrypted file without the password set
+  assert:
+    that:
+    - fail_copy_encrypted_file is failed
+    - fail_copy_encrypted_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-different/vault/vault-file'
+
+- name: fail to copy a directory with an encrypted file without the password
+  copy:
+    src: '{{role_path}}/files-different/vault'
+    dest: '{{output_dir}}'
+  register: fail_copy_directory_with_enc_file
+  ignore_errors: yes
+
+- name: assert failure message when copying a directory that contains an encrypted file without the password set
+  assert:
+    that:
+    - fail_copy_directory_with_enc_file is failed
+    - fail_copy_directory_with_enc_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-different/vault/vault-file'
