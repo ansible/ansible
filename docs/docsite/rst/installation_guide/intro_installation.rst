@@ -266,7 +266,7 @@ Ansible can manage older operating systems that contain Python 2.6 or higher.
 Installing Ansible on Ubuntu
 ----------------------------
 
-Ubuntu builds are available `in a PPA here <https://launchpad.net/~ansible/+archive/ubuntu/ansible>`_.
+Ubuntu builds are available in two PPA:  `<https://launchpad.net/~ansible/+archive/ubuntu/ansible>`_ for ansible 2.9 and `<https://launchpad.net/~ansible/+archive/ubuntu/ansible-4>`_ for ansible 4.
 
 To configure the PPA on your machine and install Ansible run these commands:
 
@@ -274,7 +274,10 @@ To configure the PPA on your machine and install Ansible run these commands:
 
     $ sudo apt update
     $ sudo apt install software-properties-common
+    # for ansible 2.9
     $ sudo add-apt-repository --yes --update ppa:ansible/ansible
+    # for ansible 4
+    $ sudo add-apt-repository --yes --update ppa:ansible/ansible-4
     $ sudo apt install ansible
 
 .. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties". You may want to use ``apt-get`` instead of ``apt`` in older versions. Also, be aware that only newer distributions (in other words, 18.04, 18.10, and so on) have a ``-u`` or ``--update`` flag, so adjust your script accordingly.
