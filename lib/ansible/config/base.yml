@@ -705,6 +705,11 @@ DEFAULT_GATHER_SUBSET:
       section: defaults
   version_added: "2.1"
   type: list
+  deprecated:
+      why: the module_defaults keyword is a more generic version and can apply to all calls to the
+           M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
+      version: "2.17"
+      alternatives: module_defaults
 DEFAULT_GATHER_TIMEOUT:
   name: Gather facts timeout
   default: 10
@@ -715,7 +720,11 @@ DEFAULT_GATHER_TIMEOUT:
   ini:
   - {key: gather_timeout, section: defaults}
   type: integer
-  yaml: {key: defaults.gather_timeout}
+  deprecated:
+      why: the module_defaults keyword is a more generic version and can apply to all calls to the
+           M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
+      version: "2.17"
+      alternatives: module_defaults
 DEFAULT_HASH_BEHAVIOUR:
   name: Hash merge behaviour
   default: replace
