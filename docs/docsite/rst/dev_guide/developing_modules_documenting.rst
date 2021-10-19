@@ -227,8 +227,8 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
           link: https://developer.cisco.com/docs/apic-mim-ref/
 
 
-  * Using ``ref:`` with a reference that is not published to the public docsite may require the use of a title to work correctly.
-  * Non-module plugins can be linked to with ``ref:`` using the rST anchor, for example ``ref: The documentation for namespace.collection.plugin_name lookup <ansible_collections.namespace.collection.plugin_name_lookup>``.
+  * If you use ``ref:`` to link to a page that does not exist on docs.ansible.com (for example, documentation for a module you are adding on your branch), you might need to add a title to make the link work correctly.
+  * You can link to non-module plugins with ``ref:`` using the rST anchor, for example ``ref: The documentation for namespace.collection.plugin_name lookup <ansible_collections.namespace.collection.plugin_name_lookup>``.
 
 
 :notes:
