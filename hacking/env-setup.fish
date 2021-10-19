@@ -5,6 +5,7 @@ set HACKING_DIR (dirname (status -f))
 set FULL_PATH (python -c "import os; print(os.path.realpath('$HACKING_DIR'))")
 set ANSIBLE_HOME (dirname $FULL_PATH)
 set PREFIX_PYTHONPATH $ANSIBLE_HOME/lib
+set ANSIBLE_TEST_PREFIX_PYTHONPATH $ANSIBLE_HOME/test/lib
 set PREFIX_PATH $ANSIBLE_HOME/bin
 set PREFIX_MANPATH $ANSIBLE_HOME/docs/man
 
@@ -29,6 +30,16 @@ else
             end
             set -gx PYTHONPATH "$PREFIX_PYTHONPATH:$PYTHONPATH"
     end
+end
+
+# Set ansible_test PYTHONPATH
+switch PYTHONPATH
+    case "$ANSIBLE_TEST_PREFIX_PYTHONPATH*"
+    case "*"
+        if not [ $QUIET ]
+            echo "Appending PYTHONPATH"
+        end
+        set -gx PYTHONPATH "$ANSIBLE_TEST_PREFIX_PYTHONPATH:$PYTHONPATH"
 end
 
 # Set PATH

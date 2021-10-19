@@ -1,9 +1,14 @@
+#!/usr/bin/env python
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# PYTHON_ARGCOMPLETE_OK
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+# ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
+from ansible.cli import CLI
 
 import datetime
 import os
@@ -16,7 +21,6 @@ import time
 
 from ansible import constants as C
 from ansible import context
-from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
@@ -39,6 +43,8 @@ class PullCLI(CLI):
         Usage of the 'fetch' module to retrieve logs from ansible-pull runs would be an
         excellent way to gather and analyze remote logs from ansible-pull.
     '''
+
+    name = 'ansible-pull'
 
     DEFAULT_REPO_TYPE = 'git'
     DEFAULT_PLAYBOOK = 'local.yml'
@@ -341,3 +347,11 @@ class PullCLI(CLI):
             if playbook is None:
                 display.warning("\n".join(errors))
             return playbook
+
+
+def main(args=None):
+    PullCLI.cli_executor(args)
+
+
+if __name__ == '__main__':
+    main()

@@ -7,6 +7,10 @@ include docs/docsite/rst/collections/all_plugins.rst
 exclude docs/docsite/rst_warnings
 exclude docs/docsite/rst/conf.py
 exclude docs/docsite/rst/index.rst
+exclude docs/docsite/rst/dev_guide/testing/sanity/bin-symlinks.rst
+exclude docs/docsite/rst/dev_guide/testing/sanity/botmeta.rst
+exclude docs/docsite/rst/dev_guide/testing/sanity/integration-aliases.rst
+exclude docs/docsite/rst/dev_guide/testing/sanity/release-names.rst
 recursive-exclude docs/docsite/_build *
 recursive-exclude docs/docsite/_extensions *.pyc *.pyo
 include examples/hosts
@@ -31,6 +35,9 @@ recursive-include test/lib/ansible_test/_util/controller/sanity/validate-modules
 recursive-include test/sanity *.json *.py *.txt
 recursive-include test/support *.py *.ps1 *.psm1 *.cs
 exclude test/sanity/code-smell/botmeta.*
+exclude test/sanity/code-smell/release-names.*
+exclude test/lib/ansible_test/_internal/commands/sanity/bin_symlinks.py
+exclude test/lib/ansible_test/_internal/commands/sanity/integration_aliases.py
 recursive-include test/units *
 include Makefile
 include MANIFEST.in
@@ -38,3 +45,5 @@ include changelogs/CHANGELOG*.rst
 include changelogs/changelog.yaml
 recursive-include hacking/build_library *.py
 include hacking/build-ansible.py
+include hacking/test-module.py
+include bin/*
