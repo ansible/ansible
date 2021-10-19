@@ -28,8 +28,4 @@ setup(
             'ansible-connection=ansible.cli.scripts.ansible_connection_cli_stub:main',
         ],
     },
-    # keep ansible-test as a verbatim script to work with editable installs, since it needs to do its
-    # own package redirection magic that's beyond the scope of the normal `ansible` path redirection
-    # done by setuptools `develop`
-    scripts=['bin/ansible-test'],
 )
