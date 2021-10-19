@@ -706,6 +706,7 @@ DEFAULT_GATHER_SUBSET:
   version_added: "2.1"
   type: list
   deprecated:
+      # TODO: set playbook/play.py to default=None
       why: the module_defaults keyword is a more generic version and can apply to all calls to the
            M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
       version: "2.17"

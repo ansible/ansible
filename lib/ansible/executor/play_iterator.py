@@ -147,10 +147,6 @@ class PlayIterator:
         self._blocks = []
         self._variable_manager = variable_manager
 
-        # Default options to gather
-        gather_subset = self._play.gather_subset
-        gather_timeout = self._play.gather_timeout
-        fact_path = self._play.fact_path
 
         setup_block = Block(play=self._play)
         # Gathering facts with run_once would copy the facts from one host to
@@ -159,18 +155,23 @@ class PlayIterator:
         setup_task = Task(block=setup_block)
         setup_task.action = 'gather_facts'
         setup_task.name = 'Gathering Facts'
-        setup_task.args = {
-            'gather_subset': gather_subset,
-        }
+        setup_task.args = {}
 
         # Unless play is specifically tagged, gathering should 'always' run
         if not self._play.tags:
             setup_task.tags = ['always']
 
-        if gather_timeout:
+        # Default options to gather
+        gather_subset = self._play.gather_subset
+        gather_timeout = self._play.gather_timeout
+        fact_path = self._play.fact_path
+        if gather_subset is not None:
+            setup_task.args['gather_subset'] = gather_subset
+        if gather_timeout is not None:
             setup_task.args['gather_timeout'] = gather_timeout
-        if fact_path:
+        if fact_path is not None:
             setup_task.args['fact_path'] = fact_path
+
         setup_task.set_loader(self._play._loader)
         # short circuit fact gathering if the entire playbook is conditional
         if self._play._included_conditional is not None:
