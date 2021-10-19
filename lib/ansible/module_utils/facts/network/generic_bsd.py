@@ -148,6 +148,8 @@ class GenericBsdIfconfigNetwork(Network):
                     self.parse_inet6_line(words, current_if, ips)
                 elif words[0] == 'tunnel':
                     self.parse_tunnel_line(words, current_if, ips)
+                elif words[0] == 'carp:':
+                    self.parse_carp_line(words, current_if)
                 else:
                     self.parse_unknown_line(words, current_if, ips)
 
@@ -244,6 +246,25 @@ class GenericBsdIfconfigNetwork(Network):
         if not words[1].startswith('127.'):
             ips['all_ipv4_addresses'].append(address['address'])
         current_if['ipv4'].append(address)
+
+    def parse_carp_line(self, words, current_if):
+        # carp: MASTER vhid 1 advbase 1 advskew 1
+        # Init carp with status
+        carp = {'role': words[1]}
+
+        # Parse each known keyword
+        for i in range(2, len(words), 2):
+            if words[i] == 'vhid':
+                carp['vhid'] = words[i+1]
+            elif words[i] == 'advbase':
+                carp['advbase'] = words[i+1]
+            elif words[i] == 'advskew':
+                carp['advskew'] = words[i+1]
+            else:
+                pass
+
+        # Save carp dict to current_if
+        current_if['carp'] = carp
 
     def parse_inet6_line(self, words, current_if, ips):
         address = {'address': words[1]}
