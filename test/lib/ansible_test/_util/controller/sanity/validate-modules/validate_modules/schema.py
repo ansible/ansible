@@ -423,6 +423,7 @@ def return_schema(for_collection):
                         Required('type'): Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str'),
                         'version_added': version(for_collection),
                         'version_added_collection': collection_name,
+                        'choices': Any([object], (object,)),
                         'sample': json_value,
                         'example': json_value,
                         'contains': Any(None, *list_dict_return_contains_schema),
