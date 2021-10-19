@@ -1,1 +1,1 @@
-ansible
+../lib/ansible/cli/galaxy.py

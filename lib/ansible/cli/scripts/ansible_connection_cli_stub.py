@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
+import argparse
 import fcntl
 import hashlib
 import os
@@ -20,6 +21,7 @@ import json
 from contextlib import contextmanager
 
 from ansible import constants as C
+from ansible.cli.arguments.option_helpers import AnsibleVersion
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import PY3
 from ansible.module_utils.six.moves import cPickle, StringIO
@@ -31,6 +33,8 @@ from ansible.plugins.loader import connection_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.utils.display import Display
 from ansible.utils.jsonrpc import JsonRpcServer
+
+display = Display()
 
 
 def read_stream(byte_stream):
@@ -217,9 +221,15 @@ class ConnectionProcess(object):
         display.display('shutdown complete', log_only=True)
 
 
-def main():
+def main(args=None):
     """ Called to initiate the connect to the remote device
     """
+    parser = argparse.ArgumentParser(prog='ansible-connection', add_help=False)
+    parser.add_argument('--version', action=AnsibleVersion, nargs=0)
+    parser.add_argument('playbook_pid')
+    parser.add_argument('task_uuid')
+    args = parser.parse_args(args[1:] if args is not None else args)
+
     rc = 0
     result = {}
     messages = list()
@@ -260,8 +270,8 @@ def main():
 
     if rc == 0:
         ssh = connection_loader.get('ssh', class_only=True)
-        ansible_playbook_pid = sys.argv[1]
-        task_uuid = sys.argv[2]
+        ansible_playbook_pid = args.playbook_pid
+        task_uuid = args.task_uuid
         cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user, play_context.connection, ansible_playbook_pid)
         # create the persistent connection dir if need be and create the paths
         # which we will be using later
@@ -345,5 +355,4 @@ def main():
 
 
 if __name__ == '__main__':
-    display = Display()
     main()

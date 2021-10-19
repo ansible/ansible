@@ -1,1 +1,1 @@
-ansible
+../lib/ansible/cli/config.py

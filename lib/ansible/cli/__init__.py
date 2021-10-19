@@ -7,17 +7,36 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import sys
+
+# Used for determining if the system is running a new enough python version
+# and should only restrict on our documented minimum versions
+if sys.version_info < (3, 8):
+    raise SystemExit(
+        'ERROR: Ansible requires Python 3.8 or newer on the controller. '
+        'Current version: %s' % ''.join(sys.version.splitlines())
+    )
+
+import errno
 import getpass
 import os
 import subprocess
-import sys
-
+import traceback
 from abc import ABCMeta, abstractmethod
+from pathlib import Path
 
-from ansible.cli.arguments import option_helpers as opt_help
-from ansible import constants as C
+try:
+    from ansible import constants as C
+    from ansible.utils.display import Display, initialize_locale
+    initialize_locale()
+    display = Display()
+except Exception as e:
+    print('ERROR: %s' % e, file=sys.stderr)
+    sys.exit(5)
+
 from ansible import context
-from ansible.errors import AnsibleError
+from ansible.cli.arguments import option_helpers as opt_help
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import with_metaclass, string_types, PY3
 from ansible.module_utils._text import to_bytes, to_text
@@ -27,7 +46,6 @@ from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.release import __version__
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
-from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
 from ansible.utils.unsafe_proxy import to_unsafe_text
 from ansible.vars.manager import VariableManager
@@ -37,9 +55,6 @@ try:
     HAS_ARGCOMPLETE = True
 except ImportError:
     HAS_ARGCOMPLETE = False
-
-
-display = Display()
 
 
 class CLI(with_metaclass(ABCMeta, object)):
@@ -292,7 +307,7 @@ class CLI(with_metaclass(ABCMeta, object)):
                 ansible.arguments.option_helpers.add_runas_options(self.parser)
                 self.parser.add_option('--my-option', dest='my_option', action='store')
         """
-        self.parser = opt_help.create_base_parser(os.path.basename(self.args[0]), usage=usage, desc=desc, epilog=epilog, )
+        self.parser = opt_help.create_base_parser(self.name, usage=usage, desc=desc, epilog=epilog)
 
     @abstractmethod
     def post_process_args(self, options):
@@ -532,3 +547,74 @@ class CLI(with_metaclass(ABCMeta, object)):
             raise AnsibleError('Empty password was provided from file (%s)' % pwd_file)
 
         return to_unsafe_text(secret)
+
+    @classmethod
+    def cli_executor(cls, args=None):
+        if args is None:
+            args = sys.argv
+
+        try:
+            display.debug("starting run")
+
+            ansible_dir = Path("~/.ansible").expanduser()
+            try:
+                ansible_dir.mkdir(mode=0o700)
+            except OSError as exc:
+                if exc.errno != errno.EEXIST:
+                    display.warning(
+                        "Failed to create the directory '%s': %s" % (ansible_dir, to_text(exc, errors='surrogate_or_replace'))
+                    )
+            else:
+                display.debug("Created the '%s' directory" % ansible_dir)
+
+            try:
+                args = [to_text(a, errors='surrogate_or_strict') for a in args]
+            except UnicodeError:
+                display.error('Command line args are not in utf-8, unable to continue.  Ansible currently only understands utf-8')
+                display.display(u"The full traceback was:\n\n%s" % to_text(traceback.format_exc()))
+                exit_code = 6
+            else:
+                cli = cls(args)
+                exit_code = cli.run()
+
+        except AnsibleOptionsError as e:
+            cli.parser.print_help()
+            display.error(to_text(e), wrap_text=False)
+            exit_code = 5
+        except AnsibleParserError as e:
+            display.error(to_text(e), wrap_text=False)
+            exit_code = 4
+    # TQM takes care of these, but leaving comment to reserve the exit codes
+    #    except AnsibleHostUnreachable as e:
+    #        display.error(str(e))
+    #        exit_code = 3
+    #    except AnsibleHostFailed as e:
+    #        display.error(str(e))
+    #        exit_code = 2
+        except AnsibleError as e:
+            display.error(to_text(e), wrap_text=False)
+            exit_code = 1
+        except KeyboardInterrupt:
+            display.error("User interrupted execution")
+            exit_code = 99
+        except Exception as e:
+            if C.DEFAULT_DEBUG:
+                # Show raw stacktraces in debug mode, It also allow pdb to
+                # enter post mortem mode.
+                raise
+            have_cli_options = bool(context.CLIARGS)
+            display.error("Unexpected Exception, this is probably a bug: %s" % to_text(e), wrap_text=False)
+            if not have_cli_options or have_cli_options and context.CLIARGS['verbosity'] > 2:
+                log_only = False
+                if hasattr(e, 'orig_exc'):
+                    display.vvv('\nexception type: %s' % to_text(type(e.orig_exc)))
+                    why = to_text(e.orig_exc)
+                    if to_text(e) != why:
+                        display.vvv('\noriginal msg: %s' % why)
+            else:
+                display.display("to see the full traceback, use -vvv")
+                log_only = True
+            display.display(u"the full traceback was:\n\n%s" % to_text(traceback.format_exc()), log_only=log_only)
+            exit_code = 250
+
+        sys.exit(exit_code)

@@ -1,13 +1,16 @@
+#!/usr/bin/env python
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# PYTHON_ARGCOMPLETE_OK
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+# ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
+from ansible.cli import CLI
 from ansible import constants as C
 from ansible import context
-from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
@@ -24,6 +27,8 @@ class AdHocCLI(CLI):
     ''' is an extra-simple tool/framework/API for doing 'remote things'.
         this command allows you to define and run a single task 'playbook' against a set of hosts
     '''
+
+    name = 'ansible'
 
     def init_parser(self):
         ''' create an options parser for bin/ansible '''
@@ -179,3 +184,11 @@ class AdHocCLI(CLI):
                 loader.cleanup_all_tmp_files()
 
         return result
+
+
+def main(args=None):
+    AdHocCLI.cli_executor(args)
+
+
+if __name__ == '__main__':
+    main()
