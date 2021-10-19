@@ -409,7 +409,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             elif u'No space left on device' in result['stderr']:
                 output = result['stderr']
             else:
-                output = ('Failed to create temporary directory.'
+                output = ('Failed to create temporary directory. '
                           'In some cases, you may have been able to authenticate and did not have permissions on the target directory. '
                           'Consider changing the remote tmp path in ansible.cfg to a path rooted in "/tmp", for more error information use -vvv. '
                           'Failed command was: %s, exited with result %d' % (cmd, result['rc']))
