@@ -65,6 +65,7 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
 
         self._supports_check_mode = True
+        print(self._task.args)
 
         result = super(ActionModule, self).run(tmp, task_vars)
         result['ansible_facts'] = {}
