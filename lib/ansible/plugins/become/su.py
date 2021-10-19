@@ -100,6 +100,7 @@ from ansible.plugins.become import BecomeBase
 class BecomeModule(BecomeBase):
 
     name = 'su'
+    support_pipelining = False
 
     # messages for detecting prompted password issues
     fail = ('Authentication failure',)

@@ -1,0 +1,2 @@
+minor_changes:
+  - become plugins will now be checked for pipelinig support vs having a harcoded list, declared by the plugin via the `support_pipelining` attribute.

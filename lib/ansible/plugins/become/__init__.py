@@ -25,6 +25,8 @@ class BecomeBase(AnsiblePlugin):
 
     name = None
 
+    support_pipelining = True
+
     # messages for detecting prompted password issues
     fail = tuple()
     missing = tuple()
