@@ -643,6 +643,7 @@ DEFAULT_FACT_PATH:
   - {key: fact_path, section: defaults}
   type: string
   deprecated:
+      # TODO: when removing set playbook/play.py to default=None
       why: the module_defaults keyword is a more generic version and can apply to all calls to the
            M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
       version: "2.17"
@@ -704,7 +705,7 @@ DEFAULT_GATHER_SUBSET:
   version_added: "2.1"
   type: list
   deprecated:
-      # TODO: set playbook/play.py to default=None
+      # TODO: when removing set playbook/play.py to default=None
       why: the module_defaults keyword is a more generic version and can apply to all calls to the
            M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
       version: "2.17"
@@ -712,13 +713,14 @@ DEFAULT_GATHER_SUBSET:
 DEFAULT_GATHER_TIMEOUT:
   name: Gather facts timeout
   description:
-    - Set the timeout in seconds for the implicit fact gathering.
+    - Set the timeout in seconds for the implicit fact gathering, see the module documentation for specifics.
     - "It does **not** apply to user defined M(ansible.builtin.setup) tasks."
   env: [{name: ANSIBLE_GATHER_TIMEOUT}]
   ini:
   - {key: gather_timeout, section: defaults}
   type: integer
   deprecated:
+      # TODO: when removing set playbook/play.py to default=None
       why: the module_defaults keyword is a more generic version and can apply to all calls to the
            M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
       version: "2.17"
