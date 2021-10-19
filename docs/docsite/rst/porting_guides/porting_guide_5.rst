@@ -115,6 +115,26 @@ Networking
 
 No notable changes
 
+Porting Guide for v5.0.0a2
+==========================
+
+Breaking Changes
+----------------
+
+community.routeros
+~~~~~~~~~~~~~~~~~~
+
+- api - splitting commands no longer uses a naive split by whitespace, but a more RouterOS CLI compatible splitting algorithm (https://github.com/ansible-collections/community.routeros/pull/45).
+- command - the module now always indicates that a change happens. If this is not correct, please use ``changed_when`` to determine the correct changed status for a task (https://github.com/ansible-collections/community.routeros/pull/50).
+
+Deprecated Features
+-------------------
+
+community.vmware
+~~~~~~~~~~~~~~~~
+
+- vmware_guest_vnc -  Sphere 7.0 removed the built-in VNC server (https://docs.vmware.com/en/VMware-vSphere/7.0/rn/vsphere-esxi-vcenter-server-70-release-notes.html#productsupport).
+
 Porting Guide for v5.0.0a1
 ==========================
 
