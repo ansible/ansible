@@ -255,11 +255,11 @@ class GenericBsdIfconfigNetwork(Network):
         # Parse each known keyword
         for i in range(2, len(words), 2):
             if words[i] == 'vhid':
-                carp['vhid'] = words[i+1]
+                carp['vhid'] = words[i + 1]
             elif words[i] == 'advbase':
-                carp['advbase'] = words[i+1]
+                carp['advbase'] = words[i + 1]
             elif words[i] == 'advskew':
-                carp['advskew'] = words[i+1]
+                carp['advskew'] = words[i + 1]
             else:
                 pass
 
