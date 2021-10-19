@@ -187,15 +187,9 @@ test/support/integration/plugins/module_utils/cloud.py pylint:isinstance-second-
 test/support/integration/plugins/module_utils/compat/ipaddress.py future-import-boilerplate
 test/support/integration/plugins/module_utils/compat/ipaddress.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/compat/ipaddress.py no-unicode-literals
-test/support/integration/plugins/module_utils/database.py future-import-boilerplate
-test/support/integration/plugins/module_utils/database.py metaclass-boilerplate
-test/support/integration/plugins/module_utils/mysql.py future-import-boilerplate
-test/support/integration/plugins/module_utils/mysql.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/network/common/utils.py future-import-boilerplate
 test/support/integration/plugins/module_utils/network/common/utils.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/network/common/utils.py pylint:use-a-generator
-test/support/integration/plugins/module_utils/postgres.py future-import-boilerplate
-test/support/integration/plugins/module_utils/postgres.py metaclass-boilerplate
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/filter/network.py pylint:consider-using-dict-comprehension
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/compat/ipaddress.py no-unicode-literals
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/module_utils/compat/ipaddress.py pep8:E203
