@@ -632,7 +632,6 @@ DEFAULT_EXECUTABLE:
   - {key: executable, section: defaults}
 DEFAULT_FACT_PATH:
   name: local fact path
-  default: ~
   description:
     - "This option allows you to globally configure a custom path for 'local_facts' for the implied M(ansible.builtin.setup) task when using fact gathering."
     - "If not set, it will fallback to the default from the M(ansible.builtin.setup) module: ``/etc/ansible/facts.d``."
@@ -694,7 +693,6 @@ DEFAULT_GATHERING:
   choices: ['smart', 'explicit', 'implicit']
 DEFAULT_GATHER_SUBSET:
   name: Gather facts subset
-  default: ['all']
   description:
       - Set the `gather_subset` option for the M(ansible.builtin.setup) task in the implicit fact gathering.
         See the module documentation for specifics.
@@ -713,7 +711,6 @@ DEFAULT_GATHER_SUBSET:
       alternatives: module_defaults
 DEFAULT_GATHER_TIMEOUT:
   name: Gather facts timeout
-  default: 10
   description:
     - Set the timeout in seconds for the implicit fact gathering.
     - "It does **not** apply to user defined M(ansible.builtin.setup) tasks."
