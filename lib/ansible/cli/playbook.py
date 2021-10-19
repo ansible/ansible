@@ -8,7 +8,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
-from ansible.cli import CLI, cli_executor
+from ansible.cli import CLI
 
 import os
 import stat
@@ -224,7 +224,7 @@ class PlaybookCLI(CLI):
 
 
 def main(args=None):
-    cli_executor(PlaybookCLI, args)
+    PlaybookCLI.cli_executor(args)
 
 
 if __name__ == '__main__':

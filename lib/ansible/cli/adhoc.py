@@ -8,7 +8,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
-from ansible.cli import CLI, cli_executor
+from ansible.cli import CLI
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
@@ -187,7 +187,7 @@ class AdHocCLI(CLI):
 
 
 def main(args=None):
-    cli_executor(AdHocCLI, args)
+    AdHocCLI.cli_executor(args)
 
 
 if __name__ == '__main__':
