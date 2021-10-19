@@ -1,16 +1,20 @@
+#!/usr/bin/env python
 # (c) 2014, James Tanner <tanner.jc@gmail.com>
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# PYTHON_ARGCOMPLETE_OK
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+# ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
+from ansible.cli import CLI
 
 import os
 import sys
 
 from ansible import constants as C
 from ansible import context
-from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_text, to_bytes
@@ -31,6 +35,8 @@ class VaultCLI(CLI):
     Because Ansible tasks, handlers, and other objects are data, these can also be encrypted with vault.
     If you'd like to not expose what variables you are using, you can keep an individual task file entirely encrypted.
     '''
+
+    name = 'ansible-vault'
 
     FROM_STDIN = "stdin"
     FROM_ARGS = "the command line args"
@@ -462,3 +468,11 @@ class VaultCLI(CLI):
                                    self.new_encrypt_vault_id)
 
         display.display("Rekey successful", stderr=True)
+
+
+def main(args=None):
+    VaultCLI.cli_executor(args)
+
+
+if __name__ == '__main__':
+    main()

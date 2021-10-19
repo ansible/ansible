@@ -1,9 +1,14 @@
+#!/usr/bin/env python
 # Copyright: (c) 2014, James Tanner <tanner.jc@gmail.com>
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# PYTHON_ARGCOMPLETE_OK
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+# ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
+from ansible.cli import CLI
 
 import datetime
 import json
@@ -19,7 +24,6 @@ import ansible.plugins.loader as plugin_loader
 
 from ansible import constants as C
 from ansible import context
-from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
@@ -334,6 +338,8 @@ class DocCLI(CLI, RoleMixin):
         It displays a terse listing of plugins and their short descriptions,
         provides a printout of their DOCUMENTATION strings,
         and it can create a short "snippet" which can be pasted into a playbook.  '''
+
+    name = 'ansible-doc'
 
     # default ignore list for detailed views
     IGNORE = ('module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs', 'collection')
@@ -1383,3 +1389,11 @@ def _do_lookup_snippet(doc):
     text.append(snippet)
 
     return text
+
+
+def main(args=None):
+    DocCLI.cli_executor(args)
+
+
+if __name__ == '__main__':
+    main()

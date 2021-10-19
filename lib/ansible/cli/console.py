@@ -1,10 +1,15 @@
+#!/usr/bin/env python
 # Copyright: (c) 2014, Nandor Sivok <dominis@haxor.hu>
 # Copyright: (c) 2016, Redhat Inc
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# PYTHON_ARGCOMPLETE_OK
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+# ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
+from ansible.cli import CLI
 
 import atexit
 import cmd
@@ -15,7 +20,6 @@ import sys
 
 from ansible import constants as C
 from ansible import context
-from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_native, to_text
@@ -56,6 +60,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
        - `exit`: exit ansible-console
     '''
 
+    name = 'ansible-console'
     modules = []
     ARGUMENTS = {'host-pattern': 'A name of a group in the inventory, a shell-like glob '
                                  'selecting hosts in inventory or any combination of the two separated by commas.'}
@@ -406,7 +411,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         if module_name in self.modules:
             in_path = module_loader.find_plugin(module_name)
             if in_path:
-                oc, a, _, _ = plugin_docs.get_docstring(in_path, fragment_loader)
+                oc, a, _dummy1, _dummy2 = plugin_docs.get_docstring(in_path, fragment_loader)
                 if oc:
                     display.display(oc['short_description'])
                     display.display('Parameters:')
@@ -438,7 +443,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
     def module_args(self, module_name):
         in_path = module_loader.find_plugin(module_name)
-        oc, a, _, _ = plugin_docs.get_docstring(in_path, fragment_loader, is_module=True)
+        oc, a, _dummy1, _dummy2 = plugin_docs.get_docstring(in_path, fragment_loader, is_module=True)
         return list(oc['options'].keys())
 
     def run(self):
@@ -494,3 +499,11 @@ class ConsoleCLI(CLI, cmd.Cmd):
         atexit.register(readline.write_history_file, histfile)
         self.set_prompt()
         self.cmdloop()
+
+
+def main(args=None):
+    ConsoleCLI.cli_executor(args)
+
+
+if __name__ == '__main__':
+    main()
