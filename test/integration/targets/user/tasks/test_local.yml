@@ -85,6 +85,8 @@
     - testgroup2
     - testgroup3
     - testgroup4
+    - testgroup5
+  register: local_user_test_groups
   tags:
     - user_test_local_mode
 
@@ -121,6 +123,17 @@
   tags:
     - user_test_local_mode
 
+- name: Change primary group for local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    group: testgroup5
+  register: local_user_test_6
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
 - name: Remove local_ansibulluser again
   user:
     name: local_ansibulluser
@@ -139,6 +152,7 @@
     - testgroup2
     - testgroup3
     - testgroup4
+    - testgroup5
   tags:
     - user_test_local_mode
 
@@ -164,6 +178,10 @@
   when: ansible_facts.system in ['Linux']
   tags:
     - user_test_local_mode
+
+- name: Check that primary group was changed
+  assert:
+    that: local_user_test_6['group'] == local_user_test_groups.results|selectattr('name', 'testgroup5')|map(attribute='gid')|first
 
 - name: Test expires for local users
   import_tasks: test_local_expires.yml
