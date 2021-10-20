@@ -3175,6 +3175,21 @@ def main():
         if info is False:
             result['msg'] = "failed to look up user name: %s" % user.name
             result['failed'] = True
+        # If we changed something with local commands a possible nss cache
+        # might not have been updated. Reread from nss at maximum for
+        # 1 second every 0.1 second.
+        if user.local and result['changed']:
+            spin = 10
+            old_info = info
+            while spin > 0:
+                spin -= 1
+                time.sleep(0.1)
+                old_info = info
+                info = user.user_info()
+                # Something has changed in the cache. Hopefully this is now
+                # reality. Hence leave the loop.
+                if not (old_info == info):
+                    break
         result['uid'] = info[2]
         result['group'] = info[3]
         result['comment'] = info[4]
