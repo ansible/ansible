@@ -11,14 +11,9 @@
   register: git_archive
   with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
 
-# The map filter was added in Jinja2 2.7, which is newer than the version on RHEL/CentOS 6,
-# so we skip this validation on those hosts
 - name: ARCHIVE | Assert that archives were downloaded
   assert:
     that: (git_archive.results | map(attribute='changed') | unique | list)[0]
-  when:
-    - "ansible_os_family == 'RedHat'"
-    - ansible_distribution_major_version is version('7', '>=')
 
 - name: ARCHIVE | Check if archive file is created or not
   stat:
@@ -53,14 +48,9 @@
   register: git_archive
   with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
 
-# The map filter was added in Jinja2 2.7, which is newer than the version on RHEL/CentOS 6,
-# so we skip this validation on those hosts
 - name: ARCHIVE | Assert that archives were downloaded
   assert:
     that: (git_archive.results | map(attribute='changed') | unique | list)[0]
-  when:
-    - "ansible_os_family == 'RedHat'"
-    - ansible_distribution_major_version is version('7', '>=')
 
 - name: ARCHIVE | Check if archive file is created or not
   stat:
@@ -82,14 +72,11 @@
   register: archive_content
   with_items: "{{ git_archive_extensions[ansible_os_family ~ ansible_distribution_major_version | default('default') ] | default(git_archive_extensions.default) }}"
 
-# Does not work on RedHat6 (jinja2 too old?)
 - name: ARCHIVE | Ensure archive content is correct
   assert:
     that:
       - item.stdout_lines | sort | first == 'defaults/'
   with_items: "{{ archive_content.results }}"
-  when:
-    - ansible_os_family ~ ansible_distribution_major_version != 'RedHat6'
 
 - name: ARCHIVE | Clear checkout_dir
   file:

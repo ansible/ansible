@@ -5,9 +5,6 @@
   collections:
     - testns.testcoll
   tasks:
-    - meta: end_host
-      when: lookup('pipe', ansible_playbook_python ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.7', '<')
-
     - bypass_host_loop:
       register: bypass
 

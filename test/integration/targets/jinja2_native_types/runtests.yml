@@ -31,20 +31,10 @@
       s_false: "False"
       yaml_none: ~
   tasks:
-      - name: check jinja version
-        command: "{{ ansible_python_interpreter }} -c 'import jinja2; print(jinja2.__version__)'"
-        register: jinja2_version
-
-      - name: make sure jinja is the right version
-        set_fact:
-            is_native: "{{ jinja2_version.stdout is version('2.10', '>=') }}"
-
-      - block:
-            - import_tasks: test_casting.yml
-            - import_tasks: test_concatentation.yml
-            - import_tasks: test_bool.yml
-            - import_tasks: test_dunder.yml
-            - import_tasks: test_types.yml
-            - import_tasks: test_none.yml
-            - import_tasks: test_template.yml
-        when: is_native
+    - import_tasks: test_casting.yml
+    - import_tasks: test_concatentation.yml
+    - import_tasks: test_bool.yml
+    - import_tasks: test_dunder.yml
+    - import_tasks: test_types.yml
+    - import_tasks: test_none.yml
+    - import_tasks: test_template.yml
