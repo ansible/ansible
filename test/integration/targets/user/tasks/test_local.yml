@@ -181,7 +181,7 @@
 
 - name: Check that primary group was changed
   assert:
-    that: local_user_test_6['group'] == local_user_test_groups.results|selectattr('name', 'testgroup5')|map(attribute='gid')|first
+    that: local_user_test_6['group'] == local_user_test_groups.results|selectattr('name', 'equalto', 'testgroup5')|map(attribute='gid')|first
 
 - name: Test expires for local users
   import_tasks: test_local_expires.yml
