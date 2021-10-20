@@ -34,7 +34,7 @@
     - name: test with no role or handler
       lambda:
         name=ansible-testing-fake-should-not-be-created
-        runtime="python2.7"
+        runtime="python3.9"
       register: result
       ignore_errors: true
 
@@ -48,7 +48,7 @@
     - name: test with all module required variables but no region
       lambda:
         name=ansible-testing-fake-should-not-be-created
-        runtime="python2.7"
+        runtime="python3.9"
         handler="no-handler"
         role=arn:fake-role-doesnt-exist
       register: result
@@ -65,7 +65,7 @@
       lambda:
         name: ansible-testing-fake-should-not-be-created
         state: present
-        runtime: "python2.7"
+        runtime: "python3.9"
         role: arn:fake-role-doesnt-exist
         handler:
         s3_bucket:
@@ -102,7 +102,7 @@
     - name: test state=present - upload the lambda
       lambda:
         name="{{lambda_function_name}}"
-        runtime="python2.7"
+        runtime="python3.9"
         handler="mini_lambda.handler"
         role="ansible_lambda_role"
         ec2_region='{{ec2_region}}'
@@ -138,7 +138,7 @@
     - name: test state=present with security group but no vpc
       lambda:
         name: "{{lambda_function_name}}"
-        runtime: "python2.7"
+        runtime: "python3.9"
         role: "ansible_lambda_role"
         ec2_region: '{{ec2_region}}'
         ec2_access_key: '{{ec2_access_key}}'
@@ -166,7 +166,7 @@
     - name: test state=present with all nullable variables explicitly set to null
       lambda:
         name: "{{lambda_function_name}}"
-        runtime: "python2.7"
+        runtime: "python3.9"
         role: "ansible_lambda_role"
         ec2_region: '{{ec2_region}}'
         ec2_access_key: '{{ec2_access_key}}'
@@ -197,7 +197,7 @@
     - name: test putting an environment variable changes lambda
       lambda:
         name: "{{lambda_function_name}}"
-        runtime: "python2.7"
+        runtime: "python3.9"
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
         ec2_region: '{{ec2_region}}'
@@ -236,7 +236,7 @@
     - name: test state=present triggering a network exception due to bad url
       lambda:
         name: "{{lambda_function_name}}"
-        runtime: "python2.7"
+        runtime: "python3.9"
         role: "ansible_lambda_role"
         ec2_url: https://noexist.example.com
         ec2_region: '{{ec2_region}}'
@@ -276,7 +276,7 @@
     - name: parallel lambda creation 1/4
       lambda:
         name: "{{lambda_function_name}}_1"
-        runtime: "python2.7"
+        runtime: "python3.9"
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
         ec2_region: '{{ec2_region}}'
@@ -290,7 +290,7 @@
     - name: parallel lambda creation 2/4
       lambda:
         name: "{{lambda_function_name}}_2"
-        runtime: "python2.7"
+        runtime: "python3.9"
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
         ec2_region: '{{ec2_region}}'
@@ -304,7 +304,7 @@
     - name: parallel lambda creation 3/4
       lambda:
         name: "{{lambda_function_name}}_3"
-        runtime: "python2.7"
+        runtime: "python3.9"
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
         ec2_region: '{{ec2_region}}'
@@ -318,7 +318,7 @@
     - name: parallel lambda creation 4/4
       lambda:
         name: "{{lambda_function_name}}_4"
-        runtime: "python2.7"
+        runtime: "python3.9"
         handler: "mini_lambda.handler"
         role: "ansible_lambda_role"
         ec2_region: '{{ec2_region}}'
