@@ -24,6 +24,7 @@
       file:
         path: "{{ fact_dir }}/dead_symlink.fact"
         src: /tmp/dead_symlink
+        force: yes
         state: link
 
 - name: force fact gather to get ansible_local
