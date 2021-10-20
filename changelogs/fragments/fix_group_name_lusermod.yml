@@ -1,0 +1,5 @@
+bugfixes:
+  - >-
+     user - on Linux use the gid of the new primary group of the user for the
+     ``-g`` parameter of (l)usermod as lusermod's ``-g`` only accepts an id.
+     usermod accepts names and ids for the ``-g`` parameter.
