@@ -90,7 +90,6 @@ options:
     description:
     - Determine when leading spaces and tabs should be stripped.
     - When set to C(yes) leading spaces and tabs are stripped from the start of a line to a block.
-    - This functionality requires Jinja 2.7 or newer.
     type: bool
     default: no
     version_added: '2.6'

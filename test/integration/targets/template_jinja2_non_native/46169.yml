@@ -29,4 +29,3 @@
       - assert:
           that:
             - native_lookup | type_debug == 'dict'
-      when: lookup('pipe', ansible_python_interpreter ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.10', '>=')

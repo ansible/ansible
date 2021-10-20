@@ -1,5 +1,4 @@
-- when: lookup('pipe', ansible_playbook_python ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.7', '>=')
-  block:
+- block:
     - set_fact:
         names: '{{ things|map(attribute="name") }}'
       vars:

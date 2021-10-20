@@ -79,13 +79,15 @@ _raw:
 from copy import deepcopy
 import os
 
+import ansible.constants as C
+
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.template import generate_ansible_template_vars, AnsibleEnvironment, USE_JINJA2_NATIVE
+from ansible.template import generate_ansible_template_vars, AnsibleEnvironment
 from ansible.utils.display import Display
 
-if USE_JINJA2_NATIVE:
+if C.DEFAULT_JINJA2_NATIVE:
     from ansible.utils.native_jinja import NativeJinjaText
 
 
@@ -109,7 +111,7 @@ class LookupModule(LookupBase):
         comment_start_string = self.get_option('comment_start_string')
         comment_end_string = self.get_option('comment_end_string')
 
-        if USE_JINJA2_NATIVE and not jinja2_native:
+        if C.DEFAULT_JINJA2_NATIVE and not jinja2_native:
             templar = self._templar.copy_with_new_env(environment_class=AnsibleEnvironment)
         else:
             templar = self._templar
@@ -152,7 +154,7 @@ class LookupModule(LookupBase):
                     res = templar.template(template_data, preserve_trailing_newlines=True,
                                            convert_data=convert_data_p, escape_backslashes=False)
 
-                if USE_JINJA2_NATIVE and not jinja2_native:
+                if C.DEFAULT_JINJA2_NATIVE and not jinja2_native:
                     # jinja2_native is true globally but off for the lookup, we need this text
                     # not to be processed by literal_eval anywhere in Ansible
                     res = NativeJinjaText(res)

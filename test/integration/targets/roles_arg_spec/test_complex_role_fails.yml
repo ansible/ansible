@@ -38,16 +38,6 @@
                   ]
 
   tasks:
-      # This test play requires jinja >= 2.7
-      - name: get the jinja2 version
-        shell: python -c 'import jinja2; print(jinja2.__version__)'
-        register: jinja2_version
-        delegate_to: localhost
-        changed_when: false
-
-      - debug:
-          msg: "Jinja version: {{ jinja2_version.stdout }}"
-
       - name: include_role test1 since it has a arg_spec.yml
         block:
             - include_role:
@@ -174,7 +164,3 @@
                   - ansible_failed_result.validate_args_context.name == "test1"
                   - ansible_failed_result.validate_args_context.type == "role"
                   - "ansible_failed_result.validate_args_context.path is search('roles_arg_spec/roles/test1')"
-
-        # skip this task if jinja isnt >= 2.7, aka centos6
-        when:
-            - jinja2_version.stdout is version('2.7', '>=')

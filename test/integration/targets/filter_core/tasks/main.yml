@@ -79,8 +79,6 @@
       - "31 == ['x','y']|map('extract',{'x':42,'y':31})|list|last"
       - "'local' == ['localhost']|map('extract',hostvars,'ansible_connection')|list|first"
       - "'local' == ['localhost']|map('extract',hostvars,['ansible_connection'])|list|first"
-  # map was added to jinja2 in version 2.7
-  when: lookup('pipe', ansible_python.executable ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.7', '>=')
 
 - name: Test extract filter with defaults
   vars:
