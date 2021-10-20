@@ -174,3 +174,40 @@ def namespace_facts(facts):
             deprefixed[k] = module_response_deepcopy(facts[k])
 
     return {'ansible_facts': deprefixed}
+
+
+def subset_required_by_plugin(name, ptype, variables, templar, extras=False):
+    '''
+       Create a subset of variables relevant to the specific plugin with values templated
+
+    :param name: name of plugin
+    :param ptype: type of plugin
+    :param variables: dictionary containing all available varaibles, from which we extract subset
+    :param temlpar: Templar object to process values of subseted variables
+    :param extras: If plugin allows for 'extras' or non explicitly defined settings in plugin docs
+
+    :returns: a list of valid variable names for the plugin and a dictionary with the templated subset
+    '''
+
+    # holds templated relevant options
+    options = {}
+
+    # list of usable vars for this plugin
+    option_vars = C.config.get_plugin_vars(ptype, name)
+
+    # create dict of 'templated vars'
+    for k in option_vars:
+        if k in variables:
+            options[k] = templar.template(variables[k])
+
+    # add extras if plugin supports them
+    if extras:
+        options['_extras'] = {}
+        match = 'ansible_%s_' % name
+
+        for k in variables:
+            if k.startswith(match) and k not in options:
+                options['_extras'][k] = templar.template(variables[k])
+                option_vars.add(k)
+
+    return option_vars, options

@@ -25,6 +25,7 @@ from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.connection import write_to_file_descriptor
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
+from ansible.plugins.connection import get_connection
 from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionConfig
@@ -32,7 +33,7 @@ from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import to_unsafe_text, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.utils.display import Display
-from ansible.utils.vars import combine_vars, isidentifier
+from ansible.utils.vars import combine_vars, isidentifier, subset_required_by_plugin
 
 display = Display()
 
@@ -157,6 +158,9 @@ class TaskExecutor:
                 display.debug("calling self._execute()")
                 res = self._execute()
                 display.debug("_execute() done")
+
+                # really only used in loop context
+                del res['_ansible_clean_vars']
 
             # make sure changed is set in the result, if it's not present
             if 'changed' not in res:
@@ -399,19 +403,10 @@ class TaskExecutor:
             results.append(res)
             del task_vars[loop_var]
 
-            # clear 'connection related' plugin variables for next iteration
-            if self._connection:
-                clear_plugins = {
-                    'connection': self._connection._load_name,
-                    'shell': self._connection._shell._load_name
-                }
-                if self._connection.become:
-                    clear_plugins['become'] = self._connection.become._load_name
-
-                for plugin_type, plugin_name in iteritems(clear_plugins):
-                    for var in C.config.get_plugin_vars(plugin_type, plugin_name):
-                        if var in task_vars and var not in self._job_vars:
-                            del task_vars[var]
+            clean = res.pop('_ansible_clean_vars', [])
+            for var in clean:
+                if var in task_vars and var not in self._job_vars:
+                    del task_vars[var]
 
         self._task.no_log = no_log
 
@@ -747,6 +742,9 @@ class TaskExecutor:
                 if C.INJECT_FACTS_AS_VARS:
                     variables.update(clean_facts(af))
 
+        # list vars to clean for next iteration
+        result['_ansible_clean_vars'] = plugin_vars
+
         # save the notification target in the result, if it was specified, as
         # this task may be running in a loop in which case the notification
         # may be item-specific, ie. "notify: service {{item}}"
@@ -888,58 +886,63 @@ class TaskExecutor:
         correct connection object from the list of connection plugins
         '''
 
-        # use magic var if it exists, if not, let task inheritance do it's thing.
-        if cvars.get('ansible_connection') is not None:
-            self._play_context.connection = templar.template(cvars['ansible_connection'])
-        else:
-            self._play_context.connection = self._task.connection
+        try:
+            connection = get_connection(self._task, templar, self._stdin, cvars, self._play_context)
+        except Exception:
+            # TODO: can remove this once above is working.
 
-        # TODO: play context has logic to update the connection for 'smart'
-        # (default value, will chose between ssh and paramiko) and 'persistent'
-        # (really paramiko), eventually this should move to task object itself.
-        connection_name = self._play_context.connection
-
-        # load connection
-        conn_type = connection_name
-        connection, plugin_load_context = self._shared_loader_obj.connection_loader.get_with_context(
-            conn_type,
-            self._play_context,
-            self._new_stdin,
-            task_uuid=self._task._uuid,
-            ansible_playbook_pid=to_text(os.getppid())
-        )
-
-        if not connection:
-            raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
-
-        # load become plugin if needed
-        if cvars.get('ansible_become') is not None:
-            become = boolean(templar.template(cvars['ansible_become']))
-        else:
-            become = self._task.become
-
-        if become:
-            if cvars.get('ansible_become_method'):
-                become_plugin = self._get_become(templar.template(cvars['ansible_become_method']))
+            # use magic var if it exists, if not, let task inheritance do it's thing.
+            if cvars.get('ansible_connection') is not None:
+                self._play_context.connection = templar.template(cvars['ansible_connection'])
             else:
-                become_plugin = self._get_become(self._task.become_method)
+                self._play_context.connection = self._task.connection
 
-            try:
-                connection.set_become_plugin(become_plugin)
-            except AttributeError:
-                # Older connection plugin that does not support set_become_plugin
-                pass
+            # TODO: play context has logic to update the connection for 'smart'
+            # (default value, will chose between ssh and paramiko) and 'persistent'
+            # (really paramiko), eventually this should move to task object itself.
+            connection_name = self._play_context.connection
 
-            if getattr(connection.become, 'require_tty', False) and not getattr(connection, 'has_tty', False):
-                raise AnsibleError(
-                    "The '%s' connection does not provide a TTY which is required for the selected "
-                    "become plugin: %s." % (conn_type, become_plugin.name)
-                )
+            # load connection
+            conn_type = connection_name
+            connection, plugin_load_context = self._shared_loader_obj.connection_loader.get_with_context(
+                conn_type,
+                self._play_context,
+                self._new_stdin,
+                task_uuid=self._task._uuid,
+                ansible_playbook_pid=to_text(os.getppid())
+            )
 
-            # Backwards compat for connection plugins that don't support become plugins
-            # Just do this unconditionally for now, we could move it inside of the
-            # AttributeError above later
-            self._play_context.set_become_plugin(become_plugin.name)
+            if not connection:
+                raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
+
+            # load become plugin if needed
+            if cvars.get('ansible_become') is not None:
+                become = boolean(templar.template(cvars['ansible_become']))
+            else:
+                become = self._task.become
+
+            if become:
+                if cvars.get('ansible_become_method'):
+                    become_plugin = self._get_become(templar.template(cvars['ansible_become_method']))
+                else:
+                    become_plugin = self._get_become(self._task.become_method)
+
+                try:
+                    connection.set_become_plugin(become_plugin)
+                except AttributeError:
+                    # Older connection plugin that does not support set_become_plugin
+                    pass
+
+                if getattr(connection.become, 'require_tty', False) and not getattr(connection, 'has_tty', False):
+                    raise AnsibleError(
+                        "The '%s' connection does not provide a TTY which is required for the selected "
+                        "become plugin: %s." % (conn_type, become_plugin.name)
+                    )
+
+                # Backwards compat for connection plugins that don't support become plugins
+                # Just do this unconditionally for now, we could move it inside of the
+                # AttributeError above later
+                self._play_context.set_become_plugin(become_plugin.name)
 
         # Also backwards compat call for those still using play_context
         self._play_context.set_attributes_from_plugin(connection)
@@ -977,36 +980,15 @@ class TaskExecutor:
             # Some plugins are assigned to private attrs, ``become`` is not
             plugin = getattr(self._connection, plugin_type)
 
-        option_vars = C.config.get_plugin_vars(plugin_type, plugin._load_name)
-        options = {}
-        for k in option_vars:
-            if k in variables:
-                options[k] = templar.template(variables[k])
-        # TODO move to task method?
+        option_vars, options = subset_required_by_plugin(plugin._load_namee, plugin_type, variables, templar, getattr(plugin, 'allow_extras', False))
+
         plugin.set_options(task_keys=task_keys, var_options=options)
 
         return option_vars
 
     def _set_connection_options(self, variables, templar):
 
-        # keep list of variable names possibly consumed
-        varnames = []
-
-        # grab list of usable vars for this plugin
-        option_vars = C.config.get_plugin_vars('connection', self._connection._load_name)
-        varnames.extend(option_vars)
-
-        # create dict of 'templated vars'
-        options = {'_extras': {}}
-        for k in option_vars:
-            if k in variables:
-                options[k] = templar.template(variables[k])
-
-        # add extras if plugin supports them
-        if getattr(self._connection, 'allow_extras', False):
-            for k in variables:
-                if k.startswith('ansible_%s_' % self._connection._load_name) and k not in options:
-                    options['_extras'][k] = templar.template(variables[k])
+        varnames, options = subset_required_by_plugin(self._connection._load_name, 'connection', variables, templar, getattr(self._connection, 'allow_extras', False))
 
         task_keys = self._task.dump_attrs()
 
