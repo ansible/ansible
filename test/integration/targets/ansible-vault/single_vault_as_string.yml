@@ -81,8 +81,6 @@
     - assert:
         that:
           - vaulted_value|map('upper')|list == ['F', 'O', 'O', ' ', 'B', 'A', 'R']
-      when: lookup('pipe', ansible_python.executable ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.7', '>=')
-
 
     - assert:
         that:
@@ -90,23 +88,19 @@
           - vaulted_value|select('equalto', 'o')|list == ['o', 'o']
           - vaulted_value|title == 'Foo Bar'
           - vaulted_value is equalto('foo bar')
-      when: lookup('pipe', ansible_python.executable ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.8', '>=')
 
     - assert:
         that:
           - vaulted_value|string|tojson == '"foo bar"'
           - vaulted_value|truncate(4) == 'foo bar'
-      when: lookup('pipe', ansible_python.executable ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.9', '>=')
 
     - assert:
         that:
           - vaulted_value|wordwrap(4) == 'foo\nbar'
-      when: lookup('pipe', ansible_python.executable ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.11', '>=')
 
     - assert:
         that:
           - vaulted_value|wordcount == 2
-      when: lookup('pipe', ansible_python.executable ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.11.2', '>=')
 
     - ping:
         data: !vault |

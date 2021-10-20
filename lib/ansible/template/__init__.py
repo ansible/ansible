@@ -28,7 +28,6 @@ import re
 import time
 
 from contextlib import contextmanager
-from ansible.module_utils.compat.version import LooseVersion
 from numbers import Number
 from traceback import format_exc
 
@@ -80,26 +79,14 @@ NON_TEMPLATED_TYPES = (bool, Number)
 
 JINJA2_OVERRIDE = '#jinja2:'
 
-from jinja2 import __version__ as j2_version
 from jinja2 import Environment
 from jinja2.utils import concat as j2_concat
 
 
-USE_JINJA2_NATIVE = False
 if C.DEFAULT_JINJA2_NATIVE:
-    try:
-        from jinja2.nativetypes import NativeEnvironment
-        from ansible.template.native_helpers import ansible_native_concat
-        from ansible.utils.native_jinja import NativeJinjaText
-        USE_JINJA2_NATIVE = True
-    except ImportError:
-        from jinja2 import Environment
-        from jinja2.utils import concat as j2_concat
-        if C.JINJA2_NATIVE_WARNING:
-            display.warning(
-                'jinja2_native requires Jinja 2.10 and above. '
-                'Version detected: %s. Falling back to default.' % j2_version
-            )
+    from jinja2.nativetypes import NativeEnvironment
+    from ansible.template.native_helpers import ansible_native_concat
+    from ansible.utils.native_jinja import NativeJinjaText
 
 
 JINJA2_BEGIN_TOKENS = frozenset(('variable_begin', 'block_begin', 'comment_begin', 'raw_begin'))
@@ -427,11 +414,10 @@ class AnsibleContext(Context):
         Also see ``AnsibleJ2Template``and
         https://github.com/pallets/jinja/commit/d67f0fd4cc2a4af08f51f4466150d49da7798729
         """
-        if LooseVersion(j2_version) >= LooseVersion('2.9'):
-            if not self.vars:
-                return self.parent
-            if not self.parent:
-                return self.vars
+        if not self.vars:
+            return self.parent
+        if not self.parent:
+            return self.vars
 
         if isinstance(self.parent, AnsibleJ2Vars):
             return self.parent.add_locals(self.vars)
@@ -639,7 +625,7 @@ class AnsibleEnvironment(Environment):
         self.tests = JinjaPluginIntercept(self.tests, test_loader, jinja2_native=False)
 
 
-if USE_JINJA2_NATIVE:
+if C.DEFAULT_JINJA2_NATIVE:
     class AnsibleNativeEnvironment(NativeEnvironment):
         '''
         Our custom environment, which simply allows us to override the class-level
@@ -675,7 +661,7 @@ class Templar:
 
         self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
-        environment_class = AnsibleNativeEnvironment if USE_JINJA2_NATIVE else AnsibleEnvironment
+        environment_class = AnsibleNativeEnvironment if C.DEFAULT_JINJA2_NATIVE else AnsibleEnvironment
 
         self.environment = environment_class(
             trim_blocks=True,
@@ -737,7 +723,7 @@ class Templar:
                 if value is not None:
                     setattr(obj, key, value)
             except AttributeError:
-                # Ignore invalid attrs, lstrip_blocks was added in jinja2==2.7
+                # Ignore invalid attrs
                 pass
 
         return new_templar
@@ -797,7 +783,7 @@ class Templar:
                 if value is not None:
                     setattr(obj, key, value)
             except AttributeError:
-                # Ignore invalid attrs, lstrip_blocks was added in jinja2==2.7
+                # Ignore invalid attrs
                 pass
 
         yield
@@ -1151,13 +1137,11 @@ class Templar:
                 # calculate the difference in newlines and append them
                 # to the resulting output for parity
                 #
-                # jinja2 added a keep_trailing_newline option in 2.7 when
-                # creating an Environment.  That would let us make this code
-                # better (remove a single newline if
-                # preserve_trailing_newlines is False).  Once we can depend on
-                # that version being present, modify our code to set that when
-                # initializing self.environment and remove a single trailing
-                # newline here if preserve_newlines is False.
+                # Using Environment's keep_trailing_newline instead would
+                # result in change in behavior when trailing newlines
+                # would be kept also for included templates, for example:
+                # "Hello {% include 'world.txt' %}!" would render as
+                # "Hello world\n!\n" instead of "Hello world!\n".
                 res_newlines = _count_newlines_from_end(res)
                 if data_newlines > res_newlines:
                     res += self.environment.newline_sequence * (data_newlines - res_newlines)

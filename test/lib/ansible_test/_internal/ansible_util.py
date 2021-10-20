@@ -96,7 +96,6 @@ def ansible_environment(args, color=True, ansible_config=None):  # type: (Common
         ANSIBLE_CONFIG=ansible_config,
         ANSIBLE_LIBRARY='/dev/null',
         ANSIBLE_DEVEL_WARNING='false',  # Don't show warnings that CI is running devel
-        ANSIBLE_JINJA2_NATIVE_WARNING='false',  # Don't show warnings in CI for old Jinja for native
         PYTHONPATH=get_ansible_python_path(args),
         PAGER='/bin/cat',
         PATH=path,

@@ -199,11 +199,6 @@
 
 # VERIFY lstrip_blocks
 
-- name: Check support for lstrip_blocks in Jinja2
-  shell: "{{ ansible_python.executable }} -c 'import jinja2; jinja2.defaults.LSTRIP_BLOCKS'"
-  register: lstrip_block_support
-  ignore_errors: True
-
 - name: Render a template with "lstrip_blocks" set to False
   template:
     src: lstrip_blocks.j2
@@ -229,24 +224,15 @@
   register: lstrip_blocks_true_result
   ignore_errors: True
 
-- name: Verify exception is thrown if Jinja2 does not support lstrip_blocks but lstrip_blocks is used
-  assert:
-    that:
-      - "lstrip_blocks_true_result.failed"
-      - 'lstrip_blocks_true_result.msg is search(">=2.7")'
-  when: "lstrip_block_support is failed"
-
 - name: Get checksum of known good lstrip_blocks_true.expected
   stat:
     path: "{{role_path}}/files/lstrip_blocks_true.expected"
   register: lstrip_blocks_true_good
-  when: "lstrip_block_support is successful"
 
 - name: Verify templated lstrip_blocks_true matches known good using checksum
   assert:
     that:
         - "lstrip_blocks_true_result.checksum == lstrip_blocks_true_good.stat.checksum"
-  when: "lstrip_block_support is successful"
 
 # VERIFY CONTENTS
 

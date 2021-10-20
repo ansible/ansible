@@ -147,20 +147,18 @@ bootstrap_remote_freebsd()
                 ;;
         esac
 
+        # Jinja2 is not installed with an OS package since the provided version is too old.
         # PyYAML is never installed with an OS package since it does not include libyaml support.
-        # Instead, ansible-test will install it using pip.
+        # Instead, ansible-test will install them using pip.
         if [ "${have_os_packages}" ]; then
-            jinja2_pkg="py${python_package_version}-Jinja2"
             cryptography_pkg="py${python_package_version}-cryptography"
         else
-            jinja2_pkg=""
             cryptography_pkg=""
         fi
 
         packages="
             ${packages}
             libyaml
-            ${jinja2_pkg}
             ${cryptography_pkg}
             "
     fi
@@ -238,10 +236,11 @@ bootstrap_remote_rhel_8()
         ${py_pkg_prefix}-devel
         "
 
+    # Jinja2 is not installed with an OS package since the provided version is too old.
+    # Instead, ansible-test will install it using pip.
     if [ "${controller}" ]; then
         packages="
             ${packages}
-            ${py_pkg_prefix}-jinja2
             ${py_pkg_prefix}-cryptography
             "
     fi

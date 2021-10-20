@@ -65,18 +65,6 @@ class ActionModule(ActionBase):
         comment_end_string = self._task.args.get('comment_end_string', None)
         output_encoding = self._task.args.get('output_encoding', 'utf-8') or 'utf-8'
 
-        # Option `lstrip_blocks' was added in Jinja2 version 2.7.
-        if lstrip_blocks:
-            try:
-                import jinja2.defaults
-            except ImportError:
-                raise AnsibleError('Unable to import Jinja2 defaults for determining Jinja2 features.')
-
-            try:
-                jinja2.defaults.LSTRIP_BLOCKS
-            except AttributeError:
-                raise AnsibleError("Option `lstrip_blocks' is only available in Jinja2 versions >=2.7")
-
         wrong_sequences = ["\\n", "\\r", "\\r\\n"]
         allowed_sequences = ["\n", "\r", "\r\n"]
 

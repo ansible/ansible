@@ -113,7 +113,6 @@ class AnsibleJ2Vars(Mapping):
         if locals is None:
             return self
 
-        # FIXME run this only on jinja2>=2.9?
         # prior to version 2.9, locals contained all of the vars and not just the current
         # local vars so this was not necessary for locals to propagate down to nested includes
         new_locals = self._locals.copy()
