@@ -376,8 +376,8 @@ class GalaxyCLI(CLI):
                                           'found on the server and the installed copy. This does not verify dependencies.')
         verify_parser.set_defaults(func=self.execute_verify)
 
-        verify_parser.add_argument('args', metavar='{0}_name'.format(galaxy_type), nargs='*', help='The collection(s) name or '
-                                   'path/url to a tar.gz collection artifact. This is mutually exclusive with --requirements-file.')
+        verify_parser.add_argument('args', metavar='{0}_name'.format(galaxy_type), nargs='*', help='The installed collection(s) name. '
+                                   'This is mutually exclusive with --requirements-file.')
         verify_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
                                    help='Ignore errors during verification and continue with the next specified collection.')
         verify_parser.add_argument('--offline', dest='offline', action='store_true', default=False,
