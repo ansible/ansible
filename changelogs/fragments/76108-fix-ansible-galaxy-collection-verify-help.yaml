@@ -1,0 +1,3 @@
+bugfixes:
+  - Fix help message for the 'ansible-galaxy collection verify' positional argument.
+    The positional argument must be a collection name (https://github.com/ansible/ansible/issues/76087).
