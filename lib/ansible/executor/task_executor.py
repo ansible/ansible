@@ -603,7 +603,8 @@ class TaskExecutor:
         if omit_token is not None:
             self._task.args = remove_omit(self._task.args, omit_token)
 
-        retries, delay = self.process_retry_parameters(self._task)
+        retries_requested = self._retries_requested(self._task)
+        retries, delay = self.process_retry_parameters(retries_requested, self._task)
 
         display.debug("starting attempt loop")
         result = None
@@ -806,22 +807,21 @@ class TaskExecutor:
 
     @staticmethod
     def _retries_requested(_task: Task) -> boolean:
-        return bool((_task.retries and _task.retries > 1) or _task.until)
+        return (_task.retries is not None) or bool(_task.until)
 
     @staticmethod
-    def process_retry_parameters(_task: Task) -> Tuple[int, int, Union[str, List]]:
+    def process_retry_parameters(retries_requested: bool, _task: Task) -> Tuple[int, int, Union[str, List]]:
         '''
         Extract the parameters used in retrying the task
         '''
-        if _task.retries is not None:
-            attempts = 1 + _task.retries
-        elif _task.until: # implicit request for retries, uses default
-            attempts = 1 + 3
-        else:
-            # no retries, no implicit retry request from `until`
-            attempts = 1
+        attempts = 1
+        if retries_requested:
+            if _task.retries is not None:
+                attempts += _task.retries
+            else:
+                attempts += 3
 
-        if attempts <= 0:
+        if attempts <= 0: # guard against negative retries
             attempts = 1
 
         delay = _task.delay
