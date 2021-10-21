@@ -80,7 +80,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     notify = FieldAttribute(isa='list')
     poll = FieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
     register = FieldAttribute(isa='string', static=True)
-    retries = FieldAttribute(isa='int', default=3)
+    retries = FieldAttribute(isa='int')
     until = FieldAttribute(isa='list', default=list)
 
     # deprecated, used to be loop and loop_args but loop has been repurposed

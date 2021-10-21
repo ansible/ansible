@@ -809,15 +809,15 @@ class TaskExecutor:
         '''
         Extract the parameters used in retrying the task
         '''
-        if _task.until:
-            retries = _task.retries
-            if retries is None:
-                retries = 3
-            elif retries <= 0:
-                retries = 1
-            else:
-                retries += 1
+        if _task.retries is not None:
+            retries = _task.retries + 1
+        elif _task.until: # implicit request for retries, uses default
+            retries = 3 + 1
         else:
+            # no retries, no implicit retry request from `until`
+            retries = 0 + 1
+
+        if retries <= 0:
             retries = 1
 
         delay = _task.delay

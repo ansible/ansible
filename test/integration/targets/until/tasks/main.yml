@@ -89,7 +89,7 @@
   delay: 0.1
   register: retries_null
   until: "false"
-  failed_when: retries_null.attempts != 3
+  failed_when: retries_null.attempts != 4
 
 - name: test default in `retries`
   shell: "false"
