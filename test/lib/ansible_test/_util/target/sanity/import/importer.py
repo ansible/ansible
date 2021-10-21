@@ -23,7 +23,8 @@ def main():
 
     ansible_path = os.path.dirname(os.path.dirname(ansible.__file__))
     temp_path = os.environ['SANITY_TEMP_PATH'] + os.path.sep
-    external_python = os.environ.get('SANITY_EXTERNAL_PYTHON') or sys.executable
+    external_python = os.environ.get('SANITY_EXTERNAL_PYTHON')
+    yaml_to_json_path = os.environ.get('SANITY_YAML_TO_JSON')
     collection_full_name = os.environ.get('SANITY_COLLECTION_FULL_NAME')
     collection_root = os.environ.get('ANSIBLE_COLLECTIONS_PATH')
     import_type = os.environ.get('SANITY_IMPORTER_TYPE')
@@ -48,7 +49,6 @@ def main():
         from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
         from ansible.utils.collection_loader import _collection_finder
 
-        yaml_to_json_path = os.path.join(os.path.dirname(__file__), 'yaml_to_json.py')
         yaml_to_dict_cache = {}
 
         # unique ISO date marker matching the one present in yaml_to_json.py
