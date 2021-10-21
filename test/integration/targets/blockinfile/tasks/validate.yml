@@ -1,6 +1,6 @@
 - name: EXPECTED FAILURE test improper validate
   blockinfile:
-    path: "{{ output_dir }}/validate.txt"
+    path: "{{ remote_tmp_dir }}/validate.txt"
     block: |
       line1
       line2
@@ -10,7 +10,7 @@
 
 - name: EXPECTED FAILURE test failure to validate
   blockinfile:
-    path: "{{ output_dir }}/validate.txt"
+    path: "{{ remote_tmp_dir }}/validate.txt"
     block: |
       line1
       line2
@@ -20,7 +20,7 @@
 
 - name: Test proper validate
   blockinfile:
-    path: "{{ output_dir }}/validate.txt"
+    path: "{{ remote_tmp_dir }}/validate.txt"
     block: |
       line1
       line2

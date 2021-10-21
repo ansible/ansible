@@ -1,11 +1,11 @@
 - name: copy the sshd_config to the test dir
   copy:
     src: sshd_config
-    dest: "{{ output_dir_test }}"
+    dest: "{{ remote_tmp_dir_test }}"
 
 - name: insert/update "Match User" configuration block in sshd_config
   blockinfile:
-    path: "{{ output_dir_test }}/sshd_config"
+    path: "{{ remote_tmp_dir_test }}/sshd_config"
     block: |
       Match User ansible-agent
       PasswordAuthentication no
@@ -18,7 +18,7 @@
       - "'backup_file' in blockinfile_test0"
 
 - name: check content
-  shell: 'grep -c -e "Match User ansible-agent" -e "PasswordAuthentication no" {{ output_dir_test }}/sshd_config'
+  shell: 'grep -c -e "Match User ansible-agent" -e "PasswordAuthentication no" {{ remote_tmp_dir_test }}/sshd_config'
   register: blockinfile_test0_grep
 
 - debug:
@@ -40,7 +40,7 @@
 
 - name: check idemptotence
   blockinfile:
-    path: "{{ output_dir_test }}/sshd_config"
+    path: "{{ remote_tmp_dir_test }}/sshd_config"
     block: |
       Match User ansible-agent
       PasswordAuthentication no

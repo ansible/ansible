@@ -1,6 +1,6 @@
 - name: Create a file with blockinfile
   blockinfile:
-    path: "{{ output_dir_test }}/empty.txt"
+    path: "{{ remote_tmp_dir_test }}/empty.txt"
     block: |
       Hey
       there
@@ -10,7 +10,7 @@
 
 - name: Run a task that results in an empty file
   blockinfile:
-    path: "{{ output_dir_test }}/empty.txt"
+    path: "{{ remote_tmp_dir_test }}/empty.txt"
     block: |
       Hey
       there
@@ -19,7 +19,7 @@
   register: empty_test_2
 
 - stat:
-    path: "{{ output_dir_test }}/empty.txt"
+    path: "{{ remote_tmp_dir_test }}/empty.txt"
   register: empty_test_stat
 
 - name: Ensure empty file was created

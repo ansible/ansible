@@ -1,11 +1,11 @@
 - name: Create a test file
   copy:
     content: diff test
-    dest: "{{ output_dir_test }}/diff.txt"
+    dest: "{{ remote_tmp_dir_test }}/diff.txt"
 
 - name: Add block to file with diff
   blockinfile:
-    path: "{{ output_dir_test }}/diff.txt"
+    path: "{{ remote_tmp_dir_test }}/diff.txt"
     block: |
       line 1
       line 2

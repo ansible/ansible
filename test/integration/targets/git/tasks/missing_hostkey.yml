@@ -2,7 +2,7 @@
   git:
     repo: '{{ repo_format2 }}'
     dest: '{{ checkout_dir }}'
-    ssh_opts: '-o UserKnownHostsFile={{ output_dir }}/known_hosts'
+    ssh_opts: '-o UserKnownHostsFile={{ remote_tmp_dir }}/known_hosts'
   register: git_result
   ignore_errors: true
 
@@ -16,7 +16,7 @@
     dest: '{{ checkout_dir }}'
     accept_hostkey: true
     key_file: '{{ github_ssh_private_key }}'
-    ssh_opts: '-o UserKnownHostsFile={{ output_dir }}/known_hosts'
+    ssh_opts: '-o UserKnownHostsFile={{ remote_tmp_dir }}/known_hosts'
   register: git_result
   when: github_ssh_private_key is defined
 
@@ -38,7 +38,7 @@
     version: 'master'
     accept_hostkey: false # should already have been accepted
     key_file: '{{ github_ssh_private_key }}'
-    ssh_opts: '-o UserKnownHostsFile={{ output_dir }}/known_hosts'
+    ssh_opts: '-o UserKnownHostsFile={{ remote_tmp_dir }}/known_hosts'
   register: git_result
   when: github_ssh_private_key is defined
 
@@ -49,7 +49,7 @@
 
 - name: MISSING-HOSTEKY | Remove github.com hostkey from known_hosts
   lineinfile:
-    dest: '{{ output_dir }}/known_hosts'
+    dest: '{{ remote_tmp_dir }}/known_hosts'
     regexp: "github.com"
     state: absent
   when: github_ssh_private_key is defined
