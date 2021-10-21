@@ -19,8 +19,8 @@
 - name: set role facts
   set_fact:
     http_port: 15260
-    files_dir: '{{ output_dir|expanduser }}/files'
-    checkout_dir: '{{ output_dir }}/git'
+    files_dir: '{{ remote_tmp_dir|expanduser }}/files'
+    checkout_dir: '{{ remote_tmp_dir }}/git'
 
 - name: create a directory to serve files from
   file:
@@ -39,10 +39,10 @@
 
 - copy:
     src: "testserver.py"
-    dest: "{{ output_dir }}/testserver.py"
+    dest: "{{ remote_tmp_dir }}/testserver.py"
 
 - name: start SimpleHTTPServer
-  shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ output_dir}}/testserver.py {{ http_port }}
+  shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ remote_tmp_dir}}/testserver.py {{ http_port }}
   async: 120 # this test set can take ~1m to run on FreeBSD (via Shippable)
   poll: 0
 
@@ -91,12 +91,12 @@
 - name: test https fetch to a site with mismatched hostname and certificate
   uri:
     url: "https://{{ badssl_host }}/"
-    dest: "{{ output_dir }}/shouldnotexist.html"
+    dest: "{{ remote_tmp_dir }}/shouldnotexist.html"
   ignore_errors: True
   register: result
 
 - stat:
-    path: "{{ output_dir }}/shouldnotexist.html"
+    path: "{{ remote_tmp_dir }}/shouldnotexist.html"
   register: stat_result
 
 - name: Assert that the file was not downloaded
@@ -111,18 +111,18 @@
 
 - name: Clean up any cruft from the results directory
   file:
-    name: "{{ output_dir }}/kreitz.html"
+    name: "{{ remote_tmp_dir }}/kreitz.html"
     state: absent
 
 - name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no
   uri:
     url: "https://{{ badssl_host }}/"
-    dest: "{{ output_dir }}/kreitz.html"
+    dest: "{{ remote_tmp_dir }}/kreitz.html"
     validate_certs: no
   register: result
 
 - stat:
-    path: "{{ output_dir }}/kreitz.html"
+    path: "{{ remote_tmp_dir }}/kreitz.html"
   register: stat_result
 
 - name: Assert that the file was downloaded
@@ -139,13 +139,13 @@
 - name: test https fetch to a site with self signed certificate using ca_path
   uri:
     url: "https://{{ self_signed_host }}:444/"
-    dest: "{{ output_dir }}/self-signed_using_ca_path.html"
+    dest: "{{ remote_tmp_dir }}/self-signed_using_ca_path.html"
     ca_path: "{{ remote_tmp_dir }}/ca2cert.pem"
     validate_certs: yes
   register: result
 
 - stat:
-    path: "{{ output_dir }}/self-signed_using_ca_path.html"
+    path: "{{ remote_tmp_dir }}/self-signed_using_ca_path.html"
   register: stat_result
 
 - name: Assert that the file was downloaded
@@ -157,13 +157,13 @@
 - name: test https fetch to a site with self signed certificate without using ca_path
   uri:
     url: "https://{{ self_signed_host }}:444/"
-    dest: "{{ output_dir }}/self-signed-without_using_ca_path.html"
+    dest: "{{ remote_tmp_dir }}/self-signed-without_using_ca_path.html"
     validate_certs: yes
   register: result
   ignore_errors: true
 
 - stat:
-    path: "{{ output_dir }}/self-signed-without_using_ca_path.html"
+    path: "{{ remote_tmp_dir }}/self-signed-without_using_ca_path.html"
   register: stat_result
 
 - name: Assure that https access to a host with self-signed certificate without providing ca_path fails
@@ -672,16 +672,16 @@
 - name: Create a testing file
   copy:
     content: "content"
-    dest: "{{ output_dir }}/output"
+    dest: "{{ remote_tmp_dir }}/output"
 
 - name: Download a file from non existing location
   uri:
     url: http://does/not/exist
-    dest: "{{ output_dir }}/output"
+    dest: "{{ remote_tmp_dir }}/output"
   ignore_errors: yes
 
 - name: Save testing file's output
-  command: "cat {{ output_dir }}/output"
+  command: "cat {{ remote_tmp_dir }}/output"
   register: file_out
 
 - name: Test the testing file was not overwritten
@@ -691,7 +691,7 @@
 
 - name: Clean up
   file:
-    dest: "{{ output_dir }}/output"
+    dest: "{{ remote_tmp_dir }}/output"
     state: absent
 
 - name: Test follow_redirects=none

@@ -1,6 +1,6 @@
 - name: Create insertafter test file
   copy:
-    dest: "{{ output_dir }}/after.txt"
+    dest: "{{ remote_tmp_dir }}/after.txt"
     content: |
       line1
       line2
@@ -8,7 +8,7 @@
 
 - name: Add block using insertafter
   blockinfile:
-    path: "{{ output_dir }}/after.txt"
+    path: "{{ remote_tmp_dir }}/after.txt"
     insertafter: line2
     block: |
       block1
@@ -17,7 +17,7 @@
 
 - name: Add block using insertafter again
   blockinfile:
-    path: "{{ output_dir }}/after.txt"
+    path: "{{ remote_tmp_dir }}/after.txt"
     insertafter: line2
     block: |
       block1
@@ -26,7 +26,7 @@
 
 - name: Stat the after.txt file
   stat:
-    path: "{{ output_dir }}/after.txt"
+    path: "{{ remote_tmp_dir }}/after.txt"
   register: after_file
 
 - name: Ensure insertafter worked correctly
