@@ -1,0 +1,4 @@
+bugfixes:
+  - >-
+     user - Ubuntu starting from version 20 only supports ``-n`` and not ``-N``
+     on the ``luseradd`` command.
