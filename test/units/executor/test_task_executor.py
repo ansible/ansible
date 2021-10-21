@@ -520,7 +520,7 @@ class TestTaskExecutorRetries:
     def _do_retry_parameters_test(self, task: Task, expected_retries=None, expected_delay=None):
         retries_requested = TaskExecutor._retries_requested(task)
         retries, delay = TaskExecutor.process_retry_parameters(retries_requested, task)
-        
+
         if expected_retries is not None:
             assert expected_retries == retries
         if expected_delay is not None:
@@ -533,7 +533,7 @@ class TestTaskExecutorRetries:
 
     def test_process_retry_parameters_no_until_follows_retries(self):
         retries = 42
-        expected_retries = retries+1
+        expected_retries = retries + 1
         self._do_retry_parameters_test(self._make_task({"retries": retries}), expected_retries=expected_retries)
 
     def test_process_retry_parameters_with_until_defaults_3(self):
@@ -554,7 +554,7 @@ class TestTaskExecutorRetries:
         retries = 42
         expected_retries = retries + 1
         self._do_retry_parameters_test(self._make_task({"until": valid_until, "retries": retries}), expected_retries=expected_retries)
-    
+
     # delay
 
     def test_process_retry_parameters_no_delay_defaults_to_Task_default(self):
