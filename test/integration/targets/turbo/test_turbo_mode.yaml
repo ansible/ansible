@@ -1,0 +1,80 @@
+- hosts: localhost
+  gather_facts: no
+  collections:
+    - ns.col
+  tasks:
+    - ns.col.turbo_demo:
+      with_sequence: count=10
+      register: _result
+    - debug: var=_result.results[-1]
+    - assert:
+        that:
+          - _result.results[-1].counter == 10
+    - ns.col.turbo_demo:
+      with_sequence: count=10
+      check_mode: True
+      register: _result
+    - assert:
+        that:
+          - _result.results[-1].counter == 10
+    - ns.col.turbo_demo:
+      with_sequence: count=10
+      become: true
+      register: _result
+    - assert:
+        that:
+          - _result.results[-1].counter == 10
+    - ns.col.turbo_demo:
+      diff: yes
+      register: _result_with_diff
+    - assert:
+        that:
+          - _result_with_diff.diff is defined
+    - ns.col.turbo_demo:
+      diff: no
+      register: _result_no_diff
+    - assert:
+        that:
+          - _result_no_diff.diff is undefined
+
+    - name: Test task environment var
+      ns.col.turbo_demo:
+      environment:
+        TURBO_TEST_VAR: foobar
+      register: _result
+
+    - assert:
+        that:
+          - _result.envvar == "foobar"
+
+    - name: Test task environment var not set
+      ns.col.turbo_demo:
+      register: _result
+
+    - assert:
+        that:
+          - not _result.envvar
+
+
+    - name: Create temporary dir
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: temp
+      register: tempdir_1
+
+    - name: Test with a different remote_tmp, there is no socket yet.
+      ns.col.turbo_demo:
+      vars:
+        ansible_remote_tmp: "{{ tempdir_1.path }}"
+      register: _result
+    - assert:
+        that:
+          - _result.counter == 1
+
+    - name: test using default remote_tmp. socket previously created
+      ns.col.turbo_demo:
+      register: _result
+
+    - assert:
+            that:
+            - _result.counter > 1

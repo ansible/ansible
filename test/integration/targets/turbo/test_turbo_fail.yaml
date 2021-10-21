@@ -1,0 +1,29 @@
+- hosts: localhost
+  gather_facts: no
+  collections:
+    - ns.col
+  tasks:
+    - name: fail with no additionnal args
+      turbo_fail:
+      register: result
+      failed_when: not result.failed
+
+    - assert:
+        that:
+          - result | list | difference(["failed_when_result"]) | sort == ["changed", "failed", "msg"]
+
+    - name: fail with additionnal args
+      turbo_fail:
+        params:
+          test:
+            phase: integration
+            release: 1.0
+          environment: production
+      register: result
+      failed_when: not result.failed
+
+    - assert:
+        that:
+          - result.environment == "production"
+          - result.test.phase == "integration"
+          - result.test.release == 1.0
