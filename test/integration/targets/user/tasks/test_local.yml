@@ -130,6 +130,27 @@
   tags:
     - user_test_local_mode
 
+- name: Add local_ansibulluser group
+  group:
+    name: local_ansibulluser
+    state: present
+
+- name: Add user again with local_ansibulluser group present
+  user:
+    name: local_ansibulluser
+    state: present
+  tags:
+    - user_test_local_mode
+
+- name: Remove local_ansibulluser again
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  tags:
+    - user_test_local_mode
+
 - name: Remove test groups
   group:
     name: "{{ item }}"
