@@ -270,6 +270,16 @@ When you run a task with ``until`` and register the result as a variable, the re
 
 .. note:: You must set the ``until`` parameter if you want a task to retry. If ``until`` is not defined, the value for the ``retries`` parameter is forced to 1.
 
+.. versionadded:: 2.14
+
+In the common case of retrying a task until it is successful, you can use ``retries`` without ``until``. For example,
+
+.. code-block:: yaml
+
+  - name: Retry a task until successful
+    ansible.builtin.shell: /usr/bin/foo
+    retries: 5
+
 Looping over inventory
 ----------------------
 
