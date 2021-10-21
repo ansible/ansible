@@ -810,15 +810,15 @@ class TaskExecutor:
         Extract the parameters used in retrying the task
         '''
         if _task.retries is not None:
-            retries = _task.retries + 1
+            attempts = 1 + _task.retries
         elif _task.until: # implicit request for retries, uses default
-            retries = 3 + 1
+            attempts = 1 + 3
         else:
             # no retries, no implicit retry request from `until`
-            retries = 0 + 1
+            attempts = 1
 
-        if retries <= 0:
-            retries = 1
+        if attempts <= 0:
+            attempts = 1
 
         delay = _task.delay
         if delay < 0:
@@ -826,7 +826,7 @@ class TaskExecutor:
 
         until = _task.until
 
-        return retries, delay, until
+        return attempts, delay, until
 
     def _poll_async_result(self, result, templar, task_vars=None):
         '''
