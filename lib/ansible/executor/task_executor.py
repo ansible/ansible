@@ -737,9 +737,14 @@ class TaskExecutor:
                     result['%s_when_result' % condname] = to_text(e)
 
             if retries_requested:
-                cond = Conditional(loader=self._loader)
-                cond.when = self._task.until
-                if cond.evaluate_conditional(templar, vars_copy):
+                if self._task.until:
+                    cond = Conditional(loader=self._loader)
+                    cond.when = self._task.until
+                    until_satisfied = cond.evaluate_conditional(templar, vars_copy)
+                else:
+                    until_satisfied = not result['failed']
+
+                if until_satisfied:
                     break
                 else:
                     # no conditional check, or it failed, so sleep for the specified time
