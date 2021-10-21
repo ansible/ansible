@@ -12,6 +12,8 @@ import tarfile
 import subprocess
 from contextlib import contextmanager
 from hashlib import sha256
+from urllib.error import URLError
+from urllib.parse import urldefrag
 from shutil import rmtree
 from tempfile import mkdtemp
 
@@ -39,8 +41,6 @@ from ansible.galaxy.dependency_resolution.dataclasses import _GALAXY_YAML
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.yaml import yaml_load
-from ansible.module_utils.six.moves.urllib.error import URLError
-from ansible.module_utils.six.moves.urllib.parse import urldefrag
 from ansible.module_utils.six import raise_from
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display

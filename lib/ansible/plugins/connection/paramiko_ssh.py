@@ -148,8 +148,6 @@ from ansible.errors import (
     AnsibleFileNotFound,
 )
 from ansible.module_utils.compat.paramiko import PARAMIKO_IMPORT_ERR, paramiko
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.six.moves import input
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe
@@ -500,8 +498,8 @@ class Connection(ConnectionBase):
 
     def _any_keys_added(self):
 
-        for hostname, keys in iteritems(self.ssh._host_keys):
-            for keytype, key in iteritems(keys):
+        for hostname, keys in self.ssh._host_keys.items():
+            for keytype, key in keys.items():
                 added_this_time = getattr(key, '_added_by_ansible_this_time', False)
                 if added_this_time:
                     return True
@@ -521,18 +519,18 @@ class Connection(ConnectionBase):
 
         with open(filename, 'w') as f:
 
-            for hostname, keys in iteritems(self.ssh._host_keys):
+            for hostname, keys in self.ssh._host_keys.items():
 
-                for keytype, key in iteritems(keys):
+                for keytype, key in keys.items():
 
                     # was f.write
                     added_this_time = getattr(key, '_added_by_ansible_this_time', False)
                     if not added_this_time:
                         f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
 
-            for hostname, keys in iteritems(self.ssh._host_keys):
+            for hostname, keys in self.ssh._host_keys.items():
 
-                for keytype, key in iteritems(keys):
+                for keytype, key in keys.items():
                     added_this_time = getattr(key, '_added_by_ansible_this_time', False)
                     if added_this_time:
                         f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))

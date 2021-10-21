@@ -31,7 +31,6 @@ from jinja2.filters import pass_environment
 from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.common.text import formatters
 from ansible.module_utils.six import binary_type, text_type
-from ansible.module_utils.six.moves import zip, zip_longest
 from ansible.module_utils.common._collections_compat import Hashable, Mapping, Iterable
 from ansible.module_utils._text import to_native, to_text
 from ansible.utils.display import Display
@@ -246,7 +245,7 @@ class FilterModule(object):
 
             # zip
             'zip': zip,
-            'zip_longest': zip_longest,
+            'zip_longest': itertools.zip_longest,
 
         }
 

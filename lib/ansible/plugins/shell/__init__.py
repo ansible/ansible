@@ -21,11 +21,11 @@ import os
 import os.path
 import random
 import re
+import shlex
 import time
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import text_type
-from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_native
 from ansible.plugins import AnsiblePlugin
 
@@ -80,7 +80,7 @@ class ShellBase(AnsiblePlugin):
         return 'ansible-tmp-%s-%s-%s' % (time.time(), os.getpid(), random.randint(0, 2**48))
 
     def env_prefix(self, **kwargs):
-        return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k, v in kwargs.items()])
+        return ' '.join(['%s=%s' % (k, shlex.quote(text_type(v))) for k, v in kwargs.items()])
 
     def join_path(self, *args):
         return os.path.join(*args)
@@ -96,21 +96,21 @@ class ShellBase(AnsiblePlugin):
     def chmod(self, paths, mode):
         cmd = ['chmod', mode]
         cmd.extend(paths)
-        cmd = [shlex_quote(c) for c in cmd]
+        cmd = [shlex.quote(c) for c in cmd]
 
         return ' '.join(cmd)
 
     def chown(self, paths, user):
         cmd = ['chown', user]
         cmd.extend(paths)
-        cmd = [shlex_quote(c) for c in cmd]
+        cmd = [shlex.quote(c) for c in cmd]
 
         return ' '.join(cmd)
 
     def chgrp(self, paths, group):
         cmd = ['chgrp', group]
         cmd.extend(paths)
-        cmd = [shlex_quote(c) for c in cmd]
+        cmd = [shlex.quote(c) for c in cmd]
 
         return ' '.join(cmd)
 
@@ -118,19 +118,19 @@ class ShellBase(AnsiblePlugin):
         """Only sets acls for users as that's really all we need"""
         cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)]
         cmd.extend(paths)
-        cmd = [shlex_quote(c) for c in cmd]
+        cmd = [shlex.quote(c) for c in cmd]
 
         return ' '.join(cmd)
 
     def remove(self, path, recurse=False):
-        path = shlex_quote(path)
+        path = shlex.quote(path)
         cmd = 'rm -f '
         if recurse:
             cmd += '-r '
         return cmd + "%s %s" % (path, self._SHELL_REDIRECT_ALLNULL)
 
     def exists(self, path):
-        cmd = ['test', '-e', shlex_quote(path)]
+        cmd = ['test', '-e', shlex.quote(path)]
         return ' '.join(cmd)
 
     def mkdtemp(self, basefile=None, system=False, mode=0o700, tmpdir=None):
@@ -189,8 +189,8 @@ class ShellBase(AnsiblePlugin):
         # Check that the user_path to expand is safe
         if user_home_path != '~':
             if not _USER_HOME_PATH_RE.match(user_home_path):
-                # shlex_quote will make the shell return the string verbatim
-                user_home_path = shlex_quote(user_home_path)
+                # shlex.quote will make the shell return the string verbatim
+                user_home_path = shlex.quote(user_home_path)
         elif username:
             # if present the user name is appended to resolve "that user's home"
             user_home_path += username
@@ -204,7 +204,7 @@ class ShellBase(AnsiblePlugin):
     def build_module_command(self, env_string, shebang, cmd, arg_path=None):
         # don't quote the cmd if it's an empty string, because this will break pipelining mode
         if cmd.strip() != '':
-            cmd = shlex_quote(cmd)
+            cmd = shlex.quote(cmd)
 
         cmd_parts = []
         if shebang:
@@ -231,4 +231,4 @@ class ShellBase(AnsiblePlugin):
 
     def quote(self, cmd):
         """Returns a shell-escaped string that can be safely used as one token in a shell command line"""
-        return shlex_quote(cmd)
+        return shlex.quote(cmd)

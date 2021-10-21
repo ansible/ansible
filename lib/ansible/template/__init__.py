@@ -50,8 +50,7 @@ from ansible.errors import (
     AnsiblePluginRemovedError,
     AnsibleUndefinedVariable,
 )
-from ansible.module_utils.six import iteritems, string_types, text_type
-from ansible.module_utils.six.moves import range
+from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Iterator, Sequence, Mapping, MappingView, MutableMapping
 from ansible.module_utils.common.collections import is_sequence
@@ -562,7 +561,7 @@ class JinjaPluginIntercept(MutableMapping):
                 method_map = getattr(plugin_impl, self._method_map_name)
 
                 try:
-                    func_items = iteritems(method_map())
+                    func_items = method_map().items()
                 except Exception as e:
                     display.warning(
                         "Skipping %s plugin %s as it seems to be invalid: %r" % (self._dirname, to_text(plugin_impl._original_path), e),
