@@ -143,6 +143,14 @@
   tags:
     - user_test_local_mode
 
+- name: Remove local_ansibulluser group
+  group:
+    name: local_ansibulluser
+    state: absent
+    local: yes
+  tags:
+    - user_test_local_mode
+
 - name: Remove test groups
   group:
     name: "{{ item }}"
