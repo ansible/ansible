@@ -507,7 +507,14 @@ class TestTaskExecutorRetries:
         params.update(extra or {})
         return Task.load(params)
 
-    valid_until = "taskresult is succeeded"
+    @pytest.mark.parametrize("task_extras,expected", [
+        ({}, False),
+        ({"retries": 42}, True),
+        ({"until": valid_until}, True),
+        ({"retries": 42, "until": valid_until}, True)
+    ])
+    def test_retries_requested(self, task_extras, expected):
+        assert expected == TaskExecutor._retries_requested(self._make_task(task_extras))
 
     def _do_test(self, task: Task, expected_retries=None, expected_delay=None):
         retries, delay = TaskExecutor.process_retry_parameters(task)
@@ -516,7 +523,6 @@ class TestTaskExecutorRetries:
             assert expected_retries == retries
         if expected_delay is not None:
             assert expected_delay == delay
-
 
     # retries
 

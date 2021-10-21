@@ -805,6 +805,10 @@ class TaskExecutor:
         return result
 
     @staticmethod
+    def _retries_requested(_task: Task) -> boolean:
+        return bool((_task.retries and _task.retries > 1) or _task.until)
+
+    @staticmethod
     def process_retry_parameters(_task: Task) -> Tuple[int, int, Union[str, List]]:
         '''
         Extract the parameters used in retrying the task
