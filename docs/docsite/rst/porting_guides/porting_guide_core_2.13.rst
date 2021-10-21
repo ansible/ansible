@@ -1,9 +1,9 @@
 
 .. _porting_2.13_guide_core:
 
-**************************
+*******************************
 Ansible-core 2.13 Porting Guide
-**************************
+*******************************
 
 This section discusses the behavioral changes between ``ansible-core`` 2.12 and ``ansible-core`` 2.13.
 
