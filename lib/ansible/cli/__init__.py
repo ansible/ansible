@@ -22,7 +22,7 @@ import getpass
 import os
 import subprocess
 import traceback
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from pathlib import Path
 
 try:
@@ -38,7 +38,7 @@ from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.inventory.manager import InventoryManager
-from ansible.module_utils.six import with_metaclass, string_types, PY3
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
@@ -57,7 +57,7 @@ except ImportError:
     HAS_ARGCOMPLETE = False
 
 
-class CLI(with_metaclass(ABCMeta, object)):
+class CLI(ABC):
     ''' code behind bin/ansible* programs '''
 
     PAGER = 'less'
@@ -509,11 +509,8 @@ class CLI(with_metaclass(ABCMeta, object)):
         b_pwd_file = to_bytes(pwd_file)
         secret = None
         if b_pwd_file == b'-':
-            if PY3:
-                # ensure its read as bytes
-                secret = sys.stdin.buffer.read()
-            else:
-                secret = sys.stdin.read()
+            # ensure its read as bytes
+            secret = sys.stdin.buffer.read()
 
         elif not os.path.exists(b_pwd_file):
             raise AnsibleError("The password file %s was not found" % pwd_file)

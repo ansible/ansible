@@ -35,7 +35,6 @@ import subprocess
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.basic import json_dict_bytes_to_unicode
-from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.plugins.inventory import BaseInventoryPlugin
@@ -171,7 +170,7 @@ class InventoryModule(BaseInventoryPlugin):
             if not isinstance(data['vars'], dict):
                 raise AnsibleError("You defined a group '%s' with bad data for variables:\n %s" % (group, data))
 
-            for k, v in iteritems(data['vars']):
+            for k, v in data['vars'].items():
                 self.inventory.set_variable(group, k, v)
 
         if group != '_meta' and isinstance(data, dict) and 'children' in data:

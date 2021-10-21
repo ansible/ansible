@@ -11,6 +11,7 @@ import json
 import os
 from collections import namedtuple
 from glob import iglob
+from urllib.parse import urlparse
 
 try:
     from typing import TYPE_CHECKING
@@ -33,7 +34,6 @@ import yaml
 from ansible.errors import AnsibleError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.six.moves.urllib.parse import urlparse
 from ansible.module_utils.six import raise_from
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display

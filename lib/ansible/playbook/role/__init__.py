@@ -24,7 +24,7 @@ import os
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils._text import to_text
-from ansible.module_utils.six import iteritems, binary_type, text_type
+from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.common._collections_compat import Container, Mapping, Set, Sequence
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
@@ -161,7 +161,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
 
             hashed_params = hash_params(params)
             if role_include.get_name() in play.ROLE_CACHE:
-                for (entry, role_obj) in iteritems(play.ROLE_CACHE[role_include.get_name()]):
+                for (entry, role_obj) in play.ROLE_CACHE[role_include.get_name()].items():
                     if hashed_params == entry:
                         if parent_role:
                             role_obj.add_parent(parent_role)
@@ -198,7 +198,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
 
         # copy over all field attributes from the RoleInclude
         # update self._attributes directly, to avoid squashing
-        for (attr_name, dump) in iteritems(self._valid_attrs):
+        for (attr_name, dump) in self._valid_attrs.items():
             if attr_name in ('when', 'tags'):
                 self._attributes[attr_name] = self._extend_value(
                     self._attributes[attr_name],

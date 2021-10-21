@@ -34,7 +34,6 @@ DOCUMENTATION = '''
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.executor.play_iterator import PlayIterator
-from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.included_file import IncludedFile
@@ -106,7 +105,7 @@ class StrategyModule(StrategyBase):
 
         display.debug("counting tasks in each state of execution")
         host_tasks_to_run = [(host, state_task)
-                             for host, state_task in iteritems(host_tasks)
+                             for host, state_task in host_tasks.items()
                              if state_task and state_task[1]]
 
         if host_tasks_to_run:

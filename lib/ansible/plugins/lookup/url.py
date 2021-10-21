@@ -173,8 +173,9 @@ RETURN = """
     elements: str
 """
 
+from urllib.error import HTTPError, URLError
+
 from ansible.errors import AnsibleError
-from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
 from ansible.plugins.lookup import LookupBase

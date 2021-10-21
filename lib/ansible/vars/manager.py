@@ -37,7 +37,7 @@ from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import Mapping, MutableMapping, Sequence
-from ansible.module_utils.six import iteritems, text_type, string_types
+from ansible.module_utils.six import text_type, string_types
 from ansible.plugins.loader import lookup_loader
 from ansible.vars.fact_cache import FactCache
 from ansible.template import Templar
@@ -513,7 +513,7 @@ class VariableManager:
         # the 'omit' value allows params to be left out if the variable they are based on is undefined
         variables['omit'] = self._omit_token
         # Set options vars
-        for option, option_value in iteritems(self._options_vars):
+        for option, option_value in self._options_vars.items():
             variables[option] = option_value
 
         if self._hostvars is not None and include_hostvars:

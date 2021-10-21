@@ -85,9 +85,9 @@ DOCUMENTATION = """
 """
 
 import re
+import shlex
 
 from ansible.module_utils._text import to_bytes
-from ansible.module_utils.six.moves import shlex_quote
 from ansible.plugins.become import BecomeBase
 
 
@@ -158,4 +158,4 @@ class BecomeModule(BecomeBase):
         user = self.get_option('become_user') or ''
         success_cmd = self._build_success_command(cmd, shell)
 
-        return "%s %s %s -c %s" % (exe, flags, user, shlex_quote(success_cmd))
+        return "%s %s %s -c %s" % (exe, flags, user, shlex.quote(success_cmd))

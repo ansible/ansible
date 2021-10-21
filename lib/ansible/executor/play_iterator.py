@@ -22,7 +22,6 @@ __metaclass__ = type
 import fnmatch
 
 from ansible import constants as C
-from ansible.module_utils.six import iteritems
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
@@ -468,7 +467,7 @@ class PlayIterator:
         self._play._removed_hosts.append(host.name)
 
     def get_failed_hosts(self):
-        return dict((host, True) for (host, state) in iteritems(self._host_states) if self._check_failed_state(state))
+        return dict((host, True) for (host, state) in self._host_states.items() if self._check_failed_state(state))
 
     def _check_failed_state(self, state):
         if state is None:

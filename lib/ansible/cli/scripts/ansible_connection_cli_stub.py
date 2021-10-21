@@ -9,7 +9,9 @@ __metaclass__ = type
 import argparse
 import fcntl
 import hashlib
+import io
 import os
+import pickle
 import signal
 import socket
 import sys
@@ -23,8 +25,6 @@ from contextlib import contextmanager
 from ansible import constants as C
 from ansible.cli.arguments.option_helpers import AnsibleVersion
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.six import PY3
-from ansible.module_utils.six.moves import cPickle, StringIO
 from ansible.module_utils.connection import Connection, ConnectionError, send_data, recv_data
 from ansible.module_utils.service import fork_process
 from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
@@ -236,26 +236,19 @@ def main(args=None):
     socket_path = None
 
     # Need stdin as a byte stream
-    if PY3:
-        stdin = sys.stdin.buffer
-    else:
-        stdin = sys.stdin
+    stdin = sys.stdin.buffer
 
     # Note: update the below log capture code after Display.display() is refactored.
     saved_stdout = sys.stdout
-    sys.stdout = StringIO()
+    sys.stdout = io.StringIO()
 
     try:
         # read the play context data via stdin, which means depickling it
         vars_data = read_stream(stdin)
         init_data = read_stream(stdin)
 
-        if PY3:
-            pc_data = cPickle.loads(init_data, encoding='bytes')
-            variables = cPickle.loads(vars_data, encoding='bytes')
-        else:
-            pc_data = cPickle.loads(init_data)
-            variables = cPickle.loads(vars_data)
+        pc_data = pickle.loads(init_data, encoding='bytes')
+        variables = pickle.loads(vars_data, encoding='bytes')
 
         play_context = PlayContext()
         play_context.deserialize(pc_data)

@@ -24,7 +24,7 @@ import os
 import ansible.constants as C
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import string_types
 from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import FieldAttribute
@@ -139,7 +139,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if isinstance(ds, AnsibleBaseYAMLObject):
             new_ds.ansible_pos = ds.ansible_pos
 
-        for (k, v) in iteritems(ds):
+        for (k, v) in ds.items():
             if k in C._ACTION_IMPORT_PLAYBOOK:
                 self._preprocess_import(ds, new_ds, k, v)
             else:

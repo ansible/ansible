@@ -4,13 +4,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import shlex
+
 from abc import abstractmethod
 from random import choice
 from string import ascii_lowercase
 from gettext import dgettext
 
 from ansible.errors import AnsibleError
-from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.plugins import AnsiblePlugin
 
@@ -64,7 +65,7 @@ class BecomeBase(AnsiblePlugin):
             return cmd
 
         try:
-            cmd = shlex_quote('%s %s %s %s' % (shell.ECHO, self.success, shell.COMMAND_SEP, cmd))
+            cmd = shlex.quote('%s %s %s %s' % (shell.ECHO, self.success, shell.COMMAND_SEP, cmd))
         except AttributeError:
             # TODO: This should probably become some more robust functionlity used to detect incompat
             raise AnsibleError('The %s shell family is incompatible with the %s become plugin' % (shell.SHELL_FAMILY, self.name))
