@@ -19,7 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleActionFail
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import isidentifier
@@ -42,7 +42,7 @@ class ActionModule(ActionBase):
         cacheable = boolean(self._task.args.pop('cacheable', False))
 
         if self._task.args:
-            for (k, v) in iteritems(self._task.args):
+            for (k, v) in self._task.args.items():
                 k = self._templar.template(k)
 
                 if not isidentifier(k):

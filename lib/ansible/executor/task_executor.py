@@ -19,8 +19,7 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.executor.task_result import TaskResult
 from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.six import iteritems, binary_type
-from ansible.module_utils.six.moves import xrange
+from ansible.module_utils.six import binary_type
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.connection import write_to_file_descriptor
 from ansible.playbook.conditional import Conditional
@@ -60,7 +59,7 @@ def remove_omit(task_args, omit_token):
         return task_args
 
     new_args = {}
-    for i in iteritems(task_args):
+    for i in task_args.items():
         if i[1] == omit_token:
             continue
         elif isinstance(i[1], dict):
@@ -408,7 +407,7 @@ class TaskExecutor:
                 if self._connection.become:
                     clear_plugins['become'] = self._connection.become._load_name
 
-                for plugin_type, plugin_name in iteritems(clear_plugins):
+                for plugin_type, plugin_name in clear_plugins.items():
                     for var in C.config.get_plugin_vars(plugin_type, plugin_name):
                         if var in task_vars and var not in self._job_vars:
                             del task_vars[var]
@@ -580,7 +579,7 @@ class TaskExecutor:
 
         display.debug("starting attempt loop")
         result = None
-        for attempt in xrange(1, retries + 1):
+        for attempt in range(1, retries + 1):
             display.debug("running the handler")
             try:
                 if self._task.timeout:

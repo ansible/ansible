@@ -32,7 +32,6 @@ from os import (
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.six import PY3
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
@@ -185,12 +184,8 @@ class ActionModule(ActionBase):
             stdin_fd = None
             stdout_fd = None
             try:
-                if PY3:
-                    stdin = self._connection._new_stdin.buffer
-                    stdout = sys.stdout.buffer
-                else:
-                    stdin = self._connection._new_stdin
-                    stdout = sys.stdout
+                stdin = self._connection._new_stdin.buffer
+                stdout = sys.stdout.buffer
                 stdin_fd = stdin.fileno()
                 stdout_fd = stdout.fileno()
             except (ValueError, AttributeError):

@@ -24,7 +24,6 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.six import string_types
-from ansible.module_utils.six.moves import shlex_quote
 from ansible.parsing.quoting import is_quoted
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.color import stringc
@@ -263,7 +262,7 @@ class ConfigCLI(CLI):
                                 # list of other stuff
                                 default = '%s' % to_native(default)
                     if isinstance(default, string_types) and not is_quoted(default):
-                        default = shlex_quote(default)
+                        default = shlex.quote(default)
                 elif default is None:
                     default = ''
 

@@ -81,7 +81,6 @@ RETURN = """
 from re import compile as re_compile, IGNORECASE
 
 from ansible.errors import AnsibleError
-from ansible.module_utils.six.moves import xrange
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
 
@@ -231,7 +230,7 @@ class LookupModule(LookupBase):
             adjust = 1
         else:
             adjust = -1
-        numbers = xrange(self.start, self.end + adjust, self.stride)
+        numbers = range(self.start, self.end + adjust, self.stride)
 
         for i in numbers:
             try:

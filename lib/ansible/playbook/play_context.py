@@ -21,19 +21,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-import sys
-
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleError
 from ansible.module_utils.compat.paramiko import paramiko
-from ansible.module_utils.six import iteritems
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.plugins import get_plugin_class
 from ansible.utils.display import Display
-from ansible.plugins.loader import get_shell_plugin
 from ansible.utils.ssh_functions import check_for_controlpersist
 
 
@@ -257,7 +251,7 @@ class PlayContext(Base):
                     setattr(new_info, 'executable', variables.get(exe_var))
 
         attrs_considered = []
-        for (attr, variable_names) in iteritems(C.MAGIC_VARIABLE_MAPPING):
+        for (attr, variable_names) in C.MAGIC_VARIABLE_MAPPING.items():
             for variable_name in variable_names:
                 if attr in attrs_considered:
                     continue

@@ -29,7 +29,7 @@ from json import dumps
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils.six import iteritems, string_types, PY3
+from ansible.module_utils.six import string_types, PY3
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
 from ansible.parsing.splitter import parse_kv
@@ -129,7 +129,7 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     # there is a high probability x will be the "default" dict the user
     # want to "patch" with y
     # therefore x will have much more elements than y
-    for key, y_value in iteritems(y):
+    for key, y_value in y.items():
         # if `key` isn't in x
         # update x and move on to the next element of y
         if key not in x:

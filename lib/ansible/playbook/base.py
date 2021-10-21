@@ -17,7 +17,7 @@ from jinja2.exceptions import UndefinedError
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError
-from ansible.module_utils.six import iteritems, string_types, with_metaclass
+from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils._text import to_text, to_native
@@ -192,7 +192,7 @@ class BaseMeta(type):
         return super(BaseMeta, cls).__new__(cls, name, parents, dct)
 
 
-class FieldAttributeBase(with_metaclass(BaseMeta, object)):
+class FieldAttributeBase(metaclass=BaseMeta):
 
     def __init__(self):
 
@@ -271,7 +271,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         # Walk all attributes in the class. We sort them based on their priority
         # so that certain fields can be loaded before others, if they are dependent.
-        for name, attr in sorted(iteritems(self._valid_attrs), key=operator.itemgetter(1)):
+        for name, attr in sorted(self._valid_attrs.items(), key=operator.itemgetter(1)):
             # copy the value over unless a _load_field method is defined
             target_name = name
             if name in self._alias_attrs:
@@ -325,7 +325,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         if not self._validated:
             # walk all fields in the object
-            for (name, attribute) in iteritems(self._valid_attrs):
+            for (name, attribute) in self._valid_attrs.items():
 
                 if name in self._alias_attrs:
                     name = self._alias_attrs[name]
@@ -615,7 +615,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         # save the omit value for later checking
         omit_value = templar.available_variables.get('omit')
 
-        for (name, attribute) in iteritems(self._valid_attrs):
+        for (name, attribute) in self._valid_attrs.items():
 
             if attribute.static:
                 value = getattr(self, name)
@@ -742,7 +742,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         Dumps all attributes to a dictionary
         '''
         attrs = {}
-        for (name, attribute) in iteritems(self._valid_attrs):
+        for (name, attribute) in self._valid_attrs.items():
             attr = getattr(self, name)
             if attribute.isa == 'class' and hasattr(attr, 'serialize'):
                 attrs[name] = attr.serialize()
@@ -754,7 +754,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         '''
         Loads attributes from a dictionary
         '''
-        for (attr, value) in iteritems(attrs):
+        for (attr, value) in attrs.items():
             if attr in self._valid_attrs:
                 attribute = self._valid_attrs[attr]
                 if attribute.isa == 'class' and isinstance(value, dict):
@@ -800,7 +800,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         if not isinstance(data, dict):
             raise AnsibleAssertionError('data (%s) should be a dict but is a %s' % (data, type(data)))
 
-        for (name, attribute) in iteritems(self._valid_attrs):
+        for (name, attribute) in self._valid_attrs.items():
             if name in data:
                 setattr(self, name, data[name])
             else:

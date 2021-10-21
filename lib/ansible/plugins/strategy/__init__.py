@@ -29,17 +29,18 @@ import time
 
 from collections import deque
 from multiprocessing import Lock
+from queue import Queue
+
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleUndefinedVariable
 from ansible.executor import action_write_locks
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.executor.task_queue_manager import CallbackSend
-from ansible.module_utils.six.moves import queue as Queue
-from ansible.module_utils.six import iteritems, itervalues, string_types
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.conditional import Conditional
@@ -260,7 +261,7 @@ class StrategyBase:
 
     def cleanup(self):
         # close active persistent connections
-        for sock in itervalues(self._active_connections):
+        for sock in self._active_connections.values():
             try:
                 conn = Connection(sock)
                 conn.reset()
@@ -679,7 +680,7 @@ class StrategyBase:
                             host_list = self.get_task_hosts(iterator, original_host, original_task)
 
                         if original_task.action in C._ACTION_INCLUDE_VARS:
-                            for (var_name, var_value) in iteritems(result_item['ansible_facts']):
+                            for (var_name, var_value) in result_item['ansible_facts'].items():
                                 # find the host we're actually referring too here, which may
                                 # be a host that is not really in inventory at all
                                 for target_host in host_list:
@@ -749,7 +750,7 @@ class StrategyBase:
             if original_task._role is not None and role_ran:  # TODO:  and original_task.action not in C._ACTION_INCLUDE_ROLE:?
                 # lookup the role in the ROLE_CACHE to make sure we're dealing
                 # with the correct object and mark it as executed
-                for (entry, role_obj) in iteritems(iterator._play.ROLE_CACHE[original_task._role.get_name()]):
+                for (entry, role_obj) in iterator._play.ROLE_CACHE[original_task._role.get_name()].items():
                     if role_obj._uuid == original_task._role._uuid:
                         role_obj._had_task_run[original_host.name] = True
 

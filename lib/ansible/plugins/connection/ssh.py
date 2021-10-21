@@ -352,6 +352,7 @@ import hashlib
 import os
 import pty
 import re
+import shlex
 import subprocess
 import time
 
@@ -366,7 +367,6 @@ from ansible.errors import (
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.compat import selectors
 from ansible.module_utils.six import PY3, text_type, binary_type
-from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, boolean
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
@@ -868,7 +868,7 @@ class Connection(ConnectionBase):
         '''
 
         # We don't use _shell.quote as this is run on the controller and independent from the shell plugin chosen
-        display_cmd = u' '.join(shlex_quote(to_text(c)) for c in cmd)
+        display_cmd = u' '.join(shlex.quote(to_text(c)) for c in cmd)
         display.vvv(u'SSH: EXEC {0}'.format(display_cmd), host=self.host)
 
         # Start the given command. If we don't need to pipeline data, we can try
@@ -1208,7 +1208,7 @@ class Connection(ConnectionBase):
             returncode = stdout = stderr = None
             if method == 'sftp':
                 cmd = self._build_command(self.get_option('sftp_executable'), 'sftp', to_bytes(host))
-                in_data = u"{0} {1} {2}\n".format(sftp_action, shlex_quote(in_path), shlex_quote(out_path))
+                in_data = u"{0} {1} {2}\n".format(sftp_action, shlex.quote(in_path), shlex.quote(out_path))
                 in_data = to_bytes(in_data, nonstring='passthru')
                 (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
             elif method == 'scp':
