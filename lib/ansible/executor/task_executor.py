@@ -13,7 +13,7 @@ import subprocess
 import sys
 import termios
 import traceback
-from typing import Tuple
+from typing import List, Tuple, Union
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
@@ -603,7 +603,7 @@ class TaskExecutor:
         if omit_token is not None:
             self._task.args = remove_omit(self._task.args, omit_token)
 
-        retries, delay = self.process_retry_parameters(self._task)
+        retries, delay, until = self.process_retry_parameters(self._task)
 
         display.debug("starting attempt loop")
         result = None
@@ -705,7 +705,7 @@ class TaskExecutor:
                     result['failed'] = False
 
             # Make attempts and retries available early to allow their use in changed/failed_when
-            if self._task.until:
+            if until:
                 result['attempts'] = attempt
 
             # set the changed property if it was missing.
@@ -737,7 +737,7 @@ class TaskExecutor:
 
             if retries > 1:
                 cond = Conditional(loader=self._loader)
-                cond.when = self._task.until
+                cond.when = until
                 if cond.evaluate_conditional(templar, vars_copy):
                     break
                 else:
@@ -805,7 +805,7 @@ class TaskExecutor:
         return result
 
     @staticmethod
-    def process_retry_parameters(_task) -> Tuple[int, int]:
+    def process_retry_parameters(_task: Task) -> Tuple[int, int, Union[str, List]]:
         '''
         Extract the parameters used in retrying the task
         '''
@@ -824,7 +824,9 @@ class TaskExecutor:
         if delay < 0:
             delay = 1
 
-        return retries, delay
+        until = _task.until
+
+        return retries, delay, until
 
     def _poll_async_result(self, result, templar, task_vars=None):
         '''

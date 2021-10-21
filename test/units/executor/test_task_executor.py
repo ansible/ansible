@@ -505,13 +505,17 @@ class TestTaskExecutorRetries:
 
     valid_until = "taskresult is succeeded"
 
-    def _do_test(self, task: Task, expected_retries=None, expected_delay=None):
-        retries, delay = TaskExecutor.process_retry_parameters(task)
+    def _do_test(self, task: Task, expected_retries=None, expected_delay=None, expected_until=None):
+        retries, delay, until = TaskExecutor.process_retry_parameters(task)
         
         if expected_retries is not None:
             assert expected_retries == retries
         if expected_delay is not None:
             assert expected_delay == delay
+        if expected_until is not None:
+            assert expected_until == until
+
+    # retries
 
     def test_process_retry_parameters_no_until_defaults_1(self):
         self._do_test(self._make_task(), expected_retries=1)
@@ -538,6 +542,8 @@ class TestTaskExecutorRetries:
         expected_retries = retries + 1
         self._do_test(self._make_task({"until": self.valid_until, "retries": retries}), expected_retries=expected_retries)
     
+    # delay
+
     def test_process_retry_parameters_no_delay_defaults_to_Task_default(self):
         expected_delay = Task._delay.default
         self._do_test(self._make_task(), expected_delay=expected_delay)
@@ -560,3 +566,11 @@ class TestTaskExecutorRetries:
     )
     def test_process_retry_parameters_delay_is_followed(self, value):
         self._do_test(self._make_task({"delay": value}), expected_delay=value)
+
+    # until
+
+    def test_process_retry_parameters_until_returns(self):
+        self._do_test(self._make_task({"until": self.valid_until}), expected_until=self.valid_until)
+
+    def test_process_retry_parameters_no_until_returns_emptylist(self):
+        self._do_test(self._make_task(), expected_until=[])
