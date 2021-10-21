@@ -13,6 +13,7 @@ import subprocess
 import sys
 import termios
 import traceback
+from typing import Tuple
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
@@ -602,21 +603,7 @@ class TaskExecutor:
         if omit_token is not None:
             self._task.args = remove_omit(self._task.args, omit_token)
 
-        # Read some values from the task, so that we can modify them if need be
-        if self._task.until:
-            retries = self._task.retries
-            if retries is None:
-                retries = 3
-            elif retries <= 0:
-                retries = 1
-            else:
-                retries += 1
-        else:
-            retries = 1
-
-        delay = self._task.delay
-        if delay < 0:
-            delay = 1
+        retries, delay = self.process_retry_parameters(self._task)
 
         display.debug("starting attempt loop")
         result = None
@@ -816,6 +803,28 @@ class TaskExecutor:
         # and return
         display.debug("attempt loop complete, returning result")
         return result
+
+    @staticmethod
+    def process_retry_parameters(_task) -> Tuple[int, int]:
+        '''
+        Extract the parameters used in retrying the task
+        '''
+        if _task.until:
+            retries = _task.retries
+            if retries is None:
+                retries = 3
+            elif retries <= 0:
+                retries = 1
+            else:
+                retries += 1
+        else:
+            retries = 1
+
+        delay = _task.delay
+        if delay < 0:
+            delay = 1
+
+        return retries, delay
 
     def _poll_async_result(self, result, templar, task_vars=None):
         '''

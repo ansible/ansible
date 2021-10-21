@@ -34,7 +34,7 @@
     state: absent
 
 - name: Test failed_when impacting until
-  shell: 'true'
+  shell: "true"
   register: failed_when_until
   failed_when: True
   until: failed_when_until is successful
@@ -47,7 +47,7 @@
       - failed_when_until.attempts == 3
 
 - name: Test changed_when impacting until
-  shell: 'true'
+  shell: "true"
   register: changed_when_until
   changed_when: False
   until: changed_when_until is changed
@@ -63,7 +63,7 @@
 # and would cause the conditional to fail due to ``'dict object' has no attribute 'attempts'``
 # https://github.com/ansible/ansible/issues/34139
 - name: Test access to attempts in changed_when/failed_when
-  shell: 'true'
+  shell: "true"
   register: changed_when_attempts
   until: 1 == 0
   retries: 5
@@ -82,3 +82,44 @@
   register: counter
   delay: 0.5
   until: counter.rc == 0
+
+- name: test explicit null in `retries`
+  shell: "false"
+  retries: null
+  delay: 0.1
+  register: retries_null
+  until: "false"
+  failed_when: retries_null.attempts != 3
+
+- name: test default in `retries`
+  shell: "false"
+  delay: 0.1
+  register: default_retries
+  until: "false"
+  failed_when: "default_retries.attempts != 4"
+# xfail
+# - name: test explicit null in `delay`
+#   shell: "false"
+#   retries: 2
+#   delay: null
+#   register: delay_null
+#   until: "false"
+#   failed_when: retries_null.attempts != 2
+
+- name: get pre-exec timestamp for test negative `delay`
+  set_fact:
+    negative_delay_preexec: "{{ now() }}"
+
+- name: test negative `delay`
+  shell: "false"
+  delay: -42
+  register: negative_delay
+  retries: 1
+  until: "false"
+  failed_when: "false"
+
+- name: assert negative `delay` defaulted to 1
+  assert:
+    that:
+      - "(now() - ((negative_delay_preexec) | to_datetime(format='%Y-%m-%d %H:%M:%S.%f'))) > (('1' | to_datetime('%S'))-('0' | to_datetime('%S')))" # delays at least 1s per retry
+      - "(now() - ((negative_delay_preexec) | to_datetime(format='%Y-%m-%d %H:%M:%S.%f'))) < (('5' | to_datetime('%S'))-('0' | to_datetime('%S')))" # delay has not been set to the default

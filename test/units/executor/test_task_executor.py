@@ -17,14 +17,18 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+from typing import Dict
+
 __metaclass__ = type
 
 from unittest import mock
+import pytest
 
 from units.compat import unittest
 from unittest.mock import patch, MagicMock
 from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor, remove_omit
+from ansible.playbook.task import Task
 from ansible.plugins.loader import action_loader, lookup_loader, module_loader
 from ansible.parsing.yaml.objects import AnsibleUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
@@ -487,3 +491,72 @@ class TestTaskExecutor(unittest.TestCase):
         }
 
         self.assertEqual(remove_omit(data, omit_token), expected)
+
+class TestTaskExecutorRetries:
+
+    @staticmethod
+    def _make_task(extra: Dict = None) -> Task:
+        params = dict(
+            name='Test Task',
+            command='echo hi',
+        )
+        params.update(extra or {})
+        return Task.load(params)
+
+    valid_until = "taskresult is succeeded"
+
+    def _do_test(self, task: Task, expected_retries=None, expected_delay=None):
+        retries, delay = TaskExecutor.process_retry_parameters(task)
+        
+        if expected_retries is not None:
+            assert expected_retries == retries
+        if expected_delay is not None:
+            assert expected_delay == delay
+
+    def test_process_retry_parameters_no_until_defaults_1(self):
+        self._do_test(self._make_task(), expected_retries=1)
+
+    def test_process_retry_parameters_no_until_overrides_retries(self):
+        self._do_test(self._make_task({"retries": 42}), expected_retries=1)
+
+    def test_process_retry_parameters_with_until_defaults_3(self):
+        expected_retries = 3 + 1
+        self._do_test(self._make_task({"until": self.valid_until}), expected_retries=expected_retries)
+
+    def test_process_retry_parameters_with_until_and_null_retry_defaults_3(self):
+        expected_retries = 3
+        self._do_test(self._make_task({"until": self.valid_until, "retries": None}), expected_retries=expected_retries)
+
+    def test_process_retry_parameters_with_negative_retries_returns_1(self):
+        self._do_test(self._make_task({"until": self.valid_until, "retries": -42}), expected_retries=1)
+
+    def test_process_retry_parameters_with_negative_retries_returns_0(self):
+        self._do_test(self._make_task({"until": self.valid_until, "retries": 0}), expected_retries=1)
+
+    def test_process_retry_parameters_with_until_follows_retries(self):
+        retries = 42
+        expected_retries = retries + 1
+        self._do_test(self._make_task({"until": self.valid_until, "retries": retries}), expected_retries=expected_retries)
+    
+    def test_process_retry_parameters_no_delay_defaults_to_Task_default(self):
+        expected_delay = Task._delay.default
+        self._do_test(self._make_task(), expected_delay=expected_delay)
+
+    @pytest.mark.parametrize(
+        "value",
+        # [-1, None] # `None` is currently xfail
+        [-1]
+    )
+    def test_process_retry_parameters_delay_defaults(self, value):
+        self._do_test(self._make_task({"delay":value}), expected_delay=1)
+
+    @pytest.mark.xfail(reason="existing behaviour is to error", raises=TypeError)
+    def test_process_retry_parameters_null_delay_defaults(self):
+        self._do_test(self._make_task({"delay":None}), expected_delay=1)
+
+    @pytest.mark.parametrize(
+        "value",
+        [42, 0]
+    )
+    def test_process_retry_parameters_delay_is_followed(self, value):
+        self._do_test(self._make_task({"delay": value}), expected_delay=value)
