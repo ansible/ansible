@@ -706,7 +706,7 @@ class TaskExecutor:
                     result['failed'] = False
 
             # Make attempts and retries available early to allow their use in changed/failed_when
-            if self._task.until:
+            if retries_requested:
                 result['attempts'] = attempt
 
             # set the changed property if it was missing.
@@ -736,7 +736,7 @@ class TaskExecutor:
                     result['failed'] = True
                     result['%s_when_result' % condname] = to_text(e)
 
-            if retries > 1:
+            if retries_requested:
                 cond = Conditional(loader=self._loader)
                 cond.when = self._task.until
                 if cond.evaluate_conditional(templar, vars_copy):
@@ -759,7 +759,7 @@ class TaskExecutor:
                         time.sleep(delay)
                         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
         else:
-            if retries > 1:
+            if retries_requested:
                 # we ran out of attempts, so mark the result as failed
                 result['attempts'] = retries - 1
                 result['failed'] = True
