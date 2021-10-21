@@ -49,4 +49,12 @@ Release Manager
 Planned work
 ============
 
-TBD
+* Data Tagging
+* ``ansible-doc`` extended dump support for devtools integration
+* ``ansible-galaxy`` CLI collection verification, source, and trust
+* ``jinja2`` 3.0+ dependency
+* Consolidate template handling to always use ``jinja2`` native
+* Drop Python 2.6 support for module execution
+* Implement sidecar docs to support documenting filter/test plugins, as well as non Python modules
+* Update the collection loader to Python 3.x loader API, due to removal of the Python 2 API in Python 3.12
+* Modernize python packaging and installation
