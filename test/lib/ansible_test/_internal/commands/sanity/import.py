@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import os
-import tempfile
 import typing as t
 
 from . import (
