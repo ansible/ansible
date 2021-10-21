@@ -603,7 +603,7 @@ class TaskExecutor:
         if omit_token is not None:
             self._task.args = remove_omit(self._task.args, omit_token)
 
-        retries, delay, until = self.process_retry_parameters(self._task)
+        retries, delay = self.process_retry_parameters(self._task)
 
         display.debug("starting attempt loop")
         result = None
@@ -705,7 +705,7 @@ class TaskExecutor:
                     result['failed'] = False
 
             # Make attempts and retries available early to allow their use in changed/failed_when
-            if until:
+            if self._task.until:
                 result['attempts'] = attempt
 
             # set the changed property if it was missing.
@@ -737,7 +737,7 @@ class TaskExecutor:
 
             if retries > 1:
                 cond = Conditional(loader=self._loader)
-                cond.when = until
+                cond.when = self._task.until
                 if cond.evaluate_conditional(templar, vars_copy):
                     break
                 else:
@@ -824,9 +824,7 @@ class TaskExecutor:
         if delay < 0:
             delay = 1
 
-        until = _task.until
-
-        return attempts, delay, until
+        return attempts, delay
 
     def _poll_async_result(self, result, templar, task_vars=None):
         '''

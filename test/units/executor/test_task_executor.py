@@ -492,6 +492,10 @@ class TestTaskExecutor(unittest.TestCase):
 
         self.assertEqual(remove_omit(data, omit_token), expected)
 
+
+valid_until = "taskresult is succeeded"
+
+
 class TestTaskExecutorRetries:
 
     @staticmethod
@@ -505,15 +509,14 @@ class TestTaskExecutorRetries:
 
     valid_until = "taskresult is succeeded"
 
-    def _do_test(self, task: Task, expected_retries=None, expected_delay=None, expected_until=None):
-        retries, delay, until = TaskExecutor.process_retry_parameters(task)
+    def _do_test(self, task: Task, expected_retries=None, expected_delay=None):
+        retries, delay = TaskExecutor.process_retry_parameters(task)
         
         if expected_retries is not None:
             assert expected_retries == retries
         if expected_delay is not None:
             assert expected_delay == delay
-        if expected_until is not None:
-            assert expected_until == until
+
 
     # retries
 
@@ -527,22 +530,22 @@ class TestTaskExecutorRetries:
 
     def test_process_retry_parameters_with_until_defaults_3(self):
         expected_retries = 3 + 1
-        self._do_test(self._make_task({"until": self.valid_until}), expected_retries=expected_retries)
+        self._do_test(self._make_task({"until": valid_until}), expected_retries=expected_retries)
 
     def test_process_retry_parameters_with_until_and_null_retry_defaults_3(self):
         expected_retries = 3 + 1
-        self._do_test(self._make_task({"until": self.valid_until, "retries": None}), expected_retries=expected_retries)
+        self._do_test(self._make_task({"until": valid_until, "retries": None}), expected_retries=expected_retries)
 
     def test_process_retry_parameters_with_negative_retries_returns_1(self):
-        self._do_test(self._make_task({"until": self.valid_until, "retries": -42}), expected_retries=1)
+        self._do_test(self._make_task({"until": valid_until, "retries": -42}), expected_retries=1)
 
     def test_process_retry_parameters_with_negative_retries_returns_0(self):
-        self._do_test(self._make_task({"until": self.valid_until, "retries": 0}), expected_retries=1)
+        self._do_test(self._make_task({"until": valid_until, "retries": 0}), expected_retries=1)
 
     def test_process_retry_parameters_with_until_follows_retries(self):
         retries = 42
         expected_retries = retries + 1
-        self._do_test(self._make_task({"until": self.valid_until, "retries": retries}), expected_retries=expected_retries)
+        self._do_test(self._make_task({"until": valid_until, "retries": retries}), expected_retries=expected_retries)
     
     # delay
 
@@ -571,8 +574,11 @@ class TestTaskExecutorRetries:
 
     # until
 
-    def test_process_retry_parameters_until_returns(self):
-        self._do_test(self._make_task({"until": self.valid_until}), expected_until=self.valid_until)
+    # def test_process_retry_parameters_until_returns(self):
+    #     self._do_test(self._make_task({"until": valid_until}), expected_until=valid_until)
 
-    def test_process_retry_parameters_no_until_and_no_retry_returns_emptylist(self):
-        self._do_test(self._make_task(), expected_until=[])
+    # def test_process_retry_parameters_no_until_and_no_retry_returns_emptylist(self):
+    #     self._do_test(self._make_task(), expected_until=[])
+
+    # def test_process_retry_parameters_no_until_with_retry_returns_default(self):
+    #     self._do_test(self._make_task({"retries": 42}), expected_until="")
