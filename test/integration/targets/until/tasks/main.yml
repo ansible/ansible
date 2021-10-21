@@ -123,3 +123,15 @@
     that:
       - "(now() - ((negative_delay_preexec) | to_datetime(format='%Y-%m-%d %H:%M:%S.%f'))) > (('1' | to_datetime('%S'))-('0' | to_datetime('%S')))" # delays at least 1s per retry
       - "(now() - ((negative_delay_preexec) | to_datetime(format='%Y-%m-%d %H:%M:%S.%f'))) < (('5' | to_datetime('%S'))-('0' | to_datetime('%S')))" # delay has not been set to the default
+- name: until defaults to 'succeeded'
+  shell: "false"
+  failed_when: until_default.attempts <= 2
+  retries: 3
+  delay: 0.1
+  register: until_default
+
+- name: assert until defaulted to 'succeeded'
+  assert:
+    that:
+      - until_default is succeeded
+      - until_default.attempts == 3
