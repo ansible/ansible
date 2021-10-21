@@ -678,6 +678,9 @@ class User(object):
                 major_release = int(dist.split('.')[0])
                 if major_release >= 12:
                     cmd.append('-N')
+            elif self.local and distro.id() == 'ubuntu' \
+                    and int(distro.major_version()) >= 20:
+                cmd.append('-n')
             else:
                 cmd.append('-N')
 
