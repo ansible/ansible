@@ -476,7 +476,7 @@ class GalaxyAPI:
         data = self._call_galaxy(url)
         return data['results']
 
-    @g_connect(['v1'])
+    @g_connect(['v1', 'v3'])
     def lookup_role_by_name(self, role_name, notify=True):
         """
         Find a role by name.
@@ -492,19 +492,75 @@ class GalaxyAPI:
         except Exception:
             raise AnsibleError("Invalid role name (%s). Specify role as format: username.rolename" % role_name)
 
-        url = _urljoin(self.api_server, self.available_api_versions['v1'], "roles",
-                       "?owner__username=%s&name=%s" % (user_name, role_name))
-        data = self._call_galaxy(url)
+        # https://galaxy.ansible.com/api/v1/roles/?owner__username=geerlingguy&name=mysql
+        if 'v1' in self.available_api_versions:
+            url = _urljoin(self.api_server, self.available_api_versions['v1'], "roles",
+                           "?owner__username=%s&name=%s" % (user_name, role_name))
+            data = self._call_galaxy(url)
+
+            if len(data["results"]) != 0:
+                return data["results"][0]
+
+        else:
+            url = _urljoin(
+                self.api_server,
+                self.available_api_versions['v3'],
+                'collections',
+                user_name,
+                role_name,
+                'versions/'
+            )
+            data = self._call_galaxy(url)
+
+            # results: [{id, url, related, summary_fields, name, github_user, github_repo, github_branch, commit}]
+            blob = {
+                'results': [{
+                    'name': role_name,
+                    #'github_user': None,
+                    #'github_repo': None,
+                    'id': None,
+                    'url': url,
+                    'versions': []
+                }]
+            }
+            for idc, collection_version in enumerate(data['data']):
+                version = {
+                    'id': idc,
+                    'name': collection_version['version'],
+                    'release_date': collection_version['created_at']
+                }
+                blob['results'][0]['versions'].append(version)
+
+            # get the repourl+commit from the newest version ...
+            cv_url = _urljoin(
+                self.api_server,
+                self.available_api_versions['v3'],
+                'collections',
+                user_name,
+                role_name,
+                'versions',
+                blob['results'][0]['versions'][0]['name'],
+                '/'
+            )
+            cv_data = self._call_galaxy(cv_url)
+            blob['results'][0].update(cv_data)
+            blob['results'][0]['id'] = cv_url
+            return blob['results'][0]
+
         if len(data["results"]) != 0:
             return data["results"][0]
+
         return None
 
-    @g_connect(['v1'])
+    @g_connect(['v1', 'v3'])
     def fetch_role_related(self, related, role_id):
         """
         Fetch the list of related items for the given role.
         The url comes from the 'related' field of the role.
         """
+
+        if 'v1' not in self.available_api_versions and 'v3' in self.available_api_versions:
+            return []
 
         results = []
         try:

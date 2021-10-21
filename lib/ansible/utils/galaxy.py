@@ -38,7 +38,7 @@ def scm_archive_collection(src, name=None, version='HEAD'):
     return scm_archive_resource(src, scm='git', name=name, version=version, keep_scm_meta=False)
 
 
-def scm_archive_resource(src, scm='git', name=None, version='HEAD', keep_scm_meta=False):
+def scm_archive_resource(src, scm='git', name=None, version='HEAD', keep_scm_meta=False, repository=None):
 
     def run_scm_cmd(cmd, tempdir):
         try:

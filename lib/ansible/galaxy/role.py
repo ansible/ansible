@@ -188,7 +188,19 @@ class GalaxyRole(object):
         """
         Downloads the archived role to a temp location based on role data
         """
-        if role_data:
+
+        if role_data and role_data.get('repository'):
+            # create tar file from scm url
+            temp_file = RoleRequirement.scm_archive_role(
+                role_data['repository'],
+                name=role_data['name'],
+                scm='git',
+                version=role_data.get('commit') or role_data.get('branch', 'master'),
+                keep_scm_meta=context.CLIARGS['keep_scm_meta'],
+            )
+            return temp_file
+
+        elif role_data:
 
             # first grab the file and save it to a temp location
             if self.download_url is not None:
@@ -266,6 +278,8 @@ class GalaxyRole(object):
                 for role_version in role_versions:
                     if role_version['name'] == self.version and 'source' in role_version:
                         self.src = role_version['source']
+                    if role_version['name'] == self.version and 'repository' in role_version:
+                        self.src = role_version['repository']
                     if role_version['name'] == self.version and 'download_url' in role_version:
                         self.download_url = role_version['download_url']
 
