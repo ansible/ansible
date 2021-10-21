@@ -19,22 +19,21 @@ DOCUMENTATION = """
       - See also Jinja2 ``range`` filter as an alternative.
     options:
       start:
-        description: number at which to start the sequence
-        default: 0
+        description: The number at which to start the sequence.
+        default: 1
         type: integer
       end:
-        description: number at which to end the sequence, dont use this with count
+        description: The number at which to end the sequence, this is not to be used with count. Required when C(count) is not provided.
         type: integer
-        default: 0
       count:
-        description: number of elements in the sequence, this is not to be used with end
+        description: The number of elements in the sequence, this is not to be used with end. Required when C(end) is not provided.
         type: integer
-        default: 0
       stride:
         description: increments between sequence numbers, the default is 1 unless the end is less than the start, then it is -1.
         type: integer
       format:
         description: return a string with the generated number formatted in
+        default: "%d"
 """
 
 EXAMPLES = """
@@ -148,6 +147,26 @@ class LookupModule(LookupBase):
         self.stride = 1
         self.format = "%d"
 
+    def load_options(self):
+        self.start = self.get_option('start')
+        self.end = self.get_option('end')
+        self.count = self.get_option('count')
+        self.format = self.get_option('format')
+        self.stride = self.get_option('stride')
+        if self.stride is None:
+            self.stride = 1
+            if self.end is not None and self.end < self.start:
+                self.stride = -1
+
+    def load_raw_params(self, term):
+        try:
+            if not self.parse_simple_args(term):
+                self.parse_kv_args(parse_kv(term))
+        except AnsibleError:
+            raise
+        except Exception as e:
+            raise AnsibleError("unknown error parsing with_sequence arguments: %r. Error was: %s" % (term, e))
+
     def parse_kv_args(self, args):
         """parse key-value style arguments"""
         for arg in ["start", "end", "count", "stride"]:
@@ -245,16 +264,19 @@ class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
         results = []
 
+        # A string would already be wrapped in a list, but this might be a dictionary
+        if not isinstance(terms, list):
+            terms = [terms]
+
         for term in terms:
             try:
                 self.reset()  # clear out things for this iteration
-                try:
-                    if not self.parse_simple_args(term):
-                        self.parse_kv_args(parse_kv(term))
-                except AnsibleError:
-                    raise
-                except Exception as e:
-                    raise AnsibleError("unknown error parsing with_sequence arguments: %r. Error was: %s" % (term, e))
+
+                if isinstance(term, dict):
+                    self.set_options(var_options=variables, direct=term)
+                    self.load_options()
+                else:
+                    self.load_raw_params(term)
 
                 self.sanity_check()
                 if self.stride != 0:
