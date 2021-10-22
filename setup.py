@@ -1,6 +1,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+#This Module provides various classes representing file system paths with semantics appropriate for different operating systems.
 import pathlib
 
 from setuptools import find_packages, setup
