@@ -673,7 +673,7 @@ class User(object):
                 else:
                     cmd.append('-N')
             elif os.path.exists('/etc/SuSE-release') \
-                    or distro_id == 'opensuse' or distro_id == 'sles':
+                    or distro_id.startswith('opensuse') or distro_id == 'sles':
                 # -N did not exist in useradd before SLE 11 and did not
                 # automatically create a group
                 dist = distro.version()
