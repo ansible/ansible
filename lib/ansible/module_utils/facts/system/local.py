@@ -53,7 +53,7 @@ class LocalFactCollector(BaseFactCollector):
             failed = None
             try:
                 executable_fact = stat.S_IXUSR & os.stat(fn)[stat.ST_MODE]
-            except Exception as e:
+            except OSError as e:
                 failed = 'Could not stat fact (%s): %s' % (fn, to_text(e))
                 local[fact_base] = failed
                 module.warn(failed)
