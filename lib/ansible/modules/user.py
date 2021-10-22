@@ -676,7 +676,11 @@ class User(object):
                 # automatically create a group
                 dist = distro.version()
                 major_release = int(dist.split('.')[0])
-                if major_release >= 12:
+                # At least since SLE 15 only -n seems to be supported by
+                # luseradd
+                if self.local and major_release >= 15:
+                    cmd.append('-n')
+                elif major_release >= 12:
                     cmd.append('-N')
             elif self.local and distro.id() == 'ubuntu' \
                     and int(distro.major_version()) >= 16:

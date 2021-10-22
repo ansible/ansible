@@ -1,4 +1,5 @@
 bugfixes:
   - >-
      user - Ubuntu starting from version 16 only supports ``-n`` and not ``-N``
-     on the ``luseradd`` command.
+     on the ``luseradd`` command. The same is true for SuSE at least since
+     version 15.
