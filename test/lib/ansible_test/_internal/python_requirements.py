@@ -25,6 +25,7 @@ from .util import (
     ANSIBLE_TEST_DATA_ROOT,
     ANSIBLE_TEST_TARGET_ROOT,
     ANSIBLE_TEST_TOOLS_ROOT,
+    ApplicationError,
     SubprocessError,
     display,
     find_executable,
@@ -65,6 +66,12 @@ REQUIREMENTS_SCRIPT_PATH = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'requ
 # Pip Abstraction
 
 
+class PipUnavailableError(ApplicationError):
+    """Exception raised when pip is not available."""
+    def __init__(self, python):  # type: (PythonConfig) -> None
+        super().__init__(f'Python {python.version} at "{python.path}" does not have pip available.')
+
+
 @dataclasses.dataclass(frozen=True)
 class PipCommand:
     """Base class for pip commands."""""
@@ -95,6 +102,11 @@ class PipUninstall(PipCommand):
     """Details required to perform a pip uninstall."""
     packages: t.List[str]
     ignore_errors: bool
+
+
+@dataclasses.dataclass(frozen=True)
+class PipVersion(PipCommand):
+    """Details required to get the pip version."""
 
 
 # Entry Points
@@ -220,7 +232,18 @@ def run_pip(
     script = prepare_pip_script(commands)
 
     if not args.explain:
-        connection.run([python.path], data=script)
+        try:
+            connection.run([python.path], data=script)
+        except SubprocessError:
+            script = prepare_pip_script([PipVersion()])
+
+            try:
+                connection.run([python.path], data=script, capture=True)
+            except SubprocessError as ex:
+                if 'pip is unavailable:' in ex.stdout + ex.stderr:
+                    raise PipUnavailableError(python)
+
+            raise
 
 
 # Collect

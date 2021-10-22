@@ -45,6 +45,7 @@ from ...ansible_util import (
 )
 
 from ...python_requirements import (
+    PipUnavailableError,
     install_requirements,
 )
 
@@ -94,7 +95,10 @@ class ImportTest(SanityMultipleVersion):
         if python.version.startswith('2.'):
             # hack to make sure that virtualenv is available under Python 2.x
             # on Python 3.x we can use the built-in venv
-            install_requirements(args, python, virtualenv=True)  # sanity (import)
+            try:
+                install_requirements(args, python, virtualenv=True)  # sanity (import)
+            except PipUnavailableError as ex:
+                display.warning(ex)
 
         temp_root = os.path.join(ResultType.TMP.path, 'sanity', 'import')
 
