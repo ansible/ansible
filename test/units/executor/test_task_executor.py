@@ -561,17 +561,12 @@ class TestTaskExecutorRetries:
         expected_delay = Task._delay.default
         self._do_retry_parameters_test(self._make_task(), expected_delay=expected_delay)
 
-    @pytest.mark.parametrize(
-        "value",
-        # [-1, None] # `None` is currently xfail
-        [-1]
-    )
-    def test_process_retry_parameters_delay_defaults(self, value):
-        self._do_retry_parameters_test(self._make_task({"delay":value}), expected_delay=1)
-
-    @pytest.mark.xfail(reason="existing behaviour is to error", raises=TypeError)
     def test_process_retry_parameters_null_delay_defaults(self):
-        self._do_retry_parameters_test(self._make_task({"delay":None}), expected_delay=1)
+        expected_delay = Task._delay.default
+        self._do_retry_parameters_test(self._make_task({"delay": None}), expected_delay=expected_delay)
+
+    def test_process_retry_parameters_negative_delay_results_1(self):
+        self._do_retry_parameters_test(self._make_task({"delay": -42}), expected_delay=1)
 
     @pytest.mark.parametrize(
         "value",

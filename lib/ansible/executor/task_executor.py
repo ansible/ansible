@@ -826,11 +826,13 @@ class TaskExecutor:
             else:
                 attempts += 3
 
-        if attempts <= 0: # guard against negative retries
+        if attempts <= 0:  # guard against negative retries
             attempts = 1
 
         delay = _task.delay
-        if delay < 0:
+        if delay is None:
+            delay = _task._delay.default
+        if delay is None or delay < 0:
             delay = 1
 
         return attempts, delay
