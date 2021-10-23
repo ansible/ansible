@@ -97,14 +97,14 @@
   register: default_retries
   until: "false"
   failed_when: "default_retries.attempts != 4"
-# xfail
-# - name: test explicit null in `delay`
-#   shell: "false"
-#   retries: 2
-#   delay: null
-#   register: delay_null
-#   until: "false"
-#   failed_when: retries_null.attempts != 2
+
+- name: test explicit null in `delay`
+  shell: "false"
+  retries: 2
+  delay: null
+  register: delay_null
+  until: "false"
+  failed_when: "retries_null.attempts != 3"
 
 - name: get pre-exec timestamp for test negative `delay`
   set_fact:
@@ -123,6 +123,7 @@
     that:
       - "(now() - ((negative_delay_preexec) | to_datetime(format='%Y-%m-%d %H:%M:%S.%f'))) > (('1' | to_datetime('%S'))-('0' | to_datetime('%S')))" # delays at least 1s per retry
       - "(now() - ((negative_delay_preexec) | to_datetime(format='%Y-%m-%d %H:%M:%S.%f'))) < (('5' | to_datetime('%S'))-('0' | to_datetime('%S')))" # delay has not been set to the default
+
 - name: until defaults to 'succeeded'
   shell: "false"
   failed_when: until_default.attempts <= 2
@@ -135,3 +136,17 @@
     that:
       - until_default is succeeded
       - until_default.attempts == 3
+
+- name: set variables for testing use in retry
+  set_fact:
+    vars_in_retry_retries: 2
+    vars_in_retry_delay: 0
+    vars_in_retry_until: "vars_in_retry is succeeded"
+
+- name: test vars in parameters
+  command: "false"
+  register: vars_in_retry
+  failed_when: vars_in_retry.attempts <= 2
+  retries: "{{ vars_in_retry_retries }}"
+  delay: "{{ vars_in_retry_delay }}"
+  until: "{{ vars_in_retry_until }}"
