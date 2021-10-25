@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import fnmatch
 
-from enum import IntEnum
+from enum import IntEnum, IntFlag
 
 from ansible import constants as C
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -44,10 +44,7 @@ class IteratingStates(IntEnum):
     COMPLETE = 4
 
 
-class FailedStates(IntEnum):
-    """The failure states for the play iteration, which are powers
-    of 2 as they may be or'ed together in certain circumstances.
-    """
+class FailedStates(IntFlag):
     NONE = 0
     SETUP = 1
     TASKS = 2
@@ -76,12 +73,6 @@ class HostState:
         return "HostState(%r)" % self._blocks
 
     def __str__(self):
-        def _failed_state_to_string(n):
-            if n == FailedStates.NONE:
-                return FailedStates.NONE
-
-            return "|".join([str(FailedStates(i)) for i in FailedStates if n & i])
-
         return ("HOST STATE: block=%d, task=%d, rescue=%d, always=%d, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? (%s), "
                 "rescue child state? (%s), always child state? (%s), did rescue? %s, did start at task? %s" % (
                     self.cur_block,
@@ -89,7 +80,7 @@ class HostState:
                     self.cur_rescue_task,
                     self.cur_always_task,
                     self.run_state,
-                    _failed_state_to_string(self.fail_state),
+                    self.fail_state,
                     self.pending_setup,
                     self.tasks_child_state,
                     self.rescue_child_state,
