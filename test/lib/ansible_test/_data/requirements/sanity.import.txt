@@ -1,0 +1,1 @@
+pyyaml == 5.4.1  # needed for yaml_to_json.py

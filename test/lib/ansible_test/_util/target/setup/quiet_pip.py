@@ -5,6 +5,7 @@ __metaclass__ = type
 import logging
 import re
 import runpy
+import sys
 import warnings
 
 BUILTIN_FILTERER_FILTER = logging.Filterer.filter
@@ -51,7 +52,11 @@ def main():
         #   Python 2.7 cannot use the -W option to match warning text after a colon. This makes it impossible to match specific warning messages.
         warnings.filterwarnings('ignore', message_filter)
 
-    runpy.run_module('pip.__main__', run_name='__main__', alter_sys=True)
+    try:
+        runpy.run_module('pip.__main__', run_name='__main__', alter_sys=True)
+    except ImportError as ex:
+        print('pip is unavailable: %s' % ex)
+        sys.exit(1)
 
 
 if __name__ == '__main__':
