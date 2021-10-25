@@ -151,7 +151,12 @@ class MetaPlayIterator(type):
     is redirected to new enum.
     """
     def __getattribute__(cls, name):
-        return _redirect_to_enum(name)
+        try:
+            rv = _redirect_to_enum(name)
+        except AttributeError:
+            return super().__getattribute__(name)
+
+        return rv
 
 
 class PlayIterator(metaclass=MetaPlayIterator):
