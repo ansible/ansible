@@ -440,9 +440,10 @@ def command_integration_filtered(
 
         if isinstance(target_profile, ControllerProfile):
             if host_state.controller_profile.python.path != target_profile.python.path:
-                install_requirements(args, target_python, command=True)  # integration
+                install_requirements(args, target_python, command=True, controller=False)  # integration
         elif isinstance(target_profile, SshTargetHostProfile):
-            install_requirements(args, target_python, command=True, connection=target_profile.get_controller_target_connections()[0])  # integration
+            connection = target_profile.get_controller_target_connections()[0]
+            install_requirements(args, target_python, command=True, controller=False, connection=connection)  # integration
 
     coverage_manager = CoverageManager(args, host_state, inventory_path)
     coverage_manager.setup()

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import os
-import tempfile
 import typing as t
 
 from . import (
@@ -34,6 +33,7 @@ from ...util import (
     display,
     parse_to_list_of_dict,
     is_subdir,
+    ANSIBLE_TEST_TOOLS_ROOT,
 )
 
 from ...util_common import (
@@ -45,6 +45,7 @@ from ...ansible_util import (
 )
 
 from ...python_requirements import (
+    PipUnavailableError,
     install_requirements,
 )
 
@@ -94,7 +95,10 @@ class ImportTest(SanityMultipleVersion):
         if python.version.startswith('2.'):
             # hack to make sure that virtualenv is available under Python 2.x
             # on Python 3.x we can use the built-in venv
-            install_requirements(args, python, virtualenv=True)  # sanity (import)
+            try:
+                install_requirements(args, python, virtualenv=True, controller=False)  # sanity (import)
+            except PipUnavailableError as ex:
+                display.warning(ex)
 
         temp_root = os.path.join(ResultType.TMP.path, 'sanity', 'import')
 
@@ -134,25 +138,25 @@ class ImportTest(SanityMultipleVersion):
             )
 
             if data_context().content.collection:
+                external_python = create_sanity_virtualenv(args, args.controller_python, self.name, context=self.name)
+
                 env.update(
                     SANITY_COLLECTION_FULL_NAME=data_context().content.collection.full_name,
-                    SANITY_EXTERNAL_PYTHON=python.path,
+                    SANITY_EXTERNAL_PYTHON=external_python.path,
+                    SANITY_YAML_TO_JSON=os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'yaml_to_json.py'),
                 )
 
             display.info(import_type + ': ' + data, verbosity=4)
 
             cmd = ['importer.py']
 
+            # add the importer to the path so it can be accessed through the coverage injector
+            env.update(
+                PATH=os.pathsep.join([os.path.join(TARGET_SANITY_ROOT, 'import'), env['PATH']]),
+            )
+
             try:
-                with tempfile.TemporaryDirectory(prefix='ansible-test', suffix='-import') as temp_dir:
-                    # make the importer available in the temporary directory
-                    os.symlink(os.path.abspath(os.path.join(TARGET_SANITY_ROOT, 'import', 'importer.py')), os.path.join(temp_dir, 'importer.py'))
-                    os.symlink(os.path.abspath(os.path.join(TARGET_SANITY_ROOT, 'import', 'yaml_to_json.py')), os.path.join(temp_dir, 'yaml_to_json.py'))
-
-                    # add the importer to the path so it can be accessed through the coverage injector
-                    env['PATH'] = os.pathsep.join([temp_dir, env['PATH']])
-
-                    stdout, stderr = cover_python(args, virtualenv_python, cmd, self.name, env, capture=True, data=data)
+                stdout, stderr = cover_python(args, virtualenv_python, cmd, self.name, env, capture=True, data=data)
 
                 if stdout or stderr:
                     raise SubprocessError(cmd, stdout=stdout, stderr=stderr)
