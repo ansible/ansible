@@ -114,6 +114,18 @@ def uninstall(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
             raise
 
 
+# noinspection PyUnusedLocal
+def version(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
+    """Report the pip version."""
+    del options
+
+    options = common_pip_options()
+
+    command = [sys.executable, pip, '-V'] + options
+
+    execute_command(command, capture=True)
+
+
 def common_pip_options():  # type: () -> t.List[str]
     """Return a list of common pip options."""
     return [

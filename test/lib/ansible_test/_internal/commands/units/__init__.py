@@ -227,7 +227,7 @@ def command_units(args):  # type: (UnitsConfig) -> None
         controller = any(test_context == TestContext.controller for test_context, python, paths, env in final_candidates)
 
         if args.requirements_mode != 'skip':
-            install_requirements(args, target_profile.python, ansible=controller, command=True)  # units
+            install_requirements(args, target_profile.python, ansible=controller, command=True, controller=False)  # units
 
         test_sets.extend(final_candidates)
 
