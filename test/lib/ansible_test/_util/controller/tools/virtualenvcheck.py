@@ -16,11 +16,6 @@ try:
 except ImportError:
     base_exec_prefix = None
 
-try:
-    from sys import base_exec_prefix
-except ImportError:
-    base_exec_prefix = None
-
 print(json.dumps(dict(
     real_prefix=real_prefix or base_exec_prefix,
 )))
