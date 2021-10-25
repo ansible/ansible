@@ -96,7 +96,7 @@ class ImportTest(SanityMultipleVersion):
             # hack to make sure that virtualenv is available under Python 2.x
             # on Python 3.x we can use the built-in venv
             try:
-                install_requirements(args, python, virtualenv=True)  # sanity (import)
+                install_requirements(args, python, virtualenv=True, controller=False)  # sanity (import)
             except PipUnavailableError as ex:
                 display.warning(ex)
 

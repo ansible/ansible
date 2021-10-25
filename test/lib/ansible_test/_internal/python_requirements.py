@@ -119,12 +119,11 @@ def install_requirements(
         command=False,  # type: bool
         coverage=False,  # type: bool
         virtualenv=False,  # type: bool
+        controller=True,  # type: bool
         connection=None,  # type: t.Optional[Connection]
 ):  # type: (...) -> None
     """Install requirements for the given Python using the specified arguments."""
     create_result_directories(args)
-
-    controller = not connection
 
     if not requirements_allowed(args, controller):
         return
