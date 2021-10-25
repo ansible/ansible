@@ -346,6 +346,13 @@ class ActionModule(ActionBase):
                 stderr=to_native(reboot_result['stderr'].strip()))
             return result
 
+        if (reboot_result['rc'] == 0) and ('Running in chroot, ignoring request' in reboot_result['stderr']):
+            result['changed'] = False
+            result['failed'] = True
+            result['rebooted'] = False
+            result['msg'] = 'Cannot reboot chroot environment'
+            return result
+
         result['failed'] = False
         return result
 
