@@ -84,7 +84,7 @@ from ansible.module_utils.six import PY3, text_type
 
 STRATS = {
     'alpine': 'Alpine',
-    'debian': 'Debian',
+    'debian': 'Systemd',
     'freebsd': 'FreeBSD',
     'generic': 'Generic',
     'macos': 'Darwin',
@@ -335,35 +335,6 @@ class AlpineStrategy(FileStrategy):
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
-
-
-class DebianStrategy(CommandStrategy):
-    """
-    This is the Debian Linux hostname manipulation strategy class.
-    """
-
-    FILE = '/etc/hostname'
-    COMMAND = 'hostname'
-
-    def get_permanent_hostname(self):
-        if not os.path.isfile(self.FILE):
-            return ''
-
-        try:
-            return get_file_lines(self.FILE)
-        except Exception as e:
-            self.module.fail_json(
-                msg="failed to read hostname: %s" % to_native(e),
-                exception=traceback.format_exc())
-
-    def set_permanent_hostname(self, name):
-        try:
-            with open(self.FILE, 'w+') as f:
-                f.write("%s\n" % name)
-        except Exception as e:
-            self.module.fail_json(
-                msg="failed to update hostname: %s" % to_native(e),
-                exception=traceback.format_exc())
 
 
 class SystemdStrategy(BaseStrategy):
