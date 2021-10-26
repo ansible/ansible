@@ -28,7 +28,7 @@ def main():
     collection_full_name = os.environ.get('SANITY_COLLECTION_FULL_NAME')
     collection_root = os.environ.get('ANSIBLE_COLLECTIONS_PATH')
     import_type = os.environ.get('SANITY_IMPORTER_TYPE')
-    ansible_controller_min_python_version = tuple(int(x) for x in os.environ.get('ANSIBLE_CONTROLLER_MIN_PYTHON_VERSION', '').split('.'))
+    ansible_controller_min_python_version = tuple(int(x) for x in os.environ.get('ANSIBLE_CONTROLLER_MIN_PYTHON_VERSION', '0').split('.'))
 
     try:
         # noinspection PyCompatibility
