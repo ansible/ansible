@@ -24,7 +24,7 @@ python_default="$(PYTHONPATH="${PWD}/test/lib" python -c 'from ansible_test._int
 single_version=2012-R2
 
 # shellcheck disable=SC2086
-ansible-test windows-integration --explain ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} > /tmp/explain.txt 2>&1 || { cat /tmp/explain.txt && false; }
+ansible-test windows-integration --list-targets -v ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} > /tmp/explain.txt 2>&1 || { cat /tmp/explain.txt && false; }
 { grep ' windows-integration: .* (targeted)$' /tmp/explain.txt || true; } > /tmp/windows.txt
 
 if [ -s /tmp/windows.txt ] || [ "${CHANGED:+$CHANGED}" == "" ]; then
