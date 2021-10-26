@@ -262,8 +262,7 @@ class ActionModule(ActionBase):
 
     def _copy_single_file(self, local_file, dest, source_rel, task_vars, tmp, backup):
         if self._play_context.check_mode:
-            module_return = dict(changed=True)
-            return module_return
+            raise AnsibleActionSkip('Check mode is not supported for this task.')
 
         # copy the file across to the server
         tmp_src = self._connection._shell.join_path(tmp, 'source')
@@ -291,8 +290,7 @@ class ActionModule(ActionBase):
         # create local zip file containing all the files and directories that
         # need to be copied to the server
         if self._play_context.check_mode:
-            module_return = dict(changed=True)
-            return module_return
+            raise AnsibleActionSkip('Check mode is not supported for this task.')
 
         try:
             zip_file = self._create_zip_tempfile(files, directories)

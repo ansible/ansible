@@ -43,7 +43,7 @@ class ActionModule(ActionBase):
 
         try:
             if self._play_context.check_mode:
-                raise AnsibleActionSkip('check mode not (yet) supported for this module')
+                raise AnsibleActionSkip('Check mode is not supported for this task.')
 
             source = self._task.args.get('src', None)
             original_dest = dest = self._task.args.get('dest', None)

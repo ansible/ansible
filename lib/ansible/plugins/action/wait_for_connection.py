@@ -70,8 +70,8 @@ class ActionModule(ActionBase):
         timeout = int(self._task.args.get('timeout', self.DEFAULT_TIMEOUT))
 
         if self._play_context.check_mode:
-            display.vvv("wait_for_connection: skipping for check_mode")
-            return dict(skipped=True)
+            raise AnsibleActionSkip('Check mode is not supported for this task.')
+
 
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect

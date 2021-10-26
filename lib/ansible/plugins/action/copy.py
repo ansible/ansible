@@ -290,8 +290,7 @@ class ActionModule(ActionBase):
 
             if self._play_context.check_mode:
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
-                result['changed'] = True
-                return result
+                raise AnsibleActionSkip('Check mode is not supported for this task.')
 
             # Define a remote directory that we will copy the file to.
             tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir, 'source')

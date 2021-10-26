@@ -34,9 +34,8 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         if self._play_context.check_mode:
-            # in --check mode, always skip this module execution
-            result['skipped'] = True
-            return result
+            raise AnsibleActionSkip('Check mode is not supported for this task.')
+
 
         executable = self._task.args.get('executable', False)
         result.update(self._low_level_execute_command(self._task.args.get('_raw_params'), executable=executable))

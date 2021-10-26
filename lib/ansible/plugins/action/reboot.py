@@ -412,7 +412,7 @@ class ActionModule(ActionBase):
             return {'changed': False, 'elapsed': 0, 'rebooted': False, 'failed': True, 'msg': msg}
 
         if self._play_context.check_mode:
-            return {'changed': True, 'elapsed': 0, 'rebooted': True}
+            raise AnsibleActionSkip('Check mode is not supported for this task.')
 
         if task_vars is None:
             task_vars = {}
