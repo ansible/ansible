@@ -28,6 +28,7 @@ def main():
     collection_full_name = os.environ.get('SANITY_COLLECTION_FULL_NAME')
     collection_root = os.environ.get('ANSIBLE_COLLECTIONS_PATH')
     import_type = os.environ.get('SANITY_IMPORTER_TYPE')
+    ansible_controller_min_python_version = tuple(int(x) for x in os.environ.get('ANSIBLE_CONTROLLER_MIN_PYTHON_VERSION', '0').split('.'))
 
     try:
         # noinspection PyCompatibility
@@ -46,8 +47,16 @@ def main():
     if collection_full_name:
         # allow importing code from collections when testing a collection
         from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native, text_type
-        from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
-        from ansible.utils.collection_loader import _collection_finder
+
+        if sys.version_info >= ansible_controller_min_python_version:
+            # noinspection PyProtectedMember
+            from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+            from ansible.utils.collection_loader import _collection_finder
+        else:
+            # noinspection PyProtectedMember
+            from ansible_test._internal.legacy_collection_loader._collection_finder import _AnsibleCollectionFinder
+            # noinspection PyProtectedMember
+            from ansible_test._internal.legacy_collection_loader import _collection_finder
 
         yaml_to_dict_cache = {}
 
