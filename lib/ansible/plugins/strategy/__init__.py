@@ -1168,7 +1168,7 @@ class StrategyBase:
             if _evaluate_conditional(target_host):
                 for host in self._inventory.get_hosts(iterator._play.hosts):
                     if host.name not in self._tqm._unreachable_hosts:
-                        iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
+                        iterator._host_states[host.name].run_state = IteratingStates.COMPLETE
                 msg = "ending batch"
             else:
                 skipped = True
