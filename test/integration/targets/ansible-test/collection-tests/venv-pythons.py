@@ -23,6 +23,11 @@ def main():
         executable = shutil.which(f'python{python_version}')
 
         if executable:
+            if python_version == '2.6':
+                # skip Python 2.6 since it requires docker to provide a PyPI proxy container
+                print(f'{executable} - skip', file=sys.stderr)
+                continue
+
             if python_version.startswith('2.'):
                 cmd = [executable, '-m', 'virtualenv', '--version']
             else:
