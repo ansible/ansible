@@ -227,8 +227,8 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
           link: https://developer.cisco.com/docs/apic-mim-ref/
 
 
-  * If you use ``ref:`` to link to an anchor that isn't associated with a title, you must add a title to the ref for the link to work correctly.
-  * You can link to non-module plugins with ``ref:`` using the rST anchor, but note that plugin and module anchors are never associated with a title, so a title must always be supplied. For example ``ref: namespace.collection.plugin_name lookup plugin  <ansible_collections.namespace.collection.plugin_name_lookup>``.
+  * If you use ``ref:`` to link to an anchor that is not associated with a title, you must add a title to the ref for the link to work correctly.
+  * You can link to non-module plugins with ``ref:`` using the rST anchor, but plugin and module anchors are never associated with a title, so you must supply a title when you link to them. For example ``ref: namespace.collection.plugin_name lookup plugin  <ansible_collections.namespace.collection.plugin_name_lookup>``.
 
 
 :notes:
