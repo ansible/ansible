@@ -33,7 +33,7 @@ DOCUMENTATION = '''
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
-from ansible.executor.play_iterator import PlayIterator
+from ansible.executor.play_iterator import IteratingStates, FailedStates
 from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.included_file import IncludedFile
@@ -112,7 +112,7 @@ class StrategyModule(StrategyBase):
             try:
                 lowest_cur_block = min(
                     (iterator.get_active_state(s).cur_block for h, (s, t) in host_tasks_to_run
-                     if s.run_state != PlayIterator.ITERATING_COMPLETE))
+                     if s.run_state != IteratingStates.COMPLETE))
             except ValueError:
                 lowest_cur_block = None
         else:
@@ -128,13 +128,13 @@ class StrategyModule(StrategyBase):
                 # Not the current block, ignore it
                 continue
 
-            if s.run_state == PlayIterator.ITERATING_SETUP:
+            if s.run_state == IteratingStates.SETUP:
                 num_setups += 1
-            elif s.run_state == PlayIterator.ITERATING_TASKS:
+            elif s.run_state == IteratingStates.TASKS:
                 num_tasks += 1
-            elif s.run_state == PlayIterator.ITERATING_RESCUE:
+            elif s.run_state == IteratingStates.RESCUE:
                 num_rescue += 1
-            elif s.run_state == PlayIterator.ITERATING_ALWAYS:
+            elif s.run_state == IteratingStates.ALWAYS:
                 num_always += 1
         display.debug("done counting tasks in each state of execution:\n\tnum_setups: %s\n\tnum_tasks: %s\n\tnum_rescue: %s\n\tnum_always: %s" % (num_setups,
                                                                                                                                                   num_tasks,
@@ -168,31 +168,31 @@ class StrategyModule(StrategyBase):
             display.debug("done advancing hosts to next task")
             return rvals
 
-        # if any hosts are in ITERATING_SETUP, return the setup task
+        # if any hosts are in SETUP, return the setup task
         # while all other hosts get a noop
         if num_setups:
-            display.debug("advancing hosts in ITERATING_SETUP")
-            return _advance_selected_hosts(hosts, lowest_cur_block, PlayIterator.ITERATING_SETUP)
+            display.debug("advancing hosts in SETUP")
+            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.SETUP)
 
-        # if any hosts are in ITERATING_TASKS, return the next normal
+        # if any hosts are in TASKS, return the next normal
         # task for these hosts, while all other hosts get a noop
         if num_tasks:
-            display.debug("advancing hosts in ITERATING_TASKS")
-            return _advance_selected_hosts(hosts, lowest_cur_block, PlayIterator.ITERATING_TASKS)
+            display.debug("advancing hosts in TASKS")
+            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.TASKS)
 
-        # if any hosts are in ITERATING_RESCUE, return the next rescue
+        # if any hosts are in RESCUE, return the next rescue
         # task for these hosts, while all other hosts get a noop
         if num_rescue:
-            display.debug("advancing hosts in ITERATING_RESCUE")
-            return _advance_selected_hosts(hosts, lowest_cur_block, PlayIterator.ITERATING_RESCUE)
+            display.debug("advancing hosts in RESCUE")
+            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.RESCUE)
 
-        # if any hosts are in ITERATING_ALWAYS, return the next always
+        # if any hosts are in ALWAYS, return the next always
         # task for these hosts, while all other hosts get a noop
         if num_always:
-            display.debug("advancing hosts in ITERATING_ALWAYS")
-            return _advance_selected_hosts(hosts, lowest_cur_block, PlayIterator.ITERATING_ALWAYS)
+            display.debug("advancing hosts in ALWAYS")
+            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.ALWAYS)
 
-        # at this point, everything must be ITERATING_COMPLETE, so we
+        # at this point, everything must be COMPLETE, so we
         # return None for all hosts in the list
         display.debug("all hosts are done, so returning None's for all hosts")
         return [(host, None) for host in hosts]
@@ -416,14 +416,14 @@ class StrategyModule(StrategyBase):
 
                 # if any_errors_fatal and we had an error, mark all hosts as failed
                 if any_errors_fatal and (len(failed_hosts) > 0 or len(unreachable_hosts) > 0):
-                    dont_fail_states = frozenset([iterator.ITERATING_RESCUE, iterator.ITERATING_ALWAYS])
+                    dont_fail_states = frozenset([IteratingStates.RESCUE, IteratingStates.ALWAYS])
                     for host in hosts_left:
                         (s, _) = iterator.get_next_task_for_host(host, peek=True)
                         # the state may actually be in a child state, use the get_active_state()
                         # method in the iterator to figure out the true active state
                         s = iterator.get_active_state(s)
                         if s.run_state not in dont_fail_states or \
-                           s.run_state == iterator.ITERATING_RESCUE and s.fail_state & iterator.FAILED_RESCUE != 0:
+                           s.run_state == IteratingStates.RESCUE and s.fail_state & FailedStates.RESCUE != 0:
                             self._tqm._failed_hosts[host.name] = True
                             result |= self._tqm.RUN_FAILED_BREAK_PLAY
                 display.debug("done checking for any_errors_fatal")
