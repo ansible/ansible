@@ -612,7 +612,7 @@ Installing ``argcomplete`` with ``apt``
 
 .. code-block:: bash
 
-    $ sudo apt install python-argcomplete
+    $ sudo apt install python3-argcomplete
 
 
 Installing ``argcomplete`` with ``pip``
