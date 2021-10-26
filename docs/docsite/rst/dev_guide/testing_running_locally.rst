@@ -2,14 +2,9 @@
 
 .. _testing_running_locally:
 
-***************
-Testing Ansible
-***************
-
-This document describes how to:
-
-* Run tests locally using ``ansible-test``
-* Extend
+*****************************************
+Testing Ansible locally with ansible-test
+*****************************************
 
 .. contents::
    :local:
