@@ -119,7 +119,7 @@ class ActionModule(ActionBase):
                     script_cmd = ' '.join([env_string, target_command])
 
             if self._play_context.check_mode:
-                raise _AnsibleActionDone()
+                raise AnsibleActionSkip('check mode is not supported for this task.')
 
             script_cmd = self._connection._shell.wrap_for_exec(script_cmd)
 
