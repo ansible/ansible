@@ -78,7 +78,7 @@ outside of those test subdirectories.  They will also not reconfigure or bounce 
 
    Use the ``--docker-no-pull`` option to avoid pulling the latest container image. This is required when using custom local images that are not available for download.
 
-Run as follows for all POSIX platform tests executed by our CI system in a fedora34 docker container:
+Run as follows for all POSIX platform tests executed by our CI system in a Fedora 34 Docker container:
 
 .. code-block:: shell-session
 
