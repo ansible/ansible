@@ -12,10 +12,14 @@
             - '"I SHOULD NOT BE TEMPLATED" not in adjacent'
             - globals1 == "[[], globals()]"
             - globals2 == "[[], globals]"
+            - left_hand == '[1] + [2]'
+            - left_hand_2 == '[1 + 2 * 3 / 4] + [-2.5, 2.5, 3.5]'
       vars:
         adjacent: "{{ empty_list }} + [dont]"
         globals1: "[{{ empty_list }}, globals()]"
         globals2: "[{{ empty_list }}, globals]"
+        left_hand: '[1] + {{ [2] }}'
+        left_hand_2: '[1 + 2 * 3 / 4] + {{ [-2.5, +2.5, 1 + 2.5] }}'
 
     - name: 'ensure we can add lists'
       assert:

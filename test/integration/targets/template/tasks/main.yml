@@ -734,3 +734,25 @@
 
 # aliases file requires root for template tests so this should be safe
 - import_tasks: backup_test.yml
+
+- name: test STRING_TYPE_FILTERS
+  copy:
+    content: "{{ a_dict | to_nice_json(indent=(indent_value|int))}}\n"
+    dest: "{{ output_dir }}/string_type_filters.templated"
+  vars:
+    a_dict:
+      foo: bar
+      foobar: 1
+    indent_value: 2
+
+- name: copy known good string_type_filters.expected into place
+  copy:
+    src: string_type_filters.expected
+    dest: "{{ output_dir }}/string_type_filters.expected"
+
+- command: "diff {{ output_dir }}/string_type_filters.templated {{ output_dir}}/string_type_filters.expected"
+  register: out
+
+- assert:
+    that:
+      - out.rc == 0

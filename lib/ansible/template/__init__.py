@@ -38,6 +38,7 @@ except ImportError:
 
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 from jinja2.loaders import FileSystemLoader
+from jinja2.nativetypes import NativeEnvironment
 from jinja2.runtime import Context, StrictUndefined
 
 from ansible import constants as C
@@ -56,13 +57,14 @@ from ansible.module_utils.common._collections_compat import Iterator, Sequence, 
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.compat.importlib import import_module
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
-from ansible.template.safe_eval import safe_eval
+from ansible.template.native_helpers import ansible_native_concat, ansible_concat
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata
 from ansible.utils.listify import listify_lookup_plugin_terms
+from ansible.utils.native_jinja import NativeJinjaText
 from ansible.utils.unsafe_proxy import wrap_var
 
 display = Display()
@@ -70,27 +72,13 @@ display = Display()
 
 __all__ = ['Templar', 'generate_ansible_template_vars']
 
-# A regex for checking to see if a variable we're trying to
-# expand is just a single variable name.
-
 # Primitive Types which we don't want Jinja to convert to strings.
 NON_TEMPLATED_TYPES = (bool, Number)
 
 JINJA2_OVERRIDE = '#jinja2:'
 
-from jinja2 import Environment
-from jinja2.utils import concat as j2_concat
-
-
-if C.DEFAULT_JINJA2_NATIVE:
-    from jinja2.nativetypes import NativeEnvironment
-    from ansible.template.native_helpers import ansible_native_concat
-    from ansible.utils.native_jinja import NativeJinjaText
-
-
 JINJA2_BEGIN_TOKENS = frozenset(('variable_begin', 'block_begin', 'comment_begin', 'raw_begin'))
 JINJA2_END_TOKENS = frozenset(('variable_end', 'block_end', 'comment_end', 'raw_end'))
-
 
 RANGE_TYPE = type(range(0))
 
@@ -336,7 +324,11 @@ class AnsibleUndefined(StrictUndefined):
         return self
 
     def __repr__(self):
-        return 'AnsibleUndefined'
+        return 'AnsibleUndefined(hint={0!r}, obj={1!r}, name={2!r})'.format(
+            self._undefined_hint,
+            self._undefined_obj,
+            self._undefined_name
+        )
 
     def __contains__(self, item):
         # Return original Undefined object to preserve the first failure context
@@ -426,11 +418,10 @@ class AnsibleContext(Context):
 
 
 class JinjaPluginIntercept(MutableMapping):
-    def __init__(self, delegatee, pluginloader, jinja2_native, *args, **kwargs):
+    def __init__(self, delegatee, pluginloader, *args, **kwargs):
         super(JinjaPluginIntercept, self).__init__(*args, **kwargs)
         self._delegatee = delegatee
         self._pluginloader = pluginloader
-        self._jinja2_native = jinja2_native
 
         if self._pluginloader.class_name == 'FilterModule':
             self._method_map_name = 'filters'
@@ -457,7 +448,7 @@ class JinjaPluginIntercept(MutableMapping):
 
         if self._pluginloader.class_name == 'FilterModule':
             for plugin_name, plugin in self._delegatee.items():
-                if self._jinja2_native and plugin_name in C.STRING_TYPE_FILTERS:
+                if plugin_name in C.STRING_TYPE_FILTERS:
                     self._delegatee[plugin_name] = _wrap_native_text(plugin)
                 else:
                     self._delegatee[plugin_name] = _unroll_iterator(plugin)
@@ -572,7 +563,7 @@ class JinjaPluginIntercept(MutableMapping):
                     fq_name = '.'.join((parent_prefix, func_name))
                     # FIXME: detect/warn on intra-collection function name collisions
                     if self._pluginloader.class_name == 'FilterModule':
-                        if self._jinja2_native and fq_name.startswith(('ansible.builtin.', 'ansible.legacy.')) and \
+                        if fq_name.startswith(('ansible.builtin.', 'ansible.legacy.')) and \
                                 func_name in C.STRING_TYPE_FILTERS:
                             self._collection_jinja_func_cache[fq_name] = _wrap_native_text(func)
                         else:
@@ -606,13 +597,10 @@ class JinjaPluginIntercept(MutableMapping):
         return len(self._delegatee)
 
 
-class AnsibleEnvironment(Environment):
+class AnsibleEnvironment(NativeEnvironment):
     '''
     Our custom environment, which simply allows us to override the class-level
     values for the Template and Context classes used by jinja2 internally.
-
-    NOTE: Any changes to this class must be reflected in
-          :class:`AnsibleNativeEnvironment` as well.
     '''
     context_class = AnsibleContext
     template_class = AnsibleJ2Template
@@ -620,27 +608,17 @@ class AnsibleEnvironment(Environment):
     def __init__(self, *args, **kwargs):
         super(AnsibleEnvironment, self).__init__(*args, **kwargs)
 
-        self.filters = JinjaPluginIntercept(self.filters, filter_loader, jinja2_native=False)
-        self.tests = JinjaPluginIntercept(self.tests, test_loader, jinja2_native=False)
+        self.filters = JinjaPluginIntercept(self.filters, filter_loader)
+        self.tests = JinjaPluginIntercept(self.tests, test_loader)
 
 
-if C.DEFAULT_JINJA2_NATIVE:
-    class AnsibleNativeEnvironment(NativeEnvironment):
-        '''
-        Our custom environment, which simply allows us to override the class-level
-        values for the Template and Context classes used by jinja2 internally.
-
-        NOTE: Any changes to this class must be reflected in
-              :class:`AnsibleEnvironment` as well.
-        '''
-        context_class = AnsibleContext
-        template_class = AnsibleJ2Template
-
-        def __init__(self, *args, **kwargs):
-            super(AnsibleNativeEnvironment, self).__init__(*args, **kwargs)
-
-            self.filters = JinjaPluginIntercept(self.filters, filter_loader, jinja2_native=True)
-            self.tests = JinjaPluginIntercept(self.tests, test_loader, jinja2_native=True)
+class AnsibleNativeEnvironment(NativeEnvironment):
+    def __new__(cls):
+        raise AnsibleAssertionError(
+            'It is not allowed to create instances of AnsibleNativeEnvironment. '
+            'The class is kept for backwards compatibility of '
+            'Templar.copy_with_new_env, see the method for more information.'
+        )
 
 
 class Templar:
@@ -660,9 +638,7 @@ class Templar:
 
         self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
-        environment_class = AnsibleNativeEnvironment if C.DEFAULT_JINJA2_NATIVE else AnsibleEnvironment
-
-        self.environment = environment_class(
+        self.environment = AnsibleEnvironment(
             trim_blocks=True,
             undefined=AnsibleUndefined,
             extensions=self._get_extensions(),
@@ -683,36 +659,54 @@ class Templar:
         # the current rendering context under which the templar class is working
         self.cur_context = None
 
-        # FIXME these regular expressions should be re-compiled each time variable_start_string and variable_end_string are changed
+        # FIXME this regex should be re-compiled each time variable_start_string and variable_end_string are changed
         self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
-        self._no_type_regex = re.compile(r'.*?\|\s*(?:%s)(?:\([^\|]*\))?\s*\)?\s*(?:%s)' %
-                                         ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
 
-    @property
-    def jinja2_native(self):
-        return not isinstance(self.environment, AnsibleEnvironment)
+        self.jinja2_native = C.DEFAULT_JINJA2_NATIVE
 
     def copy_with_new_env(self, environment_class=AnsibleEnvironment, **kwargs):
-        r"""Creates a new copy of Templar with a new environment. The new environment is based on
-        given environment class and kwargs.
+        r"""Creates a new copy of Templar with a new environment.
 
-        :kwarg environment_class: Environment class used for creating a new environment.
+        Since Ansible 2.13 this method is being deprecated and is kept only
+        for backwards compatibility:
+            - AnsibleEnvironment is now based on NativeEnvironment
+            - AnsibleNativeEnvironment is replaced by what is effectively a dummy class
+              for purposes of this method, see below
+            - environment_class arg no longer controls what type of environment is created,
+              AnsibleEnvironment is used regardless of the value passed in environment_class
+            - environment_class is used to determine the value of jinja2_native of the newly
+              created Templar; if AnsibleNativeEnvironment is passed in environment_class
+              new_templar.jinja2_native is set to True, any other value will result in
+              new_templar.jinja2_native being set to False unless overriden by the value
+              passed in kwargs
+
+        :kwarg environment_class: See above.
         :kwarg \*\*kwargs: Optional arguments for the new environment that override existing
             environment attributes.
 
         :returns: Copy of Templar with updated environment.
         """
+        display.deprecated(
+            'Templar.copy_with_new_env is no longer used within Ansible codebase and is being deprecated. '
+            'For temporarily creating a new environment with custom arguments use set_temporary_context context manager. '
+            'To control whether the Templar uses the jinja2_native functionality set/unset Templar.jinja2_native instance attribute.',
+            version='2.14', collection_name='ansible.builtin'
+        )
+
         # We need to use __new__ to skip __init__, mainly not to create a new
         # environment there only to override it below
-        new_env = object.__new__(environment_class)
+        new_env = object.__new__(AnsibleEnvironment)
         new_env.__dict__.update(self.environment.__dict__)
 
         new_templar = object.__new__(Templar)
         new_templar.__dict__.update(self.__dict__)
         new_templar.environment = new_env
 
+        new_templar.jinja2_native = environment_class is AnsibleNativeEnvironment
+
         mapping = {
             'available_variables': new_templar,
+            'jinja2_native': self,
             'searchpath': new_env.loader,
         }
 
@@ -771,6 +765,7 @@ class Templar:
         """
         mapping = {
             'available_variables': self,
+            'jinja2_native': self,
             'searchpath': self.environment.loader,
         }
         original = {}
@@ -851,20 +846,8 @@ class Templar:
                 fail_on_undefined=fail_on_undefined,
                 overrides=overrides,
                 disable_lookups=disable_lookups,
+                convert_data=convert_data,
             )
-
-            if not self.jinja2_native:
-                unsafe = hasattr(result, '__UNSAFE__')
-                if convert_data and not self._no_type_regex.match(variable):
-                    # if this looks like a dictionary or list, convert it to such using the safe_eval method
-                    if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
-                            result.startswith("[") or result in ("True", "False"):
-                        eval_results = safe_eval(result, include_exceptions=True)
-                        if eval_results[1] is None:
-                            result = eval_results[0]
-                            if unsafe:
-                                result = wrap_var(result)
-                        # FIXME: if the safe_eval raised an error, should we do something with it?
 
             # we only cache in the case where we have a single variable
             # name, to make sure we're not putting things which may otherwise
@@ -1027,7 +1010,7 @@ class Templar:
                 return wrap_var(ran)
 
             try:
-                if self.jinja2_native and isinstance(ran[0], NativeJinjaText):
+                if isinstance(ran[0], NativeJinjaText):
                     ran = wrap_var(NativeJinjaText(",".join(ran)))
                 else:
                     ran = wrap_var(",".join(ran))
@@ -1054,7 +1037,8 @@ class Templar:
             hint = "Mandatory variable has not been overridden"
         return AnsibleUndefined(hint)
 
-    def do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, disable_lookups=False):
+    def do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, disable_lookups=False,
+                    convert_data=False):
         if self.jinja2_native and not isinstance(data, string_types):
             return data
 
@@ -1114,7 +1098,8 @@ class Templar:
                 if self.jinja2_native:
                     res = ansible_native_concat(rf)
                 else:
-                    res = j2_concat(rf)
+                    res = ansible_concat(rf, convert_data, myenv.variable_start_string)
+
                 unsafe = getattr(new_context, 'unsafe', False)
                 if unsafe:
                     res = wrap_var(res)
@@ -1127,10 +1112,7 @@ class Templar:
                     display.debug("failing because of a type error, template data is: %s" % to_text(data))
                     raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data), to_native(te)))
 
-            if self.jinja2_native and not isinstance(res, string_types):
-                return res
-
-            if preserve_trailing_newlines:
+            if isinstance(res, string_types) and preserve_trailing_newlines:
                 # The low level calls above do not preserve the newline
                 # characters at the end of the input data, so we use the
                 # calculate the difference in newlines and append them

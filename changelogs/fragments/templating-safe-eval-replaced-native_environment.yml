@@ -1,0 +1,6 @@
+major_changes:
+  - Templating - remove ``safe_eval`` in favor of using ``NativeEnvironment`` but utilizing ``literal_eval`` only in cases when ``safe_eval`` was used (https://github.com/ansible/ansible/pull/75587)
+breaking_changes:
+  - Templating - it is no longer allowed to perform arithmetic and concatenation operations outside of the jinja template (https://github.com/ansible/ansible/pull/75587)
+bugfixes:
+  - Trigger an undefined error when an undefined variable is detected within a dictionary and/or list (https://github.com/ansible/ansible/pull/75587)

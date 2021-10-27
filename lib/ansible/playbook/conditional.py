@@ -181,8 +181,8 @@ class Conditional:
                 raise AnsibleError("Invalid conditional detected: %s" % to_native(e))
 
             # and finally we generate and template the presented string and look at the resulting string
-            # NOTE The spaces around True and False are intentional to short-circuit safe_eval and avoid
-            #      its expensive calls.
+            # NOTE The spaces around True and False are intentional to short-circuit literal_eval for
+            #      jinja2_native=False and avoid its expensive calls.
             presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
             # NOTE Convert the result to text to account for both native and non-native jinja.
             # NOTE The templated result of `presented` is string on native jinja as well prior to Python 3.10.
