@@ -23,7 +23,7 @@ Development Phase
 
 The ``milestone`` branch will be advanced at the start date of each development phase.
 
-- 2021-10-18 Development Phase 1
+- 2021-09-27 Development Phase 1
 - 2021-12-13 Development Phase 2
 - 2022-02-14 Development Phase 3
 
