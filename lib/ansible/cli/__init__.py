@@ -17,6 +17,18 @@ if sys.version_info < (3, 8):
         'Current version: %s' % ''.join(sys.version.splitlines())
     )
 
+from importlib.metadata import version
+from ansible.module_utils.compat.version import LooseVersion
+
+# Used for determining if the system is running a new enough Jinja2 version
+# and should only restrict on our documented minimum versions
+jinja2_version = version('jinja2')
+if jinja2_version < LooseVersion('3.0'):
+    raise SystemExit(
+        'ERROR: Ansible requires Jinja2 3.0 or newer on the controller. '
+        'Current version: %s' % jinja2_version
+    )
+
 import errno
 import getpass
 import os
