@@ -1,6 +1,6 @@
 base image=quay.io/ansible/base-test-container:2.0.0 python=3.10,2.7,3.5,3.6,3.7,3.8,3.9 seccomp=unconfined
-default image=quay.io/ansible/default-test-container:5.0.0 python=3.10,2.7,3.5,3.6,3.7,3.8,3.9 seccomp=unconfined context=collection
-default image=quay.io/ansible/ansible-core-test-container:5.0.0 python=3.10,2.7,3.5,3.6,3.7,3.8,3.9 seccomp=unconfined context=ansible-core
+default image=quay.io/ansible/default-test-container:5.1.0 python=3.10,2.7,3.5,3.6,3.7,3.8,3.9 seccomp=unconfined context=collection
+default image=quay.io/ansible/ansible-core-test-container:5.1.0 python=3.10,2.7,3.5,3.6,3.7,3.8,3.9 seccomp=unconfined context=ansible-core
 alpine3 image=quay.io/ansible/alpine3-test-container:3.1.0 python=3.9
 centos7 image=quay.io/ansible/centos7-test-container:3.1.0 python=2.7 seccomp=unconfined
 centos8 image=quay.io/ansible/centos8-test-container:3.1.0 python=3.6 seccomp=unconfined
