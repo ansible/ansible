@@ -612,6 +612,15 @@ class AnsibleEnvironment(NativeEnvironment):
         self.tests = JinjaPluginIntercept(self.tests, test_loader)
 
 
+class AnsibleNativeEnvironment(NativeEnvironment):
+    def __new__(cls):
+        raise AnsibleAssertionError(
+            'It is not allowed to create instances of AnsibleNativeEnvironment. '
+            'The class is kept for backwards compatibility of '
+            'Templar.copy_with_new_env, see the method for more information.'
+        )
+
+
 class Templar:
     '''
     The main class for templating, with the main entry-point of template().
@@ -650,32 +659,54 @@ class Templar:
         # the current rendering context under which the templar class is working
         self.cur_context = None
 
-        # FIXME these regular expressions should be re-compiled each time variable_start_string and variable_end_string are changed
+        # FIXME this regex should be re-compiled each time variable_start_string and variable_end_string are changed
         self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
 
         self.jinja2_native = C.DEFAULT_JINJA2_NATIVE
 
     def copy_with_new_env(self, environment_class=AnsibleEnvironment, **kwargs):
-        r"""Creates a new copy of Templar with a new environment. The new environment is based on
-        given environment class and kwargs.
+        r"""Creates a new copy of Templar with a new environment.
 
-        :kwarg environment_class: Environment class used for creating a new environment.
+        Since Ansible 2.13 this method is being deprecated and is kept only
+        for backwards compatibility:
+            - AnsibleEnvironment is now based on NativeEnvironment
+            - AnsibleNativeEnvironment is replaced by what is effectively a dummy class
+              for purposes of this method, see below
+            - environment_class arg no longer controls what type of environment is created,
+              AnsibleEnvironment is used regardless of the value passed in environment_class
+            - environment_class is used to determine the value of jinja2_native of the newly
+              created Templar; if AnsibleNativeEnvironment is passed in environment_class
+              new_templar.jinja2_native is set to True, any other value will result in
+              new_templar.jinja2_native being set to False unless overriden by the value
+              passed in kwargs
+
+        :kwarg environment_class: See above.
         :kwarg \*\*kwargs: Optional arguments for the new environment that override existing
             environment attributes.
 
         :returns: Copy of Templar with updated environment.
         """
+        display.deprecated(
+            'Templar.copy_with_new_env is no longer used within Ansible codebase and is being deprecated. '
+            'For temporarily creating a new environment with custom arguments use set_temporary_context context manager. '
+            'To control whether the Templar uses the jinja2_native functionality set/unset Templar.jinja2_native instance attribute.',
+            version='2.14', collection_name='ansible.builtin'
+        )
+
         # We need to use __new__ to skip __init__, mainly not to create a new
         # environment there only to override it below
-        new_env = object.__new__(environment_class)
+        new_env = object.__new__(AnsibleEnvironment)
         new_env.__dict__.update(self.environment.__dict__)
 
         new_templar = object.__new__(Templar)
         new_templar.__dict__.update(self.__dict__)
         new_templar.environment = new_env
 
+        new_templar.jinja2_native = environment_class is AnsibleNativeEnvironment
+
         mapping = {
             'available_variables': new_templar,
+            'jinja2_native': self,
             'searchpath': new_env.loader,
         }
 
