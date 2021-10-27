@@ -14,7 +14,9 @@ When Ansible receives a non-zero return code from a command or a failure from a 
 Ignoring failed commands
 ========================
 
-By default Ansible stops executing tasks on a host when a task fails on that host. You can use ``ignore_errors`` to continue on in spite of the failure::
+By default Ansible stops executing tasks on a host when a task fails on that host. You can use ``ignore_errors`` to continue on in spite of the failure.
+
+.. code-block:: yaml
 
     - name: Do not count this as a failure
       ansible.builtin.command: /bin/false
@@ -27,7 +29,9 @@ Ignoring unreachable host errors
 
 .. versionadded:: 2.7
 
-You can ignore a task failure due to the host instance being 'UNREACHABLE' with the ``ignore_unreachable`` keyword. Ansible ignores the task errors, but continues to execute future tasks against the unreachable host. For example, at the task level::
+You can ignore a task failure due to the host instance being 'UNREACHABLE' with the ``ignore_unreachable`` keyword. Ansible ignores the task errors, but continues to execute future tasks against the unreachable host. For example, at the task level:
+
+.. code-block:: yaml
 
     - name: This executes, fails, and the failure is ignored
       ansible.builtin.command: /bin/true
@@ -36,7 +40,9 @@ You can ignore a task failure due to the host instance being 'UNREACHABLE' with 
     - name: This executes, fails, and ends the play for this host
       ansible.builtin.command: /bin/true
 
-And at the playbook level::
+And at the playbook level:
+
+.. code-block:: yaml
 
     - hosts: all
       ignore_unreachable: yes
@@ -81,21 +87,27 @@ Defining failure
 
 Ansible lets you define what "failure" means in each task using the ``failed_when`` conditional. As with all conditionals in Ansible, lists of multiple ``failed_when`` conditions are joined with an implicit ``and``, meaning the task only fails when *all* conditions are met. If you want to trigger a failure when any of the conditions is met, you must define the conditions in a string with an explicit ``or`` operator.
 
-You may check for failure by searching for a word or phrase in the output of a command::
+You may check for failure by searching for a word or phrase in the output of a command
+
+.. code-block:: yaml
 
     - name: Fail task when the command error output prints FAILED
       ansible.builtin.command: /usr/bin/example-command -x -y -z
       register: command_result
       failed_when: "'FAILED' in command_result.stderr"
 
-or based on the return code::
+or based on the return code
+
+.. code-block:: yaml
 
     - name: Fail task when both files are identical
       ansible.builtin.raw: diff foo/file1 bar/file2
       register: diff_cmd
       failed_when: diff_cmd.rc == 0 or diff_cmd.rc >= 2
 
-You can also combine multiple conditions for failure. This task will fail if both conditions are true::
+You can also combine multiple conditions for failure. This task will fail if both conditions are true:
+
+.. code-block:: yaml
 
     - name: Check if a file exists in temp and fail task if it does
       ansible.builtin.command: ls /tmp/this_should_not_be_here
@@ -104,11 +116,15 @@ You can also combine multiple conditions for failure. This task will fail if bot
         - result.rc == 0
         - '"No such" not in result.stdout'
 
-If you want the task to fail when only one condition is satisfied, change the ``failed_when`` definition to::
+If you want the task to fail when only one condition is satisfied, change the ``failed_when`` definition to
+
+.. code-block:: yaml
 
       failed_when: result.rc == 0 or "No such" not in result.stdout
 
-If you have too many conditions to fit neatly into one line, you can split it into a multi-line yaml value with ``>``::
+If you have too many conditions to fit neatly into one line, you can split it into a multi-line YAML value with ``>``.
+
+.. code-block:: yaml
 
     - name: example of many failed_when conditions with OR
       ansible.builtin.shell: "./myBinary"
@@ -123,7 +139,9 @@ If you have too many conditions to fit neatly into one line, you can split it in
 Defining "changed"
 ==================
 
-Ansible lets you define when a particular task has "changed" a remote node using the ``changed_when`` conditional. This lets you determine, based on return codes or output, whether a change should be reported in Ansible statistics and whether a handler should be triggered or not. As with all conditionals in Ansible, lists of multiple ``changed_when`` conditions are joined with an implicit ``and``, meaning the task only reports a change when *all* conditions are met. If you want to report a change when any of the conditions is met, you must define the conditions in a string with an explicit ``or`` operator. For example::
+Ansible lets you define when a particular task has "changed" a remote node using the ``changed_when`` conditional. This lets you determine, based on return codes or output, whether a change should be reported in Ansible statistics and whether a handler should be triggered or not. As with all conditionals in Ansible, lists of multiple ``changed_when`` conditions are joined with an implicit ``and``, meaning the task only reports a change when *all* conditions are met. If you want to report a change when any of the conditions is met, you must define the conditions in a string with an explicit ``or`` operator. For example:
+
+.. code-block:: yaml
 
     tasks:
 
@@ -136,7 +154,9 @@ Ansible lets you define when a particular task has "changed" a remote node using
         ansible.builtin.shell: wall 'beep'
         changed_when: False
 
-You can also combine multiple conditions to override "changed" result::
+You can also combine multiple conditions to override "changed" result.
+
+.. code-block:: yaml
 
     - name: Combine multiple conditions to override 'changed' result
       ansible.builtin.command: /bin/fake_command
@@ -151,7 +171,9 @@ See :ref:`controlling_what_defines_failure` for more conditional syntax examples
 Ensuring success for command and shell
 ======================================
 
-The :ref:`command <command_module>` and :ref:`shell <shell_module>` modules care about return codes, so if you have a command whose successful exit code is not zero, you can do this::
+The :ref:`command <command_module>` and :ref:`shell <shell_module>` modules care about return codes, so if you have a command whose successful exit code is not zero, you can do this:
+
+.. code-block:: yaml
 
     tasks:
       - name: Run this command and ignore the result
@@ -166,7 +188,9 @@ Sometimes you want a failure on a single host, or failures on a certain percenta
 Aborting on the first error: any_errors_fatal
 ---------------------------------------------
 
-If you set ``any_errors_fatal`` and a task returns an error, Ansible finishes the fatal task on all hosts in the current batch, then stops executing the play on all hosts. Subsequent tasks and plays are not executed. You can recover from fatal errors by adding a :ref:`rescue section <block_error_handling>` to the block. You can set ``any_errors_fatal`` at the play or block level::
+If you set ``any_errors_fatal`` and a task returns an error, Ansible finishes the fatal task on all hosts in the current batch, then stops executing the play on all hosts. Subsequent tasks and plays are not executed. You can recover from fatal errors by adding a :ref:`rescue section <block_error_handling>` to the block. You can set ``any_errors_fatal`` at the play or block level.
+
+.. code-block:: yaml
 
      - hosts: somehosts
        any_errors_fatal: true
@@ -179,7 +203,9 @@ If you set ``any_errors_fatal`` and a task returns an error, Ansible finishes th
              - include_tasks: mytasks.yml
            any_errors_fatal: true
 
-You can use this feature when all tasks must be 100% successful to continue playbook execution. For example, if you run a service on machines in multiple data centers with load balancers to pass traffic from users to the service, you want all load balancers to be disabled before you stop the service for maintenance. To ensure that any failure in the task that disables the load balancers will stop all other tasks::
+You can use this feature when all tasks must be 100% successful to continue playbook execution. For example, if you run a service on machines in multiple data centers with load balancers to pass traffic from users to the service, you want all load balancers to be disabled before you stop the service for maintenance. To ensure that any failure in the task that disables the load balancers will stop all other tasks:
+
+.. code-block:: yaml
 
     ---
     - hosts: load_balancers_dc_a
@@ -211,7 +237,9 @@ In this example Ansible starts the software upgrade on the front ends only if al
 Setting a maximum failure percentage
 ------------------------------------
 
-By default, Ansible continues to execute tasks as long as there are hosts that have not yet failed. In some situations, such as when executing a rolling update, you may want to abort the play when a certain threshold of failures has been reached. To achieve this, you can set a maximum failure percentage on a play::
+By default, Ansible continues to execute tasks as long as there are hosts that have not yet failed. In some situations, such as when executing a rolling update, you may want to abort the play when a certain threshold of failures has been reached. To achieve this, you can set a maximum failure percentage on a play:
+
+.. code-block:: yaml
 
     ---
     - hosts: webservers
