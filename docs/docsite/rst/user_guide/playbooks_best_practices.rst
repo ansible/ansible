@@ -68,7 +68,7 @@ A system can be in multiple groups.  See :ref:`intro_inventory` and :ref:`intro_
 Separate production and staging inventory
 -----------------------------------------
 
-You can keep your production environment separate from development, test, and staging environments by using separate inventory files or directories for each environment. This way you pick with -i what you are targeting. Keeping all your environments in one file can lead to surprises! For example, all vault passwords used in an inventory need to be available when using that inventory, in other words: Your developers would be able to access production secrets when these environments are kept in the same inventory.
+You can keep your production environment separate from development, test, and staging environments by using separate inventory files or directories for each environment. This way you pick with -i what you are targeting. Keeping all your environments in one file can lead to surprises! For example, all vault passwords used in an inventory need to be available when using that inventory. If an inventory contains both production and development environments, developers using that inventory would be able to access production secrets.
 
 .. _tip_for_variables_and_vaults:
 
