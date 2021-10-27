@@ -70,15 +70,15 @@ Non-destructive Tests
 These tests will modify files in subdirectories, but will not do things that install or remove packages or things
 outside of those test subdirectories.  They will also not reconfigure or bounce system services.
 
-.. note:: Running integration tests within Docker
+.. note:: Running integration tests within containers
 
-   To protect your system from any potential changes caused by integration tests, and to ensure a sensible set of dependencies are available we recommend that you always run integration tests with the ``--docker`` option, for example ``--docker centos8``. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/docker.txt>`_ for options (the ``default`` image is used for sanity and unit tests, as well as for platform independent integration tests such as those for cloud modules).
+   To protect your system from any potential changes caused by integration tests, and to ensure a sensible set of dependencies are available we recommend that you always run integration tests with the ``--docker`` option, for example ``--docker centos8``. See the `list of supported container images <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/docker.txt>`_ for options (the ``default`` image is used for sanity and unit tests, as well as for platform independent integration tests such as those for cloud modules).
 
-.. note:: Avoiding pulling new Docker images
+.. note:: Avoiding pulling new container images
 
    Use the ``--docker-no-pull`` option to avoid pulling the latest container image. This is required when using custom local images that are not available for download.
 
-Run as follows for all POSIX platform tests executed by our CI system in a Fedora 34 Docker container:
+Run as follows for all POSIX platform tests executed by our CI system in a Fedora 34 container:
 
 .. code-block:: shell-session
 
@@ -145,11 +145,16 @@ Run the Windows tests executed by our CI system:
 
     ansible-test windows-integration -v shippable/
 
-Tests in Docker containers
+Tests in containers
 ==========================
 
-If you have a Linux system with Docker installed, running integration tests using the same Docker containers used by
+If you have a Linux system with Docker or Podman installed, running integration tests using the same containers used by
 the Ansible continuous integration (CI) system is recommended.
+
+.. note:: Podman
+
+   By default, Podman will only be used if the Docker CLI is not installed. If you have Docker installed but want to use
+   Podman, you can change this behavior by setting the environment variable ``ANSIBLE_TEST_PREFER_PODMAN``.
 
 .. note:: Docker on non-Linux
 
