@@ -152,13 +152,14 @@ def get_podman_default_hostname():  # type: () -> str
 
 
 @cache
-def get_podman_hostname():  # type: () -> str
-    """Return the hostname of the Podman service."""
+def _get_podman_remote():  # type: () -> bool
     # URL value resolution precedence:
     # - command line value
     # - environment variable CONTAINER_HOST
     # - containers.conf
     # - unix://run/podman/podman.sock
+    hostname = None
+
     podman_host = os.environ.get('CONTAINER_HOST')
     if not podman_host:
         podman_host = get_podman_default_hostname()
@@ -166,11 +167,19 @@ def get_podman_hostname():  # type: () -> str
     if podman_host and podman_host.startswith('ssh://'):
         try:
             hostname = urllib.parse.urlparse(podman_host).hostname
-            display.info('Detected Podman host: %s' % hostname, verbosity=1)
         except ValueError:
-            hostname = 'localhost'
-            display.warning('Could not parse podman URI "%s", falling back to localhost.' % podman_host)
-    else:
+            display.warning('Could not parse podman URI "%s"' % podman_host)
+        else:
+            display.info('Detected Podman remote: %s' % hostname, verbosity=1)
+    return hostname
+
+
+@cache
+def get_podman_hostname():  # type: () -> str
+    """Return the hostname of the Podman service."""
+    hostname = _get_podman_remote()
+
+    if not hostname:
         hostname = 'localhost'
         display.info('Assuming Podman is available on localhost.', verbosity=1)
 
@@ -534,8 +543,10 @@ def docker_command(
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Run the specified docker command."""
     env = docker_environment()
-    command = require_docker().command
-    return run_command(args, [command] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always, data=data)
+    command = [require_docker().command]
+    if command[0] == 'podman' and _get_podman_remote():
+        command.append('--remote')
+    return run_command(args, command + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always, data=data)
 
 
 def docker_environment():  # type: () -> t.Dict[str, str]
