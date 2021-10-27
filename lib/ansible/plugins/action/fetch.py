@@ -161,7 +161,7 @@ class ActionModule(ActionBase):
                 if 'inventory_hostname' in task_vars:
                     target_name = task_vars['inventory_hostname']
                 else:
-                    target_name = self._play_context.remote_addr
+                    target_name = self._get_host()
                 dest = "%s/%s/%s" % (self._loader.path_dwim(dest), target_name, source_local)
 
             dest = os.path.normpath(dest)
