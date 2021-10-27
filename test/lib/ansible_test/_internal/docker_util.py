@@ -152,7 +152,7 @@ def get_podman_default_hostname():  # type: () -> str
 
 
 @cache
-def _get_podman_remote():  # type: () -> bool
+def _get_podman_remote():  # type: () -> t.Optional[str]
     # URL value resolution precedence:
     # - command line value
     # - environment variable CONTAINER_HOST
