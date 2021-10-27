@@ -19,7 +19,7 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
-* Templating - it is no longer allowed to perform arithmetic and concatenation operations outside of the jinja template. The following statement will need to be rewritten to produce ``[1, 2]``:
+* Templating - You can no longer perform arithmetic and concatenation operations outside of the jinja template. The following statement will need to be rewritten to produce ``[1, 2]``:
 
  .. code-block:: yaml
 
@@ -30,6 +30,8 @@ Playbook
      - name: 2.13 and forward
        debug:
          msg: '{{ [1] + [2] }}'
+
+* The return value of the ``__repr__`` method of an undefined variable represented by the ``AnsibleUndefined`` object changed. ``{{ '%r'|format(undefined_variable) }}`` returns ``AnsibleUndefined(hint=None, obj=missing, name='undefined_variable')`` in 2.13 as opposed to just ``AnsibleUndefined`` in versions 2.12 and prior.
 
 
 Command Line
