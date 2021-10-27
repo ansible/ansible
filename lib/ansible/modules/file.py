@@ -800,10 +800,12 @@ def ensure_hardlink(path, src, follow, force, timestamps):
 
     # src is the source of a hardlink.  We require it if we are creating a new hardlink.
     # We require path in the argument_spec so we know it is present at this point.
-    if src is None:
+    if prev_state != 'hard' and src is None:
         raise AnsibleModuleError(results={'msg': 'src is required for creating new hardlinks'})
 
-    if not os.path.exists(b_src):
+    # Even if the link already exists, if src was specified it needs to exist.
+    # The inode number will be compared to ensure the link has the correct target.
+    if src is not None and not os.path.exists(b_src):
         raise AnsibleModuleError(results={'msg': 'src does not exist', 'dest': path, 'src': src})
 
     diff = initial_diff(path, 'hard', prev_state)
@@ -818,7 +820,7 @@ def ensure_hardlink(path, src, follow, force, timestamps):
             diff['after']['src'] = src
             changed = True
     elif prev_state == 'hard':
-        if not os.stat(b_path).st_ino == os.stat(b_src).st_ino:
+        if src is not None and not os.stat(b_path).st_ino == os.stat(b_src).st_ino:
             changed = True
             if not force:
                 raise AnsibleModuleError(results={'msg': 'Cannot link, different hard link exists at destination',
