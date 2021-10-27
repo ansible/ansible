@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Update the ``default`` containers to version 5.1.0.
