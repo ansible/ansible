@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-08-05 13:48+0200\n"
+"POT-Creation-Date: 2021-10-11 16:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1072,7 +1072,6 @@ msgid ":ref:`ansible_tower` also contains a very nice feature for auto-scaling u
 msgstr "また、:ref:`ansible_tower` は、自動スケーリングのユースケースには非常に優れた機能も含まれています。このモードでは、簡単な curl スクリプトは定義された URL を呼び出すことができ、サーバーは要求元に対して「ダイヤルアウト」し、起動しているインスタンスを構成します。これは、一時ノードを再設定する優れた方法になります。詳細は、Tower のインストールと製品のドキュメントを参照してください。"
 
 #: ../../rst/scenario_guides/guide_aws.rst:228
-#: ../../rst/scenario_guides/guide_rax.rst:793
 msgid "A benefit of using the callback in Tower over pull mode is that job results are still centrally recorded and less information has to be shared with remote hosts."
 msgstr "pull モードで Tower のコールバックを使用する利点は、ジョブの結果が引き続き中央で記録され、リモートホストと共有する必要のある情報が少なくなることです。"
 
@@ -1296,8 +1295,8 @@ msgid "Providing Credentials to Azure Modules"
 msgstr "Azure モジュールへの認証情報の提供"
 
 #: ../../rst/scenario_guides/guide_azure.rst:68
-msgid "The modules offer several ways to provide your credentials. For a CI/CD tool such as Ansible Tower or Jenkins, you will most likely want to use environment variables. For local development you may wish to store your credentials in a file within your home directory. And of course, you can always pass credentials as parameters to a task within a playbook. The order of precedence is parameters, then environment variables, and finally a file found in your home directory."
-msgstr "モジュールには、認証情報を提供するいくつかの方法があります。Ansible Tower や Jenkins のような CI/CD ツールでは、環境変数を使用することが多いでしょう。ローカルでの開発では、ホームディレクトリー内のファイルに認証情報を保存することができます。認証情報はパラメーターとして Playbook 内のタスクに渡すこともできます。優先される順序は、パラメーター、環境変数、および最後にホームディレクトリーにあるファイルになります。"
+msgid "The modules offer several ways to provide your credentials. For a CI/CD tool such as Ansible AWX or Jenkins, you will most likely want to use environment variables. For local development you may wish to store your credentials in a file within your home directory. And of course, you can always pass credentials as parameters to a task within a playbook. The order of precedence is parameters, then environment variables, and finally a file found in your home directory."
+msgstr "モジュールには、認証情報を提供するいくつかの方法があります。Ansible AWX や Jenkins のような CI/CD ツールでは、環境変数を使用することが多いでしょう。ローカルでの開発では、ホームディレクトリー内のファイルに認証情報を保存することができます。認証情報はパラメーターとして Playbook 内のタスクに渡すこともできます。優先される順序は、パラメーター、環境変数、および最後にホームディレクトリーにあるファイルになります。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:74
 msgid "Using Environment Variables"
@@ -3222,8 +3221,8 @@ msgid "Dynamic inventory scripts (like ``rax.py``) are saved in ``/usr/share/ans
 msgstr "Ansible がグローバルにインストールされている場合は、動的インベントリースクリプト (``rax.py`` など) が ``/usr/share/ansible/inventory`` に保存されます。virtualenv にインストールされると、インベントリースクリプトは ``$VIRTUALENV/share/inventory`` にインストールされます。"
 
 #: ../../rst/scenario_guides/guide_rax.rst:170
-msgid "Users of :ref:`ansible_tower` will note that dynamic inventory is natively supported by Tower, and all you have to do is associate a group with your Rackspace Cloud credentials, and it will easily synchronize without going through these steps::"
-msgstr ":ref:`ansible_tower` のユーザーは、Tower が動的インベントリーをネイティブにサポートしており、グループを Rackspace Cloud 認証情報に関連付けるだけで、このステップを実行せずに簡単に同期できます。"
+msgid "Users of :ref:`ansible_platform` will note that dynamic inventory is natively supported by the controller in the platform, and all you have to do is associate a group with your Rackspace Cloud credentials, and it will easily synchronize without going through these steps::"
+msgstr ":ref:`ansible_platform` のユーザーは、プラットフォームのコントローラーが動的インベントリーをネイティブにサポートしており、グループを Rackspace Cloud 認証情報に関連付けるだけで、このステップを実行せずに簡単に同期できます。"
 
 #: ../../rst/scenario_guides/guide_rax.rst:174
 msgid "``rax.py`` also accepts a ``RAX_REGION`` environment variable, which can contain an individual region, or a comma separated list of regions."
@@ -3326,34 +3325,38 @@ msgid "Advanced Usage"
 msgstr "高度な使用方法"
 
 #: ../../rst/scenario_guides/guide_rax.rst:786
-msgid "Autoscaling with Tower"
-msgstr "Tower を使用した自動スケーリング"
+msgid "Autoscaling with AWX or Red Hat Ansible Automation Platform"
+msgstr "AWX または Red Hat Ansible Automation Platform での自動スケーリング"
 
 #: ../../rst/scenario_guides/guide_rax.rst:788
-msgid ":ref:`ansible_tower` also contains a very nice feature for auto-scaling use cases. In this mode, a simple curl script can call a defined URL and the server will \"dial out\" to the requester and configure an instance that is spinning up.  This can be a great way to reconfigure ephemeral nodes. See the Tower documentation for more details."
-msgstr "また、:ref:`ansible_tower` は、自動スケーリングのユースケースには非常に優れた機能も含まれています。このモードでは、簡単な curl スクリプトは定義された URL を呼び出すことができ、サーバーは要求元に対して「ダイヤルアウト」し、起動しているインスタンスを構成します。これは、一時ノードを再設定する優れた方法になります。詳細は、Tower ドキュメントを参照してください。"
+msgid "The GUI component of :ref:`Red Hat Ansible Automation Platform <ansible_tower>` also contains a very nice feature for auto-scaling use cases.  In this mode, a simple curl script can call a defined URL and the server will \"dial out\" to the requester and configure an instance that is spinning up.  This can be a great way to reconfigure ephemeral nodes.  See `the documentation on provisioning callbacks <https://docs.ansible.com/ansible-tower/latest/html/userguide/job_templates.html#provisioning-callbacks>`_ for more details."
+msgstr "また、:ref:`Red Hat Ansible Automation Platform <ansible_tower>` の GUI コンポーネントは、自動スケーリングのユースケースには非常に優れた機能も含まれています。このモードでは、簡単な curl スクリプトは定義された URL を呼び出すことができ、サーバーは要求元に対して「ダイヤルアウト」し、起動しているインスタンスを構成します。これは、一時ノードを再設定する優れた方法になります。詳細は、`the documentation on provisioning callbacks <https://docs.ansible.com/ansible-tower/latest/html/userguide/job_templates.html#provisioning-callbacks>`_ を参照してください。"
 
-#: ../../rst/scenario_guides/guide_rax.rst:799
+#: ../../rst/scenario_guides/guide_rax.rst:792
+msgid "A benefit of using the callback approach over pull mode is that job results are still centrally recorded and less information has to be shared with remote hosts."
+msgstr "pull モードでコールバックアプローチを使用する利点は、ジョブの結果が引き続き中央で記録され、リモートホストと共有する必要のある情報が少なくなることです。"
+
+#: ../../rst/scenario_guides/guide_rax.rst:798
 msgid "Orchestration in the Rackspace Cloud"
 msgstr "Rackspace Cloud のオーケストレーション"
 
-#: ../../rst/scenario_guides/guide_rax.rst:801
+#: ../../rst/scenario_guides/guide_rax.rst:800
 msgid "Ansible is a powerful orchestration tool, and rax modules allow you the opportunity to orchestrate complex tasks, deployments, and configurations.  The key here is to automate provisioning of infrastructure, like any other piece of software in an environment.  Complex deployments might have previously required manual manipulation of load balancers, or manual provisioning of servers.  Utilizing the rax modules included with Ansible, one can make the deployment of additional nodes contingent on the current number of running nodes, or the configuration of a clustered application dependent on the number of nodes with common metadata.  One could automate the following scenarios, for example:"
 msgstr "Ansible は強力なオーケストレーションツールであり、rax モジュールを使用することで、複雑なタスク、デプロイメント、および設定のオーケストレーションが可能になります。ここでは、環境内にある他のソフトウェアと同様、インフラストラクチャーのプロビジョニングを自動化することが重要になります。複雑なデプロイメントを行う場合、これまではロードバランサーを手動で操作したり、サーバーのプロビジョニングを手動で行う必要があったかもしれません。Ansible に含まれる rax モジュールを利用すると、現在稼働しているノードの数に応じてノードを追加したり、共通のメタデータを使用してノードの数に応じてクラスター化されたアプリケーションを構成したりすることができます。たとえば、以下のようなシナリオを自動化できます。"
 
-#: ../../rst/scenario_guides/guide_rax.rst:803
+#: ../../rst/scenario_guides/guide_rax.rst:802
 msgid "Servers that are removed from a Cloud Load Balancer one-by-one, updated, verified, and returned to the load balancer pool"
 msgstr "Cloud Load Balancer から 1 つずつ削除され、更新され、検証され、ロードバランサープールに返されるサーバー"
 
-#: ../../rst/scenario_guides/guide_rax.rst:804
+#: ../../rst/scenario_guides/guide_rax.rst:803
 msgid "Expansion of an already-online environment, where nodes are provisioned, bootstrapped, configured, and software installed"
 msgstr "ノードのプロビジョニング、ブートストラップ、設定、およびソフトウェアがインストールされている、すでにオンラインの環境の拡張"
 
-#: ../../rst/scenario_guides/guide_rax.rst:805
+#: ../../rst/scenario_guides/guide_rax.rst:804
 msgid "A procedure where app log files are uploaded to a central location, like Cloud Files, before a node is decommissioned"
 msgstr "ノードが廃止される前に、アプリのログファイルが Cloud Files などの中央の場所にアップロードされる手順"
 
-#: ../../rst/scenario_guides/guide_rax.rst:806
+#: ../../rst/scenario_guides/guide_rax.rst:805
 msgid "Servers and load balancers that have DNS records created and destroyed on creation and decommissioning, respectively"
 msgstr "作成時に DNS レコードが作成され、廃止時に破棄されるサーバーとロードバランサー"
 
@@ -5337,7 +5340,7 @@ msgstr "HTTP API を使用して VMware を管理する Ansible Playbook 例の 
 
 #: ../../rst/scenario_guides/vmware_scenarios/scenario_vmware_tools_connection.rst:5
 msgid "Using vmware_tools connection plugin"
-msgstr "vmware_tools 接続プラグインの使用"
+msgstr "vmware_tools connection プラグインの使用"
 
 #: ../../rst/scenario_guides/vmware_scenarios/scenario_vmware_tools_connection.rst:13
 msgid "This guide will show you how to utilize VMware Connection plugin to communicate and automate various tasks on VMware guest machines."
@@ -5369,11 +5372,11 @@ msgstr "``validate_certs`` オプションを使用するには、Python 2.7.9 �
 
 #: ../../rst/scenario_guides/vmware_scenarios/scenario_vmware_tools_connection.rst:47
 msgid "User can run playbooks against VMware virtual machines using ``vmware_tools`` connection plugin."
-msgstr "ユーザーは、``vmware_tools`` 接続プラグインを使用して VMware 仮想マシンに対して Playbook を実行できます。"
+msgstr "ユーザーは、``vmware_tools`` connection プラグインを使用して VMware 仮想マシンに対して Playbook を実行できます。"
 
 #: ../../rst/scenario_guides/vmware_scenarios/scenario_vmware_tools_connection.rst:49
 msgid "In order work with ``vmware_tools`` connection plugin, you will need to specify hostvars for the given virtual machine."
-msgstr "``vmware_tools`` 接続プラグインと連携するには、指定の仮想マシンの hostvar を指定する必要があります。"
+msgstr "``vmware_tools`` connection プラグインと連携するには、指定の仮想マシンの hostvar を指定する必要があります。"
 
 #: ../../rst/scenario_guides/vmware_scenarios/scenario_vmware_tools_connection.rst:51
 msgid "For example, if you want to run a playbook on a virtual machine called ``centos_7`` located at ``/Asia-Datacenter1/prod/centos_7`` in the given vCenter, you will need to specify hostvars as follows:"
@@ -8261,4 +8264,7 @@ msgstr "``open-vm-tools`` で ``netplan`` がサポートされるのを待ち�
 
 #~ msgid "Use `Ansible Operator <https://learn.openshift.com/ansibleop/ansible-operator-overview/>`_ to launch your docker-compose file on `OpenShift <https://www.okd.io/>`_. Go from an app on your laptop to a fully scalable app in the cloud with Kubernetes in just a few moments."
 #~ msgstr "`Ansible Operator <https://learn.openshift.com/ansibleop/ansible-operator-overview/>`_ を使用して、`OpenShift <https://www.okd.io/>`_ で docker 構成のファイルを起動します。ラップトップ上のアプリケーションから、Kubernetes を使用するクラウド内の完全なスケーラブルなアプリケーション (数分間) に移動します。"
+
+#~ msgid "Autoscaling with Tower"
+#~ msgstr "Tower を使用した自動スケーリング"
 

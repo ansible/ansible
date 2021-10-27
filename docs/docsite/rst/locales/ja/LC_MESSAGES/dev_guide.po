@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-08-05 13:48+0200\n"
+"POT-Creation-Date: 2021-10-11 16:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -305,9 +305,9 @@ msgstr "Ansible モジュールの作成方法について"
 #: ../../rst/dev_guide/developing_collections_changelogs.rst:73
 #: ../../rst/dev_guide/developing_collections_contributing.rst:52
 #: ../../rst/dev_guide/developing_collections_creating.rst:50
-#: ../../rst/dev_guide/developing_collections_distributing.rst:236
+#: ../../rst/dev_guide/developing_collections_distributing.rst:293
 #: ../../rst/dev_guide/developing_collections_migrating.rst:129
-#: ../../rst/dev_guide/developing_collections_shared.rst:70
+#: ../../rst/dev_guide/developing_collections_shared.rst:87
 msgid ":ref:`collections`"
 msgstr ":ref:`collections`"
 
@@ -315,9 +315,9 @@ msgstr ":ref:`collections`"
 #: ../../rst/dev_guide/developing_collections_changelogs.rst:74
 #: ../../rst/dev_guide/developing_collections_contributing.rst:53
 #: ../../rst/dev_guide/developing_collections_creating.rst:51
-#: ../../rst/dev_guide/developing_collections_distributing.rst:237
+#: ../../rst/dev_guide/developing_collections_distributing.rst:294
 #: ../../rst/dev_guide/developing_collections_migrating.rst:130
-#: ../../rst/dev_guide/developing_collections_shared.rst:71
+#: ../../rst/dev_guide/developing_collections_shared.rst:88
 msgid "Learn how to install and use collections."
 msgstr "コレクションのインストール方法および使用方法はこちらを参照してください。"
 
@@ -326,25 +326,25 @@ msgstr "コレクションのインストール方法および使用方法はこ
 #: ../../rst/dev_guide/developing_collections_changelogs.rst:77
 #: ../../rst/dev_guide/developing_collections_contributing.rst:56
 #: ../../rst/dev_guide/developing_collections_creating.rst:54
-#: ../../rst/dev_guide/developing_collections_distributing.rst:238
+#: ../../rst/dev_guide/developing_collections_distributing.rst:297
 #: ../../rst/dev_guide/developing_collections_migrating.rst:133
-#: ../../rst/dev_guide/developing_collections_shared.rst:74
+#: ../../rst/dev_guide/developing_collections_shared.rst:91
 #: ../../rst/dev_guide/developing_collections_structure.rst:238
 #: ../../rst/dev_guide/developing_collections_testing.rst:80
 #: ../../rst/dev_guide/developing_core.rst:18
 #: ../../rst/dev_guide/developing_modules.rst:48
 #: ../../rst/dev_guide/developing_plugins.rst:498
 msgid "`Mailing List <https://groups.google.com/group/ansible-devel>`_"
-msgstr "`Mailing List <https://groups.google.com/group/ansible-devel>`_"
+msgstr "`メーリングリスト <https://groups.google.com/group/ansible-devel>`_"
 
 #: ../../rst/dev_guide/collections_galaxy_meta.rst:336
 #: ../../rst/dev_guide/developing_collections.rst:46
 #: ../../rst/dev_guide/developing_collections_changelogs.rst:78
 #: ../../rst/dev_guide/developing_collections_contributing.rst:57
 #: ../../rst/dev_guide/developing_collections_creating.rst:55
-#: ../../rst/dev_guide/developing_collections_distributing.rst:239
+#: ../../rst/dev_guide/developing_collections_distributing.rst:298
 #: ../../rst/dev_guide/developing_collections_migrating.rst:134
-#: ../../rst/dev_guide/developing_collections_shared.rst:75
+#: ../../rst/dev_guide/developing_collections_shared.rst:92
 #: ../../rst/dev_guide/developing_collections_structure.rst:239
 #: ../../rst/dev_guide/developing_collections_testing.rst:81
 #: ../../rst/dev_guide/developing_core.rst:19
@@ -356,9 +356,9 @@ msgstr "開発メーリングリスト"
 #: ../../rst/dev_guide/developing_collections_changelogs.rst:79
 #: ../../rst/dev_guide/developing_collections_contributing.rst:58
 #: ../../rst/dev_guide/developing_collections_creating.rst:56
-#: ../../rst/dev_guide/developing_collections_distributing.rst:240
+#: ../../rst/dev_guide/developing_collections_distributing.rst:299
 #: ../../rst/dev_guide/developing_collections_migrating.rst:135
-#: ../../rst/dev_guide/developing_collections_shared.rst:76
+#: ../../rst/dev_guide/developing_collections_shared.rst:93
 #: ../../rst/dev_guide/developing_collections_structure.rst:240
 #: ../../rst/dev_guide/developing_collections_testing.rst:82
 #: ../../rst/dev_guide/developing_inventory.rst:476
@@ -373,9 +373,9 @@ msgstr "`irc.libera.chat <https://libera.chat/>`_"
 #: ../../rst/dev_guide/developing_collections_changelogs.rst:80
 #: ../../rst/dev_guide/developing_collections_contributing.rst:59
 #: ../../rst/dev_guide/developing_collections_creating.rst:57
-#: ../../rst/dev_guide/developing_collections_distributing.rst:241
+#: ../../rst/dev_guide/developing_collections_distributing.rst:300
 #: ../../rst/dev_guide/developing_collections_migrating.rst:136
-#: ../../rst/dev_guide/developing_collections_shared.rst:77
+#: ../../rst/dev_guide/developing_collections_shared.rst:94
 #: ../../rst/dev_guide/developing_collections_structure.rst:241
 #: ../../rst/dev_guide/developing_collections_testing.rst:83
 #: ../../rst/dev_guide/developing_inventory.rst:477
@@ -598,7 +598,7 @@ msgstr "Playbook およびロールでコレクションをインストールし
 #: ../../rst/dev_guide/developing_collections_changelogs.rst:75
 #: ../../rst/dev_guide/developing_collections_contributing.rst:54
 #: ../../rst/dev_guide/developing_collections_migrating.rst:131
-#: ../../rst/dev_guide/developing_collections_shared.rst:72
+#: ../../rst/dev_guide/developing_collections_shared.rst:89
 #: ../../rst/dev_guide/developing_collections_structure.rst:236
 #: ../../rst/dev_guide/developing_collections_testing.rst:78
 msgid ":ref:`contributing_maintained_collections`"
@@ -608,7 +608,7 @@ msgstr ":ref:`contributing_maintained_collections`"
 #: ../../rst/dev_guide/developing_collections_changelogs.rst:76
 #: ../../rst/dev_guide/developing_collections_contributing.rst:55
 #: ../../rst/dev_guide/developing_collections_migrating.rst:132
-#: ../../rst/dev_guide/developing_collections_shared.rst:73
+#: ../../rst/dev_guide/developing_collections_shared.rst:90
 #: ../../rst/dev_guide/developing_collections_structure.rst:237
 #: ../../rst/dev_guide/developing_collections_testing.rst:79
 msgid "Guidelines for contributing to selected collections"
@@ -712,11 +712,11 @@ msgstr "``removed_features``"
 
 #: ../../rst/dev_guide/developing_collections_changelogs.rst:57
 msgid "Including collection changelogs into Ansible"
-msgstr "Ansible へのコレクション変更ログの追加"
+msgstr "Ansible へのコレクション changelog の追加"
 
 #: ../../rst/dev_guide/developing_collections_changelogs.rst:59
 msgid "If your collection is part of Ansible, use one of the following three options  to include your changelog into the Ansible release changelog:"
-msgstr "コレクションが Ansible の一部である場合は、以下の 3 つのオプションのいずれかを使用して、作成した変更ログを、Ansible リリースの 変更ログに追加します。"
+msgstr "コレクションが Ansible の一部である場合は、以下の 3 つのオプションのいずれかを使用して、作成した changelog を、Ansible リリースの changelog に追加します。"
 
 #: ../../rst/dev_guide/developing_collections_changelogs.rst:61
 msgid "Use the ``antsibull-changelog`` tool."
@@ -740,7 +740,7 @@ msgstr "コレクションへの貢献"
 
 #: ../../rst/dev_guide/developing_collections_contributing.rst:7
 msgid "If you want to add functionality to an existing collection, modify a collection you are using to fix a bug, or change the behavior of a module in a collection, clone the git repository for that collection and make changes on a branch. You can combine changes to a collection with a local checkout of Ansible (``source hacking/env-setup``). You should first check the collection repository to see if it has specific contribution guidelines. These are typically listed in the README.md or CONTRIBUTING.md files within the repository."
-msgstr "既存のコレクションに機能を追加するには、バグを修正するために使用するコレクションを変更したり、コレクションのモジュールの動作を変更して、そのコレクションの git リポジトリーのクローンを作成し、ブランチに変更を加えます。コレクションへの変更を、Ansible (``source hacking/env-setup``)の ローカルチェックアウトと組み合わせることができます。まず、コレクションリポジトリーを確認して、特定の貢献ガイドラインが含まれているかどうかを確認します。通常、それらはリポジトリーの README.md ファイルまたは CONTRIBUTING.md ファイルに一覧表示されます。"
+msgstr "既存のコレクションに機能を追加するには、バグを修正するために使用するコレクションを変更したり、コレクションのモジュールの動作を変更して、そのコレクションの git リポジトリーのクローンを作成し、ブランチに変更を加えます。コレクションへの変更を、Ansible (``source hacking/env-setup``) のローカルチェックアウトと組み合わせることができます。まず、コレクションリポジトリーを確認して、特定の貢献ガイドラインが含まれているかどうかを確認します。通常、それらはリポジトリーの README.md ファイルまたは CONTRIBUTING.md ファイルに一覧表示されます。"
 
 #: ../../rst/dev_guide/developing_collections_contributing.rst:11
 msgid "Contributing to a collection: community.general"
@@ -809,7 +809,7 @@ msgstr "コレクションを作成するには、以下を行います。"
 
 #: ../../rst/dev_guide/developing_collections_creating.rst:9
 msgid "Create a :ref:`collection skeleton<creating_collections_skeleton>` with the ``collection init`` command."
-msgstr "``collection init`` コマンドで :ref:`collection skeleton<creating_collections_skeleton>` を作成します。"
+msgstr "``collection init`` コマンドで :ref:`コレクションスケルトン<creating_collections_skeleton>` を作成します。"
 
 #: ../../rst/dev_guide/developing_collections_creating.rst:10
 msgid "Add modules and other content to the collection."
@@ -884,344 +884,514 @@ msgid "Distributing collections"
 msgstr "コレクションの配布"
 
 #: ../../rst/dev_guide/developing_collections_distributing.rst:7
-msgid "You can distribute your collections by publishing them on a distribution server. Distribution servers include Ansible Galaxy, Red Hat Automation Hub, and privately hosted Automation Hub instances. You can publish any collection to Ansible Galaxy and/or to a privately hosted Automation Hub instance. If your collection is certified by Red Hat, you can publish it to the Red Hat Automation Hub."
-msgstr "コレクションは、ディストリビューションサーバーに公開することで配布できます。ディストリビューションサーバーには、Ansible Galaxy、Red Hat Automation Hub、およびプライベートにホストされている Automation Hub インスタンスが含まれます。すべてのコレクションを Ansible Galaxy や、プライベートにホストされた Automation Hub インスタンスに公開できます。コレクションが Red Hat によって認定されている場合は、Red Hat Automation Hub に公開できます。"
+msgid "A collection is a distribution format for Ansible content. A typical collection contains modules and other plugins that address a set of related use cases. For example, a collection might automate administering a particular database. A collection can also contain roles and playbooks."
+msgstr "コレクションとは、Ansible コンテンツのディストリビューション形式です。典型的なコレクションには、一連の関連するユースケースに対応するモジュールやその他のプラグインが含まれています。例えば、特定のデータベースの管理を自動化するコレクションなどがあります。コレクションには、ロールやPlaybookを含めることもできます。"
 
 #: ../../rst/dev_guide/developing_collections_distributing.rst:9
-msgid "Distributing collections involves three major steps: #. Configuring your distribution server(s) #. Building your collection artifact #. Publishing your collection"
-msgstr "コレクションの配布には、#. ディストリビューションサーバーの設定 #. コレクションアーティファクトのビルド #. コレクションの公開の 3 つの大きなステップが関係します。"
+msgid "To distribute your collection and allow others to use it, you can publish your collection on one or more distribution servers. Distribution servers include:"
+msgstr "コレクションを配信して他の人が使用できるようにするには、1つまたは複数のディストリビューションサーバーでコレクションを公開することができます。ディストリビューションサーバーには次のようなものがあります。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:12
+msgid "Distribution server"
+msgstr "配信サーバー"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:12
+msgid "Collections accepted"
+msgstr "受け入れ可能なコレクション"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:14
+msgid "Ansible Galaxy"
+msgstr "Ansible Galaxy"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:14
+msgid "All collections"
+msgstr "全コレクション"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:15
+msgid "Red Hat Automation Hub"
+msgstr "Red Hat Automation Hub"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:15
+msgid "Only collections certified by Red Hat"
+msgstr "Red Hatが認定したコレクションのみ"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:16
+msgid "Privately hosted Automation Hub"
+msgstr "プライベートにホストされるオートメーションハブ"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:16
+msgid "Collections authorized by the owners"
+msgstr "オーナーが許可したコレクション"
 
 #: ../../rst/dev_guide/developing_collections_distributing.rst:19
-msgid "Configuring your distribution server or servers"
-msgstr "ディストリビューションサーバー (1 台または複数) の設定"
+msgid "Distributing collections involves four major steps:"
+msgstr "コレクションを配信するには、大きく分けて4つのステップがあります。"
 
 #: ../../rst/dev_guide/developing_collections_distributing.rst:21
-msgid "Get a namespace on each distribution server you want to use (Galaxy, private Automation Hub, Red Hat Automation Hub)."
-msgstr "使用する各ディストリビューションサーバーの名前空間 (Galaxy、プライベート Automation Hub、Red Hat Automation Hub) を取得します。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:33
+msgid "Initial configuration of your distribution server or servers"
+msgstr "配信サーバーの初期設定"
 
 #: ../../rst/dev_guide/developing_collections_distributing.rst:22
+#: ../../rst/dev_guide/developing_collections_distributing.rst:123
+msgid "Building your collection tarball"
+msgstr "コレクション tarball のビルド"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:23
+#: ../../rst/dev_guide/developing_collections_distributing.rst:185
+msgid "Preparing to publish your collection"
+msgstr "コレクション公開の準備"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:24
+#: ../../rst/dev_guide/developing_collections_distributing.rst:252
+msgid "Publishing your collection"
+msgstr "コレクションの公開"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:35
+msgid "Configure a connection to one or more distribution servers so you can publish collections there. You only need to configure each distribution server once. You must repeat the other steps (building your collection tarball, preparing to publish, and publishing your collection) every time you publish a new collection or a new version of an existing collection."
+msgstr "1つまたは複数の配信サーバーへの接続を設定し、そこでコレクションを公開できるようにします。各ディストリビューションサーバーの設定は、1回だけ行う必要があります。その他の手順（コレクションのtarballのビルド、公開の準備、コレクションの公開）は、新しいコレクションまたは既存のコレクションの新しいバージョンを公開するたびに繰り返す必要があります。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:37
+msgid "Create a namespace on each distribution server you want to use."
+msgstr "使用する各配信サーバーの名前空間を作成します。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:38
 msgid "Get an API token for each distribution server you want to use."
 msgstr "使用するディストリビューションサーバーごとに API トークンを取得します。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:23
+#: ../../rst/dev_guide/developing_collections_distributing.rst:39
 msgid "Specify the API token for each distribution server you want to use."
 msgstr "使用するディストリビューションサーバーごとに API トークンを指定します。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:26
-msgid "Getting a namespace"
-msgstr "名前空間の取得"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:44
+msgid "Creating a namespace"
+msgstr "名前空間の作成"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:28
-msgid "You need a namespace on Galaxy and/or Automation Hub to upload your collection. To get a namespace:"
-msgstr "コレクションをアップロードするには、Galaxy および/または Automation Hub の名前空間が必要です。名前空間を取得するには、以下を行います。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:46
+msgid "You must upload your collection into a namespace on each distribution server. If you have a login for Ansible Galaxy, your Ansible Galaxy username is usually also an Ansible Galaxy namespace."
+msgstr "コレクションを各配信サーバーの名前空間にアップロードする必要があります。Ansible Galaxyにログインアカウントがある場合、Ansible Galaxyのユーザー名は通常、Ansible Galaxyの名前空間でもあります。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:30
-msgid "For Galaxy, see `Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_ on the Galaxy docsite for details."
-msgstr "Galaxy の詳細は、Galaxy ドキュメントの「`Galaxy 名前空間 <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_」を参照してください。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:50
+msgid "Namespaces on Ansible Galaxy cannot include hyphens. If you have a login for Ansible Galaxy that includes a hyphen, your Galaxy username is not also a Galaxy namespace. For example, ``awesome-user`` is a valid username for Ansible Galaxy, but it is not a valid namespace."
+msgstr "Ansible Galaxyの名前空間には、ハイフンを含めることができません。ハイフンを含むAnsible Galaxyのログインアカウントがある場合、Galaxyのユーザー名はGalaxyの名前空間ではありません。たとえば、``awesome-user`` は、Ansible Galaxy の有効なユーザー名ですが、有効な名前空間ではありません。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:31
-msgid "For Automation Hub, see the `Ansible Certified Content FAQ <https://access.redhat.com/articles/4916901>`_."
-msgstr "Automation Hub の場合は、`Ansible Certified Content FAQ <https://access.redhat.com/articles/4916901>`_ を参照してください。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:52
+msgid "You can create additional namespaces on Ansible Galaxy if you choose. For Red Hat Automation Hub and private Automation Hub you must create a namespace before you can upload your collection. To create a namespace:"
+msgstr "必要に応じて、Ansible Galaxy で追加の名前空間を作成できます。Red Hat Automation Hub およびプライベートのオートメーションハブの場合、コレクションをアップロードする前に名前空間を作成する必要があります。名前空間を作成するには、以下の手順を実施します。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:36
+#: ../../rst/dev_guide/developing_collections_distributing.rst:54
+msgid "To create a namespace on Galaxy, see `Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_ on the Galaxy docsite for details."
+msgstr "Galaxy で名前空間を作成するには、Galaxy ドキュメントサイトで「`Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_」を参照して詳細を確認してください。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:55
+msgid "To create a namespace on Red Hat Automation Hub, see the `Ansible Certified Content FAQ <https://access.redhat.com/articles/4916901>`_."
+msgstr "Red Hat Automation Hub で名前空間を作成するには、`Ansible Certified Content FAQ <https://access.redhat.com/articles/4916901>`_ を参照してください。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:57
+msgid "Specify the namespace in the :file:`galaxy.yaml` file for each collection. For more information on the :file:`galaxy.yaml` file, see :ref:`collections_galaxy_meta`."
+msgstr "コレクションごとに :file:`galaxy.yaml` ファイルで名前空間を指定します。:file:`galaxy.yaml` ファイルの詳細については、:ref:`collections_galaxy_meta` を参照してください。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:62
 msgid "Getting your API token"
 msgstr "API トークンの取得"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:38
-msgid "You need an API token for Galaxy and/or Automation Hub to upload your collection. Use the API token(s) to authenticate your connection to the distribution server(s) and protect your content."
-msgstr "コレクションをアップロードするには、Galaxy や Automation Hub の API トークンが必要です。API トークンを使用してディストリビューションサーバーへの接続の認証を行い、コンテンツを保護します。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:64
+msgid "An API token authenticates your connection to each distribution server. You need a separate API token for each distribution server. Use the correct API token to connect to each distribution server securely and protect your content."
+msgstr "APIトークンは、各配信サーバーに対してコレクションを認証します。APIトークンは、各配信サーバーごとに必要となります。正しいAPIトークンを使用して、各配信サーバーに安全に接続し、コンテンツを保護してください。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:40
+#: ../../rst/dev_guide/developing_collections_distributing.rst:66
 msgid "To get your API token:"
 msgstr "API トークンを取得するには、以下を行います。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:42
-msgid "For Galaxy, go to the `Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page and click :guilabel:`API Key`."
-msgstr "Galaxy の場合は、`Galaxy プロファイルの設定 <https://galaxy.ansible.com/me/preferences>`_ ページに移動し、:guilabel:`API Key` をクリックします。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:68
+msgid "To get an API token for Galaxy, go to the `Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ page and click :guilabel:`API Key`."
+msgstr "GalaxyのAPIトークンを取得するには、`Galaxy profile preferences <https://galaxy.ansible.com/me/preferences>`_ ページに移動し、:guilabel:`API Key` をクリックします。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:43
-msgid "For Automation Hub, go to `the token page <https://cloud.redhat.com/ansible/automation-hub/token/>`_ and click :guilabel:`Load token`."
-msgstr "Automation Hub の場合は、`トークンページ <https://cloud.redhat.com/ansible/automation-hub/token/>`_ に移動し、:guilabel:`Load token` をクリックします。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:69
+msgid "To get an API token for Automation Hub, go to `the token page <https://cloud.redhat.com/ansible/automation-hub/token/>`_ and click :guilabel:`Load token`."
+msgstr "Automation HubのAPIトークンを取得するには、`the token page <https://cloud.redhat.com/ansible/automation-hub/token/>`_ に移動し、:guilabel:`Load token` をクリックします。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:46
-msgid "Specifying your API token"
-msgstr "API トークンの指定"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:74
+msgid "Specifying your API token and distribution server"
+msgstr "APIトークンと配信サーバーの指定"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:48
-msgid "Once you have retrieved your API token, you can specify the correct token for each distribution server in two ways:"
-msgstr "API トークンを取得したら、2 つの方法でディストリビューションサーバーごとに正しいトークンを指定できます。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:76
+msgid "Each time you publish a collection, you must specify the API token and the distribution server to create a secure connection. You have two options for specifying the token and distribution server:"
+msgstr "コレクションを公開するたびに、APIトークンと配信サーバーを指定して、安全な接続を行う必要があります。トークンと配信サーバーの指定には2つのオプションがあります。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:50
-msgid "Pass the token to  the ``ansible-galaxy`` command using the ``--token``."
-msgstr "``--token`` を使用して、トークンを ``ansible-galaxy`` コマンドに渡します。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:78
+msgid "You can configure the token in configuration, as part of a ``galaxy_server_list`` entry in your :file:`ansible.cfg` file. Using configuration is the most secure option."
+msgstr "トークンの設定は、コンフィギュレーションで、 :file:`ansible.cfg` ファイルの``galaxy_server_list`` エントリの一部として行うことができます。コンフィギュレーションを使用することは、最も安全なオプションです。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:51
-msgid "Configure the token within a Galaxy server list in your :file:`ansible.cfg` file."
-msgstr ":file:`ansible.cfg` ファイルの Galaxy サーバーリストにトークンを構成します。"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:54
-msgid "Specifying your API token with the ``--token`` argument"
-msgstr "``--token`` 引数での API トークンの指定"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:56
-msgid "You can use the ``--token`` argument with the ``ansible-galaxy`` command (in conjunction with the ``--server`` argument or :ref:`GALAXY_SERVER` setting in your :file:`ansible.cfg` file). You cannot use ``apt-key`` with any servers defined in your :ref:`Galaxy server list <galaxy_server_config>`."
-msgstr "``--token`` 引数は、``ansible-galaxy`` コマンド (:file:`ansible.cfg` ファイルの ``--server`` 引数または :ref:`GALAXY_SERVER` 設定とともに) で使用できます。:ref:`Galaxy サーバー一覧 <galaxy_server_config>` で定義されているサーバーでは、``apt-key`` を使用することはできません。"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:63
-msgid "Specifying your API token with a Galaxy server list"
-msgstr "Galaxy サーバーリストで API トークンの指定"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:65
-msgid "You can configure one or more distribution servers for Galaxy in your :file:`ansible.cfg` file under the ``galaxy_server_list`` section. For each server, you also configure the token."
-msgstr "``galaxy_server_list`` セクションの下にある :file:`ansible.cfg` で Galaxy 用に 1 つ以上のディストリビューションサーバーを構成します。サーバーごとに、トークンも構成します。"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:77
-msgid "See :ref:`galaxy_server_config` for complete details."
-msgstr "詳細は、「:ref:`galaxy_server_config`」を参照してください。"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:82
-msgid "Building a collection tarball"
-msgstr "コレクション tarball のビルド"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:79
+msgid "You can pass the token at the command line as an argument to the ``ansible-galaxy`` command. If you pass the token at the command line, you can specify the server at the command line, by using the default setting, or by setting the server in configuration. Passing the token at the command line is insecure, because typing secrets at the command line may expose them to other users on the system."
+msgstr "トークンは、``ansible-galaxy`` コマンドの引数として、コマンドラインで渡すことができます。コマンドラインでトークンを渡す場合、デフォルト設定を使用して、またはコンフィグレーションでサーバーを設定して、コマンドラインでサーバーを指定することができます。コマンドラインでトークンを渡すことは安全ではありません。なぜなら、コマンドラインでシークレットを入力すると、システムの他のユーザーにシークレットが漏れる可能性があるからです。"
 
 #: ../../rst/dev_guide/developing_collections_distributing.rst:84
-msgid "Once you have configured one or more distribution servers, you must build a collection tarball. To build a collection, run ``ansible-galaxy collection build`` from inside the root directory of the collection:"
-msgstr "1 つ以上のディストリビューションサーバーを設定したら、コレクション tarball を構築する必要があります。コレクションを構築するには、コレクションのルートディレクトリー内から ``ansible-galaxy collection build`` を実行します。"
+msgid "Specifying the token and distribution server in configuration"
+msgstr "コンフィギュレーションでのトークンと配信サーバーの指定"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:90
-msgid "This creates a tarball of the built collection in the current directory which can be uploaded to your distribution server::"
-msgstr "これにより、現在のディレクトリーに構築されたコレクションの tarball が作成されます。これはディストリビューションサーバーにアップロードできます。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:86
+msgid "By default, Ansible Galaxy is configured as the only distribution server. You can add other distribution servers and specify your API token or tokens in configuration by editing the ``galaxy_server_list`` section of your :file:`ansible.cfg` file. This is the most secure way to manage authentication for distribution servers. Specify a URL and token for each server. For example:"
+msgstr "デフォルトでは、Ansible Galaxyが唯一の配信サーバーとして設定されています。:file:`ansible.cfg` ファイルの``galaxy_server_list`` セクションを編集することで、他のディストリビューションサーバーを追加し、API トークンをコンフィグレーションで指定することができます。これは、配信サーバーの認証を管理する最も安全な方法です。各サーバーのURLとトークンを指定します。例えば、以下のようになります。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:99
-msgid "Certain files and folders are excluded when building the collection artifact. See :ref:`ignoring_files_and_folders_collections`  to exclude other files you would not want to distribute."
-msgstr "コレクションアーティファクトのビルド時に、特定のファイルおよびフォルダーは除外されます。配布したくない他のファイルを除外するには、「:ref:`ignoring_files_and_folders_collections`」を参照してください。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:97
+msgid "You cannot use ``apt-key`` with any servers defined in your :ref:`galaxy_server_list <galaxy_server_config>`. See :ref:`galaxy_server_config` for complete details."
+msgstr "``apt-key`` は、:ref:`galaxy_server_list <galaxy_server_config>` で定義されているサーバーと一緒に使用することはできません。詳細は:ref:`galaxy_server_config` をご覧ください。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:100
-msgid "If you used the now-deprecated ``Mazer`` tool for any of your collections, delete any and all files it added to your :file:`releases/` directory before you build your collection with ``ansible-galaxy``."
-msgstr "今回の非推奨となった ``Mazer`` ツールをコレクションに使用した場合は、``ansible-galaxy`` でコレクションをビルドする前に、:file:`releases/` ディレクトリーに追加したすべてのファイルを削除します。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:102
+msgid "Specifying the token at the command line"
+msgstr "コマンドラインでのトークンの指定"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:101
+#: ../../rst/dev_guide/developing_collections_distributing.rst:104
+msgid "You can specify the API token at the command line using the ``--token`` argument of the :ref:`ansible-galaxy` command. There are three ways to specify the distribution server when passing the token at the command line:"
+msgstr "APIトークンをコマンドラインで指定するには、:ref:`ansible-galaxy` コマンドの``--token`` 引数を使用します。コマンドラインでトークンを渡す際の配信サーバーの指定方法は3とおりあります。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:106
+msgid "using the ``--server`` argument of the :ref:`ansible-galaxy` command"
+msgstr ":ref:`ansible-galaxy` コマンドの``--server`` 引数の使用"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:107
+msgid "relying on the default (https://galaxy.ansible.com)"
+msgstr "デフォルトへの依存（https://galaxy.ansible.com)）"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:108
+msgid "setting a server in configuration by creating a :ref:`GALAXY_SERVER` setting in your :file:`ansible.cfg` file"
+msgstr ":file:`ansible.cfg` ファイルへの :ref:`GALAXY_SERVER` 設定の作成によるコンフィギュレーションでのサーバーの設定"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:110
+#: ../../rst/dev_guide/style_guide/index.rst:214
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:10
+msgid "For example:"
+msgstr "例:"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:118
+msgid "Using the ``--token`` argument is insecure. Passing secrets at the command line may expose them to others on the system."
+msgstr "``--token`` 引数の使用は安全ではありません。コマンドラインでシークレットを渡すと、システムの他のユーザーにシークレットが漏れる可能性があります。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:125
+msgid "After configuring one or more distribution servers, build a collection tarball. The collection tarball is the published artifact, the object that you upload and other users download to install your collection. To build a collection tarball:"
+msgstr "1つまたは複数の配信サーバーを設定した後、コレクションのtarballをビルドします。コレクションのtarballは、公開されたアーティファクトであり、お客様がアップロードし、他のユーザーがコレクションをインストールするためにダウンロードするオブジェクトです。コレクションのtarballをビルドするには、以下の手順で行います。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:127
+msgid "Review the version number in your :file:`galaxy.yaml` file. Each time you publish your collection, it must have a new version number. You cannot make changes to existing versions of your collection on a distribution server. If you try to upload the same collection version more than once, the distribution server returns the error ``Code: conflict.collection_exists``. Collections follow semantic versioning rules. For more information on versions, see :ref:`collection_versions`. For more information on the :file:`galaxy.yaml` file, see :ref:`collections_galaxy_meta`."
+msgstr ":file:`galaxy.yaml` ファイルのバージョン番号を確認してください。コレクションを公開するたびに、新しいバージョン番号が必要になります。配信サーバー上のコレクションの既存バージョンを変更することはできません。同じコレクションのバージョンを複数回アップロードしようとすると、配信サーバーはエラー``Code: conflict.collection_exists`` を返します。コレクションは、セマンティックバージョニングルールに従います。バージョンの詳細については、:ref:`collection_versions` を参照してください。:file:`galaxy.yaml` ファイルの詳細については、:ref:`collections_galaxy_meta` を参照してください。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:128
+msgid "Run ``ansible-galaxy collection build`` from inside the top-level directory of the collection. For example:"
+msgstr "コレクションの最上位ディレクトリの中から``ansible-galaxy collection build`` を実行します。例えば、以下のようになります。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:134
+msgid "This command builds a tarball of the collection in the current directory, which you can upload to your selected distribution server::"
+msgstr "このコマンドにより、現在のディレクトリーにコレクションの tarball がビルドされます。これを希望する配信サーバーにアップロードできます。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:143
+msgid "To reduce the size of collections, certain files and folders are excluded from the collection tarball by default. See :ref:`ignoring_files_and_folders_collections` if your collection directory contains other files you want to exclude."
+msgstr "コレクションのサイズを小さくするために、デフォルトではコレクションのtarballから特定のファイルやフォルダが除外されています。コレクションディレクトリに除外したい他のファイルがある場合は、:ref:`ignoring_files_and_folders_collections` を参照してください。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:144
 msgid "The current Galaxy maximum tarball size is 2 MB."
 msgstr "現在の Galaxy の tarball の最大サイズは 2 MB です。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:103
-msgid "This tarball is mainly intended to upload to Galaxy as a distribution method, but you can use it directly to install the collection on target systems."
-msgstr "この tarball は、配布方法として主に Galaxy にアップロードすることを目的としていますが、ターゲットシステムにコレクションをインストールするために直接使用することもできます。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:146
+msgid "You can upload your tarball to one or more distribution servers. You can also distribute your collection locally by copying the tarball to install your collection directly on target systems."
+msgstr "tarballは、1つまたは複数の配信サーバーにアップロードすることができます。また、コレクションをローカルに配布するには、tarballをコピーしてターゲットシステムにコレクションを直接インストールします。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:108
+#: ../../rst/dev_guide/developing_collections_distributing.rst:151
 msgid "Ignoring files and folders"
 msgstr "ファイルやフォルダーを無視する"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:110
-msgid "By default the build step will include all the files in the collection directory in the final build artifact except for the following:"
-msgstr "デフォルトでは、ビルドステップには、以下を除き、最終的なビルドアーティファクト内のコレクションディレクトリーにあるすべてのファイルが含まれます。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:153
+msgid "By default the build step includes all the files in the collection directory in the tarball except for the following:"
+msgstr "デフォルトでは、ビルドステップでは、tarball内のコレクションディレクトリにある、以下を除くすべてのファイルが含まれます。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:112
+#: ../../rst/dev_guide/developing_collections_distributing.rst:155
 msgid "``galaxy.yml``"
 msgstr "``galaxy.yml``"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:113
+#: ../../rst/dev_guide/developing_collections_distributing.rst:156
 msgid "``*.pyc``"
 msgstr "``*.pyc``"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:114
+#: ../../rst/dev_guide/developing_collections_distributing.rst:157
 msgid "``*.retry``"
 msgstr "``*.retry``"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:115
+#: ../../rst/dev_guide/developing_collections_distributing.rst:158
 msgid "``tests/output``"
 msgstr "``tests/output``"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:116
-msgid "previously built artifacts in the root directory"
-msgstr "ルートディレクトリーに以前にビルドされたアーティファクト"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:159
+msgid "previously built tarballs in the root directory"
+msgstr "ルートディレクトリーに以前にビルドされたtarball"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:117
-msgid "various version control directories like ``.git/``"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:160
+msgid "various version control directories such as ``.git/``"
 msgstr "``.git/`` などのさまざまなバージョン管理ディレクトリー"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:119
-msgid "To exclude other files and folders when building the collection, you can set a list of file glob-like patterns in the ``build_ignore`` key in the collection's ``galaxy.yml`` file. These patterns use the following special characters for wildcard matching:"
-msgstr "コレクションの構築時に他のファイルおよびディレクトリーを除外するには、コレクションの ``galaxy.yml`` ファイルの ``build_ignore`` キーに、ファイルグロブのようなパターンの一覧を設定します。これらのパターンはワイルドカードの一致に以下の特殊文字を使用します。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:162
+msgid "To exclude other files and folders from your collection tarball, set a list of file glob-like patterns in the ``build_ignore`` key in the collection's ``galaxy.yml`` file. These patterns use the following special characters for wildcard matching:"
+msgstr "コレクションのtarballから他のファイルおよびディレクトリーを除外するには、コレクションの ``galaxy.yml`` ファイルの ``build_ignore`` キーに、ファイルグロブのようなパターンの一覧を設定します。これらのパターンはワイルドカードの一致に以下の特殊文字を使用します。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:123
+#: ../../rst/dev_guide/developing_collections_distributing.rst:164
 msgid "``*``: Matches everything"
 msgstr "``*``: すべてに一致します。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:124
+#: ../../rst/dev_guide/developing_collections_distributing.rst:165
 msgid "``?``: Matches any single character"
 msgstr "``?``: 任意の単一文字に一致します。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:125
-msgid "``[seq]``: Matches and character in seq"
-msgstr "``[seq]``: シーケンス内の文字に一致します。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:166
+msgid "``[seq]``: Matches any character in sequence"
+msgstr "``[seq]``:任意の連続した文字に一致します。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:126
-msgid "``[!seq]``:Matches any character not in seq"
-msgstr "``[!seq]``: シーケンスにない文字と一致します。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:167
+msgid "``[!seq]``:Matches any character not in sequence"
+msgstr "``[!seq]``:連続していない任意の文字に一致します。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:128
-msgid "For example, if you wanted to exclude the :file:`sensitive` folder within the ``playbooks`` folder as well any ``.tar.gz`` archives you can set the following in your ``galaxy.yml`` file:"
-msgstr "たとえば、``playbooks`` ディレクトリー内の :file:`sensitive` ディレクトリーや ``.tar.gz`` アーカイブを除外する場合は、``galaxy.yml`` ファイルに以下を設定することができます。"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:138
-msgid "This feature is only supported when running ``ansible-galaxy collection build`` with Ansible 2.10 or newer."
-msgstr "この機能は、Ansible 2.10 以降と ``ansible-galaxy collection build`` を実行する場合に限りサポートされます。"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:143
-msgid "Collection versions"
-msgstr "コレクションのバージョン"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:145
-msgid "Each time you publish your collection, you create a new version. Once you publish a version of a collection, you cannot delete or modify that version. Ensure that everything looks okay before publishing. The only way to change a collection is to release a new version. The latest version of a collection (by highest version number) will be the version displayed everywhere in Galaxy or Automation Hub; however, users will still be able to download older versions."
-msgstr "コレクションを公開するたびに、新しいバージョンを作成します。コレクションのバージョンを公開したら、そのバージョンを削除または変更することはできません。公開する前に、すべてが正常に見えることを確認してください。コレクションを変更する唯一の方法は、新しいバージョンをリリースすることです。(最大バージョン番号による) コレクションの最新バージョンは、Galaxy または Automation Hub のあらゆる場所に表示されるバージョンになります。ただし、ユーザーは引き続き古いバージョンをダウンロードできます。"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:147
-msgid "Collection versions use `Semantic Versioning <https://semver.org/>`_ for version numbers. Please read the official documentation for details and examples. In summary:"
-msgstr "コレクションのバージョンは、バージョン番号に `セマンティックバージョン <https://semver.org/>`_ を使用します。詳細と例は、公式ドキュメントをお読みください。要約すると、以下のようになります。"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:149
-msgid "Increment major (for example: x in `x.y.z`) version number for an incompatible API change."
-msgstr "互換性のない API 変更のメジャーバージョンのバージョン番号 (例: `x.y.z` の x) が増えていきます。"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:150
-msgid "Increment minor (for example: y in `x.y.z`) version number for new functionality in a backwards compatible manner (for example new modules/plugins, parameters, return values)."
-msgstr "後方互換の方法で新機能のマイナーバージョンのバージョン番号 (例: `x.y.z` の y)(新しいモジュール/プラグイン、パラメーター、戻り値など) が増えていきます。"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:151
-msgid "Increment patch (for example: z in `x.y.z`) version number for backwards compatible bug fixes."
-msgstr "後方互換のバグ修正向けのパッチのバージョン番号 (例: `x.y.z` の z) が増えていきます。"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:157
-msgid "Trying collections locally"
-msgstr "ローカルでコレクションを試行"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:159
-msgid "Before you publish your collection, test it out locally. Every time you publish a tarball, you create a :ref:`new version <collection_versions>` of your collection. Testing the collection locally gives you confidence that the new version will contain the functionality you want without unexpected behavior."
-msgstr "コレクションをパブリッシュする前にローカルからテストします。tarball を公開する際に、:ref:`新しいバージョン <collection_versions>` のコレクションを作成します。コレクションをローカルでテストすることで、新しいバージョンに、予期しない動作のない機能が含まれることを示します。"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:162
-msgid "Trying your collection from the tarball"
-msgstr "tarball からコレクションを試してください。"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:164
-msgid "You can try your collection locally by installing it from the tarball. The following will enable an adjacent playbook to access the collection:"
-msgstr "コレクションを tarball からインストールすることで、コレクションをローカルで試すことができます。以下では、隣接用の Playbook がコレクションにアクセスできるようになります。"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:171
-msgid "You should use one of the values configured in :ref:`COLLECTIONS_PATHS` for your path. This is also where Ansible itself will expect to find collections when attempting to use them. If you don't specify a path value, ``ansible-galaxy collection install`` installs the collection in the first path defined in :ref:`COLLECTIONS_PATHS`, which by default is ``~/.ansible/collections``."
-msgstr "パスのために、:ref:`COLLECTIONS_PATHS` で構成された値の 1 つを使用する必要があります。これは、Ansible 自体がコレクションを使用しようとしたときにコレクションを見つけることを期待する場所でもあります。パス値を指定しない場合、``ansible-galaxy collection install`` は、:ref:`COLLECTIONS_PATHS` で定義された最初のパスにコレクションをインストールします。このデフォルトは、``~/.ansible/collections`` となります。"
-
-#: ../../rst/dev_guide/developing_collections_distributing.rst:175
-msgid "If you want to use a collection directly out of a checked out git repository, see :ref:`hacking_collections`."
-msgstr "確認された git リポジトリーから直接コレクションを使用する場合は、「:ref:`hacking_collections`」を参照してください。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:169
+msgid "For example, to exclude the :file:`sensitive` folder within the ``playbooks`` folder as well any ``.tar.gz`` archives, set the following in your ``galaxy.yml`` file:"
+msgstr "たとえば、``playbooks`` ディレクトリー内の :file:`sensitive` ディレクトリーや ``.tar.gz`` アーカイブを除外する場合は、``galaxy.yml`` ファイルに以下を設定します。"
 
 #: ../../rst/dev_guide/developing_collections_distributing.rst:177
-msgid "Next, try using the local collection inside a playbook. For examples and more details see :ref:`Using collections <using_collections>`"
-msgstr "次に、Playbook 内でローカルコレクションの使用を試行します。例および詳細は、「:ref:`コレクションの使用 <using_collections>`」を参照してください。"
+msgid "For more information on the :file:`galaxy.yml` file, see :ref:`collections_galaxy_meta`."
+msgstr ":file:`galaxy.yml` ファイルの詳細については、:ref:`collections_galaxy_meta` を参照してください。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:182
-msgid "Trying your collection from a git repository"
-msgstr "git リポジトリーからのコレクションの試行"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:180
+msgid "The ``build_ignore`` feature is only supported with ``ansible-galaxy collection build`` in Ansible 2.10 or newer."
+msgstr "``build_ignore`` 機能は、Ansible 2.10 以降の``ansible-galaxy collection build`` でのみサポートされています。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:184
-msgid "You can also test a version of your collection in development by installing it from a git repository."
-msgstr "また、Git リポジトリーからインストールすることで、開発でコレクションのバージョンをテストすることもできます。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:187
+msgid "Each time you publish your collection, you must create a :ref:`new version <collection_versions>` on the distribution server. After you publish a version of a collection, you cannot delete or modify that version. To avoid unnecessary extra versions, check your collection for bugs, typos, and other issues locally before publishing:"
+msgstr "コレクションを公開するたびに、配信サーバーに:ref:`new version <collection_versions>` を作成する必要があります。コレクションのあるバージョンを公開した後は、そのバージョンを削除したり変更したりすることはできません。不要な追加バージョンを避けるために、コレクションを公開する前にローカルでバグやタイプミスなどの問題をチェックしてください。"
 
-#: ../../rst/shared_snippets/installing_collections_git_repo.txt:1
-msgid "You can install a collection in a git repository by providing the URI to the repository instead of a collection name or path to a ``tar.gz`` file. The collection must contain a ``galaxy.yml`` or ``MANIFEST.json`` file, which will be used to generate the would-be collection artifact data from the directory. The URI should be prefixed with ``git+`` (or with ``git@`` to use a private repository with ssh authentication) and optionally supports a comma-separated `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ version (for example, a commit or tag)."
-msgstr "コレクション名または ``tar.gz`` ファイルへのパスではなく、リポジトリーに URI を提供することにより、git リポジトリーにコレクションをインストールできます。コレクションには、``galaxy.yml`` ファイルまたは ``MANIFEST.json`` ファイルが必要です。このコレクションは、ディレクトリーからコレクションになる予定のアーティファクトデータを生成するのに使用されます。URI のプレフィックスには ``git+`` (または ssh 認証でプライベートリポジトリーを使用する ``git@``) を付け、必要に応じてコンマ区切りの `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ バージョン (コミットまたはタグなど) をサポートする必要があります。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:189
+msgid "Install the collection locally."
+msgstr "コレクションをローカルにインストールします。"
 
-#: ../../rst/shared_snippets/installing_collections_git_repo.txt:5
-msgid "Embedding credentials into a git URI is not secure. Make sure to use safe auth options for security reasons. For example, use `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_, `netrc <https://linux.die.net/man/5/netrc>`_ or `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_/`url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ in Git config to prevent your creds from being exposed in logs."
-msgstr "認証情報を git URI に埋め込むことは安全ではありません。セキュリティー上の理由から、安全な認証オプションを使用してください。たとえば、Git 設定の `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_、`netrc <https://linux.die.net/man/5/netrc>`_、または `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_/`url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ で、クレジットがログに公開されないようにします。"
-
-#: ../../rst/shared_snippets/installing_collections_git_repo.txt:18
-msgid "In a ``requirements.yml`` file, you can also use the ``type`` and ``version`` keys in addition to using the ``git+repo,version`` syntax for the collection name."
-msgstr "``requirements.yml`` ファイルでは、コレクション名の ``git+repo,version`` 構文を使用する他に、``type`` キーおよび ``version`` キーを使用することもできます。"
-
-#: ../../rst/shared_snippets/installing_collections_git_repo.txt:27
-msgid "Git repositories can be used for collection dependencies as well. This can be helpful for local development and testing but built/published artifacts should only have dependencies on other artifacts."
-msgstr "git リポジトリーはコレクションの依存関係にも使用できます。これは、ローカル開発およびテストに役立ちますが、ビルド/公開されたアーティファクトには他のアーティファクトへの依存関係のみが必要です。"
-
-#: ../../rst/shared_snippets/installing_collections_git_repo.txt:34
-msgid "Default repository search locations"
-msgstr "デフォルトのリポジトリー検索の場所"
-
-#: ../../rst/shared_snippets/installing_collections_git_repo.txt:36
-msgid "There are two paths searched in a repository for collections by default."
-msgstr "デフォルトでは、コレクション用のリポジトリーで 2 つのパスが検索されます。"
-
-#: ../../rst/shared_snippets/installing_collections_git_repo.txt:38
-msgid "The first is the ``galaxy.yml`` or ``MANIFEST.json`` file in the top level of the repository path. If the file exists it's used as the collection metadata and the individual collection will be installed."
-msgstr "1 つ目は、リポジトリーパスのトップレベルにある ``galaxy.yml`` ファイルまたは ``MANIFEST.json`` ファイルです。ファイルが存在する場合は、コレクションのメタデータとして使用され、個々のコレクションがインストールされます。"
-
-#: ../../rst/shared_snippets/installing_collections_git_repo.txt:49
-msgid "The second is a ``galaxy.yml`` or ``MANIFEST.json`` file in each directory in the repository path (one level deep). In this scenario, each directory with a metadata file is installed as a collection."
-msgstr "2 つ目は、リポジトリーパス (1 レベルの深さ) の各ディレクトリーの ``galaxy.yml`` ファイルまたは ``MANIFEST.json`` ファイルです。ここでは、メタデータファイルが含まれる各ディレクトリーがコレクションとしてインストールされます)。"
-
-#: ../../rst/shared_snippets/installing_collections_git_repo.txt:62
-msgid "Specifying the location to search for collections"
-msgstr "コレクションを検索する場所の指定"
-
-#: ../../rst/shared_snippets/installing_collections_git_repo.txt:64
-msgid "If you have a different repository structure or only want to install a subset of collections, you can add a fragment to the end of your URI (before the optional comma-separated version) to indicate which path ansible-galaxy should inspect for metadata file(s). The path should be a directory to a collection or multiple collections (rather than the path to a ``galaxy.yml`` file or ``MANIFEST.json`` file)."
-msgstr "異なるリポジトリー構造がある場合や、コレクションのサブセットのみをインストールする場合は、URI の最後にフラグメントを追加して (任意のコンマ区切りバージョンの前)、ansible-galaxy がメタデータファイルを調べるパスを示すことができます。パスは、(``MANIFEST.json`` ファイルまたは ``galaxy.yml`` ファイルへのパスではなく) コレクションまたは複数のコレクションへのディレクトリーである必要があります。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:190
+msgid "Review the locally installed collection before publishing a new version."
+msgstr "新しいバージョンを公開する前に、ローカルにインストールされているコレクションを確認してください。"
 
 #: ../../rst/dev_guide/developing_collections_distributing.rst:193
-msgid "Publishing a collection"
-msgstr "コレクションの公開"
+msgid "Installing your collection locally"
+msgstr "コレクションのローカルインストール"
 
 #: ../../rst/dev_guide/developing_collections_distributing.rst:195
-msgid "Once you have a namespace and an API token for each distribution server you want to use, and you have created and tested a collection tarball, you can distribute your collection by publishing the tarball to Ansible Galaxy, Red Hat Automation Hub, or a privately hosted Automation Hub instance. You can use either the ``ansible-galaxy collection publish`` command or the distribution server (Galaxy, Automation Hub) itself."
-msgstr "使用する各ディストリビューションサーバーの名前空間および API トークンがあり、コレクションの tarball を作成し、テストしたら、tarball を Ansible Galaxy、Red Hat Automation Hub、またはプライベートにホストする Automation Hub インスタンスに公開して、コレクションを配布することができます。``ansible-galaxy collection publish`` コマンドまたはディストリビューションサーバー (Galaxy、Automation Hub) のいずれかを使用できます。"
+msgid "You have two options for installing your collection locally:"
+msgstr "コレクションをローカルにインストールするには、2つの方法があります。"
 
 #: ../../rst/dev_guide/developing_collections_distributing.rst:197
-msgid "Each time you add features or make changes to your collection, you must create a new collection artifact and publish a new version of the collection. For details on versioning, see :ref:`collection_versions`."
-msgstr "機能を追加したり、コレクションに変更を加えるたびに、新しいコレクションアーティファクトを作成し、コレクションの新しいバージョンを公開する必要があります。バージョンの詳細は、「:ref:`collection_versions`」を参照してください。"
+msgid "Install your collection locally from the tarball."
+msgstr "コレクションをtarballからローカルにインストールする。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:202
-msgid "Publish a collection using ``ansible-galaxy``"
-msgstr "``ansible-galaxy`` を使用してコレクションを公開します。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:198
+msgid "Install your collection locally from your git repository."
+msgstr "gitリポジトリからコレクションをローカルにインストールする。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:205
-msgid "By default, ``ansible-galaxy`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the :file:`ansible.cfg` file under :ref:`galaxy_server`). If you are only publishing your collection to Ansible Galaxy, you do not need any further configuration. If you are using Red Hat Automation Hub or any other Galaxy server, see :ref:`Configuring the ansible-galaxy client <galaxy_server_config>`."
-msgstr "デフォルトでは、``ansible-galaxy`` は、(:ref:`galaxy_server` の下の :file:`ansible.cfg` ファイルに記載されるように) https://galaxy.ansible.com を Galaxy サーバーとして使用します。コレクションのみを Ansible Galaxy に公開している場合、追加設定は必要ありません。Red Hat Automation Hub またはその他の Galaxy サーバーを使用している場合は、「:ref:`ansible-galaxy クライアントの設定 <galaxy_server_config>`」を参照してください。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:201
+msgid "Installing your collection locally from the tarball"
+msgstr "tarballからのコレクションのローカルインストール"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:207
-msgid "To upload the collection artifact with the ``ansible-galaxy`` command:"
-msgstr "``ansible-galaxy`` コマンドでコレクションアーティファクトをアップロードするには、以下を使用します。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:203
+msgid "To install your collection locally from the tarball, run ``ansible-galaxy collection install`` and specify the collection tarball. You can optionally specify a location using the ``-p`` flag. For example:"
+msgstr "コレクションをtarballからローカルにインストールするには、``ansible-galaxy collection install`` を実行し、コレクションのtarballを指定します。オプションで``-p`` フラグを使って場所を指定することもできます。例えば、以下のようになります。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:215
-msgid "The above command assumes you have retrieved and stored your API token as part of a Galaxy server list. See :ref:`galaxy_get_token` for details."
-msgstr "上記のコマンドは、API トークンを取得して Galaxy サーバーリストの一部として取得し、保存していることを前提としています。詳細は「:ref:`galaxy_get_token`」を参照してください。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:209
+msgid "Install the tarball into a directory configured in :ref:`COLLECTIONS_PATHS` so Ansible can easily find and load the collection. If you do not specify a path value, ``ansible-galaxy collection install`` installs the collection in the first path defined in :ref:`COLLECTIONS_PATHS`."
+msgstr "Ansibleがコレクションを簡単に見つけてロードできるように、:ref:`COLLECTIONS_PATHS` で設定したディレクトリにtarballをインストールします。パスの値を指定しない場合、``ansible-galaxy collection install`` は、:ref:`COLLECTIONS_PATHS` で定義された最初のパスにコレクションをインストールします。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:217
+#: ../../rst/dev_guide/developing_collections_distributing.rst:214
+msgid "Installing your collection locally from a git repository"
+msgstr "git リポジトリーからのコレクションのローカルインストール"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:216
+msgid "To install your collection locally from a git repository, specify the repository and the branch you want to install:"
+msgstr "コレクションをgitリポジトリからローカルにインストールするには、インストールしたいリポジトリとブランチを指定します。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:1
+msgid "You can install a collection from a git repository instead of from Galaxy or Automation Hub. As a developer, installing from a git repository lets you review your collection before you create the tarball and publish the collection. As a user, installing from a git repository lets you use collections or versions that are not in Galaxy or Automation Hub yet."
+msgstr "コレクションは、Galaxy または Automation Hub の代わりに git リポジトリーからインストールできます。開発者は、git リポジトリーからインストールし、tarball を作成してコレクションを公開する前にコレクションを確認できます。ユーザーとして git リポジトリーからインストールすることで、Galaxy または Automation Hub にないコレクションまたはバージョンを使用できます。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:3
+msgid "The repository must contain a ``galaxy.yml`` or ``MANIFEST.json`` file. This file provides metadata such as the version number and namespace of the collection."
+msgstr "リポジトリーには ``galaxy.yml`` または ``MANIFEST.json`` ファイルが含まれている必要があります。このファイルは、コレクションのバージョン番号、namespace などのメタデータを提供します。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:6
+msgid "Installing a collection from a git repository at the command line"
+msgstr "コマンドガイドで git リポジトリーからのコレクションのインストール"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:8
+msgid "To install a collection from a git repository at the command line, use the URI of the repository instead of a collection name or path to a ``tar.gz`` file.  Prefix the URI with ``git+`` (or with ``git@`` to use a private repository with ssh authentication). You can specify a branch, commit, or tag using the comma-separated `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ syntax."
+msgstr "git リポジトリーからコレクションをインストールするには、コレクション名または ``tar.gz`` ファイルへのパスではなく、リポジトリーの URI を使用します。``git+`` を使用して URI をプレフィックスします（または ``git@`` を使用して、ssh 認証でプライベートリポジトリーを使用します）。コンマ区切りの `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ 構文を使用して、ブランチ、コミット、またはタグを指定できます。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:25
+msgid "Embedding credentials into a git URI is not secure. Use safe authentication options to prevent your credentials from being exposed in logs or elsewhere."
+msgstr "認証情報を git URI に埋め込むことは安全ではありません。安全な認証オプションを使用して、認証情報がログに公開されないようにします。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:27
+msgid "Use `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_ authentication"
+msgstr "`SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_ 認証を使用する"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:28
+msgid "Use `netrc <https://linux.die.net/man/5/netrc>`_ authentication"
+msgstr "`netrc <https://linux.die.net/man/5/netrc>`_ 認証を使用する"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:29
+msgid "Use `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_ in your git configuration"
+msgstr "お使いの git 設定で `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_ を使用する"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:30
+msgid "Use `url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ in your git configuration"
+msgstr "お使いの git 設定で `url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ を使用する"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:33
+msgid "Specifying the collection location within the git repository"
+msgstr "git リポジトリー内でのコレクションの場所の指定"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:35
+msgid "When you install a collection from a git repository, Ansible uses the collection ``galaxy.yml`` or ``MANIFEST.json`` metadata file to build the collection. By default, Ansible searches two paths for collection ``galaxy.yml`` or ``MANIFEST.json`` metadata files:"
+msgstr "git リポジトリーからコレクションをインストールする場合、Ansible はコレクション ``galaxy.yml`` または ``MANIFEST.json`` メタデータファイルを使用してコレクションを構築します。デフォルトでは、Ansible はコレクション ``galaxy.yml`` または ``MANIFEST.json`` メタデータファイルの 2 つのパスを検索します。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:37
+msgid "The top level of the repository."
+msgstr "リポジトリーのトップレベル。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:38
+msgid "Each directory in the repository path (one level deep)."
+msgstr "リポジトリーパス内の各ディレクトリー（1 レベルの深さ）"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:40
+msgid "If a ``galaxy.yml`` or ``MANIFEST.json`` file exists in the top level of the repository, Ansible uses the collection metadata in that file to install an individual collection."
+msgstr "``galaxy.yml`` または ``MANIFEST.json`` ファイルがリポジトリーのトップレベルにある場合、Ansible はそのファイル内のコレクションメタデータを使用して個別のコレクションをインストールします。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:51
+msgid "If a ``galaxy.yml`` or ``MANIFEST.json`` file exists in one or more directories in the repository path (one level deep), Ansible installs each directory with a metadata file as a collection. For example, Ansible installs both collection1 and collection2 from this repository structure by default:"
+msgstr "リポジトリーパス内の 1 つ以上のディレクトリーに ``galaxy.yml`` または ``MANIFEST.json`` ファイルが存在する場合は、Ansible はメタデータファイルを持つ各ディレクトリーをコレクションとしてインストールします。たとえば、Ansible は、デフォルトで、このリポジトリー構造から collection1 と collection2 の両方をインストールします。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:69
+msgid "If you have a different repository structure or only want to install a subset of collections, you can add a fragment to the end of your URI (before the optional comma-separated version) to indicate the location of the metadata file or files. The path should be a directory, not the metadata file itself. For example, to install only collection2 from the example repository with two collections:"
+msgstr "リポジトリ構造が異なる場合、またはコレクションのサブセットのみをインストールする場合は、URI の末尾（オプションのコンマ区切りバージョンの前）にフラグメントを追加して、メタデータファイルの場所を示すことができます。パスは、メタデータファイル自体ではなく、ディレクトリである必要があります。たとえば、2つのコレクションを持つサンプルリポジトリからcollection2のみをインストールするには、次のようにします。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:75
+msgid "In some repositories, the main directory corresponds to the namespace:"
+msgstr "リポジトリーによっては、メインのディレクトリーは名前空間に対応します。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:97
+msgid "You can install all collections in this repository, or install one collection from a specific commit:"
+msgstr "このリポジトリーのすべてのコレクションをインストールするか、特定のコミットから 1 つのコレクションをインストールできます。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:225
+msgid "Reviewing your collection"
+msgstr "コレクションの確認"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:227
+msgid "Review the collection:"
+msgstr "コレクションを確認します。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:229
+msgid "Run a playbook that uses the modules and plugins in your collection. Verify that new features and functionality work as expected. For examples and more details see :ref:`Using collections <using_collections>`."
+msgstr "コレクションのモジュールやプラグインを使用するPlaybookを実行します。新しい機能が期待通りに動作するかどうかを検証します。例や詳細については、:ref:`Using collections <using_collections>` をご覧ください。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:230
+msgid "Check the documentation for typos."
+msgstr "ドキュメントに誤字脱字がないか確認します。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:231
+msgid "Check that the version number of your tarball is higher than the latest published version on the distribution server or servers."
+msgstr "tarballのバージョン番号が、配信サーバーで公開されている最新のバージョンよりも高いことを確認してください。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:232
+msgid "If you find any issues, fix them and rebuild the collection tarball."
+msgstr "問題が見つかった場合は、それを修正してコレクションのtarballを再ビルドします。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:237
+msgid "Understanding collection versioning"
+msgstr "コレクションのバージョニングについて"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:239
+msgid "The only way to change a collection is to release a new version. The latest version of a collection (by highest version number) is the version displayed everywhere in Galaxy and Automation Hub. Users can still download older versions."
+msgstr "コレクションを変更する唯一の方法は、新しいバージョンをリリースすることです。(最大バージョン番号による) コレクションの最新バージョンは、Galaxy およびAutomation Hubのあらゆる場所に表示されるバージョンになります。ユーザーは、古いバージョンを引き続きダウンロードできます。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:241
+msgid "Follow semantic versioning when setting the version for your collection. In summary:"
+msgstr "コレクションのバージョンを設定する際は、セマンティックバージョニングに従ってください。要約すると、以下のとおりです。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:243
+msgid "Increment the major version number, ``x`` of ``x.y.z``, for an incompatible API change."
+msgstr "互換性のない API 変更の場合:メジャーバージョンのバージョン番号 (例: ``x.y.z`` の ``x``) を増やします。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:244
+msgid "Increment the minor version number, ``y`` of ``x.y.z``, for new functionality in a backwards compatible manner (for example new modules/plugins, parameters, return values)."
+msgstr "下位互換性のある新機能（例えば、新しいモジュール/プラグイン、パラメータ、戻り値など）の場合:マイナーバージョン番号（``x.y.z`` の``y``）を増やします。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:245
+msgid "Increment the patch version number, ``z`` of ``x.y.z``, for backwards compatible bug fixes."
+msgstr "後方互換性のあるバグ修正の場合:パッチのバージョン番号（``x.y.z`` の``z``）を増やします。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:247
+msgid "Read the official `Semantic Versioning <https://semver.org/>`_ documentation for details and examples."
+msgstr "詳細や例については、`Semantic Versioning <https://semver.org/>`_の公式ドキュメントをお読みください。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:254
+msgid "The last step in distributing your collection is publishing the tarball to Ansible Galaxy, Red Hat Automation Hub, or a privately hosted Automation Hub instance. You can publish your collection in two ways:"
+msgstr "コレクションを配布する最後のステップは、Ansible Galaxy、Red Hat Automation Hub、またはプライベートにホストされているオートメーションハブインスタンスに tarball を公開することです。コレクションの公開には2つの方法があります。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:256
+msgid "from the command line using the ``ansible-galaxy collection publish`` command"
+msgstr "コマンドラインから（``ansible-galaxy collection publish`` コマンドの使用）"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:257
+msgid "from the website of the distribution server (Galaxy, Automation Hub) itself"
+msgstr "配信サーバー（Galaxy、Automation Hub）自体のWebサイトから"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:263
+msgid "Publishing a collection from the command line"
+msgstr "コマンドラインからのコレクションの公開"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:265
+msgid "To upload the collection tarball from the command line using ``ansible-galaxy``:"
+msgstr "``ansible-galaxy`` を使って、コマンドラインからコレクションの tarball をアップロードするには、以下のコマンドを実行します。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:273
+msgid "This ansible-galaxy command assumes you have retrieved and stored your API token in configuration. See :ref:`galaxy_specify_token` for details."
+msgstr "このansible-galaxyコマンドは、APIトークンを取得してコンフィグレーションに保存していることを前提としています。詳細は:ref:`galaxy_specify_token` を参照してください。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:275
 msgid "The ``ansible-galaxy collection publish`` command triggers an import process, just as if you uploaded the collection through the Galaxy website. The command waits until the import process completes before reporting the status back. If you want to continue without waiting for the import result, use the ``--no-wait`` argument and manually look at the import progress in your `My Imports <https://galaxy.ansible.com/my-imports/>`_ page."
 msgstr "``ansible-galaxy collection publish`` コマンドは、Galaxy の Web サイトでコレクションをアップロードしているのと同様に、インポートプロセスを発生させます。コマンドは、ステータスを報告する前にインポートプロセスが完了するまで待ちます。インポート結果を待たずに続行する場合は、``--no-wait`` 引数を使用して、`My Imports <https://galaxy.ansible.com/my-imports/>`_ ページで手動でインポートの進行状況を確認します。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:223
-msgid "Publishing a collection using the Galaxy website"
-msgstr "Galaxy Web サイトを使用したコレクションの公開"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:280
+msgid "Publishing a collection from the website"
+msgstr "Web サイトからのコレクションの公開"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:225
+#: ../../rst/dev_guide/developing_collections_distributing.rst:282
 msgid "To publish your collection directly on the Galaxy website:"
 msgstr "コレクションを Galaxy の Web サイトに直接公開するには、以下を実行します。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:227
+#: ../../rst/dev_guide/developing_collections_distributing.rst:284
 msgid "Go to the `My Content <https://galaxy.ansible.com/my-content/namespaces>`_ page, and click the **Add Content** button on one of your namespaces."
 msgstr "`My Content <https://galaxy.ansible.com/my-content/namespaces>`_ ページに移動し、名前空間のいずれかの **コンテンツを追加** ボタンをクリックします。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:228
+#: ../../rst/dev_guide/developing_collections_distributing.rst:285
 msgid "From the **Add Content** dialogue, click **Upload New Collection**, and select the collection archive file from your local filesystem."
 msgstr "**コンテンツの追加** ダイアログから、**新規コレクションのアップロード** をクリックして、ローカルファイルシステムからコレクションのアーカイブファイルを選択します。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:230
-msgid "When you upload a collection, it always uploads to the namespace specified in the collection metadata in the ``galaxy.yml`` file, no matter which namespace you select on the website. If you are not an owner of the namespace specified in your collection metadata, the upload request will fail."
-msgstr "コレクションをアップロードするときに、Web サイトで選択した名前空間に関係なく、``galaxy.yml`` ファイルにあるコレクションメタデータで指定された名前空間にアップロードしてください。コレクションメタデータで指定された名前空間の所有者でない場合、アップロードリクエストは失敗します。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:287
+msgid "When you upload a collection, Ansible always uploads the tarball to the namespace specified in the collection metadata in the ``galaxy.yml`` file, no matter which namespace you select on the website. If you are not an owner of the namespace specified in your collection metadata, the upload request fails."
+msgstr "コレクションをアップロードする際、Web サイトで選択した名前空間に関係なく、Ansibleは``galaxy.yml`` ファイルのコレクションメタデータで指定された名前空間にtarballをアップロードします。コレクションメタデータで指定された名前空間の所有者でない場合、アップロードリクエストは失敗します。"
 
-#: ../../rst/dev_guide/developing_collections_distributing.rst:232
-msgid "Once Galaxy uploads and accepts a collection, you will be redirected to the **My Imports** page, which displays output from the import process, including any errors or warnings about the metadata and content contained in the collection."
-msgstr "Galaxy がコレクションをアップロードして受け入れると、**My Imports** ページにリダイレクトされます。このページには、コレクションに含まれるメタデータやコンテンツに関するエラーや警告など、インポート処理の出力が表示されます。"
+#: ../../rst/dev_guide/developing_collections_distributing.rst:289
+msgid "After Galaxy uploads and accepts a collection, the website shows you the **My Imports** page. This page shows import process information. You can review any errors or warnings about your upload there."
+msgstr "Galaxyがコレクションをアップロードして受理すると、Web サイトでは**My Imports**ページが表示されます。このページには、インポートプロセス情報が表示されます。ここでは、アップロードに関するエラーや警告を確認することができます。"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:295
+msgid ":ref:`collections_galaxy_meta`"
+msgstr ":ref:`collections_galaxy_meta`"
+
+#: ../../rst/dev_guide/developing_collections_distributing.rst:296
+msgid "Table of fields used in the :file:`galaxy.yml` file"
+msgstr ":file:`galaxy.yml` ファイルで使用されるフィールドの表"
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:5
 msgid "Migrating Ansible content to a different collection"
@@ -1241,7 +1411,7 @@ msgstr "あるコレクションから別のコレクションにコンテンツ
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:18
 msgid "To migrate content from one collection to another, if the collections are parts of `Ansible distribution <https://github.com/ansible-community/ansible-build-data/blob/main/2.10/ansible.in>`_:"
-msgstr "コレクションが `Ansible ディストリビューション <https://github.com/ansible-community/ansible-build-data/blob/main/2.10/ansible.in>`_ の一部である場合は、コレクションを別のコレクションに移行するには、以下を実行します。"
+msgstr "コレクションが `Ansible ディストリビューション <https://github.com/ansible-community/ansible-build-data/blob/main/2.10/ansible.in>`_ の一部である場合、コレクションを別のコレクションに移行するには、以下を実行します。"
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:20
 msgid "Copy content from the source (old) collection to the target (new) collection."
@@ -1257,51 +1427,51 @@ msgstr "古いコレクションの次のメジャーリリースが準備され
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:24
 msgid "remove the module/plugin from the old collection"
-msgstr "古いコレクションからモジュール/プラグインを削除する"
+msgstr "古いコレクションからモジュール/プラグインを削除します。"
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:25
 msgid "remove the symlink stored in ``plugin/modules`` directory if appropriate (mainly when removing from ``community.general`` and ``community.network``)"
-msgstr "必要に応じて、``plugin/modules`` ディレクトリーに保存されたシンボリックリンクを削除する (主に ``community.general`` および ``community.network``から削除する場合)。"
+msgstr "必要に応じて、``plugin/modules`` ディレクトリーに保存されたシンボリックリンクを削除します (主に ``community.general`` および ``community.network``から削除する場合)。"
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:26
 msgid "remove related unit and integration tests"
-msgstr "関連するユニットテストおよび統合テストを削除する"
+msgstr "関連するユニットテストおよび統合テストを削除します。"
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:27
 msgid "remove specific module utils"
-msgstr "特定のモジュールユーティリティーを削除する"
+msgstr "特定のモジュールユーティリティーを削除します。"
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:28
 msgid "remove specific documentation fragments if there are any in the old collection"
-msgstr "古いコレクションにある場合は、特定のドキュメントフラグメントを削除する"
+msgstr "古いコレクションにある場合は、特定のドキュメントフラグメントを削除します。"
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:29
 msgid "add a changelog fragment containing entries for ``removed_features`` and ``breaking_changes``; you can see an example of a changelog fragment in this `pull request <https://github.com/ansible-collections/community.general/pull/1304>`_"
-msgstr "``removed_features`` および ``breaking_changes`` のエントリーを含む変更ログフラグメントを追加する。この `プル要求 <https://github.com/ansible-collections/community.general/pull/1304>`_ で変更ログフラグメントの例を確認できます。"
+msgstr "``removed_features`` および ``breaking_changes`` のエントリーを含む変更ログフラグメントを追加します。この `プル要求 <https://github.com/ansible-collections/community.general/pull/1304>`_ で変更ログフラグメントの例を確認できます。"
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:30
 msgid "change ``meta/runtime.yml`` in the old collection:"
-msgstr "古いコレクションの ``meta/runtime.yml`` を変更する。"
+msgstr "古いコレクションの ``meta/runtime.yml`` を変更します。"
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:32
 msgid "add ``redirect`` to the corresponding module/plugin's entry"
-msgstr "対応するモジュール/プラグインのエントリーに ``redirect`` を追加する"
+msgstr "対応するモジュール/プラグインのエントリーに ``redirect`` を追加します。"
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:33
 msgid "in particular, add ``redirect`` for the removed module utils and documentation fragments if applicable"
-msgstr "特に、削除されたモジュールユーティリティーおよびドキュメントフラグメント (該当する場合) に ``redirect`` を追加する。"
+msgstr "特に、削除されたモジュールユーティリティーおよびドキュメントフラグメント (該当する場合) に ``redirect`` を追加します。"
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:34
 msgid "remove ``removal_version`` from there"
-msgstr "そこから ``removal_version`` を削除する。"
+msgstr "そこから ``removal_version`` を削除します。"
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:35
 msgid "remove related entries from ``tests/sanity/ignore.txt`` files if exist"
-msgstr "``tests/sanity/ignore.txt`` ファイルから関連エントリーが存在する場合は削除する"
+msgstr "``tests/sanity/ignore.txt`` ファイルから関連エントリーが存在する場合は削除します。"
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:36
 msgid "remove changelog fragments for removed content that are not yet part of the changelog (in other words, do not modify `changelogs/changelog.yaml` and do not delete files mentioned in it)"
-msgstr "変更ログの一部ではない削除されたコンテンツの変更ログフラグメントを削除する (つまり、`changelogs/changelog.yaml` を変更せず、そのファイルに記述されているファイルを削除しないでください)"
+msgstr "変更ログの一部ではない削除されたコンテンツの変更ログフラグメントを削除します (つまり、`changelogs/changelog.yaml` を変更せず、そのファイルに記述されているファイルを削除しないでください)。"
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:37
 msgid "remove requirements that are no longer required in ``tests/unit/requirements.txt``, ``tests/requirements.yml`` and ``galaxy.yml``"
@@ -1433,7 +1603,7 @@ msgstr "Ansibulbot は、既存の問題と PR を新しいリポジトリーに
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:110
 msgid "`Example PR <https://github.com/ansible/ansible/pull/66981/files>`_"
-msgstr "`Example PR <https://github.com/ansible/ansible/pull/66981/files>`_"
+msgstr "`PR の例 <https://github.com/ansible/ansible/pull/66981/files>`_"
 
 #: ../../rst/dev_guide/developing_collections_migrating.rst:112
 msgid "The ``migrated_to:`` key must be added explicitly for every *file*. You cannot add ``migrated_to`` at the directory level. This is to allow module and plugin webdocs to be redirected to the new collection docs."
@@ -1487,8 +1657,8 @@ msgid "Using shared resources in collections"
 msgstr "コレクションで共有リソースの使用"
 
 #: ../../rst/dev_guide/developing_collections_shared.rst:7
-msgid "Although developing Ansible modules contained in collections is similar to developing standalone Ansible modules, you use shared resources like documentation fragments and module utilities differently in collections. You can use documentation fragments within and across collections. You can use optional module utilities to support multiple versions of ansible-core in your collection."
-msgstr "コレクションに含まれる Ansible モジュールの開発はスタンドアロンの Ansible モジュールの開発に似ていますが、コレクションではドキュメントフラグメントやモジュールユーティリティーなどの共有リソースを異なる方法で使用します。コレクション内およびコレクション間でドキュメントフラグメントを使用できます。任意のモジュールユーティリティーを使用して、コレクション内の複数のバージョンの ansible-core をサポートできます。"
+msgid "Although developing Ansible modules contained in collections is similar to developing standalone Ansible modules, you use shared resources like documentation fragments and module utilities differently in collections. You can use documentation fragments within and across collections. You can use optional module utilities to support multiple versions of ansible-core in your collection. Collections can also depend on other collections."
+msgstr "コレクションに含まれる Ansible モジュールの開発はスタンドアロンの Ansible モジュールの開発に似ていますが、コレクションではドキュメントフラグメントやモジュールユーティリティーなどの共有リソースを異なる方法で使用します。コレクション内およびコレクション間でドキュメントフラグメントを使用できます。任意のモジュールユーティリティーを使用して、コレクション内の複数のバージョンの ansible-core をサポートできます。コレクションが他のコレクションに依存することもあります。"
 
 #: ../../rst/dev_guide/developing_collections_shared.rst:16
 msgid "Using documentation fragments in collections"
@@ -1508,7 +1678,7 @@ msgstr "FQCN を含むドキュメントフラグメントを参照してくだ�
 
 #: ../../rst/dev_guide/developing_collections_shared.rst:32
 msgid ":ref:`module_docs_fragments` covers the basics for documentation fragments. The `kubernetes.core <https://github.com/ansible-collections/kubernetes.core>`_ collection includes a complete example."
-msgstr ":ref:`module_docs_fragments` は、ドキュメントフラグメントの基本を説明します。`kubernetes.core <https://github.com/ansible-collections/kubernetes.core>`_コレクションには完全な例が含まれています。"
+msgstr ":ref:`module_docs_fragments` は、ドキュメントフラグメントの基本を説明します。`kubernetes.core <https://github.com/ansible-collections/kubernetes.core>`_ コレクションには完全な例が含まれています。"
 
 #: ../../rst/dev_guide/developing_collections_shared.rst:34
 msgid "If you use FQCN, you can use documentation fragments from one collection in another collection."
@@ -1537,6 +1707,18 @@ msgstr "``try`` ブロックで import ステートメントをラップする�
 #: ../../rst/dev_guide/developing_collections_shared.rst:66
 msgid "The optional import behavior also applies to module_utils imported from collections."
 msgstr "任意のインポート動作は、コレクションからインポートされたモジュールユーティリティーにも適用されます。"
+
+#: ../../rst/dev_guide/developing_collections_shared.rst:71
+msgid "Listing collection dependencies"
+msgstr "コレクションの依存関係の一覧表示"
+
+#: ../../rst/dev_guide/developing_collections_shared.rst:73
+msgid "We recommend that collections work as standalone, independent units, depending only on ansible-core. However, if your collection must depend on features and functionality from another collection, list the other collection or collections under ``dependencies`` in your collection's :file:`galaxy.yml` file. For more information on the :file:`galaxy.yml` file, see :ref:`collections_galaxy_meta`."
+msgstr "コレクションはスタンドアロンの独立したユニットとして動作し、ansible-coreにのみ依存することをお勧めします。しかし、コレクションが他のコレクションの機能に依存しなければならない場合は、コレクションの :file:`galaxy.yml` ファイルの``dependencies`` セクションに、他のコレクションをリストアップしてください。:file:`galaxy.yml` ファイルの詳細については、:ref:`collections_galaxy_meta` を参照してください。"
+
+#: ../../rst/dev_guide/developing_collections_shared.rst:75
+msgid "You can use git repositories for collection dependencies during local development and testing. For example:"
+msgstr "ローカルでの開発やテストの際に、コレクションの依存関係用にgitリポジトリを使用することができます。以下に例を示します。"
 
 #: ../../rst/dev_guide/developing_collections_structure.rst:5
 msgid "Collection structure"
@@ -1833,7 +2015,7 @@ msgstr "``ansible-core`` の開発"
 
 #: ../../rst/dev_guide/developing_core.rst:5
 msgid "Although ``ansible-core`` (the code hosted in the `ansible/ansible repository <https://github.com/ansible/ansible>`_ on GitHub) includes a few plugins that can be swapped out via playbook directives or configuration, much of the code there is not modular.  The documents here give insight into how the parts of ``ansible-core`` work together."
-msgstr "``ansible-core`` (GitHub の `ansible/ansible repository <https://github.com/ansible/ansible>`_ でホストされるコード) には、Playbook ディレクティブまたは設定を介してスワップできるプラグインが含まれていますが、モジュール化されないコードが多くあります。また、``ansible-core`` の一部が連携する方法に関するドキュメントです。"
+msgstr "``ansible-core`` (GitHub の `ansible/ansible リポジトリー <https://github.com/ansible/ansible>`_ でホストされるコード) には、Playbook ディレクティブまたは設定を介してスワップできるプラグインが含まれていますが、モジュール化されないコードが多くあります。また、``ansible-core`` の一部が連携する方法に関するドキュメントです。"
 
 #: ../../rst/dev_guide/developing_core.rst:14
 #: ../../rst/dev_guide/developing_inventory.rst:466
@@ -1864,7 +2046,7 @@ msgstr "Ansible は、指定された :ref:`インベントリープラグイン
 
 #: ../../rst/dev_guide/developing_inventory.rst:9
 msgid "In previous versions, you had to create a script or program that could output JSON in the correct format when invoked with the proper arguments. You can still use and write inventory scripts, as we ensured backwards compatibility via the :ref:`script inventory plugin <script_inventory>` and there is no restriction on the programming language used. If you choose to write a script, however, you will need to implement some features yourself such as caching, configuration management, dynamic variable and group composition, and so on. If you use :ref:`inventory plugins <inventory_plugins>` instead, you can leverage the Ansible codebase and add these common features automatically."
-msgstr "以前のバージョンでは、適切な引数で呼び出されたときに正しい形式で JSON を出力できるスクリプトやプログラムを作成する必要がありました。:ref:`スクリプトインベントリープラグイン <script_inventory>` を通じて後方互換性を確保しており、使用するプログラミング言語にも制限がないため、インベントリースクリプトを使用したり書いたりすることができます。ただし、スクリプトを書く場合は、キャッシュ、設定管理、動的な変数、グループの構成など、いくつかの機能を自分で実装する必要があります。代わりに:ref:`インベントリープラグイン <inventory_plugins>` を使用すれば、Ansible のコードベースを活用し、これらの共通機能を自動的に追加することができます。"
+msgstr "以前のバージョンでは、適切な引数で呼び出されたときに正しい形式で JSON を出力できるスクリプトやプログラムを作成する必要がありました。:ref:`スクリプトインベントリープラグイン <script_inventory>` を通じて後方互換性を確保しており、使用するプログラミング言語にも制限がないため、インベントリースクリプトを使用したり書いたりすることができます。ただし、スクリプトを書く場合は、キャッシュ、設定管理、動的な変数、グループの構成など、いくつかの機能を自分で実装する必要があります。代わりに :ref:`インベントリープラグイン <inventory_plugins>` を使用すれば、Ansible のコードベースを活用し、これらの共通機能を自動的に追加することができます。"
 
 #: ../../rst/dev_guide/developing_inventory.rst:22
 msgid "Inventory sources"
@@ -1934,7 +2116,7 @@ msgstr "JSON を出力する実行可能ファイルへのパス"
 #: ../../rst/dev_guide/developing_inventory.rst:49
 #: ../../rst/dev_guide/developing_plugins.rst:314
 msgid "Inventory plugins"
-msgstr "Inventory プラグイン"
+msgstr "inventory プラグイン"
 
 #: ../../rst/dev_guide/developing_inventory.rst:51
 msgid "Like most plugin types (except modules), inventory plugins must be developed in Python. They execute on the controller and should therefore adhere to the :ref:`control_node_requirements`."
@@ -1950,7 +2132,7 @@ msgstr "通常、インベントリープラグインは実行の開始時、お
 
 #: ../../rst/dev_guide/developing_inventory.rst:58
 msgid "If you use the persistent cache, inventory plugins can also use the configured cache plugin to store and retrieve data. Caching inventory avoids making repeated and costly external calls."
-msgstr "永続キャッシュを使用する場合、inventory プラグインは設定済みのキャッシュプラグインを使用してデータを保存および取得し、コストがかかり、繰り返しかかる外部呼び出しを回避することもできます。"
+msgstr "永続キャッシュを使用する場合、inventory プラグインは設定済みの cache プラグインを使用してデータを保存および取得し、コストがかかり、繰り返しかかる外部呼び出しを回避することもできます。"
 
 #: ../../rst/dev_guide/developing_inventory.rst:63
 msgid "Developing an inventory plugin"
@@ -1982,7 +2164,7 @@ msgstr "Ansible はこのメソッドを使用して、インベントリソー�
 
 #: ../../rst/dev_guide/developing_inventory.rst:107
 msgid "In the above example, from the :ref:`virtualbox inventory plugin <virtualbox_inventory>`, we screen for specific file name patterns to avoid attempting to consume any valid YAML file. You can add any type of condition here, but the most common one is 'extension matching'. If you implement extension matching for YAML configuration files, the path suffix <plugin_name>.<yml|yaml> should be accepted. All valid extensions should be documented in the plugin description."
-msgstr "上記の例では、:ref:`virtualbox インベントリープラグイン <virtualbox_inventory>` からは、有効な YAML ファイルの使用を試みないように、特定のファイル名パターンを切り分けます。ここに任意のタイプの条件を追加できますが、最も一般的なものは「拡張子の一致」です。YAML 設定ファイルに一致する拡張子を実装する場合は、パスサフィックス <plugin_name>.<yml|yaml> が許可される必要があります。有効なすべての拡張機能は、プラグインの説明に記載されています。"
+msgstr "上記の例では、:ref:`virtualbox inventory プラグイン <virtualbox_inventory>` からは、有効な YAML ファイルの使用を試みないように、特定のファイル名パターンを切り分けます。ここに任意のタイプの条件を追加できますが、最も一般的なものは「拡張子の一致」です。YAML 設定ファイルに一致する拡張子を実装する場合は、パスサフィックス <plugin_name>.<yml|yaml> が許可される必要があります。有効なすべての拡張機能は、プラグインの説明に記載されています。"
 
 #: ../../rst/dev_guide/developing_inventory.rst:109
 msgid "The following is another example that does not use a 'file' but the inventory source string itself, from the :ref:`host list <host_list_inventory>` plugin:"
@@ -2038,7 +2220,7 @@ msgstr "インベントリーキャッシュ"
 
 #: ../../rst/dev_guide/developing_inventory.rst:197
 msgid "To cache the inventory, extend the inventory plugin documentation with the inventory_cache documentation fragment and use the Cacheable base class."
-msgstr "インベントリーをキャッシュするには、インベントリープラグインのドキュメントを inventory_cache ドキュメントフラグメントで拡張し、Cacheable 基本クラスを使用します。"
+msgstr "インベントリーをキャッシュするには、インベントリープラグインのドキュメントを inventory_cache ドキュメントフラグメントで拡張し、cacheable 基本クラスを使用します。"
 
 #: ../../rst/dev_guide/developing_inventory.rst:210
 msgid "Next, load the cache plugin specified by the user to read from and update the cache. If your inventory plugin uses YAML-based configuration files and the ``_read_config_data`` method, the cache plugin is loaded within that method. If your inventory plugin does not use ``_read_config_data``, you must load the cache explicitly with ``load_cache_plugin``."
@@ -2058,7 +2240,7 @@ msgstr "``parse`` メソッドが完了すると、``self._cache`` の内容は�
 
 #: ../../rst/dev_guide/developing_inventory.rst:271
 msgid "You have three other cache methods available:"
-msgstr "3 つのキャッシュメソッドが利用できます。"
+msgstr "利用可能な 3 つのキャッシュメソッド:"
 
 #: ../../rst/dev_guide/developing_inventory.rst:269
 msgid "``set_cache_plugin`` forces the cache plugin to be set with the contents of ``self._cache``, before the ``parse`` method completes"
@@ -2254,7 +2436,7 @@ msgstr "ローカルモジュールを自動的に読み込み、すべての Pl
 
 #: ../../rst/dev_guide/developing_locally.rst:44
 msgid "any directory added to the ``ANSIBLE_LIBRARY`` environment variable (``$ANSIBLE_LIBRARY`` takes a colon-separated list like ``$PATH``)"
-msgstr "``ANSIBLE_LIBRARY`` 環境変数に追加されたディレクトリー (``$ANSIBLE_LIBRARY`` は ``$PATH``のようにコロンで区切った一覧)"
+msgstr "``ANSIBLE_LIBRARY`` 環境変数に追加されたディレクトリー (``$ANSIBLE_LIBRARY`` は ``$PATH`` のようにコロンで区切った一覧)"
 
 #: ../../rst/dev_guide/developing_locally.rst:45
 msgid "``~/.ansible/plugins/modules/``"
@@ -2306,7 +2488,7 @@ msgstr "プラグインをローカルで追加"
 
 #: ../../rst/dev_guide/developing_locally.rst:72
 msgid "Ansible loads plugins automatically too, and loads each type of plugin separately from a directory named for the type of plugin. Here's the full list of plugin directory names:"
-msgstr "Ansible はプラグインも自動的に読み込んで、プラグインのタイプに対して名前が付けられたディレクトリーとは別に、各タイプのプラグインを読み込みます。プラグインディレクトリー名の全一覧を以下に示します。"
+msgstr "Ansible はプラグインも自動的に読み込んで、プラグインのタイプに対して名前が付けられたディレクトリーとは別に、各タイプのプラグインを読み込みます。プラグインディレクトリー名の一覧を以下に示します。"
 
 #: ../../rst/dev_guide/developing_locally.rst:74
 msgid "action_plugins*"
@@ -2414,7 +2596,7 @@ msgstr "コレクションまたはローカルモジュールのメンテナン
 
 #: ../../rst/dev_guide/developing_module_utilities.rst:25
 msgid "When you run ``ansible-playbook``, Ansible will merge any files in your local ``module_utils`` directories into the ``ansible.module_utils`` namespace in the order defined by the :ref:`Ansible search path <ansible_search_path>`."
-msgstr "``ansible-playbook`` を実行すると、Ansible は :ref:`Ansible search path <ansible_search_path>` で定義されている順序でローカルの ``module_utils`` ディレクトリーのファイルを ``ansible.module_utils`` 名前空間にマージします。"
+msgstr "``ansible-playbook`` を実行すると、Ansible は :ref:`Ansible 検索パス <ansible_search_path>` で定義されている順序でローカルの ``module_utils`` ディレクトリーのファイルを ``ansible.module_utils`` 名前空間にマージします。"
 
 #: ../../rst/dev_guide/developing_module_utilities.rst:28
 msgid "Naming and finding module utilities"
@@ -2458,7 +2640,7 @@ msgstr "ユーティリティー (``lib/ansible/module_utils/`` 内のファイ�
 
 #: ../../rst/dev_guide/shared_snippets/licensing.txt:5
 msgid "A file in ``module_utils`` used **only** for a specific vendor's hardware, provider, or service may be licensed under GPLv3+. Adding a new file under ``module_utils`` with GPLv3+ needs to be approved by the core team."
-msgstr "特定のベンダーのハードウェア、プロバイダー、またはサービスに**のみ** ``module_utils`` を使用するファイルは、GPLv3 以降でライセンスを取得している可能性があります。GPLv3 以降を持つ ``module_utils`` に新しいファイルを追加するには、コアチームによる承認が必要になります。"
+msgstr "特定のベンダーのハードウェア、プロバイダー、またはサービスに **のみ** ``module_utils`` を使用するファイルは、GPLv3 以降でライセンスを取得している可能性があります。GPLv3 以降を持つ ``module_utils`` に新しいファイルを追加するには、コアチームによる承認が必要になります。"
 
 #: ../../rst/dev_guide/shared_snippets/licensing.txt:7
 msgid "All other ``module_utils`` must be licensed under BSD, so GPL-licensed third-party and Galaxy modules can use them."
@@ -2466,7 +2648,7 @@ msgstr "他のすべての ``module_utils`` は、GPL のライセンスが付�
 
 #: ../../rst/dev_guide/shared_snippets/licensing.txt:8
 msgid "If there's doubt about the appropriate license for a file in ``module_utils``, the Ansible Core Team will decide during an Ansible Core Community Meeting."
-msgstr "``module_utils`` のファイルに適切なライセンスについて疑問がある場合は、Ansible Core Team が Ansible Core Community Meeting 中に決定します。"
+msgstr "``module_utils`` のファイルに適切なライセンスについて疑問がある場合は、Ansible Core Team が Ansible Core Community Meeting で決定します。"
 
 #: ../../rst/dev_guide/shared_snippets/licensing.txt:9
 msgid "All other files shipped with Ansible, including all modules, must be licensed under the GPL license (GPLv3 or later)."
@@ -2542,7 +2724,7 @@ msgstr "一般的に使用されるいくつかのユーティリティーは、
 
 #: ../../rst/dev_guide/developing_module_utilities.rst:66
 msgid "``ismount.py`` migrated to ``ansible.posix.plugins.module_utils.mount.py`` - Single helper function that fixes os.path.ismount"
-msgstr "``ansible.posix.plugins.module_utils.mount.py`` に移行した ``ismount.py`` - os.path.ismount を修正する単一のヘルパー関数。"
+msgstr "``ansible.posix.plugins.module_utils.mount.py`` に移行した ``ismount.py`` - os.path.ismount を修正する単一のヘルパー関数"
 
 #: ../../rst/dev_guide/developing_module_utilities.rst:67
 msgid "``known_hosts.py`` migrated to ``community.general.plugins.module_utils.known_hosts.py`` - utilities for working with known_hosts file"
@@ -2739,8 +2921,8 @@ msgid "Don't write to files directly; use a temporary file and then use the ``at
 msgstr "ファイルに直接書き込まないようにします。一時ファイルを使用してから、``ansible.module_utils.basic`` の ``atomic_move`` 関数を使用して、更新された一時ファイルを所定の場所に移動させます。これにより、データの破損を防ぎ、ファイルの正しいコンテキストが保持されるようになります。"
 
 #: ../../rst/dev_guide/developing_modules_best_practices.rst:40
-msgid "Avoid creating caches. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server or tower); do not try to build it into modules."
-msgstr "キャッシュを作成しないでください。Ansible は中央のサーバーや権限を持たないように設計されているため、さまざまなパーミッション、オプション、場所を指定して実行しないことを保証することはできません。中央の権限が必要な場合は、それを Ansible の上に置いてください (例: bastion/cm/ci サーバーまたは Tower を使用)。それをモジュールには組み込まないでください。"
+msgid "Avoid creating caches. Ansible is designed without a central server or authority, so you cannot guarantee it will not run with different permissions, options or locations. If you need a central authority, have it on top of Ansible (for example, using bastion/cm/ci server, AWX, or the Red Hat Ansible Automation Platform); do not try to build it into modules."
+msgstr "キャッシュを作成しないでください。Ansible は中央のサーバーや権限を持たないように設計されているため、さまざまなパーミッション、オプション、場所を指定して実行しないことを保証することはできません。中央の権限が必要な場合は、それを Ansible の上に置いてください (例: bastion/cm/ci server、AWX、または Red Hat Ansible Automation Platform を使用)。それをモジュールには組み込まないでください。"
 
 #: ../../rst/dev_guide/developing_modules_best_practices.rst:41
 msgid "If you package your module(s) in an RPM, install the modules on the control machine in ``/usr/share/ansible``. Packaging modules in RPMs is optional."
@@ -2820,7 +3002,7 @@ msgstr "モジュール障害の処理"
 
 #: ../../rst/dev_guide/developing_modules_best_practices.rst:105
 msgid "When your module fails, help users understand what went wrong. If you are using the ``AnsibleModule`` common Python code, the ``failed`` element will be included for you automatically when you call ``fail_json``. For polite module failure behavior:"
-msgstr "モジュールが失敗すると、ユーザーは問題を理解するのに役立ちます。一般的な Python コード ``AnsibleModule`` を使用している場合、``fail_json`` の呼び出し時に自動的に ``failed`` 要素が含まれます。polite モジュールの失敗動作には、以下を行います。"
+msgstr "モジュールが失敗すると、ユーザーは問題を理解するのに役立ちます。一般的な Python コード ``AnsibleModule`` を使用している場合は、``fail_json`` の呼び出し時に自動的に ``failed`` 要素が含まれます。polite モジュールの失敗動作には、以下を行います。"
 
 #: ../../rst/dev_guide/developing_modules_best_practices.rst:107
 msgid "Include a key of ``failed`` along with a string explanation in ``msg``. If you don't do this, Ansible will use standard return codes: 0=success and non-zero=failure."
@@ -2908,7 +3090,7 @@ msgstr "diff モードの場合は diff を返します。これは、特定の�
 
 #: ../../rst/dev_guide/developing_modules_best_practices.rst:137
 msgid "Enable your return values to be serialized as JSON with Python's standard `JSON encoder and decoder <https://docs.python.org/3/library/json.html>`_ library. Basic python types (strings, int, dicts, lists, and so on) are serializable."
-msgstr "Python の標準の `JSON エンコーダーおよびデコーダー <https://docs.python.org/3/library/json.html>` ライブラリーで、戻り値を JSON としてシリアライズできるようにします。基本的な python タイプ (文字列、int、ディクショナリー、リストなど) はシリアライズ可能です。"
+msgstr "Python の標準の `JSON エンコーダーおよびデコーダー <https://docs.python.org/3/library/json.html>`_ ライブラリーで、戻り値を JSON としてシリアライズできるようにします。基本的な python タイプ (文字列、int、ディクショナリー、リストなど) はシリアライズ可能です。"
 
 #: ../../rst/dev_guide/developing_modules_best_practices.rst:138
 msgid "Do not return an object using exit_json(). Instead, convert the fields you need from the object into the fields of a dictionary and return the dictionary."
@@ -3072,11 +3254,11 @@ msgstr "すべての貢献に適用される :ref:`ライセンス合意 <contri
 
 #: ../../rst/dev_guide/developing_modules_checklist.rst:24
 msgid "conform to Ansible's :ref:`formatting and documentation <developing_modules_documenting>` standards"
-msgstr "Ansible の :ref:`formatting and documentation <developing_modules_documenting>` 標準規格に準拠しています。"
+msgstr "Ansible の :ref:`フォーマットおよびドキュメント <developing_modules_documenting>` の標準規格に準拠しています。"
 
 #: ../../rst/dev_guide/developing_modules_checklist.rst:25
 msgid "include comprehensive :ref:`tests <developing_testing>` for your module"
-msgstr "モジュールに包括的な :ref:`tests <developing_testing>` を含めます。"
+msgstr "モジュールに包括的な :ref:`テスト <developing_testing>` を含めます。"
 
 #: ../../rst/dev_guide/developing_modules_checklist.rst:26
 msgid "minimize module dependencies"
@@ -3176,7 +3358,7 @@ msgstr "シバンおよび UTF-8 コーディングの後に、元の著作権�
 
 #: ../../rst/dev_guide/developing_modules_documenting.rst:46
 msgid "Major additions to the module (for instance, rewrites) may add additional copyright lines. Any legal review will include the source control history, so an exhaustive copyright header is not necessary. Please do not edit the existing copyright year. This simplifies project administration and is unlikely to cause any interesting legal issues. When adding a second copyright line for a significant feature or rewrite, add the newer line above the older one:"
-msgstr "モジュールへの主要な追加 (たとえば、書き換え) は、により、著作権行が追加される場合があります。法的な審査にはソース管理履歴が含まれるため、網羅的な著作権ヘッダーは必要ありません。既存の著作権年は編集しないでください。これは、プロジェクトの管理を単純化するものであり、興味深い法的問題を引き起こす可能性はほとんどありません。重要な機能や書き換えのために 2 つ目の著作権行を追加する場合は、古い行の上に新しい行を追加します。"
+msgstr "モジュールへの主要な追加 (たとえば、書き換え) により、著作権行が追加される場合があります。法的な審査にはソース管理履歴が含まれるため、網羅的な著作権ヘッダーは必要ありません。既存の著作権年は編集しないでください。これは、プロジェクトの管理を単純化するものであり、興味深い法的問題を引き起こす可能性はほとんどありません。重要な機能や書き換えのために 2 つ目の著作権行を追加する場合は、古い行の上に新しい行を追加します。"
 
 #: ../../rst/dev_guide/developing_modules_documenting.rst:62
 msgid "ANSIBLE_METADATA block"
@@ -3523,7 +3705,7 @@ msgstr "notes"
 
 #: ../../rst/dev_guide/developing_modules_documenting.rst:227
 msgid "Details of any important information that doesn't fit in one of the above sections."
-msgstr "上記のセクションのいずれかに該当しない重要な情報の詳細。"
+msgstr "上記のセクションのいずれかに該当しない重要な情報の詳細です。"
 
 #: ../../rst/dev_guide/developing_modules_documenting.rst:228
 msgid "For example, whether ``check_mode`` is or is not supported."
@@ -3545,143 +3727,131 @@ msgstr "``L()`` 見出しへのリンク。たとえば、``See L(Ansible Automa
 msgid "``U()`` for URLs. For example: ``See U(https://www.ansible.com/products/automation-platform) for an overview.``"
 msgstr "URL の場合は ``U()``。たとえば、``See U(https://www.ansible.com/products/automation-platform) for an overview.`` となります。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:238
-msgid "``R()`` for cross-references with a heading (added in Ansible 2.10). For example: ``See R(Cisco IOS Platform Guide,ios_platform_options)``.  Use the RST anchor for the cross-reference. See :ref:`adding_anchors_rst` for details."
-msgstr "(Ansible 2.10 に含まれる) 見出しと相互参照用 ``R()`` (例: ``See R(Cisco IOS Platform Guide,ios_platform_options)``)。クロス参照に RST アンカーを使用します。詳細は、:ref:`adding_anchors_rst` を参照してください。"
-
 #: ../../rst/dev_guide/developing_modules_documenting.rst:239
-msgid "``M()`` for module names. For example: ``See also M(ansible.builtin.yum) or M(community.general.apt_rpm)``."
-msgstr "``M()`` モジュール名。たとえば ``See also M(ansible.builtin.yum) or M(community.general.apt_rpm)`` になります。"
-
-#: ../../rst/dev_guide/developing_modules_documenting.rst:241
 msgid "There are also some macros which do not create links but we use them to display certain types of content in a uniform way:"
 msgstr "リンクを作成しないものの、そのマクロを使用して、特定のタイプのコンテンツを統一して表示します。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:244
+#: ../../rst/dev_guide/developing_modules_documenting.rst:242
 msgid "``I()`` for option names. For example: ``Required if I(state=present).``  This is italicized in the documentation."
 msgstr "オプション名の場合は ``I()``。たとえば ``Required if I(state=present).`` です。これは、ドキュメントではイタリック体で示されています。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:246
+#: ../../rst/dev_guide/developing_modules_documenting.rst:244
 msgid "``C()`` for files, option values, and inline code. For example: ``If not set the environment variable C(ACME_PASSWORD) will be used.`` or ``Use C(var | foo.bar.my_filter) to transform C(var) into the required format.``  This displays with a mono-space font in the documentation."
 msgstr "ファイル、オプション値、およびインラインコードの場合は ``C()`` (例 ``If not set the environment variable C(ACME_PASSWORD) will be used.`` または ``Use C(var | foo.bar.my_filter) to transform C(var) into the required format.``)。これは、ドキュメントでは Monospace フォントと表示されます。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:247
+#: ../../rst/dev_guide/developing_modules_documenting.rst:245
 msgid "``B()`` currently has no standardized usage.  It is displayed in boldface in the documentation."
 msgstr "``B()`` は、現在、標準化された使用はありません。このドキュメントには太字が表示されます。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:248
+#: ../../rst/dev_guide/developing_modules_documenting.rst:246
 msgid "``HORIZONTALLINE`` is used sparingly as a separator in long descriptions.  It becomes a horizontal rule (the ``<hr>`` html tag) in the documentation."
 msgstr "``HORIZONTALLINE`` は、長い説明では、区切り文字として慎重に使用されており、ドキュメント内の水平ルール (``<hr>`` html タグ) になります。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:252
-msgid "For links between modules and documentation within a collection, you can use any of the options above. For links outside of your collection, use ``R()`` if available. Otherwise, use ``U()`` or ``L()`` with full URLs (not relative links). For modules, use ``M()`` with the FQCN or ``ansible.builtin`` as shown in the example. If you are creating your own documentation site, you will need to use the `intersphinx extension <https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html>`_ to convert ``R()`` and ``M()`` to the correct links."
-msgstr "コレクション内のモジュールとドキュメント間のリンクについては、上記のオプションのいずれかを使用することができます。コレクション外のリンクについては、利用可能な場合は ``R()`` を使用します。利用できない場合は、(相対リンクではなく) 完全な URL で ``U()`` または ``L()`` を使用します。モジュールの場合は、例のように、FQCN または ``ansible.builtin`` で ``M()`` を使用します。独自のドキュメントサイトを作成する場合は、`intersphinx extension <https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html>`_ を使用して ``R()`` および ``M()`` を正しいリンクに変換する必要があります。"
+#: ../../rst/dev_guide/developing_modules_documenting.rst:250
+msgid "For links between modules and documentation within a collection, you can use either of the options above. Use ``U()`` or ``L()`` with full URLs (not relative links)."
+msgstr "コレクション内のモジュールとドキュメント間のリンクには、上記のオプションのいずれかを使用できます。``U()`` または``L()`` をフル URL で使用してください（相対リンクではありません）。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:256
-msgid "To refer to a group of modules in a collection, use ``R()``.  When a collection is not the right granularity, use ``C(..)``:"
-msgstr "コレクション内のモジュールのグループを参照するには、``R()`` を使用します。コレクションが適切な粒度ではない場合は、``C(..)`` を使用します。"
+#: ../../rst/dev_guide/developing_modules_documenting.rst:253
+msgid "When a collection is not the right granularity, use ``C(..)``:"
+msgstr "コレクションが適切な粒度ではない場合は、``C(..)`` を使用します。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:258
-msgid "``Refer to the R(kubernetes.core collection, plugins_in_kubernetes.core) for information on managing kubernetes clusters.``"
-msgstr "``Refer to the R(kubernetes.core collection, plugins_in_kubernetes.core) for information on managing kubernetes clusters.``"
-
-#: ../../rst/dev_guide/developing_modules_documenting.rst:259
+#: ../../rst/dev_guide/developing_modules_documenting.rst:255
 msgid "``The C(win_*) modules (spread across several collections) allow you to manage various aspects of windows hosts.``"
 msgstr "``The C(win_*) modules (spread across several collections) allow you to manage various aspects of windows hosts.``"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:264
+#: ../../rst/dev_guide/developing_modules_documenting.rst:259
 msgid "Because it stands out better, use ``seealso`` for general references over the use of notes or adding links to the description."
 msgstr "``seealso`` の方が目立つため、一般的な参照にはノートの使用や説明へのリンクよりも、``seealso`` を使用することが推奨されます。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:269
+#: ../../rst/dev_guide/developing_modules_documenting.rst:264
 msgid "Documentation fragments"
 msgstr "ドキュメントフラグメント"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:271
+#: ../../rst/dev_guide/developing_modules_documenting.rst:266
 msgid "If you are writing multiple related modules, they may share common documentation, such as authentication details, file mode settings, ``notes:`` or ``seealso:`` entries. Rather than duplicate that information in each module's ``DOCUMENTATION`` block, you can save it once as a doc_fragment plugin and use it in each module's documentation. In Ansible, shared documentation fragments are contained in a ``ModuleDocFragment`` class in `lib/ansible/plugins/doc_fragments/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/doc_fragments>`_ or the equivalent directory in a collection. To include a documentation fragment, add ``extends_documentation_fragment: FRAGMENT_NAME`` in your module documentation. Use the fully qualified collection name for the FRAGMENT_NAME (for example, ``kubernetes.core.k8s_auth_options``)."
-msgstr "複数の関連モジュールを記述している場合は、認証の詳細やファイルモードの設定、``notes:`` や``seealso:`` のエントリーなど、共通のドキュメントを共有していることがあります。そのような情報を各モジュールの ``DOCUMENTATION`` ブロックに複製するのではなく、doc_fragment プラグインとして一度保存し、各モジュールのドキュメントで使用することができます。Ansible では、共有ドキュメントフラグメントは、`lib/ansible/plugins/doc_fragments/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/doc_fragments>`_ の ``ModuleDocFragment`` クラス、またはコレクションの同等のディレクトリーに含まれています。ドキュメントフラグメントを含めるには、モジュールのドキュメントに ``extends_documentation_fragment: FRAGMENT_NAME`` を追加します。FRAGMENT_NAME には、完全修飾されたコレクション名を使用します (例: ``kubernetes.core.k8s_auth_options``)。"
+msgstr "複数の関連モジュールを記述している場合は、認証の詳細やファイルモードの設定、``notes:`` や ``seealso:`` のエントリーなど、共通のドキュメントを共有していることがあります。そのような情報を各モジュールの ``DOCUMENTATION`` ブロックに複製するのではなく、doc_fragment プラグインとして一度保存し、各モジュールのドキュメントで使用することができます。Ansible では、共有ドキュメントフラグメントは、`lib/ansible/plugins/doc_fragments/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/doc_fragments>`_ の ``ModuleDocFragment`` クラス、またはコレクションの同等のディレクトリーに含まれています。ドキュメントフラグメントを含めるには、モジュールのドキュメントに ``extends_documentation_fragment: FRAGMENT_NAME`` を追加します。FRAGMENT_NAME には、完全修飾されたコレクション名を使用します (例: ``kubernetes.core.k8s_auth_options``)。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:273
+#: ../../rst/dev_guide/developing_modules_documenting.rst:268
 msgid "Modules should only use items from a doc fragment if the module will implement all of the interface documented there in a manner that behaves the same as the existing modules which import that fragment. The goal is that items imported from the doc fragment will behave identically when used in another module that imports the doc fragment."
 msgstr "モジュールがドキュメントフラグメントのアイテムを使用するのは、そのフラグメントをインポートする既存のモジュールと同じように動作して、ドキュメント化されたすべてのインターフェースをモジュールが実装する場合のみです。目標は、ドキュメントフラグメントからインポートされたアイテムが、ドキュメントフラグメントをインポートする別のモジュールで使用された場合と同じように動作することです。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:275
+#: ../../rst/dev_guide/developing_modules_documenting.rst:270
 msgid "By default, only the ``DOCUMENTATION`` property from a doc fragment is inserted into the module documentation. It is possible to define additional properties in the doc fragment in order to import only certain parts of a doc fragment or mix and match as appropriate. If a property is defined in both the doc fragment and the module, the module value overrides the doc fragment."
 msgstr "デフォルトでは、ドキュメントフラグメントの ``DOCUMENTATION`` プロパティーがモジュールのドキュメントに挿入されます。ドキュメントフラグメントの特定の部分のみをインポートするため、または必要に応じて組み合わせて一致させるために、ドキュメントフラグメントに追加のプロパティーを定義することができます。プロパティーがドキュメントフラグメントとモジュールの両方で定義されている場合、モジュール値はドキュメントフラグメントを上書きします。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:277
+#: ../../rst/dev_guide/developing_modules_documenting.rst:272
 msgid "Here is an example doc fragment named ``example_fragment.py``:"
 msgstr "以下は、``example_fragment.py`` という名前のドキュメントフラグメントの例です。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:295
+#: ../../rst/dev_guide/developing_modules_documenting.rst:290
 msgid "To insert the contents of ``OTHER`` in a module:"
 msgstr "``OTHER`` の内容をモジュールに挿入するには、以下を行います。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:301
+#: ../../rst/dev_guide/developing_modules_documenting.rst:296
 msgid "Or use both :"
 msgstr "または、以下の両方を使用してください。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:314
+#: ../../rst/dev_guide/developing_modules_documenting.rst:309
 msgid "Since Ansible 2.8, you can have user-supplied doc_fragments by using a ``doc_fragments`` directory adjacent to play or role, just like any other plugin."
 msgstr "Ansible 2.8 以降、その他のプラグインと同様に、プレイやロールに隣接する ``doc_fragments`` ディレクトリーを使用することで、ユーザーが提供するドキュメントフラグメントを設定できます。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:316
+#: ../../rst/dev_guide/developing_modules_documenting.rst:311
 msgid "For example, all AWS modules should include:"
 msgstr "たとえば、すべての AWS モジュールには以下を含める必要があります。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:324
+#: ../../rst/dev_guide/developing_modules_documenting.rst:319
 msgid ":ref:`docfragments_collections` describes how to incorporate documentation fragments in a collection."
 msgstr "「:ref:`docfragments_collections`」では、コレクションにドキュメントのフラグメントを組み込む方法を説明します。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:329
+#: ../../rst/dev_guide/developing_modules_documenting.rst:324
 msgid "EXAMPLES block"
 msgstr "EXAMPLES ブロック"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:331
+#: ../../rst/dev_guide/developing_modules_documenting.rst:326
 msgid "After the shebang, the UTF-8 coding, the copyright line, the license section, and the ``DOCUMENTATION`` block comes the ``EXAMPLES`` block. Here you show users how your module works with real-world examples in multi-line plain-text YAML format. The best examples are ready for the user to copy and paste into a playbook. Review and update your examples with every change to your module."
-msgstr "シバンの後、UTF-8 コーディング、著作権表示、ライセンスセクション、および ``DOCUMENTATION``ブロックの後に ``EXAMPLES`` ブロックが続きます。ここでは、モジュールが実際の例で複数行のプレーンテキスト YAML 形式でどのように機能するかをユーザーに示します。最良の例は、ユーザーがコピーして Playbook に貼り付ける準備ができています。モジュールに変更を加えるたびに、例を確認して更新してください。"
+msgstr "シバンの後、UTF-8 コーディング、著作権表示、ライセンスセクション、および ``DOCUMENTATION`` ブロックの後に ``EXAMPLES`` ブロックが続きます。ここでは、モジュールが実際の例で複数行のプレーンテキスト YAML 形式でどのように機能するかをユーザーに示します。最良の例は、ユーザーがコピーして Playbook に貼り付ける準備ができています。モジュールに変更を加えるたびに、例を確認して更新してください。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:333
+#: ../../rst/dev_guide/developing_modules_documenting.rst:328
 msgid "Per playbook best practices, each example should include a ``name:`` line::"
 msgstr "Playbook のベストプラクティスに基づき、各例には ``name:`` 行が必要です。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:342
+#: ../../rst/dev_guide/developing_modules_documenting.rst:337
 msgid "The ``name:`` line should be capitalized and not include a trailing dot."
 msgstr "``name:`` 行は大文字にし、末尾のドットは含めないでください。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:344
+#: ../../rst/dev_guide/developing_modules_documenting.rst:339
 msgid "Use a fully qualified collection name (FQCN) as a part of the module's name like in the example above. For modules in ``ansible-core``, use the ``ansible.builtin.`` identifier, for example ``ansible.builtin.debug``."
 msgstr "上記の例のように、モジュール名の一部として完全修飾コレクション名 (FQCN) を使用します。``ansible-core`` のモジュールの場合は、``ansible.builtin.`` 識別子 (たとえば ``ansible.builtin.debug``) を使用します。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:346
+#: ../../rst/dev_guide/developing_modules_documenting.rst:341
 msgid "If your examples use boolean options, use yes/no values. Since the documentation generates boolean values as yes/no, having the examples use these values as well makes the module documentation more consistent."
 msgstr "サンプルでブール値オプションを使用する場合は、yes/no の値を使用します。ドキュメントによりブール値が yes/no として生成されるため、このサンプルではこれらの値が使用されており、モジュールドキュメントの一貫性が保たれます。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:348
+#: ../../rst/dev_guide/developing_modules_documenting.rst:343
 msgid "If your module returns facts that are often needed, an example of how to use them can be helpful."
 msgstr "モジュールが必要なファクトを返すと、その使用方法の例が便利です。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:353
+#: ../../rst/dev_guide/developing_modules_documenting.rst:348
 msgid "RETURN block"
 msgstr "RETURN ブロック"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:355
+#: ../../rst/dev_guide/developing_modules_documenting.rst:350
 msgid "After the shebang, the UTF-8 coding, the copyright line, the license section, ``DOCUMENTATION`` and ``EXAMPLES`` blocks comes the ``RETURN`` block. This section documents the information the module returns for use by other modules."
 msgstr "シバン、UTF-8コーディング、著作権表示、ライセンスセクション、``DOCUMENTATION`` ブロックおよび ``EXAMPLES`` ブロックの後に、``RETURN`` ブロックが続きます。このセクションでは、モジュールが他のモジュールで使用するために返す情報を説明します。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:357
+#: ../../rst/dev_guide/developing_modules_documenting.rst:352
 msgid "If your module doesn't return anything (apart from the standard returns), this section of your module should read: ``RETURN = r''' # '''`` Otherwise, for each value returned, provide the following fields. All fields are required unless specified otherwise."
-msgstr "モジュールが何も返さない場合は (標準の戻り値とは異なり)、モジュールのこのセクションは「``RETURN = r''' # '''``」を読み取る必要があります。それ以外の場合は、返された各値に以下のフィールドを指定します。特に指定がない場合はすべてのフィールドが必要になります。"
+msgstr "モジュールが何も返さない場合は (標準の戻り値とは異なり)、モジュールのこのセクションは ``RETURN = r''' # '''`` を読み取る必要があります。それ以外の場合は、返された各値に以下のフィールドを指定します。特に指定がない場合はすべてのフィールドが必要になります。"
 
 #: ../../rst/dev_guide/developing_modules_documenting.rst
 msgid "return name"
 msgstr "return name"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:361
+#: ../../rst/dev_guide/developing_modules_documenting.rst:356
 msgid "Name of the returned field."
 msgstr "返されるフィールドの名前。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:364
+#: ../../rst/dev_guide/developing_modules_documenting.rst:359
 msgid "Detailed description of what this value represents. Capitalized and with trailing dot."
 msgstr "この値が表す内容の詳細な説明。大文字で、末尾のドットを使用します。"
 
@@ -3689,15 +3859,15 @@ msgstr "この値が表す内容の詳細な説明。大文字で、末尾のド
 msgid "returned"
 msgstr "returned"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:366
+#: ../../rst/dev_guide/developing_modules_documenting.rst:361
 msgid "When this value is returned, such as ``always``, ``changed`` or ``success``. This is a string and can contain any human-readable content."
 msgstr "``always``、``changed``、``success`` などのこの値が返されると、これは文字列となり、人間が判読できるコンテンツを含めることができます。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:368
+#: ../../rst/dev_guide/developing_modules_documenting.rst:363
 msgid "Data type."
 msgstr "データ型。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:370
+#: ../../rst/dev_guide/developing_modules_documenting.rst:365
 msgid "If ``type='list'``, specifies the data type of the list's elements."
 msgstr "``type='list'`` の場合は、リストの要素のデータタイプを指定します。"
 
@@ -3705,11 +3875,11 @@ msgstr "``type='list'`` の場合は、リストの要素のデータタイプ�
 msgid "sample"
 msgstr "sample"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:372
+#: ../../rst/dev_guide/developing_modules_documenting.rst:367
 msgid "One or more examples."
 msgstr "1 つ以上の例。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:374
+#: ../../rst/dev_guide/developing_modules_documenting.rst:369
 msgid "Only needed if this return was extended after initial Ansible release, in other words, this is greater than the top level `version_added` field. This is a string, and not a float, for example, ``version_added: '2.3'``."
 msgstr "これは、最初の Ansible リリースの後にこの返された場合にのみ必要です。つまり、これは最上位レベルの `version_added` フィールドよりも大きくなります。これは浮動小数点ではなく、文字列です (例: ``version_added: '2.3'``)。"
 
@@ -3717,32 +3887,32 @@ msgstr "これは、最初の Ansible リリースの後にこの返された場
 msgid "contains"
 msgstr "contains"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:377
+#: ../../rst/dev_guide/developing_modules_documenting.rst:372
 msgid "Optional. To describe nested return values, set ``type: dict``, or ``type: list``/``elements: dict``, or if you really have to, ``type: complex``, and repeat the elements above for each sub-field."
 msgstr "任意です。ネストされた戻り値を記述するには、``type: dict`` または ``type: list``/``elements: dict`` を設定するか、本当に必要であれば ``type: complex`` を設定し、各サブフィールドに対して上記の要素を繰り返します。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:379
+#: ../../rst/dev_guide/developing_modules_documenting.rst:374
 msgid "Here are two example ``RETURN`` sections, one with three simple fields and one with a complex nested field::"
 msgstr "以下の例は、``RETURN`` セクションを 3 つの単純なフィールドと、複雑なネストされたフィールドを持つ 2 つのセクションです。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:427
+#: ../../rst/dev_guide/developing_modules_documenting.rst:422
 msgid "Python imports"
 msgstr "Python のインポート"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:429
+#: ../../rst/dev_guide/developing_modules_documenting.rst:424
 msgid "After the shebang, the UTF-8 coding, the copyright line, the license, and the sections for ``DOCUMENTATION``, ``EXAMPLES``, and ``RETURN``, you can finally add the python imports. All modules must use Python imports in the form:"
 msgstr "シバンの後には、UTF-8 コード行、著作権行、ライセンス、および ``DOCUMENTATION``、``EXAMPLES``、および ``RETURN`` のセクションが最後に python インポートを追加できます。すべてのモジュールは、この形式の Python インポートを使用する必要があります。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:435
+#: ../../rst/dev_guide/developing_modules_documenting.rst:430
 msgid "The use of \"wildcard\" imports such as ``from module_utils.basic import *`` is no longer allowed."
 msgstr "``from module_utils.basic import *`` などの「ワイルドカード」インポートの使用は許可されなくなりました。"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:440
+#: ../../rst/dev_guide/developing_modules_documenting.rst:435
 #: ../../rst/dev_guide/testing_documentation.rst:7
 msgid "Testing module documentation"
 msgstr "モジュールドキュメンテーションのテスト"
 
-#: ../../rst/dev_guide/developing_modules_documenting.rst:442
+#: ../../rst/dev_guide/developing_modules_documenting.rst:437
 msgid "To test Ansible documentation locally please :ref:`follow instruction<testing_module_documentation>`."
 msgstr "Ansible ドキュメントをローカルでテストするには、「:ref:`指示に従う<testing_module_documentation>`」を参照してください。"
 
@@ -3789,7 +3959,7 @@ msgstr "ディレクトリーをリポジトリーの root ディレクトリー
 
 #: ../../rst/dev_guide/developing_modules_general.rst:48
 msgid "Create a virtual environment: ``$ python3 -m venv venv`` (or for Python 2 ``$ virtualenv venv``. Note, this requires you to install the virtualenv package: ``$ pip install virtualenv``)"
-msgstr "仮想環境を作成します (``$ python3 -m venv venv``) (Python 2 の場合は ``$ virtualenv venv`` です。これには、virtualenv パッケージ ``$ pip install virtualenv`` をインストールする必要があります。"
+msgstr "仮想環境を作成します (``$ python3 -m venv venv``) (Python 2 の場合は ``$ virtualenv venv``) です。これには、virtualenv パッケージ ``$ pip install virtualenv`` をインストールする必要があります。"
 
 #: ../../rst/dev_guide/developing_modules_general.rst:51
 msgid "Activate the virtual environment: ``$ . venv/bin/activate``"
@@ -3813,7 +3983,7 @@ msgstr "情報またはファクトモジュールの作成"
 
 #: ../../rst/dev_guide/developing_modules_general.rst:66
 msgid "Ansible gathers information about the target machines using facts modules, and gathers information on other objects or files using info modules. If you find yourself trying to add ``state: info`` or ``state: list`` to an existing module, that is often a sign that a new dedicated ``_facts`` or ``_info`` module is needed."
-msgstr "Ansible は、ファクトモジュールを使用してターゲットマシンに関する情報を収集し、info モジュールを使用して他のオブジェクトやファイルに関する情報を収集します。既存のモジュールに ``state: info`` または ``state: list`` を追加しようとする際、多くの場合、これが新規の専用 ``_facts`` モジュールまたは ``_info`` モジュールが必要になるという署名になります。"
+msgstr "Ansible は、ファクトモジュールを使用してターゲットマシンに関する情報を収集し、info モジュールを使用して他のオブジェクトやファイルに関する情報を収集します。既存のモジュールに ``state: info`` または ``state: list`` を追加しようとする際は、多くの場合、これが新規の専用 ``_facts`` モジュールまたは ``_info`` モジュールが必要になるという署名になります。"
 
 #: ../../rst/dev_guide/developing_modules_general.rst:69
 msgid "In Ansible 2.8 and onwards, we have two type of information modules, they are ``*_info`` and ``*_facts``."
@@ -3901,7 +4071,7 @@ msgstr "以下の内容を新しいモジュールファイルに貼り付けま
 
 #: ../../rst/dev_guide/developing_modules_general.rst:109
 msgid "Modify and extend the code to do what you want your new module to do. See the :ref:`programming tips <developing_modules_best_practices>` and :ref:`Python 3 compatibility <developing_python_3>` pages for pointers on writing clean and concise module code."
-msgstr "新しいモジュールが実行することを行えるようにコードを変更し、拡張します。余計なものが入っていないモジュールコードや、簡潔なモジュールコードの作成に関するヒントは、「:ref:`プログラミングのヒント <developing_modules_best_practices>`」ページおよび」:ref:`Python 3 互換性 <developing_python_3>`」ページを参照してください。"
+msgstr "新しいモジュールが実行することを行えるようにコードを変更し、拡張します。余計なものが入っていないモジュールコードや、簡潔なモジュールコードの作成に関するヒントは、「:ref:`プログラミングのヒント <developing_modules_best_practices>`」ページおよび「:ref:`Python 3 互換性 <developing_python_3>`」ページを参照してください。"
 
 #: ../../rst/dev_guide/developing_modules_general.rst:115
 msgid "Verifying your module code"
@@ -3909,7 +4079,7 @@ msgstr "モジュールコードの確認"
 
 #: ../../rst/dev_guide/developing_modules_general.rst:117
 msgid "After you modify the sample code above to do what you want, you can try out your module. Our :ref:`debugging tips <debugging_modules>` will help if you run into bugs as you verify your module code."
-msgstr "上記のサンプルコードを修正したら、モジュールを試すことができます。:ref:`debugging tips <debugging_modules>` は、モジュールコードを検証する際にバグが発生した場合に役立ちます。"
+msgstr "上記のサンプルコードを修正したら、モジュールを試すことができます。:ref:`デバッグのヒント <debugging_modules>` は、モジュールコードを検証する際にバグが発生した場合に役立ちます。"
 
 #: ../../rst/dev_guide/developing_modules_general.rst:122
 msgid "Verifying your module code locally"
@@ -3971,7 +4141,7 @@ msgstr "以下の 2 つの例は、モジュールコードのテストを開始
 #: ../../rst/dev_guide/developing_modules_general.rst:179
 #: ../../rst/dev_guide/testing_integration.rst:20
 msgid "Every new module and plugin should have integration tests, even if the tests cannot be run on Ansible CI infrastructure. In this case, the tests should be marked with the ``unsupported`` alias in `aliases file <https://docs.ansible.com/ansible/latest/dev_guide/testing/sanity/integration-aliases.html>`_."
-msgstr "テストを Ansible CI インフラストラクチャーで実行できない場合でも、新しいモジュールとプラグインには統合テストが必要です。この場合、テストは `aliases file <https://docs.ansible.com/ansible/latest/dev_guide/testing/sanity/integration-aliases.html>`_ の ``unsupported`` エイリアスでマーク付けする必要があります。"
+msgstr "テストを Ansible CI インフラストラクチャーで実行できない場合でも、新しいモジュールとプラグインには統合テストが必要です。この場合、テストは `aliases ファイル <https://docs.ansible.com/ansible/latest/dev_guide/testing/sanity/integration-aliases.html>`_ の ``unsupported`` エイリアスでマーク付けする必要があります。"
 
 #: ../../rst/dev_guide/developing_modules_general.rst:183
 msgid "Performing sanity tests"
@@ -4023,15 +4193,15 @@ msgstr "Ansible への貢献"
 
 #: ../../rst/dev_guide/developing_modules_general.rst:211
 msgid "If you would like to contribute to ``ansible-core`` by adding a new feature or fixing a bug, `create a fork <https://help.github.com/articles/fork-a-repo/>`_ of the ansible/ansible repository and develop against a new feature branch using the ``devel`` branch as a starting point. When you have a good working code change, you can submit a pull request to the Ansible repository by selecting your feature branch as a source and the Ansible devel branch as a target."
-msgstr "新しい機能を追加したりバグを修正したりして、``ansible-core`` に貢献する場合は、ansible/ansible リポジトリーの `create a fork <https://help.github.com/articles/fork-a-repo/>`_ し、開始点として ``devel`` ブランチを使用して新機能ブランチに対して開発します。適切な作業コードも変更がある場合は、機能ブランチをソースとして、およびAnsible devel ブランチをターゲットとして選択し、Ansible リポジトリーにプル要求を送信します。"
+msgstr "新しい機能を追加したりバグを修正したりして、``ansible-core`` に貢献する場合は、ansible/ansible リポジトリーの `フォークの作成 <https://help.github.com/articles/fork-a-repo/>`_ し、開始点として ``devel`` ブランチを使用して新機能ブランチに対して開発します。適切な作業コードも変更がある場合は、機能ブランチをソースとして、および Ansible devel ブランチをターゲットとして選択し、Ansible リポジトリーにプル要求を送信します。"
 
 #: ../../rst/dev_guide/developing_modules_general.rst:213
 msgid "If you want to contribute a module to an :ref:`Ansible collection <contributing_maintained_collections>`, review our :ref:`submission checklist <developing_modules_checklist>`, :ref:`programming tips <developing_modules_best_practices>`, and :ref:`strategy for maintaining Python 2 and Python 3 compatibility <developing_python_3>`, as well as information about :ref:`testing <developing_testing>` before you open a pull request."
-msgstr "モジュールを :ref:`Ansible コレクション <contributing_maintained_collections>` に提供したい場合は、:ref:`提出のチェックアウト <developing_modules_checklist>`、:ref:`プログラムのヒント <developing_modules_best_practices>`、および :ref:`Python 2 および Python 3 の互換性を維持するストラテジー <developing_python_3>` を確認してください。プル要求を作成する前に、:ref:`テスト <developing_testing>` に関する情報も併せて参照してください。"
+msgstr "モジュールを :ref:`Ansible コレクション <contributing_maintained_collections>` に提供する場合は、「:ref:`提出のチェックアウト <developing_modules_checklist>`」、「:ref:`プログラムのヒント <developing_modules_best_practices>`」、ならびに「:ref:`Python 2 および Python 3 の互換性を維持するストラテジー <developing_python_3>`」を確認してください。プル要求を作成する前に、:ref:`テスト <developing_testing>` に関する情報も併せて参照してください。"
 
 #: ../../rst/dev_guide/developing_modules_general.rst:215
 msgid "The :ref:`Community Guide <ansible_community_guide>` covers how to open a pull request and what happens next."
-msgstr ":ref:`コミュニティーガイド <ansible_community_guide>` では、プル要求を開く方法と、次に実行することを説明します。"
+msgstr "『:ref:`コミュニティーガイド <ansible_community_guide>`』では、プル要求を開く方法と、次に実行することを説明します。"
 
 #: ../../rst/dev_guide/developing_modules_general.rst:219
 msgid "Communication and development support"
@@ -4102,7 +4272,7 @@ msgstr "`ACI Fundamentals: ACI Policy Model <https://www.cisco.com/c/en/us/td/do
 
 #: ../../rst/dev_guide/developing_modules_general_aci.rst:31
 msgid "A good introduction to the ACI object model."
-msgstr "ACI オブジェクトモデルの優れた概要。"
+msgstr "ACI オブジェクトモデルの優れた概要"
 
 #: ../../rst/dev_guide/developing_modules_general_aci.rst:32
 msgid "`APIC Management Information Model reference <https://developer.cisco.com/docs/apic-mim-ref/>`_"
@@ -4110,7 +4280,7 @@ msgstr "`APIC Management Information Model reference <https://developer.cisco.co
 
 #: ../../rst/dev_guide/developing_modules_general_aci.rst:33
 msgid "Complete reference of the APIC object model."
-msgstr "APIC オブジェクトモデルの完全なリファレンス。"
+msgstr "APIC オブジェクトモデルの完全なリファレンス"
 
 #: ../../rst/dev_guide/developing_modules_general_aci.rst:34
 msgid "`APIC REST API Configuration Guide <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/2-x/rest_cfg/2_1_x/b_Cisco_APIC_REST_API_Configuration_Guide.html>`_"
@@ -4332,11 +4502,11 @@ msgstr "例: EPG への契約のバインド"
 
 #: ../../rst/dev_guide/developing_modules_general_aci.rst:191
 msgid "child_classes - The list of APIC names for the child classes supported by the modules."
-msgstr "child_classes - モジュールがサポートする子クラスの APIC 名のリスト。"
+msgstr "child_classes - モジュールがサポートする子クラスの APIC 名のリスト"
 
 #: ../../rst/dev_guide/developing_modules_general_aci.rst:193
 msgid "This is a list, even if it is a list of one"
-msgstr "1 つのリストであっても、これはリストです"
+msgstr "1 つのリストであっても、これはリストです。"
 
 #: ../../rst/dev_guide/developing_modules_general_aci.rst:194
 msgid "These are the unfriendly names used by the APIC"
@@ -4380,7 +4550,7 @@ msgstr "state が present の場合"
 
 #: ../../rst/dev_guide/developing_modules_general_aci.rst:215
 msgid "When ``state: present``, the module needs to perform a diff against the existing configuration and the task entries. If any value needs to be updated, then the module will make a POST request with only the items that need to be updated. Some modules have children that are in a 1-to-1 relationship with another object; for these cases, the module can be used to manage the child objects."
-msgstr "``state: present`` の場合、モジュールは既存の設定とタスクエントリーに対して diff を実行する必要があります。値を更新する必要がある場合、モジュールは更新が必要なアイテムのみが含まれる POST 要求を行います。モジュールによっては、別のオブジェクトと 1-to-1 の関係にある子があります。これらの場合、モジュールは子オブジェクトを管理するために使用できます。"
+msgstr "``state: present`` の場合、モジュールは既存の設定とタスクエントリーに対して diff を実行する必要があります。値を更新する必要がある場合、モジュールは更新が必要なアイテムのみが含まれる POST 要求を行います。モジュールによっては、別のオブジェクトと 1 対 1 の関係にある子があります。これらの場合、モジュールは子オブジェクトを管理するために使用できます。"
 
 #: ../../rst/dev_guide/developing_modules_general_aci.rst:218
 msgid "Building the ACI payload"
@@ -4616,15 +4786,15 @@ msgstr "これは、単一の Windows インスタンスでモジュールをテ
 
 #: ../../rst/dev_guide/developing_modules_general_windows.rst:107
 msgid "``Vagrantfile``: The Vagrant file that reads the inventory setup of ``inventory.yml`` and provisions the hosts that are required"
-msgstr "``Vagrantfile``: ``inventory.yml`` のインベントリー設定を読み込んで、必要なホストをプロビジョニングする Vagrant ファイルです。"
+msgstr "``Vagrantfile`` - ``inventory.yml`` のインベントリー設定を読み込んで、必要なホストをプロビジョニングする Vagrant ファイルです。"
 
 #: ../../rst/dev_guide/developing_modules_general_windows.rst:108
 msgid "``inventory.yml``: Contains the hosts that are required and other connection information such as IP addresses and forwarded ports"
-msgstr "``inventory.yml``: 必要なホストと、IP アドレスや転送ポートなどの他の接続情報が含まれています。"
+msgstr "``inventory.yml`` - 必要なホストと、IP アドレスや転送ポートなどの他の接続情報が含まれています。"
 
 #: ../../rst/dev_guide/developing_modules_general_windows.rst:109
 msgid "``main.yml``: Ansible playbook called by Vagrant to provision the domain controller and join the child hosts to the domain"
-msgstr "``main.yml``: Vagrant に呼び出された Ansible Playbook は、ドメインコントローラーをプロビジョニングし、子ホストをドメインに参加させます。"
+msgstr "``main.yml`` - Vagrant に呼び出された Ansible Playbook は、ドメインコントローラーをプロビジョニングし、子ホストをドメインに参加させます。"
 
 #: ../../rst/dev_guide/developing_modules_general_windows.rst:111
 msgid "By default, these files will create the following environment:"
@@ -4732,7 +4902,7 @@ msgstr "大規模なコードブロックで try/catch 文を使用しないよ�
 
 #: ../../rst/dev_guide/developing_modules_general_windows.rst:175
 msgid "Try and catch specific exceptions when using try/catch statements"
-msgstr "Try/catch 文の使用時に特定の例外を試して捕え (キャッチし) ます。"
+msgstr "try/catch 文の使用時に特定の例外を試して捕え (キャッチし) ます。"
 
 #: ../../rst/dev_guide/developing_modules_general_windows.rst:176
 msgid "Avoid using PSCustomObjects unless necessary"
@@ -4888,7 +5058,7 @@ msgstr "``dict``: ディクショナリーの値。入力が JSON または key=
 
 #: ../../rst/dev_guide/developing_modules_general_windows.rst:223
 msgid "``float``: A float or `Single <https://docs.microsoft.com/en-us/dotnet/api/system.single?view=netframework-4.7.2>`_ value"
-msgstr "``float``: 浮動 または `Single <https://docs.microsoft.com/en-us/dotnet/api/system.single?view=netframework-4.7.2>`_ の値"
+msgstr "``float``: 浮動小数点または `Single <https://docs.microsoft.com/en-us/dotnet/api/system.single?view=netframework-4.7.2>`_ の値"
 
 #: ../../rst/dev_guide/developing_modules_general_windows.rst:224
 msgid "``int``: An Int32 value"
@@ -5308,7 +5478,7 @@ msgstr "これにより、そのロールに対して現在定義されている
 
 #: ../../rst/dev_guide/developing_modules_general_windows.rst:638
 msgid "When developing tests for a new module, it is recommended to test a scenario once in check mode and twice not in check mode. This ensures that check mode does not make any changes but reports a change, as well as that the second run is idempotent and does not report changes. For example:"
-msgstr "新しいモジュールのテストを開発するときは、シナリオをチェックモードで 1 回、チェックモード以外で 2 回テストすることが推奨されます。これにより、チェックモードでは変更は行われず、変更が報告されます。また、2 回目の実行はべき等であり、変更は報告されません。以下に例を示します。"
+msgstr "新しいモジュールのテストを開発するときは、シナリオをチェックモードで 1 回、チェックモード以外で 2 回テストすることが推奨されます。これにより、チェックモードでは変更は行われず、変更が報告されます。また、2 回目の実行は冪等であり、変更は報告されません。以下に例を示します。"
 
 #: ../../rst/dev_guide/developing_modules_general_windows.rst:691
 msgid "Windows communication and development support"
@@ -5316,7 +5486,7 @@ msgstr "Windows の通信および開発サポート"
 
 #: ../../rst/dev_guide/developing_modules_general_windows.rst:693
 msgid "Join the ``#ansible-devel`` or ``#ansible-windows`` irc channels on `irc.libera.chat <https://libera.chat/>`_ for discussions about Ansible development for Windows."
-msgstr "`irc.libera.chat <https://libera.chat/>`_ の IRC チャンネル ``#ansible-devel`` または ``#ansible-windows`` に参加し、Windows 用 の Ansible 開発に関する議論を行うこと。"
+msgstr "Windows 用 の Ansible 開発に関する議論を行うために、`irc.libera.chat <https://libera.chat/>`_ の IRC チャンネル ``#ansible-devel`` または ``#ansible-windows`` に参加してください。"
 
 #: ../../rst/dev_guide/developing_modules_in_groups.rst:5
 msgid "Creating a new collection"
@@ -5336,7 +5506,7 @@ msgstr "この前提条件のリストは、ansible-core で適切に機能し�
 
 #: ../../rst/dev_guide/developing_modules_in_groups.rst:19
 msgid "Read though all the pages linked off :ref:`developing_modules_general`; paying particular focus to the :ref:`developing_modules_checklist`."
-msgstr "「:ref:`developing_modules_general`」からリンクされているすべてのページを読み込みます。特に、「:ref:`developing_modules_checklist`」に注意してください。"
+msgstr "「:ref:`developing_modules_general`」からリンクされているすべてのページを読みます。特に、「:ref:`developing_modules_checklist`」に注意してください。"
 
 #: ../../rst/dev_guide/developing_modules_in_groups.rst:20
 msgid "We encourage PEP 8 compliance. See :ref:`testing_pep8` for more information."
@@ -5344,7 +5514,7 @@ msgstr "PEP 8 コンプライアンスが推奨されます。詳細は「:ref:`
 
 #: ../../rst/dev_guide/developing_modules_in_groups.rst:21
 msgid "We encourage supporting :ref:`Python 2.6+ and Python 3.5+ <developing_python_3>`."
-msgstr ":ref:`Python 2.6+ and Python 3.5+ <developing_python_3>` をサポートすることが推奨されます。"
+msgstr ":ref:`Python 2.6 以降および Python 3.5 以降 <developing_python_3>` をサポートすることが推奨されます。"
 
 #: ../../rst/dev_guide/developing_modules_in_groups.rst:22
 msgid "Look at Ansible Galaxy and review the naming conventions in your functional area (such as cloud, networking, databases)."
@@ -5424,11 +5594,11 @@ msgstr "メーリングリストをサブスクライブすること。「Ansibl
 
 #: ../../rst/dev_guide/developing_modules_in_groups.rst:58
 msgid "``#ansible-devel`` - We have found that communicating on the IRC channel, ``#ansible-devel`` on `libera.chat's <https://libera.chat/>`_ IRC network works best for developers so we can have an interactive dialogue."
-msgstr "``#ansible-devel`` - `libera.chat's <https://libera.chat/>`_ の IRC ネットワーク ``#ansible-devel`` では、インタラクティブな対話を行うことができるため、開発者に最適なものであることが分かっています。"
+msgstr "``#ansible-devel`` - `libera.chat <https://libera.chat/>`_ の IRC ネットワーク ``#ansible-devel`` では、インタラクティブな対話を行うことができるため、開発者に最適なものであることが分かっています。"
 
 #: ../../rst/dev_guide/developing_modules_in_groups.rst:59
 msgid "IRC meetings - Join the various weekly IRC meetings `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_"
-msgstr "IRC ミーティング。様々な IRC ミーティング (毎週) に参加してください。「`ミーティングスケジュールおよび議題のページ <https://github.com/ansible/community/blob/master/meetings/README.md>`_」を参照してください。"
+msgstr "IRC ミーティング。さまざまな IRC ミーティング (毎週) に参加してください。「`ミーティングスケジュールおよび議題のページ <https://github.com/ansible/community/blob/master/meetings/README.md>`_」を参照してください。"
 
 #: ../../rst/dev_guide/developing_modules_in_groups.rst:62
 msgid "Required files"
@@ -5544,7 +5714,7 @@ msgstr "プラグインの設定およびドキュメントの標準仕様"
 
 #: ../../rst/dev_guide/developing_plugins.rst:54
 msgid "To define configurable options for your plugin, describe them in the ``DOCUMENTATION`` section of the python file. Callback and connection plugins have declared configuration requirements this way since Ansible version 2.4; most plugin types now do the same. This approach ensures that the documentation of your plugin's options will always be correct and up-to-date. To add a configurable option to your plugin, define it in this format:"
-msgstr "プラグインの設定可能なオプションを定義するには、python ファイルの ``DOCUMENTATION`` セクションに記述します。コールバックおよび接続プラグインは、Ansible バージョン 2.4 以降、この方法で設定要件を宣言します。現在、ほとんどのプラグインタイプが同じように動作するようになりました。この方法により、プラグインのオプションのドキュメントが常に正確で最新の状態になります。設定可能なオプションをプラグインに追加するには、以下の形式で定義します。"
+msgstr "プラグインの設定可能なオプションを定義するには、python ファイルの ``DOCUMENTATION`` セクションに記述します。コールバックおよび connection プラグインは、Ansible バージョン 2.4 以降、この方法で設定要件を宣言します。現在、ほとんどのプラグインタイプが同じように動作するようになりました。この方法により、プラグインのオプションのドキュメントが常に正確で最新の状態になります。設定可能なオプションをプラグインに追加するには、以下の形式で定義します。"
 
 #: ../../rst/dev_guide/developing_plugins.rst:71
 msgid "To access the configuration settings in your plugin, use ``self.get_option(<option_name>)``. For most plugin types, the controller pre-populates the settings. If you need to populate settings explicitly, use a ``self.set_options()`` call."
@@ -5593,7 +5763,7 @@ msgstr "Cache プラグイン"
 
 #: ../../rst/dev_guide/developing_plugins.rst:152
 msgid "Cache plugins store gathered facts and data retrieved by inventory plugins."
-msgstr "Cache プラグインは、Inventory プラグインによって取得されるファクトおよびデータを収集したデータを格納します。"
+msgstr "dache プラグインは、inventory プラグインによって取得されるファクトおよびデータを格納します。"
 
 #: ../../rst/dev_guide/developing_plugins.rst:154
 msgid "Import cache plugins using the cache_loader so you can use ``self.set_options()`` and ``self.get_option(<option_name>)``. If you import a cache plugin directly in the code base, you can only access options via ``ansible.constants``, and you break the cache plugin's ability to be used by an inventory plugin."
@@ -5661,7 +5831,7 @@ msgstr "ansible-core 2.11 の新機能として、:ref:`meta<meta_module>` タ�
 
 #: ../../rst/dev_guide/developing_plugins.rst:283
 msgid "There are also some tasks which are generated internally and implicitly at various points in execution. Callback plugins can opt-in to receiving these implicit tasks as well, by setting ``self.wants_implicit_tasks = True``. Any ``Task`` object received by a callback hook will have an ``.implicit`` attribute, which can be consulted to determine whether the ``Task`` originated from within Ansible, or explicitly by the user."
-msgstr "実行のさまざまな時点で、内部的および暗黙的に生成されるタスクもいくつかあります。callback プラグインは、``self.wants_implicit_tasks = True`` を設定することにより、これらの暗黙的なタスクを受け取ることをオプトインできます。コールバックフックによって受信された ``Task`` オブジェクトには、``.implicit`` 属性があります。これを参照して、``Task`` が Ansible 内から、またはユーザーによって明示的に発信されたかどうかを決めるために参照します。"
+msgstr "実行のさまざまな時点で、内部的および暗黙的に生成されるタスクもいくつかあります。callback プラグインは、``self.wants_implicit_tasks = True`` を設定することにより、これらの暗黙的なタスクを受け取ることをオプトインできます。コールバックフックによって受信した ``Task`` オブジェクトには、``.implicit`` 属性があります。これを参照して、``Task`` が Ansible 内から、またはユーザーによって明示的に発信されたかどうかを決めるために参照します。"
 
 #: ../../rst/dev_guide/developing_plugins.rst:288
 msgid "Connection plugins"
@@ -5669,11 +5839,11 @@ msgstr "connection プラグイン"
 
 #: ../../rst/dev_guide/developing_plugins.rst:290
 msgid "Connection plugins allow Ansible to connect to the target hosts so it can execute tasks on them. Ansible ships with many connection plugins, but only one can be used per host at a time. The most commonly used connection plugins are the ``paramiko`` SSH, native ssh (just called ``ssh``), and ``local`` connection types.  All of these can be used in playbooks and with ``/usr/bin/ansible`` to connect to remote machines."
-msgstr "connection プラグインにより、Ansible はターゲットホストに接続してそのホストにあるタスクを実行できるようにします。Ansible には多くの接続プラグインが同梱されていますが、一度に使用できるのは 1 つのみとなります。最も一般的に使用される接続プラグインは、``paramiko`` SSH、ネイティブ ssh (単に ``ssh`` と呼ばれる)、および ``local`` 接続タイプです。これらはすべて Playbook で使用され、``/usr/bin/ansible`` を使用してリモートマシンに接続します。"
+msgstr "connection プラグインにより、Ansible はターゲットホストに接続してそのホストにあるタスクを実行できるようにします。Ansible には多くの connection プラグインが同梱されていますが、一度に使用できるのは 1 つのみとなります。最も一般的に使用される connection プラグインは、``paramiko`` SSH、ネイティブ ssh (単に ``ssh`` と呼ばれる)、および ``local`` 接続タイプです。これらはすべて Playbook で使用され、``/usr/bin/ansible`` を使用してリモートマシンに接続します。"
 
 #: ../../rst/dev_guide/developing_plugins.rst:292
 msgid "Ansible version 2.1 introduced the ``smart`` connection plugin. The ``smart`` connection type allows Ansible to automatically select either the ``paramiko`` or ``openssh`` connection plugin based on system capabilities, or the ``ssh`` connection plugin if OpenSSH supports ControlPersist."
-msgstr "Ansible バージョン 2.1 では、``smart`` 接続プラグインが導入されます。``smart`` 接続タイプにより、Ansible は、システム機能に基づいて、``paramiko`` 接続プラグインまたは ``openssh`` 接続プラグインのいずれかを自動的に選択できますが、OpenSSH が ControlPersist に対応している場合は connetion プラグイン ``ssh`` を選択します。"
+msgstr "Ansible バージョン 2.1 では、``smart`` connection プラグインが導入されます。``smart`` 接続タイプにより、Ansible は、システム機能に基づいて、``paramiko`` または ``openssh`` connection プラグインのいずれかを自動的に選択できますが、OpenSSH が ControlPersist に対応している場合は connetion プラグイン ``ssh`` を選択します。"
 
 #: ../../rst/dev_guide/developing_plugins.rst:294
 msgid "To create a new connection plugin (for example, to support SNMP, Message bus, or other transports), copy the format of one of the existing connection plugins and drop it into ``connection`` directory on your :ref:`local plugin path <local_plugins>`."
@@ -5681,7 +5851,7 @@ msgstr "新しい connetion プラグイン (SNMP、メッセージバス、ま�
 
 #: ../../rst/dev_guide/developing_plugins.rst:296
 msgid "Connection plugins can support common options (such as the ``--timeout`` flag) by defining an entry in the documentation for the attribute name (in this case ``timeout``). If the common option has a non-null default, the plugin should define the same default since a different default would be ignored."
-msgstr "接続プラグインは、属性名 (ここでは ``timeout``) のドキュメントでエントリーを定義することで、一般的なオプション (``--timeout`` フラグなど) をサポートします。一般的なオプションには null 以外のデフォルトがある場合、別のデフォルトは無視されるため、プラグインは同じデフォルトを定義する必要があります。"
+msgstr "connection プラグインは、属性名 (ここでは ``timeout``) のドキュメントでエントリーを定義することで、一般的なオプション (``--timeout`` フラグなど) をサポートします。一般的なオプションには null 以外のデフォルトがある場合、別のデフォルトは無視されるため、プラグインは同じデフォルトを定義する必要があります。"
 
 #: ../../rst/dev_guide/developing_plugins.rst:298
 msgid "For example connection plugins, see the source code for the `connection plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/connection>`_."
@@ -5869,7 +6039,7 @@ msgstr "新しいスタイルの Python モジュールは、モジュールの�
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:63
 msgid "In Ansible, up to version 2.0.x, the official Python modules used the :ref:`module_replacer` framework.  For module authors, :ref:`Ansiballz` is largely a superset of :ref:`module_replacer` functionality, so you usually do not need to understand the differences between them."
-msgstr "バージョン 2.0.x までの Ansible では、公式の Python モジュールが :ref:`module_replacer` フレームワークを使用していました。:ref:`Ansiballz` は、:ref:`module_replacer` 機能の上位セットであるため、通常はモジュール作成者がこれらの違いを理解する必要はありません。"
+msgstr "バージョン 2.0.x までの Ansible では、公式の Python モジュールが :ref:`module_replacer`を使用していました。:ref:`Ansiballz` は、:ref:`module_replacer` 機能の上位セットであるため、通常はモジュール作成者がこれらの違いを理解する必要はありません。"
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:71
 msgid "PowerShell"
@@ -5877,7 +6047,7 @@ msgstr "PowerShell"
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:73
 msgid "New-style PowerShell modules use the :ref:`module_replacer` framework for constructing modules. These modules get a library of PowerShell code embedded in them before being sent to the managed node."
-msgstr "新しいスタイルの PowerShell モジュールは、モジュールの構築に :ref:`module_replacer` フレームワークを使用します。これらのモジュールは、管理ノードに送信される前にそれらに組み込まれている PowerShell コードのライブラリーを取得します。"
+msgstr "新しいスタイルの PowerShell モジュールは、モジュールの構築に :ref:`module_replacer` を使用します。これらのモジュールは、管理ノードに送信される前にそれらに組み込まれている PowerShell コードのライブラリーを取得します。"
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:80
 msgid "JSONARGS modules"
@@ -5953,7 +6123,7 @@ msgstr "Executor/task_executor"
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:175
 msgid "The TaskExecutor receives the module name and parameters that were parsed from the :term:`playbook <playbooks>` (or from the command line in the case of :command:`/usr/bin/ansible`). It uses the name to decide whether it's looking at a module or an :ref:`Action Plugin <flow_action_plugins>`. If it's a module, it loads the :ref:`Normal Action Plugin <flow_normal_action_plugin>` and passes the name, variables, and other information about the task and play to that Action Plugin for further processing."
-msgstr "TaskExecutor は、:term:`playbook <playbooks>` (:command:`/usr/bin/ansible` の場合はコマンドライン) から解析されたモジュール名とパラメーターを受け取ります。これは、モジュールを見て、または :ref:`Action Plugin <flow_action_plugins>` を見ているかを判断するために名前を使用します。モジュールの場合は、:ref:`Normal Action Plugin <flow_normal_action_plugin>` を読み込み、タスクとプレイに関する名前、変数、およびその他の情報をそのアクションプラグインに渡して、さらに処理します。"
+msgstr "TaskExecutor は、:term:`Playbook <playbooks>` (:command:`/usr/bin/ansible` の場合はコマンドライン) から解析されたモジュール名とパラメーターを受け取ります。これは、モジュールを見て、または :ref:`action プラグイン <flow_action_plugins>` を見ているかを判断するために名前を使用します。モジュールの場合は、:ref:`Normal action プラグイン <flow_normal_action_plugin>` を読み込み、タスクとプレイに関する名前、変数、およびその他の情報をそのアクションプラグインに渡して、さらに処理します。"
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:186
 msgid "The ``normal`` action plugin"
@@ -5965,7 +6135,7 @@ msgstr "action プラグイン ``normal`` は、リモートホストでモジ�
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:192
 msgid "It loads the appropriate connection plugin for the task, which then transfers or executes as needed to create a connection to that host."
-msgstr "タスクに適切な接続プラグインを読み込み、そのホストへの接続を作成するために必要に応じて転送や実行を行います。"
+msgstr "タスクに適切な connection プラグインを読み込み、そのホストへの接続を作成するために必要に応じて転送や実行を行います。"
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:194
 msgid "It adds any internal Ansible properties to the module's parameters (for instance, the ones that pass along ``no_log`` to the module)."
@@ -5989,7 +6159,7 @@ msgstr "この機能の多くは、`BaseAction` クラス (:file:`plugins/action
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:211
 msgid "When :term:`tasks <tasks>` are run with the ``async:`` parameter, Ansible uses the ``async`` Action Plugin instead of the ``normal`` Action Plugin to invoke it. That program flow is currently not documented. Read the source for information on how that works."
-msgstr ":term:`tasks <tasks>` を ``async:`` パラメーターで実行している場合、Ansible は、action プラグイン ``normal`` の代わりに ``async`` を使用してそれを呼び出します。そのプログラムフローは現在文書化されていません。それがどのように機能するかについては、ソースをお読みください。"
+msgstr ":term:`タスク <tasks>` を ``async:`` パラメーターで実行している場合、Ansible は、action プラグイン ``normal`` の代わりに ``async`` を使用してそれを呼び出します。そのプログラムフローは現在文書化されていません。それがどのように機能するかについては、ソースをお読みください。"
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:219
 msgid "Executor/module_common.py"
@@ -6001,19 +6171,19 @@ msgstr ":file:`executor/module_common.py` のコードは、管理ノードに�
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:225
 msgid ":ref:`PowerShell <flow_powershell_modules>` and :ref:`JSON-args modules <flow_jsonargs_modules>` are passed through :ref:`Module Replacer <module_replacer>`."
-msgstr ":ref:`PowerShell <flow_powershell_modules>` および :ref:`JSON-args modules <flow_jsonargs_modules>` は、:ref:`Module Replacer <module_replacer>` 経由で渡されます。"
+msgstr ":ref:`PowerShell <flow_powershell_modules>` および :ref:`JSON-args モジュール <flow_jsonargs_modules>` は、:ref:`Module Replacer <module_replacer>` 経由で渡されます。"
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:226
 msgid "New-style :ref:`Python modules <flow_python_modules>` are assembled by :ref:`Ansiballz`."
-msgstr "新しいスタイルの :ref:`Python modules <flow_python_modules>` は :ref:`Ansiballz` によりアセンブルされます。"
+msgstr "新しいスタイルの :ref:`Python モジュール <flow_python_modules>` は :ref:`Ansiballz` によりアセンブルされます。"
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:227
 msgid ":ref:`Non-native-want-JSON <flow_want_json_modules>`, :ref:`Binary modules <flow_binary_modules>`, and :ref:`Old-Style modules <flow_old_style_modules>` aren't touched by either of these and pass through unchanged."
-msgstr ":ref:`Non-native-want-JSON <flow_want_json_modules>`、:ref:`バイナリーモジュール <flow_binary_modules>`、および:ref:`古いスタイルのモジュール <flow_old_style_modules>` は、これらのどちらにも触れられず、変更されずにそのまま通過します。"
+msgstr ":ref:`Non-native-want-JSON <flow_want_json_modules>`、:ref:`バイナリーモジュール <flow_binary_modules>`、および :ref:`古いスタイルのモジュール <flow_old_style_modules>` は、これらのどちらにも触れられず、変更されずにそのまま通過します。"
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:229
 msgid "After the assembling step, one final modification is made to all modules that have a shebang line. Ansible checks whether the interpreter in the shebang line has a specific path configured via an ``ansible_$X_interpreter`` inventory variable. If it does, Ansible substitutes that path for the interpreter path given in the module. After this, Ansible returns the complete module data and the module type to the :ref:`Normal Action <flow_normal_action_plugin>` which continues execution of the module."
-msgstr "アセンブル手順後、シバン行を持つすべてのモジュールに最終変更が行われます。Ansible は、シバン行内のインタープリターに ``ansible_$X_interpreter`` インベントリー変数を介して特定のパスが設定されているかどうかを確認します。パスがある場合、Ansible は、そのパスを、そのモジュールに指定されているインタープリターパスに置き換えます。その後、Ansible は完全なモジュールデータを返し、モジュールタイプを :ref:`通常のアクション <flow_normal_action_plugin>` に返し、モジュールの実行を続行します。"
+msgstr "アセンブル手順後、シバン行を持つすべてのモジュールに最終変更が行われます。Ansible は、シバン行内のインタープリターに ``ansible_$X_interpreter`` インベントリー変数を介して特定のパスが設定されているかどうかを確認します。パスがある場合、Ansible は、そのパスを、そのモジュールに指定されているインタープリターパスに置き換えます。その後、Ansible は完全なモジュールデータを返し、モジュールタイプを :ref:`normal action <flow_normal_action_plugin>` に返し、モジュールの実行を続行します。"
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:239
 msgid "Assembler frameworks"
@@ -6037,7 +6207,7 @@ msgstr "モジュールファイルでのみ実行する置換。モジュール
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:258
 msgid ":code:`from ansible.module_utils.MOD_LIB_NAME import *` is replaced with the contents of the :file:`ansible/module_utils/MOD_LIB_NAME.py`  These should only be used with :ref:`new-style Python modules <flow_python_modules>`."
-msgstr ":code:`from ansible.module_utils.MOD_LIB_NAME import *` は、:file:`ansible/module_utils/MOD_LIB_NAME.py` の内容に置き換えます。これらは、:ref:`new-style Python modules <flow_python_modules>` と併用する必要があります。"
+msgstr ":code:`from ansible.module_utils.MOD_LIB_NAME import *` は、:file:`ansible/module_utils/MOD_LIB_NAME.py` の内容に置き換えます。これらは、:ref:`新しいスタイルの Python モジュール <flow_python_modules>` と併用する必要があります。"
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:261
 msgid ":code:`#<<INCLUDE_ANSIBLE_MODULE_COMMON>>` is equivalent to :code:`from ansible.module_utils.basic import *` and should also only apply to new-style Python modules."
@@ -6053,7 +6223,7 @@ msgstr "``ansible.module_utils`` コードにより使用される代替品。�
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:270
 msgid ":code:`\"<<ANSIBLE_VERSION>>\"` is substituted with the Ansible version.  In :ref:`new-style Python modules <flow_python_modules>` under the :ref:`Ansiballz` framework the proper way is to instead instantiate an `AnsibleModule` and then access the version from :attr:``AnsibleModule.ansible_version``."
-msgstr ":code:`\"<<ANSIBLE_VERSION>>\"` は、Ansible バージョンに置き換えられます。:ref:`Ansiballz` フレームワークの下の :ref:`new-style Python modules <flow_python_modules>` で適切な方法は、代わりに `AnsibleModule` をインスタンス化し、:attr:``AnsibleModule.ansible_version`` からバージョンにアクセスすることです。"
+msgstr ":code:`\"<<ANSIBLE_VERSION>>\"` は、Ansible バージョンに置き換えられます。:ref:`Ansiballz` フレームワークの下の :ref:`新しいスタイルの Python モジュール <flow_python_modules>` で適切な方法は、代わりに `AnsibleModule` をインスタンス化し、:attr:``AnsibleModule.ansible_version`` からバージョンにアクセスすることです。"
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:275
 msgid ":code:`\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\"` is substituted with a string which is the Python ``repr`` of the :term:`JSON` encoded module parameters. Using ``repr`` on the JSON string makes it safe to embed in a Python file. In new-style Python modules under the Ansiballz framework this is better accessed by instantiating an `AnsibleModule` and then using :attr:`AnsibleModule.params`."
@@ -6394,7 +6564,7 @@ msgstr "``no_log`` がない場合は、パラメーター名が、引数の値�
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:620
 msgid "``aliases`` accepts a list of alternative argument names for the argument, such as the case where the argument is ``name`` but the module accepts ``aliases=['pkg']`` to allow ``pkg`` to be interchangeably with ``name``"
-msgstr "``aliases`` では、引数の代替引数名のリストが使用できます。たとえば、引数が ``name`` ですが、モジュールが ``aliases=['pkg']`` を受け付けて、``pkg`` を ``name`` と互換性を持たせるようにしています。"
+msgstr "``aliases`` では、引数の代替引数名のリストが使用できます。たとえば、引数は ``name`` ですが、モジュールが ``aliases=['pkg']`` を受け付けて、``pkg`` を ``name`` と互換性を持たせるようにしています。"
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:624
 msgid "``options`` implements the ability to create a sub-argument_spec, where the sub options of the top level argument are also validated using the attributes discussed in this section. The example at the top of this section demonstrates use of ``options``. ``type`` or ``elements`` should be ``dict`` is this case."
@@ -6418,7 +6588,7 @@ msgstr "removed_in_version"
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:634
 msgid "``removed_in_version`` indicates which version of ansible-core or a collection a deprecated argument will be removed in. Mutually exclusive with ``removed_at_date``, and must be used with ``removed_from_collection``."
-msgstr "``removed_in_version`` は、非推奨の引数が削除される ansible-core またはコレクションのバージョンを示します。``removed_at_date`` で相互排他され、``removed_from_collection`` で使用する必要があります。"
+msgstr "``removed_in_version`` は、非推奨の引数が削除される ansible-core またはコレクションのバージョンを示します。``removed_at_date`` で相互に排他となり、``removed_from_collection`` で使用する必要があります。"
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst
 msgid "removed_at_date"
@@ -6611,7 +6781,7 @@ msgstr "モジュールがすべての共通ファイルオプションのサポ
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:858
 msgid "You can find `a list of all file options here <https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/doc_fragments/files.py>`_. It is recommended that you make your ``DOCUMENTATION`` extend the doc fragment ``ansible.builtin.files`` (see :ref:`module_docs_fragments`) in this case, to make sure that all these fields are correctly documented."
-msgstr "`a list of all file options here <https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/doc_fragments/files.py>`_ を確認できます。今回は、``DOCUMENTATION`` がドキュメントフラグメント ``ansible.builtin.files`` (:ref:`module_docs_fragments`を参照) を拡張し、これらのフィールドがすべて正しく文書化されていることを確認することが推奨されます。"
+msgstr "`ここで、ファイルオプションの一覧 <https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/doc_fragments/files.py>`_ を確認できます。今回は、``DOCUMENTATION`` がドキュメントフラグメント ``ansible.builtin.files`` (:ref:`module_docs_fragments` を参照) を拡張し、これらのフィールドがすべて正しく文書化されていることを確認することが推奨されます。"
 
 #: ../../rst/dev_guide/developing_program_flow_modules.rst:860
 msgid "The helper functions ``module.load_file_common_arguments()`` and ``module.set_fs_attributes_if_different()`` can be used to handle these arguments for you:"
@@ -6623,15 +6793,15 @@ msgstr "Ansible および Python 3"
 
 #: ../../rst/dev_guide/developing_python_3.rst:7
 msgid "The ``ansible-core`` code runs on both Python 2 and Python 3 because we want Ansible to be able to manage a wide variety of machines. Contributors to ansible-core and to Ansible Collections should be aware of the tips in this document so that they can write code that will run on the same versions of Python as the rest of Ansible."
-msgstr "Ansible が各種マシンを管理できるようにするため、``ansible-core`` コードは Python 2 と Python 3 の両方で実行されます。ansible-core と Ansible Collections に貢献する場合は、このドキュメントのヒントを確認して、Ansible の残りの部分と同じバージョンの Python で実行するコードを記述できるようにする必要があります。"
+msgstr "Ansible が各種マシンを管理できるようにするため、``ansible-core`` コードは Python 2 と Python 3 の両方で実行されます。ansible-core と Ansible コレクションに貢献する場合は、このドキュメントのヒントを確認して、Ansible の残りの部分と同じバージョンの Python で実行するコードを記述できるようにする必要があります。"
 
 #: ../../rst/dev_guide/developing_python_3.rst:13
 msgid "To ensure that your code runs on Python 3 as well as on Python 2, learn the tips and tricks and idioms described here. Most of these considerations apply to all three types of Ansible code:"
-msgstr "Python 2 および Python 3 でコードが実行されるようにするには、ここで説明するヒントとコツ、およびイディオムを確認してください。これらの考慮事項は、これら 3 種類の Ansible コードのすべてに適用されます。"
+msgstr "Python 2 および Python 3 でコードが実行されるようにするには、ここで説明するヒントとコツ、およびイディオムを確認してください。これらの考慮事項のほとんどは、以下の 3 種類の Ansible コードのすべてに適用されます。"
 
 #: ../../rst/dev_guide/developing_python_3.rst:16
 msgid "controller-side code - code that runs on the machine where you invoke :command:`/usr/bin/ansible`"
-msgstr "コントローラー側のコード: :command:`/usr/bin/ansible` を呼び出すマシンで実行されるコード"
+msgstr "コントローラー側のコード - :command:`/usr/bin/ansible` を呼び出すマシンで実行されるコード"
 
 #: ../../rst/dev_guide/developing_python_3.rst:17
 msgid "modules - the code which Ansible transmits to and invokes on the managed machine."
@@ -6643,7 +6813,7 @@ msgstr "共有されている ``module_utils`` コード - タスクを実行す
 
 #: ../../rst/dev_guide/developing_python_3.rst:20
 msgid "However, the three types of code do not use the same string strategy. If you're developing a module or some ``module_utils`` code, be sure to read the section on string strategy carefully."
-msgstr "ただし、この 3 種類のコードで同じ文字列戦略が使用されているわけではありません。モジュールまたはいくつかの ``module_utils`` コードを開発している場合は、文字列戦略のセクションを注意してお読みください。"
+msgstr "ただし、この 3 種類のコードで同じ文字列ストラテジーが使用されているわけではありません。モジュールまたはいくつかの ``module_utils`` コードを開発している場合は、文字列ストラテジーのセクションを注意してお読みください。"
 
 #: ../../rst/dev_guide/developing_python_3.rst:23
 msgid "Minimum version of Python 3.x and Python 2.x"
@@ -6667,7 +6837,7 @@ msgstr "Python 2.4 モジュールでのサポート:"
 
 #: ../../rst/dev_guide/developing_python_3.rst:44
 msgid "Support for Python 2.4 and Python 2.5 was dropped in Ansible-2.4.  RHEL-5 (and its rebuilds like CentOS-5) were supported until April of 2017. Ansible-2.3 was released in April of 2017 and was the last Ansible release to support Python 2.4 on the module-side."
-msgstr "Python 2.4 および Python 2.5 のサポートは Ansible-2.4 から削除されました。RHEL-5 (および CentOS-5) は 2017 年 4 月までサポートされます。Ansible-2.3 は 2017 年 4 月にリリースされ、これがモジュールサイドの Python 2.4 をサポートする最後の Ansible リリースでした。"
+msgstr "Python 2.4 および Python 2.5 のサポートは Ansible-2.4 から削除されました。RHEL-5 (および CentOS-5) は 2017 年 4 月までサポートされていました。Ansible-2.3 は 2017 年 4 月にリリースされましたが、これがモジュールサイドの Python 2.4 をサポートする最後の Ansible リリースでした。"
 
 #: ../../rst/dev_guide/developing_python_3.rst:50
 msgid "Developing Ansible code that supports Python 2 and Python 3"
@@ -6675,7 +6845,7 @@ msgstr "Python 2 および Python 3 をサポートする Ansible コードの�
 
 #: ../../rst/dev_guide/developing_python_3.rst:52
 msgid "The best place to start learning about writing code that supports both Python 2 and Python 3 is `Lennart Regebro's book: Porting to Python 3 <http://python3porting.com/>`_. The book describes several strategies for porting to Python 3. The one we're using is `to support Python 2 and Python 3 from a single code base <http://python3porting.com/strategies.html#python-2-and-python-3-without-conversion>`_"
-msgstr "Python 2 と Python 3 の両方をサポートするコードの記述について学び始めるのに最適なのは、`Lennart Regebro の著書: Porting to Python 3 <http://python3porting.com/>`_ です。本書では、Python 3 に移植するためのいくつかの戦略が説明されています。Ansible で使用しているのは、`単一のコードベースから Python 2 および Python 3 をサポートするため <http://python3porting.com/strategies.html#python-2-and-python-3-without-conversion>`_ です。"
+msgstr "Python 2 と Python 3 の両方をサポートするコードの記述について学び始めるのに最適なのは、`Lennart Regebro の著書: Porting to Python 3 <http://python3porting.com/>`_ です。本書では、Python 3 に移植するためのいくつかのストラテジーが説明されています。Ansible で使用しているのは、`単一のコードベースから Python 2 および Python 3 をサポートするため <http://python3porting.com/strategies.html#python-2-and-python-3-without-conversion>`_ です。"
 
 #: ../../rst/dev_guide/developing_python_3.rst:59
 msgid "Understanding strings in Python 2 and Python 3"
@@ -6707,7 +6877,7 @@ msgstr "コントローラー文字列ストラテジー: Unicode Sandwich"
 
 #: ../../rst/dev_guide/developing_python_3.rst:93
 msgid "In controller-side code we use a strategy known as the Unicode Sandwich (named after Python 2's :func:`unicode  <python:unicode>` text type).  For Unicode Sandwich we know that at the border of our code and the outside world (for example, file and network IO, environment variables, and some library calls) we are going to receive bytes. We need to transform these bytes into text and use that throughout the internal portions of our code.  When we have to send those strings back out to the outside world we first convert the text back into bytes. To visualize this, imagine a 'sandwich' consisting of a top and bottom layer of bytes, a layer of conversion between, and all text type in the center."
-msgstr "コントローラー側のコードでは、Unicode Sandwich と呼ばれるストラテジーを使用します (名前は Python 2 の :func:`unicode  <python:unicode>` テキストタイプに由来します)。Unicode Sandwich の場合、コードと外部の境界 (ファイルやネットワークの IO、環境変数、ライブラリーの呼び出しなど) でバイトを受信することがわかります。これらのバイトをテキストに変換し、コードの内部全体でこれを使用する必要があります。これらの文字列を外部に返す必要がある場合は、最初にテキストをバイトに変換します。これは、上下にバイトの層、その間に変換の層、その中央にあるすべてのテキストタイプからなる「サンドイッチ」を想像してください。"
+msgstr "コントローラー側のコードでは、Unicode Sandwich と呼ばれるストラテジーを使用します (名前は Python 2 の :func:`unicode  <python:unicode>` テキストタイプに由来します)。Unicode Sandwich の場合は、コードと外部の境界 (ファイルやネットワークの IO、環境変数、ライブラリーの呼び出しなど) でバイトを受信することがわかります。これらのバイトをテキストに変換し、コードの内部全体でこれを使用する必要があります。これらの文字列を外部に返す必要がある場合は、最初にテキストをバイトに変換します。これは、上下にバイトの層、その間に変換の層、その中央にあるすべてのテキストタイプからなる「サンドイッチ」を想像してください。"
 
 #: ../../rst/dev_guide/developing_python_3.rst:104
 msgid "Unicode Sandwich common borders: places to convert bytes to text in controller code"
@@ -6767,7 +6937,7 @@ msgstr "他のプログラムとの対話は、オペレーティングシステ
 
 #: ../../rst/dev_guide/developing_python_3.rst:202
 msgid "One of the main places in Ansible's controller code that we interact with other programs is the connection plugins' ``exec_command`` methods.  These methods transform any text strings they receive in the command (and arguments to the command) to execute into bytes and return stdout and stderr as byte strings Higher level functions (like action plugins' ``_low_level_execute_command``) transform the output into text strings."
-msgstr "Ansible のコントローラーコードで他のプログラムとやり取りする主な場所の 1 つは、接続プラグインの ``exec_command`` メソッドです。これらのメソッドは、コマンドで受け取ったテキスト文字列 (およびコマンドへの引数) をバイトに変換し、stdout と stderr をバイト文字列として返します。(アクションプラグインの ``_low_level_execute_command`` のように) 高レベルの関数出力をテキスト文字列に変換します。"
+msgstr "Ansible のコントローラーコードで他のプログラムとやり取りする主な場所の 1 つは、connection プラグインの ``exec_command`` メソッドです。これらのメソッドは、コマンドで受け取ったテキスト文字列 (およびコマンドへの引数) をバイトに変換し、stdout と stderr をバイト文字列として返します。(アクションプラグインの ``_low_level_execute_command`` のように) 高レベルの関数出力をテキスト文字列に変換します。"
 
 #: ../../rst/dev_guide/developing_python_3.rst:212
 msgid "Module string strategy: Native String"
@@ -6926,7 +7096,7 @@ msgstr "コントローラーコードの文字列形式"
 
 #: ../../rst/dev_guide/developing_python_3.rst:356
 msgid "Use ``str.format()`` for Python 2.6 compatibility"
-msgstr "Python 2.6 の互換性のために ``str.format()`` を使用します。"
+msgstr "Python 2.6 の互換性のために ``str.format()`` の使用"
 
 #: ../../rst/dev_guide/developing_python_3.rst:358
 msgid "Starting in Python 2.6, strings gained a method called ``format()`` to put strings together.  However, one commonly used feature of ``format()`` wasn't added until Python 2.7, so you need to remember not to use it in Ansible code:"
@@ -7122,7 +7292,7 @@ msgstr "上記の情報を読んで、モジュールを開発したい。"
 
 #: ../../rst/dev_guide/index.rst:32
 msgid "What do I need to know before I start coding?"
-msgstr "コーディングを始める前に何を知っておくべきか。"
+msgstr "コーディングを始める前に何を知っておくべきでしょうか。"
 
 #: ../../rst/dev_guide/index.rst:33
 msgid "I want to :ref:`set up my Python development environment <environment_setup>`."
@@ -7367,7 +7537,7 @@ msgstr "カスタムの ``module_utils`` がある、または ``__init__.py`` �
 
 #: ../../rst/dev_guide/migrating_roles.rst:199
 msgid "Change the Python namespace for custom ``module_utils`` to use the :abbr:`FQCN (Fully Qualified Collection Name)` along with the ``ansible_collections`` convention. See :ref:`update_module_utils_role`."
-msgstr "カスタム ``module_utils`` の Python 名前空間が、``ansible_collections`` 規則と共に :abbr:`FQCN (Fully Qualified Collection Name)` を使用するように変更します。:ref:`update_module_utils_role` を参照してください。"
+msgstr "カスタム ``module_utils`` の Python 名前空間が、``ansible_collections`` 規則と共に :abbr:`FQCN (Fully Qualified Collection Name)` を使用するように変更します。「:ref:`update_module_utils_role`」を参照してください。"
 
 #: ../../rst/dev_guide/migrating_roles.rst:201
 msgid "Change how you import from ``__init__.py``. See :ref:`update_init_role`."
@@ -7479,7 +7649,7 @@ msgstr "``ansible.legacy`` を使用したコレクションベースのロー�
 
 #: ../../rst/dev_guide/migrating_roles.rst:416
 msgid "Some roles use :ref:`local custom modules <developing_locally>` that are not part of the role itself. When you move these roles into collections, they can no longer find those custom plugins. You can add the synthetic collection ``ansible.legacy`` to enable legacy behavior and find those custom plugins. Adding ``ansible.legacy`` configures your role to search the pre-collections default paths for modules and plugins."
-msgstr "一部のロールは、ロール自体の一部ではない :ref:`local custom modules <developing_locally>` を使用します。これらのロールをコレクションに移動すると、それらのカスタムプラグインを見つけることができなくなります。統合的なコレクション ``ansible.legacy`` を追加して、レガシー動作を有効にし、これらのカスタムプラグインを見つけることができます。``ansible.legacy`` を追加することで、ロールを設定し、モジュールおよびプラグインのプレコレクションのデフォルトパスを検索します。"
+msgstr "一部のロールは、ロール自体の一部ではない :ref:`ローカルのカスタムモジュール <developing_locally>` を使用します。これらのロールをコレクションに移動すると、それらのカスタムプラグインを見つけることができなくなります。統合的なコレクション ``ansible.legacy`` を追加して、レガシー動作を有効にし、これらのカスタムプラグインを見つけることができます。``ansible.legacy`` を追加することで、ロールを設定し、モジュールおよびプラグインのプレコレクションのデフォルトパスを検索します。"
 
 #: ../../rst/dev_guide/migrating_roles.rst:418
 msgid "To enable a role hosted in a collection to find legacy custom modules and other plugins hosted locally:"
@@ -7499,7 +7669,7 @@ msgstr "Ansible モジュールまたはプラグインのライフサイクル"
 
 #: ../../rst/dev_guide/module_lifecycle.rst:7
 msgid "Modules and plugins in the main Ansible repository have a defined life cycle, from the first introduction to final removal. The module and plugin lifecycle is tied to the `Ansible release cycle <release_cycle>`. A module or plugin may move through these four stages:"
-msgstr "メインの Ansible リポジトリーのモジュールおよびプラグインには、最初の導入から最後の削除までライフサイクルが定義されます。モジュールおよびプラグインのライフサイクルは、`Ansible release cycle <release_cycle>` に紐づけられ、モジュールまたはプラグインは、次の 4 つの段階を通過する可能性があります。"
+msgstr "メインの Ansible リポジトリーのモジュールおよびプラグインには、最初の導入から最後の削除までライフサイクルが定義されます。モジュールおよびプラグインのライフサイクルは、`Ansible リリースサイクル <release_cycle>` に紐づけられ、モジュールまたはプラグインは、次の 4 つの段階を通過する可能性があります。"
 
 #: ../../rst/dev_guide/module_lifecycle.rst:10
 msgid "When a module or plugin is first accepted into Ansible, we consider it in tech preview and will mark it as such in the documentation."
@@ -7627,7 +7797,7 @@ msgstr "コレクションでのモジュールまたはプラグインの名前
 
 #: ../../rst/dev_guide/module_lifecycle.rst:83
 msgid "To rename a module or plugin in a collection, or to redirect a module or plugin to another collection, you need to add a ``redirect`` entry to ``plugin_routing`` in ``meta/runtime.yml``. For example, to redirect the module ``old_cloud`` to ``foo.bar.new_cloud``, add:"
-msgstr "コレクションでモジュールまたはプラグインの名前を変更するか、モジュールまたはプラグインを別のコレクションにリダイレクトするには、``redirect`` エントリーを、``meta/runtime.yml`` の ``plugin_routing``に追加する必要があります。たとえば、モジュール ``old_cloud`` を ``foo.bar.new_cloud`` にリダイレクトする場合は、以下を追加します。"
+msgstr "コレクションでモジュールまたはプラグインの名前を変更するか、モジュールまたはプラグインを別のコレクションにリダイレクトするには、``redirect`` エントリーを、``meta/runtime.yml`` の ``plugin_routing`` に追加する必要があります。たとえば、モジュール ``old_cloud`` を ``foo.bar.new_cloud`` にリダイレクトする場合は、以下を追加します。"
 
 #: ../../rst/dev_guide/module_lifecycle.rst:92
 msgid "If you want to deprecate the old name, add a ``deprecation:`` entry (see above):"
@@ -7779,7 +7949,7 @@ msgstr "Playbook によって参照されるロールディレクトリーのサ
 
 #: ../../rst/dev_guide/overview_architecture.rst:120
 msgid "Directories specified as default paths in ``ansible.cfg`` or by the related environment variables, including the paths for the various plugin types. See :ref:`ansible_configuration_settings` for more information. Sample ``ansible.cfg`` fields:"
-msgstr "``ansible.cfg`` のデフォルトパスとして、またはさまざまなプラグインタイプのパスなど、関連する環境変数により指定されたディレクトリーて。詳細は、「:ref:`ansible_configuration_settings`」を参照してください。サンプルの ``ansible.cfg`` フィールドは以下のようになります。"
+msgstr "``ansible.cfg`` のデフォルトパスとして、またはさまざまなプラグインタイプのパスなど、関連する環境変数により指定されたディレクトリー。詳細は、「:ref:`ansible_configuration_settings`」を参照してください。サンプルの ``ansible.cfg`` フィールドは以下のようになります。"
 
 #: ../../rst/dev_guide/overview_architecture.rst:131
 msgid "Sample environment variables:"
@@ -7823,7 +7993,7 @@ msgstr "Ansible 2.9 および 1.x コレクションリリースの AWS コン�
 
 #: ../../rst/dev_guide/platforms/aws_guidelines.rst:20
 msgid "Starting with the 2.0 releases of both collections, Python 2.7 support will be ended in accordance with AWS' `end of Python 2.7 support <https://aws.amazon.com/blogs/developer/announcing-end-of-support-for-python-2-7-in-aws-sdk-for-python-and-aws-cli-v1/>`_.  Contributions to both collections that target the 2.0 or later collection releases can be written to support Python 3.6+ syntax."
-msgstr "両方のコレクションで 2.0 リリース以降、Python 2.7 サポートは AWS の `end of Python 2.7 support <https://aws.amazon.com/blogs/developer/announcing-end-of-support-for-python-2-7-in-aws-sdk-for-python-and-aws-cli-v1/>`_ に従って終了します。2.0 以降のコレクションリリースをターゲットとするコレクションの両方への貢献に、Python 3.6 以降の構文を記載することができます。"
+msgstr "両方のコレクションで 2.0 リリース以降、Python 2.7 サポートは AWS の `Python 2.7 サポートの終了 <https://aws.amazon.com/blogs/developer/announcing-end-of-support-for-python-2-7-in-aws-sdk-for-python-and-aws-cli-v1/>`_ に従って終了します。2.0 以降のコレクションリリースをターゲットとするコレクションの両方への貢献に、Python 3.6 以降の構文を記載することができます。"
 
 #: ../../rst/dev_guide/platforms/aws_guidelines.rst:23
 msgid "SDK Version Support"
@@ -8003,11 +8173,11 @@ msgstr "try ブロックで boto3 または botocore 呼び出しをラップす
 
 #: ../../rst/dev_guide/platforms/aws_guidelines.rst:275
 msgid "Catch the general ``ClientError`` or look for a specific error code with"
-msgstr "汎用的な ``ClientError`` を取得するか、次のような特定のエラーコードを探します"
+msgstr "汎用的な ``ClientError`` を取得するか、次のような特定のエラーコードを探します。"
 
 #: ../../rst/dev_guide/platforms/aws_guidelines.rst:276
 msgid "``is_boto3_error_code``."
-msgstr "``is_boto3_error_code``."
+msgstr "``is_boto3_error_code``"
 
 #: ../../rst/dev_guide/platforms/aws_guidelines.rst:277
 msgid "Use ``aws_module.fail_json_aws()`` to report the module failure in a standard way"
@@ -8035,7 +8205,7 @@ msgstr "is_boto3_error_code の使用"
 
 #: ../../rst/dev_guide/platforms/aws_guidelines.rst:287
 msgid "To use ``ansible_collections.amazon.aws.plugins.module_utils.core.is_boto3_error_code`` to catch a single AWS error code, call it in place of ``ClientError`` in your except clauses. In this case, *only* the ``InvalidGroup.NotFound`` error code will be caught here, and any other error will be raised for handling elsewhere in the program."
-msgstr "``ansible_collections.amazon.aws.plugins.module_utils.core.is_boto3_error_code`` を使用して単一の AWS エラーコードを取得するには、except 句で ``ClientError`` の代わりに呼び出しを行います。この場合、``InvalidGroup.NotFound`` エラーコードをここに検出し、その他のエラーでプログラム内の別の場所を処理する際に発生します。"
+msgstr "``ansible_collections.amazon.aws.plugins.module_utils.core.is_boto3_error_code`` を使用して単一の AWS エラーコードを取得するには、except 句で ``ClientError`` の代わりに呼び出しを行います。この場合は、``InvalidGroup.NotFound`` エラーコードをここに検出し、その他のエラーでプログラム内の別の場所を処理する際に発生します。"
 
 #: ../../rst/dev_guide/platforms/aws_guidelines.rst:301
 msgid "Using fail_json_aws()"
@@ -8079,7 +8249,7 @@ msgstr "API スロットリング (レート制限) とページネーション"
 
 #: ../../rst/dev_guide/platforms/aws_guidelines.rst:396
 msgid "For methods that return a lot of results, boto3 often provides `paginators <https://boto3.readthedocs.io/en/latest/guide/paginators.html>`_. If the method you're calling has ``NextToken`` or ``Marker`` parameters, you should probably check whether a paginator exists (the top of each boto3 service reference page has a link to Paginators, if the service has any). To use paginators, obtain a paginator object, call ``paginator.paginate`` with the appropriate arguments and then call ``build_full_result``."
-msgstr "大量の結果を返すメソッドの場合、boto3 はしばしば `paginators <https://boto3.readthedocs.io/en/latest/guide/paginators.html>`_ を提供します。呼び出しているメソッドに ``NextToken`` パラメーターまたは ``Marker`` パラメーターがある場合は、Paginator が存在するかどうかを確認する必要があります (各 boto3 サービスに Paginator がある場合は、参照ページ上部に Paginator へのリンクがあります)。Paginator を使用するには、Paginator オブジェクトを取得し、適切な引数を指定して ``paginator.paginate`` を呼び出してから、``build_full_result`` を呼び出します。"
+msgstr "大量の結果を返すメソッドの場合、boto3 はしばしば `paginators <https://boto3.readthedocs.io/en/latest/guide/paginators.html>`_ を提供します。呼び出しているメソッドに ``NextToken`` パラメーターまたは ``Marker`` パラメーターがある場合は、Paginators が存在するかどうかを確認する必要があります (各 boto3 サービスに Paginators がある場合は、参照ページ上部に Paginators へのリンクがあります)。Paginators を使用するには、Paginators オブジェクトを取得し、適切な引数を指定して ``paginator.paginate`` を呼び出してから、``build_full_result`` を呼び出します。"
 
 #: ../../rst/dev_guide/platforms/aws_guidelines.rst:403
 msgid "Any time that you are calling the AWS API a lot, you may experience API throttling, and there is an ``AWSRetry`` decorator that can be used to ensure backoff. Because exception handling could interfere with the retry working properly (as AWSRetry needs to catch throttling exceptions to work correctly), you'd need to provide a backoff function and then put exception handling around the backoff function."
@@ -8335,7 +8505,7 @@ msgstr "統合テスト用の AWS パーミッション"
 
 #: ../../rst/dev_guide/platforms/aws_guidelines.rst:706
 msgid "As explained in the :ref:`Integration Test guide <testing_integration>` there are defined IAM policies in `mattclay/aws-terminator <https://github.com/mattclay/aws-terminator>`_ that contain the necessary permissions to run the AWS integration test."
-msgstr ":ref:`Integration Test guide <testing_integration>` で説明されているように、AWS 統合テストを実行するために必要な権限が含まれる `mattclay/aws-terminator <https://github.com/mattclay/aws-terminator>`_ で定義された IAM ポリシーがあります。"
+msgstr ":ref:`統合テストガイド <testing_integration>` で説明されているように、AWS 統合テストを実行するために必要な権限が含まれる `mattclay/aws-terminator <https://github.com/mattclay/aws-terminator>`_ で定義された IAM ポリシーがあります。"
 
 #: ../../rst/dev_guide/platforms/aws_guidelines.rst:710
 msgid "If your module interacts with a new service or otherwise requires new permissions, tests will fail when you submit a pull request and the `Ansibullbot <https://github.com/ansible/ansibullbot/blob/master/ISSUE_HELP.md>`_ will tag your PR as needing revision. We do not automatically grant additional permissions to the roles used by the continuous integration builds. You will need to raise a Pull Request against `mattclay/aws-terminator <https://github.com/mattclay/aws-terminator>`_ to add them."
@@ -8604,7 +8774,7 @@ msgstr "「:ref:`developing_modules`」をお読みください。最初に、�
 
 #: ../../rst/dev_guide/platforms/ovirt_dev_guide.rst:57
 msgid "In order to achieve idempotency of oVirt entity attributes, a helper class was created. The first thing you need to do is to extend this class and override a few methods:"
-msgstr "oVirt エンティティー属性のべき等性を実現するには、ヘルパークラスが作成されました。まず、このクラスを拡張し、いくつかのメソッドを上書きする必要があります。"
+msgstr "oVirt エンティティー属性の冪等性を実現するには、ヘルパークラスが作成されました。まず、このクラスを拡張し、いくつかのメソッドを上書きする必要があります。"
 
 #: ../../rst/dev_guide/platforms/ovirt_dev_guide.rst:99
 msgid "The code above handle the check if the entity should be updated, so we don't update the entity if not needed and also it construct the needed entity of the SDK."
@@ -8700,7 +8870,7 @@ msgstr "`requests <https://2.python-requests.org/en/master/>`_"
 
 #: ../../rst/dev_guide/platforms/vmware_guidelines.rst:49
 msgid "If you want to deploy your test environment in a hypervisor, both `VMware or Libvirt <https://github.com/goneri/vmware-on-libvirt>`_ works well."
-msgstr "ハイパーバイザーにテスト環境をデプロイする場合は、`VMware または Libvirt <https://github.com/goneri/vmware-on-libvirt>` の両方が正常に機能します。"
+msgstr "ハイパーバイザーにテスト環境をデプロイする場合は、`VMware または Libvirt <https://github.com/goneri/vmware-on-libvirt>`_ の両方が正常に機能します。"
 
 #: ../../rst/dev_guide/platforms/vmware_guidelines.rst:52
 msgid "NFS server configuration"
@@ -8788,7 +8958,7 @@ msgstr "ESXi または vCenter が提供する機能に応じて、一部のモ�
 
 #: ../../rst/dev_guide/platforms/vmware_guidelines.rst:173
 msgid "Example should use the fully qualified collection name (FQCN)"
-msgstr "例では、完全修飾コレクション名 (FQCN) を使用する必要があります"
+msgstr "例では、完全修飾コレクション名 (FQCN) を使用"
 
 #: ../../rst/dev_guide/platforms/vmware_guidelines.rst:175
 msgid "Use FQCN for examples within module documentation. For instance, you should use ``community.vmware.vmware_guest`` instead of just ``vmware_guest``."
@@ -8900,7 +9070,7 @@ msgstr "VMware REST モジュール開発のガイドライン"
 
 #: ../../rst/dev_guide/platforms/vmware_rest_guidelines.rst:7
 msgid "The Ansible VMware REST collection (on `Galaxy <https://galaxy.ansible.com/vmware/vmware_rest>`_, source code `repository <https://github.com/ansible-collections/vmware.vmware_rest>`_) is maintained by Red Hat and the community."
-msgstr "Ansible VMware REST コレクション (`Galaxy <https://galaxy.ansible.com/vmware/vmware_rest>`_ ではソースコード `repository <https://github.com/ansible-collections/vmware.vmware_rest>`_) は、Red Hat とコミュニティーにより維持されます。"
+msgstr "Ansible VMware REST コレクション (`Galaxy <https://galaxy.ansible.com/vmware/vmware_rest>`_ ではソースコード `リポジトリー <https://github.com/ansible-collections/vmware.vmware_rest>`_) は、Red Hat とコミュニティーにより維持されます。"
 
 #: ../../rst/dev_guide/platforms/vmware_rest_guidelines.rst:13
 msgid "Contribution process"
@@ -8940,7 +9110,7 @@ msgstr "vmware_rest_code_generator"
 
 #: ../../rst/dev_guide/platforms/vmware_rest_guidelines.rst:34
 msgid "Your contribution should follow the coding style of `Black <https://github.com/psf/black>`. To run the code formatter, just run:"
-msgstr "貢献は、`Black <https://github.com/psf/black>` のコーディングスタイルに従う必要があります。コードフォーマッターを実行するには、以下を実行します。"
+msgstr "貢献は、`Black <https://github.com/psf/black>` のコーディングスタイルに準拠する必要があります。コードフォーマッターを実行するには、以下を実行します。"
 
 #: ../../rst/dev_guide/platforms/vmware_rest_guidelines.rst:41
 msgid "To regenerate the vmware_rest collection, you can use the following commands:"
@@ -9785,10 +9955,6 @@ msgstr "モジュールおよびプラグインへのリンクの追加"
 #: ../../rst/dev_guide/style_guide/index.rst:208
 msgid "Ansible 2.10 and later require the extended Fully Qualified Collection Name (FQCN) as part of the links:"
 msgstr "Ansible 2.10 以降は、リンクの一部として、拡張された完全修飾コレクション名 (FQCN) が必要です。"
-
-#: ../../rst/dev_guide/style_guide/index.rst:214
-msgid "For example:"
-msgstr "例:"
 
 #: ../../rst/dev_guide/style_guide/index.rst:220
 msgid "displays as :ref:`ansible.builtin.first_found lookup plugin <ansible_collections.ansible.builtin.first_found_lookup>`."
@@ -10989,7 +11155,7 @@ msgstr "これらの問題のいずれかがケースとして表示される場
 
 #: ../../rst/dev_guide/testing.rst:95
 msgid "adding a comment with ``/rebuild`` (full rebuild) or ``/rebuild_failed`` (rebuild only failed CI nodes) to the PR"
-msgstr "``/rebuild`` (完全な再構築) または ``/rebuild_failed`` (構築に失敗した CI ノードのみの再構築) でのコメントの追加"
+msgstr "``/rebuild`` (完全な再構築) または ``/rebuild_failed`` (構築に失敗した CI ノードのみの再構築) でのコメントを追加する"
 
 #: ../../rst/dev_guide/testing.rst:96
 msgid "closing and re-opening the PR (full rebuild)"
@@ -11009,7 +11175,7 @@ msgstr "PR をテストする方法"
 
 #: ../../rst/dev_guide/testing.rst:105
 msgid "Ideally, code should add tests that prove that the code works. That's not always possible and tests are not always comprehensive, especially when a user doesn't have access to a wide variety of platforms, or is using an API or web service. In these cases, live testing against real equipment can be more valuable than automation that runs against simulated interfaces. In any case, things should always be tested manually the first time as well."
-msgstr "理想的には、コードが機能することを証明するテストを追加することが推奨されます。特に、ユーザーが様々なプラットフォームにアクセスできない場合、または API や Web サービスを使用している場合は、これが必ずしも可能ではなく、テストも必ずしも包括的ではありません。このような場合は、シミュレーションされたインターフェースに対して実行される自動化よりも、実際の機器を使用したライブテストの方が有益となります。いずれにせよ、最初の段階でも常に手動でテストする必要があります。"
+msgstr "理想的には、コードが機能することを証明するテストを追加することが推奨されます。特に、ユーザーがさまざまなプラットフォームにアクセスできない場合、または API や Web サービスを使用している場合は、これが必ずしも可能ではなく、テストも必ずしも包括的ではありません。このような場合は、シミュレーションされたインターフェースに対して実行される自動化よりも、実際の機器を使用したライブテストの方が有益となります。いずれにせよ、最初の段階でも常に手動でテストする必要があります。"
 
 #: ../../rst/dev_guide/testing.rst:107
 msgid "Thankfully, helping to test Ansible is pretty straightforward, assuming you are familiar with how Ansible works."
@@ -11377,11 +11543,11 @@ msgstr "ここでは、絶対的インポートと相対的インポート、除
 
 #: ../../rst/dev_guide/testing/sanity/future-import-boilerplate.rst:18
 msgid "When Python 2 encounters an import of a name in a file like ``import copy`` it attempts to load ``copy.py`` from the same directory as the file is in.  This can cause problems if there is a python file of that name in the directory and also a python module in ``sys.path`` with that same name.  In that case, Python 2 would load the one in the same directory and there would be no way to load the one on ``sys.path``.  Python 3 fixes this by making imports absolute by default.  ``import copy`` will find ``copy.py`` from ``sys.path``.  If you want to import ``copy.py`` from the same directory, the code needs to be changed to perform a relative import: ``from . import copy``."
-msgstr "Python 2 は、``import copy`` のようなファイルで名前の import に遭遇すると、そのファイルがあるディレクトリーから ``copy.py`` を読み込もうとします。これは、そのディレクトリーにその名前の python ファイルがあり、``sys.path`` にも同じ名前の python モジュールがある場合に問題が発生します。この場合、Python 2 は同じディレクトリーにあるものを読み込み、``sys.path`` にあるものを読み込む方法がありません。Python 3 は、デフォルトでインポートを行うようにすることでこの問題を解決しました。``import copy`` は、``sys.path`` から ``copy.py`` を見つけます。同じディレクトリーから ``copy.py`` をインポートする場合は、相対インポートを行うようにコードを変更する必要があります (``from . import copy``)。"
+msgstr "Python 2 は、``import copy`` のようなファイル名の「import」に遭遇すると、そのファイルがあるディレクトリーから ``copy.py`` を読み込もうとします。これは、そのディレクトリーにその名前の python ファイルがあり、``sys.path`` にも同じ名前の python モジュールがある場合に問題が発生します。この場合、Python 2 は同じディレクトリーにあるものを読み込み、``sys.path`` にあるものを読み込む方法がありません。Python 3 は、デフォルトでインポートを行うようにすることでこの問題を解決しました。``import copy`` は、``sys.path`` から ``copy.py`` を見つけます。同じディレクトリーから ``copy.py`` をインポートする場合は、相対インポートを行うようにコードを変更する必要があります (``from . import copy``)。"
 
 #: ../../rst/dev_guide/testing/sanity/future-import-boilerplate.rst:28
 msgid "`Absolute and relative imports <https://www.python.org/dev/peps/pep-0328>`_"
-msgstr "`Absolute and relative imports <https://www.python.org/dev/peps/pep-0328>`_"
+msgstr "`絶対および相対のインポート <https://www.python.org/dev/peps/pep-0328>`_"
 
 #: ../../rst/dev_guide/testing/sanity/future-import-boilerplate.rst:33
 msgid "In Python 2, the division operator (``/``) returns integer values when used with integers.  If there was a remainder, this part would be left off (aka, `floor division`).  In Python 3, the division operator (``/``) always returns a floating point number.  Code that needs to calculate the integer portion of the quotient needs to switch to using the floor division operator (`//`) instead."
@@ -11389,7 +11555,7 @@ msgstr "Python 2 では、除算演算子 (``/``) は、整数と共に使用す
 
 #: ../../rst/dev_guide/testing/sanity/future-import-boilerplate.rst:40
 msgid "`Changing the division operator <https://www.python.org/dev/peps/pep-0238>`_"
-msgstr "`Changing the division operator <https://www.python.org/dev/peps/pep-0238>`_"
+msgstr "`除算演算子の変更 <https://www.python.org/dev/peps/pep-0238>`_"
 
 #: ../../rst/dev_guide/testing/sanity/future-import-boilerplate.rst:45
 msgid "In Python 2, :func:`python:print` is a keyword.  In Python 3, :func:`python3:print` is a function with different parameters.  Using this ``__future__`` allows using the Python 3 print semantics everywhere."
@@ -11565,7 +11731,7 @@ msgstr "``lib/ansible/plugins/`` では、未確認インポートは、Python �
 
 #: ../../rst/dev_guide/testing/sanity/import.rst:65
 msgid "collections:"
-msgstr "collections:"
+msgstr "コレクション:"
 
 #: ../../rst/dev_guide/testing/sanity/import.rst:67
 msgid "For ``plugins/modules/`` and ``plugins/module_utils/``, unchecked imports are only allowed from the Python standard library;"
@@ -12289,7 +12455,7 @@ msgstr "これにより、文字列リテラルを介してネイティブ文字
 
 #: ../../rst/dev_guide/testing/sanity/no-unicode-literals.rst:12
 msgid "It makes for more context switching.  A programmer could be reading one file which has `unicode_literals` and know that bare string literals are text strings but then switch to another file (perhaps tracing program execution into a third party library) and have to switch their understanding of what bare string literals are."
-msgstr "そのため、コンテキストの切り替えが多くなります。プログラマーは、`unicode_literals` を含むあるファイルを読み込んでいて、裸の文字列リテラルがテキスト文字列であることを知っていますが、その後、別のファイル (おそらくサードパーティーのライブラリーへのプログラム実行の追跡) に切り替えて、裸の文字列リテラルが何であるかの理解を切り替えなければなりません。"
+msgstr "そのため、コンテキストの切り替えが多くなります。プログラマーは、`unicode_literals` を含むあるファイルを読み込んでいて、裸の文字列リテラルがテキスト文字列であることを理解ｓていますが、その後、別のファイル (おそらくサードパーティーのライブラリーへのプログラム実行の追跡) に替えて、裸の文字列リテラルが何であるかの理解に切り替えなければなりません。"
 
 #: ../../rst/dev_guide/testing/sanity/no-unwanted-files.rst:2
 msgid "no-unwanted-files"
@@ -12920,7 +13086,7 @@ msgstr "Windows テスト"
 
 #: ../../rst/dev_guide/testing_integration.rst:108
 msgid "These tests exercise the ``winrm`` connection plugin and Windows modules.  You'll need to define an inventory with a remote Windows 2008 or 2012 Server to use for testing, and enable PowerShell Remoting to continue."
-msgstr "これらのテストは、``winrm`` 接続プラグインと Windows モジュールに従います。テストに使用するリモート Windows 2008 Server または 2012 Server を持つインベントリーを定義し、PowerShell Remoting を継続できるようにする必要があります。"
+msgstr "これらのテストは、``winrm`` connection プラグインと Windows モジュールに従います。テストに使用するリモート Windows 2008 Server または 2012 Server を持つインベントリーを定義し、PowerShell Remoting を継続できるようにする必要があります。"
 
 #: ../../rst/dev_guide/testing_integration.rst:112
 msgid "Running these tests may result in changes to your Windows host, so don't run them against a production/critical Windows environment."
@@ -15139,4 +15305,136 @@ msgstr "セマンティックバージョニング仕様 (https://semver.org/)) 
 
 #~ msgid "Please make sure your module meets these requirements before you submit your PR/proposal. If you have questions, reach out via `Ansible's IRC chat channel <http://irc.freenode.net>`_ or the `Ansible development mailing list <https://groups.google.com/group/ansible-devel>`_."
 #~ msgstr "PR/提案を送信する前に、お使いのモジュールがこれらの要件を満たしていることを確認してください。ご質問がある場合は、`Ansible の IRC チャットチャンネル <http://irc.freenode.net>`_ または `Ansible 開発メーリングリスト <https://groups.google.com/group/ansible-devel>`_ までお問い合わせください。"
+
+#~ msgid "You can distribute your collections by publishing them on a distribution server. Distribution servers include Ansible Galaxy, Red Hat Automation Hub, and privately hosted Automation Hub instances. You can publish any collection to Ansible Galaxy and/or to a privately hosted Automation Hub instance. If your collection is certified by Red Hat, you can publish it to the Red Hat Automation Hub."
+#~ msgstr "コレクションは、ディストリビューションサーバーに公開することで配布できます。ディストリビューションサーバーには、Ansible Galaxy、Red Hat Automation Hub、およびプライベートにホストされている Automation Hub インスタンスが含まれます。すべてのコレクションを Ansible Galaxy や、プライベートにホストされた Automation Hub インスタンスに公開できます。コレクションが Red Hat によって認定されている場合は、Red Hat Automation Hub に公開できます。"
+
+#~ msgid "Distributing collections involves three major steps: #. Configuring your distribution server(s) #. Building your collection artifact #. Publishing your collection"
+#~ msgstr "コレクションの配布には、#. ディストリビューションサーバーの設定 #. コレクションアーティファクトのビルド #. コレクションの公開の 3 つの大きなステップが関係します。"
+
+#~ msgid "Get a namespace on each distribution server you want to use (Galaxy, private Automation Hub, Red Hat Automation Hub)."
+#~ msgstr "使用する各ディストリビューションサーバーの名前空間 (Galaxy、プライベート Automation Hub、Red Hat Automation Hub) を取得します。"
+
+#~ msgid "You need a namespace on Galaxy and/or Automation Hub to upload your collection. To get a namespace:"
+#~ msgstr "コレクションをアップロードするには、Galaxy および/または Automation Hub の名前空間が必要です。名前空間を取得するには、以下を行います。"
+
+#~ msgid "You need an API token for Galaxy and/or Automation Hub to upload your collection. Use the API token(s) to authenticate your connection to the distribution server(s) and protect your content."
+#~ msgstr "コレクションをアップロードするには、Galaxy や Automation Hub の API トークンが必要です。API トークンを使用してディストリビューションサーバーへの接続の認証を行い、コンテンツを保護します。"
+
+#~ msgid "Specifying your API token"
+#~ msgstr "API トークンの指定"
+
+#~ msgid "Once you have retrieved your API token, you can specify the correct token for each distribution server in two ways:"
+#~ msgstr "API トークンを取得したら、2 つの方法でディストリビューションサーバーごとに正しいトークンを指定できます。"
+
+#~ msgid "Pass the token to  the ``ansible-galaxy`` command using the ``--token``."
+#~ msgstr "``--token`` を使用して、トークンを ``ansible-galaxy`` コマンドに渡します。"
+
+#~ msgid "Configure the token within a Galaxy server list in your :file:`ansible.cfg` file."
+#~ msgstr ":file:`ansible.cfg` ファイルの Galaxy サーバーリストにトークンを構成します。"
+
+#~ msgid "Specifying your API token with the ``--token`` argument"
+#~ msgstr "``--token`` 引数での API トークンの指定"
+
+#~ msgid "You can use the ``--token`` argument with the ``ansible-galaxy`` command (in conjunction with the ``--server`` argument or :ref:`GALAXY_SERVER` setting in your :file:`ansible.cfg` file). You cannot use ``apt-key`` with any servers defined in your :ref:`Galaxy server list <galaxy_server_config>`."
+#~ msgstr "``--token`` 引数は、``ansible-galaxy`` コマンド (:file:`ansible.cfg` ファイルの ``--server`` 引数または :ref:`GALAXY_SERVER` 設定とともに) で使用できます。:ref:`Galaxy サーバー一覧 <galaxy_server_config>` で定義されているサーバーでは、``apt-key`` を使用することはできません。"
+
+#~ msgid "Specifying your API token with a Galaxy server list"
+#~ msgstr "Galaxy サーバーリストで API トークンの指定"
+
+#~ msgid "You can configure one or more distribution servers for Galaxy in your :file:`ansible.cfg` file under the ``galaxy_server_list`` section. For each server, you also configure the token."
+#~ msgstr "``galaxy_server_list`` セクションの下にある :file:`ansible.cfg` で Galaxy 用に 1 つ以上のディストリビューションサーバーを構成します。サーバーごとに、トークンも構成します。"
+
+#~ msgid "See :ref:`galaxy_server_config` for complete details."
+#~ msgstr "詳細は、「:ref:`galaxy_server_config`」を参照してください。"
+
+#~ msgid "Once you have configured one or more distribution servers, you must build a collection tarball. To build a collection, run ``ansible-galaxy collection build`` from inside the root directory of the collection:"
+#~ msgstr "1 つ以上のディストリビューションサーバーを設定したら、コレクション tarball を構築する必要があります。コレクションを構築するには、コレクションのルートディレクトリー内から ``ansible-galaxy collection build`` を実行します。"
+
+#~ msgid "Certain files and folders are excluded when building the collection artifact. See :ref:`ignoring_files_and_folders_collections`  to exclude other files you would not want to distribute."
+#~ msgstr "コレクションアーティファクトのビルド時に、特定のファイルおよびフォルダーは除外されます。配布したくない他のファイルを除外するには、「:ref:`ignoring_files_and_folders_collections`」を参照してください。"
+
+#~ msgid "If you used the now-deprecated ``Mazer`` tool for any of your collections, delete any and all files it added to your :file:`releases/` directory before you build your collection with ``ansible-galaxy``."
+#~ msgstr "今回の非推奨となった ``Mazer`` ツールをコレクションに使用した場合は、``ansible-galaxy`` でコレクションをビルドする前に、:file:`releases/` ディレクトリーに追加したすべてのファイルを削除します。"
+
+#~ msgid "This tarball is mainly intended to upload to Galaxy as a distribution method, but you can use it directly to install the collection on target systems."
+#~ msgstr "この tarball は、配布方法として主に Galaxy にアップロードすることを目的としていますが、ターゲットシステムにコレクションをインストールするために直接使用することもできます。"
+
+#~ msgid "Collection versions"
+#~ msgstr "コレクションのバージョン"
+
+#~ msgid "Each time you publish your collection, you create a new version. Once you publish a version of a collection, you cannot delete or modify that version. Ensure that everything looks okay before publishing. The only way to change a collection is to release a new version. The latest version of a collection (by highest version number) will be the version displayed everywhere in Galaxy or Automation Hub; however, users will still be able to download older versions."
+#~ msgstr "コレクションを公開するたびに、新しいバージョンを作成します。コレクションのバージョンを公開したら、そのバージョンを削除または変更することはできません。公開する前に、すべてが正常に見えることを確認してください。コレクションを変更する唯一の方法は、新しいバージョンをリリースすることです。(最大バージョン番号による) コレクションの最新バージョンは、Galaxy または Automation Hub のあらゆる場所に表示されるバージョンになります。ただし、ユーザーは引き続き古いバージョンをダウンロードできます。"
+
+#~ msgid "Before you publish your collection, test it out locally. Every time you publish a tarball, you create a :ref:`new version <collection_versions>` of your collection. Testing the collection locally gives you confidence that the new version will contain the functionality you want without unexpected behavior."
+#~ msgstr "コレクションをパブリッシュする前にローカルからテストします。tarball を公開する際に、:ref:`新しいバージョン <collection_versions>` のコレクションを作成します。コレクションをローカルでテストすることで、新しいバージョンに、予期しない動作のない機能が含まれることを示します。"
+
+#~ msgid "You can try your collection locally by installing it from the tarball. The following will enable an adjacent playbook to access the collection:"
+#~ msgstr "コレクションを tarball からインストールすることで、コレクションをローカルで試すことができます。以下では、隣接用の Playbook がコレクションにアクセスできるようになります。"
+
+#~ msgid "You should use one of the values configured in :ref:`COLLECTIONS_PATHS` for your path. This is also where Ansible itself will expect to find collections when attempting to use them. If you don't specify a path value, ``ansible-galaxy collection install`` installs the collection in the first path defined in :ref:`COLLECTIONS_PATHS`, which by default is ``~/.ansible/collections``."
+#~ msgstr "パスのために、:ref:`COLLECTIONS_PATHS` で構成された値の 1 つを使用する必要があります。これは、Ansible 自体がコレクションを使用しようとしたときにコレクションを見つけることを期待する場所でもあります。パス値を指定しない場合、``ansible-galaxy collection install`` は、:ref:`COLLECTIONS_PATHS` で定義された最初のパスにコレクションをインストールします。このデフォルトは、``~/.ansible/collections`` となります。"
+
+#~ msgid "If you want to use a collection directly out of a checked out git repository, see :ref:`hacking_collections`."
+#~ msgstr "確認された git リポジトリーから直接コレクションを使用する場合は、「:ref:`hacking_collections`」を参照してください。"
+
+#~ msgid "Next, try using the local collection inside a playbook. For examples and more details see :ref:`Using collections <using_collections>`"
+#~ msgstr "次に、Playbook 内でローカルコレクションの使用を試行します。例および詳細は、「:ref:`コレクションの使用 <using_collections>`」を参照してください。"
+
+#~ msgid "You can also test a version of your collection in development by installing it from a git repository."
+#~ msgstr "また、Git リポジトリーからインストールすることで、開発でコレクションのバージョンをテストすることもできます。"
+
+#~ msgid "You can install a collection in a git repository by providing the URI to the repository instead of a collection name or path to a ``tar.gz`` file. The collection must contain a ``galaxy.yml`` or ``MANIFEST.json`` file, which will be used to generate the would-be collection artifact data from the directory. The URI should be prefixed with ``git+`` (or with ``git@`` to use a private repository with ssh authentication) and optionally supports a comma-separated `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ version (for example, a commit or tag)."
+#~ msgstr "コレクション名または ``tar.gz`` ファイルへのパスではなく、リポジトリーに URI を提供することにより、git リポジトリーにコレクションをインストールできます。コレクションには、``galaxy.yml`` ファイルまたは ``MANIFEST.json`` ファイルが必要です。このコレクションは、ディレクトリーからコレクションになる予定のアーティファクトデータを生成するのに使用されます。URI のプレフィックスには ``git+`` (または ssh 認証でプライベートリポジトリーを使用する ``git@``) を付け、必要に応じてコンマ区切りの `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ バージョン (コミットまたはタグなど) をサポートする必要があります。"
+
+#~ msgid "Embedding credentials into a git URI is not secure. Make sure to use safe auth options for security reasons. For example, use `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_, `netrc <https://linux.die.net/man/5/netrc>`_ or `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_/`url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ in Git config to prevent your creds from being exposed in logs."
+#~ msgstr "認証情報を git URI に埋め込むことは安全ではありません。セキュリティー上の理由から、安全な認証オプションを使用してください。たとえば、Git 設定の `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_、`netrc <https://linux.die.net/man/5/netrc>`_、または `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_/`url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ で、クレジットがログに公開されないようにします。"
+
+#~ msgid "In a ``requirements.yml`` file, you can also use the ``type`` and ``version`` keys in addition to using the ``git+repo,version`` syntax for the collection name."
+#~ msgstr "``requirements.yml`` ファイルでは、コレクション名の ``git+repo,version`` 構文を使用する他に、``type`` キーおよび ``version`` キーを使用することもできます。"
+
+#~ msgid "Git repositories can be used for collection dependencies as well. This can be helpful for local development and testing but built/published artifacts should only have dependencies on other artifacts."
+#~ msgstr "git リポジトリーはコレクションの依存関係にも使用できます。これは、ローカル開発およびテストに役立ちますが、ビルド/公開されたアーティファクトには他のアーティファクトへの依存関係のみが必要です。"
+
+#~ msgid "Default repository search locations"
+#~ msgstr "デフォルトのリポジトリー検索の場所"
+
+#~ msgid "There are two paths searched in a repository for collections by default."
+#~ msgstr "デフォルトでは、コレクション用のリポジトリーで 2 つのパスが検索されます。"
+
+#~ msgid "The second is a ``galaxy.yml`` or ``MANIFEST.json`` file in each directory in the repository path (one level deep). In this scenario, each directory with a metadata file is installed as a collection."
+#~ msgstr "2 つ目は、リポジトリーパス (1 レベルの深さ) の各ディレクトリーの ``galaxy.yml`` ファイルまたは ``MANIFEST.json`` ファイルです。ここでは、メタデータファイルが含まれる各ディレクトリーがコレクションとしてインストールされます)。"
+
+#~ msgid "Specifying the location to search for collections"
+#~ msgstr "コレクションを検索する場所の指定"
+
+#~ msgid "If you have a different repository structure or only want to install a subset of collections, you can add a fragment to the end of your URI (before the optional comma-separated version) to indicate which path ansible-galaxy should inspect for metadata file(s). The path should be a directory to a collection or multiple collections (rather than the path to a ``galaxy.yml`` file or ``MANIFEST.json`` file)."
+#~ msgstr "異なるリポジトリー構造がある場合や、コレクションのサブセットのみをインストールする場合は、URI の最後にフラグメントを追加して (任意のコンマ区切りバージョンの前)、ansible-galaxy がメタデータファイルを調べるパスを示すことができます。パスは、(``MANIFEST.json`` ファイルまたは ``galaxy.yml`` ファイルへのパスではなく) コレクションまたは複数のコレクションへのディレクトリーである必要があります。"
+
+#~ msgid "Once you have a namespace and an API token for each distribution server you want to use, and you have created and tested a collection tarball, you can distribute your collection by publishing the tarball to Ansible Galaxy, Red Hat Automation Hub, or a privately hosted Automation Hub instance. You can use either the ``ansible-galaxy collection publish`` command or the distribution server (Galaxy, Automation Hub) itself."
+#~ msgstr "使用する各ディストリビューションサーバーの名前空間および API トークンがあり、コレクションの tarball を作成し、テストしたら、tarball を Ansible Galaxy、Red Hat Automation Hub、またはプライベートにホストする Automation Hub インスタンスに公開して、コレクションを配布することができます。``ansible-galaxy collection publish`` コマンドまたはディストリビューションサーバー (Galaxy、Automation Hub) のいずれかを使用できます。"
+
+#~ msgid "Each time you add features or make changes to your collection, you must create a new collection artifact and publish a new version of the collection. For details on versioning, see :ref:`collection_versions`."
+#~ msgstr "機能を追加したり、コレクションに変更を加えるたびに、新しいコレクションアーティファクトを作成し、コレクションの新しいバージョンを公開する必要があります。バージョンの詳細は、「:ref:`collection_versions`」を参照してください。"
+
+#~ msgid "Publish a collection using ``ansible-galaxy``"
+#~ msgstr "``ansible-galaxy`` を使用してコレクションを公開します。"
+
+#~ msgid "By default, ``ansible-galaxy`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the :file:`ansible.cfg` file under :ref:`galaxy_server`). If you are only publishing your collection to Ansible Galaxy, you do not need any further configuration. If you are using Red Hat Automation Hub or any other Galaxy server, see :ref:`Configuring the ansible-galaxy client <galaxy_server_config>`."
+#~ msgstr "デフォルトでは、``ansible-galaxy`` は、(:ref:`galaxy_server` の下の :file:`ansible.cfg` ファイルに記載されるように) https://galaxy.ansible.com を Galaxy サーバーとして使用します。コレクションのみを Ansible Galaxy に公開している場合、追加設定は必要ありません。Red Hat Automation Hub またはその他の Galaxy サーバーを使用している場合は、「:ref:`ansible-galaxy クライアントの設定 <galaxy_server_config>`」を参照してください。"
+
+#~ msgid "Once Galaxy uploads and accepts a collection, you will be redirected to the **My Imports** page, which displays output from the import process, including any errors or warnings about the metadata and content contained in the collection."
+#~ msgstr "Galaxy がコレクションをアップロードして受け入れると、**My Imports** ページにリダイレクトされます。このページには、コレクションに含まれるメタデータやコンテンツに関するエラーや警告など、インポート処理の出力が表示されます。"
+
+#~ msgid "``R()`` for cross-references with a heading (added in Ansible 2.10). For example: ``See R(Cisco IOS Platform Guide,ios_platform_options)``.  Use the RST anchor for the cross-reference. See :ref:`adding_anchors_rst` for details."
+#~ msgstr "(Ansible 2.10 に含まれる) 見出しと相互参照用 ``R()`` (例: ``See R(Cisco IOS Platform Guide,ios_platform_options)``)。クロス参照に RST アンカーを使用します。詳細は、:ref:`adding_anchors_rst` を参照してください。"
+
+#~ msgid "``M()`` for module names. For example: ``See also M(ansible.builtin.yum) or M(community.general.apt_rpm)``."
+#~ msgstr "``M()`` モジュール名。たとえば ``See also M(ansible.builtin.yum) or M(community.general.apt_rpm)`` になります。"
+
+#~ msgid "For links between modules and documentation within a collection, you can use any of the options above. For links outside of your collection, use ``R()`` if available. Otherwise, use ``U()`` or ``L()`` with full URLs (not relative links). For modules, use ``M()`` with the FQCN or ``ansible.builtin`` as shown in the example. If you are creating your own documentation site, you will need to use the `intersphinx extension <https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html>`_ to convert ``R()`` and ``M()`` to the correct links."
+#~ msgstr "コレクション内のモジュールとドキュメント間のリンクについては、上記のオプションのいずれかを使用することができます。コレクション外のリンクについては、利用可能な場合は ``R()`` を使用します。利用できない場合は、(相対リンクではなく) 完全な URL で ``U()`` または ``L()`` を使用します。モジュールの場合は、例のように、FQCN または ``ansible.builtin`` で ``M()`` を使用します。独自のドキュメントサイトを作成する場合は、`intersphinx extension <https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html>`_ を使用して ``R()`` および ``M()`` を正しいリンクに変換する必要があります。"
+
+#~ msgid "``Refer to the R(kubernetes.core collection, plugins_in_kubernetes.core) for information on managing kubernetes clusters.``"
+#~ msgstr "``Refer to the R(kubernetes.core collection, plugins_in_kubernetes.core) for information on managing kubernetes clusters.``"
 

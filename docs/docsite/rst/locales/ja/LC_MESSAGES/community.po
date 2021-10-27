@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-08-05 13:48+0200\n"
+"POT-Creation-Date: 2021-10-11 16:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -660,7 +660,7 @@ msgstr "\\* **Open to PRs** の下にある ✓ は、コレクションが GitH
 
 #: ../../rst/community/contributing_maintained_collections.rst:250
 msgid "\\*\\* Integration tests are required and unit tests are welcomed but not required for the AWS collections.  An exception to this is made in cases where integration tests are logistically not feasible due to external requirements.  An example of this is AWS Direct Connect, as this service can not be functionally tested without the establishment of network peering connections.  Unit tests are therefore required for modules that interact with AWS Direct Connect.  Exceptions to ``amazon.aws`` must be approved by Red Hat, and exceptions to ``community.aws`` must be approved by the AWS community."
-msgstr "\\*\\* 統合テストは必須であり、単体テストは歓迎されますが、AWS コレクションには必須ではありません。これに対する例外は、外部要件により統合テストが永続的に実行できない場合に生じます。この例として、AWS Direct Connect があります。これは、ネットワークピアリング接続を確立しないと、このサービスを機能的にテストできないためです。したがって、AWS Direct Connect と相互作用するモジュールには単体テストが必要です。``amazon.aws`` への例外は Red Hat によって承認され、``community.aws`` への例外は AWS コミュニティーによって承認される必要があります。"
+msgstr "\\*\\* 統合テストは必須であり、ユニットテストは歓迎されますが、AWS コレクションには必須ではありません。これに対する例外は、外部要件により統合テストが永続的に実行できない場合に生じます。この例として、AWS Direct Connect があります。これは、ネットワークピアリング接続を確立しないと、このサービスを機能的にテストできないためです。したがって、AWS Direct Connect と相互作用するモジュールにはユニットテストが必要です。``amazon.aws`` への例外は Red Hat によって承認され、``community.aws`` への例外は AWS コミュニティーによって承認される必要があります。"
 
 #: ../../rst/community/contributing_maintained_collections.rst:252
 msgid "\\*\\*\\* ``ansible.netcommon`` contains all foundational components for enabling many network and security :ref:`platform <platform_options>` collections. It contains all connection and filter plugins required, and installs as a dependency when you install the platform collection."
@@ -668,7 +668,7 @@ msgstr "\\*\\*\\* ``ansible.netcommon`` には、多くのネットワークお�
 
 #: ../../rst/community/contributing_maintained_collections.rst:254
 msgid "\\*\\*\\*\\* Unit tests for Windows PowerShell modules are an exception to testing, but unit tests are valid and required for the remainder of the collection, including Ansible-side plugins."
-msgstr "\\*\\*\\*\\* Windows PowerShell モジュールの単体テストは、テストの例外ですが、単体テストは、Ansible 側のプラグインを含め、コレクションの残りの部分に有効かつ必要になります。"
+msgstr "\\*\\*\\*\\* Windows PowerShell モジュールのユニットテストは、テストの例外ですが、ユニットテストは、Ansible 側のプラグインを含め、コレクションの残りの部分に有効かつ必要になります。"
 
 #: ../../rst/community/contributing_maintained_collections.rst:260
 msgid "Deciding where your contribution belongs"
@@ -732,7 +732,7 @@ msgstr ":ref:`sanity tests and tox <tox_resource_modules>` を渡します。"
 
 #: ../../rst/community/contributing_maintained_collections.rst:291
 msgid "Passes unit, and integration tests, as listed in the :ref:`Ansible-maintained collection table <ansible-collection-table>` and described in :ref:`testing_resource_modules`."
-msgstr ":ref:`Ansible 管理コレクションの表 <ansible-collection-table>` に一覧表示されているとおりに、単体テストおよび統合テストを渡します (:ref:`testing_resource_modules` を参照)。"
+msgstr ":ref:`Ansible 管理コレクションの表 <ansible-collection-table>` に一覧表示されているとおりに、ユニットテストおよび統合テストを渡します (:ref:`testing_resource_modules` を参照)。"
 
 #: ../../rst/community/contributing_maintained_collections.rst:292
 msgid "Follows Ansible  guidelines. See :ref:`developing_modules`  and :ref:`developing_collections`."
@@ -1119,16 +1119,16 @@ msgid "Creating a changelog fragment"
 msgstr "changelog フラグメントの作成"
 
 #: ../../rst/community/development_process.rst:170
-msgid "A basic changelog fragment is a ``.yaml`` file placed in the ``changelogs/fragments/`` directory.  Each file contains a yaml dict with keys like ``bugfixes`` or ``major_changes`` followed by a list of changelog entries of bugfixes or features.  Each changelog entry is rst embedded inside of the yaml file which means that certain constructs would need to be escaped so they can be interpreted by rst and not by yaml (or escaped for both yaml and rst if you prefer).  Each PR **must** use a new fragment file rather than adding to an existing one, so we can trace the change back to the PR that introduced it."
-msgstr "基本的な changelog フラグメントは ``changelogs/fragments/`` ディレクトリーにある ``.yaml`` ファイルです。それぞれのファイルには、``bugfixes``、``major_changes`` などのキーを持つ yaml ディクショナリーが含まれており、その後にバグ修正または機能の changelog エントリーの一覧が続きます。それぞれの changelog エントリーは yaml ファイルが組み込まれている rst です。つまり、特定の構成は、yaml ではなく rst で解釈できるようにエスケープする必要があります (yaml と rst の両方にエスケープされていることが望ましい場合は、両方エスケープします)。各プル要求は、既存のものに追加するのではなく、新しいフラグメントファイルを使用する **必要があります**。したがって、変更を加えたプル要求までさかのぼることができます。"
+msgid "A basic changelog fragment is a ``.yaml`` or ``.yml`` file placed in the ``changelogs/fragments/`` directory.  Each file contains a yaml dict with keys like ``bugfixes`` or ``major_changes`` followed by a list of changelog entries of bugfixes or features.  Each changelog entry is rst embedded inside of the yaml file which means that certain constructs would need to be escaped so they can be interpreted by rst and not by yaml (or escaped for both yaml and rst if you prefer).  Each PR **must** use a new fragment file rather than adding to an existing one, so we can trace the change back to the PR that introduced it."
+msgstr "基本的な changelog フラグメントは ``changelogs/fragments/`` ディレクトリーにある ``.yaml`` または ``.yml`` ファイルです。それぞれのファイルには、``bugfixes``、``major_changes`` などのキーを持つ yaml ディクショナリーが含まれており、その後にバグ修正または機能の changelog エントリーの一覧が続きます。それぞれの changelog エントリーは yaml ファイルが組み込まれている rst です。つまり、特定の構成は、yaml ではなく rst で解釈できるようにエスケープする必要があります (yaml と rst の両方にエスケープされていることが望ましい場合は、両方エスケープします)。各プル要求は、既存のものに追加するのではなく、新しいフラグメントファイルを使用する **必要があります**。したがって、変更を加えたプル要求までさかのぼることができます。"
 
 #: ../../rst/community/development_process.rst:172
 msgid "PRs which add a new module or plugin do not necessarily need a changelog fragment. See the previous section :ref:`community_changelogs`. Also see the next section :ref:`changelogs_how_to_format` for the precise format changelog fragments should have."
 msgstr "新しいモジュールまたはプラグインを追加するプル要求は必ずしも changelog フラグメントを必要としません。前のセクション「:ref:`community_changelogs`」を参照してください。また、changelog フラグメントの正確な形式は、「:ref:`changelogs_how_to_format`」を参照してください。"
 
 #: ../../rst/community/development_process.rst:174
-msgid "To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory of the corresponding repository. The file name should include the PR number and a description of the change. It must end with the file extension ``.yaml``. For example: ``40696-user-backup-shadow-file.yaml``"
-msgstr "changelog エントリーを作成するには、対応するリポジトリーの ``changelogs/fragments/`` ディレクトリーに一意の名前を持つ新しいファイルを作成します。ファイル名には、PR 番号と変更の説明を含める必要があります。拡張子 ``.yaml`` で終了する必要があります。たとえば、``40696-user-backup-shadow-file.yaml`` です。"
+msgid "To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory of the corresponding repository. The file name should include the PR number and a description of the change. It must end with the file extension ``.yaml`` or ``.yml``. For example: ``40696-user-backup-shadow-file.yaml``"
+msgstr "changelog エントリーを作成するには、対応するリポジトリーの ``changelogs/fragments/`` ディレクトリーに一意の名前を持つ新しいファイルを作成します。ファイル名には、PR 番号と変更の説明を含める必要があります。拡張子 ``.yaml`` または ``.yml`` で終了する必要があります。たとえば、``40696-user-backup-shadow-file.yaml`` です。"
 
 #: ../../rst/community/development_process.rst:176
 msgid "A single changelog fragment may contain multiple sections but most will only contain one section. The toplevel keys (bugfixes, major_changes, and so on) are defined in the `config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ for our `release note tool <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst>`_. Here are the valid sections and a description of each:"
@@ -1570,11 +1570,11 @@ msgstr "ドキュメントワーキンググループ (DaWGs)は、`libera.chat 
 
 #: ../../rst/community/documentation_contributions.rst:213
 msgid ":ref:`More about testing module documentation <testing_module_documentation>`"
-msgstr ":ref:`More about testing module documentation <testing_module_documentation>`"
+msgstr ":ref:`モジュールドキュメントのテストの詳細 <testing_module_documentation>`"
 
 #: ../../rst/community/documentation_contributions.rst:215
 msgid ":ref:`More about documenting modules <module_documenting>`"
-msgstr ":ref:`More about documenting modules <module_documenting>`"
+msgstr ":ref:`モジュールのドキュメント化の詳細 <module_documenting>`"
 
 #: ../../rst/community/github_admins.rst:5
 msgid "GitHub Admins"
@@ -1846,7 +1846,7 @@ msgstr "特定の Ansible 機能に関心がある、または専門知識があ
 
 #: ../../rst/community/index.rst:47
 msgid "I would like to participate in conversations about features and fixes. How do I review GitHub issues and pull requests?"
-msgstr "機能や修正に関する議論に参加したいです。GitHub の問題やプル要求を確認するにはどうすれば良いですか。"
+msgstr "機能や修正に関する議論への参加を希望します。GitHub の問題やプル要求を確認するにはどうすれば良いですか。"
 
 #: ../../rst/community/index.rst:48
 msgid "I found a typo or another problem on docs.ansible.com. How can I :ref:`improve the documentation <community_documentation_contributions>`?"
@@ -2306,7 +2306,7 @@ msgstr "複数のプラグイン、ansible/ansible リポジトリーに残っ�
 
 #: ../../rst/community/reporting_bugs_and_features.rst:25
 msgid "Do not open issues for \"how do I do this\" type questions.  These are great topics for IRC or the mailing list, where things are likely to be more of a discussion."
-msgstr "「How do I do this (どうすればいいのか)」というタイプの質問で、問題を作成しないでください。このタイプの問題は、物事がより多くの議論になる可能性が高い IRC またはメーリングリストにとって素晴らしいトピックです。"
+msgstr "「How do I do this (どうすればいいのか)」というタイプの質問で、問題を作成しないでください。このタイプの問題は、色々な内容が議論される可能性が高い IRC またはメーリングリストで適切なトピックです。"
 
 #: ../../rst/community/reporting_bugs_and_features.rst:27
 msgid "If you find a bug, open the issue yourself to ensure we have a record of it. Do not rely on someone else in the community to file the bug report for you. We have created an issue template, which saves time and helps us help everyone with their issues more quickly. Please fill it out as completely and as accurately as possible:"
@@ -2344,37 +2344,41 @@ msgstr "可能な場合は出力結果の記載"
 msgid "For multiple-file content, use gist.github.com, which is more durable than pastebin content"
 msgstr "コンテンツが複数ファイルの場合は、gist.github.com を使用します。これは pastebin コンテンツよりも永続的です。"
 
-#: ../../rst/community/reporting_bugs_and_features.rst:41
+#: ../../rst/community/reporting_bugs_and_features.rst:43
 msgid "Bugs in collections"
 msgstr "コレクションのバグ"
 
-#: ../../rst/community/reporting_bugs_and_features.rst:43
+#: ../../rst/community/reporting_bugs_and_features.rst:45
 msgid "Many bugs only affect a single module or plugin. If you find a bug that affects a module or plugin hosted in a collection, file the bug in the repository of the :ref:`collection <collections>`:"
 msgstr "多くのバグは、単一のモジュールまたはプラグインにのみ影響します。コレクションでホストされるモジュールまたはプラグインに影響するバグを見つけた場合は、:ref:`コレクション <collections>` のリポジトリーにバグを報告してください。"
 
-#: ../../rst/community/reporting_bugs_and_features.rst:45
-msgid "Find the collection on Galaxy."
-msgstr "Galaxy のコレクションを見つけます。"
+#: ../../rst/community/reporting_bugs_and_features.rst:47
+msgid "Find the collection on `Galaxy <https://galaxy.ansible.com>`_."
+msgstr "`Galaxy <https://galaxy.ansible.com>` のコレクションを見つけます。"
 
-#: ../../rst/community/reporting_bugs_and_features.rst:46
+#: ../../rst/community/reporting_bugs_and_features.rst:48
 msgid "Click on the Issue Tracker link for that collection."
 msgstr "そのコレクションの Issue Tracker リンクをクリックします。"
 
-#: ../../rst/community/reporting_bugs_and_features.rst:47
+#: ../../rst/community/reporting_bugs_and_features.rst:49
 msgid "Follow the contributor guidelines or instructions in the collection repo."
 msgstr "貢献者向けガイドラインまたはコレクションリポジトリーの指示に従ってください。"
 
-#: ../../rst/community/reporting_bugs_and_features.rst:49
+#: ../../rst/community/reporting_bugs_and_features.rst:51
 msgid "If you are not sure whether a bug is in ansible-core or in a collection, you can report the behavior on the :ref:`mailing list or IRC first <communication>`."
-msgstr "バグが ansible-core またはコレクションのどちらにあるかわからない場合は、:ref:`最初にメーリングリストまたは IRC に <communication>` に動作を報告できます。"
+msgstr "バグが ansible-core またはコレクションのどちらにあるかわからない場合は、:ref:`最初にメーリングリストまたは IRC <communication>` に動作を報告できます。"
 
-#: ../../rst/community/reporting_bugs_and_features.rst:54
+#: ../../rst/community/reporting_bugs_and_features.rst:56
 msgid "Requesting a feature"
 msgstr "機能要求"
 
-#: ../../rst/community/reporting_bugs_and_features.rst:56
+#: ../../rst/community/reporting_bugs_and_features.rst:58
 msgid "The best way to get a feature into Ansible is to :ref:`submit a pull request <community_pull_requests>`, either against ansible-core or against a collection. See also :ref:`ansible_collection_merge_requirements`."
 msgstr "Ansible に機能を取り組むための最良の方法は、ansible-core またはコレクションに対して :ref:`プル要求を送信 <community_pull_requests>` することです。「:ref:`ansible_collection_merge_requirements`」も参照してください。"
+
+#: ../../rst/community/reporting_bugs_and_features.rst:60
+msgid "You can also submit a feature request through opening an issue in the `ansible/ansible <https://github.com/ansible/ansible/issues>`_ for ``ansible-core`` or in a corresponding collection repository (refer to the :ref:`Bugs in collections<reporting_bugs_in_collections>` section to learn how to find a proper issue tracker)."
+msgstr "``ansible-core``の`ansible/ansible <https://github.com/ansible/ansible/issues>`_または対応するコレクションリポジトリで問題を開いて、機能リクエストを提出することもできます (適切な課題追跡システムを見つける方法を知るには、:ref:`Bugs in collections<reporting_bugs_in_collections>`セクションを参照してください)。"
 
 #: ../../rst/community/triage_process.rst:3
 msgid "Triage Process"

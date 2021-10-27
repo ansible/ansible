@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-07-12 10:48+0200\n"
+"POT-Creation-Date: 2021-10-11 16:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -302,7 +302,7 @@ msgstr "デフォルトでは、``ansible-galaxy collection install`` は https:
 
 #: ../../rst/shared_snippets/installing_collections.txt:7
 msgid "See :ref:`Configuring the ansible-galaxy client <galaxy_server_config>` if you are using any other Galaxy server, such as Red Hat Automation Hub."
-msgstr "Red Hat Automation Hub などの他の Galaxy サーバーを使用している場合は、「:ref:`Configuring the ansible-galaxy client <galaxy_server_config>`」を参照してください。"
+msgstr "Red Hat Automation Hub などの他の Galaxy サーバーを使用している場合は、「:ref:`ansible-galaxy クライアントの設定 <galaxy_server_config>`」を参照してください。"
 
 #: ../../rst/shared_snippets/installing_collections.txt:9
 msgid "To install a collection hosted in Galaxy:"
@@ -326,11 +326,11 @@ msgstr "名前空間ディレクトリーに複数のコレクションをイン
 
 #: ../../rst/shared_snippets/installing_collections.txt:51
 msgid "The install command automatically appends the path ``ansible_collections`` to the one specified  with the ``-p`` option unless the parent directory is already in a folder called ``ansible_collections``."
-msgstr "install コマンドは、親ディレクトリーが ``ansible_collections`` ディレクトリーに含まれている場合を除き、``-p`` オプションで指定したパスに、パス ``ansible_collections`` を自動的に追加します。"
+msgstr "install コマンドは、親ディレクトリーが ``ansible_collections`` ディレクトリーに含まれている場合を除き、``-p`` オプションで指定したものに、パス ``ansible_collections`` を自動的に追加します。"
 
 #: ../../rst/shared_snippets/installing_collections.txt:55
 msgid "When using the ``-p`` option to specify the install path, use one of the values configured in :ref:`COLLECTIONS_PATHS`, as this is where Ansible itself will expect to find collections. If you don't specify a path, ``ansible-galaxy collection install`` installs the collection to the first path defined in :ref:`COLLECTIONS_PATHS`, which by default is ``~/.ansible/collections``"
-msgstr "``-p`` オプションを使用してインストールパスを指定する場合は、Ansible 自体がコレクションを見つけることが予想される場所であるため、:ref:`COLLECTIONS_PATHS` に設定された値のいずれかを使用します。パスを指定しないと、``ansible-galaxy collection install`` は :ref:`COLLECTIONS_PATHS` で定義されている最初のパスにコレクションをインストールします。これは、デフォルトでは ``~/.ansible/collections`` です。"
+msgstr "``-p`` オプションを使用してインストールパスを指定する場合は、Ansible 自体がコレクションを見つけることが予想される場所であるため、:ref:`COLLECTIONS_PATHS` に設定された値のいずれかを使用します。パスを指定しないと、``ansible-galaxy collection install`` は、:ref:`COLLECTIONS_PATHS` で定義されている最初のパスにコレクションをインストールします。これは、デフォルトでは ``~/.ansible/collections`` です。"
 
 #: ../../rst/shared_snippets/installing_collections.txt:59
 msgid "You can also keep a collection adjacent to the current playbook, under a ``collections/ansible_collections/`` directory structure."
@@ -421,36 +421,56 @@ msgid "Install multiple collections with a requirements file"
 msgstr "要件ファイルを使用した複数のコレクションのインストール"
 
 #: ../../rst/shared_snippets/installing_multiple_collections.txt:2
-msgid "You can also setup a ``requirements.yml`` file to install multiple collections in one command. This file is a YAML file in the format:"
-msgstr "``requirements.yml`` ファイルを設定して、1 つのコマンドで複数のコレクションをインストールすることもできます。このファイルは、以下の形式の YAML ファイルです。"
+msgid "You can set up a ``requirements.yml`` file to install multiple collections in one command. This file is a YAML file in the format:"
+msgstr "``requirements.yml`` ファイルを設定して、1 つのコマンドで複数のコレクションをインストールできます。このファイルは、以下の形式の YAML ファイルです。"
 
 #: ../../rst/shared_snippets/installing_multiple_collections.txt:16
-msgid "The supported keys for collection requirement entries are ``name``, ``version``, ``source``, and ``type``."
-msgstr "コレクション要件エントリーでサポートされるキーは ``name``、``version``、``source``、および ``type`` です。"
+msgid "You can specify four keys for each collection entry:"
+msgstr "各コレクションエントリーに 4 つのキーを指定できます。"
 
 #: ../../rst/shared_snippets/installing_multiple_collections.txt:18
-msgid "The ``version`` key can take in the same range identifier format documented above. If you're installing a collection from a git repository instead of a built collection artifact, the ``version`` key refers to a `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_."
-msgstr "``version`` キーは、上記の範囲識別子の形式を取ることができます。ビルドコレクションアーティファクトではなく git リポジトリーからコレクションをインストールする場合は、``version`` キーは `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ を参照します。"
+msgid "``name``"
+msgstr "``name``"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:19
+msgid "``version``"
+msgstr "``version``"
 
 #: ../../rst/shared_snippets/installing_multiple_collections.txt:20
+msgid "``source``"
+msgstr "``source``"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:21
+msgid "``type``"
+msgstr "``type``"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:23
+msgid "The ``version`` key uses the same range identifier format documented in :ref:`collections_older_version`."
+msgstr "``version`` キーは、:ref:`collections_older_version` に記載されているものと同じ範囲識別子形式を使用します。"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:25
 msgid "The ``type`` key can be set to ``galaxy``, ``url``, ``file``, and ``git``. If ``type`` is omitted, the ``name`` key is used to implicitly determine the source of the collection."
 msgstr "``type`` キーは ``galaxy``、``url``、``file``、および ``git`` に設定できます。``type`` を省略すると、``name`` キーを使用してコレクションのソースを暗黙的に決定します。"
 
-#: ../../rst/shared_snippets/installing_multiple_collections.txt:22
-msgid "Roles can also be specified and placed under the ``roles`` key. The values follow the same format as a requirements file used in older Ansible releases."
-msgstr "ロールは、``roles`` キーの下に指定して配置することもできます。この値は、古い Ansible リリースで使用される要件ファイルと同じ形式に従います。"
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:27
+msgid "When you install a collection with ``type: git``, the ``version`` key can refer to a branch or to a `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ object (commit or tag). For example:"
+msgstr "``type: git`` でコレクションをインストールする場合、``version`` キーはブランチまたは `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ オブジェクト（コミットまたはタグ）を参照できます。以下に例を示します。"
 
-#: ../../rst/shared_snippets/installing_multiple_collections.txt:39
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:36
+msgid "You can also add roles to a ``requirements.yml`` file, under the ``roles`` key. The values follow the same format as a requirements file used in older Ansible releases."
+msgstr "``roles``キーの下にある``requirements.yml``ファイルにロールを追加することもできます。この値は、古い Ansible リリースで使用される要件ファイルと同じ形式に従います。"
+
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:52
 msgid "To install both roles and collections at the same time with one command, run the following:"
 msgstr "1 つのコマンドで、ロールとコレクションを同時にインストールするには、以下のコマンドを実行します。"
 
-#: ../../rst/shared_snippets/installing_multiple_collections.txt:45
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:58
 msgid "Running ``ansible-galaxy collection install -r`` or ``ansible-galaxy role install -r`` will only install collections, or roles respectively."
 msgstr "``ansible-galaxy collection install -r`` または ``ansible-galaxy role install -r`` を実行すると、それぞれコレクションまたはロールがインストールされます。"
 
-#: ../../rst/shared_snippets/installing_multiple_collections.txt:49
+#: ../../rst/shared_snippets/installing_multiple_collections.txt:61
 msgid "Installing both roles and collections from the same requirements file will not work when specifying a custom collection or role install path. In this scenario the collections will be skipped and the command will process each like ``ansible-galaxy role install`` would."
-msgstr "カスタムコレクションまたはロールインストールパスを指定する場合は、同じ要件ファイルからロールとコレクションの両方をインストールすることはできません。今回の例では、コレクションは省略され、コマンドは ``ansible-galaxy role install`` のように処理されます。"
+msgstr "カスタムコレクションまたはロールインストールパスを指定する場合、同じ要件ファイルからロールとコレクションの両方をインストールすることはできません。今回の例では、コレクションは省略され、コマンドは ``ansible-galaxy role install`` のように処理されます。"
 
 #: ../../rst/galaxy/user_guide.rst:82
 msgid "Downloading a collection for offline use"
@@ -477,44 +497,80 @@ msgid "Installing a collection from a git repository"
 msgstr "git リポジトリーからのコレクションのインストール"
 
 #: ../../rst/shared_snippets/installing_collections_git_repo.txt:1
-msgid "You can install a collection in a git repository by providing the URI to the repository instead of a collection name or path to a ``tar.gz`` file. The collection must contain a ``galaxy.yml`` or ``MANIFEST.json`` file, which will be used to generate the would-be collection artifact data from the directory. The URI should be prefixed with ``git+`` (or with ``git@`` to use a private repository with ssh authentication) and optionally supports a comma-separated `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ version (for example, a commit or tag)."
-msgstr "コレクション名または ``tar.gz`` ファイルへのパスではなく、リポジトリーに URI を提供することにより、git リポジトリーにコレクションをインストールできます。コレクションには、``galaxy.yml`` ファイルまたは ``MANIFEST.json`` ファイルが必要です。このコレクションは、ディレクトリーからコレクションになる予定のアーティファクトデータを生成するのに使用されます。URI のプレフィックスには ``git+`` (または ssh 認証でプライベートリポジトリーを使用する ``git@``) を付け、必要に応じてコンマ区切りの `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ バージョン (コミットまたはタグなど) をサポートする必要があります。"
+msgid "You can install a collection from a git repository instead of from Galaxy or Automation Hub. As a developer, installing from a git repository lets you review your collection before you create the tarball and publish the collection. As a user, installing from a git repository lets you use collections or versions that are not in Galaxy or Automation Hub yet."
+msgstr "コレクションは、Galaxy または Automation Hub の代わりに git リポジトリーからインストールできます。開発者は、git リポジトリーからインストールし、tarball を作成してコレクションを公開する前にコレクションを確認できます。ユーザーとして git リポジトリーからインストールすることで、Galaxy または Automation Hub にないコレクションまたはバージョンを使用できます。"
 
-#: ../../rst/shared_snippets/installing_collections_git_repo.txt:5
-msgid "Embedding credentials into a git URI is not secure. Make sure to use safe auth options for security reasons. For example, use `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_, `netrc <https://linux.die.net/man/5/netrc>`_ or `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_/`url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ in Git config to prevent your creds from being exposed in logs."
-msgstr "認証情報を git URI に埋め込むことは安全ではありません。セキュリティー上の理由から、安全な認証オプションを使用してください。たとえば、Git 設定の `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_、`netrc <https://linux.die.net/man/5/netrc>`_、または `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_/`url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ で、クレジットがログに公開されないようにします。"
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:3
+msgid "The repository must contain a ``galaxy.yml`` or ``MANIFEST.json`` file. This file provides metadata such as the version number and namespace of the collection."
+msgstr "リポジトリーには ``galaxy.yml`` または ``MANIFEST.json`` ファイルが含まれている必要があります。このファイルは、コレクションのバージョン番号、namespace などのメタデータを提供します。"
 
-#: ../../rst/shared_snippets/installing_collections_git_repo.txt:18
-msgid "In a ``requirements.yml`` file, you can also use the ``type`` and ``version`` keys in addition to using the ``git+repo,version`` syntax for the collection name."
-msgstr "``requirements.yml`` ファイルでは、コレクション名の ``git+repo,version`` 構文を使用する他に、``type`` キーおよび ``version`` キーを使用することもできます。"
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:6
+msgid "Installing a collection from a git repository at the command line"
+msgstr "コマンドガイドで git リポジトリーからのコレクションのインストール"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:8
+msgid "To install a collection from a git repository at the command line, use the URI of the repository instead of a collection name or path to a ``tar.gz`` file.  Prefix the URI with ``git+`` (or with ``git@`` to use a private repository with ssh authentication). You can specify a branch, commit, or tag using the comma-separated `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ syntax."
+msgstr "git リポジトリーからコレクションをインストールするには、コレクション名または ``tar.gz`` ファイルへのパスではなく、リポジトリーの URI を使用します。``git+`` を使用して URI をプレフィックスします（または ``git@`` を使用して、ssh 認証でプライベートリポジトリーを使用します）。コンマ区切りの `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ 構文を使用して、ブランチ、コミット、またはタグを指定できます。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:10
+msgid "For example:"
+msgstr "例:"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:25
+msgid "Embedding credentials into a git URI is not secure. Use safe authentication options to prevent your credentials from being exposed in logs or elsewhere."
+msgstr "認証情報を git URI に埋め込むことは安全ではありません。安全な認証オプションを使用して、認証情報がログに公開されないようにします。"
 
 #: ../../rst/shared_snippets/installing_collections_git_repo.txt:27
-msgid "Git repositories can be used for collection dependencies as well. This can be helpful for local development and testing but built/published artifacts should only have dependencies on other artifacts."
-msgstr "git リポジトリーはコレクションの依存関係にも使用できます。これは、ローカル開発およびテストに役立ちますが、ビルド/公開されたアーティファクトには他のアーティファクトへの依存関係のみが必要です。"
+msgid "Use `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_ authentication"
+msgstr "`SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_ 認証を使用する"
 
-#: ../../rst/shared_snippets/installing_collections_git_repo.txt:34
-msgid "Default repository search locations"
-msgstr "デフォルトのリポジトリー検索の場所"
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:28
+msgid "Use `netrc <https://linux.die.net/man/5/netrc>`_ authentication"
+msgstr "`netrc <https://linux.die.net/man/5/netrc>`_ 認証を使用する"
 
-#: ../../rst/shared_snippets/installing_collections_git_repo.txt:36
-msgid "There are two paths searched in a repository for collections by default."
-msgstr "デフォルトでは、コレクション用のリポジトリーで 2 つのパスが検索されます。"
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:29
+msgid "Use `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_ in your git configuration"
+msgstr "お使いの git 設定で `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_ を使用する"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:30
+msgid "Use `url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ in your git configuration"
+msgstr "お使いの git 設定で `url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ を使用する"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:33
+msgid "Specifying the collection location within the git repository"
+msgstr "git リポジトリー内でのコレクションの場所の指定"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:35
+msgid "When you install a collection from a git repository, Ansible uses the collection ``galaxy.yml`` or ``MANIFEST.json`` metadata file to build the collection. By default, Ansible searches two paths for collection ``galaxy.yml`` or ``MANIFEST.json`` metadata files:"
+msgstr "git リポジトリーからコレクションをインストールする場合、Ansible はコレクション ``galaxy.yml`` または ``MANIFEST.json`` メタデータファイルを使用してコレクションを構築します。デフォルトでは、Ansible はコレクション ``galaxy.yml`` または ``MANIFEST.json`` メタデータファイルの 2 つのパスを検索します。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:37
+msgid "The top level of the repository."
+msgstr "リポジトリーのトップレベル。"
 
 #: ../../rst/shared_snippets/installing_collections_git_repo.txt:38
-msgid "The first is the ``galaxy.yml`` or ``MANIFEST.json`` file in the top level of the repository path. If the file exists it's used as the collection metadata and the individual collection will be installed."
-msgstr "1 つ目は、リポジトリーパスの最上位にある ``galaxy.yml`` ファイルまたは ``MANIFEST.json`` ファイルです。ファイルが存在する場合は、コレクションのメタデータとして使用され、個々のコレクションがインストールされます。"
+msgid "Each directory in the repository path (one level deep)."
+msgstr "リポジトリーパス内の各ディレクトリー（1 レベルの深さ）"
 
-#: ../../rst/shared_snippets/installing_collections_git_repo.txt:49
-msgid "The second is a ``galaxy.yml`` or ``MANIFEST.json`` file in each directory in the repository path (one level deep). In this scenario, each directory with a metadata file is installed as a collection."
-msgstr "2 つ目は、リポジトリーパス (1 レベルの深さ) の各ディレクトリーの ``galaxy.yml`` ファイルまたは ``MANIFEST.json`` ファイルです。ここでは、メタデータファイルが含まれる各ディレクトリーがコレクションとしてインストールされます)。"
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:40
+msgid "If a ``galaxy.yml`` or ``MANIFEST.json`` file exists in the top level of the repository, Ansible uses the collection metadata in that file to install an individual collection."
+msgstr "``galaxy.yml`` または ``MANIFEST.json`` ファイルがリポジトリーのトップレベルにある場合、Ansible はそのファイル内のコレクションメタデータを使用して個別のコレクションをインストールします。"
 
-#: ../../rst/shared_snippets/installing_collections_git_repo.txt:62
-msgid "Specifying the location to search for collections"
-msgstr "コレクションを検索する場所の指定"
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:51
+msgid "If a ``galaxy.yml`` or ``MANIFEST.json`` file exists in one or more directories in the repository path (one level deep), Ansible installs each directory with a metadata file as a collection. For example, Ansible installs both collection1 and collection2 from this repository structure by default:"
+msgstr "リポジトリーパス内の 1 つ以上のディレクトリーに ``galaxy.yml`` または ``MANIFEST.json`` ファイルが存在する場合は、Ansible はメタデータファイルを持つ各ディレクトリーをコレクションとしてインストールします。たとえば、Ansible は、デフォルトで、このリポジトリー構造から collection1 と collection2 の両方をインストールします。"
 
-#: ../../rst/shared_snippets/installing_collections_git_repo.txt:64
-msgid "If you have a different repository structure or only want to install a subset of collections, you can add a fragment to the end of your URI (before the optional comma-separated version) to indicate which path ansible-galaxy should inspect for metadata file(s). The path should be a directory to a collection or multiple collections (rather than the path to a ``galaxy.yml`` file or ``MANIFEST.json`` file)."
-msgstr "異なるリポジトリー構造がある場合や、コレクションのサブセットのみをインストールする場合は、URI の最後にフラグメントを追加して (任意のコンマ区切りバージョンの前)、ansible-galaxy がメタデータファイルを調べるパスを示すことができます。パスは、(``MANIFEST.json`` ファイルまたは ``galaxy.yml`` ファイルへのパスではなく) コレクションまたは複数のコレクションへのディレクトリーである必要があります。"
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:69
+msgid "If you have a different repository structure or only want to install a subset of collections, you can add a fragment to the end of your URI (before the optional comma-separated version) to indicate the location of the metadata file or files. The path should be a directory, not the metadata file itself. For example, to install only collection2 from the example repository with two collections:"
+msgstr "リポジトリ構造が異なる場合、またはコレクションのサブセットのみをインストールする場合は、URI の末尾（オプションのコンマ区切りバージョンの前）にフラグメントを追加して、メタデータファイルの場所を示すことができます。パスは、メタデータファイル自体ではなく、ディレクトリである必要があります。たとえば、2つのコレクションを持つサンプルリポジトリからcollection2のみをインストールするには、次のようにします。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:75
+msgid "In some repositories, the main directory corresponds to the namespace:"
+msgstr "リポジトリーによっては、メインのディレクトリーは名前空間に対応します。"
+
+#: ../../rst/shared_snippets/installing_collections_git_repo.txt:97
+msgid "You can install all collections in this repository, or install one collection from a specific commit:"
+msgstr "このリポジトリーのすべてのコレクションをインストールするか、特定のコミットから 1 つのコレクションをインストールできます。"
 
 #: ../../rst/galaxy/user_guide.rst:92
 msgid "Listing installed collections"
@@ -530,7 +586,7 @@ msgstr "``ansible-galaxy`` クライアントの設定"
 
 #: ../../rst/shared_snippets/galaxy_server_list.txt:3
 msgid "By default, ``ansible-galaxy`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the :file:`ansible.cfg` file under :ref:`galaxy_server`)."
-msgstr "デフォルトでは、``ansible-galaxy`` は https://galaxy.ansible.com を Galaxy サーバーとして使用します (:ref:`galaxy_server` の :file:`ansible.cfg` ファイルに記載）。"
+msgstr "デフォルトでは、``ansible-galaxy`` は https://galaxy.ansible.com を Galaxy サーバーとして使用します (:ref:`galaxy_server` の :file:`ansible.cfg` ファイルに記載)。"
 
 #: ../../rst/shared_snippets/galaxy_server_list.txt:5
 msgid "You can use either option below to configure ``ansible-galaxy collection`` to use other servers (such as Red Hat Automation Hub or a custom Galaxy server):"
@@ -538,7 +594,7 @@ msgstr "以下のオプションを使用して、他のサーバー (Red Hat Au
 
 #: ../../rst/shared_snippets/galaxy_server_list.txt:7
 msgid "Set the server list in the :ref:`galaxy_server_list` configuration option in :ref:`ansible_configuration_settings_locations`."
-msgstr "「:ref:`ansible_configuration_settings_locations`」の「:ref:`galaxy_server_list`」設定オプションにサーバーリストを設定します。"
+msgstr ":ref:`ansible_configuration_settings_locations` の :ref:`galaxy_server_list` 設定オプションにサーバーリストを設定します。"
 
 #: ../../rst/shared_snippets/galaxy_server_list.txt:8
 msgid "Use the ``--server`` command line argument to limit to an individual server."
@@ -578,7 +634,7 @@ msgstr "各サーバー名に ``auth_url`` オプションを設定します。"
 
 #: ../../rst/shared_snippets/galaxy_server_list.txt:24
 msgid "Set the API token for each server name. Go to https://cloud.redhat.com/ansible/automation-hub/token/ and click ::guilabel:`Get API token` from the version dropdown to copy your API token."
-msgstr "各サーバー名の API トークンを設定します。https://cloud.redhat.com/ansible/automation-hub/token/ に、バージョンドロップダウンリストから ::guilabel:`Get API token` をクリックして API トークンをコピーします。"
+msgstr "各サーバー名の API トークンを設定します。https://cloud.redhat.com/ansible/automation-hub/token/ で、バージョンドロップダウンリストから ::guilabel:`Get API token` をクリックして API トークンをコピーします。"
 
 #: ../../rst/shared_snippets/galaxy_server_list.txt:26
 msgid "The following example shows how to configure multiple servers:"
@@ -594,7 +650,7 @@ msgstr "**Galaxy サーバー一覧設定オプション**"
 
 #: ../../rst/shared_snippets/galaxy_server_list.txt:58
 msgid "The :ref:`galaxy_server_list` option is a list of server identifiers in a prioritized order. When searching for a collection, the install process will search in that order, for example, ``automation_hub`` first, then ``my_org_hub``, ``release_galaxy``, and finally ``test_galaxy`` until the collection is found. The actual Galaxy instance is then defined under the section ``[galaxy_server.{{ id }}]`` where ``{{ id }}`` is the server identifier defined in the list. This section can then define the following keys:"
-msgstr ":ref:`galaxy_server_list` オプションは、優先順位が付けられたサーバー識別子の一覧です。コレクションを検索する場合、インストールプロセスは次の順序で検索します。たとえば、``automation_hub`` を検索してから、``my_org_hub``、``release_galaxy``、最後に ``test_galaxy`` で、コレクションが見つかるまで行います。次に、実際の Galaxy インスタンスが ``[galaxy_server.{{ id }}]`` セクションで定義され。ここでは、``{{ id }}`` は、一覧で定義されているサーバー識別子です。このセクションでは、次のキーを定義できます。"
+msgstr ":ref:`galaxy_server_list` オプションは、優先順位が付けられたサーバー識別子の一覧です。コレクションを検索する場合、インストールプロセスは次の順序で検索します。たとえば、``automation_hub`` を検索してから、``my_org_hub``、``release_galaxy``、最後に ``test_galaxy`` で、コレクションが見つかるまで行います。次に、実際の Galaxy インスタンスが ``[galaxy_server.{{ id }}]`` セクションで定義されます。``{{ id }}`` は、一覧で定義されているサーバー識別子です。このセクションでは、次のキーを定義できます。"
 
 #: ../../rst/shared_snippets/galaxy_server_list.txt:64
 msgid "``url``: The URL of the Galaxy instance to connect to. Required."
@@ -943,4 +999,37 @@ msgstr "既知のディレクトリー構造の再利用可能なタスク、ハ
 
 #~ msgid "`irc.freenode.net <http://irc.freenode.net>`_"
 #~ msgstr "`irc.freenode.net <http://irc.freenode.net>`_"
+
+#~ msgid "The supported keys for collection requirement entries are ``name``, ``version``, ``source``, and ``type``."
+#~ msgstr "コレクション要件エントリーでサポートされるキーは ``name``、``version``、``source``、および ``type`` です。"
+
+#~ msgid "The ``version`` key can take in the same range identifier format documented above. If you're installing a collection from a git repository instead of a built collection artifact, the ``version`` key refers to a `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_."
+#~ msgstr "``version`` キーは、上記の範囲識別子の形式を取ることができます。ビルドコレクションアーティファクトではなく git リポジトリーからコレクションをインストールする場合は、``version`` キーは `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ を参照します。"
+
+#~ msgid "You can install a collection in a git repository by providing the URI to the repository instead of a collection name or path to a ``tar.gz`` file. The collection must contain a ``galaxy.yml`` or ``MANIFEST.json`` file, which will be used to generate the would-be collection artifact data from the directory. The URI should be prefixed with ``git+`` (or with ``git@`` to use a private repository with ssh authentication) and optionally supports a comma-separated `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ version (for example, a commit or tag)."
+#~ msgstr "コレクション名または ``tar.gz`` ファイルへのパスではなく、リポジトリーに URI を提供することにより、git リポジトリーにコレクションをインストールできます。コレクションには、``galaxy.yml`` ファイルまたは ``MANIFEST.json`` ファイルが必要です。このコレクションは、ディレクトリーからコレクションになる予定のアーティファクトデータを生成するのに使用されます。URI のプレフィックスには ``git+`` (または ssh 認証でプライベートリポジトリーを使用する ``git@``) を付け、必要に応じてコンマ区切りの `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ バージョン (コミットまたはタグなど) をサポートする必要があります。"
+
+#~ msgid "Embedding credentials into a git URI is not secure. Make sure to use safe auth options for security reasons. For example, use `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_, `netrc <https://linux.die.net/man/5/netrc>`_ or `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_/`url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ in Git config to prevent your creds from being exposed in logs."
+#~ msgstr "認証情報を git URI に埋め込むことは安全ではありません。セキュリティー上の理由から、安全な認証オプションを使用してください。たとえば、Git 設定の `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_、`netrc <https://linux.die.net/man/5/netrc>`_、または `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_/`url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ で、クレジットがログに公開されないようにします。"
+
+#~ msgid "In a ``requirements.yml`` file, you can also use the ``type`` and ``version`` keys in addition to using the ``git+repo,version`` syntax for the collection name."
+#~ msgstr "``requirements.yml`` ファイルでは、コレクション名の ``git+repo,version`` 構文を使用する他に、``type`` キーおよび ``version`` キーを使用することもできます。"
+
+#~ msgid "Git repositories can be used for collection dependencies as well. This can be helpful for local development and testing but built/published artifacts should only have dependencies on other artifacts."
+#~ msgstr "git リポジトリーはコレクションの依存関係にも使用できます。これは、ローカル開発およびテストに役立ちますが、ビルド/公開されたアーティファクトには他のアーティファクトへの依存関係のみが必要です。"
+
+#~ msgid "Default repository search locations"
+#~ msgstr "デフォルトのリポジトリー検索の場所"
+
+#~ msgid "There are two paths searched in a repository for collections by default."
+#~ msgstr "デフォルトでは、コレクション用のリポジトリーで 2 つのパスが検索されます。"
+
+#~ msgid "The second is a ``galaxy.yml`` or ``MANIFEST.json`` file in each directory in the repository path (one level deep). In this scenario, each directory with a metadata file is installed as a collection."
+#~ msgstr "2 つ目は、リポジトリーパス (1 レベルの深さ) の各ディレクトリーの ``galaxy.yml`` ファイルまたは ``MANIFEST.json`` ファイルです。ここでは、メタデータファイルが含まれる各ディレクトリーがコレクションとしてインストールされます)。"
+
+#~ msgid "Specifying the location to search for collections"
+#~ msgstr "コレクションを検索する場所の指定"
+
+#~ msgid "If you have a different repository structure or only want to install a subset of collections, you can add a fragment to the end of your URI (before the optional comma-separated version) to indicate which path ansible-galaxy should inspect for metadata file(s). The path should be a directory to a collection or multiple collections (rather than the path to a ``galaxy.yml`` file or ``MANIFEST.json`` file)."
+#~ msgstr "異なるリポジトリー構造がある場合や、コレクションのサブセットのみをインストールする場合は、URI の最後にフラグメントを追加して (任意のコンマ区切りバージョンの前)、ansible-galaxy がメタデータファイルを調べるパスを示すことができます。パスは、(``MANIFEST.json`` ファイルまたは ``galaxy.yml`` ファイルへのパスではなく) コレクションまたは複数のコレクションへのディレクトリーである必要があります。"
 
