@@ -78,11 +78,11 @@ outside of those test subdirectories.  They will also not reconfigure or bounce 
 
    Use the ``--docker-no-pull`` option to avoid pulling the latest container image. This is required when using custom local images that are not available for download.
 
-Run as follows for all POSIX platform tests executed by our CI system in a fedora32 docker container:
+Run as follows for all POSIX platform tests executed by our CI system in a fedora34 docker container:
 
 .. code-block:: shell-session
 
-    ansible-test integration shippable/ --docker fedora32
+    ansible-test integration shippable/ --docker fedora34
 
 You can target a specific tests as well, such as for individual modules:
 
@@ -114,7 +114,7 @@ to a virtual environment, such as Docker.  They won't reformat your filesystem:
 
 .. code-block:: shell-session
 
-    ansible-test integration destructive/ --docker fedora32
+    ansible-test integration destructive/ --docker fedora34
 
 Windows Tests
 =============
@@ -176,27 +176,26 @@ For example, to run tests for the ``ping`` module on a Ubuntu 18.04 container:
 Container Images
 ----------------
 
-Python 2
-^^^^^^^^
-
-Most container images are for testing with Python 2:
-
-  - centos6
-  - centos7
-  - opensuse15py2
-
 Python 3
 ^^^^^^^^
 
-To test with Python 3 use the following images:
+Most container images are for testing with Python 3:
 
   - alpine3
   - centos8
-  - fedora32
   - fedora33
+  - fedora34
   - opensuse15
   - ubuntu1804
   - ubuntu2004
+
+Python 2
+^^^^^^^^
+
+To test with Python 2 use the following images:
+
+  - centos7
+  - opensuse15py2
 
 
 Legacy Cloud Tests
