@@ -23,6 +23,10 @@ from ansible.plugins.action import ActionBase
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
+    def __init__(self, *args, **kwargs):
+        super(ActionModule, self).__init__(*args, **kwargs)
+        self._supports_check_mode = False
+
     def run(self, tmp=None, task_vars=None):
         if task_vars is None:
             task_vars = dict()
@@ -32,11 +36,6 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
-
-        if self._play_context.check_mode:
-            # in --check mode, always skip this module execution
-            result['skipped'] = True
-            return result
 
         executable = self._task.args.get('executable', False)
         result.update(self._low_level_execute_command(self._task.args.get('_raw_params'), executable=executable))

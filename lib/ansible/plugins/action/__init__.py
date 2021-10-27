@@ -73,6 +73,7 @@ class ActionBase(ABC):
         self._display = display
 
         self._used_interpreter = None
+        self._executable = None
 
     @abstractmethod
     def run(self, tmp=None, task_vars=None):
@@ -100,6 +101,9 @@ class ActionBase(ABC):
                                  ' plugins should set self._connection._shell.tmpdir to share'
                                  ' the tmpdir']
         del tmp
+
+        # default to when running commands
+        self._executable = C.config.get_config_value('DEFAULT_EXECUTABLE', variables=self._task.task_vars)
 
         if self._task.async_val and not self._supports_async:
             raise AnsibleActionFail('async is not supported for this task.')
@@ -282,9 +286,10 @@ class ActionBase(ABC):
         # modify_module will exit early if interpreter discovery is required; re-run after if necessary
         for dummy in (1, 2):
             try:
+                compress = C.config.get_config_value('DEFAULT_MODULE_COMPRESSION', variables=task_vars)
                 (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, self._templar,
                                                                             task_vars=use_vars,
-                                                                            module_compression=self._play_context.module_compression,
+                                                                            module_compression=compress,
                                                                             async_timeout=self._task.async_val,
                                                                             environment=final_environment,
                                                                             remote_is_local=bool(getattr(self._connection, '_remote_is_local', False)),
@@ -893,6 +898,23 @@ class ActionBase(ABC):
         finally:
             return x  # pylint: disable=lost-exception
 
+    def _get_host(self):
+
+        host = None
+        # some connection plugins don't use remote_addr, try all
+        for used_key in ('remote_addr', 'host', 'hostname'):
+            try:
+                # TODO: give warning/deprecation when not remote_addr?
+                host = self._connection.get_option(used_key)
+                break
+            except (KeyError, ValueError, AttributeError):
+                pass
+
+        if host is None:
+            host = self._play_context.remote_addr
+
+        return host
+
     def _remote_expand_user(self, path, sudoable=True, pathsep=None):
         ''' takes a remote path and performs tilde/$HOME expansion on the remote host '''
 
@@ -999,7 +1021,7 @@ class ActionBase(ABC):
             module_args['_ansible_socket'] = task_vars.get('ansible_socket')
 
         # make sure all commands use the designated shell executable
-        module_args['_ansible_shell_executable'] = self._play_context.executable
+        module_args['_ansible_shell_executable'] = self._executable
 
         # make sure modules are aware if they need to keep the remote files
         module_args['_ansible_keep_remote_files'] = C.DEFAULT_KEEP_REMOTE_FILES
@@ -1304,7 +1326,7 @@ class ActionBase(ABC):
 
         if self._connection.allow_executable:
             if executable is None:
-                executable = self._play_context.executable
+                executable = self._executable
                 # mitigation for SSH race which can drop stdout (https://github.com/ansible/ansible/issues/13876)
                 # only applied for the default executable to avoid interfering with the raw action
                 cmd = self._connection._shell.append_command(cmd, 'sleep 0')
