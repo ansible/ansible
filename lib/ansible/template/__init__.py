@@ -655,6 +655,41 @@ class Templar:
 
         self.jinja2_native = C.DEFAULT_JINJA2_NATIVE
 
+    def copy_with_new_env(self, environment_class=AnsibleEnvironment, **kwargs):
+        r"""Creates a new copy of Templar with a new environment. The new environment is based on
+        given environment class and kwargs.
+
+        :kwarg environment_class: Environment class used for creating a new environment.
+        :kwarg \*\*kwargs: Optional arguments for the new environment that override existing
+            environment attributes.
+
+        :returns: Copy of Templar with updated environment.
+        """
+        # We need to use __new__ to skip __init__, mainly not to create a new
+        # environment there only to override it below
+        new_env = object.__new__(environment_class)
+        new_env.__dict__.update(self.environment.__dict__)
+
+        new_templar = object.__new__(Templar)
+        new_templar.__dict__.update(self.__dict__)
+        new_templar.environment = new_env
+
+        mapping = {
+            'available_variables': new_templar,
+            'searchpath': new_env.loader,
+        }
+
+        for key, value in kwargs.items():
+            obj = mapping.get(key, new_env)
+            try:
+                if value is not None:
+                    setattr(obj, key, value)
+            except AttributeError:
+                # Ignore invalid attrs
+                pass
+
+        return new_templar
+
     def _get_extensions(self):
         '''
         Return jinja2 extensions to load.
