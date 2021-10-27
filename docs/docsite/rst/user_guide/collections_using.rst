@@ -371,6 +371,11 @@ A few recommendations when creating such playbooks, ``hosts:`` should be generic
 
 This will have an implied entry in the ``collections:`` keyword of ``my_namespace.my_collection`` just as with roles.
 
+.. note::
+    Playbook names, like other collection resources, have a restricted set of valid characters.
+    Names can contain only lowercase alphanumeric characters, plus _ and must start with an alpha character. The dash ``-`` character is not valid for playbook names in collections.
+    Playbooks whose names contain invalid characters are not addressable: this is a limitation of the Python importer that is used to load collection resources.
+
 .. seealso::
 
    :ref:`developing_collections`

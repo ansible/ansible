@@ -193,8 +193,8 @@ Forcing the data type
 
 You can cast values as certain types. For example, if you expect the input "True" from a :ref:`vars_prompt <playbooks_prompts>` and you want Ansible to recognize it as a boolean value instead of a string::
 
-   - debug:
-     msg: test
+   - ansible.builtin.debug:
+        msg: test
      when: some_string_value | bool
 
 If you want to perform a mathematical comparison on a fact and you want Ansible to recognize it as an integer instead of a string::
@@ -300,7 +300,7 @@ To get a list combining the elements of other lists use ``zip``::
 
     - name: Give me list combo of two lists
       ansible.builtin.debug:
-       msg: "{{ [1,2,3,4,5,6] | zip(['a','b','c','d','e','f']) | list }}"
+        msg: "{{ [1,2,3,4,5,6] | zip(['a','b','c','d','e','f']) | list }}"
 
     # => [[1, "a"], [2, "b"], [3, "c"], [4, "d"], [5, "e"], [6, "f"]]
 
@@ -1806,7 +1806,7 @@ Getting Kubernetes resource names
 Use the "k8s_config_resource_name" filter to obtain the name of a Kubernetes ConfigMap or Secret,
 including its hash::
 
-    {{ configmap_resource_definition | kuberernetes.core.k8s_config_resource_name }}
+    {{ configmap_resource_definition | kubernetes.core.k8s_config_resource_name }}
 
 This can then be used to reference hashes in Pod specifications::
 
@@ -1823,7 +1823,7 @@ This can then be used to reference hashes in Pod specifications::
             containers:
             - envFrom:
                 - secretRef:
-                    name: {{ my_secret | kuberernetes.core.k8s_config_resource_name }}
+                    name: {{ my_secret | kubernetes.core.k8s_config_resource_name }}
 
 .. versionadded:: 2.8
 
