@@ -6,7 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-from ast import literal_eval
+import ast
 from itertools import islice, chain
 
 from jinja2.runtime import StrictUndefined
@@ -16,6 +16,21 @@ from ansible.module_utils.common.collections import is_sequence, Mapping
 from ansible.module_utils.six import string_types
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.native_jinja import NativeJinjaText
+from ansible.utils.unsafe_proxy import wrap_var
+
+
+_JSON_MAP = {
+    "true": True,
+    "false": False,
+    "null": None,
+}
+
+
+class Json2Python(ast.NodeTransformer):
+    def visit_Name(self, node):
+        if node.id not in _JSON_MAP:
+            return node
+        return ast.Constant(value=_JSON_MAP[node.id])
 
 
 def _fail_on_undefined(data):
@@ -39,6 +54,52 @@ def _fail_on_undefined(data):
             str(data)
 
     return data
+
+
+def ansible_concat(nodes, convert_data, variable_start_string):
+    head = list(islice(nodes, 2))
+
+    if not head:
+        return None
+
+    if len(head) == 1:
+        out = _fail_on_undefined(head[0])
+
+        if isinstance(out, NativeJinjaText):
+            return out
+
+        out = to_text(out)
+    else:
+        out = ''.join([to_text(_fail_on_undefined(v)) for v in chain(head, nodes)])
+
+    if not convert_data:
+        return out
+
+    # if this looks like a dictionary, list or bool, convert it to such
+    do_eval = (
+        (
+            out.startswith(('{', '[')) and
+            not out.startswith(variable_start_string)
+        ) or
+        out in ('True', 'False')
+    )
+    if do_eval:
+        unsafe = hasattr(out, '__UNSAFE__')
+        try:
+            out = ast.literal_eval(
+                ast.fix_missing_locations(
+                    Json2Python().visit(
+                        ast.parse(out, mode='eval')
+                    )
+                )
+            )
+        except (ValueError, SyntaxError, MemoryError):
+            pass
+        else:
+            if unsafe:
+                out = wrap_var(out)
+
+    return out
 
 
 def ansible_native_concat(nodes):
@@ -79,6 +140,6 @@ def ansible_native_concat(nodes):
         out = ''.join([to_text(_fail_on_undefined(v)) for v in chain(head, nodes)])
 
     try:
-        return literal_eval(out)
+        return ast.literal_eval(out)
     except (ValueError, SyntaxError, MemoryError):
         return out
