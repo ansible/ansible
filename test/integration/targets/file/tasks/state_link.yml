@@ -375,7 +375,6 @@
 - name: attempt to modify the permissions of the link itself
   file:
     path: '{{remote_tmp_dir_test}}/test_follow_link'
-    src: './test_follow'
     state: 'link'
     mode: 0600
     follow: False
@@ -444,6 +443,19 @@
     that:
       - src_state is failed
       - "'src option requires state to be' in src_state.msg"
+
+- name: Create without src
+  file:
+    state: link
+    dest: "{{ output_dir }}/link.txt"
+  ignore_errors: yes
+  register: create_without_src
+
+- name: Ensure create without src failed
+  assert:
+    that:
+      - create_without_src is failed
+      - "'src is required' in create_without_src.msg"
 
 # Test creating a symlink when the destination exists and is a file
 - name: create a test file

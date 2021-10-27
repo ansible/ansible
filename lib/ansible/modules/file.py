@@ -688,7 +688,7 @@ def ensure_symlink(path, src, follow, force, timestamps):
     # source is both the source of a symlink or an informational passing of the src for a template module
     # or copy module, even if this module never uses it, it is needed to key off some things
     if src is None:
-        if follow:
+        if follow and os.path.exists(b_path):
             # use the current target of the link as the source
             src = to_native(os.readlink(b_path), errors='strict')
             b_src = to_bytes(src, errors='surrogate_or_strict')
@@ -699,9 +699,14 @@ def ensure_symlink(path, src, follow, force, timestamps):
         b_relpath = os.path.dirname(b_path)
         relpath = to_native(b_relpath, errors='strict')
 
-    absrc = os.path.join(relpath, src)
+    # If src is None that means we are expecting to update an existing link.
+    if src is None:
+        absrc = None
+    else:
+        absrc = os.path.join(relpath, src)
+
     b_absrc = to_bytes(absrc, errors='surrogate_or_strict')
-    if not force and not os.path.exists(b_absrc):
+    if not force and src is not None and not os.path.exists(b_absrc):
         raise AnsibleModuleError(results={'msg': 'src file does not exist, use "force=yes" if you'
                                                  ' really want to create the link: %s' % absrc,
                                           'path': path, 'src': src})
@@ -725,13 +730,16 @@ def ensure_symlink(path, src, follow, force, timestamps):
     changed = False
 
     if prev_state in ('hard', 'file', 'directory', 'absent'):
+        if src is None:
+            raise AnsibleModuleError(results={'msg': 'src is required for creating new symlinks'})
         changed = True
     elif prev_state == 'link':
-        b_old_src = os.readlink(b_path)
-        if b_old_src != b_src:
-            diff['before']['src'] = to_native(b_old_src, errors='strict')
-            diff['after']['src'] = src
-            changed = True
+        if src is not None:
+            b_old_src = os.readlink(b_path)
+            if b_old_src != b_src:
+                diff['before']['src'] = to_native(b_old_src, errors='strict')
+                diff['after']['src'] = src
+                changed = True
     else:
         raise AnsibleModuleError(results={'msg': 'unexpected position reached', 'dest': path, 'src': src})
 
