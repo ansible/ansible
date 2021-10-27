@@ -43,8 +43,8 @@ options:
     - If C(touch) (new in 1.4), an empty file will be created if the file does not
       exist, while an existing file or directory will receive updated file access and
       modification times (similar to the way C(touch) works from the command line).
+    - Default is the current state of the file if it exists, C(directory) if C(recurse=yes), or C(file) otherwise.
     type: str
-    default: file
     choices: [ absent, directory, file, hard, link, touch ]
   src:
     description:
