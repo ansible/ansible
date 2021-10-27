@@ -232,7 +232,7 @@ class CallbackBase(AnsiblePlugin):
                     abridged_result,
                     allow_unicode=True,
                     Dumper=_AnsibleCallbackDumper(lossy=lossy),
-                    default_flow_style=False if indent else True,
+                    default_flow_style=False,
                     indent=indent,
                     # sort_keys=sort_keys  # This requires PyYAML>=5.1
                 ),
