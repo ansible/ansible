@@ -37,6 +37,10 @@ DOCKER_COMMANDS = [
     'podman',
 ]
 
+# Max number of open files in a docker container.
+# Passed with --ulimit option to the docker run command.
+MAX_NUM_OPEN_FILES = 10240
+
 
 class DockerCommand:
     """Details about the available docker command."""
@@ -231,6 +235,8 @@ def docker_run(
     if is_docker_user_defined_network(network):
         # Only when the network is not the default bridge network.
         options.extend(['--network', network])
+
+    options.extend(['--ulimit', 'nofile=%s' % MAX_NUM_OPEN_FILES])
 
     for _iteration in range(1, 3):
         try:
