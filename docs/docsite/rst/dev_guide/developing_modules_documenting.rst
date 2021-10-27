@@ -217,10 +217,19 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
         - ref: aci_guide
           description: Detailed information on how to manage your ACI infrastructure using Ansible.
 
+        # Reference by rST documentation anchor (with custom title)
+        - ref: The official Ansible ACI guide <aci_guide>
+          description: Detailed information on how to manage your ACI infrastructure using Ansible.
+
         # Reference by Internet resource
         - name: APIC Management Information Model reference
           description: Complete reference of the APIC object model.
           link: https://developer.cisco.com/docs/apic-mim-ref/
+
+
+  * If you use ``ref:`` to link to an anchor that is not associated with a title, you must add a title to the ref for the link to work correctly.
+  * You can link to non-module plugins with ``ref:`` using the rST anchor, but plugin and module anchors are never associated with a title, so you must supply a title when you link to them. For example ``ref: namespace.collection.plugin_name lookup plugin  <ansible_collections.namespace.collection.plugin_name_lookup>``.
+
 
 :notes:
 
