@@ -57,10 +57,11 @@ class TestHostname(ModuleTestCase):
             else:
                 self.assertTrue(issubclass(cls, hostname.BaseStrategy))
 
+
 class TestRedhatStrategy(ModuleTestCase):
     def setUp(self):
         super(TestRedhatStrategy, self).setUp()
-        self.testdir = tempfile.mkdtemp(prefix='ansible-test-hostname-')
+        self.testdir = tempfile.mkdtemp(prefix="ansible-test-hostname-")
         self.network_file = os.path.join(self.testdir, "network")
 
     def tearDown(self):
@@ -91,20 +92,12 @@ class TestRedhatStrategy(ModuleTestCase):
 
     def test_get_permanent_hostname_existing(self):
         with open(self.network_file, "w") as f:
-            f.write(
-                "some other content\n"
-                "HOSTNAME=foobar\n"
-                "more content\n"
-            )
+            f.write("some other content\n" "HOSTNAME=foobar\n" "more content\n")
         self.assertEqual(self.instance.get_permanent_hostname(), "foobar")
 
     def test_get_permanent_hostname_existing_whitespace(self):
         with open(self.network_file, "w") as f:
-            f.write(
-                "some other content\n"
-                "     HOSTNAME=foobar   \n"
-                "more content\n"
-            )
+            f.write("some other content\n" "     HOSTNAME=foobar   \n" "more content\n")
         self.assertEqual(self.instance.get_permanent_hostname(), "foobar")
 
     def test_set_permanent_hostname_missing(self):
@@ -121,32 +114,31 @@ class TestRedhatStrategy(ModuleTestCase):
 
     def test_set_permanent_hostname_existing(self):
         with open(self.network_file, "w") as f:
-            f.write(
-                "some other content\n"
-                "HOSTNAME=spam\n"
-                "more content\n"
-            )
+            f.write("some other content\n" "HOSTNAME=spam\n" "more content\n")
         self.instance.set_permanent_hostname("foobar")
         with open(self.network_file) as f:
             self.assertEqual(
-                f.read(),
-                "some other content\n"
-                "HOSTNAME=foobar\n"
-                "more content\n"
+                f.read(), "some other content\n" "HOSTNAME=foobar\n" "more content\n"
             )
 
     def test_set_permanent_hostname_existing_whitespace(self):
         with open(self.network_file, "w") as f:
-            f.write(
-                "some other content\n"
-                "     HOSTNAME=spam   \n"
-                "more content\n"
-            )
+            f.write("some other content\n" "     HOSTNAME=spam   \n" "more content\n")
         self.instance.set_permanent_hostname("foobar")
         with open(self.network_file) as f:
             self.assertEqual(
-                f.read(),
-                "some other content\n"
-                "HOSTNAME=foobar\n"
-                "more content\n"
+                f.read(), "some other content\n" "HOSTNAME=foobar\n" "more content\n"
             )
+
+    def test_all_named_strategies_exist(self):
+        """Loop through the STRATS and see if anything is missing."""
+        for _name, prefix in hostname.STRATS.items():
+            classname = "%sStrategy" % prefix
+            cls = getattr(hostname, classname, None)
+
+            if cls is None:
+                self.assertFalse(
+                    cls is None, "%s is None, should be a subclass" % classname
+                )
+            else:
+                self.assertTrue(issubclass(cls, hostname.BaseStrategy))
