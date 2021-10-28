@@ -86,7 +86,7 @@ STRATS = {
     'alpine': 'Alpine',
     'debian': 'Systemd',
     'freebsd': 'FreeBSD',
-    'generic': 'Generic',
+    'generic': 'Base',
     'macos': 'Darwin',
     'macosx': 'Darwin',
     'darwin': 'Darwin',
