@@ -601,7 +601,7 @@ class DocCLI(CLI, RoleMixin):
 
         return coll_filter
 
-    def _list_plugins(self, plugin_type):
+    def _list_plugins(self, plugin_type, content):
 
         results = {}
         loader = DocCLI._prep_loader(plugin_type)
@@ -615,10 +615,13 @@ class DocCLI(CLI, RoleMixin):
         add_collection_plugins(self.plugin_list, plugin_type, coll_filter=coll_filter)
 
         # get appropriate content depending on option
-        if context.CLIARGS['list_dir']:
+        if content == 'dir':
             results = self._get_plugin_list_descriptions(loader)
-        elif context.CLIARGS['list_files']:
+        elif content == 'files':
             results = self._get_plugin_list_filenames(loader)
+        else:
+            results = {k: {} for k in self.plugin_list}
+            print(results)
         return results
 
     def _get_plugins_docs(self, plugin_type, names):
@@ -657,10 +660,13 @@ class DocCLI(CLI, RoleMixin):
            - playbook dir (basedir)
          NOTE: This matches logic in RoleDefinition._load_role_path() method.
         '''
-        subdir = os.path.join(context.CLIARGS['basedir'], "roles")
-        if os.path.isdir(subdir):
-            roles_path = (subdir,) + context.CLIARGS['roles_path']
-        return roles_path + (context.CLIARGS['basedir'],)
+        roles_path = context.CLIARGS['roles_path']
+        if context.CLIARGS['basedir'] is not None:
+            subdir = os.path.join(context.CLIARGS['basedir'], "roles")
+            if os.path.isdir(subdir):
+                roles_path = (subdir,) + roles_path
+            roles_path = roles_path + (context.CLIARGS['basedir'],)
+        return roles_path
 
     @staticmethod
     def _prep_loader(plugin_type):
@@ -690,6 +696,13 @@ class DocCLI(CLI, RoleMixin):
         do_json = context.CLIARGS['json_format'] or context.CLIARGS['dump']
         listing = context.CLIARGS['list_files'] or context.CLIARGS['list_dir']
 
+        if context.CLIARGS['list_files']:
+            content = 'files'
+        elif context.CLIARGS['list_dir']:
+            content = 'dir'
+        else:
+            content = None
+
         docs = {}
 
         if basedir:
@@ -699,7 +712,6 @@ class DocCLI(CLI, RoleMixin):
             raise AnsibleOptionsError("Unknown or undocumentable plugin type: %s" % plugin_type)
 
         if context.CLIARGS['dump']:
-
             # we always dump all types, ignore restrictions
             ptypes = TARGET_OPTIONS
             docs['all'] = {}
@@ -711,18 +723,19 @@ class DocCLI(CLI, RoleMixin):
                     names = DocCLI._list_keywords()
                     docs['all'][ptype] = DocCLI._get_keywords_docs(names.keys())
                 else:
-                    plugin_names = DocCLI.get_all_plugins_of_type(ptype)
+                    plugin_names = self._list_plugins(ptype, None)
                     docs['all'][ptype] = self._get_plugins_docs(ptype, plugin_names)
-
+                    # reset list after each type to avoid polution
+                    self.plugin_list = set()
         elif listing:
             if plugin_type == 'keyword':
                 docs = DocCLI._list_keywords()
             elif plugin_type == 'role':
                 docs = self._create_role_list()
             else:
-                docs = self._list_plugins(plugin_type)
+                docs = self._list_plugins(plugin_type, content)
         else:
-            # here we requrie a name
+            # here we require a name
             if len(context.CLIARGS['args']) == 0:
                 raise AnsibleOptionsError("Missing name(s), incorrect options passed for detailed documentation.")
 
@@ -780,16 +793,6 @@ class DocCLI(CLI, RoleMixin):
                 DocCLI.pager(''.join(text))
 
         return 0
-
-    @staticmethod
-    def get_all_plugins_of_type(plugin_type):
-        loader = DocCLI._prep_loader(plugin_type)
-        plugin_list = set()
-        paths = loader._get_paths_with_context()
-        for path_context in paths:
-            plugins_to_add = DocCLI.find_plugins(path_context.path, path_context.internal, plugin_type)
-            plugin_list.update(plugins_to_add)
-        return sorted(set(plugin_list))
 
     @staticmethod
     def namespace_from_plugin_filepath(filepath, plugin_name, basedir):
