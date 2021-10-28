@@ -705,7 +705,8 @@ class DocCLI(CLI, RoleMixin):
             docs['all'] = {}
             for ptype in ptypes:
                 if ptype == 'role':
-                    continue  # should we 'list roles' ?
+                    roles = self._create_role_list()
+                    docs['all'][ptype] = self._create_role_doc(roles.keys(), context.CLIARGS['entry_point'])
                 elif ptype == 'keyword':
                     names = DocCLI._list_keywords()
                     docs['all'][ptype] = DocCLI._get_keywords_docs(names.keys())
