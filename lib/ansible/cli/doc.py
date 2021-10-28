@@ -253,7 +253,7 @@ class RoleMixin(object):
 
         return (fqcn, doc)
 
-    def _create_role_list(self, collection_filter=None):
+    def _create_role_list(self):
         """Return a dict describing the listing of all roles with arg specs.
 
         :param role_paths: A tuple of one or more role paths.
@@ -284,6 +284,7 @@ class RoleMixin(object):
             }
         """
         roles_path = self._get_roles_path()
+        collection_filter = self._get_collection_filter()
         if not collection_filter:
             roles = self._find_all_normal_roles(roles_path)
         else:
@@ -588,14 +589,24 @@ class DocCLI(CLI, RoleMixin):
 
         return data
 
+    def _get_collection_filter(self):
+
+        coll_filter = None
+        if len(context.CLIARGS['args']) == 1:
+            coll_filter = context.CLIARGS['args'][0]
+            if not AnsibleCollectionRef.is_valid_collection_name(coll_filter):
+                raise AnsibleError('Invalid collection name (must be of the form namespace.collection): {0}'.format(coll_filter))
+            elif len(context.CLIARGS['args']) > 1:
+                raise AnsibleOptionsError("Only a single collection filter is supported.")
+
+        return coll_filter
+
     def _list_plugins(self, plugin_type, plugin_loader):
 
         results = {}
-        coll_filter = None
         loader = self._prep_loader(plugin_loader, plugin_type)
-        if len(context.CLIARGS['args']) == 1:
-            coll_filter = context.CLIARGS['args'][0]
 
+        coll_filter = self._get_collection_filter()
         if coll_filter in ('ansible.builtin', 'ansible.legacy', '', None):
             paths = loader._get_paths_with_context()
             for path_context in paths:
@@ -614,7 +625,6 @@ class DocCLI(CLI, RoleMixin):
 
         loader = self._prep_loader(plugin_loader, plugin_type)
         search_paths = DocCLI.print_paths(loader)
-
 
         # get the docs for plugins in the command line list
         plugin_docs = {}
@@ -650,7 +660,7 @@ class DocCLI(CLI, RoleMixin):
         subdir = os.path.join(context.CLIARGS['basedir'], "roles")
         if os.path.isdir(subdir):
             roles_path = (subdir,) + context.CLIARGS['roles_path']
-        return roles_path + (contex.CLIARGS['basedir'],)
+        return roles_path + (context.CLIARGS['basedir'],)
 
     def _prep_loader(self, plugin_loader, plugin_type):
         ''' return a plugint type specific loader '''
@@ -707,14 +717,7 @@ class DocCLI(CLI, RoleMixin):
             if plugin_type == 'keyword':
                 docs = DocCLI._list_keywords()
             elif plugin_type == 'role':
-                coll_filter = None
-                if len(context.CLIARGS['args']) == 1:
-                    coll_filter = context.CLIARGS['args'][0]
-                    if not AnsibleCollectionRef.is_valid_collection_name(coll_filter):
-                        raise AnsibleError('Invalid collection name (must be of the form namespace.collection): {0}'.format(coll_filter))
-                elif len(context.CLIARGS['args']) > 1:
-                    raise AnsibleOptionsError("Only a single collection filter is supported.")
-                docs = self._create_role_list(collection_filter=coll_filter)
+                docs = self._create_role_list()
             else:
                 docs = self._list_plugins(plugin_type, plugin_loader)
         else:
