@@ -17,7 +17,7 @@ DOCUMENTATION = '''
       plugin:
          description: token that ensures this is a source file for the 'generator' plugin.
          required: True
-         choices: ['generator']
+         choices: ['ansible.builtin.generator', 'generator']
       hosts:
         description:
           - The C(name) key is a template used to generate
@@ -39,7 +39,7 @@ EXAMPLES = '''
     # inventory.config file in YAML format
     # remember to enable this inventory plugin in the ansible.cfg before using
     # View the output using `ansible-inventory -i inventory.config --list`
-    plugin: generator
+    plugin: ansible.builtin.generator
     hosts:
         name: "{{ operation }}_{{ application }}_{{ environment }}_runner"
         parents:

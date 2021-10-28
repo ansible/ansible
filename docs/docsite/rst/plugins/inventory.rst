@@ -30,6 +30,7 @@ If the plugin is in a collection, use the fully qualified name:
    [inventory]
    enable_plugins = namespace.collection_name.inventory_plugin_name
 
+If you use a plugin that supports a YAML configuration source, make sure that the name matches the name provided in the ``plugin`` entry of the inventory source file.
 
 .. _using_inventory:
 
