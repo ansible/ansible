@@ -48,7 +48,7 @@ from ansible.utils.plugin_docs import (
 display = Display()
 
 
-TARGET_OPTIONS = C.DOCUMENTABLE_PLUGINS + ('role', 'keyword')
+TARGET_OPTIONS = C.DOCUMENTABLE_PLUGINS + ('role', 'keyword',)
 PB_OBJECTS = ['Play', 'Role', 'Block', 'Task']
 PB_LOADED = {}
 SNIPPETS = ['inventory', 'lookup', 'module']
@@ -601,7 +601,7 @@ class DocCLI(CLI, RoleMixin):
 
         return coll_filter
 
-    def _list_plugins(self, plugin_type, plugin_loader):
+    def _list_plugins(self, plugin_type):
 
         results = {}
         loader = self._prep_loader(plugin_loader, plugin_type)
@@ -621,7 +621,7 @@ class DocCLI(CLI, RoleMixin):
             results = self._get_plugin_list_filenames(loader)
         return results
 
-    def _get_plugins_docs(self, plugin_type, plugin_loader, names):
+    def _get_plugins_docs(self, plugin_type, names):
 
         loader = self._prep_loader(plugin_loader, plugin_type)
         search_paths = DocCLI.print_paths(loader)
@@ -662,7 +662,7 @@ class DocCLI(CLI, RoleMixin):
             roles_path = (subdir,) + context.CLIARGS['roles_path']
         return roles_path + (context.CLIARGS['basedir'],)
 
-    def _prep_loader(self, plugin_loader, plugin_type):
+    def _prep_loader(self, plugin_type):
         ''' return a plugint type specific loader '''
         loader = getattr(plugin_loader, '%s_loader' % plugin_type)
 
@@ -676,7 +676,7 @@ class DocCLI(CLI, RoleMixin):
                     loader.add_directory(path)
 
         # save only top level paths for errors
-        loader._paths = None  # reset so we can use subdirs below
+        loader._paths = None  # reset so we can use subdirs later
 
         return loader
 
@@ -701,7 +701,6 @@ class DocCLI(CLI, RoleMixin):
 
             # we always dump all types, ignore restrictions
             ptypes = TARGET_OPTIONS
-
             docs['all'] = {}
             for ptype in ptypes:
                 if ptype == 'role':
@@ -711,7 +710,7 @@ class DocCLI(CLI, RoleMixin):
                     docs['all'][ptype] = DocCLI._get_keywords_docs(names.keys())
                 else:
                     plugin_names = DocCLI.get_all_plugins_of_type(ptype)
-                    docs['all'][ptype] = self._get_plugins_docs(ptype, plugin_loader, plugin_names)
+                    docs['all'][ptype] = self._get_plugins_docs(ptype, plugin_names)
 
         elif listing:
             if plugin_type == 'keyword':
@@ -719,7 +718,7 @@ class DocCLI(CLI, RoleMixin):
             elif plugin_type == 'role':
                 docs = self._create_role_list()
             else:
-                docs = self._list_plugins(plugin_type, plugin_loader)
+                docs = self._list_plugins(plugin_type)
         else:
             # here we requrie a name
             if len(context.CLIARGS['args']) == 0:
@@ -731,7 +730,7 @@ class DocCLI(CLI, RoleMixin):
                 docs = self._create_role_doc(context.CLIARGS['args'], context.CLIARGS['entry_point'])
             else:
                 # display specific plugin docs
-                docs = self._get_plugins_docs(plugin_type, plugin_loader, context.CLIARGS['args'])
+                docs = self._get_plugins_docs(plugin_type, context.CLIARGS['args'])
 
         # Display the docs
         if do_json:
@@ -782,7 +781,7 @@ class DocCLI(CLI, RoleMixin):
 
     @staticmethod
     def get_all_plugins_of_type(plugin_type):
-        loader = getattr(plugin_loader, '%s_loader' % plugin_type)
+        loader = self._prep_loader(plugin_loader, plugin_type)
         plugin_list = set()
         paths = loader._get_paths_with_context()
         for path_context in paths:
@@ -793,7 +792,7 @@ class DocCLI(CLI, RoleMixin):
     @staticmethod
     def get_plugin_metadata(plugin_type, plugin_name):
         # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-        loader = getattr(plugin_loader, '%s_loader' % plugin_type)
+        loader = self._prep_loader(plugin_loader, plugin_type)
         result = loader.find_plugin_with_context(plugin_name, mod_type='.py', ignore_deprecated=True, check_aliases=True)
         if not result.resolved:
             raise AnsibleError("unable to load {0} plugin named {1} ".format(plugin_type, plugin_name))
