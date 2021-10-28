@@ -54,7 +54,7 @@ You can download collections from Automation Hub at the command line. Automation
       server_list = automation_hub
 
       [galaxy_server.automation_hub]
-      url=https://cloud.redhat.com/api/automation-hub/
+      url=https://console.redhat.com/api/automation-hub/
       auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
       token=my_ah_token
 
