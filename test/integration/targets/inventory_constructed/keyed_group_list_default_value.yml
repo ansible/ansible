@@ -1,4 +1,4 @@
-plugin: constructed
+plugin: ansible.builtin.constructed
 keyed_groups:
   - key: roles
     default_value: storage
