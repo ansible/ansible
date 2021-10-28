@@ -185,14 +185,14 @@ class CallbackBase(AnsiblePlugin):
             # Callback does not declare pretty_results nor extend result_format_callback
             pretty_results = None
 
-        pretty_conditions = (
+        indent_conditions = (
             result.get('_ansible_verbose_always'),
             pretty_results is None and result_format != 'json',
             pretty_results is True,
             self._display.verbosity > 2,
         )
 
-        if not indent and any(pretty_conditions):
+        if not indent and any(indent_conditions):
             indent = 4
         if pretty_results is False:
             # pretty_results=False overrides any specified indentation
