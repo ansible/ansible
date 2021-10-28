@@ -179,8 +179,24 @@ class CallbackBase(AnsiblePlugin):
             # Callback does not declare result_format nor extend result_format_callback
             result_format = 'json'
 
-        if not indent and (result.get('_ansible_verbose_always') or self._display.verbosity > 2):
+        try:
+            pretty_results = self.get_option('pretty_results')
+        except KeyError:
+            # Callback does not declare pretty_results nor extend result_format_callback
+            pretty_results = None
+
+        pretty_conditions = (
+            result.get('_ansible_verbose_always'),
+            pretty_results is None and result_format != 'json',
+            pretty_results is True,
+            self._display.verbosity > 2,
+        )
+
+        if not indent and any(pretty_conditions):
             indent = 4
+        if pretty_results is False:
+            # pretty_results=False overrides any specified indentation
+            indent = None
 
         # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
         abridged_result = strip_internal_keys(module_response_deepcopy(result))
@@ -215,9 +231,8 @@ class CallbackBase(AnsiblePlugin):
                 return json.dumps(OrderedDict(sorted(abridged_result.items(), key=to_text)),
                                   cls=AnsibleJSONEncoder, indent=indent,
                                   ensure_ascii=False, sort_keys=False)
-        elif result_format in ('yaml', 'yaml_lossy'):
-            lossy = result_format == 'yaml_lossy'
-
+        elif result_format == 'yaml':
+            lossy = pretty_results is not False
             if lossy:
                 # if we already have stdout, we don't need stdout_lines
                 if 'stdout' in abridged_result and 'stdout_lines' in abridged_result:
@@ -236,7 +251,7 @@ class CallbackBase(AnsiblePlugin):
                     indent=indent,
                     # sort_keys=sort_keys  # This requires PyYAML>=5.1
                 ),
-                ' ' * (indent or 2)
+                ' ' * (indent or 4)
             )
 
     def _handle_warnings(self, res):
@@ -272,10 +287,16 @@ class CallbackBase(AnsiblePlugin):
             # Callback does not declare result_format nor extend result_format_callback
             result_format = 'json'
 
+        try:
+            pretty_results = self.get_option('pretty_results')
+        except KeyError:
+            # Callback does not declare pretty_results nor extend result_format_callback
+            pretty_results = None
+
         if result_format == 'json':
             return json.dumps(diff, sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
-        elif result_format in ('yaml', 'yaml_lossy'):
-            lossy = result_format == 'yaml_lossy'
+        elif result_format == 'yaml':
+            lossy = pretty_results is not False
             return '%s\n' % textwrap.indent(
                 yaml.dump(
                     diff,

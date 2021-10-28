@@ -191,12 +191,16 @@ run_test result_format_yaml
 export ANSIBLE_CALLBACK_RESULT_FORMAT=json
 
 export ANSIBLE_CALLBACK_RESULT_FORMAT=yaml
-run_test result_format_yaml_verbose -v
-export ANSIBLE_CALLBACK_RESULT_FORMAT=json
-
-export ANSIBLE_CALLBACK_RESULT_FORMAT=yaml_lossy
+export ANSIBLE_CALLBACK_PRETTY=1
 run_test result_format_yaml_lossy_verbose -v
 export ANSIBLE_CALLBACK_RESULT_FORMAT=json
+unset ANSIBLE_CALLBACK_PRETTY
+
+export ANSIBLE_CALLBACK_RESULT_FORMAT=yaml
+export ANSIBLE_CALLBACK_PRETTY=0
+run_test result_format_yaml_verbose -v
+export ANSIBLE_CALLBACK_RESULT_FORMAT=json
+unset ANSIBLE_CALLBACK_PRETTY
 
 ## DRY RUN tests
 #
