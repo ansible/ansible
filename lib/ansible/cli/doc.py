@@ -621,7 +621,6 @@ class DocCLI(CLI, RoleMixin):
             results = self._get_plugin_list_filenames(loader)
         else:
             results = {k: {} for k in self.plugin_list}
-            print(results)
         return results
 
     def _get_plugins_docs(self, plugin_type, names):
