@@ -621,6 +621,7 @@ class DocCLI(CLI, RoleMixin):
             results = self._get_plugin_list_filenames(loader)
         else:
             results = {k: {} for k in self.plugin_list}
+            self.plugin_list = set()  # reset for next iteration
         return results
 
     def _get_plugins_docs(self, plugin_type, names):
@@ -725,7 +726,6 @@ class DocCLI(CLI, RoleMixin):
                     plugin_names = self._list_plugins(ptype, None)
                     docs['all'][ptype] = self._get_plugins_docs(ptype, plugin_names)
                     # reset list after each type to avoid polution
-                    self.plugin_list = set()
         elif listing:
             if plugin_type == 'keyword':
                 docs = DocCLI._list_keywords()
