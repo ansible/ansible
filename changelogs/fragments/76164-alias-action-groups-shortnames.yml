@@ -1,0 +1,4 @@
+bugfixes:
+- >
+  ``action_groups`` - Alias short names in collection action groups to FQCR of the owning collection
+  (https://github.com/ansible/ansible/issues/76164)
