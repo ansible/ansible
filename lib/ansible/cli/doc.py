@@ -604,7 +604,7 @@ class DocCLI(CLI, RoleMixin):
     def _list_plugins(self, plugin_type):
 
         results = {}
-        loader = self._prep_loader(plugin_loader, plugin_type)
+        loader = DocCLI._prep_loader(plugin_type)
 
         coll_filter = self._get_collection_filter()
         if coll_filter in ('ansible.builtin', 'ansible.legacy', '', None):
@@ -623,7 +623,7 @@ class DocCLI(CLI, RoleMixin):
 
     def _get_plugins_docs(self, plugin_type, names):
 
-        loader = self._prep_loader(plugin_loader, plugin_type)
+        loader = DocCLI._prep_loader(plugin_type)
         search_paths = DocCLI.print_paths(loader)
 
         # get the docs for plugins in the command line list
@@ -662,7 +662,8 @@ class DocCLI(CLI, RoleMixin):
             roles_path = (subdir,) + context.CLIARGS['roles_path']
         return roles_path + (context.CLIARGS['basedir'],)
 
-    def _prep_loader(self, plugin_type):
+    @staticmethod
+    def _prep_loader(plugin_type):
         ''' return a plugint type specific loader '''
         loader = getattr(plugin_loader, '%s_loader' % plugin_type)
 
@@ -781,41 +782,13 @@ class DocCLI(CLI, RoleMixin):
 
     @staticmethod
     def get_all_plugins_of_type(plugin_type):
-        loader = self._prep_loader(plugin_loader, plugin_type)
+        loader = DocCLI._prep_loader(plugin_type)
         plugin_list = set()
         paths = loader._get_paths_with_context()
         for path_context in paths:
             plugins_to_add = DocCLI.find_plugins(path_context.path, path_context.internal, plugin_type)
             plugin_list.update(plugins_to_add)
         return sorted(set(plugin_list))
-
-    @staticmethod
-    def get_plugin_metadata(plugin_type, plugin_name):
-        # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-        loader = self._prep_loader(plugin_loader, plugin_type)
-        result = loader.find_plugin_with_context(plugin_name, mod_type='.py', ignore_deprecated=True, check_aliases=True)
-        if not result.resolved:
-            raise AnsibleError("unable to load {0} plugin named {1} ".format(plugin_type, plugin_name))
-        filename = result.plugin_resolved_path
-        collection_name = result.plugin_resolved_collection
-
-        try:
-            doc, __, __, __ = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0),
-                                            collection_name=collection_name, is_module=(plugin_type == 'module'))
-        except Exception:
-            display.vvv(traceback.format_exc())
-            raise AnsibleError("%s %s at %s has a documentation formatting error or is missing documentation." % (plugin_type, plugin_name, filename))
-
-        if doc is None:
-            # Removed plugins don't have any documentation
-            return None
-
-        return dict(
-            name=plugin_name,
-            namespace=DocCLI.namespace_from_plugin_filepath(filename, plugin_name, loader.package_path),
-            description=doc.get('short_description', "UNKNOWN"),
-            version_added=doc.get('version_added', "UNKNOWN")
-        )
 
     @staticmethod
     def namespace_from_plugin_filepath(filepath, plugin_name, basedir):
