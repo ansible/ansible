@@ -1439,6 +1439,9 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
                             continue
                         # Only alias short names to an FQCR from the owning collection
                         fqcr = '{0}.{1}'.format(collection_name, name)
+                        if fqcr in action_group:
+                            # Don't overwrite
+                            continue
                         action_group[fqcr] = groups
 
                 if any(name for name in redirected_names if name in action_group):
