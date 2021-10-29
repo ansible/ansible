@@ -1,0 +1,3 @@
+bugfixes:
+- unarchive - Fix zip archive file listing that caused issues with content
+  postprocessing (https://github.com/ansible/ansible/issues/76067).
