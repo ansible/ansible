@@ -153,6 +153,8 @@ class PlayIterator:
         setup_block.run_once = False
         setup_task = Task(block=setup_block)
         setup_task.action = 'gather_facts'
+        # TODO: hardcoded resolution here, but should use actual resolution code in the end,
+        #       in case of 'legacy' mismatch
         setup_task.resolved_action = 'ansible.builtin.gather_facts'
         setup_task.name = 'Gathering Facts'
         setup_task.args = {}
