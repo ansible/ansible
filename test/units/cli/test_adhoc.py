@@ -72,7 +72,7 @@ def test_play_ds_with_include_role():
     adhoc_cli.parse()
     ret = adhoc_cli._play_ds('include_role', None, 2)
     assert ret['name'] == 'Ansible Ad-Hoc'
-    assert ret['gather_facts'] == 'no'
+    assert ret['gather_facts'] == False
 
 
 def test_run_import_playbook():
