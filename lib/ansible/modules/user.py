@@ -53,7 +53,9 @@ options:
         type: str
     groups:
         description:
-            - List of groups user will be added to. When set to an empty string C(''),
+            - List of groups user will be added to.
+            - By default, the user is removed from all other groups. Configure C(append) to modify this.
+            - When set to an empty string C(''),
               the user is removed from all groups except the primary group.
             - Before Ansible 2.3, the only input format allowed was a comma separated string.
         type: list
