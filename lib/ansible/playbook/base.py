@@ -887,6 +887,11 @@ class Base(FieldAttributeBase):
         if dep_chain:
             path_stack.extend(reversed([x._role_path for x in dep_chain if hasattr(x, '_role_path')]))
 
+        # add current role to search path if missing (might not be in 'parent' tree)
+        if hasattr(self, '_role'):
+            if self._role._role_path not in path_stack:
+                path_stack.add(self._role._role_path)
+
         # add path of task itself,
         task_path = self.get_path()
         if task_path:
