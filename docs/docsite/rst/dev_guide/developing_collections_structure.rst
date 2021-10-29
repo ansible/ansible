@@ -203,7 +203,7 @@ A collection can store some additional metadata in a ``runtime.yml`` file in the
 
 - *requires_ansible*:
 
-  The version of Ansible required to use the collection. Multiple versions can be separated with a comma.
+  The version of Ansible Core (ansible-core) required to use the collection. Multiple versions can be separated with a comma.
 
   .. code:: yaml
 
