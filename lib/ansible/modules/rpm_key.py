@@ -85,7 +85,7 @@ import tempfile
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_url, url_argument_spec
 from ansible.module_utils._text import to_native
 
 
@@ -237,13 +237,16 @@ class RpmKey(object):
 
 
 def main():
+    # use the predefined argument spec for url
+    argument_spec = url_argument_spec()
+    argument_spec.update(
+        state=dict(type='str', default='present', choices=['absent', 'present']),
+        key=dict(type='str', required=True, no_log=False),
+        fingerprint=dict(type='str'),
+        validate_certs=dict(type='bool', default=True),
+    )
     module = AnsibleModule(
-        argument_spec=dict(
-            state=dict(type='str', default='present', choices=['absent', 'present']),
-            key=dict(type='str', required=True, no_log=False),
-            fingerprint=dict(type='str'),
-            validate_certs=dict(type='bool', default=True),
-        ),
+        argument_spec=argument_spec,
         supports_check_mode=True,
     )
 
