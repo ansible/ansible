@@ -386,7 +386,7 @@ class ZipArchive(object):
                         exclude_flag = False
                         if self.excludes:
                             for exclude in self.excludes:
-                                if not fnmatch.fnmatch(member, exclude):
+                                if fnmatch.fnmatch(member, exclude):
                                     exclude_flag = True
                                     break
                         if not exclude_flag:
