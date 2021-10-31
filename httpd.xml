@@ -1,0 +1,59 @@
+- hosts: all
+  vars:
+       port: "8081"
+  tasks:
+  - file:
+      path: "/dvd"
+      state: directory
+    ignore_errors: yes
+
+
+  - mount:
+      src: "/dev/cdrom"
+      path: "/dvd"
+      fstype: iso9660
+      state: mounted
+    ignore_errors: yes
+
+
+  - yum_repository:
+      baseurl: file:///dvd/BaseOS
+      name: "dvd1"
+      description: "BaseOS"
+      gpgcheck: no
+
+
+  - yum_repository:
+      baseurl: file:///dvd/AppStream
+      name: "dvd2"
+      description: "AppStream"
+      gpgcheck: no
+
+
+  - package:
+      name: "httpd"
+      state: present
+
+
+  - template:
+      dest: "/etc/httpd/conf.d/l.conf"
+      src: "/root/ansible/l.conf"
+    register: temp
+
+
+  - debug:
+          var: temp
+
+
+  handlers:
+  - service:
+      name: ttpd"
+      state: restarted
+      enabled: yes
+
+
+  - firewalld:
+      port: "{{ port }}/tcp"
+      state: enabled
+      permanent: yes
+      immediate: yes"
