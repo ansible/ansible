@@ -1,0 +1,65 @@
+- hosts: all
+  vars:
+        url: "https://download.docker.com/linux/centos/7/x86_64/stable/"
+        python_version: "python3"
+        docker_package: "docker-ce"
+  tasks:
+  - name: "docker repository configuration"
+    yum_repository:
+        name: "docker_repo" 
+        baseurl: "{{ url }}" 
+        description: "This is docker repository"
+        state: present 
+        gpgcheck: no
+
+
+  - name: "installing Python"
+    package: 
+        name: "{{ python_version }}"
+        state: present 
+
+
+  - name: "Installing docker with command "
+    command: "yum install docker-ce --nobest -y"
+
+
+  - name: "service started"
+    service: 
+        name: "docker"
+        state: started
+        
+
+
+  - name: "docker-py install with pip command"
+    pip: 
+        name: "docker-py"
+
+
+  - name: "docker images"
+    docker_image:
+         name: "httpd"
+         source: pull
+
+
+  - name: "file path"
+    file: 
+        path: "/root/webpages"
+        state: directory
+
+
+  - name: "copy web pages"
+    copy:
+        src: "/root/ansible/1.html"
+        dest: "/root/webpages"
+
+
+  - name: "container details"
+    docker_container:
+         name: "os1"
+         image: "httpd"
+         state: started
+         exposed_ports: 
+         - 80
+         ports: 
+         - "8888:80"
+         volumes: /root/webpages:/usr/local/apache2/htdocs"
