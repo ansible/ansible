@@ -1,0 +1,76 @@
+- name: Datanode Configuration
+	  
+	  hosts: all
+	  
+	  vars:
+	    - jdk_dir: /root
+	    - hadoop_dir: /root
+	    - hdfs_dir: /slavenode
+	    - node: data
+	    - ip_addr: 192.168.43.29
+	    - port: 9009
+	  
+	  tasks:
+	    - name: Copying JDK
+	      copy:
+	        src: "{{ jdk_dir }}/jdk-8u171-linux-x64.rpm"
+	        dest: /jdk/
+	      register: x
+	
+
+	    - name: Copying Hadoop
+	      copy:
+	        src: "{{ hadoop_dir }}/hadoop-1.2.1-1.x86_64.rpm"
+	        dest: /hadoop/
+	      register: y
+	
+
+	    - name: Installing JDK
+	      yum:
+	        name: "{{ jdk_dir}}/jdk-8u171-linux-x64.rpm"
+	        state: present
+	      when: x.failed == false
+	      register: p
+	
+
+	    - name: Installing Hadoop
+	      command: "rpm -i {{ hadoop_dir }}/hadoop-1.2.1-1.x86_64.rpm --force"
+	      when: y.failed == false
+	      register: q
+	      when: p.failed == false
+	
+
+	    - name: Configuring hdfs-site
+	      template:
+	        src: /root/ansible/hdfs-site.xml
+	        dest: /etc/hadoop/hdfs-site.xml
+	      when: q.failed == false
+	      register: a
+	
+
+	    - name: Configuring core-site 
+	      template:
+	        src: /root/ansible/core-site.xml
+	        dest: /etc/hadoop/core-site.xml
+	      when: q.failed == false
+	      register: b
+	    
+	    - name: Starting the Datanode Server
+	      command: hadoop-daemon.sh start datanode
+	      register: z
+	      when: a.failed == false and b.failed == false
+	
+
+	    - debug: 
+	        var: z
+	
+
+	    - name: Checking the Connection
+	      command: jps
+	      when: z.failed == false
+	      register: k
+	
+
+	    - debug:
+	        var: k
+	

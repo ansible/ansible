@@ -1,0 +1,17 @@
+
+	<?xml version="1.0"?>
+	<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+	
+
+	<!-- Put site-specific property overrides in this file. -->
+	
+
+	<configuration>
+	<property>
+	<name>dfs.{{ node }}.dir</name>
+	<value>{{ hdfs_dir }}</value>
+
+	</property>
+	</
+    </configuration>
+
