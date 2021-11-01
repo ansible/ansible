@@ -1,0 +1,2 @@
+deprecated_features:
+  - ssh connection plugin option scp_if_ssh in favor of ssh_transfer_method.

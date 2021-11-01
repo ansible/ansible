@@ -289,6 +289,10 @@ DOCUMENTATION = '''
             - name: ansible_ssh_transfer_method
               version_added: '2.12'
       scp_if_ssh:
+        deprecated:
+              why: In favor of the "ssh_transfer_method" option.
+              version: "2.17"
+              alternatives: ssh_transfer_method
         default: smart
         description:
           - "Preferred method to use when transfering files over SSH."
