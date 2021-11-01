@@ -24,7 +24,7 @@ import yaml
 from ansible.module_utils.six import text_type, binary_type
 from ansible.module_utils.common.yaml import SafeDumper
 from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping, AnsibleVaultEncryptedUnicode
-from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes, NativeJinjaUnsafeText
 from ansible.template import AnsibleUndefined
 from ansible.vars.hostvars import HostVars, HostVarsVars
 from ansible.vars.manager import VarsWithSources
@@ -109,4 +109,9 @@ AnsibleDumper.add_representer(
 AnsibleDumper.add_representer(
     AnsibleUndefined,
     represent_undefined,
+)
+
+AnsibleDumper.add_representer(
+    NativeJinjaUnsafeText,
+    represent_unicode,
 )
