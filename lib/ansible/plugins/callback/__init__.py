@@ -112,7 +112,6 @@ _AnsibleCallbackDumper.add_representer(
 )
 
 
-
 class CallbackBase(AnsiblePlugin):
 
     '''
