@@ -47,9 +47,10 @@ do
 	justcol=$(ansible-doc -l -t ${ptype} testns.testcol|wc -l)
 	test "$justcol" -eq 0
 
+	# TODO: do we want per namespace?
 	# ensure we get 1 plugins when restricting namespace
-	justcol=$(ansible-doc -l -t ${ptype} --playbook-dir ./ testns|wc -l)
-	test "$justcol" -eq 1
+	#justcol=$(ansible-doc -l -t ${ptype} --playbook-dir ./ testns|wc -l)
+	#test "$justcol" -eq 1
 done
 
 #### test role functionality
