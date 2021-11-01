@@ -29,6 +29,7 @@ from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.module_utils.six.moves import queue as Queue
+from ansible.playbook.block import Block
 from ansible.playbook.handler import Handler
 from ansible.plugins.strategy import StrategyBase
 
@@ -464,7 +465,15 @@ class TestStrategyBase(unittest.TestCase):
         mock_task = MagicMock()
         mock_task._block = mock_block
         mock_task._role = None
-        mock_task._parent = None
+
+        # NOTE Mocking calls below to account for passing parent_block=ti_copy.build_parent_block()
+        # into load_list_of_blocks() in _load_included_file. Not doing so meant that retrieving
+        # `collection` attr from parent would result in getting MagicMock instance
+        # instead of an empty list.
+        mock_task._parent = MagicMock()
+        mock_task.copy.return_value = mock_task
+        mock_task.build_parent_block.return_value = mock_block
+        mock_block._get_parent_attribute.return_value = None
 
         mock_iterator = MagicMock()
         mock_iterator.mark_host_failed.return_value = None
@@ -474,6 +483,8 @@ class TestStrategyBase(unittest.TestCase):
 
         mock_inc_file._filename = "test.yml"
         res = strategy_base._load_included_file(included_file=mock_inc_file, iterator=mock_iterator)
+        self.assertEqual(len(res), 1)
+        self.assertTrue(isinstance(res[0], Block))
 
         mock_inc_file._filename = "bad.yml"
         res = strategy_base._load_included_file(included_file=mock_inc_file, iterator=mock_iterator)

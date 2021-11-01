@@ -135,3 +135,7 @@ cat out.txt
 test "$(grep out.txt -ce 'In imported playbook')" = 2
 test "$(grep out.txt -ce 'In imported tasks')" = 3
 test "$(grep out.txt -ce 'In imported role')" = 3
+
+# https://github.com/ansible/ansible/issues/73657
+ansible-playbook issue73657.yml 2>&1 | tee issue73657.out
+test "$(grep -c 'SHOULD_NOT_EXECUTE' issue73657.out)" = 0
