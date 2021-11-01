@@ -1,0 +1,8 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - block:
+        - include_tasks: issue73657_tasks.yml
+      rescue:
+        - debug:
+            msg: SHOULD_NOT_EXECUTE
