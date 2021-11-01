@@ -724,22 +724,23 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
             options_context.append(param)
 
             # Make sure we can iterate over the elements
-            if isinstance(parameters[param], dict):
+            if not isinstance(parameters[param], Sequence) or isinstance(parameters[param], string_types):
                 elements = [parameters[param]]
             else:
                 elements = parameters[param]
 
             for idx, sub_parameters in enumerate(elements):
+                no_log_values.update(set_fallbacks(sub_spec, sub_parameters))
+
                 if not isinstance(sub_parameters, dict):
                     errors.append(SubParameterTypeError("value of '%s' must be of type dict or list of dicts" % param))
+                    continue
 
                 # Set prefix for warning messages
                 new_prefix = prefix + param
                 if wanted == 'list':
                     new_prefix += '[%d]' % idx
                 new_prefix += '.'
-
-                no_log_values.update(set_fallbacks(sub_spec, sub_parameters))
 
                 alias_warnings = []
                 alias_deprecations = []
