@@ -724,7 +724,7 @@ def _validate_sub_spec(argument_spec, parameters, prefix='', options_context=Non
             options_context.append(param)
 
             # Make sure we can iterate over the elements
-            if not isinstance(parameters[param], list):
+            if not isinstance(parameters[param], Sequence) or isinstance(parameters[param], string_types):
                 elements = [parameters[param]]
             else:
                 elements = parameters[param]
