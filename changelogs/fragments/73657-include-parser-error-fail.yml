@@ -1,0 +1,2 @@
+bugfixes:
+  - Parser errors from within includes should not be rescueable (https://github.com/ansible/ansible/issues/73657)

@@ -34,7 +34,7 @@ DOCUMENTATION = '''
 import time
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.included_file import IncludedFile
 from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
@@ -257,6 +257,8 @@ class StrategyModule(StrategyBase):
                             )
                         else:
                             new_blocks = self._load_included_file(included_file, iterator=iterator)
+                    except AnsibleParserError:
+                        raise
                     except AnsibleError as e:
                         for host in included_file._hosts:
                             iterator.mark_host_failed(host)

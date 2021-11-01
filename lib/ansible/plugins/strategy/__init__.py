@@ -35,7 +35,7 @@ from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleUndefinedVariable, AnsibleParserError
 from ansible.executor import action_write_locks
 from ansible.executor.play_iterator import IteratingStates, FailedStates
 from ansible.executor.process.worker import WorkerProcess
@@ -945,7 +945,8 @@ class StrategyBase:
             # first processed, we do so now for each host in the list
             for host in included_file._hosts:
                 self._tqm._stats.increment('ok', host.name)
-
+        except AnsibleParserError:
+            raise
         except AnsibleError as e:
             if isinstance(e, AnsibleFileNotFound):
                 reason = "Could not find or access '%s' on the Ansible Controller." % to_text(e.file_name)
@@ -1061,6 +1062,8 @@ class StrategyBase:
                             )
                             if not result:
                                 break
+                except AnsibleParserError:
+                    raise
                 except AnsibleError as e:
                     for host in included_file._hosts:
                         iterator.mark_host_failed(host)
