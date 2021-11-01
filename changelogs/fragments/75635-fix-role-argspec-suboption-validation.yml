@@ -1,0 +1,2 @@
+bugfixes:
+  - validate_argument_spec - Skip suboption validation if the top level option is an invalid type (https://github.com/ansible/ansible/issues/75612).
