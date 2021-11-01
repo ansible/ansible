@@ -38,7 +38,7 @@ from ansible.parsing.yaml.objects import AnsibleUnicode
 from ansible.plugins import AnsiblePlugin, get_plugin_class
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
-from ansible.utils.unsafe_proxy import AnsibleUnsafeText
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText, NativeJinjaUnsafeText
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
 import yaml
@@ -105,6 +105,12 @@ _AnsibleCallbackDumper.add_representer(
     AnsibleUnsafeText,
     _pretty_represent_str,
 )
+
+_AnsibleCallbackDumper.add_representer(
+    NativeJinjaUnsafeText,
+    _pretty_represent_str,
+)
+
 
 
 class CallbackBase(AnsiblePlugin):
