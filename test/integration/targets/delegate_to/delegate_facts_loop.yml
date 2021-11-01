@@ -1,0 +1,21 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - set_fact:
+        test: 123
+      delegate_to: "{{ item }}"
+      delegate_facts: true
+      when: test is not defined
+      loop: "{{ groups['all'] | difference(['localhost']) }}"
+
+    - name: ensure we didnt create it on current host
+      assert:
+        that:
+          - test is undefined
+
+    - name: ensure facts get created
+      assert:
+        that:
+          - "'test' in hostvars[item]"
+          - hostvars[item]['test'] == 123
+      loop: "{{ groups['all'] | difference(['localhost']) }}"
