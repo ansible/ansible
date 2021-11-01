@@ -25,10 +25,10 @@ expected_out="$(sed '1 s/\(^> TESTNS\.TESTCOL\.RANDOMMODULE\).*(.*)$/\1/' random
 test "$current_out" == "$expected_out"
 
 # ensure we do work with valid collection name for list
-ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep -v "Invalid collection pattern"
+ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep -v "Invalid collection name"
 
 # ensure we dont break on invalid collection name for list
-ansible-doc --list testns.testcol.fakemodule  --playbook-dir ./ 2>&1 | grep "Invalid collection pattern"
+ansible-doc --list testns.testcol.fakemodule  --playbook-dir ./ 2>&1 | grep "Invalid collection name"
 
 
 # test listing diff plugin types from collection
