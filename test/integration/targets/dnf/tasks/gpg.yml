@@ -57,6 +57,7 @@
         that:
           - res is failed
           - "'Failed to validate GPG signature' in res.msg"
+          - "'is not signed' in res.msg"
 
   always:
     - name: Remove rpm-sign (and test package if it got installed)
