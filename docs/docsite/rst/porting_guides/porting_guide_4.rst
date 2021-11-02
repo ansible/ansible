@@ -132,6 +132,34 @@ Porting custom scripts
 
 No notable changes
 
+Porting Guide for v4.8.0
+========================
+
+Breaking Changes
+----------------
+
+community.zabbix
+~~~~~~~~~~~~~~~~
+
+- all roles now reference other roles and modules via their fully qualified collection names, which makes Ansible 2.10 minimum supported version for roles (See https://github.com/ansible-collections/community.zabbix/pull/477).
+
+Deprecated Features
+-------------------
+
+community.azure
+~~~~~~~~~~~~~~~
+
+- All community.azure.azure_rm_<resource>_facts modules are deprecated. Use azure.azcollection.azure_rm_<resource>_info modules instead (https://github.com/ansible-collections/community.azure/pull/24).
+- All community.azure.azure_rm_<resource>_info modules are deprecated. Use azure.azcollection.azure_rm_<resource>_info modules instead (https://github.com/ansible-collections/community.azure/pull/24).
+- community.azure.azure_rm_managed_disk and community.azure.azure_rm_manageddisk are deprecated. Use azure.azcollection.azure_rm_manageddisk instead (https://github.com/ansible-collections/community.azure/pull/24).
+- community.azure.azure_rm_virtualmachine_extension and community.azure.azure_rm_virtualmachineextension are deprecated. Use azure.azcollection.azure_rm_virtualmachineextension instead (https://github.com/ansible-collections/community.azure/pull/24).
+- community.azure.azure_rm_virtualmachine_scaleset and community.azure.azure_rm_virtualmachinescaleset are deprecated. Use azure.azcollection.azure_rm_virtualmachinescaleset instead (https://github.com/ansible-collections/community.azure/pull/24).
+
+community.hashi_vault
+~~~~~~~~~~~~~~~~~~~~~
+
+- lookup hashi_vault - the ``[lookup_hashi_vault]`` section in the ``ansible.cfg`` file is deprecated and will be removed in collection version ``3.0.0``. Instead, the section ``[hashi_vault_collection]`` can be used, which will apply to all plugins in the collection going forward (https://github.com/ansible-collections/community.hashi_vault/pull/144).
+
 Porting Guide for v4.7.0
 ========================
 
