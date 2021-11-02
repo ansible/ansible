@@ -394,6 +394,7 @@ namespace Ansible
 
     # FUTURE: find a better way to get the _ansible_remote_tmp variable
     $original_tmp = $env:TMP
+    $original_lib = $env:LIB
 
     $remote_tmp = $original_tmp
     $module_params = Get-Variable -Name complex_args -ErrorAction SilentlyContinue
@@ -405,8 +406,10 @@ namespace Ansible
     }
 
     $env:TMP = $remote_tmp
+    $env:LIB = $null
     Add-Type -TypeDefinition $link_util
     $env:TMP = $original_tmp
+    $env:LIB = $original_lib
 
     # enable the SeBackupPrivilege if it is disabled
     $state = Get-AnsiblePrivilege -Name SeBackupPrivilege
