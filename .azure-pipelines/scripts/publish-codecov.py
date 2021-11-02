@@ -18,6 +18,7 @@ from pathlib import Path
 class CoverageFile:
     name: str
     path: Path
+    flag: str
 
 
 @dataclasses.dataclass(frozen=True)
@@ -26,7 +27,7 @@ class Args:
     path: Path
 
 
-def parse_args():
+def parse_args() -> Args:
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', '--dry-run', action='store_true')
     parser.add_argument('path', type=Path)
@@ -43,10 +44,13 @@ def parse_args():
 def process_files(directory: Path) -> t.Tuple[CoverageFile, ...]:
     processed = []
     for file in directory.joinpath('reports').glob('coverage*.xml'):
-        # remove -powershell
-        # remove -NN
         name = file.stem.replace('coverage=', '')
-        processed.append(CoverageFile(name, file))
+
+        # Get flags from name
+        flags = name.replace('-powershell', '').split('=')  # Drop '-powershell' suffix
+        flags = [flag.split('-')[0] if flag.startswith('stub') else flag for flag in flags]  # Remove "-01" from stub files
+
+        processed.append(CoverageFile(name, file, ",".join(flags)))
 
     return tuple(processed)
 
@@ -57,6 +61,7 @@ def upload_files(codecov_bin: Path, files: t.Tuple[CoverageFile], dry_run: t.Opt
             str(codecov_bin),
             '--name', file.name,
             '--file', str(file.path),
+            '--flags', file.flag,
         ]
 
         if dry_run:
