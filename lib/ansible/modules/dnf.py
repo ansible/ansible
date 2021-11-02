@@ -1298,7 +1298,7 @@ class DnfModule(YumDnf):
                             fail = True
 
                         if fail:
-                            msg = 'Failed to validate GPG signature for {0}'.format(package)
+                            msg = 'Failed to validate GPG signature for {0}: {1}'.format(package, gpgerr)
                             self.module.fail_json(msg)
 
                 if self.download_only:
