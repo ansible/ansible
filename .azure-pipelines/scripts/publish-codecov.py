@@ -91,7 +91,7 @@ def main():
     codecov_bin = Path('codecov').resolve()
     download_file(url, codecov_bin, 0o755, args.dry_run)
 
-    files = process_files(Path(args.path))
+    files = process_files(args.path)
     upload_files(codecov_bin, files, args.dry_run)
 
 
