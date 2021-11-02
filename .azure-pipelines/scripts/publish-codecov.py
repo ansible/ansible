@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+# Upload code coverage reports to codecov.io.
+# Multiple coverage files from multiple languages are accepted and aggregated after upload.
+# Python coverage, as well as PowerShell and Python stubs can all be uploaded.
+
+import argparse
+import dataclasses
+import shutil
+import subprocess
+import urllib.request
+
+import typing as t
+
+from pathlib import Path
+
+
+@dataclasses.dataclass
+class CoverageFile:
+    name: str
+    path: Path
+
+
+@dataclasses.dataclass(frozen=True)
+class Args:
+    dry_run: bool
+    path: Path
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-n', '--dry-run', action='store_true')
+    parser.add_argument('path', type=Path)
+
+    args = parser.parse_args()
+
+    # Store arguments in a typed dataclass
+    fields = dataclasses.fields(Args)
+    kwargs = {field.name: getattr(args, field.name) for field in fields}
+
+    return Args(**kwargs)
+
+
+def process_files(directory: Path) -> t.Tuple[CoverageFile, ...]:
+    processed = []
+    for file in directory.joinpath('reports').glob('coverage*.xml'):
+        # remove -powershell
+        # remove -NN
+        name = file.stem.replace('coverage=', '')
+        processed.append(CoverageFile(name, file))
+
+    return tuple(processed)
+
+
+def upload_files(codecov_bin: Path, files: t.Tuple[CoverageFile], dry_run: t.Optional[bool] = False) -> None:
+    for file in files:
+        cmd = [
+            str(codecov_bin),
+            '--name', file.name,
+            '--file', str(file.path),
+        ]
+
+        if dry_run:
+            print(f'DRY-RUN: Would run command: {" ".join(cmd)}')
+            continue
+
+        subprocess.run(cmd, check=True)
+
+
+def download_file(url: str, dest: Path, flags: t.Optional[int] = None, dry_run: t.Optional[bool] = False) -> None:
+    if dry_run:
+        print(f'DRY-RUN: Would download {url} to {dest} and set mode to {flags:o}')
+        return
+
+    with urllib.request.urlopen(url) as resp:
+        with dest.open("wb") as bf:
+            # Read data in chunks rather than all at once
+            shutil.copyfileobj(resp, bf, 64 * 1024)
+
+    if flags is not None:
+        dest.chmod(flags)
+
+
+def main():
+    args = parse_args()
+    url = 'https://ansible-ci-files.s3.amazonaws.com/codecov/linux/codecov'
+    codecov_bin = Path('codecov').resolve()
+    download_file(url, codecov_bin, 0o755, args.dry_run)
+
+    files = process_files(Path(args.path))
+    upload_files(codecov_bin, files, args.dry_run)
+
+
+if __name__ == '__main__':
+    main()
