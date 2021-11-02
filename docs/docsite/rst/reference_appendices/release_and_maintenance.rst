@@ -89,7 +89,7 @@ Ansible Community Package Release       Status
 ansible-core release cycle
 --------------------------
 
-``ansible-core`` is developed and released on a flexible release cycle. This cycle can be extended in order to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`roadmaps` for upcoming release details.
+``ansible-core`` is developed and released on a flexible release cycle. This cycle can be extended in order to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`ansible_core_roadmaps` for upcoming release details.
 
 ``ansible-core`` has a graduated maintenance structure that extends to three major releases.
 For more information, read about the :ref:`development_and_stable_version_maintenance_workflow` or
@@ -115,7 +115,8 @@ significant changes in each minor release.
 ============================================= ======================================================
  ``ansible-core`` / ``ansible-base`` Release                          Status
 ============================================= ======================================================
-devel                                         In development (ansible-core 2.12 unreleased, trunk)
+devel                                         In development (ansible-core 2.13 unreleased, trunk)
+`2.12 ansible-core Changelogs`_               Maintained (security **and** general bug fixes)
 `2.11 ansible-core Changelogs`_               Maintained (security **and** general bug fixes)
 `2.10 ansible-base Changelogs`_               Maintained (security **and** critical bug fixes)
 `2.9 Changelogs`_                             Maintained (pre-collections) (security fixes only)
@@ -126,6 +127,8 @@ devel                                         In development (ansible-core 2.12 
 <2.5                                          Unmaintained (end of life)
 ============================================= ======================================================
 
+.. _2.12 ansible-core Changelogs:
+.. _2.12: https://github.com/ansible/ansible/blob/stable-2.12/changelogs/CHANGELOG-v2.12.rst
 .. _2.11 ansible-core Changelogs:
 .. _2.11: https://github.com/ansible/ansible/blob/stable-2.11/changelogs/CHANGELOG-v2.11.rst
 .. _2.10 ansible-base Changelogs:
