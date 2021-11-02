@@ -12,6 +12,7 @@ import urllib.request
 import typing as t
 
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 
 @dataclasses.dataclass
@@ -88,11 +89,12 @@ def download_file(url: str, dest: Path, flags: t.Optional[int] = None, dry_run: 
 def main():
     args = parse_args()
     url = 'https://ansible-ci-files.s3.amazonaws.com/codecov/linux/codecov'
-    codecov_bin = Path('codecov').resolve()
-    download_file(url, codecov_bin, 0o755, args.dry_run)
+    with NamedTemporaryFile(prefix='codecov-') as tmpf:
+        codecov_bin = Path(tmpf.name)
+        download_file(url, codecov_bin, 0o755, args.dry_run)
 
-    files = process_files(args.path)
-    upload_files(codecov_bin, files, args.dry_run)
+        files = process_files(args.path)
+        upload_files(codecov_bin, files, args.dry_run)
 
 
 if __name__ == '__main__':
