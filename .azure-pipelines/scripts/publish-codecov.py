@@ -63,7 +63,8 @@ def upload_files(codecov_bin: Path, files: t.Tuple[CoverageFile], dry_run: t.Opt
             '--name', file.name,
             '--file', str(file.path),
         ]
-        cmd.extend(f'--flags {flag}' for flag in file.flags)
+        for flag in file.flags:
+            cmd.extend(['--flags', flag])
 
         if dry_run:
             print(f'DRY-RUN: Would run command: {" ".join(cmd)}')
