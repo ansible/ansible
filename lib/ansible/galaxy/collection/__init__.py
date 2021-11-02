@@ -901,6 +901,13 @@ def _build_manifest(namespace, name, version, authors, readme, tags, description
         'format': MANIFEST_FORMAT,
     }
 
+    if kwargs.get('scmref'):
+        manifest['collection_info']['scmref'] = kwargs['scmref']
+    if kwargs.get('scm_sha'):
+        manifest['collection_info']['scm_sha'] = kwargs['scm_sha']
+
+    #import epdb; epdb.st()
+
     return manifest
 
 

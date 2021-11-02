@@ -470,7 +470,7 @@ def _normalize_galaxy_yml_manifest(
         }[info.get('type', 'str')]
         key_list_type.add(info['key'])
 
-    all_keys = frozenset(list(mandatory_keys) + list(string_keys) + list(list_keys) + list(dict_keys))
+    all_keys = frozenset(list(mandatory_keys) + list(string_keys) + list(list_keys) + list(dict_keys) + ['scmref', 'scm_sha'])
 
     set_keys = set(galaxy_yml.keys())
     missing_keys = mandatory_keys.difference(set_keys)
