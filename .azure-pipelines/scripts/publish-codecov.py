@@ -57,7 +57,7 @@ def process_files(directory: Path) -> t.Tuple[CoverageFile, ...]:
     return tuple(processed)
 
 
-def upload_files(codecov_bin: str, files: t.Tuple[CoverageFile], dry_run: bool = False) -> None:
+def upload_files(codecov_bin: str, files: t.Tuple[CoverageFile, ...], dry_run: bool = False) -> None:
     for file in files:
         cmd = [
             codecov_bin,
@@ -74,7 +74,7 @@ def upload_files(codecov_bin: str, files: t.Tuple[CoverageFile], dry_run: bool =
         subprocess.run(cmd, check=True)
 
 
-def download_file(url: str, dest: t.IO[bytes], flags: t.Optional[int] = None, dry_run: bool = False) -> None:
+def download_file(url: str, dest: t.IO[bytes], flags: int, dry_run: bool = False) -> None:
     if dry_run:
         print(f'DRY-RUN: Would download {url} to {dest} and set mode to {flags:o}')
         return
@@ -82,9 +82,9 @@ def download_file(url: str, dest: t.IO[bytes], flags: t.Optional[int] = None, dr
     with urllib.request.urlopen(url) as resp:
         # Read data in chunks rather than all at once
         shutil.copyfileobj(resp, dest, 64 * 1024)
+        dest.flush()
 
-    if flags is not None:
-        os.chmod(dest.name, flags)
+    os.chmod(dest.name, flags)
 
 
 def main():
