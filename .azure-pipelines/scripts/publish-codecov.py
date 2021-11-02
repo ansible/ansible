@@ -18,7 +18,7 @@ from pathlib import Path
 class CoverageFile:
     name: str
     path: Path
-    flag: str
+    flags: t.List[str]
 
 
 @dataclasses.dataclass(frozen=True)
@@ -50,7 +50,7 @@ def process_files(directory: Path) -> t.Tuple[CoverageFile, ...]:
         flags = name.replace('-powershell', '').split('=')  # Drop '-powershell' suffix
         flags = [flag.split('-')[0] if flag.startswith('stub') else flag for flag in flags]  # Remove "-01" from stub files
 
-        processed.append(CoverageFile(name, file, ",".join(flags)))
+        processed.append(CoverageFile(name, file, flags))
 
     return tuple(processed)
 
@@ -61,8 +61,8 @@ def upload_files(codecov_bin: Path, files: t.Tuple[CoverageFile], dry_run: t.Opt
             str(codecov_bin),
             '--name', file.name,
             '--file', str(file.path),
-            '--flags', file.flag,
         ]
+        cmd.extend(f'--flags {flag}' for flag in file.flags)
 
         if dry_run:
             print(f'DRY-RUN: Would run command: {" ".join(cmd)}')
