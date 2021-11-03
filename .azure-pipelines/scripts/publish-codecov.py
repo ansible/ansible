@@ -7,7 +7,6 @@ Python coverage, as well as PowerShell and Python stubs can all be uploaded.
 
 import argparse
 import dataclasses
-import os
 import pathlib
 import shutil
 import subprocess
@@ -57,10 +56,10 @@ def process_files(directory: pathlib.Path) -> t.Tuple[CoverageFile, ...]:
     return tuple(processed)
 
 
-def upload_files(codecov_bin: str, files: t.Tuple[CoverageFile, ...], dry_run: bool = False) -> None:
+def upload_files(codecov_bin: pathlib.Path, files: t.Tuple[CoverageFile, ...], dry_run: bool = False) -> None:
     for file in files:
         cmd = [
-            codecov_bin,
+            str(codecov_bin),
             '--name', file.name,
             '--file', str(file.path),
         ]
@@ -74,27 +73,29 @@ def upload_files(codecov_bin: str, files: t.Tuple[CoverageFile, ...], dry_run: b
         subprocess.run(cmd, check=True)
 
 
-def download_file(url: str, dest: t.IO[bytes], flags: int, dry_run: bool = False) -> None:
+def download_file(url: str, dest: pathlib.Path, flags: int, dry_run: bool = False) -> None:
     if dry_run:
         print(f'DRY-RUN: Would download {url} to {dest} and set mode to {flags:o}')
         return
 
     with urllib.request.urlopen(url) as resp:
-        # Read data in chunks rather than all at once
-        shutil.copyfileobj(resp, dest, 64 * 1024)
-        dest.flush()
+        with dest.open('w+b') as f:
+            # Read data in chunks rather than all at once
+            shutil.copyfileobj(resp, f, 64 * 1024)
+            f.flush()
 
-    os.chmod(dest.name, flags)
+    dest.chmod(flags)
 
 
 def main():
     args = parse_args()
     url = 'https://ansible-ci-files.s3.amazonaws.com/codecov/linux/codecov'
-    with tempfile.NamedTemporaryFile(prefix='codecov-') as codecov_bin:
+    with tempfile.TemporaryDirectory(prefix='codecov-') as tmpdir:
+        codecov_bin = pathlib.Path(tmpdir) / 'codecov'
         download_file(url, codecov_bin, 0o755, args.dry_run)
 
         files = process_files(args.path)
-        upload_files(codecov_bin.name, files, args.dry_run)
+        upload_files(codecov_bin, files, args.dry_run)
 
 
 if __name__ == '__main__':
