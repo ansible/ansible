@@ -5037,7 +5037,7 @@ plugin_routing:
     netbox_ip_address:
       redirect: netbox.netbox.netbox_ip_address
     netbox_interface:
-      redirect: netbox.netbox.netbox_interface
+      redirect: netbox.netbox.netbox_device_interface
     netbox_prefix:
       redirect: netbox.netbox.netbox_prefix
     netbox_site:
