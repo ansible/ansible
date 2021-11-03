@@ -77,6 +77,8 @@ def _filter_yaml_special(scalar):
     def do_filter():
         for ch in scalar:
             # Logic copied from pyyaml yaml.emitter.Emitter.analyze_scalar
+            # and combined into a single if statement
+            # We only call yaml.dump with allow_unicode=True
             if (ch == '\n' or '\x20' <= ch <= '\x7E' or
                     ch == '\x85' or '\xA0' <= ch <= '\uD7FF' or
                     '\uE000' <= ch <= '\uFFFD' or
