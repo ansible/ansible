@@ -221,6 +221,8 @@ bootstrap_remote_rhel_7()
     done
 
     install_pip
+
+    bootstrap_remote_rhel_pinned_pip_packages
 }
 
 bootstrap_remote_rhel_8()
@@ -253,6 +255,8 @@ bootstrap_remote_rhel_8()
         echo "Failed to install packages. Sleeping before trying again..."
         sleep 10
     done
+
+    bootstrap_remote_rhel_pinned_pip_packages
 }
 
 bootstrap_remote_rhel()
@@ -261,7 +265,10 @@ bootstrap_remote_rhel()
         7.*) bootstrap_remote_rhel_7 ;;
         8.*) bootstrap_remote_rhel_8 ;;
     esac
+}
 
+bootstrap_remote_rhel_pinned_pip_packages()
+{
     # pin packaging and pyparsing to match the downstream vendored versions
     pip_packages="
         packaging==20.4
