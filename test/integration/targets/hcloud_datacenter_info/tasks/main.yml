@@ -8,7 +8,7 @@
 - name: verify test gather hcloud datacenter infos
   assert:
     that:
-      - hcloud_datacenters.hcloud_datacenter_info| list | count == 3
+      - hcloud_datacenters.hcloud_datacenter_info| list | count == 4
 
 - name: test gather hcloud datacenter infos in check mode
   hcloud_datacenter_info:
@@ -18,7 +18,7 @@
 - name: verify test gather hcloud datacenter infos in check mode
   assert:
     that:
-      - hcloud_datacenters.hcloud_datacenter_info| list | count == 3
+      - hcloud_datacenters.hcloud_datacenter_info| list | count == 4
 
 
 - name: test gather hcloud datacenter infos with correct name
