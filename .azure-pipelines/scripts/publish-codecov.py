@@ -82,7 +82,6 @@ def download_file(url: str, dest: pathlib.Path, flags: int, dry_run: bool = Fals
         with dest.open('w+b') as f:
             # Read data in chunks rather than all at once
             shutil.copyfileobj(resp, f, 64 * 1024)
-            f.flush()
 
     dest.chmod(flags)
 
