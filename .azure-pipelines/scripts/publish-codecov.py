@@ -8,33 +8,31 @@ Python coverage, as well as PowerShell and Python stubs can all be uploaded.
 import argparse
 import dataclasses
 import os
+import pathlib
 import shutil
 import subprocess
-import urllib.request
-
+import tempfile
 import typing as t
-
-from pathlib import Path
-from tempfile import NamedTemporaryFile
+import urllib.request
 
 
 @dataclasses.dataclass(frozen=True)
 class CoverageFile:
     name: str
-    path: Path
+    path: pathlib.Path
     flags: t.List[str]
 
 
 @dataclasses.dataclass(frozen=True)
 class Args:
     dry_run: bool
-    path: Path
+    path: pathlib.Path
 
 
 def parse_args() -> Args:
     parser = argparse.ArgumentParser()
     parser.add_argument('-n', '--dry-run', action='store_true')
-    parser.add_argument('path', type=Path)
+    parser.add_argument('path', type=pathlib.Path)
 
     args = parser.parse_args()
 
@@ -45,7 +43,7 @@ def parse_args() -> Args:
     return Args(**kwargs)
 
 
-def process_files(directory: Path) -> t.Tuple[CoverageFile, ...]:
+def process_files(directory: pathlib.Path) -> t.Tuple[CoverageFile, ...]:
     processed = []
     for file in directory.joinpath('reports').glob('coverage*.xml'):
         name = file.stem.replace('coverage=', '')
@@ -92,7 +90,7 @@ def download_file(url: str, dest: t.IO[bytes], flags: int, dry_run: bool = False
 def main():
     args = parse_args()
     url = 'https://ansible-ci-files.s3.amazonaws.com/codecov/linux/codecov'
-    with NamedTemporaryFile(prefix='codecov-') as codecov_bin:
+    with tempfile.NamedTemporaryFile(prefix='codecov-') as codecov_bin:
         download_file(url, codecov_bin, 0o755, args.dry_run)
 
         files = process_files(args.path)
