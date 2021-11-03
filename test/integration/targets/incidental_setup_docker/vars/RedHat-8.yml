@@ -3,6 +3,7 @@ docker_prereq_packages:
   - device-mapper-persistent-data
   - lvm2
   - libseccomp
+  - iptables
 
 docker_packages:
   - docker-ce-19.03.13
