@@ -50,6 +50,8 @@ __all__ = ["CallbackBase"]
 
 
 _DEBUG_ALLOWED_KEYS = frozenset(('msg', 'exception', 'warnings', 'deprecations'))
+# regex representation of libyaml/pyyaml of a space followed by a break character
+_SPACE_BREAK_RE = re.compile(r' +([\n\x85\u2028\u2029])')
 
 
 class _AnsibleCallbackDumper(AnsibleDumper):
@@ -61,13 +63,40 @@ class _AnsibleCallbackDumper(AnsibleDumper):
         return self
 
 
-def _should_use_block(value):
-    """Returns true if string should be in block format"""
+def _should_use_block(scalar):
+    """Returns true if string should be in block format based on the existence of various newline separators"""
+    # This tuple isn't used for speed, but for eaiser documentation of characters
     #          NL        CR        FS        GS        RS        NEL       LS        PS
     for c in ('\u000a', '\u000d', '\u001c', '\u001d', '\u001e', '\u0085', '\u2028', '\u2029'):
-        if c in value:
+        if c in scalar:
             return True
     return False
+
+
+def _filter_yaml_special(scalar):
+    """Filter a string removing any character that libyaml/pyyaml declare as special"""
+    def do_filter():
+        for ch in scalar:
+            # Logic copied from pyyaml yaml.emitter.Emitter.analyze_scalar
+            if (ch == '\n' or '\x20' <= ch <= '\x7E' or
+                    ch == '\x85' or '\xA0' <= ch <= '\uD7FF' or
+                    '\uE000' <= ch <= '\uFFFD' or
+                    '\U00010000' <= ch < '\U0010ffff') and ch != '\uFEFF':
+                yield ch
+    return ''.join(do_filter())
+
+
+def _munge_data_for_lossy_yaml(scalar):
+    """Modify a string so that analyze_scalar in libyaml/pyyaml will allow block formatting"""
+    # we care more about readability than accuracy, so...
+    # ...libyaml/pyyaml does not permit trailing spaces for block scalars
+    scalar = scalar.rstrip()
+    # ...libyaml/pyyaml does not permit tabs for block scalars
+    scalar = scalar.expandtabs()
+    # ...libyaml/pyyaml only permits spaces followed by breaks for double quoted scalars
+    scalar = _SPACE_BREAK_RE.sub(r'\1', scalar)
+    # ...libyaml/pyyaml only permits special characters for double quoted scalars
+    return _filter_yaml_special(scalar)
 
 
 def _pretty_represent_str(self, data):
@@ -76,17 +105,7 @@ def _pretty_represent_str(self, data):
     if _should_use_block(data):
         style = '|'
         if self._lossy:
-            # we care more about readable than accuracy, so...
-            # ...no trailing space
-            data = data.rstrip()
-            # ...and non-printable characters
-            data = ''.join(x for x in data if x in string.printable or ord(x) >= 0xA0)
-            # ...tabs prevent blocks from expanding
-            data = data.expandtabs()
-            # ...and odd bits of whitespace
-            data = re.sub(r'[\x0b\x0c\r]', '', data)
-            # ...as does trailing space
-            data = re.sub(r' +\n', '\n', data)
+            data = _munge_data_for_lossy_yaml(data)
     else:
         style = self.default_style
 
