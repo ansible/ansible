@@ -243,7 +243,7 @@ Here are some examples:
       remote_src=True even if mode was not set as a parameter.  This failed on
       filesystems which do not have permission bits (https://github.com/ansible/ansible/issues/29444).
 
-You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.11/changelogs/fragments>`_ for the 2.11 release.
+You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.12/changelogs/fragments>`_ for the 2.12 release.
 
 After you have written the changelog fragment for your PR, commit the file and include it with the pull request.
 
@@ -307,7 +307,7 @@ We do **not** backport features.
 
    These instructions assume that:
 
-    * ``stable-2.11`` is the targeted release branch for the backport
+    * ``stable-2.12`` is the targeted release branch for the backport
     * ``https://github.com/ansible/ansible.git`` is configured as a ``git remote`` named ``upstream``. If you do not use a ``git remote`` named ``upstream``, adjust the instructions accordingly.
     * ``https://github.com/<yourgithubaccount>/ansible.git`` is configured as a ``git remote`` named ``origin``. If you do not use a ``git remote`` named ``origin``, adjust the instructions accordingly.
 
@@ -316,7 +316,7 @@ We do **not** backport features.
 .. code-block:: shell
 
        git fetch upstream
-       git checkout -b backport/2.11/[PR_NUMBER_FROM_DEVEL] upstream/stable-2.11
+       git checkout -b backport/2.12/[PR_NUMBER_FROM_DEVEL] upstream/stable-2.12
 
 #. Cherry pick the relevant commit SHA from the devel branch into your feature branch, handling merge conflicts as necessary:
 
@@ -330,15 +330,15 @@ We do **not** backport features.
 
 .. code-block:: shell
 
-       git push origin backport/2.11/[PR_NUMBER_FROM_DEVEL]
+       git push origin backport/2.12/[PR_NUMBER_FROM_DEVEL]
 
-#. Submit the pull request for ``backport/2.11/[PR_NUMBER_FROM_DEVEL]`` against the ``stable-2.11`` branch
+#. Submit the pull request for ``backport/2.12/[PR_NUMBER_FROM_DEVEL]`` against the ``stable-2.12`` branch
 
 #. The Release Manager will decide whether to merge the backport PR before the next minor release. There isn't any need to follow up. Just ensure that the automated tests (CI) are green.
 
 .. note::
 
-    The branch name ``backport/2.11/[PR_NUMBER_FROM_DEVEL]`` is somewhat arbitrary, but conveys meaning about the purpose of the branch. This branch name format is not required, but it can be helpful, especially when making multiple backport PRs for multiple stable branches.
+    The branch name ``backport/2.12/[PR_NUMBER_FROM_DEVEL]`` is somewhat arbitrary, but conveys meaning about the purpose of the branch. This branch name format is not required, but it can be helpful, especially when making multiple backport PRs for multiple stable branches.
 
 .. note::
 
