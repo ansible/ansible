@@ -1,0 +1,29 @@
+
+
+PLAY [testhost] ****************************************************************
+
+TASK [Sample task name] ********************************************************
+ok: [testhost] => 
+    msg: sample debug msg
+
+TASK [Umlaut output] ***********************************************************
+ok: [testhost] => 
+    msg: |-
+        äöü
+        éêè
+        ßï☺
+
+TASK [Test to_yaml] ************************************************************
+ok: [testhost] => 
+    msg: |-
+        'line 1
+
+          line 2
+
+          line 3
+
+          '
+
+PLAY RECAP *********************************************************************
+testhost                   : ok=3    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

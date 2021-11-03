@@ -1,0 +1,19 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: Sample task name
+      debug:
+        msg: sample debug msg
+
+    - name: Umlaut output
+      debug:
+        msg: "äöü\néêè\nßï☺"
+
+    - name: Test to_yaml
+      debug:
+        msg: "{{ data | to_yaml }}"
+      vars:
+        data: |
+          line 1
+          line 2
+          line 3

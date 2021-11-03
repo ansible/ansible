@@ -15,13 +15,14 @@ set -eux
 
 run_test() {
 	local testname=$1
+    local playbook=$2
 
 	# output was recorded w/o cowsay, ensure we reproduce the same
 	export ANSIBLE_NOCOWS=1
 
 	# The shenanigans with redirection and 'tee' are to capture STDOUT and
 	# STDERR separately while still displaying both to the console
-	{ ansible-playbook -i inventory test.yml "${@:2}" \
+	{ ansible-playbook -i inventory "$playbook" "${@:3}" \
 		> >(set +x; tee "${OUTFILE}.${testname}.stdout"); } \
 		2> >(set +x; tee "${OUTFILE}.${testname}.stderr" >&2)
 	# Scrub deprication warning that shows up in Python 2.6 on CentOS 6
@@ -129,7 +130,7 @@ export ANSIBLE_DISPLAY_OK_HOSTS=1
 export ANSIBLE_DISPLAY_FAILED_STDERR=0
 export ANSIBLE_CHECK_MODE_MARKERS=0
 
-run_test default
+run_test default test.yml
 
 # Check for async output
 # NOTE: regex to match 1 or more digits works for both BSD and GNU grep
@@ -141,32 +142,32 @@ rm -f async_test.out
 # Hide skipped
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=0
 
-run_test hide_skipped
+run_test hide_skipped test.yml
 
 # Hide skipped/ok
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=0
 export ANSIBLE_DISPLAY_OK_HOSTS=0
 
-run_test hide_skipped_ok
+run_test hide_skipped_ok test.yml
 
 # Hide ok
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=0
 
-run_test hide_ok
+run_test hide_ok test.yml
 
 # Failed to stderr
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=1
 export ANSIBLE_DISPLAY_FAILED_STDERR=1
 
-run_test failed_to_stderr
+run_test failed_to_stderr test.yml
 export ANSIBLE_DISPLAY_FAILED_STDERR=0
 
 
 # Test displaying task path on failure
 export ANSIBLE_SHOW_TASK_PATH_ON_FAILURE=1
-run_test display_path_on_failure
+run_test display_path_on_failure test.yml
 export ANSIBLE_SHOW_TASK_PATH_ON_FAILURE=0
 
 
@@ -187,20 +188,22 @@ fi
 export ANSIBLE_DISPLAY_FAILED_STDERR=0
 
 export ANSIBLE_CALLBACK_RESULT_FORMAT=yaml
-run_test result_format_yaml
+run_test result_format_yaml test.yml
 export ANSIBLE_CALLBACK_RESULT_FORMAT=json
 
 export ANSIBLE_CALLBACK_RESULT_FORMAT=yaml
 export ANSIBLE_CALLBACK_FORMAT_PRETTY=1
-run_test result_format_yaml_lossy_verbose -v
+run_test result_format_yaml_lossy_verbose test.yml -v
+run_test yaml_result_format_yaml_verbose test_yaml.yml -v
 export ANSIBLE_CALLBACK_RESULT_FORMAT=json
 unset ANSIBLE_CALLBACK_FORMAT_PRETTY
 
 export ANSIBLE_CALLBACK_RESULT_FORMAT=yaml
 export ANSIBLE_CALLBACK_FORMAT_PRETTY=0
-run_test result_format_yaml_verbose -v
+run_test result_format_yaml_verbose test.yml -v
 export ANSIBLE_CALLBACK_RESULT_FORMAT=json
 unset ANSIBLE_CALLBACK_FORMAT_PRETTY
+
 
 ## DRY RUN tests
 #
