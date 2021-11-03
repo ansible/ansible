@@ -22,7 +22,6 @@ __metaclass__ = type
 import difflib
 import json
 import re
-import string
 import sys
 import textwrap
 from collections import OrderedDict
