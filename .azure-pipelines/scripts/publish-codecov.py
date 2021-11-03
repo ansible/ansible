@@ -49,7 +49,7 @@ def process_files(directory: pathlib.Path) -> t.Tuple[CoverageFile, ...]:
 
         # Get flags from name
         flags = name.replace('-powershell', '').split('=')  # Drop '-powershell' suffix
-        flags = [flag.split('-')[0] if flag.startswith('stub') else flag for flag in flags]  # Remove "-01" from stub files
+        flags = [flag if not flag.startswith('stub') else flag.split('-')[0] for flag in flags]  # Remove "-01" from stub files
 
         processed.append(CoverageFile(name, file, flags))
 
