@@ -1,7 +1,9 @@
 #!/usr/bin/env python
-# Upload code coverage reports to codecov.io.
-# Multiple coverage files from multiple languages are accepted and aggregated after upload.
-# Python coverage, as well as PowerShell and Python stubs can all be uploaded.
+"""
+Upload code coverage reports to codecov.io.
+Multiple coverage files from multiple languages are accepted and aggregated after upload.
+Python coverage, as well as PowerShell and Python stubs can all be uploaded.
+"""
 
 import argparse
 import dataclasses
