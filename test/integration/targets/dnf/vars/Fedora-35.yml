@@ -1,0 +1,2 @@
+astream_name: '@varnish:6.0/default'
+astream_name_no_stream: '@varnish/default'
