@@ -49,8 +49,10 @@ __all__ = ["CallbackBase"]
 
 
 _DEBUG_ALLOWED_KEYS = frozenset(('msg', 'exception', 'warnings', 'deprecations'))
+# Characters that libyaml/pyyaml consider breaks
+_YAML_BREAK_CHARS = '\n\x85\u2028\u2029'  # NL, NEL, LS, PS
 # regex representation of libyaml/pyyaml of a space followed by a break character
-_SPACE_BREAK_RE = re.compile(r' +([\n\x85\u2028\u2029])')
+_SPACE_BREAK_RE = re.compile(fr' +([{_YAML_BREAK_CHARS}])')
 
 
 class _AnsibleCallbackDumper(AnsibleDumper):
@@ -64,10 +66,9 @@ class _AnsibleCallbackDumper(AnsibleDumper):
 
 def _should_use_block(scalar):
     """Returns true if string should be in block format based on the existence of various newline separators"""
-    # This tuple isn't used for speed, but for eaiser documentation of characters
-    #          NL        CR        FS        GS        RS        NEL       LS        PS
-    for c in ('\u000a', '\u000d', '\u001c', '\u001d', '\u001e', '\u0085', '\u2028', '\u2029'):
-        if c in scalar:
+    # This method of searching is faster than using a regex
+    for ch in _YAML_BREAK_CHARS:
+        if ch in scalar:
             return True
     return False
 
@@ -75,6 +76,7 @@ def _should_use_block(scalar):
 def _filter_yaml_special(scalar):
     """Filter a string removing any character that libyaml/pyyaml declare as special"""
     def do_filter():
+        # To attempt conserving memory, use a local function that yields
         for ch in scalar:
             # Logic copied from pyyaml yaml.emitter.Emitter.analyze_scalar
             # and combined into a single if statement
