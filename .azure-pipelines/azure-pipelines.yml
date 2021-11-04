@@ -96,6 +96,8 @@ stages:
               test: rhel/8.4@3.6
             - name: RHEL 8.4 py38
               test: rhel/8.4@3.8
+            - name: RHEL 9.0b
+              test: rhel/9.0b
             - name: FreeBSD 12.2
               test: freebsd/12.2
             - name: FreeBSD 13.0
@@ -173,6 +175,8 @@ stages:
               test: rhel/8.4@3.6
             - name: RHEL 8.4 py38
               test: rhel/8.4@3.8
+            - name: RHEL 9.0b
+              test: rhel/9.0b
             - name: FreeBSD 12.2
               test: freebsd/12.2
             - name: FreeBSD 13.0
