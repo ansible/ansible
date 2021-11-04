@@ -54,7 +54,7 @@ You can create additional namespaces on Ansible Galaxy if you choose. For Red Ha
 * To create a namespace on Galaxy, see `Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_ on the Galaxy docsite for details.
 * To create a namespace on Red Hat Automation Hub, see the `Ansible Certified Content FAQ <https://access.redhat.com/articles/4916901>`_.
 
-Specify the namespace in the :file:`galaxy.yaml` file for each collection. For more information on the :file:`galaxy.yaml` file, see :ref:`collections_galaxy_meta`.
+Specify the namespace in the :file:`galaxy.yml` file for each collection. For more information on the :file:`galaxy.yml` file, see :ref:`collections_galaxy_meta`.
 
 .. _galaxy_get_token:
 
@@ -124,7 +124,7 @@ Building your collection tarball
 
 After configuring one or more distribution servers, build a collection tarball. The collection tarball is the published artifact, the object that you upload and other users download to install your collection. To build a collection tarball:
 
-#. Review the version number in your :file:`galaxy.yaml` file. Each time you publish your collection, it must have a new version number. You cannot make changes to existing versions of your collection on a distribution server. If you try to upload the same collection version more than once, the distribution server returns the error ``Code: conflict.collection_exists``. Collections follow semantic versioning rules. For more information on versions, see :ref:`collection_versions`. For more information on the :file:`galaxy.yaml` file, see :ref:`collections_galaxy_meta`.
+#. Review the version number in your :file:`galaxy.yml` file. Each time you publish your collection, it must have a new version number. You cannot make changes to existing versions of your collection on a distribution server. If you try to upload the same collection version more than once, the distribution server returns the error ``Code: conflict.collection_exists``. Collections follow semantic versioning rules. For more information on versions, see :ref:`collection_versions`. For more information on the :file:`galaxy.yml` file, see :ref:`collections_galaxy_meta`.
 #. Run ``ansible-galaxy collection build`` from inside the top-level directory of the collection. For example:
 
 .. code-block:: bash
