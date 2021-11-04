@@ -233,6 +233,8 @@ bootstrap_remote_rhel_7()
     done
 
     install_pip
+
+    bootstrap_remote_rhel_pinned_pip_packages
 }
 
 bootstrap_remote_rhel_8()
@@ -264,6 +266,38 @@ bootstrap_remote_rhel_8()
         echo "Failed to install packages. Sleeping before trying again..."
         sleep 10
     done
+
+    bootstrap_remote_rhel_pinned_pip_packages
+}
+
+bootstrap_remote_rhel_9()
+{
+    py_pkg_prefix="python3"
+
+    packages="
+        gcc
+        ${py_pkg_prefix}-devel
+        "
+
+    # Jinja2 is not installed with an OS package since the provided version is too old.
+    # Instead, ansible-test will install it using pip.
+    if [ "${controller}" ]; then
+        packages="
+            ${packages}
+            ${py_pkg_prefix}-cryptography
+            ${py_pkg_prefix}-packaging
+            ${py_pkg_prefix}-pyyaml
+            ${py_pkg_prefix}-resolvelib
+            "
+    fi
+
+    while true; do
+        # shellcheck disable=SC2086
+        dnf install -q -y ${packages} \
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
+    done
 }
 
 bootstrap_remote_rhel()
@@ -271,8 +305,12 @@ bootstrap_remote_rhel()
     case "${platform_version}" in
         7.*) bootstrap_remote_rhel_7 ;;
         8.*) bootstrap_remote_rhel_8 ;;
+        9.*) bootstrap_remote_rhel_9 ;;
     esac
+}
 
+bootstrap_remote_rhel_pinned_pip_packages()
+{
     # pin packaging and pyparsing to match the downstream vendored versions
     pip_packages="
         packaging==20.4

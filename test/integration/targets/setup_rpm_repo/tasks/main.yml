@@ -24,6 +24,11 @@
     args:
       name: "{{ rpm_repo_packages }}"
 
+  - name: Install rpmfluff via pip
+    pip:
+      name: rpmfluff
+    when: ansible_facts.os_family == 'RedHat' and ansible_distribution_major_version is version('9', '==')
+
   - set_fact:
       repos:
         - "fake-{{ ansible_architecture }}"
