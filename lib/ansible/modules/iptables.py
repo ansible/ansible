@@ -380,12 +380,12 @@ options:
     description:
       - The LVS Virtual IP address to match
     type: str
-    version_added: "2.9"
+    version_added: "2.13"
   vport:
     description:
       - The LVS port to match
     type: str
-    version_added: "2.9"
+    version_added: "2.13"
 '''
 
 EXAMPLES = r'''
