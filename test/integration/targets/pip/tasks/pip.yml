@@ -90,13 +90,6 @@
     state: absent
     name: "{{ remote_tmp_dir }}/pipenv"
 
-- name: install a working version of setuptools in the virtualenv
-  pip:
-    name: setuptools
-    virtualenv: "{{ remote_tmp_dir }}/pipenv"
-    state: present
-    version: 33.1.1
-
 - name: create a requirement file with an vcs url
   copy:
     dest: "{{ remote_tmp_dir }}/pipreq.txt"
