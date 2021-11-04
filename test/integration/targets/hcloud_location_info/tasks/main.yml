@@ -8,7 +8,7 @@
 - name: verify test gather hcloud location infos
   assert:
     that:
-      - hcloud_location.hcloud_location_info | list | count == 3
+      - hcloud_location.hcloud_location_info | list | count == 4
 
 - name: test gather hcloud location infos in check mode
   hcloud_location_info:
@@ -18,7 +18,7 @@
 - name: verify test gather hcloud location infos in check mode
   assert:
     that:
-      - hcloud_location.hcloud_location_info | list | count == 3
+      - hcloud_location.hcloud_location_info | list | count == 4
 
 - name: test gather hcloud location infos with correct name
   hcloud_location_info:
