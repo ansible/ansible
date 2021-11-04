@@ -1,0 +1,4 @@
+krb5_packages:
+- krb5-devel
+- krb5-workstation
+- redhat-rpm-config  # needed for gssapi install
