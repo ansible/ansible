@@ -11,7 +11,7 @@ Ansible can also install from a source directory in several ways:
       - source: ./my_namespace/
         type: subdirs
 
-Ansible can also install a collection collected with `ansible-galaxy collection build` by specifying the output file directly:
+Ansible can also install a collection collected with ``ansible-galaxy collection build`` or downloaded from Galaxy for offline use by specifying the output file directly:
 
 .. code-block:: yaml
 
