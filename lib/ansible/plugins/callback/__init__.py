@@ -49,6 +49,7 @@ __all__ = ["CallbackBase"]
 
 
 _DEBUG_ALLOWED_KEYS = frozenset(('msg', 'exception', 'warnings', 'deprecations'))
+_YAML_TEXT_TYPES = (text_type, AnsibleUnicode, AnsibleUnsafeText, NativeJinjaUnsafeText)
 # Characters that libyaml/pyyaml consider breaks
 _YAML_BREAK_CHARS = '\n\x85\u2028\u2029'  # NL, NEL, LS, PS
 # regex representation of libyaml/pyyaml of a space followed by a break character
@@ -118,25 +119,11 @@ def _pretty_represent_str(self, data):
     return node
 
 
-_AnsibleCallbackDumper.add_representer(
-    text_type,
-    _pretty_represent_str
-)
-
-_AnsibleCallbackDumper.add_representer(
-    AnsibleUnicode,
-    _pretty_represent_str
-)
-
-_AnsibleCallbackDumper.add_representer(
-    AnsibleUnsafeText,
-    _pretty_represent_str,
-)
-
-_AnsibleCallbackDumper.add_representer(
-    NativeJinjaUnsafeText,
-    _pretty_represent_str,
-)
+for data_type in _YAML_TEXT_TYPES:
+    _AnsibleCallbackDumper.add_representer(
+        data_type,
+        _pretty_represent_str
+    )
 
 
 class CallbackBase(AnsiblePlugin):
