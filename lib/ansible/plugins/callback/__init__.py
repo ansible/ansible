@@ -119,6 +119,11 @@ def _pretty_represent_str(self, data):
 
 
 _AnsibleCallbackDumper.add_representer(
+    text_type,
+    _pretty_represent_str
+)
+
+_AnsibleCallbackDumper.add_representer(
     AnsibleUnicode,
     _pretty_represent_str
 )
