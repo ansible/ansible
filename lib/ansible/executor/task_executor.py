@@ -1135,12 +1135,18 @@ def start_connection(play_context, variables, task_uuid):
         'ANSIBLE_NETCONF_PLUGINS': netconf_loader.print_paths(),
         'ANSIBLE_TERMINAL_PLUGINS': terminal_loader.print_paths(),
     })
-    python = sys.executable
     master, slave = pty.openpty()
-    p = subprocess.Popen(
-        [python, ansible_connection, to_text(os.getppid()), to_text(task_uuid)],
-        stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
-    )
+
+    cmd = [ansible_connection, to_text(os.getppid()), to_text(task_uuid)]
+
+    if os.name != "posix" or not os.access(ansible_connection, os.X_OK):
+        # On POSIX, we should be able to execute files from their shebang lines as long as they're
+        # marked executable. On other systems, we may need to explicitly invoke the python
+        # interpreter so we add that to the command line.
+        python = sys.executable
+        cmd.insert(0, python)
+
+    p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     os.close(slave)
 
     # We need to set the pty into noncanonical mode. This ensures that we
