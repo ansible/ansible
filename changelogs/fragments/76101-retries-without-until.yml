@@ -1,2 +1,2 @@
 minor_changes:
-  - using ``retries`` without specifying ``until`` defaults to retrying until the task is successful
+  - using ``retries`` without specifying ``until`` defaults to retrying until the task is successful (https://github.com/ansible/ansible/issues/20802)
