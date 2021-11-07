@@ -499,7 +499,7 @@ valid_until = "taskresult is succeeded"
 class TestTaskExecutorRetries:
 
     @staticmethod
-    def _make_task(extra: Dict = None) -> Task:
+    def _make_task(extra=None):  # type: (Dict) -> Task
         params = dict(
             name='Test Task',
             command='echo hi',
