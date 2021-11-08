@@ -128,7 +128,6 @@ class PylintTest(SanitySingleVersion):
             add_context(remaining_paths, 'validate-modules', filter_path('test/lib/ansible_test/_util/controller/sanity/validate-modules/'))
             add_context(remaining_paths, 'validate-modules-unit', filter_path('test/lib/ansible_test/tests/validate-modules-unit/'))
             add_context(remaining_paths, 'code-smell', filter_path('test/lib/ansible_test/_util/controller/sanity/code-smell/'))
-            add_context(remaining_paths, 'legacy-collection-loader', filter_path('test/lib/ansible_test/_util/target/legacy_collection_loader/'))
             add_context(remaining_paths, 'ansible-test-target', filter_path('test/lib/ansible_test/_util/target/'))
             add_context(remaining_paths, 'ansible-test', filter_path('test/lib/'))
             add_context(remaining_paths, 'test', filter_path('test/'))
