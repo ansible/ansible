@@ -1,3 +1,9 @@
+.azure-pipelines/scripts/publish-codecov.py replace-urlopen
+.azure-pipelines/scripts/publish-codecov.py compile-2.6!skip # Uses Python 3.6+ syntax
+.azure-pipelines/scripts/publish-codecov.py compile-2.7!skip # Uses Python 3.6+ syntax
+.azure-pipelines/scripts/publish-codecov.py compile-3.5!skip # Uses Python 3.6+ syntax
+.azure-pipelines/scripts/publish-codecov.py future-import-boilerplate
+.azure-pipelines/scripts/publish-codecov.py metaclass-boilerplate
 contrib/inventory/abiquo.py future-import-boilerplate
 contrib/inventory/abiquo.py metaclass-boilerplate
 contrib/inventory/apache-libcloud.py future-import-boilerplate
