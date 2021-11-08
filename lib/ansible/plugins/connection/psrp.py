@@ -323,7 +323,6 @@ try:
     from pypsrp.exceptions import AuthenticationError, WinRMError
     from pypsrp.host import PSHost, PSHostUserInterface
     from pypsrp.powershell import PowerShell, RunspacePool
-    from pypsrp.shell import Process, SignalCode, WinRS
     from pypsrp.wsman import WSMan, AUTH_KWARGS
     from requests.exceptions import ConnectionError, ConnectTimeout
 except ImportError as err:
@@ -596,6 +595,7 @@ end {
             raise AnsibleError(to_native(stderr))
 
         put_output = json.loads(to_text(stdout))
+        local_sha1 = sha1_hash.hexdigest()
         remote_sha1 = put_output.get("sha1")
 
         if not remote_sha1:
