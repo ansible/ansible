@@ -9,7 +9,7 @@ This section describes release cycles, rules, and maintenance schedules for both
 ====================================================  ========================================================
 Ansible community package                             ansible-core
 ====================================================  ========================================================
-Uses new versioning (2.10, then 3.0.0)                Continues "classic Ansible" versioning (2.10, then 2.11)
+Uses new versioning (2.10, then 3.0.0)                Continues "classic Ansible" versioning (2.11, then 2.12)
 Follows semantic versioning rules                     Does not use semantic versioning
 Maintains only one version at a time                  Maintains latest version plus two older versions
 Includes language, runtime, and selected Collections  Includes language, runtime, and builtin plugins
@@ -50,7 +50,7 @@ The two community releases are related - the release cycle follows this pattern:
 Ansible community package release cycle
 ---------------------------------------
 
-The Ansible community team typically releases two major versions of the community package per year, on a flexible release cycle that trails the release of ``ansible-core``. This cycle can be extended to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`roadmaps` for upcoming release details. Between major versions, we release a new minor version of the Ansible community package every three weeks. Minor releases include new backwards-compatible features, modules and plugins, as well as bug fixes.
+The Ansible community team typically releases two major versions of the community package per year, on a flexible release cycle that trails the release of ``ansible-core``. This cycle can be extended to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`ansible_roadmaps` for upcoming release details. Between major versions, we release a new minor version of the Ansible community package every three weeks. Minor releases include new backwards-compatible features, modules and plugins, as well as bug fixes.
 
 Starting with version 2.10, the Ansible community team guarantees maintenance for only one major community package release at a time. For example, when Ansible 4.0.0 gets released, the team will stop making new 3.x releases. Community members may maintain older versions if desired.
 
@@ -66,27 +66,30 @@ Work in Collections is tracked within the individual Collection repositories.
 
 You can refer to the :ref:`Ansible package porting guides<porting_guides>` for tips on updating your playbooks to run on newer versions of Ansible. For Ansible 2.10 and later releases, you can install the Ansible package with ``pip``. See :ref:`intro_installation_guide` for details.  For older releases, you can download the Ansible release from `<https://releases.ansible.com/ansible/>`_.
 
-This table links to the release notes for each major Ansible release. These release notes (changelogs) contain the dates and significant changes in each minor release.
+Ansible community changelogs
+----------------------------
+
+This table links to the changelogs for each major Ansible release. These changelogs contain the dates and significant changes in each minor release.
 
 ==================================      =================================================
 Ansible Community Package Release       Status
 ==================================      =================================================
 5.0.0                                   In development (unreleased)
-`4.x Release Notes`_                    Current
-`3.x Release Notes`_                    Unmaintained (end of life)
-`2.10 Release Notes`_                   Unmaintained (end of life)
+`4.x Changelogs`_                       Current
+`3.x Changelogs`_                       Unmaintained (end of life)
+`2.10 Changelogs`_                      Unmaintained (end of life)
 ==================================      =================================================
 
 
-.. _4.x Release Notes: https://github.com/ansible-community/ansible-build-data/blob/main/4/CHANGELOG-v4.rst
-.. _3.x Release Notes: https://github.com/ansible-community/ansible-build-data/blob/main/3/CHANGELOG-v3.rst
-.. _2.10 Release Notes: https://github.com/ansible-community/ansible-build-data/blob/main/2.10/CHANGELOG-v2.10.rst
+.. _4.x Changelogs: https://github.com/ansible-community/ansible-build-data/blob/main/4/CHANGELOG-v4.rst
+.. _3.x Changelogs: https://github.com/ansible-community/ansible-build-data/blob/main/3/CHANGELOG-v3.rst
+.. _2.10 Changelogs: https://github.com/ansible-community/ansible-build-data/blob/main/2.10/CHANGELOG-v2.10.rst
 
 
 ansible-core release cycle
 --------------------------
 
-``ansible-core`` is developed and released on a flexible release cycle. This cycle can be extended in order to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`roadmaps` for upcoming release details.
+``ansible-core`` is developed and released on a flexible release cycle. This cycle can be extended in order to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`ansible_core_roadmaps` for upcoming release details.
 
 ``ansible-core`` has a graduated maintenance structure that extends to three major releases.
 For more information, read about the :ref:`development_and_stable_version_maintenance_workflow` or
@@ -102,36 +105,43 @@ You can install ``ansible-core`` with ``pip``. See :ref:`intro_installation_guid
 
 .. _release_schedule:
 
-This table links to the release notes for each major ``ansible-core``
-release. These release notes (changelogs) contain the dates and
+``ansible-core`` changelogs
+----------------------------
+
+This table links to the changelogs for each major ``ansible-core``
+release. These changelogs contain the dates and
 significant changes in each minor release.
 
-============================================= ======================================================
- ``ansible-core`` / ``ansible-base`` Release                          Status
-============================================= ======================================================
-devel                                         In development (ansible-core 2.12 unreleased, trunk)
-`2.11 ansible-core Release Notes`_            Maintained (security **and** general bug fixes)
-`2.10 ansible-base Release Notes`_            Maintained (security **and** critical bug fixes)
-`2.9 Release Notes`_                          Maintained (pre-collections) (security fixes only)
-`2.8 Release Notes`_                          Unmaintained (end of life)
-`2.7 Release Notes`_                          Unmaintained (end of life)
-`2.6 Release Notes`_                          Unmaintained (end of life)
-`2.5 Release Notes`_                          Unmaintained (end of life)
-<2.5                                          Unmaintained (end of life)
-============================================= ======================================================
+================================= ==================================================== ======================
+``ansible-core``/``ansible-base``     Status                                           Expected end of life
+    Release
+================================= ==================================================== ======================
+devel                             In development (ansible-core 2.13 unreleased, trunk)  TBD
+`2.12 ansible-core Changelogs`_   Maintained (security **and** general bug fixes)       May 2023
+`2.11 ansible-core Changelogs`_   Maintained (security **and** critical bug fixes)      Nov 2022
+`2.10 ansible-base Changelogs`_   Maintained (security fixes only)                      May 2022
+`2.9 Changelogs`_                 Maintained (pre-collections) (security fixes only)    May 2022
+`2.8 Changelogs`_                 Unmaintained (end of life)                            EOL
+`2.7 Changelogs`_                 Unmaintained (end of life)                            EOL
+`2.6 Changelogs`_                 Unmaintained (end of life)                            EOL
+`2.5 Changelogs`_                 Unmaintained (end of life)                            EOL
+<2.5                              Unmaintained (end of life)                            EOL
+================================= ==================================================== ======================
 
-.. _2.11 ansible-core Release Notes:
+.. _2.12 ansible-core Changelogs:
+.. _2.12: https://github.com/ansible/ansible/blob/stable-2.12/changelogs/CHANGELOG-v2.12.rst
+.. _2.11 ansible-core Changelogs:
 .. _2.11: https://github.com/ansible/ansible/blob/stable-2.11/changelogs/CHANGELOG-v2.11.rst
-.. _2.10 ansible-base Release Notes:
+.. _2.10 ansible-base Changelogs:
 .. _2.10: https://github.com/ansible/ansible/blob/stable-2.10/changelogs/CHANGELOG-v2.10.rst
-.. _2.9 Release Notes:
+.. _2.9 Changelogs:
 .. _2.9: https://github.com/ansible/ansible/blob/stable-2.9/changelogs/CHANGELOG-v2.9.rst
-.. _2.8 Release Notes:
+.. _2.8 Changelogs:
 .. _2.8: https://github.com/ansible/ansible/blob/stable-2.8/changelogs/CHANGELOG-v2.8.rst
-.. _2.7 Release Notes: https://github.com/ansible/ansible/blob/stable-2.7/changelogs/CHANGELOG-v2.7.rst
-.. _2.6 Release Notes:
+.. _2.7 Changelogs: https://github.com/ansible/ansible/blob/stable-2.7/changelogs/CHANGELOG-v2.7.rst
+.. _2.6 Changelogs:
 .. _2.6: https://github.com/ansible/ansible/blob/stable-2.6/changelogs/CHANGELOG-v2.6.rst
-.. _2.5 Release Notes: https://github.com/ansible/ansible/blob/stable-2.5/changelogs/CHANGELOG-v2.5.rst
+.. _2.5 Changelogs: https://github.com/ansible/ansible/blob/stable-2.5/changelogs/CHANGELOG-v2.5.rst
 .. _support_life:
 .. _methods:
 
@@ -200,8 +210,8 @@ For more information on adding features or fixing bugs in ``ansible-core`` see :
 
 .. _release_changelogs:
 
-Changelogs
-----------
+Generating changelogs
+----------------------
 
 We generate changelogs based on fragments. When creating new features for existing modules and plugins or fixing bugs, create a changelog fragment describing the change. A changelog entry is not needed for new modules or plugins. Details for those items will be generated from the module documentation.
 
