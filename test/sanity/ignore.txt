@@ -1,3 +1,9 @@
+.azure-pipelines/scripts/publish-codecov.py replace-urlopen
+.azure-pipelines/scripts/publish-codecov.py compile-2.6!skip # Uses Python 3.6+ syntax
+.azure-pipelines/scripts/publish-codecov.py compile-2.7!skip # Uses Python 3.6+ syntax
+.azure-pipelines/scripts/publish-codecov.py compile-3.5!skip # Uses Python 3.6+ syntax
+.azure-pipelines/scripts/publish-codecov.py future-import-boilerplate
+.azure-pipelines/scripts/publish-codecov.py metaclass-boilerplate
 docs/bin/find-plugin-refs.py future-import-boilerplate
 docs/bin/find-plugin-refs.py metaclass-boilerplate
 docs/docsite/_extensions/pygments_lexer.py future-import-boilerplate
