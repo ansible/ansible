@@ -5,10 +5,17 @@ __metaclass__ = type
 import json
 
 try:
+    # virtualenv <20
     from sys import real_prefix
 except ImportError:
     real_prefix = None
 
+try:
+    # venv and virtualenv >= 20
+    from sys import base_exec_prefix
+except ImportError:
+    base_exec_prefix = None
+
 print(json.dumps(dict(
-    real_prefix=real_prefix,
+    real_prefix=real_prefix or base_exec_prefix,
 )))

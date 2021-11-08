@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import os
-import tempfile
 import typing as t
 
 from . import (
@@ -18,7 +17,12 @@ from . import (
 )
 
 from ...constants import (
+    CONTROLLER_MIN_PYTHON_VERSION,
     REMOTE_ONLY_PYTHON_VERSIONS,
+)
+
+from ...io import (
+    write_text_file,
 )
 
 from ...test import (
@@ -30,14 +34,18 @@ from ...target import (
 )
 
 from ...util import (
+    cache,
     SubprocessError,
     display,
     parse_to_list_of_dict,
     is_subdir,
+    ANSIBLE_TEST_TOOLS_ROOT,
+    ANSIBLE_TEST_TARGET_ROOT,
 )
 
 from ...util_common import (
     ResultType,
+    create_temp_dir,
 )
 
 from ...ansible_util import (
@@ -45,6 +53,7 @@ from ...ansible_util import (
 )
 
 from ...python_requirements import (
+    PipUnavailableError,
     install_requirements,
 )
 
@@ -94,7 +103,10 @@ class ImportTest(SanityMultipleVersion):
         if python.version.startswith('2.'):
             # hack to make sure that virtualenv is available under Python 2.x
             # on Python 3.x we can use the built-in venv
-            install_requirements(args, python, virtualenv=True)  # sanity (import)
+            try:
+                install_requirements(args, python, virtualenv=True, controller=False)  # sanity (import)
+            except PipUnavailableError as ex:
+                display.warning(ex)
 
         temp_root = os.path.join(ResultType.TMP.path, 'sanity', 'import')
 
@@ -134,25 +146,27 @@ class ImportTest(SanityMultipleVersion):
             )
 
             if data_context().content.collection:
+                external_python = create_sanity_virtualenv(args, args.controller_python, self.name, context=self.name)
+
                 env.update(
                     SANITY_COLLECTION_FULL_NAME=data_context().content.collection.full_name,
-                    SANITY_EXTERNAL_PYTHON=python.path,
+                    SANITY_EXTERNAL_PYTHON=external_python.path,
+                    SANITY_YAML_TO_JSON=os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'yaml_to_json.py'),
+                    ANSIBLE_CONTROLLER_MIN_PYTHON_VERSION=CONTROLLER_MIN_PYTHON_VERSION,
+                    PYTHONPATH=':'.join((get_ansible_test_python_path(), env["PYTHONPATH"])),
                 )
 
             display.info(import_type + ': ' + data, verbosity=4)
 
             cmd = ['importer.py']
 
+            # add the importer to the path so it can be accessed through the coverage injector
+            env.update(
+                PATH=os.pathsep.join([os.path.join(TARGET_SANITY_ROOT, 'import'), env['PATH']]),
+            )
+
             try:
-                with tempfile.TemporaryDirectory(prefix='ansible-test', suffix='-import') as temp_dir:
-                    # make the importer available in the temporary directory
-                    os.symlink(os.path.abspath(os.path.join(TARGET_SANITY_ROOT, 'import', 'importer.py')), os.path.join(temp_dir, 'importer.py'))
-                    os.symlink(os.path.abspath(os.path.join(TARGET_SANITY_ROOT, 'import', 'yaml_to_json.py')), os.path.join(temp_dir, 'yaml_to_json.py'))
-
-                    # add the importer to the path so it can be accessed through the coverage injector
-                    env['PATH'] = os.pathsep.join([temp_dir, env['PATH']])
-
-                    stdout, stderr = cover_python(args, virtualenv_python, cmd, self.name, env, capture=True, data=data)
+                stdout, stderr = cover_python(args, virtualenv_python, cmd, self.name, env, capture=True, data=data)
 
                 if stdout or stderr:
                     raise SubprocessError(cmd, stdout=stdout, stderr=stderr)
@@ -182,3 +196,20 @@ class ImportTest(SanityMultipleVersion):
             return SanityFailure(self.name, messages=results, python_version=python.version)
 
         return SanitySuccess(self.name, python_version=python.version)
+
+
+@cache
+def get_ansible_test_python_path():  # type: () -> str
+    """
+    Return a directory usable for PYTHONPATH, containing only the ansible-test collection loader.
+    The temporary directory created will be cached for the lifetime of the process and cleaned up at exit.
+    """
+    python_path = create_temp_dir(prefix='ansible-test-')
+    ansible_test_path = os.path.join(python_path, 'ansible_test')
+
+    # legacy collection loader required by all python versions not supported by the controller
+    write_text_file(os.path.join(ansible_test_path, '__init__.py'), '', True)
+    write_text_file(os.path.join(ansible_test_path, '_internal', '__init__.py'), '', True)
+    os.symlink(os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'legacy_collection_loader'), os.path.join(ansible_test_path, '_internal', 'legacy_collection_loader'))
+
+    return python_path
