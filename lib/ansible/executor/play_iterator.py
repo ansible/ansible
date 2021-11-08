@@ -590,17 +590,17 @@ class PlayIterator(metaclass=MetaPlayIterator):
     def add_tasks(self, host, task_list):
         self.set_state_for_host(host.name, self._insert_tasks_into_state(self.get_host_state(host), task_list))
 
-    def set_state_for_host(self, hostname, state):
+    def set_state_for_host(self, hostname: str, state: HostState) -> None:
         if not isinstance(state, HostState):
             raise AnsibleAssertionError('Expected state to be a HostState but was a %s' % type(state))
         self._host_states[hostname] = state
 
-    def set_run_state_for_host(self, hostname, run_state):
+    def set_run_state_for_host(self, hostname: str, run_state: IteratingStates) -> None:
         if not isinstance(run_state, IteratingStates):
             raise AnsibleAssertionError('Expected run_state to be a IteratingStates but was %s' % (type(run_state)))
         self._host_states[hostname].run_state = run_state
 
-    def set_fail_state_for_host(self, hostname, fail_state):
+    def set_fail_state_for_host(self, hostname: str, fail_state: FailedStates) -> None:
         if not isinstance(fail_state, FailedStates):
             raise AnsibleAssertionError('Expected fail_state to be a FailedStates but was %s' % (type(fail_state)))
         self._host_states[hostname].fail_state = fail_state
