@@ -11,7 +11,7 @@ mkdir "${agent_temp_directory}/coverage/"
 
 options=(--venv --venv-system-site-packages --color -v)
 
-ansible-test coverage combine --export "${agent_temp_directory}/coverage/" "${options[@]}"
+ansible-test coverage combine --group-by command --export "${agent_temp_directory}/coverage/" "${options[@]}"
 
 if ansible-test coverage analyze targets generate --help >/dev/null 2>&1; then
     # Only analyze coverage if the installed version of ansible-test supports it.
