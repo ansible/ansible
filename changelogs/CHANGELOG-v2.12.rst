@@ -5,51 +5,13 @@ ansible-core 2.12 "Dazed and Confused" Release Notes
 .. contents:: Topics
 
 
-v2.12.0rc1
-==========
+v2.12.0
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2021-10-18
-| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
-
-
-v2.12.0b2
-=========
-
-Release Summary
----------------
-
-| Release Date: 2021-10-11
-| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
-
-
-Minor Changes
--------------
-
-- ansible-test - Update the ``base`` and ``default`` containers from Python 3.10.0rc2 to 3.10.0.
-
-Security Fixes
---------------
-
-- Do not include params in exception when a call to ``set_options`` fails. Additionally, block the exception that is returned from being displayed to stdout. (CVE-2021-3620)
-
-Bugfixes
---------
-
-- ansible-test - Fix path to inventory file for ``windows-integration`` and ``network-integration`` commands for collections.
-- ansible-test - Update distribution test containers to version 3.1.0.
-- ansible-test - Use the correct variable to reference the client's SSH key when generating inventory.
-- ansible-test pslint - Fix error when encountering validation results that are highly nested - https://github.com/ansible/ansible/issues/74151
-
-v2.12.0b1
-=========
-
-Release Summary
----------------
-
-| Release Date: 2021-09-27
+| Release Date: 2021-11-05
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
@@ -179,6 +141,7 @@ Minor Changes
 - ansible-test - Update ``typed-ast`` constraint to version 1.4.3 for compatibility with Python 3.10.
 - ansible-test - Update distribution test containers from version 2.0.1 to 2.0.2.
 - ansible-test - Update the Ansible Core and Ansible Collection default test containers to 3.2.0 and 3.2.2 respectively.
+- ansible-test - Update the ``base`` and ``default`` containers from Python 3.10.0rc2 to 3.10.0.
 - ansible-test - Update the ``import`` sanity test to avoid a new warning in Python 3.10.
 - ansible-test - Update the ``runtime-metadata`` sanity test to handle a new warning on Python 3.10.
 - ansible-test - Updated the ``default`` containers to version 4.0.1.
@@ -293,6 +256,7 @@ Removed Features (previously deprecated)
 Security Fixes
 --------------
 
+- Do not include params in exception when a call to ``set_options`` fails. Additionally, block the exception that is returned from being displayed to stdout. (CVE-2021-3620)
 - templating engine fix for not preserving usnafe status when trying to preserve newlines. CVE-2021-3583
 
 Bugfixes
@@ -349,20 +313,24 @@ Bugfixes
 - ansible-test - Avoid publishing the port used by the ``pypi-test-container`` since it is only accessed by other containers. This avoids issues when trying to run tests in parallel on a single host.
 - ansible-test - Failure to download test results from a remote host no longer hide test failures. If a download failure occurs after tests fail, a warning will be issued instead.
 - ansible-test - Fix docker container IP address detection. The ``bridge`` network is no longer assumed to be the default.
+- ansible-test - Fix path to inventory file for ``windows-integration`` and ``network-integration`` commands for collections.
 - ansible-test - Fix traceback when generating coverage reports and no coverage directory exists.
 - ansible-test - Random port selection is no longer handled by ``ansible-test``, avoiding possible port conflicts. Previously ``ansible-test`` would, under some circumstances, use one host's available ports to determine those of another host.
 - ansible-test - Running tests in a single test run with multiple "cloud" plugins no longer results in port conflicts. Previously two or more containers with overlapping ports could not be used in the same test run.
 - ansible-test - Tab completion after options like ``--docker`` which accept an optional argument will no longer provide incorrect completions.
 - ansible-test - The ``--python`` and ``--venv`` options are no longer ignored by some commands, such as ``coverage``.
 - ansible-test - The ``docker inspect`` command is now used to check for existing images instead of the ``docker images`` command. This resolves an issue where a ``docker pull`` would be unnecessarily executed for an image referenced by checksum.
+- ansible-test - Update distribution test containers to version 3.1.0.
 - ansible-test - Use ``--strict`` for ``pytest`` on Python 2.6 since ``--strict-markers`` is not available.
 - ansible-test - Use documented API to retrieve build information from Azure Pipelines.
 - ansible-test - Use pwsh to generate correct coverage line counts for stub files to get a more accurate coverage result
+- ansible-test - Use the correct variable to reference the client's SSH key when generating inventory.
 - ansible-test - add packaging python module to ``ansible-doc`` sanity test requirements.
 - ansible-test - allow the same listening port on all container interfaces
 - ansible-test - ensure the correct unit test target is given when the ``__init__.py`` file is modified inside the connection plugins directory
 - ansible-test - make the ``a/`` and ``b/`` prefixes an optional match since these can be turned off with the ``diff.noprefix`` setting in ``git``
 - ansible-test - restrict ``packaging`` to ``< 21.0`` for Python ``< 3.6`` (https://github.com/ansible/ansible/pull/75186).
+- ansible-test pslint - Fix error when encountering validation results that are highly nested - https://github.com/ansible/ansible/issues/74151
 - ansible-test validate-modules - EXAMPLES will no longer be marked as invalid YAML when it uses Ansible-specific YAML tags (https://github.com/ansible/ansible/pull/74384).
 - ansible-test validate-modules - correctly validate positional parameters to ``AnsibleModules`` (https://github.com/ansible/ansible/pull/75332).
 - ansible.builtin.cron - Keep non-empty crontabs, when removing cron jobs (https://github.com/ansible/ansible/pull/74497).

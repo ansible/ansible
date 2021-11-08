@@ -1,5 +1,16 @@
 ancestor: 2.11.0
 releases:
+  2.12.0:
+    changes:
+      release_summary: '| Release Date: 2021-11-05
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Dazed and Confused
+    fragments:
+    - v2.12.0_summary.yaml
+    release_date: '2021-11-05'
   2.12.0b1:
     changes:
       breaking_changes:
