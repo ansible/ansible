@@ -1,3 +1,4 @@
+.azure-pipelines/scripts/publish-codecov.py replace-urlopen
 docs/docsite/rst/dev_guide/testing/sanity/no-smart-quotes.rst no-smart-quotes
 docs/docsite/rst/locales/ja/LC_MESSAGES/dev_guide.po no-smart-quotes  # Translation of the no-smart-quotes rule
 examples/scripts/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
