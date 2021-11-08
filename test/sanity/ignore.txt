@@ -1,3 +1,9 @@
+.azure-pipelines/scripts/publish-codecov.py replace-urlopen
+.azure-pipelines/scripts/publish-codecov.py compile-2.6!skip # Uses Python 3.6+ syntax
+.azure-pipelines/scripts/publish-codecov.py compile-2.7!skip # Uses Python 3.6+ syntax
+.azure-pipelines/scripts/publish-codecov.py compile-3.5!skip # Uses Python 3.6+ syntax
+.azure-pipelines/scripts/publish-codecov.py future-import-boilerplate
+.azure-pipelines/scripts/publish-codecov.py metaclass-boilerplate
 docs/docsite/rst/dev_guide/testing/sanity/no-smart-quotes.rst no-smart-quotes
 docs/docsite/rst/locales/ja/LC_MESSAGES/dev_guide.po no-smart-quotes  # Translation of the no-smart-quotes rule
 docs/docsite/rst/user_guide/playbooks_filters.rst docs-build

@@ -33,7 +33,7 @@ jobs:
           summaryFileLocation: "$(outputPath)/reports/$(pipelinesCoverage).xml"
         displayName: Publish to Azure Pipelines
         condition: gt(variables.coverageFileCount, 0)
-      - bash: .azure-pipelines/scripts/publish-codecov.sh "$(outputPath)"
+      - bash: .azure-pipelines/scripts/publish-codecov.py "$(outputPath)"
         displayName: Publish to codecov.io
         condition: gt(variables.coverageFileCount, 0)
         continueOnError: true
