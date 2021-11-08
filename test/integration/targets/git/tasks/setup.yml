@@ -1,11 +1,11 @@
-- name: SETUP | clean out the output_dir
+- name: SETUP | clean out the remote_tmp_dir
   file:
-    path: "{{ output_dir }}"
+    path: "{{ remote_tmp_dir }}"
     state: absent
 
-- name: SETUP | create clean output_dir
+- name: SETUP | create clean remote_tmp_dir
   file:
-    path: "{{ output_dir }}"
+    path: "{{ remote_tmp_dir }}"
     state: directory
 
 - name: SETUP | install git
