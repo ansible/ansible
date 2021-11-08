@@ -45,9 +45,10 @@ except ImportError:
 
 try:
     from importlib.util import spec_from_loader
-    PY3_SPEC_LOADER = True
 except ImportError:
     PY3_SPEC_LOADER = False
+else:
+    PY3_SPEC_LOADER = True
 
 # NB: this supports import sanity test providing a different impl
 try:
@@ -192,43 +193,10 @@ class _AnsibleCollectionFinder:
 
     def find_module(self, fullname, path=None):
         # Figure out what's being asked for, and delegate to a special-purpose loader
-
-        split_name = fullname.split('.')
-        toplevel_pkg = split_name[0]
-        module_to_find = split_name[-1]
-        part_count = len(split_name)
-
-        if toplevel_pkg not in ['ansible', 'ansible_collections']:
-            # not interested in anything other than ansible_collections (and limited cases under ansible)
-            return None
-
-        # sanity check what we're getting from import, canonicalize path values
-        if part_count == 1:
-            if path:
-                raise ValueError('path should not be specified for top-level packages (trying to find {0})'.format(fullname))
-            else:
-                # seed the path to the configured collection roots
-                path = self._n_collection_paths
-
-        if part_count > 1 and path is None:
-            raise ValueError('path must be specified for subpackages (trying to find {0})'.format(fullname))
-
-        # NB: actual "find"ing is delegated to the constructors on the various loaders; they'll ImportError if not found
-        try:
-            if toplevel_pkg == 'ansible':
-                # something under the ansible package, delegate to our internal loader in case of redirections
-                return _AnsibleInternalRedirectLoader(fullname=fullname, path_list=path)
-            if part_count == 1:
-                return _AnsibleCollectionRootPkgLoader(fullname=fullname, path_list=path)
-            if part_count == 2:  # ns pkg eg, ansible_collections, ansible_collections.somens
-                return _AnsibleCollectionNSPkgLoader(fullname=fullname, path_list=path)
-            elif part_count == 3:  # collection pkg eg, ansible_collections.somens.somecoll
-                return _AnsibleCollectionPkgLoader(fullname=fullname, path_list=path)
-            # anything below the collection
-            return _AnsibleCollectionLoader(fullname=fullname, path_list=path)
-        except ImportError:
-            # TODO: log attempt to load context
-            return None
+        spec = self.find_spec(fullname, path=path)
+        if spec:
+            return spec.loader
+        return None
 
     def find_spec(self, fullname, path, target=None):
         # Figure out what's being asked for, and delegate to a special-purpose loader
@@ -271,7 +239,8 @@ class _AnsibleCollectionFinder:
             # TODO: log attempt to load context
             return None
 
-        spec = spec_from_loader(fullname, loader, origin=loader.get_filename(fullname))
+        # no need to pass origin here because loader has defined get_filename
+        spec = spec_from_loader(fullname, loader)
         if hasattr(loader, '_subpackage_search_paths'):
             spec.submodule_search_locations = loader._subpackage_search_paths
         return spec
@@ -308,34 +277,13 @@ class _AnsiblePathHookFinder:
         split_name = fullname.split('.')
         toplevel_pkg = split_name[0]
 
-        if toplevel_pkg == 'ansible_collections':
-            # collections content? delegate to the collection finder
-            return self._collection_finder.find_module(fullname, path=[self._pathctx])
+        # call py2's internal loader
+        if toplevel_pkg != 'ansible_collections' and not PY3:
+            return pkgutil.ImpImporter(self._pathctx).find_module(fullname)
         else:
-            # Something else; we'd normally restrict this to `ansible` descendent modules so that any weird loader
-            # behavior that arbitrary Python modules have can be serviced by those loaders. In some dev/test
-            # scenarios (eg a venv under a collection) our path_hook signs us up to load non-Ansible things, and
-            # it's too late by the time we've reached this point, but also too expensive for the path_hook to figure
-            # out what we *shouldn't* be loading with the limited info it has. So we'll just delegate to the
-            # normal path-based loader as best we can to service it. This also allows us to take advantage of Python's
-            # built-in FS caching and byte-compilation for most things.
-            if PY3:
-                # create or consult our cached file finder for this path
-                if not self._file_finder:
-                    try:
-                        self._file_finder = _AnsiblePathHookFinder._filefinder_path_hook(self._pathctx)
-                    except ImportError:
-                        # FUTURE: log at a high logging level? This is normal for things like python36.zip on the path, but
-                        # might not be in some other situation...
-                        return None
-
-                spec = self._file_finder.find_spec(fullname)
-                if not spec:
-                    return None
+            spec = self.find_spec(fullname)
+            if spec:
                 return spec.loader
-            else:
-                # call py2's internal loader
-                return pkgutil.ImpImporter(self._pathctx).find_module(fullname)
 
     def find_spec(self, fullname, target=None):
         split_name = fullname.split('.')
@@ -465,19 +413,7 @@ class _AnsibleCollectionPkgLoaderBase:
     def create_module(self, spec):
         # short-circuit redirect; we've already imported the redirected module, so just alias it and return it
         if self._redirect_module:
-            sys.modules[self._fullname] = self._redirect_module
             return self._redirect_module
-
-        module = ModuleType(spec.name)
-        module.__loader__ = spec.loader
-        module.__package__ = spec.parent
-        if spec.has_location:
-            module.__file__ = spec.origin
-        if spec.submodule_search_locations is not None:
-            module.__path__ = spec.submodule_search_locations
-
-        sys.modules[spec.name] = module
-        return module
 
     def load_module(self, fullname):
         # short-circuit redirect; we've already imported the redirected module, so just alias it and return it
@@ -633,13 +569,11 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
             # only search within the first collection we found
             self._subpackage_search_paths = [self._subpackage_search_paths[0]]
 
-    def create_module(self, spec):
-        fullname = spec.name
-
+    def exec_module(self, module):
         if not _meta_yml_to_dict:
             raise ValueError('ansible.utils.collection_loader._meta_yml_to_dict is not set')
 
-        module = super(_AnsibleCollectionPkgLoader, self).create_module(spec)
+        super(_AnsibleCollectionPkgLoader, self).exec_module(module)
 
         module._collection_meta = {}
         # TODO: load collection metadata, cache in __loader__ state
@@ -668,8 +602,8 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
 
         AnsibleCollectionConfig.on_collection_load.fire(collection_name=collection_name, collection_path=os.path.dirname(module.__file__))
 
-        sys.modules[fullname] = module
-        return module
+    def create_module(self, spec):
+        return None
 
     def load_module(self, fullname):
         if not _meta_yml_to_dict:
@@ -817,26 +751,18 @@ class _AnsibleInternalRedirectLoader:
             raise ImportError('not redirected, go ask path_hook')
 
     def get_filename(self, fullname):
-        return None
+        return '<ansible_synthetic_redirection>'
 
     def exec_module(self, module):
-        # FIXME: smuggle redirection context, provide warning/error that we tried and failed to redirect
-        sys.modules[module.__name__] = import_module(self._redirect)
-
-    def create_module(self, spec):
         # should never see this
         if not self._redirect:
-            raise ValueError('no redirect found for {0}'.format(spec.name))
+            raise ValueError('no redirect found for {0}'.format(module.__spec__.name))
 
-        module = ModuleType(spec.name)
-        module.__loader__ = spec.loader
-        module.__package__ = spec.parent
-        if spec.has_location:
-            module.__file__ = spec.origin
-        if spec.submodule_search_locations is not None:
-            module.__path__ = spec.submodule_search_locations
-        sys.modules[spec.name] = module
-        return module
+        # Replace the module with the redirect
+        sys.modules[module.__spec__.name] = import_module(self._redirect)
+
+    def create_module(self, spec):
+        return None
 
     def load_module(self, fullname):
         # since we're delegating to other loaders, this should only be called for internal redirects where we answered
