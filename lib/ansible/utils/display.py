@@ -43,7 +43,7 @@ from ansible.utils.unsafe_proxy import wrap_var
 
 
 # wrap becomes noop if not using tty
-if if C.NOTTY_WRAP or sys.__stdin__.isatty():
+if C.NOTTY_WRAP or sys.__stdin__.isatty():
     from textwrap import wrap
 else:
     def wrap(text, width, **kwargs):
