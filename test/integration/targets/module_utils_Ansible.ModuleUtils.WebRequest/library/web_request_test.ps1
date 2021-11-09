@@ -13,45 +13,48 @@ $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
 
 $httpbin_host = $module.Params.httpbin_host
 
-Function Assert-Equals {
+Function Assert-Equal {
     param(
-        [Parameter(Mandatory=$true, ValueFromPipeline=$true)][AllowNull()]$Actual,
-        [Parameter(Mandatory=$true, Position=0)][AllowNull()]$Expected
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)][AllowNull()]$Actual,
+        [Parameter(Mandatory = $true, Position = 0)][AllowNull()]$Expected
     )
 
-    $matched = $false
-    if ($Actual -is [System.Collections.ArrayList] -or $Actual -is [Array] -or $Actual -is [System.Collections.IList]) {
-        $Actual.Count | Assert-Equals -Expected $Expected.Count
-        for ($i = 0; $i -lt $Actual.Count; $i++) {
-            $actualValue = $Actual[$i]
-            $expectedValue = $Expected[$i]
-            Assert-Equals -Actual $actualValue -Expected $expectedValue
+    process {
+        $matched = $false
+        if ($Actual -is [System.Collections.ArrayList] -or $Actual -is [Array] -or $Actual -is [System.Collections.IList]) {
+            $Actual.Count | Assert-Equal -Expected $Expected.Count
+            for ($i = 0; $i -lt $Actual.Count; $i++) {
+                $actualValue = $Actual[$i]
+                $expectedValue = $Expected[$i]
+                Assert-Equal -Actual $actualValue -Expected $expectedValue
+            }
+            $matched = $true
         }
-        $matched = $true
-    } else {
-        $matched = $Actual -ceq $Expected
-    }
-
-    if (-not $matched) {
-        if ($Actual -is [PSObject]) {
-            $Actual = $Actual.ToString()
+        else {
+            $matched = $Actual -ceq $Expected
         }
 
-        $call_stack = (Get-PSCallStack)[1]
-        $module.Result.test = $test
-        $module.Result.actual = $Actual
-        $module.Result.expected = $Expected
-        $module.Result.line = $call_stack.ScriptLineNumber
-        $module.Result.method = $call_stack.Position.Text
+        if (-not $matched) {
+            if ($Actual -is [PSObject]) {
+                $Actual = $Actual.ToString()
+            }
 
-        $module.FailJson("AssertionError: actual != expected")
+            $call_stack = (Get-PSCallStack)[1]
+            $module.Result.test = $test
+            $module.Result.actual = $Actual
+            $module.Result.expected = $Expected
+            $module.Result.line = $call_stack.ScriptLineNumber
+            $module.Result.method = $call_stack.Position.Text
+
+            $module.FailJson("AssertionError: actual != expected")
+        }
     }
 }
 
 Function Convert-StreamToString {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [System.IO.Stream]
         $Stream
     )
@@ -60,7 +63,8 @@ Function Convert-StreamToString {
     try {
         $Stream.CopyTo($ms)
         [System.Text.Encoding]::UTF8.GetString($ms.ToArray())
-    } finally {
+    }
+    finally {
         $ms.Dispose()
     }
 }
@@ -69,50 +73,50 @@ $tests = [Ordered]@{
     'GET request over http' = {
         $r = Get-AnsibleWebRequest -Uri "http://$httpbin_host/get"
 
-        $r.Method | Assert-Equals -Expected 'GET'
-        $r.Timeout | Assert-Equals -Expected 30000
-        $r.UseDefaultCredentials | Assert-Equals -Expected $false
-        $r.Credentials | Assert-Equals -Expected $null
-        $r.ClientCertificates.Count | Assert-Equals -Expected 0
-        $r.Proxy.Credentials | Assert-Equals -Expected $null
-        $r.UserAgent | Assert-Equals -Expected 'ansible-httpget'
+        $r.Method | Assert-Equal -Expected 'GET'
+        $r.Timeout | Assert-Equal -Expected 30000
+        $r.UseDefaultCredentials | Assert-Equal -Expected $false
+        $r.Credentials | Assert-Equal -Expected $null
+        $r.ClientCertificates.Count | Assert-Equal -Expected 0
+        $r.Proxy.Credentials | Assert-Equal -Expected $null
+        $r.UserAgent | Assert-Equal -Expected 'ansible-httpget'
 
         $actual = Invoke-WithWebRequest -Module $module -Request $r -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.StatusCode | Assert-Equals -Expected 200
+            $Response.StatusCode | Assert-Equal -Expected 200
             Convert-StreamToString -Stream $Stream
         } | ConvertFrom-Json
 
-        $actual.headers.'User-Agent' | Assert-Equals -Expected 'ansible-httpget'
-        $actual.headers.'Host' | Assert-Equals -Expected $httpbin_host
+        $actual.headers.'User-Agent' | Assert-Equal -Expected 'ansible-httpget'
+        $actual.headers.'Host' | Assert-Equal -Expected $httpbin_host
 
-        $module.Result.msg | Assert-Equals -Expected 'OK'
-        $module.Result.status_code | Assert-Equals -Expected 200
-        $module.Result.ContainsKey('elapsed') | Assert-Equals -Expected $true
+        $module.Result.msg | Assert-Equal -Expected 'OK'
+        $module.Result.status_code | Assert-Equal -Expected 200
+        $module.Result.ContainsKey('elapsed') | Assert-Equal -Expected $true
     }
 
     'GET request over https' = {
         # url is an alias for the -Uri parameter.
         $r = Get-AnsibleWebRequest -url "https://$httpbin_host/get"
 
-        $r.Method | Assert-Equals -Expected 'GET'
-        $r.Timeout | Assert-Equals -Expected 30000
-        $r.UseDefaultCredentials | Assert-Equals -Expected $false
-        $r.Credentials | Assert-Equals -Expected $null
-        $r.ClientCertificates.Count | Assert-Equals -Expected 0
-        $r.Proxy.Credentials | Assert-Equals -Expected $null
-        $r.UserAgent | Assert-Equals -Expected 'ansible-httpget'
+        $r.Method | Assert-Equal -Expected 'GET'
+        $r.Timeout | Assert-Equal -Expected 30000
+        $r.UseDefaultCredentials | Assert-Equal -Expected $false
+        $r.Credentials | Assert-Equal -Expected $null
+        $r.ClientCertificates.Count | Assert-Equal -Expected 0
+        $r.Proxy.Credentials | Assert-Equal -Expected $null
+        $r.UserAgent | Assert-Equal -Expected 'ansible-httpget'
 
         $actual = Invoke-WithWebRequest -Module $module -Request $r -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.StatusCode | Assert-Equals -Expected 200
+            $Response.StatusCode | Assert-Equal -Expected 200
             Convert-StreamToString -Stream $Stream
         } | ConvertFrom-Json
 
-        $actual.headers.'User-Agent' | Assert-Equals -Expected 'ansible-httpget'
-        $actual.headers.'Host' | Assert-Equals -Expected $httpbin_host
+        $actual.headers.'User-Agent' | Assert-Equal -Expected 'ansible-httpget'
+        $actual.headers.'Host' | Assert-Equal -Expected $httpbin_host
     }
 
     'POST request' = {
@@ -125,14 +129,14 @@ $tests = [Ordered]@{
         }
         $r = Get-AnsibleWebRequest @getParams
 
-        $r.Method | Assert-Equals -Expected 'POST'
-        $r.Timeout | Assert-Equals -Expected 30000
-        $r.UseDefaultCredentials | Assert-Equals -Expected $false
-        $r.Credentials | Assert-Equals -Expected $null
-        $r.ClientCertificates.Count | Assert-Equals -Expected 0
-        $r.Proxy.Credentials | Assert-Equals -Expected $null
-        $r.ContentType | Assert-Equals -Expected 'application/json'
-        $r.UserAgent | Assert-Equals -Expected 'ansible-httpget'
+        $r.Method | Assert-Equal -Expected 'POST'
+        $r.Timeout | Assert-Equal -Expected 30000
+        $r.UseDefaultCredentials | Assert-Equal -Expected $false
+        $r.Credentials | Assert-Equal -Expected $null
+        $r.ClientCertificates.Count | Assert-Equal -Expected 0
+        $r.Proxy.Credentials | Assert-Equal -Expected $null
+        $r.ContentType | Assert-Equal -Expected 'application/json'
+        $r.UserAgent | Assert-Equal -Expected 'ansible-httpget'
 
         $body = New-Object -TypeName System.IO.MemoryStream -ArgumentList @(,
             ([System.Text.Encoding]::UTF8.GetBytes('{"foo":"bar"}'))
@@ -140,13 +144,13 @@ $tests = [Ordered]@{
         $actual = Invoke-WithWebRequest -Module $module -Request $r -Body $body -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.StatusCode | Assert-Equals -Expected 200
+            $Response.StatusCode | Assert-Equal -Expected 200
             Convert-StreamToString -Stream $Stream
         } | ConvertFrom-Json
 
-        $actual.headers.'User-Agent' | Assert-Equals -Expected 'ansible-httpget'
-        $actual.headers.'Host' | Assert-Equals -Expected $httpbin_host
-        $actual.data | Assert-Equals -Expected '{"foo":"bar"}'
+        $actual.headers.'User-Agent' | Assert-Equal -Expected 'ansible-httpget'
+        $actual.headers.'Host' | Assert-Equal -Expected $httpbin_host
+        $actual.data | Assert-Equal -Expected '{"foo":"bar"}'
     }
 
     'Safe redirection of GET' = {
@@ -155,8 +159,8 @@ $tests = [Ordered]@{
         Invoke-WithWebRequest -Module $module -Request $r -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.ResponseUri | Assert-Equals -Expected "http://$httpbin_host/get"
-            $Response.StatusCode | Assert-Equals -Expected 200
+            $Response.ResponseUri | Assert-Equal -Expected "http://$httpbin_host/get"
+            $Response.StatusCode | Assert-Equal -Expected 200
         }
     }
 
@@ -166,8 +170,8 @@ $tests = [Ordered]@{
         Invoke-WithWebRequest -Module $module -Request $r -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.ResponseUri | Assert-Equals -Expected "http://$httpbin_host/get"
-            $Response.StatusCode | Assert-Equals -Expected 200
+            $Response.ResponseUri | Assert-Equal -Expected "http://$httpbin_host/get"
+            $Response.StatusCode | Assert-Equal -Expected 200
         }
     }
 
@@ -181,8 +185,8 @@ $tests = [Ordered]@{
         Invoke-WithWebRequest -Module $module -Request $r -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.ResponseUri | Assert-Equals -Expected $r.RequestUri
-            $Response.StatusCode | Assert-Equals -Expected 302
+            $Response.ResponseUri | Assert-Equal -Expected $r.RequestUri
+            $Response.StatusCode | Assert-Equal -Expected 302
         }
     }
 
@@ -196,8 +200,8 @@ $tests = [Ordered]@{
         Invoke-WithWebRequest -Module $module -Request $r -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.ResponseUri | Assert-Equals -Expected $r.RequestUri
-            $Response.StatusCode | Assert-Equals -Expected 302
+            $Response.ResponseUri | Assert-Equal -Expected $r.RequestUri
+            $Response.StatusCode | Assert-Equal -Expected 302
         }
     }
 
@@ -212,8 +216,8 @@ $tests = [Ordered]@{
         Invoke-WithWebRequest -Module $module -Request $r -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.ResponseUri | Assert-Equals -Expected $r.RequestUri
-            $Response.StatusCode | Assert-Equals -Expected 302
+            $Response.ResponseUri | Assert-Equal -Expected $r.RequestUri
+            $Response.StatusCode | Assert-Equal -Expected 302
         }
     }
 
@@ -228,8 +232,8 @@ $tests = [Ordered]@{
         Invoke-WithWebRequest -Module $module -Request $r -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.ResponseUri | Assert-Equals -Expected $r.RequestUri
-            $Response.StatusCode | Assert-Equals -Expected 302
+            $Response.ResponseUri | Assert-Equal -Expected $r.RequestUri
+            $Response.StatusCode | Assert-Equal -Expected 302
         }
     }
 
@@ -243,8 +247,8 @@ $tests = [Ordered]@{
         Invoke-WithWebRequest -Module $module -Request $r -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.ResponseUri | Assert-Equals -Expected "http://$httpbin_host/get"
-            $Response.StatusCode | Assert-Equals -Expected 200
+            $Response.ResponseUri | Assert-Equal -Expected "http://$httpbin_host/get"
+            $Response.StatusCode | Assert-Equal -Expected 200
         }
     }
 
@@ -259,8 +263,8 @@ $tests = [Ordered]@{
         Invoke-WithWebRequest -Module $module -Request $r -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.ResponseUri | Assert-Equals -Expected "http://$httpbin_host/get"
-            $Response.StatusCode | Assert-Equals -Expected 200
+            $Response.ResponseUri | Assert-Equal -Expected "http://$httpbin_host/get"
+            $Response.StatusCode | Assert-Equal -Expected 200
         }
     }
 
@@ -275,8 +279,8 @@ $tests = [Ordered]@{
         Invoke-WithWebRequest -Module $module -Request $r -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.ResponseUri | Assert-Equals -Expected "https://$httpbin_host/put"
-            $Response.StatusCode | Assert-Equals -Expected 200
+            $Response.ResponseUri | Assert-Equal -Expected "https://$httpbin_host/put"
+            $Response.StatusCode | Assert-Equal -Expected 200
         }
     }
 
@@ -290,8 +294,8 @@ $tests = [Ordered]@{
         Invoke-WithWebRequest -Module $module -Request $r -IgnoreBadResponse -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.ResponseUri | Assert-Equals -Expected "https://$httpbin_host/relative-redirect/1"
-            $Response.StatusCode | Assert-Equals -Expected 302
+            $Response.ResponseUri | Assert-Equal -Expected "https://$httpbin_host/relative-redirect/1"
+            $Response.StatusCode | Assert-Equal -Expected 302
         }
     }
 
@@ -305,12 +309,13 @@ $tests = [Ordered]@{
         $failed = $false
         try {
             $null = Invoke-WithWebRequest -Module $module -Request $r -Script {}
-        } catch {
-            $_.Exception.GetType().Name | Assert-Equals -Expected 'WebException'
-            $_.Exception.Message | Assert-Equals -Expected 'Too many automatic redirections were attempted.'
+        }
+        catch {
+            $_.Exception.GetType().Name | Assert-Equal -Expected 'WebException'
+            $_.Exception.Message | Assert-Equal -Expected 'Too many automatic redirections were attempted.'
             $failed = $true
         }
-        $failed | Assert-Equals -Expected $true
+        $failed | Assert-Equal -Expected $true
     }
 
     'Basic auth as Credential' = {
@@ -324,7 +329,7 @@ $tests = [Ordered]@{
         Invoke-WithWebRequest -Module $module -Request $r -IgnoreBadResponse -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.StatusCode | Assert-Equals -Expected 200
+            $Response.StatusCode | Assert-Equal -Expected 200
         }
     }
 
@@ -340,7 +345,7 @@ $tests = [Ordered]@{
         Invoke-WithWebRequest -Module $module -Request $r -IgnoreBadResponse -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.StatusCode | Assert-Equals -Expected 200
+            $Response.StatusCode | Assert-Equal -Expected 200
         }
     }
 
@@ -359,13 +364,13 @@ $tests = [Ordered]@{
         $actual = Invoke-WithWebRequest -Module $module -Request $r -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.StatusCode | Assert-Equals -Expected 200
+            $Response.StatusCode | Assert-Equal -Expected 200
             Convert-StreamToString -Stream $Stream
         } | ConvertFrom-Json
 
-        $actual.headers.'Testheader' | Assert-Equals -Expected 'test-header'
-        $actual.headers.'testingheader' | Assert-Equals -Expected 'testing_header'
-        $actual.Headers.'User-Agent' | Assert-Equals -Expected 'test-agent'
+        $actual.headers.'Testheader' | Assert-Equal -Expected 'test-header'
+        $actual.headers.'testingheader' | Assert-Equal -Expected 'testing_header'
+        $actual.Headers.'User-Agent' | Assert-Equal -Expected 'test-agent'
     }
 
     'Request with timeout' = {
@@ -378,12 +383,13 @@ $tests = [Ordered]@{
         $failed = $false
         try {
             $null = Invoke-WithWebRequest -Module $module -Request $r -Script {}
-        } catch {
-            $failed = $true
-            $_.Exception.GetType().Name | Assert-Equals -Expected WebException
-            $_.Exception.Message | Assert-Equals -Expected 'The operation has timed out'
         }
-        $failed | Assert-Equals -Expected $true
+        catch {
+            $failed = $true
+            $_.Exception.GetType().Name | Assert-Equal -Expected WebException
+            $_.Exception.Message | Assert-Equal -Expected 'The operation has timed out'
+        }
+        $failed | Assert-Equal -Expected $true
     }
 
     'Request with file URI' = {
@@ -395,12 +401,12 @@ $tests = [Ordered]@{
         $actual = Invoke-WithWebRequest -Module $module -Request $r -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.ContentLength | Assert-Equals -Expected 6
+            $Response.ContentLength | Assert-Equal -Expected 6
             Convert-StreamToString -Stream $Stream
         }
-        $actual | Assert-Equals -Expected "test`r`n"
-        $module.Result.msg | Assert-Equals -Expected "OK"
-        $module.Result.status_code | Assert-Equals -Expected 200
+        $actual | Assert-Equal -Expected "test`r`n"
+        $module.Result.msg | Assert-Equal -Expected "OK"
+        $module.Result.status_code | Assert-Equal -Expected 200
     }
 
     'Web request based on module options' = {
@@ -419,9 +425,9 @@ $tests = [Ordered]@{
         $spec = @{
             options = @{
                 url = @{ type = 'str'; required = $true }
-                test = @{ type = 'str'; choices = 'abc', 'def'}
+                test = @{ type = 'str'; choices = 'abc', 'def' }
             }
-            mutually_exclusive = @(,@('url', 'test'))
+            mutually_exclusive = @(, @('url', 'test'))
         }
 
         $testModule = [Ansible.Basic.AnsibleModule]::Create(@(), $spec, @(Get-AnsibleWebRequestSpec))
@@ -430,10 +436,10 @@ $tests = [Ordered]@{
         $actual = Invoke-WithWebRequest -Module $testModule -Request $r -Script {
             Param ([System.Net.WebResponse]$Response, [System.IO.Stream]$Stream)
 
-            $Response.ResponseUri | Assert-Equals -Expected "https://$httpbin_host/get"
+            $Response.ResponseUri | Assert-Equal -Expected "https://$httpbin_host/get"
             Convert-StreamToString -Stream $Stream
         } | ConvertFrom-Json
-        $actual.headers.'User-Agent' | Assert-Equals -Expected 'actual-agent'
+        $actual.headers.'User-Agent' | Assert-Equal -Expected 'actual-agent'
     }
 
     'Web request with default proxy' = {
@@ -442,7 +448,7 @@ $tests = [Ordered]@{
         }
         $r = Get-AnsibleWebRequest @params
 
-        $null -ne $r.Proxy | Assert-Equals -Expected $true
+        $null -ne $r.Proxy | Assert-Equal -Expected $true
     }
 
     'Web request with no proxy' = {
@@ -452,7 +458,7 @@ $tests = [Ordered]@{
         }
         $r = Get-AnsibleWebRequest @params
 
-        $null -eq $r.Proxy | Assert-Equals -Expected $true
+        $null -eq $r.Proxy | Assert-Equal -Expected $true
     }
 }
 

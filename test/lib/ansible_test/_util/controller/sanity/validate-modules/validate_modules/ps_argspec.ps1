@@ -14,7 +14,7 @@ Function Resolve-CircularReference {
     #>
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [System.Collections.IDictionary]
         $Hash
     )
@@ -23,22 +23,26 @@ Function Resolve-CircularReference {
         $value = $Hash[$key]
         if ($value -is [System.Collections.IDictionary]) {
             Resolve-CircularReference -Hash $value
-        } elseif ($value -is [Array] -or $value -is [System.Collections.IList]) {
+        }
+        elseif ($value -is [Array] -or $value -is [System.Collections.IList]) {
             $values = @(foreach ($v in $value) {
-                if ($v -is [System.Collections.IDictionary]) {
-                    Resolve-CircularReference -Hash $v
-                }
-                ,$v
-            })
+                    if ($v -is [System.Collections.IDictionary]) {
+                        Resolve-CircularReference -Hash $v
+                    }
+                    , $v
+                })
             $Hash[$key] = $values
-        } elseif ($value -is [DateTime]) {
+        }
+        elseif ($value -is [DateTime]) {
             $Hash[$key] = $value.ToString("yyyy-MM-dd")
-        } elseif ($value -is [delegate]) {
+        }
+        elseif ($value -is [delegate]) {
             # Type can be set to a delegate function which defines it's own type. For the documentation we just
             # reflection that as raw
             if ($key -eq 'type') {
                 $Hash[$key] = 'raw'
-            } else {
+            }
+            else {
                 $Hash[$key] = $value.ToString()  # Shouldn't ever happen but just in case.
             }
         }
@@ -81,9 +85,9 @@ if ($manifest.Contains('ps_utils')) {
 
         $util_sb = [ScriptBlock]::Create((Get-Content -LiteralPath $util_path -Raw))
         $powershell.AddCommand('New-Module').AddParameters(@{
-            Name = $util_name
-            ScriptBlock = $util_sb
-        }) > $null
+                Name = $util_name
+                ScriptBlock = $util_sb
+            }) > $null
         $powershell.AddCommand('Import-Module').AddParameter('WarningAction', 'SilentlyContinue') > $null
         $powershell.AddCommand('Out-Null').AddStatement() > $null
 

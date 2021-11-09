@@ -8,7 +8,7 @@ A list of hosts entries, delimited by '|'.
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true, Position=0)][String]$Hosts
+    [Parameter(Mandatory = $true, Position = 0)][String]$Hosts
 )
 
 $ProgressPreference = "SilentlyContinue"

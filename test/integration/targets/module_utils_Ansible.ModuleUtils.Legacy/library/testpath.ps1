@@ -6,4 +6,4 @@ $params = Parse-Args $args
 
 $path = Get-AnsibleParam -Obj $params -Name path -Type path
 
-Exit-Json @{ path=$path }
+Exit-Json @{ path = $path }
