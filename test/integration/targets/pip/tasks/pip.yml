@@ -573,27 +573,24 @@
 # https://github.com/ansible/ansible/issues/68592
 # Handle pre-release version numbers in check_mode for already-installed
 # packages.
-# TODO: Limiting to py3 test boxes for now so the example of 'black' installs,
-# we should probably find another package to use with a similar versioning
-# scheme or make a small one and enable this test for py2 as well.
 - block:
-  - name: Install a beta version of a package
+  - name: Install a pre-release version of a package
     pip:
-      name: black
-      version: 19.10b0
+      name: fallible
+      version: 0.0.1a2
       state: present
 
   - name: Use check_mode and ensure that the package is shown as installed
     check_mode: true
     pip:
-      name: black
+      name: fallible
       state: present
     register: pip_prereleases
 
-  - name: Uninstall the beta package if we need to
+  - name: Uninstall the pre-release package if we need to
     pip:
-      name: black
-      version: 19.10b0
+      name: fallible
+      version: 0.0.1a2
       state: absent
     when: pip_prereleases is changed
 
@@ -601,6 +598,4 @@
       that:
         - pip_prereleases is successful
         - pip_prereleases is not changed
-        - '"black==19.10b0" in pip_prereleases.stdout_lines'
-
-  when: ansible_python.version.major == 3
+        - '"fallible==0.0.1a2" in pip_prereleases.stdout_lines'
