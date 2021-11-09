@@ -22,7 +22,7 @@ You can specify four keys for each collection entry:
 
 The ``version`` key uses the same range identifier format documented in :ref:`collections_older_version`. 
 
-The ``type`` key can be set to ``galaxy``, ``url``, ``file``, and ``git``. If ``type`` is omitted, the ``name`` key is used to implicitly determine the source of the collection.
+The ``type`` key can be set to ``file``, ``galaxy``, ``git``, ``url``, ``dir``, or ``subdirs``. If ``type`` is omitted, the ``name`` key is used to implicitly determine the source of the collection.
 
 When you install a collection with ``type: git``, the ``version`` key can refer to a branch or to a `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ object (commit or tag). For example:
 
