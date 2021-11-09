@@ -37,11 +37,6 @@ Installing an older version of a collection
 
 .. include:: ../shared_snippets/installing_older_collection.txt
 
-Installing a collection from a git repository
----------------------------------------------
-
-.. include:: ../shared_snippets/installing_collections_git_repo.txt
-
 .. _collection_requirements_file:
 
 Install multiple collections with a requirements file
@@ -56,6 +51,15 @@ Downloading a collection for offline use
 
 .. include:: ../shared_snippets/download_tarball_collections.txt
 
+Installing a collection from source files
+-----------------------------------------
+
+.. include:: ../shared_snippets/installing_collections_file.rst
+
+Installing a collection from a git repository
+---------------------------------------------
+
+.. include:: ../shared_snippets/installing_collections_git_repo.txt
 
 .. _galaxy_server_config:
 
