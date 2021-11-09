@@ -416,8 +416,10 @@ class Display(metaclass=Singleton):
             istty = stderr and sys.__stderr__.isatty() or not stderr and sys.__stdout__.isatty()
 
             if wrap_text or istty:
-                wrapped = wrap(message_text, self.columns, drop_whitespace=False)
+                wrapped = wrap(msg, self.columns, drop_whitespace=False)
                 msg2 = "\n".join(wrapped) + "\n"
+            else:
+                msg2 = msg
 
             has_newline = msg.endswith(u'\n')
             if has_newline:
