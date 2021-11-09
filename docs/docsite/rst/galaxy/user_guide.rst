@@ -83,6 +83,11 @@ Downloading a collection for offline use
 
 .. include:: ../shared_snippets/download_tarball_collections.txt
 
+Installing a collection from source files
+-----------------------------------------
+
+.. include:: ../shared_snippets/installing_collections_file.rst
+
 Installing a collection from a git repository
 ---------------------------------------------
 
