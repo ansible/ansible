@@ -191,7 +191,6 @@ class _AnsibleCollectionFinder:
         spec = self.find_spec(fullname, path=path)
         if spec:
             return spec.loader
-        return None
 
     def find_spec(self, fullname, path, target=None):
         # Figure out what's being asked for, and delegate to a special-purpose loader
@@ -277,10 +276,10 @@ class _AnsiblePathHookFinder:
         # call py2's internal loader
         if toplevel_pkg != 'ansible_collections' and not PY3:
             return pkgutil.ImpImporter(self._pathctx).find_module(fullname)
-        else:
-            spec = self.find_spec(fullname)
-            if spec:
-                return spec.loader
+
+        spec = self.find_spec(fullname)
+        if spec:
+            return spec.loader
 
     def find_spec(self, fullname, target=None):
         split_name = fullname.split('.')
