@@ -118,7 +118,6 @@ def doc_string(v):
     if not isinstance(v, string_types):
         raise _add_ansible_error_code(
             Invalid('Must be a string'), 'invalid-docs')
-        return doc_string(v)
     for m in _MODULE.finditer(v):
         _check_module_link(m.group(0), m.group(1))
     for m in _LINK.finditer(v):
