@@ -32,6 +32,7 @@ import time
 
 from struct import unpack, pack
 from termios import TIOCGWINSZ
+from textwrap import wrap
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
@@ -41,13 +42,6 @@ from ansible.utils.color import stringc
 from ansible.utils.singleton import Singleton
 from ansible.utils.unsafe_proxy import wrap_var
 
-
-# wrap becomes noop if not using tty
-if C.NOTTY_WRAP or sys.__stdin__.isatty():
-    from textwrap import wrap
-else:
-    def wrap(text, width, **kwargs):
-        return text
 
 _LIBC = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
 # Set argtypes, to avoid segfault if the wrong type is provided,
@@ -245,7 +239,7 @@ class Display(metaclass=Singleton):
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
 
-    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True):
+    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True, wrap_text=False):
         """ Display a message to the user
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
@@ -255,11 +249,15 @@ class Display(metaclass=Singleton):
 
         if not log_only:
 
+            istty = stderr and sys.__stderr__.isatty() or not stderr and sys.__stdout__.isatty()
+
+            if wrap_text or istty:
+                wrapped = wrap(message_text, self.columns, drop_whitespace=False)
+                msg2 = "\n".join(wrapped) + "\n"
+
             has_newline = msg.endswith(u'\n')
             if has_newline:
-                msg2 = msg[:-1]
-            else:
-                msg2 = msg
+                msg2 = msg2[:-1]
 
             if color:
                 msg2 = stringc(msg2, color)
@@ -380,7 +378,7 @@ class Display(metaclass=Singleton):
 
         return message_text
 
-    def deprecated(self, msg, version=None, removed=False, date=None, collection_name=None):
+    def deprecated(self, msg, version=None, removed=False, date=None, collection_name=None, wrap_text=C.NOTTY_WRAP):
         if not removed and not C.DEPRECATION_WARNINGS:
             return
 
@@ -389,25 +387,18 @@ class Display(metaclass=Singleton):
         if removed:
             raise AnsibleError(message_text)
 
-        wrapped = wrap(message_text, self.columns, drop_whitespace=False)
-        message_text = "\n".join(wrapped) + "\n"
-
         if message_text not in self._deprecations:
-            self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
             self._deprecations[message_text] = 1
 
-    def warning(self, msg, formatted=False):
 
-        if not formatted:
-            new_msg = "[WARNING]: %s" % msg
-            wrapped = wrap(new_msg, self.columns)
-            new_msg = "\n".join(wrapped) + "\n"
-        else:
+            self.display(message_text, color=C.COLOR_DEPRECATE, stderr=True, wrap_text=wrap_text)
+
+    def warning(self, msg, formatted=C.NOTTY_WRAP):
+
+        if msg not in self._warns:
+            self._warns[msg] = 1
             new_msg = "\n[WARNING]: \n%s" % msg
-
-        if new_msg not in self._warns:
-            self.display(new_msg, color=C.COLOR_WARN, stderr=True)
-            self._warns[new_msg] = 1
+            self.display(new_msg, color=C.COLOR_WARN, stderr=True, wrap_text=(not formatted))
 
     def system_warning(self, msg):
         if C.SYSTEM_WARNINGS:
@@ -453,7 +444,7 @@ class Display(metaclass=Singleton):
         (out, err) = cmd.communicate()
         self.display(u"%s\n" % to_text(out), color=color)
 
-    def error(self, msg, wrap_text=True):
+    def error(self, msg, wrap_text=C.NOTTY_WRAP):
         if wrap_text:
             new_msg = u"\n[ERROR]: %s" % msg
             wrapped = wrap(new_msg, self.columns)
