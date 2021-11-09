@@ -24,7 +24,7 @@ To see the 'raw' information as gathered, run this command at the command line::
 
 Facts include a large amount of variable data, which may look like this:
 
-.. dropdown:: Task output
+.. dropdown:: Print all available facts output
     
     .. code-block:: json
 
