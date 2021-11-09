@@ -13,7 +13,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.module_utils.common.text.converters import to_text
-from ansible.module_utils.six import PY3
+from ansible.module_utils.six import add_metaclass
 
 
 class _EventSource:
@@ -102,10 +102,6 @@ class _AnsibleCollectionConfig(type):
             raise NotImplementedError('an AnsibleCollectionFinder has not been installed in this process')
 
 
-if PY3:
-    # concrete class of our metaclass type that defines the class properties we want
-    class AnsibleCollectionConfig(metaclass=_AnsibleCollectionConfig):
-        pass
-else:
-    class AnsibleCollectionConfig(object):
-        __metaclass__ = _AnsibleCollectionConfig
+@add_metaclass(_AnsibleCollectionConfig)
+class AnsibleCollectionConfig(object):
+    pass
