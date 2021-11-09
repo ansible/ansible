@@ -232,7 +232,7 @@ class PlayIterator(metaclass=MetaPlayIterator):
                        task.get_name() == play_context.start_at_task or fnmatch.fnmatch(task.get_name(), play_context.start_at_task):
                         start_at_matched = True
                         break
-                    self._host_states[host.name] = s
+                    self.set_state_for_host(host.name, s)
 
                 # finally, reset the host's state to IteratingStates.SETUP
                 if start_at_matched:

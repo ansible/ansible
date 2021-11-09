@@ -161,7 +161,7 @@ class StrategyModule(StrategyBase):
                 if task is None:
                     continue
                 if s.run_state == cur_state and s.cur_block == cur_block:
-                    iterator._host_states[host.name] = state
+                    iterator.set_state_for_host(host.name, state)
                     rvals.append((host, task))
                 else:
                     rvals.append((host, noop_task))
