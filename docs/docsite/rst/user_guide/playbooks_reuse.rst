@@ -44,6 +44,12 @@ You can select which playbook you want to import at runtime by defining your imp
 
 If you run this playbook with ``ansible-playbook my_playbook -e import_from_extra_var=other_playbook.yml``, Ansible imports both one_playbook.yml and other_playbook.yml.
 
+When to turn a playbook into a role
+===================================
+
+For many use cases, simple playbooks work well. However, at a certain level of complexity, roles start to work better than playbooks.
+
+
 Re-using files and roles
 ========================
 
