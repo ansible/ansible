@@ -115,6 +115,34 @@ Networking
 
 No notable changes
 
+Porting Guide for v5.0.0b1
+==========================
+
+Known Issues
+------------
+
+purestorage.flashblade
+~~~~~~~~~~~~~~~~~~~~~~
+
+- purefb_lag - The mac_address field in the response is not populated. This will be fixed in a future FlashBlade update.
+
+Breaking Changes
+----------------
+
+community.hashi_vault
+~~~~~~~~~~~~~~~~~~~~~
+
+- connection options - there is no longer a default value for the ``url`` option (the Vault address), so a value must be supplied (https://github.com/ansible-collections/community.hashi_vault/issues/83).
+
+Removed Features
+----------------
+
+community.hashi_vault
+~~~~~~~~~~~~~~~~~~~~~
+
+- drop support for Python 2 and Python 3.5 (https://github.com/ansible-collections/community.hashi_vault/issues/81).
+- support for the following deprecated environment variables has been removed: ``VAULT_AUTH_METHOD``, ``VAULT_TOKEN_PATH``, ``VAULT_TOKEN_FILE``, ``VAULT_ROLE_ID``, ``VAULT_SECRET_ID`` (https://github.com/ansible-collections/community.hashi_vault/pull/173).
+
 Porting Guide for v5.0.0a3
 ==========================
 
