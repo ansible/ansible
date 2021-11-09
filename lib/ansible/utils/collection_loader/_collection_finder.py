@@ -41,9 +41,7 @@ except ImportError:
 try:
     from importlib.util import spec_from_loader
 except ImportError:
-    PY3_SPEC_LOADER = False
-else:
-    PY3_SPEC_LOADER = True
+    pass
 
 # NB: this supports import sanity test providing a different impl
 try:
@@ -186,15 +184,7 @@ class _AnsibleCollectionFinder:
             return
         reload_module(m)
 
-    def find_module(self, fullname, path=None):
-        # Figure out what's being asked for, and delegate to a special-purpose loader
-        spec = self.find_spec(fullname, path=path)
-        if spec:
-            return spec.loader
-
-    def find_spec(self, fullname, path, target=None):
-        # Figure out what's being asked for, and delegate to a special-purpose loader
-
+    def _get_loader(self, fullname, path=None):
         split_name = fullname.split('.')
         toplevel_pkg = split_name[0]
         module_to_find = split_name[-1]
@@ -222,7 +212,7 @@ class _AnsibleCollectionFinder:
             initialize_loader = _AnsibleCollectionRootPkgLoader
         elif part_count == 2:  # ns pkg eg, ansible_collections, ansible_collections.somens
             initialize_loader = _AnsibleCollectionNSPkgLoader
-        elif part_count == 3: # collection pkg eg, ansible_collections.somens.somecoll
+        elif part_count == 3:  # collection pkg eg, ansible_collections.somens.somecoll
             initialize_loader = _AnsibleCollectionPkgLoader
         else:
             # anything below the collection
@@ -230,16 +220,22 @@ class _AnsibleCollectionFinder:
 
         # NB: actual "find"ing is delegated to the constructors on the various loaders; they'll ImportError if not found
         try:
-            loader = initialize_loader(fullname=fullname, path_list=path)
+            return initialize_loader(fullname=fullname, path_list=path)
         except ImportError:
             # TODO: log attempt to load context
             return None
 
-        # no need to pass origin here because loader has defined get_filename
-        spec = spec_from_loader(fullname, loader)
-        if hasattr(loader, '_subpackage_search_paths'):
-            spec.submodule_search_locations = loader._subpackage_search_paths
-        return spec
+    def find_module(self, fullname, path=None):
+        # Figure out what's being asked for, and delegate to a special-purpose loader
+        return self._get_loader(fullname, path)
+
+    def find_spec(self, fullname, path, target=None):
+        loader = self._get_loader(fullname, path)
+        if loader:
+            spec = spec_from_loader(fullname, loader)
+            if spec is not None and hasattr(loader, '_subpackage_search_paths'):
+                spec.submodule_search_locations = loader._subpackage_search_paths
+            return spec
 
 
 # Implements a path_hook finder for iter_modules (since it's only path based). This finder does not need to actually
@@ -268,26 +264,13 @@ class _AnsiblePathHookFinder:
 
     _filefinder_path_hook = _get_filefinder_path_hook()
 
-    def find_module(self, fullname, path=None):
-        # we ignore the passed in path here- use what we got from the path hook init
+    def _get_finder(self, fullname):
         split_name = fullname.split('.')
         toplevel_pkg = split_name[0]
 
-        # call py2's internal loader
-        if toplevel_pkg != 'ansible_collections' and not PY3:
-            return pkgutil.ImpImporter(self._pathctx).find_module(fullname)
-
-        spec = self.find_spec(fullname)
-        if spec:
-            return spec.loader
-
-    def find_spec(self, fullname, target=None):
-        split_name = fullname.split('.')
-        toplevel_pkg = split_name[0]
-
-        if toplevel_pkg == 'ansible_collections' and PY3_SPEC_LOADER:
+        if toplevel_pkg == 'ansible_collections':
             # collections content? delegate to the collection finder
-            return self._collection_finder.find_spec(fullname, path=[self._pathctx])
+            return self._collection_finder
         else:
             # Something else; we'd normally restrict this to `ansible` descendent modules so that any weird loader
             # behavior that arbitrary Python modules have can be serviced by those loaders. In some dev/test
@@ -306,7 +289,30 @@ class _AnsiblePathHookFinder:
                         # might not be in some other situation...
                         return None
 
-                return self._file_finder.find_spec(fullname)
+                return self._file_finder
+
+            # call py2's internal loader
+            return pkgutil.ImpImporter(self._pathctx)
+
+    def find_module(self, fullname, path=None):
+        # we ignore the passed in path here- use what we got from the path hook init
+        split_name = fullname.split('.')
+        toplevel_pkg = split_name[0]
+
+        finder = self._get_finder(fullname)
+        if finder is not None:
+            return finder.find_module(fullname, path=[self._pathctx])
+
+    def find_spec(self, fullname, target=None):
+        split_name = fullname.split('.')
+        toplevel_pkg = split_name[0]
+
+        finder = self._get_finder(fullname)
+        if finder is not None:
+            if toplevel_pkg == 'ansible_collections':
+                return finder.find_spec(fullname, path=[self._pathctx])
+            else:
+                return finder.find_spec(fullname)
 
     def iter_modules(self, prefix):
         # NB: this currently represents only what's on disk, and does not handle package redirection
