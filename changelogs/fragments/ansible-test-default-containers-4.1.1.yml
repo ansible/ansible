@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Update the ``default`` containers to version 4.1.1, which includes the updated ``import`` sanity test requirements.
