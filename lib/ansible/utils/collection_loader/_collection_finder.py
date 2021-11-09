@@ -221,20 +221,22 @@ class _AnsibleCollectionFinder:
         if part_count > 1 and path is None:
             raise ValueError('path must be specified for subpackages (trying to find {0})'.format(fullname))
 
+        if toplevel_pkg == 'ansible':
+            # something under the ansible package, delegate to our internal loader in case of redirections
+            initialize_loader = _AnsibleInternalRedirectLoader
+        elif part_count == 1:
+            initialize_loader = _AnsibleCollectionRootPkgLoader
+        elif part_count == 2:  # ns pkg eg, ansible_collections, ansible_collections.somens
+            initialize_loader = _AnsibleCollectionNSPkgLoader
+        elif part_count == 3: # collection pkg eg, ansible_collections.somens.somecoll
+            initialize_loader = _AnsibleCollectionPkgLoader
+        else:
+            # anything below the collection
+            initialize_loader = _AnsibleCollectionLoader
+
         # NB: actual "find"ing is delegated to the constructors on the various loaders; they'll ImportError if not found
         try:
-            if toplevel_pkg == 'ansible':
-                # something under the ansible package, delegate to our internal loader in case of redirections
-                loader = _AnsibleInternalRedirectLoader(fullname=fullname, path_list=path)
-            elif part_count == 1:
-                loader = _AnsibleCollectionRootPkgLoader(fullname=fullname, path_list=path)
-            elif part_count == 2:  # ns pkg eg, ansible_collections, ansible_collections.somens
-                loader = _AnsibleCollectionNSPkgLoader(fullname=fullname, path_list=path)
-            elif part_count == 3:  # collection pkg eg, ansible_collections.somens.somecoll
-                loader = _AnsibleCollectionPkgLoader(fullname=fullname, path_list=path)
-            else:
-                # anything below the collection
-                loader = _AnsibleCollectionLoader(fullname=fullname, path_list=path)
+            loader = initialize_loader(fullname=fullname, path_list=path)
         except ImportError:
             # TODO: log attempt to load context
             return None
@@ -751,7 +753,7 @@ class _AnsibleInternalRedirectLoader:
             raise ImportError('not redirected, go ask path_hook')
 
     def get_filename(self, fullname):
-        return '<ansible_synthetic_redirection>'
+        return '<ansible synthetic package/module>'
 
     def exec_module(self, module):
         # should never see this
