@@ -49,7 +49,7 @@ No notable changes
 Modules
 =======
 
-* Python 2.7 is a hard requirement for module execution in this release. Any code utilizing ``ansible.module_utils.basic`` will not function with a lower Python version.
+* To use ansible-core 2.13 for module execution, you must use Python 2 version 2.7 or Python 3 version 3.5 or newer. Any code utilizing ``ansible.module_utils.basic`` will not function with lower Python versions.
 
 
 Modules removed
