@@ -135,9 +135,6 @@ class ImportTest(SanityMultipleVersion):
             if virtualenv_yaml is False:
                 display.warning(f'Sanity test "{self.name}" ({import_type}) on Python {python.version} may be slow due to missing libyaml support in PyYAML.')
 
-            if args.prime_venvs:
-                continue
-
             env = ansible_environment(args, color=False)
 
             env.update(
@@ -155,6 +152,9 @@ class ImportTest(SanityMultipleVersion):
                     ANSIBLE_CONTROLLER_MIN_PYTHON_VERSION=CONTROLLER_MIN_PYTHON_VERSION,
                     PYTHONPATH=':'.join((get_ansible_test_python_path(), env["PYTHONPATH"])),
                 )
+
+            if args.prime_venvs:
+                continue
 
             display.info(import_type + ': ' + data, verbosity=4)
 
