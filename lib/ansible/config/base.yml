@@ -1688,6 +1688,16 @@ NETWORK_GROUP_MODULES:
   - {key: network_group_modules, section: defaults}
   type: list
   yaml: {key: defaults.network_group_modules}
+NOTTY_WRAP:
+  name: no tty wrap
+  description: Toggle wrapping text in the abcense of a TTY
+  default: True
+  type: bool
+  version_added: '2.13'
+  env:
+    - name: ANSIBLE_NOTTY_WRAP
+  ini:
+    - {key: notty_wrap, section: defaults}
 INJECT_FACTS_AS_VARS:
   default: True
   description:

@@ -46,13 +46,6 @@ import typing as t
 from functools import wraps
 from struct import unpack, pack
 
-# wrap becomes noop if not using tty
-if sys.__stdin__.isatty():
-    from textwrap import wrap
-else:
-    def wrap(text, width, **kwargs):
-        return text
-
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError, AnsiblePromptInterrupt, AnsiblePromptNoninteractive
 from ansible.module_utils.common.text.converters import to_bytes, to_text
@@ -67,6 +60,13 @@ if t.TYPE_CHECKING:
     from ansible.executor.task_queue_manager import FinalQueue
 
 P = t.ParamSpec('P')
+
+# wrap becomes noop if not using tty
+if if C.NOTTY_WRAP or sys.__stdin__.isatty():
+    from textwrap import wrap
+else:
+    def wrap(text, width, **kwargs):
+        return text
 
 _LIBC = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
 # Set argtypes, to avoid segfault if the wrong type is provided,
