@@ -47,8 +47,8 @@ def isodate(v, error_code=None):
     return v
 
 
-COLLECTION_NAME_RE = re.compile(r'^(\w+(\.\w+)+)$')
-FULLY_QUALIFIED_COLLECTION_RESOURCE_RE = re.compile(r'^(\w+\.\w{2,})$')
+COLLECTION_NAME_RE = re.compile(r'^\w+(?:\.\w+)+$')
+FULLY_QUALIFIED_COLLECTION_RESOURCE_RE = re.compile(r'^\w+(?:\.\w+){2,}$')
 
 
 def collection_name(v, error_code=None):
