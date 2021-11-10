@@ -320,7 +320,7 @@ role ``meta/argument_specs.yml`` file. All fields are lower-case.
 
         :type:
 
-           * The data type of the option. Default is ``str``.
+           * The data type of the option. See :ref:`Argument spec <argument_spec>` for allowed values for ``type``. Default is ``str``.
            * If an option is of type ``list``, ``elements`` should be specified.
 
         :required:
