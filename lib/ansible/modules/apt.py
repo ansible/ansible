@@ -177,12 +177,12 @@ options:
     version_added: "2.12"
   validate_certs:
     description:
-      - This only applies if using a https url as the source of the rpm. e.g. for localinstall. If set to C(no), the SSL certificates will not be validated.
+      - This only applies if using a https url as the source of the deb. e.g. for localinstall. If set to C(no), the SSL certificates will not be validated.
       - This should only set to C(no) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
       - Prior to 2.1 the code worked as if this was set to C(yes).
     type: bool
     default: "yes"
-    version_added: "2.1"
+    version_added: "2.13"
 requirements:
    - python-apt (python 2)
    - python3-apt (python 3)
@@ -1127,7 +1127,7 @@ def main():
             allow_unauthenticated=dict(type='bool', default=False, aliases=['allow-unauthenticated']),
             allow_downgrade=dict(type='bool', default=False, aliases=['allow-downgrade', 'allow_downgrades', 'allow-downgrades']),
             lock_timeout=dict(type='int', default=60),
-            validate_certs=dict(type='bool', default=False),
+            validate_certs=dict(type='bool', default=True),
         ),
         mutually_exclusive=[['deb', 'package', 'upgrade']],
         required_one_of=[['autoremove', 'deb', 'package', 'update_cache', 'upgrade']],
