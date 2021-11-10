@@ -28,7 +28,7 @@ fi
 set -ux
 
 for test_name in test_include_role test_include_tasks; do
-  ansible-playbook -i inventory -e @../../integration_config.yml "$@" -e test_name=$test_name 50897.yml | tee out.txt | grep 'any_errors_fatal_this_should_never_be_reached'
+  ansible-playbook -i inventory "$@" -e test_name=$test_name 50897.yml | tee out.txt | grep 'any_errors_fatal_this_should_never_be_reached'
   res=$?
   cat out.txt
   if [ "${res}" -eq 0 ] ; then
