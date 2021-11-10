@@ -10,6 +10,7 @@ import re
 
 from ansible.module_utils.compat.version import StrictVersion
 from functools import partial
+from urllib.parse import urlparse
 
 from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid
 from ansible.module_utils.six import string_types
@@ -48,7 +49,6 @@ def isodate(v, error_code=None):
 
 COLLECTION_NAME_RE = re.compile(r'^(\w+(\.\w+)+)$')
 FULLY_QUALIFIED_COLLECTION_RESOURCE_RE = re.compile(r'^(\w+\.\w{2,})$')
-URL_RE = re.compile(r'''^(?:(?:https?:)?//[^/?#]*|)[^?#]*(?:\?([^#]*))?(?:#(.*))?$''')
 
 
 def collection_name(v, error_code=None):
@@ -102,7 +102,11 @@ def _check_link(directive, content):
 
 
 def _check_url(directive, content):
-    if not URL_RE.match(content):
+    try:
+        parsed_url = urlparse(content)
+        if parsed_url.scheme not in ('', 'http', 'https'):
+            raise ValueError('Schema must be HTTP, HTTPS, or not specified')
+    except ValueError as exc:
         raise _add_ansible_error_code(
             Invalid('Directive "%s" must contain an URL' % directive), 'invalid-docs-markup')
 
