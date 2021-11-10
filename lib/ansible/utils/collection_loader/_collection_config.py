@@ -97,6 +97,7 @@ class _AnsibleCollectionConfig(type):
             raise NotImplementedError('an AnsibleCollectionFinder has not been installed in this process')
 
 
+# concrete class of our metaclass type that defines the class properties we want
 @add_metaclass(_AnsibleCollectionConfig)
 class AnsibleCollectionConfig(object):
     pass

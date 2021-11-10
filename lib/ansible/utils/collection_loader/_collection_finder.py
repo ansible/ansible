@@ -601,23 +601,17 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
             raise ValueError('error parsing collection metadata: {0}'.format(to_native(ex)))
 
         AnsibleCollectionConfig.on_collection_load.fire(collection_name=collection_name, collection_path=os.path.dirname(module.__file__))
+
         return module
 
     def exec_module(self, module):
-        if not _meta_yml_to_dict:
-            raise ValueError('ansible.utils.collection_loader._meta_yml_to_dict is not set')
-
         super(_AnsibleCollectionPkgLoader, self).exec_module(module)
-
         self._load_module(module)
 
     def create_module(self, spec):
         return None
 
     def load_module(self, fullname):
-        if not _meta_yml_to_dict:
-            raise ValueError('ansible.utils.collection_loader._meta_yml_to_dict is not set')
-
         module = super(_AnsibleCollectionPkgLoader, self).load_module(fullname)
         return self._load_module(module)
 
