@@ -47,8 +47,7 @@ If you run this playbook with ``ansible-playbook my_playbook -e import_from_extr
 When to turn a playbook into a role
 ===================================
 
-For many use cases, simple playbooks work well. However, at a certain level of complexity, roles start to work better than playbooks.
-
+For some use cases, simple playbooks work well. However, starting at a certain level of complexity, roles work better than playbooks. A role lets you store your defaults, handlers, variables, and tasks in separate directories, instead of in a single long document. For complex use cases, most users find roles easier to maintain than all-in-one playbooks.
 
 Re-using files and roles
 ========================
