@@ -238,7 +238,7 @@ class GalaxyCLI(CLI):
                                    help='Do not use the server response cache.')
 
         # Add sub parser for the Galaxy role type (role or collection)
-        type_parser = self.parser.add_subparsers(metavar='TYPE', dest='type')
+        type_parser = self.parser.add_subparsers(metavar='CONTENT_TYPE', dest='type')
         type_parser.required = True
 
         # Add sub parser for the Galaxy collection actions
