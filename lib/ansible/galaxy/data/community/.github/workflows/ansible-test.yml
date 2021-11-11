@@ -100,17 +100,15 @@ jobs:
           - stable-2.11
           - devel
         python:
-          - 2.6
+          # List all Python versions that the collection supports here
+          # and will be tested with. For example:
           - 2.7
-          - 3.5
-          - 3.6
-          - 3.7
-          - 3.8
           - 3.9
         exclude:
-          # Because ansible-test doesn't support python3.9 for Ansible 2.9
-          - ansible: stable-2.9
-            python: 3.9
+          # If a version of ansible-core the collection is tested against does not support
+          # a certain Python version, define it here. For example:
+          - ansible: stable-2.12
+            python: 2.7
 
     steps:
       - name: >-
