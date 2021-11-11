@@ -102,3 +102,51 @@
     that:
         - "not dnf_result.failed"
         - "not dnf_result.changed"
+
+- name: enable "{{ astream_name_no_profile }}" module without providing profile
+  dnf:
+    name: "{{ astream_name_no_profile }}"
+    state: enabled
+  register: dnf_result
+
+- name: verify enablement of "{{ astream_name_no_profile }}" module without providing profile
+  assert:
+    that:
+        - "not dnf_result.failed"
+        - "dnf_result.changed"
+
+- name: enable "{{ astream_name_no_profile }}" module again without providing profile
+  dnf:
+    name: "{{ astream_name_no_profile }}"
+    state: enabled
+  register: dnf_result
+
+- name: verify enablement of "{{ astream_name_no_profile }}" module again without providing profile
+  assert:
+    that:
+        - "not dnf_result.failed"
+        - "not dnf_result.changed"
+
+- name: disable "{{ astream_name_no_profile }}" module without providing profile
+  dnf:
+    name: "{{ astream_name_no_profile }}"
+    state: disabled
+  register: dnf_result
+
+- name: verify disablement of "{{ astream_name_no_profile }}" module without providing profile
+  assert:
+    that:
+        - "not dnf_result.failed"
+        - "dnf_result.changed"
+
+- name: disable "{{ astream_name_no_profile }}" module again without providing profile
+  dnf:
+    name: "{{ astream_name_no_profile }}"
+    state: disabled
+  register: dnf_result
+
+- name: verify disablement of "{{ astream_name_no_profile }}" module again without providing profile
+  assert:
+    that:
+        - "not dnf_result.failed"
+        - "not dnf_result.changed"

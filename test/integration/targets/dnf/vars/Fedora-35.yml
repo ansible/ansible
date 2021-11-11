@@ -1,2 +1,3 @@
 astream_name: '@varnish:6.0/default'
 astream_name_no_stream: '@varnish/default'
+astream_name_no_profile: '@cri-o:1.19'

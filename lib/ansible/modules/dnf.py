@@ -42,9 +42,11 @@ options:
   state:
     description:
       - Whether to install (C(present), C(latest)), or remove (C(absent)) a package.
+      - When handling modules, you can also use C(enabled) to enable, and C(disabled) to disable a module
+        without doing any further changes like installing or removing packages provided by the module.
       - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is
         enabled for this module, then C(absent) is inferred.
-    choices: ['absent', 'present', 'installed', 'removed', 'latest']
+    choices: ['absent', 'present', 'installed', 'removed', 'latest', 'enabled', 'disabled']
     type: str
 
   enablerepo:
@@ -1010,6 +1012,10 @@ class DnfModule(YumDnf):
             'rc': 1
         }
 
+        # Sometimes (when enabling modules) we need a way to force a do_transaction() call
+        # even if resolve() says there is nothing to do
+        force_transaction = False
+
         # Autoremove is called alone
         # Jump to remove path where base.autoremove() is run
         if not self.names and self.autoremove:
@@ -1108,6 +1114,30 @@ class DnfModule(YumDnf):
                         else:
                             if install_result['msg']:
                                 response['results'].append(install_result['msg'])
+
+            elif self.state == 'enabled':
+                # Only applies to modules
+                if module_specs and self.with_modules:
+                    for module in module_specs:
+                        try:
+                            if not self._is_module_installed(module):
+                                response['results'].append("Module {0} enabled.".format(module))
+                                force_transaction = True
+                            self.module_base.enable([module])
+                        except dnf.exceptions.MarkingErrors as e:
+                            failure_response['failures'].append(' '.join((module, to_native(e))))
+
+            elif self.state == 'disabled':
+                # Only applies to modules
+                if module_specs and self.with_modules:
+                    for module in module_specs:
+                        try:
+                            if self._is_module_installed(module):
+                                response['results'].append("Module {0} disabled.".format(module))
+                                force_transaction = True
+                            self.module_base.disable([module])
+                        except dnf.exceptions.MarkingErrors as e:
+                            failure_response['failures'].append(' '.join((module, to_native(e))))
 
             elif self.state == 'latest':
                 # "latest" is same as "installed" for filenames.
@@ -1241,7 +1271,7 @@ class DnfModule(YumDnf):
                     self.base.autoremove()
 
         try:
-            if not self.base.resolve(allow_erasing=self.allowerasing):
+            if not self.base.resolve(allow_erasing=self.allowerasing) and not force_transaction:
                 if failure_response['failures']:
                     failure_response['msg'] = 'Failed to install some of the specified packages'
                     self.module.fail_json(**failure_response)
@@ -1406,6 +1436,7 @@ def main():
     # backported to yum because yum is now in "maintenance mode" upstream
     yumdnf_argument_spec['argument_spec']['allowerasing'] = dict(default=False, type='bool')
     yumdnf_argument_spec['argument_spec']['nobest'] = dict(default=False, type='bool')
+    yumdnf_argument_spec['argument_spec']['state']['choices'].extend(['enabled', 'disabled'])
 
     module = AnsibleModule(
         **yumdnf_argument_spec
