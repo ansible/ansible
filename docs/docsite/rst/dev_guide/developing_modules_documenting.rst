@@ -258,7 +258,7 @@ content in a uniform way:
 
 .. note::
 
-  Cross-references with ``R()`` do currently **not work** inside option and return value documentations. They do work however in the global description, notes, and ``seealso`` descriptions.
+  Cross-references with ``R()`` currently **do not work** inside option and return value documentations. They do work however in the global description, notes, and ``seealso`` descriptions.
 
 .. note::
 
