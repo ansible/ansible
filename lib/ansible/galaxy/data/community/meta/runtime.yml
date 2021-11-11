@@ -1,2 +1,3 @@
 ---
+# Specify all versions of ansible-core the collection supports here. For example:
 requires_ansible: '>=2.9.10'
