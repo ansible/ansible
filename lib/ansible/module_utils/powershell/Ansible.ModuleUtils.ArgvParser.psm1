@@ -5,7 +5,7 @@
 # https://docs.microsoft.com/en-us/cpp/cpp/parsing-cpp-command-line-arguments
 # https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
 
-Function Escape-Argument($argument, $force_quote=$false) {
+Function Escape-Argument($argument, $force_quote = $false) {
     # this converts a single argument to an escaped version, use Join-Arguments
     # instead of this function as this only escapes a single string.
 
@@ -14,7 +14,8 @@ Function Escape-Argument($argument, $force_quote=$false) {
         # argument does not need escaping (and we don't want to force it),
         # return as is
         return $argument
-    } else {
+    }
+    else {
         # we need to quote the arg so start with "
         $new_argument = '"'
 
@@ -28,16 +29,18 @@ Function Escape-Argument($argument, $force_quote=$false) {
             }
 
             $current_char = $argument[$i]
-            if ($i -eq ($argument.Length -1) -and $current_char -eq "\") {
+            if ($i -eq ($argument.Length - 1) -and $current_char -eq "\") {
                 # We are at the end of the string so we need to add the same \
                 # * 2 as the end char would be a "
                 $new_argument += ("\" * ($num_backslashes + 1) * 2)
-            } elseif ($current_char -eq '"') {
+            }
+            elseif ($current_char -eq '"') {
                 # we have a inline ", we need to add the existing \ but * by 2
                 # plus another 1
                 $new_argument += ("\" * (($num_backslashes * 2) + 1))
                 $new_argument += $current_char
-            } else {
+            }
+            else {
                 # normal character so no need to escape the \ we have counted
                 $new_argument += ("\" * $num_backslashes)
                 $new_argument += $current_char
@@ -50,7 +53,7 @@ Function Escape-Argument($argument, $force_quote=$false) {
     }
 }
 
-Function Argv-ToString($arguments, $force_quote=$false) {
+Function Argv-ToString($arguments, $force_quote = $false) {
     # Takes in a list of un escaped arguments and convert it to a single string
     # that can be used when starting a new process. It will escape the
     # characters as necessary in the list.
