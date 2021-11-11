@@ -118,10 +118,10 @@ def _check_ref(directive, content):
 
 
 def doc_string(v):
-    """Create a list of valid version for deprecation entries, current+4"""
+    """Match a documentation string."""
     if not isinstance(v, string_types):
         raise _add_ansible_error_code(
-            Invalid('Must be a string'), 'invalid-docs')
+            Invalid('Must be a string'), 'invalid-documentation')
     for m in _MODULE.finditer(v):
         _check_module_link(m.group(0), m.group(1))
     for m in _LINK.finditer(v):
@@ -134,13 +134,13 @@ def doc_string(v):
 
 
 def doc_string_or_strings(v):
-    """Create a list of valid version for deprecation entries, current+4"""
+    """Match a documentation string, or list of strings."""
     if isinstance(v, string_types):
         return doc_string(v)
     if isinstance(v, (list, tuple)):
         return [doc_string(vv) for vv in v]
     raise _add_ansible_error_code(
-        Invalid('Must be a string or list of strings'), 'invalid-docs')
+        Invalid('Must be a string or list of strings'), 'invalid-documentation')
 
 
 def is_callable(v):
