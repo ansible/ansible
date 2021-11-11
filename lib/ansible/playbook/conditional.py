@@ -184,12 +184,7 @@ class Conditional:
             # NOTE The spaces around True and False are intentional to short-circuit literal_eval for
             #      jinja2_native=False and avoid its expensive calls.
             presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
-            # NOTE Convert the result to text to account for both native and non-native jinja.
-            # NOTE The templated result of `presented` is string on native jinja as well prior to Python 3.10.
-            #      ast.literal_eval on Python 3.10 removes leading whitespaces so " True " becomes bool True
-            #      as opposed to Python 3.9 and lower where the same would result in IndentationError and
-            #      string " True " would be returned by Templar.
-            val = to_text(templar.template(presented, disable_lookups=disable_lookups)).strip()
+            val = templar.template(presented, disable_lookups=disable_lookups).strip()
             if val == "True":
                 return True
             elif val == "False":
