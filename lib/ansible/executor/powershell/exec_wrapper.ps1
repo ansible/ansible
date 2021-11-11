@@ -22,7 +22,7 @@ begin {
             [String] The JSON string to deserialize.
             #>
             param(
-                [Parameter(Mandatory=$true, Position=0)][String]$InputObject
+                [Parameter(Mandatory = $true, Position = 0)][String]$InputObject
             )
 
             # we can use -AsHashtable to get PowerShell to convert the JSON to
@@ -30,8 +30,9 @@ begin {
             # 6.0, fall back to a manual conversion for older versions
             $cmdlet = Get-Command -Name ConvertFrom-Json -CommandType Cmdlet
             if ("AsHashtable" -in $cmdlet.Parameters.Keys) {
-                return ,(ConvertFrom-Json -InputObject $InputObject -AsHashtable)
-            } else {
+                return , (ConvertFrom-Json -InputObject $InputObject -AsHashtable)
+            }
+            else {
                 # get the PSCustomObject and then manually convert from there
                 $raw_obj = ConvertFrom-Json -InputObject $InputObject
 
@@ -47,18 +48,20 @@ begin {
                         foreach ($prop in $InputObject.PSObject.Properties.GetEnumerator()) {
                             $new_value.($prop.Name) = (ConvertTo-Hashtable -InputObject $prop.Value)
                         }
-                        return ,$new_value
-                    } elseif ($InputObject -is [Array]) {
+                        return , $new_value
+                    }
+                    elseif ($InputObject -is [Array]) {
                         $new_value = [System.Collections.ArrayList]@()
                         foreach ($val in $InputObject) {
                             $new_value.Add((ConvertTo-Hashtable -InputObject $val)) > $null
                         }
-                        return ,$new_value.ToArray()
-                    } else {
-                        return ,$InputObject
+                        return , $new_value.ToArray()
+                    }
+                    else {
+                        return , $InputObject
                     }
                 }
-                return ,(ConvertTo-Hashtable -InputObject $raw_obj)
+                return , (ConvertTo-Hashtable -InputObject $raw_obj)
             }
         }
 
@@ -107,7 +110,7 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
             ErrorRecord is passed through.
             #>
             param(
-                [Parameter(Mandatory=$true)][String]$Message,
+                [Parameter(Mandatory = $true)][String]$Message,
                 [System.Management.Automation.ErrorRecord]$ErrorRecord = $null
             )
             $result = @{
@@ -130,8 +133,8 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
             an env value on the Windows host that this is run on to enable.
             #>
             param(
-                [Parameter(Mandatory=$true, Position=0)][String]$Message,
-                [Parameter(Position=1)][String]$Wrapper
+                [Parameter(Mandatory = $true, Position = 0)][String]$Message,
+                [Parameter(Position = 1)][String]$Wrapper
             )
 
             $log_path = $env:ANSIBLE_EXEC_DEBUG
@@ -150,7 +153,8 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
                         [System.IO.FileAccess]::Write, [System.IO.FileShare]::ReadWrite)
                     try {
                         $fs.Write($msg_bytes, 0, $msg_bytes.Length)
-                    } finally {
+                    }
+                    finally {
                         $fs.Close()
                     }
                 }
@@ -186,7 +190,8 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
 
         Write-AnsibleLog "INFO - checking if actual os version '$actual_os_version' is less than the min os version '$min_os_version'" "exec_wrapper"
         if ($actual_os_version -lt $min_os_version) {
-            Write-AnsibleError -Message "internal error: This module cannot run on this OS as it requires a minimum version of $min_os_version, actual was $actual_os_version"
+            $msg = "internal error: This module cannot run on this OS as it requires a minimum version of $min_os_version, actual was $actual_os_version"
+            Write-AnsibleError -Message $msg
             exit 1
         }
     }
@@ -196,7 +201,8 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
 
         Write-AnsibleLog "INFO - checking if actual PS version '$actual_ps_version' is less than the min PS version '$min_ps_version'" "exec_wrapper"
         if ($actual_ps_version -lt $min_ps_version) {
-            Write-AnsibleError -Message "internal error: This module cannot run as it requires a minimum PowerShell version of $min_ps_version, actual was $actual_ps_version"
+            $msg = "internal error: This module cannot run as it requires a minimum PowerShell version of $min_ps_version, actual was $actual_ps_version"
+            Write-AnsibleError -Message $msg
             exit 1
         }
     }
@@ -218,10 +224,12 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
         if ($encoded_output -and $null -ne $output) {
             $b64_output = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($output))
             Write-Output -InputObject $b64_output
-        } else {
+        }
+        else {
             $output
         }
-    } catch {
+    }
+    catch {
         Write-AnsibleError -Message "internal error: failed to run exec_wrapper action $action" -ErrorRecord $_
         exit 1
     }

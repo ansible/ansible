@@ -2,4 +2,4 @@
 
 # POWERSHELL_COMMON
 
-Exit-Json @{ data="success" }
+Exit-Json @{ data = "success" }

@@ -2,4 +2,4 @@
 
 #Requires -Module Ansible.ModuleUtils.Legacy
 
-Exit-Json @{ data="success" }
+Exit-Json @{ data = "success" }

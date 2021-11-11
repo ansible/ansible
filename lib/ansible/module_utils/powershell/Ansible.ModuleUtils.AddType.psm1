@@ -67,12 +67,12 @@ Function Add-CSharpType {
         //TypeAccelerator -Name <AcceleratorName> -TypeName <Name of compiled type>
     #>
     param(
-        [Parameter(Mandatory=$true)][AllowEmptyCollection()][String[]]$References,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][String[]]$References,
         [Switch]$IgnoreWarnings,
         [Switch]$PassThru,
-        [Parameter(Mandatory=$true, ParameterSetName="Module")][Object]$AnsibleModule,
-        [Parameter(ParameterSetName="Manual")][String]$TempPath = $env:TMP,
-        [Parameter(ParameterSetName="Manual")][Switch]$IncludeDebugInfo,
+        [Parameter(Mandatory = $true, ParameterSetName = "Module")][Object]$AnsibleModule,
+        [Parameter(ParameterSetName = "Manual")][String]$TempPath = $env:TMP,
+        [Parameter(ParameterSetName = "Manual")][Switch]$IncludeDebugInfo,
         [String[]]$CompileSymbols = @()
     )
     if ($null -eq $References -or $References.Length -eq 0) {
@@ -86,7 +86,8 @@ Function Add-CSharpType {
 
     if ([System.IntPtr]::Size -eq 4) {
         $defined_symbols.Add('X86') > $null
-    } else {
+    }
+    else {
         $defined_symbols.Add('AMD64') > $null
     }
 
@@ -100,10 +101,12 @@ Function Add-CSharpType {
     if ($null -ne $is_windows) {
         if ($is_windows.Value) {
             $defined_symbols.Add("WINDOWS") > $null
-        } else {
+        }
+        else {
             $defined_symbols.Add("UNIX") > $null
         }
-    } else {
+    }
+    else {
         $defined_symbols.Add("WINDOWS") > $null
     }
 
@@ -155,7 +158,8 @@ Function Add-CSharpType {
                 $assembly_path = $match.Groups["Name"].Value
                 if ($parameter_type -eq "Type") {
                     $assembly_path = ([Type]$assembly_path).Assembly.Location
-                } else {
+                }
+                else {
                     if (-not ([System.IO.Path]::IsPathRooted($assembly_path))) {
                         $assembly_path = Join-Path -Path $lib_assembly_location -ChildPath $assembly_path
                     }
@@ -174,15 +178,15 @@ Function Add-CSharpType {
 
             $type_matches = $type_pattern.Matches($reference)
             foreach ($match in $type_matches) {
-                $type_accelerators.Add(@{Name=$match.Groups["Name"].Value; TypeName=$match.Groups["TypeName"].Value})
+                $type_accelerators.Add(@{Name = $match.Groups["Name"].Value; TypeName = $match.Groups["TypeName"].Value })
             }
         }
 
         # Release seems to contain the correct line numbers compared to
         # debug,may need to keep a closer eye on this in the future
         $compiler_options = (New-Object -TypeName Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions -ArgumentList @(
-            [Microsoft.CodeAnalysis.OutputKind]::DynamicallyLinkedLibrary
-        )).WithOptimizationLevel([Microsoft.CodeAnalysis.OptimizationLevel]::Release)
+                [Microsoft.CodeAnalysis.OutputKind]::DynamicallyLinkedLibrary
+            )).WithOptimizationLevel([Microsoft.CodeAnalysis.OptimizationLevel]::Release)
 
         # set warnings to error out if IgnoreWarnings is not set
         if (-not $IgnoreWarnings.IsPresent) {
@@ -246,18 +250,21 @@ Function Add-CSharpType {
             $code_ms.Seek(0, [System.IO.SeekOrigin]::Begin) > $null
             $pdb_ms.Seek(0, [System.IO.SeekOrigin]::Begin) > $null
             $compiled_assembly = [System.Runtime.Loader.AssemblyLoadContext]::Default.LoadFromStream($code_ms, $pdb_ms)
-        } finally {
+        }
+        finally {
             $code_ms.Close()
             $pdb_ms.Close()
         }
-    } else {
+    }
+    else {
         # compile the code using CodeDom on PSDesktop
 
         # configure compile options based on input
         if ($PSCmdlet.ParameterSetName -eq "Module") {
             $temp_path = $AnsibleModule.Tmpdir
             $include_debug = $AnsibleModule.Verbosity -ge 3
-        } else {
+        }
+        else {
             $temp_path = $TempPath
             $include_debug = $IncludeDebugInfo.IsPresent
         }
@@ -321,7 +328,7 @@ Function Add-CSharpType {
 
             $type_matches = $type_pattern.Matches($reference)
             foreach ($match in $type_matches) {
-                $type_accelerators.Add(@{Name=$match.Groups["Name"].Value; TypeName=$match.Groups["TypeName"].Value})
+                $type_accelerators.Add(@{Name = $match.Groups["Name"].Value; TypeName = $match.Groups["TypeName"].Value })
             }
         }
         if ($ignore_warnings.Count -gt 0) {
