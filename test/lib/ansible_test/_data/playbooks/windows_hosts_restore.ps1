@@ -8,7 +8,7 @@ A list of hosts entries, delimited by '|'.
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true, Position=0)][String]$Hosts
+    [Parameter(Mandatory = $true, Position = 0)][String]$Hosts
 )
 
 $ProgressPreference = "SilentlyContinue"
@@ -26,7 +26,8 @@ $new_lines = [System.Collections.ArrayList]@()
 foreach ($host_line in $hosts_file_lines) {
     if ($host_line -in $hosts_entries) {
         $changed = $true
-    } else {
+    }
+    else {
         $new_lines += $host_line
     }
 }

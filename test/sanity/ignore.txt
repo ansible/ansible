@@ -165,7 +165,6 @@ test/integration/targets/win_exec_wrapper/tasks/main.yml no-smart-quotes  # We a
 test/integration/targets/win_fetch/tasks/main.yml no-smart-quotes  # We are explictly testing smart quotes in the file name to fetch
 test/integration/targets/win_module_utils/library/legacy_only_new_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
 test/integration/targets/win_module_utils/library/legacy_only_old_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
-test/integration/targets/win_script/files/test_script_creates_file.ps1 pslint:PSAvoidUsingCmdletAliases
 test/integration/targets/win_script/files/test_script.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/integration/targets/win_script/files/test_script_removes_file.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_script/files/test_script_with_args.ps1 pslint:PSAvoidUsingWriteHost # Keep
@@ -196,16 +195,26 @@ test/support/network-integration/collections/ansible_collections/cisco/ios/plugi
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/cliconf/vyos.py pylint:arguments-renamed
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_command.py pep8:E231
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_command.py pylint:disallowed-name
+test/support/windows-integration/collections/ansible_collections/ansible/windows/plugins/module_utils/WebRequest.psm1 pslint!skip
+test/support/windows-integration/collections/ansible_collections/ansible/windows/plugins/modules/win_uri.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/async_status.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/setup.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/slurp.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_acl.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_certificate_store.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_command.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_copy.ps1 pslint!skip
-test/support/windows-integration/plugins/modules/win_dsc.ps1 pslint!skip
-test/support/windows-integration/plugins/modules/win_feature.ps1 pslint!skip
-test/support/windows-integration/plugins/modules/win_find.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_file.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_get_url.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_lineinfile.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_regedit.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_shell.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_stat.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_tempfile.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_user_right.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_user.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_wait_for.ps1 pslint!skip
+test/support/windows-integration/plugins/modules/win_whoami.ps1 pslint!skip
 test/units/executor/test_play_iterator.py pylint:disallowed-name
 test/units/modules/test_apt.py pylint:disallowed-name
 test/units/module_utils/basic/test_deprecate_warn.py pylint:ansible-deprecated-no-version

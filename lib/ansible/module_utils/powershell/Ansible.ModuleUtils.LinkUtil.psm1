@@ -3,7 +3,10 @@
 
 #Requires -Module Ansible.ModuleUtils.PrivilegeUtil
 
-Function Load-LinkUtils() {
+Function Load-LinkUtils {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseSingularNouns", "", Justification = "Cannot change the name now")]
+    param ()
+
     $link_util = @'
 using Microsoft.Win32.SafeHandles;
 using System;
@@ -314,8 +317,12 @@ namespace Ansible
                 throw new Exception(errorMessage);
             }
 
-            string printName = new string(buffer.PathBuffer, (int)(buffer.PrintNameOffset / SIZE_OF_WCHAR) + pathOffset, (int)(buffer.PrintNameLength / SIZE_OF_WCHAR));
-            string substituteName = new string(buffer.PathBuffer, (int)(buffer.SubstituteNameOffset / SIZE_OF_WCHAR) + pathOffset, (int)(buffer.SubstituteNameLength / SIZE_OF_WCHAR));
+            string printName = new string(buffer.PathBuffer,
+                (int)(buffer.PrintNameOffset / SIZE_OF_WCHAR) + pathOffset,
+                (int)(buffer.PrintNameLength / SIZE_OF_WCHAR));
+            string substituteName = new string(buffer.PathBuffer,
+                (int)(buffer.SubstituteNameOffset / SIZE_OF_WCHAR) + pathOffset,
+                (int)(buffer.SubstituteNameLength / SIZE_OF_WCHAR));
 
             // TODO: should we check for \?\UNC\server for convert it to the NT style \\server path
             // Remove the leading Windows object directory \?\ from the path if present
@@ -432,7 +439,7 @@ Function New-Link($link_path, $link_target, $link_type) {
         throw "link_target '$link_target' does not exist, cannot create link"
     }
 
-    switch($link_type) {
+    switch ($link_type) {
         "link" {
             $type = [Ansible.LinkType]::SymbolicLink
         }

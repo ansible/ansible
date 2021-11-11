@@ -1,3 +1,3 @@
 # Test script to create a file.
 
-echo $null > $args[0]
+Write-Output $null > $args[0]

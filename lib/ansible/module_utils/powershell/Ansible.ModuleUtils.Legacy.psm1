@@ -4,9 +4,8 @@
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = "Stop"
 
-Function Set-Attr($obj, $name, $value)
-{
-<#
+Function Set-Attr($obj, $name, $value) {
+    <#
     .SYNOPSIS
     Helper function to set an "attribute" on a psobject instance in PowerShell.
     This is a convenience to make adding Members to the object easier and
@@ -16,24 +15,20 @@ Function Set-Attr($obj, $name, $value)
 #>
 
     # If the provided $obj is undefined, define one to be nice
-    If (-not $obj.GetType)
-    {
+    If (-not $obj.GetType) {
         $obj = @{ }
     }
 
-    Try
-    {
+    Try {
         $obj.$name = $value
     }
-    Catch
-    {
+    Catch {
         $obj | Add-Member -Force -MemberType NoteProperty -Name $name -Value $value
     }
 }
 
-Function Exit-Json($obj)
-{
-<#
+Function Exit-Json($obj) {
+    <#
     .SYNOPSIS
     Helper function to convert a PowerShell object to JSON and output it, exiting
     the script
@@ -42,8 +37,7 @@ Function Exit-Json($obj)
 #>
 
     # If the provided $obj is undefined, define one to be nice
-    If (-not $obj.GetType)
-    {
+    If (-not $obj.GetType) {
         $obj = @{ }
     }
 
@@ -55,9 +49,8 @@ Function Exit-Json($obj)
     Exit
 }
 
-Function Fail-Json($obj, $message = $null)
-{
-<#
+Function Fail-Json($obj, $message = $null) {
+    <#
     .SYNOPSIS
     Helper function to add the "msg" property and "failed" property, convert the
     PowerShell Hashtable to JSON and output it, exiting the script
@@ -67,12 +60,14 @@ Function Fail-Json($obj, $message = $null)
 
     if ($obj -is [hashtable] -or $obj -is [psobject]) {
         # Nothing to do
-    } elseif ($obj -is [string] -and $null -eq $message) {
+    }
+    elseif ($obj -is [string] -and $null -eq $message) {
         # If we weren't given 2 args, and the only arg was a string,
         # create a new Hashtable and use the arg as the failure message
         $message = $obj
         $obj = @{ }
-    } else {
+    }
+    else {
         # If the first argument is undefined or a different type,
         # make it a Hashtable
         $obj = @{ }
@@ -90,9 +85,8 @@ Function Fail-Json($obj, $message = $null)
     Exit 1
 }
 
-Function Add-Warning($obj, $message)
-{
-<#
+Function Add-Warning($obj, $message) {
+    <#
     .SYNOPSIS
     Helper function to add warnings, even if the warnings attribute was
     not already set up. This is a convenience for the module developer
@@ -101,16 +95,16 @@ Function Add-Warning($obj, $message)
 
     if (-not $obj.ContainsKey("warnings")) {
         $obj.warnings = @()
-    } elseif ($obj.warnings -isnot [array]) {
+    }
+    elseif ($obj.warnings -isnot [array]) {
         throw "Add-Warning: warnings attribute is not an array"
     }
 
     $obj.warnings += $message
 }
 
-Function Add-DeprecationWarning($obj, $message, $version = $null)
-{
-<#
+Function Add-DeprecationWarning($obj, $message, $version = $null) {
+    <#
     .SYNOPSIS
     Helper function to add deprecations, even if the deprecations attribute was
     not already set up. This is a convenience for the module developer
@@ -118,7 +112,8 @@ Function Add-DeprecationWarning($obj, $message, $version = $null)
 #>
     if (-not $obj.ContainsKey("deprecations")) {
         $obj.deprecations = @()
-    } elseif ($obj.deprecations -isnot [array]) {
+    }
+    elseif ($obj.deprecations -isnot [array]) {
         throw "Add-DeprecationWarning: deprecations attribute is not a list"
     }
 
@@ -128,23 +123,22 @@ Function Add-DeprecationWarning($obj, $message, $version = $null)
     }
 }
 
-Function Expand-Environment($value)
-{
-<#
+Function Expand-Environment($value) {
+    <#
     .SYNOPSIS
     Helper function to expand environment variables in values. By default
     it turns any type to a string, but we ensure $null remains $null.
 #>
     if ($null -ne $value) {
         [System.Environment]::ExpandEnvironmentVariables($value)
-    } else {
+    }
+    else {
         $value
     }
 }
 
-Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $failifempty = $false, $emptyattributefailmessage, $ValidateSet, $ValidateSetErrorMessage, $type = $null, $aliases = @())
-{
-<#
+Function Get-AnsibleParam {
+    <#
     .SYNOPSIS
     Helper function to get an "attribute" from a psobject instance in PowerShell.
     This is a convenience to make getting Members from an object easier and
@@ -156,6 +150,18 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
     Get-AnsibleParam also supports Parameter validation to save you from coding that manually
     Note that if you use the failifempty option, you do need to specify resultobject as well.
 #>
+    param (
+        $obj,
+        $name,
+        $default = $null,
+        $resultobj = @{},
+        $failifempty = $false,
+        $emptyattributefailmessage,
+        $ValidateSet,
+        $ValidateSetErrorMessage,
+        $type = $null,
+        $aliases = @()
+    )
     # Check if the provided Member $name or aliases exist in $obj and return it or the default.
     try {
 
@@ -180,20 +186,24 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
 
             if ($ValidateSet -contains ($obj.$name)) {
                 $value = $obj.$name
-            } else {
+            }
+            else {
                 if ($null -eq $ValidateSetErrorMessage) {
                     #Auto-generated error should be sufficient in most use cases
                     $ValidateSetErrorMessage = "Get-AnsibleParam: Argument $name needs to be one of $($ValidateSet -join ",") but was $($obj.$name)."
                 }
                 Fail-Json -obj $resultobj -message $ValidateSetErrorMessage
             }
-        } else {
+        }
+        else {
             $value = $obj.$name
         }
-    } catch {
+    }
+    catch {
         if ($failifempty -eq $false) {
             $value = $default
-        } else {
+        }
+        else {
             if (-not $emptyattributefailmessage) {
                 $emptyattributefailmessage = "Get-AnsibleParam: Missing required argument: $name"
             }
@@ -224,45 +234,51 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj = @{}, $fail
                 Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' has an invalid path '$value' specified."
             }
         }
-    } elseif ($type -eq "str") {
+    }
+    elseif ($type -eq "str") {
         # Convert str types to real Powershell strings
         $value = $value.ToString()
-    } elseif ($type -eq "bool") {
+    }
+    elseif ($type -eq "bool") {
         # Convert boolean types to real Powershell booleans
         $value = $value | ConvertTo-Bool
-    } elseif ($type -eq "int") {
+    }
+    elseif ($type -eq "int") {
         # Convert int types to real Powershell integers
         $value = $value -as [int]
-    } elseif ($type -eq "float") {
+    }
+    elseif ($type -eq "float") {
         # Convert float types to real Powershell floats
         $value = $value -as [float]
-    } elseif ($type -eq "list") {
+    }
+    elseif ($type -eq "list") {
         if ($value -is [array]) {
             # Nothing to do
-        } elseif ($value -is [string]) {
+        }
+        elseif ($value -is [string]) {
             # Convert string type to real Powershell array
             $value = $value.Split(",").Trim()
-        } elseif ($value -is [int]) {
+        }
+        elseif ($value -is [int]) {
             $value = @($value)
-        } else {
+        }
+        else {
             Fail-Json -obj $resultobj -message "Get-AnsibleParam: Parameter '$name' is not a YAML list."
         }
         # , is not a typo, forces it to return as a list when it is empty or only has 1 entry
-        return ,$value
+        return , $value
     }
 
     return $value
 }
 
 #Alias Get-attr-->Get-AnsibleParam for backwards compat. Only add when needed to ease debugging of scripts
-If (-not(Get-Alias -Name "Get-attr" -ErrorAction SilentlyContinue))
-{
+If (-not(Get-Alias -Name "Get-attr" -ErrorAction SilentlyContinue)) {
     New-Alias -Name Get-attr -Value Get-AnsibleParam
 }
 
-Function ConvertTo-Bool
-{
-<#
+Function ConvertTo-Bool {
+    <#
     .SYNOPSIS
     Helper filter/pipeline function to convert a value to boolean following current
     Ansible practices
@@ -270,40 +286,43 @@ Function ConvertTo-Bool
     $is_true = "true" | ConvertTo-Bool
 #>
     param(
-        [parameter(valuefrompipeline=$true)]
+        [parameter(valuefrompipeline = $true)]
         $obj
     )
 
-    $boolean_strings = "yes", "on", "1", "true", 1
-    $obj_string = [string]$obj
+    process {
+        $boolean_strings = "yes", "on", "1", "true", 1
+        $obj_string = [string]$obj
 
-    if (($obj -is [boolean] -and $obj) -or $boolean_strings -contains $obj_string.ToLower()) {
-        return $true
-    } else {
-        return $false
+        if (($obj -is [boolean] -and $obj) -or $boolean_strings -contains $obj_string.ToLower()) {
+            return $true
+        }
+        else {
+            return $false
+        }
     }
 }
 
-Function Parse-Args($arguments, $supports_check_mode = $false)
-{
-<#
+Function Parse-Args {
+    <#
     .SYNOPSIS
     Helper function to parse Ansible JSON arguments from a "file" passed as
     the single argument to the module.
     .EXAMPLE
     $params = Parse-Args $args
 #>
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseSingularNouns", "", Justification = "Cannot change the name now")]
+    param ($arguments, $supports_check_mode = $false)
+
     $params = New-Object psobject
-    If ($arguments.Length -gt 0)
-    {
+    If ($arguments.Length -gt 0) {
         $params = Get-Content $arguments[0] | ConvertFrom-Json
     }
     Else {
         $params = $complex_args
     }
     $check_mode = Get-AnsibleParam -obj $params -name "_ansible_check_mode" -type "bool" -default $false
-    If ($check_mode -and -not $supports_check_mode)
-    {
+    If ($check_mode -and -not $supports_check_mode) {
         Exit-Json @{
             skipped = $true
             changed = $false
@@ -314,17 +333,14 @@ Function Parse-Args($arguments, $supports_check_mode = $false)
 }
 
 
-Function Get-FileChecksum($path, $algorithm = 'sha1')
-{
-<#
+Function Get-FileChecksum($path, $algorithm = 'sha1') {
+    <#
     .SYNOPSIS
     Helper function to calculate a hash of a file in a way which PowerShell 3
     and above can handle
 #>
-    If (Test-Path -LiteralPath $path -PathType Leaf)
-    {
-        switch ($algorithm)
-        {
+    If (Test-Path -LiteralPath $path -PathType Leaf) {
+        switch ($algorithm) {
             'md5' { $sp = New-Object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider }
             'sha1' { $sp = New-Object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider }
             'sha256' { $sp = New-Object -TypeName System.Security.Cryptography.SHA256CryptoServiceProvider }
@@ -336,39 +352,36 @@ Function Get-FileChecksum($path, $algorithm = 'sha1')
         If ($PSVersionTable.PSVersion.Major -ge 4) {
             $raw_hash = Get-FileHash -LiteralPath $path -Algorithm $algorithm
             $hash = $raw_hash.Hash.ToLower()
-        } Else {
+        }
+        Else {
             $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite);
             $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
             $fp.Dispose();
         }
     }
-    ElseIf (Test-Path -LiteralPath $path -PathType Container)
-    {
+    ElseIf (Test-Path -LiteralPath $path -PathType Container) {
         $hash = "3";
     }
-    Else
-    {
+    Else {
         $hash = "1";
     }
     return $hash
 }
 
-Function Get-PendingRebootStatus
-{
-<#
+Function Get-PendingRebootStatus {
+    <#
     .SYNOPSIS
     Check if reboot is required, if so notify CA.
     Function returns true if computer has a pending reboot
 #>
     $featureData = Invoke-CimMethod -EA Ignore -Name GetServerFeature -Namespace root\microsoft\windows\servermanager -Class MSFT_ServerManagerTasks
     $regData = Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" "PendingFileRenameOperations" -EA Ignore
-    $CBSRebootStatus = Get-ChildItem "HKLM:\\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing"  -ErrorAction SilentlyContinue| Where-Object {$_.PSChildName -eq "RebootPending"}
-    if(($featureData -and $featureData.RequiresReboot) -or $regData -or $CBSRebootStatus)
-    {
+    $CBSRebootStatus = Get-ChildItem "HKLM:\\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing" -ErrorAction SilentlyContinue |
+        Where-Object { $_.PSChildName -eq "RebootPending" }
+    if (($featureData -and $featureData.RequiresReboot) -or $regData -or $CBSRebootStatus) {
         return $True
     }
-    else
-    {
+    else {
         return $False
     }
 }

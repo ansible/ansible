@@ -1,5 +1,5 @@
 Param(
-[bool]$boolvariable
+    [bool]$boolvariable
 )
 
 Write-Output $boolvariable.GetType().FullName

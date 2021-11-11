@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 param(
-    [Parameter(Mandatory=$true)][System.Collections.IDictionary]$Payload
+    [Parameter(Mandatory = $true)][System.Collections.IDictionary]$Payload
 )
 
 #Requires -Module Ansible.ModuleUtils.AddType
@@ -17,7 +17,8 @@ Function Get-EnumValue($enum, $flag_type, $value) {
     $raw_enum_value = $value.Replace('_', '')
     try {
         $enum_value = [Enum]::Parse($enum, $raw_enum_value, $true)
-    } catch [System.ArgumentException] {
+    }
+    catch [System.ArgumentException] {
         $valid_options = [Enum]::GetNames($enum) | ForEach-Object -Process {
             (($_ -creplace "(.)([A-Z][a-z]+)", '$1_$2') -creplace "([a-z0-9])([A-Z])", '$1_$2').ToString().ToLower()
         }
@@ -26,15 +27,17 @@ Function Get-EnumValue($enum, $flag_type, $value) {
     return $enum_value
 }
 
-Function Get-BecomeFlags($flags) {
+Function Get-BecomeFlag($flags) {
     $logon_type = [Ansible.AccessToken.LogonType]::Interactive
     $logon_flags = [Ansible.Become.LogonFlags]::WithProfile
 
     if ($null -eq $flags -or $flags -eq "") {
         $flag_split = @()
-    } elseif ($flags -is [string]) {
+    }
+    elseif ($flags -is [string]) {
         $flag_split = $flags.Split(" ")
-    } else {
+    }
+    else {
         throw "become_flags must be a string, was $($flags.GetType())"
     }
 
@@ -52,7 +55,8 @@ Function Get-BecomeFlags($flags) {
                 value = $flag_value
             }
             $logon_type = Get-EnumValue @enum_details
-        } elseif ($flag_key -eq "logon_flags") {
+        }
+        elseif ($flag_key -eq "logon_flags") {
             $logon_flag_values = $flag_value.Split(",")
             $logon_flags = 0 -as [Ansible.Become.LogonFlags]
             foreach ($logon_flag_value in $logon_flag_values) {
@@ -67,7 +71,8 @@ Function Get-BecomeFlags($flags) {
                 $logon_flag = Get-EnumValue @enum_details
                 $logon_flags = $logon_flags -bor $logon_flag
             }
-        } else {
+        }
+        else {
             throw "become_flags key '$flag_key' is not a valid runas flag, must be 'logon_type' or 'logon_flags'"
         }
     }
@@ -96,8 +101,9 @@ if ($null -eq $password) {
 }
 
 try {
-    $logon_type, $logon_flags = Get-BecomeFlags -flags $Payload.become_flags
-} catch {
+    $logon_type, $logon_flags = Get-BecomeFlag -flags $Payload.become_flags
+}
+catch {
     Write-AnsibleError -Message "internal error: failed to parse become_flags '$($Payload.become_flags)'" -ErrorRecord $_
     $host.SetShouldExit(1)
     return
@@ -134,12 +140,13 @@ $exec_wrapper += "`0`0`0`0" + $payload_json
 try {
     Write-AnsibleLog "INFO - starting become process '$lp_command_line'" "become_wrapper"
     $result = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($username, $password, $logon_flags, $logon_type,
-        $null, $lp_command_line,  $lp_current_directory, $null, $exec_wrapper)
+        $null, $lp_command_line, $lp_current_directory, $null, $exec_wrapper)
     Write-AnsibleLog "INFO - become process complete with rc: $($result.ExitCode)" "become_wrapper"
     $stdout = $result.StandardOut
     try {
         $stdout = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($stdout))
-    } catch [FormatException] {
+    }
+    catch [FormatException] {
         # output wasn't Base64, ignore as it may contain an error message we want to pass to Ansible
         Write-AnsibleLog "WARN - become process stdout was not base64 encoded as expected: $stdout"
     }
@@ -147,7 +154,8 @@ try {
     $host.UI.WriteLine($stdout)
     $host.UI.WriteErrorLine($result.StandardError.Trim())
     $host.SetShouldExit($result.ExitCode)
-} catch {
+}
+catch {
     Write-AnsibleError -Message "internal error: failed to become user '$username'" -ErrorRecord $_
     $host.SetShouldExit(1)
 }

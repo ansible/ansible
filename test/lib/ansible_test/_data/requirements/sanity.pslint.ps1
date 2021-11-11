@@ -3,7 +3,7 @@ param (
     $IsContainer
 )
 
-#Requires -Version 6
+#Requires -Version 7
 
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = "Stop"
@@ -12,11 +12,11 @@ $ProgressPreference = 'SilentlyContinue'
 Function Install-PSModule {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [String]
         $Name,
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [Version]
         $RequiredVersion
     )
@@ -25,11 +25,11 @@ Function Install-PSModule {
     $installedModule = Get-Module -Name $Name -ListAvailable | Where-Object Version -eq $RequiredVersion
     if (-not $installedModule) {
         Install-Module -Name $Name -RequiredVersion $RequiredVersion -Scope CurrentUser
-   }
+    }
 }
 
 Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
-Install-PSModule -Name PSScriptAnalyzer -RequiredVersion 1.18.0
+Install-PSModule -Name PSScriptAnalyzer -RequiredVersion 1.20.0
 
 if ($IsContainer) {
     # PSScriptAnalyzer contain lots of json files for the UseCompatibleCommands check. We don't use this rule so by

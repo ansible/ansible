@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 param(
-    [Parameter(Mandatory=$true)][System.Collections.IDictionary]$Payload
+    [Parameter(Mandatory = $true)][System.Collections.IDictionary]$Payload
 )
 
 #AnsibleRequires -Wrapper module_wrapper
@@ -159,7 +159,8 @@ try {
 
     try {
         &$entrypoint @params
-    } finally {
+    }
+    finally {
         # Processing here is kept to an absolute minimum to make sure each task runtime is kept as small as
         # possible. Once all the tests have been run ansible-test will collect this info and process it locally in
         # one go.
@@ -180,14 +181,16 @@ try {
         $utf8_no_bom = New-Object -TypeName System.Text.UTF8Encoding -ArgumentList $false
         [System.IO.File]::WriteAllbytes($coverage_output_path, $utf8_no_bom.GetBytes($code_cov_json))
     }
-} finally {
+}
+finally {
     try {
         if ($breakpoint_info) {
             foreach ($b in $breakpoint_info.Breakpoints) {
                 Remove-PSBreakpoint -Breakpoint $b
             }
         }
-    } finally {
+    }
+    finally {
         Write-AnsibleLog "INFO - Remove temp coverage folder '$temp_path'" "coverage_wrapper"
         Remove-Item -LiteralPath $temp_path -Force -Recurse
     }
