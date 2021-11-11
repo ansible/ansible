@@ -90,6 +90,7 @@ Codes
   invalid-argument-spec                                        Documentation        Error                  Argument in argument_spec must be a dictionary/hash when used
   invalid-argument-spec-options                                Documentation        Error                  Suboptions in argument_spec are invalid
   invalid-documentation                                        Documentation        Error                  ``DOCUMENTATION`` is not valid YAML
+  invalid-documentation-markup                                 Documentation        Error                  ``DOCUMENTATION`` or ``RETURN`` contains invalid markup
   invalid-documentation-options                                Documentation        Error                  ``DOCUMENTATION.options`` must be a dictionary/hash when used
   invalid-examples                                             Documentation        Error                  ``EXAMPLES`` is not valid YAML
   invalid-extension                                            Naming               Error                  Official Ansible modules must have a ``.py`` extension for python modules or a ``.ps1`` for powershell modules

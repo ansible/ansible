@@ -88,13 +88,13 @@ _REF = re.compile(r"\bR\(([^)]+)\)")
 def _check_module_link(directive, content):
     if not FULLY_QUALIFIED_COLLECTION_RESOURCE_RE.match(content):
         raise _add_ansible_error_code(
-            Invalid('Directive "%s" must contain a FQCN' % directive), 'invalid-docs-markup')
+            Invalid('Directive "%s" must contain a FQCN' % directive), 'invalid-documentation-markup')
 
 
 def _check_link(directive, content):
     if ',' not in content:
         raise _add_ansible_error_code(
-            Invalid('Directive "%s" must contain a comma' % directive), 'invalid-docs-markup')
+            Invalid('Directive "%s" must contain a comma' % directive), 'invalid-documentation-markup')
     idx = content.rindex(',')
     title = content[:idx]
     url = content[idx + 1:].lstrip(' ')
@@ -108,13 +108,13 @@ def _check_url(directive, content):
             raise ValueError('Schema must be HTTP, HTTPS, or not specified')
     except ValueError as exc:
         raise _add_ansible_error_code(
-            Invalid('Directive "%s" must contain an URL' % directive), 'invalid-docs-markup')
+            Invalid('Directive "%s" must contain an URL' % directive), 'invalid-documentation-markup')
 
 
 def _check_ref(directive, content):
     if ',' not in content:
         raise _add_ansible_error_code(
-            Invalid('Directive "%s" must contain a comma' % directive), 'invalid-docs-markup')
+            Invalid('Directive "%s" must contain a comma' % directive), 'invalid-documentation-markup')
 
 
 def doc_string(v):
