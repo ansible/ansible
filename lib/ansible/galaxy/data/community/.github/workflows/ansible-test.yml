@@ -95,9 +95,8 @@ jobs:
       fail-fast: false
       matrix:
         ansible:
-          # - stable-2.9 # Only if your collection supports Ansible 2.9
-          - stable-2.10
-          - stable-2.11
+          # List versions of ansible-core the collection supports here. For example:
+          - stable-2.12
           - devel
         python:
           # List all Python versions that the collection supports here
