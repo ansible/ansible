@@ -10,6 +10,7 @@ import re
 
 from ansible.module_utils.compat.version import StrictVersion
 from functools import partial
+from urllib.parse import urlparse
 
 from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid
 from ansible.module_utils.six import string_types
@@ -46,7 +47,8 @@ def isodate(v, error_code=None):
     return v
 
 
-COLLECTION_NAME_RE = re.compile(r'^([^.]+(\.[^.]+)+)$')
+COLLECTION_NAME_RE = re.compile(r'^\w+(?:\.\w+)+$')
+FULLY_QUALIFIED_COLLECTION_RESOURCE_RE = re.compile(r'^\w+(?:\.\w+){2,}$')
 
 
 def collection_name(v, error_code=None):
@@ -77,6 +79,70 @@ def date(error_code=None):
     return Any(isodate, error_code=error_code)
 
 
+_MODULE = re.compile(r"\bM\(([^)]+)\)")
+_LINK = re.compile(r"\bL\(([^)]+)\)")
+_URL = re.compile(r"\bU\(([^)]+)\)")
+_REF = re.compile(r"\bR\(([^)]+)\)")
+
+
+def _check_module_link(directive, content):
+    if not FULLY_QUALIFIED_COLLECTION_RESOURCE_RE.match(content):
+        raise _add_ansible_error_code(
+            Invalid('Directive "%s" must contain a FQCN' % directive), 'invalid-documentation-markup')
+
+
+def _check_link(directive, content):
+    if ',' not in content:
+        raise _add_ansible_error_code(
+            Invalid('Directive "%s" must contain a comma' % directive), 'invalid-documentation-markup')
+    idx = content.rindex(',')
+    title = content[:idx]
+    url = content[idx + 1:].lstrip(' ')
+    _check_url(directive, url)
+
+
+def _check_url(directive, content):
+    try:
+        parsed_url = urlparse(content)
+        if parsed_url.scheme not in ('', 'http', 'https'):
+            raise ValueError('Schema must be HTTP, HTTPS, or not specified')
+    except ValueError as exc:
+        raise _add_ansible_error_code(
+            Invalid('Directive "%s" must contain an URL' % directive), 'invalid-documentation-markup')
+
+
+def _check_ref(directive, content):
+    if ',' not in content:
+        raise _add_ansible_error_code(
+            Invalid('Directive "%s" must contain a comma' % directive), 'invalid-documentation-markup')
+
+
+def doc_string(v):
+    """Match a documentation string."""
+    if not isinstance(v, string_types):
+        raise _add_ansible_error_code(
+            Invalid('Must be a string'), 'invalid-documentation')
+    for m in _MODULE.finditer(v):
+        _check_module_link(m.group(0), m.group(1))
+    for m in _LINK.finditer(v):
+        _check_link(m.group(0), m.group(1))
+    for m in _URL.finditer(v):
+        _check_url(m.group(0), m.group(1))
+    for m in _REF.finditer(v):
+        _check_ref(m.group(0), m.group(1))
+    return v
+
+
+def doc_string_or_strings(v):
+    """Match a documentation string, or list of strings."""
+    if isinstance(v, string_types):
+        return doc_string(v)
+    if isinstance(v, (list, tuple)):
+        return [doc_string(vv) for vv in v]
+    raise _add_ansible_error_code(
+        Invalid('Must be a string or list of strings'), 'invalid-documentation')
+
+
 def is_callable(v):
     if not callable(v):
         raise ValueInvalid('not a valid value')
@@ -103,16 +169,16 @@ seealso_schema = Schema(
         Any(
             {
                 Required('module'): Any(*string_types),
-                'description': Any(*string_types),
+                'description': doc_string,
             },
             {
                 Required('ref'): Any(*string_types),
-                Required('description'): Any(*string_types),
+                Required('description'): doc_string,
             },
             {
                 Required('name'): Any(*string_types),
                 Required('link'): Any(*string_types),
-                Required('description'): Any(*string_types),
+                Required('description'): doc_string,
             },
         ),
     ]
@@ -322,7 +388,7 @@ def version_added(v, error_code='version-added-invalid', accept_historical=False
 def list_dict_option_schema(for_collection):
     suboption_schema = Schema(
         {
-            Required('description'): Any(list_string_types, *string_types),
+            Required('description'): doc_string_or_strings,
             'required': bool,
             'choices': list,
             'aliases': Any(list_string_types),
@@ -345,7 +411,7 @@ def list_dict_option_schema(for_collection):
 
     option_schema = Schema(
         {
-            Required('description'): Any(list_string_types, *string_types),
+            Required('description'): doc_string_or_strings,
             'required': bool,
             'choices': list,
             'aliases': Any(list_string_types),
@@ -390,8 +456,8 @@ def return_schema(for_collection):
         All(
             Schema(
                 {
-                    Required('description'): Any(list_string_types, *string_types),
-                    'returned': Any(*string_types),  # only returned on top level
+                    Required('description'): doc_string_or_strings,
+                    'returned': doc_string,  # only returned on top level
                     Required('type'): Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str'),
                     'version_added': version(for_collection),
                     'version_added_collection': collection_name,
@@ -418,8 +484,8 @@ def return_schema(for_collection):
             Schema(
                 {
                     any_string_types: {
-                        Required('description'): Any(list_string_types, *string_types),
-                        Required('returned'): Any(*string_types),
+                        Required('description'): doc_string_or_strings,
+                        Required('returned'): doc_string,
                         Required('type'): Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str'),
                         'version_added': version(for_collection),
                         'version_added_collection': collection_name,
@@ -441,8 +507,8 @@ def return_schema(for_collection):
 
 def deprecation_schema(for_collection):
     main_fields = {
-        Required('why'): Any(*string_types),
-        Required('alternative'): Any(*string_types),
+        Required('why'): doc_string,
+        Required('alternative'): doc_string,
         Required('removed_from_collection'): collection_name,
         'removed': Any(True),
     }
@@ -502,13 +568,13 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
         deprecated_module = True
     doc_schema_dict = {
         Required('module'): module_name,
-        Required('short_description'): Any(*string_types),
-        Required('description'): Any(list_string_types, *string_types),
+        Required('short_description'): doc_string,
+        Required('description'): doc_string_or_strings,
         Required('author'): All(Any(None, list_string_types, *string_types), author),
-        'notes': Any(None, list_string_types),
+        'notes': Any(None, [doc_string]),
         'seealso': Any(None, seealso_schema),
-        'requirements': list_string_types,
-        'todo': Any(None, list_string_types, *string_types),
+        'requirements': [doc_string],
+        'todo': Any(None, doc_string_or_strings),
         'options': Any(None, *list_dict_option_schema(for_collection)),
         'extends_documentation_fragment': Any(list_string_types, *string_types),
         'version_added_collection': collection_name,
@@ -529,8 +595,8 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
 
     def add_default_attributes(more=None):
         schema = {
-            'description': Any(list_string_types, *string_types),
-            'details': Any(list_string_types, *string_types),
+            'description': doc_string_or_strings,
+            'details': doc_string_or_strings,
             'support': any_string_types,
             'version_added_collection': any_string_types,
             'version_added': any_string_types,
@@ -543,9 +609,9 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
         All(
             Schema({
                 any_string_types: {
-                    Required('description'): Any(list_string_types, *string_types),
+                    Required('description'): doc_string_or_strings,
                     Required('support'): Any('full', 'partial', 'none', 'N/A'),
-                    'details': Any(list_string_types, *string_types),
+                    'details': doc_string_or_strings,
                     'version_added_collection': collection_name,
                     'version_added': version(for_collection=for_collection),
                 },
