@@ -3,7 +3,7 @@
 # NOTE - this file must align with CI test for docs-build at
 #    test/sanity/code-smell/docs-build.requirements.txt
 
-antsibull==0.39.1
+antsibull==0.39.2
 # check what sphinx requires testing more recent docutils versions
 docutils==0.17.1
 jinja2==3.0.1
