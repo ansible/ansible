@@ -272,7 +272,7 @@
 
 - name: install deb file from URL with validate_certs off
   apt:
-    name: deb="{{ distro_mirror }}/pool/main/h/hello/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
+    deb: "{{ distro_mirror }}/pool/main/h/hello/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
     validate_certs: no
   register: apt_url
 
