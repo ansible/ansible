@@ -1,0 +1,6 @@
+minor_changes:
+  - |-
+    Ansible now has the Trove Classifier ``Framework :: Ansible`` on PyPI.
+    Python projects building on Ansible can use the same classifier. To
+    discover such packages visit https://pypi.org/search/?c=Framework+%3A%3A+Ansible.
+    (https://github.com/ansible/ansible/pull/73955)
