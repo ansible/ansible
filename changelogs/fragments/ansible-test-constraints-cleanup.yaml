@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Removed used ``MarkupSafe`` constraint for Python 3.5 and earlier.
