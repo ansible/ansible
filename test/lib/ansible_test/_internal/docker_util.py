@@ -401,11 +401,11 @@ class DockerInspect:
 
 def docker_inspect(args, identifier, always=False):  # type: (EnvironmentConfig, str, bool) -> DockerInspect
     """
-    Return the results of `docker inspect` for the specified container.
+    Return the results of `docker container inspect` for the specified container.
     Raises a ContainerNotFoundError if the container was not found.
     """
     try:
-        stdout = docker_command(args, ['inspect', identifier], capture=True, always=always)[0]
+        stdout = docker_command(args, ['container', 'inspect', identifier], capture=True, always=always)[0]
     except SubprocessError as ex:
         stdout = ex.stdout
 
