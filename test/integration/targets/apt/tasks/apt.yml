@@ -270,6 +270,20 @@
 - name: uninstall hello with apt
   apt: pkg=hello state=absent purge=yes
 
+- name: install deb file from URL with validate_certs off
+  apt:
+    name: deb="{{ distro_mirror }}/pool/main/h/hello/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
+    validate_certs: no
+  register: apt_url
+
+- name: verify installation of hello
+  assert:
+    that:
+        - "apt_url.changed"
+
+- name: uninstall hello with apt
+  apt: pkg=hello state=absent purge=yes
+
 - name: force install of deb
   apt: deb="/var/cache/apt/archives/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb" force=true
   register: dpkg_force

@@ -1,0 +1,2 @@
+minor_changes:
+  - "apt - adding validate_certs option to apt module (https://github.com/ansible/ansible/pull/76260)"
