@@ -399,7 +399,7 @@ class Display(metaclass=Singleton):
         screen_only: bool = False,
         log_only: bool = False,
         newline: bool = True,
-        wrap_text: bool = False,
+        nowrap: bool = False,
     ) -> None:
         """ Display a message to the user
 
@@ -415,7 +415,7 @@ class Display(metaclass=Singleton):
 
             istty = stderr and sys.__stderr__.isatty() or not stderr and sys.__stdout__.isatty()
 
-            if wrap_text or istty:
+            if istty and not nowrap:
                 wrapped = wrap(msg, self.columns, drop_whitespace=False)
                 msg2 = "\n".join(wrapped) + "\n"
             else:
@@ -586,12 +586,12 @@ class Display(metaclass=Singleton):
             self._deprecations[message_text] = 1
 
     @_proxy
-    def warning(self, msg: str, formatted: bool = C.NOTTY_WRAP) -> None:
+    def warning(self, msg: str, formatted: bool = (not C.NOTTY_WRAP)) -> None:
 
         if msg not in self._warns:
             self._warns[msg] = 1
             new_msg = "\n[WARNING]: \n%s" % msg
-            self.display(new_msg, color=C.COLOR_WARN, stderr=True, wrap_text=(not formatted))
+            self.display(new_msg, color=C.COLOR_WARN, stderr=True, nowrap=(not formatted))
 
     @_proxy
     def system_warning(self, msg: str) -> None:
@@ -620,7 +620,7 @@ class Display(metaclass=Singleton):
         if star_len <= 3:
             star_len = 3
         stars = u"*" * star_len
-        self.display(u"\n%s %s" % (msg, stars), color=color)
+        self.display(u"\n%s %s" % (msg, stars), color=color, nowrap=True)
 
     @_proxy
     def banner_cowsay(self, msg: str, color: str | None = None) -> None:
@@ -638,7 +638,7 @@ class Display(metaclass=Singleton):
         runcmd.append(to_bytes(msg))
         cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
-        self.display(u"%s\n" % to_text(out), color=color)
+        self.display(u"%s\n" % to_text(out), color=color, nowrap=True)
 
     @_proxy
     def error(self, msg: str, wrap_text: bool = C.NOTTY_WRAP) -> None:
