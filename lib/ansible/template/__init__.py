@@ -28,13 +28,10 @@ import re
 import time
 
 from contextlib import contextmanager
+from hashlib import sha1
 from numbers import Number
 from traceback import format_exc
 
-try:
-    from hashlib import sha1
-except ImportError:
-    from sha import sha as sha1
 
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 from jinja2.loaders import FileSystemLoader
