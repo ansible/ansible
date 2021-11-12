@@ -1,0 +1,2 @@
+removed_features:
+- psrp - Removed fallback on ``put_file`` with older ``pypsrp`` versions. Users must have at least ``pypsrp>=0.4.0``.
