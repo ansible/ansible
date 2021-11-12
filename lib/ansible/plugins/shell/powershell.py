@@ -244,7 +244,15 @@ class ShellModule(ShellBase):
         return self._encode_script(script, preserve_rc=False)
 
     def wrap_for_exec(self, cmd):
-        return '& %s; exit $LASTEXITCODE' % cmd
+        return '''$ErrorActionPreference = 'Continue'
+
+$stdout = $null
+$stderr = . { & %s | Set-Variable stdout } 2>&1 | ForEach-Object ToString
+
+if ($stdout) { [System.Console]::Out.WriteLine($stdout) }
+if ($stderr) { [System.Console]::Error.WriteLine($stderr) }
+exit $LASTEXITCODE
+''' % cmd
 
     def _unquote(self, value):
         '''Remove any matching quotes that wrap the given value.'''

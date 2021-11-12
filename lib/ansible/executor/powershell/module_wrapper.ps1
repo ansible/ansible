@@ -118,14 +118,18 @@ if ($Breakpoints.Count -gt 0) {
 
 Write-AnsibleLog "INFO - start module exec with Invoke() - $ModuleName" "module_wrapper"
 
-# temporarily override the stdout stream and create our own in a StringBuilder
+# temporarily override the stdout/stderr stream and create our own in a StringBuilder
 # we use this to ensure there's always an Out pipe and that we capture the
 # output for things like async or psrp
 $orig_out = [System.Console]::Out
-$sb = New-Object -TypeName System.Text.StringBuilder
-$new_out = New-Object -TypeName System.IO.StringWriter -ArgumentList $sb
+$orig_err = [System.Console]::Error
+$sb_stdout = New-Object -TypeName System.Text.StringBuilder
+$sb_stderr = New-Object -TypeName System.Text.StringBuilder
+$new_out = New-Object -TypeName System.IO.StringWriter -ArgumentList $sb_stdout
+$new_err = New-Object -TypeName System.IO.StringWriter -ArgumentList $sb_stderr
 try {
     [System.Console]::SetOut($new_out)
+    [System.Console]::SetError($new_err)
     $module_output = $ps.Invoke()
 }
 catch {
@@ -152,7 +156,9 @@ catch {
 }
 finally {
     [System.Console]::SetOut($orig_out)
+    [System.Console]::SetError($orig_err)
     $new_out.Dispose()
+    $new_err.Dispose()
 }
 
 # other types of errors may not throw an exception in Invoke but rather just
@@ -183,7 +189,7 @@ if ($ps.InvocationStateInfo.State -eq "Failed" -and $ModuleName -ne "script") {
 }
 
 Write-AnsibleLog "INFO - module exec ended $ModuleName" "module_wrapper"
-$stdout = $sb.ToString()
+$stdout = $sb_stdout.ToString()
 if ($stdout) {
     Write-Output -InputObject $stdout
 }
@@ -191,6 +197,11 @@ if ($module_output.Count -gt 0) {
     # do not output if empty collection
     Write-AnsibleLog "INFO - using the output stream for module output - $ModuleName" "module_wrapper"
     Write-Output -InputObject ($module_output -join "`r`n")
+}
+
+$stderr = $sb_stderr.ToString()
+if ($stderr) {
+    $host.UI.WriteErrorLine($stderr)
 }
 
 # we attempt to get the return code from the LASTEXITCODE variable
