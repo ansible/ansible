@@ -113,7 +113,6 @@ lib/ansible/playbook/helpers.py pylint:disallowed-name
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
 lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility
 lib/ansible/plugins/callback/__init__.py pylint:arguments-renamed
-lib/ansible/plugins/connection/psrp.py pylint:ansible-deprecated-version
 lib/ansible/plugins/inventory/advanced_host_list.py pylint:arguments-renamed
 lib/ansible/plugins/inventory/host_list.py pylint:arguments-renamed
 lib/ansible/plugins/lookup/random_choice.py pylint:arguments-renamed
