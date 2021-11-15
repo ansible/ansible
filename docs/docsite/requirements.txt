@@ -6,7 +6,7 @@
 antsibull >= 0.39.2
 docutils
 jinja2
-Pygments >= 2.4.0
+Pygments >= 2.10.0
 PyYAML
 rstcheck
 sphinx
