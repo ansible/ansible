@@ -13,6 +13,8 @@ DOCUMENTATION = '''
     version_added: historical
     description:
         - This is the default output callback used by the ansible command (ad-hoc)
+    extends_documentation_fragment:
+      - result_format_callback
 '''
 
 from ansible.plugins.callback import CallbackBase

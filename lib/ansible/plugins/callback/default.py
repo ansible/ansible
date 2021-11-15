@@ -14,6 +14,7 @@ DOCUMENTATION = '''
         - This is the default output callback for ansible-playbook.
     extends_documentation_fragment:
       - default_callback
+      - result_format_callback
     requirements:
       - set as stdout in configuration
 '''
