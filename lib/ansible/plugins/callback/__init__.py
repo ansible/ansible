@@ -61,7 +61,10 @@ class _AnsibleCallbackDumper(AnsibleDumper):
         self._lossy = lossy
 
     def __call__(self, *args, **kwargs):
-        super(_AnsibleCallbackDumper, self).__init__(*args, **kwargs)
+        # pyyaml expects that we are passing an object that can be instantiated, but to
+        # smuggle the ``lossy`` configuration, we do that in ``__init__`` and then
+        # define this ``__call__`` that will mimic the ability for pyyaml to instantiate class
+        super().__init__(*args, **kwargs)
         return self
 
 
