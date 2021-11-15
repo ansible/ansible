@@ -6,8 +6,8 @@
 antsibull >= 0.39.2
 docutils
 jinja2
-Pygments >= 2.10.0
-PyYAML
+pygments >= 2.10.0
+pyyaml
 rstcheck
 sphinx
 sphinx-notfound-page >= 0.6
