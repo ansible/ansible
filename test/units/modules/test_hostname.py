@@ -1,6 +1,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+import shutil
+import tempfile
+
 from units.compat.mock import patch, MagicMock, mock_open
 from ansible.module_utils import basic
 from ansible.module_utils.common._utils import get_all_subclasses
@@ -33,3 +37,98 @@ class TestHostname(ModuleTestCase):
                 self.assertFalse(
                     m.return_value.write.called,
                     msg='%s called write, should not have' % str(cls))
+
+
+class TestRedhatStrategy(ModuleTestCase):
+    def setUp(self):
+        super(TestRedhatStrategy, self).setUp()
+        self.testdir = tempfile.mkdtemp(prefix='ansible-test-hostname-')
+        self.network_file = os.path.join(self.testdir, "network")
+
+    def tearDown(self):
+        super(TestRedhatStrategy, self).tearDown()
+        shutil.rmtree(self.testdir, ignore_errors=True)
+
+    @property
+    def instance(self):
+        self.module = MagicMock()
+        instance = hostname.RedHatStrategy(self.module)
+        instance.NETWORK_FILE = self.network_file
+        return instance
+
+    def test_get_permanent_hostname_missing(self):
+        self.assertIsNone(self.instance.get_permanent_hostname())
+        self.assertTrue(self.module.fail_json.called)
+        self.module.fail_json.assert_called_with(
+            "Unable to locate HOSTNAME entry in %s" % self.network_file
+        )
+
+    def test_get_permanent_hostname_line_missing(self):
+        with open(self.network_file, "w") as f:
+            f.write("# some other content\n")
+        self.assertIsNone(self.instance.get_permanent_hostname())
+        self.module.fail_json.assert_called_with(
+            "Unable to locate HOSTNAME entry in %s" % self.network_file
+        )
+
+    def test_get_permanent_hostname_existing(self):
+        with open(self.network_file, "w") as f:
+            f.write(
+                "some other content\n"
+                "HOSTNAME=foobar\n"
+                "more content\n"
+            )
+        self.assertEqual(self.instance.get_permanent_hostname(), "foobar")
+
+    def test_get_permanent_hostname_existing_whitespace(self):
+        with open(self.network_file, "w") as f:
+            f.write(
+                "some other content\n"
+                "     HOSTNAME=foobar   \n"
+                "more content\n"
+            )
+        self.assertEqual(self.instance.get_permanent_hostname(), "foobar")
+
+    def test_set_permanent_hostname_missing(self):
+        self.instance.set_permanent_hostname("foobar")
+        with open(self.network_file) as f:
+            self.assertEqual(f.read(), "HOSTNAME=foobar\n")
+
+    def test_set_permanent_hostname_line_missing(self):
+        with open(self.network_file, "w") as f:
+            f.write("# some other content\n")
+        self.instance.set_permanent_hostname("foobar")
+        with open(self.network_file) as f:
+            self.assertEqual(f.read(), "# some other content\nHOSTNAME=foobar\n")
+
+    def test_set_permanent_hostname_existing(self):
+        with open(self.network_file, "w") as f:
+            f.write(
+                "some other content\n"
+                "HOSTNAME=spam\n"
+                "more content\n"
+            )
+        self.instance.set_permanent_hostname("foobar")
+        with open(self.network_file) as f:
+            self.assertEqual(
+                f.read(),
+                "some other content\n"
+                "HOSTNAME=foobar\n"
+                "more content\n"
+            )
+
+    def test_set_permanent_hostname_existing_whitespace(self):
+        with open(self.network_file, "w") as f:
+            f.write(
+                "some other content\n"
+                "     HOSTNAME=spam   \n"
+                "more content\n"
+            )
+        self.instance.set_permanent_hostname("foobar")
+        with open(self.network_file) as f:
+            self.assertEqual(
+                f.read(),
+                "some other content\n"
+                "HOSTNAME=foobar\n"
+                "more content\n"
+            )
