@@ -217,10 +217,19 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
         - ref: aci_guide
           description: Detailed information on how to manage your ACI infrastructure using Ansible.
 
+        # Reference by rST documentation anchor (with custom title)
+        - ref: The official Ansible ACI guide <aci_guide>
+          description: Detailed information on how to manage your ACI infrastructure using Ansible.
+
         # Reference by Internet resource
         - name: APIC Management Information Model reference
           description: Complete reference of the APIC object model.
           link: https://developer.cisco.com/docs/apic-mim-ref/
+
+
+  * If you use ``ref:`` to link to an anchor that is not associated with a title, you must add a title to the ref for the link to work correctly.
+  * You can link to non-module plugins with ``ref:`` using the rST anchor, but plugin and module anchors are never associated with a title, so you must supply a title when you link to them. For example ``ref: namespace.collection.plugin_name lookup plugin  <ansible_collections.namespace.collection.plugin_name_lookup>``.
+
 
 :notes:
 
@@ -235,6 +244,8 @@ You can link from your module documentation to other module docs, other resource
 
 * ``L()`` for links with a heading. For example: ``See L(Ansible Automation Platform,https://www.ansible.com/products/automation-platform).`` As of Ansible 2.10, do not use ``L()`` for relative links between Ansible documentation and collection documentation.
 * ``U()`` for URLs. For example: ``See U(https://www.ansible.com/products/automation-platform) for an overview.``
+* ``R()`` for cross-references with a heading (added in Ansible 2.10). For example: ``See R(Cisco IOS Platform Guide,ios_platform_options)``.  Use the RST anchor for the cross-reference. See :ref:`adding_anchors_rst` for details.
+* ``M()`` for module names. For example: ``See also M(ansible.builtin.yum) or M(community.general.apt_rpm)``.
 
 There are also some macros which do not create links but we use them to display certain types of
 content in a uniform way:
@@ -247,12 +258,17 @@ content in a uniform way:
 
 .. note::
 
-  For links between modules and documentation within a collection, you can use either of the options above. Use ``U()`` or ``L()`` with full URLs (not relative links).
+  Cross-references with ``R()`` currently **do not work** inside option and return value documentations. They do work however in the global description, notes, and ``seealso`` descriptions.
 
 .. note::
-    - When a collection is not the right granularity, use ``C(..)``:
 
-        - ``The C(win_*) modules (spread across several collections) allow you to manage various aspects of windows hosts.``
+  For links between modules and documentation within a collection, you can use any of the options above. For links outside of your collection, use ``R()`` if available. Otherwise, use ``U()`` or ``L()`` with full URLs (not relative links). For modules, use ``M()`` with the FQCN or ``ansible.builtin`` as shown in the example. If you are creating your own documentation site, you will need to use the `intersphinx extension <https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html>`_ to convert ``R()`` and ``M()`` to the correct links.
+
+.. note::
+  To refer to a group of modules in a collection, use ``R()``.  When a collection is not the right granularity, use ``C(..)``:
+
+    - ``Refer to the R(kubernetes.core collection, plugins_in_kubernetes.core) for information on managing kubernetes clusters.``
+    - ``The C(win_*) modules (spread across several collections) allow you to manage various aspects of windows hosts.``
 
 .. note::
 

@@ -8,7 +8,7 @@ Function Get-PSUtilSpec {
     #>
     @{
         options = @{
-          option1 = @{ type = 'str'; required = $true; aliases = 'alias1' }
+            option1 = @{ type = 'str'; required = $true; aliases = 'alias1' }
         }
     }
 }

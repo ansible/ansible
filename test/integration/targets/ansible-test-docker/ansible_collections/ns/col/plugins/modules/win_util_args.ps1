@@ -8,7 +8,7 @@
 
 $spec = @{
     options = @{
-      my_opt = @{ type = "str"; required = $true }
+        my_opt = @{ type = "str"; required = $true }
     }
 }
 

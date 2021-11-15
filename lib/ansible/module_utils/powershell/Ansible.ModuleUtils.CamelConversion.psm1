@@ -28,15 +28,17 @@ Function Convert-ListToSnakeCase($list) {
     foreach ($value in $list) {
         if ($value -is [Hashtable]) {
             $new_value = Convert-DictToSnakeCase -dict $value
-        } elseif ($value -is [Array] -or $value -is [System.Collections.ArrayList]) {
+        }
+        elseif ($value -is [Array] -or $value -is [System.Collections.ArrayList]) {
             $new_value = Convert-ListToSnakeCase -list $value
-        } else {
+        }
+        else {
             $new_value = $value
         }
         [void]$snake_list.Add($new_value)
     }
 
-    return ,$snake_list
+    return , $snake_list
 }
 
 # converts a dict/hashtable keys from camelCase to snake_case
@@ -51,14 +53,16 @@ Function Convert-DictToSnakeCase($dict) {
         $value = $dict_entry.Value
         if ($value -is [Hashtable]) {
             $snake_dict.$snake_key = Convert-DictToSnakeCase -dict $value
-        } elseif ($value -is [Array] -or $value -is [System.Collections.ArrayList]) {
+        }
+        elseif ($value -is [Array] -or $value -is [System.Collections.ArrayList]) {
             $snake_dict.$snake_key = Convert-ListToSnakeCase -list $value
-        } else {
+        }
+        else {
             $snake_dict.$snake_key = $value
         }
     }
 
-    return ,$snake_dict
+    return , $snake_dict
 }
 
 # this line must stay at the bottom to ensure all defined module parts are exported

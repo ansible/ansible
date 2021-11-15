@@ -17,6 +17,18 @@ if sys.version_info < (3, 8):
         'Current version: %s' % ''.join(sys.version.splitlines())
     )
 
+from importlib.metadata import version
+from ansible.module_utils.compat.version import LooseVersion
+
+# Used for determining if the system is running a new enough Jinja2 version
+# and should only restrict on our documented minimum versions
+jinja2_version = version('jinja2')
+if jinja2_version < LooseVersion('3.0'):
+    raise SystemExit(
+        'ERROR: Ansible requires Jinja2 3.0 or newer on the controller. '
+        'Current version: %s' % jinja2_version
+    )
+
 import errno
 import getpass
 import os
@@ -190,6 +202,7 @@ class CLI(ABC):
                                         create_new_password,
                                         auto_prompt=auto_prompt)
 
+        last_exception = found_vault_secret = None
         for vault_id_slug in vault_ids:
             vault_id_name, vault_id_value = CLI.split_vault_id(vault_id_slug)
             if vault_id_value in ['prompt', 'prompt_ask_vault_pass']:
@@ -213,6 +226,7 @@ class CLI(ABC):
                     display.warning('Error in vault password prompt (%s): %s' % (vault_id_name, exc))
                     raise
 
+                found_vault_secret = True
                 vault_secrets.append((built_vault_id, prompted_vault_secret))
 
                 # update loader with new secrets incrementally, so we can load a vault password
@@ -223,17 +237,23 @@ class CLI(ABC):
             # assuming anything else is a password file
             display.vvvvv('Reading vault password file: %s' % vault_id_value)
             # read vault_pass from a file
-            file_vault_secret = get_file_vault_secret(filename=vault_id_value,
-                                                      vault_id=vault_id_name,
-                                                      loader=loader)
+            try:
+                file_vault_secret = get_file_vault_secret(filename=vault_id_value,
+                                                          vault_id=vault_id_name,
+                                                          loader=loader)
+            except AnsibleError as exc:
+                display.warning('Error getting vault password file (%s): %s' % (vault_id_name, to_text(exc)))
+                last_exception = exc
+                continue
 
-            # an invalid password file will error globally
             try:
                 file_vault_secret.load()
             except AnsibleError as exc:
                 display.warning('Error in vault password file loading (%s): %s' % (vault_id_name, to_text(exc)))
-                raise
+                last_exception = exc
+                continue
 
+            found_vault_secret = True
             if vault_id_name:
                 vault_secrets.append((vault_id_name, file_vault_secret))
             else:
@@ -241,6 +261,11 @@ class CLI(ABC):
 
             # update loader with as-yet-known vault secrets
             loader.set_vault_secrets(vault_secrets)
+
+        # An invalid or missing password file will error globally
+        # if no valid vault secret was found.
+        if last_exception and not found_vault_secret:
+            raise last_exception
 
         return vault_secrets
 

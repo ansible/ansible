@@ -37,6 +37,10 @@ DOCKER_COMMANDS = [
     'podman',
 ]
 
+# Max number of open files in a docker container.
+# Passed with --ulimit option to the docker run command.
+MAX_NUM_OPEN_FILES = 10240
+
 
 class DockerCommand:
     """Details about the available docker command."""
@@ -232,6 +236,8 @@ def docker_run(
         # Only when the network is not the default bridge network.
         options.extend(['--network', network])
 
+    options.extend(['--ulimit', 'nofile=%s' % MAX_NUM_OPEN_FILES])
+
     for _iteration in range(1, 3):
         try:
             stdout = docker_command(args, [command] + options + [image] + cmd, capture=True)[0]
@@ -395,11 +401,11 @@ class DockerInspect:
 
 def docker_inspect(args, identifier, always=False):  # type: (EnvironmentConfig, str, bool) -> DockerInspect
     """
-    Return the results of `docker inspect` for the specified container.
+    Return the results of `docker container inspect` for the specified container.
     Raises a ContainerNotFoundError if the container was not found.
     """
     try:
-        stdout = docker_command(args, ['inspect', identifier], capture=True, always=always)[0]
+        stdout = docker_command(args, ['container', 'inspect', identifier], capture=True, always=always)[0]
     except SubprocessError as ex:
         stdout = ex.stdout
 

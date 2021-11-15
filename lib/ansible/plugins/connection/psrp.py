@@ -323,18 +323,11 @@ try:
     from pypsrp.exceptions import AuthenticationError, WinRMError
     from pypsrp.host import PSHost, PSHostUserInterface
     from pypsrp.powershell import PowerShell, RunspacePool
-    from pypsrp.shell import Process, SignalCode, WinRS
     from pypsrp.wsman import WSMan, AUTH_KWARGS
     from requests.exceptions import ConnectionError, ConnectTimeout
 except ImportError as err:
     HAS_PYPSRP = False
     PYPSRP_IMP_ERR = err
-
-NEWER_PYPSRP = True
-try:
-    import pypsrp.pwsh_scripts
-except ImportError:
-    NEWER_PYPSRP = False
 
 display = Display()
 
@@ -471,93 +464,6 @@ class Connection(ConnectionBase):
         out_path = self._shell._unquote(out_path)
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._psrp_host)
 
-        # The new method that uses PSRP directly relies on a feature added in pypsrp 0.4.0 (release 2019-09-19). In
-        # case someone still has an older version present we warn them asking to update their library to a newer
-        # release and fallback to the old WSMV shell.
-        if NEWER_PYPSRP:
-            rc, stdout, stderr, local_sha1 = self._put_file_new(in_path, out_path)
-
-        else:
-            display.deprecated("Older pypsrp library detected, please update to pypsrp>=0.4.0 to use the newer copy "
-                               "method over PSRP.", version="2.13", collection_name='ansible.builtin')
-            rc, stdout, stderr, local_sha1 = self._put_file_old(in_path, out_path)
-
-        if rc != 0:
-            raise AnsibleError(to_native(stderr))
-
-        put_output = json.loads(to_text(stdout))
-        remote_sha1 = put_output.get("sha1")
-
-        if not remote_sha1:
-            raise AnsibleError("Remote sha1 was not returned, stdout: '%s', stderr: '%s'"
-                               % (to_native(stdout), to_native(stderr)))
-
-        if not remote_sha1 == local_sha1:
-            raise AnsibleError("Remote sha1 hash %s does not match local hash %s"
-                               % (to_native(remote_sha1), to_native(local_sha1)))
-
-    def _put_file_old(self, in_path, out_path):
-        script = u'''begin {
-    $ErrorActionPreference = "Stop"
-    $ProgressPreference = 'SilentlyContinue'
-
-    $path = '%s'
-    $fd = [System.IO.File]::Create($path)
-    $algo = [System.Security.Cryptography.SHA1CryptoServiceProvider]::Create()
-    $bytes = @()
-} process {
-    $bytes = [System.Convert]::FromBase64String($input)
-    $algo.TransformBlock($bytes, 0, $bytes.Length, $bytes, 0) > $null
-    $fd.Write($bytes, 0, $bytes.Length)
-} end {
-    $fd.Close()
-    $algo.TransformFinalBlock($bytes, 0, 0) > $null
-    $hash = [System.BitConverter]::ToString($algo.Hash)
-    $hash = $hash.Replace("-", "").ToLowerInvariant()
-
-    Write-Output -InputObject "{`"sha1`":`"$hash`"}"
-}''' % out_path
-
-        cmd_parts = self._shell._encode_script(script, as_list=True,
-                                               strict_mode=False,
-                                               preserve_rc=False)
-        b_in_path = to_bytes(in_path, errors='surrogate_or_strict')
-        if not os.path.exists(b_in_path):
-            raise AnsibleFileNotFound('file or module does not exist: "%s"'
-                                      % to_native(in_path))
-
-        in_size = os.path.getsize(b_in_path)
-        buffer_size = int(self.runspace.connection.max_payload_size / 4 * 3)
-        sha1_hash = sha1()
-
-        # copying files is faster when using the raw WinRM shell and not PSRP
-        # we will create a WinRS shell just for this process
-        # TODO: speed this up as there is overhead creating a shell for this
-        with WinRS(self.runspace.connection, codepage=65001) as shell:
-            process = Process(shell, cmd_parts[0], cmd_parts[1:])
-            process.begin_invoke()
-
-            offset = 0
-            with open(b_in_path, 'rb') as src_file:
-                for data in iter((lambda: src_file.read(buffer_size)), b""):
-                    offset += len(data)
-                    display.vvvvv("PSRP PUT %s to %s (offset=%d, size=%d" %
-                                  (in_path, out_path, offset, len(data)),
-                                  host=self._psrp_host)
-                    b64_data = base64.b64encode(data) + b"\r\n"
-                    process.send(b64_data, end=(src_file.tell() == in_size))
-                    sha1_hash.update(data)
-
-                # the file was empty, return empty buffer
-                if offset == 0:
-                    process.send(b"", end=True)
-
-            process.end_invoke()
-            process.signal(SignalCode.CTRL_C)
-
-        return process.rc, process.stdout, process.stderr, sha1_hash.hexdigest()
-
-    def _put_file_new(self, in_path, out_path):
         copy_script = '''begin {
     $ErrorActionPreference = "Stop"
     $WarningPreference = "Continue"
@@ -685,7 +591,20 @@ end {
 
         rc, stdout, stderr = self._exec_psrp_script(copy_script, read_gen(), arguments=[out_path])
 
-        return rc, stdout, stderr, sha1_hash.hexdigest()
+        if rc != 0:
+            raise AnsibleError(to_native(stderr))
+
+        put_output = json.loads(to_text(stdout))
+        local_sha1 = sha1_hash.hexdigest()
+        remote_sha1 = put_output.get("sha1")
+
+        if not remote_sha1:
+            raise AnsibleError("Remote sha1 was not returned, stdout: '%s', stderr: '%s'"
+                               % (to_native(stdout), to_native(stderr)))
+
+        if not remote_sha1 == local_sha1:
+            raise AnsibleError("Remote sha1 hash %s does not match local hash %s"
+                               % (to_native(remote_sha1), to_native(local_sha1)))
 
     def fetch_file(self, in_path, out_path):
         super(Connection, self).fetch_file(in_path, out_path)

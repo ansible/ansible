@@ -535,29 +535,6 @@ DEFAULT_CACHE_PLUGIN_PATH:
   ini:
   - {key: cache_plugins, section: defaults}
   type: pathspec
-CALLABLE_ACCEPT_LIST:
-  name: Template 'callable' accept list
-  default: []
-  description: Whitelist of callable methods to be made available to template evaluation
-  env:
-  - name: ANSIBLE_CALLABLE_WHITELIST
-    deprecated:
-      why: normalizing names to new standard
-      version: "2.15"
-      alternatives: 'ANSIBLE_CALLABLE_ENABLED'
-  - name: ANSIBLE_CALLABLE_ENABLED
-    version_added: '2.11'
-  ini:
-  - key: callable_whitelist
-    section: defaults
-    deprecated:
-      why: normalizing names to new standard
-      version: "2.15"
-      alternatives: 'callable_enabled'
-  - key: callable_enabled
-    section: defaults
-    version_added: '2.11'
-  type: list
 DEFAULT_CALLBACK_PLUGIN_PATH:
   name: Callback Plugins Path
   default: ~/.ansible/plugins/callback:/usr/share/ansible/plugins/callback

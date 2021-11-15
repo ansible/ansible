@@ -1,3 +1,4 @@
+.. _roadmaps:
 .. _ansible_core_roadmaps:
 
 ansible-core Roadmaps
@@ -28,6 +29,7 @@ See :ref:`Ansible communication channels <communication>` for details on how to 
    :glob:
    :caption: ansible-core Roadmaps
 
+   ROADMAP_2_13
    ROADMAP_2_12
    ROADMAP_2_11
    ROADMAP_2_10

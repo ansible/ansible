@@ -1,15 +1,15 @@
 
-.. _porting_2.13_guide:
+.. _porting_2.13_guide_core:
 
-**************************
-Ansible 2.13 Porting Guide
-**************************
+*******************************
+Ansible-core 2.13 Porting Guide
+*******************************
 
-This section discusses the behavioral changes between Ansible 2.12 and Ansible 2.13.
+This section discusses the behavioral changes between ``ansible-core`` 2.12 and ``ansible-core`` 2.13.
 
 It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
 
-We suggest you read this page along with `Ansible Changelog for 2.13 <https://github.com/ansible/ansible/blob/devel/changelogs/CHANGELOG-v2.13.rst>`_ to understand what updates you may need to make.
+We suggest you read this page along with `ansible-core Changelog for 2.13 <https://github.com/ansible/ansible/blob/devel/changelogs/CHANGELOG-v2.13.rst>`_ to understand what updates you may need to make.
 
 This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
@@ -19,7 +19,19 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
-No notable changes
+* Templating - You can no longer perform arithmetic and concatenation operations outside of the jinja template. The following statement will need to be rewritten to produce ``[1, 2]``:
+
+ .. code-block:: yaml
+
+     - name: Prior to 2.13
+       debug:
+         msg: '[1] + {{ [2] }}'
+
+     - name: 2.13 and forward
+       debug:
+         msg: '{{ [1] + [2] }}'
+
+* The return value of the ``__repr__`` method of an undefined variable represented by the ``AnsibleUndefined`` object changed. ``{{ '%r'|format(undefined_variable) }}`` returns ``AnsibleUndefined(hint=None, obj=missing, name='undefined_variable')`` in 2.13 as opposed to just ``AnsibleUndefined`` in versions 2.12 and prior.
 
 
 Command Line
@@ -37,7 +49,7 @@ No notable changes
 Modules
 =======
 
-No notable changes
+* To use ansible-core 2.13 for module execution, you must use Python 2 version 2.7 or Python 3 version 3.5 or newer. Any code utilizing ``ansible.module_utils.basic`` will not function with lower Python versions.
 
 
 Modules removed

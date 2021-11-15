@@ -4,13 +4,7 @@
 #
 # useful targets:
 #   make clean ---------------- clean up
-#   make webdocs -------------- produce ansible doc at docs/docsite/_build/html
-#   make coredocs ------------- produce core doc at docs/docsite/_build/html
 #   make sdist ---------------- produce a tarball
-#   make docs ----------------- rebuild the manpages (results are checked in)
-#   make gettext -------------- produce POT files for docs
-#   make generate-po ---------- generate language specific po file
-#   make needs-translation ---- generate list of file with unstranlated or fuzzy string for a specific language
 #   make tests ---------------- run the tests (see https://docs.ansible.com/ansible/devel/dev_guide/testing_units.html for requirements)
 
 ########################################################
@@ -40,15 +34,6 @@ VERSION := $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py -
 ifeq ($(findstring error,$(VERSION)), error)
 $(error "version_helper failed")
 endif
-
-ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD|DragonFly'),1)
-CPUS ?= $(shell sysctl hw.ncpu|awk '{print $$2}')
-else
-CPUS ?= $(shell nproc)
-endif
-
-# Intenationalisation and Localisation
-LANGUAGES ?=
 
 # ansible-test parameters
 ANSIBLE_TEST ?= bin/ansible-test
@@ -157,45 +142,13 @@ sdist_upload: clean docs
 changelog:
 	PYTHONPATH=./lib antsibull-changelog release -vv --use-ansible-doc && PYTHONPATH=./lib antsibull-changelog generate -vv --use-ansible-doc
 
-.PHONY: epub
-epub:
-	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) epub)
-
-.PHONY: webdocs
-webdocs:
-	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) docs)
-
-.PHONY: coredocs
-coredocs:
-	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) coredocs)
-
-.PHONY: gettext
-gettext:
-	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) gettext)
-
-.PHONY: generate-po
-generate-po:
-	(cd docs/docsite/; CPUS=$(CPUS) LANGUAGES=$(LANGUAGES) $(MAKE) generate-po)
-
-.PHONY: needs-translation
-needs-translation:
-	(cd docs/docsite/; CPUS=$(CPUS) LANGUAGES=$(LANGUAGES) $(MAKE) needs-translation)
-
-.PHONY: linkcheckdocs
-linkcheckdocs:
-	(cd docs/docsite/; CPUS=$(CPUS) $(MAKE) linkcheckdocs)
-
 .PHONY: generate_rst
 generate_rst: lib/ansible/cli/*.py
 	mkdir -p ./docs/man/man1/ ; \
 	$(PYTHON) $(GENERATE_CLI) --template-file=docs/templates/man.j2 --output-dir=docs/man/man1/ --output-format man lib/ansible/cli/*.py
 
-
 docs: generate_rst
 	$(MAKE) $(MANPAGES)
-
-.PHONY: alldocs
-alldocs: docs webdocs
 
 version:
 	@echo $(VERSION)

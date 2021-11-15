@@ -1,0 +1,2 @@
+breaking_changes:
+- Module Python Dependency - Drop support for Python 2.6 in module execution.

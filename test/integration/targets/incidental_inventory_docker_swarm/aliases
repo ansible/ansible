@@ -3,6 +3,7 @@ context/controller
 skip/osx
 skip/macos
 skip/freebsd
+skip/rhel/9.0b  # there are no docker-ce packages for CentOS/RHEL 9
 destructive
 skip/docker  # The tests sometimes make docker daemon unstable; hence,
              # we skip all docker-based CI runs to avoid disrupting
