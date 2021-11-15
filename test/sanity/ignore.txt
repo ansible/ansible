@@ -174,11 +174,6 @@ test/support/integration/plugins/inventory/aws_ec2.py pylint:use-a-generator
 test/support/integration/plugins/modules/ec2_group.py pylint:use-a-generator
 test/support/integration/plugins/modules/timezone.py pylint:disallowed-name
 test/support/integration/plugins/module_utils/aws/core.py pylint:property-with-parameters
-test/sanity/code-smell/mypy.py compile-2.6!skip  # it's invoked under py3.6
-test/sanity/code-smell/mypy.py compile-2.7!skip  # it's invoked under py3.6
-test/sanity/code-smell/mypy.py compile-3.5!skip  # it's invoked under py3.6
-test/sanity/code-smell/mypy.py future-import-boilerplate!skip  # it's invoked under py3.6
-test/sanity/code-smell/mypy.py metaclass-boilerplate!skip  # it's invoked under py3.6
 test/support/integration/plugins/module_utils/cloud.py future-import-boilerplate
 test/support/integration/plugins/module_utils/cloud.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/cloud.py pylint:isinstance-second-argument-not-valid-type
