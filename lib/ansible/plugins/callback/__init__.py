@@ -74,20 +74,24 @@ def _should_use_block(scalar):
     return False
 
 
+class _SpecialCharacterTranslator:
+    def __getitem__(self, ch):
+        # "special character" logic from pyyaml yaml.emitter.Emitter.analyze_scalar, translated to decimal
+        # for perf w/ str.translate
+        if (ch == 10 or
+            32 <= ch <= 126 or
+            ch == 133 or
+            160 <= ch <= 55295 or
+            57344 <= ch <= 65533 or
+            65536 <= ch < 1114111)\
+                and ch != 65279:
+            return ch
+        return None
+
+
 def _filter_yaml_special(scalar):
     """Filter a string removing any character that libyaml/pyyaml declare as special"""
-    def do_filter():
-        # To attempt conserving memory, use a local function that yields
-        for ch in scalar:
-            # Logic copied from pyyaml yaml.emitter.Emitter.analyze_scalar
-            # and combined into a single if statement
-            # We only call yaml.dump with allow_unicode=True
-            if (ch == '\n' or '\x20' <= ch <= '\x7E' or
-                    ch == '\x85' or '\xA0' <= ch <= '\uD7FF' or
-                    '\uE000' <= ch <= '\uFFFD' or
-                    '\U00010000' <= ch < '\U0010ffff') and ch != '\uFEFF':
-                yield ch
-    return ''.join(do_filter())
+    return scalar.translate(_SpecialCharacterTranslator())
 
 
 def _munge_data_for_lossy_yaml(scalar):
