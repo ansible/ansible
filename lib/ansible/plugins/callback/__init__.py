@@ -255,7 +255,9 @@ class CallbackBase(AnsiblePlugin):
                                   cls=AnsibleJSONEncoder, indent=indent,
                                   ensure_ascii=False, sort_keys=False)
         elif result_format == 'yaml':
-            lossy = pretty_results is not False
+            # None is a sentinel in this case that indicates default behavior
+            # default behavior for yaml is to prettify results
+            lossy = pretty_results in (None, True)
             if lossy:
                 # if we already have stdout, we don't need stdout_lines
                 if 'stdout' in abridged_result and 'stdout_lines' in abridged_result:
@@ -319,7 +321,9 @@ class CallbackBase(AnsiblePlugin):
         if result_format == 'json':
             return json.dumps(diff, sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
         elif result_format == 'yaml':
-            lossy = pretty_results is not False
+            # None is a sentinel in this case that indicates default behavior
+            # default behavior for yaml is to prettify results
+            lossy = pretty_results in (None, True)
             return '%s\n' % textwrap.indent(
                 yaml.dump(
                     diff,
