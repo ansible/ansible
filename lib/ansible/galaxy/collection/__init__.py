@@ -165,8 +165,8 @@ def verify_local_collection(
 
     modified_content = []  # type: List[ModifiedContent]
 
-    verify_local_only = remote_collection is None
-    if verify_local_only:
+    if remote_collection is None:
+        verify_local_only = True
         # partial away the local FS detail so we can just ask generically during validation
         get_json_from_validation_source = functools.partial(_get_json_from_installed_dir, b_collection_path)
         get_hash_from_validation_source = functools.partial(_get_file_hash, b_collection_path)
@@ -174,6 +174,7 @@ def verify_local_collection(
         # since we're not downloading this, just seed it with the value from disk
         manifest_hash = get_hash_from_validation_source(MANIFEST_FILENAME)
     else:
+        verify_local_only = False
         # fetch remote
         b_temp_tar_path = (  # NOTE: AnsibleError is raised on URLError
             artifacts_manager.get_artifact_path
@@ -1339,14 +1340,14 @@ def _resolve_depenency_map(
             )
             for req_inf in dep_exc.causes
         )
-        error_msg_lines = chain(
+        error_msg_lines = list(chain(
             (
                 'Failed to resolve the requested '
                 'dependencies map. Could not satisfy the following '
                 'requirements:',
             ),
             conflict_causes,
-        )
+        ))
         raise raise_from(  # NOTE: Leading "raise" is a hack for mypy bug #9717
             AnsibleError('\n'.join(error_msg_lines)),
             dep_exc,
@@ -1370,7 +1371,7 @@ def _resolve_depenency_map(
                     format(parent=', '.join(parents))
                 )
             )
-        ]
+        ]  # type: ignore[no-redef]
 
         for req in dep_exc.criterion.iter_requirement():
             error_msg_lines.append(

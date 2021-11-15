@@ -41,7 +41,7 @@ class MultiGalaxyAPIProxy:
         self._concrete_art_mgr = concrete_artifacts_manager
 
     def _get_collection_versions(self, requirement):
-        # type: (Requirement, Iterator[GalaxyAPI]) -> Iterator[Tuple[GalaxyAPI, str]]
+        # type: (Requirement) -> Iterable[Tuple[GalaxyAPI, str]]
         """Helper for get_collection_versions.
 
         Yield api, version pairs for all APIs,
