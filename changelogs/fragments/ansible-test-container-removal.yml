@@ -1,0 +1,3 @@
+minor_changes:
+  - ansible-test - Remove the ``fedora33`` test container since Fedora 33 will reach end-of-life soon.
+  - ansible-test - Remove the ``centos8`` test container since CentOS 8 will reach end-of-life soon.
