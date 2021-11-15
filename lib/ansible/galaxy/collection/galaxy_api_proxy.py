@@ -14,7 +14,7 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from typing import Dict, Iterable, Tuple
+    from typing import Dict, Iterable, Iterator, Tuple
     from ansible.galaxy.api import CollectionVersionMetadata
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
@@ -41,7 +41,7 @@ class MultiGalaxyAPIProxy:
         self._concrete_art_mgr = concrete_artifacts_manager
 
     def _get_collection_versions(self, requirement):
-        # type: (Requirement, Iterator[GalaxyAPI]) -> Iterator[Tuple[GalaxyAPI, str]]
+        # type: (Requirement) -> Iterator[Tuple[GalaxyAPI, str]]
         """Helper for get_collection_versions.
 
         Yield api, version pairs for all APIs,
