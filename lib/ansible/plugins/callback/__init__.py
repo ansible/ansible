@@ -101,10 +101,10 @@ def _munge_data_for_lossy_yaml(scalar):
     scalar = scalar.rstrip()
     # ...libyaml/pyyaml does not permit tabs for block scalars
     scalar = scalar.expandtabs()
-    # ...libyaml/pyyaml only permits spaces followed by breaks for double quoted scalars
-    scalar = _SPACE_BREAK_RE.sub(r'\1', scalar)
     # ...libyaml/pyyaml only permits special characters for double quoted scalars
-    return _filter_yaml_special(scalar)
+    scalar = _filter_yaml_special(scalar)
+    # ...libyaml/pyyaml only permits spaces followed by breaks for double quoted scalars
+    return _SPACE_BREAK_RE.sub(r'\1', scalar)
 
 
 def _pretty_represent_str(self, data):
