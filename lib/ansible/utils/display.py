@@ -391,8 +391,6 @@ class Display(metaclass=Singleton):
 
         if message_text not in self._deprecations:
             self._deprecations[message_text] = 1
-
-
             self.display(message_text, color=C.COLOR_DEPRECATE, stderr=True, nowrap=(not wrap_text))
 
     def warning(self, msg, formatted=C.NOTTY_WRAP):
