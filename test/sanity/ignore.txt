@@ -175,6 +175,7 @@ test/support/integration/plugins/modules/ec2_group.py pylint:use-a-generator
 test/support/integration/plugins/modules/timezone.py pylint:disallowed-name
 test/support/integration/plugins/module_utils/aws/core.py pylint:property-with-parameters
 test/support/integration/plugins/module_utils/cloud.py future-import-boilerplate
+lib/ansible/galaxy/collection/__init__.py no-assert  # Needed for MyPy to infer types properly
 test/support/integration/plugins/module_utils/cloud.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/cloud.py pylint:isinstance-second-argument-not-valid-type
 test/support/integration/plugins/module_utils/compat/ipaddress.py future-import-boilerplate

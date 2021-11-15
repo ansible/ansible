@@ -174,6 +174,7 @@ def verify_local_collection(
         # since we're not downloading this, just seed it with the value from disk
         manifest_hash = get_hash_from_validation_source(MANIFEST_FILENAME)
     else:
+        assert remote_collection is not None  # mypy thing
         # fetch remote
         b_temp_tar_path = (  # NOTE: AnsibleError is raised on URLError
             artifacts_manager.get_artifact_path
@@ -1346,7 +1347,7 @@ def _resolve_depenency_map(
                 'requirements:',
             ),
             conflict_causes,
-        )
+        )  # type: Union[Iterable[str], List[str]]
         raise raise_from(  # NOTE: Leading "raise" is a hack for mypy bug #9717
             AnsibleError('\n'.join(error_msg_lines)),
             dep_exc,
