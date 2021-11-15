@@ -68,14 +68,14 @@ A system can be in multiple groups.  See :ref:`intro_inventory` and :ref:`intro_
 Separate production and staging inventory
 -----------------------------------------
 
-You can keep your production environment separate from development, test, and staging environments by using separate inventory files or directories for each environment. This way you pick with -i what you are targeting. Keeping all your environments in one file can lead to surprises!
+You can keep your production environment separate from development, test, and staging environments by using separate inventory files or directories for each environment. This way you pick with -i what you are targeting. Keeping all your environments in one file can lead to surprises! For example, all vault passwords used in an inventory need to be available when using that inventory. If an inventory contains both production and development environments, developers using that inventory would be able to access production secrets.
 
 .. _tip_for_variables_and_vaults:
 
 Keep vaulted variables safely visible
 -------------------------------------
 
-You should encrypt sensitive or secret variables with Ansible Vault. However, encrypting the variable names as well as the variable values makes it hard to find the source of the values. You can keep the names of your variables accessible (by ``grep``, for example) without exposing any secrets by adding a layer of indirection:
+You should encrypt sensitive or secret variables with Ansible Vault. However, encrypting the variable names as well as the variable values makes it hard to find the source of the values. To circumvent this, you can encrypt the variables individually using ``ansible-vault encrypt_string``, or add the following layer of indirection to keep the names of your variables accessible (by ``grep``, for example) without exposing any secrets:
 
 #. Create a ``group_vars/`` subdirectory named after the group.
 #. Inside this subdirectory, create two files named ``vars`` and ``vault``.
@@ -86,6 +86,8 @@ You should encrypt sensitive or secret variables with Ansible Vault. However, en
 #. Use the variable name from the ``vars`` file in your playbooks.
 
 When running a playbook, Ansible finds the variables in the unencrypted file, which pulls the sensitive variable values from the encrypted file. There is no limit to the number of variable and vault files or their names.
+
+Note that using this strategy in your inventory still requires *all vault passwords to be available* (for example for ``ansible-playbook`` or `AWX/Ansible Tower <https://github.com/ansible/awx/issues/223#issuecomment-768386089>`_) when run with that inventory. 
 
 Execution tricks
 ================
