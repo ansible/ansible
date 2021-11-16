@@ -72,7 +72,7 @@ import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
 
 from ansible.module_utils.common.collections import Mapping
-from ansible.module_utils.six import PY3, string_types
+from ansible.module_utils.six import PY2, PY3, string_types
 from ansible.module_utils.six.moves import cStringIO
 from ansible.module_utils.basic import get_distribution, missing_required_lib
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -89,7 +89,7 @@ except ImportError:
 urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307
 
 try:
-    from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse
+    from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse, unquote
     HAS_URLPARSE = True
 except Exception:
     HAS_URLPARSE = False
@@ -753,6 +753,30 @@ def generic_urlparse(parts):
 def extract_pem_certs(b_data):
     for match in b_PEM_CERT_RE.finditer(b_data):
         yield match.group(0)
+
+
+def get_response_filename(response):
+    url = response.geturl()
+    path = urlparse(url)[2]
+    filename = os.path.basename(path.rstrip('/')) or None
+    if filename:
+        filename = unquote(filename)
+
+    return response.headers.get_param('filename', header='content-disposition') or filename
+
+
+def parse_content_type(response):
+    if PY2:
+        get_type = response.headers.gettype
+        get_param = response.headers.getparam
+    else:
+        get_type = response.headers.get_content_type
+        get_param = response.headers.get_param
+
+    content_type = (get_type() or 'application/octet-stream').split(',')[0]
+    main_type, sub_type = content_type.split('/')
+    charset = (get_param('charset') or 'utf-8').split(',')[0]
+    return content_type, main_type, sub_type, charset
 
 
 class RequestWithMethod(urllib_request.Request):
@@ -1813,10 +1837,13 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except MissingModuleError as e:
         module.fail_json(msg=to_text(e), exception=e.import_traceback)
     except urllib_error.HTTPError as e:
+        r = e
         try:
             body = e.read()
         except AttributeError:
             body = ''
+        else:
+            e.close()
 
         # Try to add exception info to the output but don't fail if we can't
         try:
