@@ -659,20 +659,19 @@ def _validate_argument_values(argument_spec, parameters, options_context=None, e
                             msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
                         errors.append(ArgumentValueError(msg))
                 elif parameters[param] not in choices:
+
                     # PyYaml converts certain strings to bools. If we can unambiguously convert back, do so before checking
                     # the value. If we can't figure this out, module author is responsible.
-                    if parameters[param] == 'False':
-                        overlap = BOOLEANS_FALSE.intersection(choices)
-                        if len(overlap) == 1:
-                            # Extract from a set
-                            (parameters[param],) = overlap
 
-                    if parameters[param] == 'True':
-                        overlap = BOOLEANS_TRUE.intersection(choices)
-                        if len(overlap) == 1:
-                            (parameters[param],) = overlap
+                    found = False
+                    lower_choices = lenient_lowercase(choices)
+                    lower_param = lenient_lowercase(parameters[param])
 
-                    if parameters[param] not in choices:
+                    if lower_param in BOOLEANS_FALSE and BOOLEANS_FALSE.intersection(lower_choices) or
+                       lower_param in BOOLEANS_TRUE and BOOLEANS_TRUE.intersection(lower_choices):
+                        found = lower_param in lower_choices
+
+                    if not found:
                         choices_str = ", ".join([to_native(c) for c in choices])
                         msg = "value of %s must be one of: %s, got: %s" % (param, choices_str, parameters[param])
                         if options_context:
