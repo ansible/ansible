@@ -149,4 +149,4 @@ def test_GzipDecodedReader_no_gzip(monkeypatch, mocker):
 
     mod = __import__('ansible.module_utils.urls').module_utils.urls
     assert mod.HAS_GZIP is False
-    pytest.raises(NotImplementedError, mod.GzipDecodedReader, None)
+    pytest.raises(mod.MissingModuleError, mod.GzipDecodedReader, None)

@@ -60,8 +60,10 @@ from contextlib import contextmanager
 try:
     import gzip
     HAS_GZIP = True
+    GZIP_IMP_ERR = None
 except ImportError:
     HAS_GZIP = False
+    GZIP_IMP_ERR = traceback.format_exc()
 
 try:
     import email.policy
@@ -515,9 +517,10 @@ class NoSSLError(SSLValidationError):
 
 class MissingModuleError(Exception):
     """Failed to import 3rd party module required by the caller"""
-    def __init__(self, message, import_traceback):
+    def __init__(self, message, import_traceback, module=None):
         super(MissingModuleError, self).__init__(message)
         self.import_traceback = import_traceback
+        self.module = module
 
 
 # Some environments (Google Compute Engine's CoreOS deploys) do not compile
@@ -795,7 +798,7 @@ class GzipDecodedReader(gzip.GzipFile if HAS_GZIP else object):
     """
     def __init__(self, fp):
         if not HAS_GZIP:
-            raise NotImplementedError('Python gzip support required to decompress gzip encoded responses')
+            raise MissingModuleError(self.missing_gzip_error(), import_traceback=GZIP_IMP_ERR)
 
         if PY3:
             self._io = fp
@@ -814,6 +817,14 @@ class GzipDecodedReader(gzip.GzipFile if HAS_GZIP else object):
             gzip.GzipFile.close(self)
         finally:
             self._io.close()
+
+    @staticmethod
+    def missing_gzip_error():
+        return missing_required_lib(
+            'gzip',
+            reason='to decompress gzip encoded responses. '
+                   'Set "decompress" to False, to prevent attempting auto decompression'
+        )
 
 
 class RequestWithMethod(urllib_request.Request):
@@ -1830,6 +1841,13 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
     if not HAS_URLPARSE:
         module.fail_json(msg='urlparse is not installed')
+
+    if not HAS_GZIP and decompress is True:
+        decompress = False
+        module.deprecate(
+            '%s. "decompress" has been automatically disabled to prevent a failure' % GzipDecodedReader.missing_gzip_error(),
+            version='2.16'
+        )
 
     # ensure we use proper tempdir
     old_tempdir = tempfile.tempdir
