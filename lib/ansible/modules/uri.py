@@ -719,6 +719,8 @@ def main():
             content = info.pop('body', b'')
     elif r:
         content = r
+    else:
+        content = None
 
     resp = {}
     resp['redirected'] = info['url'] != url
