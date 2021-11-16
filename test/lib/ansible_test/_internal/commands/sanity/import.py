@@ -87,8 +87,17 @@ class ImportTest(SanityMultipleVersion):
     """Sanity test for proper import exception handling."""
     def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test."""
+        if data_context().content.is_ansible:
+            # all of ansible-core must pass the import test, not just plugins/modules
+            # modules/module_utils will be tested using the module context
+            # everything else will be tested using the plugin context
+            paths = ['lib/ansible']
+        else:
+            # only plugins/modules must pass the import test for collections
+            paths = list(data_context().content.plugin_paths.values())
+
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' and
-                any(is_subdir(target.path, path) for path in data_context().content.plugin_paths.values())]
+                any(is_subdir(target.path, path) for path in paths)]
 
     @property
     def needs_pypi(self):  # type: () -> bool
