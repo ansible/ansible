@@ -1280,6 +1280,11 @@ class DnfModule(YumDnf):
                         msg="Failed to download packages: {0}".format(to_text(e)),
                         results=[],
                     )
+                except (dnf.exceptions.MiscError, dnf.exceptions.Error) as e:
+                    self.module.fail_json(
+                        msg="Package failure during download: {0}".format(to_text(e)),
+                        results=[],
+                    )
 
                 # Validate GPG. This is NOT done in dnf.Base (it's done in the
                 # upstream CLI subclass of dnf.Base)
