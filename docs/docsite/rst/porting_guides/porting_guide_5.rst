@@ -115,6 +115,45 @@ Networking
 
 No notable changes
 
+Porting Guide for v5.0.0b2
+==========================
+
+Major Changes
+-------------
+
+fortinet.fortios
+~~~~~~~~~~~~~~~~
+
+- Add real-world use cases in the example section for some configuration modules.
+- Collect the current configurations of the modules and convert them into playbooks.
+- Support FortiOS 7.0.1.
+- Support member operation (delete/add extra members) on an object that has a list of members in it.
+- Support selectors feature in ``fortios_monitor_fact`` and ``fortios_log_fact``.
+
+Deprecated Features
+-------------------
+
+amazon.aws
+~~~~~~~~~~
+
+- ec2_classic_lb - setting of the ``ec2_elb`` fact has been deprecated and will be removed in release 4.0.0 of the collection. The module now returns ``elb`` which can be accessed using the register keyword (https://github.com/ansible-collections/amazon.aws/pull/552).
+
+community.aws
+~~~~~~~~~~~~~
+
+- dynamodb_table - DynamoDB does not support specifying non-key-attributes when creating an ``ALL`` index.  Passing ``includes`` for such indexes is currently ignored but will result in failures after version 3.0.0 (https://github.com/ansible-collections/community.aws/pull/726).
+- dynamodb_table - DynamoDB does not support updating the primary indexes on a table.  Attempts to make such changes are currently ignored but will result in failures after version 3.0.0 (https://github.com/ansible-collections/community.aws/pull/726).
+- elb_instance - setting of the ``ec2_elb`` fact has been deprecated and will be removed in release 4.0.0 of the collection. See the module documentation for an alternative example using the register keyword (https://github.com/ansible-collections/community.aws/pull/773).
+- iam_cert - the iam_cert module has been renamed to iam_server_certificate for consistency with the companion iam_server_certificate_info module. The usage of the module has not changed.  The iam_cert alias will be removed in version 4.0.0 (https://github.com/ansible-collections/community.aws/pull/728).
+- iam_server_certificate - Passing file names to the ``cert``, ``chain_cert`` and ``key`` parameters has been deprecated. We recommend using a lookup plugin to read the files instead, see the documentation for an example (https://github.com/ansible-collections/community.aws/pull/735).
+- iam_server_certificate - the default value for the ``dup_ok`` parameter is currently ``false``, in version 4.0.0 this will be updated to ``true``.  To preserve the current behaviour explicitly set the ``dup_ok`` parameter to ``false`` (https://github.com/ansible-collections/community.aws/pull/737).
+- rds_snapshot - the rds_snapshot module has been renamed to rds_instance_snapshot. The usage of the module has not changed. The rds_snapshot alias will be removed in version 4.0.0 (https://github.com/ansible-collections/community.aws/pull/783).
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- Support for Ansible 2.9 and ansible-base 2.10 is deprecated, and will be removed in the next major release (community.general 5.0.0) next spring. While most content will probably still work with ansible-base 2.10, we will remove symbolic links for modules and action plugins, which will make it impossible to use them with Ansible 2.9 anymore. Please use community.general 4.x.y with Ansible 2.9 and ansible-base 2.10, as these releases will continue to support Ansible 2.9 and ansible-base 2.10 even after they are End of Life (https://github.com/ansible-community/community-topics/issues/50, https://github.com/ansible-collections/community.general/pull/3723).
+
 Porting Guide for v5.0.0b1
 ==========================
 
@@ -492,7 +531,6 @@ amazon.aws
 ~~~~~~~~~~
 
 - amazon.aws collection - Due to the AWS SDKs announcing the end of support for Python less than 3.6 (https://boto3.amazonaws.com/v1/documentation/api/1.17.64/guide/migrationpy3.html) this collection now requires Python 3.6+ (https://github.com/ansible-collections/amazon.aws/pull/298).
-- amazon.aws collection - The amazon.aws collection has dropped support for ``botocore<1.16.0`` and ``boto3<1.13.0``. Most modules will continue to work with older versions of the AWS SDK, however compatability with older versions of the SDK is not guaranteed and will not be tested. When using older versions of the SDK a warning will be emitted by Ansible (https://github.com/ansible-collections/amazon.aws/pull/442).
 - amazon.aws collection - The amazon.aws collection has dropped support for ``botocore<1.18.0`` and ``boto3<1.15.0``. Most modules will continue to work with older versions of the AWS SDK, however compatability with older versions of the SDK is not guaranteed and will not be tested. When using older versions of the SDK a warning will be emitted by Ansible (https://github.com/ansible-collections/amazon.aws/pull/502).
 - ec2_instance - The module has been migrated from the ``community.aws`` collection. Playbooks using the Fully Qualified Collection Name for this module should be updated to use ``amazon.aws.ec2_instance``.
 - ec2_instance_info - The module has been migrated from the ``community.aws`` collection. Playbooks using the Fully Qualified Collection Name for this module should be updated to use ``amazon.aws.ec2_instance_info``.
