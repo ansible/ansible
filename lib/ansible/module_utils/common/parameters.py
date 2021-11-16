@@ -667,7 +667,7 @@ def _validate_argument_values(argument_spec, parameters, options_context=None, e
                     lower_choices = lenient_lowercase(choices)
                     lower_param = lenient_lowercase(parameters[param])
 
-                    if lower_param in BOOLEANS_FALSE and BOOLEANS_FALSE.intersection(lower_choices) or
+                    if lower_param in BOOLEANS_FALSE and BOOLEANS_FALSE.intersection(lower_choices) or \
                        lower_param in BOOLEANS_TRUE and BOOLEANS_TRUE.intersection(lower_choices):
                         found = lower_param in lower_choices
 
