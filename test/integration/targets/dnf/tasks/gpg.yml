@@ -14,6 +14,7 @@
       dnf:
         name:
           - rpm-sign
+          - attr
         state: present
 
     - name: Create directory to use as local repo
@@ -30,6 +31,11 @@
 
     - name: Unsign the RPM
       shell: rpmsign --delsign {{ remote_tmp_dir }}/unsigned/{{ pkg_name }}*
+
+    # In RHEL 8.5 dnf uses libdnf to do checksum verification, which caches the checksum on an xattr of the file
+    # itself, so we need to clear that cache
+    - name: Clear libdnf checksum cache
+      shell: setfattr -x user.Librepo.checksum.sha256 {{ remote_tmp_dir }}/unsigned/{{ pkg_name }}*
 
     - name: createrepo
       command: createrepo .
@@ -64,6 +70,7 @@
       dnf:
         name:
           - rpm-sign
+          - attr
           - "{{ pkg_name }}"
         state: absent
 
