@@ -795,7 +795,7 @@ class GzipDecodedReader(gzip.GzipFile if HAS_GZIP else object):
     """
     def __init__(self, fp):
         if not HAS_GZIP:
-            raise NotImplementedError
+            raise NotImplementedError('Python gzip support required to decompress gzip encoded responses')
 
         if PY3:
             self._io = fp
