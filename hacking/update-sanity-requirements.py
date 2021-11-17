@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
-import os
 import pathlib
 import subprocess
 import tempfile
@@ -19,8 +18,9 @@ except ImportError:
     argcomplete = None
 
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SELF = os.path.relpath(os.path.abspath(__file__), ROOT)
+FILE = pathlib.Path(__file__).resolve()
+ROOT = FILE.parent.parent
+SELF = FILE.relative_to(ROOT)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -33,7 +33,7 @@ class SanityTest:
         with tempfile.TemporaryDirectory() as venv_dir:
             venv.create(venv_dir, with_pip=True)
 
-            python = os.path.join(venv_dir, 'bin', 'python')
+            python = pathlib.Path(venv_dir, 'bin', 'python')
             pip = [python, '-m', 'pip', '--disable-pip-version-check']
             env = dict()
 
@@ -96,14 +96,14 @@ def find_tests() -> t.List[SanityTest]:
     tests: t.List[SanityTest] = []
 
     for glob in globs:
-        tests.extend(get_tests(glob))
+        tests.extend(get_tests(pathlib.Path(glob)))
 
     return sorted(tests, key=lambda test: test.name)
 
 
-def get_tests(glob: str) -> t.List[SanityTest]:
-    path = pathlib.Path(os.path.join(ROOT, os.path.dirname(glob)))
-    pattern = os.path.basename(glob)
+def get_tests(glob: pathlib.Path) -> t.List[SanityTest]:
+    path = pathlib.Path(ROOT, glob.parent)
+    pattern = glob.name
 
     return [SanityTest.create(item) for item in path.glob(pattern)]
 
