@@ -4,6 +4,39 @@ docs/docsite/rst/locales/ja/LC_MESSAGES/dev_guide.po no-smart-quotes  # Translat
 examples/scripts/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
+lib/ansible/cli/galaxy.py import-3.8  # unguarded indirect resolvelib import
+lib/ansible/galaxy/collection/__init__.py import-3.8  # unguarded resolvelib import
+lib/ansible/galaxy/collection/concrete_artifact_manager.py import-3.8  # unguarded resolvelib import
+lib/ansible/galaxy/collection/galaxy_api_proxy.py import-3.8  # unguarded resolvelib imports
+lib/ansible/galaxy/dependency_resolution/__init__.py import-3.8  # circular imports
+lib/ansible/galaxy/dependency_resolution/dataclasses.py import-3.8  # circular imports
+lib/ansible/galaxy/dependency_resolution/errors.py import-3.8  # circular imports
+lib/ansible/galaxy/dependency_resolution/providers.py import-3.8  # circular imports
+lib/ansible/galaxy/dependency_resolution/reporters.py import-3.8  # circular imports
+lib/ansible/galaxy/dependency_resolution/resolvers.py import-3.8  # circular imports
+lib/ansible/galaxy/dependency_resolution/versioning.py import-3.8  # circular imports
+lib/ansible/cli/galaxy.py import-3.9  # unguarded indirect resolvelib import
+lib/ansible/galaxy/collection/__init__.py import-3.9  # unguarded resolvelib import
+lib/ansible/galaxy/collection/concrete_artifact_manager.py import-3.9  # unguarded resolvelib import
+lib/ansible/galaxy/collection/galaxy_api_proxy.py import-3.9  # unguarded resolvelib imports
+lib/ansible/galaxy/dependency_resolution/__init__.py import-3.9  # circular imports
+lib/ansible/galaxy/dependency_resolution/dataclasses.py import-3.9  # circular imports
+lib/ansible/galaxy/dependency_resolution/errors.py import-3.9  # circular imports
+lib/ansible/galaxy/dependency_resolution/providers.py import-3.9  # circular imports
+lib/ansible/galaxy/dependency_resolution/reporters.py import-3.9  # circular imports
+lib/ansible/galaxy/dependency_resolution/resolvers.py import-3.9  # circular imports
+lib/ansible/galaxy/dependency_resolution/versioning.py import-3.9  # circular imports
+lib/ansible/cli/galaxy.py import-3.10  # unguarded indirect resolvelib import
+lib/ansible/galaxy/collection/__init__.py import-3.10  # unguarded resolvelib import
+lib/ansible/galaxy/collection/concrete_artifact_manager.py import-3.10  # unguarded resolvelib import
+lib/ansible/galaxy/collection/galaxy_api_proxy.py import-3.10  # unguarded resolvelib imports
+lib/ansible/galaxy/dependency_resolution/__init__.py import-3.10  # circular imports
+lib/ansible/galaxy/dependency_resolution/dataclasses.py import-3.10  # circular imports
+lib/ansible/galaxy/dependency_resolution/errors.py import-3.10  # circular imports
+lib/ansible/galaxy/dependency_resolution/providers.py import-3.10  # circular imports
+lib/ansible/galaxy/dependency_resolution/reporters.py import-3.10  # circular imports
+lib/ansible/galaxy/dependency_resolution/resolvers.py import-3.10  # circular imports
+lib/ansible/galaxy/dependency_resolution/versioning.py import-3.10  # circular imports
 lib/ansible/cli/scripts/ansible_connection_cli_stub.py shebang
 lib/ansible/config/base.yml no-unwanted-files
 lib/ansible/executor/playbook_executor.py pylint:disallowed-name
