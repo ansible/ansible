@@ -201,30 +201,35 @@ def test_fetch_url_httperror(open_url_mock, fake_ansible_module):
     r, info = fetch_url(fake_ansible_module, 'http://ansible.com/')
 
     assert info == {'msg': 'HTTP Error 500: Internal Server Error', 'body': 'TESTS',
-                    'status': 500, 'url': 'http://ansible.com/', 'content-type': 'application/json'}
+                    'status': 500, 'url': 'http://ansible.com/', 'content-type': 'application/json',
+                    'cookies_string': '', 'cookies': {}}
 
 
 def test_fetch_url_urlerror(open_url_mock, fake_ansible_module):
     open_url_mock.side_effect = urllib_error.URLError('TESTS')
     r, info = fetch_url(fake_ansible_module, 'http://ansible.com/')
-    assert info == {'msg': 'Request failed: <urlopen error TESTS>', 'status': -1, 'url': 'http://ansible.com/'}
+    assert info == {'msg': 'Request failed: <urlopen error TESTS>', 'status': -1, 'url': 'http://ansible.com/',
+                    'cookies_string': '', 'cookies': {}}
 
 
 def test_fetch_url_socketerror(open_url_mock, fake_ansible_module):
     open_url_mock.side_effect = socket.error('TESTS')
     r, info = fetch_url(fake_ansible_module, 'http://ansible.com/')
-    assert info == {'msg': 'Connection failure: TESTS', 'status': -1, 'url': 'http://ansible.com/'}
+    assert info == {'msg': 'Connection failure: TESTS', 'status': -1, 'url': 'http://ansible.com/',
+                    'cookies_string': '', 'cookies': {}}
 
 
 def test_fetch_url_exception(open_url_mock, fake_ansible_module):
     open_url_mock.side_effect = Exception('TESTS')
     r, info = fetch_url(fake_ansible_module, 'http://ansible.com/')
     exception = info.pop('exception')
-    assert info == {'msg': 'An unknown error occurred: TESTS', 'status': -1, 'url': 'http://ansible.com/'}
+    assert info == {'msg': 'An unknown error occurred: TESTS', 'status': -1, 'url': 'http://ansible.com/',
+                    'cookies_string': '', 'cookies': {}}
     assert "Exception: TESTS" in exception
 
 
 def test_fetch_url_badstatusline(open_url_mock, fake_ansible_module):
     open_url_mock.side_effect = httplib.BadStatusLine('TESTS')
     r, info = fetch_url(fake_ansible_module, 'http://ansible.com/')
-    assert info == {'msg': 'Connection failure: connection was closed before a valid response was received: TESTS', 'status': -1, 'url': 'http://ansible.com/'}
+    assert info == {'msg': 'Connection failure: connection was closed before a valid response was received: TESTS', 'status': -1, 'url': 'http://ansible.com/',
+                    'cookies_string': '', 'cookies': {}}
