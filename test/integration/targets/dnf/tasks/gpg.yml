@@ -10,10 +10,11 @@
           - '{{ pkg_name }}'
         state: absent
 
-    - name: Install rpm-sign
+    - name: Install rpm-sign and attr
       dnf:
         name:
           - rpm-sign
+          - attr
         state: present
 
     - name: Create directory to use as local repo
@@ -30,6 +31,14 @@
 
     - name: Unsign the RPM
       shell: rpmsign --delsign {{ remote_tmp_dir }}/unsigned/{{ pkg_name }}*
+
+    # In RHEL 8.5 dnf uses libdnf to do checksum verification, which caches the checksum on an xattr of the file
+    # itself, so we need to clear that cache
+    - name: Clear libdnf checksum cache
+      shell: setfattr -x user.Librepo.checksum.sha256 {{ remote_tmp_dir }}/unsigned/{{ pkg_name }}*
+      when: ansible_distribution in ['RedHat', 'CentOS'] and
+            ansible_distribution_version is version('8.5', '>=') and
+            ansible_distribution_version is version('9', '<')
 
     - name: createrepo
       command: createrepo .
@@ -60,10 +69,11 @@
           - "'is not signed' in res.msg"
 
   always:
-    - name: Remove rpm-sign (and test package if it got installed)
+    - name: Remove rpm-sign and attr (and test package if it got installed)
       dnf:
         name:
           - rpm-sign
+          - attr
           - "{{ pkg_name }}"
         state: absent
 
