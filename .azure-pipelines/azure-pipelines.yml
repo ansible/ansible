@@ -92,10 +92,10 @@ stages:
               test: macos/11.1
             - name: RHEL 7.9
               test: rhel/7.9
-            - name: RHEL 8.4 py36
-              test: rhel/8.4@3.6
-            - name: RHEL 8.4 py38
-              test: rhel/8.4@3.8
+            - name: RHEL 8.5 py36
+              test: rhel/8.5@3.6
+            - name: RHEL 8.5 py38
+              test: rhel/8.5@3.8
             - name: RHEL 9.0b
               test: rhel/9.0b
             - name: FreeBSD 12.2
@@ -171,10 +171,10 @@ stages:
               test: macos/11.1
             - name: RHEL 7.9
               test: rhel/7.9
-            - name: RHEL 8.4 py36
-              test: rhel/8.4@3.6
-            - name: RHEL 8.4 py38
-              test: rhel/8.4@3.8
+            - name: RHEL 8.5 py36
+              test: rhel/8.5@3.6
+            - name: RHEL 8.5 py38
+              test: rhel/8.5@3.8
             - name: RHEL 9.0b
               test: rhel/9.0b
             - name: FreeBSD 12.2
