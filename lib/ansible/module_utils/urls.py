@@ -1825,8 +1825,6 @@ def normalize_headers(response):
         return headers
 
     for name, value in response.headers.items():
-        # The same as above, lower case keys to match py2 behavior, and create more consistent results
-        name = name.lower()
         if name in headers:
             headers[name] = ', '.join((headers[name], value))
         else:
