@@ -84,6 +84,14 @@ def unique(environment, a, case_sensitive=None, attribute=None):
 
 @pass_environment
 def intersect(environment, a, b):
+    """
+    Calculate the intersection of a and b; values present in both a and b.
+
+    If possible compute using native Python set operations.
+    This is deemed possible if a and b are both ``Hashable``.
+
+    No duplicates are returned.
+    """
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) & set(b)
     else:
@@ -93,6 +101,14 @@ def intersect(environment, a, b):
 
 @pass_environment
 def difference(environment, a, b):
+    """
+    Calculate the difference of a and b; values present in a, but not in b.
+
+    If possible compute using native Python set operations.
+    This is deemed possible if a and b are both ``Hashable``.
+
+    No duplicates are returned.
+    """
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) - set(b)
     else:
@@ -102,6 +118,14 @@ def difference(environment, a, b):
 
 @pass_environment
 def symmetric_difference(environment, a, b):
+    """
+    Calculate the symmetric difference of a and b; values present in either a or b, but not in both.
+
+    If possible compute using native Python set operations.
+    This is deemed possible if a and b are both ``Hashable``.
+
+    No duplicates are returned.
+    """
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) ^ set(b)
     else:
@@ -112,6 +136,14 @@ def symmetric_difference(environment, a, b):
 
 @pass_environment
 def union(environment, a, b):
+    """
+    Calculate the union of a and b; values present in either a or b.
+
+    If possible compute using native Python set operations.
+    This is deemed possible if a and b are both ``Hashable``.
+
+    No duplicates are returned.
+    """
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) | set(b)
     else:
