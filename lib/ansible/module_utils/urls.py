@@ -1848,11 +1848,11 @@ def process_cookies(cookies):
     return cookie_dict, cookies_string
 
 
-def catch_request_errors(url, *args, **kwargs):
+def catch_request_errors(func, *args, **kwargs):
     info = {}
     r = None
     try:
-        r = open_url(url, *args, **kwargs)
+        r = func(*args, **kwargs)
     except urllib_error.HTTPError as e:
         r = e
         try:
@@ -1956,7 +1956,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     info = {'url': url, 'status': -1}
     try:
         r, tmp_info = catch_request_errors(
-            url, data=data, headers=headers, method=method,
+            open_url, url, data=data, headers=headers, method=method,
             use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
             validate_certs=validate_certs, url_username=username,
             url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
