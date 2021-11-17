@@ -1,5 +1,4 @@
-jinja2 == 3.0.1 # ansible-core requirement
-pyyaml == 5.4.1
-
-# dependencies
-MarkupSafe == 2.0.1
+# edit "deprecated-config.requirements.in" and generate with: hacking/update-sanity-requirements.py --test deprecated-config
+Jinja2==3.0.3
+MarkupSafe==2.0.1
+PyYAML==6.0

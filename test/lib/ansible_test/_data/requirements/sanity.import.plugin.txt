@@ -1,0 +1,4 @@
+# edit "sanity.import.plugin.in" and generate with: hacking/update-sanity-requirements.py --test import.plugin
+Jinja2==3.0.3
+MarkupSafe==2.0.1
+PyYAML==6.0
