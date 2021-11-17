@@ -1,5 +1,4 @@
-yamllint == 1.26.0
-
-# dependencies
-pathspec == 0.9.0
-pyyaml == 5.4.1
+# edit "sanity.yamllint.in" and generate with: hacking/update-sanity-requirements.py --test yamllint
+pathspec==0.9.0
+PyYAML==6.0
+yamllint==1.26.3

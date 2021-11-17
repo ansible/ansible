@@ -1,13 +1,12 @@
-docutils == 0.17.1
-jinja2 == 3.0.1
-packaging == 21.0
-pyyaml == 5.4.1  # ansible-core requirement
-resolvelib == 0.5.4  # ansible-core requirement
-rstcheck == 3.3.1
-straight.plugin == 1.5.0
-antsibull-changelog == 0.9.0
-
-# dependencies
-MarkupSafe == 2.0.1
-pyparsing == 2.4.7
-semantic-version == 2.8.5
+# edit "package-data.requirements.in" and generate with: hacking/update-sanity-requirements.py --test package-data
+antsibull-changelog==0.12.0
+docutils==0.17.1
+Jinja2==3.0.3
+MarkupSafe==2.0.1
+packaging==21.2
+pyparsing==2.4.7
+PyYAML==6.0
+resolvelib==0.5.4
+rstcheck==3.3.1
+semantic-version==2.8.5
+straight.plugin==1.5.0
