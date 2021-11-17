@@ -1980,12 +1980,12 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                     exception=traceback.format_exc())
     else:
         info.update(tmp_info)
-        info['cookies'], info['cookies_string'] = process_cookies(cookies)
     finally:
         tempfile.tempdir = old_tempdir
 
     # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
     info.update(dict((k.lower(), v) for k, v in normalize_headers(r).items()))
+    info['cookies'], info['cookies_string'] = process_cookies(cookies)
 
     return r, info
 
