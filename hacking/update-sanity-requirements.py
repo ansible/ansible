@@ -37,6 +37,11 @@ class SanityTest:
             pip = [python, '-m', 'pip', '--disable-pip-version-check']
             env = dict()
 
+            pip_freeze = subprocess.run(pip + ['freeze'], env=env, check=True, capture_output=True, text=True)
+
+            if pip_freeze.stdout:
+                raise Exception(f'Initial virtual environment is not empty:\n{pip_freeze.stdout}')
+
             subprocess.run(pip + ['install', 'wheel'], env=env, check=True)  # make bdist_wheel available during pip install
             subprocess.run(pip + ['install', '-r', self.source_path], env=env, check=True)
 
