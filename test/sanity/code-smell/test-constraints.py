@@ -1,6 +1,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
 import re
 import sys
 
@@ -21,6 +22,11 @@ def main():
     non_sanity_requirements = set()
 
     for path, requirements in requirements.items():
+        filename = os.path.basename(path)
+
+        is_sanity = filename.startswith('sanity.') or filename.endswith('.requirements.txt')
+        is_constraints = path == constraints_path
+
         for lineno, line, requirement in requirements:
             if not requirement:
                 print('%s:%d:%d: cannot parse requirement: %s' % (path, lineno, 1, line))
@@ -28,14 +34,10 @@ def main():
 
             name = requirement.group('name').lower()
             raw_constraints = requirement.group('constraints')
-            raw_markers = requirement.group('markers')
             constraints = raw_constraints.strip()
-            markers = raw_markers.strip()
             comment = requirement.group('comment')
 
-            is_sanity = path.startswith('test/lib/ansible_test/_data/requirements/sanity.') or path.startswith('test/sanity/code-smell/')
             is_pinned = re.search('^ *== *[0-9.]+(\\.post[0-9]+)?$', constraints)
-            is_constraints = path == constraints_path
 
             if is_sanity:
                 sanity = frozen_sanity.setdefault(name, [])
@@ -43,20 +45,19 @@ def main():
             elif not is_constraints:
                 non_sanity_requirements.add(name)
 
+            if is_sanity:
+                if not is_pinned:
+                    # sanity test requirements must be pinned
+                    print('%s:%d:%d: sanity test requirement (%s%s) must be frozen (use `==`)' % (path, lineno, 1, name, raw_constraints))
+
+                continue
+
             if constraints and not is_constraints:
                 allow_constraints = 'sanity_ok' in comment
 
-                if is_sanity and is_pinned and not markers:
-                    allow_constraints = True  # sanity tests can use frozen requirements without markers
-
                 if not allow_constraints:
-                    if is_sanity:
-                        # sanity test requirements which need constraints should be frozen to maintain consistent test results
-                        # use of anything other than frozen constraints will make evaluation of conflicts extremely difficult
-                        print('%s:%d:%d: sanity test constraint (%s%s) must be frozen (use `==`)' % (path, lineno, 1, name, raw_constraints))
-                    else:
-                        # keeping constraints for tests other than sanity tests in one file helps avoid conflicts
-                        print('%s:%d:%d: put the constraint (%s%s) in `%s`' % (path, lineno, 1, name, raw_constraints, constraints_path))
+                    # keeping constraints for tests other than sanity tests in one file helps avoid conflicts
+                    print('%s:%d:%d: put the constraint (%s%s) in `%s`' % (path, lineno, 1, name, raw_constraints, constraints_path))
 
     for name, requirements in frozen_sanity.items():
         if len(set(req[3].group('constraints').strip() for req in requirements)) != 1:

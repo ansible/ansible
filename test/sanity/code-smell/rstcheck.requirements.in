@@ -1,0 +1,3 @@
+sphinx == 4.2.0 # required for full rstcheck functionality, installed first to get the correct docutils version
+rstcheck
+jinja2  # ansible-core requirement
