@@ -1,0 +1,20 @@
+# edit "sanity.mypy.in" and generate with: hacking/update-sanity-requirements.py --test mypy
+mypy==0.931
+mypy-extensions==0.4.3
+packaging==21.2
+pyparsing==2.4.7
+tomli==2.0.1
+typed-ast==1.5.2
+types-backports==0.1.3
+types-cryptography==3.3.15
+types-enum34==1.1.8
+types-ipaddress==1.0.8
+types-Jinja2==2.11.9
+types-MarkupSafe==1.1.10
+types-paramiko==2.8.13
+types-PyYAML==5.4.12
+types-requests==2.27.10
+types-setuptools==57.4.9
+types-toml==0.10.4
+types-urllib3==1.26.9
+typing-extensions==3.10.0.2
