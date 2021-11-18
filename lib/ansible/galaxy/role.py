@@ -85,7 +85,7 @@ class GalaxyRole(object):
             self.path = path
         else:
             # use the first path by default
-            self.path = os.path.join(galaxy.roles_paths[0], self.name)
+            self.path = self.paths[0]
 
     def __repr__(self):
         """
