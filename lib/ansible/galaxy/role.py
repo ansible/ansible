@@ -308,10 +308,12 @@ class GalaxyRole(object):
                     except Exception:
                         raise AnsibleError("this role does not appear to have a valid meta/main.yml file.")
 
-                # we strip off any higher-level directories for all of the files contained within
-                # the tar file here. The default is 'github_repo-target'. Gerrit instances, on the other
-                # hand, does not have a parent directory at all.
-                for idx, path in enumerate(self.paths):
+                paths = self.paths
+                if self.path != paths[0]:
+                    # path can be passed though __init__
+                    # FIXME should this be done in __init__?
+                    paths[:0] = self.path
+                for idx, path in enumerate(paths):
                     self.path = path
                     display.display("- extracting %s to %s" % (self.name, self.path))
                     try:
@@ -328,7 +330,9 @@ class GalaxyRole(object):
                         else:
                             os.makedirs(self.path)
 
-                        # now we do the actual extraction to the path
+                        # We strip off any higher-level directories for all of the files
+                        # contained within the tar file here. The default is 'github_repo-target'.
+                        # Gerrit instances, on the other hand, does not have a parent directory at all.
                         for member in members:
                             # we only extract files, and remove any relative path
                             # bits that might be in the file for security purposes
