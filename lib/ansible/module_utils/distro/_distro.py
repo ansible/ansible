@@ -41,6 +41,39 @@ import warnings
 
 __version__ = "1.6.0"
 
+# Use `if False` to avoid an ImportError on Python 2. After dropping Python 2
+# support, can use typing.TYPE_CHECKING instead. See:
+# https://docs.python.org/3/library/typing.html#typing.TYPE_CHECKING
+if False:  # pragma: nocover
+    from typing import (
+        Any,
+        Callable,
+        Dict,
+        Iterable,
+        Optional,
+        Sequence,
+        TextIO,
+        Tuple,
+        Type,
+        TypedDict,
+        Union,
+    )
+
+    VersionDict = TypedDict(
+        "VersionDict", {"major": str, "minor": str, "build_number": str}
+    )
+    InfoDict = TypedDict(
+        "InfoDict",
+        {
+            "id": str,
+            "version": str,
+            "version_parts": VersionDict,
+            "like": str,
+            "codename": str,
+        },
+    )
+
+
 _UNIXCONFDIR = os.environ.get("UNIXCONFDIR", "/etc")
 _UNIXUSRLIBDIR = os.environ.get("UNIXUSRLIBDIR", "/usr/lib")
 _OS_RELEASE_BASENAME = "os-release"
