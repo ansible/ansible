@@ -1,0 +1,2 @@
+bugfixes:
+  - "ansible-galaxy - when installing a role properly raise an error when inaccessible path is specified multiple times in roles_path (e.g. via environment variable and command line option) (https://github.com/ansible/ansible/issues/76316)"
