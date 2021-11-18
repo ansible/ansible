@@ -313,6 +313,7 @@ class GalaxyRole(object):
                     # path can be passed though __init__
                     # FIXME should this be done in __init__?
                     paths[:0] = self.path
+                paths_len = len(paths)
                 for idx, path in enumerate(paths):
                     self.path = path
                     display.display("- extracting %s to %s" % (self.name, self.path))
@@ -356,7 +357,7 @@ class GalaxyRole(object):
                         self._write_galaxy_install_info()
                         break
                     except OSError as e:
-                        if e.errno == errno.EACCES and idx < len(self.paths) - 1:
+                        if e.errno == errno.EACCES and idx < paths_len - 1:
                             continue
                         raise AnsibleError("Could not update files in %s: %s" % (self.path, to_native(e)))
 
