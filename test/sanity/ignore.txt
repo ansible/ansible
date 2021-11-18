@@ -271,3 +271,75 @@ test/units/utils/collection_loader/fixtures/collections_masked/ansible_collectio
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/testcoll/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/test_collection_loader.py pylint:undefined-variable  # magic runtime local var splatting
+lib/ansible/module_utils/six/__init__.py mypy-2.7:has-type  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.5:has-type  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.6:has-type  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.7:has-type  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.8:has-type  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.9:has-type  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.10:has-type  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-2.7:name-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.5:name-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.6:name-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.7:name-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.8:name-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.9:name-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.10:name-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-2.7:assignment  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.5:assignment  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.6:assignment  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.7:assignment  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-2.7:misc  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.5:misc  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.6:misc  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.7:misc  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.8:misc  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.9:misc  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.10:misc  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-2.7:var-annotated  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-2.7:attr-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.5:var-annotated  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.5:attr-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.6:var-annotated  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.6:attr-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.7:var-annotated  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.7:attr-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.8:var-annotated  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.9:var-annotated  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.10:var-annotated  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-2.7:arg-type  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-3.5:valid-type  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-3.6:valid-type  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-3.7:valid-type  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-2.7:assignment  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-2.7:attr-defined  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-3.5:attr-defined  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-3.6:attr-defined  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-3.7:attr-defined  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-2.7:misc  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.5:misc  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.6:misc  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.7:misc  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.8:misc  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.9:misc  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.10:misc  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-2.7:assignment  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.5:assignment  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.6:assignment  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.7:assignment  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.8:assignment  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.9:assignment  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.10:assignment  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-2.7:attr-defined  # vendored code
+lib/ansible/parsing/yaml/dumper.py mypy-3.8:misc
+lib/ansible/parsing/yaml/dumper.py mypy-3.9:misc
+lib/ansible/parsing/yaml/dumper.py mypy-3.10:misc
+lib/ansible/parsing/yaml/dumper.py mypy-3.8:valid-type
+lib/ansible/parsing/yaml/dumper.py mypy-3.9:valid-type
+lib/ansible/parsing/yaml/dumper.py mypy-3.10:valid-type
+lib/ansible/parsing/yaml/loader.py mypy-3.8:misc
+lib/ansible/parsing/yaml/loader.py mypy-3.9:misc
+lib/ansible/parsing/yaml/loader.py mypy-3.10:misc
+lib/ansible/parsing/yaml/loader.py mypy-3.8:valid-type
+lib/ansible/parsing/yaml/loader.py mypy-3.9:valid-type
+lib/ansible/parsing/yaml/loader.py mypy-3.10:valid-type
