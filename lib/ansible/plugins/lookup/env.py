@@ -38,6 +38,10 @@ EXAMPLES = """
 - name: Set default value to Undefined, if the variable is not defined
   debug:
     msg: "{{ lookup('env', 'USR', default=Undefined) }} is the user."
+
+- name: Set default value to undef(), if the variable is not defined
+  debug:
+    msg: "{{ lookup('env', 'USR', default=undef()) }} is the user."
 """
 
 RETURN = """
@@ -47,7 +51,9 @@ RETURN = """
     type: list
 """
 
+from jinja2.runtime import Undefined
 
+from ansible.errors import AnsibleUndefinedVariable
 from ansible.plugins.lookup import LookupBase
 from ansible.utils import py3compat
 
@@ -61,6 +67,8 @@ class LookupModule(LookupBase):
         d = self.get_option('default')
         for term in terms:
             var = term.split()[0]
-            ret.append(py3compat.environ.get(var, d))
-
+            val = py3compat.environ.get(var, d)
+            if isinstance(val, Undefined):
+                raise AnsibleUndefinedVariable('The "env" lookup, found an undefined variable: %s' % var)
+            ret.append(val)
         return ret
