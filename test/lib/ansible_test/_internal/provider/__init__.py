@@ -16,7 +16,7 @@ def get_path_provider_classes(provider_type):  # type: (t.Type[TPathProvider]) -
     return sorted(get_subclasses(provider_type), key=lambda c: (c.priority, c.__name__))
 
 
-def find_path_provider(provider_type,  # type: t.Type[TPathProvider],
+def find_path_provider(provider_type,  # type: t.Type[TPathProvider]
                        provider_classes,  # type:  t.List[t.Type[TPathProvider]]
                        path,  # type: str
                        walk,  # type: bool
