@@ -131,7 +131,7 @@ def _generate_powershell_xml(coverage_file):  # type: (str) -> Element
     return elem_coverage
 
 
-def _add_cobertura_package(packages, package_name, package_data):  # type: (SubElement, str, t.Dict[str, t.Dict[str, int]]) -> t.Tuple[int, int]
+def _add_cobertura_package(packages, package_name, package_data):  # type: (Element, str, t.Dict[str, t.Dict[str, int]]) -> t.Tuple[int, int]
     """Add a package element to the given packages element."""
     elem_package = SubElement(packages, 'package')
     elem_classes = SubElement(elem_package, 'classes')
