@@ -1314,27 +1314,6 @@ def _resolve_depenency_map(
         upgrade,  # type: bool
 ):  # type: (...) -> Dict[str, Candidate]
     """Return the resolved dependency map."""
-    return resolve_depenency_obj(
-        requested_requirements,
-        galaxy_apis,
-        concrete_artifacts_manager,
-        preferred_candidates,
-        no_deps,
-        allow_pre_release,
-        upgrade,
-    ).mapping
-
-
-def resolve_depenency_obj(
-        requested_requirements,  # type: Iterable[Requirement]
-        galaxy_apis,  # type: Iterable[GalaxyAPI]
-        concrete_artifacts_manager,  # type: ConcreteArtifactsManager
-        preferred_candidates,  # type: Optional[Iterable[Candidate]]
-        no_deps,  # type: bool
-        allow_pre_release,  # type: bool
-        upgrade,  # type: bool
-):  # type: (...) -> Dict[str, Candidate]
-    """Return the resolved dependency object."""
     collection_dep_resolver = build_collection_dependency_resolver(
         galaxy_apis=galaxy_apis,
         concrete_artifacts_manager=concrete_artifacts_manager,
@@ -1348,7 +1327,7 @@ def resolve_depenency_obj(
         return collection_dep_resolver.resolve(
             requested_requirements,
             max_rounds=2000000,  # NOTE: same constant pip uses
-        )
+        ).mapping
     except CollectionDependencyResolutionImpossible as dep_exc:
         conflict_causes = (
             '* {req.fqcn!s}:{req.ver!s} ({dep_origin!s})'.format(
@@ -1476,56 +1455,36 @@ def find_collections_to_remove(collection_path, collections, apis, no_deps, forc
     )
 
     if force:
-        for fqcn, concrete_coll_pin in candidates_mapping.items():
-            yield concrete_coll_pin
+        for fqcn, candidate in candidates_mapping.items():
+            yield candidate
     else:
-        all_installed = set(
-            candidate for candidate in preferred_collections if
-            _is_collection_dir(candidate.src)
-        )
-
-        full_installation = resolve_depenency_obj(
-            all_installed,
-            galaxy_apis=apis,
-            preferred_candidates=preferred_collections,
-            concrete_artifacts_manager=artifacts_manager,
-            no_deps=False,
-            allow_pre_release=True,
-            upgrade=False,
-        )
-
-        for candidate in find_unused_collections(candidates_mapping, preferred_collections, full_installation.criteria):
+        # Only do this for indirect removals (i.e. dependencies)?
+        for candidate in get_removable_collections(candidates_mapping, preferred_collections, artifacts_manager):
             yield candidate
 
 
-def find_unused_collections(resolved_collections, preferred_collections, criteria):
-    """Yield Candidates that are not relied on by other installed collections."""
-    for fqcn, candidate in resolved_collections.items():
-        skip = False
-        remaining_parents = []
-
-        if candidate.fqcn not in criteria:
-            yield candidate
-            continue
-
-        for parent in criteria.get(candidate.fqcn, []).iter_parent():
-            if parent is None:
+def get_removable_collections(collections, installed_collections, artifacts_manager):
+    """Yield Candidates that are not relied on by other installed collections"""
+    for fqcn, candidate in collections.items():
+        needed_by = []
+        for other in installed_collections:
+            if not _is_collection_dir(other.src):
+                # No valid metadata
                 continue
-            if parent.is_virtual:
+            if other.fqcn in collections:
+                # will also be removed, the deps don't matter
                 continue
-            if parent not in preferred_collections:
-                # not installed
-                continue
-            if parent.fqcn in resolved_collections:
-                # will also be removed
+            if other.is_virtual:
                 continue
 
-            remaining_parents.append(f"{parent.fqcn}:{parent.ver}")
-            skip = True
-
-        if skip:
+            requires = artifacts_manager.get_direct_collection_dependencies(other)
+            if fqcn in requires:
+                requires_version = requires[fqcn]
+                if meets_requirements(candidate.ver, requires_version):
+                    needed_by.append(f"{other.fqcn}:{other.ver}")
+        if needed_by:
             display.display(
-                f"Collection {fqcn} is still in use by {','.join(remaining_parents)}. "
+                f"Collection {fqcn} is still in use by {','.join(needed_by)}. "
                 "If you want to remove it anyway, use the option '--force'."
             )
         else:
