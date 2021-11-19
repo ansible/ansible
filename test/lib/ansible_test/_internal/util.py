@@ -773,10 +773,9 @@ def load_module(path, name):  # type: (str, str) -> None
 
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
     # noinspection PyUnresolvedReferences
     spec.loader.exec_module(module)
-
-    sys.modules[name] = module
 
 
 def sanitize_host_name(name):
