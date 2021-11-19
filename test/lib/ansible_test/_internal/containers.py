@@ -103,7 +103,7 @@ def run_support_container(
         args,  # type: EnvironmentConfig
         context,  # type: str
         image,  # type: str
-        name,  # type: name
+        name,  # type: str
         ports,  # type: t.List[int]
         aliases=None,  # type: t.Optional[t.List[str]]
         start=True,  # type: bool

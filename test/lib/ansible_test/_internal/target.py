@@ -155,7 +155,7 @@ def walk_units_targets():  # type: () -> t.Iterable[TestTarget]
     return walk_test_targets(path=data_context().content.unit_path, module_path=data_context().content.unit_module_path, extensions=('.py',), prefix='test_')
 
 
-def walk_compile_targets(include_symlinks=True):  # type: (bool) -> t.Iterable[TestTarget, ...]
+def walk_compile_targets(include_symlinks=True):  # type: (bool) -> t.Iterable[TestTarget]
     """Return an iterable of compile targets."""
     return walk_test_targets(module_path=data_context().content.module_path, extensions=('.py',), extra_dirs=('bin',), include_symlinks=include_symlinks)
 
