@@ -254,7 +254,7 @@ def docker_run(
     raise ApplicationError('Failed to run docker image "%s".' % image)
 
 
-def docker_start(args, container_id, options=None):  # type: (EnvironmentConfig, str, t.Optional[t.List[str]]) -> (t.Optional[str], t.Optional[str])
+def docker_start(args, container_id, options=None):  # type: (EnvironmentConfig, str, t.Optional[t.List[str]]) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """
     Start a docker container by name or ID
     """

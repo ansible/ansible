@@ -526,24 +526,24 @@ def add_environment_remote(
     )
 
 
-def complete_remote_stage(prefix, **_):  # type: (str, ...) -> t.List[str]
+def complete_remote_stage(prefix: str, **_) -> t.List[str]:
     """Return a list of supported stages matching the given prefix."""
     return [stage for stage in ('prod', 'dev') if stage.startswith(prefix)]
 
 
-def complete_windows(prefix, parsed_args, **_):  # type: (str, argparse.Namespace, ...) -> t.List[str]
+def complete_windows(prefix: str, parsed_args: argparse.Namespace, **_) -> t.List[str]:
     """Return a list of supported Windows versions matching the given prefix, excluding versions already parsed from the command line."""
     return [i for i in get_windows_version_choices() if i.startswith(prefix) and (not parsed_args.windows or i not in parsed_args.windows)]
 
 
-def complete_network_platform(prefix, parsed_args, **_):  # type: (str, argparse.Namespace, ...) -> t.List[str]
+def complete_network_platform(prefix: str, parsed_args: argparse.Namespace, **_) -> t.List[str]:
     """Return a list of supported network platforms matching the given prefix, excluding platforms already parsed from the command line."""
     images = sorted(filter_completion(network_completion()))
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
 
 
-def complete_network_platform_collection(prefix, parsed_args, **_):  # type: (str, argparse.Namespace, ...) -> t.List[str]
+def complete_network_platform_collection(prefix: str, parsed_args: argparse.Namespace, **_) -> t.List[str]:
     """Return a list of supported network platforms matching the given prefix, excluding collection platforms already parsed from the command line."""
     left = prefix.split('=')[0]
     images = sorted(set(image.platform for image in filter_completion(network_completion()).values()))
@@ -551,7 +551,7 @@ def complete_network_platform_collection(prefix, parsed_args, **_):  # type: (st
     return [i + '=' for i in images if i.startswith(left) and (not parsed_args.platform_collection or i not in [x[0] for x in parsed_args.platform_collection])]
 
 
-def complete_network_platform_connection(prefix, parsed_args, **_):  # type: (str, argparse.Namespace, ...) -> t.List[str]
+def complete_network_platform_connection(prefix: str, parsed_args: argparse.Namespace, **_) -> t.List[str]:
     """Return a list of supported network platforms matching the given prefix, excluding connection platforms already parsed from the command line."""
     left = prefix.split('=')[0]
     images = sorted(set(image.platform for image in filter_completion(network_completion()).values()))
