@@ -17,14 +17,13 @@ DOCUMENTATION = """
         description:
           - Environment variable or list of them to lookup the values for.
         required: True
+      default:
+        description: What return when the variable is undefined
+        type: raw
+        default: ''
+        version_added: '2.13'
     notes:
-      - The module returns an empty string if the environment variable is not
-        defined. This makes it impossible to differentiate between the case the
-        variable is not defined and the case the variable is defined but it
-        contains an empty string.
-      - The C(default) filter requires second parameter to be set to C(True)
-        in order to set a default value in the case the variable is not
-        defined (see examples).
+        - You can pass the `Undefined` object as O(default) to force an undefined error
 """
 
 EXAMPLES = """
@@ -51,10 +50,13 @@ from ansible.utils import py3compat
 
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
-        ret = []
 
+        self.set_options(var_options=variables, direct=kwargs)
+
+        ret = []
+        d = self.get_option('default')
         for term in terms:
             var = term.split()[0]
-            ret.append(py3compat.environ.get(var, ''))
+            ret.append(py3compat.environ.get(var, d))
 
         return ret
