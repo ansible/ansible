@@ -109,7 +109,7 @@ from ansible.galaxy.dependency_resolution import (
     build_collection_dependency_resolver,
 )
 from ansible.galaxy.dependency_resolution.dataclasses import (
-    Candidate, Requirement, _is_installed_collection_dir,
+    Candidate, Requirement, _is_installed_collection_dir, _is_collection_dir
 )
 from ansible.galaxy.dependency_resolution.errors import (
     CollectionDependencyResolutionImpossible,
@@ -1314,6 +1314,27 @@ def _resolve_depenency_map(
         upgrade,  # type: bool
 ):  # type: (...) -> Dict[str, Candidate]
     """Return the resolved dependency map."""
+    return resolve_depenency_obj(
+        requested_requirements,
+        galaxy_apis,
+        concrete_artifacts_manager,
+        preferred_candidates,
+        no_deps,
+        allow_pre_release,
+        upgrade,
+    ).mapping
+
+
+def resolve_depenency_obj(
+        requested_requirements,  # type: Iterable[Requirement]
+        galaxy_apis,  # type: Iterable[GalaxyAPI]
+        concrete_artifacts_manager,  # type: ConcreteArtifactsManager
+        preferred_candidates,  # type: Optional[Iterable[Candidate]]
+        no_deps,  # type: bool
+        allow_pre_release,  # type: bool
+        upgrade,  # type: bool
+):  # type: (...) -> Dict[str, Candidate]
+    """Return the resolved dependency object."""
     collection_dep_resolver = build_collection_dependency_resolver(
         galaxy_apis=galaxy_apis,
         concrete_artifacts_manager=concrete_artifacts_manager,
@@ -1327,7 +1348,7 @@ def _resolve_depenency_map(
         return collection_dep_resolver.resolve(
             requested_requirements,
             max_rounds=2000000,  # NOTE: same constant pip uses
-        ).mapping
+        )
     except CollectionDependencyResolutionImpossible as dep_exc:
         conflict_causes = (
             '* {req.fqcn!s}:{req.ver!s} ({dep_origin!s})'.format(
@@ -1381,3 +1402,166 @@ def _resolve_depenency_map(
             AnsibleError('\n'.join(error_msg_lines)),
             dep_exc,
         )
+
+
+def remove_collections(collections, collection_paths, apis, no_deps, force, artifacts_manager):
+    """Search all paths for the collections and remove corresponding Candidates."""
+    candidates = []
+    all_installed_collections = []
+
+    # Find all collections before removing any in case there are multiple matches or the requirements can't be resolved
+    for path in collection_paths:
+        if not os.path.isdir(path):
+            continue
+
+        preferred_collections = list(find_existing_collections(path, artifacts_manager))
+        all_installed_collections.extend(preferred_collections)
+
+        candidates.extend(
+            find_collections_to_remove(
+                path,
+                collections,
+                apis,
+                no_deps,
+                force,
+                artifacts_manager,
+                set(preferred_collections),
+            )
+        )
+
+    # Add the Candidates to a dict with FQCN keys
+    candidates_mapping = {}
+    for candidate in candidates:
+        candidates_mapping[candidate.fqcn] = candidates_mapping.get(candidate.fqcn, []) + [candidate]
+
+    # Display any requested collections that were not found
+    for req in collections:
+        if req.fqcn not in candidates_mapping and force:
+            display.display(f"Skipping '{req}' as it is not installed")
+        elif req.fqcn not in candidates_mapping:
+            # In use by another collection or uninstalled
+            if not any(req.fqcn == installed.fqcn for installed in all_installed_collections):
+                display.display(f"Skipping '{req}' as it is not installed")
+
+    for name, candidates in candidates_mapping.items():
+        remove_collections = []
+        for candidate in candidates:
+            if candidate.is_virtual:
+                display.display(f"Skipping '{candidate}' as it is virtual.")
+                continue
+            if not _is_collection_dir(candidate.src):
+                display.display(f"Skipping '{candidate}' as it is not installed")
+                continue
+            remove_collections.append(candidate)
+
+        if not force and len(remove_collections) > 1:
+            remove_collections = prompt_for_user_selection(name, remove_collections)
+            display.display("")
+
+        for candidate in remove_collections:
+            shutil.rmtree(candidate.src)
+            display.display(f"{candidate} was removed successfully")
+
+
+def find_collections_to_remove(collection_path, collections, apis, no_deps, force, artifacts_manager, preferred_collections):
+    """Yield Candidates from a collection search path."""
+    candidates_mapping = _resolve_depenency_map(
+        collections,
+        galaxy_apis=apis,
+        preferred_candidates=preferred_collections,
+        concrete_artifacts_manager=artifacts_manager,
+        no_deps=no_deps,
+        allow_pre_release=True,
+        upgrade=False,
+    )
+
+    if force:
+        for fqcn, concrete_coll_pin in candidates_mapping.items():
+            yield concrete_coll_pin
+    else:
+        all_installed = set(
+            candidate for candidate in preferred_collections if
+            _is_collection_dir(candidate.src)
+        )
+
+        full_installation = resolve_depenency_obj(
+            all_installed,
+            galaxy_apis=apis,
+            preferred_candidates=preferred_collections,
+            concrete_artifacts_manager=artifacts_manager,
+            no_deps=False,
+            allow_pre_release=True,
+            upgrade=False,
+        )
+
+        for candidate in find_unused_collections(candidates_mapping, preferred_collections, full_installation.criteria):
+            yield candidate
+
+
+def find_unused_collections(resolved_collections, preferred_collections, criteria):
+    """Yield Candidates that are not relied on by other installed collections."""
+    for fqcn, candidate in resolved_collections.items():
+        skip = False
+        remaining_parents = []
+
+        if candidate.fqcn not in criteria:
+            yield candidate
+            continue
+
+        for parent in criteria.get(candidate.fqcn, []).iter_parent():
+            if parent is None:
+                continue
+            if parent.is_virtual:
+                continue
+            if parent not in preferred_collections:
+                # not installed
+                continue
+            if parent.fqcn in resolved_collections:
+                # will also be removed
+                continue
+
+            remaining_parents.append(f"{parent.fqcn}:{parent.ver}")
+            skip = True
+
+        if skip:
+            display.display(
+                f"Collection {fqcn} is still in use by {','.join(remaining_parents)}. "
+                "If you want to remove it anyway, use the option '--force'."
+            )
+        else:
+            yield candidate
+
+
+def prompt_for_user_selection(fqcn, collections):
+    """Prompt user for indices of the collection(s)."""
+    indices = list(range(0, len(collections)))
+
+    prompt = "Found multiple collections that match '{fqcn!s}'".format(fqcn=fqcn)
+    for num in indices:
+        collection = collections[num]
+        prompt += (
+            "\n\t{index!s}. ({version!s}) {path!s}".
+            format(
+                index=num, version=collection.ver,
+                path=to_text(collection.src, errors='surrogate_or_strict'),
+            )
+        )
+    prompt += "\nType the comma separate list of numbers to remove (a for all or n for none): "
+
+    while True:
+        result = display.prompt(prompt)
+        if result in ['a', 'all']:
+            break
+        if result in ['n', 'none']:
+            indices = []
+            break
+        try:
+            # when the index is not in the expected range int('invalid') raises ValueError
+            indices = [int(r) if int(r) in indices else int('invalid') for r in result.split(',')]
+        except ValueError:
+            pass
+        else:
+            break
+        display.display("Unexpected input for prompt '{0}'".format(result))
+
+    return [collections[index] for index in indices]

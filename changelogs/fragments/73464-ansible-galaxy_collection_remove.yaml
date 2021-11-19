@@ -1,0 +1,7 @@
+minor_changes:
+- >-
+  It became possible to remove collections with ansible-galaxy by using
+  ``ansible-galaxy collection uninstall``. If there are multiple matches
+  for a collection, the user will be prompted (unless ``--force`` was
+  specified) for which to remove. Dependencies can also be removed
+  with ``--remove-deps`` (https://github.com/ansible/ansible/issues/67759).

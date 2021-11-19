@@ -190,3 +190,11 @@
       environment:
         ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
         ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+
+- name: run ansible-galaxy collection remove tests for {{ test_name }}
+  include_tasks: remove.yml
+  args:
+    apply:
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/collections_path_1/:{{ galaxy_dir }}/collections_path_2/'
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'

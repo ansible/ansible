@@ -32,6 +32,7 @@ from ansible.galaxy.collection import (
     find_existing_collections,
     install_collections,
     publish_collection,
+    remove_collections,
     validate_collection_name,
     validate_collection_path,
     verify_collections
@@ -231,6 +232,7 @@ class GalaxyCLI(CLI):
         self.add_build_options(collection_parser, parents=[common, force])
         self.add_publish_options(collection_parser, parents=[common])
         self.add_install_options(collection_parser, parents=[common, force, cache_options])
+        self.add_remove_options(collection_parser, parents=[common, collections_path, force])
         self.add_list_options(collection_parser, parents=[common, collections_path])
         self.add_verify_options(collection_parser, parents=[common, collections_path])
 
@@ -296,10 +298,21 @@ class GalaxyCLI(CLI):
                                           "'apb' and 'network'.")
 
     def add_remove_options(self, parser, parents=None):
-        remove_parser = parser.add_parser('remove', parents=parents, help='Delete roles from roles_path.')
-        remove_parser.set_defaults(func=self.execute_remove)
+        if parser.metavar == 'COLLECTION_ACTION':
+            remove_parser = parser.add_parser('remove', aliases=['uninstall'], parents=parents,
+                                              help='Delete collections installed in the collections path')
+            remove_parser.add_argument('args', metavar='collection_name', nargs='*', help='The collection(s) name or '
+                                       'path/url to a tar.gz collection artifact. This is mutually exclusive with --requirements-file.')
+            remove_parser.add_argument('-r', '--requirements-file', dest='requirements',
+                                       help='A file containing a list of collections to be removed.')
+            remove_parser.add_argument('collection', help='Collection', nargs='?', metavar='collection')
+            remove_parser.add_argument('--remove-deps', default=False, dest='remove_deps', action='store_true',
+                                       help='Also remove any dependencies of the collection(s) that are not required by anything else.')
+        else:
+            remove_parser = parser.add_parser('remove', aliases=['uninstall'], parents=parents, help='Delete roles from roles_path.')
+            remove_parser.add_argument('args', help='Role(s)', metavar='role', nargs='+')
 
-        remove_parser.add_argument('args', help='Role(s)', metavar='role', nargs='+')
+        remove_parser.set_defaults(func=self.execute_remove)
 
     def add_delete_options(self, parser, parents=None):
         delete_parser = parser.add_parser('delete', parents=parents,
@@ -1322,7 +1335,14 @@ class GalaxyCLI(CLI):
 
         return 0
 
-    def execute_remove(self):
+    @with_collection_artifacts_manager
+    def execute_remove(self, artifacts_manager=None):
+        if context.CLIARGS['type'] == 'role':
+            self.execute_remove_role()
+        elif context.CLIARGS['type'] == 'collection':
+            self.execute_remove_collection(artifacts_manager)
+
+    def execute_remove_role(self):
         """
         removes the list of roles passed as arguments from the local system.
         """
@@ -1341,6 +1361,33 @@ class GalaxyCLI(CLI):
                 raise AnsibleError("Failed to remove role %s: %s" % (role_name, to_native(e)))
 
         return 0
+
+    def execute_remove_collection(self, artifacts_manager):
+        """
+        removes the list of collections passed as arguments from the local system.
+        """
+        collections = context.CLIARGS['args']
+        search_paths = context.CLIARGS['collections_path']
+        requirements_file = context.CLIARGS['requirements']
+        no_deps = not context.CLIARGS['remove_deps']
+        force = context.CLIARGS['force']
+
+        requirements = self._require_one_of_collections_requirements(
+            collections, requirements_file,
+            artifacts_manager=artifacts_manager,
+        )
+        collection_requirements = requirements['collections']
+
+        resolved_paths = [validate_collection_path(GalaxyCLI._resolve_path(path)) for path in search_paths]
+
+        remove_collections(
+            collection_requirements,
+            resolved_paths,
+            self.api_servers,
+            no_deps,
+            force,
+            artifacts_manager=artifacts_manager,
+        )
 
     def execute_list(self):
         """

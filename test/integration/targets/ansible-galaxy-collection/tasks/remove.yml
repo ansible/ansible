@@ -1,0 +1,278 @@
+# Removing collections with no deps
+- name: install a particular (non-latest) version of a collection
+  command: ansible-galaxy collection install namespace1.name1:0.0.9 {{ galaxy_verbosity }}
+  register: result
+  failed_when:
+    - '"namespace1.name1:0.0.9 was installed successfully" not in result.stdout_lines'
+
+- name: remove an unspecified version
+  command: ansible-galaxy collection uninstall namespace1.name1 {{ galaxy_verbosity }}
+  register: result
+
+- name: verify the status of the collection directory
+  stat:
+    path: "{{ galaxy_dir }}/collections_path_1/ansible_collections/namespace1/name1"
+  register: collection_dir
+
+- assert:
+    that:
+      - '"namespace1.name1:0.0.9 was removed successfully" in result.stdout_lines'
+      - not collection_dir.stat.exists
+
+- name: install a particular version of a collection
+  command: ansible-galaxy collection install namespace1.name1:0.0.9 {{ galaxy_verbosity }}
+  register: result
+  failed_when:
+    - '"namespace1.name1:0.0.9 was installed successfully" not in result.stdout_lines'
+
+- name: remove a different version of the collection
+  command: ansible-galaxy collection uninstall namespace1.name1:0.0.8 {{ galaxy_verbosity }}
+  register: result
+
+- name: verify the status of the collection directory
+  stat:
+    path: "{{ galaxy_dir }}/collections_path_1/ansible_collections/namespace1/name1"
+  register: collection_dir
+
+- assert:
+    that:
+      - '"namespace1.name1:0.0.9 was removed successfully" not in result.stdout_lines'
+      - "\"Skipping 'namespace1.name1:0.0.8' as it is not installed\" in result.stdout_lines"
+      - collection_dir.stat.exists
+
+- name: remove the right version of the collection
+  command: ansible-galaxy collection uninstall namespace1.name1:0.0.9 {{ galaxy_verbosity }}
+  register: result
+
+- assert:
+    that:
+      - '"namespace1.name1:0.0.9 was removed successfully" in result.stdout_lines'
+
+- name: install the latest beta version of a collection
+  command: ansible-galaxy collection install namespace1.name1 --pre {{ galaxy_verbosity }}
+  register: result
+  failed_when:
+    - '"namespace1.name1:1.1.0-beta.1 was installed successfully" not in result.stdout_lines'
+
+- name: remove the latest pre-release
+  command: ansible-galaxy collection remove namespace1.name1 {{ galaxy_verbosity }}
+  register: result
+
+- name: verify the status of the collection directory
+  stat:
+    path: "{{ galaxy_dir }}/collections_path_1/ansible_collections/namespace1/name1"
+  register: collection_dir
+
+- assert:
+    that:
+      - '"namespace1.name1:1.1.0-beta.1 was removed successfully" in result.stdout_lines'
+      - not collection_dir.stat.exists
+
+# Removing collections with deps
+
+- name: install a collection with a dependency that also has a dependency
+  command: ansible-galaxy collection install parent_dep.parent_collection:1.0.0 {{ galaxy_verbosity }}
+  register: result
+  failed_when:
+    - '"parent_dep.parent_collection:1.0.0 was installed successfully" not in result.stdout_lines'
+    - '"child_dep.child_collection:0.9.9 was installed successfully" not in result.stdout_lines'
+    - '"child_dep2.child_collection:1.2.2 was installed successfully" not in result.stdout_lines'
+
+- name: remove the parent collection and the dependencies
+  command: ansible-galaxy collection remove parent_dep.parent_collection {{ galaxy_verbosity }} --remove-deps
+  register: result
+
+- name: verify the status of the collection directories
+  stat:
+    path: "{{ galaxy_dir }}/collections_path_1/ansible_collections/{{ item }}"
+  register: collection_dir
+  loop:
+    - "parent_dep/parent_collection"
+    - "child_dep/child_collection"
+    - "child_dep/child_dep2"
+
+- assert:
+    that:
+      - '"parent_dep.parent_collection:1.0.0 was removed successfully" in result.stdout_lines'
+      - not collection_dir.results[0].stat.exists
+      - '"child_dep.child_collection:0.9.9 was removed successfully" in result.stdout_lines'
+      - not collection_dir.results[1].stat.exists
+      - '"child_dep.child_dep2:1.2.2 was removed successfully" in result.stdout_lines'
+      - not collection_dir.results[2].stat.exists
+
+# Removing collection with deps using --no-deps
+
+- name: install a collection with a dependency that also has a dependency
+  command: ansible-galaxy collection install parent_dep.parent_collection:1.0.0 {{ galaxy_verbosity }}
+  register: result
+  failed_when:
+    - '"parent_dep.parent_collection:1.0.0 was installed successfully" not in result.stdout_lines'
+    - '"child_dep.child_collection:0.9.9 was installed successfully" not in result.stdout_lines'
+    - '"child_dep.child_dep2:1.2.2 was removed successfully" not in result.stdout_lines'
+
+- name: remove the parent collection without removing the dependencies
+  command: ansible-galaxy collection remove parent_dep.parent_collection {{ galaxy_verbosity }}
+  register: result
+
+- name: verify the status of the collection directories
+  stat:
+    path: "{{ galaxy_dir }}/collections_path_1/ansible_collections/{{ item }}"
+  register: collection_dir
+  loop:
+    - "parent_dep/parent_collection"
+    - "child_dep/child_collection"
+    - "child_dep/child_dep2"
+
+- assert:
+    that:
+      - '"parent_dep.parent_collection:1.0.0 was removed successfully" in result.stdout_lines'
+      - not collection_dir.results[0].stat.exists
+      - '"child_dep.child_collection:0.9.9 was removed successfully" not in result.stdout_lines'
+      - collection_dir.results[1].stat.exists
+      - '"child_dep.child_dep2:1.2.2 was removed successfully" not in result.stdout_lines'
+      - collection_dir.results[2].stat.exists
+
+# Removing collections needed by a collection that won't be removed
+
+- name: test a collection isn't removed if it's needed by another collection
+  command: ansible-galaxy collection remove child_dep.child_dep2 {{ galaxy_verbosity }}
+  register: result
+
+- assert:
+    that:
+      - '"child_dep.child_dep2:1.2.2 was removed successfully" not in result.stdout_lines'
+      - msg in result.stdout_lines
+  vars:
+    msg: "Collection child_dep.child_dep2 is still in use by child_dep.child_collection:0.9.9. If you want to remove it anyway, use the option '--force'."
+
+- name: test the collection can be removed with force
+  command: ansible-galaxy collection remove child_dep.child_dep2 --force {{ galaxy_verbosity }}
+  register: result
+
+- assert:
+    that:
+      - '"child_dep.child_dep2:1.2.2 was removed successfully" in result.stdout_lines'
+      - '"child_dep.child_collection:0.9.9 was removed successfully" not in result.stdout_lines'
+
+- name: clean up the remaining collection
+  command: ansible-galaxy collection remove child_dep.child_collection {{ galaxy_verbosity }}
+  register: result
+
+- assert:
+    that:
+      -  '"child_dep.child_collection:0.9.9 was removed successfully" in result.stdout_lines'
+
+# Removing collections from multiple paths
+
+- name: install a collection to two different paths
+  command: ansible-galaxy collection install namespace1.name1:{{ item.version }} {{ galaxy_verbosity }} -p {{ item.path }}
+  register: result
+  loop:
+    - version: "0.0.9"
+      path: "{{ galaxy_dir }}/collections_path_1/ansible_collections"
+    - version: "0.0.10"
+      path: "{{ galaxy_dir }}/collections_path_2/ansible_collections"
+
+- name: check both collections were installed
+  assert:
+    that:
+      - '"namespace1.name1:0.0.9 was installed successfully" in result.results[0].stdout_lines'
+      - '"namespace1.name1:0.0.10 was installed successfully" in result.results[1].stdout_lines'
+
+- name: remove the collection from both paths by using --force
+  command: ansible-galaxy collection remove namespace1.name1:<0.1.0 --force {{ galaxy_verbosity }}
+  register: result
+
+- assert:
+    that:
+      - '"namespace1.name1:0.0.9 was removed successfully" in result.stdout_lines'
+      - '"namespace1.name1:0.0.10 was removed successfully" in result.stdout_lines'
+
+- name: install a collection to two different paths
+  command: ansible-galaxy collection install namespace1.name1:{{ item.version }} {{ galaxy_verbosity }} -p {{ item.path }}
+  register: result
+  loop:
+    - version: "0.0.9"
+      path: "{{ galaxy_dir }}/collections_path_1"
+    - version: "0.0.10"
+      path: "{{ galaxy_dir }}/collections_path_2"
+
+- name: remove the collection from both paths by using the prompt
+  command:
+    cmd: ansible-galaxy collection remove namespace1.name1:<0.1.0 {{ galaxy_verbosity }}
+    stdin: "a"
+  register: result
+
+- assert:
+    that:
+      - '"namespace1.name1:0.0.9 was removed successfully" in result.stdout_lines'
+      - '"namespace1.name1:0.0.10 was removed successfully" in result.stdout_lines'
+
+- name: install a collection to two different paths
+  command: ansible-galaxy collection install namespace1.name1:{{ item.version }} {{ galaxy_verbosity }} -p {{ item.path }}
+  register: result
+  loop:
+    - version: "0.0.9"
+      path: "{{ galaxy_dir }}/collections_path_1"
+    - version: "0.0.10"
+      path: "{{ galaxy_dir }}/collections_path_2"
+
+- name: remove the collection from both paths by using the prompt again
+  command:
+    cmd: ansible-galaxy collection remove namespace1.name1:<0.1.0 {{ galaxy_verbosity }}
+    stdin: "0,1"
+  register: result
+
+- assert:
+    that:
+      - '"namespace1.name1:0.0.9 was removed successfully" in result.stdout_lines'
+      - '"namespace1.name1:0.0.10 was removed successfully" in result.stdout_lines'
+
+- name: install a collection to two different paths
+  command: ansible-galaxy collection install namespace1.name1:{{ item.version }} {{ galaxy_verbosity }} -p {{ item.path }}
+  register: result
+  loop:
+    - version: "0.0.9"
+      path: "{{ galaxy_dir }}/collections_path_1"
+    - version: "0.0.10"
+      path: "{{ galaxy_dir }}/collections_path_2"
+
+- name: remove the collection from neither path by using the prompt
+  command:
+    cmd: ansible-galaxy collection remove namespace1.name1:<0.1.0 {{ galaxy_verbosity }}
+    stdin: "n"
+  register: result
+
+- assert:
+    that:
+      - '"namespace1.name1:0.0.9 was removed successfully" not in result.stdout_lines'
+      - '"namespace1.name1:0.0.10 was removed successfully" not in result.stdout_lines'
+
+- name: remove the collection from only the second path by using the prompt
+  command:
+    cmd: ansible-galaxy collection remove namespace1.name1:<0.1.0 {{ galaxy_verbosity }}
+    stdin: "1"
+  register: result
+
+- assert:
+    that:
+      - '"namespace1.name1:0.0.9 was removed successfully" not in result.stdout_lines'
+      - '"namespace1.name1:0.0.10 was removed successfully" in result.stdout_lines'
+
+- name: install a collection to two different paths
+  command: ansible-galaxy collection install namespace1.name1:{{ item.version }} {{ galaxy_verbosity }} -p {{ item.path }}
+  register: result
+  loop:
+    - version: "0.0.9"
+      path: "{{ galaxy_dir }}/collections_path_1"
+    - version: "0.0.10"
+      path: "{{ galaxy_dir }}/collections_path_2"
+
+- name: test using a version restriction that matches a single collection doesn't need prompting
+  command: ansible-galaxy collection remove namespace1.name1:0.0.10 {{ galaxy_verbosity }}
+  register: result
+
+- assert:
+    that:
+      - '"namespace1.name1:0.0.9 was removed successfully" not in result.stdout_lines'
+      - '"namespace1.name1:0.0.10 was removed successfully" in result.stdout_lines'
