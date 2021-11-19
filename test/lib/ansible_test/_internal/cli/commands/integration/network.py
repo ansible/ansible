@@ -60,7 +60,7 @@ def do_network_integration(
     add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.NETWORK_INTEGRATION)  # network-integration
 
 
-def complete_network_testcase(prefix, parsed_args, **_):  # type: (str, argparse.Namespace, ...) -> t.List[str]
+def complete_network_testcase(prefix: str, parsed_args: argparse.Namespace, **_) -> t.List[str]:
     """Return a list of test cases matching the given prefix if only one target was parsed from the command line, otherwise return an empty list."""
     testcases = []
 
