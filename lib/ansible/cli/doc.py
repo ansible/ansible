@@ -595,7 +595,7 @@ class DocCLI(CLI, RoleMixin):
         if len(context.CLIARGS['args']) == 1:
             coll_filter = context.CLIARGS['args'][0]
 
-        if coll_filter in ('', None):
+        if coll_filter in ('ansible.builtin', 'ansible.legacy', '', None):
             paths = loader._get_paths_with_context()
             for path_context in paths:
                 self.plugin_list.update(DocCLI.find_plugins(path_context.path, path_context.internal, plugin_type))

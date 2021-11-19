@@ -5,6 +5,7 @@ __metaclass__ = type
 import pytest
 
 from ansible.cli.doc import DocCLI, RoleMixin
+from ansible.plugins.loader import module_loader
 
 
 TTY_IFY_DATA = {
@@ -111,3 +112,19 @@ def test_rolemixin__build_doc_no_filter_match():
     fqcn, doc = obj._build_doc(role_name, path, collection_name, argspec, entrypoint_filter)
     assert fqcn == '.'.join([collection_name, role_name])
     assert doc is None
+
+
+def test_builtin_modules_list():
+    args = ['ansible-doc', '-l', 'ansible.builtin', '-t', 'module']
+    obj = DocCLI(args=args)
+    obj.parse()
+    result = obj._list_plugins('module', module_loader)
+    assert len(result) > 0
+
+
+def test_legacy_modules_list():
+    args = ['ansible-doc', '-l', 'ansible.legacy', '-t', 'module']
+    obj = DocCLI(args=args)
+    obj.parse()
+    result = obj._list_plugins('module', module_loader)
+    assert len(result) > 0
