@@ -82,7 +82,7 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
 
-        self._supports_check_mode = False
+        self._supports_check_mode = True
 
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect

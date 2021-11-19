@@ -1,0 +1,3 @@
+minor_changes:
+  - Add check mode support and improved diff mode support to the assemble module.
+    (https://github.com/ansible/ansible/issues/11568)

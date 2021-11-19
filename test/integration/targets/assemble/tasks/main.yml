@@ -38,6 +38,15 @@
     that:
     - "result.changed == true"
 
+- name: test assemble with all fragments (check mode)
+  assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled1"
+  check_mode: True
+  register: result
+
+- assert:
+    that:
+    - "result.changed == True"
+
 - name: test assemble with all fragments
   assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled1"
   register: result
@@ -48,6 +57,16 @@
     - "result.state == 'file'"
     - "result.changed == True"
     - "result.checksum == '74152e9224f774191bc0bedf460d35de86ad90e6'"
+
+- name: test assemble with all fragments (check mode)
+  assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled1"
+  check_mode: True
+  register: result
+
+- name: assert that the same assemble + check mode reports no changes
+  assert:
+    that:
+    - "result.changed == False"
 
 - name: test assemble with all fragments
   assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled1"
@@ -60,6 +79,16 @@
     - "result.changed == False"
     - "result.checksum == '74152e9224f774191bc0bedf460d35de86ad90e6'"
 
+- name: test assemble with all fragments and decrypt=True (check mode)
+  assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled2" decrypt=yes
+  register: result
+  check_mode: True
+
+- name: assert the fragments were assembled with decrypt=True
+  assert:
+    that:
+    - "result.changed == True"
+
 - name: test assemble with all fragments and decrypt=True
   assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled2" decrypt=yes
   register: result
@@ -70,6 +99,16 @@
     - "result.state == 'file'"
     - "result.changed == True"
     - "result.checksum == '74152e9224f774191bc0bedf460d35de86ad90e6'"
+
+- name: test assemble with all fragments and decrypt=True (check mode)
+  assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled2" decrypt=yes
+  register: result
+  check_mode: True
+
+- name: assert that the same assemble + check mode reports no changes with decrypt=True
+  assert:
+    that:
+    - "result.changed == False"
 
 - name: test assemble with all fragments and decrypt=True
   assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled2" decrypt=yes
