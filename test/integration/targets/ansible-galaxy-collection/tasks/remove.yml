@@ -160,7 +160,7 @@
 
 - assert:
     that:
-      -  '"child_dep.child_collection:0.9.9 was removed successfully" in result.stdout_lines'
+      - '"child_dep.child_collection:0.9.9 was removed successfully" in result.stdout_lines'
 
 # Removing collections from multiple paths
 
