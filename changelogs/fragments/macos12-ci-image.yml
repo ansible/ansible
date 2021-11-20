@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - add macOS 12.0 as a remote target (https://github.com/ansible/ansible/pull/76328)
