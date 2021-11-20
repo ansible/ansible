@@ -143,7 +143,7 @@
       - '"child_dep.child_dep2:1.2.2 was removed successfully" not in result.stdout_lines'
       - msg in result.stdout_lines
   vars:
-    msg: "Collection child_dep.child_dep2 is still in use by child_dep.child_collection:0.9.9. If you want to remove it anyway, use the option '--force'."
+    msg: "Collection child_dep.child_dep2:1.2.2 is still in use by child_dep.child_collection:0.9.9. If you want to remove it anyway, use the option '--force'."
 
 - name: test the collection can be removed with force
   command: ansible-galaxy collection remove child_dep.child_dep2 --force {{ galaxy_verbosity }}

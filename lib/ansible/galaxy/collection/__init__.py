@@ -1444,51 +1444,52 @@ def remove_collections(collections, collection_paths, apis, no_deps, force, arti
 
 def find_collections_to_remove(collection_path, collections, apis, no_deps, force, artifacts_manager, preferred_collections):
     """Yield Candidates from a collection search path."""
-    candidates_mapping = _resolve_depenency_map(
-        collections,
-        galaxy_apis=apis,
-        preferred_candidates=preferred_collections,
-        concrete_artifacts_manager=artifacts_manager,
-        no_deps=no_deps,
-        allow_pre_release=True,
-        upgrade=False,
-    )
+    with _display_progress("Process download dependency map"):
+        candidates_mapping = _resolve_depenency_map(
+            collections,
+            galaxy_apis=apis,
+            preferred_candidates=preferred_collections,
+            concrete_artifacts_manager=artifacts_manager,
+            no_deps=no_deps,
+            allow_pre_release=True,
+            upgrade=False,
+        )
 
-    if force:
-        for fqcn, candidate in candidates_mapping.items():
+    for fqcn, candidate in candidates_mapping.items():
+        if force:
             yield candidate
-    else:
-        # Only do this for indirect removals (i.e. dependencies)?
-        for candidate in get_removable_collections(candidates_mapping, preferred_collections, artifacts_manager):
+            continue
+
+        elif not is_dependency(candidate, candidates_mapping, preferred_collections, artifacts_manager):
             yield candidate
 
 
-def get_removable_collections(collections, installed_collections, artifacts_manager):
-    """Yield Candidates that are not relied on by other installed collections"""
-    for fqcn, candidate in collections.items():
-        needed_by = []
-        for other in installed_collections:
-            if not _is_collection_dir(other.src):
-                # No valid metadata
-                continue
-            if other.fqcn in collections:
-                # will also be removed, the deps don't matter
-                continue
-            if other.is_virtual:
-                continue
+def is_dependency(collection, remove_collections, existing_collections, artifacts_manager):
+    """Whether or not the collection is relied on by another installed collection."""
+    dep_of = []
 
-            requires = artifacts_manager.get_direct_collection_dependencies(other)
-            if fqcn in requires:
-                requires_version = requires[fqcn]
-                if meets_requirements(candidate.ver, requires_version):
-                    needed_by.append(f"{other.fqcn}:{other.ver}")
-        if needed_by:
-            display.display(
-                f"Collection {fqcn} is still in use by {','.join(needed_by)}. "
-                "If you want to remove it anyway, use the option '--force'."
-            )
-        else:
-            yield candidate
+    for existing_collection in existing_collections:
+        if not _is_collection_dir(existing_collection.src):
+            # No valid metadata
+            continue
+        if existing_collection.fqcn in remove_collections:
+            continue
+        if existing_collection.is_virtual:
+            continue
+
+        requires = artifacts_manager.get_direct_collection_dependencies(existing_collection)
+        if collection.fqcn in requires:
+            requires_version = requires[collection.fqcn]
+            if meets_requirements(collection.ver, requires_version):
+                dep_of.append(f"{existing_collection}")
+
+    if dep_of:
+        display.display(
+            f"Collection {collection} is still in use by {','.join(dep_of)}. "
+            "If you want to remove it anyway, use the option '--force'."
+        )
+        return True
+    return False
 
 
 def prompt_for_user_selection(fqcn, collections):
