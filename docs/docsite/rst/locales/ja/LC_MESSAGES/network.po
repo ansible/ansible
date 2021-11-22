@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-05 13:53+0200\n"
+"POT-Creation-Date: 2021-11-09 14:07+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -801,13 +801,14 @@ msgid "Your tests should detect resources (such as interfaces) at runtime rather
 msgstr "テストは、(インターフェースなどの) リソースをテストにハードコーディングするのではなく、ランタイム時にリソースを検出する必要があります。これにより、テストはさまざまなシステムで実行できます。"
 
 #: ../../rst/network/dev_guide/developing_resource_modules_network.rst:631
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:203
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:262
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:298
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:327
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:358
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:405
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:611
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:205
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:264
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:300
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:329
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:360
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:409
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:615
+#: ../../rst/network/user_guide/network_working_with_command_output.rst:29
 msgid "For example:"
 msgstr "例:"
 
@@ -968,7 +969,7 @@ msgid "Documenting new network platforms"
 msgstr "新しいネットワークプラットフォームのドキュメント化"
 
 #: ../../rst/network/dev_guide/documenting_modules_network.rst:11
-msgid "When you create network modules for a new platform, or modify the connections provided by an existing network platform(such as ``network_cli`` and ``httpapi``), you also need to update  the :ref:`settings_by_platform` table and add or modify the Platform Options file for your platform."
+msgid "When you create network modules for a new platform, or modify the connections provided by an existing network platform (such as ``network_cli`` and ``httpapi``), you also need to update  the :ref:`settings_by_platform` table and add or modify the Platform Options file for your platform."
 msgstr "新しいプラットフォーム用のネットワークモジュールを作成する場合や、既存のネットワークプラットフォーム (``network_cli``、``httpapi`` など) が提供する接続を変更する場合は、:ref:`settings_by_platform` テーブルを更新して、プラットフォームの Platform Options ファイルを追加または変更することも必要です。"
 
 #: ../../rst/network/dev_guide/documenting_modules_network.rst:13
@@ -2998,7 +2999,7 @@ msgid "SSH key issues"
 msgstr "SSH キーの問題"
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:439
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:443
 msgid "Timeout issues"
 msgstr "タイムアウトの問題"
 
@@ -3011,7 +3012,7 @@ msgid "May actually be masking a authentication issue"
 msgstr "認証の問題を実際にマスクする可能性がある"
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:600
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:604
 msgid "Playbook issues"
 msgstr "Playbook の問題"
 
@@ -3032,13 +3033,13 @@ msgid "Enabling Networking logging and how to read the logfile"
 msgstr "ネットワークロギングの有効化とログファイルの読み取り方法"
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:39
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:96
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:156
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:199
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:256
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:294
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:321
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:426
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:98
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:158
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:201
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:258
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:296
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:323
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:430
 msgid "**Platforms:** Any"
 msgstr "**プラットフォーム:** 任意"
 
@@ -3051,545 +3052,545 @@ msgid "Because logging is very verbose, it is disabled by default. It can be ena
 msgstr "ロギングは非常に詳細なため、デフォルトでは無効になっています。これは、ansible-controller の :envvar:`ANSIBLE_LOG_PATH` オプションおよび :envvar:`ANSIBLE_DEBUG` オプションで有効にできます。これは、``ansible-playbook`` を実行しているマシンです。"
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:45
-msgid "Before running ``ansible-playbook``, run the following commands to enable logging::"
+msgid "Before running ``ansible-playbook``, run the following commands to enable logging:"
 msgstr "``ansible-playbook`` を実行する前に、以下のコマンドを実行してロギングを有効にします。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:55
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:57
 msgid "After Ansible has finished running you can inspect the log file which has been created on the ansible-controller:"
 msgstr "Ansible の実行が完了したら、ansible-controller で作成されたログファイルを確認できます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:73
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:75
 msgid "From the log notice:"
 msgstr "このログ通知は、以下のようになります。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:75
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:77
 msgid "``p=28990`` Is the PID (Process ID) of the ``ansible-connection`` process"
 msgstr "``p=28990`` ``ansible-connection`` プロセスの PID (プロセス ID) です。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:76
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:78
 msgid "``u=fred`` Is the user `running` ansible, not the remote-user you are attempting to connect as"
 msgstr "``u=fred`` ansible を `実行` しているユーザーです (接続しようとしているリモートユーザーではありません)。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:77
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:79
 msgid "``creating new control socket for host veos01:22 as user admin`` host:port as user"
 msgstr "``ホスト veos01:22 の新しいコントロールソケットをユーザー管理者`` ユーザーとして host:port"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:78
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:80
 msgid "``control socket path is`` location on disk where the persistent connection socket is created"
 msgstr "``control socket path is`` 永続接続ソケットが作成されるディスクの場所"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:79
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:81
 msgid "``using connection plugin network_cli`` Informs you that persistent connection is being used"
 msgstr "``using connection plugin network_cli`` 永続接続が使用されていることが通知されます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:80
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:82
 msgid "``connection established to veos01 in 0:00:22.580626`` Time taken to obtain a shell on the remote device"
 msgstr "``connection established to veos01 in 0:00:22.580626`` リモートデバイスでシェルの取得にかかった時間"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:83
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:85
 msgid "Port None ``creating new control socket for host veos01:None``"
 msgstr "ポートなし ``ホスト veos01:22 の新しいコントロールソケットをユーザー管理者``"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:85
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:87
 msgid "If the log reports the port as ``None`` this means that the default port is being used. A future Ansible release will improve this message so that the port is always logged."
 msgstr "ログでポートが ``None`` として報告される場合は、デフォルトのポートが使用されていることを意味します。今後の Ansible リリースでは、ポートが常にログに記録されるようにこのメッセージが改善されます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:88
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:90
 msgid "Because the log files are verbose, you can use grep to look for specific information. For example, once you have identified the ``pid`` from the ``creating new control socket for host`` line you can search for other connection log entries::"
 msgstr "ログファイルは冗長であるため、grepを使用して特定の情報を検索できます。たとえば、``creating new control socket for host`` 行から ``pid`` を特定したら、他の接続ログエントリーを検索できます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:94
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:96
 msgid "Enabling Networking device interaction logging"
 msgstr "ネットワークデバイスの対話ロギングの有効化"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:98
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:100
 msgid "Ansible includes logging of device interaction in the log file to help diagnose and troubleshoot issues regarding Ansible Networking modules. The messages are logged in the file pointed to by the ``log_path`` configuration option in the Ansible configuration file or by setting the  :envvar:`ANSIBLE_LOG_PATH`."
 msgstr "Ansible には、Ansible ネットワークモジュールに関する問題の診断およびトラブルシューティングに役立つ、ログファイル内のデバイスの対話のログが含まれています。このメッセージは、Ansible 設定ファイルの ``log_path`` 設定オプションで指定されているファイルに記録されるか、:envvar:`ANSIBLE_LOG_PATH` を設定すると記録されます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:103
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:105
 msgid "The device interaction messages consist of command executed on the target device and the returned response. Since this log data can contain sensitive information including passwords in plain text it is disabled by default. Additionally, in order to prevent accidental leakage of data, a warning will be shown on every task with this setting enabled, specifying which host has it enabled and where the data is being logged."
 msgstr "デバイスインタラクションメッセージは、ターゲットデバイス上で実行されたコマンドと返された応答で構成されます。このログデータには、パスワードなどの機密情報がプレーンテキストの形式で含まれる可能性があるため、デフォルトでは無効になっています。また、誤ってデータが漏洩しないように、この設定が有効になっているすべてのタスクに警告が表示され、有効になっているホストとデータが記録される場所が指定されます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:108
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:110
 msgid "Be sure to fully understand the security implications of enabling this option. The device interaction logging can be enabled either globally by setting in configuration file or by setting environment or enabled on per task basis by passing a special variable to the task."
 msgstr "このオプションを有効にした場合のセキュリティーへの影響を完全に理解してください。デバイス対話ロギングは、設定ファイルでグローバルに設定するか、環境を設定して有効にするか、または特殊な変数をタスクに渡すことでタスクごとに有効にすることができます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:110
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:112
 msgid "Before running ``ansible-playbook`` run the following commands to enable logging:"
 msgstr "``ansible-playbook`` を実行する前に、以下のコマンドを実行してロギングを有効にします。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:118
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:120
 msgid "Enable device interaction logging for a given task"
 msgstr "特定のタスクのデバイス対話ログを有効にします。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:130
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:756
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:823
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:132
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:760
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:827
 msgid "To make this a global setting, add the following to your ``ansible.cfg`` file:"
 msgstr "この設定をグローバルにするには、以下の設定を ``ansible.cfg`` ファイルに追加します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:137
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:139
 msgid "or enable the environment variable `ANSIBLE_PERSISTENT_LOG_MESSAGES`:"
 msgstr "または、環境変数 `ANSIBLE_PERSISTENT_LOG_MESSAGES` を有効にします。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:144
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:146
 msgid "If the task is failing on connection initialization itself, you should enable this option globally. If an individual task is failing intermittently this option can be enabled for that task itself to find the root cause."
 msgstr "タスク自体が接続の初期化に失敗している場合は、このオプションをグローバルに有効にする必要があります。個々のタスクが断続的に失敗する場合は、そのタスク自体に対してこのオプションを有効にして、根本原因を見つけることができます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:147
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:149
 msgid "After Ansible has finished running you can inspect the log file which has been created on the ansible-controller"
 msgstr "Ansible の実行が完了したら、ansible-controller で作成されたログファイルを確認できます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:149
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:151
 msgid "Be sure to fully understand the security implications of enabling this option as it can log sensitive information in log file thus creating security vulnerability."
 msgstr "このオプションを有効にすると、ログファイルに機密情報が記録され、セキュリティ上の脆弱性が生じる可能性があるため、セキュリティー上の影響を十分に理解してください。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:154
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:156
 msgid "Isolating an error"
 msgstr "エラーの分離"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:158
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:160
 msgid "As with any effort to troubleshoot it's important to simplify the test case as much as possible."
 msgstr "トラブルシューティングにおけるあらゆる作業と同様に、テストケースをできるだけ簡略化することが重要です。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:160
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:162
 msgid "For Ansible this can be done by ensuring you are only running against one remote device:"
 msgstr "Ansible の場合は、1 つのリモートデバイスに対してのみ実行するようにすることでこれを行うことができます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:162
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:164
 msgid "Using ``ansible-playbook --limit switch1.example.net...``"
 msgstr "``ansible-playbook --limit switch1.example.net...`` の使用"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:163
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:165
 msgid "Using an ad hoc ``ansible`` command"
 msgstr "``ansible`` アドホックコマンドの使用"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:165
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:167
 msgid "`ad hoc` refers to running Ansible to perform some quick command using ``/usr/bin/ansible``, rather than the orchestration language, which is ``/usr/bin/ansible-playbook``. In this case we can ensure connectivity by attempting to execute a single command on the remote device::"
 msgstr "`ad hoc` は、オーケストレーション言語 ``/usr/bin/ansible-playbook`` ではなく、``/usr/bin/ansible`` を使用して簡単なコマンドを実行するために Ansible を実行することを指します。この場合は、リモートデバイスで 1 つのコマンドを実行することで、接続を確認できます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:169
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:171
 msgid "In the above example, we:"
 msgstr "上記の例では、以下を行います。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:171
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:173
 msgid "connect to ``switch1.example.net`` specified in the inventory file ``inventory``"
 msgstr "インベントリーファイル ``inventory`` に指定された ``switch1.example.net`` に接続します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:172
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:174
 msgid "use the module ``arista.eos.eos_command``"
 msgstr "``arista.eos.eos_command`` モジュールの使用"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:173
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:175
 msgid "run the command ``?``"
 msgstr "``?`` コマンドの実行"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:174
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:176
 msgid "connect using the username ``admin``"
 msgstr "ユーザー名 ``admin`` を使用して接続"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:175
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:177
 msgid "inform the ``ansible`` command to prompt for the SSH password by specifying ``-k``"
 msgstr "``-k`` を指定して SSH パスワードを要求するように、``ansible`` コマンドに通知"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:177
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:179
 msgid "If you have SSH keys configured correctly, you don't need to specify the ``-k`` parameter."
 msgstr "SSH キーが正しく設定されている場合は、``-k`` パラメーターを指定する必要はありません。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:179
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:181
 msgid "If the connection still fails you can combine it with the enable_network_logging parameter. For example:"
 msgstr "それでも接続が失敗した場合は、これを enable_network_logging パラメーターと組み合わせることができます。以下に例を示します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:190
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:192
 msgid "Then review the log file and find the relevant error message in the rest of this document."
 msgstr "次に、ログファイルを確認し、このドキュメントの残りの部分で、関連するエラーメッセージを見つけます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:197
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:199
 msgid "Troubleshooting socket path issues"
 msgstr "ソケットパスの問題のトラブルシューティング"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:201
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:203
 msgid "The ``Socket path does not exist or cannot be found``  and ``Unable to connect to socket`` messages indicate that the socket used to communicate with the remote network device is unavailable or does not exist."
 msgstr "``Socket path does not exist or cannot be found`` メッセージおよび ``Unable to connect to socket``メッセージは、リモートネットワークデバイスとの通信に使用されるソケットが利用できないか、存在しないことを示しています。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:216
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:241
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:378
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:218
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:243
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:380
 msgid "or"
 msgstr "または"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:229
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:283
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:309
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:335
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:369
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:419
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:450
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:476
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:502
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:513
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:539
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:623
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:795
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:231
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:285
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:311
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:337
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:371
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:423
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:454
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:480
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:506
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:517
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:543
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:627
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:799
 msgid "Suggestions to resolve:"
 msgstr "解決するためのヒント:"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:231
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:233
 msgid "Verify that you have write access to the socket path described in the error message."
 msgstr "エラーメッセージに記載されているソケットパスへの書き込み権限があることを確認します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:233
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:235
 msgid "Follow the steps detailed in :ref:`enable network logging <enable_network_logging>`."
 msgstr "「:ref:`ネットワークロギングの有効化 <enable_network_logging>`」記載される手順に従ってください。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:235
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:237
 msgid "If the identified error message from the log file is:"
 msgstr "ログファイルから特定されたエラーメッセージが以下の場合は、"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:247
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:249
 msgid "Follow the steps detailed in :ref:`timeout issues <timeout_issues>`"
 msgstr "「:ref:`タイムアウトの問題 <timeout_issues>`」に記載の手順に従ってください。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:253
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:255
 msgid "Category \"Unable to open shell\""
 msgstr "Category \"Unable to open shell\""
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:258
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:260
 msgid "The ``unable to open shell`` message means that the ``ansible-connection`` daemon has not been able to successfully talk to the remote network device. This generally means that there is an authentication issue. It is a \"catch all\" message, meaning you need to enable :ref:`logging <a_note_about_logging>` to find the underlying issues."
 msgstr "``unable to open shell`` メッセージは、``ansible-connection`` デーモンがリモートネットワークデバイスと正常に通信できなかったことを示します。これは通常、認証の問題があることを意味します。これは「catch all (全て取得する)」メッセージです。つまり、:ref:`logging <a_note_about_logging>` を有効にして、根本的な問題を検出する必要があります。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:270
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:272
 msgid "or:"
 msgstr "または"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:285
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:287
 msgid "Follow the steps detailed in enable_network_logging_."
 msgstr "enable_network_logging_ に記載の手順に従います。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:287
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:289
 msgid "Once you've identified the error message from the log file, the specific solution can be found in the rest of this document."
 msgstr "ログファイルからエラーメッセージが特定できたら、特定の解決方法は、本ガイドのその他のセクションを参照してください。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:292
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:294
 msgid "Error: \"[Errno -2] Name or service not known\""
 msgstr "Error: \"[Errno -2] Name or service not known\""
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:296
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:298
 msgid "Indicates that the remote host you are trying to connect to can not be reached"
 msgstr "接続しようとしているリモートホストに到達できないことを示します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:311
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:313
 msgid "If you are using the ``provider:`` options ensure that its suboption ``host:`` is set correctly."
 msgstr "``provider:`` オプションを使用している場合は、サブオプション ``host:`` が正しく設定されていることを確認します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:312
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:314
 msgid "If you are not using ``provider:`` nor top-level arguments ensure your inventory file is correct."
 msgstr "``provider:`` またはトップレベルの引数を使用しない場合には、インベントリーファイルが正しいことを確認してください。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:319
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:321
 msgid "Error: \"Authentication failed\""
 msgstr "Error: \"Authentication failed\""
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:323
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:325
 msgid "Occurs if the credentials (username, passwords, or ssh keys) passed to ``ansible-connection`` (via ``ansible`` or ``ansible-playbook``) can not be used to connect to the remote device."
 msgstr "(``ansible`` または ``ansible-playbook`` を使用して) ``ansible-connection`` に渡される認証情報 (ユーザー名、パスワード、または ssh キー) を使用してリモートデバイスに接続できない場合に発生します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:337
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:339
 msgid "If you are specifying credentials via ``password:`` (either directly or via ``provider:``) or the environment variable `ANSIBLE_NET_PASSWORD` it is possible that ``paramiko`` (the Python SSH library that Ansible uses) is using ssh keys, and therefore the credentials you are specifying are being ignored. To find out if this is the case, disable \"look for keys\". This can be done like this:"
 msgstr "(直接または ``provider:`` を使用して) ``password:`` で認証情報を指定する場合や、環境変数 `ANSIBLE_NET_PASSWORD` を指定する場合は、``paramiko`` (Ansible が使用する Python SSH ライブラリー) が ssh キーを使用している可能性があるため、指定する認証情報が無効になります。これを確認するには、「look for keys」を無効にします。これは次のように行います。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:343
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:458
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:485
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:550
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:345
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:462
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:489
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:554
 msgid "To make this a permanent change, add the following to your ``ansible.cfg`` file:"
 msgstr "これを永続的に行うには、以下を ``ansible.cfg`` ファイルに追加します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:352
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:354
 msgid "Error: \"connecting to host <hostname> returned an error\" or \"Bad address\""
 msgstr "Error: \"connecting to host <hostname> returned an error\" or \"Bad address\""
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:354
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:356
 msgid "This may occur if the SSH fingerprint hasn't been added to Paramiko's (the Python SSH library) know hosts file."
 msgstr "これは、SSH フィンガープリントが Paramiko の既知のホストファイル (Python SSH ライブラリー) に追加されていない場合に発生する可能性があります。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:356
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:358
 msgid "When using persistent connections with Paramiko, the connection runs in a background process.  If the host doesn't already have a valid SSH key, by default Ansible will prompt to add the host key.  This will cause connections running in background processes to fail."
 msgstr "Paramiko で永続的な接続を使用する場合、接続はバックグラウンドプロセスで実行します。ホストが有効な SSH キーを持っていない場合、Ansible はデフォルトでホストキーを追加するようプロンプトを出します。これにより、バックグラウンドプロセスで実行中の接続が失敗します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:371
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:373
 msgid "Use ``ssh-keyscan`` to pre-populate the known_hosts. You need to ensure the keys are correct."
 msgstr "``ssh-keyscan`` を使用して known_hosts を事前に設定します。キーが正しいことを確認してください。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:380
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:382
 msgid "You can tell Ansible to automatically accept the keys"
 msgstr "鍵を自動的に受け入れるように Ansible に設定できます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:382
-msgid "Environment variable method::"
-msgstr "環境変数メソッド::"
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:384
+msgid "Environment variable method:"
+msgstr "環境変数メソッド:"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:387
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:391
 msgid "``ansible.cfg`` method:"
 msgstr "``ansible.cfg`` メソッド:"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:389
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:393
 msgid "ansible.cfg"
 msgstr "ansible.cfg"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:403
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:407
 msgid "Error: \"No authentication methods available\""
 msgstr "Error: \"No authentication methods available\""
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:421
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:425
 msgid "No password or SSH key supplied"
 msgstr "パスワードまたは SSH キーが指定されていない"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:424
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:428
 msgid "Clearing Out Persistent Connections"
 msgstr "永続的な接続を解除"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:428
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:432
 msgid "In Ansible 2.3, persistent connection sockets are stored in ``~/.ansible/pc`` for all network devices.  When an Ansible playbook runs, the persistent socket connection is displayed when verbose output is specified."
 msgstr "Ansible 2.3 では、すべてのネットワークデバイスの永続的な接続ソケットが ``~/.ansible/pc`` に保存されます。Ansible Playbook が実行すると、詳細な出力が指定されている場合に永続的なソケット接続が表示されます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:430
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:434
 msgid "``<switch> socket_path: /home/fred/.ansible/pc/f64ddfa760``"
 msgstr "``<switch> socket_path: /home/fred/.ansible/pc/f64ddfa760``"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:432
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:436
 msgid "To clear out a persistent connection before it times out (the default timeout is 30 seconds of inactivity), simple delete the socket file."
 msgstr "タイムアウトする前に永続的な接続 (デフォルトのタイムアウトが 30 秒の非アクティブタイムアウト) を削除するには、ソケットファイルを簡単な削除します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:442
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:446
 msgid "Persistent connection idle timeout"
 msgstr "永続的な接続アイドルタイムアウト"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:444
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:448
 msgid "By default, ``ANSIBLE_PERSISTENT_CONNECT_TIMEOUT`` is set to 30 (seconds). You may see the following error if this value is too low:"
 msgstr "デフォルトでは、``ANSIBLE_PERSISTENT_CONNECT_TIMEOUT`` は 30 (秒) に設定されます。この値が低すぎると、以下のエラーが表示される可能性があります。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:452
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:456
 msgid "Increase value of persistent connection idle timeout:"
 msgstr "永続的な接続アイドルタイムアウトの値を大きくします。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:466
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:470
 msgid "Command timeout"
 msgstr "コマンドタイムアウト"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:468
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:472
 msgid "By default, ``ANSIBLE_PERSISTENT_COMMAND_TIMEOUT`` is set to 30 (seconds). Prior versions of Ansible had this value set to 10 seconds by default. You may see the following error if this value is too low:"
 msgstr "デフォルトでは、``ANSIBLE_PERSISTENT_COMMAND_TIMEOUT`` は 30 (秒) に設定されます。Ansible の以前のバージョンでは、デフォルトでこの値を 10 秒に設定されています。この値が低すぎると、以下のエラーが発生する可能性があります。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:478
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:482
 msgid "Option 1 (Global command timeout setting): Increase value of command timeout in configuration file or by setting environment variable."
 msgstr "オプション 1 (グローバルコマンドのタイムアウト設定): 設定ファイル、または環境変数を設定してコマンドタイムアウトの値を増やします。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:492
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:496
 msgid "Option 2 (Per task command timeout setting): Increase command timeout per task basis. All network modules support a timeout value that can be set on a per task basis. The timeout value controls the amount of time in seconds before the task will fail if the command has not returned."
 msgstr "オプション 2 (タスクごとのコマンドのタイムアウト設定): タスクごとにコマンドタイムアウトを増やします。すべてのネットワークモジュールは、タスクごとに設定できるタイムアウト値をサポートしています。タイムアウト値は、コマンドが返されなかった場合にタスクが失敗するまでの時間を秒単位で制御します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:498
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:502
 msgid "For local connection type:"
 msgstr "ローカル接続タイプの場合:"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:523
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:527
 msgid "Some operations take longer than the default 30 seconds to complete.  One good example is saving the current running config on IOS devices to startup config. In this case, changing the timeout value from the default 30 seconds to 60 seconds will prevent the task from failing before the command completes successfully."
 msgstr "一部の操作は、完了までにデフォルトの 30 秒より長くかかります。たとえば、IOS デバイス上の現在の実行設定をスタートアップ設定に保存します。この場合は、タイムアウト値をデフォルトの 30 秒から 60 秒に変更すると、コマンドが正常に完了する前にタスクが失敗するのを防ぐことができます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:530
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:534
 msgid "Persistent connection retry timeout"
 msgstr "永続的な接続の再試行タイムアウト"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:532
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:536
 msgid "By default, ``ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT`` is set to 15 (seconds). You may see the following error if this value is too low:"
 msgstr "デフォルトでは、``ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT`` は 15 (秒) に設定されます。この値が低すぎると、以下のエラーが表示される可能性があります。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:541
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:545
 msgid "Increase the value of the persistent connection idle timeout. Note: This value should be greater than the SSH timeout value (the timeout value under the defaults section in the configuration file) and less than the value of the persistent connection idle timeout (connect_timeout)."
 msgstr "持続的接続アイドルタイムアウトの値を増やします。注意: この値は、SSH タイムアウト値 (設定ファイルのデフォルトセクションの下のタイムアウト値) より大きく、永続的接続アイドルタイムアウト値 (connect_timeout) より小さくする必要があります。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:559
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:563
 msgid "Timeout issue due to platform specific login menu with ``network_cli`` connection type"
 msgstr "``network_cli`` 接続タイプを持つプラットフォーム固有のログインメニューによるタイムアウトの問題"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:561
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:565
 msgid "In Ansible 2.9 and later, the network_cli connection plugin configuration options are added to handle the platform specific login menu. These options can be set as group/host or tasks variables."
 msgstr "Ansible 2.9 以降では、プラットフォーム固有のログインメニューを処理するために network_cli connection プラグイン設定オプションが追加されました。これらのオプションは、グループ/ホストまたはタスク変数として設定できます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:565
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:569
 msgid "Example: Handle single login menu prompts with host variables"
 msgstr "例: ホスト変数を使用した 1 つのログインメニュープロンプトを処理します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:576
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:580
 msgid "Example: Handle remote host multiple login menu prompts with host variables"
 msgstr "例: ホスト変数を使用したリモートホストの複数のログインメニュープロンプトを処理します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:590
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:594
 msgid "To handle multiple login menu prompts:"
 msgstr "複数のログインメニュープロンプトを処理するには、以下を行います。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:592
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:596
 msgid "The values of ``ansible_terminal_initial_prompt`` and ``ansible_terminal_initial_answer`` should be a list."
 msgstr "``ansible_terminal_initial_prompt`` および ``ansible_terminal_initial_answer`` の値は一覧形式である必要があります。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:593
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:597
 msgid "The prompt sequence should match the answer sequence."
 msgstr "プロンプトシーケンスは、応答シーケンスに一致する必要があります。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:594
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:598
 msgid "The value of ``ansible_terminal_initial_prompt_checkall`` should be set to ``True``."
 msgstr "``ansible_terminal_initial_prompt_checkall`` の値は ``True`` に設定する必要があります。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:596
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:600
 msgid "If all the prompts in sequence are not received from remote host at the time connection initialization it will result in a timeout."
 msgstr "接続の初期化時に、リモートホストからシーケンス内のすべてのプロンプトを受け取らないと、タイムアウトが生じます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:602
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:606
 msgid "This section details issues are caused by issues with the Playbook itself."
 msgstr "本セクションでは、Playbook 自体の問題が原因で発生する問題を詳しく説明します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:605
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:609
 msgid "Error: \"Unable to enter configuration mode\""
 msgstr "Error: \"Unable to enter configuration mode\""
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:607
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:611
 msgid "**Platforms:** Arista EOS and Cisco IOS"
 msgstr "**プラットフォーム:** Arista EOS および Cisco IOS"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:609
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:613
 msgid "This occurs when you attempt to run a task that requires privileged mode in a user mode shell."
 msgstr "これは、ユーザーモードシェルで特権モードを必要とするタスクを実行しようとすると発生します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:625
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:629
 msgid "Use ``connection: ansible.netcommon.network_cli`` and ``become: yes``"
 msgstr "``connection: ansible.netcommon.network_cli`` および ``become: yes`` の使用"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:629
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:633
 msgid "Proxy Issues"
 msgstr "プロキシーの問題"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:634
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:638
 msgid "delegate_to vs ProxyCommand"
 msgstr "delegate_to 対 ProxyCommand"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:636
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:640
 msgid "In order to use a bastion or intermediate jump host to connect to network devices over ``cli`` transport, network modules support the use of ``ProxyCommand``."
 msgstr "bastion または中間ジャンプホストを使用して ``cli`` トランスポートでネットワークデバイスに接続するために、ネットワークモジュールは ``ProxyCommand`` の使用に対応します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:639
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:643
 msgid "To use ``ProxyCommand``, configure the proxy settings in the Ansible inventory file to specify the proxy host."
 msgstr "``ProxyCommand`` を使用するには、Ansible インベントリーファイルでプロキシー設定を設定して、プロキシーホストを指定します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:652
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:656
 msgid "With the configuration above, simply build and run the playbook as normal with no additional changes necessary.  The network module will now connect to the network device by first connecting to the host specified in ``ansible_ssh_common_args``, which is ``bastion01`` in the above example."
 msgstr "上記の設定では、追加の変更を必要とせずに、通常どおり Playbook をビルドして実行します。ネットワークモジュールは、最初に ``ansible_ssh_common_args`` で指定したホスト (上記の例は ``bastion01``) に接続して、ネットワークデバイスに接続します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:657
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:661
 msgid "You can also set the proxy target for all hosts by using environment variables."
 msgstr "環境変数を使用して、すべてのホストのプロキシーターゲットを設定することもできます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:664
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:668
 msgid "Using bastion/jump host with netconf connection"
 msgstr "netconf 接続での bastion/ジャンプホストの使用"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:667
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:671
 msgid "Enabling jump host setting"
 msgstr "ジャンプホスト設定の有効化"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:673
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:677
 msgid "Bastion/jump host with netconf connection can be enabled by:"
 msgstr "netconf 接続を持つ bastion/ジャンプホストは、以下で有効にできます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:671
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:675
 msgid "Setting Ansible variable ``ansible_netconf_ssh_config`` either to ``True`` or custom ssh config file path"
 msgstr "Ansible 変数 ``ansible_netconf_ssh_config`` を ``True`` またはカスタムの ssh 設定ファイルパスに設定"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:672
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:676
 msgid "Setting environment variable ``ANSIBLE_NETCONF_SSH_CONFIG`` to ``True`` or custom ssh config file path"
 msgstr "環境変数 ``ANSIBLE_NETCONF_SSH_CONFIG`` を ``True`` またはカスタムの ssh 設定ファイルパスに設定"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:673
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:677
 msgid "Setting ``ssh_config = 1`` or ``ssh_config = <ssh-file-path>`` under ``netconf_connection`` section"
 msgstr "``ssh_config = 1`` セクションの下に ``ssh_config = <ssh-file-path>`` または ``netconf_connection`` の設定"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:675
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:679
 msgid "If the configuration variable is set to 1 the proxycommand and other ssh variables are read from default ssh config file (~/.ssh/config)."
 msgstr "設定変数が 1 に設定されている場合、proxycommand およびその他の ssh 変数はデフォルトの ssh 設定ファイル (~/.ssh/config) から読み込まれます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:678
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:682
 msgid "If the configuration variable is set to file path the proxycommand and other ssh variables are read from the given custom ssh file path"
 msgstr "設定変数がファイルパスに設定されていると、proxycommand およびその他の ssh 変数は指定のカスタム ssh ファイルパスから読み込まれます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:682
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:686
 msgid "Example ssh config file (~/.ssh/config)"
 msgstr "ssh 設定ファイルの例 (~/.ssh/config)"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:709
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:713
 msgid "Example Ansible inventory file"
 msgstr "Ansible インベントリーファイルの例"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:723
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:727
 msgid "Using ``ProxyCommand`` with passwords via variables"
 msgstr "変数を介したパスワードでの ``ProxyCommand`` の使用"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:725
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:729
 msgid "By design, SSH doesn't support providing passwords via environment variables. This is done to prevent secrets from leaking out, for example in ``ps`` output."
 msgstr "設計上、SSH は環境変数経由でパスワードの提供をサポートしません。これは、``ps`` の出力など、シークレットがリークしないようにします。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:728
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:732
 msgid "We recommend using SSH Keys, and if needed an ssh-agent, rather than passwords, where ever possible."
 msgstr "SSH 鍵を使用することを推奨します。必要に応じて、可能な場合は、パスワードではなく ssh-agent を使用することが推奨されます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:731
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:735
 msgid "Miscellaneous Issues"
 msgstr "その他の問題"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:735
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:739
 msgid "Intermittent failure while using ``ansible.netcommon.network_cli`` connection type"
 msgstr "``ansible.netcommon.network_cli`` 接続タイプの使用中に断続的な失敗"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:737
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:741
 msgid "If the command prompt received in response is not matched correctly within the ``ansible.netcommon.network_cli`` connection plugin the task might fail intermittently with truncated response or with the error message ``operation requires privilege escalation``. Starting in 2.7.1 a new buffer read timer is added to ensure prompts are matched properly and a complete response is send in output. The timer default value is 0.2 seconds and can be adjusted on a per task basis or can be set globally in seconds."
 msgstr "応答で受け取ったコマンドプロンプトが ``ansible.netcommon.network_cli`` connection プラグイン内で正しく一致しないと、タスクが断続的に失敗し、応答が切り捨てられるか、エラーメッセージ ``operation requires privilege escalation`` が表示されることがあります。2.7.1 以降、プロンプトが正しく一致し、完全な応答が出力に送信されるように、新しいバッファ読み取りタイマーが追加されました。タイマーのデフォルト値は 0.2 秒で、タスクごとに調整することも、秒単位でグローバルに設定することもできます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:744
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:748
 msgid "Example Per task timer setting"
 msgstr "タスクタイマーごとの設定例"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:763
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:767
 msgid "This timer delay per command executed on remote host can be disabled by setting the value to zero."
 msgstr "リモートホストで実行されるコマンド別のこのタイマー遅延は、値をゼロに設定すると無効にできます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:767
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:771
 msgid "Task failure due to mismatched error regex within command response using ``ansible.netcommon.network_cli`` connection type"
 msgstr "``ansible.netcommon.network_cli`` 接続タイプを使用したコマンド応答内のエラー正規表現の不一致によるタスクの失敗"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:769
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:773
 msgid "In Ansible 2.9 and later, the ``ansible.netcommon.network_cli`` connection plugin configuration options are added to handle the stdout and stderr regex to identify if the command execution response consist of a normal response or an error response. These options can be set group/host variables or as tasks variables."
 msgstr "Ansible 2.9 以降では、``ansible.netcommon.network_cli`` connection プラグイン設定オプションが追加され、標準出力と標準エラーの正規表現を処理して、コマンド実行応答が通常の応答かエラー応答かを識別します。これらのオプションは、グループ/ホスト変数またはタスク変数として設定できます。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:774
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:778
 msgid "Example: For mismatched error response"
 msgstr "例: 不一致のエラー応答の場合"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:784
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:788
 msgid "Playbook run output:"
 msgstr "Playbook 実行の出力:"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:797
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:801
 msgid "Modify the error regex for individual task."
 msgstr "個々のタスクのエラー正規表現を変更します。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:810
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:814
 msgid "The terminal plugin regex options ``ansible_terminal_stderr_re`` and ``ansible_terminal_stdout_re`` have ``pattern`` and ``flags`` as keys. The value of the ``flags`` key should be a value that is accepted by the ``re.compile`` python method."
 msgstr "端末プラグインの正規表現オプション ``ansible_terminal_stderr_re`` および ``ansible_terminal_stdout_re`` は、``pattern`` と ``flags`` をキーとします。``flags`` キーの値は、``re.compile`` python メソッドで許可される値である必要があります。"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:816
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:820
 msgid "Intermittent failure while using ``ansible.netcommon.network_cli`` connection type due to slower network or remote target host"
 msgstr "低速ネットワークまたはリモートターゲットホストによる ``ansible.netcommon.network_cli`` 接続タイプの使用時の断続的な失敗"
 
-#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:818
+#: ../../rst/network/user_guide/network_debug_troubleshooting.rst:822
 msgid "In Ansible 2.9 and later, the ``ansible.netcommon.network_cli`` connection plugin configuration option is added to control the number of attempts to connect to a remote host. The default number of attempts is three. After every retry attempt the delay between retries is increased by power of 2 in seconds until either the maximum attempts are exhausted or either the ``persistent_command_timeout`` or ``persistent_connect_timeout`` timers are triggered."
 msgstr "Ansible 2.9 以降では、リモートホストへの接続の試行回数を制御するために、``ansible.netcommon.network_cli`` connection プラグイン設定オプションが追加されました。デフォルトの試行回数は 3 回です。再試行のたびに、最大試行回数がなくなるか、``persistent_command_timeout`` または ``persistent_connect_timeout`` タイマーのいずれかが発生するまで、再試行間の遅延は 2 の累乗 (秒) ずつ増加します。"
 
@@ -3789,67 +3790,63 @@ msgstr "``contains`` - オブジェクトに指定された項目が含まれる
 msgid "Conditional statements evaluate the results from the commands that are executed remotely on the device.  Once the task executes the command set, the ``wait_for`` argument can be used to evaluate the results before returning control to the Ansible playbook."
 msgstr "条件文は、デバイス上でリモートに実行されるコマンドの結果を評価します。タスクがコマンドセットを実行すると、Ansible Playbook に制御を戻す前に、``wait_for`` 引数を使用して結果を評価できます。"
 
-#: ../../rst/network/user_guide/network_working_with_command_output.rst:29
-msgid "For example::"
-msgstr "例::"
-
-#: ../../rst/network/user_guide/network_working_with_command_output.rst:39
+#: ../../rst/network/user_guide/network_working_with_command_output.rst:41
 msgid "In the above example task, the command :code:`show interface Ethernet4 | json` is executed on the remote device and the results are evaluated.  If the path :code:`(result[0].interfaces.Ethernet4.interfaceStatus)` is not equal to \"connected\", then the command is retried.  This process continues until either the condition is satisfied or the number of retries has expired (by default, this is 10 retries at 1 second intervals)."
 msgstr "上記のタスク例では、リモートデバイスで command :code:`show interface Ethernet4 | json` が実行され、結果が評価されます。path :code:`(result[0].interfaces.Ethernet4.interfaceStatus)`が「connected」になっていなければ、コマンドは再試行されます。この処理は、条件が満たされるか、再試行回数が期限切れになる (デフォルトでは、1 秒間隔で 10 回の再試行) まで継続されます。"
 
-#: ../../rst/network/user_guide/network_working_with_command_output.rst:47
-msgid "The commands module can also evaluate more than one set of command results in an interface.  For instance::"
+#: ../../rst/network/user_guide/network_working_with_command_output.rst:49
+msgid "The commands module can also evaluate more than one set of command results in an interface.  For instance:"
 msgstr "また、commands モジュールは、1 つのインターフェースで複数のコマンド結果を評価することもできます。たとえば、以下のようになります。"
 
-#: ../../rst/network/user_guide/network_working_with_command_output.rst:60
+#: ../../rst/network/user_guide/network_working_with_command_output.rst:64
 msgid "In the above example, two commands are executed on the remote device, and the results are evaluated.  By specifying the result index value (0 or 1), the correct result output is checked against the conditional."
 msgstr "上記の例では、2 つのコマンドがリモートデバイスで実行され、結果が評価されます。結果のインデックス値 (0 または 1) を指定することで、条件に対して正しい結果出力が確認されます。"
 
-#: ../../rst/network/user_guide/network_working_with_command_output.rst:65
+#: ../../rst/network/user_guide/network_working_with_command_output.rst:69
 msgid "The ``wait_for`` argument must always start with result and then the command index in ``[]``, where ``0`` is the first command in the commands list, ``1`` is the second command, ``2`` is the third and so on."
 msgstr "``wait_for`` 引数は、必ず結果で、次に ``[]`` のコマンドインデックスが必要です。``0`` はコマンドリストの最初のコマンド、``1`` は 2 番目のコマンド、``2`` は 3 番目のコマンドなどになります。"
 
-#: ../../rst/network/user_guide/network_working_with_command_output.rst:71
+#: ../../rst/network/user_guide/network_working_with_command_output.rst:75
 msgid "Handling prompts in network modules"
 msgstr "ネットワークモジュールのプロンプトの処理"
 
-#: ../../rst/network/user_guide/network_working_with_command_output.rst:73
+#: ../../rst/network/user_guide/network_working_with_command_output.rst:77
 msgid "Network devices may require that you answer a prompt before performing a change on the device. Individual network modules such as :ref:`cisco.ios.ios_command <ansible_collections.cisco.ios.ios_command_module>` and :ref:`cisco.nxos.nxos_command <ansible_collections.cisco.nxos.nxos_command_module>` can handle this with a ``prompt`` parameter."
 msgstr "ネットワークデバイスは、デバイスの変更を実行する前にプロンプトの回答が必要になる場合があります。:ref:`cisco.ios.ios_command <ansible_collections.cisco.ios.ios_command_module>` および :ref:`cisco.nxos.nxos_command <ansible_collections.cisco.nxos.nxos_command_module>` などの個別ネットワークモジュールは ``prompt`` パラメーターでこれを処理できます。"
 
-#: ../../rst/network/user_guide/network_working_with_command_output.rst:77
+#: ../../rst/network/user_guide/network_working_with_command_output.rst:81
 msgid "``prompt`` is a Python regex. If you add special characters such as ``?`` in the ``prompt`` value, the prompt won't match and you will get a timeout. To avoid this, ensure that the ``prompt`` value is a Python regex that matches the actual device prompt. Any special characters must be handled correctly in the ``prompt`` regex."
 msgstr "``prompt`` は Python の正規表現です。``prompt`` 値に ``?`` などの特殊文字を追加すると、プロンプトが一致せず、タイムアウトが発生します。これを回避するには、``prompt`` 値が実際のデバイスプロンプトと一致する Python 正規表現であることを確認します。特殊文字は、``prompt`` 正規表現で正しく処理する必要があります。"
 
-#: ../../rst/network/user_guide/network_working_with_command_output.rst:79
+#: ../../rst/network/user_guide/network_working_with_command_output.rst:83
 msgid "You can also use the :ref:`ansible.netcommon.cli_command <ansible_collections.ansible.netcommon.cli_command_module>` to handle multiple prompts."
 msgstr ":ref:`ansible.netcommon.cli_command <ansible_collections.ansible.netcommon.cli_command_module>` を使用して、複数のプロンプトを処理することもできます。"
 
-#: ../../rst/network/user_guide/network_working_with_command_output.rst:97
+#: ../../rst/network/user_guide/network_working_with_command_output.rst:101
 msgid "You must list the prompt and the answers in the same order (that is, prompt[0] is answered by answer[0])."
 msgstr "プロンプトと回答を同じ順序で一覧表示する必要があります (つまり、prompt[0] には answer[0] で応答します)。"
 
-#: ../../rst/network/user_guide/network_working_with_command_output.rst:99
+#: ../../rst/network/user_guide/network_working_with_command_output.rst:103
 msgid "In the above example, ``check_all: True`` ensures that the task gives the matching answer to each prompt. Without that setting, a task with multiple prompts would give the first answer to every prompt."
 msgstr "上記の例では、``check_all: True`` により、タスクが各プロンプトに一致する応答を返すようにします。この設定がないと、複数のプロンプトがあるタスクでは、すべてのプロンプトに対して最初の応答が表示されます。"
 
-#: ../../rst/network/user_guide/network_working_with_command_output.rst:101
+#: ../../rst/network/user_guide/network_working_with_command_output.rst:105
 msgid "In the following example, the second answer would be ignored and ``y`` would be the answer given to both prompts. That is, this task only works because both answers are identical. Also notice again that ``prompt`` must be a Python regex, which is why the ``?`` is escaped in the first prompt."
 msgstr "次の例では、2 番目の回答は無視され、両方のプロンプトに ``y`` が入力されます。つまり、このタスクが機能するのは、両方の答えが同じだからです。また、``prompt`` は Python の正規表現でなければならないことにも注意してください。このため、``?`` は最初のプロンプトでエスケープされます。"
 
-#: ../../rst/network/user_guide/network_working_with_command_output.rst:119
+#: ../../rst/network/user_guide/network_working_with_command_output.rst:123
 msgid "`Rebooting network devices with Ansible <https://www.ansible.com/blog/rebooting-network-devices-with-ansible>`_"
 msgstr "`Rebooting network devices with Ansible <https://www.ansible.com/blog/rebooting-network-devices-with-ansible>`_"
 
-#: ../../rst/network/user_guide/network_working_with_command_output.rst:119
+#: ../../rst/network/user_guide/network_working_with_command_output.rst:123
 msgid "Examples using ``wait_for``, ``wait_for_connection``, and ``prompt`` for network devices."
 msgstr "ネットワークデバイス用に ``wait_for``、``wait_for_connection``、および ``prompt`` を使用する例。"
 
-#: ../../rst/network/user_guide/network_working_with_command_output.rst:121
+#: ../../rst/network/user_guide/network_working_with_command_output.rst:125
 msgid "`Deep dive on cli_command <https://www.ansible.com/blog/deep-dive-on-cli-command-for-network-automation>`_"
 msgstr "`Deep dive on cli_command <https://www.ansible.com/blog/deep-dive-on-cli-command-for-network-automation>`_"
 
-#: ../../rst/network/user_guide/network_working_with_command_output.rst:122
+#: ../../rst/network/user_guide/network_working_with_command_output.rst:126
 msgid "Detailed overview of how to use the ``cli_command``."
 msgstr "``cli_command`` の使用方法に関する詳細な概要"
 
@@ -5737,4 +5734,7 @@ msgstr "これにより、Ethernet2/1 および Ethernet2/10 は、定義され�
 
 #~ msgid "8.4(1) and later"
 #~ msgstr "8.4(1) 以降"
+
+#~ msgid "For example::"
+#~ msgstr "例::"
 
