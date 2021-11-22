@@ -85,7 +85,7 @@ class GalaxyRole(object):
             self.path = path
         else:
             # use the first path by default
-            self.path = os.path.join(galaxy.roles_paths[0], self.name)
+            self.path = self.paths[0]
 
     def __repr__(self):
         """
@@ -308,11 +308,14 @@ class GalaxyRole(object):
                     except Exception:
                         raise AnsibleError("this role does not appear to have a valid meta/main.yml file.")
 
-                # we strip off any higher-level directories for all of the files contained within
-                # the tar file here. The default is 'github_repo-target'. Gerrit instances, on the other
-                # hand, does not have a parent directory at all.
-                installed = False
-                while not installed:
+                paths = self.paths
+                if self.path != paths[0]:
+                    # path can be passed though __init__
+                    # FIXME should this be done in __init__?
+                    paths[:0] = self.path
+                paths_len = len(paths)
+                for idx, path in enumerate(paths):
+                    self.path = path
                     display.display("- extracting %s to %s" % (self.name, self.path))
                     try:
                         if os.path.exists(self.path):
@@ -328,7 +331,9 @@ class GalaxyRole(object):
                         else:
                             os.makedirs(self.path)
 
-                        # now we do the actual extraction to the path
+                        # We strip off any higher-level directories for all of the files
+                        # contained within the tar file here. The default is 'github_repo-target'.
+                        # Gerrit instances, on the other hand, does not have a parent directory at all.
                         for member in members:
                             # we only extract files, and remove any relative path
                             # bits that might be in the file for security purposes
@@ -350,16 +355,11 @@ class GalaxyRole(object):
 
                         # write out the install info file for later use
                         self._write_galaxy_install_info()
-                        installed = True
+                        break
                     except OSError as e:
-                        error = True
-                        if e.errno == errno.EACCES and len(self.paths) > 1:
-                            current = self.paths.index(self.path)
-                            if len(self.paths) > current:
-                                self.path = self.paths[current + 1]
-                                error = False
-                        if error:
-                            raise AnsibleError("Could not update files in %s: %s" % (self.path, to_native(e)))
+                        if e.errno == errno.EACCES and idx < paths_len - 1:
+                            continue
+                        raise AnsibleError("Could not update files in %s: %s" % (self.path, to_native(e)))
 
                 # return the parsed yaml metadata
                 display.display("- %s was installed successfully" % str(self))
