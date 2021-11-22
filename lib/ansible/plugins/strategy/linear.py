@@ -156,13 +156,13 @@ class StrategyModule(StrategyBase):
                 host_state_task = host_tasks.get(host.name)
                 if host_state_task is None:
                     continue
-                (s, t) = host_state_task
-                s = iterator.get_active_state(s)
-                if t is None:
+                (state, task) = host_state_task
+                s = iterator.get_active_state(state)
+                if task is None:
                     continue
                 if s.run_state == cur_state and s.cur_block == cur_block:
-                    new_t = iterator.get_next_task_for_host(host)
-                    rvals.append((host, t))
+                    iterator.set_state_for_host(host.name, state)
+                    rvals.append((host, task))
                 else:
                     rvals.append((host, noop_task))
             display.debug("done advancing hosts to next task")
