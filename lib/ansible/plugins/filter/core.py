@@ -66,6 +66,7 @@ def to_nice_yaml(a, indent=4, *args, **kw):
 def to_json(a, *args, **kw):
     ''' Convert the value to JSON '''
     kw['vault_to_text'] = True
+    kw['preprocess_unsafe'] = True
     return json.dumps(a, cls=AnsibleJSONEncoder, *args, **kw)
 
 
