@@ -1,0 +1,2 @@
+bugfixes:
+  - yum - prevent storing unnecessary cache data by running `yum makecache fast` (https://github.com/ansible/ansible/issues/76336)
