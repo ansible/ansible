@@ -2,25 +2,20 @@
 
 .. _testing_running_locally:
 
-*****************************************
-Testing Ansible locally with ansible-test
-*****************************************
+***************
+Testing Ansible
+***************
+
+This document describes how to:
+
+* Run tests locally using ``ansible-test``
+* Extend
 
 .. contents::
    :local:
 
 Requirements
 ============
-
-The ``ansible-test`` utility is provided by both the ``ansible`` and ``ansible-core`` packages. You do not need to install it separately.
-
-You can also use its development version:
-
-.. code-block:: bash
-
-  git clone https://github.com/ansible/ansible.git
-  cd ansible
-  source hacking/env-setup
 
 There are no special requirements for running ``ansible-test`` on Python 2.7 or later.
 The ``argparse`` package is required for Python 2.6.
