@@ -254,18 +254,25 @@ def main():
     if os.path.exists(dest):
         dest_hash = module.sha1(dest)
 
+    content_diff = {}
+    attr_diff = {}
     if path_hash != dest_hash:
 
         if module._diff:
-            f = open(path, 'rb')
-            after_content = f.read()
-            f.close()
+            with open(path, 'rb') as f:
+                after_content = f.read()
             if os.path.exists(dest):
-                f = open(dest, 'rb')
-                before_content = f.read()
-                f.close()
+                with open(dest, 'rb') as f:
+                    before_content = f.read()
+                before_header = '%s (content)' % dest
             else:
-                before_content = ""
+                before_content = ''
+                before_header = ''
+
+            content_diff = {'before': before_content,
+                            'after': after_content,
+                            'before_header': before_header,
+                            'after_header': '%s (content)' % dest}
 
         if validate:
             (rc, out, err) = module.run_command(validate % path)
@@ -283,23 +290,18 @@ def main():
     cleanup(path, result)
 
     # handle file permissions
-    attr_diff = {}
-    if os.path.exists(dest):
-        file_args = module.load_file_common_arguments(module.params)
-        result['changed'] = module.set_fs_attributes_if_different(file_args, changed, diff=attr_diff)
-    else:
-        result['changed'] = True
+    file_args = module.load_file_common_arguments(module.params)
+    result['changed'] = module.set_fs_attributes_if_different(file_args, changed, diff=attr_diff)  # Handles check mode
 
     # Mission complete
     result['msg'] = "OK"
 
     if module._diff:
-        content_diff = {'before': before_content,
-                        'after': after_content,
-                        'before_header': '%s (content)' % dest,
-                        'after_header': '%s (content)' % dest}
-
-        result['diff'] = [content_diff, attr_diff]
+        result['diff'] = []
+        if content_diff:
+            result['diff'].append(content_diff)
+        if attr_diff:
+            result['diff'].append(attr_diff)
 
     module.exit_json(**result)
 

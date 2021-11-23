@@ -143,17 +143,39 @@ class ActionModule(ActionBase):
                 if self._play_context.diff:
                     diff = self._get_diff_data(dest, path, task_vars)
 
-                remote_path = self._connection._shell.join_path(self._connection._shell.tmpdir, 'src')
-                xfered = self._transfer_file(path, remote_path)
+                    # _get_diff_data uses the tmp path for 'after_header'
+                    # which makes there always appear to be a diff
+                    diff['after_header'] = '%s (content)' % dest
 
-                # fix file permissions when the copy is done as a different user
-                self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
+                    if not dest_stat['exists']:
+                        # Ensure the before_header key is defined for ease of access
+                        diff['before_header'] = ''
+                    else:
+                        diff['before_header'] = diff['before_header'] + ' (content)'
 
-                new_module_args.update(dict(src=xfered,))
+                    if diff['before_header'] == diff['after_header'] and diff['before'] == diff['after']:
+                        # Nothing actually changed
+                        diff = {}
 
+                if self._play_context.check_mode:
+                    # The copy module supports check mode, so just provide the tmp path as the source
+                    new_module_args.update(dict(src=path,))
+                else:
+                    remote_path = self._connection._shell.join_path(self._connection._shell.tmpdir, 'src')
+                    xfered = self._transfer_file(path, remote_path)
+
+                    # fix file permissions when the copy is done as a different user
+                    self._fixup_perms2((self._connection._shell.tmpdir, remote_path))
+
+                    new_module_args.update(dict(src=xfered,))
+
+                # FIXME: add diff support
                 res = self._execute_module(module_name='ansible.legacy.copy', module_args=new_module_args, task_vars=task_vars)
-                if diff:
-                    res['diff'] = diff
+
+                if self._play_context.diff:
+                    res['diff'] = []
+                    if diff:
+                        res['diff'].append(diff)
                 result.update(res)
             else:
                 result.update(self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars))
