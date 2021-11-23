@@ -74,13 +74,14 @@ This table links to the changelogs for each major Ansible release. These changel
 ==================================      =================================================
 Ansible Community Package Release       Status
 ==================================      =================================================
-5.0.0                                   In development (unreleased)
+6.0.0                                   In development (unreleased)
+`5.x Changelogs`_                       In development (unreleased)
 `4.x Changelogs`_                       Current
 `3.x Changelogs`_                       Unmaintained (end of life)
 `2.10 Changelogs`_                      Unmaintained (end of life)
 ==================================      =================================================
 
-
+.. _5.x Changelogs: https://github.com/ansible-community/ansible-build-data/blob/main/5/CHANGELOG-v5.rst
 .. _4.x Changelogs: https://github.com/ansible-community/ansible-build-data/blob/main/4/CHANGELOG-v4.rst
 .. _3.x Changelogs: https://github.com/ansible-community/ansible-build-data/blob/main/3/CHANGELOG-v3.rst
 .. _2.10 Changelogs: https://github.com/ansible-community/ansible-build-data/blob/main/2.10/CHANGELOG-v2.10.rst
