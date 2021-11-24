@@ -6,9 +6,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-from ast import literal_eval
-from itertools import islice, chain
+import ast
 import types
+from itertools import islice, chain
 
 from jinja2.runtime import StrictUndefined
 
@@ -83,7 +83,11 @@ def ansible_native_concat(nodes):
         out = u''.join([to_text(_fail_on_undefined(v)) for v in nodes])
 
     try:
-        out = literal_eval(out)
-        return out
+        return ast.literal_eval(
+            # In Python 3.10+ ast.literal_eval removes leading spaces/tabs
+            # from the given string. For backwards compatibility we need to
+            # parse the string ourselves without removing leading spaces/tabs.
+            ast.parse(out, mode='eval')
+        )
     except (ValueError, SyntaxError, MemoryError):
         return out
