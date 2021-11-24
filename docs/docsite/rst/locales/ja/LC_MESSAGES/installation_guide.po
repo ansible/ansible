@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-05 13:53+0200\n"
+"POT-Creation-Date: 2021-11-09 14:07+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -238,8 +238,8 @@ msgstr "``pip`` を使用した Ansible のインストール"
 
 #: ../../rst/installation_guide/intro_installation.rst:120
 #: ../../rst/installation_guide/intro_installation.rst:152
-#: ../../rst/installation_guide/intro_installation.rst:391
-#: ../../rst/installation_guide/intro_installation.rst:490
+#: ../../rst/installation_guide/intro_installation.rst:377
+#: ../../rst/installation_guide/intro_installation.rst:484
 msgid "If you have Ansible 2.9 or older installed or Ansible 3, see :ref:`pip_upgrade`."
 msgstr "Ansible 2.9 以前もしくは Ansible 3 がインストールされている場合は、「:ref:`pip_upgrade`」を参照してください。"
 
@@ -316,7 +316,7 @@ msgid "Installing Ansible on RHEL, CentOS, or Fedora"
 msgstr "RHEL、CentOS、または Fedora への Ansible のインストール"
 
 #: ../../rst/installation_guide/intro_installation.rst:223
-#: ../../rst/installation_guide/intro_installation.rst:608
+#: ../../rst/installation_guide/intro_installation.rst:602
 msgid "On Fedora:"
 msgstr "Fedora の場合:"
 
@@ -329,465 +329,461 @@ msgid "On CentOS:"
 msgstr "CentOS の場合:"
 
 #: ../../rst/installation_guide/intro_installation.rst:242
-msgid "RPMs for RHEL 7 and RHEL 8 are available from the `Ansible Engine repository <https://access.redhat.com/articles/3174981>`_."
-msgstr "RHEL 7 および RHEL 8 の RPM は、`Ansible Engine リポジトリー <https://access.redhat.com/articles/3174981>`_ から入手できます。"
-
-#: ../../rst/installation_guide/intro_installation.rst:244
-msgid "To enable the Ansible Engine repository for RHEL 8, run the following command:"
-msgstr "RHEL 8 用の Ansible Engine リポジトリーを有効にするには、以下のコマンドを実行します。"
-
-#: ../../rst/installation_guide/intro_installation.rst:250
-msgid "To enable the Ansible Engine repository for RHEL 7, run the following command:"
-msgstr "RHEL 7 用の Ansible Engine リポジトリーを有効にするには、以下のコマンドを実行します。"
-
-#: ../../rst/installation_guide/intro_installation.rst:256
 msgid "RPMs for currently supported versions of RHEL and CentOS are also available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_."
 msgstr "現在サポートされているバージョンの RHEL および CentOS の場合は、`EPEL <https://fedoraproject.org/wiki/EPEL>`_ からも利用できます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:260
+#: ../../rst/installation_guide/intro_installation.rst:246
 msgid "Since Ansible 2.10 for RHEL is not available at this time,  continue to use Ansible 2.9."
 msgstr "現在、RHEL では Ansible 2.10 が利用できないため、引き続き Ansible 2.9 を使用してください。"
 
-#: ../../rst/installation_guide/intro_installation.rst:262
+#: ../../rst/installation_guide/intro_installation.rst:248
 msgid "Ansible can manage older operating systems that contain Python 2.6 or higher."
 msgstr "Ansible は、Python 2.6 以降が含まれる古いオペレーティングシステムを管理できます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:267
+#: ../../rst/installation_guide/intro_installation.rst:253
 msgid "Installing Ansible on Ubuntu"
 msgstr "Ubuntu への Ansible のインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:269
+#: ../../rst/installation_guide/intro_installation.rst:255
 msgid "Ubuntu builds are available `in a PPA here <https://launchpad.net/~ansible/+archive/ubuntu/ansible>`_."
 msgstr "Ubuntu ビルドは `PPA <https://launchpad.net/~ansible/+archive/ubuntu/ansible>`_ で利用できます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:271
+#: ../../rst/installation_guide/intro_installation.rst:257
 msgid "To configure the PPA on your machine and install Ansible run these commands:"
 msgstr "自分のマシンに PPA を設定して Ansible をインストールするには、次のコマンドを実行します。"
 
-#: ../../rst/installation_guide/intro_installation.rst:280
+#: ../../rst/installation_guide/intro_installation.rst:266
 msgid "On older Ubuntu distributions, \"software-properties-common\" is called \"python-software-properties\". You may want to use ``apt-get`` instead of ``apt`` in older versions. Also, be aware that only newer distributions (in other words, 18.04, 18.10, and so on) have a ``-u`` or ``--update`` flag, so adjust your script accordingly."
 msgstr "以前の Ubuntu ディストリビューションでは、「software-properties-common」は「python-software-properties」と呼ばれるため、過去のバージョンでは ``apt`` ではなく ``apt-get`` を使用するほうが適している場合があります。また、``-u`` フラグまたは ``--update`` フラグが指定できるのは、新しいディストリビューション (18.04、18.10 など) に限定されることに注意し、スクリプトを調整してください。"
 
-#: ../../rst/installation_guide/intro_installation.rst:282
+#: ../../rst/installation_guide/intro_installation.rst:268
 msgid "Debian/Ubuntu packages can also be built from the source checkout, run:"
 msgstr "Debian/Ubuntu パッケージは、ソースチェックアウトから構築することもできます。以下を実行します。"
 
-#: ../../rst/installation_guide/intro_installation.rst:289
+#: ../../rst/installation_guide/intro_installation.rst:275
 msgid "Installing Ansible on Debian"
 msgstr "Ansible の Debian へのインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:291
+#: ../../rst/installation_guide/intro_installation.rst:277
 msgid "Debian users may use the same source as the Ubuntu PPA (using the following table)."
 msgstr "Debian ユーザーは Ubuntu PPA と同じソースを使用できます（以下の表を使用）。"
 
-#: ../../rst/installation_guide/intro_installation.rst:296
+#: ../../rst/installation_guide/intro_installation.rst:282
 msgid "Debian"
 msgstr "Debian"
 
-#: ../../rst/installation_guide/intro_installation.rst:298
+#: ../../rst/installation_guide/intro_installation.rst:284
 msgid "Ubuntu"
 msgstr "Ubuntu"
 
-#: ../../rst/installation_guide/intro_installation.rst:299
+#: ../../rst/installation_guide/intro_installation.rst:285
 msgid "Debian 11 (Bullseye)"
 msgstr "Debian 11 (Bullseye)"
 
-#: ../../rst/installation_guide/intro_installation.rst:300
-#: ../../rst/installation_guide/intro_installation.rst:303
-#: ../../rst/installation_guide/intro_installation.rst:306
-#: ../../rst/installation_guide/intro_installation.rst:309
+#: ../../rst/installation_guide/intro_installation.rst:286
+#: ../../rst/installation_guide/intro_installation.rst:289
+#: ../../rst/installation_guide/intro_installation.rst:292
+#: ../../rst/installation_guide/intro_installation.rst:295
 msgid "->"
 msgstr "->"
 
-#: ../../rst/installation_guide/intro_installation.rst:301
+#: ../../rst/installation_guide/intro_installation.rst:287
 msgid "Ubuntu 20.04 (Focal)"
 msgstr "Ubuntu 20.04 (Focal)"
 
-#: ../../rst/installation_guide/intro_installation.rst:302
+#: ../../rst/installation_guide/intro_installation.rst:288
 msgid "Debian 10 (Buster)"
 msgstr "Debian 10 (Buster)"
 
-#: ../../rst/installation_guide/intro_installation.rst:304
+#: ../../rst/installation_guide/intro_installation.rst:290
 msgid "Ubuntu 18.04 (Bionic)"
 msgstr "Ubuntu 18.04 (Bionic)"
 
-#: ../../rst/installation_guide/intro_installation.rst:305
+#: ../../rst/installation_guide/intro_installation.rst:291
 msgid "Debian 9 (Stretch)"
 msgstr "Debian 9 (Stretch)"
 
-#: ../../rst/installation_guide/intro_installation.rst:307
+#: ../../rst/installation_guide/intro_installation.rst:293
 msgid "Ubuntu 16.04 (Xenial)"
 msgstr "Ubuntu 16.04 (Xenial)"
 
-#: ../../rst/installation_guide/intro_installation.rst:308
+#: ../../rst/installation_guide/intro_installation.rst:294
 msgid "Debian 8 (Jessie)"
 msgstr "Debian 8 (Jessie)"
 
-#: ../../rst/installation_guide/intro_installation.rst:310
+#: ../../rst/installation_guide/intro_installation.rst:296
 msgid "Ubuntu 14.04 (Trusty)"
 msgstr "Ubuntu 14.04 (Trusty)"
 
-#: ../../rst/installation_guide/intro_installation.rst:314
+#: ../../rst/installation_guide/intro_installation.rst:300
 msgid "As of Ansible 4.0.0, new releases will only be generated for Ubuntu 18.04 (Bionic) or later releases."
 msgstr "Ansible 4.0.0 の時点で、新しいリリースは Ubuntu 18.04 (Bionic) 以降のリリースに対してのみ生成されます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:316
+#: ../../rst/installation_guide/intro_installation.rst:302
 msgid "Add the following line to ``/etc/apt/sources.list`` or ``/etc/apt/sources.list.d/ansible.list``:"
 msgstr "以下の行を ``/etc/apt/sources.list`` または ``/etc/apt/sources.list.d/ansible.list`` に追加します。"
 
-#: ../../rst/installation_guide/intro_installation.rst:322
+#: ../../rst/installation_guide/intro_installation.rst:308
 msgid "Example for Debian 11 (Bullseye)"
 msgstr "Debian 11 の例 (Bullseye)"
 
-#: ../../rst/installation_guide/intro_installation.rst:328
+#: ../../rst/installation_guide/intro_installation.rst:314
 msgid "Then run these commands:"
 msgstr "次に、以下のコマンドを実行します。"
 
-#: ../../rst/installation_guide/intro_installation.rst:337
+#: ../../rst/installation_guide/intro_installation.rst:323
 msgid "Installing Ansible on Gentoo with portage"
 msgstr "portage を使用した Gentoo への Ansible のインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:343
+#: ../../rst/installation_guide/intro_installation.rst:329
 msgid "To install the newest version, you may need to unmask the Ansible package prior to emerging:"
 msgstr "最新バージョンをインストールするには、インストールする前に Ansible パッケージのマスク解除が必要になる場合があります。"
 
-#: ../../rst/installation_guide/intro_installation.rst:350
+#: ../../rst/installation_guide/intro_installation.rst:336
 msgid "Installing Ansible on FreeBSD"
 msgstr "FreeBSD への Ansible のインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:352
+#: ../../rst/installation_guide/intro_installation.rst:338
 msgid "Though Ansible works with both Python 2 and 3 versions, FreeBSD has different packages for each Python version. So to install you can use:"
 msgstr "Ansible は Python 2 および 3 の両バージョンで動作しますが、FreeBSD パッケージは各 Python バージョンで異なります。したがって、インストールには、以下を使用できます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:359
+#: ../../rst/installation_guide/intro_installation.rst:345
 msgid "or:"
 msgstr "または"
 
-#: ../../rst/installation_guide/intro_installation.rst:366
+#: ../../rst/installation_guide/intro_installation.rst:352
 msgid "You may also wish to install from ports, run:"
 msgstr "ポートからインストールすることもできます。以下を実行します。"
 
-#: ../../rst/installation_guide/intro_installation.rst:372
+#: ../../rst/installation_guide/intro_installation.rst:358
 msgid "You can also choose a specific version, for example ``ansible25``."
 msgstr "特定のバージョン (例: ``ansible25``) を選択することもできます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:374
+#: ../../rst/installation_guide/intro_installation.rst:360
 msgid "Older versions of FreeBSD worked with something like this (substitute for your choice of package manager):"
 msgstr "以前のバージョンの FreeBSD は、以下のようなもので動作します (パッケージマネージャーの代わりです)。"
 
-#: ../../rst/installation_guide/intro_installation.rst:383
+#: ../../rst/installation_guide/intro_installation.rst:369
 msgid "Installing Ansible on macOS"
 msgstr "MacOS への Ansible のインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:385
+#: ../../rst/installation_guide/intro_installation.rst:371
 msgid "The preferred way to install Ansible on a Mac is with ``pip``."
 msgstr "Mac に Ansible をインストールするには ``pip`` を使用することが推奨されます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:387
+#: ../../rst/installation_guide/intro_installation.rst:373
 msgid "The instructions can be found in :ref:`from_pip`. If you are running macOS version 10.12 or older, then you should upgrade to the latest ``pip`` to connect to the Python Package Index securely. It should be noted that pip must be run as a module on macOS, and the linked ``pip`` instructions will show you how to do that."
 msgstr "手順は「:ref:`from_pip`」を参照してください。MacOS バージョン 10.12 以前を実行している場合に、Python Package Index に安全に接続するには最新の ``pip`` にアップグレードする必要があります。pip は、MacOS でモジュールとして実行する必要があり、リンクされている ``pip`` の手順にその実行方法が示されることに注意してください。"
 
-#: ../../rst/installation_guide/intro_installation.rst:396
+#: ../../rst/installation_guide/intro_installation.rst:382
 msgid "macOS by default is configured for a small number of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any \"Too many open files\" errors."
 msgstr "MacOS はデフォルトで、少数のファイルハンドル向けに設定されているため、15 個以上のフォークを使用する場合は、``sudo launchctl limit maxfiles unlimited`` を使用して ulimit を増やす必要があります。このコマンドは、「Too many open files」エラーを修正することもできます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:398
+#: ../../rst/installation_guide/intro_installation.rst:384
 msgid "If you are installing on macOS Mavericks (10.9), you may encounter some noise from your compiler. A workaround is to do the following::"
 msgstr "MacOS Mavericks (10.9) にインストールする場合は、コンパイラーから何らかの問題が発生する可能性があります。回避策として、以下を行います。"
 
-#: ../../rst/installation_guide/intro_installation.rst:406
+#: ../../rst/installation_guide/intro_installation.rst:392
 msgid "Installing Ansible on Solaris"
 msgstr "Solaris への Ansible のインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:408
+#: ../../rst/installation_guide/intro_installation.rst:394
 msgid "Ansible is available for Solaris as `SysV package from OpenCSW <https://www.opencsw.org/packages/ansible/>`_."
 msgstr "Solaris では、`SysV package from OpenCSW <https://www.opencsw.org/packages/ansible/>`_ として Ansible を利用できます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:418
+#: ../../rst/installation_guide/intro_installation.rst:404
 msgid "Installing Ansible on Arch Linux"
 msgstr "Arch Linux への Ansible のインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:420
+#: ../../rst/installation_guide/intro_installation.rst:406
 msgid "Ansible is available in the Community repository::"
 msgstr "Ansible は、コミュニティーリポジトリーから入手できます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:424
-msgid "The AUR has a PKGBUILD for pulling directly from GitHub called `ansible-git <https://aur.archlinux.org/packages/ansible-git>`_."
-msgstr "AUR には、(`ansible-git <https://aur.archlinux.org/packages/ansible-git>`_ と呼ばれている) GitHub から直接プルするための PKGBUILD があります。"
+#: ../../rst/installation_guide/intro_installation.rst:410
+msgid "The AUR has a PKGBUILD for pulling directly from GitHub called `ansible-core-git <https://aur.archlinux.org/packages/ansible-core-git>`_."
+msgstr "AUR には、(`ansible-core-git <https://aur.archlinux.org/packages/ansible-core-git>`_ と呼ばれている) GitHub から直接プルするための PKGBUILD があります。"
 
-#: ../../rst/installation_guide/intro_installation.rst:426
+#: ../../rst/installation_guide/intro_installation.rst:412
 msgid "Also see the `Ansible <https://wiki.archlinux.org/index.php/Ansible>`_ page on the ArchWiki."
 msgstr "ArchWiki の「`Ansible <https://wiki.archlinux.org/index.php/Ansible>`_」ページを参照してください。"
 
-#: ../../rst/installation_guide/intro_installation.rst:431
+#: ../../rst/installation_guide/intro_installation.rst:417
 msgid "Installing Ansible on Slackware Linux"
 msgstr "Slackware Linux への Ansible のインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:433
+#: ../../rst/installation_guide/intro_installation.rst:419
 msgid "Ansible build script is available in the `SlackBuilds.org <https://slackbuilds.org/apps/ansible/>`_ repository. Can be built and installed using `sbopkg <https://sbopkg.org/>`_."
 msgstr "Ansible ビルドスクリプトは `SlackBuilds.org <https://slackbuilds.org/apps/ansible/>`_ リポジトリーから利用できます。`sbopkg <https://sbopkg.org/>`_ を使用してビルドおよびインストールできます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:436
+#: ../../rst/installation_guide/intro_installation.rst:422
 msgid "Create queue with Ansible and all dependencies::"
 msgstr "Ansible およびすべての依存関係を含むキューを作成します。"
 
-#: ../../rst/installation_guide/intro_installation.rst:440
+#: ../../rst/installation_guide/intro_installation.rst:426
 msgid "Build and install packages from a created queuefile (answer Q for question if sbopkg should use queue or package)::"
 msgstr "作成した queuefile からパッケージを構築してインストールします (sbopkg がキューまたはパッケージを使用する必要がある場合の問題への回答 Q)。"
 
-#: ../../rst/installation_guide/intro_installation.rst:447
+#: ../../rst/installation_guide/intro_installation.rst:433
 msgid "Installing Ansible on Clear Linux"
 msgstr "Clear Linux への Ansible のインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:449
+#: ../../rst/installation_guide/intro_installation.rst:435
 msgid "Ansible and its dependencies are available as part of the sysadmin host management bundle::"
 msgstr "Ansible およびその依存関係は、sysadmin ホスト管理バンドルの一部として利用できます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:453
+#: ../../rst/installation_guide/intro_installation.rst:439
 msgid "Update of the software will be managed by the swupd tool::"
 msgstr "ソフトウェアの更新は、swupd ツールにより管理されます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:461
+#: ../../rst/installation_guide/intro_installation.rst:449
+msgid "Installing Ansible on Windows"
+msgstr "Ansible の Windows へのインストール"
+
+#: ../../rst/installation_guide/intro_installation.rst:451
+msgid "See :ref:`windows_faq_ansible`"
+msgstr "「:ref:`windows_faq_ansible`」を参照してください。"
+
+#: ../../rst/installation_guide/intro_installation.rst:455
 msgid "Installing and running the ``devel`` branch from source"
 msgstr "ソースから ``devel`` ブランチのインストールおよび実行"
 
-#: ../../rst/installation_guide/intro_installation.rst:463
+#: ../../rst/installation_guide/intro_installation.rst:457
 msgid "In Ansible 2.10 and later, the `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-core``."
 msgstr "Ansible 2.10 以降では、`ansible/ansible repository <https://github.com/ansible/ansible>`_ には、モジュールコードを管理対象ノードにコピーするなど、基本的な機能や関数のコードが含まれています。このコードは ``ansible-core`` としても知られています。"
 
-#: ../../rst/installation_guide/intro_installation.rst:465
+#: ../../rst/installation_guide/intro_installation.rst:459
 msgid "New features are added to ``ansible-core`` on a branch called ``devel``. If you are testing new features, fixing bugs, or otherwise working with the development team on changes to the core code, you can install and run ``devel``."
 msgstr "新機能が ``devel`` ブランチの ``ansible-core`` に追加されました。新機能のテスト、バグの修正、またはコアコードへの変更に対して開発チームでの作業を行う場合は、``devel`` をインストールして実行できます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:469
+#: ../../rst/installation_guide/intro_installation.rst:463
 msgid "You should only install and run the ``devel`` branch if you are modifying ``ansible-core`` or trying out features under development. This is a rapidly changing source of code and can become unstable at any point."
 msgstr "開発時に ``ansible-core`` を変更し、機能を試す場合は、``devel`` ブランチのみをインストールし、実行してください。このソースコードは急速に変化するため、いつでも不安定になる可能性があります。"
 
-#: ../../rst/installation_guide/intro_installation.rst:473
+#: ../../rst/installation_guide/intro_installation.rst:467
 msgid "If you want to use Ansible AWX as the control node, do not install or run the ``devel`` branch of Ansible. Use an OS package manager (like ``apt`` or ``yum``) or ``pip`` to install a stable version."
 msgstr "Ansible AWX をコントロールノードとして使用する場合は、Ansible の ``devel`` ブランチをインストールまたは実行しないでください。OS パッケージマネージャー (``apt``、``yum`` など) または ``pip`` を使用して安定したバージョンをインストールします。"
 
-#: ../../rst/installation_guide/intro_installation.rst:475
+#: ../../rst/installation_guide/intro_installation.rst:469
 msgid "If you are running Ansible from source, you may also wish to follow the `Ansible GitHub project <https://github.com/ansible/ansible>`_. We track issues, document bugs, and share feature ideas in this and other related repositories."
 msgstr "ソースから Ansible を実行する場合は、`Ansible GitHub プロジェクト <https://github.com/ansible/ansible>`_ に従って、問題を追跡し、バグを文書化し、このリポジトリーまたはその他のリポジトリーに関する機能のアイデアを共有します。"
 
-#: ../../rst/installation_guide/intro_installation.rst:477
+#: ../../rst/installation_guide/intro_installation.rst:471
 msgid "For more information on getting involved in the Ansible project, see the :ref:`ansible_community_guide`. For more information on creating Ansible modules and Collections, see the :ref:`developer_guide`."
 msgstr "Ansible プロジェクトへの貢献の詳細は、「:ref:`ansible_community_guide`」を参照してください。Ansible モジュールおよびコレクションの作成方法は、「:ref:`developer_guide`」を参照してください。"
 
-#: ../../rst/installation_guide/intro_installation.rst:480
+#: ../../rst/installation_guide/intro_installation.rst:474
 msgid "Installing ``devel`` from GitHub with ``pip``"
 msgstr "``pip`` を使用した GitHub からの ``devel`` のインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:482
+#: ../../rst/installation_guide/intro_installation.rst:476
 msgid "You can install the ``devel`` branch of ``ansible-core`` directly from GitHub with ``pip``:"
 msgstr "``pip`` を使用して、``ansible-core`` の ``devel`` ブランチを直接 GitHub からインストールできます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:494
+#: ../../rst/installation_guide/intro_installation.rst:488
 msgid "You can replace ``devel`` in the URL mentioned above, with any other branch or tag on GitHub to install older versions of Ansible (prior to ``ansible-base`` 2.10.), tagged alpha or beta versions, and release candidates. This installs all of Ansible."
 msgstr "上記の URL の ``devel`` を、他のブランチまたは GitHub のタグに置き換えて、古いバージョンの Ansible (``ansible-base`` 2.10 以前)、タグ付けされた alpha または beta バージョン、およびリリース候補をインストールします。これにより、すべての Ansible がインストールされます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:500
+#: ../../rst/installation_guide/intro_installation.rst:494
 msgid "See :ref:`from_source` for instructions on how to run ``ansible-core`` directly from source."
 msgstr "ソースから直接 ``ansible-core`` を実行する方法は、「:ref:`from_source`」を参照してください。"
 
-#: ../../rst/installation_guide/intro_installation.rst:504
+#: ../../rst/installation_guide/intro_installation.rst:498
 msgid "Installing ``devel`` from GitHub by cloning"
 msgstr "クローン作成による GitHub からの ``devel`` のインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:506
+#: ../../rst/installation_guide/intro_installation.rst:500
 msgid "You can install the ``devel`` branch of ``ansible-core`` by cloning the GitHub repository:"
 msgstr "GitHub リポジトリーのクローンを作成して、``ansible-core`` の ``devel`` ブランチをインストールできます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:513
+#: ../../rst/installation_guide/intro_installation.rst:507
 msgid "The default branch is ``devel``."
 msgstr "デフォルトのブランチは ``devel`` です。"
 
-#: ../../rst/installation_guide/intro_installation.rst:518
+#: ../../rst/installation_guide/intro_installation.rst:512
 msgid "Running the ``devel`` branch from a clone"
 msgstr "クローンからの ``devel`` ブランチの実行"
 
-#: ../../rst/installation_guide/intro_installation.rst:520
+#: ../../rst/installation_guide/intro_installation.rst:514
 msgid "``ansible-core`` is easy to run from source. You do not need ``root`` permissions to use it and there is no software to actually install. No daemons or database setup are required."
 msgstr "``ansible-core`` ソースからの実行は簡単です。``root`` パーミッションは必要ありません。実際にインストールするソフトウェアはありません。デーモンやデータベース設定は必要ありません。"
 
-#: ../../rst/installation_guide/intro_installation.rst:522
+#: ../../rst/installation_guide/intro_installation.rst:516
 msgid "Once you have installed the ``ansible-core`` repository by cloning, setup the Ansible environment:"
 msgstr "クローン作成により ``ansible-core`` リポジトリーをインストールしたら、Ansible 環境を設定します。"
 
-#: ../../rst/installation_guide/intro_installation.rst:524
+#: ../../rst/installation_guide/intro_installation.rst:518
 msgid "Using Bash:"
 msgstr "Bash の使用:"
 
-#: ../../rst/installation_guide/intro_installation.rst:530
+#: ../../rst/installation_guide/intro_installation.rst:524
 msgid "Using Fish::"
 msgstr "Fish の使用::"
 
-#: ../../rst/installation_guide/intro_installation.rst:534
+#: ../../rst/installation_guide/intro_installation.rst:528
 msgid "If you want to suppress spurious warnings/errors, use::"
 msgstr "誤った警告やエラーが表示されないようにするには、以下を使用します。"
 
-#: ../../rst/installation_guide/intro_installation.rst:538
+#: ../../rst/installation_guide/intro_installation.rst:532
 msgid "If you do not have ``pip`` installed in your version of Python, install it::"
 msgstr "お使いのバージョンの Python に ``pip`` がインストールされていない場合は、インストールします。"
 
-#: ../../rst/installation_guide/intro_installation.rst:543
+#: ../../rst/installation_guide/intro_installation.rst:537
 msgid "Ansible also uses the following Python modules that need to be installed [1]_:"
 msgstr "Ansible は、以下の Python モジュールも使用し、このモジュールもインストールする必要があります [1]_。"
 
-#: ../../rst/installation_guide/intro_installation.rst:549
+#: ../../rst/installation_guide/intro_installation.rst:543
 msgid "To update the ``devel`` branch of ``ansible-core`` on your local machine, use pull-with-rebase so any local changes are replayed."
 msgstr "ローカルマシンで ``ansible-core`` の ``devel`` ブランチを更新するには、ローカルの変更が再生されるように pull-with-rebase を使用します。"
 
-#: ../../rst/installation_guide/intro_installation.rst:560
+#: ../../rst/installation_guide/intro_installation.rst:554
 msgid "After you run the the env-setup script, you will be running from the source code. The default inventory file will be ``/etc/ansible/hosts``. You can optionally specify an inventory file (see :ref:`inventory`) other than ``/etc/ansible/hosts``:"
 msgstr "env-setup スクリプトの実行後に、ソースコードから実行されます。デフォルトのインベントリーファイルは ``/etc/ansible/hosts`` になります。必要に応じて、``/etc/ansible/hosts`` 以外のインベントリーファイルを指定できます (:ref:`inventory` を参照)。"
 
-#: ../../rst/installation_guide/intro_installation.rst:567
+#: ../../rst/installation_guide/intro_installation.rst:561
 msgid "You can read more about the inventory file at :ref:`inventory`."
 msgstr "インベントリーファイルの詳細は、:ref:`inventory`を参照してください。"
 
-#: ../../rst/installation_guide/intro_installation.rst:570
+#: ../../rst/installation_guide/intro_installation.rst:564
 msgid "Confirming your installation"
 msgstr "インストールの確認"
 
-#: ../../rst/installation_guide/intro_installation.rst:572
+#: ../../rst/installation_guide/intro_installation.rst:566
 msgid "Whatever method of installing Ansible you chose, you can test that it is installed correctly with a ping command:"
 msgstr "選択した Ansible のインストール方法に関係なく、ping コマンドを使用して正しくインストールされていることをテストできます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:578
+#: ../../rst/installation_guide/intro_installation.rst:572
 msgid "You can also use \"sudo make install\"."
 msgstr "「sudo make install」も使用できます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:583
+#: ../../rst/installation_guide/intro_installation.rst:577
 msgid "Finding tarballs of tagged releases"
 msgstr "タグ付けされたリリースの tarball の場所"
 
-#: ../../rst/installation_guide/intro_installation.rst:585
+#: ../../rst/installation_guide/intro_installation.rst:579
 msgid "If you are packaging Ansible or wanting to build a local package yourself, and you want to avoid a git checkout, you can use a tarball of a tagged release. You can download the latest stable release from PyPI's `ansible package page <https://pypi.org/project/ansible/>`_. If you need a specific older version, beta version, or release candidate, you can use the pattern ``pypi.python.org/packages/source/a/ansible/ansible-{{VERSION}}.tar.gz``. VERSION must be the full version number, for example 3.1.0 or 4.0.0b2. You can make VERSION a variable in your package managing system that you update in one place whenever you package a new version."
 msgstr "nsible をパッケージ化する場合や、ローカルパッケージを自分で構築し、git のチェックアウトを回避する必要がある場合は、タグ付けされたリリースの tarball を使用できます。PyPI の `ansible package page <https://pypi.org/project/ansible/>`_ から最新の安定したリリースをダウンロードできます。古いバージョン、beta バージョン、またはリリース候補が必要な場合は、``pypi.python.org/packages/source/a/ansible/ansible-{{VERSION}}.tar.gz`` パターンを使用できます。VERSION は完全なバージョン番号 (3.1.0、4.0.0b2 など) である必要があります。VERSION は、新しいバージョンをパッケージ化するたびに 1 カ所で更新するパッケージ管理システムの変数にすることができます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:589
+#: ../../rst/installation_guide/intro_installation.rst:583
 msgid "If you are creating your own Ansible package, you must also download or package ``ansible-core`` (or ``ansible-base`` for packages based on 2.10.x) from PyPI as part of your Ansible package. You must specify a particular version. Visit the PyPI project pages to download files for `ansible-core <https://pypi.org/project/ansible-core/>`_ or `ansible-base <https://pypi.org/project/ansible-base/>`_."
 msgstr "独自の Ansible パッケージを作成する場合は、Ansible パッケージの一部として PyPI から ``ansible-core`` (または ``ansible-base`` 2.10.x に基づくパッケージの場合) をダウンロードまたはパッケージ化する必要もあります。特定のバージョンを指定する必要があります。PyPI プロジェクトページにアクセスして、`ansible-core <https://pypi.org/project/ansible-core/>`_ または `ansible-base <https://pypi.org/project/ansible-base/>`_ のファイルをダウンロードします。"
 
-#: ../../rst/installation_guide/intro_installation.rst:591
+#: ../../rst/installation_guide/intro_installation.rst:585
 msgid "These releases are also tagged in the `git repository <https://github.com/ansible/ansible/releases>`_ with the release version."
 msgstr "これらのリリースは、`git リポジトリー <https://github.com/ansible/ansible/releases>`_ でもリリースバージョンでタグ付けされます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:597
+#: ../../rst/installation_guide/intro_installation.rst:591
 msgid "Adding Ansible command shell completion"
 msgstr "Ansible コマンドシェル補完の追加"
 
-#: ../../rst/installation_guide/intro_installation.rst:599
+#: ../../rst/installation_guide/intro_installation.rst:593
 msgid "As of Ansible 2.9, you can add shell completion of the Ansible command line utilities by installing an optional dependency called ``argcomplete``. ``argcomplete`` supports bash, and has limited support for zsh and tcsh."
 msgstr "Ansible 2.9 の時点で、``argcomplete`` と呼ばれる任意の依存関係をインストールして、Ansible コマンドラインユーティリティーのシェル補完を追加できます。``argcomplete`` は bash をサポートし、制限付きで zsh および tcsh のサポートをサポートします。"
 
-#: ../../rst/installation_guide/intro_installation.rst:601
+#: ../../rst/installation_guide/intro_installation.rst:595
 msgid "You can install ``python-argcomplete`` from EPEL on Red Hat Enterprise based distributions, and or from the standard OS repositories for many other distributions."
 msgstr "``python-argcomplete`` は、Red Hat Enterprise ベースのディストリビューションでは EPEL からインストールでき、その他の多くのディストリビューションでは標準 OS リポジトリーで入手できます。"
 
-#: ../../rst/installation_guide/intro_installation.rst:603
+#: ../../rst/installation_guide/intro_installation.rst:597
 msgid "For more information about installation and configuration, see the `argcomplete documentation <https://kislyuk.github.io/argcomplete/>`_."
 msgstr "インストールと設定の詳細は、`argcomplete ドキュメント <https://kislyuk.github.io/argcomplete/>`_ を参照してください。"
 
-#: ../../rst/installation_guide/intro_installation.rst:606
+#: ../../rst/installation_guide/intro_installation.rst:600
 msgid "Installing ``argcomplete`` on RHEL, CentOS, or Fedora"
 msgstr "RHEL、CentOS、または Fedora への ``argcomplete`` のインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:614
+#: ../../rst/installation_guide/intro_installation.rst:608
 msgid "On RHEL and CentOS:"
 msgstr "RHEL および CentOS の場合:"
 
-#: ../../rst/installation_guide/intro_installation.rst:623
+#: ../../rst/installation_guide/intro_installation.rst:617
 msgid "Installing ``argcomplete`` with ``apt``"
 msgstr "``apt`` を使用した ``argcomplete`` のインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:631
+#: ../../rst/installation_guide/intro_installation.rst:625
 msgid "Installing ``argcomplete`` with ``pip``"
 msgstr "``pip`` を使用した ``argcomplete`` のインストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:638
+#: ../../rst/installation_guide/intro_installation.rst:632
 msgid "Configuring ``argcomplete``"
 msgstr "``argcomplete`` の設定"
 
-#: ../../rst/installation_guide/intro_installation.rst:640
+#: ../../rst/installation_guide/intro_installation.rst:634
 msgid "There are 2 ways to configure ``argcomplete`` to allow shell completion of the Ansible command line utilities: globally or per command."
 msgstr "Ansible コマンドラインユーティリティーのシェル補完を可能にする ``argcomplete`` の設定方法は、2 通りあります。"
 
-#: ../../rst/installation_guide/intro_installation.rst:643
+#: ../../rst/installation_guide/intro_installation.rst:637
 msgid "Global configuration"
 msgstr "グローバル設定"
 
-#: ../../rst/installation_guide/intro_installation.rst:645
+#: ../../rst/installation_guide/intro_installation.rst:639
 msgid "Global completion requires bash 4.2."
 msgstr "グローバル補完には bash 4.2 が必要です。"
 
-#: ../../rst/installation_guide/intro_installation.rst:651
+#: ../../rst/installation_guide/intro_installation.rst:645
 msgid "This will write a bash completion file to a global location. Use ``--dest`` to change the location."
 msgstr "これにより、bash 補完ファイルがグローバルロケーションに書き込まれます。ロケーションを変更するには ``--dest`` を使用します。"
 
-#: ../../rst/installation_guide/intro_installation.rst:654
+#: ../../rst/installation_guide/intro_installation.rst:648
 msgid "Per command configuration"
 msgstr "コマンドごとの設定"
 
-#: ../../rst/installation_guide/intro_installation.rst:656
+#: ../../rst/installation_guide/intro_installation.rst:650
 msgid "If you do not have bash 4.2, you must register each script independently."
 msgstr "bash 4.2 がない場合は、各スクリプトを個別に登録する必要があります。"
 
-#: ../../rst/installation_guide/intro_installation.rst:670
+#: ../../rst/installation_guide/intro_installation.rst:664
 msgid "You should place the above commands into your shells profile file such as ``~/.profile`` or ``~/.bash_profile``."
 msgstr "上記のコマンドを、``~/.profile``、``~/.bash_profile`` などのシェルプロファイルファイルに置く必要があります。"
 
-#: ../../rst/installation_guide/intro_installation.rst:673
+#: ../../rst/installation_guide/intro_installation.rst:667
 msgid "Using ``argcomplete`` with zsh or tcsh"
 msgstr "zsh または tcsh で ``argcomplete`` を使用"
 
-#: ../../rst/installation_guide/intro_installation.rst:675
+#: ../../rst/installation_guide/intro_installation.rst:669
 msgid "See the `argcomplete documentation <https://kislyuk.github.io/argcomplete/>`_."
 msgstr "`argcomplete ドキュメント <https://kislyuk.github.io/argcomplete/>`_ を参照してください。"
 
-#: ../../rst/installation_guide/intro_installation.rst:680
+#: ../../rst/installation_guide/intro_installation.rst:674
 msgid ":ref:`intro_adhoc`"
 msgstr ":ref:`intro_adhoc`"
 
-#: ../../rst/installation_guide/intro_installation.rst:681
+#: ../../rst/installation_guide/intro_installation.rst:675
 msgid "Examples of basic commands"
 msgstr "基本コマンドの例"
 
-#: ../../rst/installation_guide/intro_installation.rst:682
+#: ../../rst/installation_guide/intro_installation.rst:676
 msgid ":ref:`working_with_playbooks`"
 msgstr ":ref:`working_with_playbooks`"
 
-#: ../../rst/installation_guide/intro_installation.rst:683
+#: ../../rst/installation_guide/intro_installation.rst:677
 msgid "Learning ansible's configuration management language"
 msgstr "Ansible の設定管理言語の概要"
 
-#: ../../rst/installation_guide/intro_installation.rst:684
+#: ../../rst/installation_guide/intro_installation.rst:678
 msgid ":ref:`installation_faqs`"
 msgstr ":ref:`installation_faqs`"
 
-#: ../../rst/installation_guide/intro_installation.rst:685
+#: ../../rst/installation_guide/intro_installation.rst:679
 msgid "Ansible Installation related to FAQs"
 msgstr "FAQ に関連する Ansible インストール"
 
-#: ../../rst/installation_guide/intro_installation.rst:686
+#: ../../rst/installation_guide/intro_installation.rst:680
 msgid "`Mailing List <https://groups.google.com/group/ansible-project>`_"
 msgstr "`メーリングリスト <https://groups.google.com/group/ansible-project>`_"
 
-#: ../../rst/installation_guide/intro_installation.rst:687
+#: ../../rst/installation_guide/intro_installation.rst:681
 msgid "Questions? Help? Ideas?  Stop by the list on Google Groups"
 msgstr "ご質問はございますか。サポートが必要ですか。ご提案はございますか。Google グループの一覧をご覧ください。"
 
-#: ../../rst/installation_guide/intro_installation.rst:688
+#: ../../rst/installation_guide/intro_installation.rst:682
 msgid ":ref:`communication_irc`"
 msgstr ":ref:`communication_irc`"
 
-#: ../../rst/installation_guide/intro_installation.rst:689
+#: ../../rst/installation_guide/intro_installation.rst:683
 msgid "How to join Ansible chat channels"
 msgstr "Ansible チャットチャンネルへの参加方法"
 
-#: ../../rst/installation_guide/intro_installation.rst:691
+#: ../../rst/installation_guide/intro_installation.rst:685
 msgid "``paramiko`` was included in Ansible's ``requirements.txt`` prior to 2.8."
 msgstr "``paramiko`` は、2.8 以前の Ansible の ``requirements.txt`` に同梱されています。"
 
@@ -865,4 +861,13 @@ msgstr "``paramiko`` は、2.8 以前の Ansible の ``requirements.txt`` に同
 
 #~ msgid "If you have issues with the \"pycrypto\" package install on macOS, then you may need to try ``CC=clang sudo -E pip install pycrypto``."
 #~ msgstr "MacOS への「pycrypto」パッケージのインストールに問題がある場合は、``CC=clang sudo -E pip install pycrypto`` の試行が必要になる場合があります。"
+
+#~ msgid "RPMs for RHEL 7 and RHEL 8 are available from the `Ansible Engine repository <https://access.redhat.com/articles/3174981>`_."
+#~ msgstr "RHEL 7 および RHEL 8 の RPM は、`Ansible Engine リポジトリー <https://access.redhat.com/articles/3174981>`_ から入手できます。"
+
+#~ msgid "To enable the Ansible Engine repository for RHEL 8, run the following command:"
+#~ msgstr "RHEL 8 用の Ansible Engine リポジトリーを有効にするには、以下のコマンドを実行します。"
+
+#~ msgid "To enable the Ansible Engine repository for RHEL 7, run the following command:"
+#~ msgstr "RHEL 7 用の Ansible Engine リポジトリーを有効にするには、以下のコマンドを実行します。"
 

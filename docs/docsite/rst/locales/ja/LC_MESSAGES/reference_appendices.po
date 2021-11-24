@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-05 13:53+0200\n"
+"POT-Creation-Date: 2021-11-09 14:07+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -80,154 +80,159 @@ msgstr "値は、``|`` または ``>`` を使用することで複数の行に�
 msgid "While in the above ``>`` example all newlines are folded into spaces, there are two ways to enforce a newline to be kept::"
 msgstr "上記の ``>`` の例では、改行はすべてスペースに変換されますが、強制的に改行を行う方法が 2 種類あります。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:112
+#: ../../rst/reference_appendices/YAMLSyntax.rst:111
+msgid "Alternatively, it can be enforced by including newline ``\\n`` characters::"
+msgstr "あるいは、改行 ``\\n"
+"`` 文字を含めることで強制できます。"
+
+#: ../../rst/reference_appendices/YAMLSyntax.rst:115
 msgid "Let's combine what we learned so far in an arbitrary YAML example. This really has nothing to do with Ansible, but will give you a feel for the format::"
 msgstr "これまでに説明した内容を、任意の YAML の例にまとめてみましょう。以下は、Ansible とは関係ありませんが、どのような形式になるかを示しています。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:135
+#: ../../rst/reference_appendices/YAMLSyntax.rst:138
 msgid "That's all you really need to know about YAML to start writing `Ansible` playbooks."
 msgstr "`Ansible` Playbook の記述を開始するにあたり、以上が YAML について理解しておく必要のある内容です。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:138
+#: ../../rst/reference_appendices/YAMLSyntax.rst:141
 msgid "Gotchas"
 msgstr "Gotchas"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:140
+#: ../../rst/reference_appendices/YAMLSyntax.rst:143
 msgid "While you can put just about anything into an unquoted scalar, there are some exceptions. A colon followed by a space (or newline) ``\": \"`` is an indicator for a mapping. A space followed by the pound sign ``\" #\"`` starts a comment."
 msgstr "引用符で囲まれていないスカラーには何でも挿入できますが、一部例外があります。コロンの後にスペース (または改行) を続けて記述 (``\": \"``) した場合は、マッピングを示すインジケーターになります。スペースに続けてポンド記号を記述 (``\" #\"``) した場合は、コメントの開始を表します。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:144
+#: ../../rst/reference_appendices/YAMLSyntax.rst:147
 msgid "Because of this, the following is going to result in a YAML syntax error::"
 msgstr "このため、以下のような場合には、YAML 構文がエラーになります。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:150
+#: ../../rst/reference_appendices/YAMLSyntax.rst:153
 msgid "...but this will work::"
 msgstr "...ただし、以下は有効です。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:154
+#: ../../rst/reference_appendices/YAMLSyntax.rst:157
 msgid "You will want to quote hash values using colons followed by a space or the end of the line::"
 msgstr "コロンを使用してハッシュ記号を引用し、その後ろにスペースを指定するか、行末にしてください。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:160
+#: ../../rst/reference_appendices/YAMLSyntax.rst:163
 msgid "...and then the colon will be preserved."
 msgstr "...そしてコロンが保存されます。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:162
+#: ../../rst/reference_appendices/YAMLSyntax.rst:165
 msgid "Alternatively, you can use double quotes::"
 msgstr "または、二重引用符を使用してください。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:168
+#: ../../rst/reference_appendices/YAMLSyntax.rst:171
 msgid "The difference between single quotes and double quotes is that in double quotes you can use escapes::"
 msgstr "二重引用符ではエスケープを使用できる点が、一重引用符と二重引用符との相違点です。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:173
+#: ../../rst/reference_appendices/YAMLSyntax.rst:176
 msgid "The list of allowed escapes can be found in the YAML Specification under \"Escape Sequences\" (YAML 1.1) or \"Escape Characters\" (YAML 1.2)."
 msgstr "使用可能なエスケープの一覧は、YAML 仕様の「Escape Sequences」(YAML 1.1) または「Escape Characters」(YAML 1.2) を参照してください。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:175
+#: ../../rst/reference_appendices/YAMLSyntax.rst:178
 msgid "The following is invalid YAML:"
 msgstr "以下は無効な YAML です。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:182
+#: ../../rst/reference_appendices/YAMLSyntax.rst:185
 msgid "Further, Ansible uses \"{{ var }}\" for variables.  If a value after a colon starts with a \"{\", YAML will think it is a dictionary, so you must quote it, like so::"
 msgstr "さらに、Ansible は変数に \"{{ var }}\" を使用します。コロンの後に \"{\" が指定されている場合は、その値がディクショナリーであると YAML が認識するため、以下のように引用する必要があります::"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:187
+#: ../../rst/reference_appendices/YAMLSyntax.rst:190
 msgid "If your value starts with a quote the entire value must be quoted, not just part of it. Here are some additional examples of how to properly quote things::"
 msgstr "値を引用符でする場合は、値の一部だけでなく、値全体を引用符で囲む必要があります。値を引用する方法について正しい例を以下に示します。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:193
+#: ../../rst/reference_appendices/YAMLSyntax.rst:196
 msgid "Not valid::"
 msgstr "以下は有効ではありません。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:197
+#: ../../rst/reference_appendices/YAMLSyntax.rst:200
 msgid "In addition to ``'`` and ``\"`` there are a number of characters that are special (or reserved) and cannot be used as the first character of an unquoted scalar: ``[] {} > | * & ! % # ` @ ,``."
 msgstr "``'`` および ``\"`` 以外に、引用符で囲まれていないスカラーの最初の文字として使用できない特殊文字 (予約文字) がいくつかあります (``[] {} > | * & ! % # ` @ ,`` など)。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:200
+#: ../../rst/reference_appendices/YAMLSyntax.rst:203
 msgid "You should also be aware of ``? : -``. In YAML, they are allowed at the beginning of a string if a non-space character follows, but YAML processor implementations differ, so it's better to use quotes."
 msgstr "また、``? : -`` には常に注意してください。YAML では、スペース以外の文字が続く場合は、文字列の先頭で許可されますが、YAML プロセッサーの実装は異なるため、引用符を使用することが推奨されます。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:203
+#: ../../rst/reference_appendices/YAMLSyntax.rst:206
 msgid "In Flow Collections, the rules are a bit more strict::"
 msgstr "フローコレクションでは、ルールはもう少し厳密です。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:209
+#: ../../rst/reference_appendices/YAMLSyntax.rst:212
 msgid "Boolean conversion is helpful, but this can be a problem when you want a literal `yes` or other boolean values as a string. In these cases just use quotes::"
 msgstr "ブール値の変換は便利ですが、リテラルの `yes` や、文字列として他のブール値を指定する場合など問題になる場合があります。この場合は、引用符だけを使用します。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:216
+#: ../../rst/reference_appendices/YAMLSyntax.rst:219
 msgid "YAML converts certain strings into floating-point values, such as the string `1.0`. If you need to specify a version number (in a requirements.yml file, for example), you will need to quote the value if it looks like a floating-point value::"
 msgstr "YAML は、特定の文字列を文字列 `1.0` などの浮動小数点値に変換します。(たとえば requirements.yml ファイルで) バージョン番号を指定する必要があり、それが浮動小数点の値のように見える場合は、その値を引用符で囲む必要があります。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:226
+#: ../../rst/reference_appendices/YAMLSyntax.rst:229
 #: ../../rst/reference_appendices/faq.rst:813
 #: ../../rst/reference_appendices/glossary.rst:529
 #: ../../rst/reference_appendices/test_strategies.rst:267
 msgid ":ref:`working_with_playbooks`"
 msgstr ":ref:`working_with_playbooks`"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:227
+#: ../../rst/reference_appendices/YAMLSyntax.rst:230
 msgid "Learn what playbooks can do and how to write/run them."
 msgstr "Playbook でできることと、Playbook を記述および実行する方法を学びます。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:228
+#: ../../rst/reference_appendices/YAMLSyntax.rst:231
 msgid "`YAMLLint <http://yamllint.com/>`_"
 msgstr "`YAMLLint <http://yamllint.com/>`_"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:229
+#: ../../rst/reference_appendices/YAMLSyntax.rst:232
 msgid "YAML Lint (online) helps you debug YAML syntax if you are having problems"
 msgstr "YAML ヒント (オンライン) は、問題が発生した場合に YAML 構文のデバッグに役立ちます。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:230
+#: ../../rst/reference_appendices/YAMLSyntax.rst:233
 msgid "`GitHub examples directory <https://github.com/ansible/ansible-examples>`_"
 msgstr "`GitHub examples ディレクトリー <https://github.com/ansible/ansible-examples>`_"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:231
+#: ../../rst/reference_appendices/YAMLSyntax.rst:234
 msgid "Complete playbook files from the github project source"
 msgstr "Github プロジェクトソースの完全な Playbook ファイル"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:232
+#: ../../rst/reference_appendices/YAMLSyntax.rst:235
 msgid "`Wikipedia YAML syntax reference <https://en.wikipedia.org/wiki/YAML>`_"
 msgstr "`Wikipedia YAML 構文リファレンス <https://en.wikipedia.org/wiki/YAML>`_"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:233
+#: ../../rst/reference_appendices/YAMLSyntax.rst:236
 msgid "A good guide to YAML syntax"
 msgstr "YAML 構文の適切なガイド"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:234
+#: ../../rst/reference_appendices/YAMLSyntax.rst:237
 msgid "`Mailing List <https://groups.google.com/group/ansible-project>`_"
 msgstr "`メーリングリスト <https://groups.google.com/group/ansible-project>`_"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:235
+#: ../../rst/reference_appendices/YAMLSyntax.rst:238
 msgid "Questions? Help? Ideas?  Stop by the list on Google Groups"
 msgstr "ご質問はございますか。サポートが必要ですか。ご提案はございますか。Google グループの一覧をご覧ください。"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:236
+#: ../../rst/reference_appendices/YAMLSyntax.rst:239
 #: ../../rst/reference_appendices/common_return_values.rst:250
 #: ../../rst/reference_appendices/glossary.rst:535
-#: ../../rst/reference_appendices/release_and_maintenance.rst:237
+#: ../../rst/reference_appendices/release_and_maintenance.rst:30
 #: ../../rst/reference_appendices/test_strategies.rst:273
 msgid ":ref:`communication_irc`"
 msgstr ":ref:`communication_irc`"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:237
+#: ../../rst/reference_appendices/YAMLSyntax.rst:240
 msgid "How to join Ansible chat channels (join #yaml for yaml-specific questions)"
 msgstr "Ansible チャットチャンネルに参加する方法 (yaml 固有の質問は #yaml に参加してください)"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:239
+#: ../../rst/reference_appendices/YAMLSyntax.rst:242
 msgid "`YAML 1.1 Specification <https://yaml.org/spec/1.1/>`_"
 msgstr "`YAML 1.1 Specification <https://yaml.org/spec/1.1/>`_"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:239
+#: ../../rst/reference_appendices/YAMLSyntax.rst:242
 msgid "The Specification for YAML 1.1, which PyYAML and libyaml are currently implementing"
 msgstr "PyYAML および libyaml が現在実装されている YAML 1.1 の仕様"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:241
+#: ../../rst/reference_appendices/YAMLSyntax.rst:244
 msgid "`YAML 1.2 Specification <https://yaml.org/spec/1.2/spec.html>`_"
 msgstr "`YAML 1.2 仕様 <https://yaml.org/spec/1.2/spec.html>`_"
 
-#: ../../rst/reference_appendices/YAMLSyntax.rst:242
+#: ../../rst/reference_appendices/YAMLSyntax.rst:245
 msgid "For completeness, YAML 1.2 is the successor of 1.1"
 msgstr "完全を期すため、YAML 1.2 は 1.1 の後継となります。"
 
@@ -449,7 +454,7 @@ msgstr "開発メーリングリスト"
 
 #: ../../rst/reference_appendices/common_return_values.rst:251
 #: ../../rst/reference_appendices/glossary.rst:536
-#: ../../rst/reference_appendices/release_and_maintenance.rst:238
+#: ../../rst/reference_appendices/release_and_maintenance.rst:31
 #: ../../rst/reference_appendices/test_strategies.rst:274
 msgid "How to join Ansible chat channels"
 msgstr "Ansible チャットチャンネルへの参加方法"
@@ -4030,7 +4035,7 @@ msgstr "INTERPRETER_PYTHON"
 #: ../../rst/reference_appendices/config.rst:2336
 #: ../../rst/reference_appendices/config.rst:4230
 msgid "Path to the Python interpreter to be used for module execution on remote targets, or an automatic discovery mode. Supported discovery modes are ``auto`` (the default), ``auto_silent``, ``auto_legacy``, and ``auto_legacy_silent``. All discovery modes employ a lookup table to use the included system Python (on distributions known to include one), falling back to a fixed ordered list of well-known Python interpreter locations if a platform-specific default is not available. The fallback behavior will issue a warning that the interpreter should be set explicitly (since interpreters installed later may change which one is used). This warning behavior can be disabled by setting ``auto_silent`` or ``auto_legacy_silent``. The value of ``auto_legacy`` provides all the same behavior, but for backwards-compatibility with older Ansible releases that always defaulted to ``/usr/bin/python``, will use that interpreter if present."
-msgstr "リモートターゲットまたは自動検出モードでのモジュール実行に使用される Python インタープリターへのパス。サポートされている検出モードは、``auto`` (デフォルト)、``auto_silent``、``auto_legacy``、および  ``auto_legacy_silent`` です。すべての検出モードは、含まれているシステムの Python (含むことがディストリビューションで) を使用するためにルックアップテーブルを使用し、プラットフォーム固有のデフォルトが使用できない場合は、よく知られた Python インタープリターの位置の固定された順序リストにフォールバックします。フォールバック動作では、インタープリターを明示的に設定する必要があるという警告が出力されます (後からインストールされたインタープリターが、使用するインタープリターを変更する可能性があるからです)。この警告動作を無効にするには、``auto_silent`` または ``auto_legacy_silent`` を設定します。 ``auto_legacy`` の値はすべて同じ動作を指定しますが、以前の Ansible リリースとの下位互換性を確保するために常にデフォルトで ``/usr/bin/python`` に設定されていた場合には、インタープリターがあれば、それを使用します。"
+msgstr "リモートターゲットまたは自動検出モードでのモジュール実行に使用される Python インタープリターへのパス。サポートされている検出モードは、``auto`` (デフォルト)、``auto_silent``、``auto_legacy``、および ``auto_legacy_silent`` です。すべての検出モードは、含まれているシステムの Python (含むことがディストリビューションで) を使用するためにルックアップテーブルを使用し、プラットフォーム固有のデフォルトが使用できない場合は、よく知られた Python インタープリターの位置の固定された順序リストにフォールバックします。フォールバック動作では、インタープリターを明示的に設定する必要があるという警告が出力されます (後からインストールされたインタープリターが、使用するインタープリターを変更する可能性があるからです)。この警告動作を無効にするには、``auto_silent`` または ``auto_legacy_silent`` を設定します。 ``auto_legacy`` の値はすべて同じ動作を指定しますが、以前の Ansible リリースとの下位互換性を確保するために常にデフォルトで ``/usr/bin/python`` に設定されていた場合には、インタープリターがあれば、それを使用します。"
 
 #: ../../rst/reference_appendices/config.rst:2337
 msgid "``auto``"
@@ -6888,7 +6893,6 @@ msgid "Used only for 2.10. The installable package (RPM/Python/Deb package) gene
 msgstr "2.10 でのみ使用されます。`ansible/ansible リポジトリー <https://github.com/ansible/ansible>`_ から生成されたインストール可能なパッケージ (RPM/Python/Deb パッケージ) です。「``ansible-core``」を参照してください。"
 
 #: ../../rst/reference_appendices/glossary.rst:31
-#: ../../rst/reference_appendices/release_and_maintenance.rst:10
 msgid "ansible-core"
 msgstr "ansible-core"
 
@@ -9142,463 +9146,43 @@ msgstr "コードを修正して github へのプル要求を送信する場合�
 msgid "Releases and maintenance"
 msgstr "リリースおよびメンテナンス"
 
-#: ../../rst/reference_appendices/release_and_maintenance.rst:7
-msgid "This section describes release cycles, rules, and maintenance schedules for both Ansible community projects: the Ansible community package and ``ansible-core``. The two projects have different versioning systems, maintenance structures, contents, and workflows."
-msgstr "このセクションでは、Ansibleコミュニティプロジェクトの両方 (Ansibleコミュニティパッケージと``ansible-core``) のリリースサイクル、ルール、およびメンテナンススケジュールについて説明します。この2つのプロジェクトのバージョン管理システム、保守構造、コンテンツ、およびワークフローは異なります。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:10
-msgid "Ansible community package"
-msgstr "Ansibleコミュニティパッケージ"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:12
-msgid "Uses new versioning (2.10, then 3.0.0)"
-msgstr "新しいバージョン管理を使用する（2.10、次に3.0.0）"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:12
-msgid "Continues \"classic Ansible\" versioning (2.10, then 2.11)"
-msgstr "従来の Ansible バージョン管理を続行する（2.10、次に2.11）"
-
 #: ../../rst/reference_appendices/release_and_maintenance.rst:13
-msgid "Follows semantic versioning rules"
-msgstr "セマンティックバージョニングルールに従う"
+msgid "See the `the devel release and maintenance page <https://docs.ansible.com/ansible/devel/reference_appendices/release_and_maintenance.html>`_ for up to date information."
+msgstr "最新の情報については、`the devel release and maintenance page <https://docs.ansible.com/ansible/devel/reference_appendices/release_and_maintenance.html>`_ にアクセスしてください。"
 
-#: ../../rst/reference_appendices/release_and_maintenance.rst:13
-msgid "Does not use semantic versioning"
-msgstr "セマンティックバージョニングを使用しない"
+#: ../../rst/reference_appendices/release_and_maintenance.rst:17
+msgid "This link takes you to a different version of the Ansible documentation. Use the version selection on the left or your browser back button to return to this version of the documentation."
+msgstr "このリンクは、Ansible のドキュメントの別バージョンに移動します。左側またはブラウザーの戻るボタンを使用して、このバージョンのドキュメントに戻ります。"
 
-#: ../../rst/reference_appendices/release_and_maintenance.rst:14
-msgid "Maintains only one version at a time"
-msgstr "一度に1つのバージョンのみを維持する"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:14
-msgid "Maintains latest version plus two older versions"
-msgstr "最新バージョンと以前のバージョンを2つ維持する"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:15
-msgid "Includes language, runtime, and selected Collections"
-msgstr "言語、ランタイム、および選択したコレクションが含まれる"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:15
-msgid "Includes language, runtime, and builtin plugins"
-msgstr "言語、ランタイム、および組み込みプラグインが含まれる"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:16
-msgid "Developed and maintained in Collection repositories"
-msgstr "コレクションリポジトリで開発および保守されている"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:16
-msgid "Developed and maintained in ansible/ansible repository"
-msgstr "ansible / ansibleリポジトリで開発および保守されている"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:19
-msgid "Many community users install the Ansible community package. The Ansible community package offers the functionality that existed in Ansible 2.9, with more than 85 Collections containing thousands of modules and plugins. The ``ansible-core`` option is primarily for developers and users who want to install only the collections they need."
-msgstr "多くのコミュニティユーザーがAnsibleコミュニティパッケージをインストールします。Ansibleコミュニティパッケージでは、Ansible 2.9に存在していた機能と、85を超えるコレクション (数千のモジュールとプラグインを含む) が提供されます。``ansible-core``オプションは主に、必要なコレクションだけをインストールする開発者とユーザー向けです。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:27
-msgid "Release cycle overview"
-msgstr "リリースサイクルの概要"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:29
-msgid "The two community releases are related - the release cycle follows this pattern:"
-msgstr "2つのコミュニティリリースは関連しており、リリースサイクルは以下のようなパターンになっています。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:31
-msgid "Release of a new ansible-core major version, for example, ansible-core 2.11"
-msgstr "新しいansible-coreメジャーバージョンのリリース（ansible-core 2.11など）"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:33
-msgid "New release of ansible-core and two prior versions are now maintained (in this case, ansible-base 2.10, Ansible 2.9)"
-msgstr "ansible-coreの新しいリリースと2つ前までのバージョンが維持されるように（今回の場合はansible-base 2.10とAnsible 2.9）"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:34
-msgid "Work on new features for ansible-core continues in the ``devel`` branch"
-msgstr "ansible-coreの新機能に関する作業は``devel``ブランチで継続される"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:36
-msgid "Collection freeze (no new Collections or new versions of existing Collections) on the Ansible community package"
-msgstr "Ansibleコミュニティパッケージでのコレクションのフリーズ（新しいコレクションや既存のコレクションの新しいバージョンはありません）"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:37
-msgid "Release candidate for Ansible community package, testing, additional release candidates as necessary"
-msgstr "Ansibleコミュニティパッケージのリリース候補、テスト、必要に応じて追加のリリース候補"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:38
-msgid "Release of a new Ansible community package major version based on the new ansible-core, for example, Ansible 4.0.0 based on ansible-core 2.11"
-msgstr "新しいansible-coreに基づく新しいAnsibleコミュニティパッケージメジャーバージョンのリリース（例: ansible-core2.11に基づくAnsible4.0.0)"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:40
-msgid "Newest release of the Ansible community package is the only version now maintained"
-msgstr "Ansibleコミュニティパッケージの最新リリースだけが現在維持されているバージョンである"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:41
-msgid "Work on new features continues in Collections"
-msgstr "新機能の作業はコレクションで継続される"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:42
-msgid "Individual Collections can make multiple minor and/or major releases"
-msgstr "個々のコレクションは、複数のマイナーリリースおよび/またはメジャーリリースを作成できる"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:44
-msgid "Minor releases of three maintained ansible-core versions every three weeks (2.11.1)"
-msgstr "3つのansible-core管理バージョンを3週間毎にマイナーリリース（2.11.1）"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:45
-msgid "Minor releases of the single maintained Ansible community package version every three weeks (4.1.0)"
-msgstr "Ansibleコミュニティーパッケージの管理バージョン1つを3週間毎にマイナーリリース（4.1.0）"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:46
-msgid "Feature freeze on ansible-core"
-msgstr "ansible-core 機能のフリーズ"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:47
-msgid "Release candidate for ansible-core, testing, additional release candidates as necessary"
-msgstr " ansible-core のリリース候補、テスト、必要に応じて追加のリリース候補"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:48
-msgid "Release of the next ansible-core major version, cycle begins again"
-msgstr "次のansible-coreメジャーバージョンのリリース。サイクルの再開"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:51
-msgid "Ansible community package release cycle"
-msgstr "Ansible コミュニティーパッケージのリリースサイクル"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:53
-msgid "The Ansible community team typically releases two major versions of the community package per year, on a flexible release cycle that trails the release of ``ansible-core``. This cycle can be extended to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`roadmaps` for upcoming release details. Between major versions, we release a new minor version of the Ansible community package every three weeks. Minor releases include new backwards-compatible features, modules and plugins, as well as bug fixes."
-msgstr "Ansible コミュニティーチームは通常、1年に2回メジャーバージョンをリリースし、柔軟なリリースサイクルで ``ansible-core`` のリリースに続きます。このサイクルは、新しいリリースを提供する前に規模の大きい変更を正しく実装してテストできるように、延期できるようになっています。今後のリリースの詳細は、:ref:`roadmaps`を参照してください。次のメジャーバージョンがリリースされるまでに、Ansible コミュニティーパッケージの新規マイナーバージョンが3週間毎にリリースされます。マイナーリリースには、後方互換性のある機能、モジュール、プラグインだけでなく、バグ修正が含まれます。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:55
-msgid "Starting with version 2.10, the Ansible community team guarantees maintenance for only one major community package release at a time. For example, when Ansible 4.0.0 gets released, the team will stop making new 3.x releases. Community members may maintain older versions if desired."
-msgstr "バージョン2.10以降、Ansibleコミュニティチームは、一度に主要なコミュニティパッケージリリースの保守の保証するのは1バージョンのみです。たとえば、Ansible チームでは、Ansible 4.0.0がリリースされると、新しい3.xリリースの作成を停止します。コミュニティメンバーは、必要に応じて古いバージョンを維持できます。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:59
-msgid "Older, unmaintained versions of the Ansible community package might contain unfixed security vulnerabilities (*CVEs*). If you are using a release of the Ansible community package that is no longer maintained, we strongly encourage you to upgrade as soon as possible in order to benefit from the latest features and security fixes."
-msgstr "メンテナンスされていない以前のバージョンのAnsibleコミュニティパッケージには、修正されていないセキュリティの脆弱性（* CVE *）が含まれている可能性があります。メンテナンスが終了したAnsibleコミュニティパッケージのリリースを使用している場合は、できるだけ早くアップグレードして、最新の機能とセキュリティ修正を利用することを強くお勧めします。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:61
-msgid "Each major release of the Ansible community package accepts the latest released version of each included Collection and the latest released version of ansible-core. For specific schedules and deadlines, see the :ref:`ansible_roadmaps` for each version. Major releases of the Ansible community package can contain breaking changes in the modules and other plugins within the included Collections and/or in core features."
-msgstr "Ansible コミュニティーパッケージの各メジャーリリースには、追加するコレクションごとの最新のリリースバージョンと、最新リリースバージョンの ansible-core を追加できます。具体的なスケジュールや期限については、各バージョンの:ref:`ansible_roadmaps`を参照してください。Ansible コミュニティーパッケージのメジャーリリースに含まれるコレクションやコア機能に、モジュールやその他の大規模な変更が含まれる可能性があります。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:63
-msgid "The Ansible community package follows semantic versioning rules. Minor releases of the Ansible community package accept only backwards-compatible changes in included Collections, in other words, not Collections major releases. Collections must also use semantic versioning, so the Collection version numbers reflect this rule. For example, if Ansible 3.0.0 releases with community.general 2.0.0, then all minor releases of Ansible 3.x (such as Ansible 3.1.0 or Ansible 3.5.0) must include a 2.x release of community.general (such as 2.8.0 or 2.9.5) and not 3.x.x or later major releases."
-msgstr "Ansibleコミュニティパッケージは、セマンティックバージョニングルールを使用します。Ansibleコミュニティパッケージのマイナーリリースは、同梱されているコレクションと下位互換性のある変更のみを受け入れます。つまり、コレクションのメジャーリリースは受け入れません。コレクションもセマンティックバージョニングを使用する必要があるため、コレクションのバージョン番号もこのルールを反映しています。たとえば、community.general 2.0.0 が含まれる Ansible 3.0.0 リリースの場合には、Ansible 3.x の全マイナーリリース (Ansbile 3.1.0 または Ansible 3.5.0など)には、3.0.0 以降のメジャーリリースではなく、 community.general (2.8.0 または 2.9.5など)の2.xリリースを含める必要があります。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:65
-msgid "Work in Collections is tracked within the individual Collection repositories."
-msgstr "コレクションでの作業は、個々のコレクションリポジトリ内で追跡されます。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:67
-msgid "You can refer to the :ref:`Ansible package porting guides<porting_guides>` for tips on updating your playbooks to run on newer versions of Ansible. For Ansible 2.10 and later releases, you can install the Ansible package with ``pip``. See :ref:`intro_installation_guide` for details.  For older releases, you can download the Ansible release from `<https://releases.ansible.com/ansible/>`_."
-msgstr "Ansible Playbook を更新して新しいバージョンで実行するときのヒントについては、「:ref:`Ansible package porting guides<porting_guides>`」を参照してください。Ansible 2.10 以降のリリースでは、``pip`` で Ansible パッケージをインストールできます。詳細は、「:ref:`intro_installation_guide`」を参照してください。古いリリースでは、Ansible リリースは `<https://releases.ansible.com/ansible/>`_ からダウンロードできます。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:69
-msgid "This table links to the release notes for each major Ansible release. These release notes (changelogs) contain the dates and significant changes in each minor release."
-msgstr "以下の表には、Ansible の各メジャーリリースのリリースノートへのリンクが含まれています。このようなリリースノート (変更ログ) には、各マイナーリリースの日付や、大きな変更が含まれます。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:72
-msgid "Ansible Community Package Release"
-msgstr "Ansible コミュニティーパッケージのリリース"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:72
-#: ../../rst/reference_appendices/release_and_maintenance.rst:110
-msgid "Status"
-msgstr "ステータス"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:74
-msgid "5.0.0"
-msgstr "5.0.0"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:74
-msgid "In development (unreleased)"
-msgstr "開発中 (未リリース)"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:75
-msgid "`4.x Release Notes`_"
-msgstr "`4.x Release Notes`_"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:75
-msgid "Current"
-msgstr "現行"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:76
-msgid "`3.x Release Notes`_"
-msgstr "`3.x Release Notes`_"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:76
-#: ../../rst/reference_appendices/release_and_maintenance.rst:77
-#: ../../rst/reference_appendices/release_and_maintenance.rst:116
-#: ../../rst/reference_appendices/release_and_maintenance.rst:117
-#: ../../rst/reference_appendices/release_and_maintenance.rst:118
-#: ../../rst/reference_appendices/release_and_maintenance.rst:119
-#: ../../rst/reference_appendices/release_and_maintenance.rst:120
-msgid "Unmaintained (end of life)"
-msgstr "メンテナンス対象外 (エンドオフライフ)"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:77
-msgid "`2.10 Release Notes`_"
-msgstr "`2.10 Release Notes`_"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:87
-msgid "ansible-core release cycle"
-msgstr "ansible-core リリースサイクル"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:89
-msgid "``ansible-core`` is developed and released on a flexible release cycle. This cycle can be extended in order to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`roadmaps` for upcoming release details."
-msgstr "``ansible-core`` は、柔軟なリリースサイクルで開発およびリリースされます。このサイクルは、大規模な変更を正しく実装して、テストしてから新しいリリースが公開されるように、延長することが可能です。今後のリリースの詳細は、「:ref:`roadmaps`」を参照してください。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:91
-msgid "``ansible-core`` has a graduated maintenance structure that extends to three major releases. For more information, read about the :ref:`development_and_stable_version_maintenance_workflow` or see the chart in :ref:`release_schedule` for the degrees to which current releases are maintained."
-msgstr "``ansible-core`` には、3 つのメジャーリリースで展開される段階的なメンテナンス構造があります。詳細は、「:ref:`development_and_stable_version_maintenance_workflow`」を参照してください。また、現在のリリースがどの程度メンテナンスされているかについては、:ref:`release_schedule` の表を参照してください。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:97
-msgid "Older, unmaintained versions of ``ansible-core`` can contain unfixed security vulnerabilities (*CVEs*). If you are using a release of ``ansible-core`` that is no longer maintained, we strongly encourage you to upgrade as soon as possible to benefit from the latest features and security fixes. ``ansible-core`` maintenance continues for 3 releases.  Thus the latest release receives security and general bug fixes when it is first released, security and critical bug fixes when the next ``ansible-core`` version is released, and **only** security fixes once the follow on to that version is released."
-msgstr "``ansible-core``のメンテナンスされていない以前のバージョンには、セキュリティー脆弱性 (*CVE*) が含まれる場合があります。保守のない``ansible-core``のリリースを使用している場合には、最新の機能およびセキュリティー修正を活用できるように、すぐにアップグレードすることを強く推奨します。``ansible-core``の保守は、3リリース分継続されます。そのため、最新のリリースでは、初回リリース時にセキュリティーと一般的なバグ修正が、次の``ansible-core``バージョンがリリースされると、セキュリティーと重大なバグ修正が、その次のバージョンがリリースされると、セキュリティー修正**のみ**が提供されます。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:99
-msgid "You can refer to the :ref:`core_porting_guides` for tips on updating your playbooks to run on newer versions of ``ansible-core``."
-msgstr "Playbook を更新して``ansible-core`` の新しいバージョンで実行するときのヒントは、「:ref:`core_porting_guides`」を参照してください。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:101
-msgid "You can install ``ansible-core`` with ``pip``. See :ref:`intro_installation_guide` for details."
-msgstr "``pip`` で ``ansible-core`` をインストールできます。詳細は、「:ref:`intro_installation_guide`」を参照してください。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:105
-msgid "This table links to the release notes for each major ``ansible-core`` release. These release notes (changelogs) contain the dates and significant changes in each minor release."
-msgstr "以下の表には、``ansible-core`` の各メジャーリリースのリリースノートへのリンクが含まれています。このようなリリースノート (変更ログ) には、各マイナーリリースの日付や、大きな変更が含まれます。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:110
-msgid "``ansible-core`` / ``ansible-base`` Release"
-msgstr "``ansible-core`` / ``ansible-base`` リリース"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:112
-msgid "devel"
-msgstr "devel"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:112
-msgid "In development (ansible-core 2.12 unreleased, trunk)"
-msgstr "開発中 (未リリースの ansible-core 2.12 (trunk))"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:113
-msgid "`2.11 ansible-core Release Notes`_"
-msgstr "`2.11 ansible-core Release Notes`_"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:113
-msgid "Maintained (security **and** general bug fixes)"
-msgstr "メンテナンス対象 (セキュリティー **および** 一般的なバグの修正)"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:114
-msgid "`2.10 ansible-base Release Notes`_"
-msgstr "`2.10 ansible-base Release Notes`_"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:114
-msgid "Maintained (security **and** critical bug fixes)"
-msgstr "メンテナンス対象 (セキュリティー **および** 重大なバグの修正)"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:115
-msgid "`2.9 Release Notes`_"
-msgstr "`2.9 Release Notes`_"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:115
-msgid "Maintained (pre-collections) (security fixes only)"
-msgstr "保守あり（事前収集）（セキュリティ修正のみ）"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:116
-msgid "`2.8 Release Notes`_"
-msgstr "`2.8 Release Notes`_"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:117
-msgid "`2.7 Release Notes`_"
-msgstr "`2.7 Release Notes`_"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:118
-msgid "`2.6 Release Notes`_"
-msgstr "`2.6 Release Notes`_"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:119
-msgid "`2.5 Release Notes`_"
-msgstr "`2.5 リリースノート`_"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:120
-msgid "<2.5"
-msgstr "2.5 より前のバージョン"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:139
-msgid "Preparing for a new release"
-msgstr "新しいリリースの準備"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:144
-msgid "Feature freezes"
-msgstr "機能フリーズ"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:146
-msgid "During final preparations for a new release, core developers and maintainers focus on improving the release candidate, not on adding or reviewing new features. We may impose a feature freeze."
-msgstr "新しいリリースの最終準備中、コア開発者とメンテナは、新機能の追加やレビューではなく、リリース候補の改善に集中します。機能フリーズを指示する場合があります。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:148
-msgid "A feature freeze means that we delay new features and fixes that are not related to the pending release so we can ship the new release as soon as possible."
-msgstr "機能フリーズとは、保留中のリリースに関連のない新機能や修正を遅らせて、新しいリリースをできるだけ早く出荷できるようにすることを意味します。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:152
-msgid "Release candidates"
-msgstr "リリースの候補 (Release Candidate)"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:154
-msgid "We create at least one release candidate before each new major release of Ansible or ``ansible-core``. Release candidates allow the Ansible community to try out new features, test existing playbooks on the release candidate, and report bugs or issues they find."
-msgstr "Ansibleまたは``ansible-core``の新しいメジャーリリースの前に毎回、少なくとも1つのリリース候補を作成します。リリース候補を使用することで、Ansibleコミュニティは新機能を試したり、リリース候補で既存のPlaybookをテストしたり、見つかったバグや問題を報告したりできます。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:156
-msgid "Ansible and ``ansible-core`` tag the first release candidate (RC1) which is usually scheduled to last five business days. If no major bugs or issues are identified during this period, the release candidate becomes the final release."
-msgstr "Ansible および ``ansible-core`` は、最初のリリース候補のタグ (RC1) が付けられます。通常、RC1 は最後の5営業日にスケジュールされます。この期間にメジャーなバグや問題が特定されない場合には、リリース候補が最終リリースとなります。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:158
-msgid "If there are major problems with the first candidate, the team and the community fix them and tag a second release candidate (RC2). This second candidate lasts for a shorter duration than the first. If no problems have been reported for an RC2 after two business days, the second release candidate becomes the final release."
-msgstr "最初の候補に大きな問題がある場合は、チームおよびコミュニティーが修正を加えて、2 番目の候補のタグ (RC2) が付けられます。2 番目の候補は、1 番目よりも期間は短くなります。2 営業日が経過して問題が報告されない場合は、この2番目のリリース候補が最終的なリリースとなります。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:160
-msgid "If there are major problems in RC2, the cycle begins again with another release candidate and repeats until the maintainers agree that all major problems have been fixed."
-msgstr "RC2に重大な問題がある場合には、サイクルは別のリリース候補から再開され、すべての主要な問題が修正されたことにメンテナが同意するまで繰り返されます。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:166
-msgid "Development and maintenance workflows"
-msgstr "開発と保守のワークフロー"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:168
-msgid "In between releases, the Ansible community develops new features, maintains existing functionality, and fixes bugs in ``ansible-core`` and in the collections included in the Ansible community package."
-msgstr "次のリリースまでの間に、Ansibleコミュニティは新しい機能を開発して既存の機能のメンテナンスを行い、``ansible-core`` や Ansible コミュニティーパッケージに含まれるコレクションのバグを修正します。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:171
-msgid "Ansible community package workflow"
-msgstr "Ansible コミュニティパッケージのワークフロー"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:173
-msgid "The Ansible community develops and maintains the features and functionality included in the Ansible community package in Collections repositories, with a workflow that looks like this:"
-msgstr "Ansibleコミュニティは、コレクションリポジトリのAnsibleコミュニティパッケージに含まれる機能を開発および保守します。ワークフローは次のようになります。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:175
-msgid "Developers add new features and bug fixes to the individual Collections, following each Collection's rules on contributing."
-msgstr "開発者は、貢献に関する各コレクションのルールに従って、個々のコレクションに新機能とバグ修正を追加する。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:176
-#: ../../rst/reference_appendices/release_and_maintenance.rst:190
-msgid "Each new feature and each bug fix includes a changelog fragment describing the work."
-msgstr "各新機能と各バグ修正には、作業を説明する変更ログフラグメントが含まれている。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:177
-msgid "Release engineers create a minor release for the current version every three weeks to ensure that the latest bug fixes are available to users."
-msgstr "リリースエンジニアは、最新のバグ修正をユーザーが利用できるように、現在のバージョンのマイナーリリースを3週間ごとに作成する。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:178
-msgid "At the end of the development period, the release engineers announce which Collections, and which major version of each included Collection,  will be included in the next release of the Ansible community package. New Collections and new major versions may not be added after this, and the work of creating a new release begins."
-msgstr "開発期間の終わりに、リリースエンジニアは、Ansibleコミュニティパッケージの次のリリースに含まれるコレクションと、追加済みの各コレクションのメジャーバージョンを発表します。これ以降は、コレクションおよびメジャーバージョンは新たに追加できず、新しいリリースの作成準備が開始されます。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:180
-msgid "We generally do not provide fixes for unmaintained releases of the Ansible community package, however, there can sometimes be exceptions for critical issues."
-msgstr "通常、Ansible コミュニティーパッケージで保守されていないバージョンに対する修正は提供していませんが、重大な問題に関しては例外で対応する可能性があります。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:182
-msgid "Some Collections are maintained by the Ansible team, some by Partner organizations, and some by community teams. For more information on adding features or fixing bugs in Ansible-maintained Collections, see :ref:`contributing_maintained_collections`."
-msgstr "Ansibleチーム、パートナー組織、コミュニティチームがコレクションをそれぞれ部分的に管理しています。 Ansibleで管理されているコレクションの機能の追加やバグの修正の詳細については、:ref:`contributing_maintained_collections` を参照してください。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:185
-msgid "ansible-core workflow"
-msgstr "ansible-core ワークフロー"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:187
-msgid "The Ansible community develops and maintains ``ansible-core`` on GitHub_, with a workflow that looks like this:"
-msgstr "Ansibleコミュニティは、GitHub_の``ansible-core``で開発と維持を行っており、次のようなワークフローを使用します。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:189
-msgid "Developers add new features and bug fixes to the ``devel`` branch."
-msgstr "開発者は、``devel``ブランチに新機能とバグ修正を追加する。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:191
-msgid "The development team backports bug fixes to one, two, or three stable branches, depending on the severity of the bug. They do not backport new features."
-msgstr "開発チームは、バグの重大度に応じて、バグ修正を1つ、2つ、または3つの安定したブランチにバックポートし、新機能のバックポートは行わない。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:192
-msgid "Release engineers create a minor release for each maintained version every three weeks to ensure that the latest bug fixes are available to users."
-msgstr "リリースエンジニアは、最新のバグ修正をユーザーが利用できるように、各保守バージョンのマイナーリリースを3週間ごとに作成する。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:193
-msgid "At the end of the development period, the release engineers impose a feature freeze and the work of creating a new release begins."
-msgstr "開発期間の終わりに、リリースエンジニアは機能をフリーズし、新しいリリースの準備を開始する。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:195
-msgid "We generally do not provide fixes for unmaintained releases of ``ansible-core``, however, there can sometimes be exceptions for critical issues."
-msgstr "通常、メンテナンスされていない``ansible-core``リリースに対する修正は提供していませんが、重大な問題に関しては例外で対応する可能性があります。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:197
-msgid "For more information on adding features or fixing bugs in ``ansible-core`` see :ref:`community_development_process`."
-msgstr "``ansible-core`` の機能の追加またはバグの修正の詳細については、:ref:`community_development_process`を参照してください。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:204
-msgid "Changelogs"
-msgstr "変更ログ (Changelog)"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:206
-msgid "We generate changelogs based on fragments. When creating new features for existing modules and plugins or fixing bugs, create a changelog fragment describing the change. A changelog entry is not needed for new modules or plugins. Details for those items will be generated from the module documentation."
-msgstr "変更ログは、フラグメントに基づいて生成されます。既存のモジュールやプラグインの新しい機能を作成したり、バグを修正したりするときは、変更点を記述した変更ログフラグメントを作成します。変更ログのエントリーは、新しいモジュールやプラグインには必要ありません。それらの項目の詳細は、モジュールのドキュメントから生成されます。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:208
-msgid "To add changelog fragments to Collections in the Ansible community package, we recommend the `antsibull-changelog utility <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst>`_."
-msgstr "Ansibleコミュニティパッケージのコレクションに変更ログフラグメントを追加するには、`antsibull-changelog utility <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst>`_を推奨します。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:210
-msgid "To add changelog fragments for new features and bug fixes in ``ansible-core``, see the :ref:`changelog examples and instructions<changelogs_how_to>` in the Community Guide."
-msgstr "``ansible-core``に新機能とバグ修正の変更ログフラグメントを追加するには、コミュニティガイドの:ref:`changelog examples and instructions<changelogs_how_to>`を参照してください。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:213
-msgid "Deprecation cycles"
-msgstr "非推奨サイクル"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:215
-msgid "Sometimes we remove a feature, normally in favor of a reimplementation that we hope does a better job. To do this we have a deprecation cycle. First we mark a feature as 'deprecated'. This is normally accompanied with warnings to the user as to why we deprecated it, what alternatives they should switch to and when (which version) we are scheduled to remove the feature permanently."
-msgstr "通常、再実装してジョブ実行の改善を希望する場合など、機能を削除することがあります。これを行うために、非推奨のサイクルがあります。まず、機能を「非推奨」としてマークします。これには通常、非推奨になった理由、ユーザーが切り替える必要のある代替手段、および機能を完全に削除する予定の時期 (バージョン) に関する警告が伴います。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:218
-msgid "Ansible community package deprecation cycle"
-msgstr "Ansibleコミュニティパッケージの非推奨サイクル"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:220
-msgid "Since Ansible is a package of individual collections, the deprecation cycle depends on the collection maintainers. We recommend the collection maintainers deprecate a feature in one Ansible major version and do not remove that feature for one year, or at least until the next major Ansible version. For example, deprecate the feature in 3.1.0, and do not remove the feature until 5.0.0, or 4.0.0 at the earliest. Collections should use semantic versioning, such that the major collection version cannot be changed within an Ansible major version. Thus the removal should not happen before the next major Ansible community package release. This is up to each collection maintainer and cannot be guaranteed."
-msgstr "Ansible は個別のコレクションのパッケージであるため、非推奨のサイクルはコレクションのメンテナーによって異なります。コレクションメンテナーは 1 つの Ansible メジャーバージョンでこの機能を非推奨にし、1 年間でその機能を削除するか、少なくとも次の Ansible バージョンまでに削除しないことを推奨します。たとえば、3.1.0 でこの機能を非推奨にした場合は、最低でも 5.0.0 または 4.0.0 までの機能を削除しないでください。コレクションはセマンティックバージョニングを使用する必要があります。したがって、メジャーコレクションバージョンは、Ansible メジャーバージョン内で変更できません。したがって、次のメジャーリリースの Ansible コミュニティーパッケージリリースの前に削除することはできません。これは、各コレクションのメンテナーの役割であり、保証されているものではありません。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:223
-msgid "ansible-core deprecation cycle"
-msgstr "ansible-core 非推奨サイクル"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:225
-msgid "The deprecation cycle in ``ansible-core`` is normally across 4 feature releases (2.x.y, where the x marks a feature release and the y a bugfix release), so the feature is normally removed in the 4th release after we announce the deprecation. For example, something deprecated in 2.9 will be removed in 2.13, assuming we do not jump to 3.x before that point. The tracking is tied to the number of releases, not the release numbering."
-msgstr "``ansible-core`` の非推奨サイクルは通常 4 つの機能リリース (たとえば 2.x.y では、x は機能リリースを示し、y はバグ修正リリースを示します) にまたがるため、機能は通常、非推奨を発表してから 4 番目のリリースで削除されます。たとえば、2.9 で非推奨になったものは、バージョンがそのまま 3.x に続くと仮定すると、2.13 で削除されます。追跡は、リリース番号ではなく、リリースの数に関連付けられています。"
-
-#: ../../rst/reference_appendices/release_and_maintenance.rst:229
+#: ../../rst/reference_appendices/release_and_maintenance.rst:22
 msgid ":ref:`community_committer_guidelines`"
 msgstr ":ref:`community_committer_guidelines`"
 
-#: ../../rst/reference_appendices/release_and_maintenance.rst:230
+#: ../../rst/reference_appendices/release_and_maintenance.rst:23
 msgid "Guidelines for Ansible core contributors and maintainers"
 msgstr "Ansible で中心となる貢献者およびメンテナー向けガイドライン"
 
-#: ../../rst/reference_appendices/release_and_maintenance.rst:231
+#: ../../rst/reference_appendices/release_and_maintenance.rst:24
 msgid ":ref:`testing_strategies`"
 msgstr ":ref:`testing_strategies`"
 
-#: ../../rst/reference_appendices/release_and_maintenance.rst:232
+#: ../../rst/reference_appendices/release_and_maintenance.rst:25
 msgid "Testing strategies"
 msgstr "ストラテジーのテスト"
 
-#: ../../rst/reference_appendices/release_and_maintenance.rst:233
+#: ../../rst/reference_appendices/release_and_maintenance.rst:26
 msgid ":ref:`ansible_community_guide`"
 msgstr ":ref:`ansible_community_guide`"
 
-#: ../../rst/reference_appendices/release_and_maintenance.rst:234
+#: ../../rst/reference_appendices/release_and_maintenance.rst:27
 msgid "Community information and contributing"
 msgstr "コミュニティー情報および貢献"
 
-#: ../../rst/reference_appendices/release_and_maintenance.rst:235
+#: ../../rst/reference_appendices/release_and_maintenance.rst:28
 msgid "`Development Mailing List <https://groups.google.com/group/ansible-devel>`_"
 msgstr "`開発メーリングリスト <https://groups.google.com/group/ansible-devel>`_"
 
-#: ../../rst/reference_appendices/release_and_maintenance.rst:236
+#: ../../rst/reference_appendices/release_and_maintenance.rst:29
 msgid "Mailing list for development topics"
 msgstr "開発トピックのメーリングリスト"
 
@@ -10594,4 +10178,319 @@ msgstr "RHAAP は、Red Hat がサポートする Ansible AWX の製品バージ
 
 #~ msgid "Ansible Tower is the downstream Red-Hat supported product version of Ansible AWX. Find out more about Ansible Tower features and how to download it on the `Ansible Tower webpage <https://www.ansible.com/products/tower>`_. Ansible Tower is part of the Red Hat Ansible Automation subscription, and comes bundled with amazing support from Red Hat, Inc."
 #~ msgstr "Ansible Tower は、Red Hat がサポートする Ansible AWX の製品のバージョン (ダウンストリーム) です。Ansible Tower の機能とそのダウンロード方法の詳細は、`Ansible Tower web ページ <https://www.ansible.com/products/tower>`_ を参照してください。Ansible Tower は、Red Hat Ansible Automation サブスクリプションに含まれ、Red Hat, Inc のサポートが利用できます。"
+
+#~ msgid "This section describes release cycles, rules, and maintenance schedules for both Ansible community projects: the Ansible community package and ``ansible-core``. The two projects have different versioning systems, maintenance structures, contents, and workflows."
+#~ msgstr "このセクションでは、Ansibleコミュニティプロジェクトの両方 (Ansibleコミュニティパッケージと``ansible-core``) のリリースサイクル、ルール、およびメンテナンススケジュールについて説明します。この2つのプロジェクトのバージョン管理システム、保守構造、コンテンツ、およびワークフローは異なります。"
+
+#~ msgid "Ansible community package"
+#~ msgstr "Ansibleコミュニティパッケージ"
+
+#~ msgid "Uses new versioning (2.10, then 3.0.0)"
+#~ msgstr "新しいバージョン管理を使用する（2.10、次に3.0.0）"
+
+#~ msgid "Continues \"classic Ansible\" versioning (2.10, then 2.11)"
+#~ msgstr "従来の Ansible バージョン管理を続行する（2.10、次に2.11）"
+
+#~ msgid "Follows semantic versioning rules"
+#~ msgstr "セマンティックバージョニングルールに従う"
+
+#~ msgid "Does not use semantic versioning"
+#~ msgstr "セマンティックバージョニングを使用しない"
+
+#~ msgid "Maintains only one version at a time"
+#~ msgstr "一度に1つのバージョンのみを維持する"
+
+#~ msgid "Maintains latest version plus two older versions"
+#~ msgstr "最新バージョンと以前のバージョンを2つ維持する"
+
+#~ msgid "Includes language, runtime, and selected Collections"
+#~ msgstr "言語、ランタイム、および選択したコレクションが含まれる"
+
+#~ msgid "Includes language, runtime, and builtin plugins"
+#~ msgstr "言語、ランタイム、および組み込みプラグインが含まれる"
+
+#~ msgid "Developed and maintained in Collection repositories"
+#~ msgstr "コレクションリポジトリで開発および保守されている"
+
+#~ msgid "Developed and maintained in ansible/ansible repository"
+#~ msgstr "ansible / ansibleリポジトリで開発および保守されている"
+
+#~ msgid "Many community users install the Ansible community package. The Ansible community package offers the functionality that existed in Ansible 2.9, with more than 85 Collections containing thousands of modules and plugins. The ``ansible-core`` option is primarily for developers and users who want to install only the collections they need."
+#~ msgstr "多くのコミュニティユーザーがAnsibleコミュニティパッケージをインストールします。Ansibleコミュニティパッケージでは、Ansible 2.9に存在していた機能と、85を超えるコレクション (数千のモジュールとプラグインを含む) が提供されます。``ansible-core``オプションは主に、必要なコレクションだけをインストールする開発者とユーザー向けです。"
+
+#~ msgid "Release cycle overview"
+#~ msgstr "リリースサイクルの概要"
+
+#~ msgid "The two community releases are related - the release cycle follows this pattern:"
+#~ msgstr "2つのコミュニティリリースは関連しており、リリースサイクルは以下のようなパターンになっています。"
+
+#~ msgid "Release of a new ansible-core major version, for example, ansible-core 2.11"
+#~ msgstr "新しいansible-coreメジャーバージョンのリリース（ansible-core 2.11など）"
+
+#~ msgid "New release of ansible-core and two prior versions are now maintained (in this case, ansible-base 2.10, Ansible 2.9)"
+#~ msgstr "ansible-coreの新しいリリースと2つ前までのバージョンが維持されるように（今回の場合はansible-base 2.10とAnsible 2.9）"
+
+#~ msgid "Work on new features for ansible-core continues in the ``devel`` branch"
+#~ msgstr "ansible-coreの新機能に関する作業は``devel``ブランチで継続される"
+
+#~ msgid "Collection freeze (no new Collections or new versions of existing Collections) on the Ansible community package"
+#~ msgstr "Ansibleコミュニティパッケージでのコレクションのフリーズ（新しいコレクションや既存のコレクションの新しいバージョンはありません）"
+
+#~ msgid "Release candidate for Ansible community package, testing, additional release candidates as necessary"
+#~ msgstr "Ansibleコミュニティパッケージのリリース候補、テスト、必要に応じて追加のリリース候補"
+
+#~ msgid "Release of a new Ansible community package major version based on the new ansible-core, for example, Ansible 4.0.0 based on ansible-core 2.11"
+#~ msgstr "新しいansible-coreに基づく新しいAnsibleコミュニティパッケージメジャーバージョンのリリース（例: ansible-core2.11に基づくAnsible4.0.0)"
+
+#~ msgid "Newest release of the Ansible community package is the only version now maintained"
+#~ msgstr "Ansibleコミュニティパッケージの最新リリースだけが現在維持されているバージョンである"
+
+#~ msgid "Work on new features continues in Collections"
+#~ msgstr "新機能の作業はコレクションで継続される"
+
+#~ msgid "Individual Collections can make multiple minor and/or major releases"
+#~ msgstr "個々のコレクションは、複数のマイナーリリースおよび/またはメジャーリリースを作成できる"
+
+#~ msgid "Minor releases of three maintained ansible-core versions every three weeks (2.11.1)"
+#~ msgstr "3つのansible-core管理バージョンを3週間毎にマイナーリリース（2.11.1）"
+
+#~ msgid "Minor releases of the single maintained Ansible community package version every three weeks (4.1.0)"
+#~ msgstr "Ansibleコミュニティーパッケージの管理バージョン1つを3週間毎にマイナーリリース（4.1.0）"
+
+#~ msgid "Feature freeze on ansible-core"
+#~ msgstr "ansible-core 機能のフリーズ"
+
+#~ msgid "Release candidate for ansible-core, testing, additional release candidates as necessary"
+#~ msgstr " ansible-core のリリース候補、テスト、必要に応じて追加のリリース候補"
+
+#~ msgid "Release of the next ansible-core major version, cycle begins again"
+#~ msgstr "次のansible-coreメジャーバージョンのリリース。サイクルの再開"
+
+#~ msgid "Ansible community package release cycle"
+#~ msgstr "Ansible コミュニティーパッケージのリリースサイクル"
+
+#~ msgid "The Ansible community team typically releases two major versions of the community package per year, on a flexible release cycle that trails the release of ``ansible-core``. This cycle can be extended to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`roadmaps` for upcoming release details. Between major versions, we release a new minor version of the Ansible community package every three weeks. Minor releases include new backwards-compatible features, modules and plugins, as well as bug fixes."
+#~ msgstr "Ansible コミュニティーチームは通常、1年に2回メジャーバージョンをリリースし、柔軟なリリースサイクルで ``ansible-core`` のリリースに続きます。このサイクルは、新しいリリースを提供する前に規模の大きい変更を正しく実装してテストできるように、延期できるようになっています。今後のリリースの詳細は、:ref:`roadmaps`を参照してください。次のメジャーバージョンがリリースされるまでに、Ansible コミュニティーパッケージの新規マイナーバージョンが3週間毎にリリースされます。マイナーリリースには、後方互換性のある機能、モジュール、プラグインだけでなく、バグ修正が含まれます。"
+
+#~ msgid "Starting with version 2.10, the Ansible community team guarantees maintenance for only one major community package release at a time. For example, when Ansible 4.0.0 gets released, the team will stop making new 3.x releases. Community members may maintain older versions if desired."
+#~ msgstr "バージョン2.10以降、Ansibleコミュニティチームは、一度に主要なコミュニティパッケージリリースの保守の保証するのは1バージョンのみです。たとえば、Ansible チームでは、Ansible 4.0.0がリリースされると、新しい3.xリリースの作成を停止します。コミュニティメンバーは、必要に応じて古いバージョンを維持できます。"
+
+#~ msgid "Older, unmaintained versions of the Ansible community package might contain unfixed security vulnerabilities (*CVEs*). If you are using a release of the Ansible community package that is no longer maintained, we strongly encourage you to upgrade as soon as possible in order to benefit from the latest features and security fixes."
+#~ msgstr "メンテナンスされていない以前のバージョンのAnsibleコミュニティパッケージには、修正されていないセキュリティの脆弱性（* CVE *）が含まれている可能性があります。メンテナンスが終了したAnsibleコミュニティパッケージのリリースを使用している場合は、できるだけ早くアップグレードして、最新の機能とセキュリティ修正を利用することを強くお勧めします。"
+
+#~ msgid "Each major release of the Ansible community package accepts the latest released version of each included Collection and the latest released version of ansible-core. For specific schedules and deadlines, see the :ref:`ansible_roadmaps` for each version. Major releases of the Ansible community package can contain breaking changes in the modules and other plugins within the included Collections and/or in core features."
+#~ msgstr "Ansible コミュニティーパッケージの各メジャーリリースには、追加するコレクションごとの最新のリリースバージョンと、最新リリースバージョンの ansible-core を追加できます。具体的なスケジュールや期限については、各バージョンの:ref:`ansible_roadmaps`を参照してください。Ansible コミュニティーパッケージのメジャーリリースに含まれるコレクションやコア機能に、モジュールやその他の大規模な変更が含まれる可能性があります。"
+
+#~ msgid "The Ansible community package follows semantic versioning rules. Minor releases of the Ansible community package accept only backwards-compatible changes in included Collections, in other words, not Collections major releases. Collections must also use semantic versioning, so the Collection version numbers reflect this rule. For example, if Ansible 3.0.0 releases with community.general 2.0.0, then all minor releases of Ansible 3.x (such as Ansible 3.1.0 or Ansible 3.5.0) must include a 2.x release of community.general (such as 2.8.0 or 2.9.5) and not 3.x.x or later major releases."
+#~ msgstr "Ansibleコミュニティパッケージは、セマンティックバージョニングルールを使用します。Ansibleコミュニティパッケージのマイナーリリースは、同梱されているコレクションと下位互換性のある変更のみを受け入れます。つまり、コレクションのメジャーリリースは受け入れません。コレクションもセマンティックバージョニングを使用する必要があるため、コレクションのバージョン番号もこのルールを反映しています。たとえば、community.general 2.0.0 が含まれる Ansible 3.0.0 リリースの場合には、Ansible 3.x の全マイナーリリース (Ansbile 3.1.0 または Ansible 3.5.0など)には、3.0.0 以降のメジャーリリースではなく、 community.general (2.8.0 または 2.9.5など)の2.xリリースを含める必要があります。"
+
+#~ msgid "Work in Collections is tracked within the individual Collection repositories."
+#~ msgstr "コレクションでの作業は、個々のコレクションリポジトリ内で追跡されます。"
+
+#~ msgid "You can refer to the :ref:`Ansible package porting guides<porting_guides>` for tips on updating your playbooks to run on newer versions of Ansible. For Ansible 2.10 and later releases, you can install the Ansible package with ``pip``. See :ref:`intro_installation_guide` for details.  For older releases, you can download the Ansible release from `<https://releases.ansible.com/ansible/>`_."
+#~ msgstr "Ansible Playbook を更新して新しいバージョンで実行するときのヒントについては、「:ref:`Ansible package porting guides<porting_guides>`」を参照してください。Ansible 2.10 以降のリリースでは、``pip`` で Ansible パッケージをインストールできます。詳細は、「:ref:`intro_installation_guide`」を参照してください。古いリリースでは、Ansible リリースは `<https://releases.ansible.com/ansible/>`_ からダウンロードできます。"
+
+#~ msgid "This table links to the release notes for each major Ansible release. These release notes (changelogs) contain the dates and significant changes in each minor release."
+#~ msgstr "以下の表には、Ansible の各メジャーリリースのリリースノートへのリンクが含まれています。このようなリリースノート (変更ログ) には、各マイナーリリースの日付や、大きな変更が含まれます。"
+
+#~ msgid "Ansible Community Package Release"
+#~ msgstr "Ansible コミュニティーパッケージのリリース"
+
+#~ msgid "Status"
+#~ msgstr "ステータス"
+
+#~ msgid "5.0.0"
+#~ msgstr "5.0.0"
+
+#~ msgid "In development (unreleased)"
+#~ msgstr "開発中 (未リリース)"
+
+#~ msgid "`4.x Release Notes`_"
+#~ msgstr "`4.x Release Notes`_"
+
+#~ msgid "Current"
+#~ msgstr "現行"
+
+#~ msgid "`3.x Release Notes`_"
+#~ msgstr "`3.x Release Notes`_"
+
+#~ msgid "Unmaintained (end of life)"
+#~ msgstr "メンテナンス対象外 (エンドオフライフ)"
+
+#~ msgid "`2.10 Release Notes`_"
+#~ msgstr "`2.10 Release Notes`_"
+
+#~ msgid "ansible-core release cycle"
+#~ msgstr "ansible-core リリースサイクル"
+
+#~ msgid "``ansible-core`` is developed and released on a flexible release cycle. This cycle can be extended in order to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`roadmaps` for upcoming release details."
+#~ msgstr "``ansible-core`` は、柔軟なリリースサイクルで開発およびリリースされます。このサイクルは、大規模な変更を正しく実装して、テストしてから新しいリリースが公開されるように、延長することが可能です。今後のリリースの詳細は、「:ref:`roadmaps`」を参照してください。"
+
+#~ msgid "``ansible-core`` has a graduated maintenance structure that extends to three major releases. For more information, read about the :ref:`development_and_stable_version_maintenance_workflow` or see the chart in :ref:`release_schedule` for the degrees to which current releases are maintained."
+#~ msgstr "``ansible-core`` には、3 つのメジャーリリースで展開される段階的なメンテナンス構造があります。詳細は、「:ref:`development_and_stable_version_maintenance_workflow`」を参照してください。また、現在のリリースがどの程度メンテナンスされているかについては、:ref:`release_schedule` の表を参照してください。"
+
+#~ msgid "Older, unmaintained versions of ``ansible-core`` can contain unfixed security vulnerabilities (*CVEs*). If you are using a release of ``ansible-core`` that is no longer maintained, we strongly encourage you to upgrade as soon as possible to benefit from the latest features and security fixes. ``ansible-core`` maintenance continues for 3 releases.  Thus the latest release receives security and general bug fixes when it is first released, security and critical bug fixes when the next ``ansible-core`` version is released, and **only** security fixes once the follow on to that version is released."
+#~ msgstr "``ansible-core``のメンテナンスされていない以前のバージョンには、セキュリティー脆弱性 (*CVE*) が含まれる場合があります。保守のない``ansible-core``のリリースを使用している場合には、最新の機能およびセキュリティー修正を活用できるように、すぐにアップグレードすることを強く推奨します。``ansible-core``の保守は、3リリース分継続されます。そのため、最新のリリースでは、初回リリース時にセキュリティーと一般的なバグ修正が、次の``ansible-core``バージョンがリリースされると、セキュリティーと重大なバグ修正が、その次のバージョンがリリースされると、セキュリティー修正**のみ**が提供されます。"
+
+#~ msgid "You can refer to the :ref:`core_porting_guides` for tips on updating your playbooks to run on newer versions of ``ansible-core``."
+#~ msgstr "Playbook を更新して``ansible-core`` の新しいバージョンで実行するときのヒントは、「:ref:`core_porting_guides`」を参照してください。"
+
+#~ msgid "You can install ``ansible-core`` with ``pip``. See :ref:`intro_installation_guide` for details."
+#~ msgstr "``pip`` で ``ansible-core`` をインストールできます。詳細は、「:ref:`intro_installation_guide`」を参照してください。"
+
+#~ msgid "This table links to the release notes for each major ``ansible-core`` release. These release notes (changelogs) contain the dates and significant changes in each minor release."
+#~ msgstr "以下の表には、``ansible-core`` の各メジャーリリースのリリースノートへのリンクが含まれています。このようなリリースノート (変更ログ) には、各マイナーリリースの日付や、大きな変更が含まれます。"
+
+#~ msgid "``ansible-core`` / ``ansible-base`` Release"
+#~ msgstr "``ansible-core`` / ``ansible-base`` リリース"
+
+#~ msgid "devel"
+#~ msgstr "devel"
+
+#~ msgid "In development (ansible-core 2.12 unreleased, trunk)"
+#~ msgstr "開発中 (未リリースの ansible-core 2.12 (trunk))"
+
+#~ msgid "`2.11 ansible-core Release Notes`_"
+#~ msgstr "`2.11 ansible-core Release Notes`_"
+
+#~ msgid "Maintained (security **and** general bug fixes)"
+#~ msgstr "メンテナンス対象 (セキュリティー **および** 一般的なバグの修正)"
+
+#~ msgid "`2.10 ansible-base Release Notes`_"
+#~ msgstr "`2.10 ansible-base Release Notes`_"
+
+#~ msgid "Maintained (security **and** critical bug fixes)"
+#~ msgstr "メンテナンス対象 (セキュリティー **および** 重大なバグの修正)"
+
+#~ msgid "`2.9 Release Notes`_"
+#~ msgstr "`2.9 Release Notes`_"
+
+#~ msgid "Maintained (pre-collections) (security fixes only)"
+#~ msgstr "保守あり（事前収集）（セキュリティ修正のみ）"
+
+#~ msgid "`2.8 Release Notes`_"
+#~ msgstr "`2.8 Release Notes`_"
+
+#~ msgid "`2.7 Release Notes`_"
+#~ msgstr "`2.7 Release Notes`_"
+
+#~ msgid "`2.6 Release Notes`_"
+#~ msgstr "`2.6 Release Notes`_"
+
+#~ msgid "`2.5 Release Notes`_"
+#~ msgstr "`2.5 リリースノート`_"
+
+#~ msgid "<2.5"
+#~ msgstr "2.5 より前のバージョン"
+
+#~ msgid "Preparing for a new release"
+#~ msgstr "新しいリリースの準備"
+
+#~ msgid "Feature freezes"
+#~ msgstr "機能フリーズ"
+
+#~ msgid "During final preparations for a new release, core developers and maintainers focus on improving the release candidate, not on adding or reviewing new features. We may impose a feature freeze."
+#~ msgstr "新しいリリースの最終準備中、コア開発者とメンテナは、新機能の追加やレビューではなく、リリース候補の改善に集中します。機能フリーズを指示する場合があります。"
+
+#~ msgid "A feature freeze means that we delay new features and fixes that are not related to the pending release so we can ship the new release as soon as possible."
+#~ msgstr "機能フリーズとは、保留中のリリースに関連のない新機能や修正を遅らせて、新しいリリースをできるだけ早く出荷できるようにすることを意味します。"
+
+#~ msgid "Release candidates"
+#~ msgstr "リリースの候補 (Release Candidate)"
+
+#~ msgid "We create at least one release candidate before each new major release of Ansible or ``ansible-core``. Release candidates allow the Ansible community to try out new features, test existing playbooks on the release candidate, and report bugs or issues they find."
+#~ msgstr "Ansibleまたは``ansible-core``の新しいメジャーリリースの前に毎回、少なくとも1つのリリース候補を作成します。リリース候補を使用することで、Ansibleコミュニティは新機能を試したり、リリース候補で既存のPlaybookをテストしたり、見つかったバグや問題を報告したりできます。"
+
+#~ msgid "Ansible and ``ansible-core`` tag the first release candidate (RC1) which is usually scheduled to last five business days. If no major bugs or issues are identified during this period, the release candidate becomes the final release."
+#~ msgstr "Ansible および ``ansible-core`` は、最初のリリース候補のタグ (RC1) が付けられます。通常、RC1 は最後の5営業日にスケジュールされます。この期間にメジャーなバグや問題が特定されない場合には、リリース候補が最終リリースとなります。"
+
+#~ msgid "If there are major problems with the first candidate, the team and the community fix them and tag a second release candidate (RC2). This second candidate lasts for a shorter duration than the first. If no problems have been reported for an RC2 after two business days, the second release candidate becomes the final release."
+#~ msgstr "最初の候補に大きな問題がある場合は、チームおよびコミュニティーが修正を加えて、2 番目の候補のタグ (RC2) が付けられます。2 番目の候補は、1 番目よりも期間は短くなります。2 営業日が経過して問題が報告されない場合は、この2番目のリリース候補が最終的なリリースとなります。"
+
+#~ msgid "If there are major problems in RC2, the cycle begins again with another release candidate and repeats until the maintainers agree that all major problems have been fixed."
+#~ msgstr "RC2に重大な問題がある場合には、サイクルは別のリリース候補から再開され、すべての主要な問題が修正されたことにメンテナが同意するまで繰り返されます。"
+
+#~ msgid "Development and maintenance workflows"
+#~ msgstr "開発と保守のワークフロー"
+
+#~ msgid "In between releases, the Ansible community develops new features, maintains existing functionality, and fixes bugs in ``ansible-core`` and in the collections included in the Ansible community package."
+#~ msgstr "次のリリースまでの間に、Ansibleコミュニティは新しい機能を開発して既存の機能のメンテナンスを行い、``ansible-core`` や Ansible コミュニティーパッケージに含まれるコレクションのバグを修正します。"
+
+#~ msgid "Ansible community package workflow"
+#~ msgstr "Ansible コミュニティパッケージのワークフロー"
+
+#~ msgid "The Ansible community develops and maintains the features and functionality included in the Ansible community package in Collections repositories, with a workflow that looks like this:"
+#~ msgstr "Ansibleコミュニティは、コレクションリポジトリのAnsibleコミュニティパッケージに含まれる機能を開発および保守します。ワークフローは次のようになります。"
+
+#~ msgid "Developers add new features and bug fixes to the individual Collections, following each Collection's rules on contributing."
+#~ msgstr "開発者は、貢献に関する各コレクションのルールに従って、個々のコレクションに新機能とバグ修正を追加する。"
+
+#~ msgid "Each new feature and each bug fix includes a changelog fragment describing the work."
+#~ msgstr "各新機能と各バグ修正には、作業を説明する変更ログフラグメントが含まれている。"
+
+#~ msgid "Release engineers create a minor release for the current version every three weeks to ensure that the latest bug fixes are available to users."
+#~ msgstr "リリースエンジニアは、最新のバグ修正をユーザーが利用できるように、現在のバージョンのマイナーリリースを3週間ごとに作成する。"
+
+#~ msgid "At the end of the development period, the release engineers announce which Collections, and which major version of each included Collection,  will be included in the next release of the Ansible community package. New Collections and new major versions may not be added after this, and the work of creating a new release begins."
+#~ msgstr "開発期間の終わりに、リリースエンジニアは、Ansibleコミュニティパッケージの次のリリースに含まれるコレクションと、追加済みの各コレクションのメジャーバージョンを発表します。これ以降は、コレクションおよびメジャーバージョンは新たに追加できず、新しいリリースの作成準備が開始されます。"
+
+#~ msgid "We generally do not provide fixes for unmaintained releases of the Ansible community package, however, there can sometimes be exceptions for critical issues."
+#~ msgstr "通常、Ansible コミュニティーパッケージで保守されていないバージョンに対する修正は提供していませんが、重大な問題に関しては例外で対応する可能性があります。"
+
+#~ msgid "Some Collections are maintained by the Ansible team, some by Partner organizations, and some by community teams. For more information on adding features or fixing bugs in Ansible-maintained Collections, see :ref:`contributing_maintained_collections`."
+#~ msgstr "Ansibleチーム、パートナー組織、コミュニティチームがコレクションをそれぞれ部分的に管理しています。 Ansibleで管理されているコレクションの機能の追加やバグの修正の詳細については、:ref:`contributing_maintained_collections` を参照してください。"
+
+#~ msgid "ansible-core workflow"
+#~ msgstr "ansible-core ワークフロー"
+
+#~ msgid "The Ansible community develops and maintains ``ansible-core`` on GitHub_, with a workflow that looks like this:"
+#~ msgstr "Ansibleコミュニティは、GitHub_の``ansible-core``で開発と維持を行っており、次のようなワークフローを使用します。"
+
+#~ msgid "Developers add new features and bug fixes to the ``devel`` branch."
+#~ msgstr "開発者は、``devel``ブランチに新機能とバグ修正を追加する。"
+
+#~ msgid "The development team backports bug fixes to one, two, or three stable branches, depending on the severity of the bug. They do not backport new features."
+#~ msgstr "開発チームは、バグの重大度に応じて、バグ修正を1つ、2つ、または3つの安定したブランチにバックポートし、新機能のバックポートは行わない。"
+
+#~ msgid "Release engineers create a minor release for each maintained version every three weeks to ensure that the latest bug fixes are available to users."
+#~ msgstr "リリースエンジニアは、最新のバグ修正をユーザーが利用できるように、各保守バージョンのマイナーリリースを3週間ごとに作成する。"
+
+#~ msgid "At the end of the development period, the release engineers impose a feature freeze and the work of creating a new release begins."
+#~ msgstr "開発期間の終わりに、リリースエンジニアは機能をフリーズし、新しいリリースの準備を開始する。"
+
+#~ msgid "We generally do not provide fixes for unmaintained releases of ``ansible-core``, however, there can sometimes be exceptions for critical issues."
+#~ msgstr "通常、メンテナンスされていない``ansible-core``リリースに対する修正は提供していませんが、重大な問題に関しては例外で対応する可能性があります。"
+
+#~ msgid "For more information on adding features or fixing bugs in ``ansible-core`` see :ref:`community_development_process`."
+#~ msgstr "``ansible-core`` の機能の追加またはバグの修正の詳細については、:ref:`community_development_process`を参照してください。"
+
+#~ msgid "Changelogs"
+#~ msgstr "変更ログ (Changelog)"
+
+#~ msgid "We generate changelogs based on fragments. When creating new features for existing modules and plugins or fixing bugs, create a changelog fragment describing the change. A changelog entry is not needed for new modules or plugins. Details for those items will be generated from the module documentation."
+#~ msgstr "変更ログは、フラグメントに基づいて生成されます。既存のモジュールやプラグインの新しい機能を作成したり、バグを修正したりするときは、変更点を記述した変更ログフラグメントを作成します。変更ログのエントリーは、新しいモジュールやプラグインには必要ありません。それらの項目の詳細は、モジュールのドキュメントから生成されます。"
+
+#~ msgid "To add changelog fragments to Collections in the Ansible community package, we recommend the `antsibull-changelog utility <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst>`_."
+#~ msgstr "Ansibleコミュニティパッケージのコレクションに変更ログフラグメントを追加するには、`antsibull-changelog utility <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst>`_を推奨します。"
+
+#~ msgid "To add changelog fragments for new features and bug fixes in ``ansible-core``, see the :ref:`changelog examples and instructions<changelogs_how_to>` in the Community Guide."
+#~ msgstr "``ansible-core``に新機能とバグ修正の変更ログフラグメントを追加するには、コミュニティガイドの:ref:`changelog examples and instructions<changelogs_how_to>`を参照してください。"
+
+#~ msgid "Deprecation cycles"
+#~ msgstr "非推奨サイクル"
+
+#~ msgid "Sometimes we remove a feature, normally in favor of a reimplementation that we hope does a better job. To do this we have a deprecation cycle. First we mark a feature as 'deprecated'. This is normally accompanied with warnings to the user as to why we deprecated it, what alternatives they should switch to and when (which version) we are scheduled to remove the feature permanently."
+#~ msgstr "通常、再実装してジョブ実行の改善を希望する場合など、機能を削除することがあります。これを行うために、非推奨のサイクルがあります。まず、機能を「非推奨」としてマークします。これには通常、非推奨になった理由、ユーザーが切り替える必要のある代替手段、および機能を完全に削除する予定の時期 (バージョン) に関する警告が伴います。"
+
+#~ msgid "Ansible community package deprecation cycle"
+#~ msgstr "Ansibleコミュニティパッケージの非推奨サイクル"
+
+#~ msgid "Since Ansible is a package of individual collections, the deprecation cycle depends on the collection maintainers. We recommend the collection maintainers deprecate a feature in one Ansible major version and do not remove that feature for one year, or at least until the next major Ansible version. For example, deprecate the feature in 3.1.0, and do not remove the feature until 5.0.0, or 4.0.0 at the earliest. Collections should use semantic versioning, such that the major collection version cannot be changed within an Ansible major version. Thus the removal should not happen before the next major Ansible community package release. This is up to each collection maintainer and cannot be guaranteed."
+#~ msgstr "Ansible は個別のコレクションのパッケージであるため、非推奨のサイクルはコレクションのメンテナーによって異なります。コレクションメンテナーは 1 つの Ansible メジャーバージョンでこの機能を非推奨にし、1 年間でその機能を削除するか、少なくとも次の Ansible バージョンまでに削除しないことを推奨します。たとえば、3.1.0 でこの機能を非推奨にした場合は、最低でも 5.0.0 または 4.0.0 までの機能を削除しないでください。コレクションはセマンティックバージョニングを使用する必要があります。したがって、メジャーコレクションバージョンは、Ansible メジャーバージョン内で変更できません。したがって、次のメジャーリリースの Ansible コミュニティーパッケージリリースの前に削除することはできません。これは、各コレクションのメンテナーの役割であり、保証されているものではありません。"
+
+#~ msgid "ansible-core deprecation cycle"
+#~ msgstr "ansible-core 非推奨サイクル"
+
+#~ msgid "The deprecation cycle in ``ansible-core`` is normally across 4 feature releases (2.x.y, where the x marks a feature release and the y a bugfix release), so the feature is normally removed in the 4th release after we announce the deprecation. For example, something deprecated in 2.9 will be removed in 2.13, assuming we do not jump to 3.x before that point. The tracking is tied to the number of releases, not the release numbering."
+#~ msgstr "``ansible-core`` の非推奨サイクルは通常 4 つの機能リリース (たとえば 2.x.y では、x は機能リリースを示し、y はバグ修正リリースを示します) にまたがるため、機能は通常、非推奨を発表してから 4 番目のリリースで削除されます。たとえば、2.9 で非推奨になったものは、バージョンがそのまま 3.x に続くと仮定すると、2.13 で削除されます。追跡は、リリース番号ではなく、リリースの数に関連付けられています。"
 

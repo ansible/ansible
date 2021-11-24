@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-05 13:53+0200\n"
+"POT-Creation-Date: 2021-11-09 14:07+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -515,190 +515,190 @@ msgid "bridging from Matrix"
 msgstr "Matrixからのブリッジ"
 
 #: ../../rst/community/communication.rst:74
-msgid "Our IRC channels may require you to register your IRC nickname. If you receive an error when you connect or when posting a message, see `libera.chat's Nickname Registration guide <https://libera.chat/guides/registration>`_ for instructions. To find all ``ansible`` specific channels on the libera.chat network, use the following command in your IRC client::"
+msgid "Our IRC channels may require you to register your IRC nickname. If you receive an error when you connect or when posting a message, see `libera.chat's Nickname Registration guide <https://libera.chat/guides/registration>`_ for instructions. To find all ``ansible`` specific channels on the libera.chat network, use the following command in your IRC client:"
 msgstr "この IRC チャンネルでは、IRCのニックネームの登録が必要になる場合があります。接続時またはメッセージの投稿時にエラーが発生する場合は、「`libera.chat's Nickname Registration guide <https://libera.chat/guides/registration>`_」を参照してください。libera.chatネットワークの``ansible``固有のチャネルをすべてを見つけるには、IRCクライアントで次のコマンドを使用します。"
 
-#: ../../rst/community/communication.rst:78
+#: ../../rst/community/communication.rst:80
 msgid "as described in the `libera.chat docs <https://libera.chat/guides/findingchannels>`_."
 msgstr "`libera.chat ドキュメント <https://libera.chat/guides/findingchannels>`_ に記載のとおり。"
 
-#: ../../rst/community/communication.rst:81
+#: ../../rst/community/communication.rst:83
 msgid "General channels"
 msgstr "一般的なチャンネル"
 
-#: ../../rst/community/communication.rst:83
+#: ../../rst/community/communication.rst:85
 msgid "The clickable links will take you directly to the relevant Matrix room in your browser; room/channel information is also given for use in other clients:"
 msgstr "クリック可能なリンクをクリックすると、ブラウザで関連するMatrixルームに直接移動します。チャットルーム/チャンネル情報は、他のクライアントで使用するためにも提供されます。"
 
-#: ../../rst/community/communication.rst:85
+#: ../../rst/community/communication.rst:87
 msgid "`General usage and support questions <https://matrix.to:/#/#users:ansible.im>`_ - ``Matrix: #users:ansible.im | IRC: #ansible``"
 msgstr "`General usage and support questions <https://matrix.to:/#/#users:ansible.im>`_ - ``Matrix: #users:ansible.im | IRC: #ansible``"
 
-#: ../../rst/community/communication.rst:86
+#: ../../rst/community/communication.rst:88
 msgid "`Discussions on developer topics and code related to features or bugs <https://matrix.to/#/#devel:ansible.im>`_ - ``Matrix: #devel:ansible.im | IRC: #ansible-devel``"
 msgstr "`Discussions on developer topics and code related to features or bugs <https://matrix.to/#/#devel:ansible.im>`_ - ``Matrix: #devel:ansible.im | IRC: #ansible-devel``"
 
-#: ../../rst/community/communication.rst:87
+#: ../../rst/community/communication.rst:89
 msgid "`Discussions on community and collections related topics <https://matrix.to:/#/#community:ansible.im>`_ - ``Matrix: #community:ansible.im | IRC: #ansible-community``"
 msgstr "`Discussions on community and collections related topics <https://matrix.to:/#/#community:ansible.im>`_ - ``Matrix: #community:ansible.im | IRC: #ansible-community``"
 
-#: ../../rst/community/communication.rst:89
+#: ../../rst/community/communication.rst:91
 msgid "`For public community meetings <https://matrix.to/#/#meeting:ansible.im>`_ - ``Matrix: #meeting:ansible.im | IRC: #ansible-meeting``"
 msgstr "`For public community meetings <https://matrix.to/#/#meeting:ansible.im>`_ - ``Matrix: #meeting:ansible.im | IRC: #ansible-meeting``"
 
-#: ../../rst/community/communication.rst:89
+#: ../../rst/community/communication.rst:91
 msgid "We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_"
 msgstr "通常は、上記のメーリングリストで告知されます。「`meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_」を参照してください。"
 
-#: ../../rst/community/communication.rst:94
+#: ../../rst/community/communication.rst:96
 msgid "Working groups"
 msgstr "ワーキンググループ"
 
-#: ../../rst/community/communication.rst:96
+#: ../../rst/community/communication.rst:98
 msgid "Many of our community `Working Groups <https://github.com/ansible/community/wiki#working-groups>`_ meet in chat. If you want to get involved in a working group, join the Matrix room or IRC channel where it meets or comment on the agenda."
 msgstr "Ansible コミュニティーの `Working Groups <https://github.com/ansible/community/wiki#working-groups>`_ の多くが、チャットで活動しています。ワーキンググループに参加したい場合は、そのワーキンググループが活動しているMatrixのチャットルームまたはIRCチャンネルに参加したり、議題にコメントしたりしてください。"
 
-#: ../../rst/community/communication.rst:98
+#: ../../rst/community/communication.rst:100
 msgid "`Amazon (AWS) Working Group <https://github.com/ansible/community/wiki/AWS>`_ - Matrix: `#aws:ansible.im <https://matrix.to:/#/#aws:ansible.im>`_ | IRC: ``#ansible-aws``"
 msgstr "`Amazon (AWS) Working Group <https://github.com/ansible/community/wiki/AWS>`_ - Matrix: `#aws:ansible.im <https://matrix.to:/#/#aws:ansible.im>`_ | IRC: ``#ansible-aws``"
 
-#: ../../rst/community/communication.rst:99
+#: ../../rst/community/communication.rst:101
 msgid "`Ansible Lockdown Working Group <https://github.com/ansible/community/wiki/Lockdown>`_ (`Security playbooks/roles <https://github.com/ansible/ansible-lockdown>`_) - Matrix: `#lockdown:ansible.im <https://matrix.to:/#/#lockdown:ansible.im>`_ | IRC: ``#ansible-lockdown``"
 msgstr "`Ansible Lockdown Working Group <https://github.com/ansible/community/wiki/Lockdown>`_ (`Security playbooks/roles <https://github.com/ansible/ansible-lockdown>`_) - Matrix: `#lockdown:ansible.im <https://matrix.to:/#/#lockdown:ansible.im>`_ | IRC: ``#ansible-lockdown``"
 
-#: ../../rst/community/communication.rst:100
+#: ../../rst/community/communication.rst:102
 msgid "`AWX Working Group <https://github.com/ansible/awx>`_ - Matrix: `#awx:ansible.im <https://matrix.to:/#/#awx:ansible.im>`_ | IRC: ``#ansible-awx``"
 msgstr "`AWX Working Group <https://github.com/ansible/awx>`_ - Matrix: `#awx:ansible.im <https://matrix.to:/#/#awx:ansible.im>`_ | IRC: ``#ansible-awx``"
 
-#: ../../rst/community/communication.rst:101
+#: ../../rst/community/communication.rst:103
 msgid "`Azure Working Group <https://github.com/ansible/community/wiki/Azure>`_ - Matrix: `#azure:ansible.im <https://matrix.to:/#/#azure:ansible.im>`_ | IRC: ``#ansible-azure``"
 msgstr "`Azure Working Group <https://github.com/ansible/community/wiki/Azure>`_ - Matrix: `#azure:ansible.im <https://matrix.to:/#/#azure:ansible.im>`_ | IRC: ``#ansible-azure``"
 
-#: ../../rst/community/communication.rst:102
+#: ../../rst/community/communication.rst:104
 msgid "`Community Working Group <https://github.com/ansible/community/wiki/Community>`_ (including Meetups) - Matrix: `#community:ansible.im <https://matrix.to:/#/#community:ansible.im>`_ | IRC: ``#ansible-community``"
 msgstr "`Community Working Group <https://github.com/ansible/community/wiki/Community>`_ (Meetupを含む) - Matrix: `#community:ansible.im <https://matrix.to:/#/#community:ansible.im>`_ | IRC: ``#ansible-community``"
 
-#: ../../rst/community/communication.rst:103
+#: ../../rst/community/communication.rst:105
 msgid "`Container Working Group <https://github.com/ansible/community/wiki/Container>`_ - Matrix: `#container:ansible.im <https://matrix.to:/#/#container:ansible.im>`_ | IRC: ``#ansible-container``"
 msgstr "`Container Working Group <https://github.com/ansible/community/wiki/Container>`_ - Matrix: `#container:ansible.im <https://matrix.to:/#/#container:ansible.im>`_ | IRC: ``#ansible-container``"
 
-#: ../../rst/community/communication.rst:104
+#: ../../rst/community/communication.rst:106
 msgid "`Contributor Experience Working Group <https://github.com/ansible/community/wiki/Contributor-Experience>`_ - Matrix: `#community:ansible.im <https://matrix.to:/#/#community:ansible.im>`_ | IRC: ``#ansible-community``"
 msgstr "`Contributor Experience Working Group <https://github.com/ansible/community/wiki/Contributor-Experience>`_ - Matrix: `#community:ansible.im <https://matrix.to:/#/#community:ansible.im>`_ | IRC: ``#ansible-community``"
 
-#: ../../rst/community/communication.rst:105
+#: ../../rst/community/communication.rst:107
 msgid "`DigitalOcean Working Group <https://github.com/ansible/community/wiki/Digital-Ocean>`_ - Matrix: `#digitalocean:ansible.im <https://matrix.to:/#/#digitalocean:ansible.im>`_ | IRC: ``#ansible-digitalocean``"
 msgstr "`DigitalOcean Working Group <https://github.com/ansible/community/wiki/Digital-Ocean>`_ - Matrix: `#digitalocean:ansible.im <https://matrix.to:/#/#digitalocean:ansible.im>`_ | IRC: ``#ansible-digitalocean``"
 
-#: ../../rst/community/communication.rst:106
+#: ../../rst/community/communication.rst:108
 msgid "`Diversity Working Group <https://github.com/ansible/community/wiki/Diversity>`_ - Matrix: `#diversity:ansible.im <https://matrix.to:/#/#diversity:ansible.im>`_ | IRC: ``#ansible-diversity``"
 msgstr "`Diversity Working Group <https://github.com/ansible/community/wiki/Diversity>`_ - Matrix: `#diversity:ansible.im <https://matrix.to:/#/#diversity:ansible.im>`_ | IRC: ``#ansible-diversity``"
 
-#: ../../rst/community/communication.rst:107
+#: ../../rst/community/communication.rst:109
 msgid "`Docker Working Group <https://github.com/ansible/community/wiki/Docker>`_ - Matrix: `#devel:ansible.im <https://matrix.to:/#/#devel:ansible.im>`_ | IRC: ``#ansible-devel``"
 msgstr "`Docker Working Group <https://github.com/ansible/community/wiki/Docker>`_ - Matrix: `#devel:ansible.im <https://matrix.to:/#/#devel:ansible.im>`_ | IRC: ``#ansible-devel``"
 
-#: ../../rst/community/communication.rst:108
+#: ../../rst/community/communication.rst:110
 msgid "`Documentation Working Group <https://github.com/ansible/community/wiki/Docs>`_ - Matrix: `#docs:ansible.im <https://matrix.to:/#/#docs:ansible.im>`_ | IRC: ``#ansible-docs``"
 msgstr "`Documentation Working Group <https://github.com/ansible/community/wiki/Docs>`_ - Matrix: `#docs:ansible.im <https://matrix.to:/#/#docs:ansible.im>`_ | IRC: ``#ansible-docs``"
 
-#: ../../rst/community/communication.rst:109
+#: ../../rst/community/communication.rst:111
 msgid "`Galaxy Working Group <https://github.com/ansible/community/wiki/Galaxy>`_ - Matrix: `#galaxy:ansible.im <https://matrix.to:/#/#galaxy:ansible.im>`_ | IRC: ``#ansible-galaxy``"
 msgstr "`Galaxy Working Group <https://github.com/ansible/community/wiki/Galaxy>`_ - Matrix: `#galaxy:ansible.im <https://matrix.to:/#/#galaxy:ansible.im>`_ | IRC: ``#ansible-galaxy``"
 
-#: ../../rst/community/communication.rst:110
+#: ../../rst/community/communication.rst:112
 msgid "`JBoss Working Group <https://github.com/ansible/community/wiki/JBoss>`_ - Matrix: `#jboss:ansible.im <https://matrix.to:/#/#jboss:ansible.im>`_ | IRC: ``#ansible-jboss``"
 msgstr "`JBoss Working Group <https://github.com/ansible/community/wiki/JBoss>`_ - Matrix: `#jboss:ansible.im <https://matrix.to:/#/#jboss:ansible.im>`_ | IRC: ``#ansible-jboss``"
 
-#: ../../rst/community/communication.rst:111
+#: ../../rst/community/communication.rst:113
 msgid "`Kubernetes Working Group <https://github.com/ansible/community/wiki/Kubernetes>`_ - Matrix: `#kubernetes:ansible.im <https://matrix.to:/#/#kubernetes:ansible.im>`_ | IRC: ``#ansible-kubernetes``"
 msgstr "`Kubernetes Working Group <https://github.com/ansible/community/wiki/Kubernetes>`_ - Matrix: `#kubernetes:ansible.im <https://matrix.to:/#/#kubernetes:ansible.im>`_ | IRC: ``#ansible-kubernetes``"
 
-#: ../../rst/community/communication.rst:112
+#: ../../rst/community/communication.rst:114
 msgid "`Linode Working Group <https://github.com/ansible/community/wiki/Linode>`_ - Matrix: `#linode:ansible.im <https://matrix.to:/#/#linode:ansible.im>`_ | IRC: ``#ansible-linode``"
 msgstr "`Linode Working Group <https://github.com/ansible/community/wiki/Linode>`_ - Matrix: `#linode:ansible.im <https://matrix.to:/#/#linode:ansible.im>`_ | IRC: ``#ansible-linode``"
 
-#: ../../rst/community/communication.rst:113
+#: ../../rst/community/communication.rst:115
 msgid "`Molecule Working Group <https://github.com/ansible/community/wiki/Molecule>`_ (`testing platform for Ansible playbooks and roles <https://molecule.readthedocs.io>`_) - Matrix: `#molecule:ansible.im <https://matrix.to:/#/#molecule:ansible.im>`_ | IRC: ``#ansible-molecule``"
 msgstr "`Molecule Working Group <https://github.com/ansible/community/wiki/Molecule>`_ (`testing platform for Ansible playbooks and roles <https://molecule.readthedocs.io>`_) - Matrix: `#molecule:ansible.im <https://matrix.to:/#/#molecule:ansible.im>`_ | IRC: ``#ansible-molecule``"
 
-#: ../../rst/community/communication.rst:114
+#: ../../rst/community/communication.rst:116
 msgid "`Network Working Group <https://github.com/ansible/community/wiki/Network>`_ - Matrix: `#network:ansible.im <https://matrix.to:/#/#network:ansible.im>`_ | IRC: ``#ansible-network``"
 msgstr "`Network Working Group <https://github.com/ansible/community/wiki/Network>`_ - Matrix: `#network:ansible.im <https://matrix.to:/#/#network:ansible.im>`_ | IRC: ``#ansible-network``"
 
-#: ../../rst/community/communication.rst:115
+#: ../../rst/community/communication.rst:117
 msgid "`Remote Management Working Group <https://github.com/ansible/community/issues/409>`_ - Matrix: `#devel:ansible.im <https://matrix.to:/#/#devel:ansible.im>`_ | IRC: ``#ansible-devel``"
 msgstr "`Remote Management Working Group <https://github.com/ansible/community/issues/409>`_ - Matrix: `#devel:ansible.im <https://matrix.to:/#/#devel:ansible.im>`_ | IRC: ``#ansible-devel``"
 
-#: ../../rst/community/communication.rst:116
+#: ../../rst/community/communication.rst:118
 msgid "`Testing Working Group <https://github.com/ansible/community/wiki/Testing>`_  - Matrix: `#devel:ansible.im <https://matrix.to:/#/#devel:ansible.im>`_ | IRC: ``#ansible-devel``"
 msgstr "`Testing Working Group <https://github.com/ansible/community/wiki/Testing>`_  - Matrix: `#devel:ansible.im <https://matrix.to:/#/#devel:ansible.im>`_ | IRC: ``#ansible-devel``"
 
-#: ../../rst/community/communication.rst:117
+#: ../../rst/community/communication.rst:119
 msgid "`VMware Working Group <https://github.com/ansible/community/wiki/VMware>`_ - Matrix: `#vmware:ansible.im <https://matrix.to:/#/#vmware:ansible.im>`_ | IRC: ``#ansible-vmware``"
 msgstr "`VMware Working Group <https://github.com/ansible/community/wiki/VMware>`_ - Matrix: `#vmware:ansible.im <https://matrix.to:/#/#vmware:ansible.im>`_ | IRC: ``#ansible-vmware``"
 
-#: ../../rst/community/communication.rst:118
+#: ../../rst/community/communication.rst:120
 msgid "`Windows Working Group <https://github.com/ansible/community/wiki/Windows>`_ - Matrix: `#windows:ansible.im <https://matrix.to:/#/#windows:ansible.im>`_ | IRC: ``#ansible-windows``"
 msgstr "`Windows Working Group <https://github.com/ansible/community/wiki/Windows>`_ - Matrix: `#windows:ansible.im <https://matrix.to:/#/#windows:ansible.im>`_ | IRC: ``#ansible-windows``"
 
-#: ../../rst/community/communication.rst:120
+#: ../../rst/community/communication.rst:122
 msgid "Want to `form a new Working Group <https://github.com/ansible/community/blob/master/WORKING-GROUPS.md>`_?"
 msgstr "`新しいワーキンググループを作りたい <https://github.com/ansible/community/blob/master/WORKING-GROUPS.md>`_ ですか?"
 
-#: ../../rst/community/communication.rst:123
+#: ../../rst/community/communication.rst:125
 msgid "Regional and Language-specific channels"
 msgstr "地域および言語固有のチャンネル"
 
-#: ../../rst/community/communication.rst:125
+#: ../../rst/community/communication.rst:127
 msgid "Comunidad Ansible en español - Matrix: `#espanol:ansible.im <https://matrix.to:/#/#espanol:ansible.im>`_ | IRC: ``#ansible-es``"
 msgstr "スペイン語のAnsibleコミュニティー - Matrix: `#espanol:ansible.im <https://matrix.to:/#/#espanol:ansible.im>`_ | IRC: ``#ansible-es``"
 
-#: ../../rst/community/communication.rst:126
+#: ../../rst/community/communication.rst:128
 msgid "Communauté française d'Ansible - Matrix: `#francais:ansible.im <https://matrix.to:/#/#francais:ansible.im>`_ | IRC: ``#ansible-fr``"
 msgstr "フランス語のAnsibleコミュニティー - Matrix: `#francais:ansible.im <https://matrix.to:/#/#francais:ansible.im>`_ | IRC: ``#ansible-fr``"
 
-#: ../../rst/community/communication.rst:127
+#: ../../rst/community/communication.rst:129
 msgid "Communauté suisse d'Ansible - Matrix: `#suisse:ansible.im <https://matrix.to:/#/#suisse:ansible.im>`_ | IRC: ``#ansible-zh``"
 msgstr "スイスのAnsibleコミュニティー - Matrix: `#suisse:ansible.im <https://matrix.to:/#/#suisse:ansible.im>`_ | IRC: ``#ansible-zh``"
 
-#: ../../rst/community/communication.rst:128
+#: ../../rst/community/communication.rst:130
 msgid "European Ansible Community - Matrix: `#europe:ansible.im <https://matrix.to:/#/#europe:ansible.im>`_ | IRC: ``#ansible-eu``"
 msgstr "ヨーロッパのAnsibleコミュニティー - Matrix: `#europe:ansible.im <https://matrix.to:/#/#europe:ansible.im>`_ | IRC: ``#ansible-eu``"
 
-#: ../../rst/community/communication.rst:131
+#: ../../rst/community/communication.rst:133
 msgid "Meetings on chat"
 msgstr "チャットでの会議"
 
-#: ../../rst/community/communication.rst:133
+#: ../../rst/community/communication.rst:135
 msgid "The Ansible community holds regular meetings on various topics on Matrix/IRC, and anyone who is interested is invited to participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_."
 msgstr "Ansible コミュニティーは、Matrix/IRCでさまざまなトピックに関する定期的なミーティングを開いており、興味のある人は誰でも参加することができます。Ansible ミーティングの詳細は、「`meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_」を参照してください。"
 
-#: ../../rst/community/communication.rst:136
+#: ../../rst/community/communication.rst:138
 msgid "Ansible Automation Platform support questions"
 msgstr "Ansible Automation Platform サポートに関する質問"
 
-#: ../../rst/community/communication.rst:138
+#: ../../rst/community/communication.rst:140
 msgid "Red Hat Ansible `Automation Platform <https://www.ansible.com/products/automation-platform>`_ is a subscription that contains support, certified content, and tooling for Ansible including content management, a controller, UI and REST API."
 msgstr "Red Hat Ansible `Automation Platform <https://www.ansible.com/products/automation-platform>`_ は、コンテンツ管理、コントローラー、UI および REST API などの Ansible のサポート、認定コンテンツ、およびツールが含まれるサブスクリプションです。"
 
-#: ../../rst/community/communication.rst:140
+#: ../../rst/community/communication.rst:142
 msgid "If you have a question about Ansible Automation Platform, visit `Red Hat support <https://access.redhat.com/products/red-hat-ansible-automation-platform/>`_ rather than using a chat channel or the general project mailing list."
 msgstr "Ansible Automation Platform に関するご質問は、チャットチャンネルまたは一般的なプロジェクトメーリングリストではなく、`Red Hat support <https://access.redhat.com/products/red-hat-ansible-automation-platform/>`_ にお問い合わせください。"
 
-#: ../../rst/community/communication.rst:143
+#: ../../rst/community/communication.rst:145
 msgid "The Bullhorn"
 msgstr "The Bullhorn"
 
-#: ../../rst/community/communication.rst:145
+#: ../../rst/community/communication.rst:147
 msgid "**The Bullhorn** is our newsletter for the Ansible developer community. If you have any questions or content you would like to share, please reach out to us at the-bullhorn@redhat.com, or directly `contribute/suggest content <https://github.com/ansible/community/issues/546>`_ for upcoming issues."
 msgstr "**The Bullhorn** は、Ansible 開発者コミュニティーのニュースレターです。共有したい質問やコンテンツがある場合は、Red Hat にアクセスしてください (the-bullhorn@redhat.com,)。また、今後発行する版については、`contribute/suggest content <https://github.com/ansible/community/issues/546>`_ に直接お問い合わせください。"
 
-#: ../../rst/community/communication.rst:148
+#: ../../rst/community/communication.rst:150
 msgid "Read past issues `here <https://github.com/ansible/community/wiki/News>`_."
 msgstr "これまで発行した版については、`こちら <https://github.com/ansible/community/wiki/News>`_ をお読みください。"
 
-#: ../../rst/community/communication.rst:150
+#: ../../rst/community/communication.rst:152
 msgid "`Subscribe <https://eepurl.com/gZmiEP>`_ to receive it."
 msgstr "これを受け取るには、`Subscribe <https://eepurl.com/gZmiEP>`_ します。"
 
@@ -1319,8 +1319,8 @@ msgid "Here are some examples:"
 msgstr "以下に例を示します。"
 
 #: ../../rst/community/development_process.rst:246
-msgid "You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.11/changelogs/fragments>`_ for the 2.11 release."
-msgstr "changelog フラグメントの例は、2.11 リリースの `changelog ディレクトリー <https://github.com/ansible/ansible/tree/stable-2.11/changelogs/fragments>`_ にもあります。"
+msgid "You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.12/changelogs/fragments>`_ for the 2.12 release."
+msgstr "changelog フラグメントの例は、2.12 リリースの `changelog directory <https://github.com/ansible/ansible/tree/stable-2.12/changelogs/fragments>`_ にもあります。"
 
 #: ../../rst/community/development_process.rst:248
 msgid "After you have written the changelog fragment for your PR, commit the file and include it with the pull request."
@@ -1351,8 +1351,8 @@ msgid "These instructions assume that:"
 msgstr "これらの手順は、以下を前提としています。"
 
 #: ../../rst/community/development_process.rst:310
-msgid "``stable-2.11`` is the targeted release branch for the backport"
-msgstr "``stable-2.11`` は、バックポートのターゲットリリースブランチです。"
+msgid "``stable-2.12`` is the targeted release branch for the backport"
+msgstr "``stable-2.12`` は、バックポートのターゲットリリースブランチです。"
 
 #: ../../rst/community/development_process.rst:311
 msgid "``https://github.com/ansible/ansible.git`` is configured as a ``git remote`` named ``upstream``. If you do not use a ``git remote`` named ``upstream``, adjust the instructions accordingly."
@@ -1379,16 +1379,16 @@ msgid "Push your feature branch to your fork on GitHub:"
 msgstr "feature ブランチを GitHub のフォークにプッシュします。"
 
 #: ../../rst/community/development_process.rst:335
-msgid "Submit the pull request for ``backport/2.11/[PR_NUMBER_FROM_DEVEL]`` against the ``stable-2.11`` branch"
-msgstr "``stable-2.11`` ブランチに、``backport/2.11/[PR_NUMBER_FROM_DEVEL]`` のプル要求を送信します。"
+msgid "Submit the pull request for ``backport/2.12/[PR_NUMBER_FROM_DEVEL]`` against the ``stable-2.12`` branch"
+msgstr "``stable-2.12`` ブランチに、``backport/2.12/[PR_NUMBER_FROM_DEVEL]`` のプル要求を送信します。"
 
 #: ../../rst/community/development_process.rst:337
 msgid "The Release Manager will decide whether to merge the backport PR before the next minor release. There isn't any need to follow up. Just ensure that the automated tests (CI) are green."
 msgstr "次のマイナーリリースまでにバックポートのプル要求をマージするかどうかはリリースマネージャーが判断します。フォローアップの必要はありません。自動テスト (CI) に問題が発生していないことを確認するだけです。"
 
 #: ../../rst/community/development_process.rst:341
-msgid "The branch name ``backport/2.11/[PR_NUMBER_FROM_DEVEL]`` is somewhat arbitrary, but conveys meaning about the purpose of the branch. This branch name format is not required, but it can be helpful, especially when making multiple backport PRs for multiple stable branches."
-msgstr "ブランチ名 ``backport/2.11/[PR_NUMBER_FROM_DEVEL]`` はやや恣意的ですが、ブランチの目的についての意味を伝えます。このブランチ名の形式は必須ではありませんが、特に複数の安定したブランチに対して複数のバックポートプル要求を作成する場合に役立ちます。"
+msgid "The branch name ``backport/2.12/[PR_NUMBER_FROM_DEVEL]`` is somewhat arbitrary, but conveys meaning about the purpose of the branch. This branch name format is not required, but it can be helpful, especially when making multiple backport PRs for multiple stable branches."
+msgstr "ブランチ名 ``backport/2.12/[PR_NUMBER_FROM_DEVEL]`` はやや恣意的ですが、ブランチの目的についての意味を伝えます。このブランチ名の形式は必須ではありませんが、特に複数の安定したブランチに対して複数のバックポートプル要求を作成する場合に役立ちます。"
 
 #: ../../rst/community/development_process.rst:345
 msgid "If you prefer, you can use CPython's cherry-picker tool (``pip install --user 'cherry-picker >= 1.3.2'``) to backport commits from devel to stable branches in Ansible. Take a look at the `cherry-picker documentation <https://pypi.org/p/cherry-picker#cherry-picking>`_ for details on installing, configuring, and using it."

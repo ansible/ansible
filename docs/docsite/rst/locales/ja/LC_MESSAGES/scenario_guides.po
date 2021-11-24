@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-05 13:53+0200\n"
+"POT-Creation-Date: 2021-11-09 14:07+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,13 +17,22 @@ msgstr ""
 "Generated-By: Babel 2.9.0\n"
 
 #: ../../rst/scenario_guides/cloud_guides.rst:5
-#: ../../rst/scenario_guides/guides.rst:12
-msgid "Public Cloud Guides"
-msgstr "パブリッククラウドガイド"
+#: ../../rst/scenario_guides/guides.rst:17
+msgid "Legacy Public Cloud Guides"
+msgstr "従来のパブリッククラウドガイド"
 
 #: ../../rst/scenario_guides/cloud_guides.rst:7
-msgid "The guides in this section cover using Ansible with a range of public cloud platforms. They explore particular use cases in greater depth and provide a more \"top-down\" explanation of some basic features."
-msgstr "本セクションのガイドでは、さまざまなパブリッククラウドプラットフォームでの Ansible の使用を説明します。特定のユースケースをより深く掘り下げ、いくつかの基本的な機能を「トップダウン」で説明します。"
+msgid "The legacy guides in this section may be out of date. They cover using Ansible with a range of public cloud platforms. They explore particular use cases in greater depth and provide a more \"top-down\" explanation of some basic features."
+msgstr "本セクションの従来のガイドは、情報が古くなっている可能性があります。ガイドでは、さまざまなパブリッククラウドプラットフォームでの Ansible の使用を説明します。特定のユースケースをより深く掘り下げ、いくつかの基本的な機能を「トップダウン」で説明します。"
+
+#: ../../rst/scenario_guides/cloud_guides.rst:9
+msgid "Guides for using public clouds are moving into collections. We are migrating these guides into collections. Please update your links for the following guides:"
+msgstr "パブリッククラウド使用のガイドは、コレクションに移されています。これらのガイドをコレクションに移行しています。以下のガイドのリンクを更新してください。"
+
+#: ../../rst/scenario_guides/cloud_guides.rst:11
+#: ../../rst/scenario_guides/guides.rst:15
+msgid ":ref:`ansible_collections.amazon.aws.docsite.aws_intro`"
+msgstr ":ref:`ansible_collections.amazon.aws.docsite.aws_intro`"
 
 #: ../../rst/scenario_guides/guide_aci.rst:4
 msgid "Cisco ACI Guide"
@@ -816,7 +825,6 @@ msgid "`User Mailing List <https://groups.google.com/group/ansible-project>`_"
 msgstr "`ユーザーメーリングリスト <https://groups.google.com/group/ansible-project>`_"
 
 #: ../../rst/scenario_guides/guide_aci.rst:659
-#: ../../rst/scenario_guides/guide_aws.rst:282
 msgid "Have a question?  Stop by the google group!"
 msgstr "ご質問はございますか。Google Group をご覧ください。"
 
@@ -825,7 +833,6 @@ msgid "Alibaba Cloud Compute Services Guide"
 msgstr "Alibaba Cloud コンピュートサービスガイド"
 
 #: ../../rst/scenario_guides/guide_alicloud.rst:7
-#: ../../rst/scenario_guides/guide_aws.rst:7
 #: ../../rst/scenario_guides/guide_cloudstack.rst:7
 #: ../../rst/scenario_guides/guide_gce.rst:7
 #: ../../rst/scenario_guides/guide_online.rst:6
@@ -871,7 +878,6 @@ msgid "Normally, you'll use the following pattern for plays that provision Alicl
 msgstr "通常、Alicloud リソースをプロビジョニングするプレイには次のパターンを使用します。"
 
 #: ../../rst/scenario_guides/guide_alicloud.rst:28
-#: ../../rst/scenario_guides/guide_aws.rst:31
 #: ../../rst/scenario_guides/guide_vultr.rst:45
 msgid "Authentication"
 msgstr "認証"
@@ -893,7 +899,6 @@ msgid "Note that if you store your credentials in a vars_file, you need to refer
 msgstr "認証情報を vars_file に保存する場合は、各 Alicloud モジュールで認証情報を参照する必要があることに注意してください。以下に例を示します。"
 
 #: ../../rst/scenario_guides/guide_alicloud.rst:54
-#: ../../rst/scenario_guides/guide_aws.rst:57
 #: ../../rst/scenario_guides/guide_rax.rst:86
 msgid "Provisioning"
 msgstr "プロビジョニング"
@@ -918,258 +923,13 @@ msgstr "上記のサンプル Playbook では、この Playbook で作成され�
 msgid "Each Alicloud module offers a variety of parameter options. Not all options are demonstrated in the above example. See each individual module for further details and examples."
 msgstr "各 Alicloud モジュールは、さまざまなパラメーターオプションを提供します。上記の例で、すべてのオプションが示されているわけではありません。詳細およびサンプルは、各モジュールを参照してください。"
 
-#: ../../rst/scenario_guides/guide_aws.rst:2
+#: ../../rst/scenario_guides/guide_aws.rst:4
 msgid "Amazon Web Services Guide"
 msgstr "Amazon Web Services ガイド"
 
-#: ../../rst/scenario_guides/guide_aws.rst:9
-msgid "Ansible contains a number of modules for controlling Amazon Web Services (AWS).  The purpose of this section is to explain how to put Ansible modules together (and use inventory scripts) to use Ansible in AWS context."
-msgstr "Ansible には、Amazon Web Services (AWS) を制御するモジュールが多数含まれています。このセクションの目的は、AWS のコンテキストで Ansible を使用するために、Ansible モジュールをどのように組み合わせるか (インベントリースクリプトを使用するか) を説明することです。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:12
-msgid "Requirements for the AWS modules are minimal."
-msgstr "AWS モジュールの要件は最小限です。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:14
-msgid "All of the modules require and are tested against recent versions of botocore and boto3.  Starting with the 2.0 AWS collection releases, it is generally the policy of the collections to support the versions of these libraries released 12 months prior to the most recent major collection revision. Individual modules may require a more recent library version to support specific features or may require the boto library, check the module documentation for the minimum required version for each module. You must have the boto3 Python module installed on your control machine. You can install these modules from your OS distribution or using the python package installer: ``pip install boto3``."
-msgstr "すべてのモジュールは、botocore および boto3 の最新バージョンを必要とし、それらに対してテストされています。2.0 AWS コレクションリリース以降、通常、コレクションのポリシーは、最新のメジャーコレクションリビジョンの 12 カ月前にリリースされたこれらのライブラリーのバージョンをサポートすることです。個々のモジュールでは、特定の機能をサポートするために最新のライブラリーバージョンが必要な場合や、boto ライブラリーが必要な場合があります。モジュールのドキュメントで、各モジュールに必要な最低バージョンを確認してください。制御マシンに boto3 Python モジュールがインストールされている必要があります。これらのモジュールは、OS ディストリビューションから、または python パッケージインストーラーを使用してインストールできます (``pip install boto3``)。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:16
-msgid "Starting with the 2.0 releases of both collections, Python 2.7 support will be ended in accordance with AWS' `end of Python 2.7 support <https://aws.amazon.com/blogs/developer/announcing-end-of-support-for-python-2-7-in-aws-sdk-for-python-and-aws-cli-v1/>`_ and Python 3.6 or greater will be required."
-msgstr "両方のコレクションで 2.0 リリース以降、Python 2.7 サポートは AWS の `Python 2.7 サポートの終了 <https://aws.amazon.com/blogs/developer/announcing-end-of-support-for-python-2-7-in-aws-sdk-for-python-and-aws-cli-v1/>`_ と Python 3.6 以上に応じて終了します。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:19
-msgid "Whereas classically Ansible will execute tasks in its host loop against multiple remote machines, most cloud-control steps occur on your local machine with reference to the regions to control."
-msgstr "従来、Ansible はホストループ内のタスクを複数のリモートマシンに対して実行しますが、ほとんどのクラウド制御手順は、制御するリージョンを参照するローカルマシンで実行します。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:21
-msgid "In your playbook steps we'll typically be using the following pattern for provisioning steps::"
-msgstr "Playbook の手順では、通常、プロビジョニング手順に以下のパターンを使用します::"
-
-#: ../../rst/scenario_guides/guide_aws.rst:33
-msgid "Authentication with the AWS-related modules is handled by either specifying your access and secret key as ENV variables or module arguments."
-msgstr "AWS 関連のモジュールを使用した認証は、ENV 変数またはモジュール引数としてアクセスおよび秘密鍵を指定することにより処理されます。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:36
-msgid "For environment variables::"
-msgstr "環境変数の場合::"
-
-#: ../../rst/scenario_guides/guide_aws.rst:41
-msgid "For storing these in a vars_file, ideally encrypted with ansible-vault::"
-msgstr "vars_file に保存するには、ansible-vault で暗号化することが理想的です::"
-
-#: ../../rst/scenario_guides/guide_aws.rst:47
-msgid "Note that if you store your credentials in vars_file, you need to refer to them in each AWS-module. For example::"
-msgstr "認証情報を vars_file に保存する場合は、各 AWS モジュールで認証情報を参照する必要があることに注意してください。以下に例を示します。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:59
-msgid "The ec2 module provisions and de-provisions instances within EC2."
-msgstr "ec2 モジュールは、EC2 内でインスタンスのプロビジョニングおよびプロビジョニング解除を行います。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:61
-msgid "An example of making sure there are only 5 instances tagged 'Demo' in EC2 follows."
-msgstr "EC2 で「Demo」とタグ付けされたインスタンスが 5 個になるようにする例を以下に示します。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:63
-msgid "In the example below, the \"exact_count\" of instances is set to 5.  This means if there are 0 instances already existing, then 5 new instances would be created.  If there were 2 instances, only 3 would be created, and if there were 8 instances, 3 instances would be terminated."
-msgstr "以下の例では、インスタンスの「exact_count」は 5 に設定されます。これは、インスタンスがない場合は、新規インスタンスが 5 個作成されることを示しています。インスタンスが 2 個ある場合は、3 個作成され、インスタンスが 8 個ある場合は、3 個のインスタンスが終了します。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:67
-msgid "What is being counted is specified by the \"count_tag\" parameter.  The parameter \"instance_tags\" is used to apply tags to the newly created instance.::"
-msgstr "カウントされるものは「count_tag」パラメーターで指定します。「instance_tags」パラメーターは、新たに作成されたインスタンスをタグに適用するために使用されます。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:91
-msgid "The data about what instances are created is being saved by the \"register\" keyword in the variable named \"ec2\"."
-msgstr "作成されるインスタンスに関するデータは、「ec2」という変数の「register」キーワードによって保存されます。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:93
-msgid "From this, we'll use the add_host module to dynamically create a host group consisting of these new instances.  This facilitates performing configuration actions on the hosts immediately in a subsequent task.::"
-msgstr "このモジュールから add_host モジュールを使用し、これらの新規インスタンスで構成されるホストグループを動的に作成します。これにより、後続のタスクで、ホストでの設定アクションをすぐに実行できます。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:120
-msgid "With the host group now created, a second play at the bottom of the same provisioning playbook file might now have some configuration steps::"
-msgstr "これでホストグループが作成されたので、同じプロビジョニング Playbook ファイルの下部にある2つ目のプレイでは、以下のような設定ステップが必要になります。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:141
-msgid "Security Groups"
-msgstr "セキュリティーグループ"
-
-#: ../../rst/scenario_guides/guide_aws.rst:143
-msgid "Security groups on AWS are stateful. The response of a request from your instance is allowed to flow in regardless of inbound security group rules and vice-versa. In case you only want allow traffic with AWS S3 service, you need to fetch the current IP ranges of AWS S3 for one region and apply them as an egress rule.::"
-msgstr "AWS のセキュリティーグループはステートフルです。インスタンスからの要求の応答は、受信セキュリティーグループルールに関係なく流入が許可され、その逆も同様です。AWS S3 サービスを使用するトラフィックのみを許可する場合は、あるリージョンに対して AWS S3 の現在の IP 範囲を取得し、それを egress ルールとして適用する必要があります。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:172
-#: ../../rst/scenario_guides/guide_rax.rst:155
-msgid "Host Inventory"
-msgstr "ホストインベントリー"
-
-#: ../../rst/scenario_guides/guide_aws.rst:174
-msgid "Once your nodes are spun up, you'll probably want to talk to them again.  With a cloud setup, it's best to not maintain a static list of cloud hostnames in text files.  Rather, the best way to handle this is to use the aws_ec2 inventory plugin. See :ref:`dynamic_inventory`."
-msgstr "ノードが起動したら、おそらく再通信するようにしたいでしょう。クラウド設定では、テキストファイルに、クラウドホスト名の静的リストを維持しないことが推奨されます。これを処理する最善の方法は、aws_ec2 インベントリープラグインを使用することです。:ref:`dynamic_inventory` を参照してください。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:177
-msgid "The plugin will also return instances that were created outside of Ansible and allow Ansible to manage them."
-msgstr "このプラグインにより、Ansible 外で作成されたインスタンスも選択され、Ansible がインスタンスを管理できるようになります。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:182
-msgid "Tags And Groups And Variables"
-msgstr "タグ、グループ、および変数"
-
-#: ../../rst/scenario_guides/guide_aws.rst:184
-msgid "When using the inventory plugin, you can configure extra inventory structure based on the metadata returned by AWS."
-msgstr "インベントリープラグインを使用する場合は、AWS により返されるメタデータに基づいて追加のインベントリー構造を設定できます。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:186
-msgid "For instance, you might use ``keyed_groups`` to create groups from instance tags::"
-msgstr "たとえば、``keyed_groups`` を使用してインスタンスタグからグループを作成することができます。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:194
-msgid "You can then target all instances with a \"class\" tag where the value is \"webserver\" in a play::"
-msgstr "次に、「class」タグの付いたすべてのインスタンスをターゲットにすることができます。ここで、値はプレイ内の「webserver」になります。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:200
-msgid "You can also use these groups with 'group_vars' to set variables that are automatically applied to matching instances.  See :ref:`splitting_out_vars`."
-msgstr "「group_vars」でこれらのグループを使用して、一致するインスタンスに自動的に適用される変数を設定することもできます。「:ref:`splitting_out_vars`」を参照してください。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:205
-msgid "Autoscaling with Ansible Pull"
-msgstr "Ansible Pull を使用した自動スケーリング"
-
-#: ../../rst/scenario_guides/guide_aws.rst:207
-msgid "Amazon Autoscaling features automatically increase or decrease capacity based on load.  There are also Ansible modules shown in the cloud documentation that can configure autoscaling policy."
-msgstr "Amazon Autoscaling 機能は、負荷に応じて容量を自動的に増減します。また、クラウドドキュメントで説明されるように、自動スケーリングポリシーを設定する Ansible モジュールがあります。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:210
-msgid "When nodes come online, it may not be sufficient to wait for the next cycle of an ansible command to come along and configure that node."
-msgstr "ノードがオンラインになると、ansible コマンドの次のサイクルが反映されてそのノードを設定するのを待つことができない可能性があります。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:212
-msgid "To do this, pre-bake machine images which contain the necessary ansible-pull invocation.  Ansible-pull is a command line tool that fetches a playbook from a git server and runs it locally."
-msgstr "そのためには、必要な ansible-pull 呼び出しを含むマシンイメージを事前に作成します。ansible-pull は、git サーバーから Playbook を取得し、ローカルで実行するコマンドラインツールです。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:214
-msgid "One of the challenges of this approach is that there needs to be a centralized way to store data about the results of pull commands in an autoscaling context. For this reason, the autoscaling solution provided below in the next section can be a better approach."
-msgstr "このアプローチの課題の 1 つとして、pull コマンドの結果に関するデータを自動スケーリングコンテキストに保存する集中的な方法が必要になります。このため、次のセクションで提供される自動スケーリングソリューションの方が適切です。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:217
-msgid "Read :ref:`ansible-pull` for more information on pull-mode playbooks."
-msgstr "pull モードの Playbook の詳細は、「:ref:`ansible-pull`」を参照してください。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:222
-msgid "Autoscaling with Ansible Tower"
-msgstr "Ansible Tower を使用した自動スケーリング"
-
-#: ../../rst/scenario_guides/guide_aws.rst:224
-msgid ":ref:`ansible_tower` also contains a very nice feature for auto-scaling use cases.  In this mode, a simple curl script can call a defined URL and the server will \"dial out\" to the requester and configure an instance that is spinning up.  This can be a great way to reconfigure ephemeral nodes.  See the Tower install and product documentation for more details."
-msgstr "また、:ref:`ansible_tower` は、自動スケーリングのユースケースには非常に優れた機能も含まれています。このモードでは、簡単な curl スクリプトは定義された URL を呼び出すことができ、サーバーは要求元に対して「ダイヤルアウト」し、起動しているインスタンスを構成します。これは、一時ノードを再設定する優れた方法になります。詳細は、Tower のインストールと製品のドキュメントを参照してください。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:228
-msgid "A benefit of using the callback in Tower over pull mode is that job results are still centrally recorded and less information has to be shared with remote hosts."
-msgstr "pull モードで Tower のコールバックを使用する利点は、ジョブの結果が引き続き中央で記録され、リモートホストと共有する必要のある情報が少なくなることです。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:234
-msgid "Ansible With (And Versus) CloudFormation"
-msgstr "CloudFormation を使用した Ansible (Ansible と CloudFormation の比較)"
-
-#: ../../rst/scenario_guides/guide_aws.rst:236
-msgid "CloudFormation is a Amazon technology for defining a cloud stack as a JSON or YAML document."
-msgstr "CloudFormation は、クラウドスタックを JSON または YAML のドキュメントとして定義する Amazon テクノロジーです。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:238
-msgid "Ansible modules provide an easier to use interface than CloudFormation in many examples, without defining a complex JSON/YAML document. This is recommended for most users."
-msgstr "Ansible モジュールは、複雑な JSON/YAML ドキュメントを定義せずに、多くの例で CloudFormation よりも簡単にインターフェースを使用できます。これは、ほとんどのユーザーに推奨されます。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:241
-msgid "However, for users that have decided to use CloudFormation, there is an Ansible module that can be used to apply a CloudFormation template to Amazon."
-msgstr "ただし、CloudFormation を使用するユーザーには、CloudFormation テンプレートを Amazon に適用するのに使用できる Ansible モジュールがあります。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:244
-msgid "When using Ansible with CloudFormation, typically Ansible will be used with a tool like Packer to build images, and CloudFormation will launch those images, or ansible will be invoked through user data once the image comes online, or a combination of the two."
-msgstr "CloudFormation で Ansible を使用する場合は、通常、Ansible を Packer などのツールで使用してイメージを作成し、CloudFormation がそのイメージを起動するか、イメージがオンラインになると、ユーザーデータを通じて ansible が呼び出されるか、その組み合わせとなります。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:247
-msgid "Please see the examples in the Ansible CloudFormation module for more details."
-msgstr "詳細は、Ansible CloudFormation モジュールのサンプルを参照してください。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:252
-msgid "AWS Image Building With Ansible"
-msgstr "Ansible での AWS イメージの構築"
-
-#: ../../rst/scenario_guides/guide_aws.rst:254
-msgid "Many users may want to have images boot to a more complete configuration rather than configuring them entirely after instantiation.  To do this, one of many programs can be used with Ansible playbooks to define and upload a base image, which will then get its own AMI ID for usage with the ec2 module or other Ansible AWS modules such as ec2_asg or the cloudformation module.   Possible tools include Packer, aminator, and Ansible's ec2_ami module."
-msgstr "多くの場合、インスタンス化後にイメージを完全に設定するのではなく、より完全な設定での起動を望みます。これを行うには、Ansible Playbook とともに多くのプログラムの中から 1 つ使用してベースイメージを定義し、アップロードできます。これにより、ec2 モジュール、ec2_asg モジュールや cloudformation モジュールなどのその他の Ansible AWS モジュールと使用するため、独自の AMI ID を取得します。ツールには Packer、aminator、および Ansible の ec2_ami モジュールが含まれます。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:259
-msgid "Generally speaking, we find most users using Packer."
-msgstr "一般的には、Packer が使用されます。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:261
-msgid "See the Packer documentation of the `Ansible local Packer provisioner <https://www.packer.io/docs/provisioners/ansible/ansible-local>`_ and `Ansible remote Packer provisioner <https://www.packer.io/docs/provisioners/ansible/ansible>`_."
-msgstr "`Ansible local Packer provisioner <https://www.packer.io/docs/provisioners/ansible/ansible-local>`_ および `Ansible remote Packer provisioner <https://www.packer.io/docs/provisioners/ansible/ansible>`_ の Packer ドキュメントを参照してください。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:263
-msgid "If you do not want to adopt Packer at this time, configuring a base-image with Ansible after provisioning (as shown above) is acceptable."
-msgstr "現時点では、Packer を使用しない場合は、プロビジョニング後に (上記のように) Ansible を使用したベースイメージの設定が可能です。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:268
-msgid "Next Steps: Explore Modules"
-msgstr "次のステップ: モジュールの検証"
-
-#: ../../rst/scenario_guides/guide_aws.rst:270
-msgid "Ansible ships with lots of modules for configuring a wide array of EC2 services.  Browse the \"Cloud\" category of the module documentation for a full list with examples."
-msgstr "Ansible には、さまざまな EC2 サービスを設定するモジュールが多数同梱されています。例を含む完全な一覧については、モジュールドキュメントの「クラウド」カテゴリーを参照してください。"
-
-#: ../../rst/scenario_guides/guide_aws.rst:275
-msgid ":ref:`list_of_collections`"
-msgstr ":ref:`list_of_collections`"
-
-#: ../../rst/scenario_guides/guide_aws.rst:276
-msgid "Browse existing collections, modules, and plugins"
-msgstr "既存のコレクション、モジュール、およびプラグインの閲覧"
-
-#: ../../rst/scenario_guides/guide_aws.rst:277
-#: ../../rst/scenario_guides/guide_vagrant.rst:135
-#: ../../rst/scenario_guides/kubernetes_scenarios/k8s_inventory.rst:92
-#: ../../rst/scenario_guides/kubernetes_scenarios/scenario_k8s_object.rst:87
-#: ../../rst/scenario_guides/vmware_scenarios/vmware_intro.rst:52
-#: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory.rst:88
-#: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory_filters.rst:213
-#: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory_hostnames.rst:125
-#: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory_vm_attributes.rst:1181
-msgid ":ref:`working_with_playbooks`"
-msgstr ":ref:`working_with_playbooks`"
-
-#: ../../rst/scenario_guides/guide_aws.rst:278
-#: ../../rst/scenario_guides/guide_vagrant.rst:136
-#: ../../rst/scenario_guides/kubernetes_scenarios/k8s_inventory.rst:93
-#: ../../rst/scenario_guides/kubernetes_scenarios/scenario_k8s_object.rst:88
-#: ../../rst/scenario_guides/vmware_scenarios/vmware_intro.rst:53
-#: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory.rst:89
-#: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory_filters.rst:214
-#: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory_hostnames.rst:126
-#: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory_vm_attributes.rst:1182
-msgid "An introduction to playbooks"
-msgstr "Playbook の概要"
-
-#: ../../rst/scenario_guides/guide_aws.rst:279
-msgid ":ref:`playbooks_delegation`"
-msgstr ":ref:`playbooks_delegation`"
-
-#: ../../rst/scenario_guides/guide_aws.rst:280
-msgid "Delegation, useful for working with loud balancers, clouds, and locally executed steps."
-msgstr "委譲 (ロードバランサー、クラウド、ローカルで実行した手順を使用する際に役に立ちます)"
-
-#: ../../rst/scenario_guides/guide_aws.rst:281
-msgid "`User Mailing List <https://groups.google.com/group/ansible-devel>`_"
-msgstr "`ユーザーメーリングリスト <https://groups.google.com/group/ansible-devel>`_"
-
-#: ../../rst/scenario_guides/guide_aws.rst:283
-msgid ":ref:`communication_irc`"
-msgstr ":ref:`communication_irc`"
-
-#: ../../rst/scenario_guides/guide_aws.rst:284
-msgid "How to join Ansible chat channels"
-msgstr "Ansible チャットチャンネルへの参加方法"
+#: ../../rst/scenario_guides/guide_aws.rst:6
+msgid "The content on this page has moved. Please see the updated :ref:`ansible_collections.amazon.aws.docsite.aws_intro` in the AWS collection."
+msgstr "このページのコンテンツは移動しました。AWSコレクションにある更新された :ref:`ansible_collections.amazon.aws.docsite.aws_intro` をご覧ください。"
 
 #: ../../rst/scenario_guides/guide_azure.rst:2
 msgid "Microsoft Azure Guide"
@@ -3089,8 +2849,8 @@ msgid "Rackspace Cloud Guide"
 msgstr "Rackspace Cloud ガイド"
 
 #: ../../rst/scenario_guides/guide_rax.rst:9
-msgid "This section of the documentation is under construction. We are in the process of adding more examples about the Rackspace modules and how they work together.  Once complete, there will also be examples for Rackspace Cloud in `ansible-examples <https://github.com/ansible/ansible-examples/>`_."
-msgstr "本ガイドに記載するセクションは作成中です。ここでは、Rackspace モジュールやそれがどのように連携するかについての例を追加するプロセスです。完了後は、`ansible-examples <https://github.com/ansible/ansible-examples/>`_ に Rackspace Cloud の例もあります。"
+msgid "Rackspace functionality in Ansible is not maintained and users should consider the `OpenStack collection <https://galaxy.ansible.com/openstack/cloud>`_ instead."
+msgstr "Ansible の Rackspace 機能は維持されず、ユーザーは代わりに `OpenStack collection <https://galaxy.ansible.com/openstack/cloud>`_ を検討する必要があります。"
 
 #: ../../rst/scenario_guides/guide_rax.rst:11
 msgid "Ansible contains a number of core modules for interacting with Rackspace Cloud."
@@ -3191,6 +2951,10 @@ msgstr "これでホストグループが作成され、この Playbook の次�
 #: ../../rst/scenario_guides/guide_rax.rst:149
 msgid "The method above ties the configuration of a host with the provisioning step.  This isn't always what you want, and leads us to the next section."
 msgstr "上記の方法でプロビジョニングステップでホストの設定を統合します。これは必ずしも望ましいことではなく、次のセクションにつながります。"
+
+#: ../../rst/scenario_guides/guide_rax.rst:155
+msgid "Host Inventory"
+msgstr "ホストインベントリー"
 
 #: ../../rst/scenario_guides/guide_rax.rst:157
 msgid "Once your nodes are spun up, you'll probably want to talk to them again.  The best way to handle this is to use the \"rax\" inventory plugin, which dynamically queries Rackspace Cloud and tells Ansible what nodes you have to manage.  You might want to use this even if you are spinning up cloud instances via other tools, including the Rackspace Cloud user interface. The inventory plugin can be used to group resources by metadata, region, OS, and so on.  Utilizing metadata is highly recommended in \"rax\" and can provide an easy way to sort between host groups and roles. If you don't want to use the ``rax.py`` dynamic inventory script, you could also still choose to manually manage your INI inventory file, though this is less recommended."
@@ -3593,6 +3357,28 @@ msgstr "`Vagrant Issue Tracker <https://github.com/hashicorp/vagrant/issues?q=is
 msgid "The open issues for the Ansible provisioner in the Vagrant project"
 msgstr "Vagrant プロジェクトでの Ansible プロビジョナーに関する未解決な問題"
 
+#: ../../rst/scenario_guides/guide_vagrant.rst:135
+#: ../../rst/scenario_guides/kubernetes_scenarios/k8s_inventory.rst:92
+#: ../../rst/scenario_guides/kubernetes_scenarios/scenario_k8s_object.rst:87
+#: ../../rst/scenario_guides/vmware_scenarios/vmware_intro.rst:52
+#: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory.rst:88
+#: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory_filters.rst:213
+#: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory_hostnames.rst:125
+#: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory_vm_attributes.rst:1181
+msgid ":ref:`working_with_playbooks`"
+msgstr ":ref:`working_with_playbooks`"
+
+#: ../../rst/scenario_guides/guide_vagrant.rst:136
+#: ../../rst/scenario_guides/kubernetes_scenarios/k8s_inventory.rst:93
+#: ../../rst/scenario_guides/kubernetes_scenarios/scenario_k8s_object.rst:88
+#: ../../rst/scenario_guides/vmware_scenarios/vmware_intro.rst:53
+#: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory.rst:89
+#: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory_filters.rst:214
+#: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory_hostnames.rst:126
+#: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory_vm_attributes.rst:1182
+msgid "An introduction to playbooks"
+msgstr "Playbook の概要"
+
 #: ../../rst/scenario_guides/guide_vmware.rst:5
 msgid "VMware Guide"
 msgstr "VMware ガイド"
@@ -3745,12 +3531,12 @@ msgstr "すべての Vultr テストを実行します。"
 msgid "To run a specific test, for example vultr_account_info:"
 msgstr "特定のテスト (例: vultr_account_info) を実行するには、以下を実行します。"
 
-#: ../../rst/scenario_guides/guides.rst:28
+#: ../../rst/scenario_guides/guides.rst:32
 #: ../../rst/scenario_guides/network_guides.rst:5
 msgid "Network Technology Guides"
 msgstr "ネットワークテクノロジーガイド"
 
-#: ../../rst/scenario_guides/guides.rst:36
+#: ../../rst/scenario_guides/guides.rst:40
 msgid "Virtualization & Containerization Guides"
 msgstr "仮想化およびコンテナー化ガイド"
 
@@ -3759,8 +3545,16 @@ msgid "Scenario Guides"
 msgstr "シナリオガイド"
 
 #: ../../rst/scenario_guides/guides.rst:9
-msgid "The guides in this section cover integrating Ansible with a variety of platforms, products, and technologies. They explore particular use cases in greater depth and provide a more \"top-down\" explanation of some basic features."
-msgstr "本セクションのガイドでは、Ansible とさまざまなプラットフォーム、製品、およびテクノロジーの統合を説明します。特定のユースケースをより深く掘り下げ、いくつかの基本的な機能を「トップダウン」で説明します。"
+msgid "The guides in this section are migrating into collections. Remaining guides may be out of date."
+msgstr "本セクションのガイドはコレクションに移行しています。残されたガイドは、情報が古くなっている可能性があります。"
+
+#: ../../rst/scenario_guides/guides.rst:11
+msgid "These guides cover integrating Ansible with a variety of platforms, products, and technologies. They explore particular use cases in greater depth and provide a more \"top-down\" explanation of some basic features."
+msgstr "これらのガイドでは、Ansible とさまざまなプラットフォーム、製品、およびテクノロジーの統合を説明します。特定のユースケースをより深く掘り下げ、いくつかの基本的な機能を「トップダウン」で説明します。"
+
+#: ../../rst/scenario_guides/guides.rst:13
+msgid "We are migrating these guides into collections. Please update your links for the following guides:"
+msgstr "これらのガイドをコレクションに移行しています。以下のガイドのリンクを更新してください。"
 
 #: ../../rst/scenario_guides/kubernetes_scenarios/k8s_intro.rst:5
 msgid "Introduction to Ansible for Kubernetes"
@@ -8261,4 +8055,172 @@ msgstr "``open-vm-tools`` で ``netplan`` がサポートされるのを待ち�
 
 #~ msgid "If you find a bug or have a suggestion regarding modules, please file issues at `Ansible Kubernetes collection <https://github.com/ansible-collections/community.kubernetes>`_. If you find a bug regarding OpenShift client, please file issues at `OpenShift REST Client issues <https://github.com/openshift/openshift-restclient-python/issues>`_. If you find a bug regarding Kubectl binary, please file issues at `Kubectl issue tracker <https://github.com/kubernetes/kubectl>`_"
 #~ msgstr "バグが見つかった場合やモジュールに関する提案をお寄せいただける場合は、`Ansible Kubernetes コレクション <https://github.com/ansible-collections/community.kubernetes>`_ にファイルの問題を報告してください。OpenShift クライアントに関するバグが見つかった場合は、`OpenShift REST クライアントの問題 <https://github.com/openshift/openshift-restclient-python/issues>`_ に問題を作成してください。Kubectl バイナリーに関するバグは、`Kubectl issue tracker <https://github.com/kubernetes/kubectl>`_ で問題を作成してください。"
+
+#~ msgid "Ansible contains a number of modules for controlling Amazon Web Services (AWS).  The purpose of this section is to explain how to put Ansible modules together (and use inventory scripts) to use Ansible in AWS context."
+#~ msgstr "Ansible には、Amazon Web Services (AWS) を制御するモジュールが多数含まれています。このセクションの目的は、AWS のコンテキストで Ansible を使用するために、Ansible モジュールをどのように組み合わせるか (インベントリースクリプトを使用するか) を説明することです。"
+
+#~ msgid "Requirements for the AWS modules are minimal."
+#~ msgstr "AWS モジュールの要件は最小限です。"
+
+#~ msgid "All of the modules require and are tested against recent versions of botocore and boto3.  Starting with the 2.0 AWS collection releases, it is generally the policy of the collections to support the versions of these libraries released 12 months prior to the most recent major collection revision. Individual modules may require a more recent library version to support specific features or may require the boto library, check the module documentation for the minimum required version for each module. You must have the boto3 Python module installed on your control machine. You can install these modules from your OS distribution or using the python package installer: ``pip install boto3``."
+#~ msgstr "すべてのモジュールは、botocore および boto3 の最新バージョンを必要とし、それらに対してテストされています。2.0 AWS コレクションリリース以降、通常、コレクションのポリシーは、最新のメジャーコレクションリビジョンの 12 カ月前にリリースされたこれらのライブラリーのバージョンをサポートすることです。個々のモジュールでは、特定の機能をサポートするために最新のライブラリーバージョンが必要な場合や、boto ライブラリーが必要な場合があります。モジュールのドキュメントで、各モジュールに必要な最低バージョンを確認してください。制御マシンに boto3 Python モジュールがインストールされている必要があります。これらのモジュールは、OS ディストリビューションから、または python パッケージインストーラーを使用してインストールできます (``pip install boto3``)。"
+
+#~ msgid "Starting with the 2.0 releases of both collections, Python 2.7 support will be ended in accordance with AWS' `end of Python 2.7 support <https://aws.amazon.com/blogs/developer/announcing-end-of-support-for-python-2-7-in-aws-sdk-for-python-and-aws-cli-v1/>`_ and Python 3.6 or greater will be required."
+#~ msgstr "両方のコレクションで 2.0 リリース以降、Python 2.7 サポートは AWS の `Python 2.7 サポートの終了 <https://aws.amazon.com/blogs/developer/announcing-end-of-support-for-python-2-7-in-aws-sdk-for-python-and-aws-cli-v1/>`_ と Python 3.6 以上に応じて終了します。"
+
+#~ msgid "Whereas classically Ansible will execute tasks in its host loop against multiple remote machines, most cloud-control steps occur on your local machine with reference to the regions to control."
+#~ msgstr "従来、Ansible はホストループ内のタスクを複数のリモートマシンに対して実行しますが、ほとんどのクラウド制御手順は、制御するリージョンを参照するローカルマシンで実行します。"
+
+#~ msgid "In your playbook steps we'll typically be using the following pattern for provisioning steps::"
+#~ msgstr "Playbook の手順では、通常、プロビジョニング手順に以下のパターンを使用します::"
+
+#~ msgid "Authentication with the AWS-related modules is handled by either specifying your access and secret key as ENV variables or module arguments."
+#~ msgstr "AWS 関連のモジュールを使用した認証は、ENV 変数またはモジュール引数としてアクセスおよび秘密鍵を指定することにより処理されます。"
+
+#~ msgid "For environment variables::"
+#~ msgstr "環境変数の場合::"
+
+#~ msgid "For storing these in a vars_file, ideally encrypted with ansible-vault::"
+#~ msgstr "vars_file に保存するには、ansible-vault で暗号化することが理想的です::"
+
+#~ msgid "Note that if you store your credentials in vars_file, you need to refer to them in each AWS-module. For example::"
+#~ msgstr "認証情報を vars_file に保存する場合は、各 AWS モジュールで認証情報を参照する必要があることに注意してください。以下に例を示します。"
+
+#~ msgid "The ec2 module provisions and de-provisions instances within EC2."
+#~ msgstr "ec2 モジュールは、EC2 内でインスタンスのプロビジョニングおよびプロビジョニング解除を行います。"
+
+#~ msgid "An example of making sure there are only 5 instances tagged 'Demo' in EC2 follows."
+#~ msgstr "EC2 で「Demo」とタグ付けされたインスタンスが 5 個になるようにする例を以下に示します。"
+
+#~ msgid "In the example below, the \"exact_count\" of instances is set to 5.  This means if there are 0 instances already existing, then 5 new instances would be created.  If there were 2 instances, only 3 would be created, and if there were 8 instances, 3 instances would be terminated."
+#~ msgstr "以下の例では、インスタンスの「exact_count」は 5 に設定されます。これは、インスタンスがない場合は、新規インスタンスが 5 個作成されることを示しています。インスタンスが 2 個ある場合は、3 個作成され、インスタンスが 8 個ある場合は、3 個のインスタンスが終了します。"
+
+#~ msgid "What is being counted is specified by the \"count_tag\" parameter.  The parameter \"instance_tags\" is used to apply tags to the newly created instance.::"
+#~ msgstr "カウントされるものは「count_tag」パラメーターで指定します。「instance_tags」パラメーターは、新たに作成されたインスタンスをタグに適用するために使用されます。"
+
+#~ msgid "The data about what instances are created is being saved by the \"register\" keyword in the variable named \"ec2\"."
+#~ msgstr "作成されるインスタンスに関するデータは、「ec2」という変数の「register」キーワードによって保存されます。"
+
+#~ msgid "From this, we'll use the add_host module to dynamically create a host group consisting of these new instances.  This facilitates performing configuration actions on the hosts immediately in a subsequent task.::"
+#~ msgstr "このモジュールから add_host モジュールを使用し、これらの新規インスタンスで構成されるホストグループを動的に作成します。これにより、後続のタスクで、ホストでの設定アクションをすぐに実行できます。"
+
+#~ msgid "With the host group now created, a second play at the bottom of the same provisioning playbook file might now have some configuration steps::"
+#~ msgstr "これでホストグループが作成されたので、同じプロビジョニング Playbook ファイルの下部にある2つ目のプレイでは、以下のような設定ステップが必要になります。"
+
+#~ msgid "Security Groups"
+#~ msgstr "セキュリティーグループ"
+
+#~ msgid "Security groups on AWS are stateful. The response of a request from your instance is allowed to flow in regardless of inbound security group rules and vice-versa. In case you only want allow traffic with AWS S3 service, you need to fetch the current IP ranges of AWS S3 for one region and apply them as an egress rule.::"
+#~ msgstr "AWS のセキュリティーグループはステートフルです。インスタンスからの要求の応答は、受信セキュリティーグループルールに関係なく流入が許可され、その逆も同様です。AWS S3 サービスを使用するトラフィックのみを許可する場合は、あるリージョンに対して AWS S3 の現在の IP 範囲を取得し、それを egress ルールとして適用する必要があります。"
+
+#~ msgid "Once your nodes are spun up, you'll probably want to talk to them again.  With a cloud setup, it's best to not maintain a static list of cloud hostnames in text files.  Rather, the best way to handle this is to use the aws_ec2 inventory plugin. See :ref:`dynamic_inventory`."
+#~ msgstr "ノードが起動したら、おそらく再通信するようにしたいでしょう。クラウド設定では、テキストファイルに、クラウドホスト名の静的リストを維持しないことが推奨されます。これを処理する最善の方法は、aws_ec2 インベントリープラグインを使用することです。:ref:`dynamic_inventory` を参照してください。"
+
+#~ msgid "The plugin will also return instances that were created outside of Ansible and allow Ansible to manage them."
+#~ msgstr "このプラグインにより、Ansible 外で作成されたインスタンスも選択され、Ansible がインスタンスを管理できるようになります。"
+
+#~ msgid "Tags And Groups And Variables"
+#~ msgstr "タグ、グループ、および変数"
+
+#~ msgid "When using the inventory plugin, you can configure extra inventory structure based on the metadata returned by AWS."
+#~ msgstr "インベントリープラグインを使用する場合は、AWS により返されるメタデータに基づいて追加のインベントリー構造を設定できます。"
+
+#~ msgid "For instance, you might use ``keyed_groups`` to create groups from instance tags::"
+#~ msgstr "たとえば、``keyed_groups`` を使用してインスタンスタグからグループを作成することができます。"
+
+#~ msgid "You can then target all instances with a \"class\" tag where the value is \"webserver\" in a play::"
+#~ msgstr "次に、「class」タグの付いたすべてのインスタンスをターゲットにすることができます。ここで、値はプレイ内の「webserver」になります。"
+
+#~ msgid "You can also use these groups with 'group_vars' to set variables that are automatically applied to matching instances.  See :ref:`splitting_out_vars`."
+#~ msgstr "「group_vars」でこれらのグループを使用して、一致するインスタンスに自動的に適用される変数を設定することもできます。「:ref:`splitting_out_vars`」を参照してください。"
+
+#~ msgid "Autoscaling with Ansible Pull"
+#~ msgstr "Ansible Pull を使用した自動スケーリング"
+
+#~ msgid "Amazon Autoscaling features automatically increase or decrease capacity based on load.  There are also Ansible modules shown in the cloud documentation that can configure autoscaling policy."
+#~ msgstr "Amazon Autoscaling 機能は、負荷に応じて容量を自動的に増減します。また、クラウドドキュメントで説明されるように、自動スケーリングポリシーを設定する Ansible モジュールがあります。"
+
+#~ msgid "When nodes come online, it may not be sufficient to wait for the next cycle of an ansible command to come along and configure that node."
+#~ msgstr "ノードがオンラインになると、ansible コマンドの次のサイクルが反映されてそのノードを設定するのを待つことができない可能性があります。"
+
+#~ msgid "To do this, pre-bake machine images which contain the necessary ansible-pull invocation.  Ansible-pull is a command line tool that fetches a playbook from a git server and runs it locally."
+#~ msgstr "そのためには、必要な ansible-pull 呼び出しを含むマシンイメージを事前に作成します。ansible-pull は、git サーバーから Playbook を取得し、ローカルで実行するコマンドラインツールです。"
+
+#~ msgid "One of the challenges of this approach is that there needs to be a centralized way to store data about the results of pull commands in an autoscaling context. For this reason, the autoscaling solution provided below in the next section can be a better approach."
+#~ msgstr "このアプローチの課題の 1 つとして、pull コマンドの結果に関するデータを自動スケーリングコンテキストに保存する集中的な方法が必要になります。このため、次のセクションで提供される自動スケーリングソリューションの方が適切です。"
+
+#~ msgid "Read :ref:`ansible-pull` for more information on pull-mode playbooks."
+#~ msgstr "pull モードの Playbook の詳細は、「:ref:`ansible-pull`」を参照してください。"
+
+#~ msgid "Autoscaling with Ansible Tower"
+#~ msgstr "Ansible Tower を使用した自動スケーリング"
+
+#~ msgid ":ref:`ansible_tower` also contains a very nice feature for auto-scaling use cases.  In this mode, a simple curl script can call a defined URL and the server will \"dial out\" to the requester and configure an instance that is spinning up.  This can be a great way to reconfigure ephemeral nodes.  See the Tower install and product documentation for more details."
+#~ msgstr "また、:ref:`ansible_tower` は、自動スケーリングのユースケースには非常に優れた機能も含まれています。このモードでは、簡単な curl スクリプトは定義された URL を呼び出すことができ、サーバーは要求元に対して「ダイヤルアウト」し、起動しているインスタンスを構成します。これは、一時ノードを再設定する優れた方法になります。詳細は、Tower のインストールと製品のドキュメントを参照してください。"
+
+#~ msgid "A benefit of using the callback in Tower over pull mode is that job results are still centrally recorded and less information has to be shared with remote hosts."
+#~ msgstr "pull モードで Tower のコールバックを使用する利点は、ジョブの結果が引き続き中央で記録され、リモートホストと共有する必要のある情報が少なくなることです。"
+
+#~ msgid "Ansible With (And Versus) CloudFormation"
+#~ msgstr "CloudFormation を使用した Ansible (Ansible と CloudFormation の比較)"
+
+#~ msgid "CloudFormation is a Amazon technology for defining a cloud stack as a JSON or YAML document."
+#~ msgstr "CloudFormation は、クラウドスタックを JSON または YAML のドキュメントとして定義する Amazon テクノロジーです。"
+
+#~ msgid "Ansible modules provide an easier to use interface than CloudFormation in many examples, without defining a complex JSON/YAML document. This is recommended for most users."
+#~ msgstr "Ansible モジュールは、複雑な JSON/YAML ドキュメントを定義せずに、多くの例で CloudFormation よりも簡単にインターフェースを使用できます。これは、ほとんどのユーザーに推奨されます。"
+
+#~ msgid "However, for users that have decided to use CloudFormation, there is an Ansible module that can be used to apply a CloudFormation template to Amazon."
+#~ msgstr "ただし、CloudFormation を使用するユーザーには、CloudFormation テンプレートを Amazon に適用するのに使用できる Ansible モジュールがあります。"
+
+#~ msgid "When using Ansible with CloudFormation, typically Ansible will be used with a tool like Packer to build images, and CloudFormation will launch those images, or ansible will be invoked through user data once the image comes online, or a combination of the two."
+#~ msgstr "CloudFormation で Ansible を使用する場合は、通常、Ansible を Packer などのツールで使用してイメージを作成し、CloudFormation がそのイメージを起動するか、イメージがオンラインになると、ユーザーデータを通じて ansible が呼び出されるか、その組み合わせとなります。"
+
+#~ msgid "Please see the examples in the Ansible CloudFormation module for more details."
+#~ msgstr "詳細は、Ansible CloudFormation モジュールのサンプルを参照してください。"
+
+#~ msgid "AWS Image Building With Ansible"
+#~ msgstr "Ansible での AWS イメージの構築"
+
+#~ msgid "Many users may want to have images boot to a more complete configuration rather than configuring them entirely after instantiation.  To do this, one of many programs can be used with Ansible playbooks to define and upload a base image, which will then get its own AMI ID for usage with the ec2 module or other Ansible AWS modules such as ec2_asg or the cloudformation module.   Possible tools include Packer, aminator, and Ansible's ec2_ami module."
+#~ msgstr "多くの場合、インスタンス化後にイメージを完全に設定するのではなく、より完全な設定での起動を望みます。これを行うには、Ansible Playbook とともに多くのプログラムの中から 1 つ使用してベースイメージを定義し、アップロードできます。これにより、ec2 モジュール、ec2_asg モジュールや cloudformation モジュールなどのその他の Ansible AWS モジュールと使用するため、独自の AMI ID を取得します。ツールには Packer、aminator、および Ansible の ec2_ami モジュールが含まれます。"
+
+#~ msgid "Generally speaking, we find most users using Packer."
+#~ msgstr "一般的には、Packer が使用されます。"
+
+#~ msgid "See the Packer documentation of the `Ansible local Packer provisioner <https://www.packer.io/docs/provisioners/ansible/ansible-local>`_ and `Ansible remote Packer provisioner <https://www.packer.io/docs/provisioners/ansible/ansible>`_."
+#~ msgstr "`Ansible local Packer provisioner <https://www.packer.io/docs/provisioners/ansible/ansible-local>`_ および `Ansible remote Packer provisioner <https://www.packer.io/docs/provisioners/ansible/ansible>`_ の Packer ドキュメントを参照してください。"
+
+#~ msgid "If you do not want to adopt Packer at this time, configuring a base-image with Ansible after provisioning (as shown above) is acceptable."
+#~ msgstr "現時点では、Packer を使用しない場合は、プロビジョニング後に (上記のように) Ansible を使用したベースイメージの設定が可能です。"
+
+#~ msgid "Next Steps: Explore Modules"
+#~ msgstr "次のステップ: モジュールの検証"
+
+#~ msgid "Ansible ships with lots of modules for configuring a wide array of EC2 services.  Browse the \"Cloud\" category of the module documentation for a full list with examples."
+#~ msgstr "Ansible には、さまざまな EC2 サービスを設定するモジュールが多数同梱されています。例を含む完全な一覧については、モジュールドキュメントの「クラウド」カテゴリーを参照してください。"
+
+#~ msgid ":ref:`list_of_collections`"
+#~ msgstr ":ref:`list_of_collections`"
+
+#~ msgid "Browse existing collections, modules, and plugins"
+#~ msgstr "既存のコレクション、モジュール、およびプラグインの閲覧"
+
+#~ msgid ":ref:`playbooks_delegation`"
+#~ msgstr ":ref:`playbooks_delegation`"
+
+#~ msgid "Delegation, useful for working with loud balancers, clouds, and locally executed steps."
+#~ msgstr "委譲 (ロードバランサー、クラウド、ローカルで実行した手順を使用する際に役に立ちます)"
+
+#~ msgid "`User Mailing List <https://groups.google.com/group/ansible-devel>`_"
+#~ msgstr "`ユーザーメーリングリスト <https://groups.google.com/group/ansible-devel>`_"
+
+#~ msgid ":ref:`communication_irc`"
+#~ msgstr ":ref:`communication_irc`"
+
+#~ msgid "How to join Ansible chat channels"
+#~ msgstr "Ansible チャットチャンネルへの参加方法"
+
+#~ msgid "This section of the documentation is under construction. We are in the process of adding more examples about the Rackspace modules and how they work together.  Once complete, there will also be examples for Rackspace Cloud in `ansible-examples <https://github.com/ansible/ansible-examples/>`_."
+#~ msgstr "本ガイドに記載するセクションは作成中です。ここでは、Rackspace モジュールやそれがどのように連携するかについての例を追加するプロセスです。完了後は、`ansible-examples <https://github.com/ansible/ansible-examples/>`_ に Rackspace Cloud の例もあります。"
 

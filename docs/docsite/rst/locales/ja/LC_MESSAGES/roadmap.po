@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-05 13:53+0200\n"
+"POT-Creation-Date: 2021-11-09 14:07+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -497,12 +497,12 @@ msgid "Ansible-5.0.0 release."
 msgstr "Ansible-5.0.0 リリース"
 
 #: ../../rst/roadmap/COLLECTIONS_5.rst
-msgid "2022-01-04"
-msgstr "2022-01-04"
+msgid "2021-12-21"
+msgstr "2021-12-21"
 
 #: ../../rst/roadmap/COLLECTIONS_5.rst:34
-msgid "Release of Ansible-5.1.0 (bugfix + compatible features: every three weeks. Note: this comes 4 week after 5.0.0 due to the winter holiday season)."
-msgstr "Ansible-5.1.0のリリース（バグ修正+互換性のある機能：3週間ごと。注：冬季休暇の時期であるため、5.0.0の4週間後に行われます）。"
+msgid "Release of Ansible-5.1.0 (bugfix + compatible features: every three weeks.)"
+msgstr "Ansible-5.1.0 のリリース (バグ修正 + 互換性のある機能: 3 週間ごと)"
 
 #: ../../rst/roadmap/COLLECTIONS_5.rst:36
 msgid "No new modules or major features accepted after this date. In practice, this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community.crypto 2.1.0; Ansible-5.0.0 could ship with community.crypto 2.1.1.  It would not ship with community.crypto 2.2.0."
@@ -1602,4 +1602,10 @@ msgstr "現在の Ansible および ``ansible-base`` のロードマップを確
 
 #~ msgid "Post on the ``#ansible-community`` Freenode IRC channel"
 #~ msgstr "Freenode IRC チャンネル ``#ansible-community`` で発言"
+
+#~ msgid "2022-01-04"
+#~ msgstr "2022-01-04"
+
+#~ msgid "Release of Ansible-5.1.0 (bugfix + compatible features: every three weeks. Note: this comes 4 week after 5.0.0 due to the winter holiday season)."
+#~ msgstr "Ansible-5.1.0のリリース（バグ修正+互換性のある機能：3週間ごと。注：冬季休暇の時期であるため、5.0.0の4週間後に行われます）。"
 
