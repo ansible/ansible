@@ -40,7 +40,7 @@ from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.plugins.loader import module_utils_loader
-from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, _nested_dict_get
+from ansible.utils.collection_loader._collection_finder import AnsibleCollectionRef, _get_collection_metadata, _nested_dict_get
 
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
@@ -1433,6 +1433,16 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
                 except ValueError:
                     # The collection may not be installed
                     continue
+                else:
+                    for name, groups in list(action_group.items()):
+                        if AnsibleCollectionRef.is_valid_fqcr(name):
+                            continue
+                        # Only alias short names to an FQCR from the owning collection
+                        fqcr = '{0}.{1}'.format(collection_name, name)
+                        if fqcr in action_group:
+                            # Don't overwrite
+                            continue
+                        action_group[fqcr] = groups
 
                 if any(name for name in redirected_names if name in action_group):
                     tmp_args.update((module_defaults.get('group/%s' % group_name) or {}).copy())

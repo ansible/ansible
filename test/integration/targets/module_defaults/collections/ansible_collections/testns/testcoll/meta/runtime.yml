@@ -1,6 +1,6 @@
 action_groups:
   testgroup:
-    - testns.testcoll.echo1
+    - echo1
     - testns.testcoll.echo2
 # note we can define defaults for an action
     - testns.testcoll.echoaction
