@@ -213,6 +213,14 @@ EXAMPLES = r'''
     path: /etc/foo
     state: absent
 
+- name: Create symlink with custom ownership
+  ansible.builtin.file:
+    state: link
+  become: yes
+  become_user: foo
+  become_method: sudo
+  become_flags: '-g foo'
+
 '''
 RETURN = r'''
 dest:
