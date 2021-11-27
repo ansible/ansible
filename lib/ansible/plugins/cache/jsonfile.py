@@ -19,9 +19,9 @@ DOCUMENTATION = '''
         description:
           - Path in which the cache plugin will save the JSON files
         env:
-          - name: ANSIBLE_CACHE_PLUGIN_CONNECTION
+          - name: ANSIBLE_CACHE_PLUGIN_URI
         ini:
-          - key: fact_caching_connection
+          - key: fact_caching_uri
             section: defaults
         type: path
       _prefix:
