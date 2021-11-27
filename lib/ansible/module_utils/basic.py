@@ -68,7 +68,6 @@ try:
     # Makes sure that systemd.journal has method sendv()
     # Double check that journal has method sendv (some packages don't)
     # check if the system is running under systemd
-    has_journal = hasattr(journal, 'sendv')
     has_journal = hasattr(journal, 'sendv') and systemd_daemon.booted()
 except (ImportError, AttributeError):
     # AttributeError would be caused from use of .booted() if wrong systemd
