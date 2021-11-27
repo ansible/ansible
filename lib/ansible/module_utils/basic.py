@@ -64,7 +64,7 @@ except ImportError:
     HAS_SYSLOG = False
 
 try:
-    from systemd import journal
+    from systemd import journal, daemon as systemd_daemon
     # Makes sure that systemd.journal has method sendv()
     # Double check that journal has method sendv (some packages don't)
     has_journal = hasattr(journal, 'sendv')
