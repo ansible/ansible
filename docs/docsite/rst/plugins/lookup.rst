@@ -53,7 +53,7 @@ You can combine lookups with :ref:`filters <playbooks_filters>`, :ref:`tests <pl
       debug: msg="find the answer here:\n{{ lookup('url', 'https://google.com/search/?q=' + item|urlencode)|join(' ') }}"
       with_nested:
         - "{{ lookup('consul_kv', 'bcs/' + lookup('file', '/the/question') + ', host=localhost, port=2000')|shuffle }}"
-        - "{{ lookup('sequence', 'end=42 start=2 step=2')|map('log', 4)|list) }}"
+        - "{{ lookup('sequence', 'end=42 start=2 stride=2')|map('log', 4)|list) }}"
         - ['a', 'c', 'd', 'c']
 
 .. versionadded:: 2.6
