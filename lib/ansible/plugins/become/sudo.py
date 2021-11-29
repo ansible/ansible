@@ -96,10 +96,10 @@ class BecomeModule(BecomeBase):
             if flags:  # this could be simplified, but kept as is for now for backwards string matching
                 for flag in list(flags.split(' ')):
                     if flag.startswith('--'):
-                        if flag  == '--non-interactive':
-                            flags = flags.replace(flag, '')
+                        continue
                     elif 'n' in flag:
-                        flags = flags.replace(flag, flag.replace('n',''))
+                        flags = flags.replace(flag, flag.replace('n', ''))
+                flags = flags.replace('--non-interactive', '')
 
             prompt = '-p "%s"' % (self.prompt)
 
