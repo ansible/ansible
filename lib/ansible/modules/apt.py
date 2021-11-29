@@ -778,7 +778,13 @@ def get_field_of_deb(m, deb_file, field="Version"):
     return to_native(stdout).strip('\n')
 
 
-def install_deb(m, debs, cache, force, fail_on_autoremove, install_recommends, allow_unauthenticated, allow_downgrade, allow_change_held_packages, dpkg_options):
+def install_deb(
+        m, debs, cache, force, fail_on_autoremove, install_recommends,
+        allow_unauthenticated,
+        allow_downgrade,
+        allow_change_held_packages,
+        dpkg_options,
+):
     changed = False
     deps_to_install = []
     pkgs_to_install = []
@@ -1306,6 +1312,7 @@ def main():
                 install_deb(module, p['deb'], cache,
                             install_recommends=install_recommends,
                             allow_unauthenticated=allow_unauthenticated,
+                            allow_change_held_packages=allow_change_held_packages,
                             allow_downgrade=allow_downgrade,
                             force=force_yes, fail_on_autoremove=fail_on_autoremove, dpkg_options=p['dpkg_options'])
 
