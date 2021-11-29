@@ -5,6 +5,21 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
+v2.10.16rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2021-11-29
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- cli defaults for ssh args set to None as '' was bypassing normal default.
+
 v2.10.15
 ========
 
