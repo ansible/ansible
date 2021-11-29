@@ -97,7 +97,7 @@ class BecomeModule(BecomeBase):
                 for flag in list(flags.split(' ')):
                     if flag.startswith('--'):
                         if flag  == '--non-interactive':
-                            flags.replace(flag, '')
+                            flags = flags.replace(flag, '')
                     elif 'n' in flag:
                         flags = flags.replace(flag, flag.replace('n',''))
 
