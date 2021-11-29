@@ -5,6 +5,25 @@ ansible-core 2.11 "Hey Hey, What Can I Do" Release Notes
 .. contents:: Topics
 
 
+v2.11.7rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-11-29
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Ansible.ModuleUtils.LinkUtil - Ignore the ``LIB`` environment variable when loading the ``LinkUtil`` code
+- ``action_groups`` - Alias short names in collection action groups to FQCR of the owning collection (https://github.com/ansible/ansible/issues/76164)
+- hostname, fix module example using `strategy` instead of `use`.
+- set ssh host_key_checking defaults to True, restoring original behaviour (https://github.com/ansible/ansible/issues/75168)
+- validate_argument_spec - Skip suboption validation if the top level option is an invalid type (https://github.com/ansible/ansible/issues/75612).
+
 v2.11.6
 =======
 
