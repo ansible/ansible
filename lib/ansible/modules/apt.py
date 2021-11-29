@@ -101,6 +101,12 @@ options:
     type: bool
     default: 'no'
     version_added: "2.12"
+  allow_change_held_packages:
+    description:
+      - Allows changing the version of a package which is on the apt hold list
+    type: bool
+    default: 'no'
+    version_added: '2.13'
   upgrade:
     description:
       - If yes or safe, performs an aptitude safe-upgrade.
@@ -341,7 +347,7 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY3
 from ansible.module_utils.urls import fetch_file
 
@@ -655,7 +661,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
             build_dep=False, fixed=False, autoremove=False, fail_on_autoremove=False, only_upgrade=False,
-            allow_unauthenticated=False, allow_downgrade=False):
+            allow_unauthenticated=False, allow_downgrade=False, allow_change_held_packages=False):
     pkg_list = []
     packages = ""
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
@@ -733,6 +739,9 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         if allow_downgrade:
             cmd += " --allow-downgrades"
 
+        if allow_change_held_packages:
+            cmd += " --allow-change-held-packages"
+
         with PolicyRcD(m):
             rc, out, err = m.run_command(cmd)
 
@@ -769,7 +778,13 @@ def get_field_of_deb(m, deb_file, field="Version"):
     return to_native(stdout).strip('\n')
 
 
-def install_deb(m, debs, cache, force, fail_on_autoremove, install_recommends, allow_unauthenticated, allow_downgrade, dpkg_options):
+def install_deb(
+        m, debs, cache, force, fail_on_autoremove, install_recommends,
+        allow_unauthenticated,
+        allow_downgrade,
+        allow_change_held_packages,
+        dpkg_options,
+):
     changed = False
     deps_to_install = []
     pkgs_to_install = []
@@ -817,6 +832,7 @@ def install_deb(m, debs, cache, force, fail_on_autoremove, install_recommends, a
                                      fail_on_autoremove=fail_on_autoremove,
                                      allow_unauthenticated=allow_unauthenticated,
                                      allow_downgrade=allow_downgrade,
+                                     allow_change_held_packages=allow_change_held_packages,
                                      dpkg_options=expand_dpkg_options(dpkg_options))
         if not success:
             m.fail_json(**retvals)
@@ -1106,6 +1122,7 @@ def main():
             force_apt_get=dict(type='bool', default=False),
             allow_unauthenticated=dict(type='bool', default=False, aliases=['allow-unauthenticated']),
             allow_downgrade=dict(type='bool', default=False, aliases=['allow-downgrade', 'allow_downgrades', 'allow-downgrades']),
+            allow_change_held_packages=dict(type='bool', default=False),
             lock_timeout=dict(type='int', default=60),
         ),
         mutually_exclusive=[['deb', 'package', 'upgrade']],
@@ -1203,6 +1220,7 @@ def main():
     install_recommends = p['install_recommends']
     allow_unauthenticated = p['allow_unauthenticated']
     allow_downgrade = p['allow_downgrade']
+    allow_change_held_packages = p['allow_change_held_packages']
     dpkg_options = expand_dpkg_options(p['dpkg_options'])
     autoremove = p['autoremove']
     fail_on_autoremove = p['fail_on_autoremove']
@@ -1294,6 +1312,7 @@ def main():
                 install_deb(module, p['deb'], cache,
                             install_recommends=install_recommends,
                             allow_unauthenticated=allow_unauthenticated,
+                            allow_change_held_packages=allow_change_held_packages,
                             allow_downgrade=allow_downgrade,
                             force=force_yes, fail_on_autoremove=fail_on_autoremove, dpkg_options=p['dpkg_options'])
 
@@ -1357,7 +1376,8 @@ def main():
                     fail_on_autoremove=fail_on_autoremove,
                     only_upgrade=p['only_upgrade'],
                     allow_unauthenticated=allow_unauthenticated,
-                    allow_downgrade=allow_downgrade
+                    allow_downgrade=allow_downgrade,
+                    allow_change_held_packages=allow_change_held_packages,
                 )
 
                 # Store if the cache has been updated
