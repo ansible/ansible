@@ -5,6 +5,37 @@ ansible-core 2.12 "Dazed and Confused" Release Notes
 .. contents:: Topics
 
 
+v2.12.1rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2021-11-29
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- jinja2_native - keep same behavior on Python 3.10.
+
+Bugfixes
+--------
+
+- Ansible.ModuleUtils.LinkUtil - Ignore the ``LIB`` environment variable when loading the ``LinkUtil`` code
+- ansible-test - Automatic target requirements installation is now based on the target environment instead of the controller environment.
+- ansible-test - Fix Python real prefix detection when running in a ``venv`` virtual environment.
+- ansible-test - Fix installation and usage of ``pyyaml`` requirement for the ``import`` sanity test for collections.
+- ansible-test - Fix traceback in ``import`` sanity test on Python 2.7 when ``pip`` is not available.
+- ansible-test - Relocate constants to eliminate symlink.
+- ansible-test - Target integration test requirements are now correctly installed for target environments running on the controller.
+- ansible-test - Update the ``default`` containers to version 4.1.1, which includes the updated ``import`` sanity test requirements.
+- ansible-test - Use the legacy collection loader for ``import`` sanity tests on target-only Python versions.
+- set_fact/include_vars correctly handle delegation assignments within loops
+- setup - detect docker container with check for ./dockerenv or ./dockinit (https://github.com/ansible/ansible/pull/74349).
+- validate_argument_spec - Skip suboption validation if the top level option is an invalid type (https://github.com/ansible/ansible/issues/75612).
+
 v2.12.0
 =======
 
