@@ -69,6 +69,7 @@ DOCUMENTATION = """
                 key: password
 """
 
+import shlex
 
 from ansible.plugins.become import BecomeBase
 
@@ -94,12 +95,16 @@ class BecomeModule(BecomeBase):
         if self.get_option('become_pass'):
             self.prompt = '[sudo via ansible, key=%s] password:' % self._id
             if flags:  # this could be simplified, but kept as is for now for backwards string matching
-                for flag in list(flags.split(' ')):
+                reflag = []
+                for flag in shlex.split(flags):
                     if flag.startswith('--'):
-                        continue
+                        if flag != '--non-interactive')
+                            reflag.append(flag)
                     elif 'n' in flag:
-                        flags = flags.replace(flag, flag.replace('n', ''))
-                flags = flags.replace('--non-interactive', '')
+                        flag = flag.replace('n', '')
+                        reflag.append(flag)
+
+                flags = shlex.join(reflag)
 
             prompt = '-p "%s"' % (self.prompt)
 
