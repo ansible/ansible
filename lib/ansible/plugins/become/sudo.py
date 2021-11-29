@@ -98,11 +98,12 @@ class BecomeModule(BecomeBase):
 
                 reflag = []
                 for flag in shlex.split(flags):
-                    if flag.startswith('--'):
-                        if flag == '--non-interactive':
-                            continue
-                    elif 'n' in flag:
+                    if not flag.startswith('--') and 'n' in flag:
                         flag = flag.replace('n', '')
+                        if flag == '-':
+                            continue
+                    elif flag == '--non-interactive':
+                        continue
                     reflag.append(flag)
                 flags = shlex.join(reflag)
 
