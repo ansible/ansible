@@ -2043,6 +2043,20 @@ releases:
     - powershell-addtype-env-vars.yml
     - v2.10.15rc1_summary.yaml
     release_date: '2021-10-04'
+  2.10.16rc1:
+    changes:
+      bugfixes:
+      - cli defaults for ssh args set to None as '' was bypassing normal default.
+      release_summary: '| Release Date: 2021-11-29
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - fix_cli_ssh_defaults.yml
+    - v2.10.16rc1_summary.yaml
+    release_date: '2021-11-29'
   2.10.1rc1:
     changes:
       bugfixes:
