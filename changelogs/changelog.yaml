@@ -2044,3 +2044,30 @@ releases:
     - powershell-addtype-env-vars.yml
     - v2.11.6rc1_summary.yaml
     release_date: '2021-10-04'
+  2.11.7rc1:
+    changes:
+      bugfixes:
+      - Ansible.ModuleUtils.LinkUtil - Ignore the ``LIB`` environment variable when
+        loading the ``LinkUtil`` code
+      - '``action_groups`` - Alias short names in collection action groups to FQCR
+        of the owning collection (https://github.com/ansible/ansible/issues/76164)
+
+        '
+      - hostname, fix module example using `strategy` instead of `use`.
+      - set ssh host_key_checking defaults to True, restoring original behaviour (https://github.com/ansible/ansible/issues/75168)
+      - validate_argument_spec - Skip suboption validation if the top level option
+        is an invalid type (https://github.com/ansible/ansible/issues/75612).
+      release_summary: '| Release Date: 2021-11-29
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - 75635-fix-role-argspec-suboption-validation.yml
+    - 76164-alias-action-groups-shortnames.yml
+    - fix_hostname_example.yml
+    - set-ssh-host_key_checking-defaults.yaml
+    - v2.11.7rc1_summary.yaml
+    - win_LinkUtil-ignore-LIB.yml
+    release_date: '2021-11-29'
