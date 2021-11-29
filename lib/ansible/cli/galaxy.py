@@ -601,7 +601,7 @@ class GalaxyCLI(CLI):
             # v1 (roles only)
             - src: The source of the role, required if include is not set. Can be Galaxy role name, URL to a SCM repo or tarball.
               name: Downloads the role to the specified name, defaults to Galaxy name from Galaxy or name of repo if src is a URL.
-              scm: If src is a URL, specify the SCM. Only git or hd are supported and defaults ot git.
+              scm: If src is a URL, specify the SCM. Only git or hd are supported and defaults to git.
               version: The version of the role to download. Can also be tag, commit, or branch name and defaults to master.
               include: Path to additional requirements.yml files.
 

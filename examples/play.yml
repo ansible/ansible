@@ -290,7 +290,7 @@
     # http://ansible.github.com/modules.html
 
     # normally most will want to use 'k: v' notation instead of 'k=v' used above (but useful for adhoc execution).
-    # while both formats are mostly interchangable, `k: v` is more explicit, 'type friendly' and simpler to escape.
+    # while both formats are mostly interchangeable, `k: v` is more explicit, 'type friendly' and simpler to escape.
     - name: Ensure secret is locked down
       file:
          path: /tmp/secret

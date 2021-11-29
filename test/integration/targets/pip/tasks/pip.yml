@@ -112,7 +112,7 @@
     virtualenv: "{{ remote_tmp_dir }}/pipenv"
   register: req_installed
 
-- name: "check that a change didn't occurr this time (bug ansible#1705)"
+- name: "check that a change didn't occur this time (bug ansible#1705)"
   assert:
     that:
       - "not (req_installed is changed)"
@@ -124,7 +124,7 @@
     editable: True
   register: url_installed
 
-- name: "check that a change didn't occurr (bug ansible-modules-core#1645)"
+- name: "check that a change didn't occur (bug ansible-modules-core#1645)"
   assert:
     that:
       - "not (url_installed is changed)"
@@ -219,7 +219,7 @@
     state: absent
     name: "{{ remote_tmp_dir }}/pipenv"
 
-- name: install pip throught pip into fresh virtualenv
+- name: install pip through pip into fresh virtualenv
   pip:
     name: pip
     virtualenv: "{{ remote_tmp_dir }}/pipenv"
@@ -371,7 +371,7 @@
     version: "<100,!=1.0,>0.0.0"
   register: version2
 
-- name: assert no changes ocurred
+- name: assert no changes occurred
   assert:
     that: "not version2.changed"
 

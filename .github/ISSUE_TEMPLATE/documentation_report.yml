@@ -64,7 +64,7 @@ body:
           <em>Why?</em>
         </summary>
 
-        We would do it by ourselves but unfortunatelly, the curent
+        We would do it by ourselves but unfortunately, the current
         edition of GitHub Issue Forms Alpha does not support this yet 🤷
 
 
@@ -106,7 +106,7 @@ body:
     label: Ansible Version
     description: >-
       Paste verbatim output from `ansible --version` below, under
-      the prompt line. Please don't wrap it with tripple backticks — your
+      the prompt line. Please don't wrap it with triple backticks — your
       whole input will be turned into a code snippet automatically.
     render: console
     value: |
@@ -131,7 +131,7 @@ body:
     description: >-
       Paste verbatim output from `ansible-config dump --only-changed`
       below, under the prompt line.
-      Please don't wrap it with tripple backticks — your
+      Please don't wrap it with triple backticks — your
       whole input will be turned into a code snippet automatically.
     render: console
     value: |

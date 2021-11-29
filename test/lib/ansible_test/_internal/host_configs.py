@@ -449,7 +449,7 @@ class ControllerConfig(PosixConfig):
 
 
 class FallbackReason(enum.Enum):
-    """Reason fallback was peformed."""
+    """Reason fallback was performed."""
     ENVIRONMENT = enum.auto()
     PYTHON = enum.auto()
 

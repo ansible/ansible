@@ -72,7 +72,7 @@ end
 # Generate egg_info so that pkg_resources works
 #
 
-# Do the work in a fuction
+# Do the work in a function
 function gen_egg_info
     # Cannot use `test` on wildcards.
     # @see https://github.com/fish-shell/fish-shell/issues/5960

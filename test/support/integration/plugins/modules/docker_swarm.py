@@ -74,7 +74,7 @@ options:
       - Set to C(absent), to leave an existing cluster.
       - Set to C(remove), to remove an absent node from the cluster.
         Note that removing requires Docker SDK for Python >= 2.4.0.
-      - Set to C(inspect) to display swarm informations.
+      - Set to C(inspect) to display swarm information.
     type: str
     default: present
     choices:
@@ -233,7 +233,7 @@ EXAMPLES = '''
 
 RETURN = '''
 swarm_facts:
-  description: Informations about swarm.
+  description: Information about swarm.
   returned: success
   type: dict
   contains:

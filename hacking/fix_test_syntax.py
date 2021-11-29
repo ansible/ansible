@@ -70,7 +70,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     'path',
     help='Path to a directory that will be recursively walked. All .yml and .yaml files will be evaluated '
-         'and uses of tests as filters will be conveted to proper jinja test syntax files to have test syntax '
+         'and uses of tests as filters will be converted to proper jinja test syntax files to have test syntax '
          'fixed'
 )
 args = parser.parse_args()

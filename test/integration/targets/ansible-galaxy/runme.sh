@@ -239,7 +239,7 @@ pushd "${galaxy_testdir}"
 popd # ${galaxy_testdir}
 
 f_ansible_galaxy_status \
-    "role info non-existant role"
+    "role info non-existent role"
 
 role_testdir=$(mktemp -d)
 pushd "${role_testdir}"

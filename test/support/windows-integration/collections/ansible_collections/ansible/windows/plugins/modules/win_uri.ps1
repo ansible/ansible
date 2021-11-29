@@ -69,7 +69,7 @@ Function ConvertFrom-SafeJson {
     .SYNOPSIS
     Safely convert a JSON string to an object, this is like ConvertFrom-Json except it respect -ErrorAction.
 
-    .PAREMTER InputObject
+    .PARAMETER InputObject
     The input object string to convert from.
     #>
     [CmdletBinding()]

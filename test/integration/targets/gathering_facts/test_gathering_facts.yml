@@ -438,7 +438,7 @@
     - ohai
   gather_facts: yes
   tasks:
-    - name: Test that retrieving facter and ohai doesnt fail
+    - name: Test that retrieving facter and ohai doesn't fail
       assert:
         # not much to assert here, aside from not crashing, since test images dont have
         # facter/ohai

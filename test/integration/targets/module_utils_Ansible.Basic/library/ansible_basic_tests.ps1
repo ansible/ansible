@@ -87,7 +87,7 @@ Function Assert-DictionaryEqual {
 }
 
 Function Exit-Module {
-    # Make sure Exit actually calls exit and not our overriden test behaviour
+    # Make sure Exit actually calls exit and not our overridden test behaviour
     [Ansible.Basic.AnsibleModule]::Exit = { param([Int32]$rc) exit $rc }
     Write-Output -InputObject (ConvertTo-Json -InputObject $module.Result -Compress -Depth 99)
     $module.ExitJson()

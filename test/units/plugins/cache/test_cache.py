@@ -99,7 +99,7 @@ class TestCachePluginAdjudicator(unittest.TestCase):
         self.cache._plugin.set('wolf', 'animal')
         self.cache._plugin.set('another wolf', 'another animal')
 
-        # The adjudicator does't know about the new entries
+        # The adjudicator doesn't know about the new entries
         assert len(self.cache.keys()) == 2
         # But the cache itself does
         assert len(self.cache._plugin.keys()) == 3

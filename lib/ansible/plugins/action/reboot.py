@@ -299,7 +299,7 @@ class ActionModule(ActionBase):
                         self._connection.reset()
                     except AnsibleConnectionFailure:
                         pass
-                # Use exponential backoff with a max timout, plus a little bit of randomness
+                # Use exponential backoff with a max timeout, plus a little bit of randomness
                 random_int = random.randint(0, 1000) / 1000
                 fail_sleep = 2 ** fail_count + random_int
                 if fail_sleep > max_fail_sleep:

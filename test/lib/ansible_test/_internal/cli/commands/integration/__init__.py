@@ -43,7 +43,7 @@ def do_integration(
 def add_integration_common(
         parser,  # type: argparse.ArgumentParser
 ):
-    """Add common integration argumetns."""
+    """Add common integration arguments."""
     parser.add_argument(
         '--start-at',
         metavar='TARGET',

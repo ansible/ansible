@@ -1,4 +1,4 @@
-- name: ensure data was correctly defind
+- name: ensure data was correctly defined
   assert:
     that:
       - defined_var is defined

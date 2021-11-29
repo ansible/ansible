@@ -204,7 +204,7 @@ class TestFindIniFile:
         assert u'Ansible is being run in a world writable directory' in warning
         assert u'ignoring it as an ansible.cfg source' in warning
 
-    # ANSIBLE_CONFIG is sepcified
+    # ANSIBLE_CONFIG is specified
     @pytest.mark.parametrize('setup_env, expected', (([alt_cfg_file], alt_cfg_file), ([cfg_in_cwd], cfg_in_cwd)), indirect=['setup_env'])
     # All config files are present
     @pytest.mark.parametrize('setup_existing_files',

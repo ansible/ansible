@@ -178,7 +178,7 @@ class NetworkRemoteKeyValueParser(KeyValueParser):
 
         state.sections[f'target {section_name} (comma separated):'] = '\n'.join([
             f'  provider={ChoicesParser(REMOTE_PROVIDERS).document(state)}',
-            '  collection={collecton}',
+            '  collection={collection}',
             '  connection={connection}',
         ])
 

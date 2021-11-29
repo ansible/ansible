@@ -61,7 +61,7 @@ CHECK_YAML_VERSIONS = {}
 
 
 class ShellScriptTemplate:
-    """A simple substition template for shell scripts."""
+    """A simple substitution template for shell scripts."""
     def __init__(self, template):  # type: (t.Text) -> None
         self.template = template
 

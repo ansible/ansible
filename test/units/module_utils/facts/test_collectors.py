@@ -437,7 +437,7 @@ class TestServiceMgrFacts(BaseFactsTest):
         self.assertIsInstance(facts_dict, dict)
         self.assertEqual(facts_dict['service_mgr'], 'runit')
 
-    # TODO: reenable these tests when we can mock more easily
+    # TODO: re-enable these tests when we can mock more easily
 
 #    @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value=None)
 #    def test_sunos_fallback(self, mock_gfc):

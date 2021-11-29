@@ -289,7 +289,7 @@ $tests = [Ordered]@{
 
     }
 
-    "Modfiy ServiceType" = {
+    "Modify ServiceType" = {
         $service = New-Object -TypeName Ansible.Service.Service -ArgumentList $serviceName
         $service.ServiceType = [Ansible.Service.ServiceType]::Win32ShareProcess
 

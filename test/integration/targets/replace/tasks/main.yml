@@ -96,7 +96,7 @@
       - replace_cat3.stdout_lines[1] == 'We promptly judg3d antiqu3 ivory buckl3s for th3 n3xt priz3.'
 
 
-## test ^$ behavior in MULTILINE, and . behavior in absense of DOTALL
+## test ^$ behavior in MULTILINE, and . behavior in absence of DOTALL
 - name: quote everything between bof and eof
   replace:
     path: "{{ output_dir_test }}/pangrams.04.txt"

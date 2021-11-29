@@ -21,7 +21,7 @@ Function Convert-StringToSnakeCase($string) {
     return $string
 }
 
-# used by Convert-DictToSnakeCase to covert list entries from camelCase
+# used by Convert-DictToSnakeCase to convert list entries from camelCase
 # to snake_case
 Function Convert-ListToSnakeCase($list) {
     $snake_list = [System.Collections.ArrayList]@()

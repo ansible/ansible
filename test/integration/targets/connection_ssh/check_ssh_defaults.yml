@@ -4,7 +4,7 @@
     ansible_connection: ssh
     ansible_ssh_timeout: 10
   tasks:
-    - name: contain the maddness
+    - name: contain the madness
       block:
         - name: test all is good
           ping:

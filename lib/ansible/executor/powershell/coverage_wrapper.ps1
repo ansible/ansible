@@ -128,7 +128,7 @@ try {
 
     $module = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Payload.module_entry))
     $module_path = Join-Path -Path $temp_path -ChildPath "$($module_name).ps1"
-    Write-AnsibleLog "INFO - Ouputting module $module_name to temp file '$module_path'" "coverage_wrapper"
+    Write-AnsibleLog "INFO - Outputting module $module_name to temp file '$module_path'" "coverage_wrapper"
     Set-Content -LiteralPath $module_path -Value $module -Encoding $file_encoding
     $scripts.Add($module_path)
 

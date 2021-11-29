@@ -100,7 +100,7 @@ class DistributionFiles:
         return get_file_content(path)
 
     def _get_dist_file_content(self, path, allow_empty=False):
-        # cant find that dist file or it is incorrectly empty
+        # can't find that dist file or it is incorrectly empty
         if not _file_exists(path, allow_empty=allow_empty):
             return False, None
 
@@ -539,7 +539,7 @@ class Distribution(object):
 
         distro = distribution_facts['distribution']
 
-        # look for a os family alias for the 'distribution', if there isnt one, use 'distribution'
+        # look for a os family alias for the 'distribution', if there isn't one, use 'distribution'
         distribution_facts['os_family'] = self.OS_FAMILY.get(distro, None) or distro
 
         return distribution_facts

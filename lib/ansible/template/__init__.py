@@ -674,7 +674,7 @@ class Templar:
             - environment_class is used to determine the value of jinja2_native of the newly
               created Templar; if AnsibleNativeEnvironment is passed in environment_class
               new_templar.jinja2_native is set to True, any other value will result in
-              new_templar.jinja2_native being set to False unless overriden by the value
+              new_templar.jinja2_native being set to False unless overridden by the value
               passed in kwargs
 
         :kwarg environment_class: See above.
@@ -929,7 +929,7 @@ class Templar:
             # This only affects the scenario where the final result of templating
             # is a generator, and not where a filter creates a generator in the middle
             # of a template. See ``_unroll_iterator`` for the other case. This is probably
-            # unncessary
+            # unnecessary
             return list(thing)
 
         if self.jinja2_native:

@@ -2242,7 +2242,7 @@ class DarwinUser(User):
 
         super(DarwinUser, self).__init__(module)
 
-        # make the user hidden if option is set or deffer to system option
+        # make the user hidden if option is set or defer to system option
         if self.hidden is None:
             if self.system:
                 self.hidden = 1

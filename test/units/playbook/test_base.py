@@ -63,7 +63,7 @@ class TestBase(unittest.TestCase):
         self.assertIsInstance(self.b, base.Base)
         self.assertIsInstance(self.b, self.ClassUnderTest)
 
-    # dump me doesnt return anything or change anything so not much to assert
+    # dump me doesn't return anything or change anything so not much to assert
     def test_dump_me_empty(self):
         self.b.dump_me()
 
@@ -515,7 +515,7 @@ class TestBaseSubClass(TestBase):
     def test_attr_remote_user(self):
         ds = {'remote_user': 'testuser'}
         bsc = self._base_validate(ds)
-        # TODO: attemp to verify we called parent gettters etc
+        # TODO: attempt to verify we called parent getters etc
         self.assertEqual(bsc.remote_user, 'testuser')
 
     def test_attr_example_undefined(self):

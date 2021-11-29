@@ -48,7 +48,7 @@ class HardwareCollector(BaseFactCollector):
     _fact_ids = set(['processor',
                      'processor_cores',
                      'processor_count',
-                     # TODO: mounts isnt exactly hardware
+                     # TODO: mounts isn't exactly hardware
                      'mounts',
                      'devices'])
     _fact_class = Hardware

@@ -5,7 +5,7 @@
 - include_tasks: _remove_config.yaml
 
 - block:
-    - name: Merge the provided configuration with the exisiting running configuration
+    - name: Merge the provided configuration with the existing running configuration
       vyos.vyos.vyos_lldp_interfaces: &merged
         config:
           - name: 'eth1'

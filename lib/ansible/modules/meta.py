@@ -94,7 +94,7 @@ EXAMPLES = r'''
 - name: Refresh inventory to ensure new instances exist in inventory
   meta: refresh_inventory
 
-# Example showing how to clear all existing facts of targetted hosts
+# Example showing how to clear all existing facts of targeted hosts
 - name: Clear gathered facts from all currently targeted hosts
   meta: clear_facts
 

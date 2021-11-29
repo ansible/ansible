@@ -3,7 +3,7 @@
   gather_facts: no
   tasks:
     - block:
-      - name: EXPECTED FAILURE  # sate shippable
+      - name: EXPECTED FAILURE  # state shippable
         fail:
         when: inventory_hostname == 'host1'
       rescue:

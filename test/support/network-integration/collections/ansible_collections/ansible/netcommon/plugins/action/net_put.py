@@ -138,7 +138,7 @@ class ActionModule(ActionBase):
                 result["msg"] = "Exception received: %s" % exc
 
         if mode == "text":
-            # Cleanup tmp file expanded wih ansible vars
+            # Cleanup tmp file expanded with ansible vars
             os.remove(output_file)
 
         result["changed"] = changed

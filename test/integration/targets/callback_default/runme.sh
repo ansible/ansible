@@ -47,7 +47,7 @@ run_test_dryrun() {
 	# optional, pass --check to run a dry run
 	local chk=${2:-}
 
-	# outout was recorded w/o cowsay, ensure we reproduce the same
+	# output was recorded w/o cowsay, ensure we reproduce the same
 	export ANSIBLE_NOCOWS=1
 
 	# This needed to satisfy shellcheck that can not accept unquoted variable

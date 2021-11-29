@@ -95,7 +95,7 @@ ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version_raw.split('.')[:3]))
 
 
 def _get_expr_name(node):
-    """Funciton to get either ``attrname`` or ``name`` from ``node.func.expr``
+    """Function to get either ``attrname`` or ``name`` from ``node.func.expr``
 
     Created specifically for the case of ``display.deprecated`` or ``self._display.deprecated``
     """

@@ -25,10 +25,10 @@ Function Load-CommandUtils {
 Function Get-ExecutablePath {
     <#
     .SYNOPSIS
-    Get's the full path to an executable, will search the directory specified or ones in the PATH env var.
+    Gets the full path to an executable, will search the directory specified or ones in the PATH env var.
 
     .PARAMETER executable
-    [String]The executable to seach for.
+    [String]The executable to search for.
 
     .PARAMETER directory
     [String] If set, the directory to search in.

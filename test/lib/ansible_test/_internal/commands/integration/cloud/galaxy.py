@@ -80,7 +80,7 @@ class GalaxyProvider(CloudProvider):
     def __init__(self, args):  # type: (IntegrationConfig) -> None
         super().__init__(args)
 
-        # Cannot use the latest container image as either galaxy_ng 4.2.0rc2 or pulp 0.5.0 has sporatic issues with
+        # Cannot use the latest container image as either galaxy_ng 4.2.0rc2 or pulp 0.5.0 has sporadic issues with
         # dropping published collections in CI. Try running the tests multiple times when updating. Will also need to
         # comment out the cache tests in 'test/integration/targets/ansible-galaxy-collection/tasks/install.yml' when
         # the newer update is available.

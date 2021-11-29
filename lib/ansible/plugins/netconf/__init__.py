@@ -84,7 +84,7 @@ class NetconfBase(AnsiblePlugin):
             :execute_rpc: RPC to be execute on remote device
             :load_configuration: Loads given configuration on device
 
-        Note: rpc support depends on the capabilites of remote device.
+        Note: rpc support depends on the capabilities of remote device.
 
         :returns: Returns output received from remote device as byte string
         Note: the 'result' or 'error' from response should to be converted to object

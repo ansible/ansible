@@ -44,7 +44,7 @@
   register: error_module
   ignore_errors: yes
   vars:
-    # Running with coverage means the module is run from a script and not as a psuedo script in a pipeline. This
+    # Running with coverage means the module is run from a script and not as a pseudo script in a pipeline. This
     # results in a different error message being returned so we disable coverage collection for this task.
     _ansible_coverage_remote_output: ''
 

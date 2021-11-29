@@ -17,7 +17,7 @@ _SUB_PRESERVE = {'_ansible_delegated_vars': ('ansible_host', 'ansible_port', 'an
 CLEAN_EXCEPTIONS = (
     '_ansible_verbose_always',  # for debug and other actions, to always expand data (pretty jsonification)
     '_ansible_item_label',  # to know actual 'item' variable
-    '_ansible_no_log',  # jic we didnt clean up well enough, DON'T LOG
+    '_ansible_no_log',  # jic we didn't clean up well enough, DON'T LOG
     '_ansible_verbose_override',  # controls display of ansible_facts, gathering would be very noise with -v otherwise
 )
 
@@ -140,7 +140,7 @@ class TaskResult:
         elif self._result:
             result._result = module_response_deepcopy(self._result)
 
-            # actualy remove
+            # actually remove
             for remove_key in ignore:
                 if remove_key in result._result:
                     del result._result[remove_key]

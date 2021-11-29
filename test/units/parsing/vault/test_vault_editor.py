@@ -173,7 +173,7 @@ class TestVaultEditor(unittest.TestCase):
 
         tmp_path = editor_args[-1]
 
-        # simulate the tmp file being editted
+        # simulate the tmp file being edited
         tmp_file = open(tmp_path, 'wb')
         if new_src_contents:
             tmp_file.write(new_src_contents)
@@ -409,7 +409,7 @@ class TestVaultEditor(unittest.TestCase):
         self.assertEqual(src_file_plaintext, new_src_contents)
 
         # self.assertEqual(src_file_plaintext, new_src_contents,
-        #                 'The decrypted plaintext of the editted file is not the expected contents.')
+        #                 'The decrypted plaintext of the edited file is not the expected contents.')
 
     @patch('ansible.parsing.vault.subprocess.call')
     def test_edit_file_not_encrypted(self, mock_sp_call):

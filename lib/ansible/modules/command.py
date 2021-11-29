@@ -300,7 +300,7 @@ def main():
     stdin_add_newline = module.params['stdin_add_newline']
     strip = module.params['strip_empty_ends']
 
-    # we promissed these in 'always' ( _lines get autoaded on action plugin)
+    # we promised these in 'always' ( _lines get autoaded on action plugin)
     r = {'changed': False, 'stdout': '', 'stderr': '', 'rc': None, 'cmd': None, 'start': None, 'end': None, 'delta': None, 'msg': ''}
 
     if not shell and executable:

@@ -404,7 +404,7 @@ def type5_pw(password, salt=None):
         salt = random_password(length=4, chars=salt_chars)
     elif not set(salt) <= set(salt_chars):
         raise AnsibleFilterError(
-            "type5_pw salt used inproper characters, must be one of %s"
+            "type5_pw salt used improper characters, must be one of %s"
             % (salt_chars)
         )
 

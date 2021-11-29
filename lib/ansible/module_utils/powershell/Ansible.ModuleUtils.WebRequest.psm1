@@ -17,7 +17,7 @@ Function Get-AnsibleWebRequest {
     The protocol method to use, if omitted, will use the default value for the URI protocol specified.
 
     .PARAMETER FollowRedirects
-    Whether to follow redirect reponses. This is only valid when using a HTTP URI.
+    Whether to follow redirect responses. This is only valid when using a HTTP URI.
         all - Will follow all redirects
         none - Will follow no redirects
         safe - Will only follow redirects when GET or HEAD is used as the Method
@@ -265,7 +265,7 @@ Function Get-AnsibleWebRequest {
     # proxy to work with, otherwise just ignore the credentials property.
     if ($null -ne $proxy) {
         if ($ProxyUseDefaultCredential) {
-            # Weird hack, $web_request.Proxy returns an IWebProxy object which only gurantees the Credentials
+            # Weird hack, $web_request.Proxy returns an IWebProxy object which only guarantees the Credentials
             # property. We cannot set UseDefaultCredentials so we just set the Credentials to the
             # DefaultCredentials in the CredentialCache which does the same thing.
             $proxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials

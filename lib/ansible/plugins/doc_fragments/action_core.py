@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-# WARNING: this is mostly here as a convinence for documenting core behaviours, no plugin outside of ansbile-core should use this file
+# WARNING: this is mostly here as a convenience for documenting core behaviours, no plugin outside of ansbile-core should use this file
 class ModuleDocFragment(object):
 
     # requires action_common
@@ -36,7 +36,7 @@ attributes:
       support: full
 '''
 
-    # also requries core above
+    # also requires core above
     IMPORT = r'''
 attributes:
     action:

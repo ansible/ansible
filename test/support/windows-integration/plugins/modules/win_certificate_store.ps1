@@ -140,7 +140,7 @@ Function Get-CertFileType($path, $password) {
     } elseif ($certs[0].HasPrivateKey) {
         return "pkcs12"
     } elseif ($path.EndsWith(".pfx") -or $path.EndsWith(".p12")) {
-        # no way to differenciate a pfx with a der file so we must rely on the
+        # no way to differentiate a pfx with a der file so we must rely on the
         # extension
         return "pkcs12"
     } else {

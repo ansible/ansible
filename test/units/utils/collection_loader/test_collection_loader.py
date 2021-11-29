@@ -734,7 +734,7 @@ def test_fqcr_parsing_valid(ref, ref_type, expected_collection,
     ),
 )
 def test_fqcn_validation(fqcn, expected):
-    """Vefiry that is_valid_collection_name validates FQCN correctly."""
+    """Verify that is_valid_collection_name validates FQCN correctly."""
     assert AnsibleCollectionRef.is_valid_collection_name(fqcn) is expected
 
 

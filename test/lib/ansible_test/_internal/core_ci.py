@@ -352,7 +352,7 @@ class AnsibleCoreCI:
 
     @staticmethod
     def _create_http_error(response):  # type: (HttpResponse) -> ApplicationError
-        """Return an exception created from the given HTTP resposne."""
+        """Return an exception created from the given HTTP response."""
         response_json = response.json()
         stack_trace = ''
 

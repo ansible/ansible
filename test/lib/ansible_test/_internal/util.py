@@ -402,7 +402,7 @@ def pass_vars(required, optional):  # type: (t.Collection[str], t.Collection[str
 
 
 def remove_tree(path):  # type: (str) -> None
-    """Remove the specified directory, siliently continuing if the directory does not exist."""
+    """Remove the specified directory, silently continuing if the directory does not exist."""
     try:
         shutil.rmtree(to_bytes(path))
     except OSError as ex:

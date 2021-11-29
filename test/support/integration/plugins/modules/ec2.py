@@ -823,7 +823,7 @@ def boto_supports_volume_encryption():
 
 
 def create_block_device(module, ec2, volume):
-    # Not aware of a way to determine this programatically
+    # Not aware of a way to determine this programmatically
     # http://aws.amazon.com/about-aws/whats-new/2013/10/09/ebs-provisioned-iops-maximum-iops-gb-ratio-increased-to-30-1/
     MAX_IOPS_TO_SIZE_RATIO = 30
 

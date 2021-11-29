@@ -678,7 +678,7 @@ def ipaddr(value, query="", version=False, alias="ipaddr"):
     except Exception:
         pass
 
-    # This code checks if value maches the IP version the user wants, ie. if
+    # This code checks if value matches the IP version the user wants, ie. if
     # it's any version ("ipaddr()"), IPv4 ("ipv4()") or IPv6 ("ipv6()")
     # If version does not match, return False
     if version and v.version != version:
@@ -969,7 +969,7 @@ def _address_normalizer(value):
 
 def network_in_usable(value, test):
     """
-    Checks whether 'test' is a useable address or addresses in 'value'
+    Checks whether 'test' is a usable address or addresses in 'value'
 
     :param: value: The string representation of an address or network to test against.
     :param test: The string representation of an address or network to validate if it is within the range of 'value'.

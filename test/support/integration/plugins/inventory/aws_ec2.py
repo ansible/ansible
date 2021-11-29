@@ -529,7 +529,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         '''
             :param instance: an instance dict returned by boto3 ec2 describe_instances()
             :param hostnames: a list of hostname destination variables in order of preference
-            :return the preferred identifer for the host
+            :return the preferred identifier for the host
         '''
         if not hostnames:
             hostnames = ['dns-name', 'private-dns-name']

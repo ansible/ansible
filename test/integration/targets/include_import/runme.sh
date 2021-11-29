@@ -68,7 +68,7 @@ ANSIBLE_STRATEGY='free' ansible-playbook test_copious_include_tasks.yml  -i inve
 ANSIBLE_STRATEGY='free' ansible-playbook test_copious_include_tasks_fqcn.yml  -i inventory "$@"
 rm -f tasks/hello/*.yml
 
-# Inlcuded tasks should inherit attrs from non-dynamic blocks in parent chain
+# Included tasks should inherit attrs from non-dynamic blocks in parent chain
 # https://github.com/ansible/ansible/pull/38827
 ANSIBLE_STRATEGY='linear' ansible-playbook test_grandparent_inheritance.yml -i inventory "$@"
 ANSIBLE_STRATEGY='linear' ansible-playbook test_grandparent_inheritance_fqcn.yml -i inventory "$@"

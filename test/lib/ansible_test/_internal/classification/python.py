@@ -255,7 +255,7 @@ class ModuleUtilFinder(ast.NodeVisitor):
             # Various parts of the Ansible source tree execute within diffent modules.
             # To support import analysis, each file which uses relative imports must reside under a path defined here.
             # The mapping is a tuple consisting of a path pattern to match and a replacement path.
-            # During analyis, any relative imports not covered here will result in warnings, which can be fixed by adding the appropriate entry.
+            # During analysis, any relative imports not covered here will result in warnings, which can be fixed by adding the appropriate entry.
             path_map = (
                 ('^hacking/build_library/build_ansible/', 'build_ansible/'),
                 ('^lib/ansible/', 'ansible/'),

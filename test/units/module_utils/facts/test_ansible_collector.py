@@ -67,7 +67,7 @@ ALL_COLLECTOR_CLASSES = \
      EnvFactCollector,
      DnsFactCollector,
      PythonFactCollector,
-     # FIXME: re-enable when hardware doesnt Hardware() doesnt munge self.facts
+     # FIXME: re-enable when hardware doesn't Hardware() doesn't munge self.facts
      #                         HardwareCollector
      NetworkCollector,
      VirtualCollector,

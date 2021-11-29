@@ -8,7 +8,7 @@
       when: test is not defined
       loop: "{{ groups['all'] | difference(['localhost']) }}"
 
-    - name: ensure we didnt create it on current host
+    - name: ensure we didn't create it on current host
       assert:
         that:
           - test is undefined

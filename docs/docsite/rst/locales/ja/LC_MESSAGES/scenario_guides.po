@@ -3698,7 +3698,7 @@ msgid "While you don't need to know how it works, it may be interesting to know 
 msgstr "どのように機能するかを知る必要はありませんが、返される変数の種類を把握しておくといいでしょう、"
 
 #: ../../rst/scenario_guides/guide_rax.rst:317
-msgid "The ``rax_facts`` module provides facts as followings, which match the ``rax.py`` inventory script:"
+msgid "The ``rax_facts`` module provides facts as following, which match the ``rax.py`` inventory script:"
 msgstr "``rax_facts`` モジュールは、``rax.py`` インベントリースクリプトに一致する以下のようなファクトを提供します。"
 
 #: ../../rst/scenario_guides/guide_rax.rst:408
@@ -5191,7 +5191,7 @@ msgid "Network routes"
 msgstr "ネットワークルート"
 
 #: ../../rst/scenario_guides/vmware_rest_scenarios/vm_tool_information.rst:82
-msgid "Use ``vcenter_vm_guest_networking_routes_info`` to explore the route table of your vitual machine."
+msgid "Use ``vcenter_vm_guest_networking_routes_info`` to explore the route table of your virtual machine."
 msgstr "仮想マシンのルートテーブルを確認するには、``vcenter_vm_guest_networking_routes_info`` を使用します。"
 
 #: ../../rst/scenario_guides/vmware_scenarios/faq.rst:5
@@ -6648,7 +6648,7 @@ msgid "instanceUuid (str, optional)"
 msgstr "instanceUuid (str, optional)"
 
 #: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory_vm_attributes.rst:257
-msgid "VirtualCenter-specific 128-bit UUID of a virtual machine, represented as a hexademical string. This identifier is used by VirtualCenter to uniquely identify all virtual machine instances, including those that may share the same SMBIOS UUID."
+msgid "VirtualCenter-specific 128-bit UUID of a virtual machine, represented as a hexadecimal string. This identifier is used by VirtualCenter to uniquely identify all virtual machine instances, including those that may share the same SMBIOS UUID."
 msgstr "仮想マシンの VirtualCenter 固有の 128 ビットの UUID は 16 進法として表示されます。この識別子は、同じ SMBIOS UUID を共有する可能性のある仮想マシンインスタンスを含め、すべての仮想マシンインスタンスを一意に識別するために VirtualCenter により使用されます。"
 
 #: ../../rst/scenario_guides/vmware_scenarios/vmware_inventory_vm_attributes.rst:260

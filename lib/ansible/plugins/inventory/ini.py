@@ -342,7 +342,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         try:
             v = ast.literal_eval(v)
         # Using explicit exceptions.
-        # Likely a string that literal_eval does not like. We wil then just set it.
+        # Likely a string that literal_eval does not like. We will then just set it.
         except ValueError:
             # For some reason this was thought to be malformed.
             pass

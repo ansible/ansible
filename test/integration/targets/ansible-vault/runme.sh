@@ -54,8 +54,8 @@ WRONG_RC=$?
 echo "rc was $WRONG_RC (5 is expected)"
 [ $WRONG_RC -eq 5 ]
 
-# try to view the file encrypted with the vault-password we didnt specify
-# to verify we didnt choose the wrong vault-id
+# try to view the file encrypted with the vault-password we didn't specify
+# to verify we didn't choose the wrong vault-id
 ansible-vault view "$@" --vault-id vault-password encrypted-vault-password
 
 FORMAT_1_1_HEADER="\$ANSIBLE_VAULT;1.1;AES256"
@@ -194,7 +194,7 @@ WRONG_RC=$?
 echo "rc was $WRONG_RC (1 is expected)"
 [ $WRONG_RC -eq 1 ]
 
-# try specifying a --encrypt-vault-id that doesnt exist, should exit with an error indicating
+# try specifying a --encrypt-vault-id that doesn't exist, should exit with an error indicating
 # that --encrypt-vault-id and the known vault-ids
 ansible-vault encrypt "$@" --vault-password-file vault-password --encrypt-vault-id doesnt_exist "${TEST_FILE}" && :
 WRONG_RC=$?
@@ -360,7 +360,7 @@ head -1 "${TEST_FILE_EDIT}" | grep "${FORMAT_1_1_HEADER}"
 ansible-vault encrypt "$@" --vault-id vault_password@vault-password "${TEST_FILE_EDIT2}"
 
 # verify that we aren't prompted for a new vault password on edit if we are running interactively (ie, with prompts)
-# have to use setsid nd --ask-vault-pass to force a prompt to simulate.
+# have to use setsid and --ask-vault-pass to force a prompt to simulate.
 # See https://github.com/ansible/ansible/issues/35834
 setsid sh -c 'tty; echo password |ansible-vault edit --ask-vault-pass vault_test.yml' < /dev/null > log 2>&1 && :
 grep  'New Vault password' log && :
@@ -388,8 +388,8 @@ echo "rc was $WRONG_RC (5 is expected)"
 # but this time specify with --encrypt-vault-id, but specifying vault-id names (instead of default)
 # ansible-vault encrypt "$@" --vault-id from_vault_password@vault-password --vault-id from_encrypted_vault_password@encrypted-vault-password --encrypt-vault-id from_encrypted_vault_password "${TEST_FILE(_ENC_PASSWORD}"
 
-# try to view the file encrypted with the vault-password we didnt specify
-# to verify we didnt choose the wrong vault-id
+# try to view the file encrypted with the vault-password we didn't specify
+# to verify we didn't choose the wrong vault-id
 # ansible-vault view "$@" --vault-id vault-password "${TEST_FILE_ENC_PASSWORD}" && :
 # WRONG_RC=$?
 # echo "rc was $WRONG_RC (1 is expected)"

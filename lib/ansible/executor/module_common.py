@@ -642,7 +642,7 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple(), remote_is_local=
         interpreter_out = templar.template(task_vars.get(interpreter_config).strip())
 
     if not interpreter_out:
-        # nothing matched(None) or in case someone configures empty string or empty intepreter
+        # nothing matched(None) or in case someone configures empty string or empty interpreter
         interpreter_out = interpreter
         shebang = None
     elif interpreter_out == interpreter:

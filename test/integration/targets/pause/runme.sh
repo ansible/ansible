@@ -23,7 +23,7 @@ if sleep 0 | ansible localhost -m pause -a 'seconds=1' 2>&1 | grep '\[WARNING\]:
     echo "Incorrectly issued warning when run in the background"
     exit 1
 else
-    echo "Succesfully ran in the background with no warning"
+    echo "Successfully ran in the background with no warning"
 fi
 
 # Test redirecting stdout

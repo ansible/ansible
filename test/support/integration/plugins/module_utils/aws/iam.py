@@ -19,7 +19,7 @@ def get_aws_account_id(module):
 
     get_account_id tries too find out the account that we are working
     on.  It's not guaranteed that this will be easy so we try in
-    several different ways.  Giving either IAM or STS privilages to
+    several different ways.  Giving either IAM or STS privileges to
     the account should be enough to permit this.
     """
     account_id = None

@@ -27,7 +27,7 @@ ansible-playbook -i ../../inventory injection/avoid_slurp_return.yml -e "output_
 # Change the known_hosts file to avoid changing the test environment
 export ANSIBLE_CACHE_PLUGIN=jsonfile
 export ANSIBLE_CACHE_PLUGIN_CONNECTION="${OUTPUT_DIR}/cache"
-# Create a non-root user account and configure SSH acccess for that account
+# Create a non-root user account and configure SSH access for that account
 ansible-playbook -i "${INVENTORY_PATH}" setup_unreadable_test.yml -e "output_dir=${OUTPUT_DIR}" "$@"
 
 # Run the tests as the unprivileged user without become to test the use of the stat module from the fetch module

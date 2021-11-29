@@ -133,7 +133,7 @@ def test_no_tty_fallback(atomic_am, atomic_mocks, fake_stat, mocker):
 
 @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
 def test_existing_file_stat_failure(atomic_am, atomic_mocks, mocker):
-    """Failure to stat an existing file in order to copy permissions propogates the error (unless EPERM)"""
+    """Failure to stat an existing file in order to copy permissions propagates the error (unless EPERM)"""
     atomic_mocks['stat'].side_effect = OSError()
     atomic_mocks['path_exists'].return_value = True
 

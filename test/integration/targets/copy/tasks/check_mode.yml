@@ -36,7 +36,7 @@
       - check_mode_subdir_real_stat.stat.exists
 
   # Do some finagling here. First, use check_mode to ensure it never gets
-  # created. Then actualy create it, and use check_mode to ensure that doing
+  # created. Then actually create it, and use check_mode to ensure that doing
   # the same copy gets marked as no change.
   #
   # This same pattern repeats for several other src/dest combinations.
