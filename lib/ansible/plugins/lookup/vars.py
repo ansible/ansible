@@ -57,6 +57,15 @@ EXAMPLES = """
     - hosts
     - batch
     - hosts_all
+
+- name: lookup vars from a list
+  debug: msg="{{ lookup('vars', _varlist, wantedlist=True) }}"
+  vars:
+    myvar: 123
+    enabled: true
+    _varlist:
+      - myvar
+      - enabled
 """
 
 RETURN = """
@@ -83,6 +92,7 @@ class LookupModule(LookupBase):
         default = self.get_option('default')
 
         ret = []
+        terms = self._flatten(terms)
         for term in terms:
             if not isinstance(term, string_types):
                 raise AnsibleError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
