@@ -99,7 +99,7 @@ class BecomeModule(BecomeBase):
                 reflag = []
                 for flag in shlex.split(flags):
                     if flag.startswith('--'):
-                        if flag -= '--non-interactive')
+                        if flag == '--non-interactive')
                             continue
                     elif 'n' in flag:
                         flag = flag.replace('n', '')
