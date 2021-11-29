@@ -94,13 +94,11 @@ class BecomeModule(BecomeBase):
         if self.get_option('become_pass'):
             self.prompt = '[sudo via ansible, key=%s] password:' % self._id
             if flags:  # this could be simplified, but kept as is for now for backwards string matching
-
                 for flag in list(flags.split(' ')):
-                    if flag  == '--non-interactive':
-                        flags.replace(flag, '')
                     if flag.startswith('--'):
-                        continue
-                    if 'n' in flag:
+                        if flag  == '--non-interactive':
+                            flags.replace(flag, '')
+                    elif 'n' in flag:
                         flags = flags.replace(flag, flag.replace('n',''))
 
             prompt = '-p "%s"' % (self.prompt)
