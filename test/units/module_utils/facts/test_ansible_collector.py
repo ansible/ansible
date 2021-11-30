@@ -493,7 +493,7 @@ class TestPkgMgrOSTreeFacts(TestPkgMgrFacts):
         # Recollect facts
         self.setUp()
         self.assertIn('pkg_mgr', self.facts)
-        self.assertEqual(self.facts['pkg_mgr'], 'atomic_container')
+        self.assertEqual(self.facts['pkg_mgr'], 'rpm_ostree_pkg')
 
     def test_is_rhel_edge_ostree(self):
         self._recollect_facts('RedHat', 8)

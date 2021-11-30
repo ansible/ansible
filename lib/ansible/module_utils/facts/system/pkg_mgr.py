@@ -15,7 +15,7 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 # A list of dicts.  If there is a platform with more than one
 # package manager, put the preferred one last.  If there is an
 # ansible module, use that as the value for the 'name' key.
-PKG_MGRS = [{'path': '/usr/bin/rpm-ostree', 'name': 'atomic_container'},
+PKG_MGRS = [{'path': '/usr/bin/rpm-ostree', 'name': 'rpm_ostree_pkg'},
             {'path': '/usr/bin/yum', 'name': 'yum'},
             {'path': '/usr/bin/dnf', 'name': 'dnf'},
             {'path': '/usr/bin/apt-get', 'name': 'apt'},
@@ -70,7 +70,7 @@ class PkgMgrFactCollector(BaseFactCollector):
 
     def _check_rh_versions(self, pkg_mgr_name, collected_facts):
         if os.path.exists('/run/ostree-booted'):
-            return "atomic_container"
+            return "rpm_ostree_pkg"
 
         if collected_facts['ansible_distribution'] == 'Fedora':
             try:

@@ -1,0 +1,5 @@
+---
+minor_changes:
+- Use `rpm_ostree_pkg` module for package installation on OSTree
+  systems instead of `atomic_container`, which is no longer under
+  development.

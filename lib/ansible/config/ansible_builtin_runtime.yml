@@ -498,12 +498,6 @@ plugin_routing:
       redirect: community.general.ali_instance
     ali_instance_info:
       redirect: community.general.ali_instance_info
-    atomic_container:
-      redirect: community.general.atomic_container
-    atomic_host:
-      redirect: community.general.atomic_host
-    atomic_image:
-      redirect: community.general.atomic_image
     clc_aa_policy:
       redirect: community.general.clc_aa_policy
     clc_alert_policy:
@@ -1182,6 +1176,8 @@ plugin_routing:
       redirect: community.general.rax_scaling_group
     rax_scaling_policy:
       redirect: community.general.rax_scaling_policy
+    rpm_ostree_pkg:
+      redirect: community.general.rpm_ostree_pkg
     scaleway_image_facts:
       redirect: community.general.scaleway_image_facts
     scaleway_ip_facts:
