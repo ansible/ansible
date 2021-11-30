@@ -1,0 +1,160 @@
+# Test code for integration of until and loop options
+# Copyright: (c) 2018, Ansible Project
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <https://www.gnu.org/licenses/>.
+- shell: '{{ ansible_python.executable }} -c "import tempfile; print(tempfile.mkstemp()[1])"'
+  register: tempfilepaths
+  # 0 to 3:
+  loop: "{{ range(0, 3 + 1) | list }}"
+
+- set_fact:
+    "until_tempfile_path_{{ idx }}": "{{ tmp_file.stdout }}"
+    until_tempfile_path_var_names: >
+        {{ [ 'until_tempfile_path_' + idx | string ] + until_tempfile_path_var_names | default([]) }}
+  loop: "{{ tempfilepaths.results }}"
+  loop_control:
+    index_var: idx
+    loop_var: tmp_file
+
+# `select` filter is only available since Jinja 2.7,
+# thus tests are failing under CentOS in CI
+#- set_fact:
+#    until_tempfile_path_var_names: >
+#      {{ vars | select('match', '^until_tempfile_path_') | list }}
+
+- name: loop and until with 6 retries
+  shell: echo "run" >> {{ lookup('vars', tmp_file_var) }} && wc -w < {{ lookup('vars', tmp_file_var) }} | tr -d ' '
+  register: runcount
+  until: runcount.stdout | int == idx + 3
+  retries: "{{ idx + 2 }}"
+  delay: 0.01
+  loop: "{{ until_tempfile_path_var_names }}"
+  loop_control:
+    index_var: idx
+    loop_var: tmp_file_var
+
+- debug: var=runcount
+
+- assert:
+    that: item.stdout | int == idx + 3
+  loop: "{{ runcount.results }}"
+  loop_control:
+    index_var: idx
+
+- &cleanup-tmp-files
+  name: Empty tmp files
+  copy:
+    content: ""
+    dest: "{{ lookup('vars', tmp_file_var) }}"
+  loop: "{{ until_tempfile_path_var_names }}"
+  loop_control:
+    index_var: idx
+    loop_var: tmp_file_var
+
+- name: loop with specified max retries
+  shell: echo "run" >> {{ lookup('vars', tmp_file_var) }}
+  until: 1==0
+  retries: 5
+  delay: 0.01
+  ignore_errors: true
+  loop: "{{ until_tempfile_path_var_names }}"
+  loop_control:
+    index_var: idx
+    loop_var: tmp_file_var
+
+- name: validate output
+  shell: wc -l < {{ lookup('vars', tmp_file_var) }}
+  register: runcount
+  loop: "{{ until_tempfile_path_var_names }}"
+  loop_control:
+    index_var: idx
+    loop_var: tmp_file_var
+
+- assert:
+    that: item.stdout | int == 6  # initial + 5 retries
+  loop: "{{ runcount.results }}"
+
+- *cleanup-tmp-files
+
+- name: Test failed_when impacting until
+  shell: echo "run" >> {{ lookup('vars', tmp_file_var) }}
+  register: failed_when_until
+  failed_when: True
+  until: failed_when_until is successful
+  retries: 3
+  delay: 0.5
+  ignore_errors: True
+  loop: "{{ until_tempfile_path_var_names }}"
+  loop_control:
+    index_var: idx
+    loop_var: tmp_file_var
+
+- name: Get attempts number
+  shell: wc -l < {{ lookup('vars', tmp_file_var) }}
+  register: runcount
+  loop: "{{ until_tempfile_path_var_names }}"
+  loop_control:
+    index_var: idx
+    loop_var: tmp_file_var
+
+- assert:
+    that: item.stdout | int == 3 + 1
+  loop: "{{ runcount.results }}"
+
+- *cleanup-tmp-files
+
+- name: Test changed_when impacting until
+  shell: echo "run" >> {{ lookup('vars', tmp_file_var) }}
+  register: changed_when_until
+  changed_when: False
+  until: changed_when_until is changed
+  retries: 3
+  delay: 0.5
+  ignore_errors: True
+  loop: "{{ until_tempfile_path_var_names }}"
+  loop_control:
+    index_var: idx
+    loop_var: tmp_file_var
+
+- name: Get attempts number
+  shell: wc -l < {{ lookup('vars', tmp_file_var) }}
+  register: runcount
+  loop: "{{ until_tempfile_path_var_names }}"
+  loop_control:
+    index_var: idx
+    loop_var: tmp_file_var
+
+- assert:
+    that: item.stdout | int == 3 + 1
+  loop: "{{ runcount.results }}"
+
+- *cleanup-tmp-files
+
+- name: Test access to attempts in changed_when/failed_when
+  shell: 'true'
+  register: changed_when_attempts
+  until: 1 == 0
+  retries: 5
+  delay: 0.5
+  failed_when: changed_when_attempts.attempts > 6
+  loop: "{{ runcount.results }}"
+
+- &wipe-out-tmp-files
+  file: path="{{ lookup('vars', tmp_file_var) }}" state=absent
+  loop: "{{ until_tempfile_path_var_names }}"
+  loop_control:
+    index_var: idx
+    loop_var: tmp_file_var
