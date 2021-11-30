@@ -42,5 +42,5 @@ redhat_packages_py3:
 # Do not install requests[security] via pip. It will cause test failures.
 # See https://github.com/ansible/ansible/pull/66319
 pip_packages:
-  - psutil
-  - pymongo
+  - psutil==5.8.0
+  - pymongo==3.12.2
