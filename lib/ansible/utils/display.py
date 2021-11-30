@@ -221,7 +221,7 @@ class Display(metaclass=Singleton):
                 (out, err) = cmd.communicate()
                 if cmd.returncode:
                     raise Exception
-                self.cows_available = set([to_text(c) for c in out.split()])
+                self.cows_available = {to_text(c) for c in out.split()}  # set comprehension
                 if C.ANSIBLE_COW_ACCEPTLIST and any(C.ANSIBLE_COW_ACCEPTLIST):
                     self.cows_available = set(C.ANSIBLE_COW_ACCEPTLIST).intersection(self.cows_available)
             except Exception:
