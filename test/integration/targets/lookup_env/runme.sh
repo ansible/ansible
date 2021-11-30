@@ -9,5 +9,5 @@ ansible -m debug -a msg="{{ lookup('env', 'USR', default='nobody')}}" localhost 
 USR='' ansible -m debug -a msg="{{ lookup('env', 'USR', default='nobody')}}" localhost |grep -v nobody
 
 # this should fail with undefined
-result=$(ansible -m debug -a msg="{{ lookup('env', 'USR', default=Undefined)}}" localhost)
+ansible -m debug -a msg="{{ lookup('env', 'USR', default=Undefined)}}" localhost && exit 1 || exit 0
 
