@@ -1,0 +1,362 @@
+# Test code for the find module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- set_fact: output_dir_test={{output_dir}}/test_find
+
+- name: make sure our testing sub-directory does not exist
+  file:
+    path: "{{ output_dir_test }}"
+    state: absent
+
+- name: create our testing sub-directory
+  file:
+    path: "{{ output_dir_test }}"
+    state: directory
+
+##
+## find
+##
+
+- name: make some directories
+  file:
+      path: "{{ output_dir_test }}/{{ item }}"
+      state: directory
+  with_items:
+      - a/b/c/d
+      - e/f/g/h
+
+- name: make some files
+  copy:
+      dest: "{{ output_dir_test }}/{{ item }}"
+      content: 'data'
+  with_items:
+      - a/1.txt
+      - a/b/2.jpg
+      - a/b/c/3
+      - a/b/c/d/4.xml
+      - e/5.json
+      - e/f/6.swp
+      - e/f/g/7.img
+      - e/f/g/h/8.ogg
+
+- name: find the directories
+  find:
+      paths: "{{ output_dir_test }}"
+      file_type: directory
+      recurse: yes
+  register: find_test0
+- debug: var=find_test0
+- name: validate directory results
+  assert:
+      that:
+          - 'find_test0.changed is defined'
+          - 'find_test0.examined is defined'
+          - 'find_test0.files is defined'
+          - 'find_test0.matched is defined'
+          - 'find_test0.msg is defined'
+          - 'find_test0.matched == 8'
+          - 'find_test0.files | length == 8'
+          - 'find_test0.examined == 16'
+
+- name: find the xml and img files
+  find:
+      paths: "{{ output_dir_test }}"
+      file_type: file
+      patterns: "*.xml,*.img"
+      recurse: yes
+  register: find_test1
+- debug: var=find_test1
+- name: validate directory results
+  assert:
+      that:
+          - 'find_test1.matched == 2'
+          - 'find_test1.files | length == 2'
+
+- name: find the xml file
+  find:
+      paths: "{{ output_dir_test }}"
+      patterns: "*.xml"
+      recurse: yes
+  register: find_test2
+- debug: var=find_test2
+- name: validate gr_name and pw_name are defined
+  assert:
+      that:
+          - 'find_test2.matched == 1'
+          - 'find_test2.files[0].pw_name is defined'
+          - 'find_test2.files[0].gr_name is defined'
+
+- name: find the xml file with empty excludes
+  find:
+      paths: "{{ output_dir_test }}"
+      patterns: "*.xml"
+      recurse: yes
+      excludes: []
+  register: find_test3
+- debug: var=find_test3
+- name: validate gr_name and pw_name are defined
+  assert:
+      that:
+          - 'find_test3.matched == 1'
+          - 'find_test3.files[0].pw_name is defined'
+          - 'find_test3.files[0].gr_name is defined'
+
+- name: Copy some files into the test dir
+  copy:
+      src: "{{ item }}"
+      dest: "{{ output_dir_test }}/{{ item }}"
+      mode: 0644
+  with_items:
+      - a.txt
+      - log.txt
+
+- name: Ensure '$' only matches the true end of the file with read_whole_file, not a line
+  find:
+      paths: "{{ output_dir_test }}"
+      patterns: "*.txt"
+      contains: "KO$"
+      read_whole_file: true
+  register: whole_no_match
+
+- debug: var=whole_no_match
+
+- assert:
+      that:
+          - whole_no_match.matched == 0
+
+- name: Match the end of the file successfully
+  find:
+      paths: "{{ output_dir_test }}"
+      patterns: "*.txt"
+      contains: "OK$"
+      read_whole_file: true
+  register: whole_match
+
+- debug: var=whole_match
+
+- assert:
+      that:
+          - whole_match.matched == 1
+
+- name: When read_whole_file=False, $ should match an individual line
+  find:
+      paths: "{{ output_dir_test }}"
+      patterns: "*.txt"
+      contains: ".*KO$"
+      read_whole_file: false
+  register: match_end_of_line
+
+- debug: var=match_end_of_line
+
+- assert:
+      that:
+          - match_end_of_line.matched == 1
+
+- name: When read_whole_file=True, match across line boundaries
+  find:
+      paths: "{{ output_dir_test }}"
+      patterns: "*.txt"
+      contains: "has\na few"
+      read_whole_file: true
+  register: match_line_boundaries
+
+- debug: var=match_line_boundaries
+
+- assert:
+      that:
+          - match_line_boundaries.matched == 1
+
+- name: When read_whole_file=False, do not match across line boundaries
+  find:
+      paths: "{{ output_dir_test }}"
+      patterns: "*.txt"
+      contains: "has\na few"
+      read_whole_file: false
+  register: no_match_line_boundaries
+
+- debug: var=no_match_line_boundaries
+
+- assert:
+      that:
+          - no_match_line_boundaries.matched == 0
+
+- block:
+    - set_fact:
+        mypath: /idontexist{{lookup('pipe', 'mktemp')}}
+
+    - find:
+        paths: '{{mypath}}'
+        patterns: '*'
+      register: failed_path
+
+    - assert:
+        that:
+            - failed_path.files == []
+            - 'failed_path.msg == "Not all paths examined, check warnings for details"'
+            - mypath in failed_path.skipped_paths
+
+- name: test number of examined directories/files
+  block:
+    - name: Get all files/directories in the path
+      find:
+        paths: "{{ output_dir_test }}"
+        recurse: yes
+        file_type: any
+      register: total_contents
+
+    - assert:
+        that:
+          - total_contents.matched == 18
+          - total_contents.examined == 18
+
+    - name: Get files and directories with depth
+      find:
+        paths: "{{ output_dir_test }}"
+        recurse: yes
+        file_type: any
+        depth: 2
+      register: contents_with_depth
+
+    - assert:
+        that:
+          - contents_with_depth.matched == 8
+          # dir contents are considered until the depth exceeds the requested depth
+          # there are 8 files/directories in the requested depth and 4 that exceed it by 1
+          - contents_with_depth.examined == 12
+
+    - name: Find files with depth
+      find:
+        paths: "{{ output_dir_test }}"
+        depth: 2
+        recurse: yes
+      register: files_with_depth
+
+    - assert:
+        that:
+          - files_with_depth.matched == 4
+          # dir contents are considered until the depth exceeds the requested depth
+          # there are 8 files/directories in the requested depth and 4 that exceed it by 1
+          - files_with_depth.examined == 12
+- name: exclude with regex
+  find:
+    paths: "{{ output_dir_test }}"
+    recurse: yes
+    use_regex: true
+    exclude: .*\.ogg
+  register: find_test3
+
+- set_fact:
+    find_test3_list: "{{ find_test3.files|map(attribute='path') }}"
+
+- name: assert we skipped the ogg file
+  assert:
+    that:
+      - '"{{ output_dir_test }}/e/f/g/h/8.ogg" not in find_test3_list'
+
+- name: create our age/size testing sub-directory
+  file:
+    path: "{{ output_dir_test }}/astest"
+    state: directory
+
+- name: create test file with old timestamps
+  file:
+    path: "{{ output_dir_test }}/astest/old.txt"
+    state: touch
+    modification_time: "202001011200.0"
+
+- name: create test file with current timestamps
+  file:
+    path: "{{ output_dir_test }}/astest/new.txt"
+    state: touch
+
+- name: create hidden test file with current timestamps
+  file:
+    path: "{{ output_dir_test }}/astest/.hidden.txt"
+    state: touch
+
+- name: find files older than 1 week
+  find:
+    path: "{{ output_dir_test }}/astest"
+    age: 1w
+    hidden: true
+  register: result
+
+- set_fact:
+    astest_list: "{{ result.files|map(attribute='path') }}"
+
+- name: assert we only find the old file
+  assert:
+    that:
+      - result.matched == 1
+      - '"{{ output_dir_test }}/astest/old.txt" in astest_list'
+
+- name: find files newer than 1 week
+  find:
+    path: "{{ output_dir_test }}/astest"
+    age: -1w
+  register: result
+
+- set_fact:
+    astest_list: "{{ result.files|map(attribute='path') }}"
+
+- name: assert we only find the current file
+  assert:
+    that:
+      - result.matched == 1
+      - '"{{ output_dir_test }}/astest/new.txt" in astest_list'
+
+- name: add some content to the new file
+  shell: "echo hello world > {{ output_dir_test }}/astest/new.txt"
+
+- name: find files with MORE than 5 bytes, also get checksums
+  find:
+    path: "{{ output_dir_test }}/astest"
+    size: 5
+    hidden: true
+    get_checksum: true
+  register: result
+
+- set_fact:
+    astest_list: "{{ result.files|map(attribute='path') }}"
+
+- name: assert we only find the hello world file
+  assert:
+    that:
+      - result.matched == 1
+      - '"{{ output_dir_test }}/astest/new.txt" in astest_list'
+      - '"checksum" in result.files[0]'
+
+- name: find ANY item with LESS than 5 bytes, also get checksums
+  find:
+    path: "{{ output_dir_test }}/astest"
+    size: -5
+    hidden: true
+    get_checksum: true
+    file_type: any
+  register: result
+
+- set_fact:
+    astest_list: "{{ result.files|map(attribute='path') }}"
+
+- name: assert we do not find the hello world file and a checksum is present
+  assert:
+    that:
+      - result.matched == 2
+      - '"{{ output_dir_test }}/astest/old.txt" in astest_list'
+      - '"{{ output_dir_test }}/astest/.hidden.txt" in astest_list'
+      - '"checksum" in result.files[0]'

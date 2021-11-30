@@ -1,0 +1,12 @@
+# this file is here to support testing vars_files in the blending tests only.
+# in general define test data in the individual role:
+#    roles/role_name/vars/main.yml
+
+foo: "Hello"
+things1:
+    - 1
+    - 2
+things2:
+    - "{{ foo }}"
+    - "{{ foob | default('') }}"
+vars_file_var: 321

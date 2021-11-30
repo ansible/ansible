@@ -1,0 +1,309 @@
+- block:
+    - name: Install dinginessentail-1.0-1
+      dnf:
+        name: dinginessentail-1.0-1
+        state: present
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+    # ============================================================================
+    - name: Install dinginessentail-1.0-1 again
+      dnf:
+        name: dinginessentail-1.0-1
+        state: present
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'msg' in dnf_result"
+    # ============================================================================
+    - name: Install dinginessentail again (noop, module is idempotent)
+      dnf:
+        name: dinginessentail
+        state: present
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            # No upgrade happened to 1.1.1
+            - "not dnf_result.changed"
+            # Old version still installed
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+    # ============================================================================
+    - name: Install dinginessentail-1:1.0-2
+      dnf:
+        name: "dinginessentail-1:1.0-2.{{ ansible_architecture }}"
+        state: present
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+    # ============================================================================
+    - name: Update to the latest dinginessentail
+      dnf:
+        name: dinginessentail
+        state: latest
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.1-1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+    # ============================================================================
+    - name: Install dinginessentail-1.0-1 from a file (downgrade)
+      dnf:
+        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
+        state: present
+        allow_downgrade: True
+        disable_gpg_check: True
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+
+    - name: Remove dinginessentail
+      dnf:
+        name: dinginessentail
+        state: absent
+    # ============================================================================
+    - name: Install dinginessentail-1.0-1 from a file
+      dnf:
+        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
+        state: present
+        disable_gpg_check: True
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+    # ============================================================================
+    - name: Install dinginessentail-1.0-1 from a file again
+      dnf:
+        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
+        state: present
+        disable_gpg_check: True
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+    # ============================================================================
+    - name: Install dinginessentail-1.0-2 from a file
+      dnf:
+        name: "{{ repodir }}/dinginessentail-1.0-2.{{ ansible_architecture }}.rpm"
+        state: present
+        disable_gpg_check: True
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
+
+    - name: Verify dnf module outputs
+      assert:
+        that:
+            - "'results' in dnf_result"
+    # ============================================================================
+    - name: Install dinginessentail-1.0-2 from a file again
+      dnf:
+        name: "{{ repodir }}/dinginessentail-1.0-2.{{ ansible_architecture }}.rpm"
+        state: present
+        disable_gpg_check: True
+      register: dnf_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not dnf_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
+    # ============================================================================
+    - name: Remove dinginessentail
+      dnf:
+        name: dinginessentail
+        state: absent
+
+    - name: Try to install incompatible arch
+      dnf:
+        name: "{{ repodir_ppc64 }}/dinginessentail-1.0-1.ppc64.rpm"
+        state: present
+      register: dnf_result
+      ignore_errors: yes
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+      ignore_errors: yes
+
+    - name: Verify installation
+      assert:
+        that:
+            - "rpm_result.rc == 1"
+            - "not dnf_result.changed"
+            - "dnf_result is failed"
+    # ============================================================================
+
+    # Should install dinginessentail-with-weak-dep and dinginessentail-weak-dep
+    - name: Install package with defaults
+      dnf:
+        name: dinginessentail-with-weak-dep
+        state: present
+
+    - name: Check if dinginessentail-with-weak-dep is installed
+      shell: rpm -q dinginessentail-with-weak-dep
+      register: rpm_main_result
+
+    - name: Check if dinginessentail-weak-dep is installed
+      shell: rpm -q dinginessentail-weak-dep
+      register: rpm_weak_result
+
+    - name: Verify install with weak deps
+      assert:
+        that:
+        - rpm_main_result.rc == 0
+        - rpm_weak_result.rc == 0
+
+    - name: Uninstall dinginessentail weak dep packages
+      dnf:
+        name:
+        - dinginessentail-with-weak-dep
+        - dinginessentail-weak-dep
+        state: absent
+
+    - name: Install package with weak deps but skip weak deps
+      dnf:
+        name: dinginessentail-with-weak-dep
+        install_weak_deps: False
+        state: present
+
+    - name: Check if dinginessentail-with-weak-dep is installed
+      shell: rpm -q dinginessentail-with-weak-dep
+      register: rpm_main_result
+
+    - name: Check if dinginessentail-weak-dep is installed
+      shell: rpm -q dinginessentail-weak-dep
+      register: rpm_weak_result
+      ignore_errors: yes
+
+    - name: Verify install without weak deps
+      assert:
+        that:
+        - rpm_main_result.rc == 0
+        - rpm_weak_result.rc == 1  # the weak dependency shouldn't be installed
+
+    # https://github.com/ansible/ansible/issues/55938
+    - name: Install dinginessentail-*
+      dnf:
+        name: dinginessentail-*
+        state: present
+
+    - name: Uninstall dinginessentail-*
+      dnf:
+        name: dinginessentail-*
+        state: absent
+
+    - name: Check if all dinginessentail packages are removed
+      shell: rpm -qa dinginessentail-* | wc -l
+      register: rpm_result
+
+    - name: Verify rpm result
+      assert:
+        that:
+          - rpm_result.stdout == '0'
+  always:
+    - name: Clean up
+      dnf:
+        name:
+        - dinginessentail
+        - dinginessentail-with-weak-dep
+        - dinginessentail-weak-dep
+        state: absent

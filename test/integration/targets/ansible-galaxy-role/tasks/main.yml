@@ -1,0 +1,58 @@
+- name: Archive directories
+  file:
+    state: directory
+    path: "{{ remote_tmp_dir }}/role.d/{{item}}"
+  loop:
+  - meta
+  - tasks
+
+- name: Metadata file
+  copy:
+    content: "'galaxy_info': {}"
+    dest: "{{ remote_tmp_dir }}/role.d/meta/main.yml"
+
+- name: Valid files
+  copy:
+    content: ""
+    dest: "{{ remote_tmp_dir }}/role.d/tasks/{{item}}"
+  loop:
+  - "main.yml"
+  - "valid~file.yml"
+
+- name: Valid role archive
+  command: "tar cf {{ remote_tmp_dir }}/valid-role.tar {{ remote_tmp_dir }}/role.d"
+
+- name: Invalid file
+  copy:
+    content: ""
+    dest: "{{ remote_tmp_dir }}/role.d/tasks/~invalid.yml"
+
+- name: Valid requirements file
+  copy:
+    dest: valid-requirements.yml
+    content: "[{'src': '{{ remote_tmp_dir }}/valid-role.tar', 'name': 'valid-testrole'}]"
+
+- name: Invalid role archive
+  command: "tar cf {{ remote_tmp_dir }}/invalid-role.tar {{ remote_tmp_dir }}/role.d"
+
+- name: Invalid requirements file
+  copy:
+    dest: invalid-requirements.yml
+    content: "[{'src': '{{ remote_tmp_dir }}/invalid-role.tar', 'name': 'invalid-testrole'}]"
+
+- name: Install valid role
+  command: ansible-galaxy install -r valid-requirements.yml
+
+- name: Uninstall valid role
+  command: ansible-galaxy role remove valid-testrole
+
+- name: Install invalid role
+  command: ansible-galaxy install -r invalid-requirements.yml
+  ignore_errors: yes
+  register: invalid
+
+- assert:
+    that: "invalid.rc != 0"
+
+- name: Uninstall invalid role
+  command: ansible-galaxy role remove invalid-testrole

@@ -1,0 +1,836 @@
+# UNINSTALL 'python2-dnf'
+#  The `dnf` module has the smarts to auto-install the relevant python
+#  bindings.  To test, we will first uninstall python2-dnf (so that the tests
+#  on python2 will require python2-dnf)
+- name: check python2-dnf with rpm
+  shell: rpm -q python2-dnf
+  register: rpm_result
+  ignore_errors: true
+  args:
+    warn: no
+
+# Don't uninstall python2-dnf with the `dnf` module in case it needs to load
+# some dnf python files after the package is uninstalled.
+- name: uninstall python2-dnf with shell
+  shell: dnf -y remove python2-dnf
+  when: rpm_result is successful
+
+# UNINSTALL
+#   With 'python2-dnf' uninstalled, the first call to 'dnf' should install
+#   python2-dnf.
+- name: uninstall sos
+  dnf:
+    name: sos
+    state: removed
+  register: dnf_result
+
+- name: check sos with rpm
+  shell: rpm -q sos
+  failed_when: False
+  register: rpm_result
+
+- name: verify uninstallation of sos
+  assert:
+    that:
+        - "not dnf_result.failed | default(False)"
+        - "rpm_result.rc == 1"
+
+# UNINSTALL AGAIN
+- name: uninstall sos
+  dnf:
+    name: sos
+    state: removed
+  register: dnf_result
+
+- name: verify no change on re-uninstall
+  assert:
+    that:
+        - "not dnf_result.changed"
+
+# INSTALL
+- name: install sos (check_mode)
+  dnf:
+    name: sos
+    state: present
+    update_cache: True
+  check_mode: True
+  register: dnf_result
+
+- assert:
+    that:
+      - dnf_result is success
+      - dnf_result.results|length > 0
+      - "dnf_result.results[0].startswith('Installed: ')"
+
+- name: install sos
+  dnf:
+    name: sos
+    state: present
+    update_cache: True
+  register: dnf_result
+
+- name: check sos with rpm
+  shell: rpm -q sos
+  failed_when: False
+  register: rpm_result
+
+- name: verify installation of sos
+  assert:
+    that:
+        - "not dnf_result.failed | default(False)"
+        - "dnf_result.changed"
+        - "rpm_result.rc == 0"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'results' in dnf_result"
+
+# INSTALL AGAIN
+- name: install sos again (check_mode)
+  dnf:
+    name: sos
+    state: present
+  check_mode: True
+  register: dnf_result
+
+- assert:
+    that:
+      - dnf_result is not changed
+      - dnf_result.results|length == 0
+
+- name: install sos again
+  dnf:
+    name: sos
+    state: present
+  register: dnf_result
+
+- name: verify no change on second install
+  assert:
+    that:
+        - "not dnf_result.changed"
+
+# Multiple packages
+- name: uninstall sos and dos2unix
+  dnf: name=sos,dos2unix state=removed
+  register: dnf_result
+
+- name: check sos with rpm
+  shell: rpm -q sos
+  failed_when: False
+  register: rpm_sos_result
+
+- name: check dos2unix with rpm
+  shell: rpm -q dos2unix
+  failed_when: False
+  register: rpm_dos2unix_result
+
+- name: verify packages installed
+  assert:
+    that:
+        - "rpm_sos_result.rc != 0"
+        - "rpm_dos2unix_result.rc != 0"
+
+- name: install sos and dos2unix as comma separated
+  dnf: name=sos,dos2unix state=present
+  register: dnf_result
+
+- name: check sos with rpm
+  shell: rpm -q sos
+  failed_when: False
+  register: rpm_sos_result
+
+- name: check dos2unix with rpm
+  shell: rpm -q dos2unix
+  failed_when: False
+  register: rpm_dos2unix_result
+
+- name: verify packages installed
+  assert:
+    that:
+        - "not dnf_result.failed | default(False)"
+        - "dnf_result.changed"
+        - "rpm_sos_result.rc == 0"
+        - "rpm_dos2unix_result.rc == 0"
+
+- name: uninstall sos and dos2unix
+  dnf: name=sos,dos2unix state=removed
+  register: dnf_result
+
+- name: install sos and dos2unix as list
+  dnf:
+    name:
+      - sos
+      - dos2unix
+    state: present
+  register: dnf_result
+
+- name: check sos with rpm
+  shell: rpm -q sos
+  failed_when: False
+  register: rpm_sos_result
+
+- name: check dos2unix with rpm
+  shell: rpm -q dos2unix
+  failed_when: False
+  register: rpm_dos2unix_result
+
+- name: verify packages installed
+  assert:
+    that:
+        - "not dnf_result.failed | default(False)"
+        - "dnf_result.changed"
+        - "rpm_sos_result.rc == 0"
+        - "rpm_dos2unix_result.rc == 0"
+
+- name: uninstall sos and dos2unix
+  dnf:
+    name: "sos,dos2unix"
+    state: removed
+  register: dnf_result
+
+- name: install sos and dos2unix as comma separated with spaces
+  dnf:
+    name: "sos, dos2unix"
+    state: present
+  register: dnf_result
+
+- name: check sos with rpm
+  shell: rpm -q sos
+  failed_when: False
+  register: rpm_sos_result
+
+- name: check sos with rpm
+  shell: rpm -q dos2unix
+  failed_when: False
+  register: rpm_dos2unix_result
+
+- name: verify packages installed
+  assert:
+    that:
+        - "not dnf_result.failed | default(False)"
+        - "dnf_result.changed"
+        - "rpm_sos_result.rc == 0"
+        - "rpm_dos2unix_result.rc == 0"
+
+- name: uninstall sos and dos2unix (check_mode)
+  dnf:
+    name:
+      - sos
+      - dos2unix
+    state: removed
+  check_mode: True
+  register: dnf_result
+
+- assert:
+    that:
+      - dnf_result is success
+      - dnf_result.results|length == 2
+      - "dnf_result.results[0].startswith('Removed: ')"
+      - "dnf_result.results[1].startswith('Removed: ')"
+
+- name: uninstall sos and dos2unix
+  dnf:
+    name:
+      - sos
+      - dos2unix
+    state: removed
+  register: dnf_result
+
+- assert:
+    that:
+      - dnf_result is changed
+
+- name: install non-existent rpm
+  dnf:
+    name: does-not-exist
+  register: non_existent_rpm
+  ignore_errors: True
+
+- name: check non-existent rpm install failed
+  assert:
+    that:
+      - non_existent_rpm is failed
+
+# Install in installroot='/'.  This should be identical to default
+- name: install sos in /
+  dnf: name=sos state=present installroot='/'
+  register: dnf_result
+
+- name: check sos with rpm in /
+  shell: rpm -q sos --root=/
+  failed_when: False
+  register: rpm_result
+
+- name: verify installation of sos in /
+  assert:
+    that:
+        - "not dnf_result.failed | default(False)"
+        - "dnf_result.changed"
+        - "rpm_result.rc == 0"
+
+- name: verify dnf module outputs in /
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'results' in dnf_result"
+
+- name: uninstall sos in /
+  dnf: name=sos installroot='/'
+  register: dnf_result
+
+- name: uninstall sos for downloadonly test
+  dnf:
+    name: sos
+    state: absent
+
+- name: Test download_only (check_mode)
+  dnf:
+    name: sos
+    state: latest
+    download_only: true
+  check_mode: true
+  register: dnf_result
+
+- assert:
+    that:
+      - dnf_result is success
+      - "dnf_result.results[0].startswith('Downloaded: ')"
+
+- name: Test download_only
+  dnf:
+    name: sos
+    state: latest
+    download_only: true
+  register: dnf_result
+
+- name: verify download of sos (part 1 -- dnf "install" succeeded)
+  assert:
+    that:
+        - "dnf_result is success"
+        - "dnf_result is changed"
+
+- name: uninstall sos (noop)
+  dnf:
+    name: sos
+    state: absent
+  register: dnf_result
+
+- name: verify download of sos (part 2 -- nothing removed during uninstall)
+  assert:
+    that:
+        - "dnf_result is success"
+        - "not dnf_result is changed"
+
+- name: uninstall sos for downloadonly/downloaddir test
+  dnf:
+    name: sos
+    state: absent
+
+- name: Test download_only/download_dir
+  dnf:
+    name: sos
+    state: latest
+    download_only: true
+    download_dir: "/var/tmp/packages"
+  register: dnf_result
+
+- name: verify dnf output
+  assert:
+    that:
+        - "dnf_result is success"
+        - "dnf_result is changed"
+
+- command: "ls /var/tmp/packages"
+  register: ls_out
+
+- name: Verify specified download_dir was used
+  assert:
+    that:
+      - "'sos' in ls_out.stdout"
+
+# GROUP INSTALL
+- name: install Custom Group group
+  dnf:
+    name: "@Custom Group"
+    state: present
+  register: dnf_result
+
+- name: check dinginessentail with rpm
+  command: rpm -q dinginessentail
+  failed_when: False
+  register: dinginessentail_result
+
+- name: verify installation of the group
+  assert:
+    that:
+    - not dnf_result is failed
+    - dnf_result is changed
+    - "'results' in dnf_result"
+    - dinginessentail_result.rc == 0
+
+- name: install the group again
+  dnf:
+    name: "@Custom Group"
+    state: present
+  register: dnf_result
+
+- name: verify nothing changed
+  assert:
+    that:
+    - not dnf_result is changed
+    - "'msg' in dnf_result"
+
+- name: verify that landsidescalping is not installed
+  dnf:
+    name: landsidescalping
+    state: absent
+
+- name: install the group again but also with a package that is not yet installed
+  dnf:
+    name:
+      - "@Custom Group"
+      - landsidescalping
+    state: present
+  register: dnf_result
+
+- name: check landsidescalping with rpm
+  command: rpm -q landsidescalping
+  failed_when: False
+  register: landsidescalping_result
+
+- name: verify landsidescalping is installed
+  assert:
+    that:
+    - dnf_result is changed
+    - "'results' in dnf_result"
+    - landsidescalping_result.rc == 0
+
+- name: try to install the group again, with --check to check 'changed'
+  dnf:
+    name: "@Custom Group"
+    state: present
+  check_mode: yes
+  register: dnf_result
+
+- name: verify nothing changed
+  assert:
+    that:
+    - not dnf_result is changed
+    - "'msg' in dnf_result"
+
+- name: remove landsidescalping after test
+  dnf:
+    name: landsidescalping
+    state: absent
+
+# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
+- shell: 'dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"'
+  register: shell_dnf_result
+
+# GROUP UPGRADE - this will go to the same method as group install
+# but through group_update - it is its invocation we're testing here
+# see commit 119c9e5d6eb572c4a4800fbe8136095f9063c37b
+- name: install latest Custom Group
+  dnf:
+    name: "@Custom Group"
+    state: latest
+  register: dnf_result
+
+- name: verify installation of the group
+  assert:
+    that:
+    - not dnf_result is failed
+    - dnf_result is changed
+    - "'results' in dnf_result"
+
+# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
+- shell: dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"
+
+- name: try to install non existing group
+  dnf:
+    name: "@non-existing-group"
+    state: present
+  register: dnf_result
+  ignore_errors: True
+
+- name: verify installation of the non existing group failed
+  assert:
+    that:
+        - "not dnf_result.changed"
+        - "dnf_result is failed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'msg' in dnf_result"
+
+- name: try to install non existing file
+  dnf:
+    name: /tmp/non-existing-1.0.0.fc26.noarch.rpm
+    state: present
+  register: dnf_result
+  ignore_errors: yes
+
+- name: verify installation failed
+  assert:
+    that:
+        - "dnf_result is failed"
+        - "not dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'msg' in dnf_result"
+
+- name: try to install from non existing url
+  dnf:
+    name: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/dnf/non-existing-1.0.0.fc26.noarch.rpm
+    state: present
+  register: dnf_result
+  ignore_errors: yes
+
+- name: verify installation failed
+  assert:
+    that:
+        - "dnf_result is failed"
+        - "not dnf_result.changed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'msg' in dnf_result"
+
+# ENVIRONMENT UPGRADE
+# see commit de299ef77c03a64a8f515033a79ac6b7db1bc710
+- name: install Custom Environment Group
+  dnf:
+    name: "@Custom Environment Group"
+    state: latest
+  register: dnf_result
+
+- name: check landsidescalping with rpm
+  command: rpm -q landsidescalping
+  register: landsidescalping_result
+
+- name: verify installation of the environment
+  assert:
+    that:
+    - not dnf_result is failed
+    - dnf_result is changed
+    - "'results' in dnf_result"
+    - landsidescalping_result.rc == 0
+
+# Fedora 28 (DNF 2) does not support this, just remove the package itself
+- name: remove landsidescalping package on Fedora 28
+  dnf:
+    name: landsidescalping
+    state: absent
+  when: ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28
+
+# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
+- name: remove Custom Environment Group
+  shell: dnf -y group install "Custom Environment Group" && dnf -y group remove "Custom Environment Group"
+  when: not (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28)
+
+# https://github.com/ansible/ansible/issues/39704
+- name: install non-existent rpm, state=latest
+  dnf:
+    name: non-existent-rpm
+    state: latest
+  ignore_errors: yes
+  register: dnf_result
+
+- name: verify the result
+  assert:
+    that:
+        - "dnf_result is failed"
+        - "'non-existent-rpm' in dnf_result['failures'][0]"
+        - "'No package non-existent-rpm available' in dnf_result['failures'][0]"
+        - "'Failed to install some of the specified packages' in dnf_result['msg']"
+
+- name: use latest to install httpd
+  dnf:
+    name: httpd
+    state: latest
+  register: dnf_result
+
+- name: verify httpd was installed
+  assert:
+    that:
+      - "'changed' in dnf_result"
+
+- name: uninstall httpd
+  dnf:
+    name: httpd
+    state: removed
+
+- name: update httpd only if it exists
+  dnf:
+    name: httpd
+    state: latest
+    update_only: yes
+  register: dnf_result
+
+- name: verify httpd not installed
+  assert:
+    that:
+      - "not dnf_result is changed"
+
+- name: try to install not compatible arch rpm, should fail
+  dnf:
+    name: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/dnf/banner-1.3.4-3.el7.ppc64le.rpm
+    state: present
+  register: dnf_result
+  ignore_errors: True
+
+- name: verify that dnf failed
+  assert:
+    that:
+        - "not dnf_result is changed"
+        - "dnf_result is failed"
+
+# setup for testing installing an RPM from local file
+
+- set_fact:
+    pkg_name: noarchfake
+    pkg_path: '{{ repodir }}/noarchfake-1.0-1.noarch.rpm'
+
+- name: cleanup
+  dnf:
+    name: "{{ pkg_name }}"
+    state: absent
+
+# setup end
+
+- name: install a local noarch rpm from file
+  dnf:
+    name: "{{ pkg_path }}"
+    state: present
+    disable_gpg_check: true
+  register: dnf_result
+
+- name: verify installation
+  assert:
+    that:
+        - "dnf_result is success"
+        - "dnf_result is changed"
+
+- name: install the downloaded rpm again
+  dnf:
+    name: "{{ pkg_path }}"
+    state: present
+  register: dnf_result
+
+- name: verify installation
+  assert:
+    that:
+        - "dnf_result is success"
+        - "not dnf_result is changed"
+
+- name: clean up
+  dnf:
+    name: "{{ pkg_name }}"
+    state: absent
+
+- name: install from url
+  dnf:
+    name: "file://{{ pkg_path }}"
+    state: present
+    disable_gpg_check: true
+  register: dnf_result
+
+- name: verify installation
+  assert:
+    that:
+        - "dnf_result is success"
+        - "dnf_result is changed"
+        - "dnf_result is not failed"
+
+- name: verify dnf module outputs
+  assert:
+    that:
+        - "'changed' in dnf_result"
+        - "'results' in dnf_result"
+
+- name: Create a temp RPM file which does not contain nevra information
+  file:
+    name: "/tmp/non_existent_pkg.rpm"
+    state: touch
+
+- name: Try installing RPM file which does not contain nevra information
+  dnf:
+    name: "/tmp/non_existent_pkg.rpm"
+    state: present
+  register: no_nevra_info_result
+  ignore_errors: yes
+
+- name: Verify RPM failed to install
+  assert:
+    that:
+      - "'changed' in no_nevra_info_result"
+      - "'msg' in no_nevra_info_result"
+
+- name: Delete a temp RPM file
+  file:
+    name: "/tmp/non_existent_pkg.rpm"
+    state: absent
+
+- name: uninstall lsof
+  dnf:
+    name: lsof
+    state: removed
+
+- name: check lsof with rpm
+  shell: rpm -q lsof
+  ignore_errors: True
+  register: rpm_lsof_result
+
+- name: verify lsof is uninstalled
+  assert:
+    that:
+      - "rpm_lsof_result is failed"
+
+- name: create conf file that excludes lsof
+  copy:
+    content: |
+      [main]
+      exclude=lsof*
+    dest: '{{ remote_tmp_dir }}/test-dnf.conf'
+  register: test_dnf_copy
+
+- block:
+  # begin test case where disable_excludes is supported
+  - name: Try install lsof without disable_excludes
+    dnf: name=lsof state=latest conf_file={{ test_dnf_copy.dest }}
+    register: dnf_lsof_result
+    ignore_errors: True
+
+  - name: verify lsof did not install because it is in exclude list
+    assert:
+      that:
+        - "dnf_lsof_result is failed"
+
+  - name: install lsof with disable_excludes
+    dnf: name=lsof state=latest disable_excludes=all conf_file={{ test_dnf_copy.dest }}
+    register: dnf_lsof_result_using_excludes
+
+  - name: verify lsof did install using disable_excludes=all
+    assert:
+      that:
+        - "dnf_lsof_result_using_excludes is success"
+        - "dnf_lsof_result_using_excludes is changed"
+        - "dnf_lsof_result_using_excludes is not failed"
+  always:
+  - name: remove exclude lsof conf file
+    file:
+      path: '{{ remote_tmp_dir }}/test-dnf.conf'
+      state: absent
+
+# end test case where disable_excludes is supported
+
+- name: Test "dnf install /usr/bin/vi"
+  block:
+    - name: Clean vim-minimal
+      dnf:
+        name: vim-minimal
+        state: absent
+
+    - name: Install vim-minimal by specifying "/usr/bin/vi"
+      dnf:
+        name: /usr/bin/vi
+        state: present
+
+    - name: Get rpm output
+      command: rpm -q vim-minimal
+      register: rpm_output
+
+    - name: Check installation was successful
+      assert:
+        that:
+          - "'vim-minimal' in rpm_output.stdout"
+  when:
+    - ansible_distribution == 'Fedora'
+
+- name: Remove wildcard package that isn't installed
+  dnf:
+    name: firefox*
+    state: absent
+  register: wildcard_absent
+
+- assert:
+    that:
+      - wildcard_absent is successful
+      - wildcard_absent is not changed
+
+- name: Test removing with various package specs
+  block:
+    - name: Ensure sos is installed
+      dnf:
+        name: sos
+        state: present
+
+    - name: Determine version of sos
+      command: rpm -q --queryformat=%{version} sos
+      register: sos_version_command
+
+    - name: Determine release of sos
+      command: rpm -q --queryformat=%{release} sos
+      register: sos_release_command
+
+    - name: Determine arch of sos
+      command: rpm -q --queryformat=%{arch} sos
+      register: sos_arch_command
+
+    - set_fact:
+        sos_version: "{{ sos_version_command.stdout | trim }}"
+        sos_release: "{{ sos_release_command.stdout | trim }}"
+        sos_arch: "{{ sos_arch_command.stdout | trim }}"
+
+    # We are just trying to remove the package by specifying its spec in a
+    # bunch of different ways. Each "item" here is a test (a name passed, to make
+    # sure it matches, with how we call Hawkey in the dnf module).
+    - include_tasks: test_sos_removal.yml
+      with_items:
+        - sos
+        - sos-{{ sos_version }}
+        - sos-{{ sos_version }}-{{ sos_release }}
+        - sos-{{ sos_version }}-{{ sos_release }}.{{ sos_arch }}
+        - sos-*-{{ sos_release }}
+        - sos-{{ sos_version[0] }}*
+        - sos-{{ sos_version[0] }}*-{{ sos_release }}
+        - sos-{{ sos_version[0] }}*{{ sos_arch }}
+
+    - name: Ensure deleting a non-existing package fails correctly
+      dnf:
+        name: a-non-existent-package
+        state: absent
+      ignore_errors: true
+      register: nonexisting
+
+    - assert:
+        that:
+          - nonexisting is success
+          - nonexisting.msg == 'Nothing to do'
+
+# running on RHEL which is --remote where .mo language files are present
+# for dnf as opposed to in --docker
+- when: ansible_distribution == 'RedHat'
+  block:
+    - dnf:
+        name: langpacks-ja
+        state: present
+
+    - dnf:
+        name: nginx-mod*
+        state: absent
+      environment:
+        LANG: ja_JP.UTF-8
+  always:
+    - dnf:
+        name: langpacks-ja
+        state: absent

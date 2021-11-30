@@ -1,0 +1,14 @@
+# Copyright 2019 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: check if the inclusion tree shows ourself twice as well as our initial parent
+  assert:
+    that:
+      - "ansible_parent_role_names|length == 2"
+      - "ansible_parent_role_names[0] == 'include_parent_role_vars'"  # Since we included ourselves, we're the top level
+      - "ansible_parent_role_names[1] == 'special_vars'"
+
+- name: ensure that ansible_parent_role_paths has the same length as ansible_parent_role_names
+  assert:
+    that:
+      - "ansible_parent_role_names|length == ansible_parent_role_paths|length"

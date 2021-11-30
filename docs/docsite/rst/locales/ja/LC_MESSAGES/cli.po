@@ -1,0 +1,1137 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2021 Red Hat, Inc.
+# This file is distributed under the same license as the Ansible package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Ansible devel\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-03-08 20:25+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.0\n"
+
+#: ../../rst/cli/ansible.rst:7
+msgid "ansible"
+msgstr "ansible"
+
+#: ../../rst/cli/ansible.rst:10
+msgid ":strong:`Define and run a single task 'playbook' against a set of hosts`"
+msgstr ":strong:`一連のホストに対して単一のタスク「Playbook」を定義して実行`"
+
+#: ../../rst/cli/ansible-config.rst:21 ../../rst/cli/ansible-console.rst:21
+#: ../../rst/cli/ansible-doc.rst:21 ../../rst/cli/ansible-galaxy.rst:21
+#: ../../rst/cli/ansible-inventory.rst:21 ../../rst/cli/ansible-playbook.rst:21
+#: ../../rst/cli/ansible-pull.rst:21 ../../rst/cli/ansible-vault.rst:21
+#: ../../rst/cli/ansible.rst:21
+msgid "Synopsis"
+msgstr "概要"
+
+#: ../../rst/cli/ansible-config.rst:30 ../../rst/cli/ansible-console.rst:44
+#: ../../rst/cli/ansible-doc.rst:35 ../../rst/cli/ansible-galaxy.rst:30
+#: ../../rst/cli/ansible-inventory.rst:36 ../../rst/cli/ansible-playbook.rst:45
+#: ../../rst/cli/ansible-pull.rst:44 ../../rst/cli/ansible-vault.rst:32
+#: ../../rst/cli/ansible.rst:43
+msgid "Description"
+msgstr "説明"
+
+#: ../../rst/cli/ansible.rst:46
+msgid "is an extra-simple tool/framework/API for doing 'remote things'. this command allows you to define and run a single task 'playbook' against a set of hosts"
+msgstr "「リモートのこと」を行う非常に単純なツール/フレームワーク/API です。このコマンドでは、ホスト 1 台に対して単一タスク「Playbook」を定義および実行できます"
+
+#: ../../rst/cli/ansible-config.rst:37 ../../rst/cli/ansible-console.rst:72
+#: ../../rst/cli/ansible-doc.rst:45 ../../rst/cli/ansible-galaxy.rst:37
+#: ../../rst/cli/ansible-inventory.rst:43 ../../rst/cli/ansible-playbook.rst:53
+#: ../../rst/cli/ansible-pull.rst:59 ../../rst/cli/ansible-vault.rst:46
+#: ../../rst/cli/ansible.rst:51
+msgid "Common Options"
+msgstr "共通オプション"
+
+#: ../../rst/cli/ansible-console.rst:79 ../../rst/cli/ansible-inventory.rst:50
+#: ../../rst/cli/ansible-playbook.rst:60 ../../rst/cli/ansible-pull.rst:71
+#: ../../rst/cli/ansible-vault.rst:89 ../../rst/cli/ansible-vault.rst:123
+#: ../../rst/cli/ansible-vault.rst:157 ../../rst/cli/ansible-vault.rst:191
+#: ../../rst/cli/ansible-vault.rst:221 ../../rst/cli/ansible-vault.rst:259
+#: ../../rst/cli/ansible-vault.rst:313 ../../rst/cli/ansible.rst:58
+msgid "ask for vault password"
+msgstr "Vault のパスワード入力を尋ねます。"
+
+#: ../../rst/cli/ansible-console.rst:84 ../../rst/cli/ansible-playbook.rst:65
+#: ../../rst/cli/ansible.rst:63
+msgid "privilege escalation method to use (default=sudo), use `ansible-doc -t become -l` to list valid choices."
+msgstr "使用する特権昇格方法 (デフォルトは sudo)。有効な選択を一覧表示するには `ansible-doc -t become -l` を使用します。"
+
+#: ../../rst/cli/ansible-console.rst:89 ../../rst/cli/ansible-playbook.rst:70
+#: ../../rst/cli/ansible.rst:68
+msgid "run operations as this user (default=root)"
+msgstr "このユーザーとして操作を実行します (デフォルトは root)。"
+
+#: ../../rst/cli/ansible-console.rst:94 ../../rst/cli/ansible-playbook.rst:85
+#: ../../rst/cli/ansible-pull.rst:96 ../../rst/cli/ansible.rst:73
+msgid "outputs a list of matching hosts; does not execute anything else"
+msgstr "一致するホストの一覧を出力します。他には何も実行しません。"
+
+#: ../../rst/cli/ansible-console.rst:99 ../../rst/cli/ansible-doc.rst:57
+#: ../../rst/cli/ansible-inventory.rst:85 ../../rst/cli/ansible.rst:78
+msgid "Since this tool does not use playbooks, use this as a substitute playbook directory.This sets the relative path for many features including roles/ group_vars/ etc."
+msgstr "このツールは Playbook を使用しないため、代替の Playbook ディレクトリーとして使用します。これにより、roles/ group_vars/ などの多くの機能の相対パスが設定されます。"
+
+#: ../../rst/cli/ansible-console.rst:104 ../../rst/cli/ansible-playbook.rst:100
+#: ../../rst/cli/ansible-pull.rst:101 ../../rst/cli/ansible.rst:83
+msgid "use this file to authenticate the connection"
+msgstr "このファイルを使用して接続を認証します。"
+
+#: ../../rst/cli/ansible-console.rst:109 ../../rst/cli/ansible-playbook.rst:105
+#: ../../rst/cli/ansible-pull.rst:111 ../../rst/cli/ansible.rst:88
+msgid "specify extra arguments to pass to scp only (e.g. -l)"
+msgstr "scp のみに渡す追加の引数を指定します (例: -l)。"
+
+#: ../../rst/cli/ansible-console.rst:114 ../../rst/cli/ansible-playbook.rst:110
+#: ../../rst/cli/ansible-pull.rst:116 ../../rst/cli/ansible.rst:93
+msgid "specify extra arguments to pass to sftp only (e.g. -f, -l)"
+msgstr "sftp のみに渡す追加の引数を指定します (例: -f、-l)。"
+
+#: ../../rst/cli/ansible-console.rst:119 ../../rst/cli/ansible-playbook.rst:120
+#: ../../rst/cli/ansible-pull.rst:126 ../../rst/cli/ansible.rst:98
+msgid "specify common arguments to pass to sftp/scp/ssh (e.g. ProxyCommand)"
+msgstr "sftp/scp/ssh に渡す一般的な引数を指定します (例: ProxyCommand)。"
+
+#: ../../rst/cli/ansible-console.rst:124 ../../rst/cli/ansible-playbook.rst:125
+#: ../../rst/cli/ansible-pull.rst:131 ../../rst/cli/ansible.rst:103
+msgid "specify extra arguments to pass to ssh only (e.g. -R)"
+msgstr "ssh のみに渡す追加の引数を指定します (例: -R)。"
+
+#: ../../rst/cli/ansible-console.rst:134 ../../rst/cli/ansible-playbook.rst:140
+#: ../../rst/cli/ansible.rst:108
+msgid "perform a syntax check on the playbook, but do not execute it"
+msgstr "Playbook で構文チェックを実行しますが、Playbook は実行しません。"
+
+#: ../../rst/cli/ansible-console.rst:139 ../../rst/cli/ansible.rst:113
+msgid "set task timeout limit in seconds, must be positive integer."
+msgstr "タスクのタイムアウト制限を秒単位で設定します。正の整数である必要があります。"
+
+#: ../../rst/cli/ansible-console.rst:144
+#: ../../rst/cli/ansible-inventory.rst:100
+#: ../../rst/cli/ansible-playbook.rst:145 ../../rst/cli/ansible-pull.rst:141
+#: ../../rst/cli/ansible-vault.rst:97 ../../rst/cli/ansible-vault.rst:131
+#: ../../rst/cli/ansible-vault.rst:165 ../../rst/cli/ansible-vault.rst:195
+#: ../../rst/cli/ansible-vault.rst:233 ../../rst/cli/ansible-vault.rst:279
+#: ../../rst/cli/ansible-vault.rst:329 ../../rst/cli/ansible.rst:118
+msgid "the vault identity to use"
+msgstr "使用する Vault アイデンティティー"
+
+#: ../../rst/cli/ansible-console.rst:149
+#: ../../rst/cli/ansible-inventory.rst:105
+#: ../../rst/cli/ansible-playbook.rst:150 ../../rst/cli/ansible-pull.rst:146
+#: ../../rst/cli/ansible-vault.rst:101 ../../rst/cli/ansible-vault.rst:135
+#: ../../rst/cli/ansible-vault.rst:169 ../../rst/cli/ansible-vault.rst:199
+#: ../../rst/cli/ansible-vault.rst:237 ../../rst/cli/ansible-vault.rst:283
+#: ../../rst/cli/ansible-vault.rst:333 ../../rst/cli/ansible.rst:123
+msgid "vault password file"
+msgstr "Vault パスワードファイル"
+
+#: ../../rst/cli/ansible-config.rst:44 ../../rst/cli/ansible-console.rst:154
+#: ../../rst/cli/ansible-doc.rst:62 ../../rst/cli/ansible-galaxy.rst:44
+#: ../../rst/cli/ansible-inventory.rst:110
+#: ../../rst/cli/ansible-playbook.rst:155 ../../rst/cli/ansible-pull.rst:156
+#: ../../rst/cli/ansible-vault.rst:53 ../../rst/cli/ansible.rst:128
+msgid "show program's version number, config file location, configured module search path, module location, executable location and exit"
+msgstr "プログラムバージョン番号、設定ファイルの場所、設定したモジュール検索パス、モジュールの場所、実行可能な場所、および終了を表示します。"
+
+#: ../../rst/cli/ansible.rst:133
+msgid "run asynchronously, failing after X seconds (default=N/A)"
+msgstr "非同期的に実行し、X 秒後に失敗します (デフォルトは N/A)。"
+
+#: ../../rst/cli/ansible-console.rst:159 ../../rst/cli/ansible-playbook.rst:160
+#: ../../rst/cli/ansible-pull.rst:76 ../../rst/cli/ansible.rst:138
+msgid "don't make any changes; instead, try to predict some of the changes that may occur"
+msgstr "変更を加えないでください。代わりに、発生する可能性のある変更のいくつかを予測してみてください。"
+
+#: ../../rst/cli/ansible-console.rst:164 ../../rst/cli/ansible-playbook.rst:165
+#: ../../rst/cli/ansible-pull.rst:86 ../../rst/cli/ansible.rst:143
+msgid "when changing (small) files and templates, show the differences in those files; works great with --check"
+msgstr "(小規模な) ファイルおよびテンプレートの変更時に、これらのファイルの相違点を表示します。--check と適切に連携します。"
+
+#: ../../rst/cli/ansible-console.rst:169 ../../rst/cli/ansible-playbook.rst:170
+#: ../../rst/cli/ansible-pull.rst:166 ../../rst/cli/ansible.rst:148
+msgid "ask for privilege escalation password"
+msgstr "権限昇格のパスワードを要求します。"
+
+#: ../../rst/cli/ansible-console.rst:174 ../../rst/cli/ansible-doc.rst:72
+#: ../../rst/cli/ansible-playbook.rst:175 ../../rst/cli/ansible-pull.rst:171
+#: ../../rst/cli/ansible.rst:153
+msgid "prepend colon-separated path(s) to module library (default=~/.ansible/plugins/modules:/usr/share/ansible/plugins/modules)"
+msgstr "モジュールライブラリーへのコロン区切りパス (デフォルトは ~/.ansible/plugins/modules:/usr/share/ansible/plugins/modules) を先頭に追加します。"
+
+#: ../../rst/cli/ansible.rst:158
+msgid "set the poll interval if using -B (default=15)"
+msgstr "-B (デフォルトは 15) を使用する場合はポーリング間隔を設定します。"
+
+#: ../../rst/cli/ansible-console.rst:179 ../../rst/cli/ansible-playbook.rst:180
+#: ../../rst/cli/ansible-pull.rst:176 ../../rst/cli/ansible.rst:163
+msgid "override the connection timeout in seconds (default=10)"
+msgstr "接続タイムアウトを秒単位で上書きします (デフォルトは 10)。"
+
+#: ../../rst/cli/ansible.rst:168
+msgid "module arguments"
+msgstr "モジュール引数"
+
+#: ../../rst/cli/ansible-console.rst:184 ../../rst/cli/ansible-playbook.rst:185
+#: ../../rst/cli/ansible.rst:173
+msgid "run operations with become (does not imply password prompting)"
+msgstr "become で操作の実行 (パスワード入力を意味するものではありません)"
+
+#: ../../rst/cli/ansible-console.rst:189 ../../rst/cli/ansible-playbook.rst:190
+#: ../../rst/cli/ansible-pull.rst:186 ../../rst/cli/ansible.rst:178
+msgid "connection type to use (default=smart)"
+msgstr "使用する接続タイプ (デフォルトは smart)"
+
+#: ../../rst/cli/ansible-console.rst:194
+#: ../../rst/cli/ansible-inventory.rst:115
+#: ../../rst/cli/ansible-playbook.rst:195 ../../rst/cli/ansible-pull.rst:196
+#: ../../rst/cli/ansible.rst:183
+msgid "set additional variables as key=value or YAML/JSON, if filename prepend with @"
+msgstr "ファイル名の前に @ を付ける場合は、追加の変数を key=value または YAML/JSON に設定します。"
+
+#: ../../rst/cli/ansible-console.rst:199 ../../rst/cli/ansible-playbook.rst:200
+#: ../../rst/cli/ansible.rst:188
+msgid "specify number of parallel processes to use (default=5)"
+msgstr "使用する並列プロセス数を指定します (デフォルトは 5)。"
+
+#: ../../rst/cli/ansible-config.rst:49 ../../rst/cli/ansible-console.rst:204
+#: ../../rst/cli/ansible-doc.rst:82 ../../rst/cli/ansible-galaxy.rst:49
+#: ../../rst/cli/ansible-inventory.rst:120
+#: ../../rst/cli/ansible-playbook.rst:205 ../../rst/cli/ansible-pull.rst:206
+#: ../../rst/cli/ansible-vault.rst:58 ../../rst/cli/ansible.rst:193
+msgid "show this help message and exit"
+msgstr "ヘルプメッセージを表示して終了します。"
+
+#: ../../rst/cli/ansible-console.rst:209
+#: ../../rst/cli/ansible-inventory.rst:125
+#: ../../rst/cli/ansible-playbook.rst:210 ../../rst/cli/ansible-pull.rst:211
+#: ../../rst/cli/ansible.rst:198
+msgid "specify inventory host path or comma separated host list. --inventory-file is deprecated"
+msgstr "インベントリーホストパスまたはコンマ区切りホスト一覧を指定します。--inventory-file は非推奨になりました。"
+
+#: ../../rst/cli/ansible-console.rst:214 ../../rst/cli/ansible-playbook.rst:215
+#: ../../rst/cli/ansible-pull.rst:216 ../../rst/cli/ansible.rst:203
+msgid "ask for connection password"
+msgstr "接続のパスワードを要求します。"
+
+#: ../../rst/cli/ansible-console.rst:219 ../../rst/cli/ansible-playbook.rst:220
+#: ../../rst/cli/ansible-pull.rst:221 ../../rst/cli/ansible.rst:208
+msgid "further limit selected hosts to an additional pattern"
+msgstr "選択したホストを追加パターンにさらに制限します。"
+
+#: ../../rst/cli/ansible.rst:213
+msgid "module name to execute (default=command)"
+msgstr "実行するモジュール名 (デフォルトは command)"
+
+#: ../../rst/cli/ansible.rst:218
+msgid "condense output"
+msgstr "出力を要約します。"
+
+#: ../../rst/cli/ansible.rst:223
+msgid "log output to this directory"
+msgstr "このディレクトリーにログを記録します。"
+
+#: ../../rst/cli/ansible-console.rst:224 ../../rst/cli/ansible-playbook.rst:230
+#: ../../rst/cli/ansible-pull.rst:246 ../../rst/cli/ansible.rst:228
+msgid "connect as this user (default=None)"
+msgstr "このユーザーとして接続 します (デフォルトは None)。"
+
+#: ../../rst/cli/ansible-config.rst:54 ../../rst/cli/ansible-console.rst:229
+#: ../../rst/cli/ansible-doc.rst:112 ../../rst/cli/ansible-galaxy.rst:54
+#: ../../rst/cli/ansible-inventory.rst:135
+#: ../../rst/cli/ansible-playbook.rst:235 ../../rst/cli/ansible-pull.rst:251
+#: ../../rst/cli/ansible-vault.rst:63 ../../rst/cli/ansible.rst:233
+msgid "verbose mode (-vvv for more, -vvvv to enable connection debugging)"
+msgstr "詳細モード (-vvv の場合はより詳細になる。-vvvv の場合は接続のデバッグを有効にする)"
+
+#: ../../rst/cli/ansible-config.rst:139 ../../rst/cli/ansible-console.rst:238
+#: ../../rst/cli/ansible-doc.rst:121 ../../rst/cli/ansible-galaxy.rst:783
+#: ../../rst/cli/ansible-inventory.rst:149
+#: ../../rst/cli/ansible-playbook.rst:244 ../../rst/cli/ansible-pull.rst:260
+#: ../../rst/cli/ansible-vault.rst:344 ../../rst/cli/ansible.rst:242
+msgid "Environment"
+msgstr "環境"
+
+#: ../../rst/cli/ansible-config.rst:141 ../../rst/cli/ansible-console.rst:240
+#: ../../rst/cli/ansible-doc.rst:123 ../../rst/cli/ansible-galaxy.rst:785
+#: ../../rst/cli/ansible-inventory.rst:151
+#: ../../rst/cli/ansible-playbook.rst:246 ../../rst/cli/ansible-pull.rst:262
+#: ../../rst/cli/ansible-vault.rst:346 ../../rst/cli/ansible.rst:244
+msgid "The following environment variables may be specified."
+msgstr "以下の環境変数を指定できます。"
+
+#: ../../rst/cli/ansible-config.rst:145 ../../rst/cli/ansible-console.rst:244
+#: ../../rst/cli/ansible-doc.rst:127 ../../rst/cli/ansible-galaxy.rst:789
+#: ../../rst/cli/ansible-inventory.rst:155
+#: ../../rst/cli/ansible-playbook.rst:250 ../../rst/cli/ansible-pull.rst:266
+#: ../../rst/cli/ansible-vault.rst:350 ../../rst/cli/ansible.rst:248
+msgid ":envvar:`ANSIBLE_CONFIG` -- Override the default ansible config file"
+msgstr ":envvar:`ANSIBLE_CONFIG` -- デフォルトの Ansible 設定ファイルを上書きします"
+
+#: ../../rst/cli/ansible-config.rst:147 ../../rst/cli/ansible-console.rst:246
+#: ../../rst/cli/ansible-doc.rst:129 ../../rst/cli/ansible-galaxy.rst:791
+#: ../../rst/cli/ansible-inventory.rst:157
+#: ../../rst/cli/ansible-playbook.rst:252 ../../rst/cli/ansible-pull.rst:268
+#: ../../rst/cli/ansible-vault.rst:352 ../../rst/cli/ansible.rst:250
+msgid "Many more are available for most options in ansible.cfg"
+msgstr "ansible.cfg のほとんどのオプションで、さらに多くのものが利用できます。"
+
+#: ../../rst/cli/ansible-config.rst:151 ../../rst/cli/ansible-console.rst:250
+#: ../../rst/cli/ansible-doc.rst:133 ../../rst/cli/ansible-galaxy.rst:795
+#: ../../rst/cli/ansible-inventory.rst:161
+#: ../../rst/cli/ansible-playbook.rst:256 ../../rst/cli/ansible-pull.rst:272
+#: ../../rst/cli/ansible-vault.rst:356 ../../rst/cli/ansible.rst:254
+msgid "Files"
+msgstr "ファイル"
+
+#: ../../rst/cli/ansible-config.rst:154 ../../rst/cli/ansible-console.rst:253
+#: ../../rst/cli/ansible-doc.rst:136 ../../rst/cli/ansible-galaxy.rst:798
+#: ../../rst/cli/ansible-inventory.rst:164
+#: ../../rst/cli/ansible-playbook.rst:259 ../../rst/cli/ansible-pull.rst:275
+#: ../../rst/cli/ansible-vault.rst:359 ../../rst/cli/ansible.rst:257
+msgid ":file:`/etc/ansible/ansible.cfg` -- Config file, used if present"
+msgstr ":file:`/etc/ansible/ansible.cfg` -- 存在する場合は使用される設定ファイル。"
+
+#: ../../rst/cli/ansible-config.rst:156 ../../rst/cli/ansible-console.rst:255
+#: ../../rst/cli/ansible-doc.rst:138 ../../rst/cli/ansible-galaxy.rst:800
+#: ../../rst/cli/ansible-inventory.rst:166
+#: ../../rst/cli/ansible-playbook.rst:261 ../../rst/cli/ansible-pull.rst:277
+#: ../../rst/cli/ansible-vault.rst:361 ../../rst/cli/ansible.rst:259
+msgid ":file:`~/.ansible.cfg` -- User config file, overrides the default config if present"
+msgstr ":file:`~/.ansible.cfg` -- 存在する場合はデフォルト設定を上書きするユーザー設定ファイル。"
+
+#: ../../rst/cli/ansible-config.rst:159 ../../rst/cli/ansible-console.rst:258
+#: ../../rst/cli/ansible-doc.rst:141 ../../rst/cli/ansible-galaxy.rst:803
+#: ../../rst/cli/ansible-inventory.rst:169
+#: ../../rst/cli/ansible-playbook.rst:264 ../../rst/cli/ansible-pull.rst:280
+#: ../../rst/cli/ansible-vault.rst:364 ../../rst/cli/ansible.rst:262
+msgid "Author"
+msgstr "作成者"
+
+#: ../../rst/cli/ansible-config.rst:161 ../../rst/cli/ansible-console.rst:260
+#: ../../rst/cli/ansible-doc.rst:143 ../../rst/cli/ansible-galaxy.rst:805
+#: ../../rst/cli/ansible-inventory.rst:171
+#: ../../rst/cli/ansible-playbook.rst:266 ../../rst/cli/ansible-pull.rst:282
+#: ../../rst/cli/ansible-vault.rst:366 ../../rst/cli/ansible.rst:264
+msgid "Ansible was originally written by Michael DeHaan."
+msgstr "Ansible は当初、Michael DeHaan によって記述されました。"
+
+#: ../../rst/cli/ansible-config.rst:163 ../../rst/cli/ansible-console.rst:262
+#: ../../rst/cli/ansible-doc.rst:145 ../../rst/cli/ansible-galaxy.rst:807
+#: ../../rst/cli/ansible-inventory.rst:173
+#: ../../rst/cli/ansible-playbook.rst:268 ../../rst/cli/ansible-pull.rst:284
+#: ../../rst/cli/ansible-vault.rst:368 ../../rst/cli/ansible.rst:266
+msgid "See the `AUTHORS` file for a complete list of contributors."
+msgstr "貢献者の完全な一覧は、`AUTHORS` ファイルを参照してください。"
+
+#: ../../rst/cli/ansible-config.rst:167 ../../rst/cli/ansible-console.rst:266
+#: ../../rst/cli/ansible-doc.rst:149 ../../rst/cli/ansible-galaxy.rst:811
+#: ../../rst/cli/ansible-inventory.rst:177
+#: ../../rst/cli/ansible-playbook.rst:272 ../../rst/cli/ansible-pull.rst:288
+#: ../../rst/cli/ansible-vault.rst:372 ../../rst/cli/ansible.rst:270
+msgid "License"
+msgstr "ライセンス"
+
+#: ../../rst/cli/ansible-config.rst:169 ../../rst/cli/ansible-console.rst:268
+#: ../../rst/cli/ansible-doc.rst:151 ../../rst/cli/ansible-galaxy.rst:813
+#: ../../rst/cli/ansible-inventory.rst:179
+#: ../../rst/cli/ansible-playbook.rst:274 ../../rst/cli/ansible-pull.rst:290
+#: ../../rst/cli/ansible-vault.rst:374 ../../rst/cli/ansible.rst:272
+msgid "Ansible is released under the terms of the GPLv3+ License."
+msgstr "Ansible は、GPLv3 以降のライセンスの対象範囲でリリースされています。"
+
+#: ../../rst/cli/ansible-config.rst:172 ../../rst/cli/ansible-console.rst:271
+#: ../../rst/cli/ansible-doc.rst:154 ../../rst/cli/ansible-galaxy.rst:816
+#: ../../rst/cli/ansible-inventory.rst:182
+#: ../../rst/cli/ansible-playbook.rst:277 ../../rst/cli/ansible-pull.rst:293
+#: ../../rst/cli/ansible-vault.rst:377 ../../rst/cli/ansible.rst:275
+msgid "See also"
+msgstr "参照情報"
+
+#: ../../rst/cli/ansible-config.rst:174 ../../rst/cli/ansible-console.rst:273
+#: ../../rst/cli/ansible-doc.rst:156 ../../rst/cli/ansible-galaxy.rst:818
+#: ../../rst/cli/ansible-inventory.rst:184
+#: ../../rst/cli/ansible-playbook.rst:279 ../../rst/cli/ansible-pull.rst:295
+#: ../../rst/cli/ansible-vault.rst:379 ../../rst/cli/ansible.rst:277
+msgid ":manpage:`ansible(1)`,  :manpage:`ansible-config(1)`,  :manpage:`ansible-console(1)`,  :manpage:`ansible-doc(1)`,  :manpage:`ansible-galaxy(1)`,  :manpage:`ansible-inventory(1)`,  :manpage:`ansible-playbook(1)`,  :manpage:`ansible-pull(1)`,  :manpage:`ansible-vault(1)`,"
+msgstr ":manpage:`ansible(1)`、 :manpage:`ansible-config(1)`、 :manpage:`ansible-console(1)`、 :manpage:`ansible-doc(1)`、 :manpage:`ansible-galaxy(1)`、 :manpage:`ansible-inventory(1)`、 :manpage:`ansible-playbook(1)`、 :manpage:`ansible-pull(1)`、 :manpage:`ansible-vault(1)`"
+
+#: ../../rst/cli/ansible-config.rst:7
+msgid "ansible-config"
+msgstr "ansible-config"
+
+#: ../../rst/cli/ansible-config.rst:10
+msgid ":strong:`View ansible configuration.`"
+msgstr ":strong:`ansible 設定を表示します。`"
+
+#: ../../rst/cli/ansible-config.rst:33
+msgid "Config command line class"
+msgstr "設定コマンドラインクラス"
+
+#: ../../rst/cli/ansible-config.rst:62 ../../rst/cli/ansible-galaxy.rst:62
+#: ../../rst/cli/ansible-vault.rst:71
+msgid "Actions"
+msgstr "アクション"
+
+#: ../../rst/cli/ansible-config.rst:70
+msgid "list"
+msgstr "list"
+
+#: ../../rst/cli/ansible-config.rst:72
+msgid "list all current configs reading lib/constants.py and shows env and config file setting names"
+msgstr "lib/constants.py を読み取る現在の設定の一覧を表示し、env および config ファイルの設定名を表示します。"
+
+#: ../../rst/cli/ansible-config.rst:80 ../../rst/cli/ansible-config.rst:106
+#: ../../rst/cli/ansible-config.rst:128
+msgid "path to configuration file, defaults to first file found in precedence."
+msgstr "設定ファイルへのパス (デフォルトは優先される最初のファイルです)。"
+
+#: ../../rst/cli/ansible-config.rst:92
+msgid "dump"
+msgstr "dump"
+
+#: ../../rst/cli/ansible-config.rst:94
+msgid "Shows the current settings, merges ansible.cfg if specified"
+msgstr "現在の設定を表示し、指定した場合は ansible.cfg をマージします。"
+
+#: ../../rst/cli/ansible-config.rst:102
+msgid "Only show configurations that have changed from the default"
+msgstr "デフォルトから変更した設定のみを表示します。"
+
+#: ../../rst/cli/ansible-config.rst:118 ../../rst/cli/ansible-vault.rst:181
+msgid "view"
+msgstr "view"
+
+#: ../../rst/cli/ansible-config.rst:120
+msgid "Displays the current config file"
+msgstr "現在の設定ファイルを表示します。"
+
+#: ../../rst/cli/ansible-console.rst:7
+msgid "ansible-console"
+msgstr "ansible-console"
+
+#: ../../rst/cli/ansible-console.rst:10
+msgid ":strong:`REPL console for executing Ansible tasks.`"
+msgstr ":strong:`Ansible タスクを実行する REPL コンソール`"
+
+#: ../../rst/cli/ansible-console.rst:47
+msgid "A REPL that allows for running ad-hoc tasks against a chosen inventory from a nice shell with built-in tab completion (based on dominis' ansible-shell)."
+msgstr "(dominis の ansible-shell に基づく) 組み込みのタブ補完機能を備えた優れたシェルから選択したインベントリーに対してアドホックタスクを実行できるようにする REPL。"
+
+#: ../../rst/cli/ansible-console.rst:51
+msgid "It supports several commands, and you can modify its configuration at runtime:"
+msgstr "これは複数のコマンドをサポートし、起動時にその設定を変更できます。"
+
+#: ../../rst/cli/ansible-console.rst:54
+msgid "`cd [pattern]`: change host/group (you can use host patterns eg.: app*.dc*:!app01*)"
+msgstr "`cd [pattern]`: ホスト/グループを変更する (app*.dc*:!app01* などのホストパターンを使用できます)。"
+
+#: ../../rst/cli/ansible-console.rst:55
+msgid "`list`: list available hosts in the current path"
+msgstr "`list`: 現在のパスで利用可能なホストを一覧表示する"
+
+#: ../../rst/cli/ansible-console.rst:56
+msgid "`list groups`: list groups included in the current path"
+msgstr "`list groups`: 現在のパスに含まれるグループを一覧表示する"
+
+#: ../../rst/cli/ansible-console.rst:57
+msgid "`become`: toggle the become flag"
+msgstr "`become`: become フラグを切り替える"
+
+#: ../../rst/cli/ansible-console.rst:58
+msgid "`!`: forces shell module instead of the ansible module (!yum update -y)"
+msgstr "`!`: Ansible モジュールの代わりにシェルモジュールを強制的に実行する (!yum update -y)"
+
+#: ../../rst/cli/ansible-console.rst:59
+msgid "`verbosity [num]`: set the verbosity level"
+msgstr "`verbosity [num]`: 詳細レベルを設定する"
+
+#: ../../rst/cli/ansible-console.rst:60
+msgid "`forks [num]`: set the number of forks"
+msgstr "`forks [num]`: フォークの数を設定する"
+
+#: ../../rst/cli/ansible-console.rst:61
+msgid "`become_user [user]`: set the become_user"
+msgstr "`become_user [user]`: become_user を設定する"
+
+#: ../../rst/cli/ansible-console.rst:62
+msgid "`remote_user [user]`: set the remote_user"
+msgstr "`remote_user [user]`: remote_user を設定する"
+
+#: ../../rst/cli/ansible-console.rst:63
+msgid "`become_method [method]`: set the privilege escalation method"
+msgstr "`become_method [method]`: 権限昇格方法を設定する"
+
+#: ../../rst/cli/ansible-console.rst:64
+msgid "`check [bool]`: toggle check mode"
+msgstr "`check [bool]`: チェックモードを切り替える"
+
+#: ../../rst/cli/ansible-console.rst:65
+msgid "`diff [bool]`: toggle diff mode"
+msgstr "`diff [bool]`: diff モードを切り替える"
+
+#: ../../rst/cli/ansible-console.rst:66
+msgid "`timeout [integer]`: set the timeout of tasks in seconds (0 to disable)"
+msgstr "`timeout [integer]`: タスクのタイムアウトを秒単位で設定する (無効にするには 0)。"
+
+#: ../../rst/cli/ansible-console.rst:67
+msgid "`help [command/module]`: display documentation for the command or module"
+msgstr "`help [command/module]`: コマンドまたはモジュールのドキュメントを表示する"
+
+#: ../../rst/cli/ansible-console.rst:68
+msgid "`exit`: exit ansible-console"
+msgstr "`exit`: ansible-console を終了する"
+
+#: ../../rst/cli/ansible-console.rst:129 ../../rst/cli/ansible-playbook.rst:135
+msgid "one-step-at-a-time: confirm each task before running"
+msgstr "one-step-at-a-time: 実行前に各タスクを確認する"
+
+#: ../../rst/cli/ansible-doc.rst:7
+msgid "ansible-doc"
+msgstr "ansible-doc"
+
+#: ../../rst/cli/ansible-doc.rst:10
+msgid ":strong:`plugin documentation tool`"
+msgstr ":strong:`プラグインドキュメントツール`"
+
+#: ../../rst/cli/ansible-doc.rst:38
+msgid "displays information on modules installed in Ansible libraries. It displays a terse listing of plugins and their short descriptions, provides a printout of their DOCUMENTATION strings, and it can create a short \"snippet\" which can be pasted into a playbook."
+msgstr "Ansible ライブラリーにインストールされているモジュールに関する情報を表示します。プラグインとその簡単な説明を表示し、DOCUMENTATION 文字列を出力します。これにより、Playbook に簡単に張り付けることができる短い「スニペット」を作成できます。"
+
+#: ../../rst/cli/ansible-doc.rst:52
+msgid "**For internal testing only** Dump json metadata for all plugins."
+msgstr "**内部テストのみ** すべてのプラグインの json メタデータをダンプする。"
+
+#: ../../rst/cli/ansible-doc.rst:67
+msgid "Show plugin names and their source files without summaries (implies --list). A supplied argument will be used for filtering, can be a namespace or full collection name."
+msgstr "要約なしでプラグイン名およびソースファイルを表示します (implmaries --list)。指定した引数は、名前空間または完全なコレクション名になります。"
+
+#: ../../rst/cli/ansible-doc.rst:77
+msgid "Select the entry point for role(s)."
+msgstr "ロールのエントリーポイントを選択します。"
+
+#: ../../rst/cli/ansible-doc.rst:87
+msgid "Change output into json format."
+msgstr "出力を json 形式に変更します。"
+
+#: ../../rst/cli/ansible-doc.rst:92
+msgid "List available plugins. A supplied argument will be used for filtering, can be a namespace or full collection name."
+msgstr "利用可能なプラグインを一覧表示します。指定された引数はフィルタリングに使用され、名前空間または完全コレクション名になります。"
+
+#: ../../rst/cli/ansible-doc.rst:97
+msgid "The path to the directory containing your roles."
+msgstr "ロールを含むディレクトリーへのパス。"
+
+#: ../../rst/cli/ansible-doc.rst:102
+msgid "Show playbook snippet for specified plugin(s)"
+msgstr "指定されたプラグインの Playbook スニペットを表示します"
+
+#: ../../rst/cli/ansible-doc.rst:107
+msgid "Choose which plugin type (defaults to \"module\"). Available plugin types are : ('become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', 'vars', 'module', 'strategy', 'role', 'keyword')"
+msgstr "プラグインの種類 (デフォルトは「module」) を選択します。利用可能なプラグインの種類は :(「become」、「cache」、「callback」、「cliconf」、「connection」、「httpapi」、「inventory」、「lookup」、「netconf」、「shell」、「vars」、「module」、「strategy」、「role」、「keyword」) です。"
+
+#: ../../rst/cli/ansible-galaxy.rst:7
+msgid "ansible-galaxy"
+msgstr "ansible-galaxy"
+
+#: ../../rst/cli/ansible-galaxy.rst:10
+msgid ":strong:`Perform various Role and Collection related operations.`"
+msgstr ":strong:`ロールおよびコレクションに関する様々な操作を実行します。`"
+
+#: ../../rst/cli/ansible-galaxy.rst:33
+msgid "command to manage Ansible roles in shared repositories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*."
+msgstr "共有リポジトリーの Ansible ロールを管理するコマンド (デフォルトは Ansible Galaxy *https://galaxy.ansible.com* です)。"
+
+#: ../../rst/cli/ansible-galaxy.rst:70
+msgid "collection"
+msgstr "コレクション"
+
+#: ../../rst/cli/ansible-galaxy.rst:72
+msgid "Perform the action on an Ansible Galaxy collection. Must be combined with a further action like init/install as listed below."
+msgstr "Ansible Galaxy コレクションでアクションを実行します。以下で示すように、init/install などの追加アクションと組み合わせる必要があります。"
+
+#: ../../rst/cli/ansible-galaxy.rst:84
+msgid "collection download"
+msgstr "collection download"
+
+#: ../../rst/cli/ansible-galaxy.rst:94 ../../rst/cli/ansible-galaxy.rst:265
+msgid "Clear the existing server response cache."
+msgstr "既存のサーバーの応答キャッシュを消去します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:98 ../../rst/cli/ansible-galaxy.rst:273
+msgid "Do not use the server response cache."
+msgstr "サーバーの応答キャッシュを使用しないでください。"
+
+#: ../../rst/cli/ansible-galaxy.rst:102 ../../rst/cli/ansible-galaxy.rst:277
+msgid "Include pre-release versions. Semantic versioning pre-releases are ignored by default"
+msgstr "リリース前のバージョンを含めます。セマンティックバージョニングのプレリリースはデフォルトで無視されます"
+
+#: ../../rst/cli/ansible-galaxy.rst:106 ../../rst/cli/ansible-galaxy.rst:156
+#: ../../rst/cli/ansible-galaxy.rst:195 ../../rst/cli/ansible-galaxy.rst:236
+#: ../../rst/cli/ansible-galaxy.rst:281 ../../rst/cli/ansible-galaxy.rst:338
+#: ../../rst/cli/ansible-galaxy.rst:371 ../../rst/cli/ansible-galaxy.rst:440
+#: ../../rst/cli/ansible-galaxy.rst:477 ../../rst/cli/ansible-galaxy.rst:510
+#: ../../rst/cli/ansible-galaxy.rst:539 ../../rst/cli/ansible-galaxy.rst:584
+#: ../../rst/cli/ansible-galaxy.rst:629 ../../rst/cli/ansible-galaxy.rst:666
+#: ../../rst/cli/ansible-galaxy.rst:703 ../../rst/cli/ansible-galaxy.rst:740
+msgid "The Ansible Galaxy API key which can be found at https://galaxy.ansible.com/me/preferences."
+msgstr "https://galaxy.ansible.com/me/preferences で見つかる Ansible Galaxy API キー。"
+
+#: ../../rst/cli/ansible-galaxy.rst:110 ../../rst/cli/ansible-galaxy.rst:160
+#: ../../rst/cli/ansible-galaxy.rst:199 ../../rst/cli/ansible-galaxy.rst:240
+#: ../../rst/cli/ansible-galaxy.rst:289 ../../rst/cli/ansible-galaxy.rst:342
+#: ../../rst/cli/ansible-galaxy.rst:375 ../../rst/cli/ansible-galaxy.rst:448
+#: ../../rst/cli/ansible-galaxy.rst:481 ../../rst/cli/ansible-galaxy.rst:514
+#: ../../rst/cli/ansible-galaxy.rst:543 ../../rst/cli/ansible-galaxy.rst:588
+#: ../../rst/cli/ansible-galaxy.rst:633 ../../rst/cli/ansible-galaxy.rst:670
+#: ../../rst/cli/ansible-galaxy.rst:707 ../../rst/cli/ansible-galaxy.rst:744
+msgid "Ignore SSL certificate validation errors."
+msgstr "SSL 証明書の検証エラーを無視します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:114
+msgid "Don't download collection(s) listed as dependencies."
+msgstr "依存関係としてリストされているコレクションはダウンロードしないでください。"
+
+#: ../../rst/cli/ansible-galaxy.rst:118
+msgid "The directory to download the collections to."
+msgstr "コレクションをダウンロードするディレクトリー。"
+
+#: ../../rst/cli/ansible-galaxy.rst:122
+msgid "A file containing a list of collections to be downloaded."
+msgstr "ダウンロードするコレクションの一覧を含むファイル。"
+
+#: ../../rst/cli/ansible-galaxy.rst:126 ../../rst/cli/ansible-galaxy.rst:168
+#: ../../rst/cli/ansible-galaxy.rst:207 ../../rst/cli/ansible-galaxy.rst:244
+#: ../../rst/cli/ansible-galaxy.rst:313 ../../rst/cli/ansible-galaxy.rst:350
+#: ../../rst/cli/ansible-galaxy.rst:391 ../../rst/cli/ansible-galaxy.rst:456
+#: ../../rst/cli/ansible-galaxy.rst:489 ../../rst/cli/ansible-galaxy.rst:518
+#: ../../rst/cli/ansible-galaxy.rst:551 ../../rst/cli/ansible-galaxy.rst:592
+#: ../../rst/cli/ansible-galaxy.rst:637 ../../rst/cli/ansible-galaxy.rst:678
+#: ../../rst/cli/ansible-galaxy.rst:715 ../../rst/cli/ansible-galaxy.rst:772
+msgid "The Galaxy API server URL"
+msgstr "Galaxy API サーバー URL"
+
+#: ../../rst/cli/ansible-galaxy.rst:137
+msgid "collection init"
+msgstr "collection init"
+
+#: ../../rst/cli/ansible-galaxy.rst:139 ../../rst/cli/ansible-galaxy.rst:419
+msgid "Creates the skeleton framework of a role or collection that complies with the Galaxy metadata format. Requires a role or collection name. The collection name must be in the format ``<namespace>.<collection>``."
+msgstr "Galaxy メタデータ形式に準拠するロールまたはコレクションのスケルトンフレームワークを作成します。ロールまたはコレクション名が必要です。コレクション名は ``<namespace>.<collection>`` の形式にする必要があります。"
+
+#: ../../rst/cli/ansible-galaxy.rst:148
+msgid "The path to a collection skeleton that the new collection should be based upon."
+msgstr "新しいコレクションの基となるコレクションスケルトンへのパス。"
+
+#: ../../rst/cli/ansible-galaxy.rst:152
+msgid "The path in which the skeleton collection will be created. The default is the current working directory."
+msgstr "スケルトンコレクションが作成されるパス。デフォルトは現在の作業ディレクトリーです。"
+
+#: ../../rst/cli/ansible-galaxy.rst:164 ../../rst/cli/ansible-galaxy.rst:203
+#: ../../rst/cli/ansible-galaxy.rst:293 ../../rst/cli/ansible-galaxy.rst:452
+#: ../../rst/cli/ansible-galaxy.rst:748
+msgid "Force overwriting an existing role or collection"
+msgstr "既存のロールまたはコレクションの上書きを強制します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:179
+msgid "collection build"
+msgstr "collection build"
+
+#: ../../rst/cli/ansible-galaxy.rst:181
+msgid "Build an Ansible Galaxy collection artifact that can be stored in a central repository like Ansible Galaxy. By default, this command builds from the current working directory. You can optionally pass in the collection input path (where the ``galaxy.yml`` file is)."
+msgstr "Ansible Galaxy などの中央リポジトリーに格納できる Ansible Galaxy コレクションアーティファクトを構築します。デフォルトでは、このコマンドは現在の作業ディレクトリーから構築されます。必要に応じて、コレクション入力パスを渡すことができます (``galaxy.yml`` ファイルの場所です)。"
+
+#: ../../rst/cli/ansible-galaxy.rst:191
+msgid "The path in which the collection is built to. The default is the current working directory."
+msgstr "コレクションが構築されるパス。デフォルトは現在の作業ディレクトリーです。"
+
+#: ../../rst/cli/ansible-galaxy.rst:218
+msgid "collection publish"
+msgstr "collection publish"
+
+#: ../../rst/cli/ansible-galaxy.rst:220
+msgid "Publish a collection into Ansible Galaxy. Requires the path to the collection tarball to publish."
+msgstr "コレクションを Ansible Galaxy に公開します。公開するには、コレクション tarball へのパスが必要になります。"
+
+#: ../../rst/cli/ansible-galaxy.rst:228
+msgid "The time to wait for the collection import process to finish."
+msgstr "コレクションのインポートプロセスが完了するのを待つ時間。"
+
+#: ../../rst/cli/ansible-galaxy.rst:232
+msgid "Don't wait for import validation results."
+msgstr "インポートの検証結果を待ちません。"
+
+#: ../../rst/cli/ansible-galaxy.rst:255
+msgid "collection install"
+msgstr "collection install"
+
+#: ../../rst/cli/ansible-galaxy.rst:269
+msgid "Force overwriting an existing collection and its dependencies."
+msgstr "既存のコレクションおよびその依存関係を強制的に上書きします。"
+
+#: ../../rst/cli/ansible-galaxy.rst:285
+msgid "Upgrade installed collection artifacts. This will also update dependencies unless --no-deps is provided"
+msgstr "インストールされたコレクションアーティファクトをアップグレードします。--no-deps が提供されている場合を除き依存関係も更新されます。"
+
+#: ../../rst/cli/ansible-galaxy.rst:297
+msgid "Ignore errors during installation and continue with the next specified collection. This will not ignore dependency conflict errors."
+msgstr "インストール時にエラーを無視し、次の指定されたコレクションで続行します。依存関係の競合エラーは無視しません。"
+
+#: ../../rst/cli/ansible-galaxy.rst:301
+msgid "Don't download collections listed as dependencies."
+msgstr "依存関係として一覧表示されているコレクションはダウンロードしないでください。"
+
+#: ../../rst/cli/ansible-galaxy.rst:305
+msgid "The path to the directory containing your collections."
+msgstr "コレクションを含むディレクトリーへのパス。"
+
+#: ../../rst/cli/ansible-galaxy.rst:309
+msgid "A file containing a list of collections to be installed."
+msgstr "インストールするコレクションの一覧を含むファイル。"
+
+#: ../../rst/cli/ansible-galaxy.rst:324
+msgid "collection list"
+msgstr "collection list"
+
+#: ../../rst/cli/ansible-galaxy.rst:326 ../../rst/cli/ansible-galaxy.rst:531
+msgid "List installed collections or roles"
+msgstr "インストール済みのコレクションまたはロールを一覧表示します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:334
+msgid "Format to display the list of collections in."
+msgstr "コレクションの一覧を表示する形式。"
+
+#: ../../rst/cli/ansible-galaxy.rst:346 ../../rst/cli/ansible-galaxy.rst:383
+msgid "One or more directories to search for collections in addition to the default COLLECTIONS_PATHS. Separate multiple paths with ':'."
+msgstr "デフォルトの COLLECTIONS_PATHS に加えて、コレクションを検索する 1 つ以上のディレクトリー。複数のパスは、「:」で区切ります。"
+
+#: ../../rst/cli/ansible-galaxy.rst:361
+msgid "collection verify"
+msgstr "collection verify"
+
+#: ../../rst/cli/ansible-galaxy.rst:379
+msgid "Ignore errors during verification and continue with the next specified collection."
+msgstr "検証時のエラーを無視し、次の指定されたコレクションで続行します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:387
+msgid "A file containing a list of collections to be verified."
+msgstr "検証するコレクションの一覧を含むファイル。"
+
+#: ../../rst/cli/ansible-galaxy.rst:403
+msgid "role"
+msgstr "ロール"
+
+#: ../../rst/cli/ansible-galaxy.rst:405
+msgid "Perform the action on an Ansible Galaxy role. Must be combined with a further action like delete/install/init as listed below."
+msgstr "Ansible Galaxy ロールで操作を実行します。以下のように delete/install/init などのアクションと組み合わせる必要があります。"
+
+#: ../../rst/cli/ansible-galaxy.rst:417
+msgid "role init"
+msgstr "role init"
+
+#: ../../rst/cli/ansible-galaxy.rst:428
+msgid "The path in which the skeleton role will be created. The default is the current working directory."
+msgstr "スケルトンロールが作成されるパス。デフォルトは現在の作業ディレクトリーです。"
+
+#: ../../rst/cli/ansible-galaxy.rst:432 ../../rst/cli/ansible-galaxy.rst:699
+msgid "Don't query the galaxy API when creating roles"
+msgstr "ロールの作成時に galaxy API にクエリーを実行しないでください。"
+
+#: ../../rst/cli/ansible-galaxy.rst:436
+msgid "The path to a role skeleton that the new role should be based upon."
+msgstr "新しいロールの基となるロールスケルトンへのパス。"
+
+#: ../../rst/cli/ansible-galaxy.rst:444
+msgid "Initialize using an alternate role type. Valid types include: 'container', 'apb' and 'network'."
+msgstr "別のロールタイプを使用して初期化します。有効なタイプには、「container」、「apb」、および「network」が含まれます。"
+
+#: ../../rst/cli/ansible-galaxy.rst:467
+msgid "role remove"
+msgstr "role remove"
+
+#: ../../rst/cli/ansible-galaxy.rst:469
+msgid "removes the list of roles passed as arguments from the local system."
+msgstr "ローカルシステムから引数として渡されたロールの一覧を削除します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:485 ../../rst/cli/ansible-galaxy.rst:547
+#: ../../rst/cli/ansible-galaxy.rst:674 ../../rst/cli/ansible-galaxy.rst:711
+#: ../../rst/cli/ansible-galaxy.rst:764
+msgid "The path to the directory containing your roles. The default is the first writable one configured via DEFAULT_ROLES_PATH: ~/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles"
+msgstr "ロールを含むディレクトリーへのパスです。デフォルトは DEFAULT_ROLES_PATH: ~/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles で設定される最初の書き込み可能なファイルです。"
+
+#: ../../rst/cli/ansible-galaxy.rst:500
+msgid "role delete"
+msgstr "role delete"
+
+#: ../../rst/cli/ansible-galaxy.rst:502
+msgid "Delete a role from Ansible Galaxy."
+msgstr "Ansible Galaxy からロールを削除します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:529
+msgid "role list"
+msgstr "role list"
+
+#: ../../rst/cli/ansible-galaxy.rst:562
+msgid "role search"
+msgstr "role search"
+
+#: ../../rst/cli/ansible-galaxy.rst:564
+msgid "searches for roles on the Ansible Galaxy server"
+msgstr "Ansible Galaxy サーバーでロールを検索します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:572
+msgid "GitHub username"
+msgstr "GitHub ユーザー名"
+
+#: ../../rst/cli/ansible-galaxy.rst:576
+msgid "list of galaxy tags to filter by"
+msgstr "フィルタリングする galaxy タグの一覧を表示します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:580
+msgid "list of OS platforms to filter by"
+msgstr "フィルタリングする OS プラットフォームの一覧を表示します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:603
+msgid "role import"
+msgstr "role import"
+
+#: ../../rst/cli/ansible-galaxy.rst:605
+msgid "used to import a role into Ansible Galaxy"
+msgstr "Ansible Galaxy にロールをインポートするのに使用します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:613
+msgid "The name of a branch to import. Defaults to the repository's default branch (usually master)"
+msgstr "インポートするブランチの名前。デフォルトではリポジトリーのデフォルトブランチ (通常は master) に設定されます。"
+
+#: ../../rst/cli/ansible-galaxy.rst:617
+msgid "Don't wait for import results."
+msgstr "インポートの結果を待ちません。"
+
+#: ../../rst/cli/ansible-galaxy.rst:621
+msgid "The name the role should have, if different than the repo name"
+msgstr "ロールに付与すべき名前 (リポジトリー名とは異なる場合)"
+
+#: ../../rst/cli/ansible-galaxy.rst:625
+msgid "Check the status of the most recent import request for given github_user/github_repo."
+msgstr "指定した github_user/github_repo の、最新のインポート要求ステータスを確認します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:648
+msgid "role setup"
+msgstr "role setup"
+
+#: ../../rst/cli/ansible-galaxy.rst:650
+msgid "Setup an integration from Github or Travis for Ansible Galaxy roles"
+msgstr "Ansible Galaxy ロールの Github または Travis からの統合を設定します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:658
+msgid "List all of your integrations."
+msgstr "すべての統合の一覧を表示します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:662
+msgid "Remove the integration matching the provided ID value. Use --list to see ID values."
+msgstr "指定の ID 値に一致するインテグレーションを削除します。ID の値を表示するには --list を使用します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:689
+msgid "role info"
+msgstr "role info"
+
+#: ../../rst/cli/ansible-galaxy.rst:691
+msgid "prints out detailed information about an installed role as well as info available from the galaxy API."
+msgstr "インストールされているロールに関する詳細情報と、galaxy API で利用可能な情報を出力します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:726
+msgid "role install"
+msgstr "role install"
+
+#: ../../rst/cli/ansible-galaxy.rst:736
+msgid "Force overwriting an existing role and its dependencies."
+msgstr "既存のロールとその依存関係を強制的に上書きします。"
+
+#: ../../rst/cli/ansible-galaxy.rst:752
+msgid "Use tar instead of the scm archive option when packaging the role."
+msgstr "ロールをパッケージ化する際に、scm アーカイブオプションの代わりに tar を使用します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:756
+msgid "Ignore errors and continue with the next specified role."
+msgstr "エラーを無視して、次に指定したロールで続行します。"
+
+#: ../../rst/cli/ansible-galaxy.rst:760
+msgid "Don't download roles listed as dependencies."
+msgstr "依存関係としてリストされているロールはダウンロードしないでください。"
+
+#: ../../rst/cli/ansible-galaxy.rst:768
+msgid "A file containing a list of roles to be installed."
+msgstr "インストールするロールの一覧を含むファイル。"
+
+#: ../../rst/cli/ansible-inventory.rst:7
+msgid "ansible-inventory"
+msgstr "ansible-inventory"
+
+#: ../../rst/cli/ansible-inventory.rst:10
+msgid ":strong:`None`"
+msgstr ":strong:`None`"
+
+#: ../../rst/cli/ansible-inventory.rst:39
+msgid "used to display or dump the configured inventory as Ansible sees it"
+msgstr "Ansible が認識しているように、設定したインベントリーを表示またはダンプするために使用します。"
+
+#: ../../rst/cli/ansible-inventory.rst:55
+msgid "When doing an --list, represent in a way that is optimized for export,not as an accurate representation of how Ansible has processed it"
+msgstr "--list を実行する場合は、Ansible が処理する方法を正確に示すのではなく、エクスポート用に最適化される方法を示します。"
+
+#: ../../rst/cli/ansible-inventory.rst:60
+msgid "create inventory graph, if supplying pattern it must be a valid group name"
+msgstr "インベントリーグラフを作成します (パターンを指定している場合は、有効なグループ名である必要があります)。"
+
+#: ../../rst/cli/ansible-inventory.rst:65
+msgid "Output specific host info, works as inventory script"
+msgstr "特定のホスト情報を出力します (インベントリースクリプトとして機能します)。"
+
+#: ../../rst/cli/ansible-inventory.rst:70
+msgid "Output all hosts info, works as inventory script"
+msgstr "全ホスト情報出力します (インベントリースクリプトとして機能します)。"
+
+#: ../../rst/cli/ansible-inventory.rst:75
+#: ../../rst/cli/ansible-inventory.rst:130
+msgid "==SUPPRESS=="
+msgstr "==SUPPRESS=="
+
+#: ../../rst/cli/ansible-inventory.rst:80
+msgid "When doing --list, send the inventory to a file instead of to the screen"
+msgstr "--list を実行する場合は、画面の代わりにインベントリーをファイルに送信します。"
+
+#: ../../rst/cli/ansible-inventory.rst:90
+msgid "Use TOML format instead of default JSON, ignored for --graph"
+msgstr "デフォルトの JSON の代わりに TOML 形式を使用します (--graph では無視されます)。"
+
+#: ../../rst/cli/ansible-inventory.rst:95
+msgid "Add vars to graph display, ignored unless used with --graph"
+msgstr "グラフ表示に変数を追加します。--graph と併用しない限り無視されます。"
+
+#: ../../rst/cli/ansible-inventory.rst:140
+msgid "Use YAML format instead of default JSON, ignored for --graph"
+msgstr "デフォルトの JSON の代わりに YAML 形式を使用します。--graph は無視されます。"
+
+#: ../../rst/cli/ansible-playbook.rst:7
+msgid "ansible-playbook"
+msgstr "ansible-playbook"
+
+#: ../../rst/cli/ansible-playbook.rst:10
+msgid ":strong:`Runs Ansible playbooks, executing the defined tasks on the targeted hosts.`"
+msgstr ":strong:`ターゲットのホストで定義したタスクを実行して Ansible Playbook を実行します。`"
+
+#: ../../rst/cli/ansible-playbook.rst:48
+msgid "the tool to run *Ansible playbooks*, which are a configuration and multinode deployment system. See the project home page (https://docs.ansible.com) for more information."
+msgstr "設定およびマルチノードのデプロイメントシステムである *Ansible Playbook* を実行するツール。詳細はプロジェクトのホームページ (https://docs.ansible.com)) を参照してください。"
+
+#: ../../rst/cli/ansible-playbook.rst:75
+msgid "clear the fact cache for every host in inventory"
+msgstr "インベントリー内のすべてのホストのファクトキャッシュを消去します。"
+
+#: ../../rst/cli/ansible-playbook.rst:80
+msgid "run handlers even if a task fails"
+msgstr "タスクが失敗してもハンドラーを実行する"
+
+#: ../../rst/cli/ansible-playbook.rst:90
+msgid "list all available tags"
+msgstr "利用可能なタグをすべて表示する"
+
+#: ../../rst/cli/ansible-playbook.rst:95
+msgid "list all tasks that would be executed"
+msgstr "実行するタスクをすべて表示する"
+
+#: ../../rst/cli/ansible-playbook.rst:115 ../../rst/cli/ansible-pull.rst:121
+msgid "only run plays and tasks whose tags do not match these values"
+msgstr "タグがこれらの値と一致しないプレイとタスクのみを実行する"
+
+#: ../../rst/cli/ansible-playbook.rst:130
+msgid "start the playbook at the task matching this name"
+msgstr "この名前に一致するタスクで Playbook を開始する"
+
+#: ../../rst/cli/ansible-playbook.rst:225 ../../rst/cli/ansible-pull.rst:241
+msgid "only run plays and tasks tagged with these values"
+msgstr "それらの値でタグ付けされたプレイとタスクのみを実行する"
+
+#: ../../rst/cli/ansible-pull.rst:7
+msgid "ansible-pull"
+msgstr "ansible-pull"
+
+#: ../../rst/cli/ansible-pull.rst:10
+msgid ":strong:`pulls playbooks from a VCS repo and executes them for the local host`"
+msgstr ":strong:`VCS リポジトリーから Playbooks を取得し、ローカルホストで実行します。`"
+
+#: ../../rst/cli/ansible-pull.rst:47
+msgid "Used to pull a remote copy of ansible on each managed node, each set to run via cron and update playbook source via a source repository. This inverts the default *push* architecture of ansible into a *pull* architecture, which has near-limitless scaling potential."
+msgstr "各管理対象ノードで ansible のリモートコピーを取得するのに使用されます。各セットは cron を介して実行され、ソースリポジトリーを介して Playbook ソースを更新します。これにより、ansible のデフォルトの *push* アーキテクチャーが *pull* アーキテクチャーに反転します。これには、スケーリングの可能性がほぼ無限あります。"
+
+#: ../../rst/cli/ansible-pull.rst:52
+msgid "The setup playbook can be tuned to change the cron frequency, logging locations, and parameters to ansible-pull. This is useful both for extreme scale-out as well as periodic remediation. Usage of the 'fetch' module to retrieve logs from ansible-pull runs would be an excellent way to gather and analyze remote logs from ansible-pull."
+msgstr "セットアップ Playbook は、cron 頻度、ロギングの場所、およびパラメーターを ansible-pull に変更します。これは、急なスケールアウトと定期的な修復にも便利です。ansible-pull からログを取得するために「fetch」モジュールを使用することは、ansible-pull からログを収集し、分析するための優れた方法です。"
+
+#: ../../rst/cli/ansible-pull.rst:66
+msgid "adds the hostkey for the repo url if not already added"
+msgstr "リポジトリー URL のホストキーが追加されていない場合はホストキーを追加する"
+
+#: ../../rst/cli/ansible-pull.rst:81
+msgid "modified files in the working repository will be discarded"
+msgstr "作業リポジトリー内の変更されたファイルは破棄される"
+
+#: ../../rst/cli/ansible-pull.rst:91
+msgid "Do a full clone, instead of a shallow one."
+msgstr "簡易クローンではなく、完全なクローンを実行します。"
+
+#: ../../rst/cli/ansible-pull.rst:106
+msgid "purge checkout after playbook run"
+msgstr "Playbook の実行後にチェックアウトをパージする"
+
+#: ../../rst/cli/ansible-pull.rst:136
+msgid "submodules will track the latest changes. This is equivalent to specifying the --remote flag to git submodule update"
+msgstr "サブモジュールでは最新の変更を追跡します。これは、--remote フラグを git サブモジュール更新に指定するのと同じです。"
+
+#: ../../rst/cli/ansible-pull.rst:151
+msgid "verify GPG signature of checked out commit, if it fails abort running the playbook. This needs the corresponding VCS module to support such an operation"
+msgstr "チェックアウトしたコミットの GPG 署名を確認します。Playbook の実行を中断できない場合に、このような操作をサポートするには、対応する VCS モジュールが必要になります。"
+
+#: ../../rst/cli/ansible-pull.rst:161
+msgid "branch/tag/commit to checkout. Defaults to behavior of repository module."
+msgstr "チェックアウトするブランチ、タグ、またはコミット。デフォルトは、リポジトリーモジュールの動作です。"
+
+#: ../../rst/cli/ansible-pull.rst:181
+msgid "URL of the playbook repository"
+msgstr "Playbook リポジトリーの URL"
+
+#: ../../rst/cli/ansible-pull.rst:191
+msgid "directory to checkout repository to"
+msgstr "リポジトリーをチェックアウトするディレクトリー"
+
+#: ../../rst/cli/ansible-pull.rst:201
+msgid "run the playbook even if the repository could not be updated"
+msgstr "リポジトリーを更新できなかった場合でも、Playbook を実行します。"
+
+#: ../../rst/cli/ansible-pull.rst:226
+msgid "Repository module name, which ansible will use to check out the repo. Choices are ('git', 'subversion', 'hg', 'bzr'). Default is git."
+msgstr "Ansible がリポジトリーをチェックアウトするのに使用するリポジトリーモジュール名 (「git」、「subversion」、「hg」、「bzr」)。デフォルトは git です。"
+
+#: ../../rst/cli/ansible-pull.rst:231
+msgid "only run the playbook if the repository has been updated"
+msgstr "リポジトリーが更新されている場合にのみ Playbook を実行します。"
+
+#: ../../rst/cli/ansible-pull.rst:236
+msgid "sleep for random interval (between 0 and n number of seconds) before starting. This is a useful way to disperse git requests"
+msgstr "開始前のランダムな間隔 (0 ～ n 秒間) をスリープ状態にします。これは、git 要求を分散させるための便利な方法です。"
+
+#: ../../rst/cli/ansible-vault.rst:7
+msgid "ansible-vault"
+msgstr "ansible-vault"
+
+#: ../../rst/cli/ansible-vault.rst:10
+msgid ":strong:`encryption/decryption utility for Ansible data files`"
+msgstr ":strong:`Ansible データファイルの暗号化/複合ユーティリティー`"
+
+#: ../../rst/cli/ansible-vault.rst:35
+msgid "can encrypt any structured data file used by Ansible. This can include *group_vars/* or *host_vars/* inventory variables, variables loaded by *include_vars* or *vars_files*, or variable files passed on the ansible-playbook command line with *-e @file.yml* or *-e @file.json*. Role variables and defaults are also included!"
+msgstr "Ansible が使用する構造化データファイルをすべて暗号化できます。これには、インベントリー変数 *group_vars/* または *host_vars/*、*include_vars* または *vars_files* で読み込まれる変数、*-e @file.yml* または *-e @file.json* を使用して ansible-playbook コマンドラインで渡される変数ファイルが含まれます。ロールの変数およびデフォルトも含まれます。"
+
+#: ../../rst/cli/ansible-vault.rst:41
+msgid "Because Ansible tasks, handlers, and other objects are data, these can also be encrypted with vault. If you'd like to not expose what variables you are using, you can keep an individual task file entirely encrypted."
+msgstr "Ansible タスク、ハンドラー、およびその他のオブジェクトはデータであるため、Vault で暗号化することもできます。使用している変数を公開しない場合は、個別のタスクファイルを完全に暗号化できます。"
+
+#: ../../rst/cli/ansible-vault.rst:79
+msgid "create"
+msgstr "create"
+
+#: ../../rst/cli/ansible-vault.rst:81
+msgid "create and open a file in an editor that will be encrypted with the provided vault secret when closed"
+msgstr "閉じたときに提供される Vault シークレットで暗号化されるファイルを作成してエディターで開きます"
+
+#: ../../rst/cli/ansible-vault.rst:93 ../../rst/cli/ansible-vault.rst:161
+#: ../../rst/cli/ansible-vault.rst:225 ../../rst/cli/ansible-vault.rst:263
+#: ../../rst/cli/ansible-vault.rst:317
+msgid "the vault id used to encrypt (required if more than one vault-id is provided)"
+msgstr "暗号化に使用する Vault ID (複数の vault-id が指定されている場合に必要)"
+
+#: ../../rst/cli/ansible-vault.rst:113
+msgid "decrypt"
+msgstr "decrypt"
+
+#: ../../rst/cli/ansible-vault.rst:115
+msgid "decrypt the supplied file using the provided vault secret"
+msgstr "提供された Vault シークレットを使用して提供されたファイルを復号します。"
+
+#: ../../rst/cli/ansible-vault.rst:127 ../../rst/cli/ansible-vault.rst:229
+#: ../../rst/cli/ansible-vault.rst:267
+msgid "output file name for encrypt or decrypt; use - for stdout"
+msgstr "暗号化用または復号用の出力ファイル名。標準出力 (stdout) に - を使用します。"
+
+#: ../../rst/cli/ansible-vault.rst:147
+msgid "edit"
+msgstr "edit"
+
+#: ../../rst/cli/ansible-vault.rst:149
+msgid "open and decrypt an existing vaulted file in an editor, that will be encrypted again when closed"
+msgstr "エディターで既存の Vault ファイルを開き、復号します。これは、閉じると再度暗号化されます。"
+
+#: ../../rst/cli/ansible-vault.rst:183
+msgid "open, decrypt and view an existing vaulted file using a pager using the supplied vault secret"
+msgstr "提供された Vault シークレットを使用するページャーを使用して、既存の Vault ファイルを開き、復号し、表示します。"
+
+#: ../../rst/cli/ansible-vault.rst:211
+msgid "encrypt"
+msgstr "encrypt"
+
+#: ../../rst/cli/ansible-vault.rst:213
+msgid "encrypt the supplied file using the provided vault secret"
+msgstr "提供される Vault シークレットを使用して提供されたファイルを暗号化します。"
+
+#: ../../rst/cli/ansible-vault.rst:249
+msgid "encrypt_string"
+msgstr "encrypt_string"
+
+#: ../../rst/cli/ansible-vault.rst:251
+msgid "encrypt the supplied string using the provided vault secret"
+msgstr "提供された Vault シークレットを使用して提供された文字列を暗号化します。"
+
+#: ../../rst/cli/ansible-vault.rst:271
+msgid "Do not hide input when prompted for the string to encrypt"
+msgstr "文字列の暗号化を要求したときに入力を非表示にしない"
+
+#: ../../rst/cli/ansible-vault.rst:275
+msgid "Specify the variable name for stdin"
+msgstr "stdin の変数名を指定する"
+
+#: ../../rst/cli/ansible-vault.rst:287
+msgid "Specify the variable name"
+msgstr "変数名を指定する"
+
+#: ../../rst/cli/ansible-vault.rst:291
+msgid "Prompt for the string to encrypt"
+msgstr "暗号化する文字列を入力する"
+
+#: ../../rst/cli/ansible-vault.rst:303
+msgid "rekey"
+msgstr "rekey"
+
+#: ../../rst/cli/ansible-vault.rst:305
+msgid "re-encrypt a vaulted file with a new secret, the previous secret is required"
+msgstr "新規シークレットと共に Vault ファイルを再暗号化します。以前のシークレットが必要です。"
+
+#: ../../rst/cli/ansible-vault.rst:321
+msgid "the new vault identity to use for rekey"
+msgstr "rekey に使用する新しい vault アイデンティティー"
+
+#: ../../rst/cli/ansible-vault.rst:325
+msgid "new vault password file for rekey"
+msgstr "rekey の新しい Vault パスワードファイル"
+
+#~ msgid "a REPL that allows for running ad-hoc tasks against a chosen inventory (based on dominis' ansible-shell)."
+#~ msgstr ""
+

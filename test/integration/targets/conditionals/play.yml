@@ -1,0 +1,667 @@
+# (c) 2014, James Cammarata <jcammarata@ansible.com>
+# (c) 2019, Ansible Project
+
+- hosts: testhost
+  gather_facts: false
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - name: test conditional '=='
+      shell: echo 'testing'
+      when: 1 == 1
+      register: result
+
+    - name: assert conditional '==' ran
+      assert:
+        that:
+        - result is changed
+        - "result.stdout == 'testing'"
+        - "result.rc == 0"
+
+    - name: test bad conditional '=='
+      shell: echo 'testing'
+      when: 0 == 1
+      register: result
+
+    - name: assert bad conditional '==' did NOT run
+      assert:
+        that:
+        - result is skipped
+
+    - name: test conditional '!='
+      shell: echo 'testing'
+      when: 0 != 1
+      register: result
+
+    - name: assert conditional '!=' ran
+      assert:
+        that:
+        - result is changed
+        - "result.stdout == 'testing'"
+        - "result.rc == 0"
+
+    - name: test bad conditional '!='
+      shell: echo 'testing'
+      when: 1 != 1
+      register: result
+
+    - name: assert bad conditional '!=' did NOT run
+      assert:
+        that:
+        - result is skipped
+
+    - name: test conditional 'in'
+      shell: echo 'testing'
+      when: 1 in [1,2,3]
+      register: result
+
+    - name: assert conditional 'in' ran
+      assert:
+        that:
+        - result is changed
+        - "result.stdout == 'testing'"
+        - "result.rc == 0"
+
+    - name: test bad conditional 'in'
+      shell: echo 'testing'
+      when: 1 in [7,8,9]
+      register: result
+
+    - name: assert bad conditional 'in' did NOT run
+      assert:
+        that:
+        - result is skipped
+
+    - name: test conditional 'not in'
+      shell: echo 'testing'
+      when: 0 not in [1,2,3]
+      register: result
+
+    - name: assert conditional 'not in' ran
+      assert:
+        that:
+        - result is changed
+        - "result.stdout == 'testing'"
+        - "result.rc == 0"
+
+    - name: test bad conditional 'not in'
+      shell: echo 'testing'
+      when: 1 not in [1,2,3]
+      register: result
+
+    - name: assert bad conditional 'not in' did NOT run
+      assert:
+        that:
+        - result is skipped
+
+    - name: test conditional 'is defined'
+      shell: echo 'testing'
+      when: test_bare is defined
+      register: result
+
+    - name: assert conditional 'is defined' ran
+      assert:
+        that:
+        - result is changed
+        - "result.stdout == 'testing'"
+        - "result.rc == 0"
+
+    - name: test bad conditional 'is defined'
+      shell: echo 'testing'
+      when: foo_asdf_xyz is defined
+      register: result
+
+    - name: assert bad conditional 'is defined' did NOT run
+      assert:
+        that:
+        - result is skipped
+
+    - name: test conditional 'is not defined'
+      shell: echo 'testing'
+      when: foo_asdf_xyz is not defined
+      register: result
+
+    - name: assert conditional 'is not defined' ran
+      assert:
+        that:
+        - result is changed
+        - "result.stdout == 'testing'"
+        - "result.rc == 0"
+
+    - name: test bad conditional 'is not defined'
+      shell: echo 'testing'
+      when: test_bare is not defined
+      register: result
+
+    - name: assert bad conditional 'is not defined' did NOT run
+      assert:
+        that:
+        - result is skipped
+
+    - name: test bad conditional 'is undefined'
+      shell: echo 'testing'
+      when: test_bare is undefined
+      register: result
+
+    - name: assert bad conditional 'is undefined' did NOT run
+      assert:
+        that:
+        - result is skipped
+
+    - name: test bare conditional
+      shell: echo 'testing'
+      when: test_bare
+      register: result
+
+    - name: assert bare conditional ran
+      assert:
+        that:
+        - result is changed
+        - "result.stdout == 'testing'"
+        - "result.rc == 0"
+
+    - name: not test bare conditional
+      shell: echo 'testing'
+      when: not test_bare
+      register: result
+
+    - name: assert did not run
+      assert:
+        that:
+        - result is skipped
+
+    - name: empty string is false
+      shell: echo 'testing'
+      when: string_lit_empty
+      register: result
+
+    - name: assert did not run
+      assert:
+        that:
+        - result is skipped
+
+    - name: not empty string is true
+      shell: echo 'testing'
+      when: not string_lit_empty
+      register: result
+
+    - name: assert ran
+      assert:
+        that:
+        - result is not skipped
+
+    - name: literal 0 is false
+      shell: echo 'testing'
+      when: int_lit_0
+      register: result
+
+    - name: assert did not run
+      assert:
+        that:
+        - result is skipped
+
+    - name: not literal 0 is true
+      shell: echo 'testing'
+      when: not int_lit_0
+      register: result
+
+    - name: assert ran
+      assert:
+        that:
+        - result is not skipped
+
+    - name: literal 1 is true
+      shell: echo 'testing'
+      when: int_lit_1
+      register: result
+
+    - name: assert ran
+      assert:
+        that:
+        - result is not skipped
+
+    - name: not literal 1 is false
+      shell: echo 'testing'
+      when: not int_lit_1
+      register: result
+
+    - name: assert did not run
+      assert:
+        that:
+        - result is skipped
+
+    - name: null is false
+      shell: echo 'testing'
+      when: lit_null
+      register: result
+
+    - name: assert did not run
+      assert:
+        that:
+        - result is skipped
+
+    - name: literal string "true" is true
+      shell: echo 'testing'
+      when: string_lit_true
+      register: result
+
+    - name: assert ran
+      assert:
+        that:
+        - result is not skipped
+
+    - name: not literal string "true" is false
+      shell: echo 'testing'
+      when: not string_lit_true
+      register: result
+
+    - name: assert did not run
+      assert:
+        that:
+        - result is skipped
+
+    - name: literal string "false" is true (nonempty string)
+      shell: echo 'testing'
+      when: string_lit_false
+      register: result
+
+    - name: assert ran
+      assert:
+        that:
+        - result is not skipped
+
+    - name: not literal string "false" is false
+      shell: echo 'testing'
+      when: not string_lit_false
+      register: result
+
+    - name: assert did not run
+      assert:
+        that:
+        - result is skipped
+
+    - name: not literal string "true" is false
+      shell: echo 'testing'
+      when: not string_lit_true
+      register: result
+
+    - name: assert did not run
+      assert:
+        that:
+        - result is skipped
+
+    - name: test conditional using a variable
+      shell: echo 'testing'
+      when: test_bare_var == 123
+      register: result
+
+    - name: assert conditional using a variable ran
+      assert:
+        that:
+        - result is changed
+        - "result.stdout == 'testing'"
+        - "result.rc == 0"
+
+    - name: test good conditional based on nested variables
+      shell: echo 'testing'
+      when: test_bare_nested_good
+      register: result
+
+    - name: assert good conditional based on nested var ran
+      assert:
+        that:
+        - result is changed
+        - "result.stdout == 'testing'"
+        - "result.rc == 0"
+
+    - name: test bad conditional based on nested variables
+      shell: echo 'testing'
+      when: test_bare_nested_bad
+      register: result
+
+    - debug: var={{item}}
+      loop:
+        - result
+        - test_bare_nested_bad
+
+    - name: assert that the bad nested conditional ran (it is a non-empty string, so truthy)
+      assert:
+        that:
+         - result is not skipped
+
+    - name: test bad conditional based on nested variables with bool filter
+      shell: echo 'testing'
+      when: test_bare_nested_bad|bool
+      register: result
+
+    - name: assert that the bad nested conditional did NOT run as bool forces evaluation
+      assert:
+        that:
+        - result is skipped
+
+
+    #-----------------------------------------------------------------------
+    # proper booleanification tests (issue #8629)
+
+    - name: set fact to string 'false'
+      set_fact: bool_test1=false
+
+    - name: set fact to string 'False'
+      set_fact: bool_test2=False
+
+    - name: set fact to a proper boolean using complex args
+      set_fact:
+        bool_test3: false
+
+    - name: "test boolean value 'false' string using 'when: var'"
+      command: echo 'hi'
+      when: bool_test1
+      register: result
+
+    - name: assert that the task did not run for 'false'
+      assert:
+        that:
+        - result is skipped
+
+    - name: "test boolean value 'false' string using 'when: not var'"
+      command: echo 'hi'
+      when: not bool_test1
+      register: result
+
+    - name: assert that the task DID run for not 'false'
+      assert:
+        that:
+        - result is changed
+
+    - name: "test boolean value of 'False' string using 'when: var'"
+      command: echo 'hi'
+      when: bool_test2
+      register: result
+
+    - name: assert that the task did not run for 'False'
+      assert:
+        that:
+        - result is skipped
+
+    - name: "test boolean value 'False' string using 'when: not var'"
+      command: echo 'hi'
+      when: not bool_test2
+      register: result
+
+    - name: assert that the task DID run for not 'False'
+      assert:
+        that:
+        - result is changed
+
+    - name: "test proper boolean value of complex arg using 'when: var'"
+      command: echo 'hi'
+      when: bool_test3
+      register: result
+
+    - name: assert that the task did not run for proper boolean false
+      assert:
+        that:
+        - result is skipped
+
+    - name: "test proper boolean value of complex arg using 'when: not var'"
+      command: echo 'hi'
+      when: not bool_test3
+      register: result
+
+    - name: assert that the task DID run for not false
+      assert:
+        that:
+        - result is changed
+
+    - set_fact: skipped_bad_attribute=True
+    - block:
+      - name: test a with_items loop using a variable with a missing attribute
+        debug: var=item
+        with_items: "{{cond_bad_attribute.results | default('')}}"
+        register: result
+      - set_fact: skipped_bad_attribute=False
+      - name: assert the task was skipped
+        assert:
+          that:
+          - skipped_bad_attribute
+      when: cond_bad_attribute is defined and 'results' in cond_bad_attribute
+
+    - name: test a with_items loop skipping a single item
+      debug: var=item
+      with_items: "{{cond_list_of_items.results}}"
+      when: item != 'b'
+      register: result
+
+    - debug: var=result
+
+    - name: assert only a single item was skipped
+      assert:
+        that:
+        - result.results|length == 3
+        - result.results[1].skipped
+
+    - name: test complex templated condition
+      debug: msg="it works"
+      when: vars_file_var in things1|union([vars_file_var])
+
+    - name: test dict with invalid key is undefined
+      vars:
+        mydict:
+         a: foo
+         b: bar
+      debug: var=mydict['c']
+      register: result
+      when: mydict['c'] is undefined
+
+    - name: assert the task did not fail
+      assert:
+        that:
+          - result is success
+
+    - name: test dict with invalid key does not run with conditional is defined
+      vars:
+        mydict:
+          a: foo
+          b: bar
+      debug: var=mydict['c']
+      when: mydict['c'] is defined
+      register: result
+
+    - name: assert the task was skipped
+      assert:
+        that:
+          - result is skipped
+
+    - name: test list with invalid element does not run with conditional is defined
+      vars:
+        mylist: []
+      debug: var=mylist[0]
+      when: mylist[0] is defined
+      register: result
+
+    - name: assert the task was skipped
+      assert:
+        that:
+          - result is skipped
+
+    - name: test list with invalid element is undefined
+      vars:
+        mylist: []
+      debug: var=mylist[0]
+      when: mylist[0] is undefined
+      register: result
+
+    - name: assert the task did not fail
+      assert:
+        that:
+          - result is success
+
+
+    - name: Deal with multivar equality
+      tags: ['leveldiff']
+      vars:
+          toplevel_hash:
+            hash_var_one: justastring
+            hash_var_two: something.with.dots
+            hash_var_three: something:with:colons
+            hash_var_four: something/with/slashes
+            hash_var_five: something with spaces
+            hash_var_six: yes
+            hash_var_seven: no
+          toplevel_var_one: justastring
+          toplevel_var_two: something.with.dots
+          toplevel_var_three: something:with:colons
+          toplevel_var_four: something/with/slashes
+          toplevel_var_five: something with spaces
+          toplevel_var_six: yes
+          toplevel_var_seven: no
+      block:
+
+      - name: var subkey simple string
+        debug:
+          var: toplevel_hash.hash_var_one
+        register: sub
+        when: toplevel_hash.hash_var_one
+
+      - name: toplevel simple string
+        debug:
+          var: toplevel_var_one
+        when: toplevel_var_one
+        register: top
+        ignore_errors: yes
+
+      - name: ensure top and multi work same
+        assert:
+          that:
+            - top is not skipped
+            - sub is not skipped
+            - top is not failed
+            - sub is not failed
+
+      - name: var subkey string with dots
+        debug:
+          var: toplevel_hash.hash_var_two
+        register: sub
+        when: toplevel_hash.hash_var_two
+
+      - debug:
+          var: toplevel_var_two
+        when: toplevel_var_two
+        register: top
+        ignore_errors: yes
+
+      - name: ensure top and multi work same
+        assert:
+          that:
+            - top is not skipped
+            - sub is not skipped
+            - top is not failed
+            - sub is not failed
+
+      - name: var subkey string with dots
+        debug:
+          var: toplevel_hash.hash_var_three
+        register: sub
+        when: toplevel_hash.hash_var_three
+
+      - debug:
+          var: toplevel_var_three
+        when: toplevel_var_three
+        register: top
+        ignore_errors: yes
+
+      - name: ensure top and multi work same
+        assert:
+          that:
+            - top is not skipped
+            - sub is not skipped
+            - top is not failed
+            - sub is not failed
+
+      - name: var subkey string with colon
+        debug:
+          var: toplevel_hash.hash_var_four
+        register: sub
+        when: toplevel_hash.hash_var_four
+
+      - debug:
+          var: toplevel_var_four
+        when: toplevel_var_four
+        register: top
+        ignore_errors: yes
+
+      - name: ensure top and multi work same
+        assert:
+          that:
+            - top is not skipped
+            - sub is not skipped
+            - top is not failed
+            - sub is not failed
+
+      - name: var subkey string with spaces
+        debug:
+          var: toplevel_hash.hash_var_five
+        register: sub
+        when: toplevel_hash.hash_var_five
+
+      - debug:
+          var: toplevel_var_five
+        when: toplevel_var_five
+        register: top
+        ignore_errors: yes
+
+      - name: ensure top and multi work same
+        assert:
+          that:
+            - top is not skipped
+            - sub is not skipped
+            - top is not failed
+            - sub is not failed
+
+      - name: var subkey with 'yes' value
+        debug:
+          var: toplevel_hash.hash_var_six
+        register: sub
+        when: toplevel_hash.hash_var_six
+
+      - debug:
+          var: toplevel_var_six
+        register: top
+        when: toplevel_var_six
+
+      - name: ensure top and multi work same
+        assert:
+          that:
+            - top is not skipped
+            - sub is not skipped
+
+      - name: var subkey with 'no' value
+        debug:
+          var: toplevel_hash.hash_var_seven
+        register: sub
+        when: toplevel_hash.hash_var_seven
+
+      - debug:
+          var: toplevel_var_seven
+        register: top
+        when: toplevel_var_seven
+
+      - name: ensure top and multi work same
+        assert:
+          that:
+            - top is skipped
+            - sub is skipped
+
+      - name: test that 'comparison expression' item works with_items
+        assert:
+          that:
+            - item
+        with_items:
+          - 1 == 1
+
+      - name: test that 'comparison expression' item works in loop
+        assert:
+          that:
+            - item
+        loop:
+          - 1 == 1

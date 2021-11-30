@@ -1,0 +1,18 @@
+docker_cli_version: '0.0'
+docker_api_version: '0.0'
+docker_py_version: '0.0'
+docker_skip_cleanup: no
+docker_prereq_packages: []
+docker_packages:
+  - docker-ce
+
+docker_pip_extra_packages: []
+docker_pip_never_remove: []
+docker_pip_packages:
+  - docker
+
+docker_cleanup_packages:
+  - docker
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io

@@ -1,0 +1,44 @@
+- name: Hello, World!
+  helloworld:
+  register: hello_world
+
+- assert:
+    that:
+      - 'hello_world.msg == "Hello, World!"'
+
+- name: Hello, Ansible!
+  helloworld:
+  args:
+    name: Ansible
+  register: hello_ansible
+
+- assert:
+    that:
+      - 'hello_ansible.msg == "Hello, Ansible!"'
+
+- name: Goodbye, Ansible!
+  helloworld:
+  args:
+    salutation: Goodbye
+    name: Ansible
+  register: goodbye_ansible
+
+- assert:
+    that:
+      - 'goodbye_ansible.msg == "Goodbye, Ansible!"'
+
+- name: Copy module to remote
+  copy:
+    src: "{{ role_path }}/library/helloworld.sh"
+    dest: "{{ remote_tmp_dir }}/helloworld.sh"
+
+- name: Execute module directly
+  command: '/bin/sh {{ remote_tmp_dir }}/helloworld.sh'
+  register: direct
+  ignore_errors: true
+
+- assert:
+    that:
+      - direct is failed
+      - |
+        direct.stdout == '{"msg": "No argument file provided", "failed": true}'

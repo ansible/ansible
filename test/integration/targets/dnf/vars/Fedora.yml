@@ -1,0 +1,6 @@
+astream_name: '@hub:pre-release/default'
+
+# For this to work, it needs to be that only shows once in `dnf module list`.
+# Such packages, that exist on all the versions we test on, are hard to come by.
+# TODO: This would be solved by using our own repo with modularity/streams.
+astream_name_no_stream: '@hub/default'

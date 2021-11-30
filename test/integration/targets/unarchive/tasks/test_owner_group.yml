@@ -1,0 +1,164 @@
+- block:
+    - name: Create a group to chown to
+      group:
+        name: testgroup
+      register: testgroup
+
+    - name: Create a user to chown to
+      user:
+        name: testuser
+        groups:
+        - testgroup
+      register: testuser
+
+    - set_fact:
+        outdir: '{{remote_tmp_dir}}/test-unarchive-{{ ext | replace(".", "_") }}'
+
+    - debug:
+        msg: Username test
+
+    # username
+    - name: create our unarchive destinations
+      file:
+        path: '{{outdir}}'
+        state: directory
+
+    - name: unarchive a file
+      unarchive:
+        src: '{{remote_tmp_dir}}/{{archive}}'
+        dest: '{{outdir}}'
+        list_files: True
+        remote_src: yes
+        owner: testuser
+
+    - name: stat an output file
+      stat:
+        path: '{{outdir}}/{{testfile}}'
+      register: stat
+
+    - name: verify that the file has the right owner
+      assert:
+        that:
+          - stat.stat.exists
+          - stat.stat.pw_name == testuser.name
+          - stat.stat.uid == testuser.uid
+
+    - name: nuke destination
+      file:
+        path: '{{outdir}}'
+        state: absent
+
+    - debug:
+        msg: uid test
+
+    # uid
+    - name: create our unarchive destinations
+      file:
+        path: '{{outdir}}'
+        state: directory
+
+    - name: unarchive a file
+      unarchive:
+        src: '{{remote_tmp_dir}}/{{archive}}'
+        dest: '{{outdir}}'
+        list_files: True
+        remote_src: yes
+        owner: '{{ testuser.uid }}'
+
+    - name: stat an output file
+      stat:
+        path: '{{outdir}}/{{testfile}}'
+      register: stat
+
+    - name: verify that the file has the right owner
+      assert:
+        that:
+          - stat.stat.exists
+          - stat.stat.pw_name == testuser.name
+          - stat.stat.uid == testuser.uid
+
+    - name: nuke destination
+      file:
+        path: '{{outdir}}'
+        state: absent
+
+    - debug:
+        msg: groupname test
+
+    # groupname
+    - name: create our unarchive destinations
+      file:
+        path: '{{outdir}}'
+        state: directory
+
+    - name: unarchive a file
+      unarchive:
+        src: '{{remote_tmp_dir}}/{{archive}}'
+        dest: '{{outdir}}'
+        list_files: True
+        remote_src: yes
+        group: testgroup
+
+    - name: stat an output file
+      stat:
+        path: '{{outdir}}/{{testfile}}'
+      register: stat
+
+    - name: verify that the file has the right owner
+      assert:
+        that:
+          - stat.stat.exists
+          - stat.stat.gr_name == testgroup.name
+          - stat.stat.gid == testgroup.gid
+
+    - name: nuke destination
+      file:
+        path: '{{outdir}}'
+        state: absent
+
+    - debug:
+        msg: gid test
+
+    # gid
+    - name: create our unarchive destinations
+      file:
+        path: '{{outdir}}'
+        state: directory
+
+    - name: unarchive a file
+      unarchive:
+        src: '{{remote_tmp_dir}}/{{archive}}'
+        dest: '{{outdir}}'
+        list_files: True
+        remote_src: yes
+        group: '{{ testgroup.gid }}'
+
+    - name: stat an output file
+      stat:
+        path: '{{outdir}}/{{testfile}}'
+      register: stat
+
+    - name: verify that the file has the right owner
+      assert:
+        that:
+          - stat.stat.exists
+          - stat.stat.gr_name == testgroup.name
+          - stat.stat.gid == testgroup.gid
+
+    - name: nuke destination
+      file:
+        path: '{{outdir}}'
+        state: absent
+
+  always:
+    - name: Remove testuser
+      user:
+        name: testuser
+        state: absent
+        remove: yes
+        force: yes
+
+    - name: Remove testgroup
+      group:
+        name: testgroup
+        state: absent

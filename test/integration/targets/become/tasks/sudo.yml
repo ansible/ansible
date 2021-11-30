@@ -1,0 +1,91 @@
+- name: Create test user (become_method=sudo)
+  become: True
+  become_user: root
+  become_method: sudo
+  user:
+    name: "{{ become_test_user }}"
+    group: '{{ "staff" if ansible_facts.distribution == "MacOSX" else omit }}'
+
+- name: test becoming user (become_method=sudo)
+  shell: whoami
+  become: True
+  become_user: "{{ become_test_user }}"
+  become_method: sudo
+  register: results
+
+- assert:
+    that:
+      - "results.stdout == '{{ become_test_user }}'"
+
+- name: tilde expansion honors become in file (become_method=sudo)
+  become: True
+  become_user: "{{ become_test_user }}"
+  become_method: sudo
+  file:
+    path: "~/foo.txt"
+    state: touch
+
+- name: check that the path in the user's home dir was created (become_method=sudo)
+  become: True
+  become_user: "{{ become_test_user }}"
+  become_method: sudo
+  stat:
+    path: "~{{ become_test_user }}/foo.txt"
+  register: results
+
+- assert:
+    that:
+      - "results.stat.exists == True"
+      - "results.stat.path|dirname|basename == '{{ become_test_user }}'"
+
+- name: tilde expansion honors become in template (become_method=sudo)
+  become: True
+  become_user: "{{ become_test_user }}"
+  become_method: sudo
+  template:
+    src: "bar.j2"
+    dest: "~/bar.txt"
+
+- name: check that the path in the user's home dir was created (become_method=sudo)
+  become: True
+  become_user: "{{ become_test_user }}"
+  become_method: sudo
+  stat:
+    path: "~{{ become_test_user }}/bar.txt"
+  register: results
+
+- assert:
+    that:
+      - "results.stat.exists == True"
+      - "results.stat.path|dirname|basename == '{{ become_test_user }}'"
+
+- name: tilde expansion honors become in copy (become_method=sudo)
+  become: True
+  become_user: "{{ become_test_user }}"
+  become_method: sudo
+  copy:
+    src: baz.txt
+    dest: "~/baz.txt"
+
+- name: check that the path in the user's home dir was created (become_method=sudo)
+  become: True
+  become_user: "{{ become_test_user }}"
+  become_method: sudo
+  stat:
+    path: "~{{ become_test_user }}/baz.txt"
+  register: results
+
+- assert:
+    that:
+      - "results.stat.exists == True"
+      - "results.stat.path|dirname|basename == '{{ become_test_user }}'"
+
+- name: Remove test user and their home dir (become_method=sudo)
+  become: True
+  become_user: root
+  become_method: sudo
+  user:
+    name: "{{ become_test_user }}"
+    state: "absent"
+    remove: "yes"
+    force: "yes"

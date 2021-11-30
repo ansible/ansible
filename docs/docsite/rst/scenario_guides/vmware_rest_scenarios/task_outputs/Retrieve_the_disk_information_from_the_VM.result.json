@@ -1,0 +1,18 @@
+{
+    "value": [
+        {
+            "scsi": {
+                "bus": 0,
+                "unit": 0
+            },
+            "backing": {
+                "vmdk_file": "[local] test_vm1_8/test_vm1.vmdk",
+                "type": "VMDK_FILE"
+            },
+            "label": "Hard disk 1",
+            "type": "SCSI",
+            "capacity": 17179869184
+        }
+    ],
+    "changed": false
+}

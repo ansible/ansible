@@ -1,0 +1,40 @@
+{
+    "name": "Debian 10",
+    "distro": {
+        "codename": "buster",
+        "id": "debian",
+        "name": "Debian GNU/Linux",
+        "version": "10",
+        "version_best": "10",
+        "lsb_release_info": {
+            "distributor_id": "Debian",
+            "description": "Debian GNU/Linux 10 (buster)",
+            "release": "10",
+            "codename": "buster"
+        },
+        "os_release_info": {
+            "pretty_name": "Debian GNU/Linux 10 (buster)",
+            "name": "Debian GNU/Linux",
+            "version_id": "10",
+            "version": "10 (buster)",
+            "version_codename": "buster",
+            "id": "debian",
+            "home_url": "https://www.debian.org/",
+            "support_url": "https://www.debian.org/support",
+            "bug_report_url": "https://bugs.debian.org/",
+            "codename": "buster"
+        }
+    },
+    "input": {
+        "/etc/os-release": "PRETTY_NAME=\"Debian GNU/Linux 10 (buster)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"10\"\nVERSION=\"10 (buster)\"\nVERSION_CODENAME=buster\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"\n",
+        "/usr/lib/os-release": "PRETTY_NAME=\"Debian GNU/Linux 10 (buster)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"10\"\nVERSION=\"10 (buster)\"\nVERSION_CODENAME=buster\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"\n"
+    },
+    "platform.dist": ["debian", "10", "buster"],
+    "result": {
+        "distribution": "Debian",
+        "distribution_version": "10",
+        "distribution_release": "buster",
+        "distribution_major_version": "10",
+        "os_family": "Debian"
+    }
+}

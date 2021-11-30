@@ -1,0 +1,19 @@
+- hosts: localhost
+  vars:
+    git_install: '{{ lookup("file", lookup("env", "OUTPUT_DIR") + "/git_install.json") | from_json }}'
+  tasks:
+    - name: cleanup
+      include_tasks: "{{ cleanup_filename }}"
+      with_first_found:
+        - "cleanup-{{ ansible_distribution | lower }}.yml"
+        - "cleanup-default.yml"
+      loop_control:
+        loop_var: cleanup_filename
+
+    - name: Remove default collection directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "~/.ansible/collections/ansible_collections"
+        - /usr/share/ansible/collections/ansible_collections

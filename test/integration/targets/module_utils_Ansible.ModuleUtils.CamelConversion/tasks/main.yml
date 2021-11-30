@@ -1,0 +1,8 @@
+---
+- name: call module with camel conversion tests
+  camel_conversion_test:
+  register: camel_conversion
+
+- assert:
+    that:
+    - camel_conversion.data == 'success'

@@ -1,0 +1,5 @@
+- name: Add a floppy disk drive
+  vmware.vmware_rest.vcenter_vm_hardware_floppy:
+    vm: '{{ test_vm1_info.id }}'
+    allow_guest_control: true
+  register: my_floppy_drive

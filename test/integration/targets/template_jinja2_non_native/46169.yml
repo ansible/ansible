@@ -1,0 +1,31 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - set_fact:
+        output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+
+    - template:
+        src: templates/46169.json.j2
+        dest: "{{ output_dir }}/result.json"
+
+    - command: "diff templates/46169.json.j2 {{ output_dir }}/result.json"
+      register: diff_result
+
+    - assert:
+        that:
+          - diff_result.stdout == ""
+
+    - block:
+      - set_fact:
+          non_native_lookup: "{{ lookup('template', 'templates/46169.json.j2') }}"
+
+      - assert:
+          that:
+            - non_native_lookup | type_debug == 'NativeJinjaUnsafeText'
+
+      - set_fact:
+          native_lookup: "{{ lookup('template', 'templates/46169.json.j2', jinja2_native=true) }}"
+
+      - assert:
+          that:
+            - native_lookup | type_debug == 'dict'

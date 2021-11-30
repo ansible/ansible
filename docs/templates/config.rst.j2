@@ -1,0 +1,227 @@
+.. _ansible_configuration_settings:
+
+{%   set name = 'Ansible Configuration Settings' -%}
+{%   set name_slug = 'config' -%}
+
+{%   set name_len = name|length + 0-%}
+{{ '=' * name_len }}
+{{name}}
+{{ '=' * name_len }}
+
+Ansible supports several sources for configuring its behavior, including an ini file named ``ansible.cfg``, environment variables, command-line options, playbook keywords, and variables. See :ref:`general_precedence_rules` for details on the relative precedence of each source.
+
+The ``ansible-config`` utility allows users to see all the configuration settings available, their defaults, how to set them and
+where their current value comes from. See :ref:`ansible-config` for more information.
+
+.. _ansible_configuration_settings_locations:
+
+The configuration file
+======================
+
+Changes can be made and used in a configuration file which will be searched for in the following order:
+
+ * ``ANSIBLE_CONFIG`` (environment variable if set)
+ * ``ansible.cfg`` (in the current directory)
+ * ``~/.ansible.cfg`` (in the home directory)
+ * ``/etc/ansible/ansible.cfg``
+
+Ansible will process the above list and use the first file found, all others are ignored.
+
+.. note::
+
+   The configuration file is one variant of an INI format.
+   Both the hash sign (``#``) and semicolon (``;``) are allowed as
+   comment markers when the comment starts the line.
+   However, if the comment is inline with regular values,
+   only the semicolon is allowed to introduce the comment.
+   For instance::
+
+        # some basic default values...
+        inventory = /etc/ansible/hosts  ; This points to the file that lists your hosts
+
+
+.. _cfg_in_world_writable_dir:
+
+Avoiding security risks with ``ansible.cfg`` in the current directory
+---------------------------------------------------------------------
+
+
+If Ansible were to load ``ansible.cfg`` from a world-writable current working
+directory, it would create a serious security risk. Another user could place
+their own config file there, designed to make Ansible run malicious code both
+locally and remotely, possibly with elevated privileges. For this reason,
+Ansible will not automatically load a config file from the current working
+directory if the directory is world-writable.
+
+If you depend on using Ansible with a config file in the current working
+directory, the best way to avoid this problem is to restrict access to your
+Ansible directories to particular user(s) and/or group(s). If your Ansible
+directories live on a filesystem which has to emulate Unix permissions, like
+Vagrant or Windows Subsystem for Linux (WSL), you may, at first, not know how
+you can fix this as ``chmod``, ``chown``, and ``chgrp`` might not work there.
+In most of those cases, the correct fix is to modify the mount options of the
+filesystem so the files and directories are readable and writable by the users
+and groups running Ansible but closed to others.  For more details on the
+correct settings, see:
+
+* for Vagrant, the `Vagrant documentation <https://www.vagrantup.com/docs/synced-folders/>`_ covers synced folder permissions.
+* for WSL, the `WSL docs <https://docs.microsoft.com/en-us/windows/wsl/wsl-config#set-wsl-launch-settings>`_
+  and this `Microsoft blog post <https://blogs.msdn.microsoft.com/commandline/2018/01/12/chmod-chown-wsl-improvements/>`_ cover mount options.
+
+If you absolutely depend on storing your Ansible config in a world-writable current
+working directory, you can explicitly specify the config file via the
+:envvar:`ANSIBLE_CONFIG` environment variable. Please take
+appropriate steps to mitigate the security concerns above before doing so.
+
+
+Relative paths for configuration
+--------------------------------
+
+You can specify a relative path for many configuration options. In most of
+those cases the path used will be relative to the ``ansible.cfg`` file used
+for the current execution. If you need a path relative to your current working
+directory (CWD) you can use the ``{%raw%}{{CWD}}{%endraw%}`` macro to specify
+it. We do not recommend this approach, as using your CWD as the root of
+relative paths can be a security risk. For example:
+``cd /tmp; secureinfo=./newrootpassword ansible-playbook ~/safestuff/change_root_pwd.yml``.
+
+
+Common Options
+==============
+
+This is a copy of the options available from our release, your local install might have extra options due to additional plugins,
+you can use the command line utility mentioned above (`ansible-config`) to browse through those.
+
+{% if config_options %}
+
+
+{%   for config_option in config_options|sort %}
+{%     set config_len = config_option|length -%}
+{%     set config = config_options[config_option] %}
+.. _{{config_option}}:
+
+{{config_option}}
+{{ '-' * config_len }}
+
+{%     if config['description'] and config['description'] != [''] %}
+{%       if config['description'] != ['TODO: write it'] %}
+:Description: {{' '.join(config['description'])}}
+{%       endif %}
+{%     endif %}
+{%     if config['type'] %}
+:Type: {{config['type']}}
+{%     endif %}
+{%     if 'default' in config %}
+:Default: ``{{config['default']}}``
+{%     endif %}
+{%     if config.get('choices', False) %}
+:Choices:
+{%       if config['choices'] is mapping %}
+{%         for key in config['choices'].keys() %}
+    - :{{key}}: {{ config['choices'][key] }}
+{%         endfor %}
+{%       else %}
+{%         for key in config['choices'] %}
+    - :{{key}}:
+{%         endfor %}
+{%       endif %}
+{%     endif %}
+{%     if config['version_added'] %}
+:Version Added: {{config['version_added']}}
+{%     endif %}
+{%     if config.get('ini', False) %}
+:Ini:
+{%       for ini_map in config['ini']|sort(attribute='section') %}
+     {% if config['ini']|length > 1 %}- {% endif %}:Section: [{{ini_map['section']}}]
+     {% if config['ini']|length > 1 %}  {% endif %}:Key: {{ini_map['key']}}
+{%         if ini_map['version_added'] %}
+       :Version Added: {{ini_map['version_added']}}
+{%         endif %}
+{%         if ini_map['deprecated'] %}
+       :Deprecated in: {{ini_map['deprecated']['version']}}
+       :Deprecated detail: {{ini_map['deprecated']['why']}}
+{%           if ini_map['deprecated']['alternatives'] %}
+       :Deprecated alternatives: {{ini_map['deprecated']['alternatives']}}
+{%           endif %}
+{%         endif %}
+{%       endfor %}
+{%     endif %}
+{%     if config.get('env', False) %}
+:Environment:
+{%       for env_var_map in config['env']|sort(attribute='name') %}
+     {% if config['env']|length > 1 %}- {% endif %}:Variable: :envvar:`{{env_var_map['name']}}`
+{%         if env_var_map['version_added'] %}
+       :Version Added: {{env_var_map['version_added']}}
+{%         endif %}
+{%         if env_var_map['deprecated'] %}
+       :Deprecated in: {{env_var_map['deprecated']['version']}}
+       :Deprecated detail: {{env_var_map['deprecated']['why']}}
+{%           if env_var_map['deprecated']['alternatives'] %}
+       :Deprecated alternatives: {{env_var_map['deprecated']['alternatives']}}
+{%           endif %}
+{%         endif %}
+{%       endfor %}
+{%     endif %}
+{%     if config.get('vars', False) %}
+:Variables:
+{%       for a_var in config['vars']|sort(attribute='name') %}
+     {% if config['vars']|length > 1 %}- {%endif%}:name: `{{a_var['name']}}`
+{%       if a_var['version_added'] %}
+       :Version Added: {{a_var['version_added']}}
+{%       endif %}
+{%         if a_var['deprecated'] %}
+       :Deprecated in: {{a_var['deprecated']['version']}}
+       :Deprecated detail: {{a_Var['deprecated']['why']}}
+{%           if a_var['deprecated']['alternatives'] %}
+       :Deprecated alternatives: {{a_var['deprecated']['alternatives']}}
+{%           endif %}
+{%         endif %}
+{%       endfor %}
+{%     endif %}
+{%     if config['deprecated'] %}
+:Deprecated in: {{config['deprecated']['version']}}
+:Deprecated detail: {{config['deprecated']['why']}}
+{%       if config['deprecated']['alternatives'] %}
+:Deprecated alternatives: {{config['deprecated']['alternatives']}}
+{%       endif %}
+{%     endif %}
+
+{%   endfor %}
+
+Environment Variables
+=====================
+
+.. envvar:: ANSIBLE_CONFIG
+
+
+    Override the default ansible config file
+
+
+{%   for config_option in config_options %}
+{%     for env_var_map in config_options[config_option]['env'] %}
+.. envvar:: {{env_var_map['name']}}
+
+{%       if config_options[config_option]['description']  and config_options[config_option]['description'] != [''] %}
+{%         if config_options[config_option]['description'] != ['TODO: write it'] %}
+    {{ ''.join(config_options[config_option]['description']) }}
+{%         endif %}
+{%       endif %}
+
+    See also :ref:`{{config_option}} <{{config_option}}>`
+
+{%       if env_var_map['version_added'] %}
+    :Version Added: {{env_var_map['version_added']}}
+{%       endif %}
+{%       if env_var_map['deprecated'] %}
+    :Deprecated in: {{env_var_map['deprecated']['version']}}
+    :Deprecated detail: {{env_var_map['deprecated']['why']}}
+{%         if env_var_map['deprecated']['alternatives'] %}
+    :Deprecated alternatives: {{env_var_map['deprecated']['alternatives']}}
+{%         endif %}
+{%       endif %}
+
+{%     endfor %}
+
+{%   endfor %}
+
+{% endif %}

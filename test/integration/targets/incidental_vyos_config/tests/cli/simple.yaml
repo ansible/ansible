@@ -1,0 +1,53 @@
+---
+- debug: msg="START cli/simple.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  vyos.vyos.vyos_config:
+    lines: set system host-name {{ inventory_hostname_short }}
+    match: none
+
+- name: configure simple config command
+  vyos.vyos.vyos_config:
+    lines: set system host-name foo
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'set system host-name foo' in result.commands"
+
+- name: check simple config command idempontent
+  vyos.vyos.vyos_config:
+    lines: set system host-name foo
+  register: result
+
+- assert:
+    that:
+      - "result.changed == false"
+
+- name: Delete services
+  vyos.vyos.vyos_config: &del
+    lines:
+      - delete service lldp
+      - delete protocols static
+
+- name: Configuring when commands starts with whitespaces
+  vyos.vyos.vyos_config:
+    src: "{{ role_path }}/tests/cli/config.cfg"
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - '"set service lldp" in result.commands'
+      - '"set protocols static" in result.commands'
+
+- name: Delete services
+  vyos.vyos.vyos_config: *del
+
+- name: teardown
+  vyos.vyos.vyos_config:
+    lines: set system host-name {{ inventory_hostname_short }}
+    match: none
+
+- debug: msg="END cli/simple.yaml on connection={{ ansible_connection }}"

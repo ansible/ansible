@@ -1,0 +1,56 @@
+- block:
+  - name: Install needed packages
+    apt:
+      name: "{{ item }}"
+    with_items:
+      - dpkg-dev
+      - equivs
+      - libfile-fcntllock-perl  # to silence warning by equivs-build
+
+  - set_fact:
+      repodir: /tmp/repo/
+
+  - name: Create repo dir
+    file:
+      path: "{{ repodir }}"
+      state: directory
+      mode: 0755
+
+  - name: Copy package specs to remote
+    copy:
+      src: "{{ item }}"
+      dest: "{{ remote_tmp_dir }}/{{ item | basename }}"
+    with_fileglob:
+      - "files/package_specs/*"
+
+  - name: Create deb files
+    shell: "equivs-build {{ remote_tmp_dir }}/{{ item | basename }}"
+    args:
+      chdir: "{{ repodir }}"
+    with_fileglob:
+      - "files/package_specs/*"
+
+  - name: Create repo
+    shell: dpkg-scanpackages --multiversion . /dev/null | gzip -9c > Packages.gz
+    args:
+      chdir: "{{ repodir }}"
+
+  # Can't use apt_repository as it doesn't expose a trusted=yes option
+  - name: Install the repo
+    copy:
+      content: deb [trusted=yes] file:{{ repodir }} ./
+      dest: /etc/apt/sources.list.d/file_tmp_repo.list
+
+  # Need to uncomment the deb-src for the universe component for build-dep state
+  - name: Ensure deb-src for the universe component
+    lineinfile:
+      path: /etc/apt/sources.list
+      backrefs: True
+      regexp: ^#\s*deb-src http://archive\.ubuntu\.com/ubuntu/ (\w*){{ item }} universe$
+      line: deb-src http://archive.ubuntu.com/ubuntu \1{{ item }} universe
+      state: present
+    with_items:
+    - ''
+    - -updates
+
+  when: ansible_distribution in ['Ubuntu', 'Debian']

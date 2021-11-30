@@ -1,0 +1,5 @@
+{
+    "disabled": true,
+    "no_targets": true,
+    "output": "path-line-column-message"
+}

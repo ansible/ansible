@@ -1,0 +1,152 @@
+- name: install a group to test and yum-utils
+  yum:
+    name: "{{ pkgs }}"
+    state: present
+  vars:
+    pkgs:
+      - "@Custom Group"
+      - yum-utils
+  when: ansible_pkg_mgr == "yum"
+
+- name: install a group to test and dnf-utils
+  yum:
+    name: "{{ pkgs }}"
+    state: present
+  vars:
+    pkgs:
+      - "@Custom Group"
+      - dnf-utils
+  when: ansible_pkg_mgr == "dnf"
+
+- name: check mode remove the group
+  yum:
+    name: "@Custom Group"
+    state: absent
+  check_mode: yes
+  register: yum_result
+
+- name: verify changed
+  assert:
+    that:
+        - "yum_result.changed"
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'changed' in yum_result"
+        - "'results' in yum_result"
+
+- name: remove the group
+  yum:
+    name: "@Custom Group"
+    state: absent
+  register: yum_result
+
+- name: verify changed
+  assert:
+    that:
+        - "yum_result.rc == 0"
+        - "yum_result.changed"
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'changed' in yum_result"
+        - "'msg' in yum_result"
+        - "'results' in yum_result"
+
+- name: remove the group again
+  yum:
+    name: "@Custom Group"
+    state: absent
+  register: yum_result
+
+- name: verify changed
+  assert:
+    that:
+        - "not yum_result.changed"
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'changed' in yum_result"
+        - "'msg' in yum_result"
+        - "'results' in yum_result"
+
+- name: check mode remove the group again
+  yum:
+    name: "@Custom Group"
+    state: absent
+  check_mode: yes
+  register: yum_result
+
+- name: verify changed
+  assert:
+    that:
+        - "not yum_result.changed"
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'changed' in yum_result"
+        - "'results' in yum_result"
+
+- name: install a group and a package to test
+  yum:
+    name: "@Custom Group,sos"
+    state: present
+  register: yum_output
+
+- name: check mode remove the group along with the package
+  yum:
+    name: "@Custom Group,sos"
+    state: absent
+  register: yum_result
+  check_mode: yes
+
+- name: verify changed
+  assert:
+    that:
+        - "yum_result.changed"
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'changed' in yum_result"
+        - "'results' in yum_result"
+
+- name: remove the group along with the package
+  yum:
+    name: "@Custom Group,sos"
+    state: absent
+  register: yum_result
+
+- name: verify changed
+  assert:
+    that:
+        - "yum_result.changed"
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'changed' in yum_result"
+        - "'msg' in yum_result"
+        - "'results' in yum_result"
+
+- name: check mode remove the group along with the package
+  yum:
+    name: "@Custom Group,sos"
+    state: absent
+  register: yum_result
+  check_mode: yes
+
+- name: verify not changed
+  assert:
+    that:
+        - "not yum_result.changed"
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'changed' in yum_result"
+        - "'results' in yum_result"

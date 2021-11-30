@@ -1,0 +1,7 @@
+- name: delete temporary directory
+  include_tasks: default-cleanup.yml
+  when: not setup_remote_tmp_dir_skip_cleanup | bool
+
+- name: delete temporary directory (windows)
+  include_tasks: windows-cleanup.yml
+  when: not setup_remote_tmp_dir_skip_cleanup | bool

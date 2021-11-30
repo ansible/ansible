@@ -1,0 +1,17 @@
+.. _modules_by_category:
+
+{# avoids rST "isn't included in any toctree" errors for module index docs #}
+:orphan:
+
+Module Index
+============
+
+
+.. toctree:: :maxdepth: 1
+
+{% for name in categories %}
+{# strip out empty category names as a result flattening the dir structure #}
+{% if name %}
+   list_of_@{ name }@_modules
+{% endif %}
+{% endfor %}

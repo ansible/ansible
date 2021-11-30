@@ -1,0 +1,163 @@
+# test code for the assemble module
+# (c) 2014, James Cammarata <jcammarata@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: create a new directory for file source
+  file: dest="{{output_dir}}/src" state=directory
+  register: result
+
+- name: assert the directory was created
+  assert:
+    that:
+    - "result.state == 'directory'"
+
+- name: copy the files to a new directory
+  copy: src="./" dest="{{output_dir}}/src"
+  register: result
+
+- name: create unicode file for test
+  shell: echo "π" > {{ output_dir }}/src/ßΩ.txt
+  register: result
+
+- name: assert that the new file was created
+  assert:
+    that:
+    - "result.changed == true"
+
+- name: test assemble with all fragments
+  assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled1"
+  register: result
+
+- name: assert the fragments were assembled
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.changed == True"
+    - "result.checksum == '74152e9224f774191bc0bedf460d35de86ad90e6'"
+
+- name: test assemble with all fragments
+  assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled1"
+  register: result
+
+- name: assert that the same assemble made no changes
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.changed == False"
+    - "result.checksum == '74152e9224f774191bc0bedf460d35de86ad90e6'"
+
+- name: test assemble with all fragments and decrypt=True
+  assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled2" decrypt=yes
+  register: result
+
+- name: assert the fragments were assembled with decrypt=True
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.changed == True"
+    - "result.checksum == '74152e9224f774191bc0bedf460d35de86ad90e6'"
+
+- name: test assemble with all fragments and decrypt=True
+  assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled2" decrypt=yes
+  register: result
+
+- name: assert that the same assemble made no changes with decrypt=True
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.changed == False"
+    - "result.checksum == '74152e9224f774191bc0bedf460d35de86ad90e6'"
+
+- name: test assemble with fragments matching a regex
+  assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled3" regexp="^fragment[1-3]$"
+  register: result
+
+- name: assert the fragments were assembled with a regex
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.checksum == 'edfe2d7487ef8f5ebc0f1c4dc57ba7b70a7b8e2b'"
+
+- name: test assemble with fragments matching a regex and decrypt=True
+  assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled4" regexp="^fragment[1-3]$" decrypt=yes
+  register: result
+
+- name: assert the fragments were assembled with a regex and decrypt=True
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.checksum == 'edfe2d7487ef8f5ebc0f1c4dc57ba7b70a7b8e2b'"
+
+- name: test assemble with a delimiter
+  assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled5" delimiter="#--- delimiter ---#"
+  register: result
+
+- name: assert the fragments were assembled with a delimiter
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.checksum == 'd986cefb82e34e4cf14d33a3cda132ff45aa2980'"
+
+- name: test assemble with a delimiter and decrypt=True
+  assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled6" delimiter="#--- delimiter ---#" decrypt=yes
+  register: result
+
+- name: assert the fragments were assembled with a delimiter and decrypt=True
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.checksum == 'd986cefb82e34e4cf14d33a3cda132ff45aa2980'"
+
+- name: test assemble with remote_src=False
+  assemble: src="./" dest="{{output_dir}}/assembled7" remote_src=no
+  register: result
+
+- name: assert the fragments were assembled without remote
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.checksum == '048a1bd1951aa5ccc427eeb4ca19aee45e9c68b3'"
+
+- name: test assemble with remote_src=False and decrypt=True
+  assemble: src="./" dest="{{output_dir}}/assembled8" remote_src=no decrypt=yes
+  register: result
+
+- name: assert the fragments were assembled without remote and decrypt=True
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.checksum == '048a1bd1951aa5ccc427eeb4ca19aee45e9c68b3'"
+
+- name: test assemble with remote_src=False and a delimiter
+  assemble: src="./" dest="{{output_dir}}/assembled9" remote_src=no delimiter="#--- delimiter ---#"
+  register: result
+
+- name: assert the fragments were assembled without remote
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.checksum == '505359f48c65b3904127cf62b912991d4da7ed6d'"
+
+- name: test assemble with remote_src=False and a delimiter and decrypt=True
+  assemble: src="./" dest="{{output_dir}}/assembled10" remote_src=no delimiter="#--- delimiter ---#" decrypt=yes
+  register: result
+
+- name: assert the fragments were assembled without remote
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.checksum == '505359f48c65b3904127cf62b912991d4da7ed6d'"

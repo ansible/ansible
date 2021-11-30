@@ -1,0 +1,7 @@
+- name: delete installed collections
+  file:
+    state: absent
+    path: "{{ item }}"
+  loop:
+    - "{{ install_path }}"
+    - "{{ alt_install_path }}"

@@ -1,0 +1,64 @@
+- block:
+  - name: Disable ubuntu repos so system packages are not upgraded and do not change testing env
+    command: mv /etc/apt/sources.list /etc/apt/sources.list.backup
+
+  - name: install foo-1.0.0
+    apt:
+      name: foo=1.0.0
+      state: present
+      allow_unauthenticated: yes
+
+  - name: check foo version
+    shell: dpkg -s foo | grep Version | awk '{print $2}'
+    register: foo_version
+
+  - name: ensure the correct version of foo has been installed
+    assert:
+      that:
+        - "'1.0.0' in foo_version.stdout"
+
+  - name: "(upgrade type: {{upgrade_type}}) upgrade packages to latest version, force_apt_get: {{force_apt_get}}"
+    apt:
+      upgrade: "{{ upgrade_type }}"
+      force_apt_get: "{{ force_apt_get }}"
+      force: yes
+    register: upgrade_result
+
+  - name: check foo version
+    shell: dpkg -s foo | grep Version | awk '{print $2}'
+    register: foo_version
+
+  - name: check that warning is not given when force_apt_get set
+    assert:
+      that:
+        - "'warnings' not in upgrade_result"
+    when:
+      - force_apt_get
+
+  - name: check that old version upgraded correctly
+    assert:
+      that:
+        - "'1.0.0' not in foo_version.stdout"
+        - "{{ foo_version.changed }}"
+
+  - name: "(upgrade type: {{upgrade_type}}) upgrade packages to latest version (Idempotant)"
+    apt:
+      upgrade: "{{ upgrade_type }}"
+      force_apt_get: "{{ force_apt_get }}"
+      force: yes
+    register: second_upgrade_result
+
+  - name: check that nothing has changed (Idempotant)
+    assert:
+      that:
+        - "second_upgrade_result.changed == false"
+
+  always:
+    - name: Clean up
+      apt:
+        pkg: foo,foobar
+        state: absent
+        autoclean: yes
+
+    - name: Restore ubuntu repos
+      command: mv /etc/apt/sources.list.backup /etc/apt/sources.list

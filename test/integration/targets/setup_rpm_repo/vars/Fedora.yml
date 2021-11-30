@@ -1,0 +1,4 @@
+rpm_repo_packages:
+  - "{{ 'python' ~ rpm_repo_python_major_version ~ '-rpmfluff' }}"
+  - createrepo
+  - rpm-build

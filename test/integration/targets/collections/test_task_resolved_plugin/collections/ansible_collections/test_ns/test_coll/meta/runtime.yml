@@ -1,0 +1,7 @@
+plugin_routing:
+  modules:
+    formerly_module:
+      redirect: test_ns.test_coll.collection_module
+  action:
+    formerly_action:
+      redirect: test_ns.test_coll.collection_action

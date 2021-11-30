@@ -1,0 +1,14 @@
+- name: execute the script
+  command: "'{{ ansible_python_interpreter }}' '{{ role_path }}/files/playbook_example1.py' '{{ lookup('env', 'OUTPUT_DIR') }}'"
+  register: script
+
+- name: parse script output
+  # work around for ansible-runner showing ansible warnings on stdout
+  set_fact:
+    pbexec_json: "{{ script.stdout | parse_json }}"
+
+- assert:
+    that:
+        - "pbexec_json.rc == 0"
+        - "pbexec_json.events|length == 7"
+        - "'localhost' in pbexec_json.stats.ok"

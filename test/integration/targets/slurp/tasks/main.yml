@@ -1,0 +1,69 @@
+# test code for the slurp module.  Based on win_slurp test cases
+# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: Create a UTF-8 file to test with
+  copy:
+    content: 'We are at the café'
+    dest: '{{ output_dir }}/foo.txt'
+
+- name: test slurping an existing file
+  slurp:
+    src: '{{ output_dir }}/foo.txt'
+  register: slurp_existing
+
+- name: check slurp existing result
+  assert:
+    that:
+      - 'slurp_existing.content'
+      - 'slurp_existing.encoding == "base64"'
+      - 'slurp_existing is not changed'
+      - 'slurp_existing is not failed'
+      - '"{{ slurp_existing.content | b64decode }}" == "We are at the café"'
+
+- name: Create a binary file to test with
+  copy:
+    src: bar.bin
+    dest: '{{ output_dir }}/bar.bin'
+
+- name: test slurping a binary file
+  slurp:
+    path: '{{ output_dir }}/bar.bin'
+  register: slurp_binary
+  no_log: true
+
+- name: check slurp result of binary
+  assert:
+    that:
+      - "slurp_binary.content"
+      - "slurp_binary.encoding == 'base64'"
+      - "slurp_binary is not changed"
+      - "slurp_binary is not failed"
+
+- name: test slurp with missing argument
+  action: slurp
+  register: slurp_no_args
+  ignore_errors: true
+
+- name: check slurp with missing argument result
+  assert:
+    that:
+      - "slurp_no_args is failed"
+      - "slurp_no_args.msg"
+      - "slurp_no_args is not changed"
+
+- import_tasks: test_unreadable.yml

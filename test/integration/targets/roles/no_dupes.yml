@@ -1,0 +1,29 @@
+- name: play should only show 1 invocation of a, as dependencies in this play are deduped
+  hosts: testhost
+  gather_facts: false
+  tags: [ 'inroles' ]
+  roles:
+    - role: a
+    - role: b
+    - role: c
+
+- name: play should only show 1 invocation of a, as dependencies in this play are deduped even outside of roles
+  hosts: testhost
+  gather_facts: false
+  tags: [ 'acrossroles' ]
+  roles:
+    - role: a
+    - role: b
+  tasks:
+    - name: execute role c which depends on a
+      import_role: name=c
+
+- name: play should only show 1 invocation of a, as dependencies in this play are deduped by include_role
+  hosts: testhost
+  gather_facts: false
+  tags: [ 'intasks' ]
+  tasks:
+    - name: execute role b which depends on a
+      include_role: name=b
+    - name: execute role c which also depends on a
+      include_role: name=c

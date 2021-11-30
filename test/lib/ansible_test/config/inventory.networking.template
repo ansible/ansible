@@ -1,0 +1,42 @@
+# This is the configuration template for ansible-test network-integration tests.
+#
+# You do not need this template if you are:
+#
+# 1) Running integration tests without using ansible-test.
+# 2) Using the `--platform` option to provision temporary network instances on EC2.
+#
+# If you do not want to use the automatically provisioned temporary network instances,
+# fill in the @VAR placeholders below and save this file without the .template extension.
+#
+# NOTE: Automatic provisioning of network instances on EC2 requires an ansible-core-ci API key.
+
+[@OS]
+@NAME ansible_connection="local" ansible_host=@HOST ansible_network_os="@OS" ansible_user="@USER" ansible_ssh_private_key_file="@KEY_FILE"
+
+[aci:vars]
+aci_hostname=your-apic-1
+aci_username=admin
+aci_password=your-apic-password
+aci_validate_certs=no
+aci_use_ssl=yes
+aci_use_proxy=no
+
+[aci]
+localhost ansible_ssh_host=127.0.0.1 ansible_connection=local
+
+[mso:vars]
+mso_hostname=your-mso-1
+mso_username=admin
+mso_password=your-mso-password
+mso_validate_certs=no
+mso_use_ssl=yes
+mso_use_proxy=no
+
+[mso]
+localhost ansible_ssh_host=127.0.0.1 ansible_connection=local
+
+###
+# Example
+#
+# [vyos]
+# vyos01.example.net ansible_connection=local ansible_network_os="vyos" ansible_user=admin ansible_ssh_pass=mypassword

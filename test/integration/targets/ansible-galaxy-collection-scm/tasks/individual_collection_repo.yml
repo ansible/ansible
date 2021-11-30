@@ -1,0 +1,18 @@
+- name: Clone a git repository
+  git:
+    repo: https://github.com/ansible-collections/amazon.aws.git
+    dest: '{{ scm_path }}/amazon.aws/'
+
+- name: install
+  command: 'ansible-galaxy collection install git+file://{{ scm_path }}/amazon.aws/.git'
+
+- name: list installed collections
+  command: 'ansible-galaxy collection list'
+  register: installed_collections
+
+- assert:
+    that:
+      - "'amazon.aws' in installed_collections.stdout"
+
+- include_tasks: ./empty_installed_collections.yml
+  when: cleanup

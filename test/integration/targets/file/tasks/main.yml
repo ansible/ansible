@@ -1,0 +1,876 @@
+# Test code for the file module.
+# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- set_fact: output_file={{output_dir}}/foo.txt
+
+# same as expanduser & expandvars called on managed host
+- command: 'echo {{ output_file }}'
+  register: echo
+
+- set_fact:
+    remote_file_expanded: '{{ echo.stdout }}'
+
+# Import the test tasks
+- name: Run tests for state=link
+  import_tasks: state_link.yml
+
+- name: Run tests for directory as dest
+  import_tasks: directory_as_dest.yml
+
+- name: Run tests for unicode
+  import_tasks: unicode_path.yml
+  environment:
+    LC_ALL: C
+    LANG: C
+
+- name: decide to include or not include selinux tests
+  include_tasks: selinux_tests.yml
+  when: selinux_installed is defined and selinux_installed.stdout != "" and selinux_enabled.stdout != "Disabled"
+
+- name: Initialize the test output dir
+  import_tasks: initialize.yml
+
+- name: Test _diff_peek
+  import_tasks: diff_peek.yml
+
+
+# These tests need to be organized by state parameter into separate files later
+
+- name: verify that we are checking a file and it is present
+  file: path={{output_file}} state=file
+  register: file_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file_result.changed == false"
+      - "file_result.state == 'file'"
+
+- name: Make sure file does not exist
+  file:
+    path: /tmp/ghost
+    state: absent
+
+- name: Target a file that does not exist
+  file:
+    path: /tmp/ghost
+  ignore_errors: yes
+  register: ghost_file_result
+
+- name: Validate ghost file results
+  assert:
+    that:
+      - ghost_file_result is failed
+      - ghost_file_result is not changed
+      - ghost_file_result.state == 'absent'
+      - "'cannot continue' in ghost_file_result.msg"
+
+- name: verify that we are checking an absent file
+  file: path={{output_dir}}/bar.txt state=absent
+  register: file2_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file2_result.changed == false"
+      - "file2_result.state == 'absent'"
+
+- name: verify we can touch a file
+  file:
+    path: "{{output_dir}}/baz.txt"
+    state: touch
+    mode: '0644'
+  register: file3_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file3_result.changed == true"
+      - "file3_result.state == 'file'"
+      - "file3_result.mode == '0644'"
+
+- name: change file mode
+  file: path={{output_dir}}/baz.txt mode=0600
+  register: file4_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file4_result.changed == true"
+      - "file4_result.mode == '0600'"
+
+- name: define file to verify chattr/lsattr with
+  set_fact:
+    attributes_file: "{{ output_dir }}/attributes.txt"
+    attributes_supported: no
+
+- name: create file to verify chattr/lsattr with
+  command: touch "{{ attributes_file }}"
+
+- name: add "A" attribute to file
+  command: chattr +A "{{ attributes_file }}"
+  ignore_errors: yes
+
+- name: get attributes from file
+  command: lsattr -d "{{ attributes_file }}"
+  register: attribute_A_set
+  ignore_errors: yes
+
+- name: remove "A" attribute from file
+  command: chattr -A "{{ attributes_file }}"
+  ignore_errors: yes
+
+- name: get attributes from file
+  command: lsattr -d "{{ attributes_file }}"
+  register: attribute_A_unset
+  ignore_errors: yes
+
+- name: determine if chattr/lsattr is supported
+  set_fact:
+    attributes_supported: yes
+  when:
+    - attribute_A_set is success
+    - "'A' in attribute_A_set.stdout_lines[0].split()[0]"
+    - attribute_A_unset is success
+    - "'A' not in attribute_A_unset.stdout_lines[0].split()[0]"
+
+- name: explicitly set file attribute "A"
+  file: path={{output_dir}}/baz.txt attributes=A
+  register: file_attributes_result
+  ignore_errors: True
+  when: attributes_supported
+
+- name: add file attribute "A"
+  file: path={{output_dir}}/baz.txt attributes=+A
+  register: file_attributes_result_2
+  when: file_attributes_result is changed
+
+- name: verify that the file was not marked as changed
+  assert:
+    that:
+      - "file_attributes_result_2 is not changed"
+  when: file_attributes_result is changed
+
+- name: remove file attribute "A"
+  file: path={{output_dir}}/baz.txt attributes=-A
+  register: file_attributes_result_3
+  ignore_errors: True
+
+- name: explicitly remove file attributes
+  file: path={{output_dir}}/baz.txt attributes=""
+  register: file_attributes_result_4
+  when: file_attributes_result_3 is changed
+
+- name: verify that the file was not marked as changed
+  assert:
+    that:
+      - "file_attributes_result_4 is not changed"
+  when: file_attributes_result_4 is changed
+
+- name: create user
+  user:
+    name: test1
+    uid: 1234
+  notify: remove users
+
+- name: create group
+  group:
+    name: test1
+    gid: 1234
+  notify: remove groups
+
+- name: change ownership and group
+  file: path={{output_dir}}/baz.txt owner=1234 group=1234
+
+- name: Get stat info to check atime later
+  stat: path={{output_dir}}/baz.txt
+  register: file_attributes_result_5_before
+
+- name: updates access time
+  file: path={{output_dir}}/baz.txt access_time=now
+  register: file_attributes_result_5
+
+- name: Get stat info to check atime later
+  stat: path={{output_dir}}/baz.txt
+  register: file_attributes_result_5_after
+
+- name: verify that the file was marked as changed and atime changed
+  assert:
+    that:
+      - "file_attributes_result_5 is changed"
+      - "file_attributes_result_5_after['stat']['atime'] != file_attributes_result_5_before['stat']['atime']"
+
+- name: setup a tmp-like directory for ownership test
+  file: path=/tmp/worldwritable mode=1777 state=directory
+
+- name: Ask to create a file without enough perms to change ownership
+  file: path=/tmp/worldwritable/baz.txt state=touch owner=root
+  become: yes
+  become_user: nobody
+  register: chown_result
+  ignore_errors: True
+
+- name: Ask whether the new file exists
+  stat: path=/tmp/worldwritable/baz.txt
+  register: file_exists_result
+
+- name: Verify that the file doesn't exist on failure
+  assert:
+    that:
+      - "chown_result.failed == True"
+      - "file_exists_result.stat.exists == False"
+
+- name: clean up
+  file: path=/tmp/worldwritable state=absent
+
+- name: create hard link to file
+  file: src={{output_file}} dest={{output_dir}}/hard.txt state=hard
+  register: file6_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file6_result.changed == true"
+
+- name: touch a hard link
+  file:
+    dest: '{{ output_dir }}/hard.txt'
+    state: 'touch'
+  register: file6_touch_result
+
+- name: verify that the hard link was touched
+  assert:
+    that:
+      - "file6_touch_result.changed == true"
+
+- name: stat1
+  stat: path={{output_file}}
+  register: hlstat1
+
+- name: stat2
+  stat: path={{output_dir}}/hard.txt
+  register: hlstat2
+
+- name: verify that hard link is still the same after timestamp updated
+  assert:
+    that:
+      - "hlstat1.stat.inode == hlstat2.stat.inode"
+
+- name: create hard link to file 2
+  file: src={{output_file}} dest={{output_dir}}/hard.txt state=hard
+  register: hlink_result
+
+- name: verify that hard link creation is idempotent
+  assert:
+    that:
+      - "hlink_result.changed == False"
+
+- name: Change mode on a hard link
+  file: src={{output_file}} dest={{output_dir}}/hard.txt mode=0701
+  register: file6_mode_change
+
+- name: verify that the hard link was touched
+  assert:
+    that:
+      - "file6_touch_result.changed == true"
+
+- name: stat1
+  stat: path={{output_file}}
+  register: hlstat1
+
+- name: stat2
+  stat: path={{output_dir}}/hard.txt
+  register: hlstat2
+
+- name: verify that hard link is still the same after timestamp updated
+  assert:
+    that:
+      - "hlstat1.stat.inode == hlstat2.stat.inode"
+      - "hlstat1.stat.mode == '0701'"
+
+- name: create a directory
+  file: path={{output_dir}}/foobar state=directory
+  register: file7_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file7_result.changed == true"
+      - "file7_result.state == 'directory'"
+
+- name: determine if selinux is installed
+  shell: which getenforce || exit 0
+  register: selinux_installed
+
+- name: determine if selinux is enabled
+  shell: getenforce
+  register: selinux_enabled
+  when: selinux_installed.stdout != ""
+  ignore_errors: true
+
+- name: remove directory foobar
+  file: path={{output_dir}}/foobar state=absent
+
+- name: remove file foo.txt
+  file: path={{output_dir}}/foo.txt state=absent
+
+- name: remove file bar.txt
+  file: path={{output_dir}}/foo.txt state=absent
+
+- name: remove file baz.txt
+  file: path={{output_dir}}/foo.txt state=absent
+
+- name: copy directory structure over
+  copy: src=foobar dest={{output_dir}}
+
+- name: check what would be removed if folder state was absent and diff is enabled
+  file:
+    path: "{{ item }}"
+    state: absent
+  check_mode: yes
+  diff: yes
+  with_items:
+    - "{{ output_dir }}"
+    - "{{ output_dir }}/foobar/fileA"
+  register: folder_absent_result
+
+- name: 'assert that the "absent" state lists expected files and folders for only directories'
+  assert:
+    that:
+      - folder_absent_result.results[0].diff.before.path_content is defined
+      - folder_absent_result.results[1].diff.before.path_content is not defined
+      - test_folder in folder_absent_result.results[0].diff.before.path_content.directories
+      - test_file in folder_absent_result.results[0].diff.before.path_content.files
+  vars:
+    test_folder: "{{ folder_absent_result.results[0].path }}/foobar"
+    test_file: "{{ folder_absent_result.results[0].path }}/foobar/fileA"
+
+- name: Change ownership of a directory with recurse=no(default)
+  file: path={{output_dir}}/foobar owner=1234
+
+- name: verify that the permission of the directory was set
+  file: path={{output_dir}}/foobar state=directory
+  register: file8_result
+
+- name: assert that the directory has changed to have owner 1234
+  assert:
+    that:
+      - "file8_result.uid == 1234"
+
+- name: verify that the permission of a file under the directory was not set
+  file: path={{output_dir}}/foobar/fileA state=file
+  register: file9_result
+
+- name: assert the file owner has not changed to 1234
+  assert:
+    that:
+      - "file9_result.uid != 1234"
+
+- name: create user
+  user:
+    name: test2
+    uid: 1235
+
+- name: change the ownership of a directory with recurse=yes
+  file: path={{output_dir}}/foobar owner=1235 recurse=yes
+
+- name: verify that the permission of the directory was set
+  file: path={{output_dir}}/foobar state=directory
+  register: file10_result
+
+- name: assert that the directory has changed to have owner 1235
+  assert:
+    that:
+      - "file10_result.uid == 1235"
+
+- name: verify that the permission of a file under the directory was not set
+  file: path={{output_dir}}/foobar/fileA state=file
+  register: file11_result
+
+- name: assert that the file has changed to have owner 1235
+  assert:
+    that:
+      - "file11_result.uid == 1235"
+
+- name: remove directory foobar
+  file: path={{output_dir}}/foobar state=absent
+  register: file14_result
+
+- name: verify that the directory was removed
+  assert:
+    that:
+      - 'file14_result.changed == true'
+      - 'file14_result.state == "absent"'
+
+- name: create a test sub-directory
+  file: dest={{output_dir}}/sub1 state=directory
+  register: file15_result
+
+- name: verify that the new directory was created
+  assert:
+    that:
+      - 'file15_result.changed == true'
+      - 'file15_result.state == "directory"'
+
+- name: create test files in the sub-directory
+  file: dest={{output_dir}}/sub1/{{item}} state=touch
+  with_items:
+  - file1
+  - file2
+  - file3
+  register: file16_result
+
+- name: verify the files were created
+  assert:
+    that:
+      - 'item.changed == true'
+      - 'item.state == "file"'
+  with_items: "{{file16_result.results}}"
+
+- name: test file creation with symbolic mode
+  file: dest={{output_dir}}/test_symbolic state=touch mode=u=rwx,g=rwx,o=rwx
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0777'
+
+- name: modify symbolic mode for all
+  file: dest={{output_dir}}/test_symbolic state=touch mode=a=r
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0444'
+
+- name: modify symbolic mode for owner
+  file: dest={{output_dir}}/test_symbolic state=touch mode=u+w
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0644'
+
+- name: modify symbolic mode for group
+  file: dest={{output_dir}}/test_symbolic state=touch mode=g+w
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0664'
+
+- name: modify symbolic mode for world
+  file: dest={{output_dir}}/test_symbolic state=touch mode=o+w
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0666'
+
+- name: modify symbolic mode for owner
+  file: dest={{output_dir}}/test_symbolic state=touch mode=u+x
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0766'
+
+- name: modify symbolic mode for group
+  file: dest={{output_dir}}/test_symbolic state=touch mode=g+x
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0776'
+
+- name: modify symbolic mode for world
+  file: dest={{output_dir}}/test_symbolic state=touch mode=o+x
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0777'
+
+- name: remove symbolic mode for world
+  file: dest={{output_dir}}/test_symbolic state=touch mode=o-wx
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0774'
+
+- name: remove symbolic mode for group
+  file: dest={{output_dir}}/test_symbolic state=touch mode=g-wx
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0744'
+
+- name: remove symbolic mode for owner
+  file: dest={{output_dir}}/test_symbolic state=touch mode=u-wx
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0444'
+
+- name: set sticky bit with symbolic mode
+  file: dest={{output_dir}}/test_symbolic state=touch mode=o+t
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '01444'
+
+- name: remove sticky bit with symbolic mode
+  file: dest={{output_dir}}/test_symbolic state=touch mode=o-t
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0444'
+
+- name: add setgid with symbolic mode
+  file: dest={{output_dir}}/test_symbolic state=touch mode=g+s
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '02444'
+
+- name: remove setgid with symbolic mode
+  file: dest={{output_dir}}/test_symbolic state=touch mode=g-s
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0444'
+
+- name: add setuid with symbolic mode
+  file: dest={{output_dir}}/test_symbolic state=touch mode=u+s
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '04444'
+
+- name: remove setuid with symbolic mode
+  file: dest={{output_dir}}/test_symbolic state=touch mode=u-s
+  register: result
+
+- name: assert file mode
+  assert:
+    that:
+    - result.mode == '0444'
+
+# https://github.com/ansible/ansible/issues/67307
+# Test the module fails in check_mode when directory and owner/group do not exist
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: owner does not exist in check_mode
+  file:
+    path: '/tmp/nonexistent'
+    owner: nonexistent
+  check_mode: yes
+  register: owner_no_exist
+  ignore_errors: yes
+
+- name: create owner
+  user:
+    name: nonexistent
+  notify: remove users
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: owner exist in check_mode
+  file:
+    path: '/tmp/nonexistent'
+    owner: nonexistent
+  check_mode: yes
+  register: owner_exists
+  ignore_errors: yes
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: owner does not exist in check_mode, using uid
+  file:
+    path: '/tmp/nonexistent'
+    owner: '111111'
+  check_mode: yes
+  ignore_errors: yes
+  register: owner_uid_no_exist
+
+- name: create owner using uid
+  user:
+    name: test_uid
+    uid: 111111
+  notify: remove users
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: owner exists in check_mode, using uid
+  file:
+    path: '/tmp/nonexistent'
+    owner: '111111'
+    state: touch
+  check_mode: yes
+  ignore_errors: yes
+  register: owner_uid_exists
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: group does not exist in check_mode
+  file:
+    path: '/tmp/nonexistent'
+    group: nonexistent1
+  check_mode: yes
+  register: group_no_exist
+  ignore_errors: yes
+
+- name: create group
+  group:
+    name: nonexistent1
+  notify: remove groups
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: group exists in check_mode
+  file:
+    path: '/tmp/nonexistent'
+    group: nonexistent1
+  check_mode: yes
+  register: group_exists
+  ignore_errors: yes
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: group does not exist in check_mode, using gid
+  file:
+    path: '/tmp/nonexistent'
+    group: '111112'
+  check_mode: yes
+  register: group_gid_no_exist
+  ignore_errors: yes
+
+- name: create group with gid
+  group:
+    name: test_gid
+    gid: 111112
+  notify: remove groups
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: group exists in check_mode, using gid
+  file:
+    path: '/tmp/nonexistent'
+    group: '111112'
+  check_mode: yes
+  register: group_gid_exists
+  ignore_errors: yes
+
+- assert:
+    that:
+    - owner_no_exist.warnings[0] is search('failed to look up user')
+    - owner_uid_no_exist.warnings[0] is search('failed to look up user with uid')
+    - group_no_exist.warnings[0] is search('failed to look up group')
+    - group_gid_no_exist.warnings[0] is search('failed to look up group with gid')
+    - owner_exists.warnings is not defined
+    - owner_uid_exists.warnings is not defined
+    - group_exists.warnings is not defined
+    - group_gid_exists.warnings is not defined
+
+# https://github.com/ansible/ansible/issues/50943
+# Need to use /tmp as nobody can't access output_dir at all
+- name: create file as root with all write permissions
+  file: dest=/tmp/write_utime state=touch mode=0666 owner={{ansible_user_id}}
+
+- name: Pause to ensure stat times are not the exact same
+  pause:
+    seconds: 1
+
+- block:
+  - name: get previous time
+    stat: path=/tmp/write_utime
+    register: previous_time
+
+  - name: pause for 1 second to ensure the next touch is newer
+    pause: seconds=1
+
+  - name: touch file as nobody
+    file: dest=/tmp/write_utime state=touch
+    become: True
+    become_user: nobody
+    register: result
+
+  - name: get new time
+    stat: path=/tmp/write_utime
+    register: current_time
+
+  always:
+  - name: remove test utime file
+    file: path=/tmp/write_utime state=absent
+
+- name: assert touch file as nobody
+  assert:
+    that:
+    - result is changed
+    - current_time.stat.atime > previous_time.stat.atime
+    - current_time.stat.mtime > previous_time.stat.mtime
+
+# Follow + recursive tests
+- name: create a toplevel directory
+  file: path={{output_dir}}/test_follow_rec state=directory mode=0755
+
+- name: create a file outside of the toplevel
+  file: path={{output_dir}}/test_follow_rec_target_file state=touch mode=0700
+
+- name: create a directory outside of the toplevel
+  file: path={{output_dir}}/test_follow_rec_target_dir state=directory mode=0700
+
+- name: create a file inside of the link target directory
+  file: path={{output_dir}}/test_follow_rec_target_dir/foo state=touch mode=0700
+
+- name: create a symlink to the file
+  file: path={{output_dir}}/test_follow_rec/test_link state=link src="../test_follow_rec_target_file"
+
+- name: create a symlink to the directory
+  file: path={{output_dir}}/test_follow_rec/test_link_dir state=link src="../test_follow_rec_target_dir"
+
+- name: create a symlink to a nonexistent file
+  file: path={{output_dir}}/test_follow_rec/nonexistent state=link src=does_not_exist force=True
+
+- name: try to change permissions without following symlinks
+  file: path={{output_dir}}/test_follow_rec follow=False mode="a-x" recurse=True
+
+- name: stat the link file target
+  stat: path={{output_dir}}/test_follow_rec_target_file
+  register: file_result
+
+- name: stat the link dir target
+  stat: path={{output_dir}}/test_follow_rec_target_dir
+  register: dir_result
+
+- name: stat the file inside the link dir target
+  stat: path={{output_dir}}/test_follow_rec_target_dir/foo
+  register: file_in_dir_result
+
+- name: assert that the link targets were unmodified
+  assert:
+    that:
+    - file_result.stat.mode == '0700'
+    - dir_result.stat.mode == '0700'
+    - file_in_dir_result.stat.mode == '0700'
+
+- name: try to change permissions with following symlinks
+  file: path={{output_dir}}/test_follow_rec follow=True mode="a-x" recurse=True
+
+- name: stat the link file target
+  stat: path={{output_dir}}/test_follow_rec_target_file
+  register: file_result
+
+- name: stat the link dir target
+  stat: path={{output_dir}}/test_follow_rec_target_dir
+  register: dir_result
+
+- name: stat the file inside the link dir target
+  stat: path={{output_dir}}/test_follow_rec_target_dir/foo
+  register: file_in_dir_result
+
+- name: assert that the link targets were modified
+  assert:
+    that:
+    - file_result.stat.mode == '0600'
+    - dir_result.stat.mode == '0600'
+    - file_in_dir_result.stat.mode == '0600'
+
+# https://github.com/ansible/ansible/issues/55971
+- name: Test missing src and path
+  file:
+    state: hard
+  register: file_error1
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "file_error1 is failed"
+      - "file_error1.msg == 'missing required arguments: path'"
+
+- name: Test missing src
+  file:
+    dest: "{{ output_dir }}/hard.txt"
+    state: hard
+  register: file_error2
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "file_error2 is failed"
+      - "file_error2.msg == 'src is required for creating new hardlinks'"
+
+- name: Test non-existing src
+  file:
+    src: non-existing-file-that-does-not-exist.txt
+    dest: "{{ output_dir }}/hard.txt"
+    state: hard
+  register: file_error3
+  ignore_errors: yes
+
+- assert:
+    that:
+      - "file_error3 is failed"
+      - "file_error3.msg == 'src does not exist'"
+      - "file_error3.dest == '{{ output_dir }}/hard.txt' | expanduser"
+      - "file_error3.src == 'non-existing-file-that-does-not-exist.txt'"
+
+- block:
+  - name: Create a testing file
+    file:
+      dest: original_file.txt
+      state: touch
+
+  - name: Test relative path with state=hard
+    file:
+      src: original_file.txt
+      dest: hard_link_file.txt
+      state: hard
+    register: hard_link_relpath
+
+  - name: Just check if it was successful, we don't care about the actual hard link in this test
+    assert:
+      that:
+        - "hard_link_relpath is success"
+
+  always:
+    - name: Clean up
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - original_file.txt
+        - hard_link_file.txt
+
+# END #55971

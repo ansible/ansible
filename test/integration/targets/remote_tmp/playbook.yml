@@ -1,0 +1,59 @@
+- name: Test temp dir on de escalation
+  hosts: testhost
+  become: yes
+  tasks:
+    - name: create test user
+      user:
+        name: tmptest
+        state: present
+        group: '{{ "staff" if ansible_facts.distribution == "MacOSX" else omit }}'
+
+    - name: execute test case
+      become_user: tmptest
+      block:
+        - name: Test case from issue 41340
+          blockinfile:
+              create: yes
+              block: |
+                export foo=bar
+              marker: "# {mark} Here there be a marker"
+              dest: /tmp/testing.txt
+              mode: 0644
+      always:
+        - name: clean up file
+          file: path=/tmp/testing.txt state=absent
+
+        - name: clean up test user
+          user: name=tmptest state=absent
+          become_user: root
+
+- name: Test tempdir is removed
+  hosts: testhost
+  gather_facts: false
+  tasks:
+    - import_role:
+        name: ../setup_remote_tmp_dir
+
+    - file:
+        state: touch
+        path: "{{ remote_tmp_dir }}/65393"
+
+    - copy:
+        src: "{{ remote_tmp_dir }}/65393"
+        dest: "{{ remote_tmp_dir }}/65393.2"
+        remote_src: true
+
+    - find:
+        path: "~/.ansible/tmp"
+        use_regex: yes
+        patterns: 'AnsiballZ_.+\.py'
+        recurse: true
+      register: result
+
+    - debug:
+        var: result
+
+    - assert:
+        that:
+          # Should find nothing since pipelining is used
+          - result.files|length == 0

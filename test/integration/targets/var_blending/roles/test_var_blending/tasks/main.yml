@@ -1,0 +1,57 @@
+# test code 
+# (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- include_vars: more_vars.yml
+
+- set_fact:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+
+- name: deploy a template that will use variables at various levels
+  template: src=foo.j2 dest={{output_dir}}/foo.templated 
+  register: template_result
+
+- name: copy known good into place
+  copy: src=foo.txt dest={{output_dir}}/foo.txt
+
+- name: compare templated file to known good
+  shell: diff {{output_dir}}/foo.templated {{output_dir}}/foo.txt
+  register: diff_result
+
+- name: verify templated file matches known good
+  assert:  
+    that: 
+        - 'diff_result.stdout == ""' 
+
+- name: check debug variable with same name as var content
+  debug: var=same_value_as_var_name_var
+  register: same_value_as_var_name
+
+- name: check debug variable output when variable is undefined
+  debug: var=undefined_variable
+  register: var_undefined
+
+- assert:
+    that:
+      - "'VARIABLE IS NOT DEFINED!' in var_undefined.undefined_variable"
+      - same_value_as_var_name.same_value_as_var_name_var == 'same_value_as_var_name_var'
+
+- name: cleanup temporary template output
+  file: path={{output_dir}}/foo.templated state=absent
+
+- name: cleanup temporary copy
+  file: path={{output_dir}}/foo.txt state=absent

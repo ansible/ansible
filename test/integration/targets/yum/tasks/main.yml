@@ -1,0 +1,82 @@
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Note: We install the yum package onto Fedora so that this will work on dnf systems
+# We want to test that for people who don't want to upgrade their systems.
+
+- block:
+  - name: ensure test packages are removed before starting
+    yum:
+      name:
+      - sos
+      state: absent
+
+  - import_tasks: yum.yml
+  always:
+    - name: remove installed packages
+      yum:
+        name:
+          - sos
+        state: absent
+
+    - name: remove installed group
+      yum:
+        name: "@Custom Group"
+        state: absent
+
+    - name: On Fedora 28 the above won't remove the group which results in a failure in repo.yml below
+      yum:
+        name: dinginessentail
+        state: absent
+      when:
+        - ansible_distribution in ['Fedora']
+
+  when:
+    - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
+
+
+- block:
+    - import_tasks: repo.yml
+    - import_tasks: yum_group_remove.yml
+      when:
+        - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux']
+  always:
+    - yum_repository:
+        name: "{{ item }}"
+        state: absent
+      loop: "{{ repos }}"
+
+    - command: yum clean metadata
+  when:
+    - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
+
+
+- import_tasks: yuminstallroot.yml
+  when:
+    - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
+
+
+- import_tasks: proxy.yml
+  when:
+    - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
+
+
+- import_tasks: check_mode_consistency.yml
+  when:
+    - (ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux'] and ansible_distribution_major_version|int == 7)
+
+
+- import_tasks: lock.yml
+  when:
+    - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux']
+
+- import_tasks: multiarch.yml
+  when:
+    - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux']
+    - ansible_architecture == 'x86_64'
+    # Our output parsing expects us to be on yum, not dnf
+    - ansible_distribution_major_version is version('7', '<=')
+
+- import_tasks: cacheonly.yml
+  when:
+    - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']

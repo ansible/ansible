@@ -1,0 +1,33 @@
+# Test code for the file module - selinux subtasks.
+# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: Initialize the test output dir
+  import_tasks: initialize.yml
+
+- name: touch a file for testing
+  file: path={{output_dir}}/foo-se.txt state=touch
+  register: file_se_result
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file_se_result.changed == true"
+      - "file_se_result.secontext == 'unconfined_u:object_r:admin_home_t:s0'"
+
+- name: remove the file used for testing
+  file: path={{output_dir}}/foo-se.txt state=absent

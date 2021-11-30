@@ -1,0 +1,3 @@
+shippable/posix/group1  # runs in the distro test containers
+shippable/generic/group1  # runs in the default test container
+context/controller

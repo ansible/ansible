@@ -1,0 +1,57 @@
+---
+- name: A second playbook run with fact caching enabled
+  hosts: localhost
+  tasks:
+    - name: show ansible_foobar fact
+      debug:
+        var: ansible_foobar
+
+    - name: assert ansible_foobar is correct value when read from cache
+      assert:
+        that:
+          - ansible_foobar == 'foobar_from_set_fact_cacheable'
+
+    - name: show ansible_foobar_not_cached fact
+      debug:
+        var: ansible_foobar_not_cached
+
+    - name: assert ansible_foobar_not_cached is not cached
+      assert:
+        that:
+          - ansible_foobar_not_cached is undefined
+
+    - name: show fact_not_cached fact
+      debug:
+        var: fact_not_cached
+
+    - name: assert fact_not_cached is not cached
+      assert:
+        that:
+          - fact_not_cached is undefined
+
+    - name: show ansible_foobar_fqcn fact (FQCN)
+      debug:
+        var: ansible_foobar_fqcn
+
+    - name: assert ansible_foobar_fqcn is correct value when read from cache (FQCN)
+      assert:
+        that:
+          - ansible_foobar_fqcn == 'foobar_fqcn_from_set_fact_cacheable'
+
+    - name: show ansible_foobar_fqcn_not_cached fact (FQCN)
+      debug:
+        var: ansible_foobar_fqcn_not_cached
+
+    - name: assert ansible_foobar_fqcn_not_cached is not cached (FQCN)
+      assert:
+        that:
+          - ansible_foobar_fqcn_not_cached is undefined
+
+    - name: show fact_not_cached_fqcn fact (FQCN)
+      debug:
+        var: fact_not_cached_fqcn
+
+    - name: assert fact_not_cached_fqcn is not cached (FQCN)
+      assert:
+        that:
+          - fact_not_cached_fqcn is undefined

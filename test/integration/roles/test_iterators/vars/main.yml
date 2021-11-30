@@ -1,9 +1,0 @@
-element_data:
-  - id: x
-    the_list:
-      - "f"
-      - "d"
-  - id: y
-    the_list:
-      - "e"
-      - "f"

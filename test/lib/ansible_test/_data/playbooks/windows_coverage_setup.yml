@@ -1,0 +1,18 @@
+- name: Setup Windows code coverage configuration
+  hosts: all
+  gather_facts: no
+  tasks:
+  - name: Create coverage temporary directory
+    ansible.windows.win_file:
+      path: '{{ remote_temp_path }}'
+      state: directory
+
+  - name: Allow everyone to write to the temporary coverage directory
+    ansible.windows.win_acl:
+      path: '{{ remote_temp_path }}'
+      user: Everyone
+      rights: Modify
+      inherit: ContainerInherit, ObjectInherit
+      propagation: 'None'
+      type: allow
+      state: present

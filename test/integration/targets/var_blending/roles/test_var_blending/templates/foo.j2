@@ -1,0 +1,77 @@
+The value of groups_tree_var = {{ groups_tree_var }}.
+This comes from host, not the parents or grandparents.
+
+The value of the grandparent variable grandparent_var is
+not overridden and is = {{ grandparent_var }}
+
+The value of the parent variable is not overridden and
+is = {{ parent_var }}
+
+The variable 'overridden_in_parent' is set in the parent
+and grandparent, so the parent wins.  It's value is = {{ overridden_in_parent }}.
+
+The values of 'uno', 'dos', and 'tres' are set in group_vars/all but 'tres' is
+set to the value of 'three' in group_vars/local, which should override it.
+
+uno = {{ uno }}
+dos = {{ dos }}
+tres = {{ tres }}
+
+The values of 'a', 'b', 'c', and 'd' are set in host_vars/local and should not
+be clobbered by values that are also set in group_vars.
+
+a = {{ a }}
+b = {{ b }}
+c = {{ c }}
+d = {{ d }}
+
+The value of 'badwolf' is set via the include_vars plugin.
+
+badwolf = {{ badwolf }}
+
+The value of 'winter' is set via the main.yml in the role.   
+
+winter = {{ winter }}
+
+Here's an arbitrary variable set as vars_files in the playbook.
+
+vars_file_var = {{ vars_file_var }}
+
+And vars.
+
+vars = {{ vars_var }}
+
+Variables about other hosts can be looked up via hostvars.  This includes
+facts but here we'll just access a variable defined in the groups.
+
+{{ hostvars['testhost2']['a'] }}
+
+Ansible has pretty basic precedence rules for variable overriding. We already have
+some tests above about group order.  Here are a few more.
+
+   * -e variables always win
+   * then comes "most everything else"
+   * then comes variables defined in inventory
+   * then "role defaults", which are the most "defaulty" and lose in priority to everything.
+
+Given the above rules, here's a test that a -e variable overrides inventory, 
+and also defaults, and role vars.
+
+etest = {{ etest }}
+
+Now a test to make sure role variables can override inventory variables.
+
+role_var_beats_inventory = {{ role_var_beats_inventory }}
+
+Role variables should also beat defaults.
+
+role_var_beats_default = {{ role_var_beats_default }}
+
+But defaults are lower priority than inventory, so inventory should win.
+
+inventory_beats_default = {{ inventory_beats_default }}
+
+That's the end of the precedence tests for now, but more are welcome.
+
+
+

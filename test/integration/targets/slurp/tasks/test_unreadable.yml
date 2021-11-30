@@ -1,0 +1,81 @@
+- name: test slurping a non-existent file
+  slurp:
+    src: '{{ output_dir }}/i_do_not_exist'
+  register: slurp_missing
+  ignore_errors: yes
+
+- name: Create a directory to test with
+  file:
+    path: '{{ output_dir }}/baz/'
+    state: directory
+
+- name: test slurping a directory
+  slurp:
+    src: '{{ output_dir }}/baz'
+  register: slurp_dir
+  ignore_errors: yes
+
+# Ensure unreadable file and directory handling and error messages
+# https://github.com/ansible/ansible/issues/67340
+- name: create test user
+  user:
+    name: "{{ become_test_user }}"
+    create_home: yes
+  notify:
+    - "remove test user and their home dir"
+
+- name: create unreadable file
+  copy:
+    content: "Hello, World!"
+    dest: "{{ output_dir }}/qux.txt"
+    mode: '0600'
+    owner: root
+
+- name: test slurp unreadable file
+  slurp:
+    src: "{{ output_dir }}/qux.txt"
+  register: slurp_unreadable_file
+  become: yes
+  become_user: "{{ become_test_user }}"
+  become_method: su
+  ignore_errors: yes
+
+- name: create unreadable directory
+  file:
+    path: "{{ output_dir }}/test_data"
+    state: directory
+    mode: '0700'
+    owner: root
+
+- name: test slurp unreadable directory
+  slurp:
+    src: "{{ output_dir }}/test_data"
+  register: slurp_unreadable_dir
+  become: yes
+  become_user: "{{ become_test_user }}"
+  become_method: su
+  ignore_errors: yes
+
+- name: Try to access file as directory
+  slurp:
+    src: "{{ output_dir }}/qux.txt/somefile"
+  ignore_errors: yes
+  register: slurp_path_file_as_dir
+
+- name: check slurp failures
+  assert:
+    that:
+      - slurp_missing is failed
+      - slurp_missing.msg is search('file not found')
+      - slurp_missing is not changed
+      - slurp_unreadable_file is failed
+      - slurp_unreadable_file.msg is regex('^file is not readable:')
+      - slurp_unreadable_file is not changed
+      - slurp_unreadable_dir is failed
+      - slurp_unreadable_dir.msg is regex('^file is not readable:')
+      - slurp_unreadable_dir is not changed
+      - slurp_path_file_as_dir is failed
+      - slurp_path_file_as_dir is search('unable to slurp file')
+      - slurp_dir is failed
+      - slurp_dir.msg is search('source is a directory and must be a file')
+      - slurp_dir is not changed

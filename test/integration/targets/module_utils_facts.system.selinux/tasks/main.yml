@@ -1,0 +1,37 @@
+- name: check selinux config
+  shell: |
+    command -v getenforce &&
+    getenforce | grep -E 'Enforcing|Permissive'
+  ignore_errors: yes
+  register: selinux_state
+
+- name: explicitly collect selinux facts
+  setup:
+    gather_subset:
+    - '!all'
+    - '!any'
+    - selinux
+  register: selinux_facts
+
+- set_fact:
+    selinux_policytype: "unknown"
+
+- name: check selinux policy type
+  shell: grep '^SELINUXTYPE=' /etc/selinux/config | cut -d'=' -f2
+  register: r
+
+- set_fact:
+    selinux_policytype: "{{ r.stdout_lines[0] }}"
+  when: r.changed
+
+- assert:
+    that:
+    - selinux_facts is success and selinux_facts.ansible_facts.ansible_selinux is defined
+    - (selinux_facts.ansible_facts.ansible_selinux.status in ['disabled', 'Missing selinux Python library'] if selinux_state is not success else True)
+    - (selinux_facts.ansible_facts.ansible_selinux.status == 'enabled' if selinux_state is success else True)
+    - (selinux_facts.ansible_facts.ansible_selinux.mode in ['enforcing', 'permissive'] if selinux_state is success else True)
+    - (selinux_facts.ansible_facts.ansible_selinux.type == selinux_policytype if selinux_state is success else True)
+
+- name: run selinux tests
+  include_tasks: selinux.yml
+  when: selinux_state is success

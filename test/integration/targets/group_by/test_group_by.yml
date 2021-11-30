@@ -1,0 +1,187 @@
+# test code for the group_by module
+# (c) 2014, Chris Church <cchurch@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: Create overall groups
+  hosts: all
+  gather_facts: false
+  tasks:
+    - include_tasks: create_groups.yml
+
+- name: Vicunga group validation
+  hosts: vicugna
+  gather_facts: false
+  tasks:
+    - name: verify that only the alpaca is in this group
+      assert: { that: "inventory_hostname == 'alpaca'" }
+    - name: set a fact to check that we ran this play
+      set_fact: genus_vicugna=true
+
+- name: Lama group validation
+  hosts: lama
+  gather_facts: false
+  tasks:
+    - name: verify that only the llama is in this group
+      assert: { that: "inventory_hostname == 'llama'" }
+    - name: set a fact to check that we ran this play
+      set_fact: genus_lama=true
+
+- name: Camelus group validation
+  hosts: camelus
+  gather_facts: false
+  tasks:
+    - name: verify that only the camel is in this group
+      assert: { that: "inventory_hostname == 'camel'" }
+    - name: set a fact to check that we ran this play
+      set_fact: genus_camelus=true
+
+- name: Vic group validation
+  hosts: vic
+  gather_facts: false
+  tasks:
+    - name: verify that only the alpaca is in this group
+      assert: { that: "inventory_hostname == 'alpaca'" }
+    - name: set a fact to check that we ran this play
+      set_fact: genus_vic=true
+
+- name: Lam group validation
+  hosts: lam
+  gather_facts: false
+  tasks:
+    - name: verify that only the llama is in this group
+      assert: { that: "inventory_hostname == 'llama'" }
+    - name: set a fact to check that we ran this play
+      set_fact: genus_lam=true
+
+- name: Cam group validation
+  hosts: cam
+  gather_facts: false
+  tasks:
+    - name: verify that only the camel is in this group
+      assert: { that: "inventory_hostname == 'camel'" }
+    - name: set a fact to check that we ran this play
+      set_fact: genus_cam=true
+
+- name: Vi group validation
+  hosts: vi
+  gather_facts: false
+  tasks:
+    - name: verify that only the alpaca is in this group
+      assert: { that: "inventory_hostname == 'alpaca'" }
+    - name: set a fact to check that we ran this play
+      set_fact: genus_vi=true
+
+- name: La group validation
+  hosts: la
+  gather_facts: false
+  tasks:
+    - name: verify that only the llama is in this group
+      assert: { that: "inventory_hostname == 'llama'" }
+    - name: set a fact to check that we ran this play
+      set_fact: genus_la=true
+
+- name: Ca group validation
+  hosts: ca
+  gather_facts: false
+  tasks:
+    - name: verify that only the camel is in this group
+      assert: { that: "inventory_hostname == 'camel'" }
+    - name: set a fact to check that we ran this play
+      set_fact: genus_ca=true
+
+- name: VICUGNA group validation
+  hosts: VICUGNA
+  gather_facts: false
+  tasks:
+    - name: verify that only the alpaca is in this group
+      assert: { that: "inventory_hostname == 'alpaca'" }
+    - name: set a fact to check that we ran this play
+      set_fact: genus_VICUGNA=true
+
+- name: LAMA group validation
+  hosts: LAMA
+  gather_facts: false
+  tasks:
+    - name: verify that only the llama is in this group
+      assert: { that: "inventory_hostname == 'llama'" }
+    - name: set a fact to check that we ran this play
+      set_fact: genus_LAMA=true
+
+- name: CAMELUS group validation
+  hosts: CAMELUS
+  gather_facts: false
+  tasks:
+    - name: verify that only the camel is in this group
+      assert: { that: "inventory_hostname == 'camel'" }
+    - name: set a fact to check that we ran this play
+      set_fact: genus_CAMELUS=true
+
+- name: alpaca validation of groups
+  hosts: alpaca
+  gather_facts: false
+  tasks:
+    - name: check that alpaca matched all four groups
+      assert: { that: ["genus_vicugna", "genus_vic", "genus_vi", "genus_VICUGNA"] }
+
+- name: llama validation of groups
+  hosts: llama
+  gather_facts: false
+  tasks:
+    - name: check that llama matched all four groups
+      assert: { that: ["genus_lama", "genus_lam", "genus_la", "genus_LAMA"] }
+
+- hosts: camel
+  gather_facts: false
+  tasks:
+    - name: check that camel matched all four groups
+      assert: { that: ["genus_camelus", "genus_cam", "genus_ca", "genus_CAMELUS"] }
+
+- hosts: vicugna
+  gather_facts: false
+  tasks:
+    - name: check group_vars variable overrides for vicugna
+      assert: { that: ["uno == 1", "dos == 2", "tres == 'three'"] }
+
+- hosts: lama
+  gather_facts: false
+  tasks:
+    - name: check group_vars variable overrides for lama
+      assert: { that: ["uno == 1", "dos == 2", "tres == 3"] }
+
+- hosts: camelus
+  gather_facts: false
+  tasks:
+    - name: check group_vars variable overrides for camelus
+      assert: { that: ["uno == 1", "dos == 'two'", "tres == 3"] }
+
+- name: Nested group validation
+  hosts: lama
+  gather_facts: false
+  tasks:
+    - name: group by genus with parent
+      group_by: key=vicugna-{{ genus }} parents=vicugna
+    - name: check group_vars variable overrides for vicugna-lama
+      assert: { that: ["uno == 1", "dos == 2", "tres == 'three'"] }
+
+    - name: group by genus with nonexistent parent
+      group_by:
+        key: "{{ genus }}"
+        parents:
+          - oxydactylus
+          - stenomylus
+    - name: check parent groups
+      assert: { that: ["'oxydactylus' in group_names", "'stenomylus' in group_names"] }

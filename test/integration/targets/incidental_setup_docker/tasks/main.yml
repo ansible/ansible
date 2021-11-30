@@ -1,0 +1,113 @@
+- name: Setup Docker
+  when: ansible_facts.distribution ~ ansible_facts.distribution_major_version not in  ['CentOS6', 'RedHat6']
+  block:
+    - name: Include distribution specific variables
+      include_vars: "{{ lookup('first_found', params) }}"
+      vars:
+        params:
+          files:
+            - "{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml"
+            - "{{ ansible_facts.os_family }}-{{ ansible_facts.distribution_major_version }}.yml"
+            - "{{ ansible_facts.distribution }}.yml"
+            - "{{ ansible_facts.os_family }}.yml"
+            - default.yml
+          paths:
+            - "{{ role_path }}/vars"
+
+    - name: Include distribution specific tasks
+      include_tasks: "{{ lookup('first_found', params) }}"
+      vars:
+        params:
+          files:
+            - "{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml"
+            - "{{ ansible_facts.os_family }}-{{ ansible_facts.distribution_major_version }}.yml"
+            - "{{ ansible_facts.distribution }}.yml"
+            - "{{ ansible_facts.os_family }}.yml"
+          paths:
+            - "{{ role_path }}/tasks"
+
+    - name: Install Python requirements
+      pip:
+        state: present
+        name: "{{ docker_pip_packages | union(docker_pip_extra_packages) }}"
+        extra_args: "-c {{ remote_constraints }}"
+      notify: cleanup docker
+
+    # Detect docker CLI, API and docker-py versions
+    - name: Check Docker CLI version
+      command: "docker version -f {% raw %}'{{.Client.Version}}'{% endraw %}"
+      register: docker_cli_version_stdout
+      ignore_errors: yes
+
+    - name: Check Docker API version
+      command: "{{ ansible_python.executable }} -c 'import docker; print(docker.from_env().version()[\"ApiVersion\"])'"
+      register: docker_api_version_stdout
+      ignore_errors: yes
+
+    - name: Check docker-py API version
+      command: "{{ ansible_python.executable }} -c 'import docker; print(docker.__version__)'"
+      register: docker_py_version_stdout
+      ignore_errors: yes
+
+    - set_fact:
+        docker_cli_version: "{{ docker_cli_version_stdout.stdout | default('0.0') }}"
+        docker_api_version: "{{ docker_api_version_stdout.stdout | default('0.0') }}"
+        docker_py_version: "{{ docker_py_version_stdout.stdout | default('0.0') }}"
+
+    - debug:
+        msg: "Docker CLI version: {{ docker_cli_version }}; Docker API version: {{ docker_api_version }}; docker-py library version: {{ docker_py_version }}"
+
+    - block:
+      # Cleanup docker daemon
+      - name: "Remove all ansible-test-* docker containers"
+        shell: 'docker ps --no-trunc --format {% raw %}"{{.Names}}"{% endraw %} | grep "^ansible-test-" | xargs -r docker rm -f'
+        register: docker_containers
+        retries: 3
+        delay: 3
+        until: docker_containers is success
+
+      - name: "Remove all ansible-test-* docker volumes"
+        shell: 'docker volume ls --format {% raw %}"{{.Name}}"{% endraw %} | grep "^ansible-test-" | xargs -r docker volume rm -f'
+        register: docker_volumes
+
+      - name: "Remove all ansible-test-* docker networks"
+        shell: 'docker network ls --no-trunc --format {% raw %}"{{.Name}}"{% endraw %} | grep "^ansible-test-" | xargs -r docker network rm'
+        register: docker_networks
+
+      - name: Cleaned docker resources
+        debug:
+          var: docker_resources
+        vars:
+          docker_resources:
+            containers: "{{ docker_containers.stdout_lines }}"
+            volumes: "{{ docker_volumes.stdout_lines }}"
+            networks: "{{ docker_networks.stdout_lines }}"
+
+      # List all existing docker resources
+      - name: List all docker containers
+        command: docker ps --no-trunc -a
+        register: docker_containers
+
+      - name: List all docker volumes
+        command: docker volume ls
+        register: docker_volumes
+
+      - name: List all docker networks
+        command: docker network ls --no-trunc
+        register: docker_networks
+
+      - name: List all docker images
+        command: docker images --no-trunc -a
+        register: docker_images
+
+      - name: Still existing docker resources
+        debug:
+          var: docker_resources
+        vars:
+          docker_resources:
+            containers: "{{ docker_containers.stdout_lines }}"
+            volumes: "{{ docker_volumes.stdout_lines }}"
+            networks: "{{ docker_networks.stdout_lines }}"
+            images: "{{ docker_images.stdout_lines }}"
+
+      when: docker_cli_version is version('0.0', '>')

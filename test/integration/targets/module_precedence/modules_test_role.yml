@@ -1,0 +1,13 @@
+- hosts: testhost
+  gather_facts: no
+  roles:
+    - foo
+  tasks:
+  - name: Use ping from role
+    ping:
+    register: result
+
+  - assert:
+      that:
+        - '"location" in result'
+        - 'result["location"] == "role: foo"'

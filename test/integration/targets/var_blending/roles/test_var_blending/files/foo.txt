@@ -1,0 +1,77 @@
+The value of groups_tree_var = 5000.
+This comes from host, not the parents or grandparents.
+
+The value of the grandparent variable grandparent_var is
+not overridden and is = 2000
+
+The value of the parent variable is not overridden and
+is = 6000
+
+The variable 'overridden_in_parent' is set in the parent
+and grandparent, so the parent wins.  It's value is = 1000.
+
+The values of 'uno', 'dos', and 'tres' are set in group_vars/all but 'tres' is
+set to the value of 'three' in group_vars/local, which should override it.
+
+uno = 1
+dos = 2
+tres = three
+
+The values of 'a', 'b', 'c', and 'd' are set in host_vars/local and should not
+be clobbered by values that are also set in group_vars.
+
+a = 1
+b = 2
+c = 3
+d = 4
+
+The value of 'badwolf' is set via the include_vars plugin.
+
+badwolf = badwolf
+
+The value of 'winter' is set via the main.yml in the role.   
+
+winter = coming
+
+Here's an arbitrary variable set as vars_files in the playbook.
+
+vars_file_var = 321
+
+And vars.
+
+vars = 123
+
+Variables about other hosts can be looked up via hostvars.  This includes
+facts but here we'll just access a variable defined in the groups.
+
+999
+
+Ansible has pretty basic precedence rules for variable overriding. We already have
+some tests above about group order.  Here are a few more.
+
+   * -e variables always win
+   * then comes "most everything else"
+   * then comes variables defined in inventory
+   * then "role defaults", which are the most "defaulty" and lose in priority to everything.
+
+Given the above rules, here's a test that a -e variable overrides inventory, 
+and also defaults, and role vars.
+
+etest = from -e
+
+Now a test to make sure role variables can override inventory variables.
+
+role_var_beats_inventory = chevron 5 encoded
+
+Role variables should also beat defaults.
+
+role_var_beats_default = chevron 6 encoded
+
+But defaults are lower priority than inventory, so inventory should win.
+
+inventory_beats_default = narf
+
+That's the end of the precedence tests for now, but more are welcome.
+
+
+

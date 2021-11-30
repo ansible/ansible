@@ -1,0 +1,4 @@
+destructive
+shippable/posix/group1
+needs/httptester
+skip/macos/12.0  # This test crashes Python due to https://wefearchange.org/2018/11/forkmacos.rst.html

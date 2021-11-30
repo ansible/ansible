@@ -1,0 +1,5 @@
+mock
+pytest
+pytest-mock
+pytest-xdist
+pyyaml  # required by the collection loader (only needed for collections)

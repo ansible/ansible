@@ -1,0 +1,10 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+  - name: Use standard ping module
+    ping:
+    register: result
+
+  - assert:
+      that:
+        - '"location" not in result'

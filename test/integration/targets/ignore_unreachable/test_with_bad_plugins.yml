@@ -1,0 +1,24 @@
+- hosts: bad_put_file
+  gather_facts: false
+  ignore_unreachable: true
+  tasks:
+    - name: Hi
+      ping:
+- hosts: bad_put_file
+  gather_facts: true
+  ignore_unreachable: true
+  tasks:
+    - name: Hi
+      ping:
+- hosts: bad_exec
+  gather_facts: false
+  ignore_unreachable: true
+  tasks:
+    - name: Hi
+      ping:
+- hosts: bad_exec
+  gather_facts: true
+  ignore_unreachable: true
+  tasks:
+    - name: Hi
+      ping:

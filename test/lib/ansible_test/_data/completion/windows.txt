@@ -1,0 +1,5 @@
+windows/2012 provider=aws
+windows/2012-R2 provider=aws
+windows/2016 provider=aws
+windows/2019 provider=aws
+windows/2022 provider=aws

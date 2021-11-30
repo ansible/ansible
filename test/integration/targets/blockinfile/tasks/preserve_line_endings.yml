@@ -1,0 +1,24 @@
+- name: create line_endings_test.txt in the test dir
+  copy:
+    dest: "{{ remote_tmp_dir_test }}/line_endings_test.txt"
+    # generating the content like this instead of copying a fixture file
+    # prevents sanity checks from warning about mixed line endings
+    content: "unix\nunix\nunix\n\ndos\r\ndos\r\ndos\r\n\nunix\nunix\n# BEGIN ANSIBLE MANAGED BLOCK\ndos\r\n# END ANSIBLE MANAGED BLOCK\nunix\nunix\nunix\nunix\n"
+
+- name: insert/update "dos" configuration block in line_endings_test.txt
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/line_endings_test.txt"
+    block: "dos\r\ndos\r\ndos\r\n"
+  register: blockinfile_test2
+
+- name: check content
+  # using the more precise `grep -Pc "^dos\\r$" ...` fails on BSD/macOS
+  shell: 'grep -c "^dos.$" {{ remote_tmp_dir_test }}/line_endings_test.txt'
+  register: blockinfile_test2_grep
+
+- name: validate line_endings_test.txt results
+  assert:
+    that:
+      - 'blockinfile_test2 is changed'
+      - 'blockinfile_test2.msg == "Block inserted"'
+      - 'blockinfile_test2_grep.stdout == "6"'

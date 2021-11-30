@@ -1,0 +1,448 @@
+- argspec:
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    required_one_of_one: value
+  register: argspec_required_fail
+  ignore_errors: true
+
+- argspec:
+    required: value
+    required_one_of_two: value
+
+- argspec:
+    required: value
+  register: argspec_required_one_of_fail
+  ignore_errors: true
+
+- argspec:
+    required: value
+    required_one_of_two: value
+    required_by_one: value
+    required_by_two: value
+    required_by_three: value
+
+- argspec:
+    required: value
+    required_one_of_two: value
+    required_by_one: value
+    required_by_two: value
+  register: argspec_required_by_fail
+  ignore_errors: true
+
+- argspec:
+    state: absent
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    state: present
+    required: value
+    required_one_of_one: value
+  register: argspec_required_if_fail
+  ignore_errors: true
+
+- argspec:
+    state: present
+    path: foo
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    state: present
+    content: foo
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    state: present
+    content: foo
+    path: foo
+    required: value
+    required_one_of_one: value
+  register: argspec_mutually_exclusive_fail
+  ignore_errors: true
+
+- argspec:
+    mapping:
+      foo: bar
+    required: value
+    required_one_of_one: value
+  register: argspec_good_mapping
+
+- argspec:
+    mapping: foo=bar
+    required: value
+    required_one_of_one: value
+  register: argspec_good_mapping_kv
+
+- argspec:
+    mapping: !!str '{"foo": "bar"}'
+    required: value
+    required_one_of_one: value
+  register: argspec_good_mapping_json
+
+- argspec:
+    mapping: !!str '{"foo": False}'
+    required: value
+    required_one_of_one: value
+  register: argspec_good_mapping_dict_repr
+
+- argspec:
+    mapping: foo
+    required: value
+    required_one_of_one: value
+  register: argspec_bad_mapping_string
+  ignore_errors: true
+
+- argspec:
+    mapping: 1
+    required: value
+    required_one_of_one: value
+  register: argspec_bad_mapping_int
+  ignore_errors: true
+
+- argspec:
+    mapping:
+      - foo
+      - bar
+    required: value
+    required_one_of_one: value
+  register: argspec_bad_mapping_list
+  ignore_errors: true
+
+- argspec:
+    required_together:
+      - thing: foo
+        other: bar
+        another: baz
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    required_together:
+      - another: baz
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    required_together:
+      - thing: foo
+    required: value
+    required_one_of_one: value
+  register: argspec_required_together_fail
+  ignore_errors: true
+
+- argspec:
+    required_together:
+      - thing: foo
+        other: bar
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    required_if:
+      - thing: bar
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    required_if:
+      - thing: foo
+        other: bar
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    required_if:
+      - thing: foo
+    required: value
+    required_one_of_one: value
+  register: argspec_required_if_fail_2
+  ignore_errors: true
+
+- argspec:
+    required_one_of:
+      - thing: foo
+        other: bar
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    required_one_of:
+      - {}
+    required: value
+    required_one_of_one: value
+  register: argspec_required_one_of_fail_2
+  ignore_errors: true
+
+- argspec:
+    required_by:
+      - thing: foo
+        other: bar
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    required_by:
+      - thing: foo
+    required: value
+    required_one_of_one: value
+  register: argspec_required_by_fail_2
+  ignore_errors: true
+
+- argspec:
+    json: !!str '{"foo": "bar"}'
+    required: value
+    required_one_of_one: value
+  register: argspec_good_json_string
+
+- argspec:
+    json:
+      foo: bar
+    required: value
+    required_one_of_one: value
+  register: argspec_good_json_dict
+
+- argspec:
+    json: 1
+    required: value
+    required_one_of_one: value
+  register: argspec_bad_json
+  ignore_errors: true
+
+- argspec:
+    fail_on_missing_params:
+      - needed_param
+    needed_param: whatever
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    fail_on_missing_params:
+      - needed_param
+    required: value
+    required_one_of_one: value
+  register: argspec_fail_on_missing_params_bad
+  ignore_errors: true
+
+- argspec:
+    required_together_one: foo
+    required_together_two: bar
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    required_together_one: foo
+    required: value
+    required_one_of_one: value
+  register: argspec_fail_required_together_2
+  ignore_errors: true
+
+- argspec:
+    suboptions_list_no_elements:
+      - thing: foo
+    required: value
+    required_one_of_one: value
+  register: argspec_suboptions_list_no_elements
+
+- argspec:
+    choices_with_strings_like_bools: on
+    required: value
+    required_one_of_one: value
+  register: argspec_choices_with_strings_like_bools_true
+
+- argspec:
+    choices_with_strings_like_bools: 'on'
+    required: value
+    required_one_of_one: value
+  register: argspec_choices_with_strings_like_bools_true_bool
+
+- argspec:
+    choices_with_strings_like_bools: off
+    required: value
+    required_one_of_one: value
+  register: argspec_choices_with_strings_like_bools_false
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    choices: foo
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    choices: baz
+  register: argspec_choices_bad_choice
+  ignore_errors: true
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    list_choices:
+      - bar
+      - baz
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    list_choices:
+      - bar
+      - baz
+      - qux
+  register: argspec_list_choices_bad_choice
+  ignore_errors: true
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    primary: foo
+  register: argspec_aliases_primary
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    alias: foo
+  register: argspec_aliases_alias
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    primary: foo
+    alias: foo
+  register: argspec_aliases_both
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    primary: foo
+    alias: bar
+  register: argspec_aliases_both_different
+
+- command: >-
+    ansible localhost -m argspec
+    -a 'required=value required_one_of_one=value primary=foo alias=bar'
+  environment:
+    ANSIBLE_LIBRARY: '{{ role_path }}/library'
+  register: argspec_aliases_both_warning
+
+- command: ansible localhost -m import_role -a 'role=argspec tasks_from=password_no_log.yml'
+  register: argspec_password_no_log
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    int: 1
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    int: foo
+  register: argspec_int_invalid
+  ignore_errors: true
+
+- argspec:
+    required: value
+    required_one_of_one: value
+  register: argspec_apply_defaults_not_specified
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    apply_defaults: ~
+  register: argspec_apply_defaults_none
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    apply_defaults: {}
+  register: argspec_apply_defaults_empty
+
+- argspec:
+    required: value
+    required_one_of_one: value
+    apply_defaults:
+      foo: bar
+  register: argspec_apply_defaults_one
+
+- assert:
+    that:
+      - argspec_required_fail is failed
+
+      - argspec_required_one_of_fail is failed
+
+      - argspec_required_by_fail is failed
+
+      - argspec_required_if_fail is failed
+
+      - argspec_mutually_exclusive_fail is failed
+
+      - argspec_good_mapping is successful
+      - >-
+        argspec_good_mapping.mapping == {'foo': 'bar'}
+      - argspec_good_mapping_json is successful
+      - >-
+        argspec_good_mapping_json.mapping == {'foo': 'bar'}
+      - argspec_good_mapping_dict_repr is successful
+      - >-
+        argspec_good_mapping_dict_repr.mapping == {'foo': False}
+      - argspec_good_mapping_kv is successful
+      - >-
+        argspec_good_mapping_kv.mapping == {'foo': 'bar'}
+      - argspec_bad_mapping_string is failed
+      - argspec_bad_mapping_int is failed
+      - argspec_bad_mapping_list is failed
+
+      - argspec_required_together_fail is failed
+
+      - argspec_required_if_fail_2 is failed
+
+      - argspec_required_one_of_fail_2 is failed
+
+      - argspec_required_by_fail_2 is failed
+
+      - argspec_good_json_string is successful
+      - >-
+        argspec_good_json_string.json == '{"foo": "bar"}'
+      - argspec_good_json_dict is successful
+      - >-
+        argspec_good_json_dict.json == '{"foo": "bar"}'
+      - argspec_bad_json is failed
+
+      - argspec_fail_on_missing_params_bad is failed
+
+      - argspec_fail_required_together_2 is failed
+
+      - >-
+        argspec_suboptions_list_no_elements.suboptions_list_no_elements.0 == {'thing': 'foo'}
+
+      - argspec_choices_with_strings_like_bools_true.choices_with_strings_like_bools == 'on'
+      - argspec_choices_with_strings_like_bools_true_bool.choices_with_strings_like_bools == 'on'
+      - argspec_choices_with_strings_like_bools_false.choices_with_strings_like_bools == 'off'
+
+      - argspec_choices_bad_choice is failed
+
+      - argspec_list_choices_bad_choice is failed
+
+      - argspec_aliases_primary.primary == 'foo'
+      - argspec_aliases_primary.alias is undefined
+      - argspec_aliases_alias.primary == 'foo'
+      - argspec_aliases_alias.alias == 'foo'
+      - argspec_aliases_both.primary == 'foo'
+      - argspec_aliases_both.alias == 'foo'
+      - argspec_aliases_both_different.primary == 'bar'
+      - argspec_aliases_both_different.alias == 'bar'
+      - '"[WARNING]: Both option primary and its alias alias are set." in argspec_aliases_both_warning.stderr'
+
+      - '"Module did not set no_log for maybe_password" in argspec_password_no_log.stderr'
+      - '"Module did not set no_log for password" not in argspec_password_no_log.stderr'
+      - '"Module did not set no_log for not_a_password" not in argspec_password_no_log.stderr'
+      - argspec_password_no_log.stdout|regex_findall('VALUE_SPECIFIED_IN_NO_LOG_PARAMETER')|length == 1
+
+      - argspec_int_invalid is failed
+
+      - "argspec_apply_defaults_not_specified.apply_defaults == {'foo': none, 'bar': 'baz'}"
+      - "argspec_apply_defaults_none.apply_defaults == {'foo': none, 'bar': 'baz'}"
+      - "argspec_apply_defaults_empty.apply_defaults == {'foo': none, 'bar': 'baz'}"
+      - "argspec_apply_defaults_one.apply_defaults == {'foo': 'bar', 'bar': 'baz'}"

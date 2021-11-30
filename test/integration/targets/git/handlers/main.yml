@@ -1,0 +1,7 @@
+- name: cleanup
+  include_tasks: "{{ cleanup_filename }}"
+  with_first_found:
+    - "cleanup-{{ ansible_distribution | lower }}.yml"
+    - "cleanup-default.yml"
+  loop_control:
+    loop_var: cleanup_filename

@@ -1,0 +1,107 @@
+# Test code for the raw module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- set_fact: output_dir_test={{output_dir}}/test_command_raw
+
+- name: make sure our testing sub-directory does not exist
+  file: path="{{ output_dir_test }}" state=absent
+
+- name: create our testing sub-directory
+  file: path="{{ output_dir_test }}" state=directory
+
+##
+## raw
+##
+
+- name: touch a file
+  raw: "touch {{output_dir_test | expanduser}}/test.txt"
+  register: raw_result0
+- debug: var=raw_result0
+- stat:
+    path: "{{output_dir_test | expanduser}}/test.txt"
+  register: raw_result0_stat
+- debug: var=raw_result0_stat
+- name: ensure proper results
+  assert:
+      that:
+          - 'raw_result0.changed is defined'
+          - 'raw_result0.rc is defined'
+          - 'raw_result0.stderr is defined'
+          - 'raw_result0.stdout is defined'
+          - 'raw_result0.stdout_lines is defined'
+          - 'raw_result0.rc == 0'
+          - 'raw_result0_stat.stat.size == 0'
+
+- name: run a piped command
+  raw: "echo 'foo,bar,baz' | cut -d\\, -f2 | tr 'b' 'c'"
+  register: raw_result1
+- debug: var=raw_result1
+- name: ensure proper results
+  assert:
+      that:
+          - 'raw_result1.changed is defined'
+          - 'raw_result1.rc is defined'
+          - 'raw_result1.stderr is defined'
+          - 'raw_result1.stdout is defined'
+          - 'raw_result1.stdout_lines is defined'
+          - 'raw_result1.rc == 0'
+          - 'raw_result1.stdout_lines == ["car"]'
+
+- name: get the path to bash
+  shell: which bash
+  register: bash_path
+- name: run exmample non-posix command with bash
+  raw: "echo 'foobar' > {{output_dir_test | expanduser}}/test.txt ; cat < {{output_dir_test | expanduser}}/test.txt"
+  args:
+      executable: "{{ bash_path.stdout }}"
+  register: raw_result2
+- debug: var=raw_result2
+- name: ensure proper results
+  assert:
+      that:
+          - 'raw_result2.changed is defined'
+          - 'raw_result2.rc is defined'
+          - 'raw_result2.stderr is defined'
+          - 'raw_result2.stdout is defined'
+          - 'raw_result2.stdout_lines is defined'
+          - 'raw_result2.rc == 0'
+          - 'raw_result2.stdout_lines == ["foobar"]'
+# the following five tests added to test https://github.com/ansible/ansible/pull/68315
+- name: get the path to sh
+  shell: which sh
+  register: sh_path
+- name: use sh
+  raw: echo $0
+  args:
+    executable: "{{ sh_path.stdout }}"
+  become: true
+  become_method: su
+  register: sh_output
+- name: assert sh
+  assert:
+    that: "(sh_output.stdout | trim) == sh_path.stdout"
+- name: use bash
+  raw: echo $0
+  args:
+    executable: "{{ bash_path.stdout }}"
+  become: true
+  become_method: su
+  register: bash_output
+- name: assert bash
+  assert:
+    that: "(bash_output.stdout | trim) == bash_path.stdout"

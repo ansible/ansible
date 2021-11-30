@@ -1,0 +1,41 @@
+- name: Test reboot
+  when: ansible_facts.virtualization_type | default('') not in ['docker', 'container', 'containerd']
+  block:
+    # This block can be removed once we have a mechanism in ansible-test to separate
+    # the control node from the managed node.
+    - block:
+        - name: Write temp file for sanity checking this is not the controller
+          copy:
+            content: 'I am the control node'
+            dest: /tmp/Anything-Nutlike-Nuzzle-Plow-Overdue
+          delegate_to: localhost
+          connection: local
+          when: inventory_hostname == ansible_play_hosts[0]
+
+        - name: See if the temp file exists on the managed node
+          stat:
+            path: /tmp/Anything-Nutlike-Nuzzle-Plow-Overdue
+          register: controller_temp_file
+
+        - name: EXPECT FAILURE | Check if the managed node is the control node
+          assert:
+            msg: >
+              This test must be run manually by modifying the inventory file to point
+              "{{ inventory_hostname }}" at a remote host rather than "{{ ansible_host }}".
+              Skipping reboot test.
+            that:
+              - not controller_temp_file.stat.exists
+      always:
+        - name: Cleanup temp file
+          file:
+            path: /tmp/Anything-Nutlike-Nuzzle-Plow-Overdue
+            state: absent
+          delegate_to: localhost
+          connection: local
+          when: inventory_hostname == ansible_play_hosts[0]
+
+    - import_tasks: test_standard_scenarios.yml
+    - import_tasks: test_reboot_command.yml
+    - import_tasks: test_invalid_parameter.yml
+    - import_tasks: test_invalid_test_command.yml
+    - import_tasks: test_molly_guard.yml

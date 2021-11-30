@@ -1,0 +1,12 @@
+- name: Check that 'invalid' group works, problem exposed in #58980
+  hosts: localhost
+  tasks:
+    - name: add a host to a group, that has - to trigger substitution
+      add_host:
+        name: localhost
+        groups: Not-Working
+
+    - name: group hosts by distribution, with dash to trigger substitution
+      group_by:
+        key: "{{ ansible_distribution }}-{{ ansible_distribution_version }}"
+      changed_when: false

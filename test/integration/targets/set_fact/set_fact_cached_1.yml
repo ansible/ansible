@@ -1,0 +1,324 @@
+---
+- name: the first play
+  hosts: localhost
+  tasks:
+    - name: show foobar fact before
+      debug:
+        var: ansible_foobar
+
+    - name: set a persistent fact foobar
+      set_fact:
+        ansible_foobar: 'foobar_from_set_fact_cacheable'
+        cacheable: true
+
+    - name: show foobar fact after
+      debug:
+        var: ansible_foobar
+
+    - name: assert ansible_foobar is correct value
+      assert:
+        that:
+          - ansible_foobar == 'foobar_from_set_fact_cacheable'
+
+    - name: set a non persistent fact that will not be cached
+      set_fact:
+        ansible_foobar_not_cached: 'this_should_not_be_cached'
+
+    - name: show ansible_foobar_not_cached fact after being set
+      debug:
+        var: ansible_foobar_not_cached
+
+    - name: assert ansible_foobar_not_cached is correct value
+      assert:
+        that:
+          - ansible_foobar_not_cached == 'this_should_not_be_cached'
+
+    - name: set another non persistent fact that will not be cached
+      set_fact: "cacheable=no fact_not_cached='this_should_not_be_cached!'"
+
+    - name: show fact_not_cached fact after being set
+      debug:
+        var: fact_not_cached
+
+    - name: assert fact_not_cached is correct value
+      assert:
+        that:
+          - fact_not_cached == 'this_should_not_be_cached!'
+
+    - name: show foobar fact before (FQCN)
+      debug:
+        var: ansible_foobar_fqcn
+
+    - name: set a persistent fact foobar (FQCN)
+      set_fact:
+        ansible_foobar_fqcn: 'foobar_fqcn_from_set_fact_cacheable'
+        cacheable: true
+
+    - name: show foobar fact after (FQCN)
+      debug:
+        var: ansible_foobar_fqcn
+
+    - name: assert ansible_foobar_fqcn is correct value (FQCN)
+      assert:
+        that:
+          - ansible_foobar_fqcn == 'foobar_fqcn_from_set_fact_cacheable'
+
+    - name: set a non persistent fact that will not be cached (FQCN)
+      set_fact:
+        ansible_foobar_not_cached_fqcn: 'this_should_not_be_cached'
+
+    - name: show ansible_foobar_not_cached_fqcn fact after being set (FQCN)
+      debug:
+        var: ansible_foobar_not_cached_fqcn
+
+    - name: assert ansible_foobar_not_cached_fqcn is correct value (FQCN)
+      assert:
+        that:
+          - ansible_foobar_not_cached_fqcn == 'this_should_not_be_cached'
+
+    - name: set another non persistent fact that will not be cached (FQCN)
+      set_fact: "cacheable=no fact_not_cached_fqcn='this_should_not_be_cached!'"
+
+    - name: show fact_not_cached_fqcn fact after being set (FQCN)
+      debug:
+        var: fact_not_cached_fqcn
+
+    - name: assert fact_not_cached_fqcn is correct value (FQCN)
+      assert:
+        that:
+          - fact_not_cached_fqcn == 'this_should_not_be_cached!'
+
+- name: the second play
+  hosts: localhost
+  tasks:
+    - name: show foobar fact after second play
+      debug:
+        var: ansible_foobar
+
+    - name: assert ansible_foobar is correct value
+      assert:
+        that:
+          - ansible_foobar == 'foobar_from_set_fact_cacheable'
+
+    - name: show foobar fact after second play (FQCN)
+      debug:
+        var: ansible_foobar_fqcn
+
+    - name: assert ansible_foobar is correct value (FQCN)
+      assert:
+        that:
+          - ansible_foobar_fqcn == 'foobar_fqcn_from_set_fact_cacheable'
+
+- name: show ansible_nodename and ansible_os_family
+  hosts: localhost
+  tasks:
+    - name: show nodename fact after second play
+      debug:
+        var: ansible_nodename
+    - name: show os_family fact after second play (FQCN)
+      debug:
+        var: ansible_os_family
+
+- name: show ansible_nodename and ansible_os_family overridden with var
+  hosts: localhost
+  vars:
+    ansible_nodename: 'nodename_from_play_vars'
+    ansible_os_family: 'os_family_from_play_vars'
+  tasks:
+    - name: show nodename fact after second play
+      debug:
+        var: ansible_nodename
+    - name: show os_family fact after second play (FQCN)
+      debug:
+        var: ansible_os_family
+
+- name: verify ansible_nodename from vars overrides the fact
+  hosts: localhost
+  vars:
+    ansible_nodename: 'nodename_from_play_vars'
+    ansible_os_family: 'os_family_from_play_vars'
+  tasks:
+    - name: show nodename fact
+      debug:
+        var: ansible_nodename
+
+    - name: assert ansible_nodename is correct value
+      assert:
+        that:
+          - ansible_nodename == 'nodename_from_play_vars'
+
+    - name: show os_family fact (FQCN)
+      debug:
+        var: ansible_os_family
+
+    - name: assert ansible_os_family is correct value (FQCN)
+      assert:
+        that:
+          - ansible_os_family == 'os_family_from_play_vars'
+
+- name: set_fact ansible_nodename and ansible_os_family
+  hosts: localhost
+  tasks:
+    - name: set a persistent fact nodename
+      set_fact:
+        ansible_nodename: 'nodename_from_set_fact_cacheable'
+
+    - name: show nodename fact
+      debug:
+        var: ansible_nodename
+
+    - name: assert ansible_nodename is correct value
+      assert:
+        that:
+          - ansible_nodename == 'nodename_from_set_fact_cacheable'
+
+    - name: set a persistent fact os_family (FQCN)
+      ansible.builtin.set_fact:
+        ansible_os_family: 'os_family_from_set_fact_cacheable'
+
+    - name: show os_family fact (FQCN)
+      debug:
+        var: ansible_os_family
+
+    - name: assert ansible_os_family is correct value (FQCN)
+      assert:
+        that:
+          - ansible_os_family == 'os_family_from_set_fact_cacheable'
+
+- name: verify that set_fact ansible_xxx non_cacheable overrides ansible_xxx in vars
+  hosts: localhost
+  vars:
+    ansible_nodename: 'nodename_from_play_vars'
+    ansible_os_family: 'os_family_from_play_vars'
+  tasks:
+    - name: show nodename fact
+      debug:
+        var: ansible_nodename
+
+    - name: assert ansible_nodename is correct value
+      assert:
+        that:
+          - ansible_nodename == 'nodename_from_set_fact_cacheable'
+
+    - name: show os_family fact (FQCN)
+      debug:
+        var: ansible_os_family
+
+    - name: assert ansible_os_family is correct value (FQCN)
+      assert:
+        that:
+          - ansible_os_family == 'os_family_from_set_fact_cacheable'
+
+- name: verify that set_fact_cacheable in previous play overrides ansible_xxx in vars
+  hosts: localhost
+  vars:
+    ansible_nodename: 'nodename_from_play_vars'
+    ansible_os_family: 'os_family_from_play_vars'
+  tasks:
+    - name: show nodename fact
+      debug:
+        var: ansible_nodename
+
+    - name: assert ansible_nodename is correct value
+      assert:
+        that:
+          - ansible_nodename == 'nodename_from_set_fact_cacheable'
+
+    - name: show os_family fact (FQCN)
+      debug:
+        var: ansible_os_family
+
+    - name: assert ansible_os_family is correct value (FQCN)
+      assert:
+        that:
+          - ansible_os_family == 'os_family_from_set_fact_cacheable'
+
+- name: set_fact ansible_nodename and ansible_os_family cacheable
+  hosts: localhost
+  tasks:
+    - name: set a persistent fact nodename
+      set_fact:
+        ansible_nodename: 'nodename_from_set_fact_cacheable'
+        cacheable: true
+
+    - name: show nodename fact
+      debug:
+        var: ansible_nodename
+
+    - name: assert ansible_nodename is correct value
+      assert:
+        that:
+          - ansible_nodename == 'nodename_from_set_fact_cacheable'
+
+    - name: set a persistent fact os_family (FQCN)
+      ansible.builtin.set_fact:
+        ansible_os_family: 'os_family_from_set_fact_cacheable'
+        cacheable: true
+
+    - name: show os_family fact (FQCN)
+      debug:
+        var: ansible_os_family
+
+    - name: assert ansible_os_family is correct value (FQCN)
+      assert:
+        that:
+          - ansible_os_family == 'os_family_from_set_fact_cacheable'
+
+
+- name: verify that set_fact_cacheable in previous play overrides ansible_xxx in vars
+  hosts: localhost
+  vars:
+    ansible_nodename: 'nodename_from_play_vars'
+    ansible_os_family: 'os_family_from_play_vars'
+  tasks:
+    - name: show nodename fact
+      debug:
+        var: ansible_nodename
+
+    - name: assert ansible_nodename is correct value
+      assert:
+        that:
+          - ansible_nodename == 'nodename_from_set_fact_cacheable'
+
+    - name: show os_family fact (FQCN)
+      debug:
+        var: ansible_os_family
+
+    - name: assert ansible_os_family is correct value (FQCN)
+      assert:
+        that:
+          - ansible_os_family == 'os_family_from_set_fact_cacheable'
+
+- name: the fourth play
+  hosts: localhost
+  vars:
+    ansible_foobar: 'foobar_from_play_vars'
+    ansible_foobar_fqcn: 'foobar_fqcn_from_play_vars'
+  tasks:
+    - name: show example fact
+      debug:
+        var: ansible_example
+
+    - name: set a persistent fact example
+      set_fact:
+        ansible_example: 'foobar_from_set_fact_cacheable'
+        cacheable: true
+
+    - name: assert ansible_example is correct value
+      assert:
+        that:
+          - ansible_example == 'foobar_from_set_fact_cacheable'
+
+    - name: show example fact (FQCN)
+      debug:
+        var: ansible_example_fqcn
+
+    - name: set a persistent fact example (FQCN)
+      set_fact:
+        ansible_example_fqcn: 'foobar_fqcn_from_set_fact_cacheable'
+        cacheable: true
+
+    - name: assert ansible_example_fqcn is correct value (FQCN)
+      assert:
+        that:
+          - ansible_example_fqcn == 'foobar_fqcn_from_set_fact_cacheable'

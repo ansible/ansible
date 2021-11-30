@@ -1,0 +1,3 @@
+krb5_packages:
+- krb5-user
+- libkrb5-dev

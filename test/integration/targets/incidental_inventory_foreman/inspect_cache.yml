@@ -1,0 +1,35 @@
+---
+- hosts: localhost
+  vars:
+    foreman_stub_host: "{{ lookup('env', 'FOREMAN_HOST') }}"
+    foreman_stub_port: "{{ lookup('env', 'FOREMAN_PORT') }}"
+    foreman_stub_api_path: /api/v2
+    cached_hosts_key: "http://{{ foreman_stub_host }}:{{ foreman_stub_port }}{{ foreman_stub_api_path }}/hosts"
+  tasks:
+    - name: make sure jmespath is installed
+      pip:
+        name: jmespath
+
+    - name: verify a cache file was created
+      find:
+        path:
+          - ./foreman_cache
+      register: matching_files
+
+    - assert:
+        that:
+          - matching_files.matched == 1
+    - name: read the cached inventory
+      set_fact:
+        contents: "{{ lookup('file', matching_files.files.0.path) }}"
+
+    - name: extract all the host names
+      set_fact:
+        cached_hosts: "{{ contents[cached_hosts_key] | json_query('[*].name') }}"
+
+    - assert:
+        that:
+          "'{{ item }}' in cached_hosts"
+      loop:
+        - "v6.example-780.com"
+        - "c4.j1.y5.example-487.com"

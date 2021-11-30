@@ -1,0 +1,7 @@
+- name: get botocore version
+  command: python -c "import botocore; print(botocore.__version__)"
+  register: botocore_version
+- name: check botocore version
+  assert:
+    that:
+      - 'botocore_version.stdout == "1.13.49"'

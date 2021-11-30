@@ -1,0 +1,12 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    verbosity: "{{ '' if not ansible_verbosity else '-' ~ ('v' * ansible_verbosity) }}"
+  tasks:
+    - command: ansible-playbook {{ verbosity }} delegate_to_lookup_context.yml
+      register: result
+
+    - assert:
+        that:
+          - >
+            '[WARNING]: Unable to find' not in result.stderr

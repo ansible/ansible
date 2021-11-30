@@ -1,0 +1,23 @@
+- name: test variable dunder
+  set_fact:
+      var_dunder: "{{ b_true.__class__ }}"
+
+- assert:
+    that:
+        - 'var_dunder|type_debug == "type"'
+
+- name: test constant dunder
+  set_fact:
+      const_dunder: "{{ true.__class__ }}"
+
+- assert:
+    that:
+        - 'const_dunder|type_debug == "type"'
+
+- name: test constant dunder to string
+  set_fact:
+      const_dunder: "{{ true.__class__|string }}"
+
+- assert:
+    that:
+        - 'const_dunder|type_debug in ["str", "unicode", "NativeJinjaText"]'

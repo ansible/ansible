@@ -1,0 +1,44 @@
+# The RHEL extras repository must be enabled to provide the container-selinux package.
+# See: https://docs.docker.com/engine/installation/linux/docker-ee/rhel/#install-using-the-repository
+
+- name: Install Docker pre-reqs
+  yum:
+    name: "{{ docker_prereq_packages }}"
+    state: present
+  notify: cleanup docker
+
+- name: Install epel repo which is missing on rhel-7 and is needed for pigz (needed for docker-ce 18)
+  include_role:
+    name: setup_epel
+
+- name: Enable extras repository for RHEL on AWS
+  # RHEL 7.6 uses REGION-rhel-server-extras and RHEL 7.7+ use rhel-7-server-rhui-extras-rpms
+  command: yum-config-manager --enable REGION-rhel-server-extras rhel-7-server-rhui-extras-rpms
+  args:
+    warn: no
+
+# They broke their .repo file, so we set it up ourselves
+- name: Set-up repository
+  yum_repository:
+    name: docker-ce
+    description: docker-ce
+    baseurl: https://download.docker.com/linux/centos/{{ ansible_facts.distribution_major_version }}/$basearch/stable
+    gpgcheck: true
+    gpgkey: https://download.docker.com/linux/centos/gpg
+
+- name: Update cache
+  command: yum -y makecache fast
+  args:
+    warn: no
+
+- name: Install docker
+  yum:
+    name: "{{ docker_packages }}"
+    state: present
+  notify: cleanup docker
+
+- name: Make sure the docker daemon is running (failure expected inside docker container)
+  service:
+    name: docker
+    state: started
+  ignore_errors: "{{ ansible_virtualization_type == 'docker' }}"

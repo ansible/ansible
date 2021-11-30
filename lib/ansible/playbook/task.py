@@ -15,270 +15,481 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from ansible import errors
-from ansible import utils
-import os
-import ansible.utils.template as template
-import sys
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-class Task(object):
+from ansible import constants as C
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
+from ansible.module_utils._text import to_native
+from ansible.module_utils.six import string_types
+from ansible.parsing.mod_args import ModuleArgsParser
+from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
+from ansible.plugins.loader import lookup_loader
+from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.base import Base
+from ansible.playbook.block import Block
+from ansible.playbook.collectionsearch import CollectionSearch
+from ansible.playbook.conditional import Conditional
+from ansible.playbook.loop_control import LoopControl
+from ansible.playbook.role import Role
+from ansible.playbook.taggable import Taggable
+from ansible.utils.collection_loader import AnsibleCollectionConfig
+from ansible.utils.display import Display
+from ansible.utils.sentinel import Sentinel
 
-    __slots__ = [
-        'name', 'meta', 'action', 'when', 'async_seconds', 'async_poll_interval',
-        'notify', 'module_name', 'module_args', 'module_vars', 'default_vars',
-        'play', 'notified_by', 'tags', 'register', 'role_name',
-        'delegate_to', 'first_available_file', 'ignore_errors',
-        'local_action', 'transport', 'sudo', 'remote_user', 'sudo_user', 'sudo_pass',
-        'items_lookup_plugin', 'items_lookup_terms', 'environment', 'args',
-        'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until',
-        'su', 'su_user', 'su_pass', 'no_log',
-    ]
+__all__ = ['Task']
 
-    # to prevent typos and such
-    VALID_KEYS = [
-         'name', 'meta', 'action', 'when', 'async', 'poll', 'notify',
-         'first_available_file', 'include', 'tags', 'register', 'ignore_errors',
-         'delegate_to', 'local_action', 'transport', 'remote_user', 'sudo', 'sudo_user',
-         'sudo_pass', 'when', 'connection', 'environment', 'args',
-         'any_errors_fatal', 'changed_when', 'failed_when', 'always_run', 'delay', 'retries', 'until',
-         'su', 'su_user', 'su_pass', 'no_log',
-    ]
+display = Display()
 
-    def __init__(self, play, ds, module_vars=None, default_vars=None, additional_conditions=None, role_name=None):
-        ''' constructor loads from a task or handler datastructure '''
 
-        # meta directives are used to tell things like ansible/playbook to run
-        # operations like handler execution.  Meta tasks are not executed
-        # normally.
-        if 'meta' in ds:
-            self.meta = ds['meta']
-            self.tags = []
-            return
+class Task(Base, Conditional, Taggable, CollectionSearch):
+
+    """
+    A task is a language feature that represents a call to a module, with given arguments and other parameters.
+    A handler is a subclass of a task.
+
+    Usage:
+
+       Task.load(datastructure) -> Task
+       Task.something(...)
+    """
+
+    # =================================================================================
+    # ATTRIBUTES
+    # load_<attribute_name> and
+    # validate_<attribute_name>
+    # will be used if defined
+    # might be possible to define others
+
+    # NOTE: ONLY set defaults on task attributes that are not inheritable,
+    # inheritance is only triggered if the 'current value' is None,
+    # default can be set at play/top level object and inheritance will take it's course.
+
+    _args = FieldAttribute(isa='dict', default=dict)
+    _action = FieldAttribute(isa='string')
+
+    _async_val = FieldAttribute(isa='int', default=0, alias='async')
+    _changed_when = FieldAttribute(isa='list', default=list)
+    _delay = FieldAttribute(isa='int', default=5)
+    _delegate_to = FieldAttribute(isa='string')
+    _delegate_facts = FieldAttribute(isa='bool')
+    _failed_when = FieldAttribute(isa='list', default=list)
+    _loop = FieldAttribute()
+    _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
+    _notify = FieldAttribute(isa='list')
+    _poll = FieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
+    _register = FieldAttribute(isa='string', static=True)
+    _retries = FieldAttribute(isa='int', default=3)
+    _until = FieldAttribute(isa='list', default=list)
+
+    # deprecated, used to be loop and loop_args but loop has been repurposed
+    _loop_with = FieldAttribute(isa='string', private=True, inherit=False)
+
+    def __init__(self, block=None, role=None, task_include=None):
+        ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
+
+        self._role = role
+        self._parent = None
+        self.implicit = False
+        self.resolved_action = None
+
+        if task_include:
+            self._parent = task_include
         else:
-            self.meta = None
+            self._parent = block
 
+        super(Task, self).__init__()
 
-        library = os.path.join(play.basedir, 'library')
-        if os.path.exists(library):
-            utils.plugins.module_finder.add_directory(library)
+    def get_name(self, include_role_fqcn=True):
+        ''' return the name of the task '''
 
-        for x in ds.keys():
+        if self._role:
+            role_name = self._role.get_name(include_role_fqcn=include_role_fqcn)
 
-            # code to allow for saying "modulename: args" versus "action: modulename args"
-            if x in utils.plugins.module_finder:
-
-                if 'action' in ds:
-                    raise errors.AnsibleError("multiple actions specified in task %s" % (ds.get('name', ds['action'])))
-                if isinstance(ds[x], dict):
-                    if 'args' in ds:
-                        raise errors.AnsibleError("can't combine args: and a dict for %s: in task %s" % (x, ds.get('name', "%s: %s" % (x, ds[x]))))
-                    ds['args'] = ds[x]
-                    ds[x] = ''
-                elif ds[x] is None:
-                    ds[x] = ''
-                if not isinstance(ds[x], basestring):
-                    raise errors.AnsibleError("action specified for task %s has invalid type %s" % (ds.get('name', "%s: %s" % (x, ds[x])), type(ds[x])))
-                ds['action'] = x + " " + ds[x]
-                ds.pop(x)
-
-            # code to allow "with_glob" and to reference a lookup plugin named glob
-            elif x.startswith("with_"):
-
-                if isinstance(ds[x], basestring) and ds[x].lstrip().startswith("{{"):
-                    utils.warning("It is unneccessary to use '{{' in loops, leave variables in loop expressions bare.")
-
-                plugin_name = x.replace("with_","")
-                if plugin_name in utils.plugins.lookup_loader:
-                    ds['items_lookup_plugin'] = plugin_name
-                    ds['items_lookup_terms'] = ds[x]
-                    ds.pop(x)
-                else:
-                    raise errors.AnsibleError("cannot find lookup plugin named %s for usage in with_%s" % (plugin_name, plugin_name))
-
-            elif x in [ 'changed_when', 'failed_when', 'when']:
-                if isinstance(ds[x], basestring) and ds[x].lstrip().startswith("{{"):
-                    utils.warning("It is unneccessary to use '{{' in conditionals, leave variables in loop expressions bare.")
-            elif x.startswith("when_"):
-                utils.deprecated("The 'when_' conditional has been removed. Switch to using the regular unified 'when' statements as described on docs.ansible.com.","1.5", removed=True)
-
-                if 'when' in ds:
-                    raise errors.AnsibleError("multiple when_* statements specified in task %s" % (ds.get('name', ds['action'])))
-                when_name = x.replace("when_","")
-                ds['when'] = "%s %s" % (when_name, ds[x])
-                ds.pop(x)
-            elif not x in Task.VALID_KEYS:
-                raise errors.AnsibleError("%s is not a legal parameter in an Ansible task or handler" % x)
-
-        self.module_vars  = module_vars
-        self.default_vars = default_vars
-        self.play         = play
-
-        # load various attributes
-        self.name         = ds.get('name', None)
-        self.tags         = [ 'all' ]
-        self.register     = ds.get('register', None)
-        self.sudo         = utils.boolean(ds.get('sudo', play.sudo))
-        self.su           = utils.boolean(ds.get('su', play.su))
-        self.environment  = ds.get('environment', {})
-        self.role_name    = role_name
-        self.no_log       = utils.boolean(ds.get('no_log', "false"))
-
-        #Code to allow do until feature in a Task 
-        if 'until' in ds:
-            if not ds.get('register'):
-                raise errors.AnsibleError("register keyword is mandatory when using do until feature")
-            self.module_vars['delay']     = ds.get('delay', 5)
-            self.module_vars['retries']   = ds.get('retries', 3)
-            self.module_vars['register']  = ds.get('register', None)
-            self.until                    = ds.get('until')
-            self.module_vars['until']     = self.until
-
-        # rather than simple key=value args on the options line, these represent structured data and the values
-        # can be hashes and lists, not just scalars
-        self.args         = ds.get('args', {})
-
-        # get remote_user for task, then play, then playbook
-        if ds.get('remote_user') is not None:
-            self.remote_user      = ds.get('remote_user')
-        elif ds.get('remote_user', play.remote_user) is not None:
-            self.remote_user      = ds.get('remote_user', play.remote_user)
+        if self._role and self.name:
+            return "%s : %s" % (role_name, self.name)
+        elif self.name:
+            return self.name
         else:
-            self.remote_user      = ds.get('remote_user', play.playbook.remote_user)
+            if self._role:
+                return "%s : %s" % (role_name, self.action)
+            else:
+                return "%s" % (self.action,)
 
-        self.sudo_user    = None
-        self.sudo_pass    = None
-        self.su_user      = None
-        self.su_pass      = None
+    def _merge_kv(self, ds):
+        if ds is None:
+            return ""
+        elif isinstance(ds, string_types):
+            return ds
+        elif isinstance(ds, dict):
+            buf = ""
+            for (k, v) in ds.items():
+                if k.startswith('_'):
+                    continue
+                buf = buf + "%s=%s " % (k, v)
+            buf = buf.strip()
+            return buf
 
-        if self.sudo:
-            self.sudo_user    = ds.get('sudo_user', play.sudo_user)
-            self.sudo_pass    = ds.get('sudo_pass', play.playbook.sudo_pass)
-        elif self.su:
-            self.su_user      = ds.get('su_user', play.su_user)
-            self.su_pass      = ds.get('su_pass', play.playbook.su_pass)
+    @staticmethod
+    def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
+        t = Task(block=block, role=role, task_include=task_include)
+        return t.load_data(data, variable_manager=variable_manager, loader=loader)
 
-        # Fail out if user specifies a sudo param with a su param in a given play
-        if (ds.get('sudo') or ds.get('sudo_user') or ds.get('sudo_pass')) and \
-                (ds.get('su') or ds.get('su_user') or ds.get('su_pass')):
-            raise errors.AnsibleError('sudo params ("sudo", "sudo_user", "sudo_pass") '
-                                      'and su params "su", "su_user", "su_pass") '
-                                      'cannot be used together')
-
-        # Both are defined
-        if ('action' in ds) and ('local_action' in ds):
-            raise errors.AnsibleError("the 'action' and 'local_action' attributes can not be used together")
-        # Both are NOT defined
-        elif (not 'action' in ds) and (not 'local_action' in ds):
-            raise errors.AnsibleError("'action' or 'local_action' attribute missing in task \"%s\"" % ds.get('name', '<Unnamed>'))
-        # Only one of them is defined
-        elif 'local_action' in ds:
-            self.action      = ds.get('local_action', '')
-            self.delegate_to = '127.0.0.1'
+    def __repr__(self):
+        ''' returns a human readable representation of the task '''
+        if self.get_name() in C._ACTION_META:
+            return "TASK: meta (%s)" % self.args['_raw_params']
         else:
-            self.action      = ds.get('action', '')
-            self.delegate_to = ds.get('delegate_to', None)
-            self.transport   = ds.get('connection', ds.get('transport', play.transport))
+            return "TASK: %s" % self.get_name()
 
-        if isinstance(self.action, dict):
-            if 'module' not in self.action:
-                raise errors.AnsibleError("'module' attribute missing from action in task \"%s\"" % ds.get('name', '%s' % self.action))
-            if self.args:
-                raise errors.AnsibleError("'args' cannot be combined with dict 'action' in task \"%s\"" % ds.get('name', '%s' % self.action))
-            self.args = self.action
-            self.action = self.args.pop('module')
+    def _preprocess_with_loop(self, ds, new_ds, k, v):
+        ''' take a lookup plugin name and store it correctly '''
 
-        # delegate_to can use variables
-        if not (self.delegate_to is None):
-            # delegate_to: localhost should use local transport
-            if self.delegate_to in ['127.0.0.1', 'localhost']:
-                self.transport   = 'local'
+        loop_name = k.replace("with_", "")
+        if new_ds.get('loop') is not None or new_ds.get('loop_with') is not None:
+            raise AnsibleError("duplicate loop in task: %s" % loop_name, obj=ds)
+        if v is None:
+            raise AnsibleError("you must specify a value when using %s" % k, obj=ds)
+        new_ds['loop_with'] = loop_name
+        new_ds['loop'] = v
+        # display.deprecated("with_ type loops are being phased out, use the 'loop' keyword instead",
+        #                    version="2.10", collection_name='ansible.builtin')
 
-        # notified by is used by Playbook code to flag which hosts
-        # need to run a notifier
-        self.notified_by = []
+    def preprocess_data(self, ds):
+        '''
+        tasks are especially complex arguments so need pre-processing.
+        keep it short.
+        '''
 
-        # if no name is specified, use the action line as the name
-        if self.name is None:
-            self.name = self.action
+        if not isinstance(ds, dict):
+            raise AnsibleAssertionError('ds (%s) should be a dict but was a %s' % (ds, type(ds)))
 
-        # load various attributes
-        self.when    = ds.get('when', None)
-        self.changed_when = ds.get('changed_when', None)
-        self.failed_when = ds.get('failed_when', None)
+        # the new, cleaned datastructure, which will have legacy
+        # items reduced to a standard structure suitable for the
+        # attributes of the task class
+        new_ds = AnsibleMapping()
+        if isinstance(ds, AnsibleBaseYAMLObject):
+            new_ds.ansible_pos = ds.ansible_pos
 
-        self.async_seconds = int(ds.get('async', 0))  # not async by default
-        self.async_poll_interval = int(ds.get('poll', 10))  # default poll = 10 seconds
-        self.notify = ds.get('notify', [])
-        self.first_available_file = ds.get('first_available_file', None)
+        # since this affects the task action parsing, we have to resolve in preprocess instead of in typical validator
+        default_collection = AnsibleCollectionConfig.default_collection
 
-        self.items_lookup_plugin = ds.get('items_lookup_plugin', None)
-        self.items_lookup_terms  = ds.get('items_lookup_terms', None)
-     
+        collections_list = ds.get('collections')
+        if collections_list is None:
+            # use the parent value if our ds doesn't define it
+            collections_list = self.collections
+        else:
+            # Validate this untemplated field early on to guarantee we are dealing with a list.
+            # This is also done in CollectionSearch._load_collections() but this runs before that call.
+            collections_list = self.get_validated_value('collections', self._collections, collections_list, None)
 
-        self.ignore_errors = ds.get('ignore_errors', False)
-        self.any_errors_fatal = ds.get('any_errors_fatal', play.any_errors_fatal)
+        if default_collection and not self._role:  # FIXME: and not a collections role
+            if collections_list:
+                if default_collection not in collections_list:
+                    collections_list.insert(0, default_collection)
+            else:
+                collections_list = [default_collection]
 
-        self.always_run = ds.get('always_run', False)
+        if collections_list and 'ansible.builtin' not in collections_list and 'ansible.legacy' not in collections_list:
+            collections_list.append('ansible.legacy')
 
-        # action should be a string
-        if not isinstance(self.action, basestring):
-            raise errors.AnsibleError("action is of type '%s' and not a string in task. name: %s" % (type(self.action).__name__, self.name))
+        if collections_list:
+            ds['collections'] = collections_list
 
-        # notify can be a string or a list, store as a list
-        if isinstance(self.notify, basestring):
-            self.notify = [ self.notify ]
+        # use the args parsing class to determine the action, args,
+        # and the delegate_to value from the various possible forms
+        # supported as legacy
+        args_parser = ModuleArgsParser(task_ds=ds, collection_list=collections_list)
+        try:
+            (action, args, delegate_to) = args_parser.parse()
+        except AnsibleParserError as e:
+            # if the raises exception was created with obj=ds args, then it includes the detail
+            # so we dont need to add it so we can just re raise.
+            if e.obj:
+                raise
+            # But if it wasn't, we can add the yaml object now to get more detail
+            raise AnsibleParserError(to_native(e), obj=ds, orig_exc=e)
+        else:
+            self.resolved_action = args_parser.resolved_action
 
-        # split the action line into a module name + arguments
-        tokens = self.action.split(None, 1)
-        if len(tokens) < 1:
-            raise errors.AnsibleError("invalid/missing action in task. name: %s" % self.name)
-        self.module_name = tokens[0]
-        self.module_args = ''
-        if len(tokens) > 1:
-            self.module_args = tokens[1]
+        # the command/shell/script modules used to support the `cmd` arg,
+        # which corresponds to what we now call _raw_params, so move that
+        # value over to _raw_params (assuming it is empty)
+        if action in C._ACTION_HAS_CMD:
+            if 'cmd' in args:
+                if args.get('_raw_params', '') != '':
+                    raise AnsibleError("The 'cmd' argument cannot be used when other raw parameters are specified."
+                                       " Please put everything in one or the other place.", obj=ds)
+                args['_raw_params'] = args.pop('cmd')
 
-        import_tags = self.module_vars.get('tags',[])
-        if type(import_tags) in [int,float]:
-            import_tags = str(import_tags)
-        elif type(import_tags) in [str,unicode]:
-            # allow the user to list comma delimited tags
-            import_tags = import_tags.split(",")
+        new_ds['action'] = action
+        new_ds['args'] = args
+        new_ds['delegate_to'] = delegate_to
 
-        # handle mutually incompatible options
-        incompatibles = [ x for x in [ self.first_available_file, self.items_lookup_plugin ] if x is not None ]
-        if len(incompatibles) > 1:
-            raise errors.AnsibleError("with_(plugin), and first_available_file are mutually incompatible in a single task")
+        # we handle any 'vars' specified in the ds here, as we may
+        # be adding things to them below (special handling for includes).
+        # When that deprecated feature is removed, this can be too.
+        if 'vars' in ds:
+            # _load_vars is defined in Base, and is used to load a dictionary
+            # or list of dictionaries in a standard way
+            new_ds['vars'] = self._load_vars(None, ds.get('vars'))
+        else:
+            new_ds['vars'] = dict()
 
-        # make first_available_file accessable to Runner code
-        if self.first_available_file:
-            self.module_vars['first_available_file'] = self.first_available_file
+        for (k, v) in ds.items():
+            if k in ('action', 'local_action', 'args', 'delegate_to') or k == action or k == 'shell':
+                # we don't want to re-assign these values, which were determined by the ModuleArgsParser() above
+                continue
+            elif k.startswith('with_') and k.replace("with_", "") in lookup_loader:
+                # transform into loop property
+                self._preprocess_with_loop(ds, new_ds, k, v)
+            elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
+                new_ds[k] = v
+            else:
+                display.warning("Ignoring invalid attribute: %s" % k)
 
-        if self.items_lookup_plugin is not None:
-            self.module_vars['items_lookup_plugin'] = self.items_lookup_plugin
-            self.module_vars['items_lookup_terms'] = self.items_lookup_terms
+        return super(Task, self).preprocess_data(new_ds)
 
-        # allow runner to see delegate_to option
-        self.module_vars['delegate_to'] = self.delegate_to
+    def _load_loop_control(self, attr, ds):
+        if not isinstance(ds, dict):
+            raise AnsibleParserError(
+                "the `loop_control` value must be specified as a dictionary and cannot "
+                "be a variable itself (though it can contain variables)",
+                obj=ds,
+            )
 
-        # make some task attributes accessible to Runner code
-        self.module_vars['ignore_errors'] = self.ignore_errors
-        self.module_vars['register'] = self.register
-        self.module_vars['changed_when'] = self.changed_when
-        self.module_vars['failed_when'] = self.failed_when
-        self.module_vars['always_run'] = self.always_run
+        return LoopControl.load(data=ds, variable_manager=self._variable_manager, loader=self._loader)
 
-        # tags allow certain parts of a playbook to be run without running the whole playbook
-        apply_tags = ds.get('tags', None)
-        if apply_tags is not None:
-            if type(apply_tags) in [ str, unicode ]:
-                self.tags.append(apply_tags)
-            elif type(apply_tags) in [ int, float ]:
-                self.tags.append(str(apply_tags))
-            elif type(apply_tags) == list:
-                self.tags.extend(apply_tags)
-        self.tags.extend(import_tags)
+    def _validate_attributes(self, ds):
+        try:
+            super(Task, self)._validate_attributes(ds)
+        except AnsibleParserError as e:
+            e.message += '\nThis error can be suppressed as a warning using the "invalid_task_attribute_failed" configuration'
+            raise e
 
-        if additional_conditions:
-            new_conditions = additional_conditions
-            new_conditions.append(self.when)
-            self.when = new_conditions
+    def post_validate(self, templar):
+        '''
+        Override of base class post_validate, to also do final validation on
+        the block and task include (if any) to which this task belongs.
+        '''
+
+        if self._parent:
+            self._parent.post_validate(templar)
+
+        if AnsibleCollectionConfig.default_collection:
+            pass
+
+        super(Task, self).post_validate(templar)
+
+    def _post_validate_loop(self, attr, value, templar):
+        '''
+        Override post validation for the loop field, which is templated
+        specially in the TaskExecutor class when evaluating loops.
+        '''
+        return value
+
+    def _post_validate_environment(self, attr, value, templar):
+        '''
+        Override post validation of vars on the play, as we don't want to
+        template these too early.
+        '''
+        env = {}
+        if value is not None:
+
+            def _parse_env_kv(k, v):
+                try:
+                    env[k] = templar.template(v, convert_bare=False)
+                except AnsibleUndefinedVariable as e:
+                    error = to_native(e)
+                    if self.action in C._ACTION_FACT_GATHERING and 'ansible_facts.env' in error or 'ansible_env' in error:
+                        # ignore as fact gathering is required for 'env' facts
+                        return
+                    raise
+
+            if isinstance(value, list):
+                for env_item in value:
+                    if isinstance(env_item, dict):
+                        for k in env_item:
+                            _parse_env_kv(k, env_item[k])
+                    else:
+                        isdict = templar.template(env_item, convert_bare=False)
+                        if isinstance(isdict, dict):
+                            env.update(isdict)
+                        else:
+                            display.warning("could not parse environment value, skipping: %s" % value)
+
+            elif isinstance(value, dict):
+                # should not really happen
+                env = dict()
+                for env_item in value:
+                    _parse_env_kv(env_item, value[env_item])
+            else:
+                # at this point it should be a simple string, also should not happen
+                env = templar.template(value, convert_bare=False)
+
+        return env
+
+    def _post_validate_changed_when(self, attr, value, templar):
+        '''
+        changed_when is evaluated after the execution of the task is complete,
+        and should not be templated during the regular post_validate step.
+        '''
+        return value
+
+    def _post_validate_failed_when(self, attr, value, templar):
+        '''
+        failed_when is evaluated after the execution of the task is complete,
+        and should not be templated during the regular post_validate step.
+        '''
+        return value
+
+    def _post_validate_until(self, attr, value, templar):
+        '''
+        until is evaluated after the execution of the task is complete,
+        and should not be templated during the regular post_validate step.
+        '''
+        return value
+
+    def get_vars(self):
+        all_vars = dict()
+        if self._parent:
+            all_vars.update(self._parent.get_vars())
+
+        all_vars.update(self.vars)
+
+        if 'tags' in all_vars:
+            del all_vars['tags']
+        if 'when' in all_vars:
+            del all_vars['when']
+
+        return all_vars
+
+    def get_include_params(self):
+        all_vars = dict()
+        if self._parent:
+            all_vars.update(self._parent.get_include_params())
+        if self.action in C._ACTION_ALL_INCLUDES:
+            all_vars.update(self.vars)
+        return all_vars
+
+    def copy(self, exclude_parent=False, exclude_tasks=False):
+        new_me = super(Task, self).copy()
+
+        new_me._parent = None
+        if self._parent and not exclude_parent:
+            new_me._parent = self._parent.copy(exclude_tasks=exclude_tasks)
+
+        new_me._role = None
+        if self._role:
+            new_me._role = self._role
+
+        new_me.implicit = self.implicit
+        new_me.resolved_action = self.resolved_action
+
+        return new_me
+
+    def serialize(self):
+        data = super(Task, self).serialize()
+
+        if not self._squashed and not self._finalized:
+            if self._parent:
+                data['parent'] = self._parent.serialize()
+                data['parent_type'] = self._parent.__class__.__name__
+
+            if self._role:
+                data['role'] = self._role.serialize()
+
+            data['implicit'] = self.implicit
+            data['resolved_action'] = self.resolved_action
+
+        return data
+
+    def deserialize(self, data):
+
+        # import is here to avoid import loops
+        from ansible.playbook.task_include import TaskInclude
+        from ansible.playbook.handler_task_include import HandlerTaskInclude
+
+        parent_data = data.get('parent', None)
+        if parent_data:
+            parent_type = data.get('parent_type')
+            if parent_type == 'Block':
+                p = Block()
+            elif parent_type == 'TaskInclude':
+                p = TaskInclude()
+            elif parent_type == 'HandlerTaskInclude':
+                p = HandlerTaskInclude()
+            p.deserialize(parent_data)
+            self._parent = p
+            del data['parent']
+
+        role_data = data.get('role')
+        if role_data:
+            r = Role()
+            r.deserialize(role_data)
+            self._role = r
+            del data['role']
+
+        self.implicit = data.get('implicit', False)
+        self.resolved_action = data.get('resolved_action')
+
+        super(Task, self).deserialize(data)
+
+    def set_loader(self, loader):
+        '''
+        Sets the loader on this object and recursively on parent, child objects.
+        This is used primarily after the Task has been serialized/deserialized, which
+        does not preserve the loader.
+        '''
+
+        self._loader = loader
+
+        if self._parent:
+            self._parent.set_loader(loader)
+
+    def _get_parent_attribute(self, attr, extend=False, prepend=False):
+        '''
+        Generic logic to get the attribute or parent attribute for a task value.
+        '''
+
+        extend = self._valid_attrs[attr].extend
+        prepend = self._valid_attrs[attr].prepend
+        try:
+            value = self._attributes[attr]
+            # If parent is static, we can grab attrs from the parent
+            # otherwise, defer to the grandparent
+            if getattr(self._parent, 'statically_loaded', True):
+                _parent = self._parent
+            else:
+                _parent = self._parent._parent
+
+            if _parent and (value is Sentinel or extend):
+                if getattr(_parent, 'statically_loaded', True):
+                    # vars are always inheritable, other attributes might not be for the parent but still should be for other ancestors
+                    if attr != 'vars' and hasattr(_parent, '_get_parent_attribute'):
+                        parent_value = _parent._get_parent_attribute(attr)
+                    else:
+                        parent_value = _parent._attributes.get(attr, Sentinel)
+
+                    if extend:
+                        value = self._extend_value(value, parent_value, prepend)
+                    else:
+                        value = parent_value
+        except KeyError:
+            pass
+
+        return value
+
+    def all_parents_static(self):
+        if self._parent:
+            return self._parent.all_parents_static()
+        return True
+
+    def get_first_parent_include(self):
+        from ansible.playbook.task_include import TaskInclude
+        if self._parent:
+            if isinstance(self._parent, TaskInclude):
+                return self._parent
+            return self._parent.get_first_parent_include()
+        return None

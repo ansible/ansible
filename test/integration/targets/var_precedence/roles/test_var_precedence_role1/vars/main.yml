@@ -1,0 +1,4 @@
+---
+# should override the global vars_files_var since it's local to the role
+# but will be set to the value in the last role included which defines it
+vars_files_var_role: "vars_files_var_role1"

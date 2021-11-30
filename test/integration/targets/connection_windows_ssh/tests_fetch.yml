@@ -1,0 +1,41 @@
+# This must be a play as we need to invoke it with the ANSIBLE_SCP_IF_SSH env
+# to control the mechanism used. Unfortunately while ansible_scp_if_ssh is
+# documented, it isn't actually used hence the separate invocation
+---
+- name: further fetch tests with metachar characters in filename
+  hosts: windows
+  force_handlers: yes
+  serial: 1
+  gather_facts: no
+
+  tasks:
+  - name: setup remote tmp dir
+    import_role:
+      name: ../../setup_remote_tmp_dir
+
+  - name: create remote file with metachar in name
+    win_copy:
+      content: some content
+      dest: '{{ remote_tmp_dir }}\file ^with &whoami'
+
+  - name: test fetch against a file with cmd metacharacters
+    block:
+    - name: fetch file with metachar in name
+      fetch:
+        src: '{{ remote_tmp_dir }}\file ^with &whoami'
+        dest: ansible-test.txt
+        flat: yes
+      register: fetch_res
+
+    - name: assert fetch file with metachar in name
+      assert:
+        that:
+        - fetch_res is changed
+        - fetch_res.checksum == '94e66df8cd09d410c62d9e0dc59d3a884e458e05'
+
+    always:
+    - name: remove local copy of file
+      file:
+        path: ansible-test.txt
+        state: absent
+      delegate_to: localhost

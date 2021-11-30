@@ -1,0 +1,14 @@
+{
+    "value": [
+        {
+            "scsi": {
+                "bus": 0,
+                "unit": 7
+            },
+            "label": "SCSI controller 0",
+            "type": "PVSCSI",
+            "sharing": "NONE"
+        }
+    ],
+    "changed": false
+}

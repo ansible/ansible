@@ -1,0 +1,2 @@
+# edit "release-names.requirements.in" and generate with: hacking/update-sanity-requirements.py --test release-names
+PyYAML==6.0

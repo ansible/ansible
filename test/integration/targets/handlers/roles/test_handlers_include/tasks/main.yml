@@ -1,0 +1,4 @@
+- name: 'main task'
+  debug: msg='main task'
+  changed_when: True
+  notify: test handler

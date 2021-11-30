@@ -1,0 +1,115 @@
+# Test playbook for the package_facts module
+# (c) 2017, Adam Miller <admiller@redhat.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: Prep package_fact tests - Debian Family
+  block:
+    - name: install python apt bindings - python2
+      package: name="python-apt" state=present
+      when: ansible_python.version.major|int == 2
+
+    - name: install python apt bindings - python3
+      package: name="python3-apt" state=present
+      when: ansible_python.version.major|int == 3
+
+    - name: Gather package facts
+      package_facts:
+        manager: apt
+
+    - name: check for ansible_facts.packages exists
+      assert:
+        that: ansible_facts.packages is defined
+  when: ansible_os_family == "Debian"
+
+- name: Run package_fact tests - Red Hat Family
+  block:
+    - name: Gather package facts
+      package_facts:
+        manager: rpm
+
+    - name: check for ansible_facts.packages exists
+      assert:
+        that: ansible_facts.packages is defined
+  when: (ansible_os_family == "RedHat")
+
+- name: Run package_fact tests - SUSE/OpenSUSE Family
+  block:
+    - name: install python rpm bindings - python2
+      package: name="rpm-python" state=present
+      when: ansible_python.version.major|int == 2
+
+    - name: install python rpm bindings - python3
+      package: name="python3-rpm" state=present
+      when: ansible_python.version.major|int == 3
+
+    - name: Gather package facts
+      package_facts:
+        manager: rpm
+
+    - name: check for ansible_facts.packages exists
+      assert:
+        that: ansible_facts.packages is defined
+  when: (ansible_os_family == "openSUSE Leap") or (ansible_os_family == "Suse")
+
+# Check that auto detection works also
+- name: Gather package facts
+  package_facts:
+    manager: auto
+
+- name: check for ansible_facts.packages exists
+  assert:
+    that: ansible_facts.packages is defined
+
+- name: Run package_fact tests - FreeBSD
+  block:
+    - name: Gather package facts
+      package_facts:
+        manager: pkg
+
+    - name: check for ansible_facts.packages exists
+      assert:
+        that: ansible_facts.packages is defined
+
+    - name: check there is at least one package not flagged vital nor automatic
+      command: pkg query -e "%a = 0 && %V = 0" %n
+      register: not_vital_nor_automatic
+      failed_when: not not_vital_nor_automatic.stdout
+
+    - vars:
+        pkg_name: "{{ not_vital_nor_automatic.stdout_lines[0].strip() }}"
+      block:
+        - name: check the selected package is not vital
+          assert:
+            that:
+              - 'not ansible_facts.packages[pkg_name][0].vital'
+              - 'not ansible_facts.packages[pkg_name][0].automatic'
+
+        - name: flag the selected package as vital and automatic
+          command: 'pkg set --yes -v 1 -A 1 {{ pkg_name }}'
+
+        - name: Gather package facts (again)
+          package_facts:
+
+        - name: check the selected package is flagged vital and automatic
+          assert:
+            that:
+              - 'ansible_facts.packages[pkg_name][0].vital|bool'
+              - 'ansible_facts.packages[pkg_name][0].automatic|bool'
+      always:
+        - name: restore previous flags for the selected package
+          command: 'pkg set --yes -v 0 -A 0 {{ pkg_name }}'
+  when: ansible_os_family == "FreeBSD"

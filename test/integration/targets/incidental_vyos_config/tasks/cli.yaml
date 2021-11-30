@@ -1,0 +1,26 @@
+---
+- name: collect all cli test cases
+  find:
+    paths: "{{ role_path }}/tests/cli"
+    patterns: "{{ testcase }}.yaml"
+  register: test_cases
+  delegate_to: localhost
+
+- name: set test_items
+  set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
+
+- name: run test case (connection=ansible.netcommon.network_cli)
+  include_tasks: "file={{ test_case_to_run }}"
+  vars:
+      ansible_connection: ansible.netcommon.network_cli
+  with_items: "{{ test_items }}"
+  loop_control:
+    loop_var: test_case_to_run
+
+- name: run test case (connection=local)
+  include_tasks: "file={{ test_case_to_run }}"
+  vars:
+      ansible_connection: local
+  with_first_found: "{{ test_items }}"
+  loop_control:
+    loop_var: test_case_to_run

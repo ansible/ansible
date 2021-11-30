@@ -1,0 +1,601 @@
+# test code for the pip module
+# (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# FIXME: replace the python test package
+
+# first some tests installed system-wide
+# verify things were not installed to start with
+
+- name: ensure packages are not installed (precondition setup)
+  pip:
+    name: "{{ pip_test_packages }}"
+    state: absent
+
+# verify that a package that is uninstalled being set to absent
+# results in an unchanged state and that the test package is not
+# installed
+
+- name: ensure packages are not installed
+  pip:
+    name: "{{ pip_test_packages }}"
+    state: absent
+  register: uninstall_result
+
+- name: removing unremoved packages should return unchanged
+  assert:
+    that:
+       - "not (uninstall_result is changed)"
+
+- command: "{{ ansible_python.executable }} -c 'import {{ item }}'"
+  register: absent_result
+  failed_when: "absent_result.rc == 0"
+  loop: '{{ pip_test_modules }}'
+
+# now we're going to install the test package knowing it is uninstalled
+# and check that installation was ok
+
+- name: ensure packages are installed
+  pip:
+    name: "{{ pip_test_packages }}"
+    state: present
+  register: install_result
+
+- name: verify we recorded a change
+  assert:
+    that:
+      - "install_result is changed"
+
+- command: "{{ ansible_python.executable }} -c 'import {{ item }}'"
+  loop: '{{ pip_test_modules }}'
+
+# now remove it to test uninstallation of a package we are sure is installed
+
+- name: now uninstall so we can see that a change occurred
+  pip:
+    name: "{{ pip_test_packages }}"
+    state: absent
+  register: absent2
+
+- name: assert a change occurred on uninstallation
+  assert:
+    that:
+      - "absent2 is changed"
+
+# put the test packages back
+
+- name: now put it back in case someone wanted it (like us!)
+  pip:
+    name: "{{ pip_test_packages  }}"
+    state: present
+
+# Test virtualenv installations
+
+- name: "make sure the test env doesn't exist"
+  file:
+    state: absent
+    name: "{{ remote_tmp_dir }}/pipenv"
+
+- name: create a requirement file with an vcs url
+  copy:
+    dest: "{{ remote_tmp_dir }}/pipreq.txt"
+    content: "-e git+https://github.com/dvarrazzo/pyiso8601#egg=iso8601"
+
+- name: install the requirement file in a virtualenv
+  pip:
+    requirements: "{{ remote_tmp_dir}}/pipreq.txt"
+    virtualenv: "{{ remote_tmp_dir }}/pipenv"
+  register: req_installed
+
+- name: check that a change occurred
+  assert:
+    that:
+      - "req_installed is changed"
+
+- name: "repeat installation to check status didn't change"
+  pip:
+    requirements: "{{ remote_tmp_dir}}/pipreq.txt"
+    virtualenv: "{{ remote_tmp_dir }}/pipenv"
+  register: req_installed
+
+- name: "check that a change didn't occurr this time (bug ansible#1705)"
+  assert:
+    that:
+      - "not (req_installed is changed)"
+
+- name: install the same module from url
+  pip:
+    name: "git+https://github.com/dvarrazzo/pyiso8601#egg=iso8601"
+    virtualenv: "{{ remote_tmp_dir }}/pipenv"
+    editable: True
+  register: url_installed
+
+- name: "check that a change didn't occurr (bug ansible-modules-core#1645)"
+  assert:
+    that:
+      - "not (url_installed is changed)"
+
+# Test pip package in check mode doesn't always report changed.
+
+# Special case for pip
+- name: check for pip package
+  pip:
+    name: pip
+    virtualenv: "{{ remote_tmp_dir }}/pipenv"
+    state: present
+
+- name: check for pip package in check_mode
+  pip:
+    name: pip
+    virtualenv: "{{ remote_tmp_dir }}/pipenv"
+    state: present
+  check_mode: True
+  register: pip_check_mode
+
+- name: make sure pip in check_mode doesn't report changed
+  assert:
+    that:
+      - "not (pip_check_mode is changed)"
+
+# Special case for setuptools
+- name: check for setuptools package
+  pip:
+    name: setuptools
+    virtualenv: "{{ remote_tmp_dir }}/pipenv"
+    state: present
+
+- name: check for setuptools package in check_mode
+  pip:
+    name: setuptools
+    virtualenv: "{{ remote_tmp_dir }}/pipenv"
+    state: present
+  check_mode: True
+  register: setuptools_check_mode
+
+- name: make sure setuptools in check_mode doesn't report changed
+  assert:
+    that:
+      - "not (setuptools_check_mode is changed)"
+
+
+# Normal case
+- name: check for q package
+  pip:
+    name: q
+    virtualenv: "{{ remote_tmp_dir }}/pipenv"
+    state: present
+
+- name: check for q package in check_mode
+  pip:
+    name: q
+    virtualenv: "{{ remote_tmp_dir }}/pipenv"
+    state: present
+  check_mode: True
+  register: q_check_mode
+
+- name: make sure q in check_mode doesn't report changed
+  assert:
+    that:
+      - "not (q_check_mode is changed)"
+
+# Case with package name that has a different package name case and an
+# underscore instead of a hyphen
+- name: check for Junit-XML package
+  pip:
+    name: Junit-XML
+    virtualenv: "{{ remote_tmp_dir }}/pipenv"
+    state: present
+
+- name: check for Junit-XML package in check_mode
+  pip:
+    name: Junit-XML
+    virtualenv: "{{ remote_tmp_dir }}/pipenv"
+    state: present
+  check_mode: True
+  register: diff_case_check_mode
+
+- name: make sure Junit-XML in check_mode doesn't report changed
+  assert:
+    that:
+      - "diff_case_check_mode is not changed"
+
+# ansible#23204
+- name: ensure is a fresh virtualenv
+  file:
+    state: absent
+    name: "{{ remote_tmp_dir }}/pipenv"
+
+- name: install pip throught pip into fresh virtualenv
+  pip:
+    name: pip
+    virtualenv: "{{ remote_tmp_dir }}/pipenv"
+  register: pip_install_venv
+
+- name: make sure pip in fresh virtualenv report changed
+  assert:
+    that:
+      - "pip_install_venv is changed"
+
+# https://github.com/ansible/ansible/issues/37912
+# support chdir without virtualenv
+- name: create chdir test directories
+  file:
+    state: directory
+    name: "{{ remote_tmp_dir }}/{{ item }}"
+  loop:
+    - pip_module
+    - pip_root
+    - pip_module/ansible_test_pip_chdir
+
+- name: copy test module
+  copy:
+    src: "{{ item }}"
+    dest: "{{ remote_tmp_dir }}/pip_module/{{ item }}"
+  loop:
+    - setup.py
+    - ansible_test_pip_chdir/__init__.py
+
+- name: install test module
+  pip:
+    name: .
+    chdir: "{{ remote_tmp_dir }}/pip_module"
+    extra_args: --user --upgrade --root {{ remote_tmp_dir }}/pip_root
+
+- name: register python_site_lib
+  command: '{{ ansible_python.executable }} -c "import site; print(site.USER_SITE)"'
+  register: pip_python_site_lib
+
+- name: register python_user_base
+  command: '{{ ansible_python.executable }} -c "import site; print(site.USER_BASE)"'
+  register: pip_python_user_base
+
+- name: run test module
+  shell: "PYTHONPATH=$(echo {{ remote_tmp_dir }}/pip_root{{ pip_python_site_lib.stdout }}) {{ remote_tmp_dir }}/pip_root{{ pip_python_user_base.stdout }}/bin/ansible_test_pip_chdir"
+  register: pip_chdir_command
+
+- name: make sure command ran
+  assert:
+    that:
+      - pip_chdir_command.stdout == "success"
+
+# https://github.com/ansible/ansible/issues/25122
+- name: ensure is a fresh virtualenv
+  file:
+    state: absent
+    name: "{{ remote_tmp_dir }}/pipenv"
+
+- name: install requirements file into virtual + chdir
+  pip:
+   name: q
+   chdir: "{{ remote_tmp_dir }}/"
+   virtualenv: "pipenv"
+   state: present
+  register: venv_chdir
+
+- name: make sure fresh virtualenv + chdir report changed
+  assert:
+    that:
+      - "venv_chdir is changed"
+
+# ansible#38785
+- name: allow empty list of packages
+  pip:
+    name: []
+  register: pip_install_empty
+
+- name: ensure empty install is successful
+  assert:
+    that:
+      - "not (pip_install_empty is changed)"
+
+# https://github.com/ansible/ansible/issues/41043
+- block:
+    - name: Ensure previous virtualenv no longer exists
+      file:
+        state: absent
+        name: "{{ remote_tmp_dir }}/pipenv"
+
+    - name: do not consider an empty string as a version
+      pip:
+        name: q
+        state: present
+        version: ""
+        virtualenv: "{{ remote_tmp_dir }}/pipenv"
+      register: pip_empty_version_string
+
+    - name: test idempotency with empty string
+      pip:
+        name: q
+        state: present
+        version: ""
+        virtualenv: "{{ remote_tmp_dir }}/pipenv"
+      register: pip_empty_version_string_idempotency
+
+    - name: test idempotency without empty string
+      pip:
+        name: q
+        state: present
+        virtualenv: "{{ remote_tmp_dir }}/pipenv"
+      register: pip_no_empty_version_string_idempotency
+
+      # 'present' and version=="" is analogous to latest when first installed
+    - name: ensure we installed the latest version
+      pip:
+        name: q
+        state: latest
+        virtualenv: "{{ remote_tmp_dir }}/pipenv"
+      register: pip_empty_version_idempotency
+
+    - name: ensure that installation worked and is idempotent
+      assert:
+        that:
+          - pip_empty_version_string is changed
+          - pip_empty_version_string is successful
+          - pip_empty_version_idempotency is not changed
+          - pip_no_empty_version_string_idempotency is not changed
+          - pip_empty_version_string_idempotency is not changed
+
+# test version specifiers
+- name: make sure no test_package installed now
+  pip:
+    name: "{{ pip_test_packages }}"
+    state: absent
+
+- name: install package with version specifiers
+  pip:
+    name: "{{ pip_test_package }}"
+    version: "<100,!=1.0,>0.0.0"
+  register: version
+
+- name: assert package installed correctly
+  assert:
+    that: "version.changed"
+
+- name: reinstall package
+  pip:
+    name: "{{ pip_test_package }}"
+    version: "<100,!=1.0,>0.0.0"
+  register: version2
+
+- name: assert no changes ocurred
+  assert:
+    that: "not version2.changed"
+
+- name: test the check_mod
+  pip:
+    name: "{{ pip_test_package }}"
+    version: "<100,!=1.0,>0.0.0"
+  check_mode: yes
+  register: version3
+
+- name: assert no changes
+  assert:
+    that: "not version3.changed"
+
+- name: test the check_mod with unsatisfied version
+  pip:
+    name: "{{ pip_test_package }}"
+    version: ">100.0.0"
+  check_mode: yes
+  register: version4
+
+- name: assert changed
+  assert:
+    that: "version4.changed"
+
+- name: uninstall test packages for next test
+  pip:
+    name: "{{ pip_test_packages }}"
+    state: absent
+
+- name: test invalid combination of arguments
+  pip:
+    name: "{{ pip_test_pkg_ver }}"
+    version: "1.11.1"
+  ignore_errors: yes
+  register: version5
+
+- name: assert the invalid combination should fail
+  assert:
+    that: "version5 is failed"
+
+- name: another invalid combination of arguments
+  pip:
+    name: "{{ pip_test_pkg_ver[0] }}"
+    version: "<100.0.0"
+  ignore_errors: yes
+  register: version6
+
+- name: assert invalid combination should fail
+  assert:
+    that: "version6 is failed"
+
+- name: try to install invalid package
+  pip:
+    name: "{{ pip_test_pkg_ver_unsatisfied }}"
+  ignore_errors: yes
+  register: version7
+
+- name: assert install should fail
+  assert:
+    that: "version7 is failed"
+
+- name: test install multi-packages with version specifiers
+  pip:
+    name: "{{ pip_test_pkg_ver }}"
+  register: version8
+
+- name: assert packages installed correctly
+  assert:
+    that: "version8.changed"
+
+- name: test install multi-packages with check_mode
+  pip:
+    name: "{{ pip_test_pkg_ver }}"
+  check_mode: yes
+  register: version9
+
+- name: assert no change
+  assert:
+    that: "not version9.changed"
+
+- name: test install unsatisfied multi-packages with check_mode
+  pip:
+    name: "{{ pip_test_pkg_ver_unsatisfied }}"
+  check_mode: yes
+  register: version10
+
+- name: assert changes needed
+  assert:
+    that: "version10.changed"
+
+- name: uninstall packages for next test
+  pip:
+    name: "{{ pip_test_packages }}"
+    state: absent
+
+- name: test install multi package provided by one single string
+  pip:
+    name: "{{pip_test_pkg_ver[0]}},{{pip_test_pkg_ver[1]}}"
+  register: version11
+
+- name: assert the install ran correctly
+  assert:
+    that: "version11.changed"
+
+- name: test install multi package provided by one single string with check_mode
+  pip:
+    name: "{{pip_test_pkg_ver[0]}},{{pip_test_pkg_ver[1]}}"
+  check_mode: yes
+  register: version12
+
+- name: assert no changes needed
+  assert:
+    that: "not version12.changed"
+
+- name: test module can parse the combination of multi-packages one line and git url
+  pip:
+    name:
+      - git+https://github.com/dvarrazzo/pyiso8601#egg=iso8601
+      - "{{pip_test_pkg_ver[0]}},{{pip_test_pkg_ver[1]}}"
+
+- name: test the invalid package name
+  pip:
+    name: djan=+-~!@#$go>1.11.1,<1.11.3
+  ignore_errors: yes
+  register: version13
+
+- name: the invalid package should make module failed
+  assert:
+    that: "version13 is failed"
+
+- name: try install package with setuptools extras
+  pip:
+    name:
+      - "{{pip_test_package}}[test]"
+
+- name: clean up
+  pip:
+    name: "{{ pip_test_packages }}"
+    state: absent
+
+# https://github.com/ansible/ansible/issues/47198
+# distribute is a legacy package that will fail on newer Python 3 versions
+- block:
+  - name: make sure the virtualenv does not exist
+    file:
+      state: absent
+      name: "{{ remote_tmp_dir }}/pipenv"
+
+  - name: install distribute in the virtualenv
+    pip:
+      # using -c for constraints is not supported as long as tests are executed using the centos6 container
+      # since the pip version in the venv is not upgraded and is too old (6.0.8)
+      name:
+        - distribute
+        - setuptools<45  # setuptools 45 and later require python 3.5 or later
+      virtualenv: "{{ remote_tmp_dir }}/pipenv"
+      state: present
+
+  - name: try to remove distribute
+    pip:
+      state: "absent"
+      name: "distribute"
+      virtualenv: "{{ remote_tmp_dir }}/pipenv"
+    ignore_errors: yes
+    register: remove_distribute
+
+  - name: inspect the cmd
+    assert:
+      that: "'distribute' in remove_distribute.cmd"
+  when: ansible_python.version.major == 2
+
+### test virtualenv_command begin ###
+
+- name: Test virtualenv command with arguments
+  when: ansible_python.version.major == 2
+  block:
+    - name: make sure the virtualenv does not exist
+      file:
+        state: absent
+        name: "{{ remote_tmp_dir }}/pipenv"
+
+    # ref: https://github.com/ansible/ansible/issues/52275
+    - name: install using virtualenv_command with arguments
+      pip:
+        name: "{{ pip_test_package }}"
+        virtualenv: "{{ remote_tmp_dir }}/pipenv"
+        virtualenv_command: "{{ command.stdout_lines[0] | basename }} --verbose"
+        state: present
+      register: version13
+
+    - name: ensure install using virtualenv_command with arguments was successful
+      assert:
+        that:
+          - "version13 is success"
+
+### test virtualenv_command end ###
+
+# https://github.com/ansible/ansible/issues/68592
+# Handle pre-release version numbers in check_mode for already-installed
+# packages.
+- block:
+  - name: Install a pre-release version of a package
+    pip:
+      name: fallible
+      version: 0.0.1a2
+      state: present
+
+  - name: Use check_mode and ensure that the package is shown as installed
+    check_mode: true
+    pip:
+      name: fallible
+      state: present
+    register: pip_prereleases
+
+  - name: Uninstall the pre-release package if we need to
+    pip:
+      name: fallible
+      version: 0.0.1a2
+      state: absent
+    when: pip_prereleases is changed
+
+  - assert:
+      that:
+        - pip_prereleases is successful
+        - pip_prereleases is not changed
+        - '"fallible==0.0.1a2" in pip_prereleases.stdout_lines'

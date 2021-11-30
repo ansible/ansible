@@ -1,0 +1,274 @@
+---
+- name: fetch current target date/time for log filtering
+  raw: '[datetime]::now | Out-String'
+  register: test_starttime
+
+- name: test normal module execution
+  test_fail:
+  register: normal
+
+- name: assert test normal module execution
+  assert:
+    that:
+    - not normal is failed
+
+- name: test fail module execution
+  test_fail:
+    data: fail
+  register: fail_module
+  ignore_errors: yes
+
+- name: assert test fail module execution
+  assert:
+    that:
+    - fail_module is failed
+    - fail_module.msg == "fail message"
+    - not fail_module.exception is defined
+
+- name: test module with exception thrown
+  test_fail:
+    data: throw
+  register: throw_module
+  ignore_errors: yes
+
+- name: assert test module with exception thrown
+  assert:
+    that:
+    - throw_module is failed
+    - 'throw_module.msg == "Unhandled exception while executing module: module is thrown"'
+    - '"throw [ArgumentException]\"module is thrown\"" in throw_module.exception'
+
+- name: test module with error msg
+  test_fail:
+    data: error
+  register: error_module
+  ignore_errors: yes
+  vars:
+    # Running with coverage means the module is run from a script and not as a psuedo script in a pipeline. This
+    # results in a different error message being returned so we disable coverage collection for this task.
+    _ansible_coverage_remote_output: ''
+
+- name: assert test module with error msg
+  assert:
+    that:
+    - error_module is failed
+    - 'error_module.msg == "Unhandled exception while executing module: error"'
+    - '"Write-Error -Message $data" in error_module.exception'
+
+- name: test module with cmdlet error
+  test_fail:
+    data: cmdlet_error
+  register: cmdlet_error
+  ignore_errors: yes
+
+- name: assert test module with cmdlet error
+  assert:
+    that:
+    - cmdlet_error is failed
+    - 'cmdlet_error.msg == "Unhandled exception while executing module: Cannot find drive. A drive with the name ''fake'' does not exist."'
+    - '"Get-Item -Path \"fake:\\path\"" in cmdlet_error.exception'
+
+- name: test module with .NET exception
+  test_fail:
+    data: dotnet_exception
+  register: dotnet_exception
+  ignore_errors: yes
+
+- name: assert test module with .NET exception
+  assert:
+    that:
+    - dotnet_exception is failed
+    - 'dotnet_exception.msg == "Unhandled exception while executing module: Exception calling \"GetFullPath\" with \"1\" argument(s): \"The path is not of a legal form.\""'
+    - '"[System.IO.Path]::GetFullPath($null)" in dotnet_exception.exception'
+
+- name: test module with function exception
+  test_fail:
+    data: function_throw
+  register: function_exception
+  ignore_errors: yes
+  vars:
+    _ansible_coverage_remote_output: ''
+
+- name: assert test module with function exception
+  assert:
+    that:
+    - function_exception is failed
+    - 'function_exception.msg == "Unhandled exception while executing module: exception in function"'
+    - '"throw \"exception in function\"" in function_exception.exception'
+    - '"at Test-ThrowException, <No file>: line" in function_exception.exception'
+
+- name: test module with fail process but Exit-Json
+  test_fail:
+    data: proc_exit_fine
+  register: proc_exit_fine
+
+- name: assert test module with fail process but Exit-Json
+  assert:
+    that:
+    - not proc_exit_fine is failed
+
+- name: test module with fail process but Fail-Json
+  test_fail:
+    data: proc_exit_fail
+  register: proc_exit_fail
+  ignore_errors: yes
+
+- name: assert test module with fail process but Fail-Json
+  assert:
+    that:
+    - proc_exit_fail is failed
+    - proc_exit_fail.msg == "proc_exit_fail"
+    - not proc_exit_fail.exception is defined
+
+- name: test out invalid options
+  test_invalid_requires:
+  register: invalid_options
+
+- name: assert test out invalid options
+  assert:
+    that:
+    - invalid_options is successful
+    - invalid_options.output == "output"
+
+- name: test out invalid os version
+  test_min_os_version:
+  register: invalid_os_version
+  ignore_errors: yes
+
+- name: assert test out invalid os version
+  assert:
+    that:
+    - invalid_os_version is failed
+    - '"This module cannot run on this OS as it requires a minimum version of 20.0, actual was " in invalid_os_version.msg'
+
+- name: test out invalid powershell version
+  test_min_ps_version:
+  register: invalid_ps_version
+  ignore_errors: yes
+
+- name: assert test out invalid powershell version
+  assert:
+    that:
+    - invalid_ps_version is failed
+    - '"This module cannot run as it requires a minimum PowerShell version of 20.0.0.0, actual was " in invalid_ps_version.msg'
+
+- name: test out environment block for task
+  win_shell: set
+  args:
+    executable: cmd.exe
+  environment:
+    String: string value
+    Int: 1234
+    Bool: True
+    double_quote: 'double " quote'
+    single_quote: "single ' quote"
+    hyphen-var: abc@123
+    '_-(){}[]<>*+-/\?"''!@#$%^&|;:i,.`~0': '_-(){}[]<>*+-/\?"''!@#$%^&|;:i,.`~0'
+    '‘key': 'value‚'
+  register: environment_block
+
+- name: assert environment block for task
+  assert:
+    that:
+    - '"String=string value" in environment_block.stdout_lines'
+    - '"Int=1234" in environment_block.stdout_lines'
+    - '"Bool=True" in environment_block.stdout_lines'
+    - '"double_quote=double \" quote" in environment_block.stdout_lines'
+    - '"single_quote=single '' quote" in environment_block.stdout_lines'
+    - '"hyphen-var=abc@123" in environment_block.stdout_lines'
+    # yaml escaping rules - (\\ == \), (\" == "), ('' == ')
+    - '"_-(){}[]<>*+-/\\?\"''!@#$%^&|;:i,.`~0=_-(){}[]<>*+-/\\?\"''!@#$%^&|;:i,.`~0" in environment_block.stdout_lines'
+    - '"‘key=value‚" in environment_block.stdout_lines'
+
+- name: test out become requires without become_user set
+  test_all_options:
+  register: become_system
+
+- name: assert become requires without become_user set
+  assert:
+    that:
+    - become_system is successful
+    - become_system.output == "S-1-5-18"
+
+- set_fact:
+    become_test_username: ansible_become_test
+    gen_pw: "{{ 'password123!' + lookup('password', '/dev/null chars=ascii_letters,digits length=8') }}"
+
+- name: create unprivileged user
+  win_user:
+    name: "{{ become_test_username }}"
+    password: "{{ gen_pw }}"
+    update_password: always
+    groups: Users
+  register: become_test_user_result
+
+- name: execute tests and ensure that test user is deleted regardless of success/failure
+  block:
+  - name: ensure current user is not the become user
+    win_shell: whoami
+    register: whoami_out
+
+  - name: verify output
+    assert:
+      that:
+      - not whoami_out.stdout_lines[0].endswith(become_test_username)
+
+  - name: get become user profile dir so we can clean it up later
+    vars: &become_vars
+      ansible_become_user: "{{ become_test_username }}"
+      ansible_become_password: "{{ gen_pw }}"
+      ansible_become_method: runas
+      ansible_become: yes
+    win_shell: $env:USERPROFILE
+    register: profile_dir_out
+
+  - name: ensure profile dir contains test username (eg, if become fails silently, prevent deletion of real user profile)
+    assert:
+      that:
+      - become_test_username in profile_dir_out.stdout_lines[0]
+
+  - name: test out become requires when become_user set
+    test_all_options:
+    vars: *become_vars
+    register: become_system
+
+  - name: assert become requires when become_user set
+    assert:
+      that:
+      - become_system is successful
+      - become_system.output == become_test_user_result.sid
+
+  always:
+  - name: ensure test user is deleted
+    win_user:
+      name: "{{ become_test_username }}"
+      state: absent
+
+  - name: ensure test user profile is deleted
+    # NB: have to work around powershell limitation of long filenames until win_file fixes it
+    win_shell: rmdir /S /Q {{ profile_dir_out.stdout_lines[0] }}
+    args:
+      executable: cmd.exe
+    when: become_test_username in profile_dir_out.stdout_lines[0]
+
+- name: test common functions in exec
+  test_common_functions:
+  register: common_functions_res
+
+- name: assert test common functions in exec
+  assert:
+    that:
+    - not common_functions_res is failed
+    - common_functions_res.msg == "good"
+
+- name: get PS events containing module args or envvars created since test start
+  raw: |
+    $dt=[datetime]"{{ test_starttime.stdout|trim }}"
+    (Get-WinEvent -LogName Microsoft-Windows-Powershell/Operational |
+    ? { $_.TimeCreated -ge $dt -and $_.Message -match "fail_module|hyphen-var" }).Count
+  register: ps_log_count
+
+- name: assert no PS events contain module args or envvars
+  assert:
+    that:
+    - ps_log_count.stdout | int == 0

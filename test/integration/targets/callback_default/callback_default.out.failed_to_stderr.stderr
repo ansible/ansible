@@ -1,0 +1,8 @@
++ ansible-playbook -i inventory test.yml
+++ set +x
+fatal: [testhost]: FAILED! => {"changed": false, "msg": "no reason"}
+failed: [testhost] (item=debug-2) => {
+    "msg": "debug-2"
+}
+fatal: [testhost]: FAILED! => {"msg": "One or more items failed"}
+fatal: [testhost]: FAILED! => {"changed": false, "msg": "Failed as requested from task"}

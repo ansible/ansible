@@ -1,0 +1,3 @@
+---
+- {import_tasks: cli.yaml, tags: ['cli']}
+- {import_tasks: cli_config.yaml, tags: ['cli_config']}

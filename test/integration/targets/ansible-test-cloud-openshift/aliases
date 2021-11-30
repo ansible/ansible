@@ -1,0 +1,4 @@
+cloud/openshift
+shippable/generic/group1
+disabled  # disabled due to requirements conflict: botocore 1.20.6 has requirement urllib3<1.27,>=1.25.4, but you have urllib3 1.24.3.
+context/controller

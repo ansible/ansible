@@ -1,0 +1,21 @@
+---
+- name: name1
+  set_fact:
+    role_non_templated_name: True
+- name: "{{ handler2 }}"
+  set_fact:
+    role_templated_name: True
+- name: testlistener1
+  set_fact:
+    role_non_templated_listener: True
+  listen: name3
+- name: testlistener2
+  set_fact:
+    role_templated_listener: True
+  listen: "{{ handler4 }}"
+- name: name5
+  set_fact:
+    role_handler5: True
+- set_fact:
+    role_handler6: True
+  listen: name6

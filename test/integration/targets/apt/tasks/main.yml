@@ -1,0 +1,40 @@
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- block:
+  - import_tasks: 'apt.yml'
+
+  - import_tasks: 'url-with-deps.yml'
+
+  - import_tasks: 'apt-multiarch.yml'
+    when:
+      - ansible_userspace_architecture != apt_foreign_arch
+
+  - import_tasks: 'apt-builddep.yml'
+
+  - block:
+      - import_tasks: 'repo.yml'
+    always:
+      - file:
+          path: /etc/apt/sources.list.d/file_tmp_repo.list
+          state: absent
+      - file:
+          name: "{{ repodir }}"
+          state: absent
+
+  when:
+    - ansible_distribution in ('Ubuntu', 'Debian')

@@ -1,0 +1,4 @@
+shippable/posix/group3
+skip/aix
+context/target
+needs/target/setup_remote_tmp_dir

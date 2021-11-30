@@ -1,0 +1,39 @@
+{
+    "name": "FreeBSD 12.2",
+    "distro": {
+        "codename": "",
+        "id": "freebsd",
+        "name": "FreeBSD",
+        "version": "12.2",
+        "version_best": "12.2",
+        "lsb_release_info": {},
+        "os_release_info": {
+            "name": "FreeBSD",
+            "version": "12.2-PRERELEASE",
+            "version_id": "12.2",
+            "id": "freebsd",
+            "ansi_color": "0;31",
+            "pretty_name": "FreeBSD 12.2-PRERELEASE",
+            "cpe_name": "cpe:/o:freebsd:freebsd:12.2",
+            "home_url": "https://FreeBSD.org/",
+            "bug_report_url": "https://bugs.FreeBSD.org/"
+        }
+    },
+    "input": {
+        "/etc/os-release": "NAME=FreeBSD\nVERSION=12.2-PRERELEASE\nVERSION_ID=12.2\nID=freebsd\nANSI_COLOR=\"0;31\"\nPRETTY_NAME=\"FreeBSD 12.2-PRERELEASE\"\nCPE_NAME=cpe:/o:freebsd:freebsd:12.2\nHOME_URL=https://FreeBSD.org/\nBUG_REPORT_URL=https://bugs.FreeBSD.org/\n"
+    },
+    "platform.dist": [
+        "freebsd",
+        "12.2",
+        ""
+    ],
+    "result": {
+        "distribution": "FreeBSD",
+        "distribution_version": "12.2",
+        "distribution_release": "12.2-PRERELEASE",
+        "distribution_major_version": "12",
+        "os_family": "FreeBSD"
+    },
+    "platform.system": "FreeBSD",
+    "platform.release": "12.2-PRERELEASE"
+}

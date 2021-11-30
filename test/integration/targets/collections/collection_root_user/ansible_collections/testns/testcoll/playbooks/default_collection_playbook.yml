@@ -1,0 +1,49 @@
+# verify default collection action/module lookup works
+# since we're running this playbook inside a collection, it will set that collection as the default search for all playboooks
+# and non-collection roles to allow for easy migration of old integration tests to collections
+- hosts: testhost
+  tasks:
+    - testmodule:
+
+- hosts: testhost
+  vars:
+    test_role_input: task static default collection
+  tasks:
+    - import_role:
+        name: testrole  # unqualified role lookup should work; inheriting from the containing collection
+    - assert:
+        that:
+          - test_role_output.msg == test_role_input
+    - vars:
+        test_role_input: task static legacy embedded default collection
+      block:
+      - import_role:
+          name: non_coll_role
+      - assert:
+          that:
+            - test_role_output.msg == test_role_input
+
+- hosts: testhost
+  vars:
+    test_role_input: keyword static default collection
+  roles:
+    - testrole
+  tasks:
+    - debug: var=test_role_input
+    - debug: var=test_role_output
+    - assert:
+        that:
+        - test_role_output.msg == test_role_input
+
+- hosts: testhost
+  vars:
+    test_role_input: task dynamic default collection
+  tasks:
+    - include_role:
+        name: testrole  # unqualified role lookup should work; inheriting from the containing collection
+    - include_role:
+        name: non_coll_role
+    - assert:
+        that:
+        - testmodule_out_from_non_coll_role is success
+        - embedded_module_out_from_non_coll_role is success

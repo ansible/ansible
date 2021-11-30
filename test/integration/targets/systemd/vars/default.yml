@@ -1,0 +1,2 @@
+ssh_service: sshd
+sleep_bin_path: /usr/bin/sleep

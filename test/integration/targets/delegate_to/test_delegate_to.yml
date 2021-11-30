@@ -1,0 +1,58 @@
+- hosts: testhost3
+  vars:
+    - template_role: ./roles/test_template
+    - output_dir: "{{ playbook_dir }}"
+    - templated_var: foo
+    - templated_dict: { 'hello': 'world' }
+  tasks:
+    - name: Test no delegate_to
+      setup:
+      register: setup_results
+
+    - assert:
+        that:
+          - '"127.0.0.3" in setup_results.ansible_facts.ansible_env["SSH_CONNECTION"]'
+
+    - name: Test delegate_to with host in inventory
+      setup:
+      register: setup_results
+      delegate_to: testhost4
+
+    - debug: var=setup_results
+
+    - assert:
+        that:
+          - '"127.0.0.4" in setup_results.ansible_facts.ansible_env["SSH_CONNECTION"]'
+
+    - name: Test delegate_to with host not in inventory
+      setup:
+      register: setup_results
+      delegate_to: 127.0.0.254
+
+    - assert:
+        that:
+          - '"127.0.0.254" in setup_results.ansible_facts.ansible_env["SSH_CONNECTION"]'
+#
+# Smoketest some other modules do not error as a canary
+#
+    - name: Test file works with delegate_to and a host in inventory
+      file: path={{ output_dir }}/foo.txt mode=0644 state=touch
+      delegate_to: testhost4
+
+    - name: Test file works with delegate_to and a host not in inventory
+      file: path={{ output_dir }}/tmp.txt mode=0644 state=touch
+      delegate_to: 127.0.0.254
+
+    - name: Test template works with delegate_to and a host in inventory
+      template: src={{ template_role }}/templates/foo.j2 dest={{ output_dir }}/foo.txt
+      delegate_to: testhost4
+
+    - name: Test template works with delegate_to and a host not in inventory
+      template: src={{ template_role }}/templates/foo.j2 dest={{ output_dir }}/foo.txt
+      delegate_to: 127.0.0.254
+
+    - name: remove test file
+      file: path={{ output_dir }}/foo.txt state=absent
+
+    - name: remove test file
+      file: path={{ output_dir }}/tmp.txt state=absent

@@ -1,0 +1,2 @@
+bugfixes:
+  - Add a YAML representer for ``NativeJinjaUnsafeText``

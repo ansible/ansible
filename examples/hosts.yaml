@@ -1,0 +1,69 @@
+# This is the default ansible 'hosts' file.
+#
+# It should live in /etc/ansible/hosts
+#
+#   - Comments begin with the '#' character
+#   - Blank lines are ignored
+#   - Top level entries are assumed to be groups, start with 'all' to have a full hierarchy
+#   - Hosts must be specified in a group's hosts:
+#     and they must be a key (: terminated)
+#   - groups can have children, hosts and vars keys
+#   - groups are unique and global - if you define a group in multiple locations, Ansible aggregates all the data to the global name.
+#   - If you define a group as a child of 2 different groups, it will be the child of both, any hosts and variables assigned will not be dependent on the parents, they will all be associated with the group.
+#   - Anything defined under a host is assumed to be a var
+#   - You can enter hostnames or IP addresses
+#   - A hostname/IP can be a member of multiple groups
+
+# Ex 1: Ungrouped hosts, put them in 'all' or 'ungrouped' group, defines 4 hosts, one with 2 variables
+##all:
+##  hosts:
+##      green.example.com:
+##          ansible_ssh_host: 191.168.100.32
+##          anyvariable: value
+##      blue.example.com:
+##      192.168.100.1:
+##      192.168.100.10:
+
+# Ex 2: A collection of hosts belonging to the 'webservers' group, with shared group var
+##webservers:
+##  hosts:
+##     alpha.example.org:
+##     beta.example.org:
+##     192.168.1.100:
+##     192.168.1.110:
+##  vars:
+##    http_port: 8080
+
+# Ex 3: You can create hosts using ranges and add children groups and vars to a group
+# The child group can define anything you would normally add to a group.
+# Hosts in child groups inherit all variables from parent, parents include all hosts in child groups.
+# webservers is added as a child group of testing, so all gamma hosts (1-3) are added
+# to the 'webservers' group, including gamma3, which is defined in the tree of another parent group.
+# All references to webservers will get any hosts defined under webservers.
+# References to testing will get all of those hosts plus any host matching www[001:006].example.com
+
+##webservers:
+##  hosts:
+##    gamma1.example.org:
+##    gamma2.example.org:
+##testing:
+##  hosts:
+##    www[001:006].example.com:
+##  vars:
+##    testing1: value1
+##  children:
+##    webservers:
+##other:
+##  children:
+##    webservers:
+##      gamma3.example.org
+
+# From above, the testing group contains: gamma1.example.org gamma2.example.org gamma3.example.org www001.example.com www002.example.com www003.example.com www004.example.com www005.example.com www006.example.com
+
+# Ex 4: all vars
+# keeping within 'all' group you can define common 'all' vars here with lowest precedence
+
+
+##all:
+##  vars:
+##      commontoall: thisvar

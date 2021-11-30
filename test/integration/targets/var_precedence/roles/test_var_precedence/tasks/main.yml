@@ -1,0 +1,10 @@
+- debug: var=extra_var
+- debug: var=vars_var
+- debug: var=vars_files_var
+- debug: var=vars_files_var_role
+- assert:
+    that:
+      - 'extra_var == "extra_var"'
+      - 'vars_var == "vars_var"'
+      - 'vars_files_var == "vars_files_var"'
+      - 'vars_files_var_role == "vars_files_var_role3"'

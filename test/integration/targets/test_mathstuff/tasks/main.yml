@@ -1,0 +1,27 @@
+- name: Assert subset tests work
+  assert:
+    that:
+      - "[1] is issubset([1, 2])"  # old name
+      - "[1] is subset([1, 2])"
+      - "[1] is not subset([2])"
+
+- name: Assert superset tests work
+  assert:
+    that:
+      - "[1, 2] is issuperset([1])"  # old name
+      - "[1, 2] is superset([1])"
+      - "[2] is not superset([1])"
+
+- name: Assert contains tests work
+  assert:
+    that:
+      - "[1] is contains(1)"
+      - "[1] is not contains(2)"
+
+- name: Assert nan tests work
+  assert:
+    that:
+      - "'bad' is not nan"
+      - "1.1 | float is not nan"
+      - "'nan' | float is isnan"  # old name
+      - "'nan' | float is nan"

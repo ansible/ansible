@@ -1,0 +1,195 @@
+---
+#
+# Save initial state
+#
+- name: Retrieve a list of gpg keys are installed for package checking
+  shell: 'rpm -q gpg-pubkey | sort'
+  register: list_of_pubkeys
+
+- name: Retrieve the gpg keys used to verify packages
+  command: 'rpm -q --qf %{description} gpg-pubkey'
+  register: pubkeys
+
+- name: Save gpg keys to a file
+  copy:
+    content: "{{ pubkeys['stdout'] }}\n"
+    dest: '{{ output_dir }}/pubkeys'
+    mode: 0600
+
+#
+# Tests start
+#
+- name: download EPEL GPG key
+  get_url:
+    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-7
+    dest: /tmp/RPM-GPG-KEY-EPEL-7
+
+- name: download sl rpm
+  get_url:
+    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/sl-5.02-1.el7.x86_64.rpm
+    dest: /tmp/sl.rpm
+
+- name: download Mono key
+  get_url:
+    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/mono.gpg
+    dest: /tmp/mono.gpg
+
+- name: remove EPEL GPG key from keyring
+  rpm_key:
+    state: absent
+    key: /tmp/RPM-GPG-KEY-EPEL-7
+
+- name: check GPG signature of sl. Should fail
+  shell: "rpm --checksig /tmp/sl.rpm"
+  register: sl_check
+  ignore_errors: yes
+
+- name: confirm that signature check failed
+  assert:
+    that:
+      - "'MISSING KEYS' in sl_check.stdout or 'SIGNATURES NOT OK' in sl_check.stdout"
+      - "sl_check.failed"
+
+- name: remove EPEL GPG key from keyring (idempotent)
+  rpm_key:
+    state: absent
+    key: /tmp/RPM-GPG-KEY-EPEL-7
+  register: idempotent_test
+
+- name: check idempontence
+  assert:
+    that: "not idempotent_test.changed"
+
+- name: add EPEL GPG key to key ring
+  rpm_key:
+    state: present
+    key: /tmp/RPM-GPG-KEY-EPEL-7
+
+- name: add EPEL GPG key to key ring (idempotent)
+  rpm_key:
+    state: present
+    key: /tmp/RPM-GPG-KEY-EPEL-7
+
+- name: add Mono gpg key
+  rpm_key:
+      state: present
+      key: /tmp/mono.gpg
+
+- name: add Mono gpg key
+  rpm_key:
+      state: present
+      key: /tmp/mono.gpg
+  register: mono_indempotence
+
+- name: verify idempotence
+  assert:
+    that: "not mono_indempotence.changed"
+
+- name: check GPG signature of sl. Should return okay
+  shell: "rpm --checksig /tmp/sl.rpm"
+  register: sl_check
+
+- name: confirm that signature check succeeded
+  assert:
+    that: "'rsa sha1 (md5) pgp md5 OK' in sl_check.stdout or 'digests signatures OK' in sl_check.stdout"
+
+- name: remove GPG key from url
+  rpm_key:
+    state: absent
+    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-7
+
+- name: Confirm key is missing
+  shell: "rpm --checksig /tmp/sl.rpm"
+  register: sl_check
+  ignore_errors: yes
+
+- name: confirm that signature check failed
+  assert:
+    that:
+      - "'MISSING KEYS' in sl_check.stdout or 'SIGNATURES NOT OK' in sl_check.stdout"
+      - "sl_check.failed"
+
+- name: add GPG key from url
+  rpm_key:
+    state: present
+    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-7
+
+- name: check GPG signature of sl. Should return okay
+  shell: "rpm --checksig /tmp/sl.rpm"
+  register: sl_check
+
+- name: confirm that signature check succeeded
+  assert:
+    that: "'rsa sha1 (md5) pgp md5 OK' in sl_check.stdout or 'digests signatures OK' in sl_check.stdout"
+
+- name: remove all keys from key ring
+  shell: "rpm -q  gpg-pubkey | xargs rpm -e"
+
+- name: add very first key on system
+  rpm_key:
+    state: present
+    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-7
+
+- name: check GPG signature of sl. Should return okay
+  shell: "rpm --checksig /tmp/sl.rpm"
+  register: sl_check
+
+- name: confirm that signature check succeeded
+  assert:
+    that: "'rsa sha1 (md5) pgp md5 OK' in sl_check.stdout or 'digests signatures OK' in sl_check.stdout"
+
+- name: Issue 20325 - Verify fingerprint of key, invalid fingerprint - EXPECTED FAILURE
+  rpm_key:
+    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY.dag
+    fingerprint: 1111 1111 1111 1111 1111 1111 1111 1111 1111 1111
+  register: result
+  failed_when: result is success
+
+- name: Issue 20325 - Assert Verify fingerprint of key, invalid fingerprint
+  assert:
+    that:
+       - result is success
+       - result is not changed
+       - "'does not match the key fingerprint' in result.msg"
+
+- name: Issue 20325 - Verify fingerprint of key, valid fingerprint
+  rpm_key:
+    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY.dag
+    fingerprint: EBC6 E12C 62B1 C734 026B 2122 A20E 5214 6B8D 79E6
+  register: result
+
+- name: Issue 20325 - Assert Verify fingerprint of key, valid fingerprint
+  assert:
+    that:
+      - result is success
+      - result is changed
+
+- name: Issue 20325 - Verify fingerprint of key, valid fingerprint - Idempotent check
+  rpm_key:
+    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY.dag
+    fingerprint: EBC6 E12C 62B1 C734 026B 2122 A20E 5214 6B8D 79E6
+  register: result
+
+- name: Issue 20325 - Assert Verify fingerprint of key, valid fingerprint - Idempotent check
+  assert:
+    that:
+      - result is success
+      - result is not changed
+
+#
+# Cleanup
+#
+- name: remove all keys from key ring
+  shell: "rpm -q  gpg-pubkey | xargs rpm -e"
+
+- name: Restore the gpg keys normally installed on the system
+  command: 'rpm --import {{ output_dir }}/pubkeys'
+
+- name: Retrieve a list of gpg keys are installed for package checking
+  shell: 'rpm -q gpg-pubkey | sort'
+  register: new_list_of_pubkeys
+
+- name: Confirm that we've restored all the pubkeys
+  assert:
+    that:
+      - 'list_of_pubkeys["stdout"] == new_list_of_pubkeys["stdout"]'

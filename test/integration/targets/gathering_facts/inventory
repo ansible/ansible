@@ -1,0 +1,2 @@
+[local]
+facthost[0:26] ansible_connection=local ansible_python_interpreter="{{ ansible_playbook_python }}"

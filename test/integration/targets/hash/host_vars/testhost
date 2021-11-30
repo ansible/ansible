@@ -1,0 +1,2 @@
+test_hash:
+  host_vars_testhost: "this is in host_vars/testhost"

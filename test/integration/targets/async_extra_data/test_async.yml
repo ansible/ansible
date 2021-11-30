@@ -1,0 +1,10 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+  # make sure non-JSON data before module output is ignored
+  - name: async ping wrapped in extra junk
+    junkping:
+    async: 10
+    poll: 1
+    register: result
+  - debug: var=result

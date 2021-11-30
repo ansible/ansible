@@ -1,0 +1,46 @@
+# Test code for the getent module.
+# (c) 2017, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+- name: check for getent command
+  shell: which getent
+  failed_when: False
+  register: getent_check
+##
+## getent
+##
+- block:
+    - name: run getent with specified service
+      getent:
+          database: passwd
+          key: root
+          service: files
+      register: getent_test0
+      when: ansible_system != 'FreeBSD' and ansible_distribution != 'Alpine'
+    - name: run getent w/o specified service (FreeBSD)
+      getent:
+          database: passwd
+          key: root
+      register: getent_test0
+      when: ansible_system == 'FreeBSD' or ansible_distribution == 'Alpine'
+    - debug: var=getent_test0
+    - name: validate results
+      assert:
+          that:
+              - 'getent_passwd is defined'
+              - 'getent_passwd.root is defined'
+              - 'getent_passwd.root|length == 6'
+  when: getent_check.rc == 0

@@ -1,0 +1,40 @@
+- hosts: localhost
+  gather_facts: false
+  handlers:
+    - include_tasks:
+        file: include_me_listen.yml
+      listen:
+        - include_me_listen
+
+    - name: Include Me Notify
+      include_tasks: include_me_notify.yml
+
+  tasks:
+    - name: Include me
+      include_tasks: include_me.yml
+      args:
+        apply:
+          tags:
+            - bar
+      debugger: ~
+      ignore_errors: false
+      loop:
+        - 1
+      loop_control:
+        loop_var: loopy
+      no_log: false
+      register: this_isnt_useful
+      run_once: true
+      tags:
+        - foo
+      vars:
+        baz: qux
+      when: true
+
+    - command: "true"
+      notify:
+        - include_me_listen
+
+    - command: "true"
+      notify:
+        - Include Me Notify

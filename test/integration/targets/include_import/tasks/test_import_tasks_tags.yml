@@ -1,0 +1,23 @@
+- name: Test import_tasks using tags
+  hosts: testhost
+
+  tasks:
+    - name: Import tasks1.yml
+      import_tasks: tasks1.yml
+
+    - name: Import tasks4.yml using tag on import task
+      import_tasks: tasks4.yml
+      tags:
+        - canary1
+
+    - name: Import tasks2.yml
+      import_tasks: tasks2.yml
+
+    - name: Assert that appropriate tasks were run
+      assert:
+        that:
+          - set_in_tasks1
+          - set_in_tasks4
+          - set_in_tasks2 is not defined
+      tags:
+        - validate

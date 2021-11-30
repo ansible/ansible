@@ -1,0 +1,4 @@
+minor_changes:
+  - ansible-test - Declare public dependencies of ansible-core and use to limit unguarded imports in plugins.
+  - ansible-test - Requirements for the plugin import test are now frozen.
+  - ansible-test - Update sanity test requirements.

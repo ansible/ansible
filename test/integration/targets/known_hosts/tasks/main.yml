@@ -1,0 +1,377 @@
+# test code for the known_hosts module
+# (c) 2017, Marius Gedminas <marius@gedmin.as>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: copy an existing file in place
+  copy:
+    src: existing_known_hosts
+    dest: "{{ output_dir }}/known_hosts"
+
+# test addition
+
+- name: add a new host in check mode
+  check_mode: yes
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key }}"
+    state: present
+    path: "{{output_dir}}/known_hosts"
+  register: diff
+
+- name: assert that the diff looks as expected (the key was added at the end)
+  assert:
+    that:
+    - 'diff is changed'
+    - 'diff.diff.before_header == diff.diff.after_header == output_dir|expanduser + "/known_hosts"'
+    - 'diff.diff.after.splitlines()[:-1] == diff.diff.before.splitlines()'
+    - 'diff.diff.after.splitlines()[-1] == example_org_rsa_key.strip()'
+
+- name: add a new host
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key }}"
+    state: present
+    path: "{{output_dir}}/known_hosts"
+  register: result
+
+- name: get the file content
+  command: "cat {{output_dir}}/known_hosts"
+  register: known_hosts
+
+- name: assert that the key was added and ordering preserved
+  assert:
+    that:
+    - 'result is changed'
+    - 'known_hosts.stdout_lines[0].startswith("example.com")'
+    - 'known_hosts.stdout_lines[4].startswith("# example.net")'
+    - 'known_hosts.stdout_lines[-1].strip() == example_org_rsa_key.strip()'
+
+# test idempotence of addition
+
+- name: add the same host in check mode
+  check_mode: yes
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key }}"
+    state: present
+    path: "{{output_dir}}/known_hosts"
+  register: check
+
+- name: assert that no changes were expected
+  assert:
+    that:
+    - 'check is not changed'
+    - 'check.diff.before == check.diff.after'
+
+- name: add the same host
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key }}"
+    state: present
+    path: "{{output_dir}}/known_hosts"
+  register: result
+
+- name: get the file content
+  command: "cat {{output_dir}}/known_hosts"
+  register: known_hosts_v2
+
+- name: assert that no changes happened
+  assert:
+    that:
+    - 'result is not changed'
+    - 'result.diff.before == result.diff.after'
+    - 'known_hosts.stdout == known_hosts_v2.stdout'
+
+# test removal
+
+- name: remove the host in check mode
+  check_mode: yes
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key }}"
+    state: absent
+    path: "{{output_dir}}/known_hosts"
+  register: diff
+
+- name: assert that the diff looks as expected (the key was removed)
+  assert:
+    that:
+    - 'diff.diff.before_header == diff.diff.after_header == output_dir|expanduser + "/known_hosts"'
+    - 'diff.diff.before.splitlines()[-1] == example_org_rsa_key.strip()'
+    - 'diff.diff.after.splitlines() == diff.diff.before.splitlines()[:-1]'
+
+- name: remove the host
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key }}"
+    state: absent
+    path: "{{output_dir}}/known_hosts"
+  register: result
+
+- name: get the file content
+  command: "cat {{output_dir}}/known_hosts"
+  register: known_hosts_v3
+
+- name: assert that the key was removed and ordering preserved
+  assert:
+    that:
+    - 'result is changed'
+    - '"example.org" not in known_hosts_v3.stdout'
+    - 'known_hosts_v3.stdout_lines[0].startswith("example.com")'
+    - 'known_hosts_v3.stdout_lines[-1].startswith("# example.net")'
+
+# test idempotence of removal
+
+- name: remove the same host in check mode
+  check_mode: yes
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key }}"
+    state: absent
+    path: "{{output_dir}}/known_hosts"
+  register: check
+
+- name: assert that no changes were expected
+  assert:
+    that:
+    - 'check is not changed'
+    - 'check.diff.before == check.diff.after'
+
+- name: remove the same host
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key }}"
+    state: absent
+    path: "{{output_dir}}/known_hosts"
+  register: result
+
+- name: get the file content
+  command: "cat {{output_dir}}/known_hosts"
+  register: known_hosts_v4
+
+- name: assert that no changes happened
+  assert:
+    that:
+    - 'result is not changed'
+    - 'result.diff.before == result.diff.after'
+    - 'known_hosts_v3.stdout == known_hosts_v4.stdout'
+
+# test addition as hashed_host
+
+- name: add a new hashed host
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key }}"
+    state: present
+    path: "{{output_dir}}/known_hosts"
+    hash_host: yes
+  register: result
+
+- name: get the file content
+  command: "cat {{output_dir}}/known_hosts"
+  register: known_hosts_v5
+
+- name: assert that the key was added and ordering preserved
+  assert:
+    that:
+    - 'result is changed'
+    - 'known_hosts_v5.stdout_lines[0].startswith("example.com")'
+    - 'known_hosts_v5.stdout_lines[4].startswith("# example.net")'
+    - 'known_hosts_v5.stdout_lines[-1].strip().startswith("|1|")'
+    - 'known_hosts_v5.stdout_lines[-1].strip().endswith(example_org_rsa_key.strip().split()[-1])'
+
+# test idempotence of hashed addition
+
+- name: add the same host hashed
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key }}"
+    state: present
+    path: "{{output_dir}}/known_hosts"
+    hash_host: yes
+  register: result
+
+- name: get the file content
+  command: "cat {{output_dir}}/known_hosts"
+  register: known_hosts_v6
+
+- name: assert that no changes happened
+  assert:
+    that:
+    - 'result is not changed'
+    - 'result.diff.before == result.diff.after'
+    - 'known_hosts_v5.stdout == known_hosts_v6.stdout'
+
+# test hashed removal
+
+- name: remove the hashed host
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key }}"
+    state: absent
+    path: "{{output_dir}}/known_hosts"
+  register: result
+
+- name: get the file content
+  command: "cat {{output_dir}}/known_hosts"
+  register: known_hosts_v7
+
+- name: assert that the key was removed and ordering preserved
+  assert:
+    that:
+    - 'result is changed'
+    - 'example_org_rsa_key.strip().split()[-1] not in known_hosts_v7.stdout'
+    - 'known_hosts_v7.stdout_lines[0].startswith("example.com")'
+    - 'known_hosts_v7.stdout_lines[-1].startswith("# example.net")'
+
+# test idempotence of removal
+
+- name: remove the same hashed host
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key }}"
+    state: absent
+    path: "{{output_dir}}/known_hosts"
+  register: result
+
+- name: get the file content
+  command: "cat {{output_dir}}/known_hosts"
+  register: known_hosts_v8
+
+- name: assert that no changes happened
+  assert:
+    that:
+    - 'result is not changed'
+    - 'result.diff.before == result.diff.after'
+    - 'known_hosts_v7.stdout == known_hosts_v8.stdout'
+
+# test roundtrip plaintext => hashed => plaintext
+# The assertions are rather relaxed, because most of this hash been tested previously
+
+- name: add a new host
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key }}"
+    state: present
+    path: "{{output_dir}}/known_hosts"
+
+- name: get the file content
+  command: "cat {{output_dir}}/known_hosts"
+  register: known_hosts_v8
+
+- name: assert the plaintext host is there
+  assert:
+    that:
+      - 'known_hosts_v8.stdout_lines[-1].strip() == example_org_rsa_key.strip()'
+
+- name: update the host to hashed mode
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key }}"
+    state: present
+    path: "{{output_dir}}/known_hosts"
+    hash_host: true
+
+- name: get the file content
+  command: "cat {{output_dir}}/known_hosts"
+  register: known_hosts_v9
+
+- name: assert the hashed host is there
+  assert:
+    that:
+      - 'known_hosts_v9.stdout_lines[-1].strip().startswith("|1|")'
+      - 'known_hosts_v9.stdout_lines[-1].strip().endswith(example_org_rsa_key.strip().split()[-1])'
+
+- name: downgrade the host to plaintext mode
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key }}"
+    state: present
+    path: "{{output_dir}}/known_hosts"
+
+- name: get the file content
+  command: "cat {{output_dir}}/known_hosts"
+  register: known_hosts_v10
+
+- name: assert the plaintext host is there
+  assert:
+    that:
+      - 'known_hosts_v10.stdout_lines[5].strip() == example_org_rsa_key.strip()'
+
+# ... and remove the host again for the next test
+
+- name: copy an existing file in place
+  copy:
+    src: existing_known_hosts
+    dest: "{{ output_dir }}/known_hosts"
+
+# Test key changes
+
+- name: add a hashed host
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key }}"
+    state: present
+    path: "{{output_dir}}/known_hosts"
+    hash_host: true
+
+- name: change the key of a hashed host
+  known_hosts:
+    name: example.org
+    key: "{{ example_org_rsa_key.strip()[:-7] + 'RANDOM=' }}"
+    state: present
+    path: "{{output_dir}}/known_hosts"
+    hash_host: true
+
+- name: get the file content
+  command: "cat {{output_dir}}/known_hosts"
+  register: known_hosts_v11
+
+- name: assert the change took place and the key got modified
+  assert:
+    that:
+      - 'known_hosts_v11.stdout_lines[-1].strip().endswith("RANDOM=")'
+
+# test errors
+
+- name: Try using a comma separated list of hosts
+  known_hosts:
+    name: example.org,acme.com
+    key: "{{ example_org_rsa_key }}"
+    path: "{{output_dir}}/known_hosts"
+  ignore_errors: yes
+  register: result
+
+- name: Assert that error message was displayed
+  assert:
+    that:
+      - result is failed
+      - result.msg == 'Comma separated list of names is not supported. Please pass a single name to lookup in the known_hosts file.'
+
+- name: Try using a name that does not match the key
+  known_hosts:
+    name: example.com
+    key: "{{ example_org_rsa_key }}"
+    path: "{{output_dir}}/known_hosts"
+  ignore_errors: yes
+  register: result
+
+- name: Assert that name checking failed with error message
+  assert:
+    that:
+      - result is failed
+      - result.msg == 'Host parameter does not match hashed host field in supplied key'

@@ -1,0 +1,320 @@
+- name: Verify unique's fallback's exception throwing for case_sensitive=False
+  set_fact:
+    unique_fallback_exc1: '{{ [{"foo": "bar", "moo": "cow"}]|unique(case_sensitive=False) }}'
+  ignore_errors: true
+  tags: unique
+  register: unique_fallback_exc1_res
+
+- name: Verify unique's fallback's exception throwing for a Hashable thing that triggers TypeError
+  set_fact:
+    unique_fallback_exc2: '{{ True|unique }}'
+  ignore_errors: true
+  tags: unique
+  register: unique_fallback_exc2_res
+
+- name: Verify unique
+  tags: unique
+  assert:
+    that:
+      - '[1,2,3,4,4,3,2,1]|unique == [1,2,3,4]'
+      - '["a", "b", "a", "b"]|unique == ["a", "b"]'
+      - '[{"foo": "bar", "moo": "cow"}, {"foo": "bar", "moo": "cow"}, {"haha": "bar", "moo": "mar"}]|unique == [{"foo": "bar", "moo": "cow"}, {"haha": "bar", "moo": "mar"}]'
+      - '[{"foo": "bar", "moo": "cow"}, {"foo": "bar", "moo": "mar"}]|unique == [{"foo": "bar", "moo": "cow"}, {"foo": "bar", "moo": "mar"}]'
+      - '{"foo": "bar", "moo": "cow"}|unique == ["foo", "moo"]'
+      - '"foo"|unique|sort|join == "fo"'
+      - '[1,2,3,4,5]|unique == [1,2,3,4,5]'
+      - unique_fallback_exc1_res is failed
+      - unique_fallback_exc2_res is failed
+      - "\"'bool' object is not iterable\" in unique_fallback_exc2_res.msg"
+
+# `unique` will fall back to a custom implementation if the Jinja2 version is
+# too old to support `jinja2.filters.do_unique`. However, the built-in fallback
+# is quite different by default. Namely, it ignores the case-sensitivity
+# setting. This means running:
+#    ['a', 'b', 'A', 'B']|unique
+# ... will give a different result for someone running Jinja 2.9 vs 2.10 when
+# do_unique was added. So here, we do a test to see if we have `do_unique`. If
+# we do, then we do another test to make sure attribute and case_sensitive
+# work on it.
+- name: Test for do_unique
+  shell: "{{ansible_python_interpreter}} -c 'from jinja2 import filters; print(\"do_unique\" in dir(filters))'"
+  tags: unique
+  register: do_unique_res
+
+- name: Verify unique some more
+  tags: unique
+  assert:
+    that:
+      - '["a", "b", "A", "B"]|unique(case_sensitive=True) == ["a", "b", "A", "B"]'
+      - '[{"foo": "bar", "moo": "cow"}, {"foo": "bar", "moo": "mar"}]|unique(attribute="foo") == [{"foo": "bar", "moo": "cow"}]'
+      - '["a", "b", "A", "B"]|unique == ["a", "b"]' # defaults to case_sensitive=False
+      - "'cannot fall back' in unique_fallback_exc1_res.msg"
+  when: do_unique_res.stdout == 'True'
+
+- name: Verify unique some more
+  tags: unique
+  assert:
+    that:
+      - "'does not support case_sensitive' in unique_fallback_exc1_res.msg"
+  when: do_unique_res.stdout == 'False'
+
+- name: Verify intersect
+  tags: intersect
+  assert:
+    that:
+      - '[1,2,3]|intersect([4,5,6]) == []'
+      - '[1,2,3]|intersect([3,4,5,6]) == [3]'
+      - '[1,2,3]|intersect([3,2,1]) == [1,2,3]'
+      - '(1,2,3)|intersect((4,5,6))|list == []'
+      - '(1,2,3)|intersect((3,4,5,6))|list == [3]'
+      - '["a","A","b"]|intersect(["B","c","C"]) == []'
+      - '["a","A","b"]|intersect(["b","B","c","C"]) == ["b"]'
+      - '["a","A","b"]|intersect(["b","A","a"]) == ["a","A","b"]'
+      - '("a","A","b")|intersect(("B","c","C"))|list == []'
+      - '("a","A","b")|intersect(("b","B","c","C"))|list == ["b"]'
+
+- name: Verify difference
+  tags: difference
+  assert:
+    that:
+      - '[1,2,3]|difference([4,5,6]) == [1,2,3]'
+      - '[1,2,3]|difference([3,4,5,6]) == [1,2]'
+      - '[1,2,3]|difference([3,2,1]) == []'
+      - '(1,2,3)|difference((4,5,6))|list == [1,2,3]'
+      - '(1,2,3)|difference((3,4,5,6))|list == [1,2]'
+      - '["a","A","b"]|difference(["B","c","C"]) == ["a","A","b"]'
+      - '["a","A","b"]|difference(["b","B","c","C"]) == ["a","A"]'
+      - '["a","A","b"]|difference(["b","A","a"]) == []'
+      - '("a","A","b")|difference(("B","c","C"))|list|sort(case_sensitive=True) == ["A","a","b"]'
+      - '("a","A","b")|difference(("b","B","c","C"))|list|sort(case_sensitive=True) == ["A","a"]'
+
+- name: Verify symmetric_difference
+  tags: symmetric_difference
+  assert:
+    that:
+      - '[1,2,3]|symmetric_difference([4,5,6]) == [1,2,3,4,5,6]'
+      - '[1,2,3]|symmetric_difference([3,4,5,6]) == [1,2,4,5,6]'
+      - '[1,2,3]|symmetric_difference([3,2,1]) == []'
+      - '(1,2,3)|symmetric_difference((4,5,6))|list == [1,2,3,4,5,6]'
+      - '(1,2,3)|symmetric_difference((3,4,5,6))|list == [1,2,4,5,6]'
+      - '["a","A","b"]|symmetric_difference(["B","c","C"]) == ["a","A","b","B","c","C"]'
+      - '["a","A","b"]|symmetric_difference(["b","B","c","C"]) == ["a","A","B","c","C"]'
+      - '["a","A","b"]|symmetric_difference(["b","A","a"]) == []'
+      - '("a","A","b")|symmetric_difference(("B","c","C"))|list|sort(case_sensitive=True) == ["A","B","C","a","b","c"]'
+      - '("a","A","b")|symmetric_difference(("b","B","c","C"))|list|sort(case_sensitive=True) == ["A","B","C","a","c"]'
+
+- name: Verify union
+  tags: union
+  assert:
+    that:
+      - '[1,2,3]|union([4,5,6]) == [1,2,3,4,5,6]'
+      - '[1,2,3]|union([3,4,5,6]) == [1,2,3,4,5,6]'
+      - '[1,2,3]|union([3,2,1]) == [1,2,3]'
+      - '(1,2,3)|union((4,5,6))|list == [1,2,3,4,5,6]'
+      - '(1,2,3)|union((3,4,5,6))|list == [1,2,3,4,5,6]'
+      - '["a","A","b"]|union(["B","c","C"]) == ["a","A","b","B","c","C"]'
+      - '["a","A","b"]|union(["b","B","c","C"]) == ["a","A","b","B","c","C"]'
+      - '["a","A","b"]|union(["b","A","a"]) == ["a","A","b"]'
+      - '("a","A","b")|union(("B","c","C"))|list|sort(case_sensitive=True) == ["A","B","C","a","b","c"]'
+      - '("a","A","b")|union(("b","B","c","C"))|list|sort(case_sensitive=True) == ["A","B","C","a","b","c"]'
+
+- name: Verify min
+  tags: min
+  assert:
+    that:
+      - '[1000,-99]|min == -99'
+      - '[0,4]|min == 0'
+
+- name: Verify max
+  tags: max
+  assert:
+    that:
+      - '[1000,-99]|max == 1000'
+      - '[0,4]|max == 4'
+
+- name: Verify logarithm on a value of invalid type
+  set_fact:
+    logarithm_exc1: '{{ "yo"|log }}'
+  ignore_errors: true
+  tags: logarithm
+  register: logarithm_exc1_res
+
+- name: Verify logarithm (which is passed to Jinja as "log" because consistency is boring)
+  tags: logarithm
+  assert:
+    that:
+      - '1|log == 0.0'
+      - '100|log(10) == 2.0'
+      - '100|log(10) == 2.0'
+      - '21|log(21) == 1.0'
+      - '(2.3|log(42)|string).startswith("0.222841")'
+      - '(21|log(42)|string).startswith("0.814550")'
+      - logarithm_exc1_res is failed
+      - '"can only be used on numbers" in logarithm_exc1_res.msg'
+
+- name: Verify power on a value of invalid type
+  set_fact:
+    power_exc1: '{{ "yo"|pow(4) }}'
+  ignore_errors: true
+  tags: power
+  register: power_exc1_res
+
+- name: Verify power (which is passed to Jinja as "pow" because consistency is boring)
+  tags: power
+  assert:
+    that:
+      - '2|pow(4) == 16.0'
+      - power_exc1_res is failed
+      - '"can only be used on numbers" in power_exc1_res.msg'
+
+- name: Verify inversepower on a value of invalid type
+  set_fact:
+    inversepower_exc1: '{{ "yo"|root }}'
+  ignore_errors: true
+  tags: inversepower
+  register: inversepower_exc1_res
+
+- name: Verify inversepower (which is passed to Jinja as "root" because consistency is boring)
+  tags: inversepower
+  assert:
+    that:
+      - '4|root == 2.0'
+      - '4|root(2) == 2.0'
+      - '9|root(1) == 9.0'
+      - '(9|root(6)|string).startswith("1.4422495")'
+      - inversepower_exc1_res is failed
+      - '"can only be used on numbers" in inversepower_exc1_res.msg'
+
+- name: Verify human_readable on invalid input
+  set_fact:
+    human_readable_exc1: '{{ "monkeys"|human_readable }}'
+  ignore_errors: true
+  tags: human_readable
+  register: human_readable_exc1_res
+
+- name: Verify human_readable
+  tags: human_readable
+  assert:
+    that:
+      - '"1.00 Bytes" == 1|human_readable'
+      - '"1.00 bits" == 1|human_readable(isbits=True)'
+      - '"10.00 KB" == 10240|human_readable'
+      - '"97.66 MB" == 102400000|human_readable'
+      - '"0.10 GB" == 102400000|human_readable(unit="G")'
+      - '"0.10 Gb" == 102400000|human_readable(isbits=True, unit="G")'
+      - human_readable_exc1_res is failed
+      - '"failed on bad input" in human_readable_exc1_res.msg'
+
+- name: Verify human_to_bytes
+  tags: human_to_bytes
+  assert:
+    that:
+      - "{{'0'|human_to_bytes}}        == 0"
+      - "{{'0.1'|human_to_bytes}}      == 0"
+      - "{{'0.9'|human_to_bytes}}      == 1"
+      - "{{'1'|human_to_bytes}}        == 1"
+      - "{{'10.00 KB'|human_to_bytes}} == 10240"
+      - "{{   '11 MB'|human_to_bytes}} == 11534336"
+      - "{{  '1.1 GB'|human_to_bytes}} == 1181116006"
+      - "{{'10.00 Kb'|human_to_bytes(isbits=True)}} == 10240"
+
+- name: Verify human_to_bytes (bad string)
+  set_fact:
+    bad_string: "{{ '10.00 foo' | human_to_bytes }}"
+  ignore_errors: yes
+  tags: human_to_bytes
+  register: _human_bytes_test
+
+- name: Verify human_to_bytes (bad string)
+  tags: human_to_bytes
+  assert:
+    that: "{{_human_bytes_test.failed}}"
+
+- name: Verify that union can be chained
+  tags: union
+  vars:
+    unions: '{{ [1,2,3]|union([4,5])|union([6,7]) }}'
+  assert:
+    that:
+      - "unions|type_debug == 'list'"
+      - "unions|length == 7"
+
+- name: Test union with unhashable item
+  tags: union
+  vars:
+    unions: '{{ [1,2,3]|union([{}]) }}'
+  assert:
+    that:
+      - "unions|type_debug == 'list'"
+      - "unions|length == 4"
+
+- name: Verify rekey_on_member with invalid "duplicates" kwarg
+  set_fact:
+    rekey_on_member_exc1: '{{ []|rekey_on_member("asdf", duplicates="boo") }}'
+  ignore_errors: true
+  tags: rekey_on_member
+  register: rekey_on_member_exc1_res
+
+- name: Verify rekey_on_member with invalid data
+  set_fact:
+    rekey_on_member_exc2: '{{ "minkeys"|rekey_on_member("asdf") }}'
+  ignore_errors: true
+  tags: rekey_on_member
+  register: rekey_on_member_exc2_res
+
+- name: Verify rekey_on_member with partially invalid data (list item is not dict)
+  set_fact:
+    rekey_on_member_exc3: '{{ [True]|rekey_on_member("asdf") }}'
+  ignore_errors: true
+  tags: rekey_on_member
+  register: rekey_on_member_exc3_res
+
+- name: Verify rekey_on_member with partially invalid data (key not in all dicts)
+  set_fact:
+    rekey_on_member_exc4: '{{ [{"foo": "bar", "baz": "buzz"}, {"hello": 8, "different": "haha"}]|rekey_on_member("foo") }}'
+  ignore_errors: true
+  tags: rekey_on_member
+  register: rekey_on_member_exc4_res
+
+- name: Verify rekey_on_member with duplicates and duplicates=error
+  set_fact:
+    rekey_on_member_exc5: '{{ [{"proto": "eigrp", "state": "enabled"}, {"proto": "eigrp", "state": "enabled"}]|rekey_on_member("proto", duplicates="error") }}'
+  ignore_errors: true
+  tags: rekey_on_member
+  register: rekey_on_member_exc5_res
+
+- name: Verify rekey_on_member
+  tags: rekey_on_member
+  assert:
+    that:
+      - rekey_on_member_exc1_res is failed
+      - '"duplicates parameter to rekey_on_member has unknown value" in rekey_on_member_exc1_res.msg'
+      - '[{"proto": "eigrp", "state": "enabled"}, {"proto": "ospf", "state": "enabled"}]|rekey_on_member("proto") == {"eigrp": {"proto": "eigrp", "state": "enabled"}, "ospf": {"proto": "ospf", "state": "enabled"}}'
+      - '{"a": {"proto": "eigrp", "state": "enabled"}, "b": {"proto": "ospf", "state": "enabled"}}|rekey_on_member("proto") == {"eigrp": {"proto": "eigrp", "state": "enabled"}, "ospf": {"proto": "ospf", "state": "enabled"}}'
+      - '[{"proto": "eigrp", "state": "enabled"}, {"proto": "eigrp", "state": "enabled"}]|rekey_on_member("proto", duplicates="overwrite") == {"eigrp": {"proto": "eigrp", "state": "enabled"}}'
+      - rekey_on_member_exc2_res is failed
+      - '"Type is not a valid list, set, or dict" in rekey_on_member_exc2_res.msg'
+      - rekey_on_member_exc3_res is failed
+      - '"List item is not a valid dict" in rekey_on_member_exc3_res.msg'
+      - rekey_on_member_exc4_res is failed
+      - '"was not found" in rekey_on_member_exc4_res.msg'
+      - rekey_on_member_exc5_res is failed
+      - '"is not unique, cannot correctly turn into dict" in rekey_on_member_exc5_res.msg'
+
+- name: test undefined positional args for rekey_on_member are properly handled
+  vars:
+    all_vars: "{{ hostvars[inventory_hostname] }}"
+    test_var: "{{ all_vars.foo }}"
+  block:
+    - include_vars:
+        file: defined_later.yml
+    - assert:
+        that: "test_var == 'test'"
+    - assert:
+        that: "rekeyed == {'value': {'test': 'value'}}"
+
+# TODO: For some reason, the coverage tool isn't accounting for the last test
+# so add another "last test" to fake it...
+- assert:
+    that:
+      - true

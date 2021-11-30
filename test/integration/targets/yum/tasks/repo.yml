@@ -1,0 +1,729 @@
+- block:
+    - name: Install dinginessentail-1.0-1
+      yum:
+        name: dinginessentail-1.0-1
+        state: present
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+    # ============================================================================
+    - name: Install dinginessentail-1.0-1 again
+      yum:
+        name: dinginessentail-1.0-1
+        state: present
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+    # ============================================================================
+    - name: Install dinginessentail-1:1.0-2
+      yum:
+        name: "dinginessentail-1:1.0-2.{{ ansible_architecture }}"
+        state: present
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+
+    - name: Remove dinginessentail
+      yum:
+        name: dinginessentail
+        state: absent
+    # ============================================================================
+    - name: Downgrade dinginessentail
+      yum:
+        name: dinginessentail-1.0-1
+        state: present
+        allow_downgrade: yes
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+    # ============================================================================
+    - name: Update to the latest dinginessentail
+      yum:
+        name: dinginessentail
+        state: latest
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.1-1')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+    # ============================================================================
+    - name: Install dinginessentail-1.0-1 from a file (higher version is already installed)
+      yum:
+        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
+        state: present
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.1-1')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+
+    - name: Remove dinginessentail
+      yum:
+        name: dinginessentail
+        state: absent
+    # ============================================================================
+    - name: Install dinginessentail-1.0-1 from a file
+      yum:
+        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
+        state: present
+        disable_gpg_check: true
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+    # ============================================================================
+    - name: Install dinginessentail-1.0-1 from a file again
+      yum:
+        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
+        state: present
+        disable_gpg_check: true
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+    # ============================================================================
+    - name: Install dinginessentail-1.0-2 from a file
+      yum:
+        name: "{{ repodir }}/dinginessentail-1.0-2.{{ ansible_architecture }}.rpm"
+        state: present
+        disable_gpg_check: true
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+    # ============================================================================
+    - name: Install dinginessentail-1.0-2 from a file again
+      yum:
+        name: "{{ repodir }}/dinginessentail-1.0-2.{{ ansible_architecture }}.rpm"
+        state: present
+        disable_gpg_check: true
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+    # ============================================================================
+    - name: Try to downgrade dinginessentail without allow_downgrade being set
+      yum:
+        name: dinginessentail-1.0-1
+        state: present
+        allow_downgrade: no
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+    # ============================================================================
+    - name: Update dinginessentail with update_only set
+      yum:
+        name: dinginessentail
+        state: latest
+        update_only: yes
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.1-1')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+
+    - name: Remove dinginessentail
+      yum:
+        name: dinginessentail
+        state: absent
+    # ============================================================================
+    - name: Try to update dinginessentail which is not installed, update_only is set
+      yum:
+        name: dinginessentail
+        state: latest
+        update_only: yes
+      register: yum_result
+      ignore_errors: yes
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+      ignore_errors: yes
+
+    - name: Verify installation
+      assert:
+        that:
+            - "rpm_result.rc == 1"
+            - "yum_result.rc == 0"
+            - "not yum_result.changed"
+            - "not yum_result is failed"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+    # ============================================================================
+    - name: Try to install incompatible arch
+      yum:
+        name: "{{ repodir_ppc64 }}/dinginessentail-1.0-1.ppc64.rpm"
+        state: present
+      register: yum_result
+      ignore_errors: yes
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+      ignore_errors: yes
+
+    - name: Verify installation
+      assert:
+        that:
+            - "rpm_result.rc == 1"
+            - "yum_result.rc == 1"
+            - "not yum_result.changed"
+            - "yum_result is failed"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+    # ============================================================================
+    - name: Make sure latest dinginessentail is installed
+      yum:
+        name: dinginessentail
+        state: latest
+
+    - name: Downgrade dinginessentail using rpm file
+      yum:
+        name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
+        state: present
+        allow_downgrade: yes
+        disable_gpg_check: yes
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+    # ============================================================================
+    - block:
+      - name: make sure dinginessentail is not installed
+        yum:
+          name: dinginessentail
+          state: absent
+
+      - name: install dinginessentail both archs
+        yum:
+          name: "{{ pkgs }}"
+          state: present
+          disable_gpg_check: true
+        vars:
+          pkgs:
+            - "{{ repodir }}/dinginessentail-1.1-1.x86_64.rpm"
+            - "{{ repodir_i686 }}/dinginessentail-1.1-1.i686.rpm"
+
+      - name: try to install lower version of dinginessentail from rpm file, without allow_downgrade, just one arch
+        yum:
+          name: "{{ repodir_i686 }}/dinginessentail-1.0-1.i686.rpm"
+          state: present
+        register: yum_result
+
+      - name: check dinginessentail with rpm
+        shell: rpm -q dinginessentail
+        register: rpm_result
+
+      - name: verify installation
+        assert:
+          that:
+              - "not yum_result.changed"
+              - "rpm_result.stdout_lines[0].startswith('dinginessentail-1.1-1')"
+              - "rpm_result.stdout_lines[1].startswith('dinginessentail-1.1-1')"
+
+      - name: verify yum module outputs
+        assert:
+          that:
+              - "'msg' in yum_result"
+              - "'rc' in yum_result"
+              - "'results' in yum_result"
+      when: ansible_architecture == "x86_64"
+    # ============================================================================
+    - block:
+      - name: make sure dinginessentail is not installed
+        yum:
+          name: dinginessentail
+          state: absent
+
+      - name: install dinginessentail both archs
+        yum:
+          name: "{{ pkgs }}"
+          state: present
+          disable_gpg_check: true
+        vars:
+          pkgs:
+            - "{{ repodir }}/dinginessentail-1.0-1.x86_64.rpm"
+            - "{{ repodir_i686 }}/dinginessentail-1.0-1.i686.rpm"
+
+      - name: Update both arch in one task using rpm files
+        yum:
+          name: "{{ repodir }}/dinginessentail-1.1-1.x86_64.rpm,{{ repodir_i686 }}/dinginessentail-1.1-1.i686.rpm"
+          state: present
+          disable_gpg_check: yes
+        register: yum_result
+
+      - name: check dinginessentail with rpm
+        shell: rpm -q dinginessentail
+        register: rpm_result
+
+      - name: verify installation
+        assert:
+          that:
+              - "yum_result.changed"
+              - "rpm_result.stdout_lines[0].startswith('dinginessentail-1.1-1')"
+              - "rpm_result.stdout_lines[1].startswith('dinginessentail-1.1-1')"
+
+      - name: verify yum module outputs
+        assert:
+          that:
+              - "'msg' in yum_result"
+              - "'rc' in yum_result"
+              - "'results' in yum_result"
+      when: ansible_architecture == "x86_64"
+    # ============================================================================
+  always:
+    - name: Clean up
+      yum:
+        name: dinginessentail
+        state: absent
+
+# FIXME: dnf currently doesn't support epoch as part of it's pkg_spec for
+#        finding install candidates
+#         https://bugzilla.redhat.com/show_bug.cgi?id=1619687
+- block:
+    - name: Install 1:dinginessentail-1.0-2
+      yum:
+        name: "1:dinginessentail-1.0-2.{{ ansible_architecture }}"
+        state: present
+        disable_gpg_check: true
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+  always:
+    - name: Clean up
+      yum:
+        name: dinginessentail
+        state: absent
+
+  when: ansible_pkg_mgr == 'yum'
+
+# DNF1 (Fedora < 26) had some issues:
+# - did not accept architecture tag as valid component of a package spec unless
+#   installing a file (i.e. can't search the repo)
+# - doesn't handle downgrade transactions via the API properly, marks it as a
+#   conflict
+#
+# NOTE: Both DNF1 and Fedora < 26 have long been EOL'd by their respective
+#       upstreams
+- block:
+    # ============================================================================
+    - name: Install dinginessentail-1.0-2
+      yum:
+        name: "dinginessentail-1.0-2.{{ ansible_architecture }}"
+        state: present
+        disable_gpg_check: true
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+
+    - name: Install dinginessentail-1.0-2 again
+      yum:
+        name: dinginessentail-1.0-2
+        state: present
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "not yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-2')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+  always:
+    - name: Clean up
+      yum:
+        name: dinginessentail
+        state: absent
+  when: not (ansible_distribution == "Fedora" and ansible_distribution_major_version|int < 26)
+
+# https://github.com/ansible/ansible/issues/47689
+- block:
+    - name: Install dinginessentail == 1.0
+      yum:
+        name: "dinginessentail == 1.0"
+        state: present
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0-1')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+  always:
+    - name: Clean up
+      yum:
+        name: dinginessentail
+        state: absent
+
+  when: ansible_pkg_mgr == 'yum'
+
+
+# https://github.com/ansible/ansible/pull/54603
+- block:
+    - name: Install dinginessentail < 1.1
+      yum:
+        name: "dinginessentail < 1.1"
+        state: present
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.0')"
+
+    - name: Install dinginessentail >= 1.1
+      yum:
+        name: "dinginessentail >= 1.1"
+        state: present
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify installation
+      assert:
+        that:
+            - "yum_result.changed"
+            - "rpm_result.stdout.startswith('dinginessentail-1.1')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+
+  always:
+    - name: Clean up
+      yum:
+        name: dinginessentail
+        state: absent
+
+  when: ansible_pkg_mgr == 'yum'
+
+# https://github.com/ansible/ansible/issues/45250
+- block:
+    - name: Install dinginessentail-1.0, dinginessentail-olive-1.0, landsidescalping-1.0
+      yum:
+        name: "dinginessentail-1.0,dinginessentail-olive-1.0,landsidescalping-1.0"
+        state: present
+
+    - name: Upgrade dinginessentail*
+      yum:
+        name: dinginessentail*
+        state: latest
+      register: yum_result
+
+    - name: Check dinginessentail with rpm
+      shell: rpm -q dinginessentail
+      register: rpm_result
+
+    - name: Verify update of dinginessentail
+      assert:
+        that:
+            - "rpm_result.stdout.startswith('dinginessentail-1.1-1')"
+
+    - name: Check dinginessentail-olive with rpm
+      shell: rpm -q dinginessentail-olive
+      register: rpm_result
+
+    - name: Verify update of dinginessentail-olive
+      assert:
+        that:
+            - "rpm_result.stdout.startswith('dinginessentail-olive-1.1-1')"
+
+    - name: Check landsidescalping with rpm
+      shell: rpm -q landsidescalping
+      register: rpm_result
+
+    - name: Verify landsidescalping did NOT get updated
+      assert:
+        that:
+            - "rpm_result.stdout.startswith('landsidescalping-1.0-1')"
+
+    - name: Verify yum module outputs
+      assert:
+        that:
+            - "yum_result is changed"
+            - "'msg' in yum_result"
+            - "'rc' in yum_result"
+            - "'results' in yum_result"
+  always:
+    - name: Clean up
+      yum:
+        name: dinginessentail,dinginessentail-olive,landsidescalping
+        state: absent
+
+- block:
+    - yum:
+        name: dinginessentail
+        state: present
+
+    - yum:
+        list: dinginessentail*
+      register: list_out
+
+    - set_fact:
+        passed: true
+      loop: "{{ list_out.results }}"
+      when: item.yumstate == 'installed'
+
+    - name: Test that there is yumstate=installed in the result
+      assert:
+        that:
+          - passed is defined
+  always:
+    - name: Clean up
+      yum:
+        name: dinginessentail
+        state: absent

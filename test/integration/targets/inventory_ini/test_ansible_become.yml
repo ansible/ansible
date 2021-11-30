@@ -1,0 +1,11 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: Test proper bool evaluation of ansible_become (issue #70476)
+      shell: whoami
+      register: output
+
+    - name: Assert we are NOT the become user specified
+      assert:
+        that:
+          - "output.stdout != 'ansibletest1'"

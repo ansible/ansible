@@ -1,0 +1,105 @@
+You can install a collection from a git repository instead of from Galaxy or Automation Hub. As a developer, installing from a git repository lets you review your collection before you create the tarball and publish the collection. As a user, installing from a git repository lets you use collections or versions that are not in Galaxy or Automation Hub yet.
+
+The repository must contain a ``galaxy.yml`` or ``MANIFEST.json`` file. This file provides metadata such as the version number and namespace of the collection.
+
+Installing a collection from a git repository at the command line
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To install a collection from a git repository at the command line, use the URI of the repository instead of a collection name or path to a ``tar.gz`` file.  Prefix the URI with ``git+`` (or with ``git@`` to use a private repository with ssh authentication). You can specify a branch, commit, or tag using the comma-separated `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ syntax.
+
+For example:
+
+.. code-block:: bash
+
+   # Install a collection in a repository using the latest commit on the branch 'devel'
+   ansible-galaxy collection install git+https://github.com/organization/repo_name.git,devel
+
+   # Install a collection from a private github repository
+   ansible-galaxy collection install git@github.com:organization/repo_name.git
+
+   # Install a collection from a local git repository
+   ansible-galaxy collection install git+file:///home/user/path/to/repo_name.git
+
+.. warning::
+
+   Embedding credentials into a git URI is not secure. Use safe authentication options to prevent your credentials from being exposed in logs or elsewhere. 
+   
+   * Use `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_ authentication
+   * Use `netrc <https://linux.die.net/man/5/netrc>`_ authentication
+   * Use `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_ in your git configuration
+   * Use `url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ in your git configuration
+
+Specifying the collection location within the git repository
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When you install a collection from a git repository, Ansible uses the collection ``galaxy.yml`` or ``MANIFEST.json`` metadata file to build the collection. By default, Ansible searches two paths for collection ``galaxy.yml`` or ``MANIFEST.json`` metadata files:
+
+* The top level of the repository.
+* Each directory in the repository path (one level deep).
+
+If a ``galaxy.yml`` or ``MANIFEST.json`` file exists in the top level of the repository, Ansible uses the collection metadata in that file to install an individual collection.
+
+.. code-block:: text
+
+   ├── galaxy.yml
+   ├── plugins/
+   │   ├── lookup/
+   │   ├── modules/
+   │   └── module_utils/
+   └─── README.md
+
+If a ``galaxy.yml`` or ``MANIFEST.json`` file exists in one or more directories in the repository path (one level deep), Ansible installs each directory with a metadata file as a collection. For example, Ansible installs both collection1 and collection2 from this repository structure by default:
+
+.. code-block:: text
+
+   ├── collection1
+   │   ├── docs/
+   │   ├── galaxy.yml
+   │   └── plugins/
+   │       ├── inventory/
+   │       └── modules/
+   └── collection2
+       ├── docs/
+       ├── galaxy.yml
+       ├── plugins/
+       |   ├── filter/
+       |   └── modules/
+       └── roles/
+
+If you have a different repository structure or only want to install a subset of collections, you can add a fragment to the end of your URI (before the optional comma-separated version) to indicate the location of the metadata file or files. The path should be a directory, not the metadata file itself. For example, to install only collection2 from the example repository with two collections:
+
+.. code-block:: text
+
+   ansible-galaxy collection install git+https://github.com/organization/repo_name.git#/collection2/
+
+In some repositories, the main directory corresponds to the namespace:
+
+.. code-block:: text
+
+   namespace/
+   ├── collectionA/
+   |   ├── docs/
+   |   ├── galaxy.yml
+   |   ├── plugins/
+   |   │   ├── README.md
+   |   │   └── modules/
+   |   ├── README.md
+   |   └── roles/
+   └── collectionB/
+       ├── docs/
+       ├── galaxy.yml
+       ├── plugins/
+       │   ├── connection/
+       │   └── modules/
+       ├── README.md
+       └── roles/
+
+You can install all collections in this repository, or install one collection from a specific commit:
+
+.. code-block:: bash
+
+   # Install all collections in the namespace
+   ansible-galaxy collection install git+https://github.com/organization/repo_name.git#/namespace/
+
+   # Install an individual collection using a specific commit
+   ansible-galaxy collection install git+https://github.com/organization/repo_name.git#/namespace/collectionA/,7b60ddc245bc416b72d8ea6ed7b799885110f5e5

@@ -1,0 +1,8 @@
+- name: record constraints.txt path on remote host
+  set_fact:
+    remote_constraints: "{{ remote_tmp_dir }}/constraints.txt"
+
+- name: copy constraints.txt to remote host
+  copy:
+    src: "{{ role_path }}/../../../lib/ansible_test/_data/requirements/constraints.txt"
+    dest: "{{ remote_constraints }}"

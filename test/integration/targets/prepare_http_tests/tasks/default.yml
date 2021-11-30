@@ -1,0 +1,64 @@
+- name: RedHat - Enable the dynamic CA configuration feature
+  command: update-ca-trust force-enable
+  when: ansible_os_family == 'RedHat'
+
+- name: RedHat - Retrieve test cacert
+  get_url:
+    url: "http://ansible.http.tests/cacert.pem"
+    dest: "/etc/pki/ca-trust/source/anchors/ansible.pem"
+  when: ansible_os_family == 'RedHat'
+
+- name: Get client cert/key
+  get_url:
+    url: "http://ansible.http.tests/{{ item }}"
+    dest: "{{ remote_tmp_dir }}/{{ item }}"
+  with_items:
+    - client.pem
+    - client.key
+
+- name: Suse - Retrieve test cacert
+  get_url:
+    url: "http://ansible.http.tests/cacert.pem"
+    dest: "/etc/pki/trust/anchors/ansible.pem"
+  when: ansible_os_family == 'Suse'
+
+- name: Debian/Alpine - Retrieve test cacert
+  get_url:
+    url: "http://ansible.http.tests/cacert.pem"
+    dest: "/usr/local/share/ca-certificates/ansible.crt"
+  when: ansible_os_family in ['Debian', 'Alpine']
+
+- name: Redhat - Update ca trust
+  command: update-ca-trust extract
+  when: ansible_os_family == 'RedHat'
+
+- name: Debian/Alpine/Suse - Update ca certificates
+  command: update-ca-certificates
+  when: ansible_os_family in ['Debian', 'Alpine', 'Suse']
+
+- name: FreeBSD - Retrieve test cacert
+  get_url:
+    url: "http://ansible.http.tests/cacert.pem"
+    dest: "/tmp/ansible.pem"
+  when: ansible_os_family == 'FreeBSD'
+
+- name: FreeBSD - Add cacert to root certificate store
+  blockinfile:
+    path: "/etc/ssl/cert.pem"
+    block: "{{ lookup('file', '/tmp/ansible.pem') }}"
+  when: ansible_os_family == 'FreeBSD'
+
+- name: MacOS - Retrieve test cacert
+  when: ansible_os_family == 'Darwin'
+  block:
+    - uri:
+        url: "http://ansible.http.tests/cacert.pem"
+        return_content: true
+      register: cacert_pem
+
+    - raw: '{{ ansible_python_interpreter }} -c "import ssl; print(ssl.get_default_verify_paths().cafile)"'
+      register: macos_cafile
+
+    - blockinfile:
+        path: "{{ macos_cafile.stdout_lines|first }}"
+        block: "{{ cacert_pem.content }}"

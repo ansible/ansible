@@ -1,0 +1,93 @@
+
+PLAY [testhost] ****************************************************************
+
+TASK [Changed task] ************************************************************
+changed: [testhost]
+
+TASK [Ok task] *****************************************************************
+ok: [testhost]
+
+TASK [Failed task] *************************************************************
+fatal: [testhost]: FAILED! => {"changed": false, "msg": "no reason"}
+...ignoring
+
+TASK [Task with var in name (foo bar)] *****************************************
+changed: [testhost]
+
+TASK [Loop task] ***************************************************************
+changed: [testhost] => (item=foo-1)
+changed: [testhost] => (item=foo-2)
+changed: [testhost] => (item=foo-3)
+
+TASK [debug loop] **************************************************************
+changed: [testhost] => (item=debug-1) => {
+    "msg": "debug-1"
+}
+failed: [testhost] (item=debug-2) => {
+    "msg": "debug-2"
+}
+ok: [testhost] => (item=debug-3) => {
+    "msg": "debug-3"
+}
+fatal: [testhost]: FAILED! => {"msg": "One or more items failed"}
+...ignoring
+
+TASK [EXPECTED FAILURE Failed task to be rescued] ******************************
+fatal: [testhost]: FAILED! => {"changed": false, "msg": "Failed as requested from task"}
+
+TASK [Rescue task] *************************************************************
+changed: [testhost]
+
+TASK [include_tasks] ***********************************************************
+included: .../test/integration/targets/callback_default/include_me.yml for testhost => (item=1)
+
+TASK [debug] *******************************************************************
+ok: [testhost] => {
+    "item": 1
+}
+
+TASK [copy] ********************************************************************
+changed: [testhost]
+
+TASK [replace] *****************************************************************
+--- before: .../test_diff.txt
++++ after: .../test_diff.txt
+@@ -1 +1 @@
+-foo
+\ No newline at end of file
++bar
+\ No newline at end of file
+
+changed: [testhost]
+
+TASK [replace] *****************************************************************
+ok: [testhost]
+
+RUNNING HANDLER [Test handler 1] ***********************************************
+changed: [testhost]
+
+RUNNING HANDLER [Test handler 2] ***********************************************
+ok: [testhost]
+
+RUNNING HANDLER [Test handler 3] ***********************************************
+changed: [testhost]
+
+PLAY [testhost] ****************************************************************
+
+TASK [First free task] *********************************************************
+changed: [testhost]
+
+TASK [Second free task] ********************************************************
+changed: [testhost]
+
+TASK [Include some tasks] ******************************************************
+included: .../test/integration/targets/callback_default/include_me.yml for testhost => (item=1)
+
+TASK [debug] *******************************************************************
+ok: [testhost] => {
+    "item": 1
+}
+
+PLAY RECAP *********************************************************************
+testhost                   : ok=19   changed=11   unreachable=0    failed=0    skipped=1    rescued=1    ignored=2   
+

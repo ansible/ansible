@@ -1,0 +1,50 @@
+# test code for the template module
+# (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: fill in a basic template in check mode
+  template: src=foo.j2 dest={{output_dir}}/checkmode_foo.templated mode=0644
+  register: template_result
+
+- name: check whether file exists
+  stat: path={{output_dir}}/checkmode_foo.templated
+  register: foo
+
+- name: verify that the file was marked as changed in check mode
+  assert: 
+    that: 
+      - "template_result is changed"
+      - "not foo.stat.exists"
+
+- name: Actually create the file, disable check mode
+  template: src=foo.j2 dest={{output_dir}}/checkmode_foo.templated2 mode=0644
+  check_mode: no
+  register: checkmode_disabled
+
+- name: fill in template with new content
+  template: src=foo.j2 dest={{output_dir}}/checkmode_foo.templated2 mode=0644
+  register: template_result2
+
+- name: remove templated file
+  file: path={{output_dir}}/checkmode_foo.templated2 state=absent
+  check_mode: no
+
+- name: verify that the file was not changed
+  assert: 
+    that: 
+      - "checkmode_disabled is changed"
+      - "template_result2 is not changed"

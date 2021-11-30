@@ -1,0 +1,26 @@
+- name: ensure that 'fake slurp' does not poison fetch source
+  hosts: localhost
+  gather_facts: False
+  tasks:
+    - name: fetch with relative source path
+      fetch: src=../injection/here.txt dest={{output_dir}}
+      become: true
+      register: islurp
+
+    - name: fetch with normal source path
+      fetch: src=here.txt dest={{output_dir}}
+      become: true
+      register: islurp2
+
+    - name: ensure all is good in hollywood
+      assert:
+        that:
+            - "'..' not in islurp['dest']"
+            - "'..' not in islurp2['dest']"
+            - "'foo' not in islurp['dest']"
+            - "'foo' not in islurp2['dest']"
+
+    - name: try to trip dest anyways
+      fetch: src=../injection/here.txt dest={{output_dir}}
+      become: true
+      register: islurp2

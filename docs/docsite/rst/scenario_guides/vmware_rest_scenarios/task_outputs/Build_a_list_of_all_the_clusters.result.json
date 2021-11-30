@@ -1,0 +1,11 @@
+{
+    "value": [
+        {
+            "drs_enabled": false,
+            "cluster": "domain-c1636",
+            "name": "my_cluster",
+            "ha_enabled": false
+        }
+    ],
+    "changed": false
+}

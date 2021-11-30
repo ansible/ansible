@@ -1,0 +1,78 @@
+- name: MISSING-HOSTKEY | check accept_newhostkey support
+  shell: ssh -o StrictHostKeyChecking=accept-new -V
+  register: ssh_supports_accept_newhostkey
+  ignore_errors: true
+
+- block:
+    - name: MISSING-HOSTKEY | accept_newhostkey when ssh does not support the option
+      git:
+        repo: '{{ repo_format2 }}'
+        dest: '{{ checkout_dir }}'
+        accept_newhostkey: true
+        ssh_opts: '-o UserKnownHostsFile={{ remote_tmp_dir }}/known_hosts'
+      register: git_result
+      ignore_errors: true
+
+    - assert:
+        that:
+          - git_result is failed
+          - git_result.warnings is search("does not support")
+
+  when: ssh_supports_accept_newhostkey.rc != 0
+
+- name: MISSING-HOSTKEY | checkout ssh://git@github.com repo without accept_newhostkey (expected fail)
+  git:
+    repo: '{{ repo_format2 }}'
+    dest: '{{ checkout_dir }}'
+    ssh_opts: '-o UserKnownHostsFile={{ remote_tmp_dir }}/known_hosts'
+  register: git_result
+  ignore_errors: true
+
+- assert:
+    that:
+      - git_result is failed
+
+- block:
+    - name: MISSING-HOSTKEY | checkout git@github.com repo with accept_newhostkey (expected pass)
+      git:
+        repo: '{{ repo_format2 }}'
+        dest: '{{ checkout_dir }}'
+        accept_newhostkey: true
+        key_file: '{{ github_ssh_private_key }}'
+        ssh_opts: '-o UserKnownHostsFile={{ remote_tmp_dir }}/known_hosts'
+      register: git_result
+
+    - assert:
+        that:
+          - git_result is changed
+
+    - name: MISSING-HOSTKEY | clear checkout_dir
+      file:
+        state: absent
+        path: '{{ checkout_dir }}'
+
+    - name: MISSING-HOSTKEY | checkout ssh://git@github.com repo with accept_newhostkey (expected pass)
+      git:
+        repo: '{{ repo_format3 }}'
+        dest: '{{ checkout_dir }}'
+        version: 'master'
+        accept_newhostkey: false # should already have been accepted
+        key_file: '{{ github_ssh_private_key }}'
+        ssh_opts: '-o UserKnownHostsFile={{ remote_tmp_dir }}/known_hosts'
+      register: git_result
+
+    - assert:
+        that:
+          - git_result is changed
+
+    - name: MISSING-HOSTEKY | Remove github.com hostkey from known_hosts
+      lineinfile:
+        dest: '{{ remote_tmp_dir }}/known_hosts'
+        regexp: "github.com"
+        state: absent
+
+    - name: MISSING-HOSTKEY | clear checkout_dir
+      file:
+        state: absent
+        path: '{{ checkout_dir }}'
+  when: github_ssh_private_key is defined and ssh_supports_accept_newhostkey.rc == 0

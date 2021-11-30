@@ -1,0 +1,3 @@
+#!/usr/bin/python
+
+print('{"changed":false, "msg":"this is the embedded module"}')

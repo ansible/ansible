@@ -1,0 +1,2 @@
+minor_changes:
+  - dnf - add more specific error message for GPG validation (https://github.com/ansible/ansible/issues/76192)

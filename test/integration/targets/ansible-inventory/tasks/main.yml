@@ -1,0 +1,181 @@
+- name: "No command supplied"
+  command: ansible-inventory
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+        - result is failed
+        - '"ERROR! No action selected, at least one of --host, --graph or --list needs to be specified." in result.stderr'
+
+- name: "test option: --list --export"
+  command: ansible-inventory --list --export
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+
+- name: "test option: --list --yaml --export"
+  command: ansible-inventory --list --yaml --export
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+
+- name: "test option: --list --output"
+  command: ansible-inventory --list --output junk.txt
+  register: result
+
+- name: stat output file
+  stat:
+      path: junk.txt
+  register: st
+
+- assert:
+    that:
+        - result is succeeded
+        - st.stat.exists
+
+- name: "test option: --graph"
+  command: ansible-inventory --graph
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+
+- name: "test option: --graph --vars"
+  command: ansible-inventory --graph --vars
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+
+- name: "test option: --graph with bad pattern"
+  command: ansible-inventory --graph invalid
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+        - result is failed
+        - '"ERROR! Pattern must be valid group name when using --graph" in result.stderr'
+
+- name: "test option: --host localhost"
+  command: ansible-inventory --host localhost
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+
+- name: "test option: --host with invalid host"
+  command: ansible-inventory --host invalid
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+        - result is failed
+        - '"ERROR! Could not match supplied host pattern, ignoring: invalid" in result.stderr'
+
+- name: Install toml package
+  pip:
+    name:
+      - toml
+    state: present
+
+- name: "test option: --toml with valid group name"
+  command: ansible-inventory --list --toml -i {{ role_path }}/files/valid_sample.yml
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+
+- name: "test option: --toml with invalid group name"
+  command: ansible-inventory --list --toml -i {{ role_path }}/files/invalid_sample.yml
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+        - result is failed
+        - '"ERROR! The source inventory contains a non-string key" in result.stderr'
+
+- name: "test json output with unicode characters"
+  command: ansible-inventory --list -i {{ role_path }}/files/unicode.yml
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+        - result.stdout is contains('příbor')
+
+- block:
+  - name: "test json output file with unicode characters"
+    command: ansible-inventory --list --output unicode_inventory.json -i {{ role_path }}/files/unicode.yml
+
+  - set_fact:
+      json_inventory_file: "{{ lookup('file', 'unicode_inventory.json') | string }}"
+
+  - assert:
+      that:
+          - json_inventory_file is contains('příbor')
+  always:
+    - file:
+        name: unicode_inventory.json
+        state: absent
+
+- name: "test yaml output with unicode characters"
+  command: ansible-inventory --list --yaml -i {{ role_path }}/files/unicode.yml
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+        - result.stdout is contains('příbor')
+
+- block:
+  - name: "test yaml output file with unicode characters"
+    command: ansible-inventory --list --yaml --output unicode_inventory.yaml -i {{ role_path }}/files/unicode.yml
+
+  - set_fact:
+      yaml_inventory_file: "{{ lookup('file', 'unicode_inventory.yaml') | string }}"
+
+  - assert:
+      that:
+          - yaml_inventory_file is contains('příbor')
+  always:
+    - file:
+        name: unicode_inventory.yaml
+        state: absent
+
+- block:
+  - name: "test toml output with unicode characters"
+    command: ansible-inventory --list --toml -i {{ role_path }}/files/unicode.yml
+    register: result
+
+  - assert:
+      that:
+          - result is succeeded
+          - result.stdout is contains('příbor')
+
+  - block:
+    - name: "test toml output file with unicode characters"
+      command: ansible-inventory --list --toml --output unicode_inventory.toml -i {{ role_path }}/files/unicode.yml
+
+    - set_fact:
+        toml_inventory_file: "{{ lookup('file', 'unicode_inventory.toml') | string }}"
+
+    - assert:
+        that:
+            - toml_inventory_file is contains('příbor')
+    always:
+      - file:
+          name: unicode_inventory.toml
+          state: absent
+  when: ansible_python.version.major|int == 3

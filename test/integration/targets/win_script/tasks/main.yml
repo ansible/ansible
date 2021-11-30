@@ -1,0 +1,316 @@
+# test code for the script module when using winrm connection
+# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: run setup to allow skipping OS-specific tests
+  setup:
+    gather_subset: min
+
+- name: get tempdir path
+  raw: $env:TEMP
+  register: tempdir
+
+- name: set script path dynamically
+  set_fact:
+    test_win_script_filename: "{{ tempdir.stdout_lines[0] }}/testing_win_script.txt"
+
+- name: run simple test script
+  script: test_script.ps1
+  register: test_script_result
+
+- name: check that script ran
+  assert:
+    that:
+      - "test_script_result.rc == 0"
+      - "test_script_result.stdout"
+      - "'Woohoo' in test_script_result.stdout"
+      - "not test_script_result.stderr"
+      - "test_script_result is not failed"
+      - "test_script_result is changed"
+
+- name: run test script that takes arguments including a unicode char
+  script: test_script_with_args.ps1 /this /that /Ӧther
+  register: test_script_with_args_result
+
+- name: check that script ran and received arguments and returned unicode
+  assert:
+    that:
+      - "test_script_with_args_result.rc == 0"
+      - "test_script_with_args_result.stdout"
+      - "test_script_with_args_result.stdout_lines[0] == '/this'"
+      - "test_script_with_args_result.stdout_lines[1] == '/that'"
+      - "test_script_with_args_result.stdout_lines[2] == '/Ӧther'"
+      - "not test_script_with_args_result.stderr"
+      - "test_script_with_args_result is not failed"
+      - "test_script_with_args_result is changed"
+
+# Bug: https://github.com/ansible/ansible/issues/32850
+- name: set fact of long string
+  set_fact:
+    long_string: "{{ lookup('pipe', 'printf \"a%.0s\" {1..1000}') }}"
+
+- name: run test script with args that exceed the stdin buffer
+  script: test_script_with_args.ps1 {{ long_string }}
+  register: test_script_with_large_args_result
+
+- name: check that script ran and received arguments correctly
+  assert:
+    that:
+    - test_script_with_large_args_result.rc == 0
+    - not test_script_with_large_args_result.stderr
+    - test_script_with_large_args_result is not failed
+    - test_script_with_large_args_result is changed
+
+- name: check that script ran and received arguments correctly with winrm output
+  assert:
+    that:
+    - test_script_with_large_args_result.stdout == long_string + "\r\n"
+  when: ansible_connection != 'psrp'
+
+- name: check that script ran and received arguments correctly with psrp output
+  assert:
+    that:
+    - test_script_with_large_args_result.stdout == long_string
+  when: ansible_connection == 'psrp'
+
+- name: run test script that takes parameters passed via splatting
+  script: test_script_with_splatting.ps1 @{ This = 'this'; That = '{{ test_win_script_value }}'; Other = 'other'}
+  register: test_script_with_splatting_result
+
+- name: check that script ran and received parameters via splatting
+  assert:
+    that:
+      - "test_script_with_splatting_result.rc == 0"
+      - "test_script_with_splatting_result.stdout"
+      - "test_script_with_splatting_result.stdout_lines[0] == 'this'"
+      - "test_script_with_splatting_result.stdout_lines[1] == test_win_script_value"
+      - "test_script_with_splatting_result.stdout_lines[2] == 'other'"
+      - "not test_script_with_splatting_result.stderr"
+      - "test_script_with_splatting_result is not failed"
+      - "test_script_with_splatting_result is changed"
+
+- name: run test script that takes splatted parameters from a variable
+  script: test_script_with_splatting.ps1 {{ test_win_script_splat }}
+  register: test_script_with_splatting2_result
+
+- name: check that script ran and received parameters via splatting from a variable
+  assert:
+    that:
+      - "test_script_with_splatting2_result.rc == 0"
+      - "test_script_with_splatting2_result.stdout"
+      - "test_script_with_splatting2_result.stdout_lines[0] == 'THIS'"
+      - "test_script_with_splatting2_result.stdout_lines[1] == 'THAT'"
+      - "test_script_with_splatting2_result.stdout_lines[2] == 'OTHER'"
+      - "not test_script_with_splatting2_result.stderr"
+      - "test_script_with_splatting2_result is not failed"
+      - "test_script_with_splatting2_result is changed"
+
+- name: run test script that has errors
+  script: test_script_with_errors.ps1
+  register: test_script_with_errors_result
+  ignore_errors: true
+
+- name: check that script ran but failed with errors
+  assert:
+    that:
+      - "test_script_with_errors_result.rc != 0"
+      - "not test_script_with_errors_result.stdout"
+      - "test_script_with_errors_result.stderr"
+      - "test_script_with_errors_result is failed"
+      - "test_script_with_errors_result is changed"
+
+- name: cleanup test file if it exists
+  raw: Remove-Item "{{ test_win_script_filename }}" -Force
+  ignore_errors: true
+
+- name: run test script that creates a file
+  script: test_script_creates_file.ps1 {{ test_win_script_filename }}
+  args:
+    creates: "{{ test_win_script_filename }}"
+  register: test_script_creates_file_result
+
+- name: check that script ran and indicated a change
+  assert:
+    that:
+      - "test_script_creates_file_result.rc == 0"
+      - "not test_script_creates_file_result.stdout"
+      - "not test_script_creates_file_result.stderr"
+      - "test_script_creates_file_result is not failed"
+      - "test_script_creates_file_result is changed"
+
+- name: run test script that creates a file again
+  script: test_script_creates_file.ps1 {{ test_win_script_filename }}
+  args:
+    creates: "{{ test_win_script_filename }}"
+  register: test_script_creates_file_again_result
+
+- name: check that the script did not run since the remote file exists
+  assert:
+    that:
+      - "test_script_creates_file_again_result is not failed"
+      - "test_script_creates_file_again_result is not changed"
+      - "test_script_creates_file_again_result is skipped"
+
+- name: run test script that removes a file
+  script: test_script_removes_file.ps1 {{ test_win_script_filename }}
+  args:
+    removes: "{{ test_win_script_filename }}"
+  register: test_script_removes_file_result
+
+- name: check that the script ran since the remote file exists
+  assert:
+    that:
+      - "test_script_removes_file_result.rc == 0"
+      - "not test_script_removes_file_result.stdout"
+      - "not test_script_removes_file_result.stderr"
+      - "test_script_removes_file_result is not failed"
+      - "test_script_removes_file_result is changed"
+
+- name: run test script that removes a file again
+  script: test_script_removes_file.ps1 {{ test_win_script_filename }}
+  args:
+    removes: "{{ test_win_script_filename }}"
+  register: test_script_removes_file_again_result
+
+- name: check that the script did not run since the remote file does not exist
+  assert:
+    that:
+      - "test_script_removes_file_again_result is not failed"
+      - "test_script_removes_file_again_result is not changed"
+      - "test_script_removes_file_again_result is skipped"
+
+- name: skip batch tests on 6.0 (UTF8 codepage prevents it from working, see https://github.com/ansible/ansible/issues/21915)
+  block:
+  - name: run simple batch file
+    script: test_script.bat
+    register: test_batch_result
+
+  - name: check that batch file ran
+    assert:
+      that:
+        - "test_batch_result.rc == 0"
+        - "test_batch_result.stdout"
+        - "'batch' in test_batch_result.stdout"
+        - "not test_batch_result.stderr"
+        - "test_batch_result is not failed"
+        - "test_batch_result is changed"
+
+  - name: run simple batch file with .cmd extension
+    script: test_script.cmd
+    register: test_cmd_result
+
+  - name: check that batch file with .cmd extension ran
+    assert:
+      that:
+        - "test_cmd_result.rc == 0"
+        - "test_cmd_result.stdout"
+        - "'cmd extension' in test_cmd_result.stdout"
+        - "not test_cmd_result.stderr"
+        - "test_cmd_result is not failed"
+        - "test_cmd_result is changed"
+
+  - name: run simple batch file with .bat extension that fails
+    script: fail.bat
+    ignore_errors: true
+    register: test_batch_result
+
+  - name: check that batch file with .bat extension reported failure
+    assert:
+      that:
+        - test_batch_result.rc == 1
+        - test_batch_result.stdout
+        - test_batch_result.stderr
+        - test_batch_result is failed
+        - test_batch_result is changed
+  when: not ansible_distribution_version.startswith('6.0')
+
+- name: run test script that takes a boolean parameter
+  script: test_script_bool.ps1 $false  # use false as that can pick up more errors
+  register: test_script_bool_result
+
+- name: check that the script ran and the parameter was treated as a boolean
+  assert:
+    that:
+      - test_script_bool_result.stdout_lines[0] == 'System.Boolean'
+      - test_script_bool_result.stdout_lines[1] == 'False'
+
+- name: run test script that uses envvars
+  script: test_script_with_env.ps1
+  environment:
+    taskenv: task
+  register: test_script_env_result
+
+- name: ensure that script ran and that environment var was passed
+  assert:
+    that:
+    - test_script_env_result is successful
+    - test_script_env_result.stdout_lines[0] == 'task'
+
+# check mode
+- name: Run test script that creates a file in check mode
+  script: test_script_creates_file.ps1 {{ test_win_script_filename }}
+  args:
+    creates: "{{ test_win_script_filename }}"
+  check_mode: yes
+  register: test_script_creates_file_check_mode
+
+- name: Get state of file created by script
+  win_stat:
+    path: "{{ test_win_script_filename }}"
+  register: create_file_stat
+
+- name: Assert that a change was reported but the script did not make changes
+  assert:
+    that:
+      - test_script_creates_file_check_mode is changed
+      - not create_file_stat.stat.exists
+
+- name: Run test script that creates a file
+  script: test_script_creates_file.ps1 {{ test_win_script_filename }}
+  args:
+    creates: "{{ test_win_script_filename }}"
+
+- name: Run test script that removes a file in check mode
+  script: test_script_removes_file.ps1 {{ test_win_script_filename }}
+  args:
+    removes: "{{ test_win_script_filename }}"
+  check_mode: yes
+  register: test_script_removes_file_check_mode
+
+- name: Get state of file removed by script
+  win_stat:
+    path: "{{ test_win_script_filename }}"
+  register: remove_file_stat
+
+- name: Assert that a change was reported but the script did not make changes
+  assert:
+    that:
+      - test_script_removes_file_check_mode is changed
+      - remove_file_stat.stat.exists
+
+- name: run test script with become that outputs 2 lines
+  script: test_script_whoami.ps1
+  register: test_script_result_become
+  become: yes
+  become_user: SYSTEM
+  become_method: runas
+
+- name: check that the script ran and we get both outputs on new lines
+  assert:
+    that:
+    - test_script_result_become.stdout_lines[0]|lower == 'nt authority\\system'
+    - test_script_result_become.stdout_lines[1] == 'finished'

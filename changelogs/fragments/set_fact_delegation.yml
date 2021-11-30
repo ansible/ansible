@@ -1,0 +1,2 @@
+bugfixes:
+  - set_fact/include_vars correctly handle delegation assignments within loops

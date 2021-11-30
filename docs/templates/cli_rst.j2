@@ -1,0 +1,161 @@
+:source: {{ cli }}.py
+
+{% set name = cli_name -%}
+{% set name_slug = cli_name -%}
+
+.. _{{name}}:
+
+{% set name_len = name|length + 0-%}
+{{ '=' * name_len }}
+{{name}}
+{{ '=' * name_len }}
+
+
+:strong:`{{short_desc|default('')}}`
+
+
+.. contents::
+   :local:
+   :depth: {{content_depth}}
+
+
+.. program:: {{cli_name}}
+
+Synopsis
+========
+
+.. code-block:: bash
+
+   {{ usage|replace('%prog', cli_name) }}
+
+
+Description
+===========
+
+
+{{ long_desc|default('', True)  }}
+
+{% if options %}
+Common Options
+==============
+
+
+{% for option in options|sort(attribute='options') if option.options %}
+
+.. option:: {% for switch in option['options'] %}{{switch}}{% if option['arg'] %} <{{option['arg']}}>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+
+   {{ option['desc'] }}
+{% endfor %}
+{% endif %}
+
+{% if arguments %}
+ARGUMENTS
+=========
+
+.. program:: {{cli_name}}
+
+{% for arg in arguments %}
+.. option:: {{ arg }}
+
+   {{ (arguments[arg]|default(' '))}}
+
+{% endfor %}
+{% endif %}
+
+{% if actions %}
+Actions
+=======
+
+{% for action in actions %}
+
+.. program:: {{cli_name}} {{action}}
+.. _{{cli_name|replace('-','_')}}_{{action}}:
+
+{{ action}}
+{{ '-' * action|length}}
+
+{{ (actions[action]['desc']|default(' '))}}
+
+{% if actions[action]['options'] %}
+
+
+{% for option in actions[action]['options']|sort(attribute='options') %}
+.. option:: {% for switch in option['options'] if switch in actions[action]['option_names'] %}{{switch}} {% if option['arg'] %} <{{option['arg']}}>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+
+   {{ (option['desc']) }}
+{% endfor %}
+{% endif %}
+
+{% for sub_action in actions[action]['actions'] %}
+
+
+.. program:: {{cli_name}} {{action}} {{sub_action}}
+.. _{{cli_name|replace('-','_')}}_{{action}}_{{sub_action}}:
+
+{{ action + " " + sub_action }}
+{{ '+' * (action|length + sub_action|length + 1) }}
+
+{{ (actions[action]['actions'][sub_action]['desc']|default(' '))}}
+
+{% if actions[action]['actions'][sub_action]['options'] %}
+
+
+{% for option in actions[action]['actions'][sub_action]['options']|sort(attribute='options') %}
+.. option:: {% for switch in option['options'] if switch in actions[action]['actions'][sub_action]['option_names'] %}{{switch}} {% if option['arg'] %} <{{option['arg']}}>{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}
+
+   {{ (option['desc']) }}
+{% endfor %}
+{% endif %}
+
+{% endfor %}
+
+{% endfor %}
+.. program:: {{cli_name}}
+{% endif %}
+
+Environment
+===========
+
+The following environment variables may be specified.
+
+{% if inventory %}
+:envvar:`ANSIBLE_INVENTORY`  -- Override the default ansible inventory file
+
+{% endif %}
+{% if library %}
+:envvar:`ANSIBLE_LIBRARY` -- Override the default ansible module library path
+
+{% endif %}
+:envvar:`ANSIBLE_CONFIG` -- Override the default ansible config file
+
+Many more are available for most options in ansible.cfg
+
+
+Files
+=====
+
+{% if inventory %}
+:file:`/etc/ansible/hosts` -- Default inventory file
+
+{% endif %}
+:file:`/etc/ansible/ansible.cfg` -- Config file, used if present
+
+:file:`~/.ansible.cfg` -- User config file, overrides the default config if present
+
+Author
+======
+
+Ansible was originally written by Michael DeHaan.
+
+See the `AUTHORS` file for a complete list of contributors.
+
+
+License
+=======
+
+Ansible is released under the terms of the GPLv3+ License.
+
+See also
+========
+
+{% for other in cli_bin_name_list|sort %}:manpage:`{{other}}(1)`,  {% endfor %}

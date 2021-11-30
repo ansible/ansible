@@ -1,0 +1,443 @@
+- hosts: testhost
+  tasks:
+  # basic test of FQ module lookup and that we got the right one (user-dir hosted)
+  - name: exec FQ module in a user-dir testns collection
+    testns.testcoll.testmodule:
+    register: testmodule_out
+
+  # verifies that distributed collection subpackages are visible under a multi-location namespace (testns exists in user and sys locations)
+  - name: exec FQ module in a sys-dir testns collection
+    testns.coll_in_sys.systestmodule:
+    register: systestmodule_out
+
+  # verifies that content-adjacent collections were automatically added to the installed content roots
+  - name: exec FQ module from content-adjacent collection
+    testns.content_adj.contentadjmodule:
+    register: contentadjmodule_out
+
+  # content should only be loaded from the first visible instance of a collection
+  - name: attempt to look up FQ module in a masked collection
+    testns.testcoll.plugin_lookup:
+      type: module
+      name: testns.testcoll.maskedmodule
+    register: maskedmodule_out
+
+  # ensure the ansible ns can have real collections added to it
+  - name: call an external module in the ansible namespace
+    ansible.bullcoll.bullmodule:
+    register: bullmodule_out
+
+  # ensure the ansible ns cannot override ansible.builtin externally
+  - name: call an external module in the ansible.builtin collection (should use the built in module)
+    ansible.builtin.ping:
+    register: builtin_ping_out
+
+  # action in a collection subdir
+  - name: test subdir action FQ
+    testns.testcoll.action_subdir.subdir_ping_action:
+    register: subdir_ping_action_out
+
+  # module in a collection subdir
+  - name: test subdir module FQ
+    testns.testcoll.module_subdir.subdir_ping_module:
+    register: subdir_ping_module_out
+
+  # module with a granular module_utils import (from (this collection).module_utils.leaf import thingtocall)
+  - name: exec module with granular module utils import from this collection
+    testns.testcoll.uses_leaf_mu_granular_import:
+    register: granular_out
+
+  # module with a granular nested module_utils import (from (this collection).module_utils.base import thingtocall,
+  # where base imports secondary from the same collection's module_utils)
+  - name: exec module with nested module utils from this collection
+    testns.testcoll.uses_base_mu_granular_nested_import:
+    register: granular_nested_out
+
+  # module with a flat module_utils import (import (this collection).module_utils.leaf)
+  - name: exec module with flat module_utils import from this collection
+    testns.testcoll.uses_leaf_mu_flat_import:
+    register: flat_out
+
+  # module with a full-module module_utils import using 'from' (from (this collection).module_utils import leaf)
+  - name: exec module with full-module module_utils import using 'from' from this collection
+    testns.testcoll.uses_leaf_mu_module_import_from:
+    register: from_out
+
+  # module with multiple levels of the same nested package name and imported as a function
+  - name: exec module with multiple levels of the same nested package name imported as a function
+    testns.testcoll.uses_nested_same_as_func:
+    register: from_nested_func
+
+  # module with multiple levels of the same nested package name and imported as a module
+  - name: exec module with multiple levels of the same nested package name imported as a module
+    testns.testcoll.uses_nested_same_as_module:
+    register: from_nested_module
+
+  # module using a bunch of collection-level redirected module_utils
+  - name: exec module using a bunch of collection-level redirected module_utils
+    testns.testcoll.uses_collection_redirected_mu:
+    register: from_redirected_mu
+
+  # module with bogus MU
+  - name: exec module with bogus MU
+    testns.testcoll.uses_mu_missing:
+    ignore_errors: true
+    register: from_missing_mu
+
+  # module with redirected MU, redirect collection not found
+  - name: exec module with a missing redirect target collection
+    testns.testcoll.uses_mu_missing_redirect_collection:
+    ignore_errors: true
+    register: from_missing_redir_collection
+
+  # module with redirected MU, redirect module not found
+  - name: exec module with a missing redirect target module
+    testns.testcoll.uses_mu_missing_redirect_module:
+    ignore_errors: true
+    register: from_missing_redir_module
+
+  - assert:
+      that:
+      - testmodule_out.source == 'user'
+      - systestmodule_out.source == 'sys'
+      - contentadjmodule_out.source == 'content_adj'
+      - not maskedmodule_out.plugin_path
+      - bullmodule_out.source == 'user_ansible_bullcoll'
+      - builtin_ping_out.source is not defined
+      - builtin_ping_out.ping == 'pong'
+      - subdir_ping_action_out is not changed
+      - subdir_ping_module_out is not changed
+      - granular_out.mu_result == 'thingtocall in leaf'
+      - granular_nested_out.mu_result == 'thingtocall in base called thingtocall in secondary'
+      - flat_out.mu_result == 'thingtocall in leaf'
+      - from_out.mu_result == 'thingtocall in leaf'
+      - from_out.mu2_result == 'thingtocall in secondary'
+      - from_out.mu3_result == 'thingtocall in subpkg.submod'
+      - from_out.mu4_result == 'thingtocall in subpkg_with_init'
+      - from_out.mu5_result == 'thingtocall in mod_in_subpkg_with_init'
+      - from_out.mu6_result == 'thingtocall in subpkg.submod'
+      - from_nested_func.mu_result == 'hello from nested_same'
+      - from_nested_module.mu_result == 'hello from nested_same'
+      - from_redirected_mu.mu_result == 'hello from ansible_collections.testns.content_adj.plugins.module_utils.sub1.foomodule'
+      - from_redirected_mu.mu_result2 == 'hello from testns.othercoll.formerly_testcoll_pkg.thing'
+      - from_redirected_mu.mu_result3 == 'hello from formerly_testcoll_pkg.submod.thing'
+      - from_missing_mu is failed
+      - "'Could not find imported module support' in from_missing_mu.msg"
+      - from_missing_redir_collection is failed
+      - "'unable to locate collection bogusns.boguscoll' in from_missing_redir_collection.msg"
+      - from_missing_redir_module is failed
+      - "'Could not find imported module support code for ansible_collections.testns.testcoll.plugins.modules.uses_mu_missing_redirect_module' in from_missing_redir_module.msg"
+
+
+- hosts: testhost
+  tasks:
+  - name: exercise filters/tests/lookups
+    assert:
+      that:
+      - "'data' | testns.testcoll.testfilter == 'data_via_testfilter_from_userdir'"
+      - "'data' | testns.testcoll.testfilter2 == 'data_via_testfilter2_from_userdir'"
+      - "'data' | testns.testcoll.filter_subdir.test_subdir_filter == 'data_via_testfilter_from_subdir'"
+      - "'from_user' is testns.testcoll.testtest"
+      - "'from_user2' is testns.testcoll.testtest2"
+      - "'subdir_from_user' is testns.testcoll.test_subdir.subdir_test"
+      - lookup('testns.testcoll.mylookup') == 'mylookup_from_user_dir'
+      - lookup('testns.testcoll.mylookup2') == 'mylookup2_from_user_dir'
+      - lookup('testns.testcoll.lookup_subdir.my_subdir_lookup') == 'subdir_lookup_from_user_dir'
+
+  - debug:
+      msg: "{{ 'foo'|testns.testbroken.broken }}"
+    register: result
+    ignore_errors: true
+
+  - assert:
+      that:
+        - |
+          'This is a broken filter plugin.' in result.msg
+
+  - debug:
+      msg: "{{ 'foo'|missing.collection.filter }}"
+    register: result
+    ignore_errors: true
+
+  - assert:
+      that:
+        - result is failed
+
+# ensure that the synthetic ansible.builtin collection limits to builtin plugins, that ansible.legacy loads overrides
+# from legacy plugin dirs, and that a same-named plugin loaded from a real collection is not masked by the others
+- hosts: testhost
+  tasks:
+  - name: test unqualified ping from library dir
+    ping:
+    register: unqualified_ping_out
+
+  - name: test legacy-qualified ping from library dir
+    ansible.legacy.ping:
+    register: legacy_ping_out
+
+  - name: test builtin ping
+    ansible.builtin.ping:
+    register: builtin_ping_out
+
+  - name: test collection-based ping
+    testns.testcoll.ping:
+    register: collection_ping_out
+
+  - assert:
+      that:
+      - unqualified_ping_out.source == 'legacy_library_dir'
+      - legacy_ping_out.source == 'legacy_library_dir'
+      - builtin_ping_out.ping == 'pong'
+      - collection_ping_out.source == 'user'
+
+# verify the default value for the collections list is empty
+- hosts: testhost
+  tasks:
+  - name: sample default collections value
+    testns.testcoll.plugin_lookup:
+    register: coll_default_out
+
+  - assert:
+      that:
+      # in original release, collections defaults to empty, which is mostly equivalent to ansible.legacy
+      - not coll_default_out.collection_list
+
+
+# ensure that inheritance/masking works as expected, that the proper default values are injected when missing,
+# and that the order is preserved if one of the magic values is explicitly specified
+- name: verify collections keyword play/block/task inheritance and magic values
+  hosts: testhost
+  collections:
+  - bogus.fromplay
+  tasks:
+  - name: sample play collections value
+    testns.testcoll.plugin_lookup:
+    register: coll_play_out
+
+  - name: collections override block-level
+    collections:
+    - bogus.fromblock
+    block:
+    - name: sample block collections value
+      testns.testcoll.plugin_lookup:
+      register: coll_block_out
+
+    - name: sample task collections value
+      collections:
+      - bogus.fromtask
+      testns.testcoll.plugin_lookup:
+      register: coll_task_out
+
+    - name: sample task with explicit core
+      collections:
+      - ansible.builtin
+      - bogus.fromtaskexplicitcore
+      testns.testcoll.plugin_lookup:
+      register: coll_task_core
+
+    - name: sample task with explicit legacy
+      collections:
+      - ansible.legacy
+      - bogus.fromtaskexplicitlegacy
+      testns.testcoll.plugin_lookup:
+      register: coll_task_legacy
+
+  - assert:
+      that:
+      # ensure that parent value inheritance is masked properly by explicit setting
+      - coll_play_out.collection_list == ['bogus.fromplay', 'ansible.legacy']
+      - coll_block_out.collection_list == ['bogus.fromblock', 'ansible.legacy']
+      - coll_task_out.collection_list == ['bogus.fromtask', 'ansible.legacy']
+      - coll_task_core.collection_list == ['ansible.builtin', 'bogus.fromtaskexplicitcore']
+      - coll_task_legacy.collection_list == ['ansible.legacy', 'bogus.fromtaskexplicitlegacy']
+
+- name: verify unqualified plugin resolution behavior
+  hosts: testhost
+  collections:
+  - testns.testcoll
+  - testns.coll_in_sys
+  - testns.contentadj
+  tasks:
+  # basic test of unqualified module lookup and that we got the right one (user-dir hosted, there's another copy of
+  # this one in the same-named collection in sys dir that should be masked
+  - name: exec unqualified module in a user-dir testns collection
+    testmodule:
+    register: testmodule_out
+
+  # use another collection to verify that we're looking in all collections listed on the play
+  - name: exec unqualified module in a sys-dir testns collection
+    systestmodule:
+    register: systestmodule_out
+
+  - assert:
+      that:
+      - testmodule_out.source == 'user'
+      - systestmodule_out.source == 'sys'
+
+# test keyword-static execution of a FQ collection-backed role with "tasks/main.yaml"
+- name: verify collection-backed role execution (keyword static)
+  hosts: testhost
+  collections:
+  # set to ansible.builtin only to ensure that roles function properly without inheriting the play's collections config
+  - ansible.builtin
+  vars:
+    test_role_input: keyword static
+  roles:
+  - role: testns.testcoll.testrole_main_yaml
+  tasks:
+  - name: ensure role executed
+    assert:
+      that:
+      - test_role_output.msg == test_role_input
+      - testrole_source == 'collection'
+
+
+# test dynamic execution of a FQ collection-backed role
+- name: verify collection-backed role execution (dynamic)
+  hosts: testhost
+  collections:
+  # set to ansible.builtin only to ensure that roles function properly without inheriting the play's collections config
+  - ansible.builtin
+  vars:
+    test_role_input: dynamic
+  tasks:
+  - include_role:
+      name: testns.testcoll.testrole
+  - name: ensure role executed
+    assert:
+      that:
+      - test_role_output.msg == test_role_input
+      - testrole_source == 'collection'
+
+# test task-static execution of a FQ collection-backed role
+- name: verify collection-backed role execution (task static)
+  hosts: testhost
+  collections:
+  - ansible.builtin
+  vars:
+    test_role_input: task static
+  tasks:
+  - import_role:
+      name: testns.testcoll.testrole
+  - name: ensure role executed
+    assert:
+      that:
+      - test_role_output.msg == test_role_input
+      - testrole_source == 'collection'
+
+
+# test a legacy playbook-adjacent role, ensure that play collections config is not inherited
+- name: verify legacy playbook-adjacent role behavior
+  hosts: testhost
+  collections:
+  - bogus.bogus
+  vars:
+    test_role_input: legacy playbook-adjacent
+  roles:
+  - testrole
+# FIXME: this should technically work to look up a playbook-adjacent role
+#  - ansible.legacy.testrole
+  tasks:
+  - name: ensure role executed
+    assert:
+      that:
+      - test_role_output.msg == test_role_input
+      - testrole_source == 'legacy roles dir'
+
+
+# test dynamic execution of a FQ collection-backed role
+- name: verify collection-backed role execution in subdir (include)
+  hosts: testhost
+  vars:
+    test_role_input: dynamic (subdir)
+  tasks:
+  - include_role:
+      name: testns.testcoll.role_subdir.subdir_testrole
+  - name: ensure role executed
+    assert:
+      that:
+      - test_role_output.msg == test_role_input
+      - testrole_source == 'collection'
+
+
+# test collection-relative role deps (keyword static)
+- name: verify collection-relative role deps
+  hosts: testhost
+  vars:
+    outer_role_input: keyword static outer
+    test_role_input: keyword static inner
+  roles:
+    - testns.testcoll.calls_intra_collection_dep_role_unqualified
+  tasks:
+    - assert:
+        that:
+          - outer_role_output.msg == outer_role_input
+          - test_role_output.msg == test_role_input
+          - testrole_source == 'collection'
+
+# test collection-relative role deps (task static)
+- name: verify collection-relative role deps
+  hosts: testhost
+  vars:
+    outer_role_input: task static outer
+    test_role_input: task static inner
+  tasks:
+    - import_role:
+        name: testns.testcoll.calls_intra_collection_dep_role_unqualified
+    - assert:
+        that:
+          - outer_role_output.msg == outer_role_input
+          - test_role_output.msg == test_role_input
+          - testrole_source == 'collection'
+
+# test collection-relative role deps (task dynamic)
+- name: verify collection-relative role deps
+  hosts: testhost
+  vars:
+    outer_role_input: task dynamic outer
+    test_role_input: task dynamic inner
+  tasks:
+    - include_role:
+        name: testns.testcoll.calls_intra_collection_dep_role_unqualified
+    - assert:
+        that:
+          - outer_role_output.msg == outer_role_input
+          - test_role_output.msg == test_role_input
+          - testrole_source == 'collection'
+
+
+- name: validate static task include behavior
+  hosts: testhost
+  collections:
+  - bogus.bogus
+  tasks:
+  - import_tasks: includeme.yml
+
+
+- name: validate dynamic task include behavior
+  hosts: testhost
+  collections:
+  - bogus.bogus
+  tasks:
+  - include_tasks: includeme.yml
+
+
+- import_playbook: test_collection_meta.yml
+- name: Test FQCN handlers
+  hosts: testhost
+  vars:
+    handler_counter: 0
+  roles:
+    - testns.testcoll.test_fqcn_handlers
+
+- name: Ensure a collection role can call a standalone role
+  hosts: testhost
+  roles:
+    - testns.testcoll.call_standalone
+
+# Issue https://github.com/ansible/ansible/issues/69054
+- name: Test collection as string
+  hosts: testhost
+  collections: foo
+  tasks:
+    - debug: msg="Test"

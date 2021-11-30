@@ -1,0 +1,192 @@
+---
+- name: set some facts for tests
+  set_fact:
+    galaxy_dir: "{{ remote_tmp_dir }}/galaxy"
+
+- name: create scratch dir used for testing
+  file:
+    path: '{{ galaxy_dir }}/scratch'
+    state: directory
+
+- name: run ansible-galaxy collection init tests
+  import_tasks: init.yml
+
+- name: run ansible-galaxy collection build tests
+  import_tasks: build.yml
+
+# The pulp container has a long start up time
+# The first task to interact with pulp needs to wait until it responds appropriately
+- name: list pulp distributions
+  uri:
+    url: '{{ pulp_api }}/pulp/api/v3/distributions/ansible/ansible/'
+    status_code:
+      - 200
+    user: '{{ pulp_user }}'
+    password: '{{ pulp_password }}'
+    force_basic_auth: true
+  register: pulp_distributions
+  until: pulp_distributions is successful
+  delay: 1
+  retries: 60
+
+- name: configure pulp
+  include_tasks: pulp.yml
+
+- name: Get galaxy_ng token
+  uri:
+    url: '{{ galaxy_ng_server }}v3/auth/token/'
+    method: POST
+    body_format: json
+    body: {}
+    status_code:
+      - 200
+    user: '{{ pulp_user }}'
+    password: '{{ pulp_password }}'
+    force_basic_auth: true
+  register: galaxy_ng_token
+
+- name: create test ansible.cfg that contains the Galaxy server list
+  template:
+    src: ansible.cfg.j2
+    dest: '{{ galaxy_dir }}/ansible.cfg'
+
+- name: run ansible-galaxy collection publish tests for {{ test_name }}
+  include_tasks: publish.yml
+  args:
+    apply:
+      environment:
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  vars:
+    test_name: '{{ item.name }}'
+    test_server: '{{ item.server }}'
+    vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
+  loop:
+  - name: pulp_v2
+    server: '{{ pulp_server }}published/api/'
+  - name: pulp_v3
+    server: '{{ pulp_server }}published/api/'
+    v3: true
+  - name: galaxy_ng
+    server: '{{ galaxy_ng_server }}'
+    v3: true
+
+# We use a module for this so we can speed up the test time.
+# For pulp interactions, we only upload to galaxy_ng which shares
+# the same repo and distribution with pulp_ansible
+# However, we use galaxy_ng only, since collections are unique across
+# pulp repositories, and galaxy_ng maintains a 2nd list of published collections
+- name: setup test collections for install and download test
+  setup_collections:
+    server: galaxy_ng
+    collections: '{{ collection_list }}'
+  environment:
+    ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+
+# Stores the cached test version number index as we run install many times
+- set_fact:
+    cache_version_build: 0
+
+- name: run ansible-galaxy collection install tests for {{ test_name }}
+  include_tasks: install.yml
+  vars:
+    test_name: '{{ item.name }}'
+    test_server: '{{ item.server }}'
+    vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
+    requires_auth: '{{ item.requires_auth|default(false) }}'
+  args:
+    apply:
+      environment:
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  loop:
+  - name: galaxy_ng
+    server: '{{ galaxy_ng_server }}'
+    v3: true
+    requires_auth: true
+  - name: pulp_v2
+    server: '{{ pulp_server }}published/api/'
+  - name: pulp_v3
+    server: '{{ pulp_server }}published/api/'
+    v3: true
+
+- name: publish collection with a dep on another server
+  setup_collections:
+    server: secondary
+    collections:
+    - namespace: secondary
+      name: name
+      # parent_dep.parent_collection does not exist on the secondary server
+      dependencies:
+        parent_dep.parent_collection: '1.0.0'
+  environment:
+    ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+
+- name: install collection with dep on another server
+  command: ansible-galaxy collection install secondary.name -vvv  # 3 -v's will show the source in the stdout
+  register: install_cross_dep
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+
+- name: get result of install collection with dep on another server
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/{{ item.namespace }}/{{ item.name }}/MANIFEST.json'
+  register: install_cross_dep_actual
+  loop:
+  - namespace: secondary
+    name: name
+  - namespace: parent_dep
+    name: parent_collection
+  - namespace: child_dep
+    name: child_collection
+  - namespace: child_dep
+    name: child_dep2
+
+- name: assert result of install collection with dep on another server
+  assert:
+    that:
+    - >-
+      "'secondary.name:1.0.0' obtained from server secondary"
+      in install_cross_dep.stdout
+    # pulp_v2 is highest in the list so it will find it there first
+    - >-
+      "'parent_dep.parent_collection:1.0.0' obtained from server pulp_v2"
+      in install_cross_dep.stdout
+    - >-
+      "'child_dep.child_collection:0.9.9' obtained from server pulp_v2"
+      in install_cross_dep.stdout
+    - >-
+      "'child_dep.child_dep2:1.2.2' obtained from server pulp_v2"
+      in install_cross_dep.stdout
+    - (install_cross_dep_actual.results[0].content | b64decode | from_json).collection_info.version == '1.0.0'
+    - (install_cross_dep_actual.results[1].content | b64decode | from_json).collection_info.version == '1.0.0'
+    - (install_cross_dep_actual.results[2].content | b64decode | from_json).collection_info.version == '0.9.9'
+    - (install_cross_dep_actual.results[3].content | b64decode | from_json).collection_info.version == '1.2.2'
+
+- name: run ansible-galaxy collection download tests
+  include_tasks: download.yml
+  args:
+    apply:
+      environment:
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+
+- name: run ansible-galaxy collection verify tests for {{ test_name }}
+  include_tasks: verify.yml
+  args:
+    apply:
+      environment:
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  vars:
+    test_api_fallback: 'pulp_v2'
+    test_api_fallback_versions: 'v1, v2'
+    test_name: 'galaxy_ng'
+    test_server: '{{ galaxy_ng_server }}'
+
+- name: run ansible-galaxy collection list tests
+  include_tasks: list.yml
+
+- include_tasks: upgrade.yml
+  args:
+    apply:
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'

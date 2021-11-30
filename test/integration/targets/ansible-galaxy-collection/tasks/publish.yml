@@ -1,0 +1,33 @@
+---
+- name: publish collection - {{ test_name }}
+  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_name }} {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}'
+  register: publish_collection
+
+- name: get result of publish collection - {{ test_name }}
+  uri:
+    url: '{{ test_server }}{{ vX }}collections/ansible_test/my_collection/versions/1.0.0/'
+    return_content: yes
+    user: '{{ pulp_user }}'
+    password: '{{ pulp_password }}'
+    force_basic_auth: true
+  register: publish_collection_actual
+
+- name: assert publish collection - {{ test_name }}
+  assert:
+    that:
+    - '"Collection has been successfully published and imported to the Galaxy server" in publish_collection.stdout'
+    - publish_collection_actual.json.collection.name == 'my_collection'
+    - publish_collection_actual.json.namespace.name == 'ansible_test'
+    - publish_collection_actual.json.version == '1.0.0'
+
+- name: fail to publish existing collection version - {{ test_name }}
+  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_name }} {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}'
+  register: fail_publish_existing
+  failed_when: fail_publish_existing is not failed
+
+- name: reset published collections - {{ test_name }}
+  include_tasks: pulp.yml

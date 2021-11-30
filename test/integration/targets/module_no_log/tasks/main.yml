@@ -1,0 +1,61 @@
+- name: Detect syslog
+  stat:
+    path: /var/log/syslog
+  register: syslog
+
+- name: Detect journalctl
+  shell: command -V journalctl
+  ignore_errors: yes
+  changed_when: no
+  register: journalctl
+
+- block:
+    - name: Skip tests if logs were not found.
+      debug:
+        msg: Did not find /var/log/syslog or journalctl. Tests will be skipped.
+    - meta: end_play
+  when: journalctl is failed and not syslog.stat.exists
+
+- name: Generate random numbers for unique log entries
+  set_fact:
+    good_number: "{{ 999999999999 | random }}"
+    bad_number: "{{ 999999999999 | random }}"
+
+- name: Generate expected log entry messages
+  set_fact:
+    good_message: 'My number is: ({{ good_number }})'
+    bad_message: 'My number is: ({{ bad_number }})'
+
+- name: Generate log message search patterns
+  set_fact:
+    # these search patterns are designed to avoid matching themselves
+    good_search: '{{ good_message.replace(":", "[:]") }}'
+    bad_search: '{{ bad_message.replace(":", "[:]") }}'
+
+- name: Generate grep command
+  set_fact:
+    grep_command: "grep -e '{{ good_search }}' -e '{{ bad_search }}'"
+
+- name: Run a module that logs without no_log
+  module_that_logs:
+    number: "{{ good_number }}"
+
+- name: Run a module that logs with no_log
+  module_that_logs:
+    number: "{{ bad_number }}"
+  no_log: yes
+
+- name: Search for expected log messages
+  # if this fails the tests are probably running on a system which stores logs elsewhere
+  shell: "({{ grep_command }} /var/log/syslog) || (journalctl | {{ grep_command }})"
+  changed_when: no
+  register: grep
+
+- name: Verify the correct log messages were found
+  assert:
+    that:
+      # if the good message is not found then the cause is likely one of:
+      # 1) the remote system does not write user.info messages to the logs
+      # 2) the AnsibleModule.log method is not working
+      - good_message in grep.stdout
+      - bad_message not in grep.stdout

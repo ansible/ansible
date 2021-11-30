@@ -1,0 +1,5 @@
+requires_ansible: '>=2.11'  # force ansible-doc to check the Ansible version (requires packaging)
+plugin_routing:
+  modules:
+    hi:
+      redirect: hello

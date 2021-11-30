@@ -1,0 +1,204 @@
+# test code for the ping module
+# (c) 2014, James Cammarata <jcammarata@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+- name: Install test requirements
+  import_role:
+    name: setup_pexpect
+
+- name: record the test_command file
+  set_fact: test_command_file={{output_dir | expanduser}}/test_command.py
+
+- name: copy script into output directory
+  copy: src=test_command.py dest={{test_command_file}} mode=0444
+
+- name: record the output file
+  set_fact: output_file={{output_dir}}/foo.txt
+
+- copy:
+   content: "foo"
+   dest: "{{output_file}}"
+
+- name: test expect
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    responses:
+      foo: bar
+  register: expect_result
+
+- name: assert expect worked
+  assert:
+    that:
+    - "expect_result.changed == true"
+    - "expect_result.stdout_lines|last == 'foobar'"
+
+- name: test creates option
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    responses:
+      foo: bar
+    creates: "{{output_file}}"
+  register: creates_result
+
+- name: assert when creates is provided command is not run
+  assert:
+    that:
+    - "creates_result.changed == false"
+    - "'skipped' in creates_result.stdout"
+
+- name: test creates option (missing)
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    responses:
+      foo: bar
+    creates: "{{output_file}}.does.not.exist"
+  register: creates_result
+
+- name: assert when missing creates is provided command is run
+  assert:
+    that:
+    - "creates_result.changed == true"
+    - "creates_result.stdout_lines|last == 'foobar'"
+
+- name: test removes option
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    responses:
+      foo: bar
+    removes: "{{output_file}}"
+  register: removes_result
+
+- name: assert when removes is provided command is run
+  assert:
+    that:
+    - "removes_result.changed == true"
+    - "removes_result.stdout_lines|last == 'foobar'"
+
+- name: test removes option (missing)
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    responses:
+      foo: bar
+    removes: "{{output_file}}.does.not.exist"
+  register: removes_result
+
+- name: assert when missing removes is provided command is not run
+  assert:
+    that:
+    - "removes_result.changed == false"
+    - "'skipped' in removes_result.stdout"
+
+- name: test chdir
+  expect:
+    command: "/bin/sh -c 'pwd && sleep 1'"
+    chdir: "{{output_dir}}"
+    responses:
+      foo: bar
+  register: chdir_result
+
+- name: assert chdir works
+  assert:
+    that:
+    - "'{{chdir_result.stdout |expanduser | realpath }}' == '{{output_dir | expanduser | realpath}}'"
+
+- name: test timeout option
+  expect:
+    command: "sleep 10"
+    responses:
+      foo: bar
+    timeout: 1
+  ignore_errors: true
+  register: timeout_result
+
+- name: assert failure message when timeout
+  assert:
+    that:
+    - "timeout_result.msg == 'command exceeded timeout'"
+
+- name: test echo option
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}}"
+    responses:
+      foo: bar
+    echo: true
+  register: echo_result
+
+- name: assert echo works
+  assert:
+    that:
+    - "echo_result.stdout_lines|length == 7"
+    - "echo_result.stdout_lines[-2] == 'foobar'"
+    - "echo_result.stdout_lines[-1] == 'bar'"
+
+- name: test response list
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}} foo foo"
+    responses:
+      foo:
+      - bar
+      - baz
+  register: list_result
+
+- name: assert list response works
+  assert:
+    that:
+    - "list_result.stdout_lines|length == 7"
+    - "list_result.stdout_lines[-2] == 'foobar'"
+    - "list_result.stdout_lines[-1] == 'foobaz'"
+
+- name: test no remaining responses
+  expect:
+    command: "{{ansible_python_interpreter}} {{test_command_file}} foo foo"
+    responses:
+      foo:
+      - bar
+  register: list_result
+  ignore_errors: yes
+
+- name: assert no remaining responses
+  assert:
+    that:
+    - "list_result.failed"
+    - "'No remaining responses' in list_result.msg"
+
+- name: test no command
+  expect:
+    command: ""
+    responses:
+      foo: bar
+  register: no_command_result
+  ignore_errors: yes
+
+- name: assert no command
+  assert:
+    that:
+    - "no_command_result.failed"
+    - "no_command_result.msg == 'no command given'"
+    - "no_command_result.rc == 256"
+
+- name: test non-zero return code
+  expect:
+    command: "ls /does-not-exist"
+    responses:
+      foo: bar
+  register: non_zero_result
+  ignore_errors: yes
+
+- name: assert non-zero return code
+  assert:
+    that:
+    - "non_zero_result.failed"
+    - "non_zero_result.msg == 'non-zero return code'"

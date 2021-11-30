@@ -1,0 +1,112 @@
+- hosts: localhost
+  gather_facts: no
+  collections:
+  - testns.testcoll
+  - testns.othercoll
+  module_defaults:
+    testns.testcoll.echoaction:
+      explicit_module_default: from playbook
+    testns.testcoll.echo1:
+      explicit_module_default: from playbook
+    group/testgroup:
+      group_module_default: from playbook
+  tasks:
+  - testns.testcoll.echoaction:
+      task_arg: from task
+    register: echoaction_fq
+  - echoaction:
+      task_arg: from task
+    register: echoaction_unq
+  - testns.testcoll.echo1:
+      task_arg: from task
+    register: echo1_fq
+  - echo1:
+      task_arg: from task
+    register: echo1_unq
+  - testns.testcoll.echo2:
+      task_arg: from task
+    register: echo2_fq
+  - echo2:
+      task_arg: from task
+    register: echo2_unq
+  - testns.othercoll.other_echoaction:
+      task_arg: from task
+    register: other_echoaction_fq
+  - other_echoaction:
+      task_arg: from task
+    register: other_echoaction_unq
+  - testns.othercoll.other_echo1:
+      task_arg: from task
+    register: other_echo1_fq
+  - other_echo1:
+      task_arg: from task
+    register: other_echo1_unq
+
+  - debug: var=echo1_fq
+
+  - legacy_ping:
+    register: legacy_ping_1
+    module_defaults:
+      legacy_ping:
+        data: from task
+
+  - legacy_ping:
+    register: legacy_ping_2
+    module_defaults:
+      ansible.legacy.legacy_ping:
+        data: from task
+
+  - ansible.legacy.legacy_ping:
+    register: legacy_ping_3
+    module_defaults:
+      legacy_ping:
+        data: from task
+
+  - ansible.legacy.legacy_ping:
+    register: legacy_ping_4
+    module_defaults:
+      ansible.legacy.legacy_ping:
+        data: from task
+
+  - name: builtin uses legacy defaults
+    ansible.builtin.debug:
+    module_defaults:
+      debug:
+        msg: legacy default
+    register: builtin_legacy_defaults_1
+
+  - name: builtin uses legacy defaults
+    ansible.builtin.debug:
+    module_defaults:
+      ansible.legacy.debug:
+        msg: legacy default
+    register: builtin_legacy_defaults_2
+
+  - name: legacy does not use builtin defaults
+    ansible.legacy.debug:
+    register: legacy_builtin_defaults
+    module_defaults:
+      ansible.builtin.debug:
+        msg: legacy default
+
+  - assert:
+      that:
+        - "echoaction_fq.args_in == {'task_arg': 'from task', 'explicit_module_default': 'from playbook', 'group_module_default': 'from playbook' }"
+        - "echoaction_unq.args_in == {'task_arg': 'from task', 'explicit_module_default': 'from playbook', 'group_module_default': 'from playbook' }"
+        - "echo1_fq.args_in == {'task_arg': 'from task', 'explicit_module_default': 'from playbook', 'group_module_default': 'from playbook' }"
+        - "echo1_unq.args_in == {'task_arg': 'from task', 'explicit_module_default': 'from playbook', 'group_module_default': 'from playbook' }"
+        - "echo2_fq.args_in == {'task_arg': 'from task', 'group_module_default': 'from playbook' }"
+        - "echo2_unq.args_in == {'task_arg': 'from task', 'group_module_default': 'from playbook' }"
+        - "other_echoaction_fq.args_in == {'task_arg': 'from task', 'group_module_default': 'from playbook' }"
+        - "other_echoaction_unq.args_in == {'task_arg': 'from task', 'group_module_default': 'from playbook' }"
+        - "other_echo1_fq.args_in == {'task_arg': 'from task', 'group_module_default': 'from playbook' }"
+        - "other_echo1_unq.args_in == {'task_arg': 'from task', 'group_module_default': 'from playbook' }"
+        - "legacy_ping_1.ping == 'from task'"
+        - "legacy_ping_2.ping == 'from task'"
+        - "legacy_ping_3.ping == 'from task'"
+        - "legacy_ping_4.ping == 'from task'"
+        - "legacy_builtin_defaults.msg == 'Hello world!'"
+        - "builtin_legacy_defaults_1.msg == 'legacy default'"
+        - "builtin_legacy_defaults_2.msg == 'legacy default'"
+
+  - include_tasks: tasks/main.yml

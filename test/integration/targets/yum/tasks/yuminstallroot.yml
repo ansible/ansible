@@ -1,0 +1,122 @@
+# make a installroot
+- name: Create installroot
+  command: mktemp -d "{{ remote_tmp_dir }}/ansible.test.XXXXXX"
+  register: yumroot
+
+#- name: Populate directory
+#  file:
+#    path: "/{{ yumroot.stdout }}/etc/"
+#    state: directory
+#    mode: 0755
+#
+#- name: Populate directory2
+#  copy:
+#    content: "[main]\ndistropkgver={{ ansible_distribution_version }}\n"
+#    dest: "/{{ yumroot.stdout }}/etc/yum.conf"
+
+- name: Make a necessary directory
+  file:
+    path: "{{ yumroot.stdout }}/etc/yum/vars/"
+    state: directory
+    mode: 0755
+
+- name: get yum releasever
+  command: "{{ ansible_python_interpreter }} -c 'import yum; yb = yum.YumBase(); print(yb.conf.yumvar[\"releasever\"])'"
+  register: releasever
+  ignore_errors: yes
+
+- name: Populate directory
+  copy:
+    content: "{{ releasever.stdout_lines[-1] }}\n"
+    dest: "/{{ yumroot.stdout }}/etc/yum/vars/releasever"
+  when: releasever is successful
+
+# This will drag in > 200 MB.
+- name: attempt installroot
+  yum: name=zlib installroot="{{ yumroot.stdout }}/" disable_gpg_check=yes
+  register: yum_result
+
+- name: check sos with rpm in installroot
+  shell: rpm -q zlib --root="{{ yumroot.stdout }}/"
+  failed_when: False
+  register: rpm_result
+
+- name: verify installation of sos
+  assert:
+    that:
+        - "yum_result.rc == 0"
+        - "yum_result.changed"
+        - "rpm_result.rc == 0"
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'changed' in yum_result"
+        - "'msg' in yum_result"
+        - "'rc' in yum_result"
+        - "'results' in yum_result"
+
+- name: cleanup installroot
+  file:
+    path: "{{ yumroot.stdout }}/"
+    state: absent
+
+# Test for releasever working correctly
+#
+# Bugfix: https://github.com/ansible/ansible/issues/67050
+#
+# This test case is based on a reproducer originally reported on Reddit:
+#   https://www.reddit.com/r/ansible/comments/g2ps32/ansible_yum_module_throws_up_an_error_when/
+#
+# NOTE: For the Ansible upstream CI we can only run this for RHEL7 because the
+#       containerized runtimes in shippable don't allow the nested mounting of
+#       buildah container volumes.
+- name: perform yuminstallroot in a buildah mount with releasever
+  when:
+    - ansible_facts["distribution_major_version"] == "7"
+    - ansible_facts["distribution"] == "RedHat"
+  block:
+    # Need to enable this RHUI repo for RHEL7 testing in AWS, CentOS has Extras
+    # enabled by default and this is not needed there.
+    - name: enable rhel-7-server-rhui-extras-rpms repo for RHEL7
+      command: yum-config-manager --enable rhel-7-server-rhui-extras-rpms
+    - name: update cache to pull repodata
+      yum:
+        update_cache: yes
+    - name: install required packages for buildah test
+      yum:
+        state: present
+        name:
+          - buildah
+    - name: create buildah container from scratch
+      command: "buildah --name yum_installroot_releasever_test from scratch"
+    - name: mount the buildah container
+      command: "buildah mount yum_installroot_releasever_test"
+      register: buildah_mount
+    - name: figure out yum value of $releasever
+      shell: python -c 'import yum; yb = yum.YumBase(); print(yb.conf.yumvar["releasever"])' | tail -1
+      register: buildah_host_releasever
+    - name: test yum install of python using releasever
+      yum:
+        name: 'python'
+        state: present
+        installroot: "{{ buildah_mount.stdout }}"
+        releasever: "{{ buildah_host_releasever.stdout }}"
+      register: yum_result
+    - name: verify installation of python
+      assert:
+        that:
+            - "yum_result.rc == 0"
+            - "yum_result.changed"
+            - "rpm_result.rc == 0"
+  always:
+    - name: remove buildah container
+      command: "buildah rm yum_installroot_releasever_test"
+      ignore_errors: yes
+    - name: remove buildah from CI system
+      yum:
+        state: absent
+        name:
+          - buildah
+    - name: disable rhel-7-server-rhui-extras-rpms repo for RHEL7
+      command: yum-config-manager --disable rhel-7-server-rhui-extras-rpms

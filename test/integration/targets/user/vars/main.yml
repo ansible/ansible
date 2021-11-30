@@ -1,0 +1,13 @@
+user_home_prefix:
+  Linux: '/home'
+  FreeBSD: '/home'
+  SunOS: '/home'
+  Darwin: '/Users'
+
+status_command:
+  OpenBSD: "grep ansibulluser /etc/master.passwd | cut -d ':' -f 2"
+  FreeBSD: 'pw user show ansibulluser'
+
+default_user_group:
+  openSUSE Leap: users
+  MacOSX: admin

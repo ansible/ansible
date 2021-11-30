@@ -1,0 +1,11 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - import_role:
+        name: include_handler_test
+
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - import_role:
+        name: import_handler_test

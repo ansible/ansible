@@ -1,0 +1,43 @@
+- name: Get OS version
+  shell: uname -r
+  register: os_version
+
+- name: Install pre-reqs
+  apt:
+    name: "{{ docker_prereq_packages }}"
+    state: present
+    update_cache: yes
+  notify: cleanup docker
+
+- name: Add gpg key
+  shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg >key && apt-key add key
+
+- name: Add Docker repo
+  shell: add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+- block:
+    - name: Prevent service restart
+      copy:
+        content: exit 101
+        dest: /usr/sbin/policy-rc.d
+        backup: yes
+        mode: 0755
+      register: policy_rc_d
+
+    - name: Install Docker CE
+      apt:
+        name: "{{ docker_packages }}"
+        state: present
+        update_cache: yes
+  always:
+    - name: Restore /usr/sbin/policy-rc.d (if needed)
+      command: mv {{ policy_rc_d.backup_file }} /usr/sbin/policy-rc.d
+      when:
+        - "'backup_file' in policy_rc_d"
+
+    - name: Remove /usr/sbin/policy-rc.d (if needed)
+      file:
+        path: /usr/sbin/policy-rc.d
+        state: absent
+      when:
+        - "'backup_file' not in policy_rc_d"

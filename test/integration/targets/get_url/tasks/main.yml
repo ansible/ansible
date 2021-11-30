@@ -1,0 +1,618 @@
+# Test code for the get_url module
+# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <https://www.gnu.org/licenses/>.
+
+- name: Determine if python looks like it will support modern ssl features like SNI
+  command: "{{ ansible_python.executable }} -c 'from ssl import SSLContext'"
+  ignore_errors: True
+  register: python_test
+
+- name: Set python_has_sslcontext if we have it
+  set_fact:
+    python_has_ssl_context: True
+  when: python_test.rc == 0
+
+- name: Set python_has_sslcontext False if we don't have it
+  set_fact:
+    python_has_ssl_context: False
+  when: python_test.rc != 0
+
+- name: Define test files for file schema
+  set_fact:
+    geturl_srcfile: "{{ remote_tmp_dir }}/aurlfile.txt"
+    geturl_dstfile: "{{ remote_tmp_dir }}/aurlfile_copy.txt"
+
+- name: Create source file
+  copy:
+    dest: "{{ geturl_srcfile }}"
+    content: "foobar"
+  register: source_file_copied
+
+- name: test file fetch
+  get_url:
+    url: "file://{{ source_file_copied.dest }}"
+    dest: "{{ geturl_dstfile }}"
+  register: result
+
+- name: assert success and change
+  assert:
+    that:
+      - result is changed
+      - '"OK" in result.msg'
+
+- name: test nonexisting file fetch
+  get_url:
+    url: "file://{{ source_file_copied.dest }}NOFILE"
+    dest: "{{ geturl_dstfile }}NOFILE"
+  register: result
+  ignore_errors: True
+
+- name: assert success and change
+  assert:
+    that:
+      - result is failed
+
+- name: test HTTP HEAD request for file in check mode
+  get_url:
+    url: "https://{{ httpbin_host }}/get"
+    dest: "{{ remote_tmp_dir }}/get_url_check.txt"
+    force: yes
+  check_mode: True
+  register: result
+
+- name: assert that the HEAD request was successful in check mode
+  assert:
+    that:
+    - result is changed
+    - '"OK" in result.msg'
+
+- name: test HTTP HEAD for nonexistent URL in check mode
+  get_url:
+    url: "https://{{ httpbin_host }}/DOESNOTEXIST"
+    dest: "{{ remote_tmp_dir }}/shouldnotexist.html"
+    force: yes
+  check_mode: True
+  register: result
+  ignore_errors: True
+
+- name: assert that HEAD request for nonexistent URL failed
+  assert:
+    that:
+      - result is failed
+
+- name: test https fetch
+  get_url: url="https://{{ httpbin_host }}/get" dest={{remote_tmp_dir}}/get_url.txt force=yes
+  register: result
+
+- name: assert the get_url call was successful
+  assert:
+    that:
+      - result is changed
+      - '"OK" in result.msg'
+
+- name: test https fetch to a site with mismatched hostname and certificate
+  get_url:
+    url: "https://{{ badssl_host }}/"
+    dest: "{{ remote_tmp_dir }}/shouldnotexist.html"
+  ignore_errors: True
+  register: result
+
+- stat:
+    path: "{{ remote_tmp_dir }}/shouldnotexist.html"
+  register: stat_result
+
+- name: Assert that the file was not downloaded
+  assert:
+    that:
+      - "result is failed"
+      - "'Failed to validate the SSL certificate' in result.msg or 'Hostname mismatch' in result.msg or ( result.msg is match('hostname .* doesn.t match .*'))"
+      - "stat_result.stat.exists == false"
+
+- name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no
+  get_url:
+    url: "https://{{ badssl_host }}/"
+    dest: "{{ remote_tmp_dir }}/get_url_no_validate.html"
+    validate_certs: no
+  register: result
+
+- stat:
+    path: "{{ remote_tmp_dir }}/get_url_no_validate.html"
+  register: stat_result
+
+- name: Assert that the file was downloaded
+  assert:
+    that:
+      - result is changed
+      - "stat_result.stat.exists == true"
+
+# SNI Tests
+# SNI is only built into the stdlib from python-2.7.9 onwards
+- name: Test that SNI works
+  get_url:
+    url: 'https://{{ sni_host }}/'
+    dest: "{{ remote_tmp_dir }}/sni.html"
+  register: get_url_result
+  ignore_errors: True
+
+- command: "grep '{{ sni_host }}' {{ remote_tmp_dir}}/sni.html"
+  register: data_result
+  when: python_has_ssl_context
+
+- debug:
+    var: get_url_result
+
+- name: Assert that SNI works with this python version
+  assert:
+    that:
+      - 'data_result.rc == 0'
+  when: python_has_ssl_context
+
+# If the client doesn't support SNI then get_url should have failed with a certificate mismatch
+- name: Assert that hostname verification failed because SNI is not supported on this version of python
+  assert:
+    that:
+      - 'get_url_result is failed'
+  when: not python_has_ssl_context
+
+# These tests are just side effects of how the site is hosted.  It's not
+# specifically a test site.  So the tests may break due to the hosting changing
+- name: Test that SNI works
+  get_url:
+    url: 'https://{{ sni_host }}/'
+    dest: "{{ remote_tmp_dir }}/sni.html"
+  register: get_url_result
+  ignore_errors: True
+
+- command: "grep '{{ sni_host }}' {{ remote_tmp_dir}}/sni.html"
+  register: data_result
+  when: python_has_ssl_context
+
+- debug:
+    var: get_url_result
+
+- name: Assert that SNI works with this python version
+  assert:
+    that:
+      - 'data_result.rc == 0'
+      - 'get_url_result is not failed'
+  when: python_has_ssl_context
+
+# If the client doesn't support SNI then get_url should have failed with a certificate mismatch
+- name: Assert that hostname verification failed because SNI is not supported on this version of python
+  assert:
+    that:
+      - 'get_url_result is failed'
+  when: not python_has_ssl_context
+# End hacky SNI test section
+
+- name: Test get_url with redirect
+  get_url:
+    url: 'https://{{ httpbin_host }}/redirect/6'
+    dest: "{{ remote_tmp_dir }}/redirect.json"
+
+- name: Test that setting file modes work
+  get_url:
+    url: 'https://{{ httpbin_host }}/'
+    dest: '{{ remote_tmp_dir }}/test'
+    mode: '0707'
+  register: result
+
+- stat:
+    path: "{{ remote_tmp_dir }}/test"
+  register: stat_result
+
+- name: Assert that the file has the right permissions
+  assert:
+    that:
+      - result is changed
+      - "stat_result.stat.mode == '0707'"
+
+- name: Test that setting file modes on an already downloaded file work
+  get_url:
+    url: 'https://{{ httpbin_host }}/'
+    dest: '{{ remote_tmp_dir }}/test'
+    mode: '0070'
+  register: result
+
+- stat:
+    path: "{{ remote_tmp_dir }}/test"
+  register: stat_result
+
+- name: Assert that the file has the right permissions
+  assert:
+    that:
+      - result is changed
+      - "stat_result.stat.mode == '0070'"
+
+# https://github.com/ansible/ansible/pull/65307/
+- name: Test that on http status 304, we get a status_code field.
+  get_url:
+    url: 'https://{{ httpbin_host }}/status/304'
+    dest: '{{ remote_tmp_dir }}/test'
+  register: result
+
+- name: Assert that we get the appropriate status_code
+  assert:
+    that:
+      - "'status_code' in result"
+      - "result.status_code == 304"
+
+# https://github.com/ansible/ansible/issues/29614
+- name: Change mode on an already downloaded file and specify checksum
+  get_url:
+    url: 'https://{{ httpbin_host }}/base64/cHR1eA=='
+    dest: '{{ remote_tmp_dir }}/test'
+    checksum: 'sha256:b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.'
+    mode: '0775'
+  register: result
+
+- stat:
+    path: "{{ remote_tmp_dir }}/test"
+  register: stat_result
+
+- name: Assert that file permissions on already downloaded file were changed
+  assert:
+    that:
+      - result is changed
+      - "stat_result.stat.mode == '0775'"
+
+- name: test checksum match in check mode
+  get_url:
+    url: 'https://{{ httpbin_host }}/base64/cHR1eA=='
+    dest: '{{ remote_tmp_dir }}/test'
+    checksum: 'sha256:b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.'
+  check_mode: True
+  register: result
+
+- name: Assert that check mode was green
+  assert:
+    that:
+      - result is not changed
+
+- name: Get a file that already exists with a checksum
+  get_url:
+    url: 'https://{{ httpbin_host }}/cache'
+    dest: '{{ remote_tmp_dir }}/test'
+    checksum: 'sha1:{{ stat_result.stat.checksum }}'
+  register: result
+
+- name: Assert that the file was not downloaded
+  assert:
+    that:
+      - result.msg == 'file already exists'
+
+- name: Get a file that already exists
+  get_url:
+    url: 'https://{{ httpbin_host }}/cache'
+    dest: '{{ remote_tmp_dir }}/test'
+  register: result
+
+- name: Assert that we didn't re-download unnecessarily
+  assert:
+    that:
+      - result is not changed
+      - "'304' in result.msg"
+
+- name: get a file that doesn't respond to If-Modified-Since without checksum
+  get_url:
+    url: 'https://{{ httpbin_host }}/get'
+    dest: '{{ remote_tmp_dir }}/test'
+  register: result
+
+- name: Assert that we downloaded the file
+  assert:
+    that:
+      - result is changed
+
+# https://github.com/ansible/ansible/issues/27617
+
+- name: set role facts
+  set_fact:
+    http_port: 27617
+    files_dir: '{{ remote_tmp_dir }}/files'
+
+- name: create files_dir
+  file:
+    dest: "{{ files_dir }}"
+    state: directory
+
+- name: create src file
+  copy:
+    dest: '{{ files_dir }}/27617.txt'
+    content: "ptux"
+
+- name: create duplicate src file
+  copy:
+    dest: '{{ files_dir }}/71420.txt'
+    content: "ptux"
+
+- name: create sha1 checksum file of src
+  copy:
+    dest: '{{ files_dir }}/sha1sum.txt'
+    content: |
+      a97e6837f60cec6da4491bab387296bbcd72bdba  27617.txt
+      a97e6837f60cec6da4491bab387296bbcd72bdba  71420.txt
+      3911340502960ca33aece01129234460bfeb2791  not_target1.txt
+      1b4b6adf30992cedb0f6edefd6478ff0a593b2e4  not_target2.txt
+
+- name: create sha256 checksum file of src
+  copy:
+    dest: '{{ files_dir }}/sha256sum.txt'
+    content: |
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  27617.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  71420.txt
+      30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  not_target1.txt
+      d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  not_target2.txt
+
+- name: create sha256 checksum file of src with a dot leading path
+  copy:
+    dest: '{{ files_dir }}/sha256sum_with_dot.txt'
+    content: |
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  ./27617.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  ./71420.txt
+      30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  ./not_target1.txt
+      d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  ./not_target2.txt
+
+- name: create sha256 checksum file of src with a * leading path
+  copy:
+    dest: '{{ files_dir }}/sha256sum_with_asterisk.txt'
+    content: |
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006. *27617.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006. *71420.txt
+      30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892 *not_target1.txt
+      d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b *not_target2.txt
+
+- copy:
+    src: "testserver.py"
+    dest: "{{ remote_tmp_dir }}/testserver.py"
+
+- name: start SimpleHTTPServer for issues 27617
+  shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ remote_tmp_dir}}/testserver.py {{ http_port }}
+  async: 90
+  poll: 0
+
+- name: Wait for SimpleHTTPServer to come up online
+  wait_for:
+    host: 'localhost'
+    port: '{{ http_port }}'
+    state: started
+
+- name: download src with sha1 checksum url in check mode
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ remote_tmp_dir }}'
+    checksum: 'sha1:http://localhost:{{ http_port }}/sha1sum.txt'
+  register: result_sha1_check_mode
+  check_mode: True
+
+- name: download src with sha1 checksum url
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ remote_tmp_dir }}'
+    checksum: 'sha1:http://localhost:{{ http_port }}/sha1sum.txt'
+  register: result_sha1
+
+- stat:
+    path: "{{ remote_tmp_dir }}/27617.txt"
+  register: stat_result_sha1
+
+- name: download src with sha256 checksum url
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ remote_tmp_dir }}/27617sha256.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum.txt'
+  register: result_sha256
+
+- stat:
+    path: "{{ remote_tmp_dir }}/27617.txt"
+  register: stat_result_sha256
+
+- name: download src with sha256 checksum url with dot leading paths
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ remote_tmp_dir }}/27617sha256_with_dot.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum_with_dot.txt'
+  register: result_sha256_with_dot
+
+- stat:
+    path: "{{ remote_tmp_dir }}/27617sha256_with_dot.txt"
+  register: stat_result_sha256_with_dot
+
+- name: download src with sha256 checksum url with asterisk leading paths
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ remote_tmp_dir }}/27617sha256_with_asterisk.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum_with_asterisk.txt'
+  register: result_sha256_with_asterisk
+
+- stat:
+    path: "{{ remote_tmp_dir }}/27617sha256_with_asterisk.txt"
+  register: stat_result_sha256_with_asterisk
+
+- name: download src with sha256 checksum url with file scheme
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ remote_tmp_dir }}/27617sha256_with_file_scheme.txt'
+    checksum: 'sha256:file://{{ files_dir }}/sha256sum.txt'
+  register: result_sha256_with_file_scheme
+
+- stat:
+    path: "{{ remote_tmp_dir }}/27617sha256_with_dot.txt"
+  register: stat_result_sha256_with_file_scheme
+
+- name: download 71420.txt with sha1 checksum url
+  get_url:
+    url: 'http://localhost:{{ http_port }}/71420.txt'
+    dest: '{{ remote_tmp_dir }}'
+    checksum: 'sha1:http://localhost:{{ http_port }}/sha1sum.txt'
+  register: result_sha1_71420
+
+- stat:
+    path: "{{ remote_tmp_dir }}/71420.txt"
+  register: stat_result_sha1_71420
+
+- name: download 71420.txt with sha256 checksum url
+  get_url:
+    url: 'http://localhost:{{ http_port }}/71420.txt'
+    dest: '{{ remote_tmp_dir }}/71420sha256.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum.txt'
+  register: result_sha256_71420
+
+- stat:
+    path: "{{ remote_tmp_dir }}/71420.txt"
+  register: stat_result_sha256_71420
+
+- name: download 71420.txt with sha256 checksum url with dot leading paths
+  get_url:
+    url: 'http://localhost:{{ http_port }}/71420.txt'
+    dest: '{{ remote_tmp_dir }}/71420sha256_with_dot.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum_with_dot.txt'
+  register: result_sha256_with_dot_71420
+
+- stat:
+    path: "{{ remote_tmp_dir }}/71420sha256_with_dot.txt"
+  register: stat_result_sha256_with_dot_71420
+
+- name: download 71420.txt with sha256 checksum url with asterisk leading paths
+  get_url:
+    url: 'http://localhost:{{ http_port }}/71420.txt'
+    dest: '{{ remote_tmp_dir }}/71420sha256_with_asterisk.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum_with_asterisk.txt'
+  register: result_sha256_with_asterisk_71420
+
+- stat:
+    path: "{{ remote_tmp_dir }}/71420sha256_with_asterisk.txt"
+  register: stat_result_sha256_with_asterisk_71420
+
+- name: download 71420.txt with sha256 checksum url with file scheme
+  get_url:
+    url: 'http://localhost:{{ http_port }}/71420.txt'
+    dest: '{{ remote_tmp_dir }}/71420sha256_with_file_scheme.txt'
+    checksum: 'sha256:file://{{ files_dir }}/sha256sum.txt'
+  register: result_sha256_with_file_scheme_71420
+
+- stat:
+    path: "{{ remote_tmp_dir }}/71420sha256_with_dot.txt"
+  register: stat_result_sha256_with_file_scheme_71420
+
+- name: Assert that the file was downloaded
+  assert:
+    that:
+      - result_sha1_check_mode is changed
+      - result_sha1 is changed
+      - result_sha256 is changed
+      - result_sha256_with_dot is changed
+      - result_sha256_with_asterisk is changed
+      - result_sha256_with_file_scheme is changed
+      - "stat_result_sha1.stat.exists == true"
+      - "stat_result_sha256.stat.exists == true"
+      - "stat_result_sha256_with_dot.stat.exists == true"
+      - "stat_result_sha256_with_asterisk.stat.exists == true"
+      - "stat_result_sha256_with_file_scheme.stat.exists == true"
+      - result_sha1_71420 is changed
+      - result_sha256_71420 is changed
+      - result_sha256_with_dot_71420 is changed
+      - result_sha256_with_asterisk_71420 is changed
+      - result_sha256_with_file_scheme_71420 is changed
+      - "stat_result_sha1_71420.stat.exists == true"
+      - "stat_result_sha256_71420.stat.exists == true"
+      - "stat_result_sha256_with_dot_71420.stat.exists == true"
+      - "stat_result_sha256_with_asterisk_71420.stat.exists == true"
+      - "stat_result_sha256_with_file_scheme_71420.stat.exists == true"
+
+#https://github.com/ansible/ansible/issues/16191
+- name: Test url split with no filename
+  get_url:
+    url: https://{{ httpbin_host }}
+    dest: "{{ remote_tmp_dir }}"
+
+- name: Test headers dict
+  get_url:
+    url: https://{{ httpbin_host }}/headers
+    headers:
+      Foo: bar
+      Baz: qux
+    dest: "{{ remote_tmp_dir }}/headers_dict.json"
+
+- name: Get downloaded file
+  slurp:
+    src: "{{ remote_tmp_dir }}/headers_dict.json"
+  register: result
+
+- name: Test headers dict
+  assert:
+    that:
+      - (result.content | b64decode | from_json).headers.get('Foo') == 'bar'
+      - (result.content | b64decode | from_json).headers.get('Baz') == 'qux'
+
+- name: Test client cert auth, with certs
+  get_url:
+    url: "https://ansible.http.tests/ssl_client_verify"
+    client_cert: "{{ remote_tmp_dir }}/client.pem"
+    client_key: "{{ remote_tmp_dir }}/client.key"
+    dest: "{{ remote_tmp_dir }}/ssl_client_verify"
+  when: has_httptester
+
+- name: Get downloaded file
+  slurp:
+    src: "{{ remote_tmp_dir }}/ssl_client_verify"
+  register: result
+  when: has_httptester
+
+- name: Assert that the ssl_client_verify file contains the correct content
+  assert:
+    that:
+      - '(result.content | b64decode) == "ansible.http.tests:SUCCESS"'
+  when: has_httptester
+
+- name: test unredirected_headers
+  get_url:
+    url: 'https://{{ httpbin_host }}/redirect-to?status_code=301&url=/basic-auth/user/passwd'
+    username: user
+    password: passwd
+    force_basic_auth: true
+    unredirected_headers:
+      - authorization
+    dest: "{{ remote_tmp_dir }}/doesnt_matter"
+  ignore_errors: true
+  register: unredirected_headers
+
+- name: test unredirected_headers
+  get_url:
+    url: 'https://{{ httpbin_host }}/redirect-to?status_code=301&url=/basic-auth/user/passwd'
+    username: user
+    password: passwd
+    force_basic_auth: true
+    dest: "{{ remote_tmp_dir }}/doesnt_matter"
+  register: redirected_headers
+
+- name: ensure unredirected_headers caused auth to fail
+  assert:
+    that:
+      - unredirected_headers is failed
+      - unredirected_headers.status_code == 401
+      - redirected_headers is successful
+      - redirected_headers.status_code == 200
+
+- name: Test use_gssapi=True
+  include_tasks:
+    file: use_gssapi.yml
+    apply:
+      environment:
+        KRB5_CONFIG: '{{ krb5_config }}'
+        KRB5CCNAME: FILE:{{ remote_tmp_dir }}/krb5.cc
+  when: krb5_config is defined

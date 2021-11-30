@@ -1,0 +1,45 @@
+- name: Install all collections by default
+  command: 'ansible-galaxy collection install git+file://{{ test_repo_path }}/.git'
+
+- name: list installed collections
+  command: 'ansible-galaxy collection list'
+  register: installed_collections
+
+- assert:
+    that:
+      - "'ansible_test.collection_1' in installed_collections.stdout"
+      - "'ansible_test.collection_2' in installed_collections.stdout"
+
+- name: install from artifact to another path to compare contents
+  command: 'ansible-galaxy collection install {{ artifact_path }} -p {{ alt_install_path }} --no-deps'
+  vars:
+    artifact_path: "{{ galaxy_dir }}/ansible_test-collection_1-1.0.0.tar.gz"
+
+- name: check if the files and folders in build_ignore were respected
+  stat:
+    path: "{{ install_path }}/ansible_test/collection_1/{{ item }}"
+  register: result
+  loop:
+    - foo.txt
+    - foobar/baz.txt
+    - foobar/qux
+
+- assert:
+    that: result.results | map(attribute='stat') | map(attribute='exists') is not any
+
+- name: check that directory with ignored files exists and is empty
+  stat:
+    path: "{{ install_path }}/ansible_test/collection_1/foobar"
+  register: result
+
+- assert:
+    that: result.stat.exists
+
+- name: test that there are no diff installing from a repo vs artifact
+  command: "diff -ur {{ collection_from_artifact }} {{ collection_from_repo }} -x *.json"
+  vars:
+    collection_from_repo: "{{ install_path }}/ansible_test/collection_1"
+    collection_from_artifact: "{{ alt_install_path }}/ansible_test/collection_1"
+
+- include_tasks: ./empty_installed_collections.yml
+  when: cleanup

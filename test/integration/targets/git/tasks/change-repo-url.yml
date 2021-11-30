@@ -1,0 +1,132 @@
+# test change of repo url
+# see https://github.com/ansible/ansible-modules-core/pull/721
+
+- name: CHANGE-REPO-URL | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: CHANGE-REPO-URL | Clone example git repo
+  git:
+    repo: "{{ repo_update_url_1 }}"
+    dest: "{{ checkout_dir }}"
+
+- name: CHANGE-REPO-URL | Clone repo with changed url to the same place
+  git:
+    repo: "{{ repo_update_url_2 }}"
+    dest: "{{ checkout_dir }}"
+  register: clone2
+
+- assert:
+    that: "clone2 is successful"
+
+- name: CHANGE-REPO-URL | check url updated
+  shell: git remote show origin | grep Fetch
+  register: remote_url
+  args:
+    chdir: "{{ checkout_dir }}"
+  environment:
+    LC_ALL: C
+
+- assert:
+    that:
+    - "'git-test-new' in remote_url.stdout"
+    - "'git-test-old' not in remote_url.stdout"
+
+- name: CHANGE-REPO-URL | check for new content in git-test-new
+  stat: path={{ checkout_dir }}/newfilename
+  register: repo_content
+
+- name: CHANGE-REPO-URL | assert presence of new file in repo (i.e. working copy updated)
+  assert:
+    that: "repo_content.stat.exists"
+
+# Make sure 'changed' result is accurate in check mode.
+# See https://github.com/ansible/ansible-modules-core/pull/4243
+
+- name: CHANGE-REPO-URL | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: CHANGE-REPO-URL | clone repo
+  git:
+    repo: "{{ repo_update_url_1 }}"
+    dest: "{{ checkout_dir }}"
+
+- name: CHANGE-REPO-URL | clone repo with same url to same destination
+  git:
+    repo: "{{ repo_update_url_1 }}"
+    dest: "{{ checkout_dir }}"
+  register: checkout_same_url
+
+- name: CHANGE-REPO-URL | check repo not changed
+  assert:
+    that:
+      - checkout_same_url is not changed
+
+
+- name: CHANGE-REPO-URL | clone repo with new url to same destination
+  git:
+    repo: "{{ repo_update_url_2 }}"
+    dest: "{{ checkout_dir }}"
+  register: checkout_new_url
+
+- name: CHANGE-REPO-URL | check repo changed
+  assert:
+    that:
+      - checkout_new_url is changed
+
+
+- name: CHANGE-REPO-URL | clone repo with new url in check mode
+  git:
+    repo: "{{ repo_update_url_1 }}"
+    dest: "{{ checkout_dir }}"
+  register: checkout_new_url_check_mode
+  check_mode: True
+
+- name: CHANGE-REPO-URL | check repo reported changed in check mode
+  assert:
+    that:
+      - checkout_new_url_check_mode is changed
+  when: git_version.stdout is version(git_version_supporting_ls_remote, '>=')
+
+- name: CHANGE-REPO-URL | clone repo with new url after check mode
+  git:
+    repo: "{{ repo_update_url_1 }}"
+    dest: "{{ checkout_dir }}"
+  register: checkout_new_url_after_check_mode
+
+- name: CHANGE-REPO-URL | check repo still changed after check mode
+  assert:
+    that:
+      - checkout_new_url_after_check_mode is changed
+
+
+# Test that checkout by branch works when the branch is not in our current repo but the sha is
+
+- name: CHANGE-REPO-URL | clear checkout_dir
+  file:
+    state: absent
+    path: "{{ checkout_dir }}"
+
+- name: CHANGE-REPO-URL | "Clone example git repo that we're going to modify"
+  git:
+    repo: "{{ repo_update_url_1 }}"
+    dest: "{{ checkout_dir }}/repo"
+
+- name: CHANGE-REPO-URL | Clone the repo again - this is what we test
+  git:
+    repo: "{{ checkout_dir }}/repo"
+    dest: "{{ checkout_dir }}/checkout"
+
+- name: CHANGE-REPO-URL | Add a branch to the repo
+  command: git branch new-branch
+  args:
+    chdir: "{{ checkout_dir }}/repo"
+
+- name: CHANGE-REPO-URL | Checkout the new branch in the checkout
+  git:
+    repo: "{{ checkout_dir}}/repo"
+    version: 'new-branch'
+    dest: "{{ checkout_dir }}/checkout"

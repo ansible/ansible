@@ -1,7 +1,7 @@
 'Hacking' directory tools
 =========================
 
-Env-setup
+env-setup
 ---------
 
 The 'env-setup' script modifies your environment to allow you to run
@@ -17,32 +17,45 @@ and do not wish to install them from your operating system package manager, you
 can install them from pip
 
     $ easy_install pip               # if pip is not already available
-    $ pip install pyyaml jinja2
+    $ pip install -r requirements.txt
 
 From there, follow ansible instructions on docs.ansible.com as normal.
 
-Test-module
------------
+test-module.py
+--------------
 
-'test-module' is a simple program that allows module developers (or testers) to run
+'test-module.py' is a simple program that allows module developers (or testers) to run
 a module outside of the ansible program, locally, on the current machine.
 
 Example:
 
-    $ ./hacking/test-module -m library/commands/shell -a "echo hi"
+    $ ./hacking/test-module.py -m lib/ansible/modules/commands/command.py -a "echo hi"
 
 This is a good way to insert a breakpoint into a module, for instance.
 
-Module-formatter
-----------------
+For more complex arguments such as the following yaml:
 
-The module formatter is a script used to generate manpages and online
-module documentation.  This is used by the system makefiles and rarely
-needs to be run directly.
+```yaml
+parent:
+  child:
+    - item: first
+      val: foo
+    - item: second
+      val: boo
+```
 
-Authors
--------
-'authors' is a simple script that generates a list of everyone who has
-contributed code to the ansible repository.
+Use:
 
+    $ ./hacking/test-module.py -m module \
+        -a '{"parent": {"child": [{"item": "first", "val": "foo"}, {"item": "second", "val": "bar"}]}}'
 
+return_skeleton_generator.py
+----------------------------
+
+return_skeleton_generator.py helps in generating the RETURNS section of a module. It takes
+JSON output of a module provided either as a file argument or via stdin.
+
+fix_test_syntax.py
+------------------
+
+A script to assist in the conversion for tests using filter syntax to proper jinja test syntax. This script has been used to convert all of the Ansible integration tests to the correct format for the 2.5 release. There are a few limitations documented, and all changes made by this script should be evaluated for correctness before executing the modified playbooks.

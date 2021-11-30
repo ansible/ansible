@@ -1,0 +1,92 @@
+# TODO: test against real connection plugins to ensure they're not leaking module args
+
+- name: normal play
+  hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: args should be logged in the absence of no_log
+      shell: echo "LOG_ME_TASK_SUCCEEDED"
+
+    - name: failed args should be logged in the absence of no_log
+      shell: echo "LOG_ME_TASK_FAILED"
+      failed_when: true
+      ignore_errors: true
+
+    - name: item args should be logged in the absence of no_log
+      shell: echo {{ item }}
+      with_items: [ "LOG_ME_ITEM", "LOG_ME_SKIPPED", "LOG_ME_ITEM_FAILED" ]
+      when: item != "LOG_ME_SKIPPED"
+      failed_when: item == "LOG_ME_ITEM_FAILED"
+      ignore_errors: true
+
+    - name: args should not be logged when task-level no_log set
+      shell: echo "DO_NOT_LOG_TASK_SUCCEEDED"
+      no_log: true
+
+    - name: failed args should not be logged when task-level no_log set
+      shell: echo "DO_NOT_LOG_TASK_FAILED"
+      no_log: true
+      failed_when: true
+      ignore_errors: true
+
+    - name: skipped task args should be suppressed with no_log
+      shell: echo "DO_NOT_LOG_TASK_SKIPPED"
+      no_log: true
+      when: false
+
+    - name: items args should be suppressed with no_log in every state
+      shell: echo {{ item }}
+      no_log: true
+      with_items: [ "DO_NOT_LOG_ITEM", "DO_NOT_LOG_ITEM_SKIPPED", "DO_NOT_LOG_ITEM_FAILED" ]
+      when: item != "DO_NOT_LOG_ITEM_SKIPPED"
+      failed_when: item == "DO_NOT_LOG_ITEM_FAILED"
+      ignore_errors: yes
+
+    - name: async task args should suppressed with no_log
+      async: 10
+      poll: 1
+      shell: echo "DO_NOT_LOG_ASYNC_TASK_SUCCEEDED"
+      no_log: true
+
+- name: play-level no_log set
+  hosts: testhost
+  gather_facts: no
+  no_log: true
+  tasks:
+      - name: args should not be logged when play-level no_log set
+        shell: echo "DO_NOT_LOG_PLAY"
+
+      - name: args should not be logged when both play- and task-level no_log set
+        shell: echo "DO_NOT_LOG_TASK_AND_PLAY"
+        no_log: true
+
+      - name: args should be logged when task-level no_log overrides play-level
+        shell: echo "LOG_ME_OVERRIDE"
+        no_log: false
+
+      - name: Add a fake host for next play
+        add_host:
+            hostname: fake
+
+- name: use 'fake' unreachable host to force unreachable error
+  hosts: fake
+  gather_facts: no
+  connection: ssh
+  tasks:
+    - name: 'EXPECTED FAILURE: Fail to run a lineinfile task'
+      vars:
+        logins:
+          - machine: foo
+            login: bar
+            password: DO_NOT_LOG_UNREACHABLE_ITEM
+          - machine: two
+            login: three
+            password: DO_NOT_LOG_UNREACHABLE_ITEM
+      lineinfile:
+        path: /dev/null
+        mode: 0600
+        create: true
+        insertafter: EOF
+        line: "machine {{ item.machine }} login {{ item.login }} password {{ item.password }}"
+      loop: "{{ logins }}"
+      no_log: true

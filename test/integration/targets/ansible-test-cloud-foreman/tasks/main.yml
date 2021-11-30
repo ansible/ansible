@@ -1,0 +1,6 @@
+- name: Verify endpoints respond
+  uri:
+    url: "{{ item }}"
+    validate_certs: no
+  with_items:
+    - http://{{ ansible_env.FOREMAN_HOST }}:{{ ansible_env.FOREMAN_PORT }}/ping

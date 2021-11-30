@@ -1,0 +1,41 @@
+- name: Fetch with no parameters
+  fetch:
+  register: fetch_no_params
+  ignore_errors: yes
+
+- name: Fetch with incorrect source type
+  fetch:
+    src: [1, 2]
+    dest: "{{ output_dir }}/fetched"
+  register: fetch_incorrect_src
+  ignore_errors: yes
+
+- name: Try to fetch a file inside an inaccessible directory
+  fetch:
+    src: "{{ remote_tmp_dir }}/noaccess/file1"
+    dest: "{{ output_dir }}"
+  register: failed_fetch_no_access
+  become: yes
+  become_user: fetcher
+  become_method: su
+  ignore_errors: yes
+
+- name: Dest is an existing directory name without trailing slash and flat=yes, should fail
+  fetch:
+    src: "{{ remote_tmp_dir }}/orig"
+    dest: "{{ output_dir }}"
+    flat: yes
+  register: failed_fetch_dest_dir
+  ignore_errors: true
+
+- name: Ensure fetch failed
+  assert:
+    that:
+      - fetch_no_params is failed
+      - fetch_no_params.msg is search('src and dest are required')
+      - fetch_incorrect_src is failed
+      - fetch_incorrect_src.msg is search('Invalid type supplied for source')
+      - failed_fetch_no_access is failed
+      - failed_fetch_no_access.msg is search('file is not readable')
+      - failed_fetch_dest_dir is failed
+      - failed_fetch_dest_dir.msg is search('dest is an existing directory')

@@ -1,0 +1,5 @@
+- name: role-based handler from handler subdir
+  include_tasks: A.yml
+
+- name: role-based handler from tasks subdir
+  include_tasks: B.yml

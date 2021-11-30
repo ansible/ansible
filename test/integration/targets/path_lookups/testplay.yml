@@ -1,0 +1,20 @@
+- name: test initial state
+  hosts: localhost
+  gather_facts: false
+  pre_tasks:
+    - name: remove {{ remove }}
+      file: path={{ playbook_dir }}/{{ remove }} state=absent
+  roles:
+    - showfile
+  post_tasks:
+    - name: from play
+      set_fact: play_result="{{lookup('file', 'testfile')}}"
+
+    - name: output stage {{ remove }} removed
+      debug: msg="play> {{play_out}}, role> {{role_out}}"
+
+    - name: verify that result match expected
+      assert:
+        that:
+            - 'play_result == play_out'
+            - 'role_result == role_out'

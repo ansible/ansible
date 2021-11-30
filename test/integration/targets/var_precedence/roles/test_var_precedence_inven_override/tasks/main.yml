@@ -1,0 +1,5 @@
+---
+- debug: var=foo
+- assert:
+    that:
+    - 'foo == "bar"'

@@ -1,0 +1,489 @@
+# file module tests for dealing with symlinks (state=link)
+
+- name: Initialize the test output dir
+  import_tasks: initialize.yml
+
+#
+# Basic absolute symlink to a file
+#
+- name: create soft link to file
+  file: src={{output_file}} dest={{output_dir}}/soft.txt state=link
+  register: file1_result
+
+- name: Get stat info for the link
+  stat:
+    path: '{{ output_dir }}/soft.txt'
+    follow: False
+  register: file1_link_stat
+
+- name: verify that the symlink was created correctly
+  assert:
+    that:
+      - 'file1_result is changed'
+      - 'file1_link_stat["stat"].islnk'
+      - 'file1_link_stat["stat"].lnk_target | expanduser == output_file | expanduser'
+
+#
+# Change an absolute soft link into a relative soft link
+#
+- name: change soft link to relative
+  file: src={{output_file|basename}} dest={{output_dir}}/soft.txt state=link
+  register: file2_result
+
+- name: Get stat info for the link
+  stat:
+    path: '{{ output_dir }}/soft.txt'
+    follow: False
+  register: file2_link_stat
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "file2_result is changed"
+      - "file2_result.diff.before.src == remote_file_expanded"
+      - "file2_result.diff.after.src == remote_file_expanded|basename"
+      - "file2_link_stat['stat'].islnk"
+      - "file2_link_stat['stat'].lnk_target == remote_file_expanded | basename"
+
+#
+# Check that creating the soft link a second time was idempotent
+#
+- name: soft link idempotency check
+  file: src={{output_file|basename}} dest={{output_dir}}/soft.txt state=link
+  register: file3_result
+
+- name: Get stat info for the link
+  stat:
+    path: '{{ output_dir }}/soft.txt'
+    follow: False
+  register: file3_link_stat
+
+- name: verify that the file was not marked as changed
+  assert:
+    that:
+      - "not file3_result is changed"
+      - "file3_link_stat['stat'].islnk"
+      - "file3_link_stat['stat'].lnk_target == remote_file_expanded | basename"
+
+#
+# Test symlink to nonexistent files
+#
+- name: fail to create soft link to non existent file
+  file:
+    src: '/nonexistent'
+    dest: '{{output_dir}}/soft2.txt'
+    state: 'link'
+    force: False
+  register: file4_result
+  ignore_errors: true
+
+- name: verify that link was not created
+  assert:
+    that:
+      - "file4_result is failed"
+
+- name: force creation soft link to non existent
+  file:
+    src: '/nonexistent'
+    dest: '{{ output_dir}}/soft2.txt'
+    state: 'link'
+    force: True
+  register: file5_result
+
+- name: Get stat info for the link
+  stat:
+    path: '{{ output_dir }}/soft2.txt'
+    follow: False
+  register: file5_link_stat
+
+- name: verify that link was created
+  assert:
+    that:
+      - "file5_result is changed"
+      - "file5_link_stat['stat'].islnk"
+      - "file5_link_stat['stat'].lnk_target == '/nonexistent'"
+
+- name: Prove idempotence of force creation soft link to non existent
+  file:
+    src: '/nonexistent'
+    dest: '{{ output_dir }}/soft2.txt'
+    state: 'link'
+    force: True
+  register: file6a_result
+
+- name: verify that the link to nonexistent is idempotent
+  assert:
+    that:
+      - "file6a_result.changed == false"
+
+# In order for a symlink in a sticky world writable directory to be followed, it must
+# either be owned by the follower,
+# or the directory and symlink must have the same owner.
+- name: symlink in sticky directory
+  block:
+    - name: Create remote unprivileged remote user
+      user:
+        name: '{{ remote_unprivileged_user }}'
+      register: user
+      notify: remove users
+
+    - name: Create a local temporary directory
+      tempfile:
+        state: directory
+      register: tempdir
+
+    - name: Set sticky bit
+      file:
+        path: '{{ tempdir.path }}'
+        mode: o=rwXt
+
+    - name: 'Check mode: force creation soft link in sticky directory owned by another user (mode is used)'
+      file:
+        src: '{{ user.home }}/nonexistent'
+        dest: '{{ tempdir.path }}/soft3.txt'
+        mode: 0640
+        state: 'link'
+        owner: '{{ remote_unprivileged_user }}'
+        force: true
+        follow: false
+      check_mode: true
+      register: missing_dst_no_follow_enable_force_use_mode1
+
+    - name: force creation soft link in sticky directory owned by another user (mode is used)
+      file:
+        src: '{{ user.home }}/nonexistent'
+        dest: '{{ tempdir.path }}/soft3.txt'
+        mode: 0640
+        state: 'link'
+        owner: '{{ remote_unprivileged_user }}'
+        force: true
+        follow: false
+      register: missing_dst_no_follow_enable_force_use_mode2
+
+    - name: Get stat info for the link
+      stat:
+        path: '{{ tempdir.path }}/soft3.txt'
+        follow: false
+      register: soft3_result
+
+    - name: 'Idempotence: force creation soft link in sticky directory owned by another user (mode is used)'
+      file:
+        src: '{{ user.home }}/nonexistent'
+        dest: '{{ tempdir.path }}/soft3.txt'
+        mode: 0640
+        state: 'link'
+        owner: '{{ remote_unprivileged_user }}'
+        force: yes
+        follow: false
+      register: missing_dst_no_follow_enable_force_use_mode3
+  always:
+    - name: Delete remote unprivileged remote user
+      user:
+        name: '{{ remote_unprivileged_user }}'
+        state: absent
+        force: yes
+        remove: yes
+
+    - name: Delete unprivileged user home and tempdir
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - '{{ tempdir.path }}'
+        - '{{ user.home }}'
+
+- name: verify that link was created
+  assert:
+    that:
+      - "missing_dst_no_follow_enable_force_use_mode1 is changed"
+      - "missing_dst_no_follow_enable_force_use_mode2 is changed"
+      - "missing_dst_no_follow_enable_force_use_mode3 is not changed"
+      - "soft3_result['stat'].islnk"
+      - "soft3_result['stat'].lnk_target == '{{ user.home }}/nonexistent'"
+
+#
+# Test creating a link to a directory https://github.com/ansible/ansible/issues/1369
+#
+- name: create soft link to directory using absolute path
+  file:
+    src: '/'
+    dest: '{{ output_dir }}/root'
+    state: 'link'
+  register: file6_result
+
+- name: Get stat info for the link
+  stat:
+    path: '{{ output_dir }}/root'
+    follow: False
+  register: file6_link_stat
+
+- name: Get stat info for the pointed to file
+  stat:
+    path: '{{ output_dir }}/root'
+    follow: True
+  register: file6_links_dest_stat
+
+- name: Get stat info for the file we intend to point to
+  stat:
+    path: '/'
+    follow: False
+  register: file6_dest_stat
+
+- name: verify that the link was created correctly
+  assert:
+    that:
+      # file command reports it created something
+      - "file6_result.changed == true"
+      # file command created a link
+      - 'file6_link_stat["stat"]["islnk"]'
+      # Link points to the right path
+      - 'file6_link_stat["stat"]["lnk_target"] == "/"'
+      # The link target and the file we intended to link to have the same inode
+      - 'file6_links_dest_stat["stat"]["inode"] == file6_dest_stat["stat"]["inode"]'
+
+#
+# Test creating a relative link
+#
+
+# Relative link to file
+- name: create a test sub-directory to link to
+  file:
+    dest: '{{ output_dir }}/sub1'
+    state: 'directory'
+
+- name: create a file to link to in the test sub-directory
+  file:
+    dest: '{{ output_dir }}/sub1/file1'
+    state: 'touch'
+
+- name: create another test sub-directory to place links within
+  file:
+    dest: '{{output_dir}}/sub2'
+    state: 'directory'
+
+- name: create soft link to relative file
+  file:
+    src: '../sub1/file1'
+    dest: '{{ output_dir }}/sub2/link1'
+    state: 'link'
+  register: file7_result
+
+- name: Get stat info for the link
+  stat:
+    path: '{{ output_dir }}/sub2/link1'
+    follow: False
+  register: file7_link_stat
+
+- name: Get stat info for the pointed to file
+  stat:
+    path: '{{ output_dir }}/sub2/link1'
+    follow: True
+  register: file7_links_dest_stat
+
+- name: Get stat info for the file we intend to point to
+  stat:
+    path: '{{ output_dir }}/sub1/file1'
+    follow: False
+  register: file7_dest_stat
+
+- name: verify that the link was created correctly
+  assert:
+    that:
+      # file command reports it created something
+      - "file7_result.changed == true"
+      # file command created a link
+      - 'file7_link_stat["stat"]["islnk"]'
+      # Link points to the right path
+      - 'file7_link_stat["stat"]["lnk_target"] == "../sub1/file1"'
+      # The link target and the file we intended to link to have the same inode
+      - 'file7_links_dest_stat["stat"]["inode"] == file7_dest_stat["stat"]["inode"]'
+
+# Relative link to directory
+- name: create soft link to relative directory
+  file:
+    src: sub1
+    dest: '{{ output_dir }}/sub1-link'
+    state: 'link'
+  register: file8_result
+
+- name: Get stat info for the link
+  stat:
+    path: '{{ output_dir }}/sub1-link'
+    follow: False
+  register: file8_link_stat
+
+- name: Get stat info for the pointed to file
+  stat:
+    path: '{{ output_dir }}/sub1-link'
+    follow: True
+  register: file8_links_dest_stat
+
+- name: Get stat info for the file we intend to point to
+  stat:
+    path: '{{ output_dir }}/sub1'
+    follow: False
+  register: file8_dest_stat
+
+- name: verify that the link was created correctly
+  assert:
+    that:
+      # file command reports it created something
+      - "file8_result.changed == true"
+      # file command created a link
+      - 'file8_link_stat["stat"]["islnk"]'
+      # Link points to the right path
+      - 'file8_link_stat["stat"]["lnk_target"] == "sub1"'
+      # The link target and the file we intended to link to have the same inode
+      - 'file8_links_dest_stat["stat"]["inode"] == file8_dest_stat["stat"]["inode"]'
+
+# test the file module using follow=yes, so that the target of a
+# symlink is modified, rather than the link itself
+
+- name: create a test file
+  copy:
+    dest: '{{output_dir}}/test_follow'
+    content: 'this is a test file\n'
+    mode: 0666
+
+- name: create a symlink to the test file
+  file:
+    path: '{{output_dir}}/test_follow_link'
+    src: './test_follow'
+    state: 'link'
+
+- name: modify the permissions on the link using follow=yes
+  file:
+    path: '{{output_dir}}/test_follow_link'
+    mode: 0644
+    follow: yes
+  register: file9_result
+
+- name: stat the link target
+  stat:
+    path: '{{output_dir}}/test_follow'
+  register: file9_stat
+
+- name: assert that the chmod worked
+  assert:
+    that:
+      - 'file9_result is changed'
+      - 'file9_stat["stat"]["mode"] == "0644"'
+
+#
+# Test modifying the permissions of a link itself
+#
+- name: attempt to modify the permissions of the link itself
+  file:
+    path: '{{output_dir}}/test_follow_link'
+    src: './test_follow'
+    state: 'link'
+    mode: 0600
+    follow: False
+  register: file10_result
+
+# Whether the link itself changed is platform dependent! (BSD vs Linux?)
+# Just check that the underlying file was not changed
+- name: stat the link target
+  stat:
+    path: '{{output_dir}}/test_follow'
+  register: file10_target_stat
+
+- name: assert that the link target was unmodified
+  assert:
+    that:
+      - 'file10_target_stat["stat"]["mode"] == "0644"'
+
+
+# https://github.com/ansible/ansible/issues/56928
+- block:
+
+  - name: Create a testing file
+    file:
+      path: "{{ output_dir }}/test_follow1"
+      state: touch
+
+  - name: Create a symlink and change mode of the original file, since follow == yes by default
+    file:
+      src: "{{ output_dir }}/test_follow1"
+      dest: "{{ output_dir }}/test_follow1_link"
+      state: link
+      mode: 0700
+
+  - name: stat the original file
+    stat:
+      path: "{{ output_dir }}/test_follow1"
+    register: stat_out
+
+  - name: Check if the mode of the original file was set
+    assert:
+      that:
+        - 'stat_out.stat.mode == "0700"'
+
+  always:
+    - name: Clean up
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ output_dir }}/test_follow1"
+        - "{{ output_dir }}/test_follow1_link"
+
+# END #56928
+
+
+# Test failure with src and no state parameter
+- name: Specify src without state
+  file:
+    src: "{{ output_file }}"
+    dest: "{{ output_dir }}/link.txt"
+  ignore_errors: yes
+  register: src_state
+
+- name: Ensure src without state failed
+  assert:
+    that:
+      - src_state is failed
+      - "'src option requires state to be' in src_state.msg"
+
+# Test creating a symlink when the destination exists and is a file
+- name: create a test file
+  copy:
+    dest: '{{ output_dir }}/file.txt'
+    content: 'this is a test file\n'
+    mode: 0666
+
+- name: Create a symlink with dest already a file
+  file:
+    src: '{{ output_file }}'
+    dest: '{{ output_dir }}/file.txt'
+    state: link
+  ignore_errors: true
+  register: dest_is_existing_file_fail
+
+- name: Stat to make sure the symlink was not created
+  stat:
+    path: '{{ output_dir }}/file.txt'
+    follow: false
+  register: dest_is_existing_file_fail_stat
+
+- name: Forcefully a symlink with dest already a file
+  file:
+    src: '{{ output_file }}'
+    dest: '{{ output_dir }}/file.txt'
+    state: link
+    force: true
+  register: dest_is_existing_file_force
+
+- name: Stat to make sure the symlink was created
+  stat:
+    path: '{{ output_dir }}/file.txt'
+    follow: false
+  register: dest_is_existing_file_force_stat
+
+- assert:
+    that:
+    - dest_is_existing_file_fail is failed
+    - not dest_is_existing_file_fail_stat.stat.islnk
+    - dest_is_existing_file_force is changed
+    - dest_is_existing_file_force_stat.stat.exists
+    - dest_is_existing_file_force_stat.stat.islnk

@@ -1,0 +1,6 @@
+- name: Install ansible-runner
+  pip:
+    name: ansible-runner
+    version: 1.4.6
+    extra_args:
+      -c {{ role_path }}/files/constraints.txt

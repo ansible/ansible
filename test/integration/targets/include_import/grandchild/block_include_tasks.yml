@@ -1,0 +1,2 @@
+- command: "true"
+  register: block_include_result

@@ -1,0 +1,5 @@
+- name: Change vm-tools upgrade policy to UPGRADE_AT_POWER_CYCLE
+  vmware.vmware_rest.vcenter_vm_tools:
+    vm: '{{ test_vm1_info.id }}'
+    upgrade_policy: UPGRADE_AT_POWER_CYCLE
+  register: _result

@@ -1,0 +1,28 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: make sure the nobody user is available
+      include_role:
+        name: setup_nobody
+
+    - name: verify AnsibleModule works when cwd is missing
+      test_cwd_missing:
+      register: missing
+
+    - name: verify AnsibleModule works when cwd is unreadable
+      test_cwd_unreadable:
+      register: unreadable
+      become: yes
+      become_user: nobody  # root can read cwd regardless of permissions, so a non-root user is required here
+
+    - name: get real path of home directory of the unprivileged user
+      raw: "{{ ansible_python_interpreter }} -c 'import os.path; print(os.path.realpath(os.path.expanduser(\"~\")))'"
+      register: home
+      become: yes
+      become_user: nobody
+
+    - name: verify AnsibleModule was able to adjust cwd as expected
+      assert:
+        that:
+          - missing.before != missing.after
+          - unreadable.before != unreadable.after or unreadable.before == '/' or unreadable.before == home.stdout.strip()  # allow / and $HOME fallback on macOS when using an unprivileged user

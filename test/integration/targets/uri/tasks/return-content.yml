@@ -1,0 +1,49 @@
+- name: Test when return_content is yes
+  uri:
+    url: https://{{ httpbin_host }}/get
+    return_content: yes
+  register: result
+
+- name: Assert content exists when return_content is yes and request succeeds
+  assert:
+    that:
+      - result is successful
+      - "'content' in result"
+
+- name: Test when return_content is yes
+  uri:
+    url: http://does/not/exist
+    return_content: yes
+  register: result
+  ignore_errors: true
+
+- name: Assert content exists when return_content is yes and request fails
+  assert:
+    that:
+      - result is failed
+      - "'content' in result"
+
+- name: Test when return_content is no
+  uri:
+    url: https://{{ httpbin_host }}/get
+    return_content: no
+  register: result
+
+- name: Assert content does not exist when return_content is no and request succeeds
+  assert:
+    that:
+      - result is successful
+      - "'content' not in result"
+
+- name: Test when return_content is no
+  uri:
+    url: http://does/not/exist
+    return_content: no
+  register: result
+  ignore_errors: true
+
+- name: Assert content does not exist when return_content is no and request fails
+  assert:
+    that:
+      - result is failed
+      - "'content' not in result"

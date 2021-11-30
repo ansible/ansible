@@ -1,0 +1,7 @@
+- name: Test max recursion depth
+  hosts: testhost
+
+  tasks:
+    - ansible.builtin.import_role:
+        name: role1
+        tasks_from: r1t01.yml

@@ -1,0 +1,37 @@
+- name: Create insertafter test file
+  copy:
+    dest: "{{ remote_tmp_dir }}/after.txt"
+    content: |
+      line1
+      line2
+      line3
+
+- name: Add block using insertafter
+  blockinfile:
+    path: "{{ remote_tmp_dir }}/after.txt"
+    insertafter: line2
+    block: |
+      block1
+      block2
+  register: after1
+
+- name: Add block using insertafter again
+  blockinfile:
+    path: "{{ remote_tmp_dir }}/after.txt"
+    insertafter: line2
+    block: |
+      block1
+      block2
+  register: after2
+
+- name: Stat the after.txt file
+  stat:
+    path: "{{ remote_tmp_dir }}/after.txt"
+  register: after_file
+
+- name: Ensure insertafter worked correctly
+  assert:
+    that:
+      - after1 is changed
+      - after2 is not changed
+      - after_file.stat.checksum == 'a8adeb971358230a28ce554f3b8fdd1ef65fdf1c'

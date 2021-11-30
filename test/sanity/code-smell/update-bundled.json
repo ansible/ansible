@@ -1,0 +1,8 @@
+{
+    "all_targets": true,
+    "ignore_self": true,
+    "extensions": [
+        ".py"
+    ],
+    "output": "path-message"
+}

@@ -1,0 +1,1351 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2021 Red Hat, Inc.
+# This file is distributed under the same license as the Ansible package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Ansible devel\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-03-08 20:25+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.0\n"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:3
+msgid "Ansible project 2.10"
+msgstr "Ansible プロジェクト 2.10"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:5
+msgid "This release schedule includes dates for the `ansible <https://pypi.org/project/ansible/>`_ package, with a few dates for the `ansible-base <https://pypi.org/project/ansible-base/>`_ package as well. All dates are subject to change. See :ref:`base_roadmap_2_10` for the most recent updates on ansible-base."
+msgstr "本リリーススケジュールには、`ansible <https://pypi.org/project/ansible/>`_ パッケージの日付が含まれており、`ansible-base <https://pypi.org/project/ansible-base/>`_ パッケージの日付もいくつか含まれています。この日付はすべて変更する可能性があります。ansible-base の最新の更新については「:ref:`base_roadmap_2_10`」を参照してください。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:11
+#: ../../rst/roadmap/ROADMAP_2_10.rst:11 ../../rst/roadmap/ROADMAP_2_11.rst:11
+#: ../../rst/roadmap/ROADMAP_2_6.rst:8 ../../rst/roadmap/ROADMAP_2_7.rst:8
+#: ../../rst/roadmap/ROADMAP_2_8.rst:9 ../../rst/roadmap/ROADMAP_2_9.rst:9
+msgid "Release Schedule"
+msgstr "リリーススケジュール"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:13
+#: ../../rst/roadmap/ROADMAP_2_10.rst:19 ../../rst/roadmap/ROADMAP_2_11.rst:19
+msgid "Dates subject to change."
+msgstr "日付は変更する可能性があります。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:14
+msgid "We plan to post weekly alpha releases to the `PyPI ansible project <https://pypi.org/project/ansible/>`_ for testing."
+msgstr "テストのため、`PyPI ansible プロジェクト <https://pypi.org/project/ansible/>`_ に Alpha リリースを毎週公開することが予定されています。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:17
+msgid "We initially were going to have feature freeze on 2020-08-18. We tried this but decided to change course.  Instead, we'll enter feature freeze when ansible-2.10.0 beta1 is released."
+msgstr "当初は 2020 年 08 月 18 日に機能フリーズが行われる予定でした。フリーズを試みましたが、予定が変更になりました。代わりに、ansible-2.10.0 Beta1 がリリースされたときに機能フリーズになります。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:20
+msgid "2020-06-23: ansible-2.10 alpha freeze. No net new collections will be added to the ``ansible-2.10`` package after this date."
+msgstr "2020 年 06 月 23 日: ansible-2.10 Alpha フリーズ。この日付を過ぎると、新しいコレクションが ``ansible-2.10`` パッケージに追加されなくなります。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:22
+msgid "2020-07-10: Ansible collections freeze date for content shuffling. Content should be in its final collection for the ansible-2.10 series of releases. No more content should move out of the ``community.general`` or ``community.network`` collections."
+msgstr "2020 年 07 月 10 日: コンテンツ入れ替えの Ansible コレクション。コンテンツは、ansible-2.10 シリーズのリリースの最終コレクションにあるはずです。他のコンテンツは ``community.general`` コレクションまたは ``community.network`` コレクションに含まれるコンテンツは他にありません。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:24
+msgid "2020-08-13: ansible-base 2.10 Release date, see :ref:`base_roadmap_2_10`."
+msgstr "2020 年 08 月 13 日: ansible-base 2.10 リリース日。「:ref:`base_roadmap_2_10`」を参照してください。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:25
+msgid "2020-08-14: final ansible-2.10 alpha."
+msgstr "2020 年 08 月 14 日: 最終的な ansible-2.10 Alpha。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:26
+msgid "2020-09-01: ansible-2.10.0 beta1 and feature freeze."
+msgstr "2020 年 09 月 01 日: ansible-2.10.0 Beta1 および機能フリーズ。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:28
+msgid "No new modules or major features will be added after this date. In practice this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community-crypto-1.1.0; ansible-2.10.0 could ship with community-crypto-1.1.1.  It would not ship with community-crypto-1.2.0."
+msgstr "この日付以降は、新しいモジュールや主な機能は追加されません。実際には、semver コレクションのバージョンは互換性のあるリリースバージョンにフリーズします。たとえば、この日付の community.crypto のバージョンが community-crypto-1.1.0 であれば、ansible-2.10.0 は community-crypto-1.1.1 に同梱される可能性がありました。community-crypto-1.2.0 には同梱されません。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:30
+msgid "2020-09-08: ansible-2.10.0 beta2."
+msgstr "2020 年 09 月 08 日: Ansible-2.10.0 beta2。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:31
+msgid "2020-09-15: ansible-2.10.0 rc1 and final freeze."
+msgstr "2020 年 09 月 15 日: Ansible-2.10.0 rc1 および最終フリーズ。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:33
+msgid "After this date only changes blocking a release are accepted."
+msgstr "この日付以降は、リリースをブロックする変更のみが許可されます。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:34
+msgid "Collections will only be updated to a new version if a blocker is approved.  Collection owners should discuss any blockers at the community IRC meeting (on 9-17) to decide whether to bump the version of the collection for a fix. See the `Community IRC meeting agenda <https://github.com/ansible/community/issues/539>`_."
+msgstr "コレクションは、ブロッカーが承認された場合にのみ新規バージョンに更新されます。コレクションの所有者は、修正のためにコレクションのバージョンを上げるかどうかを決めるために、コミュニティー IRC ミーティングのブロッカーについて (9 ~ 17 上) 議論する必要があります。`Community IRC meeting agenda <https://github.com/ansible/community/issues/539>`_ を参照してください。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:36
+msgid "** Additional release candidates to be published as needed as blockers are fixed **"
+msgstr "**ブロッカーが修正されると、必要に応じて公開される追加のリリース候補**"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:38
+msgid "2020-09-22: ansible-2.10 GA release date."
+msgstr "2020 年 09 月 22 日: Ansible-2.10 GA リリース日。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:40
+msgid "Ansible-2.10.x patch releases will occur roughly every three weeks if changes to collections have been made or if it is deemed necessary to force an upgrade to a later ansible-base-2.10.x.  Ansible-2.10.x patch releases may contain new features but not backwards incompatibilities.  In practice, this means we will include new collection versions where either the patch or the minor version number has changed but not when the major number has changed (example: Ansible-2.10 ships with community-crypto-1.1.0; ansible-2.10.1 may ship with community-crypto-1.2.0 but would not ship with community-crypto-2.0.0)."
+msgstr "コレクションに変更が加えられた場合、または後で ansible-base-2.10.x へのアップグレードを強制する必要があると見なされた場合、Ansible-2.10.x パッチのリリースは約 3 週間ごとに行われます。Ansible-2.10.x パッチリリースには新機能が含まれている可能性がありますが、後方互換性は含まれていません。実際には、これは、パッチまたはマイナーバージョン番号のいずれかが変更されたにもかかわらず、メジャー番号が変更されたときは変更されない新しいコレクションバージョンを含めることを意味します。たとえば、Ansible-2.10 が community-crypto-1.1.0 に同梱されると、ansible-2.10.1 は community-crypto-1.2.0 に同梱される場合がありますが、community-crypto-2.0.0 には同梱されません。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:42
+msgid "Breaking changes may be introduced in ansible-2.11.0 although we encourage collection owners to use deprecation periods that will show up in at least one Ansible release before being changed incompatibly."
+msgstr "ansible-2.11.0 で重大な変更が導入される可能性がありますが、コレクションの所有者は、非互換性になる前に少なくとも 1 つの Ansible リリースに含まれる非推奨期間を使用することが推奨されます。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:44
+msgid "The rough schedule for Ansible-2.11 and beyond (such as how many months we'll aim for between versions) is still to be discussed and likely will be made after 2.10.0 has been released."
+msgstr "Ansible-2.11 以降の大まかなスケジュール (バージョン間の目標数など) は依然として検討されており、2.10.0 のリリース後に行われる可能性があります。"
+
+#: ../../rst/roadmap/COLLECTIONS_2_10.rst:46
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:45
+#: ../../rst/roadmap/COLLECTIONS_4.rst:48
+msgid "For more information, reach out on a mailing list or an IRC channel - see :ref:`communication` for more details."
+msgstr "詳細は、メーリングリストまたは IRC チャンネルをご利用ください。「:ref:`communication`」を参照してください。"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:3
+msgid "Ansible project 3.0"
+msgstr "Ansible プロジェクト 3.0"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:5
+msgid "This release schedule includes dates for the `ansible <https://pypi.org/project/ansible/>`_ package, with a few dates for the `ansible-base <https://pypi.org/project/ansible-base/>`_ package as well. All dates are subject to change. Ansible 3.x.x includes ``ansible-base`` 2.10. See :ref:`base_roadmap_2_10` for the most recent updates on ``ansible-base``."
+msgstr "本リリーススケジュールには、`ansible <https://pypi.org/project/ansible/>`_ パッケージの日付が含まれており、`ansible-base <https://pypi.org/project/ansible-base/>`_ パッケージの日付もいくつか含まれています。この日付はすべて変更する可能性があります。Ansible 3.x.x には ``ansible-base`` 2.10 が含まれます。``ansible-base`` の最新の更新については、「:ref:`base_roadmap_2_10`」を参照してください。"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:11
+#: ../../rst/roadmap/COLLECTIONS_4.rst:12
+msgid "Release schedule"
+msgstr "リリーススケジュール"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:15
+msgid "Ansible is switching from its traditional versioning scheme to `semantic versioning <https://semver.org/>`_ starting with this release.  So this version is 3.0.0 instead of 2.11.0."
+msgstr "Ansible は、本リリース以降の従来のバージョン管理スキームから `semantic versioning <https://semver.org/>`_ に切り替えるため、このバージョンは 2.11.0 ではなく 3.0.0 になります。"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst
+msgid "2020-12-16"
+msgstr "2020 年 12 月 16 日"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:19
+msgid "Finalize rules for net-new collections submitted for the ansible release."
+msgstr "Ansible リリースに送信された net-new コレクションのルールのファイナライズ。"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst
+msgid "2021-01-27"
+msgstr "2021 年 01 月 27 日"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:20
+msgid "Final day for new collections to be **reviewed and approved**. They MUST be submitted prior to this to give reviewers a chance to look them over and for collection owners to fix any problems."
+msgstr "新しいコレクションの **レビューおよび承認** の最終日。レビュー担当者が新しいコレクションを確認し、コレクションの所有者が問題を修正する機会を得るために、この日付までに提出する必要があります。"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst
+msgid "2021-02-02"
+msgstr "2021 年 02 月 02 日"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:23
+msgid "Ansible-3.0.0-beta1 -- feature freeze [1]_"
+msgstr "ansible-3.0.0-beta1 -- 機能フリーズ [1]_"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst
+msgid "2021-02-09"
+msgstr "2021 年 02 月 09 日"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:24
+msgid "Ansible-3.0.0-rc1 -- final freeze [2]_ [3]_"
+msgstr "Ansible-3.0.0-rc1 -- 最終フリーズ [2]_ [3]_"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst
+msgid "2021-02-16"
+msgstr "2021 年 02 月 16 日"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:25
+msgid "Release of Ansible-3.0.0"
+msgstr "Ansible-3.0.0 のリリース"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst
+msgid "2021-03-09"
+msgstr "2021 年 03 月 09 日"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:26
+msgid "Release of Ansible-3.1.0 (bugfix + compatible features: every three weeks)"
+msgstr "Ansible-3.1.0 のリリース (バグ修正 + 互換性のある機能: 3 週間ごと)"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:28
+#: ../../rst/roadmap/COLLECTIONS_4.rst:31
+msgid "No new modules or major features accepted after this date. In practice this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community-crypto-2.1.0; ansible-3.0.0 could ship with community-crypto-2.1.1.  It would not ship with community-crypto-2.2.0."
+msgstr "この日付以降は、新しいモジュールやメジャー機能は追加されません。実際には、semver コレクションのバージョンは互換性のあるリリースバージョンにフリーズします。たとえば、この日付の community.crypto のバージョンが community-crypto-2.1.0 であれば、ansible-3.0.0 は community-crypto-2.1.1 に同梱される可能性がありました。community-crypto-2.2.0 は同梱されません。"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:30
+#: ../../rst/roadmap/COLLECTIONS_4.rst:33
+msgid "After this date only changes blocking a release are accepted.  Accepted changes require creating a new rc and may slip the final release date."
+msgstr "この日付以降は、リリースをブロックする変更のみが許可されます。受け入れ可能な変更には、新しい rc を作成する必要があり、最終リリース日は処理されない可能性があります。"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:31
+#: ../../rst/roadmap/COLLECTIONS_4.rst:34
+msgid "Collections will only be updated to a new version if a blocker is approved.  Collection owners should discuss any blockers at a community IRC meeting (before this freeze) to decide whether to bump the version of the collection for a fix. See the `Community IRC meeting agenda <https://github.com/ansible/community/issues/539>`_."
+msgstr "コレクションは、ブロッカーが承認された場合にのみ新しいバージョンに更新されます。コレクションの所有者は、(フリーズの前に) 修正のためにコレクションのバージョンを上げるかどうかを決定するために、コミュニティー IRC ミーティングのブロッカーについて検討する必要があります。`コミュニティー IRC ミーティングの議題 <https://github.com/ansible/community/issues/539>`_ を参照してください。"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:36
+msgid "Breaking changes may be introduced in Ansible 3.0.0, although we encourage collection owners to use deprecation periods that will show up in at least one Ansible release before the breaking change happens."
+msgstr "Ansible3.0.0 で重大な変更が導入される可能性がありますが、コレクションの所有者は、重大な変更が発生する前に少なくとも 1 つの Ansible リリースに含まれる非推奨期間を使用することが推奨されます。"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:40
+#: ../../rst/roadmap/COLLECTIONS_4.rst:43
+msgid "Ansible minor releases"
+msgstr "Ansible マイナーリリース"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:42
+msgid "Ansible 3.x.x minor releases will occur approximately every three weeks if changes to collections have been made or if it is deemed necessary to force an upgrade to a later ansible-base-2.10.x.  Ansible 3.x.x minor releases may contain new features but not backwards incompatibilities.  In practice, this means we will include new collection versions where either the patch or the minor version number has changed but not when the major number has changed. For example, if Ansible-3.0.0 ships with community-crypto-2.1.0; Ansible-3.1.0 may ship with community-crypto-2.2.0 but would not ship with community-crypto-3.0.0)."
+msgstr "コレクションに変更が加えられた場合、または後で ansible-base-2.10.x へのアップグレードを強制する必要があると見なされた場合、Ansible 3.x.x マイナーリリースは約 3 週間ごとに行われます。Ansible 3.x.x マイナーリリースには新機能が含まれている可能性がありますが、後方互換性は含まれていません。実際には、これは、パッチまたはマイナーバージョン番号のいずれかが変更されたにもかかわらず、メジャー番号が変更されたときに変更されない新しいコレクションバージョンを含めることを意味します。たとえば、Ansible-3.0.0 が community-crypto-2.1.0 に同梱されると、Ansible-3.1.0 は community-crypto-2.2.0 に同梱される場合がありますが、community-crypto-3.0.0 には同梱されません。"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:48
+msgid "ansible-base release"
+msgstr "ansible-base リリース"
+
+#: ../../rst/roadmap/COLLECTIONS_3_0.rst:50
+msgid "Ansible 3.x.x works with ``ansible-base`` 2.10. See :ref:`base_roadmap_2_10` for details."
+msgstr "Ansible 3.x.x は ``ansible-base`` 2.10 で動作します。詳細は、「:ref:`base_roadmap_2_10`」を参照してください。"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:3
+msgid "Ansible project 4.0"
+msgstr "Ansible プロジェクト 4.0"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:5
+msgid "This release schedule includes dates for the `ansible <https://pypi.org/project/ansible/>`_ package, with a few dates for the `ansible-core <https://pypi.org/project/ansible-core/>`_ package as well. All dates are subject to change. See :ref:`base_roadmap_2_11` for the most recent updates on ``ansible-core``."
+msgstr "本リリーススケジュールには、`ansible <https://pypi.org/project/ansible/>`_ パッケージの日付が含まれており、`ansible-core <https://pypi.org/project/ansible-core/>`_ パッケージの日付もいくつか含まれています。この日付はすべて変更される可能性があります。``ansible-core`` の最新の更新については「:ref:`base_roadmap_2_11`」を参照してください。"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst
+msgid "2021-01-26"
+msgstr "2021 年 01 月 26日"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:15
+msgid "New Collections will be reviewed for inclusion in Ansible 4."
+msgstr "新しいコレクションは、Ansible 4 に含まれるようにレビューされています。"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst
+msgid "2021-03-03"
+msgstr "2021 年 03 月 03 日"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:16
+msgid "Ansible-4.0.0 alpha1 (biweekly ``ansible`` alphas.  These are timed to coincide with the start of the ``ansible-core-2.11`` pre-releases)."
+msgstr "Ansible-4.0.0 alpha1 (``ansible`` Alpha は隔週)。これらは ``ansible-core-2.11`` プレリリースの開始と合致するようにタイミングが調整されます。"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst
+msgid "2021-03-16"
+msgstr "2021 年 03 月 16 日"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:17
+msgid "Ansible-4.0.0 alpha2"
+msgstr "Ansible-4.0.0 alpha2"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst
+msgid "2021-03-30"
+msgstr "2021 年 03 月 30 日"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:18
+msgid "Ansible-4.0.0 alpha3"
+msgstr "Ansible-4.0.0 alpha3"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst
+msgid "2021-04-13"
+msgstr "2021 年 04 月 13 日"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:19
+msgid "Last day for new collections to be submitted for inclusion in Ansible 4. Note that collections MUST be reviewed and approved before being included. There is no guarantee that we will review every collection. The earlier your collection is submitted, the more likely it will be that your collection will be reviewed and the necessary feedback can be addressed in time for inclusion."
+msgstr "Ansible 4 に含めるために新しいコレクションを送信する最終日。コレクションを含める前に、コレクションをレビューして承認する必要があることに注意してください。すべてのコレクションをレビューする保証はありません。コレクションが早く提出されるほど、コレクションがレビューされ、必要なフィードバックが含まれるのに間に合うように対処される可能性が高くなります。"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:20
+msgid "Ansible-4.0.0 alpha4"
+msgstr "Ansible-4.0.0 alpha4"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst
+msgid "2021-04-14"
+msgstr "2021 年 04 月 14 日"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:21
+msgid "Community IRC Meeting topic: list any new collection reviews which block release.  List any backwards incompatible collection releases that beta1 should try to accommodate."
+msgstr "コミュニティー IRC ミーティングのトピック: リリースをブロックする新しいコレクションレビューを一覧表示します。beta1 が対応しようとする後方互換性のないコレクションリリースの一覧を表示します。"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst
+msgid "2021-04-21"
+msgstr "2021 年 04 月 21 日"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:22
+msgid "Community IRC Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline."
+msgstr "コミュニティー IRC ミーティングのトピック: 期限に間に合わないブロッカーに対してアクティブにする不測の事態を決定します。"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst
+msgid "2021-04-26"
+msgstr "2021 年 04 月 26 日"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:23
+msgid "Last day for new collections to be **reviewed and approved** for inclusion in Ansible 4."
+msgstr "新しいコレクションを Ansible 4 に含めるために **レビューおよび承認** される最終日。"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:24
+msgid "Last day for collections to make backwards incompatible releases that will be accepted into Ansible 4."
+msgstr "コレクションが Ansible 4 に受け入れられる後方互換性のないリリースを作成する最終日。"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst
+msgid "2021-04-27"
+msgstr "2021 年 04 月 27 日"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:25
+msgid "Ansible-4.0.0 beta1 -- feature freeze [1]_ (weekly beta releases.  Collection owners and interested users should test for bugs)."
+msgstr "Ansible-4.0.0 beta1 -- 機能フリーズ [1]_ (週次 Beta リリース)。コレクションの所有者と対象のユーザーはバグについてテストする必要があります。"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst
+msgid "2021-05-04"
+msgstr "2021 年 05 月 04 日"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:26
+msgid "Ansible-4.0.0 beta2"
+msgstr "Ansible-4.0.0 beta2"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst
+msgid "2021-05-11"
+msgstr "2021 年 05 月 11 日"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:27
+msgid "Ansible-4.0.0 rc1 [2]_ [3]_ (weekly release candidates as needed.  Test and alert us to any blocker bugs)."
+msgstr "Ansible-4.0.0 rc1 [2]_ [3]_ (必要に応じて週次リリース候補。すべてのブロッカーバグに対してテストし、警告します)"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst
+msgid "2021-05-18"
+msgstr "2021 年 05 月 18 日"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:28
+msgid "Ansible-4.0.0 release"
+msgstr "Ansible-4.0.0 リリース"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst
+msgid "2021-06-08"
+msgstr "2021 年 06 月 08 日"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:29
+msgid "Release of Ansible-4.1.0 (bugfix + compatible features: every three weeks)"
+msgstr "Ansible-4.1.0 のリリース (バグ修正 + 互換性のある機能: 3 週間ごと)"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:39
+msgid "Breaking changes will be introduced in Ansible 4.0.0, although we encourage the use of deprecation periods that will show up in at least one Ansible release before the breaking change happens, this is not guaranteed."
+msgstr "Ansible 4.0.0 で 重大な変更が導入されますが、重大な変更が発生する前に少なくとも 1 つの Ansible リリースに表示される非推奨期間の使用が推奨されますが、これは保証されません。"
+
+#: ../../rst/roadmap/COLLECTIONS_4.rst:45
+msgid "Ansible 4.x minor releases will occur approximately every three weeks if changes to collections have been made or if it is deemed necessary to force an upgrade to a later ansible-core-2.11.x.  Ansible 4.x minor releases may contain new features but not backwards incompatibilities.  In practice, this means we will include new collection versions where either the patch or the minor version number has changed but not when the major number has changed. For example, if Ansible-4.0.0 ships with community-crypto-2.1.0; Ansible-4.1.0 may ship with community-crypto-2.2.0 but would not ship with community-crypto-3.0.0)."
+msgstr "コレクションに変更が加えられた場合、または後で ansible-core-2.11.x へのアップグレードを強制する必要があると見なされた場合、Ansible 4.x マイナーリリースは約 3 週間ごとに行われます。Ansible 4.x マイナーリリースには新機能が含まれている可能性がありますが、後方互換性は含まれていません。実際には、これは、パッチまたはマイナーバージョン番号のいずれかが変更されたにもかかわらず、メジャー番号が変更されたときに変更されない新しいコレクションバージョンを含めることを意味します。たとえば、Ansible-4.0.0 が community-crypto-2.1.0 に同梱されると、Ansible-4.1.0 は community-crypto-2.2.0 に同梱される場合がありますが、community-crypto-3.0.0 には同梱されません。"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:5
+msgid "Ansible-base 2.10"
+msgstr "Ansible-base 2.10"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:14 ../../rst/roadmap/ROADMAP_2_11.rst:14
+#: ../../rst/roadmap/ROADMAP_2_7.rst:11 ../../rst/roadmap/ROADMAP_2_8.rst:12
+#: ../../rst/roadmap/ROADMAP_2_9.rst:12
+msgid "Expected"
+msgstr "予定"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:16
+msgid "PRs must be raised well in advance of the dates below to have a chance of being included in this ansible-base release."
+msgstr "プル要求は、この ansible-base リリースに含まれる可能性を高めるために、以下の期日に間に合うように、十分な余裕をもって提案してください。"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:18
+msgid "There is no Alpha phase in 2.10."
+msgstr "2.10 には、Alpha フェーズはありません。"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:21
+msgid "2020-06-16 Beta 1 **Feature freeze** No new functionality (including modules/plugins) to any code"
+msgstr "2020 年 06 月 16 日 Beta 1 **機能フリーズ** どのコードにも新しい機能 (モジュール、プラグインなど) はありません。"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:24
+msgid "2020-07-21 Release Candidate 1 (bumped from 2020-07-14)"
+msgstr "2020 年 07 月 21 日 リリース候補 1 (2020-07-14 からバージョンを上げました)"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:25
+msgid "2020-07-24 Release Candidate 2"
+msgstr "2020 年 07 月 24 日 リリース候補 2"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:26
+msgid "2020-07-25 Release Candidate 3"
+msgstr "2020 年 07 月 25 日 リリース候補 3"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:27
+msgid "2020-07-30 Release Candidate 4"
+msgstr "2020 年 07 月 30 日 リリース候補 4"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:28
+msgid "2020-08-13 Release"
+msgstr "2020 年 08 月 13 日 リリース"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:31 ../../rst/roadmap/ROADMAP_2_11.rst:33
+#: ../../rst/roadmap/ROADMAP_2_5.rst:19 ../../rst/roadmap/ROADMAP_2_6.rst:27
+#: ../../rst/roadmap/ROADMAP_2_7.rst:24 ../../rst/roadmap/ROADMAP_2_8.rst:31
+#: ../../rst/roadmap/ROADMAP_2_9.rst:31
+msgid "Release Manager"
+msgstr "リリースマネージャー"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:33
+msgid "@sivel"
+msgstr "@sivel"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:36 ../../rst/roadmap/ROADMAP_2_11.rst:38
+#: ../../rst/roadmap/ROADMAP_2_8.rst:36 ../../rst/roadmap/ROADMAP_2_9.rst:37
+msgid "Planned work"
+msgstr "予定される作業"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:38
+msgid "Migrate non-base plugins and modules from the ``ansible/ansible`` repository to smaller collection repositories"
+msgstr "ベースでないプラグインとモジュールを ``ansible/ansible`` リポジトリーから小規模なコレクションリポジトリーに移行する"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:39
+msgid "Add functionality to ease transition to collections, such as automatic redirects from the 2.9 names to the new FQCN of the plugin"
+msgstr "2.9 の名前からプラグインの新しい FQCN への自動リダイレクトなど、コレクションへの移行を容易にする機能を追加します。"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:40
+msgid "Create new ``ansible-base`` package representing the ``ansible/ansible`` repository"
+msgstr "``ansible-base`` リポジトリーを表す新しい ``ansible/ansible`` パッケージを作成します。"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:43
+msgid "Additional Resources"
+msgstr "追加情報"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:45
+msgid "The 2.10 release of Ansible will fundamentally change the scope of plugins included in the ``ansible/ansible`` repository, by moving much of the plugins into smaller collection repositories that will be shipped through https://galaxy.ansible.com/"
+msgstr "Ansible の 2.10 リリースでは、プラグインの大半を、https://galaxy.ansible.com/ から同梱する小規模なコレクションリポジトリーに移動することで、``ansible/ansible`` リポジトリーに含まれるプラグインの範囲を基本的に変更します。"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:48
+msgid "The following links have more information about this process:"
+msgstr "以下のリンクには、このプロセスに関する詳細情報が含まれます。"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:50
+msgid "https://groups.google.com/d/msg/ansible-devel/oKqgCeYTs-M/cHrOgMw8CAAJ"
+msgstr "https://groups.google.com/d/msg/ansible-devel/oKqgCeYTs-M/cHrOgMw8CAAJ"
+
+#: ../../rst/roadmap/ROADMAP_2_10.rst:51
+msgid "https://github.com/ansible-collections/overview/blob/main/README.rst"
+msgstr "https://github.com/ansible-collections/overview/blob/main/README.rst"
+
+#: ../../rst/roadmap/ROADMAP_2_11.rst:5
+msgid "Ansible-core 2.11"
+msgstr "Ansible-core 2.11"
+
+#: ../../rst/roadmap/ROADMAP_2_11.rst:16
+msgid "PRs must be raised well in advance of the dates below to have a chance of being included in this ansible-core release."
+msgstr "プル要求は、この ansible-core リリースに含まれる可能性を高めるために、以下の期日に間に合うように、十分な余裕をもって提案してください。"
+
+#: ../../rst/roadmap/ROADMAP_2_11.rst:18
+msgid "There is no Alpha phase in 2.11."
+msgstr "2.11 には、Alpha フェーズはありません。"
+
+#: ../../rst/roadmap/ROADMAP_2_11.rst:21
+msgid "2021-02-12 Feature Freeze No new functionality (including modules/plugins) to any code"
+msgstr "2021 年 02 月 12 日 機能フリーズ。コードへの新しい機能 (モジュール/プラグインを含む) はありません。"
+
+#: ../../rst/roadmap/ROADMAP_2_11.rst:24
+msgid "2021-03-02 Beta 1"
+msgstr "2021 年 03 月 02 日 Beta 1"
+
+#: ../../rst/roadmap/ROADMAP_2_11.rst:25
+msgid "2021-03-15 Beta 2 (if necessary)"
+msgstr "2021 年 03 月 15 日 Beta 2 (必要な場合)"
+
+#: ../../rst/roadmap/ROADMAP_2_11.rst:27
+msgid "2021-03-29 Release Candidate 1 (and ``stable-2.11`` branching from ``devel``)"
+msgstr "2021 年 03 月 29 日 リリース候補 1 (および ``devel`` の ``stable-2.11`` ブランチ)"
+
+#: ../../rst/roadmap/ROADMAP_2_11.rst:28
+msgid "2021-04-12 Release Candidate 2 (if necessary)"
+msgstr "2021 年 04 月 12 日 リリース候補 2 (必要な場合)"
+
+#: ../../rst/roadmap/ROADMAP_2_11.rst:30
+msgid "2021-04-26 Release"
+msgstr "2021 年 04 月 26 日 リリース"
+
+#: ../../rst/roadmap/ROADMAP_2_11.rst:35
+msgid "Ansible Core Team"
+msgstr "Ansible Core Team"
+
+#: ../../rst/roadmap/ROADMAP_2_11.rst:40
+msgid "Rename ``ansible-base`` to ``ansible-core``."
+msgstr "``ansible-base`` の名前を ``ansible-core`` に変更します。"
+
+#: ../../rst/roadmap/ROADMAP_2_11.rst:41
+msgid "Improve UX of ``ansible-galaxy collection`` CLI, specifically as it relates to install and upgrade."
+msgstr "特にインストールおよびアップグレードに関連する ``ansible-galaxy collection`` CLI の UX が改善されます。"
+
+#: ../../rst/roadmap/ROADMAP_2_11.rst:42
+msgid "Add new Role Argument Spec feature that will allow a role to define an argument spec to be used in validating variables used by the role."
+msgstr "ロールが使用する変数の検証に使用する引数の仕様を定義できるように、新規の Role 引数仕様機能を追加します。"
+
+#: ../../rst/roadmap/ROADMAP_2_11.rst:44
+msgid "Bump the minimum Python version requirement for the controller to Python 3.8. There will be no breaking changes to this release, however ``ansible-core`` will only be packaged for Python 3.8+. ``ansible-core==2.12`` will include breaking changes requiring at least Python 3.8."
+msgstr "コントローラーの最小 Python バージョン要件を Python 3.8 に上げます。今回のリリースには、重大な変更はありませんが、``ansible-core`` は Python 3.8 以降に対してのみパッケージ化されます。``ansible-core==2.12`` には、Python 3.8 以上を必要とする重大な変更が含まれます。"
+
+#: ../../rst/roadmap/ROADMAP_2_11.rst:47
+msgid "Introduce split-controller testing in ``ansible-test`` to separate dependencies for the controller from dependencies on the target."
+msgstr "``ansible-test`` に split-controller テストが導入され、コントローラーの依存関係をターゲットの依存関係から分離します。"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:3
+msgid "Ansible 2.5"
+msgstr "Ansible 2.5"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:4
+msgid "**Core Engine Freeze and Module Freeze: 22 January 2018**"
+msgstr "**コアエンジンのフリーズおよびモジュールのフリーズ: 2018 年 1 月 22 日**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:6
+msgid "**Core and Curated Module Freeze: 22 January 2018**"
+msgstr "**コアおよびキューレーションモジュールのフリーズ: 2018 年 1 月 22 日**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:8
+msgid "**Community Module Freeze: 7 February 2018**"
+msgstr "**コミュニティーモジュールのフリーズ: 2018 年 2 月 7 日**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:10
+msgid "**Release Candidate 1 will be 21 February, 2018**"
+msgstr "**リリース候補 1 は 2018 年 2 月 21 日です。**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:12
+msgid "**Target: March 2018**"
+msgstr "**ターゲット: 2018 年 3 月**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:14
+msgid "**Service Release schedule: every 2-3 weeks**"
+msgstr "**サービスリリーススケジュール: 2 ~ 3 週間ごと**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:16 ../../rst/roadmap/ROADMAP_2_6.rst:5
+#: ../../rst/roadmap/ROADMAP_2_7.rst:5
+msgid "Topics"
+msgstr "トピック"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:20
+msgid "Matt Davis (IRC/GitHub: @nitzmahone)"
+msgstr "Matt Davis (IRC/GitHub: @nitzmahone)"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:24 ../../rst/roadmap/ROADMAP_2_6.rst:33
+msgid "Engine improvements"
+msgstr "エンジンの改善"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:25
+msgid "Assemble module improvements - assemble just skips when in check mode, it should be able to test if there is a difference and changed=true/false. - The same with diff, it should work as template modules does"
+msgstr "assemble モジュールの改善 - チェックモードでは assemble はスキップするだけで、違いがあり、変更があるかどうかをテストできます (true/false)。diff と同じように、テンプレートモジュールと同じように機能するはずです。"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:28
+msgid "Handle Password reset prompts cleaner"
+msgstr "パスワードリセットプロンプトクリーナーの処理"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:29
+msgid "Tasks stats for rescues and ignores"
+msgstr "rescue および ignore のタスク統計"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:30
+msgid "Normalize temp dir usage across all subsystems"
+msgstr "すべてのサブシステムで一時ディレクトリーの使用を正規化"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:31
+msgid "Add option to set playbook dir for adhoc, inventory and console to allow for 'relative path loading'"
+msgstr "アドホック、インベントリー、およびコンソールに Playbook ディレクトリーを設定して、「相対パスの読み込み」を可能にするオプションを追加します"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:35
+msgid "Ansible-Config"
+msgstr "Ansible-Config"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:36
+msgid "Extend config to more plugin types and update plugins to support the new config"
+msgstr "設定を他のプラグインタイプに拡張し、新しい設定をサポートするようにプラグインを更新します。"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:39
+msgid "Inventory"
+msgstr "インベントリー"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:40
+msgid "ansible-inventory option to output group variable assignment and data (--export)"
+msgstr "グループ変数の割り当ておよびデータを出力する ansible-inventory オプション (--export)"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:41
+msgid "Create inventory plugins for: - aws"
+msgstr "- aws にインベントリープラグインを作成します。"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:45
+msgid "Facts"
+msgstr "ファクト"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:46
+msgid "Namespacing fact variables (via a config option) implemented in ansible/ansible PR `#18445 <https://github.com/ansible/ansible/pull/18445>`_. Proposal found in ansible/proposals issue `#17 <https://github.com/ansible/proposals/issues/17>`_."
+msgstr "ansible/ansible のプル要求に実装されたファクト変数 (設定オプション経由) の名前空間 (`#18445 <https://github.com/ansible/ansible/pull/18445>`_)。ansible/proposals 問題に表示される提案 (`#17 <https://github.com/ansible/proposals/issues/17>`_)。"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:48
+msgid "Make fact collectors and gather_subset specs finer grained"
+msgstr "ファクトコレクターと gather_subset の仕様をより詳細にする"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:49
+msgid "Eliminate unneeded deps between fact collectors"
+msgstr "ファクトコレクター間の不要なデッドを排除する"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:50
+msgid "Allow fact collectors to indicate if they need information from another fact collector to be gathered first."
+msgstr "ファクトコレクターは、別のファクトコレクターからの情報を最初に収集する必要があるかどうかを示すことができるようにします。"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:53
+msgid "Static Loop Keyword"
+msgstr "静的ループキーのパスワード"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:55
+msgid "A simpler alternative to ``with_``, ``loop:`` only takes a list"
+msgstr "``with_`` のより簡単な代替方法としては、``loop:`` はリストのみを使用します。"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:56
+msgid "Remove complexity from loops, lookups are still available to users"
+msgstr "ループから複雑性を削除し、ユーザーは、引き続き検索を利用できます。"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:57
+msgid "Less confusing having a static directive vs a one that is dynamic depending on plugins loaded."
+msgstr "読み込まれたプラグインに応じて動的なディレクティブと比較して、静的なディレクティブを持つことで混乱が少なくなります。"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:60
+msgid "Vault"
+msgstr "Vault"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:61
+msgid "Vault secrets client inc new 'keyring' client"
+msgstr "新しい「キーリング」クライアントを含む Vault シークレットクライアント"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:64
+msgid "Runtime Check on Modules for Disabling"
+msgstr "無効にするモジュールのランタイムチェック"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:65
+msgid "Filter on things like \"supported_by\" in module metadata"
+msgstr "モジュールメタデータに「supported_by」などの内容にフィルタリングする"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:66
+msgid "Provide users with an option of \"warning, error or allow/ignore\""
+msgstr "「warning, error or allow/ignore」のオプションをユーザーに指定する"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:67
+msgid "Configurable via ansible.cfg and environment variable"
+msgstr "ansible.cfg および環境変数を使用して設定可能に"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:70 ../../rst/roadmap/ROADMAP_2_6.rst:78
+#: ../../rst/roadmap/ROADMAP_2_7.rst:94
+msgid "Windows"
+msgstr "Windows"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:71
+msgid "Implement gather_subset on Windows facts"
+msgstr "Windows ファクトへの gather_subset の実装"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:72
+msgid "Fix Windows async + become to allow them to work together"
+msgstr "Windows の非同期を修正し、それらが連携できるようにする"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:73
+msgid "Implement Windows become flags for controlling various modes **(done)** - logontype - elevation behavior"
+msgstr "さまざまなモードを制御するための Windows の become フラグを実装する **(完了)** - logontype - elevation behavior"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:76
+msgid "Convert win_updates to action plugin for auto reboot and extra features **(done)**"
+msgstr "自動再起動および追加機能の Win_updates からアクションプラグインに変換する **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:77
+msgid "Spike out changing the connection over to PSRP instead of WSMV **(done- it's possible)**"
+msgstr "接続を WSMV ではなく PSRP に変更することを明確にする **(完了 - 可能)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:78
+msgid "Module updates"
+msgstr "モジュールの更新"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:80
+msgid "win_updates **(done)**"
+msgstr "win_updates **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:82
+msgid "Fix win_updates to detect (or request) become"
+msgstr "become を検出 (または要求) するように win_updates を修正する"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:83
+msgid "Add enable/disable features to win_updates"
+msgstr "win_updates に有効化/無効化機能を追加する"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:84
+msgid "win_dsc further improvements **(done)**"
+msgstr "win_dsc をさらに改善する **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:87
+msgid "General Cloud"
+msgstr "一般クラウド"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:88
+msgid "Make multi-cloud provisioning easier"
+msgstr "マルチクラウドのプロビジョニングを容易にする"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:89
+msgid "Diff mode will output provisioning task results of ansible-playbook runs"
+msgstr "diff モードは、ansible-playbook の実行のプロビジョニングタスク結果を出力する"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:90
+msgid "Terraform module"
+msgstr "Terraform モジュール"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:93 ../../rst/roadmap/ROADMAP_2_7.rst:62
+msgid "AWS"
+msgstr "AWS"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:94
+msgid "Focus on pull requests for various modules"
+msgstr "さまざまなモジュールのプル要求に焦点"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:95
+msgid "Triage existing merges for modules"
+msgstr "モジュールの既存マージの優先順位付け"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:96
+msgid "Module work"
+msgstr "モジュール作業"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:98
+msgid "ec2_instance"
+msgstr "ec2_instance"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:99
+msgid "ec2_vpc: Allow the addition of secondary IPv4 CIDRS to existing VPCs."
+msgstr "ec2_vpc: 既存の VPC へのセカンダリー IPv4 CIDRS の追加を許可します。"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:100
+msgid "AWS Network Load Balancer support (NLB module, ASG support, and so on)"
+msgstr "AWS Network Load Balancer サポート (NLB モジュール、ASG サポートなど)"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:101
+msgid "rds_instance"
+msgstr "rds_instance"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:104 ../../rst/roadmap/ROADMAP_2_7.rst:71
+msgid "Azure"
+msgstr "Azure"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:105
+msgid "Azure CLI auth **(done)**"
+msgstr "Azure CLI 認証 **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:106
+msgid "Fix Azure module results to have \"high-level\" output instead of raw REST API dictionary **(partial, more to come in 2.6)**"
+msgstr "生の REST API ディレクトリーではなく「高レベル」の出力を表示するように Azure モジュールの結果を修正する **(部分的。2.6 でさらに追加予定)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:107
+msgid "Deprecate Azure automatic storage accounts in azure_rm_virtualmachine **(breaks on Azure Stack, punted until AS supports managed disks)**"
+msgstr "azure_rm_virtualmachine の Azure 自動ストレージアカウントを非推奨に **(Azure Stack で中断。AS が管理対象ディスクをサポートするまで保留)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:110
+msgid "Network Roadmap"
+msgstr "ネットワークのロードマップ"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:111
+msgid "Refactor common network shared code into package **(done)**"
+msgstr "共通ネットワーク共有コードをパッケージにリファクタリングする **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:112
+msgid "Convert various nxos modules to leverage declarative intent **(done)**"
+msgstr "さまざまな nxos モジュールを変換し、宣言的推論 **(完了)** を活用"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:113
+msgid "Refactor various modules to leverage the cliconf plugin **(done)**"
+msgstr "cliconf プラグインを活用するために各種モジュールをリファクタリングする **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:114
+msgid "Add various missing declarative modules for supported platforms and functions **(done)**"
+msgstr "サポートされるプラットフォームおよび機能用に、不足しているさまざまな宣言型モジュールを追加する **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:115
+msgid "Implement a feature that handles platform differences and feature unavailability **(done)**"
+msgstr "プラットフォームの違いと機能の利用不可に対応する機能を実装する **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:116
+msgid "netconf-config.py should provide control for deployment strategy"
+msgstr "netconf-config.py がデプロイメントストラテジーの制御を提供する必要がある"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:117
+msgid "Create netconf connection plugin **(done)**"
+msgstr "netconf 接続プラグインを作成する **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:118
+msgid "Create netconf fact module"
+msgstr "netconf ファクトモジュールを作成する"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:119
+msgid "Turn network_cli into a usable connection type **(done)**"
+msgstr "network_cli を使用可能な接続タイプに変換する **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:120
+msgid "Implements jsonrpc message passing for ansible-connection **(done)**"
+msgstr "ansible-connection に渡す jsonrpc メッセージを実装する **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:121
+msgid "Improve logging for ansible-connection **(done)**"
+msgstr "ansible-connection のロギングを改善する **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:122
+msgid "Improve stdout output for failures whilst using persistent connection **(done)**"
+msgstr "永続的な接続の使用中に傷害が発生した場合の stdout 出力を改善する **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:123
+msgid "Create IOS-XR NetConf Plugin and refactor iosxr modules to leverage netconf plugin **(done)**"
+msgstr "IOS-XR NetConf プラグインを作成し、iosxr モジュールをリファクタリングして netconf プラグインを活用する **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:124
+msgid "Refactor junos modules to use netconf plugin **(done)**"
+msgstr "netconf プラグインを使用するように junos モジュールをリファクタリングする **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:125
+msgid "Filters: Add a filter to convert XML response from a network device to JSON object **(done)**"
+msgstr "フィルター: XML 応答をネットワークデバイスから JSON オブジェクトに変換するフィルターを追加する **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:128
+msgid "Documentation"
+msgstr "ドキュメント"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:129
+msgid "Extend documentation to more plugins"
+msgstr "ドキュメントを他のプラグインへ拡張"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:130
+msgid "Document vault-password-client scripts."
+msgstr "vault-password-client スクリプトを文書化します。"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:131
+msgid "Network Documentation"
+msgstr "ネットワークドキュメント"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:133
+msgid "New landing page (to replace intro_networking) **(done)**"
+msgstr "新しいランディングページ (intro_networking を置き換えるため) **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:134
+msgid "Platform specific guides **(done)**"
+msgstr "プラットフォーム固有のガイド **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:135
+msgid "Walk through: Getting Started **(done)**"
+msgstr "ウォークスルー: はじめに **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:136
+msgid "Networking and ``become`` **(done)**"
+msgstr "ネットワークおよび ``become`` **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:137
+msgid "Best practice **(done)**"
+msgstr "ベストプラクティス **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:140
+msgid "Contributor Quality of Life"
+msgstr "貢献者の生活の質"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:141
+msgid "Finish PSScriptAnalyer integration with ansible-test (for enforcing Powershell style) **(done)**"
+msgstr "PSScriptAnalyer と ansible-test の統合を完了する (Powershell スタイルを適用するため) **(完了)**"
+
+#: ../../rst/roadmap/ROADMAP_2_5.rst:142
+msgid "Resolve issues requiring skipping of some integration tests on Python 3."
+msgstr "Python 3 で一部の統合テストをスキップする必要がある問題を解決する。"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:3
+msgid "Ansible 2.6"
+msgstr "Ansible 2.6"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:11
+msgid "Actual"
+msgstr "実績"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:13
+msgid "2018-05-17 Core Freeze (Engine and Core Modules/Plugins)"
+msgstr "2018 年 05 月 17 日 コアフリーズ (Engine および Core モジュール/プラグイン)"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:14
+msgid "2018-05-21 Alpha Release 1"
+msgstr "2018 年 05 月 21 日 Alpha リリース 1"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:15
+msgid "2018-05-25 Community Freeze (Non-Core Modules/Plugins)"
+msgstr "2018 年 05 月 25 日 コミュニティーフリーズ (非 Core モジュール/プラグイン)"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:16
+msgid "2018-05-25 Branch stable-2.6"
+msgstr "2018 年 05 月 25 日 ブランチの stable-2.6"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:17
+msgid "2018-05-30 Alpha Release 2"
+msgstr "2018 年 05 月 30 日 Ahpha リリース 2"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:18
+msgid "2018-06-05 Release Candidate 1"
+msgstr "2018 年 06 月 05 日 リリース候補 1"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:19
+msgid "2018-06-08 Release Candidate 2"
+msgstr "2018 年 06 月 08 日 リリース候補 2"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:20
+msgid "2018-06-18 Release Candidate 3"
+msgstr "2018 年 06 月 18 日 リリース候補 3"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:21
+msgid "2018-06-25 Release Candidate 4"
+msgstr "2018 年 06 月 25 日 リリース候補 4"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:22
+msgid "2018-06-26 Release Candidate 5"
+msgstr "2018 年 06 月 26 日 リリース候補 5"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:23
+msgid "2018-06-28 Final Release"
+msgstr "2018 年 06 月 28 日 最終リリース"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:28
+msgid "2.6.0-2.6.12 Matt Clay (IRC/GitHub: @mattclay)"
+msgstr "2.6.0-2.6.12 Matt Clay (IRC/GitHub: @mattclay)"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:29
+msgid "2.6.13+ Toshio Kuratomi (IRC: abadger1999; GitHub: @abadger)"
+msgstr "2.6.13+ Toshio Kuratomi (IRC: abadger1999、GitHub: @abadger)"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:35
+msgid "Version 2.6 is largely going to be a stabilization release for Core code."
+msgstr "バージョン 2.6 は、主に Core コード用の安定版リリースになります。"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:36
+msgid "Some of the items covered in this release, but are not limited to are the following:"
+msgstr "一部の項目は、本リリースで説明されていますが、以下に限定されません。"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:38
+msgid "``ansible-inventory``"
+msgstr "``ansible-inventory``"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:39
+msgid "``import_*``"
+msgstr "``import_*``"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:40
+msgid "``include_*``"
+msgstr "``include_*``"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:41
+msgid "Test coverage"
+msgstr "テストカバレッジ"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:42
+msgid "Performance Testing"
+msgstr "パフォーマンステスト"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:45 ../../rst/roadmap/ROADMAP_2_7.rst:44
+msgid "Core Modules"
+msgstr "コアモジュール"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:46
+msgid "Adopt-a-module Campaign"
+msgstr "adopt-a-module キャンペーン"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:48
+msgid "Review current status of all Core Modules"
+msgstr "すべての Core モジュールの現在の状態の確認"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:49
+msgid "Reduce backlog of open issues against these modules"
+msgstr "これらのモジュールに対してオープン問題のバックログを減らす"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:52 ../../rst/roadmap/ROADMAP_2_7.rst:55
+msgid "Cloud Modules"
+msgstr "クラウドモジュール"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:55 ../../rst/roadmap/ROADMAP_2_7.rst:77
+msgid "Network"
+msgstr "ネットワーク"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:58
+msgid "Connection work"
+msgstr "接続作業"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:60
+msgid "New connection plugin: eAPI `proposal#102 <https://github.com/ansible/proposals/issues/102>`_"
+msgstr "新規接続プラグイン: eAPI (`proposal#102 <https://github.com/ansible/proposals/issues/102>`_)"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:61
+msgid "New connection plugin: NX-API"
+msgstr "新規接続プラグイン: NX-API"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:62
+msgid "Support for configurable options for network_cli & netconf"
+msgstr "network_cli & netconf の設定可能なオプションのサポート"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:65 ../../rst/roadmap/ROADMAP_2_7.rst:87
+#: ../../rst/roadmap/ROADMAP_2_7.rst:102
+msgid "Modules"
+msgstr "モジュール"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:67
+msgid "New ``net_get`` - platform agnostic module for pulling configuration via SCP/SFTP over network_cli"
+msgstr "新しい ``net_get`` - network_cli 経由で SCP/SFTP を介して設定をプルするプラットフォームに依存しないモジュール"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:68
+msgid "New ``net_put`` - platform agnostic module for pushing configuration via SCP/SFTP over network_cli"
+msgstr "新しい ``net_put`` - network_cli 経由で SCP/SFTP を介して設定をプッシュするプラットフォームに依存しないモジュール"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:69
+msgid "New ``netconf_get`` - Netconf module to fetch configuration and state data `proposal#104 <https://github.com/ansible/proposals/issues/104>`_"
+msgstr "新しい ``netconf_get`` - 設定および状態データを取得する Netconf モジュール (`proposal#104 <https://github.com/ansible/proposals/issues/104>`_)。"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:72
+msgid "Other Features"
+msgstr "その他の機能"
+
+#: ../../rst/roadmap/ROADMAP_2_6.rst:74
+msgid "Stretch & tech preview: Configuration caching for network_cli. Opt-in feature to avoid ``show running`` performance hit"
+msgstr "ストレッチおよびテクノロジープレビュー: network_cli の構成キャッシュ。``show running`` パフォーマンスヒットを回避するオプトイン機能"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:3
+msgid "Ansible 2.7"
+msgstr "Ansible 2.7"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:13
+msgid "2018-08-23 Core Freeze (Engine and Core Modules/Plugins)"
+msgstr "2018 年 08 月 23 日 コアフリーズ (Engine および Core モジュール/プラグイン)"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:14
+msgid "2018-08-23 Alpha Release 1"
+msgstr "2018 年 08 月 23 日 Ahpha リリース 1"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:15
+msgid "2018-08-30 Community Freeze (Non-Core Modules/Plugins)"
+msgstr "2018 年 08 月 30 日 コミュニティーフリーズ (非 Core モジュール/プラグイン)"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:16
+msgid "2018-08-30 Beta Release 1"
+msgstr "2018 年 08 月 30 日 Beta リリース 1"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:17
+msgid "2018-09-06 Release Candidate 1 (If needed)"
+msgstr "2018 年 09 月 06 日 リリース候補 1 (必要な場合)"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:18
+msgid "2018-09-13 Release Candidate 2 (If needed)"
+msgstr "2018 年 09 月 13日 リリース候補 2 (必要な場合)"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:19
+msgid "2018-09-20 Release Candidate 3 (If needed)"
+msgstr "2018 年 09 月 20 日 リリース候補 3 (必要な場合)"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:20
+msgid "2018-09-27 Release Candidate 4 (If needed)"
+msgstr "2018 年 09 月 27日 リリース候補 4 (必要な場合)"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:21
+msgid "2018-10-04 General Availability"
+msgstr "2018 年 10 月 04 日 一般提供 (GA)"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:25 ../../rst/roadmap/ROADMAP_2_8.rst:33
+msgid "Toshio Kuratomi (IRC: abadger1999; GitHub: @abadger)"
+msgstr "Toshio Kuratomi (IRC: abadger1999、GitHub: @abadger)"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:29
+msgid "Cleaning Duty"
+msgstr "責務の消去"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:31
+msgid "Drop Py2.6 for controllers  `Docs PR #42971 <https://github.com/ansible/ansible/pull/42971>`_ and `issue #42972 <https://github.com/ansible/ansible/issues/42972>`_"
+msgstr "コントローラー `Docs PR #42971 <https://github.com/ansible/ansible/pull/42971>`_ および `issue #42972 <https://github.com/ansible/ansible/issues/42972>`_ の場合は、Py2.6 を破棄します。"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:33
+msgid "Remove dependency on simplejson `issue #42761 <https://github.com/ansible/ansible/issues/42761>`_"
+msgstr "simplejson `issue #42761 <https://github.com/ansible/ansible/issues/42761>`_ の依存関係を削除します。"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:37
+msgid "Engine Improvements"
+msgstr "エンジンの改善"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:39
+msgid "Performance improvement invoking Python modules `pr #41749 <https://github.com/ansible/ansible/pull/41749>`_"
+msgstr "Python モジュール `pr #41749 <https://github.com/ansible/ansible/pull/41749>`_ を呼び出すパフォーマンスが向上しました。"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:40
+msgid "Jinja native types will allow for users to render a Python native type. `pr #32738 <https://github.com/ansible/ansible/pull/32738>`_"
+msgstr "Jinja ネイティブタイプを使用すると、ユーザーは Python ネイティブタイプをレンダリングできます (`pr #32738 <https://github.com/ansible/ansible/pull/32738>`_)。"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:46
+msgid "Include feature changes and improvements"
+msgstr "機能変更および改善の追加"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:48
+msgid "Create new argument ``apply`` that will allow for included tasks to inherit explicitly provided attributes. `pr #39236 <https://github.com/ansible/ansible/pull/39236>`_"
+msgstr "含まれるタスクが明示的に指定した属性を継承するように、新しい引数 ``apply`` を作成します (`pr #39236 <https://github.com/ansible/ansible/pull/39236>`)。"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:49
+msgid "Create \"private\" functionality for allowing vars/default to be exposed outside of roles. `pr #41330 <https://github.com/ansible/ansible/pull/41330>`_"
+msgstr "ロール外に vars/default が公開されるように「プライベート」機能を作成します (`pr #41330 <https://github.com/ansible/ansible/pull/41330>`)。"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:50
+msgid "Provide a parameter for the ``template`` module to output to different encoding formats `pr #42171 <https://github.com/ansible/ansible/pull/42171>`_"
+msgstr "``template`` モジュールが、異なるエンコーディング形式に出力するパラメーターを提供します (`pr #42171 <https://github.com/ansible/ansible/pull/42171>`_)。"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:52
+msgid "``reboot`` module for Linux hosts (@samdoran) `pr #35205 <https://github.com/ansible/ansible/pull/35205>`_"
+msgstr "Linux ホストの ``reboot`` モジュール (@samdoran) (`pr #35205 <https://github.com/ansible/ansible/pull/35205>`_)"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:58 ../../rst/roadmap/ROADMAP_2_7.rst:80
+#: ../../rst/roadmap/ROADMAP_2_7.rst:97
+msgid "General"
+msgstr "全般"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:59
+msgid "Cloud auth plugin `proposal #24 <https://github.com/ansible/proposals/issues/24>`_"
+msgstr "クラウド認証プラグイン (`proposal #24 <https://github.com/ansible/proposals/issues/24>`_)"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:63
+msgid "Inventory plugin for RDS `pr #41919 <https://github.com/ansible/ansible/pull/41919>`_"
+msgstr "RDS のインベントリープラグイン (`pr #41919 <https://github.com/ansible/ansible/pull/41919>`_)"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:64
+msgid "Count support for `ec2_instance`"
+msgstr "`ec2_instance` のカウントサポート"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:65
+msgid "`aws_eks` module `pr #41183 <https://github.com/ansible/ansible/pull/41183>`_"
+msgstr "`aws_eks` モジュール `pr #41183 <https://github.com/ansible/ansible/pull/41183>`_"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:66
+msgid "Cloudformation stack sets support (`PR#41669 <https://github.com/ansible/ansible/pull/41669>`_)"
+msgstr "CloudFormation スタックセットのサポート (`PR#41669 <https://github.com/ansible/ansible/pull/41669>`_)"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:67
+msgid "RDS instance and snapshot modules `pr #39994 <https://github.com/ansible/ansible/pull/39994>`_ `pr #43789 <https://github.com/ansible/ansible/pull/43789>`_"
+msgstr "RDS インスタンスおよびスナップショットモジュール (`pr #39994 <https://github.com/ansible/ansible/pull/39994>`_ `pr #43789 <https://github.com/ansible/ansible/pull/43789>`_)"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:68
+msgid "Diff mode improvements for cloud modules `pr #44533 <https://github.com/ansible/ansible/pull/44533>`_"
+msgstr "クラウドモジュールの diff モードが改善 (`pr #44533 <https://github.com/ansible/ansible/pull/44533>`)。"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:73
+msgid "Azure inventory plugin `issue #42769 <https://github.com/ansible/ansible/issues/42769>`__"
+msgstr "Azure インベントリープラグイン (`issue #42769 <https://github.com/ansible/ansible/issues/42769>`_)"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:82
+msgid "Refactor the APIs in cliconf (`issue #39056 <https://github.com/ansible/ansible/issues/39056>`_) and netconf (`issue #39160 <https://github.com/ansible/ansible/issues/39160>`_) plugins so that they have a uniform signature across supported network platforms. **done** (`PR #41846 <https://github.com/ansible/ansible/pull/41846>`_) (`PR #43643 <https://github.com/ansible/ansible/pull/43643>`_) (`PR #43837 <https://github.com/ansible/ansible/pull/43837>`_) (`PR #43203 <https://github.com/ansible/ansible/pull/43203>`_) (`PR #42300 <https://github.com/ansible/ansible/pull/42300>`_) (`PR #44157 <https://github.com/ansible/ansible/pull/44157>`_)"
+msgstr "サポートされているネットワークプラットフォーム全体で統一された署名を持つように cliconf (`issue #39056 <https://github.com/ansible/ansible/issues/39056>`_) プラグインおよび netconf (`issue #39160 <https://github.com/ansible/ansible/issues/39160>`_) プラグインで API をリファクタリングする。**完了** (`PR #41846 <https://github.com/ansible/ansible/pull/41846>`_) (`PR #43643 <https://github.com/ansible/ansible/pull/43643>`_) (`PR #43837 <https://github.com/ansible/ansible/pull/43837>`_) (`PR #43203 <https://github.com/ansible/ansible/pull/43203>`_) (`PR #42300 <https://github.com/ansible/ansible/pull/42300>`_) (`PR #44157 <https://github.com/ansible/ansible/pull/44157>`_)"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:89
+msgid "New ``cli_config`` module `issue #39228 <https://github.com/ansible/ansible/issues/39228>`_ **done** `PR #42413 <https://github.com/ansible/ansible/pull/42413>`_."
+msgstr "新しい ``cli_config`` モジュール (`issue #39228 <https://github.com/ansible/ansible/issues/39228>`_ **完了** (`PR #42413 <https://github.com/ansible/ansible/pull/42413>`_))。"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:90
+msgid "New ``cli_command`` module `issue #39284 <https://github.com/ansible/ansible/issues/39284>`_"
+msgstr "新しい ``cli_command`` モジュール (`issue #39284 <https://github.com/ansible/ansible/issues/39284>`_)"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:91
+msgid "Refactor ``netconf_config`` module to add additional functionality. **done** `proposal #104 <https://github.com/ansible/proposals/issues/104>`_ (`PR #44379 <https://github.com/ansible/ansible/pull/44379>`_)"
+msgstr "``netconf_config`` モジュールをリファクタリングして、追加機能を追加する **完了** (`proposal #104 <https://github.com/ansible/proposals/issues/104>`_ (`PR #44379 <https://github.com/ansible/ansible/pull/44379>`_))"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:99
+msgid "Added new connection plugin that uses PSRP as the connection protocol `pr #41729 <https://github.com/ansible/ansible/pull/41729>`__"
+msgstr "PSRP を接続プロトコルとして使用する新規接続プラグインを追加する (`pr #41729 <https://github.com/ansible/ansible/pull/41729>`_)。"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:104
+msgid "Revamp Chocolatey to fix bugs and support offline installation `pr #43013 <https://github.com/ansible/ansible/pull/43013>`_."
+msgstr "Chocolatey を改良してバグを修正し、オフラインインストールをサポートする (`pr #43013 <https://github.com/ansible/ansible/pull/43013>`_)"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:105
+msgid "Add Chocolatey modules that can manage the following Chocolatey features"
+msgstr "以下の Chocolatey 機能を管理できる Chocolatey モジュールを追加する。"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:107
+msgid "`Sources <https://chocolatey.org/docs/commands-sources>`_ `pr #42790 <https://github.com/ansible/ansible/pull/42790>`_"
+msgstr "`Sources <https://chocolatey.org/docs/commands-sources>`_ `pr #42790 <https://github.com/ansible/ansible/pull/42790>`_"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:108
+msgid "`Features <https://chocolatey.org/docs/chocolatey-configuration#features>`_ `pr #42848 <https://github.com/ansible/ansible/pull/42848>`_"
+msgstr "`Features <https://chocolatey.org/docs/chocolatey-configuration#features>`_ `pr #42848 <https://github.com/ansible/ansible/pull/42848>`_"
+
+#: ../../rst/roadmap/ROADMAP_2_7.rst:109
+msgid "`Config <https://chocolatey.org/docs/chocolatey-configuration#config-settings>`_ `pr #42915 <h*ttps://github.com/ansible/ansible/pull/42915>`_"
+msgstr "`Config <https://chocolatey.org/docs/chocolatey-configuration#config-settings>`_ `pr #42915 <h*ttps://github.com/ansible/ansible/pull/42915>`_"
+
+#: ../../rst/roadmap/ROADMAP_2_8.rst:3
+msgid "Ansible 2.8"
+msgstr "Ansible 2.8"
+
+#: ../../rst/roadmap/ROADMAP_2_8.rst:14 ../../rst/roadmap/ROADMAP_2_9.rst:14
+msgid "PRs must be raised well in advance of the dates below to have a chance of being included in this Ansible release."
+msgstr "プル要求は、この Ansible リリースに含まれる可能性を高めるために、以下の期日に間に合うように、十分な余裕をもって提案してください。"
+
+#: ../../rst/roadmap/ROADMAP_2_8.rst:16
+msgid "2019-04-04 Alpha 1 **Core freeze** No new features to ``support:core`` code. Includes no new options to existing Core modules"
+msgstr "2019 年 04 月 04 日 Alpha 1 **コアフリーズ** ``support:core`` コードへの新機能はありません。既存のコアモジュールに新しいオプションは含まれません。"
+
+#: ../../rst/roadmap/ROADMAP_2_8.rst:20
+msgid "2019-04-11 Beta 1 **Feature freeze** No new functionality (including modules/plugins) to any code"
+msgstr "2019 年 04 月 11 日 ベータ 1 ** 機能フリーズ** いずれのコードへの新機能なし (モジュール/プラグインを含む)"
+
+#: ../../rst/roadmap/ROADMAP_2_8.rst:23
+msgid "2019-04-25 Release Candidate 1"
+msgstr "2019 年 04 月 25 日 リリース候補 1"
+
+#: ../../rst/roadmap/ROADMAP_2_8.rst:24
+msgid "2019-05-02 Release Candidate 2"
+msgstr "2019 年 05 月 02 日 リリース候補 2"
+
+#: ../../rst/roadmap/ROADMAP_2_8.rst:25
+msgid "2019-05-10 Release Candidate 3"
+msgstr "2019 年 05 月 10 日 リリース候補 3"
+
+#: ../../rst/roadmap/ROADMAP_2_8.rst:26
+msgid "2019-05-16 Release"
+msgstr "2019 年 05 月 16 日 リリース"
+
+#: ../../rst/roadmap/ROADMAP_2_8.rst:38
+msgid "See the `Ansible 2.8 Project Board <https://github.com/ansible/ansible/projects/30>`_"
+msgstr "「`Ansible 2.8 Project Board <https://github.com/ansible/ansible/projects/30>`_」を参照してください。"
+
+#: ../../rst/roadmap/ROADMAP_2_9.rst:3
+msgid "Ansible 2.9"
+msgstr "Ansible 2.9"
+
+#: ../../rst/roadmap/ROADMAP_2_9.rst:16
+msgid "There is no Alpha phase in 2.9."
+msgstr "2.9 には、Alpha フェーズはありません。"
+
+#: ../../rst/roadmap/ROADMAP_2_9.rst:18
+msgid "2019-08-29 Beta 1 **Feature freeze** No new functionality (including modules/plugins) to any code"
+msgstr "2019 年 08 月 29 日 Beta 1 **機能フリーズ** どのコードにも新しい機能 (モジュール、プラグインなど) はありません。"
+
+#: ../../rst/roadmap/ROADMAP_2_9.rst:21
+msgid "2019-09-19 Release Candidate 1"
+msgstr "2019 年 09 月 19 日 リリースの候補 1"
+
+#: ../../rst/roadmap/ROADMAP_2_9.rst:22
+msgid "2019-10-03 Release Candidate 2"
+msgstr "2019 年 10 月 03 日 リリースの候補 2"
+
+#: ../../rst/roadmap/ROADMAP_2_9.rst:23
+msgid "2019-10-10 Release Candidate 3"
+msgstr "2019 年 10 月 10 日 リリースの候補 3"
+
+#: ../../rst/roadmap/ROADMAP_2_9.rst:24
+msgid "2019-10-17 Release Candidate 4 (if needed)"
+msgstr "2019 年 10 月 17 日 リリースの候補 4 (必要な場合)"
+
+#: ../../rst/roadmap/ROADMAP_2_9.rst:25
+msgid "2019-10-24 Release Candidate 5 (if needed)"
+msgstr "2019 年 10 月 24 日 リリースの候補 5 (必要な場合)"
+
+#: ../../rst/roadmap/ROADMAP_2_9.rst:26
+msgid "2019-10-31 Release"
+msgstr "2019 年 10 月 31 日 リリース"
+
+#: ../../rst/roadmap/ROADMAP_2_9.rst:32
+msgid "TBD"
+msgstr "TBD"
+
+#: ../../rst/roadmap/ROADMAP_2_9.rst:34
+msgid "Temporarily, Matt Davis (@nitzmahone) or Matt Clay (@mattclay) on IRC or github."
+msgstr "IRC または github で、暫定的に Matt Davis (@nitzmahone) または Matt Clay (@mattclay) が担当しています。"
+
+#: ../../rst/roadmap/ROADMAP_2_9.rst:39
+msgid "See the `Ansible 2.9 Project Board <https://github.com/ansible/ansible/projects/34>`_"
+msgstr "「`Ansible 2.9 Project Board <https://github.com/ansible/ansible/projects/34>`_」を参照してください。"
+
+#: ../../rst/roadmap/ansible_base_roadmap_index.rst:4
+#: ../../rst/roadmap/ansible_base_roadmap_index.rst:26
+msgid "ansible-core Roadmaps"
+msgstr "ansible-core ロードマップ"
+
+#: ../../rst/roadmap/ansible_base_roadmap_index.rst:6
+msgid "The ``ansible-core`` team develops a roadmap for each major and minor ``ansible-core`` release. The latest roadmap shows current work; older roadmaps provide a history of the project. We don't publish roadmaps for subminor versions. So 2.10 and 2.11 have roadmaps, but 2.10.1 does not."
+msgstr "``ansible-core`` チームは、``ansible-core`` の各メジャーリリースとマイナーリリースのロードマップを開発しています。最新のロードマップは現在の作業を示し、古いロードマップはプロジェクトの履歴を示します。サブマイナーバージョンのロードマップは公開していません。2.10 と 2.11 にはロードマップがありますが、2.10.1 にはありません。"
+
+#: ../../rst/roadmap/ansible_base_roadmap_index.rst:10
+msgid "Ansible renamed ``ansible-base`` to ``ansible-core``."
+msgstr "Ansible の名前は ``ansible-base`` から ``ansible-core`` に変更しました。"
+
+#: ../../rst/roadmap/ansible_base_roadmap_index.rst:12
+#: ../../rst/roadmap/ansible_roadmap_index.rst:8
+msgid "We incorporate team and community feedback in each roadmap, and aim for further transparency and better inclusion of both community desires and submissions."
+msgstr "各ロードマップにチームとコミュニティーのフィードバックを組み込むことで、コミュニティーの要望と提供されたものをより多く追加し、透明性もより高いものにすることを目指しています。"
+
+#: ../../rst/roadmap/ansible_base_roadmap_index.rst:14
+msgid "Each roadmap offers a *best guess*, based on the ``ansible-core`` team's experience and on requests and feedback from the community, of what will be included in a given release. However, some items on the roadmap may be dropped due to time constraints, lack of community maintainers, and so on."
+msgstr "各ロードマップは、``ansible-core`` チームの経験とコミュニティーからの要求やフィードバックに基づいて、特定のリリースに何が含まれるかについて *最良の推測* を提供します。ただし、ロードマップの一部の項目は、時間的制約、コミュニティーのメンテナー不足などのために削除される場合があります。"
+
+#: ../../rst/roadmap/ansible_base_roadmap_index.rst:16
+msgid "Each roadmap is published both as an idea of what is upcoming in ``ansible-core``, and as a medium for seeking further feedback from the community."
+msgstr "各ロードマップは、``ansible-core`` の今後の予定、およびコミュニティーからのフィードバックを募る媒体として公開されています。"
+
+#: ../../rst/roadmap/ansible_base_roadmap_index.rst:18
+#: ../../rst/roadmap/ansible_roadmap_index.rst:14
+msgid "You can submit feedback on the current roadmap in multiple ways:"
+msgstr "現在のロードマップに関するフィードバックは、複数の方法で送信できます。"
+
+#: ../../rst/roadmap/ansible_base_roadmap_index.rst:20
+msgid "Edit the agenda of an IRC `Core Team Meeting <https://github.com/ansible/community/blob/master/meetings/README.md>`_ (preferred)"
+msgstr "IRC `Core Team Meeting <https://github.com/ansible/community/blob/master/meetings/README.md>`_ の議題を編集 (推奨)"
+
+#: ../../rst/roadmap/ansible_base_roadmap_index.rst:21
+msgid "Post on the ``#ansible-devel`` Freenode IRC channel"
+msgstr "Freenode IRC チャンネル ``#ansible-devel`` で発言"
+
+#: ../../rst/roadmap/ansible_base_roadmap_index.rst:22
+msgid "Email the ansible-devel list"
+msgstr "ansible-devel リストへのメール送信"
+
+#: ../../rst/roadmap/ansible_base_roadmap_index.rst:24
+msgid "See :ref:`Ansible communication channels <communication>` for details on how to join and use the email lists and IRC channels."
+msgstr "メーリングリストおよび IRC チャンネルに参加して使用する方法は、「:ref:`Ansible コミュニケーションチャンネル <communication>`」を参照してください。"
+
+#: ../../rst/roadmap/ansible_roadmap_index.rst:21
+msgid "Ansible Release Roadmaps"
+msgstr "Ansible リリースロードマップ"
+
+#: ../../rst/roadmap/ansible_roadmap_index.rst:4
+msgid "Ansible Roadmap"
+msgstr "Ansible ロードマップ"
+
+#: ../../rst/roadmap/ansible_roadmap_index.rst:6
+msgid "The Ansible team develops a roadmap for each major and minor Ansible release. The latest roadmap shows current work; older roadmaps provide a history of the project. We don't publish roadmaps for subminor versions. So 2.10 and 2.11 have roadmaps, but 2.10.1 does not."
+msgstr "Ansible チームは、Ansible の各メジャーリリースとマイナーリリースのロードマップを開発しています。最新のロードマップは現在の作業を示し、古いロードマップはプロジェクトの履歴を示します。サブマイナーバージョンのロードマップは公開していません。2.10 と 2.11 にはロードマップがありますが、2.10.1 にはありません。"
+
+#: ../../rst/roadmap/ansible_roadmap_index.rst:10
+msgid "Each roadmap offers a *best guess*, based on the Ansible team's experience and on requests and feedback from the community, of what will be included in a given release. However, some items on the roadmap may be dropped due to time constraints, lack of community maintainers, and so on."
+msgstr "各ロードマップは、Ansible チームの経験とコミュニティーからの要求やフィードバックに基づいて、特定のリリースに何が含まれるかについて *最良の推測* を提供します。ただし、ロードマップの一部の項目は、時間的制約、コミュニティーのメンテナー不足などのために削除される場合があります。"
+
+#: ../../rst/roadmap/ansible_roadmap_index.rst:12
+msgid "Each roadmap is published both as an idea of what is upcoming in Ansible, and as a medium for seeking further feedback from the community."
+msgstr "各ロードマップは、Ansible の今後の予定、およびコミュニティーからのフィードバックを募る媒体として公開されています。"
+
+#: ../../rst/roadmap/ansible_roadmap_index.rst:16
+msgid "Edit the agenda of an IRC `Ansible Community Meeting <https://github.com/ansible/community/issues/539>`_ (preferred)"
+msgstr "IRC `Ansible コミュニティーミーティング <https://github.com/ansible/community/issues/539>`_ の議題を編集 (推奨)"
+
+#: ../../rst/roadmap/ansible_roadmap_index.rst:17
+msgid "Post on the ``#ansible-community`` Freenode IRC channel"
+msgstr "Freenode IRC チャンネル ``#ansible-community`` で発言"
+
+#: ../../rst/roadmap/ansible_roadmap_index.rst:19
+msgid "See :ref:`Ansible communication channels <communication>` for details on how to join and use the IRC channels."
+msgstr "IRC チャンネルに参加して使用する方法は、「:ref:`Ansible コミュニケーションチャンネル <communication>`」を参照してください。"
+
+#: ../../rst/roadmap/index.rst:4
+msgid "Roadmaps"
+msgstr "ロードマップ"
+
+#: ../../rst/roadmap/old_roadmap_index.rst:4
+#: ../../rst/roadmap/old_roadmap_index.rst:10
+msgid "Older Roadmaps"
+msgstr "古いロードマップ"
+
+#: ../../rst/roadmap/old_roadmap_index.rst:6
+msgid "Older roadmaps are listed here to provide a history of the Ansible project."
+msgstr "Ansible プロジェクトの履歴は、以下に示す以前のロードマップから確認できます。"
+
+#: ../../rst/roadmap/old_roadmap_index.rst:8
+msgid "See :ref:`roadmaps` to find current Ansible and ``ansible-base`` roadmaps."
+msgstr "現在の Ansible および ``ansible-base`` のロードマップを確認するには、「:ref:`roadmaps`」を参照してください。"
+

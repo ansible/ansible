@@ -1,0 +1,51 @@
+- name: Test pause
+  hosts: localhost
+  gather_facts: no
+  become: no
+
+  tasks:
+    - name: non-integer for duraction (EXPECTED FAILURE)
+      pause:
+        seconds: hello
+      register: result
+      ignore_errors: yes
+
+    - assert:
+        that:
+          - result is failed
+          - "'non-integer' in result.msg"
+
+    - name: non-boolean for echo (EXPECTED FAILURE)
+      pause:
+        echo: hello
+      register: result
+      ignore_errors: yes
+
+    - assert:
+        that:
+          - result is failed
+          - "'not a valid boolean' in result.msg"
+
+    - pause:
+        seconds: 0.1
+      register: results
+
+    - assert:
+        that:
+          - results.stdout is search('Paused for \d+\.\d+ seconds')
+
+    - pause:
+        seconds: 1
+      register: results
+
+    - assert:
+        that:
+          - results.stdout is search('Paused for \d+\.\d+ seconds')
+
+    - pause:
+        minutes: 1
+      register: results
+
+    - assert:
+        that:
+          - results.stdout is search('Paused for \d+\.\d+ minutes')

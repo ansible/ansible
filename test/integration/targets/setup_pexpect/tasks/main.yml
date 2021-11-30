@@ -1,0 +1,10 @@
+- name: Copy constraints file
+  copy:
+    src: constraints.txt
+    dest: "{{ remote_tmp_dir }}/pexpect-constraints.txt"
+
+- name: Install pexpect
+  pip:
+    name: pexpect
+    extra_args: '--constraint "{{ remote_tmp_dir }}/pexpect-constraints.txt"'
+    state: present

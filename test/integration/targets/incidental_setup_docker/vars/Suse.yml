@@ -1,0 +1,2 @@
+docker_packages:
+  - docker=19.03.1_ce

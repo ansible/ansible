@@ -1,0 +1,42 @@
+# test code for the git module
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- import_tasks: setup.yml
+- import_tasks: setup-local-repos.yml
+
+- import_tasks: formats.yml
+- import_tasks: missing_hostkey.yml
+- import_tasks: missing_hostkey_acceptnew.yml
+- import_tasks: no-destination.yml
+- import_tasks: specific-revision.yml
+- import_tasks: submodules.yml
+- import_tasks: change-repo-url.yml
+- import_tasks: depth.yml
+- import_tasks: single-branch.yml
+- import_tasks: checkout-new-tag.yml
+- include_tasks: gpg-verification.yml
+  when:
+    - not gpg_version.stderr
+    - gpg_version.stdout
+    - not (ansible_os_family == 'RedHat' and ansible_distribution_major_version is version('7', '<'))
+- import_tasks: localmods.yml
+- import_tasks: reset-origin.yml
+- import_tasks: ambiguous-ref.yml
+- import_tasks: archive.yml
+- import_tasks: separate-git-dir.yml
+- import_tasks: forcefully-fetch-tag.yml

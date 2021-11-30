@@ -1,0 +1,263 @@
+---
+name: 🐛 Bug report
+description: Create a report to help us improve
+
+body:
+- type: markdown
+  attributes:
+    value: >
+      **Thank you for wanting to report a bug in ansible-core!**
+
+
+      ⚠
+      Verify first that your issue is not [already reported on
+      GitHub][issue search] and keep in mind that we may have to keep
+      the current behavior because [every change breaks someone's
+      workflow][XKCD 1172].
+      We try to be mindful about this.
+
+      Also test if the latest release and devel branch are affected too.
+
+
+      **Tip:** If you are seeking community support, please consider
+      [starting a mailing list thread or chatting in IRC][ML||IRC].
+
+
+
+      [ML||IRC]:
+      https://docs.ansible.com/ansible-core/devel/community/communication.html?utm_medium=github&utm_source=issue_form--bug_report.yml#mailing-list-information
+
+      [issue search]: ../search?q=is%3Aissue&type=issues
+
+      [XKCD 1172]: https://xkcd.com/1172/
+
+
+- type: textarea
+  attributes:
+    label: Summary
+    description: Explain the problem briefly below.
+    placeholder: >-
+      When I try to do X with ansible-core from the devel branch on GitHub, Y
+      breaks in a way Z under the env E. Here are all the details I know
+      about this problem...
+  validations:
+    required: true
+
+- type: dropdown
+  attributes:
+    label: Issue Type
+    description: >
+      Please select the single available option in the drop-down.
+
+      <details>
+        <summary>
+          <em>Why?</em>
+        </summary>
+
+        We would do it by ourselves but unfortunatelly, the curent
+        edition of GitHub Issue Forms Alpha does not support this yet 🤷
+
+
+        _We will make it easier in the future, once GitHub
+        supports dropdown defaults. Promise!_
+
+      </details>
+    # FIXME: Once GitHub allows defining the default choice, update this
+    options:
+    - Bug Report
+  validations:
+    required: true
+
+- type: input
+  attributes:
+    label: Component Name
+    description: >
+      Write the short name of the rst file, module, plugin, task or
+      feature below, *use your best guess if unsure*.
+
+
+      **Tip:** Cannot find it in this repository? Please be advised that
+      the source for some parts of the documentation are hosted outside
+      of this repository. If the page you are reporting describes
+      modules/plugins/etc that are not officially supported by the
+      Ansible Core Engineering team, there is a good chance that it is
+      coming from one of the [Ansible Collections maintained by the
+      community][collections org]. If this is the case, please make sure
+      to file an issue under the appropriate project there instead.
+
+
+      [collections org]: /ansible-collections
+    placeholder: dnf, apt, yum, pip, user etc.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Ansible Version
+    description: >-
+      Paste verbatim output from `ansible --version` below, under
+      the prompt line. Please don't wrap it with tripple backticks — your
+      whole input will be turned into a code snippet automatically.
+    render: console
+    value: |
+      $ ansible --version
+    placeholder: |
+      $ ansible --version
+      ansible [core 2.11.0b4.post0]  (detached HEAD ref: refs/) last updated 2021/04/02 00:33:35 (GMT +200)
+        config file = None
+        configured module search path = ['~/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+        ansible python module location = ~/src/github/ansible/ansible/lib/ansible
+        ansible collection location = ~/.ansible/collections:/usr/share/ansible/collections
+        executable location = bin/ansible
+        python version = 3.9.0 (default, Oct 26 2020, 13:08:59) [GCC 10.2.0]
+        jinja version = 2.11.3
+        libyaml = True
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Configuration
+    description: >-
+      Paste verbatim output from `ansible-config dump --only-changed`
+      below, under the prompt line.
+      Please don't wrap it with tripple backticks — your
+      whole input will be turned into a code snippet automatically.
+    render: console
+    value: |
+      $ ansible-config dump --only-changed
+    placeholder: |
+      $ ansible-config dump --only-changed
+      DEFAULT_GATHERING(~/src/github/ansible/ansible/ansible.cfg) = smart
+      DEFAULT_HOST_LIST(~/src/github/ansible/ansible/ansible.cfg) = ['~/src/github/ansible/ansible/hosts']
+      DEFAULT_VAULT_PASSWORD_FILE(~/src/github/ansible/ansible/ansible.cfg) = ~/src/github/ansible/ansible/vault/print-password.sh
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: OS / Environment
+    description: >-
+      Provide all relevant information below, e.g. target OS versions,
+      network device firmware, etc.
+    placeholder: RHEL 8, CentOS Stream etc.
+  validations:
+    required: true
+
+
+- type: textarea
+  attributes:
+    label: Steps to Reproduce
+    description: |
+      Describe exactly how to reproduce the problem, using a minimal test-case. It would *really* help us understand your problem if you could also pased any playbooks, configs and commands you used.
+
+      **HINT:** You can paste https://gist.github.com links for larger files.
+    value: |
+      <!--- Paste example playbooks or commands between quotes below -->
+      ```yaml (paste below)
+
+      ```
+    placeholder: |
+      1. Implement the following playbook:
+
+         ```yaml
+         ---
+         # ping.yml
+         - hosts: all
+           gather_facts: false
+           tasks:
+           - ping:
+         ...
+         ```
+      2. Then run `ANSIBLE_DEBUG=1 ansible-playbook ping.yml -vvvvv`
+      3. An error occurs.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Expected Results
+    description: >-
+      Describe what you expected to happen when running the steps above.
+    placeholder: >-
+      I expected X to happen because I assumed Y and was shocked
+      that it did not.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Actual Results
+    description: |
+      Describe what actually happened. If possible run with extra verbosity (`-vvvv`).
+
+      Paste verbatim command output and don't wrap it with tripple backticks — your
+      whole input will be turned into a code snippet automatically.
+    render: console
+    placeholder: >-
+      Certificate did not match expected hostname: files.pythonhosted.org. Certificate: {'notAfter': 'Apr 28 19:20:25 2021 GMT', 'subjectAltName': ((u'DNS', 'r.ssl.fastly.net'), (u'DNS', '*.catchpoint.com'), (u'DNS', '*.cnn.io'), (u'DNS', '*.dollarshaveclub.com'), (u'DNS', '*.eater.com'), (u'DNS', '*.fastly.picmonkey.com'), (u'DNS', '*.files.saymedia-content.com'), (u'DNS', '*.ft.com'), (u'DNS', '*.meetupstatic.com'), (u'DNS', '*.nfl.com'), (u'DNS', '*.pagar.me'), (u'DNS', '*.picmonkey.com'), (u'DNS', '*.realself.com'), (u'DNS', '*.sbnation.com'), (u'DNS', '*.shakr.com'), (u'DNS', '*.streamable.com'), (u'DNS', '*.surfly.com'), (u'DNS', '*.theverge.com'), (u'DNS', '*.thrillist.com'), (u'DNS', '*.vox-cdn.com'), (u'DNS', '*.vox.com'), (u'DNS', '*.voxmedia.com'), (u'DNS', 'eater.com'), (u'DNS', 'ft.com'), (u'DNS', 'i.gse.io'), (u'DNS', 'picmonkey.com'), (u'DNS', 'realself.com'), (u'DNS', 'static.wixstatic.com'), (u'DNS', 'streamable.com'), (u'DNS', 'surfly.com'), (u'DNS', 'theverge.com'), (u'DNS', 'vox-cdn.com'), (u'DNS', 'vox.com'), (u'DNS', 'www.joyent.com')), 'subject': ((('countryName', u'US'),), (('stateOrProvinceName', u'California'),), (('localityName', u'San Francisco'),), (('organizationName', u'Fastly, Inc'),), (('commonName', u'r.ssl.fastly.net'),))}
+      Exception:
+      Traceback (most recent call last):
+        File "/usr/local/lib/python2.6/dist-packages/pip/basecommand.py", line 215, in main
+          status = self.run(options, args)
+        File "/usr/local/lib/python2.6/dist-packages/pip/commands/install.py", line 335, in run
+          wb.build(autobuilding=True)
+        File "/usr/local/lib/python2.6/dist-packages/pip/wheel.py", line 749, in build
+          self.requirement_set.prepare_files(self.finder)
+        File "/usr/local/lib/python2.6/dist-packages/pip/req/req_set.py", line 380, in prepare_files
+          ignore_dependencies=self.ignore_dependencies))
+        File "/usr/local/lib/python2.6/dist-packages/pip/req/req_set.py", line 620, in _prepare_file
+          session=self.session, hashes=hashes)
+        File "/usr/local/lib/python2.6/dist-packages/pip/download.py", line 821, in unpack_url
+          hashes=hashes
+        File "/usr/local/lib/python2.6/dist-packages/pip/download.py", line 659, in unpack_http_url
+          hashes)
+        File "/usr/local/lib/python2.6/dist-packages/pip/download.py", line 853, in _download_http_url
+          stream=True,
+        File "/usr/local/lib/python2.6/dist-packages/pip/_vendor/requests/sessions.py", line 521, in get
+          return self.request('GET', url, **kwargs)
+        File "/usr/local/lib/python2.6/dist-packages/pip/download.py", line 386, in request
+          return super(PipSession, self).request(method, url, *args, **kwargs)
+        File "/usr/local/lib/python2.6/dist-packages/pip/_vendor/requests/sessions.py", line 508, in request
+          resp = self.send(prep, **send_kwargs)
+        File "/usr/local/lib/python2.6/dist-packages/pip/_vendor/requests/sessions.py", line 618, in send
+          r = adapter.send(request, **kwargs)
+        File "/usr/local/lib/python2.6/dist-packages/pip/_vendor/cachecontrol/adapter.py", line 47, in send
+          resp = super(CacheControlAdapter, self).send(request, **kw)
+        File "/usr/local/lib/python2.6/dist-packages/pip/_vendor/requests/adapters.py", line 506, in send
+          raise SSLError(e, request=request)
+      SSLError: HTTPSConnectionPool(host='files.pythonhosted.org', port=443): Max retries exceeded with url: /packages/ef/ab/aa12712415809bf698e719b307419f953e25344e8f42d557533d7a02b276/netapp_lib-2020.7.16-py2-none-any.whl (Caused by SSLError(CertificateError("hostname 'files.pythonhosted.org' doesn't match either of 'r.ssl.fastly.net', '*.catchpoint.com', '*.cnn.io', '*.dollarshaveclub.com', '*.eater.com', '*.fastly.picmonkey.com', '*.files.saymedia-content.com', '*.ft.com', '*.meetupstatic.com', '*.nfl.com', '*.pagar.me', '*.picmonkey.com', '*.realself.com', '*.sbnation.com', '*.shakr.com', '*.streamable.com', '*.surfly.com', '*.theverge.com', '*.thrillist.com', '*.vox-cdn.com', '*.vox.com', '*.voxmedia.com', 'eater.com', 'ft.com', 'i.gse.io', 'picmonkey.com', 'realself.com', 'static.wixstatic.com', 'streamable.com', 'surfly.com', 'theverge.com', 'vox-cdn.com', 'vox.com', 'www.joyent.com'",),))
+      ERROR: Command "/usr/bin/python2.6 /root/ansible/test/lib/ansible_test/_data/quiet_pip.py install --disable-pip-version-check -r /root/ansible/test/lib/ansible_test/_data/requirements/units.txt -r tests/unit/requirements.txt -c /root/ansible/test/lib/ansible_test/_data/requirements/constraints.txt" returned exit status 2.
+      ERROR: Command "docker exec d47eb360db4ce779c1f690db964655b76e68895c4360ff252c46fe7fe6f5c75a /usr/bin/env ANSIBLE_TEST_CONTENT_ROOT=/root/ansible_collections/netapp/ontap LC_ALL=en_US.UTF-8 /usr/bin/python3.6 /root/ansible/bin/ansible-test units --metadata tests/output/.tmp/metadata-9i2qfrcl.json --truncate 200 --redact --color yes --requirements --python default --requirements-mode only" returned exit status 1.
+  validations:
+    required: true
+
+
+- type: markdown
+  attributes:
+    value: >
+      *One last thing...*
+
+
+      *Please, complete **all** sections as described, this form
+      is [processed automatically by a robot][ansibot help].*
+
+
+      Thank you for your collaboration!
+
+
+      [ansibot help]:
+      /ansible/ansibullbot/blob/master/ISSUE_HELP.md#for-issue-submitters
+
+
+- type: checkboxes
+  attributes:
+    label: Code of Conduct
+    description: |
+      Read the [Ansible Code of Conduct][CoC] first.
+
+      [CoC]: https://docs.ansible.com/ansible/latest/community/code_of_conduct.html?utm_medium=github&utm_source=issue_form--bug_report.yml
+    options:
+    - label: I agree to follow the Ansible Code of Conduct
+      required: true
+...

@@ -1,0 +1,25 @@
+
+You can only have one version of a collection installed at a time. By default ``ansible-galaxy`` installs the latest available version. If you want to install a specific version, you can add a version range identifier. For example, to install the 1.0.0-beta.1 version of the collection:
+
+.. code-block:: bash
+
+   ansible-galaxy collection install my_namespace.my_collection:==1.0.0-beta.1
+
+You can specify multiple range identifiers separated by ``,``. Use single quotes so the shell passes the entire command, including ``>``, ``!``, and other operators, along. For example, to install the most recent version that is greater than or equal to 1.0.0 and less than 2.0.0:
+
+.. code-block:: bash
+
+   ansible-galaxy collection install 'my_namespace.my_collection:>=1.0.0,<2.0.0'
+
+Ansible will always install the most recent version that meets the range identifiers you specify. You can use the following range identifiers:
+
+* ``*``: The most recent version. This is the default.
+* ``!=``: Not equal to the version specified.
+* ``==``: Exactly the version specified.
+* ``>=``: Greater than or equal to the version specified.
+* ``>``: Greater than the version specified.
+* ``<=``: Less than or equal to the version specified.
+* ``<``: Less than the version specified.
+
+.. note::
+    By default ``ansible-galaxy`` ignores pre-release versions. To install a pre-release version, you must use the ``==`` range identifier to require it explicitly.

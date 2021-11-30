@@ -1,0 +1,11 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+  - name: Use ping from library path
+    ping:
+    register: result
+
+  - assert:
+      that:
+        - '"location" in result'
+        - 'result["location"] == "library"'

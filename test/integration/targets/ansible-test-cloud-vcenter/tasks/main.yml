@@ -1,0 +1,6 @@
+- name: Verify endpoints respond
+  uri:
+    url: "{{ item }}"
+    validate_certs: no
+  with_items:
+    - http://{{ vcenter_hostname }}:5000/  # control endpoint for the simulator

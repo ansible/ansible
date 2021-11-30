@@ -1,0 +1,10 @@
+{
+    "value": [
+        {
+            "folder": "group-d1",
+            "name": "Datacenters",
+            "type": "DATACENTER"
+        }
+    ],
+    "changed": false
+}

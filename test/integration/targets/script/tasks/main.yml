@@ -1,0 +1,240 @@
+# Test code for the script module and action_plugin.
+# (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+##
+## prep
+##
+
+- set_fact:
+    output_dir_test: "{{ output_dir }}/test_script"
+
+- name: make sure our testing sub-directory does not exist
+  file:
+    path: "{{ output_dir_test }}"
+    state: absent
+
+- name: create our testing sub-directory
+  file:
+    path: "{{ output_dir_test }}"
+    state: directory
+
+##
+## script
+##
+
+- name: execute the test.sh script via command
+  script: test.sh
+  register: script_result0
+
+- name: assert that the script executed correctly
+  assert:
+    that:
+      - "script_result0.rc == 0"
+      - "script_result0.stdout == 'win'"
+
+- name: Execute a script with a space in the path
+  script: "'space path/test.sh'"
+  register: _space_path_test
+  tags:
+    - spacepath
+
+- name: Assert that script with space in path ran successfully
+  assert:
+    that:
+      - _space_path_test is success
+      - _space_path_test.stdout == 'Script with space in path'
+  tags:
+    - spacepath
+
+- name: Execute a script with arguments including a unicode character
+  script: test_with_args.sh -this -that -Ӧther
+  register: unicode_args
+
+- name: Assert that script with unicode character ran successfully
+  assert:
+    that:
+      - unicode_args is success
+      - unicode_args.stdout_lines[0] == '-this'
+      - unicode_args.stdout_lines[1] == '-that'
+      - unicode_args.stdout_lines[2] == '-Ӧther'
+
+# creates
+- name: verify that afile.txt is absent
+  file:
+    path: "{{ output_dir_test }}/afile.txt"
+    state: absent
+
+- name: create afile.txt with create_afile.sh via command
+  script: create_afile.sh {{ output_dir_test | expanduser }}/afile.txt
+  args:
+    creates: "{{ output_dir_test | expanduser }}/afile.txt"
+  register: _create_test1
+
+- name: Check state of created file
+  stat:
+    path: "{{ output_dir_test | expanduser }}/afile.txt"
+  register: _create_stat1
+
+- name: Run create_afile.sh again to ensure it is skipped
+  script: create_afile.sh {{ output_dir_test | expanduser }}/afile.txt
+  args:
+    creates: "{{ output_dir_test | expanduser }}/afile.txt"
+  register: _create_test2
+
+- name: Assert that script report a change, file was created, second run was skipped
+  assert:
+    that:
+      - _create_test1 is changed
+      - _create_stat1.stat.exists
+      - _create_test2 is skipped
+
+
+# removes
+- name: verify that afile.txt is present
+  file:
+    path: "{{ output_dir_test }}/afile.txt"
+    state: file
+
+- name: remove afile.txt with remote_afile.sh via command
+  script: remove_afile.sh {{ output_dir_test | expanduser }}/afile.txt
+  args:
+    removes: "{{ output_dir_test | expanduser }}/afile.txt"
+  register: _remove_test1
+
+- name: Check state of removed file
+  stat:
+    path: "{{ output_dir_test | expanduser }}/afile.txt"
+  register: _remove_stat1
+
+- name: Run remote_afile.sh again to enure it is skipped
+  script: remove_afile.sh {{ output_dir_test | expanduser }}/afile.txt
+  args:
+    removes: "{{ output_dir_test | expanduser }}/afile.txt"
+  register: _remove_test2
+
+- name: Assert that script report a change, file was removed, second run was skipped
+  assert:
+    that:
+      - _remove_test1 is changed
+      - not _remove_stat1.stat.exists
+      - _remove_test2 is skipped
+
+
+# async
+- name: verify that afile.txt is absent
+  file:
+    path: "{{ output_dir_test }}/afile.txt"
+    state: absent
+
+- name: test task failure with async param
+  script: /some/script.sh
+  async: 2
+  ignore_errors: true
+  register: script_result3
+
+- name: assert task with async param failed
+  assert:
+    that:
+      - script_result3 is failed
+      - script_result3.msg == "async is not supported for this task."
+
+
+# check mode
+- name: Run script to create a file in check mode
+  script: create_afile.sh {{ output_dir_test | expanduser }}/afile2.txt
+  check_mode: yes
+  register: _check_mode_test
+
+- debug:
+    var: _check_mode_test
+    verbosity: 2
+
+- name: Get state of file created by script
+  stat:
+    path: "{{ output_dir_test | expanduser }}/afile2.txt"
+  register: _afile_stat
+
+- debug:
+    var: _afile_stat
+    verbosity: 2
+
+- name: Assert that a change was reported but the script did not make changes
+  assert:
+    that:
+      - _check_mode_test is changed
+      - not _afile_stat.stat.exists
+
+- name: Run script to create a file
+  script: create_afile.sh {{ output_dir_test | expanduser }}/afile2.txt
+
+- name: Run script to create a file in check mode with 'creates' argument
+  script: create_afile.sh {{ output_dir_test | expanduser }}/afile2.txt
+  args:
+    creates: "{{ output_dir_test | expanduser }}/afile2.txt"
+  register: _check_mode_test2
+  check_mode: yes
+
+- debug:
+    var: _check_mode_test2
+    verbosity: 2
+
+- name: Assert that task was skipped and mesage was returned
+  assert:
+    that:
+      - _check_mode_test2 is skipped
+      - '_check_mode_test2.msg == "{{ output_dir_test | expanduser }}/afile2.txt exists, matching creates option"'
+
+- name: Remove afile2.txt
+  file:
+    path: "{{ output_dir_test | expanduser }}/afile2.txt"
+    state: absent
+
+- name: Run script to remove a file in check mode with 'removes' argument
+  script: remove_afile.sh {{ output_dir_test | expanduser }}/afile2.txt
+  args:
+    removes: "{{ output_dir_test | expanduser }}/afile2.txt"
+  register: _check_mode_test3
+  check_mode: yes
+
+- debug:
+    var: _check_mode_test3
+    verbosity: 2
+
+- name: Assert that task was skipped and message was returned
+  assert:
+    that:
+      - _check_mode_test3 is skipped
+      - '_check_mode_test3.msg == "{{ output_dir_test | expanduser }}/afile2.txt does not exist, matching removes option"'
+
+# executable
+
+- name: Run script with shebang omitted
+  script: no_shebang.py
+  args:
+    executable: "{{ ansible_python_interpreter }}"
+  register: _shebang_omitted_test
+  tags:
+    - noshebang
+
+- name: Assert that script with shebang omitted succeeded
+  assert:
+    that:
+      - _shebang_omitted_test is success
+      - _shebang_omitted_test.stdout == 'Script with shebang omitted'
+  tags:
+    - noshebang

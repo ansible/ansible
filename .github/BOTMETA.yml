@@ -1,0 +1,151 @@
+automerge: false
+collection_redirect: true
+notifications: false
+files:
+  $module_utils/csharp: &id001
+    labels: windows
+    maintainers: $team_windows_core
+    support: core
+  $module_utils/network:
+    labels: networking
+  $module_utils/network/common:
+    maintainers: $team_networking
+    support: network
+  $module_utils/powershell: *id001
+  $modules:
+    ignored: ryansb tomaszkiewicz
+  $modules/lineinfile.py: $team_ansible samdoran
+  $modules/stat.py:
+    ignored: bpennypacker
+  $modules/unarchive.py:
+    ignored: dagwieers
+    labels: m:unarchive
+    maintainers: pileofrogs
+  $modules/add_host.py:
+    ignored: skvidal
+    maintainers: $team_ansible
+  $modules/get_url.py: ptux
+  $modules/uri.py:
+    ignored: romeotheriault
+    maintainers: $team_ansible
+  $modules/pip.py: Lujeni webknjaz
+  $modules//yum.py:
+    ignored: skvidal
+    maintainers: $team_ansible kustodian
+  $modules/user.py: $team_ansible samdoran
+  $modules/pause.py: samdoran
+  $modules/wait_for.py: gregswift
+  $plugins/cliconf/:
+    labels: networking
+  $plugins/connection/psrp.py: *id001
+  $plugins/connection/winrm.py: *id001
+  $plugins/doc_fragments/url_windows.py:
+    labels: windows
+    maintainers: $team_windows_core
+    support: core
+  $plugins/httpapi:
+    labels: networking
+    maintainers: $team_networking
+    support: network
+  $plugins/netconf/:
+    labels: networking
+    maintainers: $team_networking
+    support: network
+  $plugins/shell/powershell.py: *id001
+  $plugins/terminal/:
+    labels: networking
+  $plugins/terminal/__init__.py:
+    support: network
+  .github/BOTMETA.yml:
+    labels: botmeta
+    support: core
+  docs/:
+    maintainers:
+    - acozine
+  docs/docsite/rst/community/:
+    maintainers:
+    - gundalow
+  docs/docsite/rst/dev_guide/:
+    maintainers:
+    - gundalow
+  docs/docsite/rst/network/:
+    labels: networking
+    maintainers:
+    - samccann
+  docs/docsite/rst/user_guide/windows: *id001
+  hacking/report.py:
+    notified: mattclay
+  hacking/shippable/:
+    notified: mattclay
+  lib/ansible/cli/scripts/ansible_connection_cli_stub.py:
+    keywords:
+    - persistent connection
+    labels: networking
+  lib/ansible/config/ansible_builtin_runtime.yml:
+    labels: runtime
+    maintainers: gundalow
+  lib/ansible/executor/powershell: *id001
+  lib/ansible/inventory:
+    keywords:
+    - core inventory
+    - inventory
+    - inventory parsing
+  lib/ansible/playbook/handler.py:
+    keywords:
+    - handlers
+  lib/ansible/playbook/role:
+    keywords:
+    - roles path
+    - roles_path
+    - role
+    - role path
+  lib/ansible/playbook/role/include.py:
+    keywords:
+    - include role
+    - include_role
+    - role include
+  lib/ansible/playbook/role/requirement.py:
+    keywords:
+    - role dependencies
+    - role dep
+    - role dependency
+  lib/ansible/release.py:
+    notified: mattclay nitzmahone
+  lib/ansible/template:
+    keywords:
+    - jinja
+    - jinja2
+  lib/ansible/utils/collection_loader.py:
+    notified: mattclay nitzmahone
+  test/integration/targets/incidental_:
+    notified: mattclay
+  test/lib/:
+    notified: mattclay
+  test/lib/ansible_test/_util/controller/sanity/validate-modules:
+    keywords:
+    - validate-modules
+    notified:
+    - mattclay
+  test/lib/ansible_test/_util/controller/sanity/validate-modules/validate_modules/main.py:
+    notified:
+    - gundalow
+    - sivel
+  test/lib/ansible_test/_util/controller/sanity/validate-modules/validate_modules/schema.py:
+    notified:
+    - gundalow
+    - sivel
+  test/sanity/:
+    notified: mattclay
+  test/sanity/ignore.txt:
+    notified: tremble
+  test/support/:
+    notified: mattclay
+  test/utils/shippable/:
+    notified: mattclay
+macros:
+  module_utils: lib/ansible/module_utils
+  modules: lib/ansible/modules
+  plugins: lib/ansible/plugins
+  team_ansible: []
+  team_networking: Qalthos ganeshrn trishnaguha justjais NilashishC danielmellado rohitthakur2590 GomathiselviS
+  team_windows_core: nitzmahone jborean93

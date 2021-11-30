@@ -1,0 +1,4 @@
+shippable/windows/group1
+shippable/windows/smoketest
+windows
+needs/target/binary_modules

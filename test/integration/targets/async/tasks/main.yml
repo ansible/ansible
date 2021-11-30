@@ -1,0 +1,300 @@
+# test code for the async keyword
+# (c) 2014, James Tanner <tanner.jc@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: run a 2 second loop
+  shell: for i in $(seq 1 2); do echo $i ; sleep 1; done;
+  async: 10
+  poll: 1
+  register: async_result
+
+
+- debug: var=async_result
+
+- name: validate async returns
+  assert:
+    that:
+        - "'ansible_job_id' in async_result"
+        - "'changed' in async_result"
+        - "'cmd' in async_result"
+        - "'delta' in async_result"
+        - "'end' in async_result"
+        - "'rc' in async_result"
+        - "'start' in async_result"
+        - "'stderr' in async_result"
+        - "'stdout' in async_result"
+        - "'stdout_lines' in async_result"
+        - async_result.rc == 0
+        - async_result.finished == 1
+        - async_result is finished
+
+- name: assert temp async directory exists
+  stat:
+    path: "~/.ansible_async"
+  register: dir_st
+
+- assert:
+    that:
+      - dir_st.stat.isdir is defined and dir_st.stat.isdir
+
+- name: stat temp async status file
+  stat:
+    path: "~/.ansible_async/{{ async_result.ansible_job_id }}"
+  register: tmp_async_file_st
+
+- name: validate automatic cleanup of temp async status file on completed run
+  assert:
+    that:
+      - not tmp_async_file_st.stat.exists
+
+- name: test async without polling
+  command: sleep 5
+  async: 30
+  poll: 0
+  register: async_result
+
+- debug: var=async_result
+
+- name: validate async without polling returns
+  assert:
+    that:
+        - "'ansible_job_id' in async_result"
+        - "'started' in async_result"
+        - async_result.finished == 0
+        - async_result is not finished
+
+- name: test skipped task handling
+  command: /bin/true
+  async: 15
+  poll: 0
+  when: False
+
+# test async "fire and forget, but check later"
+
+- name: 'start a task with "fire-and-forget"'
+  command: sleep 3
+  async: 30
+  poll: 0
+  register: fnf_task
+
+- name: assert task was successfully started
+  assert:
+    that:
+    - fnf_task.started == 1
+    - fnf_task is started
+    - "'ansible_job_id' in fnf_task"
+
+- name: 'check on task started as a "fire-and-forget"'
+  async_status: jid={{ fnf_task.ansible_job_id }}
+  register: fnf_result
+  until: fnf_result is finished
+  retries: 10
+  delay: 1
+
+- name: assert task was successfully checked
+  assert:
+    that:
+    - fnf_result.finished
+    - fnf_result is finished
+
+- name: test graceful module failure
+  async_test:
+    fail_mode: graceful
+  async: 30
+  poll: 1
+  register: async_result
+  ignore_errors: true
+
+- name: assert task failed correctly
+  assert:
+    that:
+    - async_result.ansible_job_id is match('\d+\.\d+')
+    - async_result.finished == 1
+    - async_result is finished
+    - async_result is not changed
+    - async_result is failed
+    - async_result.msg == 'failed gracefully'
+
+- name: test exception module failure
+  async_test:
+    fail_mode: exception
+  async: 5
+  poll: 1
+  register: async_result
+  ignore_errors: true
+
+- name: validate response
+  assert:
+    that:
+    - async_result.ansible_job_id is match('\d+\.\d+')
+    - async_result.finished == 1
+    - async_result is finished
+    - async_result.changed == false
+    - async_result is not changed
+    - async_result.failed == true
+    - async_result is failed
+    - async_result.stderr is search('failing via exception', multiline=True)
+
+- name: test leading junk before JSON
+  async_test:
+    fail_mode: leading_junk
+  async: 5
+  poll: 1
+  register: async_result
+
+- name: validate response
+  assert:
+    that:
+    - async_result.ansible_job_id is match('\d+\.\d+')
+    - async_result.finished == 1
+    - async_result is finished
+    - async_result.changed == true
+    - async_result is changed
+    - async_result is successful
+
+- name: test trailing junk after JSON
+  async_test:
+    fail_mode: trailing_junk
+  async: 5
+  poll: 1
+  register: async_result
+
+- name: validate response
+  assert:
+    that:
+    - async_result.ansible_job_id is match('\d+\.\d+')
+    - async_result.finished == 1
+    - async_result is finished
+    - async_result.changed == true
+    - async_result is changed
+    - async_result is successful
+    - async_result.warnings[0] is search('trailing junk after module output')
+
+- name: test stderr handling
+  async_test:
+    fail_mode: stderr
+  async: 30
+  poll: 1
+  register: async_result
+  ignore_errors: true
+
+- assert:
+    that:
+      - async_result.stderr == "printed to stderr\n"
+
+# NOTE: This should report a warning that cannot be tested
+- name: test async properties on non-async task
+  command: sleep 1
+  register: non_async_result
+
+- name: validate response
+  assert:
+    that:
+    - non_async_result is successful
+    - non_async_result is changed
+    - non_async_result is finished
+    - "'ansible_job_id' not in non_async_result"
+
+- name: set fact of custom tmp dir
+  set_fact:
+    custom_async_tmp: ~/.ansible_async_test
+
+- name: ensure custom async tmp dir is absent
+  file:
+    path: '{{ custom_async_tmp }}'
+    state: absent
+
+- block:
+  - name: run async task with custom dir
+    command: sleep 1
+    register: async_custom_dir
+    async: 5
+    poll: 1
+    vars:
+      ansible_async_dir: '{{ custom_async_tmp }}'
+
+  - name: check if the async temp dir is created
+    stat:
+      path: '{{ custom_async_tmp }}'
+    register: async_custom_dir_result
+
+  - name: assert run async task with custom dir
+    assert:
+      that:
+      - async_custom_dir is successful
+      - async_custom_dir is finished
+      - async_custom_dir_result.stat.exists
+
+  - name: remove custom async dir again
+    file:
+      path: '{{ custom_async_tmp }}'
+      state: absent
+
+  - name: remove custom async dir after deprecation test
+    file:
+      path: '{{ custom_async_tmp }}'
+      state: absent
+
+  - name: run fire and forget async task with custom dir
+    command: echo moo
+    register: async_fandf_custom_dir
+    async: 5
+    poll: 0
+    vars:
+      ansible_async_dir: '{{ custom_async_tmp }}'
+
+  - name: fail to get async status with custom dir with defaults
+    async_status:
+      jid: '{{ async_fandf_custom_dir.ansible_job_id }}'
+    register: async_fandf_custom_dir_fail
+    ignore_errors: yes
+
+  - name: get async status with custom dir using newer format
+    async_status:
+      jid: '{{ async_fandf_custom_dir.ansible_job_id }}'
+    register: async_fandf_custom_dir_result
+    vars:
+      ansible_async_dir: '{{ custom_async_tmp }}'
+
+  - name: assert run fire and forget async task with custom dir
+    assert:
+      that:
+      - async_fandf_custom_dir is successful
+      - async_fandf_custom_dir_fail is failed
+      - async_fandf_custom_dir_fail.msg == "could not find job"
+      - async_fandf_custom_dir_result is successful
+
+  always:
+  - name: remove custom tmp dir after test
+    file:
+      path: '{{ custom_async_tmp }}'
+      state: absent
+
+- name: Test that async has stdin
+  command: >
+    {{ ansible_python_interpreter|default('/usr/bin/python') }} -c 'import os; os.fdopen(os.dup(0), "r")'
+  async: 1
+  poll: 1
+
+- name: run async poll callback test playbook
+  command: ansible-playbook {{ role_path }}/callback_test.yml
+  delegate_to: localhost
+  register: callback_output
+
+- assert:
+    that:
+      - '"ASYNC POLL on localhost" in callback_output.stdout'

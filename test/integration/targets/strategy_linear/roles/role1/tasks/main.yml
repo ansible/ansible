@@ -1,0 +1,6 @@
+- name: Include tasks
+  include_tasks: "tasks.yml"
+
+- name: Mark role as finished
+  set_fact:
+    role1_complete: True

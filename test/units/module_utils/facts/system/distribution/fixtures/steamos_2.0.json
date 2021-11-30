@@ -1,0 +1,40 @@
+{
+    "name": "SteamOS 2.0",
+    "input": {
+        "/etc/os-release": "PRETTY_NAME=\"SteamOS GNU/Linux 2.0 (brewmaster)\"\nNAME=\"SteamOS GNU/Linux\"\nVERSION_ID=\"2\"\nVERSION=\"2 (brewmaster)\"\nID=steamos\nID_LIKE=debian\nHOME_URL=\"http://www.steampowered.com/\"\nSUPPORT_URL=\"http://support.steampowered.com/\"\nBUG_REPORT_URL=\"http://support.steampowered.com/\"",
+        "/etc/lsb-release": "DISTRIB_ID=SteamOS\nDISTRIB_RELEASE=2.0\nDISTRIB_CODENAME=brewmaster\nDISTRIB_DESCRIPTION=\"SteamOS 2.0\""
+    },
+    "platform.dist": ["Steamos", "2.0", "brewmaster"],
+    "distro": {
+        "codename": "brewmaster",
+        "id": "steamos",
+        "name": "SteamOS GNU/Linux",
+        "version": "2.0",
+        "version_best": "2.0",
+        "os_release_info": {
+            "bug_report_url": "http://support.steampowered.com/",
+            "id_like": "debian",
+            "version_id": "2",
+            "pretty_name": "SteamOS GNU/Linux 2.0 (brewmaster)",
+            "version": "2 (brewmaster)",
+            "home_url": "http://www.steampowered.com/",
+            "name": "SteamOS GNU/Linux",
+            "support_url": "http://support.steampowered.com/",
+            "codename": "brewmaster",
+            "id": "steamos"
+        },
+        "lsb_release_info": {
+            "codename": "brewmaster",
+            "description": "SteamOS 2.0",
+            "distributor_id": "SteamOS",
+            "release": "2.0"
+        }
+    },
+    "result": {
+        "distribution": "SteamOS",
+        "distribution_major_version": "2",
+        "distribution_release": "brewmaster",
+        "os_family": "Debian",
+        "distribution_version": "2.0"
+    }
+}

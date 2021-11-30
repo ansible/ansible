@@ -1,0 +1,14 @@
+---
+- name: 'Test templating in name'
+  hosts: testhost
+  vars:
+    a_list:
+      - 'part'
+      - 'of a'
+      - 'name'
+
+  tasks:
+  # Note: this only tests that we do not traceback.  It doesn't test that the
+  # name goes through templating correctly
+    - name: 'Task: {{ a_list | to_json }}'
+      debug: msg='{{ a_list | to_json }}'

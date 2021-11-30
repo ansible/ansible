@@ -1,0 +1,243 @@
+---
+
+- set_fact:
+    test_ppa_name: 'ppa:git-core/ppa'
+    test_ppa_filename: 'git-core'
+    test_ppa_spec: 'deb http://ppa.launchpad.net/git-core/ppa/ubuntu {{ansible_distribution_release}} main'
+    test_ppa_key: 'E1DF1F24' # http://keyserver.ubuntu.com:11371/pks/lookup?search=0xD06AAF4C11DAB86DF421421EFE6B20ECA7AD98A1&op=index
+
+- name: show python version
+  debug: var=ansible_python_version
+
+- name: use python-apt
+  set_fact:
+    python_apt: python-apt
+  when: ansible_python_version is version('3', '<')
+
+- name: use python3-apt
+  set_fact:
+    python_apt: python3-apt
+  when: ansible_python_version is version('3', '>=')
+
+# UNINSTALL 'python-apt'
+#  The `apt_repository` module has the smarts to auto-install `python-apt`.  To
+# test, we will first uninstall `python-apt`.
+- name: check {{ python_apt }} with dpkg
+  shell: dpkg -s {{ python_apt }}
+  register: dpkg_result
+  ignore_errors: true
+
+- name: uninstall {{ python_apt }} with apt
+  apt: pkg={{ python_apt }} state=absent purge=yes
+  register: apt_result
+  when: dpkg_result is successful
+
+#
+# TEST: apt_repository: repo=<name>
+#
+- import_tasks: 'cleanup.yml'
+
+- name: 'record apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_before
+
+- name: 'name=<name> (expect: pass)'
+  apt_repository: repo='{{test_ppa_name}}' state=present
+  register: result
+
+- name: 'assert the apt cache did *NOT* change'
+  assert:
+    that:
+      - 'result.changed'
+      - 'result.state == "present"'
+      - 'result.repo == "{{test_ppa_name}}"'
+
+- name: 'examine apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_after
+
+- name: 'assert the apt cache did change'
+  assert:
+    that:
+      - 'cache_before.stat.mtime != cache_after.stat.mtime'
+
+- name: 'ensure ppa key is installed (expect: pass)'
+  apt_key: id='{{test_ppa_key}}' state=present
+
+#
+# TEST: apt_repository: repo=<name> update_cache=no
+#
+- import_tasks: 'cleanup.yml'
+
+- name: 'record apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_before
+
+- name: 'name=<name> update_cache=no (expect: pass)'
+  apt_repository: repo='{{test_ppa_name}}' state=present update_cache=no
+  register: result
+
+- assert:
+    that:
+      - 'result.changed'
+      - 'result.state == "present"'
+      - 'result.repo == "{{test_ppa_name}}"'
+
+- name: 'examine apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_after
+
+- name: 'assert the apt cache did *NOT* change'
+  assert:
+    that:
+      - 'cache_before.stat.mtime == cache_after.stat.mtime'
+
+- name: 'ensure ppa key is installed (expect: pass)'
+  apt_key: id='{{test_ppa_key}}' state=present
+
+#
+# TEST: apt_repository: repo=<name> update_cache=yes
+#
+- import_tasks: 'cleanup.yml'
+
+- name: 'record apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_before
+
+- name: 'name=<name> update_cache=yes (expect: pass)'
+  apt_repository: repo='{{test_ppa_name}}' state=present update_cache=yes
+  register: result
+
+- assert:
+    that:
+      - 'result.changed'
+      - 'result.state == "present"'
+      - 'result.repo == "{{test_ppa_name}}"'
+
+- name: 'examine apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_after
+
+- name: 'assert the apt cache did change'
+  assert:
+    that:
+      - 'cache_before.stat.mtime != cache_after.stat.mtime'
+
+- name: 'ensure ppa key is installed (expect: pass)'
+  apt_key: id='{{test_ppa_key}}' state=present
+
+#
+# TEST: apt_repository: repo=<spec>
+#
+- import_tasks: 'cleanup.yml'
+
+- name: 'record apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_before
+
+- name: ensure ppa key is present before adding repo that requires authentication
+  apt_key: keyserver=keyserver.ubuntu.com id='{{test_ppa_key}}' state=present
+
+- name: 'name=<spec> (expect: pass)'
+  apt_repository: repo='{{test_ppa_spec}}' state=present
+  register: result
+
+- name: update the cache
+  apt:
+    update_cache: true
+  register: result_cache
+
+- assert:
+    that:
+      - 'result.changed'
+      - 'result.state == "present"'
+      - 'result.repo == "{{test_ppa_spec}}"'
+      - result_cache is not changed
+
+- name: 'examine apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_after
+
+- name: 'assert the apt cache did change'
+  assert:
+    that:
+      - 'cache_before.stat.mtime != cache_after.stat.mtime'
+
+- name: remove repo by spec
+  apt_repository: repo='{{test_ppa_spec}}' state=absent
+  register: result
+
+# When installing a repo with the spec, the key is *NOT* added
+- name: 'ensure ppa key is absent (expect: pass)'
+  apt_key: id='{{test_ppa_key}}' state=absent
+
+#
+# TEST: apt_repository: repo=<spec> filename=<filename>
+#
+- import_tasks: 'cleanup.yml'
+
+- name: 'record apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_before
+
+- name: ensure ppa key is present before adding repo that requires authentication
+  apt_key: keyserver=keyserver.ubuntu.com id='{{test_ppa_key}}' state=present
+
+- name: 'name=<spec> filename=<filename> (expect: pass)'
+  apt_repository: repo='{{test_ppa_spec}}' filename='{{test_ppa_filename}}' state=present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed'
+      - 'result.state == "present"'
+      - 'result.repo == "{{test_ppa_spec}}"'
+
+- name: 'examine source file'
+  stat: path='/etc/apt/sources.list.d/{{test_ppa_filename}}.list'
+  register: source_file
+
+- name: 'assert source file exists'
+  assert:
+    that:
+      - 'source_file.stat.exists == True'
+
+- name: 'examine apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_after
+
+- name: 'assert the apt cache did change'
+  assert:
+    that:
+      - 'cache_before.stat.mtime != cache_after.stat.mtime'
+
+# When installing a repo with the spec, the key is *NOT* added
+- name: 'ensure ppa key is absent (expect: pass)'
+  apt_key: id='{{test_ppa_key}}' state=absent
+
+- name: Test apt_repository with a null value for repo
+  apt_repository:
+    repo:
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is failed
+      - result.msg == 'Please set argument \'repo\' to a non-empty value'
+
+- name: Test apt_repository with an empty value for repo
+  apt_repository:
+    repo: ""
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is failed
+      - result.msg == 'Please set argument \'repo\' to a non-empty value'
+
+#
+# TEARDOWN
+#
+- import_tasks: 'cleanup.yml'

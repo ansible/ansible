@@ -1,0 +1,4 @@
+- hosts: testhost
+  gather_facts: False
+  roles:
+    - { role: test_vault_embedded_ids, tags: test_vault_embedded_ids}

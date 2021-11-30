@@ -1,6 +1,0 @@
-# Test that playbooks support YAML lists of hosts.
----
-- hosts: [host1, host2, host3]
-  connection: local
-  tasks:
-  - action: command true

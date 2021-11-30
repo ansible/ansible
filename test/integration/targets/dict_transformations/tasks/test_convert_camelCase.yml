@@ -1,0 +1,33 @@
+- convert_camelCase:
+    data: {'top_level_key': {'nested_key': 'do_not_convert'}}
+  register: result
+
+- assert:
+    that:
+      - "result.data == {'topLevelKey': {'nestedKey': 'do_not_convert'}}"
+
+- convert_camelCase:
+    data: {'t_o_p_level_key': {'n_e_s_t_e_d_key': 'do_not_convert'}}
+  register: result
+
+- assert:
+    that:
+      - "result.data == {'tOPLevelKey': {'nESTEDKey': 'do_not_convert'}}"
+
+- convert_camelCase:
+    data: {'t_o_p_level_key': {'n_e_s_t_e_d_key': 'do_not_convert'}}
+    capitalize_first: True
+  register: result
+
+- assert:
+    that:
+      - "result.data == {'TOPLevelKey': {'NESTEDKey': 'do_not_convert'}}"
+
+- convert_camelCase:
+    data: {'results': [{'i_a_m_user': 'user_name', 'tags': {'do_convert': 'do_not_convert'}}]}
+    capitalize_first: True
+  register: result
+
+- assert:
+    that:
+      - "result.data == {'Results': [{'IAMUser': 'user_name', 'Tags': {'DoConvert': 'do_not_convert'}}]}"

@@ -1,0 +1,36 @@
+{
+    "name": "Debian stretch/sid",
+    "input": {
+        "/etc/os-release": "PRETTY_NAME=\"Debian GNU/Linux stretch/sid\"\nNAME=\"Debian GNU/Linux\"\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"",
+        "/etc/debian_version": "stretch/sid\n"
+    },
+    "platform.dist": ["debian", "stretch/sid", ""],
+    "distro": {
+        "codename": "stretch",
+        "id": "debian",
+        "name": "Debian GNU/Linux",
+        "version": "9",
+        "version_best": "9.8",
+        "lsb_release_info": {
+            "release": "unstable",
+            "codename": "sid",
+            "distributor_id": "Debian",
+            "description": "Debian GNU/Linux stretch/sid"
+        },
+        "os_release_info": {
+            "name": "Debian GNU/Linux",
+            "support_url": "https://www.debian.org/support",
+            "bug_report_url": "https://bugs.debian.org/",
+            "pretty_name": "Debian GNU/Linux stretch/sid",
+            "home_url": "https://www.debian.org/",
+            "id": "debian"
+        }
+    },
+    "result": {
+        "distribution": "Debian",
+        "distribution_major_version": "9",
+        "distribution_release": "stretch",
+        "os_family": "Debian",
+        "distribution_version": "9.8"
+    }
+}

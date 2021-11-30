@@ -1,0 +1,26 @@
+# Test that additional parameters after import_playbook raises a warning & strips whitespaces
+- import_playbook: playbook1.yml  tags=test_import
+
+# Test and validate playbook import
+- import_playbook: playbook1.yml
+- import_playbook: validate1.yml
+
+
+# Test and validate conditional import
+- import_playbook: playbook2.yml
+  when: no
+
+- import_playbook: validate2.yml
+
+- import_playbook: playbook3.yml
+- import_playbook: playbook4.yml
+  when: include_next_playbook
+
+- import_playbook: validate34.yml
+
+- import_playbook: playbook_needing_vars.yml
+  vars:
+    import_playbook_role_name: import_playbook_role
+
+# https://github.com/ansible/ansible/issues/59548
+- import_playbook: sub_playbook/sub_playbook.yml

@@ -1,0 +1,100 @@
+# test code for the template module
+# (c) 2015, Brian Coca <bcoca@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: verify ansible_managed
+  template: src=foo.j2 dest={{output_dir}}/special_vars.yaml
+
+- name: read the file into facts
+  include_vars: "{{output_dir}}/special_vars.yaml"
+
+
+- name: verify all test vars are defined
+  assert:
+    that:
+        - 'item in hostvars[inventory_hostname].keys()'
+  with_items:
+    - test_template_host
+    - test_template_path
+    - test_template_mtime
+    - test_template_uid
+    - test_template_fullpath
+    - test_template_run_date
+    - test_ansible_managed
+
+- name: ensure that role_name exists in role_names, ansible_play_role_names, ansible_role_names, and not in ansible_dependent_role_names
+  assert:
+    that:
+      - "role_name in role_names"
+      - "role_name in ansible_play_role_names"
+      - "role_name in ansible_role_names"
+      - "role_name not in ansible_dependent_role_names"
+
+- name: ensure that our dependency (prepare_tests) exists in ansible_role_names and ansible_dependent_role_names, but not in role_names or ansible_play_role_names
+  assert:
+    that:
+      - "'prepare_tests' in ansible_role_names"
+      - "'prepare_tests' in ansible_dependent_role_names"
+      - "'prepare_tests' not in role_names"
+      - "'prepare_tests' not in ansible_play_role_names"
+
+- name: ensure that ansible_role_names is the sum of ansible_play_role_names and ansible_dependent_role_names
+  assert:
+    that:
+      - "(ansible_play_role_names + ansible_dependent_role_names)|unique|sort|list == ansible_role_names|sort|list"
+
+- name: check that ansible_parent_role_names is normally unset when not included/imported (before including other roles)
+  assert:
+    that:
+      - "ansible_parent_role_names is undefined"
+      - "ansible_parent_role_paths is undefined"
+
+- name: ansible_parent_role_names - test functionality by including another role
+  include_role:
+    name: include_parent_role_vars
+    tasks_from: included_by_other_role.yml
+
+- name: check that ansible_parent_role_names is normally unset when not included/imported (after including other role)
+  assert:
+    that:
+      - "ansible_parent_role_names is undefined"
+      - "ansible_parent_role_paths is undefined"
+
+- name: ansible_parent_role_names - test functionality by importing another role
+  import_role:
+    name: include_parent_role_vars
+    tasks_from: included_by_other_role.yml
+
+- name: check that ansible_parent_role_names is normally unset when not included/imported (after importing other role)
+  assert:
+    that:
+      - "ansible_parent_role_names is undefined"
+      - "ansible_parent_role_paths is undefined"
+
+- name: ansible_parent_role_names - test functionality by including another role
+  include_role:
+    name: include_parent_role_vars
+
+- name: check that ansible_parent_role_names is normally unset when not included/imported (after both import and inlcude)
+  assert:
+    that:
+      - "ansible_parent_role_names is undefined"
+      - "ansible_parent_role_paths is undefined"
+
+- name: ansible_parent_role_names - test functionality by importing another role
+  import_role:
+    name: include_parent_role_vars

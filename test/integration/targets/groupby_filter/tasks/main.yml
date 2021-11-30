@@ -1,0 +1,16 @@
+- set_fact:
+    result: "{{ fruits | groupby('enjoy') }}"
+  vars:
+    fruits:
+      - name: apple
+        enjoy: yes
+      - name: orange
+        enjoy: no
+      - name: strawberry
+        enjoy: yes
+
+- assert:
+    that:
+      - result == expected
+  vars:
+    expected: [[false, [{"enjoy": false, "name": "orange"}]], [true, [{"enjoy": true, "name": "apple"}, {"enjoy": true, "name": "strawberry"}]]]

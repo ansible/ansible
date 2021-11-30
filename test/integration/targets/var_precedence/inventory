@@ -1,0 +1,13 @@
+[local]
+testhost ansible_connection=local ansible_python_interpreter="{{ ansible_playbook_python }}"
+
+[all:vars]
+extra_var_override=FROM_INVENTORY
+inven_var=inventory_var
+
+[inven_overridehosts]
+invenoverride ansible_connection=local ansible_python_interpreter="{{ ansible_playbook_python }}"
+
+[inven_overridehosts:vars]
+foo=foo
+var_dir=vars

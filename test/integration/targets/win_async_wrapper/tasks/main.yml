@@ -1,0 +1,257 @@
+- name: capture timestamp before fire and forget
+  set_fact:
+    start_timestamp: "{{ lookup('pipe', 'date +%s') }}"
+
+- name: async fire and forget
+  async_test:
+    sleep_delay_sec: 15
+  async: 20
+  poll: 0
+  register: asyncresult
+
+- name: validate response
+  assert:
+    that:
+    - asyncresult.ansible_job_id is match('\d+\.\d+')
+    - asyncresult.started == 1
+    - asyncresult is started
+    - asyncresult.finished == 0
+    - asyncresult is not finished
+    - asyncresult.results_file is search('\.ansible_async.+\d+\.\d+')
+     # ensure that async is actually async- this test will fail if # hosts > forks or if the target host is VERY slow
+    - (lookup('pipe', 'date +%s') | int) - (start_timestamp | int) < 15
+
+- name: async poll immediate success
+  async_test:
+    sleep_delay_sec: 0
+  async: 10
+  poll: 1
+  register: asyncresult
+
+- name: validate response
+  assert:
+    that:
+    - asyncresult.ansible_job_id is match('\d+\.\d+')
+    - asyncresult.finished == 1
+    - asyncresult is finished
+    - asyncresult is changed
+    - asyncresult.ansible_async_watchdog_pid is number
+#    - asyncresult.module_tempdir is search('ansible-tmp-')
+    - asyncresult.module_pid is number
+
+# this part of the test is flaky- Windows PIDs are reused aggressively, so this occasionally fails due to a new process with the same ID
+# FUTURE: consider having the test module hook to a kernel object we can poke at that gets signaled/released on exit
+#- name: ensure that watchdog and module procs have exited
+#  raw: Get-Process | Where { $_.Id -in ({{ asyncresult.ansible_async_watchdog_pid }}, {{ asyncresult.module_pid }}) }
+#  register: proclist
+#
+#- name: validate no running watchdog/module processes were returned
+#  assert:
+#    that:
+#    - proclist.stdout.strip() == ''
+
+#- name: ensure that module_tempdir was deleted
+#  raw: Test-Path {{ asyncresult.module_tempdir }}
+#  register: tempdircheck
+#
+#- name: validate tempdir response
+#  assert:
+#    that:
+#    - tempdircheck.stdout is search('False')
+
+- name: async poll retry
+  async_test:
+    sleep_delay_sec: 5
+  async: 10
+  poll: 1
+  register: asyncresult
+
+- name: validate response
+  assert:
+    that:
+    - asyncresult.ansible_job_id is match('\d+\.\d+')
+    - asyncresult.finished == 1
+    - asyncresult is finished
+    - asyncresult is changed
+#    - asyncresult.module_tempdir is search('ansible-tmp-')
+    - asyncresult.module_pid is number
+
+# this part of the test is flaky- Windows PIDs are reused aggressively, so this occasionally fails due to a new process with the same ID
+# FUTURE: consider having the test module hook to a kernel object we can poke at that gets signaled/released on exit
+#- name: ensure that watchdog and module procs have exited
+#  raw: Get-Process | Where { $_.Id -in ({{ asyncresult.ansible_async_watchdog_pid }}, {{ asyncresult.module_pid }}) }
+#  register: proclist
+#
+#- name: validate no running watchdog/module processes were returned
+#  assert:
+#    that:
+#    - proclist.stdout.strip() == ''
+
+#- name: ensure that module_tempdir was deleted
+#  raw: Test-Path {{ asyncresult.module_tempdir }}
+#  register: tempdircheck
+#
+#- name: validate tempdir response
+#  assert:
+#    that:
+#    - tempdircheck.stdout is search('False')
+
+- name: async poll timeout
+  async_test:
+    sleep_delay_sec: 5
+  async: 3
+  poll: 1
+  register: asyncresult
+  ignore_errors: true
+
+- name: validate response
+  assert:
+    that:
+    - asyncresult.ansible_job_id is match('\d+\.\d+')
+    - asyncresult.finished == 1
+    - asyncresult is finished
+    - asyncresult is not changed
+    - asyncresult is failed
+    - asyncresult.msg is search('timed out')
+
+- name: async poll graceful module failure
+  async_test:
+    fail_mode: graceful
+  async: 5
+  poll: 1
+  register: asyncresult
+  ignore_errors: true
+
+- name: validate response
+  assert:
+    that:
+    - asyncresult.ansible_job_id is match('\d+\.\d+')
+    - asyncresult.finished == 1
+    - asyncresult is finished
+    - asyncresult is changed
+    - asyncresult is failed
+    - asyncresult.msg == 'failed gracefully'
+
+- name: async poll exception module failure
+  async_test:
+    fail_mode: exception
+  async: 5
+  poll: 1
+  register: asyncresult
+  ignore_errors: true
+
+- name: validate response
+  assert:
+    that:
+    - asyncresult.ansible_job_id is match('\d+\.\d+')
+    - asyncresult.finished == 1
+    - asyncresult is finished
+    - asyncresult is not changed
+    - asyncresult is failed
+    - 'asyncresult.msg == "Unhandled exception while executing module: failing via exception"'
+
+- name: echo some non ascii characters
+  win_command: cmd.exe /c echo über den Fußgängerübergang gehen
+  async: 10
+  poll: 1
+  register: nonascii_output
+
+- name: assert echo some non ascii characters
+  assert:
+    that:
+    - nonascii_output is changed
+    - nonascii_output.rc == 0
+    - nonascii_output.stdout_lines|count == 1
+    - nonascii_output.stdout_lines[0] == 'über den Fußgängerübergang gehen'
+    - nonascii_output.stderr == ''
+
+- name: test async with custom async dir
+  win_shell: echo hi
+  register: async_custom_dir
+  async: 5
+  vars:
+    ansible_async_dir: '{{win_output_dir}}'
+
+- name: assert results file is in the remote tmp specified
+  assert:
+    that:
+    - async_custom_dir.results_file == win_output_dir + '\\' + async_custom_dir.ansible_job_id
+
+- name: test async fire and forget with custom async dir
+  win_shell: echo hi
+  register: async_custom_dir_poll
+  async: 5
+  poll: 0
+  vars:
+    ansible_async_dir: '{{win_output_dir}}'
+
+- name: poll with different dir - fail
+  async_status:
+    jid: '{{ async_custom_dir_poll.ansible_job_id }}'
+  register: fail_async_custom_dir_poll
+  ignore_errors: yes
+
+- name: poll with different dir - success
+  async_status:
+    jid: '{{ async_custom_dir_poll.ansible_job_id }}'
+  register: success_async_custom_dir_poll
+  vars:
+    ansible_async_dir: '{{win_output_dir}}'
+
+- name: assert test async fire and forget with custom async dir
+  assert:
+    that:
+    - fail_async_custom_dir_poll.failed
+    - '"could not find job at ''" + nonascii_output.results_file|win_dirname + "''" in fail_async_custom_dir_poll.msg'
+    - not success_async_custom_dir_poll.failed
+    - success_async_custom_dir_poll.results_file == win_output_dir + '\\' + async_custom_dir_poll.ansible_job_id
+
+# FUTURE: figure out why the last iteration of this test often fails on shippable
+#- name: loop async success
+#  async_test:
+#    sleep_delay_sec: 3
+#  async: 10
+#  poll: 0
+#  with_sequence: start=1 end=4
+#  register: async_many
+#
+#- name: wait for completion
+#  async_status:
+#    jid: "{{ item }}"
+#  register: asyncout
+#  until: asyncout is finished
+#  retries: 10
+#  delay: 1
+#  with_items: "{{ async_many.results | map(attribute='ansible_job_id') | list }}"
+#
+#- name: validate results
+#  assert:
+#    that:
+#    - item.finished == 1
+#    - item is finished
+#    - item.slept_sec == 3
+#    - item is changed
+#    - item.ansible_job_id is match('\d+\.\d+')
+#  with_items: "{{ asyncout.results }}"
+
+# this part of the test is flaky- Windows PIDs are reused aggressively, so this occasionally fails due to a new process with the same ID
+# FUTURE: consider having the test module hook to a kernel object we can poke at that gets signaled/released on exit
+#- name: ensure that all watchdog and module procs have exited
+#  raw: Get-Process | Where { $_.Id -in ({{ asyncout.results | join(',', attribute='ansible_async_watchdog_pid') }}, {{ asyncout.results | join(',', attribute='module_pid') }}) }
+#  register: proclist
+#
+#- name: validate no processes were returned
+#  assert:
+#    that:
+#    - proclist.stdout.strip() == ""
+
+# FUTURE: test junk before/after JSON
+# FUTURE: verify tempdir stays through module exec
+# FUTURE: verify tempdir is deleted after module exec
+# FUTURE: verify tempdir is permanent with ANSIBLE_KEEP_REMOTE_FILES=1 (how?)
+# FUTURE: verify binary modules work
+
+# FUTURE: test status/return
+# FUTURE: test status/cleanup
+# FUTURE: test reboot/connection failure
+# FUTURE: figure out how to ensure that processes and tempdirs are cleaned up in all exceptional cases

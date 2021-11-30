@@ -1,0 +1,23 @@
+{
+    "value": {
+        "start_connected": false,
+        "pci_slot_number": 4,
+        "backing": {
+            "connection_cookie": 2145337177,
+            "distributed_switch_uuid": "50 33 88 3a 8c 6e f9 02-7a fd c2 c0 2c cf f2 ac",
+            "distributed_port": "2",
+            "type": "DISTRIBUTED_PORTGROUP",
+            "network": "dvportgroup-1649"
+        },
+        "mac_address": "00:50:56:b3:49:5c",
+        "mac_type": "ASSIGNED",
+        "allow_guest_control": false,
+        "wake_on_lan_enabled": false,
+        "label": "Network adapter 1",
+        "state": "NOT_CONNECTED",
+        "type": "VMXNET3",
+        "upt_compatibility_enabled": false
+    },
+    "id": "4000",
+    "changed": true
+}

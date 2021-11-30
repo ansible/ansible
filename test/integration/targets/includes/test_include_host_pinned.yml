@@ -1,0 +1,9 @@
+- hosts: testhost
+  gather_facts: no
+  strategy: host_pinned
+  roles:
+    - test_includes_host_pinned
+  tasks:
+    - assert:
+        that:
+          - "inner_host_pinned == 'reached'"

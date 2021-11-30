@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Add support for ``rhel/8.5`` remote instances.

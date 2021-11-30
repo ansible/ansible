@@ -1,0 +1,52 @@
+- name: Get Fedora GPG Key
+  get_url:
+    url: https://ansible-ci-files.s3.us-east-1.amazonaws.com/test/integration/targets/apt_key/fedora.gpg
+    dest: /tmp/fedora.gpg
+
+- name: Ensure clean slate
+  apt_key:
+    id: 1161AE6945719A39
+    state: absent
+
+- name: Run apt_key with both file and keyserver
+  apt_key:
+    file: /tmp/fedora.gpg
+    keyserver: keys.gnupg.net
+    id: 97A1AE57C3A2372CCA3A4ABA6C13026D12C944D0
+  register: both_file_keyserver
+  ignore_errors: true
+
+- name: Run apt_key with file only
+  apt_key:
+    file: /tmp/fedora.gpg
+  register: only_file
+
+- name: Run apt_key with keyserver only
+  apt_key:
+    keyserver: keys.gnupg.net
+    id: 97A1AE57C3A2372CCA3A4ABA6C13026D12C944D0
+  register: only_keyserver
+
+- name: validate results
+  assert:
+    that:
+      - 'both_file_keyserver is failed'
+      - 'only_file.changed'
+      - 'not only_keyserver.changed'
+
+- name: remove fedora.gpg
+  apt_key:
+    id: 1161AE6945719A39
+    state: absent
+  register: remove_fedora
+
+- name: add key from url
+  apt_key:
+    url: https://ansible-ci-files.s3.us-east-1.amazonaws.com/test/integration/targets/apt_key/fedora.gpg
+  register: apt_key_url
+
+- name: verify key from url
+  assert:
+    that:
+      - remove_fedora is changed
+      - apt_key_url is changed

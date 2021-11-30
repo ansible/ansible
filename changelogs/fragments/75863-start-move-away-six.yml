@@ -1,0 +1,2 @@
+minor_changes:
+  - "Start of moving away from using Six, Python 2 and 3 compatibility library (https://github.com/ansible/ansible/pull/75863)"

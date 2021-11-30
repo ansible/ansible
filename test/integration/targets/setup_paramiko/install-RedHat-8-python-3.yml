@@ -1,0 +1,6 @@
+- name: Setup remote constraints
+  include_tasks: setup-remote-constraints.yml
+- name: Install Paramiko for Python 3 on RHEL 8
+  pip: # no python3-paramiko package exists for RHEL 8
+    name: paramiko
+    extra_args: "-c {{ remote_constraints }}"

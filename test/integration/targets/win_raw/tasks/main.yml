@@ -1,0 +1,143 @@
+# test code for the raw module when using winrm connection
+# (c) 2014, Chris Church <chris@ninemoreminutes.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: run getmac
+  raw: getmac
+  register: getmac_result
+
+- name: assert that getmac ran
+  assert:
+    that:
+      - "getmac_result.rc == 0"
+      - "getmac_result.stdout"
+      - "not getmac_result.stderr"
+      - "getmac_result is not failed"
+      - "getmac_result is changed"
+
+- name: run ipconfig with /all argument
+  raw: ipconfig /all
+  register: ipconfig_result
+
+- name: assert that ipconfig ran with /all argument
+  assert:
+    that:
+      - "ipconfig_result.rc == 0"
+      - "ipconfig_result.stdout"
+      - "'Physical Address' in ipconfig_result.stdout"
+      - "not ipconfig_result.stderr"
+      - "ipconfig_result is not failed"
+      - "ipconfig_result is changed"
+
+- name: run ipconfig with invalid argument
+  raw: ipconfig /badswitch
+  register: ipconfig_invalid_result
+  ignore_errors: true
+
+- name: assert that ipconfig with invalid argument failed
+  assert:
+    that:
+      - "ipconfig_invalid_result.rc != 0"
+      - "ipconfig_invalid_result.stdout" # ipconfig displays errors on stdout.
+#      - "not ipconfig_invalid_result.stderr"
+      - "ipconfig_invalid_result is failed"
+      - "ipconfig_invalid_result is changed"
+
+- name: run an unknown command
+  raw: uname -a
+  register: unknown_result
+  ignore_errors: true
+
+- name: assert that an unknown command failed
+  assert:
+    that:
+      - "unknown_result.rc != 0"
+      - "not unknown_result.stdout"
+      - "unknown_result.stderr" # An unknown command displays error on stderr.
+      - "unknown_result is failed"
+      - "unknown_result is changed"
+
+- name: run a command that takes longer than 60 seconds
+  raw: Start-Sleep -s 75
+  register: sleep_command
+
+- name: assert that the sleep command ran
+  assert:
+    that:
+      - "sleep_command.rc == 0"
+      - "not sleep_command.stdout"
+      - "not sleep_command.stderr"
+      - "sleep_command is not failed"
+      - "sleep_command is changed"
+
+- name: run a raw command with key=value arguments
+  raw: echo wwe=raw
+  register: raw_result
+
+- name: make sure raw is really raw and not removing key=value arguments
+  assert:
+    that:
+      - "raw_result.stdout_lines[0] == 'wwe=raw'"
+
+- name: unicode tests for winrm
+  when: ansible_connection != 'psrp'  # Write-Host does not work over PSRP
+  block:
+  - name: run a raw command with unicode chars and quoted args (from https://github.com/ansible/ansible-modules-core/issues/1929)
+    raw: Write-Host --% icacls D:\somedir\ /grant "! ЗАО. Руководство":F
+    register: raw_result2
+
+  - name: make sure raw passes command as-is and doesn't split/rejoin args
+    assert:
+      that:
+        - "raw_result2.stdout_lines[0] == '--% icacls D:\\\\somedir\\\\ /grant \"! ЗАО. Руководство\":F'"
+
+- name: unicode tests for psrp
+  when: ansible_connection == 'psrp'
+  block:
+  # Cannot test unicode passed into separate exec as PSRP doesn't run with a preset CP of 65001 which reuslts in ? for unicode chars
+  - name: run a raw command with unicode chars
+    raw: Write-Output "! ЗАО. Руководство"
+    register: raw_result2
+
+  - name: make sure raw passes command as-is and doesn't split/rejoin args
+    assert:
+      that:
+        - "raw_result2.stdout_lines[0] == '! ЗАО. Руководство'"
+
+# Assumes MaxShellsPerUser == 30 (the default)
+
+- name: test raw + with_items to verify that winrm connection is reused for each item
+  raw: echo "{{item}}"
+  with_items: "{{range(32)|list}}"
+  register: raw_with_items_result
+
+- name: check raw + with_items result
+  assert:
+    that:
+      - "raw_with_items_result is not failed"
+      - "raw_with_items_result.results|length == 32"
+
+# TODO: this test fails, since we're back to passing raw commands without modification
+#- name: test raw with job to ensure that preamble-free InputEncoding is working
+#  raw: Start-Job { echo yo } | Receive-Job -Wait
+#  register: raw_job_result
+#
+#- name: check raw with job result
+#  assert:
+#    that:
+#    - raw_job_result is successful
+#    - raw_job_result.stdout_lines[0] == 'yo'

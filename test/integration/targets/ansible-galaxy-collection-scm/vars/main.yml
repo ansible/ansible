@@ -1,0 +1,4 @@
+install_path: "{{ galaxy_dir }}/collections/ansible_collections"
+alt_install_path: "{{ galaxy_dir }}/other_collections/ansible_collections"
+scm_path: "{{ galaxy_dir }}/development"
+test_repo_path: "{{ galaxy_dir }}/development/ansible_test"

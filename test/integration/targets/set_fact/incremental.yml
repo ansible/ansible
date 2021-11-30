@@ -1,0 +1,35 @@
+- name: test set_fact incremental https://github.com/ansible/ansible/issues/38271
+  hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: Generate inline loop for set_fact
+      set_fact:
+        dig_list: "{{ dig_list + [ item ] }}"
+      loop:
+        - two
+        - three
+        - four
+      vars:
+        dig_list:
+            - one
+
+    - name: verify cumulative set fact worked
+      assert:
+        that:
+           - dig_list == ['one', 'two', 'three', 'four']
+
+    - name: Generate inline loop for set_fact (FQCN)
+      ansible.builtin.set_fact:
+        dig_list_fqcn: "{{ dig_list_fqcn + [ item ] }}"
+      loop:
+        - two
+        - three
+        - four
+      vars:
+        dig_list_fqcn:
+            - one
+
+    - name: verify cumulative set fact worked (FQCN)
+      assert:
+        that:
+           - dig_list_fqcn == ['one', 'two', 'three', 'four']
