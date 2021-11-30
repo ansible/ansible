@@ -115,289 +115,8 @@ Networking
 
 No notable changes
 
-Porting Guide for v5.0.0b2
-==========================
-
-Major Changes
--------------
-
-fortinet.fortios
-~~~~~~~~~~~~~~~~
-
-- Add real-world use cases in the example section for some configuration modules.
-- Collect the current configurations of the modules and convert them into playbooks.
-- Support FortiOS 7.0.1.
-- Support member operation (delete/add extra members) on an object that has a list of members in it.
-- Support selectors feature in ``fortios_monitor_fact`` and ``fortios_log_fact``.
-
-Deprecated Features
--------------------
-
-amazon.aws
-~~~~~~~~~~
-
-- ec2_classic_lb - setting of the ``ec2_elb`` fact has been deprecated and will be removed in release 4.0.0 of the collection. The module now returns ``elb`` which can be accessed using the register keyword (https://github.com/ansible-collections/amazon.aws/pull/552).
-
-community.aws
-~~~~~~~~~~~~~
-
-- dynamodb_table - DynamoDB does not support specifying non-key-attributes when creating an ``ALL`` index.  Passing ``includes`` for such indexes is currently ignored but will result in failures after version 3.0.0 (https://github.com/ansible-collections/community.aws/pull/726).
-- dynamodb_table - DynamoDB does not support updating the primary indexes on a table.  Attempts to make such changes are currently ignored but will result in failures after version 3.0.0 (https://github.com/ansible-collections/community.aws/pull/726).
-- elb_instance - setting of the ``ec2_elb`` fact has been deprecated and will be removed in release 4.0.0 of the collection. See the module documentation for an alternative example using the register keyword (https://github.com/ansible-collections/community.aws/pull/773).
-- iam_cert - the iam_cert module has been renamed to iam_server_certificate for consistency with the companion iam_server_certificate_info module. The usage of the module has not changed.  The iam_cert alias will be removed in version 4.0.0 (https://github.com/ansible-collections/community.aws/pull/728).
-- iam_server_certificate - Passing file names to the ``cert``, ``chain_cert`` and ``key`` parameters has been deprecated. We recommend using a lookup plugin to read the files instead, see the documentation for an example (https://github.com/ansible-collections/community.aws/pull/735).
-- iam_server_certificate - the default value for the ``dup_ok`` parameter is currently ``false``, in version 4.0.0 this will be updated to ``true``.  To preserve the current behaviour explicitly set the ``dup_ok`` parameter to ``false`` (https://github.com/ansible-collections/community.aws/pull/737).
-- rds_snapshot - the rds_snapshot module has been renamed to rds_instance_snapshot. The usage of the module has not changed. The rds_snapshot alias will be removed in version 4.0.0 (https://github.com/ansible-collections/community.aws/pull/783).
-
-community.general
-~~~~~~~~~~~~~~~~~
-
-- Support for Ansible 2.9 and ansible-base 2.10 is deprecated, and will be removed in the next major release (community.general 5.0.0) next spring. While most content will probably still work with ansible-base 2.10, we will remove symbolic links for modules and action plugins, which will make it impossible to use them with Ansible 2.9 anymore. Please use community.general 4.x.y with Ansible 2.9 and ansible-base 2.10, as these releases will continue to support Ansible 2.9 and ansible-base 2.10 even after they are End of Life (https://github.com/ansible-community/community-topics/issues/50, https://github.com/ansible-collections/community.general/pull/3723).
-
-Porting Guide for v5.0.0b1
-==========================
-
-Known Issues
-------------
-
-purestorage.flashblade
-~~~~~~~~~~~~~~~~~~~~~~
-
-- purefb_lag - The mac_address field in the response is not populated. This will be fixed in a future FlashBlade update.
-
-Breaking Changes
-----------------
-
-community.hashi_vault
-~~~~~~~~~~~~~~~~~~~~~
-
-- connection options - there is no longer a default value for the ``url`` option (the Vault address), so a value must be supplied (https://github.com/ansible-collections/community.hashi_vault/issues/83).
-
-Removed Features
-----------------
-
-community.hashi_vault
-~~~~~~~~~~~~~~~~~~~~~
-
-- drop support for Python 2 and Python 3.5 (https://github.com/ansible-collections/community.hashi_vault/issues/81).
-- support for the following deprecated environment variables has been removed: ``VAULT_AUTH_METHOD``, ``VAULT_TOKEN_PATH``, ``VAULT_TOKEN_FILE``, ``VAULT_ROLE_ID``, ``VAULT_SECRET_ID`` (https://github.com/ansible-collections/community.hashi_vault/pull/173).
-
-Porting Guide for v5.0.0a3
-==========================
-
-Known Issues
-------------
-
-dellemc.openmanage
-~~~~~~~~~~~~~~~~~~
-
-- idrac_user - Issue(192043) Module may error out with the message ``unable to perform the import or export operation because there are pending attribute changes or a configuration job is in progress``. Wait for the job to complete and run the task again.
-- ome_device_power_settings - Issue(212679) The ome_device_power_settings module errors out with the following message if the value provided for the parameter ``power_cap`` is not within the supported range of 0 to 32767, ``Unable to complete the request because PowerCap does not  exist or is not applicable for the resource URI.``
-- ome_smart_fabric_uplink - Issue(186024) ome_smart_fabric_uplink module does not allow the creation of multiple uplinks of the same name even though it is supported by OpenManage Enterprise Modular. If an uplink is created using the same name as an existing uplink, the existing uplink is modified.
-
-Breaking Changes
-----------------
-
-community.crypto
-~~~~~~~~~~~~~~~~
-
-- Adjust ``dirName`` text parsing and to text converting code to conform to `Sections 2 and 3 of RFC 4514 <https://datatracker.ietf.org/doc/html/rfc4514.html>`_. This is similar to how `cryptography handles this <https://cryptography.io/en/latest/x509/reference/#cryptography.x509.Name.rfc4514_string>`_ (https://github.com/ansible-collections/community.crypto/pull/274).
-- acme module utils - removing compatibility code (https://github.com/ansible-collections/community.crypto/pull/290).
-- acme_* modules - removed vendored copy of the Python library ``ipaddress``. If you are using Python 2.x, please make sure to install the library (https://github.com/ansible-collections/community.crypto/pull/287).
-- compatibility module_utils - removed vendored copy of the Python library ``ipaddress`` (https://github.com/ansible-collections/community.crypto/pull/287).
-- crypto module utils - removing compatibility code (https://github.com/ansible-collections/community.crypto/pull/290).
-- get_certificate, openssl_csr_info, x509_certificate_info - depending on the ``cryptography`` version used, the modules might not return the ASN.1 value for an extension as contained in the certificate respectively CSR, but a re-encoded version of it. This should usually be identical to the value contained in the source file, unless the value was malformed. For extensions not handled by C(cryptography) the value contained in the source file is always returned unaltered (https://github.com/ansible-collections/community.crypto/pull/318).
-- module_utils - removed various PyOpenSSL support functions and default backend values that are not needed for the openssl_pkcs12 module (https://github.com/ansible-collections/community.crypto/pull/273).
-- openssl_csr, openssl_csr_pipe, x509_crl - the ``subject`` respectively ``issuer`` fields no longer ignore empty values, but instead fail when encountering them (https://github.com/ansible-collections/community.crypto/pull/316).
-- openssl_privatekey_info - by default consistency checks are not run; they need to be explicitly requested by passing ``check_consistency=true`` (https://github.com/ansible-collections/community.crypto/pull/309).
-- x509_crl - for idempotency checks, the ``issuer`` order is ignored. If order is important, use the new ``issuer_ordered`` option (https://github.com/ansible-collections/community.crypto/pull/316).
-
-community.docker
-~~~~~~~~~~~~~~~~
-
-- docker_compose - fixed ``timeout`` defaulting behavior so that ``stop_grace_period``, if defined in the compose file, will be used if `timeout`` is not specified (https://github.com/ansible-collections/community.docker/pull/163).
-
-community.general
-~~~~~~~~~~~~~~~~~
-
-- archive - adding idempotency checks for changes to file names and content within the ``destination`` file (https://github.com/ansible-collections/community.general/pull/3075).
-- lxd inventory plugin - when used with Python 2, the plugin now needs ``ipaddress`` installed `from pypi <https://pypi.org/project/ipaddress/>`_ (https://github.com/ansible-collections/community.general/pull/2441).
-- scaleway_security_group_rule - when used with Python 2, the module now needs ``ipaddress`` installed `from pypi <https://pypi.org/project/ipaddress/>`_ (https://github.com/ansible-collections/community.general/pull/2441).
-
-community.zabbix
-~~~~~~~~~~~~~~~~
-
-- all roles now reference other roles and modules via their fully qualified collection names, which makes Ansible 2.10 minimum supported version for roles (See https://github.com/ansible-collections/community.zabbix/pull/477).
-
-netapp.storagegrid
-~~~~~~~~~~~~~~~~~~
-
-- This version introduces a breaking change.
-  All modules have been renamed from ``nac_sg_*`` to ``na_sg_*``.
-  Playbooks and Roles must be updated to match.
-
-Major Changes
--------------
-
-cisco.ise
-~~~~~~~~~
-
-- Adds ``ise_uses_api_gateway`` to module options.
-- Adds a 'aws_deployment' role that allows the deployment of an arbitrary large ISE cluster to AWS.
-- Adds ise_responses to return values of info modules.
-- Adds ise_update_response to return values of non-info modules.
-- Fixes inner logic of modules that have no get by name and have not working filter.
-- Renamed module device_administration_authorization_exception_rules to device_administration_local_exception_rules.
-- Renamed module device_administration_authorization_global_exception_rules to device_administration_global_exception_rules.
-- Renamed module network_access_authorization_exception_rules to network_access_local_exception_rules.
-- Renamed module network_access_authorization_global_exception_rules to network_access_global_exception_rules.
-- Updates options required for modules.
-- Updates sdk parameters for previous modules
-- device_administration_authorization_exception_rules - removed module.
-- device_administration_authorization_exception_rules_info - removed module.
-- device_administration_authorization_global_exception_rules - removed module.
-- device_administration_authorization_global_exception_rules_info - removed module.
-- guest_user_reinstante - removed module.
-- import_trust_cert - removed module.
-- network_access_authorization_exception_rules - removed module.
-- network_access_authorization_exception_rules_info - removed module.
-- network_access_authorization_global_exception_rules - removed module.
-- network_access_authorization_global_exception_rules_info - removed module.
-- personas_check_standalone - Adds module for the deployment of personas to existing nodes in an ISE cluster.
-- personas_export_certs - Adds module for the deployment of personas to existing nodes in an ISE cluster.
-- personas_promote_primary - Adds module for the deployment of personas to existing nodes in an ISE cluster.
-- personas_update_roles - Adds module for the deployment of personas to existing nodes in an ISE cluster.
-- service_info - removed module.
-- system_certificate_export - removed module.
-- telemetry_info_info - removed module.
-
-cloud.common
-~~~~~~~~~~~~
-
-- turbo - enable turbo mode for lookup plugins
-
-community.general
-~~~~~~~~~~~~~~~~~
-
-- bitbucket_* modules - ``client_id`` is no longer marked as ``no_log=true``. If you relied on its value not showing up in logs and output, please mark the whole tasks with ``no_log: true`` (https://github.com/ansible-collections/community.general/pull/2045).
-
-Removed Features
-----------------
-
-community.crypto
-~~~~~~~~~~~~~~~~
-
-- acme_* modules - the ``acme_directory`` option is now required (https://github.com/ansible-collections/community.crypto/pull/290).
-- acme_* modules - the ``acme_version`` option is now required (https://github.com/ansible-collections/community.crypto/pull/290).
-- acme_account_facts - the deprecated redirect has been removed. Use community.crypto.acme_account_info instead (https://github.com/ansible-collections/community.crypto/pull/290).
-- acme_account_info - ``retrieve_orders=url_list`` no longer returns the return value ``orders``. Use the ``order_uris`` return value instead (https://github.com/ansible-collections/community.crypto/pull/290).
-- crypto.info module utils - the deprecated redirect has been removed. Use ``crypto.pem`` instead (https://github.com/ansible-collections/community.crypto/pull/290).
-- get_certificate - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
-- openssl_certificate - the deprecated redirect has been removed. Use community.crypto.x509_certificate instead (https://github.com/ansible-collections/community.crypto/pull/290).
-- openssl_certificate_info - the deprecated redirect has been removed. Use community.crypto.x509_certificate_info instead (https://github.com/ansible-collections/community.crypto/pull/290).
-- openssl_csr - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
-- openssl_csr and openssl_csr_pipe - ``version`` now only accepts the (default) value 1 (https://github.com/ansible-collections/community.crypto/pull/290).
-- openssl_csr_info - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
-- openssl_csr_pipe - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
-- openssl_privatekey - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
-- openssl_privatekey_info - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
-- openssl_privatekey_pipe - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
-- openssl_publickey - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
-- openssl_publickey_info - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
-- openssl_signature - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
-- openssl_signature_info - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
-- x509_certificate - remove ``assertonly`` provider (https://github.com/ansible-collections/community.crypto/pull/289).
-- x509_certificate - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
-- x509_certificate_info - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
-- x509_certificate_pipe - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
-
-community.docker
-~~~~~~~~~~~~~~~~
-
-- docker_container - the default value of ``container_default_behavior`` changed to ``no_defaults`` (https://github.com/ansible-collections/community.docker/pull/210).
-- docker_container - the default value of ``network_mode`` is now the name of the first network specified in ``networks`` if such are specified and ``networks_cli_compatible=true`` (https://github.com/ansible-collections/community.docker/pull/210).
-- docker_container - the special value ``all`` can no longer be used in ``published_ports`` next to other values. Please use ``publish_all_ports=true`` instead (https://github.com/ansible-collections/community.docker/pull/210).
-- docker_login - removed the ``email`` option (https://github.com/ansible-collections/community.docker/pull/210).
-
-community.general
-~~~~~~~~~~~~~~~~~
-
-- All inventory and vault scripts contained in community.general were moved to the `contrib-scripts GitHub repository <https://github.com/ansible-community/contrib-scripts>`_ (https://github.com/ansible-collections/community.general/pull/2696).
-- ModuleHelper module utils - remove fallback when value could not be determined for a parameter (https://github.com/ansible-collections/community.general/pull/3461).
-- Removed deprecated netapp module utils and doc fragments (https://github.com/ansible-collections/community.general/pull/3197).
-- The nios, nios_next_ip, nios_next_network lookup plugins, the nios documentation fragment, and the nios_host_record, nios_ptr_record, nios_mx_record, nios_fixed_address, nios_zone, nios_member, nios_a_record, nios_aaaa_record, nios_network, nios_dns_view, nios_txt_record, nios_naptr_record, nios_srv_record, nios_cname_record, nios_nsgroup, and nios_network_view module have been removed from community.general 4.0.0 and were replaced by redirects to the `infoblox.nios_modules <https://galaxy.ansible.com/infoblox/nios_modules>`_ collection. Please install the ``infoblox.nios_modules`` collection to continue using these plugins and modules, and update your FQCNs (https://github.com/ansible-collections/community.general/pull/3592).
-- The vendored copy of ``ipaddress`` has been removed. Please use ``ipaddress`` from the Python 3 standard library, or `from pypi <https://pypi.org/project/ipaddress/>`_. (https://github.com/ansible-collections/community.general/pull/2441).
-- cpanm - removed the deprecated ``system_lib`` option. Use Ansible's privilege escalation mechanism instead; the option basically used ``sudo`` (https://github.com/ansible-collections/community.general/pull/3461).
-- grove - removed the deprecated alias ``message`` of the ``message_content`` option (https://github.com/ansible-collections/community.general/pull/3461).
-- proxmox - default value of ``proxmox_default_behavior`` changed to ``no_defaults`` (https://github.com/ansible-collections/community.general/pull/3461).
-- proxmox_kvm - default value of ``proxmox_default_behavior`` changed to ``no_defaults`` (https://github.com/ansible-collections/community.general/pull/3461).
-- runit - removed the deprecated ``dist`` option which was not used by the module (https://github.com/ansible-collections/community.general/pull/3461).
-- telegram - removed the deprecated ``msg``, ``msg_format`` and ``chat_id`` options (https://github.com/ansible-collections/community.general/pull/3461).
-- xfconf - the default value of ``disable_facts`` changed to ``true``, and the value ``false`` is no longer allowed. Register the module results instead (https://github.com/ansible-collections/community.general/pull/3461).
-
-Deprecated Features
--------------------
-
-community.azure
-~~~~~~~~~~~~~~~
-
-- All community.azure.azure_rm_<resource>_facts modules are deprecated. Use azure.azcollection.azure_rm_<resource>_info modules instead (https://github.com/ansible-collections/community.azure/pull/24).
-- All community.azure.azure_rm_<resource>_info modules are deprecated. Use azure.azcollection.azure_rm_<resource>_info modules instead (https://github.com/ansible-collections/community.azure/pull/24).
-- community.azure.azure_rm_managed_disk and community.azure.azure_rm_manageddisk are deprecated. Use azure.azcollection.azure_rm_manageddisk instead (https://github.com/ansible-collections/community.azure/pull/24).
-- community.azure.azure_rm_virtualmachine_extension and community.azure.azure_rm_virtualmachineextension are deprecated. Use azure.azcollection.azure_rm_virtualmachineextension instead (https://github.com/ansible-collections/community.azure/pull/24).
-- community.azure.azure_rm_virtualmachine_scaleset and community.azure.azure_rm_virtualmachinescaleset are deprecated. Use azure.azcollection.azure_rm_virtualmachinescaleset instead (https://github.com/ansible-collections/community.azure/pull/24).
-
-community.crypto
-~~~~~~~~~~~~~~~~
-
-- acme_* modules - ACME version 1 is now deprecated and support for it will be removed in community.crypto 2.0.0 (https://github.com/ansible-collections/community.crypto/pull/288).
-
-community.docker
-~~~~~~~~~~~~~~~~
-
-- docker_container - using the special value ``all`` in ``published_ports`` has been deprecated. Use ``publish_all_ports=true`` instead (https://github.com/ansible-collections/community.docker/pull/210).
-
-community.general
-~~~~~~~~~~~~~~~~~
-
-- ali_instance_info - marked removal version of deprecated parameters ``availability_zone`` and ``instance_names`` (https://github.com/ansible-collections/community.general/issues/2429).
-- bitbucket_* modules - ``username`` options have been deprecated in favor of ``workspace`` and will be removed in community.general 6.0.0 (https://github.com/ansible-collections/community.general/pull/2045).
-- dnsimple - python-dnsimple < 2.0.0 is deprecated and support for it will be removed in community.general 5.0.0 (https://github.com/ansible-collections/community.general/pull/2946#discussion_r667624693).
-- gitlab_group_members - setting ``gitlab_group`` to ``name`` or ``path`` is deprecated. Use ``full_path`` instead (https://github.com/ansible-collections/community.general/pull/3451).
-- keycloak_authentication - the return value ``flow`` is now deprecated and will be removed in community.general 6.0.0; use ``end_state`` instead (https://github.com/ansible-collections/community.general/pull/3280).
-- keycloak_group - the return value ``group`` is now deprecated and will be removed in community.general 6.0.0; use ``end_state`` instead (https://github.com/ansible-collections/community.general/pull/3280).
-- linode - parameter ``backupsenabled`` is deprecated and will be removed in community.general 5.0.0 (https://github.com/ansible-collections/community.general/pull/2410).
-- lxd_container - the current default value ``true`` of ``ignore_volatile_options`` is deprecated and will change to ``false`` in community.general 6.0.0 (https://github.com/ansible-collections/community.general/pull/3429).
-- serverless - deprecating parameter ``functions`` because it was not used in the code (https://github.com/ansible-collections/community.general/pull/2845).
-- xfconf - deprecate the ``get`` state. The new module ``xfconf_info`` should be used instead (https://github.com/ansible-collections/community.general/pull/3049).
-
-community.hashi_vault
-~~~~~~~~~~~~~~~~~~~~~
-
-- lookup hashi_vault - the ``[lookup_hashi_vault]`` section in the ``ansible.cfg`` file is deprecated and will be removed in collection version ``3.0.0``. Instead, the section ``[hashi_vault_collection]`` can be used, which will apply to all plugins in the collection going forward (https://github.com/ansible-collections/community.hashi_vault/pull/144).
-
-Porting Guide for v5.0.0a2
-==========================
-
-Breaking Changes
-----------------
-
-community.routeros
-~~~~~~~~~~~~~~~~~~
-
-- api - splitting commands no longer uses a naive split by whitespace, but a more RouterOS CLI compatible splitting algorithm (https://github.com/ansible-collections/community.routeros/pull/45).
-- command - the module now always indicates that a change happens. If this is not correct, please use ``changed_when`` to determine the correct changed status for a task (https://github.com/ansible-collections/community.routeros/pull/50).
-
-Deprecated Features
--------------------
-
-community.vmware
-~~~~~~~~~~~~~~~~
-
-- vmware_guest_vnc -  Sphere 7.0 removed the built-in VNC server (https://docs.vmware.com/en/VMware-vSphere/7.0/rn/vsphere-esxi-vcenter-server-70-release-notes.html#productsupport).
-
-Porting Guide for v5.0.0a1
-==========================
+Porting Guide for v5.0.0
+========================
 
 Known Issues
 ------------
@@ -411,8 +130,14 @@ dellemc.openmanage
 ~~~~~~~~~~~~~~~~~~
 
 - idrac_user - Issue(192043) Module may error out with the message ``unable to perform the import or export operation because there are pending attribute changes or a configuration job is in progress``. Wait for the job to complete and run the task again.
+- ome_device_power_settings - Issue(212679) The ome_device_power_settings module errors out with the following message if the value provided for the parameter ``power_cap`` is not within the supported range of 0 to 32767, ``Unable to complete the request because PowerCap does not  exist or is not applicable for the resource URI.``
 - ome_smart_fabric_uplink - Issue(186024) ome_smart_fabric_uplink module does not allow the creation of multiple uplinks of the same name even though it is supported by OpenManage Enterprise Modular. If an uplink is created using the same name as an existing uplink, the existing uplink is modified.
 - ome_smart_fabric_uplink - Issue(186024) ome_smart_fabric_uplink module does not allow the creation of multiple uplinks of the same name even though this is supported by OpenManage Enterprise Modular. If an uplink is created using the same name as an existing uplink, the existing uplink is modified.
+
+purestorage.flashblade
+~~~~~~~~~~~~~~~~~~~~~~
+
+- purefb_lag - The mac_address field in the response is not populated. This will be fixed in a future FlashBlade update.
 
 Breaking Changes
 ----------------
@@ -469,6 +194,20 @@ community.aws
 - ec2_vpc_nat_gateway_info - The module has been migrated from the ``community.aws`` collection. Playbooks using the Fully Qualified Collection Name for this module should be updated to use ``amazon.aws.ec2_vpc_nat_gateway_info``.
 - kms_info - key details are now returned in the ``kms_keys`` attribute rather than the ``keys`` attribute (https://github.com/ansible-collections/community.aws/pull/648).
 
+community.crypto
+~~~~~~~~~~~~~~~~
+
+- Adjust ``dirName`` text parsing and to text converting code to conform to `Sections 2 and 3 of RFC 4514 <https://datatracker.ietf.org/doc/html/rfc4514.html>`_. This is similar to how `cryptography handles this <https://cryptography.io/en/latest/x509/reference/#cryptography.x509.Name.rfc4514_string>`_ (https://github.com/ansible-collections/community.crypto/pull/274).
+- acme module utils - removing compatibility code (https://github.com/ansible-collections/community.crypto/pull/290).
+- acme_* modules - removed vendored copy of the Python library ``ipaddress``. If you are using Python 2.x, please make sure to install the library (https://github.com/ansible-collections/community.crypto/pull/287).
+- compatibility module_utils - removed vendored copy of the Python library ``ipaddress`` (https://github.com/ansible-collections/community.crypto/pull/287).
+- crypto module utils - removing compatibility code (https://github.com/ansible-collections/community.crypto/pull/290).
+- get_certificate, openssl_csr_info, x509_certificate_info - depending on the ``cryptography`` version used, the modules might not return the ASN.1 value for an extension as contained in the certificate respectively CSR, but a re-encoded version of it. This should usually be identical to the value contained in the source file, unless the value was malformed. For extensions not handled by C(cryptography) the value contained in the source file is always returned unaltered (https://github.com/ansible-collections/community.crypto/pull/318).
+- module_utils - removed various PyOpenSSL support functions and default backend values that are not needed for the openssl_pkcs12 module (https://github.com/ansible-collections/community.crypto/pull/273).
+- openssl_csr, openssl_csr_pipe, x509_crl - the ``subject`` respectively ``issuer`` fields no longer ignore empty values, but instead fail when encountering them (https://github.com/ansible-collections/community.crypto/pull/316).
+- openssl_privatekey_info - by default consistency checks are not run; they need to be explicitly requested by passing ``check_consistency=true`` (https://github.com/ansible-collections/community.crypto/pull/309).
+- x509_crl - for idempotency checks, the ``issuer`` order is ignored. If order is important, use the new ``issuer_ordered`` option (https://github.com/ansible-collections/community.crypto/pull/316).
+
 community.dns
 ~~~~~~~~~~~~~
 
@@ -484,6 +223,23 @@ community.dns
 - hosttech_* module_utils - completely rewrite and refactor to support new JSON API and allow to re-use provider-independent module logic (https://github.com/ansible-collections/community.dns/pull/4).
 - hosttech_dns_record_set - the option ``overwrite`` was replaced by a new option ``on_existing``. Specifying ``overwrite=true`` is equivalent to ``on_existing=replace`` (the new default). Specifying ``overwrite=false`` with ``state=present`` is equivalent to ``on_existing=keep_and_fail``, and specifying ``overwrite=false`` with ``state=absent`` is equivalent to ``on_existing=keep`` (https://github.com/ansible-collections/community.dns/pull/31).
 
+community.docker
+~~~~~~~~~~~~~~~~
+
+- docker_compose - fixed ``timeout`` defaulting behavior so that ``stop_grace_period``, if defined in the compose file, will be used if `timeout`` is not specified (https://github.com/ansible-collections/community.docker/pull/163).
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- archive - adding idempotency checks for changes to file names and content within the ``destination`` file (https://github.com/ansible-collections/community.general/pull/3075).
+- lxd inventory plugin - when used with Python 2, the plugin now needs ``ipaddress`` installed `from pypi <https://pypi.org/project/ipaddress/>`_ (https://github.com/ansible-collections/community.general/pull/2441).
+- scaleway_security_group_rule - when used with Python 2, the module now needs ``ipaddress`` installed `from pypi <https://pypi.org/project/ipaddress/>`_ (https://github.com/ansible-collections/community.general/pull/2441).
+
+community.hashi_vault
+~~~~~~~~~~~~~~~~~~~~~
+
+- connection options - there is no longer a default value for the ``url`` option (the Vault address), so a value must be supplied (https://github.com/ansible-collections/community.hashi_vault/issues/83).
+
 community.okd
 ~~~~~~~~~~~~~
 
@@ -493,6 +249,13 @@ community.routeros
 ~~~~~~~~~~~~~~~~~~
 
 - api - due to a programming error, the module never failed on errors. This has now been fixed. If you are relying on the module not failing in case of idempotent commands (resulting in errors like ``failure: already have such address``), you need to adjust your roles/playbooks. We suggest to use ``failed_when`` to accept failure in specific circumstances, for example ``failed_when: "'failure: already have ' in result.msg[0]"`` (https://github.com/ansible-collections/community.routeros/pull/39).
+- api - splitting commands no longer uses a naive split by whitespace, but a more RouterOS CLI compatible splitting algorithm (https://github.com/ansible-collections/community.routeros/pull/45).
+- command - the module now always indicates that a change happens. If this is not correct, please use ``changed_when`` to determine the correct changed status for a task (https://github.com/ansible-collections/community.routeros/pull/50).
+
+community.zabbix
+~~~~~~~~~~~~~~~~
+
+- all roles now reference other roles and modules via their fully qualified collection names, which makes Ansible 2.10 minimum supported version for roles (See https://github.com/ansible-collections/community.zabbix/pull/477).
 
 kubernetes.core
 ~~~~~~~~~~~~~~~
@@ -502,6 +265,13 @@ kubernetes.core
 - helm_plugin_info - remove unused ``release_namespace`` parameter (https://github.com/ansible-collections/kubernetes.core/pull/85).
 - k8s_cluster_info - returned apis as list to avoid being overwritten in case of multiple version (https://github.com/ansible-collections/kubernetes.core/pull/41).
 - k8s_facts - remove the deprecated alias from k8s_facts to k8s_info (https://github.com/ansible-collections/kubernetes.core/pull/125).
+
+netapp.storagegrid
+~~~~~~~~~~~~~~~~~~
+
+- This version introduces a breaking change.
+  All modules have been renamed from ``nac_sg_*`` to ``na_sg_*``.
+  Playbooks and Roles must be updated to match.
 
 Major Changes
 -------------
@@ -548,6 +318,43 @@ amazon.aws
 - ec2_vpc_route_table_facts - The module has been migrated from the ``community.aws`` collection. Playbooks using the Fully Qualified Collection Name for this module should be updated to use ``amazon.aws.ec2_vpc_route_table_facts``.
 - ec2_vpc_route_table_info - The module has been migrated from the ``community.aws`` collection. Playbooks using the Fully Qualified Collection Name for this module should be updated to use ``amazon.aws.ec2_vpc_route_table_info``.
 
+cisco.ise
+~~~~~~~~~
+
+- Adds ``ise_uses_api_gateway`` to module options.
+- Adds a 'aws_deployment' role that allows the deployment of an arbitrary large ISE cluster to AWS.
+- Adds ise_responses to return values of info modules.
+- Adds ise_update_response to return values of non-info modules.
+- Fixes inner logic of modules that have no get by name and have not working filter.
+- Renamed module device_administration_authorization_exception_rules to device_administration_local_exception_rules.
+- Renamed module device_administration_authorization_global_exception_rules to device_administration_global_exception_rules.
+- Renamed module network_access_authorization_exception_rules to network_access_local_exception_rules.
+- Renamed module network_access_authorization_global_exception_rules to network_access_global_exception_rules.
+- Updates options required for modules.
+- Updates sdk parameters for previous modules
+- device_administration_authorization_exception_rules - removed module.
+- device_administration_authorization_exception_rules_info - removed module.
+- device_administration_authorization_global_exception_rules - removed module.
+- device_administration_authorization_global_exception_rules_info - removed module.
+- guest_user_reinstante - removed module.
+- import_trust_cert - removed module.
+- network_access_authorization_exception_rules - removed module.
+- network_access_authorization_exception_rules_info - removed module.
+- network_access_authorization_global_exception_rules - removed module.
+- network_access_authorization_global_exception_rules_info - removed module.
+- personas_check_standalone - Adds module for the deployment of personas to existing nodes in an ISE cluster.
+- personas_export_certs - Adds module for the deployment of personas to existing nodes in an ISE cluster.
+- personas_promote_primary - Adds module for the deployment of personas to existing nodes in an ISE cluster.
+- personas_update_roles - Adds module for the deployment of personas to existing nodes in an ISE cluster.
+- service_info - removed module.
+- system_certificate_export - removed module.
+- telemetry_info_info - removed module.
+
+cloud.common
+~~~~~~~~~~~~
+
+- turbo - enable turbo mode for lookup plugins
+
 cloudscale_ch.cloud
 ~~~~~~~~~~~~~~~~~~~
 
@@ -577,6 +384,11 @@ community.dns
 ~~~~~~~~~~~~~
 
 - hosttech_* modules - support the new JSON API at https://api.ns1.hosttech.eu/api/documentation/ (https://github.com/ansible-collections/community.dns/pull/4).
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- bitbucket_* modules - ``client_id`` is no longer marked as ``no_log=true``. If you relied on its value not showing up in logs and output, please mark the whole tasks with ``no_log: true`` (https://github.com/ansible-collections/community.general/pull/2045).
 
 community.kubernetes
 ~~~~~~~~~~~~~~~~~~~~
@@ -616,13 +428,18 @@ dellemc.openmanage
 fortinet.fortios
 ~~~~~~~~~~~~~~~~
 
+- Add real-world use cases in the example section for some configuration modules.
+- Collect the current configurations of the modules and convert them into playbooks.
 - Improve ``fortios_configuration_fact`` to use multiple selectors concurrently.
 - New module fortios_monitor_fact.
+- Support FortiOS 7.0.1.
 - Support Fortios 7.0.
 - Support Log APIs.
 - Support ``check_mode`` in all cofigurationAPI-based modules.
 - Support filtering for fact gathering modules ``fortios_configuration_fact`` and ``fortios_monitor_fact``.
+- Support member operation (delete/add extra members) on an object that has a list of members in it.
 - Support moving policy in ``firewall_central_snat_map``.
+- Support selectors feature in ``fortios_monitor_fact`` and ``fortios_log_fact``.
 - Unify schemas for monitor API.
 
 gluster.gluster
@@ -677,6 +494,63 @@ ansible.windows
 
 - win_reboot - Removed ``shutdown_timeout`` and ``shutdown_timeout_sec`` which has not done anything since Ansible 2.5.
 
+community.crypto
+~~~~~~~~~~~~~~~~
+
+- acme_* modules - the ``acme_directory`` option is now required (https://github.com/ansible-collections/community.crypto/pull/290).
+- acme_* modules - the ``acme_version`` option is now required (https://github.com/ansible-collections/community.crypto/pull/290).
+- acme_account_facts - the deprecated redirect has been removed. Use community.crypto.acme_account_info instead (https://github.com/ansible-collections/community.crypto/pull/290).
+- acme_account_info - ``retrieve_orders=url_list`` no longer returns the return value ``orders``. Use the ``order_uris`` return value instead (https://github.com/ansible-collections/community.crypto/pull/290).
+- crypto.info module utils - the deprecated redirect has been removed. Use ``crypto.pem`` instead (https://github.com/ansible-collections/community.crypto/pull/290).
+- get_certificate - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
+- openssl_certificate - the deprecated redirect has been removed. Use community.crypto.x509_certificate instead (https://github.com/ansible-collections/community.crypto/pull/290).
+- openssl_certificate_info - the deprecated redirect has been removed. Use community.crypto.x509_certificate_info instead (https://github.com/ansible-collections/community.crypto/pull/290).
+- openssl_csr - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
+- openssl_csr and openssl_csr_pipe - ``version`` now only accepts the (default) value 1 (https://github.com/ansible-collections/community.crypto/pull/290).
+- openssl_csr_info - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
+- openssl_csr_pipe - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
+- openssl_privatekey - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
+- openssl_privatekey_info - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
+- openssl_privatekey_pipe - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
+- openssl_publickey - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
+- openssl_publickey_info - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
+- openssl_signature - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
+- openssl_signature_info - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
+- x509_certificate - remove ``assertonly`` provider (https://github.com/ansible-collections/community.crypto/pull/289).
+- x509_certificate - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
+- x509_certificate_info - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
+- x509_certificate_pipe - removed the ``pyopenssl`` backend (https://github.com/ansible-collections/community.crypto/pull/273).
+
+community.docker
+~~~~~~~~~~~~~~~~
+
+- docker_container - the default value of ``container_default_behavior`` changed to ``no_defaults`` (https://github.com/ansible-collections/community.docker/pull/210).
+- docker_container - the default value of ``network_mode`` is now the name of the first network specified in ``networks`` if such are specified and ``networks_cli_compatible=true`` (https://github.com/ansible-collections/community.docker/pull/210).
+- docker_container - the special value ``all`` can no longer be used in ``published_ports`` next to other values. Please use ``publish_all_ports=true`` instead (https://github.com/ansible-collections/community.docker/pull/210).
+- docker_login - removed the ``email`` option (https://github.com/ansible-collections/community.docker/pull/210).
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- All inventory and vault scripts contained in community.general were moved to the `contrib-scripts GitHub repository <https://github.com/ansible-community/contrib-scripts>`_ (https://github.com/ansible-collections/community.general/pull/2696).
+- ModuleHelper module utils - remove fallback when value could not be determined for a parameter (https://github.com/ansible-collections/community.general/pull/3461).
+- Removed deprecated netapp module utils and doc fragments (https://github.com/ansible-collections/community.general/pull/3197).
+- The nios, nios_next_ip, nios_next_network lookup plugins, the nios documentation fragment, and the nios_host_record, nios_ptr_record, nios_mx_record, nios_fixed_address, nios_zone, nios_member, nios_a_record, nios_aaaa_record, nios_network, nios_dns_view, nios_txt_record, nios_naptr_record, nios_srv_record, nios_cname_record, nios_nsgroup, and nios_network_view module have been removed from community.general 4.0.0 and were replaced by redirects to the `infoblox.nios_modules <https://galaxy.ansible.com/infoblox/nios_modules>`_ collection. Please install the ``infoblox.nios_modules`` collection to continue using these plugins and modules, and update your FQCNs (https://github.com/ansible-collections/community.general/pull/3592).
+- The vendored copy of ``ipaddress`` has been removed. Please use ``ipaddress`` from the Python 3 standard library, or `from pypi <https://pypi.org/project/ipaddress/>`_. (https://github.com/ansible-collections/community.general/pull/2441).
+- cpanm - removed the deprecated ``system_lib`` option. Use Ansible's privilege escalation mechanism instead; the option basically used ``sudo`` (https://github.com/ansible-collections/community.general/pull/3461).
+- grove - removed the deprecated alias ``message`` of the ``message_content`` option (https://github.com/ansible-collections/community.general/pull/3461).
+- proxmox - default value of ``proxmox_default_behavior`` changed to ``no_defaults`` (https://github.com/ansible-collections/community.general/pull/3461).
+- proxmox_kvm - default value of ``proxmox_default_behavior`` changed to ``no_defaults`` (https://github.com/ansible-collections/community.general/pull/3461).
+- runit - removed the deprecated ``dist`` option which was not used by the module (https://github.com/ansible-collections/community.general/pull/3461).
+- telegram - removed the deprecated ``msg``, ``msg_format`` and ``chat_id`` options (https://github.com/ansible-collections/community.general/pull/3461).
+- xfconf - the default value of ``disable_facts`` changed to ``true``, and the value ``false`` is no longer allowed. Register the module results instead (https://github.com/ansible-collections/community.general/pull/3461).
+
+community.hashi_vault
+~~~~~~~~~~~~~~~~~~~~~
+
+- drop support for Python 2 and Python 3.5 (https://github.com/ansible-collections/community.hashi_vault/issues/81).
+- support for the following deprecated environment variables has been removed: ``VAULT_AUTH_METHOD``, ``VAULT_TOKEN_PATH``, ``VAULT_TOKEN_FILE``, ``VAULT_ROLE_ID``, ``VAULT_SECRET_ID`` (https://github.com/ansible-collections/community.hashi_vault/pull/173).
+
 Deprecated Features
 -------------------
 
@@ -692,6 +566,7 @@ amazon.aws
 ~~~~~~~~~~
 
 - ec2 - the boto based ``ec2`` module has been deprecated in favour of the boto3 based ``ec2_instance`` module. The ``ec2`` module will be removed in release 4.0.0 (https://github.com/ansible-collections/amazon.aws/pull/424).
+- ec2_classic_lb - setting of the ``ec2_elb`` fact has been deprecated and will be removed in release 4.0.0 of the collection. The module now returns ``elb`` which can be accessed using the register keyword (https://github.com/ansible-collections/amazon.aws/pull/552).
 - ec2_vpc_dhcp_option - The ``new_config`` return key has been deprecated and will be removed in a future release.  It will be replaced by ``dhcp_config``.  Both values are returned in the interim. (https://github.com/ansible-collections/amazon.aws/pull/252)
 
 ansible.netcommon
@@ -733,12 +608,33 @@ cisco.nxos
 community.aws
 ~~~~~~~~~~~~~
 
+- dynamodb_table - DynamoDB does not support specifying non-key-attributes when creating an ``ALL`` index.  Passing ``includes`` for such indexes is currently ignored but will result in failures after version 3.0.0 (https://github.com/ansible-collections/community.aws/pull/726).
+- dynamodb_table - DynamoDB does not support updating the primary indexes on a table.  Attempts to make such changes are currently ignored but will result in failures after version 3.0.0 (https://github.com/ansible-collections/community.aws/pull/726).
 - ec2_elb - the ``ec2_elb`` module has been removed and redirected to the ``elb_instance`` module which functions identically. The original ``ec2_elb`` name is now deprecated and will be removed in release 3.0.0 (https://github.com/ansible-collections/community.aws/pull/586).
 - ec2_elb_info - the boto based ``ec2_elb_info`` module has been deprecated in favour of the boto3 based ``elb_classic_lb_info`` module. The ``ec2_elb_info`` module will be removed in release 3.0.0 (https://github.com/ansible-collections/community.aws/pull/586).
 - elb_classic_lb - the ``elb_classic_lb`` module has been removed and redirected to the ``amazon.aws.ec2_elb_lb`` module which functions identically.
+- elb_instance - setting of the ``ec2_elb`` fact has been deprecated and will be removed in release 4.0.0 of the collection. See the module documentation for an alternative example using the register keyword (https://github.com/ansible-collections/community.aws/pull/773).
 - iam - the boto based ``iam`` module has been deprecated in favour of the boto3 based ``iam_user``, ``iam_group`` and ``iam_role`` modules. The ``iam`` module will be removed in release 3.0.0 (https://github.com/ansible-collections/community.aws/pull/664).
+- iam_cert - the iam_cert module has been renamed to iam_server_certificate for consistency with the companion iam_server_certificate_info module. The usage of the module has not changed.  The iam_cert alias will be removed in version 4.0.0 (https://github.com/ansible-collections/community.aws/pull/728).
+- iam_server_certificate - Passing file names to the ``cert``, ``chain_cert`` and ``key`` parameters has been deprecated. We recommend using a lookup plugin to read the files instead, see the documentation for an example (https://github.com/ansible-collections/community.aws/pull/735).
+- iam_server_certificate - the default value for the ``dup_ok`` parameter is currently ``false``, in version 4.0.0 this will be updated to ``true``.  To preserve the current behaviour explicitly set the ``dup_ok`` parameter to ``false`` (https://github.com/ansible-collections/community.aws/pull/737).
 - rds - the boto based ``rds`` module has been deprecated in favour of the boto3 based ``rds_instance`` module. The ``rds`` module will be removed in release 3.0.0 (https://github.com/ansible-collections/community.aws/pull/663).
+- rds_snapshot - the rds_snapshot module has been renamed to rds_instance_snapshot. The usage of the module has not changed. The rds_snapshot alias will be removed in version 4.0.0 (https://github.com/ansible-collections/community.aws/pull/783).
 - script_inventory_ec2 - The ec2.py inventory script is being moved to a new repository. The script can now be downloaded from https://github.com/ansible-community/contrib-scripts/blob/main/inventory/ec2.py and will be removed from this collection in the 3.0 release. We recommend migrating from the script to the `amazon.aws.ec2` inventory plugin.
+
+community.azure
+~~~~~~~~~~~~~~~
+
+- All community.azure.azure_rm_<resource>_facts modules are deprecated. Use azure.azcollection.azure_rm_<resource>_info modules instead (https://github.com/ansible-collections/community.azure/pull/24).
+- All community.azure.azure_rm_<resource>_info modules are deprecated. Use azure.azcollection.azure_rm_<resource>_info modules instead (https://github.com/ansible-collections/community.azure/pull/24).
+- community.azure.azure_rm_managed_disk and community.azure.azure_rm_manageddisk are deprecated. Use azure.azcollection.azure_rm_manageddisk instead (https://github.com/ansible-collections/community.azure/pull/24).
+- community.azure.azure_rm_virtualmachine_extension and community.azure.azure_rm_virtualmachineextension are deprecated. Use azure.azcollection.azure_rm_virtualmachineextension instead (https://github.com/ansible-collections/community.azure/pull/24).
+- community.azure.azure_rm_virtualmachine_scaleset and community.azure.azure_rm_virtualmachinescaleset are deprecated. Use azure.azcollection.azure_rm_virtualmachinescaleset instead (https://github.com/ansible-collections/community.azure/pull/24).
+
+community.crypto
+~~~~~~~~~~~~~~~~
+
+- acme_* modules - ACME version 1 is now deprecated and support for it will be removed in community.crypto 2.0.0 (https://github.com/ansible-collections/community.crypto/pull/288).
 
 community.dns
 ~~~~~~~~~~~~~
@@ -750,6 +646,22 @@ community.docker
 
 - docker_* modules and plugins, except ``docker_swarm`` connection plugin and ``docker_compose`` and ``docker_stack*` modules - the current default ``localhost`` for ``tls_hostname`` is deprecated. In community.docker 2.0.0 it will be computed from ``docker_host`` instead (https://github.com/ansible-collections/community.docker/pull/134).
 - docker_container - the new ``command_handling``'s default value, ``compatibility``, is deprecated and will change to ``correct`` in community.docker 3.0.0. A deprecation warning is emitted by the module in cases where the behavior will change. Please note that ansible-core will output a deprecation warning only once, so if it is shown for an earlier task, there could be more tasks with this warning where it is not shown (https://github.com/ansible-collections/community.docker/pull/186).
+- docker_container - using the special value ``all`` in ``published_ports`` has been deprecated. Use ``publish_all_ports=true`` instead (https://github.com/ansible-collections/community.docker/pull/210).
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- Support for Ansible 2.9 and ansible-base 2.10 is deprecated, and will be removed in the next major release (community.general 5.0.0) next spring. While most content will probably still work with ansible-base 2.10, we will remove symbolic links for modules and action plugins, which will make it impossible to use them with Ansible 2.9 anymore. Please use community.general 4.x.y with Ansible 2.9 and ansible-base 2.10, as these releases will continue to support Ansible 2.9 and ansible-base 2.10 even after they are End of Life (https://github.com/ansible-community/community-topics/issues/50, https://github.com/ansible-collections/community.general/pull/3723).
+- ali_instance_info - marked removal version of deprecated parameters ``availability_zone`` and ``instance_names`` (https://github.com/ansible-collections/community.general/issues/2429).
+- bitbucket_* modules - ``username`` options have been deprecated in favor of ``workspace`` and will be removed in community.general 6.0.0 (https://github.com/ansible-collections/community.general/pull/2045).
+- dnsimple - python-dnsimple < 2.0.0 is deprecated and support for it will be removed in community.general 5.0.0 (https://github.com/ansible-collections/community.general/pull/2946#discussion_r667624693).
+- gitlab_group_members - setting ``gitlab_group`` to ``name`` or ``path`` is deprecated. Use ``full_path`` instead (https://github.com/ansible-collections/community.general/pull/3451).
+- keycloak_authentication - the return value ``flow`` is now deprecated and will be removed in community.general 6.0.0; use ``end_state`` instead (https://github.com/ansible-collections/community.general/pull/3280).
+- keycloak_group - the return value ``group`` is now deprecated and will be removed in community.general 6.0.0; use ``end_state`` instead (https://github.com/ansible-collections/community.general/pull/3280).
+- linode - parameter ``backupsenabled`` is deprecated and will be removed in community.general 5.0.0 (https://github.com/ansible-collections/community.general/pull/2410).
+- lxd_container - the current default value ``true`` of ``ignore_volatile_options`` is deprecated and will change to ``false`` in community.general 6.0.0 (https://github.com/ansible-collections/community.general/pull/3429).
+- serverless - deprecating parameter ``functions`` because it was not used in the code (https://github.com/ansible-collections/community.general/pull/2845).
+- xfconf - deprecate the ``get`` state. The new module ``xfconf_info`` should be used instead (https://github.com/ansible-collections/community.general/pull/3049).
 
 community.grafana
 ~~~~~~~~~~~~~~~~~
@@ -761,11 +673,17 @@ community.hashi_vault
 
 - hashi_vault collection - support for Python 2 will be dropped in version ``2.0.0`` of ``community.hashi_vault`` (https://github.com/ansible-collections/community.hashi_vault/issues/81).
 - hashi_vault collection - support for Python 3.5 will be dropped in version ``2.0.0`` of ``community.hashi_vault`` (https://github.com/ansible-collections/community.hashi_vault/issues/81).
+- lookup hashi_vault - the ``[lookup_hashi_vault]`` section in the ``ansible.cfg`` file is deprecated and will be removed in collection version ``3.0.0``. Instead, the section ``[hashi_vault_collection]`` can be used, which will apply to all plugins in the collection going forward (https://github.com/ansible-collections/community.hashi_vault/pull/144).
 
 community.kubernetes
 ~~~~~~~~~~~~~~~~~~~~
 
 - The ``community.kubernetes`` collection is being renamed to ``kubernetes.core``. All content in the collection has been replaced by deprecated redirects to ``kubernetes.core``. If you are using FQCNs starting with ``community.kubernetes``, please update them to ``kubernetes.core`` (https://github.com/ansible-collections/community.kubernetes/pull/439).
+
+community.vmware
+~~~~~~~~~~~~~~~~
+
+- vmware_guest_vnc -  Sphere 7.0 removed the built-in VNC server (https://docs.vmware.com/en/VMware-vSphere/7.0/rn/vsphere-esxi-vcenter-server-70-release-notes.html#productsupport).
 
 inspur.sm
 ~~~~~~~~~
