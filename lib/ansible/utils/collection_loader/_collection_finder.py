@@ -236,6 +236,8 @@ class _AnsibleCollectionFinder:
             if spec is not None and hasattr(loader, '_subpackage_search_paths'):
                 spec.submodule_search_locations = loader._subpackage_search_paths
             return spec
+        else:
+            return None
 
 
 # Implements a path_hook finder for iter_modules (since it's only path based). This finder does not need to actually
@@ -296,12 +298,11 @@ class _AnsiblePathHookFinder:
 
     def find_module(self, fullname, path=None):
         # we ignore the passed in path here- use what we got from the path hook init
-        split_name = fullname.split('.')
-        toplevel_pkg = split_name[0]
-
         finder = self._get_finder(fullname)
         if finder is not None:
             return finder.find_module(fullname, path=[self._pathctx])
+        else:
+            return None
 
     def find_spec(self, fullname, target=None):
         split_name = fullname.split('.')
@@ -313,6 +314,8 @@ class _AnsiblePathHookFinder:
                 return finder.find_spec(fullname, path=[self._pathctx])
             else:
                 return finder.find_spec(fullname)
+        else:
+            return None
 
     def iter_modules(self, prefix):
         # NB: this currently represents only what's on disk, and does not handle package redirection
@@ -407,6 +410,10 @@ class _AnsibleCollectionPkgLoaderBase:
         return module_path, has_code, package_path
 
     def exec_module(self, module):
+        # short-circuit redirect; avoid reinitializing existing modules
+        if self._redirect_module:
+            return
+
         # execute the module's code in its namespace
         code_obj = self.get_code(self._fullname)
         if code_obj is not None:  # things like NS packages that can't have code on disk will return None
@@ -416,6 +423,8 @@ class _AnsibleCollectionPkgLoaderBase:
         # short-circuit redirect; we've already imported the redirected module, so just alias it and return it
         if self._redirect_module:
             return self._redirect_module
+        else:
+            return None
 
     def load_module(self, fullname):
         # short-circuit redirect; we've already imported the redirected module, so just alias it and return it
@@ -724,9 +733,6 @@ class _AnsibleInternalRedirectLoader:
 
         if not self._redirect:
             raise ImportError('not redirected, go ask path_hook')
-
-    def get_filename(self, fullname):
-        return '<ansible synthetic package/module>'
 
     def exec_module(self, module):
         # should never see this
