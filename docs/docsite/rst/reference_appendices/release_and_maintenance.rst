@@ -75,8 +75,8 @@ This table links to the changelogs for each major Ansible release. These changel
 Ansible Community Package Release       Status
 ==================================      =================================================
 6.0.0                                   In development (unreleased)
-`5.x Changelogs`_                       In development (unreleased)
-`4.x Changelogs`_                       Current
+`5.x Changelogs`_                       Current
+`4.x Changelogs`_                       End of life after 4.10
 `3.x Changelogs`_                       Unmaintained (end of life)
 `2.10 Changelogs`_                      Unmaintained (end of life)
 ==================================      =================================================
