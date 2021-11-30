@@ -545,4 +545,3 @@ if __name__ == '__main__':
 
         # show it
         display.display(to_text(res, errors='surrogate_or_strict'))
->>>>>>> 1cb4b15f51 (add 'get' setting to ansbile-config)
