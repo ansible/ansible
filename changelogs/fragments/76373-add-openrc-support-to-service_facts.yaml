@@ -1,2 +1,2 @@
 minor_changes:
-  - services_facts: Add support for openrc (https://github.com/ansible/ansible/pull/76373).
+  - services_facts - Add support for openrc (https://github.com/ansible/ansible/pull/76373).
