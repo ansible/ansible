@@ -6,7 +6,7 @@ import os
 import re
 import typing as t
 
-from . import UNDOCUMENTED_PLUGIN_TYPES
+from . import DOCUMENTABLE_PLUGINS
 
 from . import (
     SanitySingleVersion,
@@ -51,7 +51,7 @@ class AnsibleDocTest(SanitySingleVersion):
     """Sanity test for ansible-doc."""
     def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test."""
-        plugin_paths = [plugin_path for plugin_type, plugin_path in data_context().content.plugin_paths.items() if plugin_type not in UNDOCUMENTED_PLUGIN_TYPES]
+        plugin_paths = [plugin_path for plugin_type, plugin_path in data_context().content.plugin_paths.items() if plugin_type in DOCUMENTABLE_PLUGINS]
 
         return [target for target in targets
                 if os.path.splitext(target.path)[1] == '.py'

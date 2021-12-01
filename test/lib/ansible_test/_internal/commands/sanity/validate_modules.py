@@ -7,7 +7,7 @@ import typing as t
 
 from collections import defaultdict
 
-from . import UNDOCUMENTED_PLUGIN_TYPES
+from . import DOCUMENTABLE_PLUGINS
 
 from . import (
     SanitySingleVersion,
@@ -63,7 +63,7 @@ def _get_plugin_type_getter():
     prefixes = dict(
         (plugin_type, plugin_path + '/')
         for plugin_type, plugin_path in content.plugin_paths.items()
-        if plugin_type != 'module' and plugin_type not in UNDOCUMENTED_PLUGIN_TYPES
+        if plugin_type != 'module' and plugin_type in DOCUMENTABLE_PLUGINS
     )
     exceptions = set()
     for prefix in prefixes.values():

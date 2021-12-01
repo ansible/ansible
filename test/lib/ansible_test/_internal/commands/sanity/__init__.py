@@ -123,20 +123,10 @@ COMMAND = 'sanity'
 SANITY_ROOT = os.path.join(ANSIBLE_TEST_CONTROLLER_ROOT, 'sanity')
 TARGET_SANITY_ROOT = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'sanity')
 
-# This should use documentable plugins from constants instead
-UNDOCUMENTED_PLUGIN_TYPES = set([
-    # not supported by ansible-doc
-    'action',
-    'doc_fragments',
-    'filter',
-    'module_utils',
-    'terminal',
-    'test',
-    # The following are plugin directories not directly supported by ansible-core (and thus also not by ansible-doc)
-    # (https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#modules--plugins)
-    'plugin_utils',
-    'sub_plugins',
-])
+# NOTE: must match ansible.constants.DOCUMENTABLE_PLUGINS
+DOCUMENTABLE_PLUGINS = (
+    'become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', 'vars', 'module', 'strategy'
+)
 
 created_venvs = []  # type: t.List[str]
 
