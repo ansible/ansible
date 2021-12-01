@@ -69,6 +69,7 @@ DOCUMENTATION = """
                 key: password
 """
 
+import re
 import shlex
 
 from ansible.plugins.become import BecomeBase
@@ -101,7 +102,7 @@ class BecomeModule(BecomeBase):
                         continue
                     elif not flag.startswith('--'):
                         # handle -XnxxX flags only
-                        flag = re.sub(r'^(-(\w*)n(\w*.*)', r'-\1\2', flag)
+                        flag = re.sub(r'^(-\w*)n(\w*.*)', r'\1\2', flag)
                     reflag.append(flag)
                 flags = shlex.join(reflag)
 
