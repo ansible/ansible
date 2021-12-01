@@ -785,7 +785,9 @@ class SanityTest(metaclass=abc.ABCMeta):
                 # utility code that runs in target environments and requires support for remote-only Python versions
                 is_subdir(target.path, 'test/lib/ansible_test/_util/target/') or
                 # integration test support modules/module_utils continue to require support for remote-only Python versions
-                re.search('^test/support/integration/.*/(modules|module_utils)/', target.path)
+                re.search('^test/support/integration/.*/(modules|module_utils)/', target.path) or
+                # collection loader requires support for remote-only Python versions
+                re.search('^lib/ansible/utils/collection_loader/', target.path)
             ))
         )]
 
