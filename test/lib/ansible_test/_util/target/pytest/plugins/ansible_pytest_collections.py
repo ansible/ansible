@@ -3,7 +3,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import sys
 
 # set by ansible-test to a single directory, rather than a list of directories as supported by Ansible itself
 ANSIBLE_COLLECTIONS_PATH = os.path.join(os.environ['ANSIBLE_COLLECTIONS_PATH'], 'ansible_collections')
@@ -41,12 +40,8 @@ def pytest_configure():
     except AttributeError:
         pytest_configure.executed = True
 
-    if sys.version_info >= ANSIBLE_CONTROLLER_MIN_PYTHON_VERSION:
-        # noinspection PyProtectedMember
-        from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
-    else:
-        # noinspection PyProtectedMember
-        from ansible_test._internal.legacy_collection_loader._collection_finder import _AnsibleCollectionFinder
+    # noinspection PyProtectedMember
+    from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
 
     # allow unit tests to import code from collections
 
