@@ -373,7 +373,8 @@ def main():
         # this is partial check_mode support, since we end up skipping if we get here
         r['rc'] = 0
         r['msg'] = "Command would have run if not in check mode"
-        r['skipped'] = True
+        if creates is None and removes is None:
+            r['skipped'] = True
 
     r['changed'] = True
 
