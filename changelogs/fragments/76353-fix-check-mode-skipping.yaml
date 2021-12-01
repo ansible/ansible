@@ -1,0 +1,3 @@
+bugfixes:
+  - shell/command - only skip in check mode if the options `creates` and `removes` are both None.
+  - script - skip in check mode since the plugin cannot determine if a change will occur.
