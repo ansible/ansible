@@ -95,15 +95,13 @@ class BecomeModule(BecomeBase):
         if self.get_option('become_pass'):
             self.prompt = '[sudo via ansible, key=%s] password:' % self._id
             if flags:  # this could be simplified, but kept as is for now for backwards string matching
-
                 reflag = []
                 for flag in shlex.split(flags):
-                    if not flag.startswith('--') and 'n' in flag:
-                        flag = flag.replace('n', '')
-                        if flag == '-':
-                            continue
-                    elif flag == '--non-interactive':
+                    if flag in ('-n', '--non-interactive'):
                         continue
+                    elif not flag.startswith('--'):
+                        # handle -XnxxX flags only
+                        flag = re.sub('^(-(\w*)n(\w*.*)', '-/1/2', flag)
                     reflag.append(flag)
                 flags = shlex.join(reflag)
 
