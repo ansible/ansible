@@ -474,7 +474,7 @@ def write_file(module, dest, content, resp):
         module.fail_json(msg=msg, **resp)
 
     checksum_src = None
-    checksum_dst = None
+    checksum_dest = None
 
     checksum_src = module.sha1(tmpsrc)
     checksum_dest = module.sha1(dest)
@@ -486,7 +486,7 @@ def write_file(module, dest, content, resp):
           os.remove(tmpsrc)
           msg = format_message("failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)), resp)
           module.fail_json(msg=msg, **resp)
-          
+
     os.remove(tmpsrc)  
 
 def absolute_location(url, location):
