@@ -21,10 +21,6 @@ from ...constants import (
     REMOTE_ONLY_PYTHON_VERSIONS,
 )
 
-from ...io import (
-    write_text_file,
-)
-
 from ...test import (
     TestResult,
 )
@@ -40,7 +36,6 @@ from ...util import (
     parse_to_list_of_dict,
     is_subdir,
     ANSIBLE_TEST_TOOLS_ROOT,
-    ANSIBLE_TEST_TARGET_ROOT,
 )
 
 from ...util_common import (
@@ -214,11 +209,4 @@ def get_ansible_test_python_path():  # type: () -> str
     The temporary directory created will be cached for the lifetime of the process and cleaned up at exit.
     """
     python_path = create_temp_dir(prefix='ansible-test-')
-    ansible_test_path = os.path.join(python_path, 'ansible_test')
-
-    # legacy collection loader required by all python versions not supported by the controller
-    write_text_file(os.path.join(ansible_test_path, '__init__.py'), '', True)
-    write_text_file(os.path.join(ansible_test_path, '_internal', '__init__.py'), '', True)
-    os.symlink(os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'legacy_collection_loader'), os.path.join(ansible_test_path, '_internal', 'legacy_collection_loader'))
-
     return python_path
