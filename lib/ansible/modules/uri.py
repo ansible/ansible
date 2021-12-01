@@ -458,22 +458,36 @@ def format_message(err, resp):
 
 
 def write_file(module, dest, content, resp):
-    # create a tempfile with some test content
-    fd, tmpsrc = tempfile.mkstemp(dir=module.tmpdir)
+    """
+    Create temp file and write content to dest file only if content changed
+    """
     try:
+        fd, tmpsrc = tempfile.mkstemp(dir=module.tmpdir)
         with os.fdopen(fd, 'wb') as f:
             if isinstance(content, binary_type):
                 f.write(content)
             else:
-                module.atomic_move(content, f)
+                shutil.copyfileobj(content, f)
     except Exception as e:
         os.remove(tmpsrc)
         msg = format_message("Failed to create temporary content file: %s" % to_native(e), resp)
         module.fail_json(msg=msg, **resp)
-    finally:
-        f.close()
-        os.remove(tmpsrc)
 
+    checksum_src = None
+    checksum_dst = None
+
+    checksum_src = module.sha1(tmpsrc)
+    checksum_dest = module.sha1(dest)
+
+    if checksum_src != checksum_dest:
+      try:
+          module.atomic_move(tmpsrc, dest)
+      except Exception as e:
+          os.remove(tmpsrc)
+          msg = format_message("failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)), resp)
+          module.fail_json(msg=msg, **resp)
+          
+    os.remove(tmpsrc)  
 
 def absolute_location(url, location):
     """Attempts to create an absolute URL based on initial URL, and

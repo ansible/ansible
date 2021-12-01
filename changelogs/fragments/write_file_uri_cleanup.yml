@@ -1,2 +1,2 @@
 minor_changes:
-  - cleanup write_file method, remove overkill safety checks and report any exception, change shutilcopyfile to use module.atomic_move
+  - uri - cleanup write_file method, remove overkill safety checks and report any exception, change shutilcopyfile to use module.atomic_move
