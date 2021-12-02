@@ -698,6 +698,7 @@ class Templar:
         new_templar = object.__new__(Templar)
         new_templar.__dict__.update(self.__dict__)
         new_templar.environment = new_env
+        new_templar.environment.finalize = new_templar._finalize
 
         new_templar.jinja2_native = environment_class is AnsibleNativeEnvironment
 
