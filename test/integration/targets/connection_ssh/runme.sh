@@ -71,3 +71,9 @@ ansible-playbook check_ssh_defaults.yml "$@" -i test_connection.inventory
 
 # ensure we can load from ini cfg
 ANSIBLE_CONFIG=./test_ssh_defaults.cfg ansible-playbook verify_config.yml "$@"
+
+# ensure we handle cp with spaces correctly
+ANSIBLE_SSH_CONTROL_PATH='/tmp/ssh cp with spaces'
+./posix.sh "$@"
+[ -f "${ANSIBLE_SSH_CONTROL_PATH}" ]
+rm "${ANSIBLE_SSH_CONTROL_PATH}"
