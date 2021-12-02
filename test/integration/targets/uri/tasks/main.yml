@@ -247,6 +247,16 @@
     headers:
       Cookie: "fake=fake_value"
 
+- name: test digest auth failure
+  uri:
+    url: 'https://{{ httpbin_host }}/digest-auth/auth/user/passwd'
+    user: user
+    password: wrong
+    headers:
+      Cookie: "fake=fake_value"
+  register: result
+  failed_when: result.status != 401
+
 - name: test unredirected_headers
   uri:
     url: 'https://{{ httpbin_host }}/redirect-to?status_code=301&url=/basic-auth/user/passwd'
