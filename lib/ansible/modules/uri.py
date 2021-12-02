@@ -697,7 +697,9 @@ def main():
         filename = get_response_filename(r) or 'index.html'
         dest = os.path.join(dest, filename)
 
-    if r:
+    if r and r.fp is not None:
+        # r may be None for some errors
+        # r.fp may be None depending on the error, which means there are no headers either
         content_type, main_type, sub_type, content_encoding = parse_content_type(r)
     else:
         content_type = 'application/octet-stream'
@@ -710,7 +712,7 @@ def main():
 
     if maybe_output:
         try:
-            if PY3 and r.closed:
+            if PY3 and (r.fp is None or r.closed):
                 raise TypeError
             content = r.read()
         except (AttributeError, TypeError):

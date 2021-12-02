@@ -1839,6 +1839,11 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except urllib_error.HTTPError as e:
         r = e
         try:
+            if e.fp is None:
+                # Certain HTTPError objects may not have the ability to call ``.read()`` on Python 3
+                # This is not handled gracefully in Python 3, and instead an exception is raised from
+                # tempfile, due to ``urllib.response.addinfourl`` not being initialized
+                raise AttributeError
             body = e.read()
         except AttributeError:
             body = ''
