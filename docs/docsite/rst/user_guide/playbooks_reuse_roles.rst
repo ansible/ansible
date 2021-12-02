@@ -129,7 +129,7 @@ When you use the ``roles`` option at the play level, for each role 'x':
 - If roles/x/meta/main.yml exists, Ansible adds any role dependencies in that file to the list of roles.
 - Any copy, script, template or include tasks (in the role) can reference files in roles/x/{files,templates,tasks}/ (dir depends on task) without having to path them relatively or absolutely.
 
-When you use the ``roles`` option at the play level, Ansible treats the roles as static imports and processes them during playbook parsing. Ansible executes your playbook in this order:
+When you use the ``roles`` option at the play level, Ansible treats the roles as static imports and processes them during playbook parsing. Ansible executes each play in this order:
 
 - Any ``pre_tasks`` defined in the play.
 - Any handlers triggered by pre_tasks.
@@ -168,7 +168,7 @@ When using ``vars:`` within the ``roles:`` section of a playbook, the variables 
 Including roles: dynamic reuse
 ------------------------------
 
-You can reuse roles dynamically anywhere in the ``tasks`` section of a play using ``include_role``. While roles added in a ``roles`` section run before any other tasks in a playbook, included roles run in the order they are defined. If there are other tasks before an ``include_role`` task, the other tasks will run first.
+You can reuse roles dynamically anywhere in the ``tasks`` section of a play using ``include_role``. While roles added in a ``roles`` section run before any other tasks in a play, included roles run in the order they are defined. If there are other tasks before an ``include_role`` task, the other tasks will run first.
 
 To include a role:
 
@@ -385,10 +385,10 @@ Sample specification
 
 .. _run_role_twice:
 
-Running a role multiple times in one playbook
-=============================================
+Running a role multiple times in one play
+=========================================
 
-Ansible only executes each role once, even if you define it multiple times, unless the parameters defined on the role are different for each definition. For example, Ansible only runs the role ``foo`` once in a play like this:
+Ansible only executes each role once in a play, even if you define it multiple times, unless the parameters defined on the role are different for each definition. For example, Ansible only runs the role ``foo`` once in a play like this:
 
 .. code-block:: yaml
 
