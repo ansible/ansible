@@ -115,6 +115,14 @@ Networking
 
 No notable changes
 
+Porting Guide for v5.0.1
+========================
+
+Major Changes
+-------------
+
+- Raised python requirement of the ansible package from >=2.7 to >=3.8 to match ansible-core
+
 Porting Guide for v5.0.0
 ========================
 
