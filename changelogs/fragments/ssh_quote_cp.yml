@@ -1,2 +1,2 @@
 bugfixes:
-  - ssh connection, properly quote controlpersist path given by user, avoid issue swith spaces and other characters
+  - ssh connection - properly quote controlpersist path given by user to avoid issues with spaces and other characters
