@@ -14,10 +14,12 @@ from functools import wraps
 
 from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.connection import Connection as AnsibleConnectionClient
 from ansible.plugins import AnsiblePlugin
 from ansible.utils.display import Display
 from ansible.plugins.loader import connection_loader, get_shell_plugin
 from ansible.utils.path import unfrackpath
+from ansible.module_utils.six.moves import cPickle
 
 display = Display()
 
@@ -253,9 +255,11 @@ class NetworkConnectionBase(ConnectionBase):
         self._sub_plugin = {}
         self._cached_variables = (None, None, None)
 
+        self._playctx = play_context
+
         # reconstruct the socket_path and set instance values accordingly
         self._ansible_playbook_pid = kwargs.get('ansible_playbook_pid')
-        self._update_connection_state()
+#        self._update_connection_state()
 
     def __getattr__(self, name):
         try:
@@ -269,7 +273,33 @@ class NetworkConnectionBase(ConnectionBase):
                         return method
             raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, name))
 
+    def _connect(self, *args, **kwargs):
+        pass
+
+    def _ensure_socket_path(self):
+        self._update_connection_state()
+
+        if (sp := getattr(self, '_socket_path', '')) and os.path.exists(sp):
+            # connection process should already be running, just talk to it
+            conn = AnsibleConnectionClient(self._socket_path)
+
+            # FIXME: this is trashing the connection details somehow (eg, remote_user is incorrect)- maybe a race where we need to copy it earlier?
+            # is this even necessary anymore now that we're passing the connection options over directly?
+            # pcdata = cPickle.dumps(self._play_context.serialize(), protocol=0)
+            # conn.update_play_context(to_text(pcdata))
+
+            # FIXME: catch exceptions for plugins that don't implement this
+            conn.set_check_prompt(self._task_uuid)
+            conn.set_options(var_options=self._smuggled_options)
+
+        else:
+            # start a new connection host
+            self._socket_path = self._startconn(self._play_context, self._smuggled_options, self._task_uuid)
+
+
     def exec_command(self, cmd, in_data=None, sudoable=True):
+        self._ensure_socket_path()
+
         return self._local.exec_command(cmd, in_data, sudoable)
 
     def queue_message(self, level, message):

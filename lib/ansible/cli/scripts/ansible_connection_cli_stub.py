@@ -306,27 +306,31 @@ def main(args=None):
                     result.update(data)
 
             else:
-                messages.append(('vvvv', 'found existing local domain socket, using it!'))
-                conn = Connection(socket_path)
-                try:
-                    conn.set_options(var_options=variables)
-                except ConnectionError as exc:
-                    messages.append(('debug', to_text(exc)))
-                    raise ConnectionError('Unable to decode JSON from response set_options. See the debug log for more information.')
-                pc_data = to_text(init_data)
-                try:
-                    conn.update_play_context(pc_data)
-                    conn.set_check_prompt(task_uuid)
-                except Exception as exc:
-                    # Only network_cli has update_play context and set_check_prompt, so missing this is
-                    # not fatal e.g. netconf
-                    if isinstance(exc, ConnectionError) and getattr(exc, 'code', None) == -32601:
-                        pass
-                    else:
-                        result.update({
-                            'error': to_text(exc),
-                            'exception': traceback.format_exc()
-                        })
+                sys.stderr.write("bang, shouldn't call to create when it already exists")
+                sys.exit(1)
+
+            # else:
+            #     messages.append(('vvvv', 'found existing local domain socket, using it!'))
+            #     conn = Connection(socket_path)
+            #     try:
+            #         conn.set_options(var_options=variables)
+            #     except ConnectionError as exc:
+            #         messages.append(('debug', to_text(exc)))
+            #         raise ConnectionError('Unable to decode JSON from response set_options. See the debug log for more information.')
+            #     pc_data = to_text(init_data)
+            #     try:
+            #         conn.update_play_context(pc_data)
+            #         conn.set_check_prompt(task_uuid)
+            #     except Exception as exc:
+            #         # Only network_cli has update_play context and set_check_prompt, so missing this is
+            #         # not fatal e.g. netconf
+            #         if isinstance(exc, ConnectionError) and getattr(exc, 'code', None) == -32601:
+            #             pass
+            #         else:
+            #             result.update({
+            #                 'error': to_text(exc),
+            #                 'exception': traceback.format_exc()
+            #             })
 
     if os.path.exists(socket_path):
         messages.extend(Connection(socket_path).pop_messages())

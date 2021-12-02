@@ -957,13 +957,11 @@ class TaskExecutor:
 
         if any(((connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), connection.force_persistence)):
             self._play_context.timeout = connection.get_option('persistent_command_timeout')
-            display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
-            display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
-
             options = self._get_persistent_connection_options(connection, cvars, templar)
-            socket_path = start_connection(self._play_context, options, self._task._uuid)
-            display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
-            setattr(connection, '_socket_path', socket_path)
+            # HACK: need a better way to make these necessary bits accessible for the deferred connection startup
+            connection._smuggled_options = options
+            connection._startconn = start_connection
+            connection._task_uuid = self._task._uuid
 
         return connection
 
