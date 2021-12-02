@@ -43,6 +43,13 @@ try:
 except ImportError:
     pass
 
+try:
+    from importlib.machinery import FileFinder
+except ImportError:
+    HAS_FILE_FINDER = False
+else:
+    HAS_FILE_FINDER = True
+
 # NB: this supports import sanity test providing a different impl
 try:
     from ._collection_meta import _meta_yml_to_dict
@@ -300,7 +307,10 @@ class _AnsiblePathHookFinder:
         # we ignore the passed in path here- use what we got from the path hook init
         finder = self._get_finder(fullname)
         if finder is not None:
-            return finder.find_module(fullname, path=[self._pathctx])
+            if HAS_FILE_FINDER and isinstance(finder, FileFinder):
+                return finder.find_module(fullname)
+            else:
+                return finder.find_module(fullname, path=[self._pathctx])
         else:
             return None
 
