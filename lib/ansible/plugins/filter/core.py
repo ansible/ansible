@@ -46,7 +46,12 @@ UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
 def to_yaml(a, *args, **kw):
     '''Make verbose, human readable yaml'''
+
+    # user should not set these since we need to override internally
     default_flow_style = kw.pop('default_flow_style', None)
+    for dont in ('allow_unicode', 'Dumper'):
+        kw.pop(dont, None)
+
     try:
         transformed = yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, default_flow_style=default_flow_style, **kw)
     except Exception as e:
@@ -56,6 +61,11 @@ def to_yaml(a, *args, **kw):
 
 def to_nice_yaml(a, indent=4, *args, **kw):
     '''Make verbose, human readable yaml'''
+
+    # user should not set these since we need to override internally
+    for dont in ('allow_unicode', 'default_flow_style', 'Dumper'):
+        kw.pop(dont, None)
+
     try:
         transformed = yaml.dump(a, Dumper=AnsibleDumper, indent=indent, allow_unicode=True, default_flow_style=False, **kw)
     except Exception as e:
@@ -72,11 +82,20 @@ def to_json(a, *args, **kw):
     if 'preprocess_unsafe' not in kw:
         kw['preprocess_unsafe'] = False
 
+    # user should not set these since we need to override internally
+    for dont in ('cls', 'default'):
+        kw.pop(dont, None)
+
     return json.dumps(a, cls=AnsibleJSONEncoder, *args, **kw)
 
 
 def to_nice_json(a, indent=4, sort_keys=True, *args, **kw):
     '''Make verbose, human readable JSON'''
+
+    # user should not set these since we need to override internally
+    for dont in ('indent', 'sort_keys', 'separators'):
+        kw.pop(dont, None)
+
     return to_json(a, indent=indent, sort_keys=sort_keys, separators=(',', ': '), *args, **kw)
 
 

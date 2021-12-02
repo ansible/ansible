@@ -1,0 +1,2 @@
+bugfixes:
+  - json and yaml filters now explicitly remove possibly harmful or conflicting parameters.
