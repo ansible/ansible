@@ -1,15 +1,13 @@
 """Sanity test using validate-modules."""
 from __future__ import annotations
 
+import collections
 import json
 import os
 import typing as t
 
-from collections import defaultdict
-
-from . import DOCUMENTABLE_PLUGINS
-
 from . import (
+    DOCUMENTABLE_PLUGINS,
     SanitySingleVersion,
     SanityMessage,
     SanityFailure,
@@ -58,32 +56,6 @@ from ...host_configs import (
 )
 
 
-def _get_plugin_type_getter():
-    content = data_context().content
-    prefixes = dict(
-        (plugin_type, plugin_path + '/')
-        for plugin_type, plugin_path in content.plugin_paths.items()
-        if plugin_type != 'module' and plugin_type in DOCUMENTABLE_PLUGINS
-    )
-    exceptions = set()
-    for prefix in prefixes.values():
-        exceptions.add(prefix + '__init__.py')
-    if not data_context().content.collection:
-        exceptions.add('lib/ansible/plugins/cache/base.py')
-
-    def get_plugin_type(target):  # type: TestTarget -> t.Optional[str]
-        if target.path in exceptions:
-            return None
-        if target.module:
-            return 'module'
-        for plugin_type, prefix in prefixes.items():
-            if target.path.startswith(prefix):
-                return plugin_type
-        return None
-
-    return get_plugin_type
-
-
 class ValidateModulesTest(SanitySingleVersion):
     """Sanity test using validate-modules."""
 
@@ -94,25 +66,44 @@ class ValidateModulesTest(SanitySingleVersion):
             'deprecated-date',
         ])
 
+        content = data_context().content
+        self._prefixes = {
+            plugin_type: plugin_path + '/'
+            for plugin_type, plugin_path in content.plugin_paths.items()
+            if plugin_type != 'modules' and plugin_type in DOCUMENTABLE_PLUGINS
+        }
+        self._exclusions = {os.path.join(prefix, '__init__.py') for prefix in self._prefixes.values()}
+        if not data_context().content.collection:
+            self._exclusions.add('lib/ansible/plugins/cache/base.py')
+
     @property
     def error_code(self):  # type: () -> t.Optional[str]
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'A100'
 
+    def get_plugin_type(self, target):  # type: (TestTarget) -> t.Optional[str]
+        """Return the plugin type of the given target, or None if it is neither a plugin or module."""
+        if target.path in self._exclusions:
+            return None
+        if target.module:
+            return 'module'
+        for plugin_type, prefix in self._prefixes.items():
+            if target.path.startswith(prefix):
+                return plugin_type
+        return None
+
     def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test."""
-        get_plugin_type = _get_plugin_type_getter()
-        return [target for target in targets if get_plugin_type(target) is not None]
+        return [target for target in targets if self.get_plugin_type(target) is not None]
 
     def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
         env = ansible_environment(args, color=False)
 
         settings = self.load_processor(args)
 
-        get_plugin_type = _get_plugin_type_getter()
-        target_per_type = defaultdict(list)
+        target_per_type = collections.defaultdict(list)
         for target in targets.include:
-            target_per_type[get_plugin_type(target)].append(target)
+            target_per_type[self.get_plugin_type(target)].append(target)
 
         cmd = [
             python.path,
