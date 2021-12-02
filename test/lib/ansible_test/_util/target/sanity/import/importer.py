@@ -54,6 +54,14 @@ def main():
     except ImportError:
         from io import StringIO
 
+    try:
+        from importlib.util import spec_from_loader, module_from_spec
+        from importlib.machinery import SourceFileLoader
+    except ImportError:
+        HAS_PY3_LOADER = False
+    else:
+        HAS_PY3_LOADER = True
+
     if collection_full_name:
         # allow importing code from collections when testing a collection
         from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native, text_type
@@ -149,7 +157,24 @@ def main():
             self.loaded_modules = set()
             self.restrict_to_module_paths = restrict_to_module_paths
 
+        def find_spec(self, fullname, path=None, target=None):
+            loader = self._get_loader(fullname, path=path)
+            if loader is not None and HAS_PY3_LOADER:
+                return spec_from_loader(fullname, loader)
+            elif loader:
+                raise ImportError("Failed to import '%s' due to a bug in ansible-test. Check importlib imports for typos." % fullname)
+            else:
+                return None
+
         def find_module(self, fullname, path=None):
+            """Return self if the given fullname is restricted, otherwise return None.
+            :param fullname: str
+            :param path: str
+            :return: RestrictedModuleLoader | None
+            """
+            return self._get_loader(fullname, path=path)
+
+        def _get_loader(self, fullname, path=None):
             """Return self if the given fullname is restricted, otherwise return None.
             :param fullname: str
             :param path: str
@@ -190,6 +215,23 @@ def main():
 
             # not a namespace we care about
             return None
+
+        def create_module(self, spec):
+            return None
+
+        def exec_module(self, module):
+            fullname = module.__spec__.name
+            if fullname == 'ansible.module_utils.basic':
+                self.loaded_modules.add(fullname)
+                loader = SourceFileLoader(fullname, 'lib/ansible/module_utils/basic.py')
+                spec = spec_from_loader(fullname, loader)
+                real_module = module_from_spec(spec)
+                loader.exec_module(real_module)
+                real_module.AnsibleModule = ImporterAnsibleModule
+                real_module._load_params = lambda *args, **kwargs: {}  # pylint: disable=protected-access
+                sys.modules[fullname] = real_module
+                return
+            raise ImportError('import of "%s" is not allowed in this context' % fullname)
 
         def load_module(self, fullname):
             """Raise an ImportError.
@@ -513,33 +555,6 @@ def main():
                 warnings.filterwarnings(
                     "ignore",
                     "Python 3.5 support will be dropped in the next release of cryptography. Please upgrade your Python.")
-
-            if sys.version_info >= (3, 10):
-                # Temporary solution for Python 3.10 until find_spec is implemented in RestrictedModuleLoader.
-                # That implementation is dependent on find_spec being added to the controller's collection loader first.
-                # The warning text is: main.<locals>.RestrictedModuleLoader.find_spec() not found; falling back to find_module()
-                warnings.filterwarnings(
-                    "ignore",
-                    r"main\.<locals>\.RestrictedModuleLoader\.find_spec\(\) not found; falling back to find_module\(\)",
-                )
-                # Temporary solution for Python 3.10 until exec_module is implemented in RestrictedModuleLoader.
-                # That implementation is dependent on exec_module being added to the controller's collection loader first.
-                # The warning text is: main.<locals>.RestrictedModuleLoader.exec_module() not found; falling back to load_module()
-                warnings.filterwarnings(
-                    "ignore",
-                    r"main\.<locals>\.RestrictedModuleLoader\.exec_module\(\) not found; falling back to load_module\(\)",
-                )
-
-                # Temporary solution for Python 3.10 until find_spec is implemented in the controller's collection loader.
-                warnings.filterwarnings(
-                    "ignore",
-                    r"_Ansible.*Finder\.find_spec\(\) not found; falling back to find_module\(\)",
-                )
-                # Temporary solution for Python 3.10 until exec_module is implemented in the controller's collection loader.
-                warnings.filterwarnings(
-                    "ignore",
-                    r"_Ansible.*Loader\.exec_module\(\) not found; falling back to load_module\(\)",
-                )
 
             try:
                 yield
