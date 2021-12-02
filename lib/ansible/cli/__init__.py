@@ -524,7 +524,10 @@ class CLI(ABC):
 
         hosts = inventory.list_hosts(pattern)
         if not hosts and no_hosts is False:
-            raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
+            if C.HOST_FILTER_EMPTY:
+                display.warning("provided hosts list after filter was applied was empty")
+            else:
+                raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
 
         return hosts
 

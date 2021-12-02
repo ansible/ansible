@@ -420,6 +420,16 @@ LOCALHOST_WARNING:
   - {key: localhost_warning, section: defaults}
   type: boolean
   version_added: "2.6"
+HOST_FILTER_EMPTY:
+  name: Warning when using limit or filter and no hosts match
+  default: False
+  description:
+    - By default Ansible will error when no hosts match.
+  env: [{name: ANSIBLE_HOST_FILTER_EMPTY}]
+  ini:
+  - {key: host_filter_empty, section: defaults}
+  type: boolean
+  version_added: "2.13"
 DOC_FRAGMENT_PLUGIN_PATH:
   name: documentation fragment plugins path
   default: ~/.ansible/plugins/doc_fragments:/usr/share/ansible/plugins/doc_fragments
