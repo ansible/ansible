@@ -33,6 +33,8 @@ Playbook
 
 * The return value of the ``__repr__`` method of an undefined variable represented by the ``AnsibleUndefined`` object changed. ``{{ '%r'|format(undefined_variable) }}`` returns ``AnsibleUndefined(hint=None, obj=missing, name='undefined_variable')`` in 2.13 as opposed to just ``AnsibleUndefined`` in versions 2.12 and prior.
 
+* The ``finalize`` method is no longer exposed in the globals for use in templating. To convert ``None`` to an empty string the following expression can be used: ``{{ value if value is not none }}``.
+
 
 Command Line
 ============
