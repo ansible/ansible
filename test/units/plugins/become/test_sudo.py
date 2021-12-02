@@ -38,3 +38,30 @@ def test_sudo(mocker, parser, reset_cli_args):
 
     cmd = sudo.build_become_command('/bin/foo', sh)
     assert re.match(r"""sudo\s+-s\s-H\s+-p "\[sudo via ansible, key=.+?\] password:" -u foo /bin/bash -c 'echo BECOME-SUCCESS-.+? ; /bin/foo'""", cmd), cmd
+
+    sudo.set_options(direct={
+        'become_user': 'foo',
+        'become_flags': '-snH',
+        'become_pass': 'testpass',
+    })
+
+    cmd = sudo.build_become_command('/bin/foo', sh)
+    assert re.match(r"""sudo\s+-sH\s+-p "\[sudo via ansible, key=.+?\] password:" -u foo /bin/bash -c 'echo BECOME-SUCCESS-.+? ; /bin/foo'""", cmd), cmd
+
+    sudo.set_options(direct={
+        'become_user': 'foo',
+        'become_flags': '--non-interactive -s -H',
+        'become_pass': 'testpass',
+    })
+
+    cmd = sudo.build_become_command('/bin/foo', sh)
+    assert re.match(r"""sudo\s+-s\s-H\s+-p "\[sudo via ansible, key=.+?\] password:" -u foo /bin/bash -c 'echo BECOME-SUCCESS-.+? ; /bin/foo'""", cmd), cmd
+
+    sudo.set_options(direct={
+        'become_user': 'foo',
+        'become_flags': '--non-interactive -nC5 -s -H',
+        'become_pass': 'testpass',
+    })
+
+    cmd = sudo.build_become_command('/bin/foo', sh)
+    assert re.match(r"""sudo\s+-C5\s-s\s-H\s+-p "\[sudo via ansible, key=.+?\] password:" -u foo /bin/bash -c 'echo BECOME-SUCCESS-.+? ; /bin/foo'""", cmd), cmd
