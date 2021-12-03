@@ -486,7 +486,7 @@ def write_file(module, dest, content, resp):
         except Exception as e:
             if os.path.exists(tmpsrc):
                 os.remove(tmpsrc)
-            msg = format_message("failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)))
+            msg = format_message("failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)), resp)
             module.fail_json(msg=msg, **resp)
 
     if os.path.exists(tmpsrc):
