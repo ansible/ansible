@@ -137,10 +137,10 @@ class ServiceMgrFactCollector(BaseFactCollector):
                 service_mgr_name = 'upstart'
             elif os.path.exists('/sbin/openrc'):
                 service_mgr_name = 'openrc'
+            elif os.path.exists('/etc/init.d/'):
+                service_mgr_name = 'sysvinit
             elif self.is_systemd_managed_offline(module=module):
                 service_mgr_name = 'systemd'
-            elif os.path.exists('/etc/init.d/'):
-                service_mgr_name = 'sysvinit'
 
         if not service_mgr_name:
             # if we cannot detect, fallback to generic 'service'
