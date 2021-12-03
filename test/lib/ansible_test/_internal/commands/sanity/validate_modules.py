@@ -66,13 +66,14 @@ class ValidateModulesTest(SanitySingleVersion):
             'deprecated-date',
         ])
 
-        content = data_context().content
         self._prefixes = {
             plugin_type: plugin_path + '/'
-            for plugin_type, plugin_path in content.plugin_paths.items()
+            for plugin_type, plugin_path in data_context().content.plugin_paths.items()
             if plugin_type != 'modules' and plugin_type in DOCUMENTABLE_PLUGINS
         }
+
         self._exclusions = {os.path.join(prefix, '__init__.py') for prefix in self._prefixes.values()}
+
         if not data_context().content.collection:
             self._exclusions.add('lib/ansible/plugins/cache/base.py')
 
@@ -82,14 +83,17 @@ class ValidateModulesTest(SanitySingleVersion):
         return 'A100'
 
     def get_plugin_type(self, target):  # type: (TestTarget) -> t.Optional[str]
-        """Return the plugin type of the given target, or None if it is neither a plugin or module."""
+        """Return the plugin type of the given target, or None if it is not a plugin or module."""
         if target.path in self._exclusions:
             return None
+
         if target.module:
-            return 'module'
+            return 'modules'
+
         for plugin_type, prefix in self._prefixes.items():
             if target.path.startswith(prefix):
                 return plugin_type
+
         return None
 
     def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
@@ -102,6 +106,7 @@ class ValidateModulesTest(SanitySingleVersion):
         settings = self.load_processor(args)
 
         target_per_type = collections.defaultdict(list)
+
         for target in targets.include:
             target_per_type[self.get_plugin_type(target)].append(target)
 
@@ -135,10 +140,11 @@ class ValidateModulesTest(SanitySingleVersion):
                 display.warning('Cannot perform module comparison against the base branch because the base branch was not detected.')
 
         errors = []
+
         for plugin_type, plugin_targets in sorted(target_per_type.items()):
             paths = [target.path for target in plugin_targets]
             plugin_cmd = list(cmd)
-            if plugin_type != 'module':
+            if plugin_type != 'modules':
                 plugin_cmd += ['--plugin-type', plugin_type]
             plugin_cmd += paths
 
@@ -159,6 +165,7 @@ class ValidateModulesTest(SanitySingleVersion):
             messages = json.loads(stdout)
 
             plugin_errors = []
+
             for filename in messages:
                 output = messages[filename]
 
@@ -171,8 +178,7 @@ class ValidateModulesTest(SanitySingleVersion):
                         message=item['msg'],
                     ))
 
-            plugin_errors = settings.process_errors(plugin_errors, paths)
-            errors += plugin_errors
+            errors += settings.process_errors(plugin_errors, paths)
 
         if args.explain:
             return SanitySuccess(self.name)
