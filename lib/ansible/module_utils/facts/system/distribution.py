@@ -464,6 +464,10 @@ class DistributionFiles:
             centos_facts['distribution_release'] = 'Stream'
             return True, centos_facts
 
+        if "TencentOS Server" in data:
+            centos_facts['distribution'] = 'TencentOS'
+            return True, centos_facts
+
         return False, centos_facts
 
 
