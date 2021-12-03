@@ -1,2 +1,3 @@
 ssh_service: sshd
+tftp_service: tftp
 sleep_bin_path: /usr/bin/sleep

@@ -112,10 +112,24 @@
     enabled: true
   register: systemd_enable_ssh_2
 
+#tftp server allows for checking indirect status
+- name: get tftp package
+  package:
+    name: '{{ tftp_service }}-server'
+    state: present
+
+- name: Enable tftp indirect
+  systemd:
+    name: '{{ tftp_service }}'
+    enabled: true
+  register: systemd_enable_tftp
+
+
 - assert:
     that:
       - systemd_disable_ssh_2 is not changed
       - systemd_enable_ssh_1 is changed
       - systemd_enable_ssh_2 is not changed
+      - systemd_enable_tftp is changed
 
 - import_tasks: test_unit_template.yml
