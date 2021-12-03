@@ -144,8 +144,10 @@ class ValidateModulesTest(SanitySingleVersion):
         for plugin_type, plugin_targets in sorted(target_per_type.items()):
             paths = [target.path for target in plugin_targets]
             plugin_cmd = list(cmd)
+
             if plugin_type != 'modules':
                 plugin_cmd += ['--plugin-type', plugin_type]
+
             plugin_cmd += paths
 
             try:
