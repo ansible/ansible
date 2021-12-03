@@ -469,7 +469,8 @@ def write_file(module, dest, content, resp):
             else:
                 shutil.copyfileobj(content, f)
     except Exception as e:
-        os.remove(tmpsrc)
+        if os.path.exists(tmpsrc):
+            os.remove(tmpsrc)
         msg = format_message("Failed to create temporary content file: %s" % to_native(e), resp)
         module.fail_json(msg=msg, **resp)
 
@@ -483,11 +484,13 @@ def write_file(module, dest, content, resp):
         try:
             module.atomic_move(tmpsrc, dest)
         except Exception as e:
-            os.remove(tmpsrc)
-            msg = format_message("failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)), resp)
+            if os.path.exists(tmpsrc):
+                os.remove(tmpsrc)
+            msg = format_message("failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)))
             module.fail_json(msg=msg, **resp)
 
-    os.remove(tmpsrc)
+    if os.path.exists(tmpsrc):
+        os.remove(tmpsrc)
 
 
 def absolute_location(url, location):
