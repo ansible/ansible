@@ -69,10 +69,10 @@ class ValidateModulesTest(SanitySingleVersion):
         self._prefixes = {
             plugin_type: plugin_path + '/'
             for plugin_type, plugin_path in data_context().content.plugin_paths.items()
-            if plugin_type != 'modules' and plugin_type in DOCUMENTABLE_PLUGINS
+            if plugin_type in DOCUMENTABLE_PLUGINS
         }
 
-        self._exclusions = {os.path.join(prefix, '__init__.py') for prefix in self._prefixes.values()}
+        self._exclusions = set()
 
         if not data_context().content.collection:
             self._exclusions.add('lib/ansible/plugins/cache/base.py')
@@ -84,11 +84,11 @@ class ValidateModulesTest(SanitySingleVersion):
 
     def get_plugin_type(self, target):  # type: (TestTarget) -> t.Optional[str]
         """Return the plugin type of the given target, or None if it is not a plugin or module."""
-        if target.path in self._exclusions:
+        if target.path.endswith('/__init__.py'):
             return None
 
-        if target.module:
-            return 'modules'
+        if target.path in self._exclusions:
+            return None
 
         for plugin_type, prefix in self._prefixes.items():
             if target.path.startswith(prefix):
