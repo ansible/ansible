@@ -1,3 +1,4 @@
 ssh_service: sshd
+tftp_package: tftp-server
 tftp_service: tftp
 sleep_bin_path: /usr/bin/sleep
