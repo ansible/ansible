@@ -112,23 +112,31 @@
     enabled: true
   register: systemd_enable_ssh_2
 
-- name: get tftp package
+- name: get tftp package to test indirect service
   package:
     name: '{{ tftp_package }}'
     state: present
   when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat"
 
 #tftp server allows for checking indirect status
-- name: Enable indirect service
+- name: Enable indirect service 1
   systemd:
     name: '{{ tftp_service }}'
     enabled: true
-  register: systemd_enable_tftp_indirect
+  register: systemd_enable_tftp_indirect_1
+  when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat"
+
+- name: Enable indirect service 2
+  systemd:
+    name: '{{ tftp_service }}'
+    enabled: true
+  register: systemd_enable_tftp_indirect_2
   when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat"
 
 - assert:
     that:
-      - systemd_enable_tftp_indirect is changed
+      - systemd_enable_tftp_indirect_1 is changed
+      - systemd_enable_tftp_indirect_2 is not changed
   when: ansible_distribution == "CentOS" or ansible_distribution == "RedHat"
 
 - assert:
