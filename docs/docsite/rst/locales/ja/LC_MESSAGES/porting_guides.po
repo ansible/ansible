@@ -1614,7 +1614,7 @@ msgid "Changed ``role`` to ``prefix_role`` in ``netbox_prefix.py`` (https://gith
 msgstr "``netbox_prefix.py`` の ``role`` を ``prefix_role`` へ変更しました (https://github.com/netbox-community/ansible_modules/issues/9)。"
 
 #: ../../rst/porting_guides/porting_guide_2.10.rst:564
-msgid "Module failures when required fields aren't provided (https://github.com/netbox-community/ansible_modules/issues/24)"
+msgid "Module failures when required fields are not provided (https://github.com/netbox-community/ansible_modules/issues/24)"
 msgstr "必須フィールドが提供されていない場合のモジュールの失敗 (https://github.com/netbox-community/ansible_modules/issues/24)"
 
 #: ../../rst/porting_guides/porting_guide_2.10.rst:565
