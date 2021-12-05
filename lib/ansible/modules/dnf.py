@@ -512,18 +512,29 @@ class DnfModule(YumDnf):
             packagename = packagename[:-4]
 
         rpm_nevr_re = re.compile(r'(\S+)-(?:(\d*):)?(.*)-(~?\w+[\w.+]*)')
+
         try:
-            arch = None
-            nevr, arch = self._split_package_arch(packagename)
-            if arch:
-                packagename = nevr
-            rpm_nevr_match = rpm_nevr_re.match(packagename)
-            if rpm_nevr_match:
-                name, epoch, version, release = rpm_nevr_re.match(packagename).groups()
-                if not version or not version.split('.')[0].isdigit():
-                    return None
+            # Get package nevra if installed.
+            pkg_installed = self._whatprovides(packagename, available=False)
+            if self.state in ['present', 'installed'] and pkg_installed:
+                name = pkg_installed.name
+                epoch = pkg_installed.epoch
+                version = pkg_installed.version
+                release = pkg_installed.release
+                arch = pkg_installed.arch
+
             else:
-                return None
+                arch = None
+                nevr, arch = self._split_package_arch(packagename)
+                if arch:
+                    packagename = nevr
+                rpm_nevr_match = rpm_nevr_re.match(packagename)
+                if rpm_nevr_match:
+                    name, epoch, version, release = rpm_nevr_re.match(packagename).groups()
+                    if not version or not version.split('.')[0].isdigit():
+                        return None
+                else:
+                    return None
         except AttributeError as e:
             self.module.fail_json(
                 msg='Error attempting to parse package: %s, %s' % (packagename, to_native(e)),
@@ -906,27 +917,32 @@ class DnfModule(YumDnf):
             }
 
         except dnf.exceptions.Error as e:
-            if to_text("already installed") in to_text(e):
-                return {'failed': False, 'msg': '', 'failure': ''}
-            else:
-                return {
-                    'failed': True,
-                    'msg': "Unknown Error occurred for package {0}.".format(pkg_spec),
-                    'failure': " ".join((pkg_spec, to_native(e))),
-                    'rc': 1,
-                    "results": []
-                }
+            return {
+                'failed': True,
+                'msg': "Unknown Error occurred for package {0}.".format(pkg_spec),
+                'failure': " ".join((pkg_spec, to_native(e))),
+                'rc': 1,
+                "results": []
+            }
 
-    def _whatprovides(self, filepath):
+    # available=True will check package in any repo available and installed.
+    # available=False only checks the package against whats currently installed.
+    def _whatprovides(self, filepath, available=True):
         self.base.read_all_repos()
-        available = self.base.sack.query().available()
-        # Search in file
-        files_filter = available.filter(file=filepath)
-        # And Search in provides
-        pkg_spec = files_filter.union(available.filter(provides=filepath)).run()
+        # This may return more than 1 package it's installed or available in repo
+        if available:
+            available = self.base.sack.query().available()
+            # Search in file
+            files_filter = available.filter(file=filepath)
+            # And Search in provides
+            pkg_spec = files_filter.union(available.filter(provides=filepath)).run()
+        else:
+            # Only returns nevra format of package if installed
+            # get_best_query returns one package rather than a list of possibly multiple providing packages.
+            pkg_spec = dnf.subject.Subject(filepath).get_best_query(sack=self.base.sack).installed().run()
 
         if pkg_spec:
-            return pkg_spec[0].name
+            return pkg_spec[0]
 
     def _parse_spec_group_file(self):
         pkg_specs, grp_specs, module_specs, filenames = [], [], [], []
@@ -942,7 +958,7 @@ class DnfModule(YumDnf):
                 # like "dnf install /usr/bin/vi"
                 pkg_spec = self._whatprovides(name)
                 if pkg_spec:
-                    pkg_specs.append(pkg_spec)
+                    pkg_specs.append(pkg_spec.name)
                     continue
             elif name.startswith("@") or ('/' in name):
                 if not already_loaded_comps:

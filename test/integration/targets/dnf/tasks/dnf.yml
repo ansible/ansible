@@ -96,7 +96,6 @@
 - assert:
     that:
       - dnf_result is not changed
-      - dnf_result.results|length == 0
 
 - name: install sos again
   dnf:
@@ -355,6 +354,12 @@
     state: present
   register: dnf_result
 
+- name: Verify Custom Group not updated
+  dnf:
+    name: "@Custom Group"
+    state: installed
+  register: custom_grp_res
+
 - name: check dinginessentail with rpm
   command: rpm -q dinginessentail
   failed_when: False
@@ -367,6 +372,7 @@
     - dnf_result is changed
     - "'results' in dnf_result"
     - dinginessentail_result.rc == 0
+    - custom_grp_res is not changed
 
 - name: install the group again
   dnf:
@@ -591,6 +597,76 @@
   assert:
     that:
       - "not dnf_result is changed"
+
+- name: Get java-11-openjdk
+  dnf:
+    name: java-11-openjdk
+    state: latest
+  register: java_install_res
+
+- name: verify java package
+  assert:
+    that:
+      - "java_install_res is changed"
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version('9', '<')
+
+- name: downgrade java-11-openjdk
+  command: dnf downgrade java-11-openjdk -y
+  register: java_downgrade_res
+
+- name: verify java is downgraded
+  assert:
+    that:
+      - "java_downgrade_res is changed"
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version('9', '<')
+
+- name: verify java installed
+  dnf:
+    name: java-11-openjdk
+    state: installed
+  register: java_installed_res
+
+- name: make sure java didn't change
+  assert:
+    that:
+      - "java_installed_res is not changed"
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version('9', '<')
+
+- name: verify java present
+  dnf:
+    name: java-11-openjdk
+    state: present
+  register: java_present_res
+
+- name: make sure java didn't change
+  assert:
+    that:
+      - "java_present_res is not changed"
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version('9', '<')
+  
+- name: install latest java
+  dnf:
+    name: java-11-openjdk
+    state: latest
+  register: java_latest_res
+
+- name: make sure java updated
+  assert:
+    that:
+      - "java_latest_res is changed"
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version('9', '<')
+
+- name: remove java
+  dnf:
+    name: java-11-openjdk
+    state: absent
+  register: java_absent_res
+
+- name: make sure java is removed
+  assert:
+    that:
+      - "java_absent_res is changed"
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version is version('9', '<')
 
 - name: try to install not compatible arch rpm, should fail
   dnf:

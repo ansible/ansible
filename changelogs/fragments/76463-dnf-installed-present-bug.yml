@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf - issue with dict unpacking which causes packages to get updated regardless when using state present state installed
