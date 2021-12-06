@@ -475,6 +475,12 @@ def main():
         with warnings.catch_warnings():
             warnings.simplefilter('error')
 
+            # If vendoring is in use (lib/ansible/_vendor/), then vendored modules may already be loaded after the first file is tested.
+            # To avoid test failures, the warning about this condition must be ignored.
+            warnings.filterwarnings(
+                "ignore",
+                "One or more Python packages bundled by this ansible-core distribution were already loaded ")
+
             if sys.version_info[0] == 2:
                 warnings.filterwarnings(
                     "ignore",
