@@ -1083,6 +1083,17 @@ releases:
     fragments:
     - v2.12.0rc1_summary.yaml
     release_date: '2021-10-18'
+  2.12.1:
+    changes:
+      release_summary: '| Release Date: 2021-12-06
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Dazed and Confused
+    fragments:
+    - v2.12.1_summary.yaml
+    release_date: '2021-12-06'
   2.12.1rc1:
     changes:
       bugfixes:
