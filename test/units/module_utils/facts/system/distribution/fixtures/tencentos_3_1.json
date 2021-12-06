@@ -1,0 +1,50 @@
+{
+    "name": "TencentOS 3.1",
+    "distro": {
+        "codename": "Final",
+        "id": "tencentos",
+        "name": "TencentOS Server",
+        "version": "3.1",
+        "version_best": "3.1",
+        "lsb_release_info": {},
+        "os_release_info": {
+            "name": "TencentOS Server",
+            "version": "3.1 (Final)",
+            "id": "tencentos",
+            "id_like": "rhel fedora centos",
+            "version_id": "3.1",
+            "platform_id": "platform:el8",
+            "pretty_name": "TencentOS Server 3.1 (Final)",
+            "ansi_color": "0;31",
+            "cpe_name": "cpe:/o:tencentos:tencentos:3",
+            "home_url": "https://tlinux.qq.com/",
+            "bug_report_url": "https://tlinux.qq.com/",
+            "centos_mantisbt_project": "CentOS-8",
+            "centos_mantisbt_project_version": "8",
+            "redhat_support_product": "centos",
+            "redhat_support_product_version": "8",
+            "name_orig": "CentOS Linux",
+            "codename": "Final"
+        }
+    },
+    "input": {
+        "/etc/centos-release": "NAME=\"TencentOS Server\"\nVERSION=\"3.1 (Final)\"\nID=\"tencentos\"\nID_LIKE=\"rhel fedora centos\"\nVERSION_ID=\"3.1\"\nPLATFORM_ID=\"platform:el8\"\nPRETTY_NAME=\"TencentOS Server 3.1 (Final)\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:tencentos:tencentos:3\"\nHOME_URL=\"https://tlinux.qq.com/\"\nBUG_REPORT_URL=\"https://tlinux.qq.com/\"\n\nCENTOS_MANTISBT_PROJECT=\"CentOS-8\"\nCENTOS_MANTISBT_PROJECT_VERSION=\"8\"\nREDHAT_SUPPORT_PRODUCT=\"centos\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"8\"\nNAME_ORIG=\"CentOS Linux\"\n",
+        "/etc/redhat-release": "CentOS Linux release 8.4.2105 (Core)\n",
+        "/etc/system-release": "NAME=\"TencentOS Server\"\nVERSION=\"3.1 (Final)\"\nID=\"tencentos\"\nID_LIKE=\"rhel fedora centos\"\nVERSION_ID=\"3.1\"\nPLATFORM_ID=\"platform:el8\"\nPRETTY_NAME=\"TencentOS Server 3.1 (Final)\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:tencentos:tencentos:3\"\nHOME_URL=\"https://tlinux.qq.com/\"\nBUG_REPORT_URL=\"https://tlinux.qq.com/\"\n\nCENTOS_MANTISBT_PROJECT=\"CentOS-8\"\nCENTOS_MANTISBT_PROJECT_VERSION=\"8\"\nREDHAT_SUPPORT_PRODUCT=\"centos\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"8\"\nNAME_ORIG=\"CentOS Linux\"\n",
+        "/etc/os-release": "NAME=\"TencentOS Server\"\nVERSION=\"3.1 (Final)\"\nID=\"tencentos\"\nID_LIKE=\"rhel fedora centos\"\nVERSION_ID=\"3.1\"\nPLATFORM_ID=\"platform:el8\"\nPRETTY_NAME=\"TencentOS Server 3.1 (Final)\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:tencentos:tencentos:3\"\nHOME_URL=\"https://tlinux.qq.com/\"\nBUG_REPORT_URL=\"https://tlinux.qq.com/\"\n\nCENTOS_MANTISBT_PROJECT=\"CentOS-8\"\nCENTOS_MANTISBT_PROJECT_VERSION=\"8\"\nREDHAT_SUPPORT_PRODUCT=\"centos\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"8\"\nNAME_ORIG=\"CentOS Linux\"\n",
+        "/usr/lib/os-release": "NAME=\"CentOS Linux\"\nVERSION=\"8\"\nID=\"centos\"\nID_LIKE=\"rhel fedora\"\nVERSION_ID=\"8\"\nPLATFORM_ID=\"platform:el8\"\nPRETTY_NAME=\"CentOS Linux 8\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:centos:centos:8\"\nHOME_URL=\"https://centos.org/\"\nBUG_REPORT_URL=\"https://bugs.centos.org/\"\nCENTOS_MANTISBT_PROJECT=\"CentOS-8\"\nCENTOS_MANTISBT_PROJECT_VERSION=\"8\"\n"
+    },
+    "platform.dist": [
+        "tencentos",
+        "3.1",
+        "Final"
+    ],
+    "result": {
+        "distribution": "TencentOS",
+        "distribution_version": "3.1",
+        "distribution_release": "Final",
+        "distribution_major_version": "3",
+        "os_family": "RedHat"
+    },
+    "platform.release": "5.4.32-19-0001"
+}
