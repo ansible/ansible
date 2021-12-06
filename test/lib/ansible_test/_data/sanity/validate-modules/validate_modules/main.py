@@ -605,7 +605,7 @@ class ModuleValidator(Validator):
             if isinstance(child, (ast.FunctionDef, ast.ClassDef)):
                 linenos.append(child.lineno)
 
-        return min(linenos)
+        return min(linenos) if linenos else None
 
     def _find_main_call(self, look_for="main"):
         """ Ensure that the module ends with:
@@ -2230,7 +2230,7 @@ class ModuleValidator(Validator):
             main = self._find_main_call()
             self._find_module_utils(main)
             self._find_has_import()
-            first_callable = self._get_first_callable()
+            first_callable = self._get_first_callable() or 1000000  # use a bogus "high" line number if no callable exists
             self._ensure_imports_below_docs(doc_info, first_callable)
             self._check_for_subprocess()
             self._check_for_os_call()
