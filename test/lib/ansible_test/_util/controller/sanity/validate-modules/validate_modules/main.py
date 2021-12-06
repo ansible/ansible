@@ -606,7 +606,8 @@ class ModuleValidator(Validator):
             if isinstance(child, (ast.FunctionDef, ast.ClassDef)):
                 linenos.append(child.lineno)
 
-        return min(linenos)
+        if linenos:
+            return min(linenos)
 
     def _find_has_import(self):
         for child in self.ast.body:
