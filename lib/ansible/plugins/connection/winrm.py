@@ -204,6 +204,8 @@ try:
 except ImportError:
     HAS_IPADDRESS = False
 
+import backoff
+
 display = Display()
 
 
@@ -476,6 +478,10 @@ class Connection(ConnectionBase):
             stream['@End'] = 'true'
         protocol.send_message(xmltodict.unparse(rq))
 
+    def _winrmexec_backoff_hdlr(details):
+        print ("Backing off {wait:0.1f} seconds after {tries} tries calling function {target} with args {args} and kwargs {kwargs}".format(**details))
+
+    @backoff.on_exception(backoff.expo, AnsibleConnectionFailure, max_tries=8, on_backoff=_winrmexec_backoff_hdlr)
     def _winrm_exec(self, command, args=(), from_exec=False, stdin_iterator=None):
         if not self.protocol:
             self.protocol = self._winrm_connect()
