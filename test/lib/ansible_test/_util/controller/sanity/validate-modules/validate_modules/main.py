@@ -606,7 +606,7 @@ class ModuleValidator(Validator):
             if isinstance(child, (ast.FunctionDef, ast.ClassDef)):
                 linenos.append(child.lineno)
 
-        return min(linenos)
+        return min(linenos) if linenos else None
 
     def _find_has_import(self):
         for child in self.ast.body:
@@ -2179,7 +2179,7 @@ class ModuleValidator(Validator):
             self._find_rejectlist_imports()
             self._find_module_utils()
             self._find_has_import()
-            first_callable = self._get_first_callable()
+            first_callable = self._get_first_callable() or 1000000  # use a bogus "high" line number if no callable exists
             self._ensure_imports_below_docs(doc_info, first_callable)
             self._check_for_subprocess()
             self._check_for_os_call()
