@@ -65,7 +65,7 @@
 - key: tags
   description:
   - A list of tags you want to associate with the collection for indexing/searching.
-  - A tag name has the same character requirements as C(namespace) and C(name).
+  - A tag name has the same character requirements as C(namespace) and C(name). See L(here,https://docs.ansible.com/ansible/devel/dev_guide/developing_collections_structure.html) for details.
   type: list
 
 - key: dependencies

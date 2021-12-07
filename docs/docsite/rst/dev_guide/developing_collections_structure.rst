@@ -51,6 +51,20 @@ galaxy.yml
 
 A collection must have a ``galaxy.yml`` file that contains the necessary information to build a collection artifact. See :ref:`collections_galaxy_meta` for details.
 
+You can include one or more of the following tags in your collection to help users filter by tag in Red Hat Automation Hub:
+
+* cloud
+* linux
+* networking
+* storage
+* security
+* windows
+* infrastructure
+* monitoring
+* tools
+* database
+* application
+
 .. _collections_doc_dir:
 
 docs directory
@@ -70,7 +84,7 @@ For community collections included in the Ansible PyPI package, docs.ansible.com
      toctree:
        - scenario_guide
 
-The index page of the documentation for your collection displays the title you define in ``docs/docsite/extra-docs.yml`` with a link to your extra documentation. For an example, see the `community.docker collection repo <https://github.com/ansible-collections/community.docker/tree/main/docs/docsite>`_ and the `community.docker collection documentation <https://docs.ansible.com/ansible/latest/collections/community/docker/index.html>`_. 
+The index page of the documentation for your collection displays the title you define in ``docs/docsite/extra-docs.yml`` with a link to your extra documentation. For an example, see the `community.docker collection repo <https://github.com/ansible-collections/community.docker/tree/main/docs/docsite>`_ and the `community.docker collection documentation <https://docs.ansible.com/ansible/latest/collections/community/docker/index.html>`_.
 
 Plugin and module documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
