@@ -72,8 +72,6 @@ ansible-playbook check_ssh_defaults.yml "$@" -i test_connection.inventory
 # ensure we can load from ini cfg
 ANSIBLE_CONFIG=./test_ssh_defaults.cfg ansible-playbook verify_config.yml "$@"
 
-# ensure we handle cp with spaces correctly
-ANSIBLE_SSH_CONTROL_PATH='/tmp/ssh cp with spaces'
-./posix.sh "$@"
-[ -f "${ANSIBLE_SSH_CONTROL_PATH}" ]
-rm "${ANSIBLE_SSH_CONTROL_PATH}"
+# ensure we handle cp with spaces correctly, otherwise would fail with
+# `"Failed to connect to the host via ssh: command-line line 0: keyword controlpath extra arguments at end of line"`
+ANSIBLE_SSH_CONTROL_PATH='/tmp/ssh cp with spaces' ansible -m ping -c ssh -i 'localhost,' all
