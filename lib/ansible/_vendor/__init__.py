@@ -39,7 +39,6 @@ def _ensure_vendored_path_entry():
         already_loaded_vendored_modules = set(sys.modules.keys()).intersection(vendored_module_names)
 
         if already_loaded_vendored_modules:
-            # NOTE: If this message is changed, the matching warning filter in ansible-test must also be updated in `importer.py` for the import sanity test.
             warnings.warn('One or more Python packages bundled by this ansible-core distribution were already '
                           'loaded ({0}). This may result in undefined behavior.'.format(', '.join(sorted(already_loaded_vendored_modules))))
 
