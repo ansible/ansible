@@ -464,6 +464,10 @@ class DistributionFiles:
             centos_facts['distribution_release'] = 'Stream'
             return True, centos_facts
 
+        if "TencentOS Server" in data:
+            centos_facts['distribution'] = 'TencentOS'
+            return True, centos_facts
+
         return False, centos_facts
 
 
@@ -480,7 +484,7 @@ class Distribution(object):
     OS_FAMILY_MAP = {'RedHat': ['RedHat', 'Fedora', 'CentOS', 'Scientific', 'SLC',
                                 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
                                 'OEL', 'Amazon', 'Virtuozzo', 'XenServer', 'Alibaba',
-                                'EulerOS', 'openEuler', 'AlmaLinux', 'Rocky'],
+                                'EulerOS', 'openEuler', 'AlmaLinux', 'Rocky', 'TencentOS'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
                                 'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux',
                                 'Pop!_OS', 'Parrot', 'Pardus GNU/Linux'],
