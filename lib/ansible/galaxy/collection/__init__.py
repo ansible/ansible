@@ -791,6 +791,8 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns):
     # We always ignore .pyc and .retry files as well as some well known version control directories. The ignore
     # patterns can be extended by the build_ignore key in galaxy.yml
     b_ignore_patterns = [
+        b'MANIFEST.json',
+        b'FILES.json',
         b'galaxy.yml',
         b'galaxy.yaml',
         b'.git',
