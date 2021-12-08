@@ -114,8 +114,13 @@ def main():
         # do not support collection loading when not testing a collection
         collection_loader = None
 
-    # remove all modules under the ansible package, except the preloaded vendor module
-    list(map(sys.modules.pop, [m for m in sys.modules if m.partition('.')[0] == ansible.__name__ and m != vendor_module_name]))
+    if collection_loader and import_type == 'plugin':
+        # do not unload ansible code for collection plugin (not module) tests
+        # doing so could result in the collection loader being initialized multiple times
+        pass
+    else:
+        # remove all modules under the ansible package, except the preloaded vendor module
+        list(map(sys.modules.pop, [m for m in sys.modules if m.partition('.')[0] == ansible.__name__ and m != vendor_module_name]))
 
     if import_type == 'module':
         # pre-load an empty ansible package to prevent unwanted code in __init__.py from loading
@@ -437,7 +442,7 @@ def main():
         try:
             yield
         finally:
-            if import_type == 'plugin':
+            if import_type == 'plugin' and not collection_loader:
                 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
                 _AnsibleCollectionFinder._remove()  # pylint: disable=protected-access
 
@@ -485,6 +490,11 @@ def main():
 
         with warnings.catch_warnings():
             warnings.simplefilter('error')
+
+            if collection_loader and import_type == 'plugin':
+                warnings.filterwarnings(
+                    "ignore",
+                    "AnsibleCollectionFinder has already been configured")
 
             if sys.version_info[0] == 2:
                 warnings.filterwarnings(
