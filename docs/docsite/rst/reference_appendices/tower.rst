@@ -3,6 +3,10 @@
 Red Hat Ansible Automation Platform
 ===================================
 
+.. important::
+
+  Red Hat Ansible Automation Platform will soon be available on Microsoft Azure. `Sign up to preview the experience <https://www.redhat.com/en/engage/ansible-microsoft-azure-e-202110220735>`_.
+  
 `Red Hat Ansible Automation Platform <https://www.ansible.com/products/automation-platform>`_ (RHAAP) is an integrated solution for operationalizing Ansible across your team, organization, and enterprise. The platform includes a controller with a web console and REST API, analytics, execution environments, and much more.
 
 RHAAP gives you role-based access control, including control over the use of securely stored credentials for SSH and other services. You can sync your inventory with a wide variety of cloud sources, and powerful multi-playbook workflows allow you to model complex processes.
