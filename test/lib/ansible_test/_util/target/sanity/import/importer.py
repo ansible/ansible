@@ -8,17 +8,28 @@ def main():
     Main program function used to isolate globals from imported code.
     Changes to globals in imported modules on Python 2.x will overwrite our own globals.
     """
+    import os
+    import sys
+    import types
+
+    # preload an empty ansible._vendor module to prevent use of any embedded modules during the import test
+    vendor_module_name = 'ansible._vendor'
+
+    vendor_module = types.ModuleType(vendor_module_name)
+    vendor_module.__file__ = os.path.join(os.path.sep.join(os.path.abspath(__file__).split(os.path.sep)[:-8]), 'lib/ansible/_vendor/__init__.py')
+    vendor_module.__path__ = []
+    vendor_module.__package__ = vendor_module_name
+
+    sys.modules[vendor_module_name] = vendor_module
+
     import ansible
     import contextlib
     import datetime
     import json
-    import os
     import re
     import runpy
     import subprocess
-    import sys
     import traceback
-    import types
     import warnings
 
     ansible_path = os.path.dirname(os.path.dirname(ansible.__file__))
@@ -103,8 +114,8 @@ def main():
         # do not support collection loading when not testing a collection
         collection_loader = None
 
-    # remove all modules under the ansible package
-    list(map(sys.modules.pop, [m for m in sys.modules if m.partition('.')[0] == ansible.__name__]))
+    # remove all modules under the ansible package, except the preloaded vendor module
+    list(map(sys.modules.pop, [m for m in sys.modules if m.partition('.')[0] == ansible.__name__ and m != vendor_module_name]))
 
     if import_type == 'module':
         # pre-load an empty ansible package to prevent unwanted code in __init__.py from loading
