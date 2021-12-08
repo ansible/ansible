@@ -1,6 +1,10 @@
 Microsoft Azure Guide
 =====================
 
+.. important::
+
+  Red Hat Ansible Automation Platform will soon be available on Microsoft Azure. `Sign up to preview the experience <https://www.redhat.com/en/engage/ansible-microsoft-azure-e-202110220735>`_.
+  
 Ansible includes a suite of modules for interacting with Azure Resource Manager, giving you the tools to easily create
 and orchestrate infrastructure on the Microsoft Azure Cloud.
 
