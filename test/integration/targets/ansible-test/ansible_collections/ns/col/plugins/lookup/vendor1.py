@@ -15,6 +15,8 @@ EXAMPLES = '''#'''
 RETURN = '''#'''
 
 from ansible.plugins.lookup import LookupBase
+# noinspection PyUnresolvedReferences
+from ansible.plugins import loader  # import the loader to verify it works when the collection loader has already been loaded
 
 try:
     import demo
