@@ -3,6 +3,10 @@
 Ansible Automation Hub
 ======================
 
+.. important::
+
+  Red Hat Ansible Automation Platform will soon be available on Microsoft Azure. `Sign up to preview the experience <https://www.redhat.com/en/engage/ansible-microsoft-azure-e-202110220735>`_. 
+
 `Ansible Automation Hub <https://www.ansible.com/products/automation-hub>`_ is the official location to discover and download supported :ref:`collections <collections>`, included as part of an Ansible Automation Platform subscription. These content collections contain modules, plugins, roles, and playbooks in a downloadable package.
 
 Ansible Automation Hub gives you direct access to trusted content collections from Red Hat and Certified Partners. You can find content by topic or Ansible Partner organizations.
