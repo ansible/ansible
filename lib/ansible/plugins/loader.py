@@ -1150,7 +1150,8 @@ def _does_collection_support_ansible_version(requirement_string, ansible_version
 
 def _configure_collection_loader():
     if AnsibleCollectionConfig.collection_finder:
-        display.warning('AnsibleCollectionFinder has already been configured')
+        # this must be a Python warning so that it can be filtered out by the import sanity test
+        warnings.warn('AnsibleCollectionFinder has already been configured')
         return
 
     finder = _AnsibleCollectionFinder(C.config.get_config_value('COLLECTIONS_PATHS'), C.config.get_config_value('COLLECTIONS_SCAN_SYS_PATH'))
