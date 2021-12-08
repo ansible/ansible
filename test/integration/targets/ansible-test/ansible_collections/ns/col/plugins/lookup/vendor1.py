@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = '''
-name: vendor2
+name: vendor1
 short_description: lookup
 description: Lookup.
 author:
