@@ -346,8 +346,8 @@ class StrategyBase:
                 conditional = task.evaluate_conditional(templar, task_vars)
             except AnsibleError as e:
                 tr = TaskResult(
-                    host=host.name,
-                    task=task._uuid,
+                    host=host,
+                    task=task,
                     return_data={
                         'failed': True,
                         'msg': to_text(e),
@@ -357,8 +357,8 @@ class StrategyBase:
             else:
                 if not conditional:
                     tr = TaskResult(
-                        host=host.name,
-                        task=task._uuid,
+                        host=host,
+                        task=task,
                         return_data={
                             'changed': False,
                             'skipped': True,
@@ -379,8 +379,8 @@ class StrategyBase:
                 if not include_file:
                     raise ForkShortCircuit(
                         TaskResult(
-                            host=host.name,
-                            task=task._uuid,
+                            host=host,
+                            task=task,
                             return_data={
                                 'failed': True,
                                 'msg': 'No include file was specified to the include',
@@ -395,8 +395,8 @@ class StrategyBase:
                         include_file = templar.template(include_file)
                 except AnsibleError as e:
                     tr = TaskResult(
-                        host=host.name,
-                        task=task._uuid,
+                        host=host,
+                        task=task,
                         return_data={
                             'failed': True,
                             'msg': to_text(e),
@@ -405,8 +405,8 @@ class StrategyBase:
                     )
                 else:
                     tr = TaskResult(
-                        host=host.name,
-                        task=task._uuid,
+                        host=host,
+                        task=task,
                         return_data={
                             'include': include_file,
                             'include_args': include_args,
@@ -417,8 +417,8 @@ class StrategyBase:
             elif task.action == 'include_role':
                 include_args = task.args.copy()
                 tr = TaskResult(
-                    host=host.name,
-                    task=task._uuid,
+                    host=host,
+                    task=task,
                     return_data={
                         'include_args': include_args,
                     }
