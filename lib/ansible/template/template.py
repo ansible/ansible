@@ -19,12 +19,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import jinja2
+from jinja2.nativetypes import NativeTemplate
 
 __all__ = ['AnsibleJ2Template']
 
 
-class AnsibleJ2Template(jinja2.environment.Template):
+class AnsibleJ2Template(NativeTemplate):
     '''
     A helper class, which prevents Jinja2 from running AnsibleJ2Vars through dict().
     Without this, {% include %} and similar will create new contexts unlike the special
