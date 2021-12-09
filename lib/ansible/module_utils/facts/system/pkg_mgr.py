@@ -113,12 +113,22 @@ class PkgMgrFactCollector(BaseFactCollector):
                     pkg_mgr_name = 'apt'
         return pkg_mgr_name
 
+    def pkg_mgrs(self, collected_facts):
+        # Filter out the /usr/bin/pkg because on Altlinux it is actually the
+        # perl-Package (not Solaris package manager).
+        # Since the pkg5 takes precedence over apt, this workaround
+        # is required to select the suitable package manager on Altlinux.
+        if collected_facts['ansible_os_family'] == 'Altlinux':
+            return filter(lambda pkg: pkg['path'] != '/usr/bin/pkg', PKG_MGRS)
+        else:
+            return PKG_MGRS
+
     def collect(self, module=None, collected_facts=None):
         facts_dict = {}
         collected_facts = collected_facts or {}
 
         pkg_mgr_name = 'unknown'
-        for pkg in PKG_MGRS:
+        for pkg in self.pkg_mgrs(collected_facts):
             if os.path.exists(pkg['path']):
                 pkg_mgr_name = pkg['name']
 
