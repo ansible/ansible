@@ -347,7 +347,7 @@ class TestFailure(TestResult):
         if re.search(r'^[0-9.]+$', ansible_version):
             url_version = '.'.join(ansible_version.split('.')[:2])
 
-        testing_docs_url = 'https://docs.ansible.com/ansible/%s/dev_guide/testing' % url_version
+        testing_docs_url = 'https://docs.ansible.com/ansible-core/%s/dev_guide/testing' % url_version
 
         url = '%s/%s/' % (testing_docs_url, self.command)
 

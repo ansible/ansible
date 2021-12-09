@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Update help links to reference ``ansible-core`` instead of ``ansible``.
