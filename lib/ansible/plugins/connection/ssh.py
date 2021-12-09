@@ -775,7 +775,7 @@ class Connection(ConnectionBase):
                         self.port,
                         self.user
                     )
-                b_args = (b"-o", b"ControlPath=" + to_bytes(shlex.quote(self.control_path % dict(directory=cpdir)), errors='surrogate_or_strict'))
+                b_args = (b"-o", shlex.quote(b"ControlPath=" + to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict')))
                 self._add_args(b_command, b_args, u"found only ControlPersist; added ControlPath")
 
         # Finally, we add any caller-supplied extras.
