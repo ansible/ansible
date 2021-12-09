@@ -311,6 +311,9 @@ class _AnsiblePathHookFinder:
         if finder is None:
             return None
         elif HAS_FILE_FINDER and isinstance(finder, FileFinder):
+            # this codepath is erroneously used under some cases in py3,
+            # and the find_module method on FileFinder does not accept the path arg
+            # see https://github.com/pypa/setuptools/pull/2918
             return finder.find_module(fullname)
         else:
             return finder.find_module(fullname, path=[self._pathctx])
