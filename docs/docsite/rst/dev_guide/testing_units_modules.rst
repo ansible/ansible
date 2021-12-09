@@ -199,9 +199,9 @@ above, either by throwing an exception or ensuring that they haven't been called
     module = MagicMock()
     module.exit_json.side_effect = AnsibleExitJson(Exception)
     with self.assertRaises(AnsibleExitJson) as result:
-        return = my_module.test_this_function(module, argument)
+        results = my_module.test_this_function(module, argument)
     module.fail_json.assert_not_called()
-    assert return["changed"] == True
+    assert results["changed"] == True
 
 API definition with unit test cases
 -----------------------------------
