@@ -487,7 +487,7 @@ class ModuleValidator(Validator):
                     path=self.object_path,
                     code='use-short-gplv3-license',
                     msg='Found old style GPLv3 license header: '
-                        'https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_documenting.html#copyright'
+                        'https://docs.ansible.com/ansible-core/devel/dev_guide/developing_modules_documenting.html#copyright'
                 )
 
     def _check_for_subprocess(self):
