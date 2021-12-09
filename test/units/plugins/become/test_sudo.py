@@ -11,7 +11,7 @@ import re
 
 from ansible import context
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins.loader import become_loader
+from ansible.plugins.loader import become_loader, shell_loader
 
 
 def test_sudo(mocker, parser, reset_cli_args):
@@ -43,6 +43,11 @@ def test_sudo(mocker, parser, reset_cli_args):
     assert (re.match("""%s %s -p "%s" -u %s %s -c 'echo %s; %s'""" % (sudo_exe, sudo_flags.replace('-n', ''),
                                                                       r"\[sudo via ansible, key=.+?\] password:", play_context.become_user,
                                                                       default_exe, success, default_cmd), cmd) is not None)
+
+    sudo = become_loader.get('sudo')
+    sh = shell_loader.get('sh')
+    sh.executable = "/bin/bash"
+
     cmd = sudo.build_become_command('/bin/foo', sh)
     assert re.match(r"""sudo\s+-s\s-H\s+-p "\[sudo via ansible, key=.+?\] password:" -u foo /bin/bash -c 'echo BECOME-SUCCESS-.+? ; /bin/foo'""", cmd), cmd
 
