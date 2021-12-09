@@ -97,11 +97,15 @@ class AnsibleJ2Vars(Mapping):
             try:
                 value = self._templar.template(variable)
             except AnsibleUndefinedVariable as e:
-                from ansible.template import AnsibleUndefined
-
-                # Instead of failing here prematurely, return AnsibleUndefined which will
-                # fail on the first usage allowing us to do lazy evaluation.
-                return AnsibleUndefined(name=varname, hint=f"{variable}: {e.message}")
+                # Instead of failing here prematurely, return an Undefined
+                # object which fails only after its first usage allowing us to
+                # do lazy evaluation and passing it into filters/tests that
+                # operate on such objects.
+                return self._templar.environment.undefined(
+                    hint=f"{variable}: {e.message}",
+                    name=varname,
+                    exc=AnsibleUndefinedVariable,
+                )
             except Exception as e:
                 msg = getattr(e, 'message', None) or to_native(e)
                 raise AnsibleError("An unhandled exception occurred while templating '%s'. "
