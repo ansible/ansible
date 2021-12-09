@@ -64,7 +64,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
     UNSTABLE = 'unstable/'
     UNSUPPORTED = 'unsupported/'
 
-    EXPLAIN_URL = 'https://docs.ansible.com/ansible/devel/dev_guide/testing/sanity/integration-aliases.html'
+    EXPLAIN_URL = 'https://docs.ansible.com/ansible-core/devel/dev_guide/testing/sanity/integration-aliases.html'
 
     TEMPLATE_DISABLED = """
     The following integration tests are **disabled** [[explain]({explain_url}#disabled)]:
