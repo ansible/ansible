@@ -103,7 +103,7 @@ class LookupModule(LookupBase):
         # capture options
         convert_data_p = self.get_option('convert_data')
         lookup_template_vars = self.get_option('template_vars')
-        jinja2_native = self.get_option('jinja2_native')
+        jinja2_native = self.get_option('jinja2_native') and C.DEFAULT_JINJA2_NATIVE
         variable_start_string = self.get_option('variable_start_string')
         variable_end_string = self.get_option('variable_end_string')
         comment_start_string = self.get_option('comment_start_string')
