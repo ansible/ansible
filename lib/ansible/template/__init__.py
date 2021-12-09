@@ -350,17 +350,21 @@ class AnsibleContext(Context):
         a key or value which contains jinja2 syntax and would otherwise
         lose the AnsibleUnsafe value.
         '''
-        if isinstance(val, dict):
+        unsafe = False
+        if getattr(val, '__UNSAFE__', False) is True:
+            # already unsafe, no need to check more
+            unsafe = True
+        elif isinstance(val, Mapping):
             for key in val.keys():
                 if self._is_unsafe(val[key]):
-                    return True
-        elif isinstance(val, list):
+                    unsafe = True
+                    break
+        elif isinstance(val, Sequence) and not isinstance(val, string_types):
             for item in val:
                 if self._is_unsafe(item):
-                    return True
-        elif getattr(val, '__UNSAFE__', False) is True:
-            return True
-        return False
+                    unsafe = True
+                    break
+        return unsafe
 
     def _update_unsafe(self, val):
         if val is not None and not self.unsafe and self._is_unsafe(val):

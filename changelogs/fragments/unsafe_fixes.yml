@@ -1,0 +1,2 @@
+bugfixes:
+  - templating, using a better definition of types/classes to wrap unsafe contexts in.

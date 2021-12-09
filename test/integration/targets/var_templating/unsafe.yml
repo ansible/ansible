@@ -1,0 +1,18 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - set_fact:
+        top_level:
+          unsafe_value: !unsafe '{{ dont_expand }}'
+    - add_host:
+        name: another
+        ansible_connection: local
+        ansible_python_interpreter: '{{ ansible_playbook_python }}'
+
+- hosts: another
+  gather_facts: false
+  tasks:
+    - set_fact:
+        maybe_bad: '{{ hostvars.localhost.top_level }}'
+    - debug:
+        msg: '{{ maybe_bad }}'
