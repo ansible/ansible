@@ -141,7 +141,7 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
         current_version = get_collection_version()
 
     # Updates to schema MUST also be reflected in the documentation
-    # ~https://docs.ansible.com/ansible/devel/dev_guide/developing_collections.html
+    # ~https://docs.ansible.com/ansible-core/devel/dev_guide/developing_collections.html
 
     # plugin_routing schema
 
