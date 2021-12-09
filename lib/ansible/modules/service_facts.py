@@ -15,7 +15,7 @@ short_description: Return service state information as fact data
 description:
      - Return service state information as fact data for various service management utilities.
 version_added: "2.5"
-requirements: ["Any of the following supported init systems: systemd, sysv, upstart, AIX SRC"]
+requirements: ["Any of the following supported init systems: systemd, sysv, upstart, openrc, AIX SRC"]
 extends_documentation_fragment:
   -  action_common_attributes
   -  action_common_attributes.facts
@@ -112,9 +112,11 @@ class ServiceScanService(BaseService):
             return None
         initctl_path = self.module.get_bin_path("initctl")
         chkconfig_path = self.module.get_bin_path("chkconfig")
+        rc_status_path = self.module.get_bin_path("rc-status")
+        rc_update_path = self.module.get_bin_path("rc-update")
 
         # sysvinit
-        if service_path is not None and chkconfig_path is None:
+        if service_path is not None and chkconfig_path is None and rc_status_path is None:
             rc, stdout, stderr = self.module.run_command("%s --status-all 2>&1 | grep -E \"\\[ (\\+|\\-) \\]\"" % service_path, use_unsafe_shell=True)
             for line in stdout.split("\n"):
                 line_data = line.split()
@@ -191,6 +193,30 @@ class ServiceScanService(BaseService):
                             service_state = 'stopped'
                     service_data = {"name": service_name, "state": service_state, "status": service_status, "source": "sysv"}
                     services[service_name] = service_data
+        # openrc
+        elif rc_status_path is not None and rc_update_path is not None:
+            all_services_runlevels = {}
+            rc, stdout, stderr = self.module.run_command("%s -a -s -m 2>&1 | grep '^ ' | tr -d '[]'" % rc_status_path, use_unsafe_shell=True)
+            rc_u, stdout_u, stderr_u = self.module.run_command("%s show -v 2>&1 | grep '|'" % rc_update_path, use_unsafe_shell=True)
+            for line in stdout_u.split('\n'):
+                line_data = line.split('|')
+                if len(line_data) < 2:
+                    continue
+                service_name = line_data[0].strip()
+                runlevels = line_data[1].strip()
+                if not runlevels:
+                    all_services_runlevels[service_name] = None
+                else:
+                    all_services_runlevels[service_name] = runlevels.split()
+            for line in stdout.split('\n'):
+                line_data = line.split()
+                if len(line_data) < 2:
+                    continue
+                service_name = line_data[0]
+                service_state = line_data[1]
+                service_runlevels = all_services_runlevels[service_name]
+                service_data = {"name": service_name, "runlevels": service_runlevels, "state": service_state, "source": "openrc"}
+                services[service_name] = service_data
         return services
 
 
