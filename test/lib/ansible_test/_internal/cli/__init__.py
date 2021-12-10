@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import typing as t
 
 from .argparsing import (
     CompositeActionCompletionFinder,
