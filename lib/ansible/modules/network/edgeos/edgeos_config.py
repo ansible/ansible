@@ -40,6 +40,7 @@ options:
         compared with the existing configuration on the remote
         device.
     type: list
+    elements: str
   src:
     description:
       - The C(src) argument specifies the path to the source config
