@@ -1,0 +1,2 @@
+minor_changes:
+  - Clarify in a comment that unrolling an iterator in ``Templar._finalize`` is actually necessary. Also switch to using the ``_unroll_iterator`` decorator directly to deduplicate code in ``Templar._finalize``. (https://github.com/ansible/ansible/pull/76436)
