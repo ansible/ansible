@@ -324,6 +324,7 @@ def integration_test_environment(
             display.info('Copying %s/ to %s/' % (dir_src, dir_dst), verbosity=2)
 
             if not args.explain:
+                # noinspection PyTypeChecker
                 shutil.copytree(to_bytes(dir_src), to_bytes(dir_dst), symlinks=True)
 
         for file_src, file_dst in file_copies:

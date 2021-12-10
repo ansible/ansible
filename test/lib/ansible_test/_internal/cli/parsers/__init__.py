@@ -73,7 +73,7 @@ class DelegatedControllerParser(ControllerNamespaceParser, TypeParser):
     """Composite argument parser for the controller when delegation is supported."""
     def get_stateless_parsers(self):  # type: () -> t.Dict[str, Parser]
         """Return a dictionary of type names and type parsers."""
-        parsers = dict(
+        parsers: t.Dict[str, Parser] = dict(
             origin=OriginParser(),
             docker=DockerParser(controller=True),
         )
@@ -99,7 +99,7 @@ class PosixTargetParser(TargetNamespaceParser, TypeParser):
     """Composite argument parser for a POSIX target."""
     def get_stateless_parsers(self):  # type: () -> t.Dict[str, Parser]
         """Return a dictionary of type names and type parsers."""
-        parsers = dict(
+        parsers: t.Dict[str, Parser] = dict(
             controller=ControllerParser(),
             docker=DockerParser(controller=False),
         )

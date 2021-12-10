@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import errno
+# noinspection PyCompatibility
 import fcntl
+import importlib.util
 import inspect
 import os
 import pkgutil
@@ -20,6 +22,7 @@ import shlex
 import typing as t
 
 from struct import unpack, pack
+# noinspection PyCompatibility
 from termios import TIOCGWINSZ
 
 from .encoding import (
@@ -590,9 +593,6 @@ class Display:
             message = message.replace(self.clear, color)
             message = '%s%s%s' % (color, message, self.clear)
 
-        if sys.version_info[0] == 2:
-            message = to_bytes(message)
-
         print(message, file=fd)
         fd.flush()
 
@@ -771,23 +771,12 @@ def load_module(path, name):  # type: (str, str) -> None
     if name in sys.modules:
         return
 
-    if sys.version_info >= (3, 4):
-        import importlib.util
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    # noinspection PyUnresolvedReferences
+    spec.loader.exec_module(module)
 
-        spec = importlib.util.spec_from_file_location(name, path)
-        module = importlib.util.module_from_spec(spec)
-        # noinspection PyUnresolvedReferences
-        spec.loader.exec_module(module)
-
-        sys.modules[name] = module
-    else:
-        # noinspection PyDeprecation
-        import imp  # pylint: disable=deprecated-module
-
-        # load_source (and thus load_module) require a file opened with `open` in text mode
-        with open(to_bytes(path)) as module_file:
-            # noinspection PyDeprecation
-            imp.load_module(name, module_file, path, ('.py', 'r', imp.PY_SOURCE))
+    sys.modules[name] = module
 
 
 def sanitize_host_name(name):
