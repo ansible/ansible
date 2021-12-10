@@ -50,6 +50,7 @@ yumdnf_argument_spec = dict(
         update_cache=dict(type='bool', default=False, aliases=['expire-cache']),
         update_only=dict(required=False, default="no", type='bool'),
         validate_certs=dict(type='bool', default=True),
+        sslverify=dict(type='bool', default=True),
         lock_timeout=dict(type='int', default=30),
     ),
     required_one_of=[['name', 'list', 'update_cache']],
@@ -95,6 +96,7 @@ class YumDnf(with_metaclass(ABCMeta, object)):
         self.update_only = self.module.params['update_only']
         self.update_cache = self.module.params['update_cache']
         self.validate_certs = self.module.params['validate_certs']
+        self.sslverify = self.module.params['sslverify']
         self.lock_timeout = self.module.params['lock_timeout']
 
         # It's possible someone passed a comma separated string since it used
