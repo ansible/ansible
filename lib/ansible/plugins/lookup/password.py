@@ -110,7 +110,7 @@ EXAMPLES = """
 
 - name: create random but idempotent password
   set_fact:
-    password: "{{ lookup('password', '/dev/null', seed=inventory_hostname) }}"
+    password: "{{ lookup('password', '/dev/null seed=' + inventory_hostname) }}"
 """
 
 RETURN = """
