@@ -172,6 +172,13 @@ options:
     type: bool
     default: "yes"
     version_added: "2.7"
+  sslverify:
+    description:
+      - Disables SSL validation of the repository server for this transaction.
+      - This should be set to C(no) if one of the configured repositories is using an untrusted or self-signed certificate.
+    type: bool
+    default: "yes"
+    version_added: "2.13"
   allow_downgrade:
     description:
       - Specify if the named package and version is allowed to downgrade
@@ -587,7 +594,7 @@ class DnfModule(YumDnf):
             results=[]
         )
 
-    def _configure_base(self, base, conf_file, disable_gpg_check, installroot='/'):
+    def _configure_base(self, base, conf_file, disable_gpg_check, installroot='/', sslverify=True):
         """Configure the dnf Base object."""
 
         conf = base.conf
@@ -615,6 +622,9 @@ class DnfModule(YumDnf):
 
         # Don't prompt for user confirmations
         conf.assumeyes = True
+
+        # Set certificate validation
+        conf.sslverify = sslverify
 
         # Set installroot
         conf.installroot = installroot
@@ -686,10 +696,10 @@ class DnfModule(YumDnf):
                 for repo in repos.get_matching(repo_pattern):
                     repo.enable()
 
-    def _base(self, conf_file, disable_gpg_check, disablerepo, enablerepo, installroot):
+    def _base(self, conf_file, disable_gpg_check, disablerepo, enablerepo, installroot, sslverify):
         """Return a fully configured dnf Base object."""
         base = dnf.Base()
-        self._configure_base(base, conf_file, disable_gpg_check, installroot)
+        self._configure_base(base, conf_file, disable_gpg_check, installroot, sslverify)
         try:
             # this method has been supported in dnf-4.2.17-6 or later
             # https://bugzilla.redhat.com/show_bug.cgi?id=1788212
@@ -1350,7 +1360,7 @@ class DnfModule(YumDnf):
         if self.update_cache and not self.names and not self.list:
             self.base = self._base(
                 self.conf_file, self.disable_gpg_check, self.disablerepo,
-                self.enablerepo, self.installroot
+                self.enablerepo, self.installroot, self.sslverify
             )
             self.module.exit_json(
                 msg="Cache updated",
@@ -1368,7 +1378,7 @@ class DnfModule(YumDnf):
         if self.list:
             self.base = self._base(
                 self.conf_file, self.disable_gpg_check, self.disablerepo,
-                self.enablerepo, self.installroot
+                self.enablerepo, self.installroot, self.sslverify
             )
             self.list_items(self.list)
         else:
@@ -1381,7 +1391,7 @@ class DnfModule(YumDnf):
                 )
             self.base = self._base(
                 self.conf_file, self.disable_gpg_check, self.disablerepo,
-                self.enablerepo, self.installroot
+                self.enablerepo, self.installroot, self.sslverify
             )
 
             if self.with_modules:

@@ -119,7 +119,13 @@ options:
     type: bool
     default: "yes"
     version_added: "2.1"
-
+  sslverify:
+    description:
+      - Disables SSL validation of the repository server for this transaction.
+      - This should be set to C(no) if one of the configured repositories is using an untrusted or self-signed certificate.
+    type: bool
+    default: "yes"
+    version_added: "2.13"
   update_only:
     description:
       - When using latest, only update installed packages. Do not install packages.
@@ -551,6 +557,11 @@ class YumModule(YumDnf):
             if self.disable_excludes:
                 self._yum_base.conf.disable_excludes = self.disable_excludes
 
+            # setting conf.sslverify allows retrieving the repo's metadata
+            # without validating the certificate, but that does not allow
+            # package installation from a bad-ssl repo.
+            self._yum_base.conf.sslverify = self.sslverify
+
             # A sideeffect of accessing conf is that the configuration is
             # loaded and plugins are discovered
             self.yum_base.conf
@@ -955,6 +966,11 @@ class YumModule(YumDnf):
         cmd = self.yum_basecmd + [action] + pkgs
         if self.releasever:
             cmd.extend(['--releasever=%s' % self.releasever])
+
+        # setting sslverify using --setopt is required as conf.sslverify only
+        # affects the metadata retrieval.
+        if not self.sslverify:
+            cmd.extend(['--setopt', 'sslverify=0'])
 
         if self.module.check_mode:
             self.module.exit_json(changed=True, results=res['results'], changes=dict(installed=pkgs))
