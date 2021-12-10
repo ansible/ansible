@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import sys
+import typing as t
 
 # This import should occur as early as possible.
 # It must occur before subprocess has been imported anywhere in the current process.
