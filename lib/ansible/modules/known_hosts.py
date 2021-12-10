@@ -56,6 +56,13 @@ options:
     choices: [ "absent", "present" ]
     default: "present"
     type: str
+attributes:
+  check_mode:
+    support: full
+  diff_mode:
+    support: full
+extends_documentation_fragment:
+  - action_common_attributes
 author:
 - Matthew Vernon (@mcv21)
 '''
