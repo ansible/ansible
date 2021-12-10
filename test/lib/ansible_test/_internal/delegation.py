@@ -53,7 +53,6 @@ from .ci import (
 from .host_configs import (
     OriginConfig,
     PythonConfig,
-    VirtualPythonConfig,
 )
 
 from .connections import (
@@ -254,9 +253,9 @@ def generate_command(
         ANSIBLE_TEST_CONTENT_ROOT=content_root,
     )
 
-    if isinstance(args.controller.python, VirtualPythonConfig):
-        # Expose the ansible and ansible_test library directories to the virtual environment.
-        # This is only required when running from an install.
+    if isinstance(args.controller, OriginConfig):
+        # Expose the ansible and ansible_test library directories to the Python environment.
+        # This is only required when delegation is used on the origin host.
         library_path = process_scoped_temporary_directory(args)
 
         os.symlink(ANSIBLE_LIB_ROOT, os.path.join(library_path, 'ansible'))
