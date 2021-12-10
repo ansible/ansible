@@ -41,7 +41,7 @@ attributes:
     connection:
         support: none
     check_mode:
-        support: none
+        support: full
     delegation:
         support: none
     diff_mode:
