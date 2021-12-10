@@ -261,7 +261,7 @@ def _is_rolled(value):
 
 
 def _unroll_iterator(func):
-    """Wrapper function, that intercepts the result of a filter
+    """Wrapper function, that intercepts the result of a templating
     and auto unrolls a generator, so that users are not required to
     explicitly use ``|list`` to unroll.
     """
@@ -916,22 +916,23 @@ class Templar:
         # so just return it as-is
         return variable
 
+    @_unroll_iterator
     def _finalize(self, thing):
-        '''
-        A custom finalize method for jinja2, which prevents None from being returned. This
-        avoids a string of ``"None"`` as ``None`` has no importance in YAML.
+        """A custom finalize method for jinja2, which prevents None from being
+        returned. This avoids a string of ``"None"`` as ``None`` has no
+        importance in YAML.
 
-        If using ANSIBLE_JINJA2_NATIVE we bypass this and return the actual value always
-        '''
-        if _is_rolled(thing):
-            # Auto unroll a generator, so that users are not required to
-            # explicitly use ``|list`` to unroll
-            # This only affects the scenario where the final result of templating
-            # is a generator, and not where a filter creates a generator in the middle
-            # of a template. See ``_unroll_iterator`` for the other case. This is probably
-            # unncessary
-            return list(thing)
+        The method is decorated with ``_unroll_iterator`` so that users are not
+        required to explicitly use ``|list`` to unroll a generator. This only
+        affects the scenario where the final result of templating
+        is a generator, e.g. ``range``, ``dict.items()`` and so on. Filters
+        which can produce a generator in the middle of a template are already
+        wrapped with ``_unroll_generator`` in ``JinjaPluginIntercept``.
 
+        If using jinja2_native we bypass this and return the actual value always.
+        """
+        # FIXME remove this special case for jinja2_native by creating separate
+        #       _finalized methods in AnsibleEnvironment/AnsibleNativeEnvironment.
         if self.jinja2_native:
             return thing
 
