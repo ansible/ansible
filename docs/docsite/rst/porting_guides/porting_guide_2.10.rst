@@ -112,7 +112,7 @@ community.general
 Major Changes
 -------------
 
-- Restricting the version of the community.okd collection to 1.0.0. The previously included version, 1.0.1, had a dependency on kubernetes.core and thus required the installation of an additional collection that was not included in Ansible 2.10. Version 1.0.0 is essentially identical to 1.0.1, except that it uses community.kubernetes, wihch is included in Ansible 2.10.
+- Restricting the version of the community.okd collection to 1.0.0. The previously included version, 1.0.1, had a dependency on kubernetes.core and thus required the installation of an additional collection that was not included in Ansible 2.10. Version 1.0.0 is essentially identical to 1.0.1, except that it uses community.kubernetes, which is included in Ansible 2.10.
 
 ovirt.ovirt
 ~~~~~~~~~~~
@@ -229,7 +229,7 @@ netbox.netbox
 
 - nb_inventory - Add ``dns_name`` option that adds ``dns_name`` to the host when ``True`` and device has a primary IP address. (#394)
 - nb_inventory - Add ``status`` as a ``group_by`` option. (398)
-- nb_inventory - Move around ``extracted_primary_ip`` to allow for ``config_context`` or ``custom_field`` to overwite. (#377)
+- nb_inventory - Move around ``extracted_primary_ip`` to allow for ``config_context`` or ``custom_field`` to overwrite. (#377)
 - nb_inventory - Services are now a list of integers due to NetBox 2.10 changes. (#396)
 - nb_lookup - Allow ID to be passed in and use ``.get`` instead of ``.filter``. (#376)
 - nb_lookup - Allow ``api_endpoint`` and ``token`` to be found via env. (#391)
@@ -339,7 +339,7 @@ community.docker
 - docker_image - the ``source`` option is now mandatory (https://github.com/ansible-collections/community.docker/pull/1).
 - docker_image - the ``use_tls`` option has been removed. Use ``tls`` and ``validate_certs`` instead (https://github.com/ansible-collections/community.docker/pull/1).
 - docker_image - the default of the ``build.pull`` option changed to ``false`` (https://github.com/ansible-collections/community.docker/pull/1).
-- docker_image_facts - this alias is on longer availabe, use ``docker_image_info`` instead (https://github.com/ansible-collections/community.docker/pull/1).
+- docker_image_facts - this alias is on longer available, use ``docker_image_info`` instead (https://github.com/ansible-collections/community.docker/pull/1).
 - docker_network - no longer returns ``ansible_facts`` (https://github.com/ansible-collections/community.docker/pull/1).
 - docker_network - the ``ipam_options`` option has been removed. Use ``ipam_config`` instead (https://github.com/ansible-collections/community.docker/pull/1).
 - docker_service - no longer returns ``ansible_facts`` (https://github.com/ansible-collections/community.docker/pull/1).
@@ -468,9 +468,9 @@ community.grafana
 Breaking Changes
 ----------------
 
-- cisco.nxos.nxos_igmp_interface - no longer supports the deprecated ``oif_prefix`` and ``oif_source`` options. These have been superceeded by ``oif_ps``.
+- cisco.nxos.nxos_igmp_interface - no longer supports the deprecated ``oif_prefix`` and ``oif_source`` options. These have been superseded by ``oif_ps``.
 - community.grafana.grafana_dashboard - the parameter ``message`` is renamed to ``commit_message`` since ``message`` is used by Ansible Core engine internally.
-- purestorage.flashblade.purefb_fs - no longer supports the deprecated ``nfs`` option. This has been superceeded by ``nfsv3``.
+- purestorage.flashblade.purefb_fs - no longer supports the deprecated ``nfs`` option. This has been superseded by ``nfsv3``.
 
 amazon.aws
 ~~~~~~~~~~
@@ -561,7 +561,7 @@ netbox.netbox
 - Change ``ip-addresses`` key in netbox inventory plugin to ``ip_addresses`` (https://github.com/netbox-community/ansible_modules/issues/139)
 - Changed ``group`` to ``tenant_group`` in ``netbox_tenant.py`` (https://github.com/netbox-community/ansible_modules/issues/9)
 - Changed ``role`` to ``prefix_role`` in ``netbox_prefix.py`` (https://github.com/netbox-community/ansible_modules/issues/9)
-- Module failures when required fields arent provided (https://github.com/netbox-community/ansible_modules/issues/24)
+- Module failures when required fields aren't provided (https://github.com/netbox-community/ansible_modules/issues/24)
 - Renamed ``netbox_interface`` to ``netbox_device_interface`` (https://github.com/netbox-community/ansible_modules/issues/9)
 - This version has a few breaking changes due to new namespace and collection name. I felt it necessary to change the name of the lookup plugin and inventory plugin just not to have a non descriptive namespace call to use them. Below is an example:
   ``netbox.netbox.netbox`` would be used for both inventory plugin and lookup plugin, but in different contexts so no collision will arise, but confusion will.
@@ -937,7 +937,7 @@ community.general
 - redfish_config - Deprecate ``bios_attribute_name`` and ``bios_attribute_value`` in favor of new `bios_attributes`` option.
 - redfish_config - the ``bios_attribute_name`` and ``bios_attribute_value`` options will be removed. To maintain the existing behavior use the ``bios_attributes`` option instead.
 - redfish_config and redfish_command - the behavior to select the first System, Manager, or Chassis resource to modify when multiple are present will be removed. Use the new ``resource_id`` option to specify target resource to modify.
-- redfish_config, redfish_command - Behavior to modify the first System, Mananger, or Chassis resource when multiple are present is deprecated. Use the new ``resource_id`` option to specify target resource to modify.
+- redfish_config, redfish_command - Behavior to modify the first System, Manager, or Chassis resource when multiple are present is deprecated. Use the new ``resource_id`` option to specify target resource to modify.
 - xbps - the ``force`` option never had any effect. It is now deprecated, and will be removed in 3.0.0 (https://github.com/ansible-collections/community.general/pull/568).
 
 community.vmware
