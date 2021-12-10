@@ -511,6 +511,7 @@
     that:
       - "'Command would have run if not in check mode' in result.msg"
       - result.skipped
+      - not result.changed
 
 - name: test check mode creates/removes message
   command:
@@ -524,6 +525,7 @@
     that:
       - "'Command would have run if not in check mode' in result.msg"
       - "'skipped' not in result"
+      - result.changed
 
 - name: command symlink handling
   block:
