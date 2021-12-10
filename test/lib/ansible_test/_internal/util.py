@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import errno
+# noinspection PyCompatibility
 import fcntl
 import inspect
 import os
@@ -20,6 +21,7 @@ import shlex
 import typing as t
 
 from struct import unpack, pack
+# noinspection PyCompatibility
 from termios import TIOCGWINSZ
 
 from .encoding import (
