@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import typing as t
 
 from .argparsing import (
     CompositeActionCompletionFinder,
@@ -42,6 +43,7 @@ def parse_args(argv=None):  # type: (t.Optional[t.List[str]]) -> argparse.Namesp
         argv = sys.argv[1:]
     else:
         argv = argv[1:]
+
     args = parser.parse_args(argv)
 
     if args.explain and not args.verbosity:
