@@ -11,7 +11,7 @@ import os
 import sys
 
 
-def main(args=None):  # type: (t.Optional[t.List[str]]) -> None
+def main(args=None):
     """Main program entry point."""
     ansible_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     source_root = os.path.join(ansible_root, 'test', 'lib')
