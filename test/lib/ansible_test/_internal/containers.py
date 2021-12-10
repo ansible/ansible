@@ -286,7 +286,7 @@ class ContainerAccess:
 
     def to_dict(self):  # type: () -> t.Dict[str, t.Any]
         """Return a dict of the current instance."""
-        value = dict(
+        value: t.Dict[str, t.Any] = dict(
             host_ip=self.host_ip,
             names=self.names,
         )
