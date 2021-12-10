@@ -590,9 +590,6 @@ class Display:
             message = message.replace(self.clear, color)
             message = '%s%s%s' % (color, message, self.clear)
 
-        if sys.version_info[0] == 2:
-            message = to_bytes(message)
-
         print(message, file=fd)
         fd.flush()
 
