@@ -72,7 +72,7 @@ options:
   include:
     description:
       - List of directory and file entries that you would like to extract from the archive. If C(include) 
-        is not empty (default), only files listed here will be extracted.
+        is not empty, only files listed here will be extracted.
       - Mutually exclusive with C(exclude).
     type: list
     default: []
