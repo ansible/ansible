@@ -1139,6 +1139,7 @@ def main():
         DEBIAN_FRONTEND='noninteractive',
         DEBIAN_PRIORITY='critical',
         LANG=locale,
+        LANGUGE=locale,
         LC_ALL=locale,
         LC_MESSAGES=locale,
         LC_CTYPE=locale,
