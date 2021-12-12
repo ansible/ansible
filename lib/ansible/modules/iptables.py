@@ -33,7 +33,7 @@ attributes:
     platform:
         platforms: linux
 notes:
-  - This module just deals with individual rules.If you need advanced
+  - This module just deals with individual rules. If you need advanced
     chaining of rules the recommended way is to template the iptables restore
     file.
 options:
