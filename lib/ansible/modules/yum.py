@@ -748,13 +748,13 @@ class YumModule(YumDnf):
                     # If a repo with `repo_gpgcheck=1` is added and the repo GPG
                     # key was never accepted, querying this repo will throw an
                     # error: 'repomd.xml signature could not be verified'. In that
-                    # situation we need to run `yum -y makecache` which will accept
+                    # situation we need to run `yum -y makecache fast` which will accept
                     # the key and try again.
                     if 'repomd.xml signature could not be verified' in to_native(e):
                         if self.releasever:
-                            self.module.run_command(self.yum_basecmd + ['makecache'] + ['--releasever=%s' % self.releasever])
+                            self.module.run_command(self.yum_basecmd + ['makecache', 'fast', '--releasever=%s' % self.releasever])
                         else:
-                            self.module.run_command(self.yum_basecmd + ['makecache'])
+                            self.module.run_command(self.yum_basecmd + ['makecache', 'fast'])
                         pkgs = self.yum_base.returnPackagesByDep(req_spec) + \
                             self.yum_base.returnInstalledPackagesByDep(req_spec)
                     else:
