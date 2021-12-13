@@ -252,10 +252,10 @@ The ``contains`` test is designed to work with the ``select``, ``reject``, ``sel
       - debug:
           msg: "{{ (lacp_groups|selectattr('interfaces', 'contains', 'em1')|first).master }}"
 
-.. versionadded:: 2.4
-
 Testing if a list value is True
 ===============================
+
+.. versionadded:: 2.4
 
 You can use `any` and `all` to check if any or all elements in a list are true or not
 
