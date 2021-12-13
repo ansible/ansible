@@ -170,7 +170,7 @@ class LookupModule(LookupBase):
             if isinstance(term, Mapping):
                 self.set_options(var_options=variables, direct=term)
                 files = self.get_option('files')
-            elif: isinstance(term, string_types):
+            elif isinstance(term, string_types):
                 files = [term]
             elif isinstance(term, Sequence):
                 partial, skip = self._process_terms(term, variables, kwargs)
