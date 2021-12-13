@@ -712,7 +712,7 @@ class StrategyBase:
                         for myhost in host_list:
                             for k in data.keys():
                                 if aggregate:
-                                    self._tqm._stats.update_custom_stats(k, data[k], myhost)
+                                    self._tqm._stats.update_custom_stats(k, data[k], myhost, list_merge=result_item['ansible_stats']['list_merge'])
                                 else:
                                     self._tqm._stats.set_custom_stats(k, data[k], myhost)
 
