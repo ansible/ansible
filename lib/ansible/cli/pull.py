@@ -123,6 +123,7 @@ class PullCLI(CLI):
                                  help="don't make any changes; instead, try to predict some of the changes that may occur")
         self.parser.add_argument("--diff", default=C.DIFF_ALWAYS, dest='diff', action='store_true',
                                  help="when changing (small) files and templates, show the differences in those files; works great with --check")
+        self.parser.add_argument("-r", "--role-file", dest='role_file', default=None, help='requirements file to install before running the playbook')
 
     def post_process_args(self, options):
         options = super(PullCLI, self).post_process_args(options)
@@ -255,6 +256,17 @@ class PullCLI(CLI):
             display.display("Repository has not changed, quitting.")
             return 0
 
+        # Install Galaxy Requirements
+        requirements = self.select_requirements(context.CLIARGS['dest'])
+        if requirements is not None:
+            cmd = '%s/ansible-galaxy install --force --role-file %s' % (bin_path, requirements)
+            display.vvvv('running %s' % cmd)
+            os.chdir(context.CLIARGS['dest'])
+            rc, b_out, b_err = run_cmd(cmd, live=True)
+
+            if rc != 0:
+                display.warning('unable to run galaxy install: %s' % b_err)
+
         playbook = self.select_playbook(context.CLIARGS['dest'])
         if playbook is None:
             raise AnsibleOptionsError("Could not find a playbook to run.")
@@ -307,12 +319,35 @@ class PullCLI(CLI):
         return rc
 
     @staticmethod
-    def try_playbook(path):
+    def try_file(path):
         if not os.path.exists(path):
             return 1
         if not os.access(path, os.R_OK):
             return 2
         return 0
+
+    @staticmethod
+    def select_requirements(path):
+        requirements = None
+        errors = []
+        files = []
+        if context.CLIARGS['role_file'] is not None:
+            files.append(context.CLIARGS['role_file'])
+        files.append('requirements.yml')
+        files.append('requirements.yaml')
+        files.append('roles/requirements.yml')
+        files.append('roles/requirements.yaml')
+        for req in files:
+            req_path = os.path.join(path, req)
+            rc = PullCLI.try_file(req_path)
+            if rc == 0:
+                requirements = req_path
+                break
+            else:
+                errors.append("%s: %s" % (req_path, PullCLI.PLAYBOOK_ERRORS[rc]))
+        if requirements is None:
+            display.warning("\n".join(errors))
+        return requirements
 
     @staticmethod
     def select_playbook(path):
@@ -322,7 +357,7 @@ class PullCLI(CLI):
             playbooks = []
             for book in context.CLIARGS['args']:
                 book_path = os.path.join(path, book)
-                rc = PullCLI.try_playbook(book_path)
+                rc = PullCLI.try_file(book_path)
                 if rc != 0:
                     errors.append("%s: %s" % (book_path, PullCLI.PLAYBOOK_ERRORS[rc]))
                     continue
@@ -338,7 +373,7 @@ class PullCLI(CLI):
             shorthostpb = os.path.join(path, fqdn.split('.')[0] + '.yml')
             localpb = os.path.join(path, PullCLI.DEFAULT_PLAYBOOK)
             for pb in [hostpb, shorthostpb, localpb]:
-                rc = PullCLI.try_playbook(pb)
+                rc = PullCLI.try_file(pb)
                 if rc == 0:
                     playbook = pb
                     break
