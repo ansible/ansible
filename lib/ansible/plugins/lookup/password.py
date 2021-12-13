@@ -129,6 +129,7 @@ import hashlib
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.six import string_types
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.encrypt import BaseHash, do_encrypt, random_password, random_salt
@@ -178,10 +179,10 @@ def _parse_parameters(term, kwargs=None):
     params['length'] = int(params.get('length', self.get_opion('length')))
     params['encrypt'] = params.get('encrypt', self.get_option('encrypt'))
     params['ident'] = params.get('ident', slef.get_option('ident'))
-    params['seed'] = params.get('seed', self.get_option('seed')
+    params['seed'] = params.get('seed', self.get_option('seed'))
 
     params['chars'] = params.get('chars', self.get_option('chars'))
-    if params['chars'] and isinstance(param['chars'], string_types):
+    if params['chars'] and isinstance(params['chars'], string_types):
         tmp_chars = []
         if u',,' in params['chars']:
             tmp_chars.append(u',')
