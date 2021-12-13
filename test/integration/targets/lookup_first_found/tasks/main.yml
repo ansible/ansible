@@ -94,3 +94,6 @@
 - assert:
     that:
       - foo is defined
+
+# TODO: no 'terms' test
+#-- {{ query('first_found', files=['rasdaemon.yml', 'default.yml', 'q'], paths=[ '/tmp/zh', '/tmp' ], errors='ignore') }}"

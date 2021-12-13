@@ -169,8 +169,9 @@ class LookupModule(LookupBase):
         for term in terms:
             if isinstance(term, Mapping):
                 self.set_options(var_options=variables, direct=term)
-            elif isinstance(term, string_types):
-                self.set_options(var_options=variables, direct=kwargs)
+                files = self.get_option('files')
+            elif: isinstance(term, string_types):
+                files = [term]
             elif isinstance(term, Sequence):
                 partial, skip = self._process_terms(term, variables, kwargs)
                 total_search.extend(partial)
@@ -178,7 +179,6 @@ class LookupModule(LookupBase):
             else:
                 raise AnsibleLookupError("Invalid term supplied, can handle string, mapping or list of strings but got: %s for %s" % (type(term), term))
 
-            files = self.get_option('files')
             paths = self.get_option('paths')
 
             # NOTE: this is used as 'global' but  can be set many times?!?!?
@@ -203,6 +203,10 @@ class LookupModule(LookupBase):
         return total_search, skip
 
     def run(self, terms, variables, **kwargs):
+
+        self.set_options(var_options=variables, direct=kwargs)
+        if not terms:
+            terms = self.get_options('files')
 
         total_search, skip = self._process_terms(terms, variables, kwargs)
 
