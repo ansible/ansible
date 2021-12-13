@@ -204,8 +204,8 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
-        self.set_options(var_options=variables, direct=kwargs)
         if not terms:
+            self.set_options(var_options=variables, direct=kwargs)
             terms = self.get_options('files')
 
         total_search, skip = self._process_terms(terms, variables, kwargs)
