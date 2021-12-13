@@ -259,7 +259,7 @@ class PullCLI(CLI):
         # Install Galaxy Requirements
         requirements = self.select_requirements(context.CLIARGS['dest'])
         if requirements is not None:
-            cmd = '%s/ansible-galaxy install --force --role-file %s' % (bin_path, requirements)
+            cmd = '%s/ansible-galaxy install --force --force-with-deps --role-file %s' % (bin_path, requirements)
             display.vvvv('running %s' % cmd)
             os.chdir(context.CLIARGS['dest'])
             rc, b_out, b_err = run_cmd(cmd, live=True)
