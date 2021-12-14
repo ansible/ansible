@@ -33,7 +33,7 @@ attributes:
     platform:
         platforms: linux
 notes:
-  - This module just deals with individual rules.If you need advanced
+  - This module just deals with individual rules. If you need advanced
     chaining of rules the recommended way is to template the iptables restore
     file.
 options:
@@ -317,9 +317,9 @@ options:
   limit:
     description:
       - Specifies the maximum average number of matches to allow per second.
-      - The number can specify units explicitly, using `/second', `/minute',
-        `/hour' or `/day', or parts of them (so `5/second' is the same as
-        `5/s').
+      - The number can specify units explicitly, using C(/second), C(/minute),
+        C(/hour) or C(/day), or parts of them (so C(5/second) is the same as
+        C(5/s)).
     type: str
   limit_burst:
     description:

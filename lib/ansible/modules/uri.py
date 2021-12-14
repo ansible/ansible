@@ -52,7 +52,7 @@ options:
     description:
       - The serialization format of the body. When set to C(json), C(form-multipart), or C(form-urlencoded), encodes
         the body argument, if needed, and automatically sets the Content-Type header accordingly.
-      - As of C(2.3) it is possible to override the `Content-Type` header, when
+      - As of v2.3 it is possible to override the C(Content-Type) header, when
         set to C(json) or C(form-urlencoded) via the I(headers) option.
       - The 'Content-Type' header cannot be overridden when using C(form-multipart)
       - C(form-urlencoded) was added in v2.7.

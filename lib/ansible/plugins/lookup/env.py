@@ -23,7 +23,7 @@ DOCUMENTATION = """
         default: ''
         version_added: '2.13'
     notes:
-        - You can pass the `Undefined` object as C(default) to force an undefined error
+        - You can pass the C(Undefined) object as C(default) to force an undefined error
 """
 
 EXAMPLES = """

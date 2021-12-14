@@ -48,8 +48,8 @@ options:
     description:
       - Use file magic and return data about the nature of the file. this uses
         the 'file' utility found on most Linux/Unix systems.
-      - This will add both `mime_type` and 'charset' fields to the return, if possible.
-      - In Ansible 2.3 this option changed from 'mime' to 'get_mime' and the default changed to 'Yes'.
+      - This will add both C(mime_type) and C(charset) fields to the return, if possible.
+      - In Ansible 2.3 this option changed from I(mime) to I(get_mime) and the default changed to C(yes).
     type: bool
     default: yes
     aliases: [ mime, mime_type, mime-type ]
@@ -334,15 +334,15 @@ stat:
         mimetype:
             description: file magic data or mime-type
             returned: success, path exists and user can read stats and
-                installed python supports it and the `mime` option was true, will
-                return 'unknown' on error.
+                installed python supports it and the I(mime) option was true, will
+                return C(unknown) on error.
             type: str
             sample: application/pdf; charset=binary
         charset:
             description: file character set or encoding
             returned: success, path exists and user can read stats and
-                installed python supports it and the `mime` option was true, will
-                return 'unknown' on error.
+                installed python supports it and the I(mime) option was true, will
+                return C(unknown) on error.
             type: str
             sample: us-ascii
         readable:

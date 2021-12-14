@@ -95,8 +95,8 @@ options:
         description:
             - If C(yes), any modified files in the working
               repository will be discarded.  Prior to 0.7, this was always
-              'yes' and could not be disabled.  Prior to 1.9, the default was
-              `yes`.
+              C(yes) and could not be disabled.  Prior to 1.9, the default was
+              C(yes).
         type: bool
         default: 'no'
         version_added: "0.7"

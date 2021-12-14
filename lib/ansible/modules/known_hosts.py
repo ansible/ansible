@@ -34,7 +34,7 @@ options:
       - Specifically, the key should not match the format that is found in an SSH pubkey file, but should rather have the hostname prepended to a
         line that includes the pubkey, the same way that it would appear in the known_hosts file. The value prepended to the line must also match
         the value of the name parameter.
-      - Should be of format `<hostname[,IP]> ssh-rsa <pubkey>`.
+      - Should be of format C(<hostname[,IP]> ssh-rsa <pubkey>).
       - For custom SSH port, C(key) needs to specify port as well. See example section.
     type: str
   path:

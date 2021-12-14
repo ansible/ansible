@@ -35,7 +35,7 @@ options:
   system_tmpdirs:
     description:
        - "List of valid system temporary directories on the managed machine for Ansible to choose
-         when it cannot use ``remote_tmp``, normally due to permission issues.  These must be world
+         when it cannot use C(remote_tmp), normally due to permission issues.  These must be world
          readable, writable, and executable. This list should only contain directories which the
          system administrator has pre-created with the proper ownership and permissions otherwise
          security issues can arise."
