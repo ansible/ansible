@@ -34,13 +34,13 @@ If you're not comfortable exporting your API token, you can pass it as a paramet
 On Packet, devices and reserved IP addresses belong to `projects <https://www.packet.com/developers/api/#projects>`_. In order to use the packet_device module, you need to specify the UUID of the project in which you want to create or manage devices. You can find a project's UUID in the Packet portal `here <https://app.packet.net/portal#/projects/list/table/>`_ (it's just under the project table) or via one of the available `CLIs <https://www.packet.net/developers/integrations/>`_.
 
 
-If you want to use a new SSH keypair in this tutorial, you can generate it to ``./id_rsa`` and ``./id_rsa.pub`` as:
+If you want to use a new SSH key pair in this tutorial, you can generate it to ``./id_rsa`` and ``./id_rsa.pub`` as:
 
 .. code-block:: bash
 
     $ ssh-keygen -t rsa -f ./id_rsa
 
-If you want to use an existing keypair, just copy the private and public key over to the playbook directory.
+If you want to use an existing key pair, just copy the private and public key over to the playbook directory.
 
 
 Device Creation

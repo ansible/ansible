@@ -310,7 +310,7 @@ msgstr "Connection プラグイン"
 #: ../../rst/porting_guides/porting_guide_2.0.rst:375
 #: ../../rst/porting_guides/porting_guide_2.0.rst:390
 msgid "connection plugins"
-msgstr "conneciton プラグイン"
+msgstr "connection プラグイン"
 
 #: ../../rst/porting_guides/porting_guide_2.0.rst:235
 #: ../../rst/porting_guides/porting_guide_2.0.rst:378
@@ -632,7 +632,7 @@ msgid "Major Changes"
 msgstr "主な変更点"
 
 #: ../../rst/porting_guides/porting_guide_2.10.rst:115
-msgid "Restricting the version of the community.okd collection to 1.0.0. The previously included version, 1.0.1, had a dependency on kubernetes.core and thus required the installation of an additional collection that was not included in Ansible 2.10. Version 1.0.0 is essentially identical to 1.0.1, except that it uses community.kubernetes, wihch is included in Ansible 2.10."
+msgid "Restricting the version of the community.okd collection to 1.0.0. The previously included version, 1.0.1, had a dependency on kubernetes.core and thus required the installation of an additional collection that was not included in Ansible 2.10. Version 1.0.0 is essentially identical to 1.0.1, except that it uses community.kubernetes, which is included in Ansible 2.10."
 msgstr "community.okd コレクションのバージョンを 1.0.0 に制限しました。これまで含まれていたバージョン 1.0.1 は、kubernetes.core に依存していたため、Ansible 2.10 に含まれていない追加のコレクションをインストールする必要がありました。バージョン 1.0.0 は、Ansible 2.10 に含まれている community.kubernetes を使用している以外は、1.0.1 と基本的に同じです。"
 
 #: ../../rst/porting_guides/porting_guide_2.10.rst:118
@@ -849,7 +849,7 @@ msgstr "nb_inventory - ``group_by`` オプションとして ``status`` を追�
 
 #: ../../rst/porting_guides/porting_guide_2.10.rst:232
 #: ../../rst/porting_guides/porting_guide_3.rst:224
-msgid "nb_inventory - Move around ``extracted_primary_ip`` to allow for ``config_context`` or ``custom_field`` to overwite. (#377)"
+msgid "nb_inventory - Move around ``extracted_primary_ip`` to allow for ``config_context`` or ``custom_field`` to overwrite. (#377)"
 msgstr "nb_inventory - ``config_context`` または ``custom_field`` の上書きを許可する ``extracted_primary_ip`` を移動します。(#377)"
 
 #: ../../rst/porting_guides/porting_guide_2.10.rst:233
@@ -1085,7 +1085,7 @@ msgstr "docker_image - ``build.pull`` オプションのデフォルトが ``fal
 
 #: ../../rst/porting_guides/porting_guide_2.10.rst:342
 #: ../../rst/porting_guides/porting_guide_3.rst:267
-msgid "docker_image_facts - this alias is on longer availabe, use ``docker_image_info`` instead (https://github.com/ansible-collections/community.docker/pull/1)."
+msgid "docker_image_facts - this alias is on longer available, use ``docker_image_info`` instead (https://github.com/ansible-collections/community.docker/pull/1)."
 msgstr "docker_image - このエイリアスは利用できなくなります。代わりに ``docker_image_info`` を使用します (https://github.com/ansible-collections/community.docker/pull/1)。"
 
 #: ../../rst/porting_guides/porting_guide_2.10.rst:343
@@ -1356,7 +1356,7 @@ msgid "grafana_datasource doesn't set password correctly (#113)"
 msgstr "grafana_datasource でパスワードが正しく設定されない (#113)"
 
 #: ../../rst/porting_guides/porting_guide_2.10.rst:471
-msgid "cisco.nxos.nxos_igmp_interface - no longer supports the deprecated ``oif_prefix`` and ``oif_source`` options. These have been superceeded by ``oif_ps``."
+msgid "cisco.nxos.nxos_igmp_interface - no longer supports the deprecated ``oif_prefix`` and ``oif_source`` options. These have been superseded by ``oif_ps``."
 msgstr "cisco.nxos.nxos_igmp_interface - 非推奨の ``oif_prefix`` オプションおよび ``oif_source`` オプションをサポートしなくなりました。これらは ``oif_ps`` に置き換えられました。"
 
 #: ../../rst/porting_guides/porting_guide_2.10.rst:472
@@ -1364,7 +1364,7 @@ msgid "community.grafana.grafana_dashboard - the parameter ``message`` is rename
 msgstr "community.grafana.grafana_dashboard - ``message`` は内部的に Ansible Core Engine で使用されるため、パラメーター ``message`` の名前が ``commit_message`` に変更されました。"
 
 #: ../../rst/porting_guides/porting_guide_2.10.rst:473
-msgid "purestorage.flashblade.purefb_fs - no longer supports the deprecated ``nfs`` option. This has been superceeded by ``nfsv3``."
+msgid "purestorage.flashblade.purefb_fs - no longer supports the deprecated ``nfs`` option. This has been superseded by ``nfsv3``."
 msgstr "purestorage.flashblade.purefb_fs - 非推奨の ``nfs`` オプションに対応しなくなりました。これは ``nfsv3`` に置き換えられました。"
 
 #: ../../rst/porting_guides/porting_guide_2.10.rst:476
@@ -1614,7 +1614,7 @@ msgid "Changed ``role`` to ``prefix_role`` in ``netbox_prefix.py`` (https://gith
 msgstr "``netbox_prefix.py`` の ``role`` を ``prefix_role`` へ変更しました (https://github.com/netbox-community/ansible_modules/issues/9)。"
 
 #: ../../rst/porting_guides/porting_guide_2.10.rst:564
-msgid "Module failures when required fields arent provided (https://github.com/netbox-community/ansible_modules/issues/24)"
+msgid "Module failures when required fields aren't provided (https://github.com/netbox-community/ansible_modules/issues/24)"
 msgstr "必須フィールドが提供されていない場合のモジュールの失敗 (https://github.com/netbox-community/ansible_modules/issues/24)"
 
 #: ../../rst/porting_guides/porting_guide_2.10.rst:565
@@ -2506,8 +2506,8 @@ msgid "redfish_config and redfish_command - the behavior to select the first Sys
 msgstr "redfish_config および redfish_command - 複数のリソースが存在する場合に修正する最初の System リソース、Manager リソース、または Chassis リソースを選択する動作が削除されます。新しい ``resource_id`` オプションを使用して、変更する対象のリソースを指定します。"
 
 #: ../../rst/porting_guides/porting_guide_2.10.rst:940
-msgid "redfish_config, redfish_command - Behavior to modify the first System, Mananger, or Chassis resource when multiple are present is deprecated. Use the new ``resource_id`` option to specify target resource to modify."
-msgstr "redfish_config、redfish_command - 複数のリソースが存在する場合、最初の System、Mananger、または Chassis リソースを修正する動作は非推奨です。新しい ``resource_id`` オプションを使用して、変更する対象のリソースを指定してください。"
+msgid "redfish_config, redfish_command - Behavior to modify the first System, Manager, or Chassis resource when multiple are present is deprecated. Use the new ``resource_id`` option to specify target resource to modify."
+msgstr "redfish_config、redfish_command - 複数のリソースが存在する場合、最初の System、Manager、または Chassis リソースを修正する動作は非推奨です。新しい ``resource_id`` オプションを使用して、変更する対象のリソースを指定してください。"
 
 #: ../../rst/porting_guides/porting_guide_2.10.rst:941
 #: ../../rst/porting_guides/porting_guide_3.rst:431
@@ -6136,7 +6136,7 @@ msgid "The Google cloud inventory script ``gce.py`` has been migrated to the ``c
 msgstr "Google クラウドインベントリースクリプト ``gce.py`` を ``community.google`` コレクションに移行しました。使用を継続するには、``community.google`` コレクションをインストールしてください。"
 
 #: ../../rst/porting_guides/porting_guide_3.rst:85
-msgid "archive - remove path folder itself when ``remove`` paramater is true (https://github.com/ansible-collections/community.general/issues/1041)."
+msgid "archive - remove path folder itself when ``remove`` parameter is true (https://github.com/ansible-collections/community.general/issues/1041)."
 msgstr "archive - ``remove`` パラメーターが true の場合にパスフォルダー自体を削除します (https://github.com/ansible-collections/community.general/issues/1041)。"
 
 #: ../../rst/porting_guides/porting_guide_3.rst:87
@@ -6192,7 +6192,7 @@ msgid "os10_bgp - Changed \"subnet\"  key as list format instead of dictionary f
 msgstr "os10_bgp - listen コマンドの複数の neighbor 接頭辞をサポートするために、「listen」キーの「subnet」キーを、ディクショナリー形式からリスト形式に変更しました。"
 
 #: ../../rst/porting_guides/porting_guide_3.rst:134
-msgid "os10_bgp - Changed \"vrf\" key as list format instead of dictionary format to supprot multiple VRF in router BGP and changed the \"vrf\" key name to \"vrfs\""
+msgid "os10_bgp - Changed \"vrf\" key as list format instead of dictionary format to support multiple VRF in router BGP and changed the \"vrf\" key name to \"vrfs\""
 msgstr "os10_bgp - ルーター BGP で複数の VRF をサポートするために、「vrf」キーをディクショナリー形式ではなくリスト形式に変更し、「vrf」キーの名前を「vrfs」に変更しました。"
 
 #: ../../rst/porting_guides/porting_guide_3.rst:137

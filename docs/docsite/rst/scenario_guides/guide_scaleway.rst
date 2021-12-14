@@ -36,13 +36,13 @@ The simplest way to authenticate yourself is to set the Scaleway API token in an
 
 If you're not comfortable exporting your API token, you can pass it as a parameter to the modules using the ``api_token`` argument.
 
-If you want to use a new SSH keypair in this tutorial, you can generate it to ``./id_rsa`` and ``./id_rsa.pub`` as:
+If you want to use a new SSH key pair in this tutorial, you can generate it to ``./id_rsa`` and ``./id_rsa.pub`` as:
 
 .. code-block:: bash
 
     $ ssh-keygen -t rsa -f ./id_rsa
 
-If you want to use an existing keypair, just copy the private and public key over to the playbook directory.
+If you want to use an existing key pair, just copy the private and public key over to the playbook directory.
 
 .. _scaleway_add_sshkey:
 

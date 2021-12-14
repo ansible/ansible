@@ -3048,7 +3048,7 @@ msgstr "DEFAULT_NO_TARGET_SYSLOG"
 
 #: ../../rst/reference_appendices/config.rst:1661
 #: ../../rst/reference_appendices/config.rst:3861
-msgid "Toggle Ansible logging to syslog on the target when it executes tasks. On Windows hosts this will disable a newer style PowerShell modules from writting to the event log."
+msgid "Toggle Ansible logging to syslog on the target when it executes tasks. On Windows hosts this will disable a newer style PowerShell modules from writing to the event log."
 msgstr "タスクの実行時に、Ansible ログをターゲットの syslog へ切り替えます。Windows ホストでは、これにより、新しいスタイルの PowerShell モジュールがイベントログに書き込むことができなくなります。"
 
 #: ../../rst/reference_appendices/config.rst:1666
@@ -3849,7 +3849,7 @@ msgid "GALAXY_DISPLAY_PROGRESS"
 msgstr "GALAXY_DISPLAY_PROGRESS"
 
 #: ../../rst/reference_appendices/config.rst:2235
-msgid "Some steps in ``ansible-galaxy`` display a progress wheel which can cause issues on certain displays or when outputing the stdout to a file. This config option controls whether the display wheel is shown or not. The default is to show the display wheel if stdout has a tty."
+msgid "Some steps in ``ansible-galaxy`` display a progress wheel which can cause issues on certain displays or when outputting the stdout to a file. This config option controls whether the display wheel is shown or not. The default is to show the display wheel if stdout has a tty."
 msgstr "``ansible-galaxy`` の一部の手順では、特定の表示で、または標準出力 (stdout) をファイルに出力するときに問題が発生する可能性のある進行状況ホイールを表示します。この設定オプションは、表示ホイールを表示するかどうかを制御します。デフォルトでは、stdout に tty があると、表示ホイールが表示されます。"
 
 #: ../../rst/reference_appendices/config.rst:2241
@@ -4422,7 +4422,7 @@ msgstr "OLD_PLUGIN_CACHE_CLEARING"
 
 #: ../../rst/reference_appendices/config.rst:2656
 #: ../../rst/reference_appendices/config.rst:4421
-msgid "Previously Ansible would only clear some of the plugin loading caches when loading new roles, this led to some behaviours in which a plugin loaded in prevoius plays would be unexpectedly 'sticky'. This setting allows to return to that behaviour."
+msgid "Previously Ansible would only clear some of the plugin loading caches when loading new roles, this led to some behaviours in which a plugin loaded in previous plays would be unexpectedly 'sticky'. This setting allows to return to that behaviour."
 msgstr "以前の Ansible は、新しいロールを読み込むときにプラグインの読み込みキャッシュの一部のみを削除していました。これにより、以前のプレイで読み込まれたプラグインが予期せず「スティッキー」になる動作が発生しました。この設定により、その動作に戻ることができます。"
 
 #: ../../rst/reference_appendices/config.rst:2662
@@ -5643,7 +5643,7 @@ msgid "See also :ref:`GALAXY_TOKEN_PATH <GALAXY_TOKEN_PATH>`"
 msgstr "「:ref:`GALAXY_TOKEN_PATH <GALAXY_TOKEN_PATH>`」も参照してください。"
 
 #: ../../rst/reference_appendices/config.rst:4233
-msgid "Some steps in ``ansible-galaxy`` display a progress wheel which can cause issues on certain displays or when outputing the stdout to a file.This config option controls whether the display wheel is shown or not.The default is to show the display wheel if stdout has a tty."
+msgid "Some steps in ``ansible-galaxy`` display a progress wheel which can cause issues on certain displays or when outputting the stdout to a file.This config option controls whether the display wheel is shown or not.The default is to show the display wheel if stdout has a tty."
 msgstr "``ansible-galaxy`` の一部の手順では、特定の表示で、または標準出力 (stdout) をファイルに出力するときに問題を引き起こす可能性のある進行状況ホイールを表示します。この設定オプションは、表示ホイールを表示するかどうかを制御します。デフォルトでは、stdout に tty があると、表示ホイールが表示されます。"
 
 #: ../../rst/reference_appendices/config.rst:4235

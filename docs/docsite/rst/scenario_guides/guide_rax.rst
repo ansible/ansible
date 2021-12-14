@@ -314,7 +314,7 @@ This can be achieved with the ``rax_facts`` module and an inventory file similar
 
 While you don't need to know how it works, it may be interesting to know what kind of variables are returned.
 
-The ``rax_facts`` module provides facts as followings, which match the ``rax.py`` inventory script:
+The ``rax_facts`` module provides facts as following, which match the ``rax.py`` inventory script:
 
 .. code-block:: json
 
