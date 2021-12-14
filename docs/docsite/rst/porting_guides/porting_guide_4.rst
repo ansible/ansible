@@ -132,6 +132,36 @@ Porting custom scripts
 
 No notable changes
 
+Porting Guide for v4.10.0
+=========================
+
+Major Changes
+-------------
+
+containers.podman
+~~~~~~~~~~~~~~~~~
+
+- Add podman_tag module
+- Add secrets driver and driver opts support
+
+Deprecated Features
+-------------------
+
+cisco.nxos
+~~~~~~~~~~
+
+- Deprecated nxos_snmp_community module.
+- Deprecated nxos_snmp_contact module.
+- Deprecated nxos_snmp_host module.
+- Deprecated nxos_snmp_location module.
+- Deprecated nxos_snmp_traps module.
+- Deprecated nxos_snmp_user module.
+
+junipernetworks.junos
+~~~~~~~~~~~~~~~~~~~~~
+
+- 'router_id' options is deprecated from junos_ospf_interfaces, junos_ospfv2 and junos_ospfv3 resuorce module.
+
 Porting Guide for v4.9.0
 ========================
 
