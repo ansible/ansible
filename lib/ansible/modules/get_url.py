@@ -23,7 +23,7 @@ description:
      - HTTP redirects can redirect from HTTP to HTTPS so you should be sure that
        your proxy environment for both protocols is correct.
      - From Ansible 2.4 when run with C(--check), it will do a HEAD request to validate the URL but
-       will not download the entire file or verify it against hashes.
+       will not download the entire file or verify it against hashes and will report incorrect changed status.
      - For Windows targets, use the M(ansible.windows.win_get_url) module instead.
 version_added: '0.6'
 options:
@@ -190,7 +190,8 @@ extends_documentation_fragment:
     - action_common_attributes
 attributes:
     check_mode:
-        support: full
+        details: the changed status will reflect comparison to an empty source file
+        support: partial
     diff_mode:
         support: none
     platform:
