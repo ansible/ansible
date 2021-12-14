@@ -788,7 +788,7 @@ class TgzArchive(object):
         locale = get_best_parsable_locale(self.module)
         rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LANGUAGE=locale))
         if rc != 0:
-            raise UnarchiveError(err)
+            raise UnarchiveError('Unable to list files in the archive: %s' % err)
 
         for filename in out.splitlines():
             # Compensate for locale-related problems in gtar output (octal unicode representation) #11348
@@ -908,7 +908,7 @@ class TgzArchive(object):
             if self.files_in_archive:
                 return True, None
         except UnarchiveError as e:
-            return False, 'Command "%s" could not handle archive: %s' % (self.cmd_path, e)
+            return False, 'Command "%s" could not handle archive: %s' % (self.cmd_path, to_native(e))
         # Errors and no files in archive assume that we weren't able to
         # properly unarchive it
         return False, 'Command "%s" found no files in archive. Empty archive files are not supported.' % self.cmd_path
