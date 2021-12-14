@@ -422,7 +422,7 @@ All hosts in the 'raleigh' group will have the variables defined in these files
 available to them. This can be very useful to keep your variables organized when a single
 file gets too big, or when you want to use :ref:`Ansible Vault<playbooks_vault>` on some group variables.
 
-You can also add ``group_vars/`` and ``host_vars/`` directories to your playbook directory. The ``ansible-playbook`` command looks for these directories in the current working directory by default. Other Ansible commands (for example, ``ansible``, ``ansible-console``, and so on) will only look for ``group_vars/`` and ``host_vars/`` in the inventory directory. If you want other commands to load group and host variables from a playbook directory, you must provide the ``--playbook-dir`` option on the command line.
+For ``ansible-playbook`` you can also add ``group_vars/`` and ``host_vars/`` directories to your playbook directory. Other Ansible commands (for example, ``ansible``, ``ansible-console``, and so on) will only look for ``group_vars/`` and ``host_vars/`` in the inventory directory. If you want other commands to load group and host variables from a playbook directory, you must provide the ``--playbook-dir`` option on the command line.
 If you load inventory files from both the playbook directory and the inventory directory, variables in the playbook directory will override variables set in the inventory directory.
 
 Keeping your inventory file and variables in a git repo (or other version control)
