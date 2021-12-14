@@ -78,7 +78,7 @@ EXAMPLES = r'''
     - validate_argument_spec:
         argument_spec: "{{lookup('file', 'nakedoptions.yml'}}"
         provided_arguments:
-            but: "that i can define on the include itself, like in it's `vars:` keyword"
+            but: "that i can define on the include itself, like in it's C(vars:) keyword"
 
     - name: the include itself
       vars:

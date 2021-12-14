@@ -15,7 +15,7 @@ DOCUMENTATION = '''
     options:
         directory:
             version_added: '2.11'
-            description: directory that will contain the per host JSON files. Also set by the ``--tree`` option when using adhoc.
+            description: directory that will contain the per host JSON files. Also set by the C(--tree) option when using adhoc.
             ini:
                 - section: callback_tree
                   key: directory
@@ -24,7 +24,7 @@ DOCUMENTATION = '''
             default: "~/.ansible/tree"
             type: path
     description:
-        - "This callback is used by the Ansible (adhoc) command line option `-t|--tree`"
+        - "This callback is used by the Ansible (adhoc) command line option C(-t|--tree)."
         - This produces a JSON dump of events in a directory, a file for each host, the directory used MUST be passed as a command line option.
 '''
 
