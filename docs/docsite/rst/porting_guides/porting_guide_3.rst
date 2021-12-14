@@ -309,7 +309,7 @@ dellemc.os10
 ~~~~~~~~~~~~
 
 - os10_bgp - Changed "subnet"  key as list format instead of dictionary format under "listen" key to support multiple neighbor prefix for listen command
-- os10_bgp - Changed "vrf" key as list format instead of dictionary format to supprot multiple VRF in router BGP and changed the "vrf" key name to "vrfs"
+- os10_bgp - Changed "vrf" key as list format instead of dictionary format to support multiple VRF in router BGP and changed the "vrf" key name to "vrfs"
 
 ngine_io.cloudstack
 ~~~~~~~~~~~~~~~~~~~
@@ -406,7 +406,7 @@ netbox.netbox
 
 - nb_inventory - Add ``dns_name`` option that adds ``dns_name`` to the host when ``True`` and device has a primary IP address. (#394)
 - nb_inventory - Add ``status`` as a ``group_by`` option. (398)
-- nb_inventory - Move around ``extracted_primary_ip`` to allow for ``config_context`` or ``custom_field`` to overwite. (#377)
+- nb_inventory - Move around ``extracted_primary_ip`` to allow for ``config_context`` or ``custom_field`` to overwrite. (#377)
 - nb_inventory - Services are now a list of integers due to NetBox 2.10 changes. (#396)
 - nb_lookup - Allow ID to be passed in and use ``.get`` instead of ``.filter``. (#376)
 - nb_lookup - Allow ``api_endpoint`` and ``token`` to be found via env. (#391)
@@ -449,7 +449,7 @@ community.docker
 - docker_image - the ``source`` option is now mandatory (https://github.com/ansible-collections/community.docker/pull/1).
 - docker_image - the ``use_tls`` option has been removed. Use ``tls`` and ``validate_certs`` instead (https://github.com/ansible-collections/community.docker/pull/1).
 - docker_image - the default of the ``build.pull`` option changed to ``false`` (https://github.com/ansible-collections/community.docker/pull/1).
-- docker_image_facts - this alias is on longer availabe, use ``docker_image_info`` instead (https://github.com/ansible-collections/community.docker/pull/1).
+- docker_image_facts - this alias is on longer available, use ``docker_image_info`` instead (https://github.com/ansible-collections/community.docker/pull/1).
 - docker_network - no longer returns ``ansible_facts`` (https://github.com/ansible-collections/community.docker/pull/1).
 - docker_network - the ``ipam_options`` option has been removed. Use ``ipam_config`` instead (https://github.com/ansible-collections/community.docker/pull/1).
 - docker_service - no longer returns ``ansible_facts`` (https://github.com/ansible-collections/community.docker/pull/1).
