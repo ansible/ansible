@@ -952,13 +952,13 @@ class TarZstdArchive(TgzArchive):
 # try handlers in order and return the one that works or bail if none work
 def pick_handler(src, dest, file_args, module):
     handlers = [ZipArchive, TgzArchive, TarArchive, TarBzipArchive, TarXzArchive, TarZstdArchive]
-    reasons = []
+    reasons = set()
     for handler in handlers:
         obj = handler(src, dest, file_args, module)
         (can_handle, reason) = obj.can_handle_archive()
         if can_handle:
             return obj
-        reasons.append("%s: %s" % (handler.__name__, reason))
+        reasons.add(reason)
     reason_msg = '\n'.join(reasons)
     module.fail_json(msg='Failed to find handler for "%s". Make sure the required command to extract the file is installed.\n%s' % (src, reason_msg))
 
