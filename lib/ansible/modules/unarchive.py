@@ -71,7 +71,7 @@ options:
     version_added: "2.1"
   include:
     description:
-      - List of directory and file entries that you would like to extract from the archive. If C(include) 
+      - List of directory and file entries that you would like to extract from the archive. If C(include)
         is not empty, only files listed here will be extracted.
       - Mutually exclusive with C(exclude).
     type: list
