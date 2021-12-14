@@ -119,7 +119,7 @@ ansible_play_name
     The name of the currently executed play. Added in ``2.8``. (`name` attribute of the play, not file name of the playbook.)
 
 playbook_dir
-    The path to the directory of the playbook that was passed to the ``ansible-playbook`` command line.
+    The path to the directory of the current playbook being executed.  NOTE: This might be different than directory of the playbook passed to the ``ansible-playbook`` command line when a playbook contains a ``import_playbook`` statement. 
 
 role_name
     The name of the role currently being executed.
