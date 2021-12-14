@@ -1,0 +1,2 @@
+bugfixes:
+- unarchive - Make extraction work when the LANGUAGE environment variable is set to a non-English locale.
