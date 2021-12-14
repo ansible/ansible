@@ -786,7 +786,7 @@ class TgzArchive(object):
             cmd.extend(self.include_files)
 
         locale = get_best_parsable_locale(self.module)
-        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale))
+        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LANGUAGE=locale))
         if rc != 0:
             raise UnarchiveError('Unable to list files in the archive')
 
@@ -831,7 +831,7 @@ class TgzArchive(object):
         if self.include_files:
             cmd.extend(self.include_files)
         locale = get_best_parsable_locale(self.module)
-        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale))
+        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LANGUAGE=locale))
 
         # Check whether the differences are in something that we're
         # setting anyway
@@ -885,7 +885,7 @@ class TgzArchive(object):
         if self.include_files:
             cmd.extend(self.include_files)
         locale = get_best_parsable_locale(self.module)
-        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale))
+        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LANGUAGE=locale))
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
     def can_handle_archive(self):
