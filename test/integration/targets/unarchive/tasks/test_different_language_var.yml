@@ -1,4 +1,5 @@
 - name: test non-ascii with different LANGUAGE
+  when: ansible_os_family == 'Debian'
   block:
     - name: install de language pack
       apt: 
