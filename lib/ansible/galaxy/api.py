@@ -440,31 +440,90 @@ class GalaxyAPI:
         data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
         return data
 
-    @g_connect(['v1'])
+    @g_connect(['v1', 'v3'])
     def create_import_task(self, github_user, github_repo, reference=None, role_name=None):
         """
         Post an import request
         """
-        url = _urljoin(self.api_server, self.available_api_versions['v1'], "imports") + '/'
-        args = {
-            "github_user": github_user,
-            "github_repo": github_repo,
-            "github_reference": reference if reference else ""
-        }
-        if role_name:
-            args['alternate_role_name'] = role_name
-        elif github_repo.startswith('ansible-role'):
-            args['alternate_role_name'] = github_repo[len('ansible-role') + 1:]
-        data = self._call_galaxy(url, args=urlencode(args), method="POST")
+
+        if 'v1' in  self.available_api_versions:
+            url = _urljoin(self.api_server, self.available_api_versions['v1'], "imports") + '/'
+            args = {
+                "github_user": github_user,
+                "github_repo": github_repo,
+                "github_reference": reference if reference else ""
+            }
+            if role_name:
+                args['alternate_role_name'] = role_name
+            elif github_repo.startswith('ansible-role'):
+                args['alternate_role_name'] = github_repo[len('ansible-role') + 1:]
+            data = self._call_galaxy(url, args=urlencode(args), method="POST")
+
+        elif 'v3' in  self.available_api_versions:
+            url = _urljoin(self.api_server, self.available_api_versions['v3'], "git", "sync", "collection") + '/'
+            repository = f'https://github.com/{github_user}/{github_repo}'
+            args = {
+                "repository": repository,
+                "namespace": github_user,
+                "type": "role"
+            }
+            if role_name:
+                args['name'] = role_name
+
+            data = self._call_galaxy(url, args=json.dumps(args), headers={'content-type': 'application/json'}, method="POST")
+            result = [
+                {
+                    'id': data['task']
+                }
+            ]
+
+            return result
+
         if data.get('results', None):
             return data['results']
+
         return data
 
-    @g_connect(['v1'])
+    @g_connect(['v1', 'v3'])
     def get_import_task(self, task_id=None, github_user=None, github_repo=None):
         """
         Check the status of an import task.
         """
+        if isinstance(task_id, str):
+            urlparts = [x.strip() for x in self.api_server.split('/') if x.strip()]
+            baseurl = urlparts[0] + '//' + urlparts[1]
+            task_url = _urljoin(baseurl, task_id)
+            state = 'running'
+            while state in ['running']:
+                time.sleep(1)
+                res = self._call_galaxy(task_url)
+                state = res['state']
+                print(state)
+            if state == 'failed':
+                print(res['error']['traceback'])
+                print(res['error']['description'])
+                raise Exception('import failed')
+
+            messages = []
+            for idm,msg in enumerate(res['progress_reports']):
+                msg['id'] = idm
+                msg['message_type'] = 'INFO'
+                msg['message_text'] = msg['message']
+                messages.append(msg)
+
+            final_state = 'SUCCESS' if state == 'completed' else 'FAILED'
+            results = [
+                {
+                    'state': final_state,
+                    'id': task_id,
+                    'summary_fields': {
+                        'task_messages': messages
+                    }
+                }
+            ]
+            #import epdb; epdb.st()
+            return results
+
         url = _urljoin(self.api_server, self.available_api_versions['v1'], "imports")
         if task_id is not None:
             url = "%s?id=%d" % (url, task_id)
@@ -474,6 +533,7 @@ class GalaxyAPI:
             raise AnsibleError("Expected task_id or github_user and github_repo")
 
         data = self._call_galaxy(url)
+
         return data['results']
 
     @g_connect(['v1', 'v3'])

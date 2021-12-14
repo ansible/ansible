@@ -1613,7 +1613,7 @@ class GalaxyCLI(CLI):
                                 color=C.COLOR_CHANGED)
                 return 0
             # found a single role as expected
-            display.display("Successfully submitted import request %d" % task[0]['id'])
+            display.display("Successfully submitted import request %s" % task[0]['id'])
             if not context.CLIARGS['wait']:
                 display.display("Role name: %s" % task[0]['summary_fields']['role']['name'])
                 display.display("Repo: %s/%s" % (task[0]['github_user'], task[0]['github_repo']))
