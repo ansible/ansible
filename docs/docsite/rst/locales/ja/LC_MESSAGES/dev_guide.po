@@ -2551,7 +2551,7 @@ msgid "Include a key of ``failed`` along with a string explanation in ``msg``. I
 msgstr "``msg`` の文字列の説明と共に ``failed`` のキーが含まれるようにします。これを行わないと、Ansible は標準の戻りコード 0=success および non-zero=failure を使用します。"
 
 #: ../../rst/dev_guide/developing_modules_best_practices.rst:108
-msgid "Don't raise a traceback (stacktrace). Ansible can deal with stacktraces and automatically converts anything unparseable into a failed result, but raising a stacktrace on module failure is not user-friendly."
+msgid "Don't raise a traceback (stacktrace). Ansible can deal with stacktraces and automatically converts anything unparsable into a failed result, but raising a stacktrace on module failure is not user-friendly."
 msgstr "トレースバック (スタックトレース) は発生させません。Ansible はスタックトレースを扱うことができ、解析できないものは自動的に失敗した結果に変換しますが、モジュールの失敗時にスタックトレースを発生させるのはユーザーフレンドリーではありません。"
 
 #: ../../rst/dev_guide/developing_modules_best_practices.rst:109
@@ -5392,11 +5392,11 @@ msgstr "接続プラグインにより、Ansible はターゲットホストに�
 
 #: ../../rst/dev_guide/developing_plugins.rst:292
 msgid "Ansible version 2.1 introduced the ``smart`` connection plugin. The ``smart`` connection type allows Ansible to automatically select either the ``paramiko`` or ``openssh`` connection plugin based on system capabilities, or the ``ssh`` connection plugin if OpenSSH supports ControlPersist."
-msgstr "Ansible バージョン 2.1 では、``smart`` 接続プラグインが導入されます。``smart`` 接続タイプにより、Ansible は、システム機能に基づいて、``paramiko`` 接続プラグインまたは ``openssh`` 接続プラグインのいずれかを自動的に選択できますが、OpenSSH が ControlPersist に対応している場合は ``ssh`` の Connetion プラグインを選択します。"
+msgstr "Ansible バージョン 2.1 では、``smart`` 接続プラグインが導入されます。``smart`` 接続タイプにより、Ansible は、システム機能に基づいて、``paramiko`` 接続プラグインまたは ``openssh`` 接続プラグインのいずれかを自動的に選択できますが、OpenSSH が ControlPersist に対応している場合は ``ssh`` の Connection プラグインを選択します。"
 
 #: ../../rst/dev_guide/developing_plugins.rst:294
 msgid "To create a new connection plugin (for example, to support SNMP, Message bus, or other transports), copy the format of one of the existing connection plugins and drop it into ``connection`` directory on your :ref:`local plugin path <local_plugins>`."
-msgstr "新しい connetion プラグイン (SNMP、メッセージバス、またはその他のトランスポートをサポートする場合など) を作成するには、既存の connetion プラグインのいずれかの形式をコピーして、:ref:`ローカルプラグインパス <local_plugins>` にある ``connection`` ディレクトリーに置きます。"
+msgstr "新しい connection プラグイン (SNMP、メッセージバス、またはその他のトランスポートをサポートする場合など) を作成するには、既存の connection プラグインのいずれかの形式をコピーして、:ref:`ローカルプラグインパス <local_plugins>` にある ``connection`` ディレクトリーに置きます。"
 
 #: ../../rst/dev_guide/developing_plugins.rst:296
 msgid "Connection plugins can support common options (such as the ``--timeout`` flag) by defining an entry in the documentation for the attribute name (in this case ``timeout``). If the common option has a non-null default, the plugin should define the same default since a different default would be ignored."

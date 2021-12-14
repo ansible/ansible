@@ -175,7 +175,7 @@ clean:
 			rm -rf "rst/collections/$$filename"; \
 		fi \
 	done
-	@echo "Cleanning up generated ansible_structure"
+	@echo "Cleaning up generated ansible_structure"
 	find . -type l -delete
 	@echo "Cleaning up legacy generated rst locations"
 	rm -rf rst/modules
