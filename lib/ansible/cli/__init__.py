@@ -21,6 +21,7 @@ from ansible.errors import AnsibleError
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import with_metaclass, string_types, PY3
 from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.common.file import is_executable
 from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
 from ansible.plugins.loader import add_all_plugin_dirs
@@ -513,7 +514,7 @@ class CLI(with_metaclass(ABCMeta, object)):
         elif not os.path.exists(b_pwd_file):
             raise AnsibleError("The password file %s was not found" % pwd_file)
 
-        elif os.path.is_executable(b_pwd_file):
+        elif is_executable(b_pwd_file):
             display.vvvv(u'The password file %s is a script.' % to_text(pwd_file))
             cmd = [b_pwd_file]
 
