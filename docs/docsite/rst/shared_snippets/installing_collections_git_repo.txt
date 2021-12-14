@@ -5,7 +5,7 @@ The repository must contain a ``galaxy.yml`` or ``MANIFEST.json`` file. This fil
 Installing a collection from a git repository at the command line
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To install a collection from a git repository at the command line, use the URI of the repository instead of a collection name or path to a ``tar.gz`` file.  Prefix the URI with ``git+`` (or with ``git@`` to use a private repository with ssh authentication). You can specify a branch, commit, or tag using the comma-separated `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ syntax.
+To install a collection from a git repository at the command line, use the URI of the repository instead of a collection name or path to a ``tar.gz`` file. Use the prefix ``git+``, unless you're using SSH authentication with the user ``git`` (for example, ``git@github.com:ansible-collections/ansible.windows.git``). You can specify a branch, commit, or tag using the comma-separated `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ syntax.
 
 For example:
 
