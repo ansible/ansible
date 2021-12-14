@@ -4,14 +4,14 @@
       apt: 
         name: language-pack-de 
         state: present
-    - name: Ensure de_DE.UTF-8 exists
-      community.general.locale_gen:
-        name: de_DE.UTF-8
-        state: present
-    - name: Ensure de_DE exists
-      community.general.locale_gen:
-        name: de_DE
-        state: present
+    #- name: Ensure de_DE.UTF-8 exists
+    #  community.general.locale_gen:
+    #    name: de_DE.UTF-8
+    #    state: present
+    #- name: Ensure de_DE exists
+    #  community.general.locale_gen:
+    #    name: de_DE
+    #    state: present
       
     - name: create our unarchive destination
       file:
