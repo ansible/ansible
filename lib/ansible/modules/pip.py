@@ -129,7 +129,7 @@ notes:
      run the actual pip command, so it can use any pip version you specify with I(executable).
      By default, it uses the pip version for the Ansible Python interpreter. For example, pip3 on python 3, and pip2 or pip on python 2.
    - The interpreter used by Ansible
-     (see :ref:`ansible_python_interpreter<ansible_python_interpreter>`)
+     (see R(ansible_python_interpreter, ansible_python_interpreter))
      requires the setuptools package, regardless of the version of pip set with
      the I(executable) option.
 requirements:

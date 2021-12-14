@@ -22,7 +22,7 @@ description:
 options:
   key_value:
     description:
-      - "The C(set_fact) module takes ``key=value`` pairs or ``key: value``(YAML notation) as variables to set in the playbook scope.
+      - "The C(set_fact) module takes C(key=value) pairs or C(key: value) (YAML notation) as variables to set in the playbook scope.
         The 'key' is the resulting variable name and the value is, of course, the value of said variable."
       - You can create multiple variables at once, by supplying multiple pairs, but do NOT mix notations.
     required: true
