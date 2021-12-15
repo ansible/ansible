@@ -92,12 +92,12 @@ class ActionModule(ActionBase):
                 # the task has already been skipped if a change would not occur
                 if self._task.args.get('creates') or self._task.args.get('removes'):
                     result['changed'] = True
-                    return result
+                    raise _AnsibleActionDone(result=result)
                 # If the script doesn't return changed in the result, it defaults to True,
                 # but since the script may override 'changed', just skip instead of guessing.
                 else:
                     result['changed'] = False
-                    raise AnsibleActionSkip('Check mode is not supported for this task.')
+                    raise AnsibleActionSkip('Check mode is not supported for this task.', result=result)
 
             # now we execute script, always assume changed.
             result['changed'] = True
