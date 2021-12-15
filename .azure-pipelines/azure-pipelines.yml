@@ -42,7 +42,9 @@ pool: Standard
 
 jobs:
   - job: debug
+    container: default
     workspace:
       clean: all
     steps:
-      - bash: date
+      - bash: ls -l /__a/externals/
+      - bash: ls -l /__a/externals/node*
