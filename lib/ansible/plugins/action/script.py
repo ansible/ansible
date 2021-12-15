@@ -87,7 +87,7 @@ class ActionModule(ActionBase):
             except AnsibleError as e:
                 raise AnsibleActionFail(to_native(e))
 
-            if self._play_context.check_mode:
+            if self._task.check_mode:
                 # check mode is supported if 'creates' or 'removes' are provided
                 # the task has already been skipped if a change would not occur
                 if self._task.args.get('creates') or self._task.args.get('removes'):
