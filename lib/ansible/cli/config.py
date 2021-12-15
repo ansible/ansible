@@ -9,7 +9,6 @@ __metaclass__ = type
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
 
-import json
 import os
 import shlex
 import subprocess
@@ -24,7 +23,7 @@ from ansible.config.manager import ConfigManager, Setting
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Mapping, Sequence
-from ansible.module_utils.common.json import AnsibleJSONEncoder
+from ansible.module_utils.common.text.converters import jsonify
 from ansible.module_utils.six import string_types
 from ansible.parsing.quoting import is_quoted
 from ansible.parsing.yaml.dumper import AnsibleDumper
@@ -92,7 +91,6 @@ class ConfigCLI(CLI):
         # search_parser.add_argument('args', help='Search term', metavar='<search term>')
 
     def post_process_args(self, options):
-
         options = super(ConfigCLI, self).post_process_args(options)
         display.verbosity = options.verbosity
 
@@ -288,7 +286,7 @@ class ConfigCLI(CLI):
                 if subkey == 'env':
                     data.append('%s%s=%s' % (prefix, entry, default))
                 elif subkey == 'vars':
-                    data.append(prefix + to_text(yaml.dump({entry: default}, default_flow_style=False, Dumper=AnsibleDumper), errors='surrogate_or_strict'))
+                    data.append(prefix + to_text(yaml.dump({entry: default}, Dumper=AnsibleDumper, default_flow_style=False), errors='surrogate_or_strict'))
                 data.append('')
 
         return data
@@ -539,7 +537,7 @@ if __name__ == '__main__':
                 raise AnsibleError("Cannot format and display this setting due to it being of type %s" % type(res))
 
         elif f == 'json':
-            res = json.dumps(res, cls=AnsibleJSONEncoder)
+            res = jsonify(res)
         elif f == 'yaml':
             res = yaml.dump(res, Dumper=AnsibleDumper)
 
