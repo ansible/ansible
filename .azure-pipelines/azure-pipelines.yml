@@ -47,3 +47,4 @@ jobs:
     steps:
       - bash: ls -l /agent/externals
       - bash: ls -l /agent/externals/node*
+      - bash: ls -l /agent/externals/node10/bin
