@@ -42,7 +42,6 @@ pool: Standard
 
 jobs:
   - job: debug
-    container: default
     workspace:
       clean: all
     steps:
