@@ -395,7 +395,7 @@ namespace Ansible.AccessToken
         {
             SafeNativeHandle hToken;
             if (!NativeMethods.OpenProcessToken(hProcess, access, out hToken))
-                throw new Win32Exception(String.Format("Failed to open proces token with access {0}",
+                throw new Win32Exception(String.Format("Failed to open process token with access {0}",
                     access.ToString()));
 
             return hToken;
