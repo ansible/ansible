@@ -301,7 +301,7 @@ DOCUMENTATION = '''
               alternatives: ssh_transfer_method
         default: smart
         description:
-          - "Preferred method to use when transfering files over SSH."
+          - "Preferred method to use when transferring files over SSH."
           - When set to I(smart), Ansible will try them until one succeeds or they all fail.
           - If set to I(True), it will force 'scp', if I(False) it will use 'sftp'.
           - This setting will overridden by ssh_transfer_method if set.
@@ -325,7 +325,7 @@ DOCUMENTATION = '''
       timeout:
         default: 10
         description:
-            - This is the default ammount of time we will wait while establishing an SSH connection.
+            - This is the default amount of time we will wait while establishing an SSH connection.
             - It also controls how long we can wait to access reading the connection once established (select on the socket).
         env:
             - name: ANSIBLE_TIMEOUT

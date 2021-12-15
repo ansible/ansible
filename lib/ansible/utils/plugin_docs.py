@@ -37,7 +37,7 @@ def merge_fragment(target, source):
             elif isinstance(target[key], MutableSequence):
                 value = sorted(frozenset(value + target[key]))
             else:
-                raise Exception("Attempt to extend a documentation fragement, invalid type for %s" % key)
+                raise Exception("Attempt to extend a documentation fragment, invalid type for %s" % key)
         target[key] = value
 
 
