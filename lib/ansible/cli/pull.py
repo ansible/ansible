@@ -125,7 +125,7 @@ class PullCLI(CLI):
                                  help="when changing (small) files and templates, show the differences in those files; works great with --check")
         self.parser.add_argument("-r", "--galaxy-role-file", dest='role_file', default=None,
                                  help='requirements file to install before running the playbook')
-        self.parser.add_argument("--galaxy-force-with-deps", default=False, dest='force_with_deps', action='store_true'
+        self.parser.add_argument("--galaxy-force-with-deps", default=False, dest='force_with_deps', action='store_true',
                                  help='adds --force-with-deps to the ansible-galaxy call')
 
     def post_process_args(self, options):
