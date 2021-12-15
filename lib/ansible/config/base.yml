@@ -1715,7 +1715,7 @@ PARAMIKO_LOOK_FOR_KEYS:
   type: boolean
 PERSISTENT_CONTROL_PATH_DIR:
   name: Persistence socket path
-  default: ~/.ansible/pc
+  default: ~/.ansible/cp
   description: Path to socket to be used by the connection persistence system.
   env: [{name: ANSIBLE_PERSISTENT_CONTROL_PATH_DIR}]
   ini:
