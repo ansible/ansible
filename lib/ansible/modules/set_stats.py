@@ -31,6 +31,13 @@ options:
         - Whether the provided value is aggregated to the existing stat C(yes) or will replace it C(no).
     type: bool
     default: yes
+  list_merge:
+    description:
+        - Set list merge behaviour on aggregating existing stat.
+        - See L(Combining hashes/dictionaries,https://docs.ansible.com/ansible/latest/user_guide/playbooks_filters.html#combining-hashes-dictionaries).
+    type: str
+    default: replace
+    choices: [ replace, keep, append, prepend, append_rp, prepend_rp ]
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.conn
