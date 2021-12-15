@@ -81,7 +81,7 @@ class AggregateStats:
         else:
             self.custom[host][which] = what
 
-    def update_custom_stats(self, which, what, host=None):
+    def update_custom_stats(self, which, what, host=None, list_merge='replace'):
         ''' allow aggregation of a custom stat'''
 
         if host is None:
@@ -94,7 +94,7 @@ class AggregateStats:
             return None
 
         if isinstance(what, MutableMapping):
-            self.custom[host][which] = merge_hash(self.custom[host][which], what)
+            self.custom[host][which] = merge_hash(self.custom[host][which], what, list_merge=list_merge)
         else:
             # let overloaded + take care of other types
             self.custom[host][which] += what
