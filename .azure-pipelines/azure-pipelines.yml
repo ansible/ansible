@@ -42,9 +42,8 @@ pool: Standard
 
 jobs:
   - job: debug
-    container: default
     workspace:
       clean: all
     steps:
-      - bash: ls -l /__a/externals/
-      - bash: ls -l /__a/externals/node*
+      - bash: ls -l /agent/externals
+      - bash: ls -l /agent/externals/node*
