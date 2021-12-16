@@ -483,13 +483,6 @@ class ConfigCLI(CLI):
         self.pager(to_text('\n'.join(text), errors='surrogate_or_strict'))
 
 
-def main(args=None):
-    ConfigCLI.cli_executor(args)
-
-
-if __name__ == '__main__':
-    main()
-
     def execute_get(self):
 
         # init/validation
@@ -543,3 +536,11 @@ if __name__ == '__main__':
 
         # show it
         display.display(to_text(res, errors='surrogate_or_strict'))
+
+def main(args=None):
+    ConfigCLI.cli_executor(args)
+
+
+if __name__ == '__main__':
+    main()
+
