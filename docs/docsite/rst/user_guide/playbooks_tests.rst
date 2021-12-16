@@ -421,7 +421,7 @@ The following tasks are illustrative of the tests meant to check the status of t
 Type Tests
 ==========
 
-When looking to determine types, it may be tempting to use the ``type_debug`` filter and compare that to the string name of that type, however, you should instead use type test comparisons, like these::
+When looking to determine types, it may be tempting to use the ``type_debug`` filter and compare that to the string name of that type, however, you should instead use type test comparisons, such as:
 
      tasks:
      - name: "String interpretation"
