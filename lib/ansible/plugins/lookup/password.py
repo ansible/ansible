@@ -334,6 +334,7 @@ def _release_lock(lockfile):
 
 
 class LookupModule(LookupBase):
+
     def _parse_parameters(self, term):
         """Hacky parsing of params
 
@@ -388,7 +389,7 @@ class LookupModule(LookupBase):
         self.set_options(var_options=variables, direct=kwargs)
 
         for term in terms:
-            relpath, params = _parse_parameters(term, self)
+            relpath, params = self._parse_parameters(term, self)
             path = self._loader.path_dwim(relpath)
             b_path = to_bytes(path, errors='surrogate_or_strict')
             chars = _gen_candidate_chars(params['chars'])
