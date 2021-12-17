@@ -1,0 +1,26 @@
+- name: Initialize a git repo
+  command: 'git init {{ test_error_repo_path }}'
+
+- stat:
+    path: "{{ test_error_repo_path }}"
+
+- name: Add a collection to the repository
+  command: 'ansible-galaxy collection init {{ coll_name }}'
+  args:
+    chdir: '{{ scm_path }}'
+  vars:
+    coll_name: 'error_test.bad_version_collection'
+
+- name: Add an invalid version to the collection
+  lineinfile:
+    path: '{{ test_error_repo_path }}/bad_version_collection/galaxy.yml'
+    regexp: '^version'
+    line: "version: 1.0"
+
+- name: Commit the changes
+  command: '{{ item }}'
+  args:
+    chdir: '{{ test_error_repo_path }}'
+  loop:
+    - git add ./
+    - git commit -m 'add collections'

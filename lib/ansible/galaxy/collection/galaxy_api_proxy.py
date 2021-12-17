@@ -23,9 +23,12 @@ if TYPE_CHECKING:
         Candidate, Requirement,
     )
 
+from ansible.errors import AnsibleError
 from ansible.galaxy.api import GalaxyAPI, GalaxyError
 from ansible.module_utils._text import to_text
+from ansible.module_utils.six import string_types
 from ansible.utils.display import Display
+from ansible.utils.version import SemanticVersion
 
 
 display = Display()
@@ -85,13 +88,19 @@ class MultiGalaxyAPIProxy:
         # type: (Requirement) -> Iterable[Tuple[str, GalaxyAPI]]
         """Get a set of unique versions for FQCN on Galaxy servers."""
         if requirement.is_concrete_artifact:
-            return {
-                (
-                    self._concrete_art_mgr.
-                    get_direct_collection_version(requirement),
-                    requirement.src,
-                ),
-            }
+            version = self._concrete_art_mgr.get_direct_collection_version(requirement)
+
+            err = f"Invalid version found for requirement '{requirement}': {version} ({type(version)}). "
+            err += "The version should be a semantic version string (or '*')."
+            if not isinstance(version, string_types):
+                raise AnsibleError(err)
+            elif version != "*":
+                try:
+                    SemanticVersion(version)
+                except ValueError:
+                    raise AnsibleError(err)
+
+            return {(version, requirement.src,)}
 
         api_lookup_order = (
             (requirement.src, )
