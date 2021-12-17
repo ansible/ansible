@@ -193,7 +193,7 @@ The following table shows:
       <td>✓</td>
       <td>GitHub Actions</td>
       <td>✓</td>
-      <td><a href="https://docs.ansible.com/ansible/devel/scenario_guides/guide_kubernetes.html">Kubernetes guide</a></td>
+      <td></td>
     </tr>
     <tr>
       <td><a href="https://cloud.redhat.com/ansible/automation-hub/redhat/openshift">redhat.openshift</a></td>
@@ -204,7 +204,7 @@ The following table shows:
       <td>✓</td>
       <td>GitHub Actions</td>
       <td>✓</td>
-      <td><a href="https://docs.ansible.com/ansible/devel/scenario_guides/guide_kubernetes.html">Kubernetes guide</a></td>
+      <td></td>
     <tr>
       <td><a href="https://galaxy.ansible.com/openvswitch/openvswitch">openvswitch.openvswitch</a></td>
       <td><a href="https://galaxy.ansible.com/community/network">community.network</a></td>
