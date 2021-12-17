@@ -58,6 +58,7 @@ class ValidationResult:
         """
 
         self._unsupported_parameters = set()
+        self._supported_parameters = dict()
         self._validated_parameters = deepcopy(parameters)
         self._deprecations = []
         self._warnings = []
@@ -204,7 +205,14 @@ class ArgumentSpecValidator:
             result.errors.append(NoLogError(to_native(te)))
 
         try:
-            result._unsupported_parameters.update(_get_unsupported_parameters(self.argument_spec, result._validated_parameters, legal_inputs))
+            result._unsupported_parameters.update(
+                _get_unsupported_parameters(
+                    self.argument_spec,
+                    result._validated_parameters,
+                    legal_inputs,
+                    store_supported=result._supported_parameters,
+                )
+            )
         except TypeError as te:
             result.errors.append(RequiredDefaultError(to_native(te)))
         except ValueError as ve:
@@ -236,7 +244,8 @@ class ArgumentSpecValidator:
         _validate_sub_spec(self.argument_spec, result._validated_parameters,
                            errors=result.errors,
                            no_log_values=result._no_log_values,
-                           unsupported_parameters=result._unsupported_parameters)
+                           unsupported_parameters=result._unsupported_parameters,
+                           supported_parameters=result._supported_parameters,)
 
         if result._unsupported_parameters:
             flattened_names = []
@@ -247,9 +256,10 @@ class ArgumentSpecValidator:
                     flattened_names.append(item)
 
             unsupported_string = ", ".join(sorted(list(flattened_names)))
-            supported_string = ", ".join(self._valid_parameter_names)
+            supported_params = sorted(list(result._supported_parameters.get(item, [])))
+            supported_string = ", ".join(supported_params)
             result.errors.append(
-                UnsupportedError("{0}. Supported parameters include: {1}.".format(unsupported_string, supported_string)))
+                UnsupportedError("{0} is not a supported parameter. Supported parameters include: {1}.".format(unsupported_string, supported_string)))
 
         return result
 
