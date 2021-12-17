@@ -41,6 +41,5 @@ We are migrating these guides into collections. Please update your links for the
    :maxdepth: 1
    :caption: Virtualization & Containerization Guides
 
-   guide_kubernetes
    guide_vagrant
    guide_vmware
