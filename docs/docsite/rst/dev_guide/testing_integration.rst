@@ -116,8 +116,8 @@ Windows Tests
 =============
 
 These tests exercise the ``winrm`` connection plugin and Windows modules.  You'll
-need to define an inventory with a remote Windows 2008 or 2012 Server to use
-for testing, and enable PowerShell Remoting to continue.
+need to define an inventory with a remote Windows Server to use for testing,
+and enable PowerShell Remoting to continue.
 
 Running these tests may result in changes to your Windows host, so don't run
 them against a production/critical Windows environment.
