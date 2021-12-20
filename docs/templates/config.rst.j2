@@ -122,7 +122,7 @@ you can use the command line utility mentioned above (`ansible-config`) to brows
 {%         endfor %}
 {%       else %}
 {%         for key in config['choices'] %}
-    - :{{key}}:
+    - {{key}}
 {%         endfor %}
 {%       endif %}
 {%     endif %}
