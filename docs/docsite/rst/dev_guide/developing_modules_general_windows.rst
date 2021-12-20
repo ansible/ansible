@@ -279,7 +279,7 @@ These are the checks that can be used within Ansible modules:
 - ``#AnsibleRequires -Become``: Added in Ansible 2.5, forces the exec runner to run the module with ``become``, which is primarily used to bypass WinRM restrictions. If ``ansible_become_user`` is not specified then the ``SYSTEM`` account is used instead.
 
 The ``#AnsibleRequires -PowerShell`` and ``#AnsibleRequires -CSharpUtil``
-support further features like:
+support further features such as:
 
 - Importing a util contained in a collection (added in Ansible 2.9)
 - Importing a util by relative names (added in Ansible 2.10)
