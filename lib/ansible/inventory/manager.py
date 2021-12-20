@@ -415,7 +415,7 @@ class InventoryManager(object):
                 if order == 'shuffle':
                     shuffle(hosts)
                 elif order == 'last_segment':
-                    hosts = sorted(hosts, key=lambda x: getattr(x, 'name').rsplit("-",1)[-1])
+                    hosts = sorted(hosts, key=lambda x: getattr(x, 'name').split("-")[::-1])
                 elif order not in [None, 'inventory']:
                     raise AnsibleOptionsError("Invalid 'order' specified for inventory hosts: %s" % order)
 
