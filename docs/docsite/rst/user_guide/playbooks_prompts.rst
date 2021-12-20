@@ -45,10 +45,10 @@ If you have a variable that changes infrequently, you can provide a default valu
        prompt: Product release version
        default: "1.0"
 
-Encrypting values supplied by ``vars_prompt``
----------------------------------------------
+Hashing values supplied by ``vars_prompt``
+------------------------------------------
 
-You can encrypt the entered value so you can use it, for instance, with the user module to define a password:
+You can hash the entered value so you can use it, for instance, with the user module to define a password:
 
 .. code-block:: yaml
 
