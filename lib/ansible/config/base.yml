@@ -1786,7 +1786,7 @@ PLAYBOOK_VARS_ROOT:
   ini:
   - {key: playbook_vars_root, section: defaults}
   choices:
-    top: follows the traditional behaviour of using the top playbook in the chain to find the root directory
+    top: follows the traditional behavior of using the top playbook in the chain to find the root directory.
     bottom: follows the 2.4.0 behaviour of using the current playbook to find the root directory.
     all: examines from the first parent to the current playbook.
 PLUGIN_FILTERS_CFG:
