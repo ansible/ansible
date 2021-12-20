@@ -414,8 +414,8 @@ class InventoryManager(object):
                 hosts = self._hosts_patterns_cache[pattern_hash][:]
                 if order == 'shuffle':
                     shuffle(hosts)
-                elif order == 'last_segment':
-                    hosts = sorted(hosts, key=lambda x: getattr(x, 'name').split("-")[::-1])
+                elif order == 'rtl_sorted':
+                    hosts = sorted(hosts, key=lambda x: getattr(x, 'name')[::-1])
                 elif order not in [None, 'inventory']:
                     raise AnsibleOptionsError("Invalid 'order' specified for inventory hosts: %s" % order)
 
