@@ -46,7 +46,7 @@ If you have a variable that changes infrequently, you can provide a default valu
        default: "1.0"
 
 Hashing values supplied by ``vars_prompt``
----------------------------------------------
+------------------------------------------
 
 You can hash the entered value so you can use it, for instance, with the user module to define a password:
 
