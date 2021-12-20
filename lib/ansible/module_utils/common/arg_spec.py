@@ -256,10 +256,20 @@ class ArgumentSpecValidator:
                     flattened_names.append(item)
 
             unsupported_string = ", ".join(sorted(list(flattened_names)))
-            supported_params = sorted(list(result._supported_parameters.get(item, [])))
+            supported_params = supported_aliases = []
+            if result._supported_parameters.get(item):
+                supported_params = sorted(list(result._supported_parameters[item][0]))
+                supported_aliases = sorted(list(result._supported_parameters[item][1]))
             supported_string = ", ".join(supported_params)
-            result.errors.append(
-                UnsupportedError("{0} is not a supported parameter. Supported parameters include: {1}.".format(unsupported_string, supported_string)))
+            if supported_aliases:
+                aliases_string = ", ".join(supported_aliases)
+                supported_string += " (%s)" % aliases_string
+            if kwargs.get('validate_role_argument_spec'):
+                msg = "{0} is not a supported parameter. Supported parameters include: {1}.".format(unsupported_string, supported_string)
+            else:
+                # AnsibleModule modifies the error message
+                msg = "{0}. Supported parameters include: {1}.".format(unsupported_string, supported_string)
+            result.errors.append(UnsupportedError(msg))
 
         return result
 

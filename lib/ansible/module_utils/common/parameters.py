@@ -183,7 +183,14 @@ def _get_unsupported_parameters(argument_spec, parameters, legal_inputs=None, op
             unsupported_parameters.add(context)
 
             if store_supported is not None:
-                store_supported.update({context: legal_inputs})
+                supported_aliases = _handle_aliases(argument_spec, parameters)
+                supported_params = []
+                for option in legal_inputs:
+                    if option in supported_aliases:
+                        continue
+                    supported_params.append(option)
+
+                store_supported.update({context: (supported_params, supported_aliases)})
 
     return unsupported_parameters
 
