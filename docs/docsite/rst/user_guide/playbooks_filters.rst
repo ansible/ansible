@@ -114,6 +114,7 @@ If you are unsure of the underlying Python type of a variable, you can use the `
 
     {{ myvar | type_debug }}
 
+You should note that, while this may seem like a useful filter for checking that you have the right type of data in a variable, you should often prefer :ref:`type tests <type_tests>`, which will allow you to test for specific data types.
 
 .. _dict_filter:
 
