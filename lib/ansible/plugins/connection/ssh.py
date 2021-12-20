@@ -334,8 +334,6 @@ DOCUMENTATION = '''
         vars:
           - name: ansible_ssh_timeout
             version_added: '2.11'
-        cli:
-          - name: timeout
         type: integer
       pkcs11_provider:
         version_added: '2.12'

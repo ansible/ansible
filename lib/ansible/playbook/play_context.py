@@ -322,6 +322,9 @@ class PlayContext(Base):
             try:
                 if 'become' in prop:
                     continue
+                if prop in ['pipelining', 'timeout']:
+                    # HACK: exclude FAs with non-None defaults to allow SSH connection plugin specific configuration
+                    continue
 
                 var_val = getattr(self, prop)
                 for var_opt in var_list:
