@@ -84,13 +84,11 @@ created Windows VM:
 The OS that is created is based on the image set. The following
 images can be used:
 
-- `jborean93/WindowsServer2008-x86 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2008-x86>`_
-- `jborean93/WindowsServer2008-x64 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2008-x64>`_
-- `jborean93/WindowsServer2008R2 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2008R2>`_
 - `jborean93/WindowsServer2012 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2012>`_
 - `jborean93/WindowsServer2012R2 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2012R2>`_
 - `jborean93/WindowsServer2016 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2016>`_
 - `jborean93/WindowsServer2019 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2019>`_
+- `jborean93/WindowsServer2022 <https://app.vagrantup.com/jborean93/boxes/WindowsServer2022>`_
 
 When the host is online, it can accessible by RDP on ``127.0.0.1:3389`` but the
 port may differ depending if there was a conflict. To get rid of the host, run
@@ -157,10 +155,6 @@ controller started with ``00`` and is incremented from there. For example, in
 the default ``inventory.yml`` file, WinRM over HTTPS for ``SERVER2012R2`` is
 forwarded over port ``29804`` as it's the fourth entry in ``domain_children``.
 
-.. note:: While an SSH server is available on all Windows hosts but Server
-    2008 (non R2), it is not a support connection for Ansible managing Windows
-    hosts and should not be used with Ansible.
-
 Windows new module development
 ==============================
 
@@ -177,7 +171,7 @@ When creating a new module there are a few things to keep in mind:
 - Look for common functions in ``./lib/ansible/module_utils/powershell/`` and use the code there instead of duplicating work. These can be imported by adding the line ``#Requires -Module *`` where * is the filename to import, and will be automatically included with the module code sent to the Windows target when run via Ansible
 - As well as PowerShell module utils, C# module utils are stored in ``./lib/ansible/module_utils/csharp/`` and are automatically imported in a module execution if the line ``#AnsibleRequires -CSharpUtil *`` is present
 - C# and PowerShell module utils achieve the same goal but C# allows a developer to implement low level tasks, such as calling the Win32 API, and can be faster in some cases
-- Ensure the code runs under Powershell v3 and higher on Windows Server 2008 and higher; if higher minimum Powershell or OS versions are required, ensure the documentation reflects this clearly
+- Ensure the code runs under Powershell v3 and higher on Windows Server 2012 and higher; if higher minimum Powershell or OS versions are required, ensure the documentation reflects this clearly
 - Ansible runs modules under strictmode version 2.0. Be sure to test with that enabled by putting ``Set-StrictMode -Version 2.0`` at the top of your dev script
 - Favor native Powershell cmdlets over executable calls if possible
 - Use the full cmdlet name instead of aliases, for example ``Remove-Item`` over ``rm``

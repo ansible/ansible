@@ -17,8 +17,7 @@ More details on DSC can be viewed at `DSC Overview <https://docs.microsoft.com/e
 Host Requirements
 `````````````````
 To use the ``win_dsc`` module, a Windows host must have PowerShell v5.0 or
-newer installed. All supported hosts, except for Windows Server 2008 (non R2) can be
-upgraded to PowerShell v5.
+newer installed. All supported hosts can be upgraded to PowerShell v5.
 
 Once the PowerShell requirements have been met, using DSC is as simple as
 creating a task with the ``win_dsc`` module.
