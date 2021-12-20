@@ -1,8 +1,8 @@
 .. _communication:
 
-*************
-Communicating
-*************
+*****************************************
+Communicating with the Ansible community
+*****************************************
 
 .. contents::
    :local:
@@ -44,7 +44,7 @@ To join the community using Matrix, you need two things:
 * a Matrix account (from `Matrix.org <https://app.element.io/#/register>`_ or any other Matrix homeserver)
 * a `Matrix client <https://matrix.org/clients/>`_ (we recommend `Element Webchat <https://app.element.io>`_)
 
-The Ansible community maintains its own Matrix homeserver at ``ansible.im``, however public registration is currently unavailable. 
+The Ansible community maintains its own Matrix homeserver at ``ansible.im``, however public registration is currently unavailable.
 
 Matrix chat supports:
 
