@@ -267,9 +267,57 @@ These are the checks that can be used within Ansible modules:
 
 - ``#Requires -Module Ansible.ModuleUtils.<module_util>``: Added in Ansible 2.4, specifies a module_util to load in for the module execution.
 - ``#Requires -Version x.y``: Added in Ansible 2.5, specifies the version of PowerShell that is required by the module. The module will fail if this requirement is not met.
+- ``#AnsibleRequires -PowerShell <module_util>``: Added in Ansible 2.8, like ``#Requires -Module``, this specifies a module_util to load in for module execution.
+- ``#AnsibleRequires -CSharpUtil <module_util>``: Added in Ansible 2.8, specifies a C# module_util to load in for the module execution.
 - ``#AnsibleRequires -OSVersion x.y``: Added in Ansible 2.5, specifies the OS build version that is required by the module and will fail if this requirement is not met. The actual OS version is derived from ``[Environment]::OSVersion.Version``.
 - ``#AnsibleRequires -Become``: Added in Ansible 2.5, forces the exec runner to run the module with ``become``, which is primarily used to bypass WinRM restrictions. If ``ansible_become_user`` is not specified then the ``SYSTEM`` account is used instead.
-- ``#AnsibleRequires -CSharpUtil Ansible.<module_util>``: Added in Ansible 2.8, specifies a C# module_util to load in for the module execution.
+
+The ``#AnsibleRequires -PowerShell`` and ``#AnsibleRequires -CSharpUtil``
+support further features such as:
+
+- Importing a util contained in a collection (added in Ansible 2.9)
+- Importing a util by relative names (added in Ansible 2.10)
+- Specifying the util is optional by adding `-Optional` to the import
+  declaration (added in Ansible 2.12).
+
+See the below examples for more details:
+
+.. code-block:: powershell
+
+    # Imports the PowerShell Ansible.ModuleUtils.Legacy provided by Ansible itself
+    #AnsibleRequires -PowerShell Ansible.ModuleUtils.Legacy
+
+    # Imports the PowerShell my_util in the my_namesapce.my_name collection
+    #AnsibleRequires -PowerShell ansible_collections.my_namespace.my_name.plugins.module_utils.my_util
+
+    # Imports the PowerShell my_util that exists in the same collection as the current module
+    #AnsibleRequires -PowerShell ..module_utils.my_util
+
+    # Imports the PowerShell Ansible.ModuleUtils.Optional provided by Ansible if it exists.
+    # If it does not exist then it will do nothing.
+    #AnsibleRequires -PowerShell Ansible.ModuleUtils.Optional -Optional
+
+    # Imports the C# Ansible.Process provided by Ansible itself
+    #AnsibleRequires -CSharpUtil Ansible.Process
+
+    # Imports the C# my_util in the my_namespace.my_name collection
+    #AnsibleRequires -CSharpUtil ansible_collections.my_namespace.my_name.plugins.module_utils.my_util
+
+    # Imports the C# my_util that exists in the same collection as the current module
+    #AnsibleRequires -CSharpUtil ..module_utils.my_util
+
+    # Imports the C# Ansible.Optional provided by Ansible if it exists.
+    # If it does not exist then it will do nothing.
+    #AnsibleRequires -CSharpUtil Ansible.Optional -Optional
+
+For optional require statements, it is up to the module code to then verify
+whether the util has been imported before trying to use it. This can be done by
+checking if a function or type provided by the util exists or not.
+
+While both ``#Requires -Module`` and ``#AnsibleRequires -PowerShell`` can be
+used to load a PowerShell module it is recommended to use ``#AnsibleRequires``.
+This is because ``#AnsibleRequires`` supports collection module utils, imports
+by relative util names, and optional util imports.
 
 C# module utils can reference other C# utils by adding the line
 ``using Ansible.<module_util>;`` to the top of the script with all the other
