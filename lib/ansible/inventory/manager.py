@@ -410,6 +410,8 @@ class InventoryManager(object):
                 hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
             elif order == 'reverse_inventory':
                 hosts = self._hosts_patterns_cache[pattern_hash][::-1]
+            elif order == 'order_last_dash':
+                hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], key=lambda x: getattr(x, 'name').rsplit("-",1)[-1])
             else:
                 hosts = self._hosts_patterns_cache[pattern_hash][:]
                 if order == 'shuffle':
