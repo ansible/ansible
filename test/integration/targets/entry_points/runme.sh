@@ -5,6 +5,8 @@ source virtualenv.sh
 set +x
 unset PYTHONPATH
 
+export SETUPTOOLS_USE_DISTUTILS=stdlib
+
 base_dir="$(dirname "$(dirname "$(dirname "$(dirname "${OUTPUT_DIR}")")")")"
 bin_dir="$(dirname "$(command -v pip)")"
 
