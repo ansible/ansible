@@ -97,10 +97,10 @@ class MultiGalaxyAPIProxy:
             elif version != "*":
                 try:
                     SemanticVersion(version)
-                except ValueError:
-                    raise AnsibleError(err)
+                except ValueError as ex:
+                    raise AnsibleError(err) from ex
 
-            return {(version, requirement.src,)}
+            return {(version, requirement.src)}
 
         api_lookup_order = (
             (requirement.src, )
