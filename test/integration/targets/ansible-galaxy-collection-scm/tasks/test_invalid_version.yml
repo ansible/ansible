@@ -1,6 +1,6 @@
 - block:
   - name: test installing a collection with invalid version
-    command: 'ansible-galaxy collection install git+file://{{ test_error_repo_path }}/.git#bad_version_collection -vvvvvv'
+    command: 'ansible-galaxy collection install git+file://{{ test_error_repo_path }}/.git#float_version_collection -vvvvvv'
     ignore_errors: yes
     register: invalid_version_result
 
@@ -9,8 +9,22 @@
         - invalid_version_result is failed
         - msg in invalid_version_result.stderr
     vars:
-      req: error_test.bad_version_collection:1.0
+      req: error_test.float_version_collection:1.0
       ver: "1.0 (<class 'float'>)"
+      msg: "Invalid version found for requirement '{{ req }}': {{ ver }}. The version should be a semantic version string (or '*')."
+
+  - name: test installing a collection with invalid version
+    command: 'ansible-galaxy collection install git+file://{{ test_error_repo_path }}/.git#not_semantic_version_collection -vvvvvv'
+    ignore_errors: yes
+    register: invalid_version_result
+
+  - assert:
+      that:
+        - invalid_version_result is failed
+        - msg in invalid_version_result.stderr
+    vars:
+      req: error_test.not_semantic_version_collection:1.0
+      ver: "1.0 (<class 'str'>)"
       msg: "Invalid version found for requirement '{{ req }}': {{ ver }}. The version should be a semantic version string (or '*')."
 
   always:
