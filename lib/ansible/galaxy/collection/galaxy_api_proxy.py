@@ -92,6 +92,17 @@ class MultiGalaxyAPIProxy:
 
             err = f"Invalid version found for requirement '{requirement}': {version} ({type(version)}). "
             err += "The version should be a semantic version string (or '*')."
+            # NOTE: The known cases causing the version to be a non-string object come from
+            # NOTE: the differences in how the YAML parser normalizes ambiguous values and
+            # NOTE: how the end-users sometimes expect them to be parsed. Unless the users
+            # NOTE: explicitly use the double quotes of one of the multiline string syntaxes
+            # NOTE: in the collection metadata file, PyYAML will parse a value containing
+            # NOTE: two dot-separated integers as `float`, a single integer as `int`, and 3+
+            # NOTE: integers as a `str`. In some cases, they may also use an empty value
+            # NOTE: which is normalized as `null` and turned into `None` in the Python-land.
+            # NOTE: Another known mistake is setting a minor part of the SemVer notation
+            # NOTE: skipping the "patch" bit like "1.0" which is assumed non-compliant even
+            # NOTE: after the conversion to string.
             if not isinstance(version, string_types):
                 raise AnsibleError(err)
             elif version != "*":
