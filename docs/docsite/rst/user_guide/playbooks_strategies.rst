@@ -183,6 +183,8 @@ sorted:
     Sorted alphabetically sorted by name
 reverse_sorted:
     Sorted by name in reverse alphabetical order
+rtl_sorted:
+    Sorted by name reading right to left (from the end of string to the beginning)
 shuffle:
     Randomly ordered on each run
 
