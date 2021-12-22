@@ -116,27 +116,24 @@
   package:
     name: '{{ tftp_package }}'
     state: present
-  when: (ansible_distribution == "CentOS" or ansible_distribution == "RedHat") and ansible_distribution_version|int < 9
+
 #tftp server allows for checking indirect status
 - name: Enable indirect service 1
   systemd:
     name: '{{ tftp_service }}'
     enabled: true
   register: systemd_enable_tftp_indirect_1
-  when: (ansible_distribution == "CentOS" or ansible_distribution == "RedHat") and ansible_distribution_version|int < 9
 
 - name: Enable indirect service 2
   systemd:
     name: '{{ tftp_service }}'
     enabled: true
   register: systemd_enable_tftp_indirect_2
-  when: (ansible_distribution == "CentOS" or ansible_distribution == "RedHat") and ansible_distribution_version|int < 9
 
 - assert:
     that:
       - systemd_enable_tftp_indirect_1 is changed
       - systemd_enable_tftp_indirect_2 is not changed
-  when: (ansible_distribution == "CentOS" or ansible_distribution == "RedHat") and ansible_distribution_version|int < 9
 
 - assert:
     that:
