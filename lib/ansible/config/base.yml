@@ -667,7 +667,7 @@ DEFAULT_GATHERING:
       section: defaults
   version_added: "1.6"
   choices:
-    implicit: the cache plugin will be ignored and facts will be gathered per play unless 'gather_facts: False' is set.
+    implicit: "the cache plugin will be ignored and facts will be gathered per play unless 'gather_facts: False' is set."
     explicit: facts will not be gathered unless directly requested in the play.
     smart: each new host that has no facts discovered will be scanned, but if the same host is addressed in multiple plays it will not be contacted again in the run.
 DEFAULT_GATHER_SUBSET:
