@@ -1,0 +1,2 @@
+minor_changes:
+  - inventory/manager.py add 'rtl_sorted' sorting order for get_host, returnes hosts sorted looking from the end of the string.
