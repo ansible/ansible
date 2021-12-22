@@ -372,7 +372,7 @@ stat:
         version:
             description: The version/generation attribute of a file according to the filesystem
             returned: success, path exists, user can execute the path, lsattr is available and filesystem supports
-            type: string
+            type: str
             sample: "381700746"
             version_added: 2.3
 '''
