@@ -1,0 +1,2 @@
+bugfixes:
+  - Fall back to DNS resolution if a delegate_to host is defined in inventory with a null remote address (https://github.com/ansible/ansible/issues/76359).
