@@ -11,7 +11,7 @@
     vars:
       req: error_test.float_version_collection:1.0
       ver: "1.0 (<class 'float'>)"
-      msg: "Invalid version found for requirement '{{ req }}': {{ ver }}. The version should be a semantic version string (or '*')."
+      msg: "Invalid version found for the collection '{{ req }}': {{ ver }}. A SemVer-compliant version or '*' is required."
 
   - name: test installing a collection with invalid version
     command: 'ansible-galaxy collection install git+file://{{ test_error_repo_path }}/.git#not_semantic_version_collection -vvvvvv'
@@ -25,7 +25,7 @@
     vars:
       req: error_test.not_semantic_version_collection:1.0
       ver: "1.0 (<class 'str'>)"
-      msg: "Invalid version found for requirement '{{ req }}': {{ ver }}. The version should be a semantic version string (or '*')."
+      msg: "Invalid version found for the collection '{{ req }}': {{ ver }}. A SemVer-compliant version or '*' is required."
 
   always:
   - include_tasks: ./empty_installed_collections.yml

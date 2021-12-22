@@ -90,8 +90,9 @@ class MultiGalaxyAPIProxy:
         if requirement.is_concrete_artifact:
             version = self._concrete_art_mgr.get_direct_collection_version(requirement)
 
-            err = f"Invalid version found for requirement '{requirement}': {version} ({type(version)}). "
-            err += "The version should be a semantic version string (or '*')."
+            err = f"Invalid version found for the collection '{requirement}': {version} ({type(version)}). "
+            err += "A SemVer-compliant version or '*' is required. See https://semver.org to learn how to compose it correctly. "
+            err += "This is an issue with the collection."
             # NOTE: The known cases causing the version to be a non-string object come from
             # NOTE: the differences in how the YAML parser normalizes ambiguous values and
             # NOTE: how the end-users sometimes expect them to be parsed. Unless the users
