@@ -381,7 +381,7 @@ class ConfigCLI(CLI):
             else:
                 color = 'green'
                 msg = "%s(%s) = %s" % (setting, 'default', config[setting].get('default'))
-            if not context.CLIARGS['only_changed'] or color == 'yellow':
+            if not context.CLIARGS['only_changed'] or (color == 'yellow' and setting not in ('_terms', '_input')):
                 text.append(stringc(msg, color))
 
         return text

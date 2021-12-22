@@ -1,0 +1,2 @@
+bugfixes:
+  - ansilbe-config avoid showing _terms and _input when --only-changed
