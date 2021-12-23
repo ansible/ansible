@@ -119,3 +119,4 @@
       - systemd_enable_ssh_2 is not changed
 
 - import_tasks: test_unit_template.yml
+- import_tasks: test_indirect_service.yml
