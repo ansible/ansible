@@ -497,11 +497,15 @@ def main():
 
             # do we need to enable the service?
             enabled = False
-            (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
+            (rc, out, err) = module.run_command("%s is-enabled '%s' -l" % (systemctl, unit))
 
             # check systemctl result or if it is a init script
             if rc == 0:
                 enabled = True
+                # Check if service is indirect and if out contains exactly 1 line of string 'indirect' it's disabled
+                if out.splitlines() == ["indirect"]:
+                    enabled = False
+
             elif rc == 1:
                 # if not a user or global user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
                 if module.params['scope'] == 'system' and \

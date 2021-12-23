@@ -1,0 +1,2 @@
+bugfixes:
+- systemd - check if service is indirect so it gets enabled (https://github.com/ansible/ansible/issues/76453).
