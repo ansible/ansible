@@ -5,7 +5,7 @@
 
 - name: remove dummy indirect service
   file:
-    path: "/lib/systemd/system/{{item}}"
+    path: "/etc/systemd/system/{{item}}"
     state: absent
   loop:
     - dummy.service

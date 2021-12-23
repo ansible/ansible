@@ -1,7 +1,7 @@
 - name: Copy service file
   template:
     src: "{{item}}"
-    dest: "/lib/systemd/system/{{item}}"
+    dest: "/etc/systemd/system/{{item}}"
     owner: root
     group: root
   loop:
