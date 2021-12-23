@@ -26,9 +26,7 @@ if TYPE_CHECKING:
 from ansible.errors import AnsibleError
 from ansible.galaxy.api import GalaxyAPI, GalaxyError
 from ansible.module_utils._text import to_text
-from ansible.module_utils.six import string_types
 from ansible.utils.display import Display
-from ansible.utils.version import SemanticVersion
 
 
 display = Display()
@@ -88,31 +86,13 @@ class MultiGalaxyAPIProxy:
         # type: (Requirement) -> Iterable[Tuple[str, GalaxyAPI]]
         """Get a set of unique versions for FQCN on Galaxy servers."""
         if requirement.is_concrete_artifact:
-            version = self._concrete_art_mgr.get_direct_collection_version(requirement)
-
-            err = f"Invalid version found for the collection '{requirement}': {version} ({type(version)}). "
-            err += "A SemVer-compliant version or '*' is required. See https://semver.org to learn how to compose it correctly. "
-            err += "This is an issue with the collection."
-            # NOTE: The known cases causing the version to be a non-string object come from
-            # NOTE: the differences in how the YAML parser normalizes ambiguous values and
-            # NOTE: how the end-users sometimes expect them to be parsed. Unless the users
-            # NOTE: explicitly use the double quotes of one of the multiline string syntaxes
-            # NOTE: in the collection metadata file, PyYAML will parse a value containing
-            # NOTE: two dot-separated integers as `float`, a single integer as `int`, and 3+
-            # NOTE: integers as a `str`. In some cases, they may also use an empty value
-            # NOTE: which is normalized as `null` and turned into `None` in the Python-land.
-            # NOTE: Another known mistake is setting a minor part of the SemVer notation
-            # NOTE: skipping the "patch" bit like "1.0" which is assumed non-compliant even
-            # NOTE: after the conversion to string.
-            if not isinstance(version, string_types):
-                raise AnsibleError(err)
-            elif version != "*":
-                try:
-                    SemanticVersion(version)
-                except ValueError as ex:
-                    raise AnsibleError(err) from ex
-
-            return {(version, requirement.src)}
+            return {
+                (
+                    self._concrete_art_mgr.
+                    get_direct_collection_version(requirement),
+                    requirement.src,
+                ),
+            }
 
         api_lookup_order = (
             (requirement.src, )
