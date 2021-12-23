@@ -5,4 +5,4 @@
     name: paramiko
     extra_args: "-c {{ remote_constraints }}"
   environment:
-    SETUPTOOLS_USE_DISTUTILS: nope
+    SETUPTOOLS_USE_DISTUTILS: stdlib
