@@ -2,3 +2,12 @@
   file:
     path: /etc/systemd/system/sleeper@.service
     state: absent
+
+- name: remove dummy indirect service
+  file:
+    path: "/lib/systemd/system/{{item}}"
+    state: absent
+  loop:
+    - dummy.service
+    - dummy.socket
+
