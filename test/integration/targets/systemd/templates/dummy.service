@@ -4,7 +4,7 @@ Requires=dummy.socket
 Documentation=dummy
 
 [Service]
-ExecStart=yes
+ExecStart=/bin/yes
 StandardInput=socket
 
 [Install]

@@ -4,7 +4,6 @@
     dest: "/lib/systemd/system/{{item}}"
     owner: root
     group: root
-    mode: '0644'
   loop:
     - dummy.service
     - dummy.socket
@@ -31,7 +30,7 @@
     name: '{{ indirect_service }}'
     enabled: true
   register: systemd_enable_dummy_indirect_2
-  
+
 - assert:
     that:
       - systemd_enable_dummy_indirect_1 is changed
