@@ -18,3 +18,4 @@
 - import_tasks: test_download.yml
 - import_tasks: test_unprivileged_user.yml
 - import_tasks: test_different_language_var.yml
+- import_tasks: test_invalid_options.yml
