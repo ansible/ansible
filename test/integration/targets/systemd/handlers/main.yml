@@ -10,4 +10,3 @@
   loop:
     - dummy.service
     - dummy.socket
-
