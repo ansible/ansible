@@ -123,10 +123,6 @@ class PullCLI(CLI):
                                  help="don't make any changes; instead, try to predict some of the changes that may occur")
         self.parser.add_argument("--diff", default=C.DIFF_ALWAYS, dest='diff', action='store_true',
                                  help="when changing (small) files and templates, show the differences in those files; works great with --check")
-        self.parser.add_argument("-r", "--galaxy-role-file", dest='role_file', default=None,
-                                 help='requirements file to install before running the playbook')
-        self.parser.add_argument("--galaxy-force-with-deps", default=False, dest='force_with_deps', action='store_true',
-                                 help='adds --force-with-deps to the ansible-galaxy call')
 
     def post_process_args(self, options):
         options = super(PullCLI, self).post_process_args(options)
@@ -263,10 +259,6 @@ class PullCLI(CLI):
         requirements = self.select_requirements(context.CLIARGS['dest'])
         if requirements is not None:
             cmd = '%s/ansible-galaxy install --role-file %s' % (bin_path, requirements)
-            if context.CLIARGS['force']:
-                cmd += ' --force'
-            if context.CLIARGS['force_with_deps']:
-                cmd += ' --force-with-deps'
             display.vvvv('running %s' % cmd)
             os.chdir(context.CLIARGS['dest'])
             rc, b_out, b_err = run_cmd(cmd, live=True)
@@ -337,13 +329,7 @@ class PullCLI(CLI):
     def select_requirements(path):
         requirements = None
         errors = []
-        files = []
-        if context.CLIARGS['role_file'] is not None:
-            files.append(context.CLIARGS['role_file'])
-        files.append('requirements.yml')
-        files.append('requirements.yaml')
-        files.append('roles/requirements.yml')
-        files.append('roles/requirements.yaml')
+        files = ['roles/requirements.yml', 'roles/requirements.yaml']
         for req in files:
             req_path = os.path.join(path, req)
             rc = PullCLI.try_file(req_path)
