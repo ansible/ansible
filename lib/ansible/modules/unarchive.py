@@ -391,9 +391,9 @@ class ZipArchive(object):
                                     break
                         if not exclude_flag:
                             self._files_in_archive.append(to_native(member))
-            except Exception:
+            except Exception as e:
                 archive.close()
-                raise UnarchiveError('Unable to list files in the archive')
+                raise UnarchiveError('Unable to list files in the archive: %s' % to_native(e))
 
             archive.close()
         return self._files_in_archive
@@ -739,7 +739,7 @@ class ZipArchive(object):
         rc, out, err = self.module.run_command(cmd)
         if rc == 0:
             return True, None
-        return False, 'Command "%s" could not handle archive.' % self.cmd_path
+        return False, 'Command "%s" could not handle archive: %s' % (self.cmd_path, err)
 
 
 class TgzArchive(object):
@@ -788,7 +788,7 @@ class TgzArchive(object):
         locale = get_best_parsable_locale(self.module)
         rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LANGUAGE=locale))
         if rc != 0:
-            raise UnarchiveError('Unable to list files in the archive')
+            raise UnarchiveError('Unable to list files in the archive: %s' % err)
 
         for filename in out.splitlines():
             # Compensate for locale-related problems in gtar output (octal unicode representation) #11348
@@ -907,8 +907,8 @@ class TgzArchive(object):
         try:
             if self.files_in_archive:
                 return True, None
-        except UnarchiveError:
-            return False, 'Command "%s" could not handle archive.' % self.cmd_path
+        except UnarchiveError as e:
+            return False, 'Command "%s" could not handle archive: %s' % (self.cmd_path, to_native(e))
         # Errors and no files in archive assume that we weren't able to
         # properly unarchive it
         return False, 'Command "%s" found no files in archive. Empty archive files are not supported.' % self.cmd_path
@@ -959,8 +959,8 @@ def pick_handler(src, dest, file_args, module):
         if can_handle:
             return obj
         reasons.add(reason)
-    reason_msg = ' '.join(reasons)
-    module.fail_json(msg='Failed to find handler for "%s". Make sure the required command to extract the file is installed. %s' % (src, reason_msg))
+    reason_msg = '\n'.join(reasons)
+    module.fail_json(msg='Failed to find handler for "%s". Make sure the required command to extract the file is installed.\n%s' % (src, reason_msg))
 
 
 def main():

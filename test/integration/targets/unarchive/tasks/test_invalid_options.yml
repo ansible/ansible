@@ -1,0 +1,27 @@
+- name: create our tar unarchive destination
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-tar'
+    state: directory
+
+- name: unarchive a tar file with an invalid option
+  unarchive:
+    src: '{{remote_tmp_dir}}/test-unarchive.tar'
+    dest: '{{remote_tmp_dir}}/test-unarchive-tar'
+    remote_src: yes
+    extra_opts:
+      - "--invalid-éxtra-optら"
+  ignore_errors: yes
+  register: unarchive
+
+- name: verify that the invalid option is in the error message
+  assert:
+    that:
+      - "unarchive is failed"
+      - "unarchive['msg'] is search(msg)"
+  vars:
+    msg: "Unable to list files in the archive: /.*/(tar|gtar): unrecognized option '--invalid-éxtra-optら'"
+
+- name: remove our tar unarchive destination
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-tar'
+    state: absent
