@@ -40,7 +40,7 @@
         "distribution_version": "8.5",
         "distribution_release": "Tirana",
         "distribution_major_version": "8",
-        "os_family": "EuroLinux"
+        "os_family": "RedHat"
     },
     "platform.release": "4.18.0-348.2.1.el8_5.x86_64"
 }
