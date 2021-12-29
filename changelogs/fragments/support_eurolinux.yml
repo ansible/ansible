@@ -1,2 +1,2 @@
 bugfixes:
-  - add EuroLinux to fact gathering
+  - distribution - add EuroLinux to fact gathering (https://github.com/ansible/ansible/pull/76624).
