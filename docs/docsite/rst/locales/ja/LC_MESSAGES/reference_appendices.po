@@ -2109,7 +2109,7 @@ msgstr "DEFAULT_ASK_PASS"
 
 #: ../../rst/reference_appendices/config.rst:1043
 #: ../../rst/reference_appendices/config.rst:3473
-msgid "This controls whether an Ansible playbook should prompt for a login password. If using SSH keys for authentication, you probably do not needed to change this setting."
+msgid "This controls whether an Ansible playbook should prompt for a login password. If using SSH keys for authentication, you probably do not need to change this setting."
 msgstr "これは、Ansible Playbook がログインパスワードを要求するかどうかを制御します。認証に SSH 鍵を使用する場合は、この設定を変更する必要がない可能性があります。"
 
 #: ../../rst/reference_appendices/config.rst:1048
