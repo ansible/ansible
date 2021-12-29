@@ -457,7 +457,7 @@ DEFAULT_ASK_PASS:
   default: False
   description:
     - This controls whether an Ansible playbook should prompt for a login password.
-      If using SSH keys for authentication, you probably do not needed to change this setting.
+      If using SSH keys for authentication, you probably do not need to change this setting.
   env: [{name: ANSIBLE_ASK_PASS}]
   ini:
   - {key: ask_pass, section: defaults}
