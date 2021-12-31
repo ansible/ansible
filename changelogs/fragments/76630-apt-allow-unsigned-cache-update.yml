@@ -1,0 +1,2 @@
+minor_changes:
+  apt - Add update_cache_insecure to allow updating cache when unsigned repo is present. (https://github.com/ansible/ansible/pull/76632)
