@@ -507,3 +507,41 @@
     that:
       - "allow_change_held_packages_no_update is not changed"
       - "allow_change_held_packages_hello_version.stdout == allow_change_held_packages_hello_version_again.stdout"
+
+- name: Get repository that is not signed
+  get_url: 
+    url: https://master.dl.sourceforge.net/project/d-apt/files/d-apt.list
+    dest: /etc/apt/sources.list.d/d-apt.list
+
+- name: Update cache with update_cache_insecure = false
+  apt:
+    update_cache: yes
+  register: update_cache_insecure_false
+  ignore_errors: yes
+
+- name: Verify cache update failed
+  assert:
+    that:
+      - "update_cache_insecure_false is failed"
+
+- name: Update cache with update_cache_insecure = true
+  apt:
+    update_cache: yes
+    update_cache_insecure: true
+  register: update_cache_insecure_true
+
+- name: Verify cache was updated
+  assert:
+    that:
+      - "update_cache_insecure_true is changed"
+
+- name: Remove unsigned repository
+  apt_repository:
+    repo: deb https://master.dl.sourceforge.net/project/d-apt/ d-apt main
+    state: absent
+  register: insecure_repo_removed
+
+- name: Verify unsigned repository removed
+  assert:
+    that: 
+      - "insecure_repo_removed is changed"

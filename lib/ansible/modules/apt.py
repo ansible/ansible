@@ -39,6 +39,11 @@ options:
       - Default is not to update the cache.
     aliases: [ update-cache ]
     type: bool
+  update_cache_insecure:
+    description:
+      - Allows for updating the cache when a repository may be unsigned. Equivalent of C(apt-get update --allow-insecure-repositories).
+    type: bool
+    default: false
   update_cache_retries:
     description:
       - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
@@ -1103,6 +1108,7 @@ def main():
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['absent', 'build-dep', 'fixed', 'latest', 'present']),
             update_cache=dict(type='bool', aliases=['update-cache']),
+            update_cache_insecure=dict(type='bool', default=False),
             update_cache_retries=dict(type='int', default=5),
             update_cache_retry_max_delay=dict(type='int', default=12),
             cache_valid_time=dict(type='int', default=0),
@@ -1249,6 +1255,12 @@ def main():
             #  needed and `update_cache` was set to true
             updated_cache = False
             if p['update_cache'] or p['cache_valid_time']:
+                if p['update_cache_insecure']:
+                    try:
+                        apt_pkg.config['Acquire::AllowInsecureRepositories'] = "true"
+                    except AttributeError:
+                        apt_pkg.Config['Acquire::AllowInsecureRepositories'] = "true"
+
                 now = datetime.datetime.now()
                 tdelta = datetime.timedelta(seconds=p['cache_valid_time'])
                 if not mtimestamp + tdelta >= now:
