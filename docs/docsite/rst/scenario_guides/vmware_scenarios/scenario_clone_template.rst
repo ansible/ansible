@@ -65,9 +65,9 @@ Scenario requirements
 Assumptions
 ===========
 
-- All variable names and VMware object names are case sensitive
-- VMware allows creation of virtual machine and templates with same name across datacenters and within datacenters
-- You need to use Python 2.7.9 version in order to use ``validate_certs`` option, as this version is capable of changing the SSL verification behaviours
+- All variable names and VMware object names are case sensitive.
+- VMware allows creation of virtual machine and templates with same name across datacenters and within datacenters.
+- You need to use Python 2.7.9 version in order to use ``validate_certs`` option, as this version is capable of changing the SSL verification behaviours.
 
 Caveats
 =======
@@ -214,10 +214,10 @@ What to expect
 Troubleshooting
 ---------------
 
-Things to inspect
+Things to inspect:
 
-- Check if the values provided for username and password are correct
-- Check if the datacenter you provided is available
-- Check if the template specified exists and you have permissions to access the datastore
-- Ensure the full folder path you specified already exists. It will not create folders automatically for you
+- Check if the values provided for username and password are correct.
+- Check if the datacenter you provided is available.
+- Check if the template specified exists and you have permissions to access the datastore.
+- Ensure the full folder path you specified already exists. It will not create folders automatically for you.
 
