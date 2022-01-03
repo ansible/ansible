@@ -1248,11 +1248,9 @@ class AnsibleModule(object):
             self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" %
                            to_native(e), exception=traceback.format_exc())
 
-    def _set_internal_properties(self, argument_spec=None, module_parameters=None):
-        if argument_spec is None:
-            argument_spec = self.argument_spec
-        if module_parameters is None:
-            module_parameters = self.params
+    def _set_internal_properties(self):
+     
+        module_parameters = self.params
 
         for k in PASS_VARS:
             # handle setting internal properties from internal ansible vars
