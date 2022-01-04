@@ -1,0 +1,3 @@
+bugfixes:
+  - basic - Removed ``if`` statements in ``_set_internal_properties`` that always evaluated to True. 
+Also remove unused variable ``argument_spec``.
