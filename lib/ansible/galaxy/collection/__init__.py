@@ -1384,4 +1384,4 @@ def _resolve_depenency_map(
             dep_exc,
         )
     except ValueError as exc:
-        raise AnsibleError(to_native(exc))
+        raise AnsibleError(to_native(exc)) from exc
