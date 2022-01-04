@@ -31,7 +31,7 @@ Use a loop to create exponential backoff for retries/until.
 
 .. code-block:: yaml
 
-    - name: retry ping 10 times with exponential backup delay
+    - name: retry ping 10 times with exponential backoff delay
       ping:
       retries: 10
       delay: '{{item|int}}'
