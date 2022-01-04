@@ -223,7 +223,7 @@ class CollectionDependencyProvider(AbstractProvider):
                     f"Invalid version found for the collection '{first_req}'. " + version_req
                 ) from exc
             # Unexpected error from a Galaxy server
-            raise exc from exc
+            raise
 
         if first_req.is_concrete_artifact:
             # FIXME: do we assume that all the following artifacts are also concrete?

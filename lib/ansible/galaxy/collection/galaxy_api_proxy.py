@@ -23,7 +23,6 @@ if TYPE_CHECKING:
         Candidate, Requirement,
     )
 
-from ansible.errors import AnsibleError
 from ansible.galaxy.api import GalaxyAPI, GalaxyError
 from ansible.module_utils._text import to_text
 from ansible.utils.display import Display
