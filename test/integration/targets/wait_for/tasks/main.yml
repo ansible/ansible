@@ -150,7 +150,7 @@
 
 - name: install psutil using pip (non-Linux only)
   pip:
-    name: psutil
+    name: psutil==5.8.0
   when: ansible_system != 'Linux'
 
 - name: Copy zombie.py
