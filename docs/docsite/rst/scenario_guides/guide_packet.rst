@@ -210,7 +210,7 @@ The dynamic inventory script queries the Packet API for a list of hosts, and exp
 
 You can find it in Ansible Community General Collection's git repo at `scripts/inventory/packet_net.py <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/packet_net.py>`_.
 
-The inventory script is configurable via a `ini file <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/packet_net.ini>`_.
+The inventory script is configurable through an `ini file <https://raw.githubusercontent.com/ansible-community/contrib-scripts/main/inventory/packet_net.ini>`_.
 
 If you want to use the inventory script, you must first export your Packet API token to a PACKET_API_TOKEN environment variable.
 

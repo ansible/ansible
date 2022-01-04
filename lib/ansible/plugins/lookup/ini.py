@@ -8,7 +8,7 @@ DOCUMENTATION = """
     name: ini
     author: Yannig Perre (!UNKNOWN) <yannig.perre(at)gmail.com>
     version_added: "2.0"
-    short_description: read data from a ini file
+    short_description: read data from an ini file
     description:
       - "The ini lookup reads the contents of a file in INI format C(key1=value1).
         This plugin retrieves the value on the right side after the equal sign C('=') of a given section C([section])."
@@ -45,7 +45,7 @@ DOCUMENTATION = """
         version_added: '2.12'
       allow_no_value:
         description:
-        - Read ini file which contains key without value and without '=' symbol.
+        - Read an ini file which contains key without value and without '=' symbol.
         type: bool
         default: False
         aliases: ['allow_none']
@@ -63,7 +63,7 @@ EXAMPLES = """
     msg: "{{ item }}"
   loop: "{{ q('ini', '.*', section='section1', file='test.ini', re=True) }}"
 
-- name: Read ini file with allow_no_value
+- name: Read an ini file with allow_no_value
   debug:
     msg: "{{ lookup('ini', 'user', file='mysql.ini', section='mysqld', allow_no_value=True) }}"
 """
