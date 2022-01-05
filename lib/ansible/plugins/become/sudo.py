@@ -104,7 +104,11 @@ class BecomeModule(BecomeBase):
                         # handle -XnxxX flags only
                         flag = re.sub(r'^(-\w*)n(\w*.*)', r'\1\2', flag)
                     reflag.append(flag)
-                flags = shlex.join(reflag)
+                try:
+                    flags = shlex.join(reflag)
+                except AttributeError:
+                    # for older pythons
+                    flags = ' '.join([shlex.quote(a) for a in reflag])
 
             prompt = '-p "%s"' % (self.prompt)
 
