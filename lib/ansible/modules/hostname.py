@@ -946,6 +946,12 @@ class RedosHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
+class EurolinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Eurolinux'
+    strategy_class = RedHatStrategy
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
