@@ -231,7 +231,7 @@ class CollectionDependencyProvider(AbstractProvider):
 
             # Ensure the version found in the concrete artifact is SemVer-compliant
             for version, req_src in coll_versions:
-                version_err = f"Invalid version found for the collection '{first_req}': {version} ({type(version)}). " + version_req
+                version_err = f"Invalid version found for the collection '{first_req}': {version} ({type(version)}). {version_req}"
                 # NOTE: The known cases causing the version to be a non-string object come from
                 # NOTE: the differences in how the YAML parser normalizes ambiguous values and
                 # NOTE: how the end-users sometimes expect them to be parsed. Unless the users
