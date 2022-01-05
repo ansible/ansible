@@ -220,7 +220,7 @@ class CollectionDependencyProvider(AbstractProvider):
             if first_req.is_concrete_artifact:
                 # Non hashable versions will cause a TypeError
                 raise ValueError(
-                    f"Invalid version found for the collection '{first_req}'. " + version_req
+                    f"Invalid version found for the collection '{first_req}'. {version_req}"
                 ) from exc
             # Unexpected error from a Galaxy server
             raise
