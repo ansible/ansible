@@ -370,18 +370,22 @@ class ConfigCLI(CLI):
 
         text = []
         for setting in sorted(config):
+            changed = False
             if isinstance(config[setting], Setting):
+                # proceed normally
                 if config[setting].origin == 'default':
                     color = 'green'
                 elif config[setting].origin == 'REQUIRED':
                     color = 'red'
                 else:
                     color = 'yellow'
+                    changed = True
                 msg = "%s(%s) = %s" % (setting, config[setting].origin, config[setting].value)
             else:
                 color = 'green'
                 msg = "%s(%s) = %s" % (setting, 'default', config[setting].get('default'))
-            if not context.CLIARGS['only_changed'] or (color == 'yellow' and setting not in ('_terms', '_input')):
+
+            if not context.CLIARGS['only_changed'] or changed:  # and setting not in ('_terms', '_input')):
                 text.append(stringc(msg, color))
 
         return text
@@ -445,6 +449,11 @@ class ConfigCLI(CLI):
                         o = 'REQUIRED'
                     else:
                         raise e
+
+                if v is None and o is None:
+                    # not all cases will be error
+                    o = 'REQUIRED'
+
                 config_entries[finalname][setting] = Setting(setting, v, o, None)
 
             # pretty please!
