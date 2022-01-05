@@ -145,12 +145,12 @@ from ansible.plugins.lookup import LookupBase
 
 def _split_on(terms, spliters=','):
 
-    # TODO: fix as it does not allow spaces in names
     termlist = []
+    splitSym = spliters[0]
     if isinstance(terms, string_types):
         for spliter in spliters:
-            terms = terms.replace(spliter, ' ')
-        termlist = terms.split(' ')
+            terms = terms.replace(spliter, splitSym)
+        termlist = terms.split(splitSym)
     else:
         # added since options will already listify
         for t in terms:
