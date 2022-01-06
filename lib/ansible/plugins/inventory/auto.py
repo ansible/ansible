@@ -53,8 +53,9 @@ class InventoryModule(BaseInventoryPlugin):
             raise AnsibleParserError("inventory config '{0}' specifies unknown plugin '{1}'".format(path, plugin_name))
 
         if not plugin.verify_file(path):
-            raise AnsibleParserError("inventory config '{0}' could not be verified by plugin '{1}'".format(path, plugin_name))
+            raise AnsibleParserError("inventory source '{0}' could not be verified by inventory plugin '{1}'".format(path, plugin_name))
 
+        self.display.v("Using inventory plugin '{0}' to process inventory source '{1}'".format(plugin._load_name, path))
         plugin.parse(inventory, loader, path, cache=cache)
         try:
             plugin.update_cache_if_changed()
