@@ -1,0 +1,47 @@
+- name: Initialize a git repo
+  command: 'git init {{ test_error_repo_path }}'
+
+- stat:
+    path: "{{ test_error_repo_path }}"
+
+- name: Add a collection to the repository
+  command: 'ansible-galaxy collection init {{ item }}'
+  args:
+    chdir: '{{ scm_path }}'
+  loop:
+    - error_test.float_version_collection
+    - error_test.not_semantic_version_collection
+    - error_test.list_version_collection
+    - error_test.dict_version_collection
+
+- name: Add an invalid float version to a collection
+  lineinfile:
+    path: '{{ test_error_repo_path }}/float_version_collection/galaxy.yml'
+    regexp: '^version'
+    line: "version: 1.0"  # Version is a float, not a string as expected
+
+- name: Add an invalid non-semantic string version a collection
+  lineinfile:
+    path: '{{ test_error_repo_path }}/not_semantic_version_collection/galaxy.yml'
+    regexp: '^version'
+    line: "version: '1.0'"  # Version is a string, but not a semantic version as expected
+
+- name: Add an invalid list version to a collection
+  lineinfile:
+    path: '{{ test_error_repo_path }}/list_version_collection/galaxy.yml'
+    regexp: '^version'
+    line: "version: ['1.0.0']"  # Version is a list, not a string as expected
+
+- name: Add an invalid version to a collection
+  lineinfile:
+    path: '{{ test_error_repo_path }}/dict_version_collection/galaxy.yml'
+    regexp: '^version'
+    line: "version: {'broken': 'version'}"  # Version is a dict, not a string as expected
+
+- name: Commit the changes
+  command: '{{ item }}'
+  args:
+    chdir: '{{ test_error_repo_path }}'
+  loop:
+    - git add ./
+    - git commit -m 'add collections'

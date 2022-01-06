@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - installing/downloading collections with invalid versions in git repositories and directories now gives a formatted error message (https://github.com/ansible/ansible/issues/76425, https://github.com/ansible/ansible/issues/75404).
