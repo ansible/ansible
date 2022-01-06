@@ -2283,14 +2283,11 @@ class DarwinUser(User):
         # sys.stderr.write('*** |%s| %s -> %s\n' %  (property, out, lines))
         if len(lines) == 1:
             return lines[0].split(': ')[1]
-        else:
-            if len(lines) > 2:
-                return '\n'.join([lines[1].strip()] + lines[2:])
-            else:
-                if len(lines) == 2:
-                    return lines[1].strip()
-                else:
-                    return None
+        if len(lines) > 2:
+            return '\n'.join([lines[1].strip()] + lines[2:])
+        if len(lines) == 2:
+            return lines[1].strip()
+        return None
 
     def _get_next_uid(self, system=None):
         '''
@@ -2444,7 +2441,7 @@ class DarwinUser(User):
     def user_exists(self):
         '''Check is SELF.NAME is a known user on the system.'''
         cmd = self._get_dscl()
-        cmd += ['-list', '/Users/%s' % self.name]
+        cmd += ['-read', '/Users/%s' % self.name, 'UniqueID']
         (rc, out, err) = self.execute_command(cmd, obey_checkmode=False)
         return rc == 0
 
