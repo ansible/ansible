@@ -28,6 +28,7 @@ from ansible.galaxy.dependency_resolution.versioning import (
     is_pre_release,
     meets_requirements,
 )
+from ansible.module_utils.six import string_types
 from ansible.utils.version import SemanticVersion
 
 from resolvelib import AbstractProvider
@@ -211,10 +212,44 @@ class CollectionDependencyProvider(AbstractProvider):
         first_req = requirements[0]
         fqcn = first_req.fqcn
         # The fqcn is guaranteed to be the same
-        coll_versions = self._api_proxy.get_collection_versions(first_req)
+        version_req = "A SemVer-compliant version or '*' is required. See https://semver.org to learn how to compose it correctly. "
+        version_req += "This is an issue with the collection."
+        try:
+            coll_versions = self._api_proxy.get_collection_versions(first_req)
+        except TypeError as exc:
+            if first_req.is_concrete_artifact:
+                # Non hashable versions will cause a TypeError
+                raise ValueError(
+                    f"Invalid version found for the collection '{first_req}'. {version_req}"
+                ) from exc
+            # Unexpected error from a Galaxy server
+            raise
+
         if first_req.is_concrete_artifact:
             # FIXME: do we assume that all the following artifacts are also concrete?
             # FIXME: does using fqcn==None cause us problems here?
+
+            # Ensure the version found in the concrete artifact is SemVer-compliant
+            for version, req_src in coll_versions:
+                version_err = f"Invalid version found for the collection '{first_req}': {version} ({type(version)}). {version_req}"
+                # NOTE: The known cases causing the version to be a non-string object come from
+                # NOTE: the differences in how the YAML parser normalizes ambiguous values and
+                # NOTE: how the end-users sometimes expect them to be parsed. Unless the users
+                # NOTE: explicitly use the double quotes of one of the multiline string syntaxes
+                # NOTE: in the collection metadata file, PyYAML will parse a value containing
+                # NOTE: two dot-separated integers as `float`, a single integer as `int`, and 3+
+                # NOTE: integers as a `str`. In some cases, they may also use an empty value
+                # NOTE: which is normalized as `null` and turned into `None` in the Python-land.
+                # NOTE: Another known mistake is setting a minor part of the SemVer notation
+                # NOTE: skipping the "patch" bit like "1.0" which is assumed non-compliant even
+                # NOTE: after the conversion to string.
+                if not isinstance(version, string_types):
+                    raise ValueError(version_err)
+                elif version != '*':
+                    try:
+                        SemanticVersion(version)
+                    except ValueError as ex:
+                        raise ValueError(version_err) from ex
 
             return [
                 Candidate(fqcn, version, _none_src_server, first_req.type)
