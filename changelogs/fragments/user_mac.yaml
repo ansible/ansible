@@ -1,0 +1,2 @@
+bugfixes:
+- user - update logic to check if user exists or not in MacOS.
