@@ -18,9 +18,25 @@
     mode: '0644'
   register: install_systemd_result
 
+- name: Create fake failed systemd service
+  copy:
+    src: failed-test.service
+    dest:  /etc/systemd/system/failed-test.service
+    mode: '0644'
+  register: failed_service_result
+
+- name: start fake failed service
+  service:
+    name: failed-test.service
+    state: started
+  register: fake_service_started_result
+
 - name: assert that the systemd unit file was installed
   assert:
     that:
     - "install_systemd_result.dest == '/etc/systemd/system/ansible_test.service'"
     - "install_systemd_result.state == 'file'"
     - "install_systemd_result.mode == '0644'"
+    - "failed_service_result is changed"
+    - "fake_service_started_result is changed"
+

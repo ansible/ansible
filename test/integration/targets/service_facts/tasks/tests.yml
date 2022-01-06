@@ -31,6 +31,12 @@
   debug:
     var: services['ansible_test.service'].state
 
-- name: ansible_test service's running state should be \"inactive\"
+- name: ansible_test service's running state should be \"dead\"
   assert:
-    that: "services['ansible_test.service'].state == 'inactive'"
+    that: "services['ansible_test.service'].state == 'dead'"
+
+- name: failed-test service running state should be \"failed\"
+  assert:
+    that: "services['failed-test.service'].state == 'failed'"
+
+

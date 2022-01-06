@@ -1,0 +1,8 @@
+[Unit]
+Description=failed service test
+
+[Service]
+ExecStart=/usr/fakecmd
+
+[Install]
+WantedBy=multi-user.target

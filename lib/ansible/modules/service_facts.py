@@ -247,24 +247,26 @@ class SystemctlScanService(BaseService):
         rc, stdout, stderr = self.module.run_command("%s list-units --no-pager --type service --all --plain --no-legend" % systemctl_path, use_unsafe_shell=True)
         for line in [svc_line.split() for svc_line in stdout.split('\n') if '.service' in svc_line]:
             service_name = line[0]
+            load_state = line[1]
             status_val = line[2]
             state_val = line[3]
-            services[service_name] = {"name": service_name, "state": state_val, "status": status_val, "source": "systemd"}
+            services[service_name] = {"name": service_name, "state": state_val, "status": status_val, "load_state": load_state, "source": "systemd"}
 
         # now try unit files for complete picture and final 'status'
         rc, stdout, stderr = self.module.run_command("%s list-unit-files --no-pager --type service --all --plain --no-legend" % systemctl_path, use_unsafe_shell=True)
         for line in [svc_line.split() for svc_line in stdout.split('\n') if '.service' in svc_line]:
             service_name = line[0]
-            status_val = line[1]
+            load_state = line[1]
             if service_name not in services:
-                rc, show_service_stdout, stderr = self.module.run_command("%s show %s -p ActiveState,SubState" % (systemctl_path, service_name), use_unsafe_shell=True)
+                rc, show_service_stdout, stderr = self.module.run_command("%s show %s -p ActiveState,LoadState,SubState" % (systemctl_path, service_name), use_unsafe_shell=True)
                 state = 'unknown'
+                status_val = 'unknown'
                 if not rc and stdout != '':
-                    #state = stdout.replace('ActiveState=', '').rstrip()
                     show_service_stdout = [i.partition("=")[2] for i in show_service_stdout.split()]
                     status_val = show_service_stdout[0]
-                    state = show_service_stdout[1]
-                services[service_name] = {"name": service_name, "state": state, "status": status_val, "source": "systemd"}
+                    load_state = show_service_stdout[1]
+                    state = show_service_stdout[2]
+                services[service_name] = {"name": service_name, "state": state, "status": status_val, "load_state": load_state, "source": "systemd"}
 
         return services
 
