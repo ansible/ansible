@@ -1,0 +1,2 @@
+minor_changes:
+  - auto inventory plugin will now give plugin loading information on verbose output
