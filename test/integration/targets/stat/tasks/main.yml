@@ -17,10 +17,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: make a new file
-  copy: dest={{output_dir}}/foo.txt mode=0644 content="hello world"
+  copy: dest={{remote_tmp_dir}}/foo.txt mode=0644 content="hello world"
 
 - name: check stat of file
-  stat: path={{output_dir}}/foo.txt
+  stat: path={{remote_tmp_dir}}/foo.txt
   register: stat_result
 
 - debug: var=stat_result
@@ -64,13 +64,13 @@
 
 - name: make a symlink
   file:
-    src: "{{ output_dir }}/foo.txt"
-    path: "{{ output_dir }}/foo-link"
+    src: "{{ remote_tmp_dir }}/foo.txt"
+    path: "{{ remote_tmp_dir }}/foo-link"
     state: link
 
 - name: check stat of a symlink with follow off
   stat:
-    path: "{{ output_dir }}/foo-link"
+    path: "{{ remote_tmp_dir }}/foo-link"
   register: stat_result
 
 - debug: var=stat_result
@@ -113,7 +113,7 @@
 
 - name: check stat of a symlink with follow on
   stat:
-    path: "{{ output_dir }}/foo-link"
+    path: "{{ remote_tmp_dir }}/foo-link"
     follow: True
   register: stat_result
 
@@ -158,13 +158,13 @@
 
 - name: make a new file with colon in filename
   copy:
-    dest: "{{ output_dir }}/foo:bar.txt"
+    dest: "{{ remote_tmp_dir }}/foo:bar.txt"
     mode: '0644'
     content: "hello world"
 
 - name: check stat of a file with colon in name
   stat:
-    path: "{{ output_dir }}/foo:bar.txt"
+    path: "{{ remote_tmp_dir }}/foo:bar.txt"
     follow: True
   register: stat_result
 
