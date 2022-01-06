@@ -24,6 +24,8 @@
   - include_tasks: ./setup_recursive_scm_dependency.yml
   - include_tasks: ./scm_dependency_deduplication.yml
   - include_tasks: ./download.yml
+  - include_tasks: ./setup_collection_bad_version.yml
+  - include_tasks: ./test_invalid_version.yml
 
   always:
 
