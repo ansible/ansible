@@ -1249,7 +1249,6 @@ class AnsibleModule(object):
                            to_native(e), exception=traceback.format_exc())
 
     def _set_internal_properties(self):
-     
         module_parameters = self.params
 
         for k in PASS_VARS:
