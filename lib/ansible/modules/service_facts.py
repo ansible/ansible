@@ -70,7 +70,7 @@ ansible_facts:
         state:
           description:
           - State of the service.
-          - 'This commonly includes (but is not limited to) the following: C(failed), C(running), C(stopped) or C(unknown).'
+                - 'This commonly includes (but is not limited to) the following: C(running), C(failed), C(dead), C(exited), C(running), C(stopped) or C(unknown).'
           - Depending on the used init system additional states might be returned.
           returned: always
           type: str
@@ -78,10 +78,18 @@ ansible_facts:
         status:
           description:
           - State of the service.
-          - Either C(enabled), C(disabled), C(static), C(indirect) or C(unknown).
+          - Either C(loaded), C(active), C(inactive), C(failed), C(disabled), C(static), C(indirect) or C(unknown).
+          - Depending on the systemd version additional status' may be returned.
           returned: systemd systems or RedHat/SUSE flavored sysvinit/upstart or OpenBSD
           type: str
           sample: enabled
+        load_state:
+          description:
+          - Load state of the service.
+          - Either C(loaded), C(not-found), C(bad-setting), C(error) or C(masked).
+          returned: systemd systems
+          type: str
+          sample: loaded
         name:
           description: Name of the service.
           returned: always
@@ -235,7 +243,6 @@ class SystemctlScanService(BaseService):
         return False
 
     def gather_services(self):
-        BAD_STATES = frozenset(['not-found', 'masked', 'failed'])
         services = {}
         if not self.systemd_enabled():
             return None
@@ -253,15 +260,35 @@ class SystemctlScanService(BaseService):
             services[service_name] = {"name": service_name, "state": state_val, "status": status_val, "load_state": load_state, "source": "systemd"}
 
         # now try unit files for complete picture and final 'status'
+
+        # TODO REMOVE COMMENT:
+        # The "STATE" value returned by systemctl list-unit-files is actually the "LoadState"
+
         rc, stdout, stderr = self.module.run_command("%s list-unit-files --no-pager --type service --all --plain --no-legend" % systemctl_path, use_unsafe_shell=True)
         for line in [svc_line.split() for svc_line in stdout.split('\n') if '.service' in svc_line]:
             service_name = line[0]
             load_state = line[1]
             if service_name not in services:
+
+                # TODO REMOVE COMMENT:
+                # To conform to how systemctl list-units uses "ActiveState" for status key and "SubState" for state key in services dict
+                # we should also grab these values from systemctl show and add to dict.
+
                 rc, show_service_stdout, stderr = self.module.run_command("%s show %s -p ActiveState,LoadState,SubState" % (systemctl_path, service_name), use_unsafe_shell=True)
+
+                #TODO REMOVE COMMENT:
+                # Setting state and status values to unknown handles cases of "Template" unit files where systemctl will fail
+                # ex:
+                # systemctl show user@.service
+                # Failed to get properties: Unit name user@.service is neither a valid invocation ID nor unit name.
+
                 state = 'unknown'
                 status_val = 'unknown'
                 if not rc and stdout != '':
+
+                    #TODO REMOVE COMMENT:
+                    # Every rc=0 output of systemctl show should always have the 3 properties we queried ActiveState,LoadState,SubState
+
                     show_service_stdout = [i.partition("=")[2] for i in show_service_stdout.split()]
                     status_val = show_service_stdout[0]
                     load_state = show_service_stdout[1]

@@ -39,4 +39,13 @@
   assert:
     that: "services['failed-test.service'].state == 'failed'"
 
+- name: Get states as systemd sees them
+  command: systemctl list-units --no-pager --type service --all --plain --no-legend
+  register: systemctl_list_units_out
 
+- name:  Check on each systemd service with each item from service_facts
+  assert:
+    that:
+      - "services[item.split()[0]].state == item.split()[3]"
+      - "services[item.split()[0]].status == item.split()[2]"
+  loop: "{{systemctl_list_units_out.stdout.split('\n') | list}}"
