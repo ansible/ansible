@@ -502,8 +502,8 @@ def main():
             # check systemctl result or if it is a init script
             if rc == 0:
                 enabled = True
-                # Check if service is indirect and if out contains exactly 1 line of string 'indirect' it's disabled
-                if out.splitlines() == ["indirect"]:
+                # Check if the service is indirect or alias and if out contains exactly 1 line of string 'indirect'/ 'alias' it's disabled
+                if out.splitlines() == ["indirect"] or out.splitlines() == ["alias"]:
                     enabled = False
 
             elif rc == 1:
