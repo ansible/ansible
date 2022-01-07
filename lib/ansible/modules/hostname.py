@@ -951,6 +951,12 @@ class EurolinuxHostname(Hostname):
     strategy_class = RedHatStrategy
 
 
+class OpenEulerHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Openeuler'
+    strategy_class = SystemdStrategy
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
