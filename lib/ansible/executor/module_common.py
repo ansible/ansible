@@ -1349,12 +1349,12 @@ def _extract_interpreter(b_module_data):
         b_shebang = b_lines[0].strip()
 
         # shlex.split on python-2.6 needs bytes.  On python-3.x it needs text
-        n_args = shlex.split(to_native(b_shebang[2:], errors='surrogate_or_strict'))
+        cli_split = shlex.split(to_native(b_shebang[2:], errors='surrogate_or_strict'))
 
         # convert args to text
-        n_args = [to_text(a, errors='surrogate_or_strict') for a in args]
-        interpreter = n_args[0]
-        args = n_args[1:]
+        cli_split = [to_text(a, errors='surrogate_or_strict') for a in cli_split]
+        interpreter = cli_split[0]
+        args = cli_split[1:]
 
     return interpreter, args
 
