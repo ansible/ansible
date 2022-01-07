@@ -23,6 +23,8 @@ options:
           ini:
             - section: defaults
               key: pipelining
+            - section: connection
+              key: pipelining
           type: boolean
           vars:
             - name: ansible_pipelining
