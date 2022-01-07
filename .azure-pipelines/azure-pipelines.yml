@@ -167,42 +167,10 @@ stages:
         parameters:
           testFormat: i/{0}
           targets:
-            - name: macOS 11.1
-              test: macos/11.1
-            - name: RHEL 7.9
-              test: rhel/7.9
             - name: RHEL 8.5 py36
               test: rhel/8.5@3.6
             - name: RHEL 8.5 py38
               test: rhel/8.5@3.8
-            - name: RHEL 9.0b
-              test: rhel/9.0b
-            - name: FreeBSD 12.2
-              test: freebsd/12.2
-            - name: FreeBSD 13.0
-              test: freebsd/13.0
-  - stage: Incidental_Docker
-    displayName: Incidental Docker
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: i/linux/{0}
-          targets:
-            - name: CentOS 7
-              test: centos7
-            - name: Fedora 34
-              test: fedora34
-            - name: Fedora 35
-              test: fedora35
-            - name: openSUSE 15 py2
-              test: opensuse15py2
-            - name: openSUSE 15 py3
-              test: opensuse15
-            - name: Ubuntu 18.04
-              test: ubuntu1804
-            - name: Ubuntu 20.04
-              test: ubuntu2004
   - stage: Incidental_Windows
     displayName: Incidental Windows
     dependsOn: []
@@ -245,7 +213,6 @@ stages:
       - Galaxy
       - Generic
       - Incidental_Remote
-      - Incidental_Docker
       - Incidental_Windows
       - Incidental
     jobs:
