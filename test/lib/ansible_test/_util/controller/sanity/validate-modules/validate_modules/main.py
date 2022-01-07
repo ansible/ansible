@@ -39,13 +39,14 @@ from fnmatch import fnmatch
 import yaml
 
 from ansible import __version__ as ansible_version
-from ansible.executor.module_common import REPLACER_WINDOWS
+from ansible.executor.module_common import REPLACER_WINDOWS, NEW_STYLE_PYTHON_MODULE_RE
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.common.parameters import DEFAULT_TYPE_VALIDATORS
 from ansible.plugins.loader import fragment_loader
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
 from ansible.utils.plugin_docs import REJECTLIST, add_collection_to_versions_and_dates, add_fragments, get_docstring
 from ansible.utils.version import SemanticVersion
+from ansible.module_utils.basic import to_bytes
 
 from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_argument_spec
 
@@ -433,7 +434,15 @@ class ModuleValidator(Validator):
                 )
             return
 
+        missing_python_interpreter = False
+
         if not self.text.startswith('#!/usr/bin/python'):
+            if NEW_STYLE_PYTHON_MODULE_RE.search(to_bytes(self.text)):
+                missing_python_interpreter = self.text.startswith('#!')  # shebang optional, but if present must match
+            else:
+                missing_python_interpreter = True  # shebang required
+
+        if missing_python_interpreter:
             self.reporter.error(
                 path=self.object_path,
                 code='missing-python-interpreter',
