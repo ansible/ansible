@@ -220,9 +220,9 @@ class TestTemplarTemplate(BaseTemplar, unittest.TestCase):
     def test_weird(self):
         data = u'''1 2 #}huh{# %}ddfg{% }}dfdfg{{  {%what%} {{#foo#}} {%{bar}%} {#%blip%#} {{asdfsd%} 3 4 {{foo}} 5 6 7'''
         self.assertRaisesRegex(AnsibleError,
-                                'template error while templating string',
-                                self.templar.template,
-                                data)
+                               'template error while templating string',
+                               self.templar.template,
+                               data)
 
     def test_template_with_error(self):
         """Check that AnsibleError is raised, fail if an unhandled exception is raised"""
@@ -298,10 +298,10 @@ class TestTemplarMisc(BaseTemplar, unittest.TestCase):
 class TestTemplarLookup(BaseTemplar, unittest.TestCase):
     def test_lookup_missing_plugin(self):
         self.assertRaisesRegex(AnsibleError,
-                                r'lookup plugin \(not_a_real_lookup_plugin\) not found',
-                                self.templar._lookup,
-                                'not_a_real_lookup_plugin',
-                                'an_arg', a_keyword_arg='a_keyword_arg_value')
+                               r'lookup plugin \(not_a_real_lookup_plugin\) not found',
+                               self.templar._lookup,
+                               'not_a_real_lookup_plugin',
+                               'an_arg', a_keyword_arg='a_keyword_arg_value')
 
     def test_lookup_list(self):
         res = self.templar._lookup('list', 'an_arg', 'another_arg')
@@ -309,9 +309,9 @@ class TestTemplarLookup(BaseTemplar, unittest.TestCase):
 
     def test_lookup_jinja_undefined(self):
         self.assertRaisesRegex(AnsibleUndefinedVariable,
-                                "'an_undefined_jinja_var' is undefined",
-                                self.templar._lookup,
-                                'list', '{{ an_undefined_jinja_var }}')
+                               "'an_undefined_jinja_var' is undefined",
+                               self.templar._lookup,
+                               'list', '{{ an_undefined_jinja_var }}')
 
     def test_lookup_jinja_defined(self):
         res = self.templar._lookup('list', '{{ some_var }}')
@@ -320,17 +320,17 @@ class TestTemplarLookup(BaseTemplar, unittest.TestCase):
 
     def test_lookup_jinja_dict_string_passed(self):
         self.assertRaisesRegex(AnsibleError,
-                                "with_dict expects a dict",
-                                self.templar._lookup,
-                                'dict',
-                                '{{ some_var }}')
+                               "with_dict expects a dict",
+                               self.templar._lookup,
+                               'dict',
+                               '{{ some_var }}')
 
     def test_lookup_jinja_dict_list_passed(self):
         self.assertRaisesRegex(AnsibleError,
-                                "with_dict expects a dict",
-                                self.templar._lookup,
-                                'dict',
-                                ['foo', 'bar'])
+                               "with_dict expects a dict",
+                               self.templar._lookup,
+                               'dict',
+                               ['foo', 'bar'])
 
     def test_lookup_jinja_kwargs(self):
         res = self.templar._lookup('list', 'blip', random_keyword='12345')
@@ -343,11 +343,11 @@ class TestTemplarLookup(BaseTemplar, unittest.TestCase):
 
     def test_lookup_jinja_list_wantlist_undefined(self):
         self.assertRaisesRegex(AnsibleUndefinedVariable,
-                                "'some_undefined_var' is undefined",
-                                self.templar._lookup,
-                                'list',
-                                '{{ some_undefined_var }}',
-                                wantlist=True)
+                               "'some_undefined_var' is undefined",
+                               self.templar._lookup,
+                               'list',
+                               '{{ some_undefined_var }}',
+                               wantlist=True)
 
     def test_lookup_jinja_list_wantlist_unsafe(self):
         res = self.templar._lookup('list', '{{ some_unsafe_var }}', wantlist=True)

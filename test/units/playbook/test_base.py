@@ -504,13 +504,13 @@ class TestBaseSubClass(TestBase):
         not_a_esc = ExampleSubClass
         ds = {'test_attr_class_post_validate': not_a_esc}
         self.assertRaisesRegex(AnsibleParserError, 'is not a valid.*got a.*Meta.*instead',
-                                self._base_validate, ds)
+                               self._base_validate, ds)
 
     def test_attr_class_post_validate_wrong_class(self):
         not_a_esc = 37
         ds = {'test_attr_class_post_validate': not_a_esc}
         self.assertRaisesRegex(AnsibleParserError, 'is not a valid.*got a.*int.*instead',
-                                self._base_validate, ds)
+                               self._base_validate, ds)
 
     def test_attr_remote_user(self):
         ds = {'remote_user': 'testuser'}
@@ -600,7 +600,7 @@ class TestBaseSubClass(TestBase):
         fake_loader = DictDataLoader({})
         templar = Templar(loader=fake_loader)
         self.assertRaisesRegex(AnsibleParserError, 'cannot have empty values',
-                                bsc.post_validate, templar)
+                               bsc.post_validate, templar)
 
     def test_attr_unknown(self):
         a_list = ['some string']

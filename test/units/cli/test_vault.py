@@ -71,8 +71,8 @@ class TestVaultCli(unittest.TestCase):
         cli = VaultCLI(args=['ansible-vault', 'view', '/dev/null/foo'])
         cli.parse()
         self.assertRaisesRegex(errors.AnsibleOptionsError,
-                                "A vault password is required to use Ansible's Vault",
-                                cli.run)
+                               "A vault password is required to use Ansible's Vault",
+                               cli.run)
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     def test_encrypt_missing_file_no_secret(self, mock_setup_vault_secrets):
@@ -80,8 +80,8 @@ class TestVaultCli(unittest.TestCase):
         cli = VaultCLI(args=['ansible-vault', 'encrypt', '/dev/null/foo'])
         cli.parse()
         self.assertRaisesRegex(errors.AnsibleOptionsError,
-                                "A vault password is required to use Ansible's Vault",
-                                cli.run)
+                               "A vault password is required to use Ansible's Vault",
+                               cli.run)
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')

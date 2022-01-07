@@ -266,11 +266,11 @@ class TestGetCollectorNames(unittest.TestCase):
         minimal_gather_subset = frozenset(['my_fact'])
 
         self.assertRaisesRegex(TypeError,
-                                r'Bad subset .* given to Ansible.*allowed\:.*all,.*my_fact.*',
-                                collector.get_collector_names,
-                                valid_subsets=valid_subsets,
-                                minimal_gather_subset=minimal_gather_subset,
-                                gather_subset=['my_fact', 'not_a_valid_gather_subset'])
+                               r'Bad subset .* given to Ansible.*allowed\:.*all,.*my_fact.*',
+                               collector.get_collector_names,
+                               valid_subsets=valid_subsets,
+                               minimal_gather_subset=minimal_gather_subset,
+                               gather_subset=['my_fact', 'not_a_valid_gather_subset'])
 
 
 class TestFindUnresolvedRequires(unittest.TestCase):
@@ -350,9 +350,9 @@ class TestResolveRequires(unittest.TestCase):
                             'network': [default_collectors.LinuxNetworkCollector],
                             'virtual': [default_collectors.LinuxVirtualCollector]}
         self.assertRaisesRegex(collector.UnresolvedFactDep,
-                                'unresolved fact dep.*required_thing2',
-                                collector.resolve_requires,
-                                unresolved, all_fact_subsets)
+                               'unresolved fact dep.*required_thing2',
+                               collector.resolve_requires,
+                               unresolved, all_fact_subsets)
 
     def test(self):
         unresolved = ['env', 'network']
@@ -557,7 +557,7 @@ class TestCollectorClassesFromGatherSubset(unittest.TestCase):
         # something claims 'unknown_collector' is a valid gather_subset, but there is
         # no FactCollector mapped to 'unknown_collector'
         self.assertRaisesRegex(TypeError,
-                                r'Bad subset.*unknown_collector.*given to Ansible.*allowed\:.*all,.*env.*',
-                                self._classes,
-                                all_collector_classes=default_collectors.collectors,
-                                gather_subset=['env', 'unknown_collector'])
+                               r'Bad subset.*unknown_collector.*given to Ansible.*allowed\:.*all,.*env.*',
+                               self._classes,
+                               all_collector_classes=default_collectors.collectors,
+                               gather_subset=['env', 'unknown_collector'])

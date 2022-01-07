@@ -108,29 +108,29 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
     def test_empty_task(self):
         ds = [{}]
         self.assertRaisesRegex(errors.AnsibleParserError,
-                                "no module/action detected in task",
-                                helpers.load_list_of_tasks,
-                                ds, play=self.mock_play,
-                                variable_manager=self.mock_variable_manager, loader=self.fake_loader)
+                               "no module/action detected in task",
+                               helpers.load_list_of_tasks,
+                               ds, play=self.mock_play,
+                               variable_manager=self.mock_variable_manager, loader=self.fake_loader)
 
     def test_empty_task_use_handlers(self):
         ds = [{}]
         self.assertRaisesRegex(errors.AnsibleParserError,
-                                "no module/action detected in task.",
-                                helpers.load_list_of_tasks,
-                                ds,
-                                use_handlers=True,
-                                play=self.mock_play,
-                                variable_manager=self.mock_variable_manager,
-                                loader=self.fake_loader)
+                               "no module/action detected in task.",
+                               helpers.load_list_of_tasks,
+                               ds,
+                               use_handlers=True,
+                               play=self.mock_play,
+                               variable_manager=self.mock_variable_manager,
+                               loader=self.fake_loader)
 
     def test_one_bogus_block(self):
         ds = [{'block': None}]
         self.assertRaisesRegex(errors.AnsibleParserError,
-                                "A malformed block was encountered",
-                                helpers.load_list_of_tasks,
-                                ds, play=self.mock_play,
-                                variable_manager=self.mock_variable_manager, loader=self.fake_loader)
+                               "A malformed block was encountered",
+                               helpers.load_list_of_tasks,
+                               ds, play=self.mock_play,
+                               variable_manager=self.mock_variable_manager, loader=self.fake_loader)
 
     def test_unknown_action(self):
         action_name = 'foo_test_unknown_action'
@@ -173,10 +173,10 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
     def test_one_bogus_block_use_handlers(self):
         ds = [{'block': True}]
         self.assertRaisesRegex(errors.AnsibleParserError,
-                                "A malformed block was encountered",
-                                helpers.load_list_of_tasks,
-                                ds, play=self.mock_play, use_handlers=True,
-                                variable_manager=self.mock_variable_manager, loader=self.fake_loader)
+                               "A malformed block was encountered",
+                               helpers.load_list_of_tasks,
+                               ds, play=self.mock_play, use_handlers=True,
+                               variable_manager=self.mock_variable_manager, loader=self.fake_loader)
 
     def test_one_bogus_include(self):
         ds = [{'include': 'somefile.yml'}]
@@ -321,10 +321,10 @@ class TestLoadListOfRoles(unittest.TestCase, MixinForMocks):
     def test_empty_role(self):
         ds = [{}]
         self.assertRaisesRegex(errors.AnsibleError,
-                                "role definitions must contain a role name",
-                                helpers.load_list_of_roles,
-                                ds, self.mock_play,
-                                variable_manager=self.mock_variable_manager, loader=self.fake_role_loader)
+                               "role definitions must contain a role name",
+                               helpers.load_list_of_roles,
+                               ds, self.mock_play,
+                               variable_manager=self.mock_variable_manager, loader=self.fake_role_loader)
 
     def test_empty_role_just_name(self):
         ds = [{'name': 'bogus_role'}]
@@ -360,15 +360,15 @@ class TestLoadListOfBlocks(unittest.TestCase, MixinForMocks):
         ds = [{}]
         mock_play = MagicMock(name='MockPlay')
         self.assertRaisesRegex(errors.AnsibleParserError,
-                                "no module/action detected in task",
-                                helpers.load_list_of_blocks,
-                                ds, mock_play,
-                                parent_block=None,
-                                role=None,
-                                task_include=None,
-                                use_handlers=False,
-                                variable_manager=None,
-                                loader=None)
+                               "no module/action detected in task",
+                               helpers.load_list_of_blocks,
+                               ds, mock_play,
+                               parent_block=None,
+                               role=None,
+                               task_include=None,
+                               use_handlers=False,
+                               variable_manager=None,
+                               loader=None)
 
     def test_block_unknown_action(self):
         ds = [{'action': 'foo', 'collections': []}]

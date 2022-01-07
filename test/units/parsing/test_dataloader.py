@@ -139,7 +139,7 @@ class TestDataLoader(unittest.TestCase):
 
     def test_get_file_contents_none_path(self):
         self.assertRaisesRegex(AnsibleParserError, 'Invalid filename',
-                                self._loader._get_file_contents, None)
+                               self._loader._get_file_contents, None)
 
     def test_get_file_contents_non_existent_path(self):
         self.assertRaises(AnsibleFileNotFound, self._loader._get_file_contents, '/non_existent_file')
