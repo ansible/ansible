@@ -1391,11 +1391,13 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
         # No interpreter/shebang, assume a binary module?
         if interpreter is not None:
 
-            shebang = _get_shebang(interpreter, task_vars, templar, args, remote_is_local=remote_is_local)[0]
+            shebang, new_interpreter = _get_shebang(interpreter, task_vars, templar, args, remote_is_local=remote_is_local)
 
             # update shebang
             b_lines = b_module_data.split(b"\n", 1)
-            b_lines[0] = to_bytes(shebang, errors='surrogate_or_strict', nonstring='passthru')
+
+            if interpreter != new_interpreter:
+                b_lines[0] = to_bytes(shebang, errors='surrogate_or_strict', nonstring='passthru')
 
             if os.path.basename(interpreter).startswith(u'python'):
                 b_lines.insert(1, b_ENCODING_STRING)
