@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-test - Fix tests that were broken with ``pytest 7`` - https://github.com/ansible/ansible/issues/76577
