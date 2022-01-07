@@ -52,7 +52,7 @@ class TestAnsibleVaultUnicodeNoVault(unittest.TestCase, YamlTestUtils):
         self.assertIsInstance(avu, objects.AnsibleVaultEncryptedUnicode)
         self.assertTrue(avu.vault is None)
         # AnsibleVaultEncryptedUnicode without a vault should never == any string
-        self.assertNotEquals(avu, seq)
+        self.assertNotEqual(avu, seq)
 
     def assert_values(self, seq):
         avu = objects.AnsibleVaultEncryptedUnicode(seq)
