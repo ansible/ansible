@@ -36,3 +36,7 @@ if sys.version_info < (2, 7):
         print('You need unittest2 installed on python2.6.x to run tests')
 else:
     from unittest import *
+
+    if not hasattr(TestCase, 'assertRaisesRegex'):
+        # added in Python 3.2
+        TestCase.assertRaisesRegex = TestCase.assertRaisesRegexp
