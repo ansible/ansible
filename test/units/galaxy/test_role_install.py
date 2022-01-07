@@ -8,6 +8,7 @@ __metaclass__ = type
 
 
 import os
+import functools
 import pytest
 import tempfile
 
@@ -59,9 +60,9 @@ def mock_NamedTemporaryFile(mocker, **args):
     return mock_ntf
 
 
-@pytest.fixture(autouse=True)
-def init_test(monkeypatch):
-    monkeypatch.setattr(tempfile, 'NamedTemporaryFile', mock_NamedTemporaryFile)
+@pytest.fixture
+def init_mock_temp_file(mocker, monkeypatch):
+    monkeypatch.setattr(tempfile, 'NamedTemporaryFile', functools.partial(mock_NamedTemporaryFile, mocker))
 
 
 @pytest.fixture(autouse=True)
@@ -74,7 +75,7 @@ def mock_role_download_api(mocker, monkeypatch):
     return mock_role_api
 
 
-def test_role_download_github(mocker, galaxy_server, mock_role_download_api, monkeypatch):
+def test_role_download_github(init_mock_temp_file, mocker, galaxy_server, mock_role_download_api, monkeypatch):
     mock_api = mocker.MagicMock()
     mock_api.side_effect = [
         StringIO(u'{"available_versions":{"v1":"v1/"}}'),
@@ -89,7 +90,7 @@ def test_role_download_github(mocker, galaxy_server, mock_role_download_api, mon
     assert mock_role_download_api.mock_calls[0][1][0] == 'https://github.com/test_owner/test_role/archive/0.0.1.tar.gz'
 
 
-def test_role_download_github_default_version(mocker, galaxy_server, mock_role_download_api, monkeypatch):
+def test_role_download_github_default_version(init_mock_temp_file, mocker, galaxy_server, mock_role_download_api, monkeypatch):
     mock_api = mocker.MagicMock()
     mock_api.side_effect = [
         StringIO(u'{"available_versions":{"v1":"v1/"}}'),
@@ -104,7 +105,7 @@ def test_role_download_github_default_version(mocker, galaxy_server, mock_role_d
     assert mock_role_download_api.mock_calls[0][1][0] == 'https://github.com/test_owner/test_role/archive/0.0.2.tar.gz'
 
 
-def test_role_download_github_no_download_url_for_version(mocker, galaxy_server, mock_role_download_api, monkeypatch):
+def test_role_download_github_no_download_url_for_version(init_mock_temp_file, mocker, galaxy_server, mock_role_download_api, monkeypatch):
     mock_api = mocker.MagicMock()
     mock_api.side_effect = [
         StringIO(u'{"available_versions":{"v1":"v1/"}}'),
@@ -119,7 +120,7 @@ def test_role_download_github_no_download_url_for_version(mocker, galaxy_server,
     assert mock_role_download_api.mock_calls[0][1][0] == 'https://github.com/test_owner/test_role/archive/0.0.1.tar.gz'
 
 
-def test_role_download_url(mocker, galaxy_server, mock_role_download_api, monkeypatch):
+def test_role_download_url(init_mock_temp_file, mocker, galaxy_server, mock_role_download_api, monkeypatch):
     mock_api = mocker.MagicMock()
     mock_api.side_effect = [
         StringIO(u'{"available_versions":{"v1":"v1/"}}'),
@@ -135,7 +136,7 @@ def test_role_download_url(mocker, galaxy_server, mock_role_download_api, monkey
     assert mock_role_download_api.mock_calls[0][1][0] == 'http://localhost:8080/test_owner/test_role/0.0.1.tar.gz'
 
 
-def test_role_download_url_default_version(mocker, galaxy_server, mock_role_download_api, monkeypatch):
+def test_role_download_url_default_version(init_mock_temp_file, mocker, galaxy_server, mock_role_download_api, monkeypatch):
     mock_api = mocker.MagicMock()
     mock_api.side_effect = [
         StringIO(u'{"available_versions":{"v1":"v1/"}}'),
