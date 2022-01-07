@@ -1241,11 +1241,11 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                                        'Look at traceback for that process for debugging information.')
         zipdata = to_text(zipdata, errors='surrogate_or_strict')
 
-        o_interpreter = _extract_interpreter(b_module_data)
+        o_interpreter, o_args = _extract_interpreter(b_module_data)
         if o_interpreter is None:
             o_interpreter= u'/usr/bin/python'
 
-        shebang, interpreter = _get_shebang(o_interpreter, task_vars, templar, remote_is_local=remote_is_local)
+        shebang, interpreter = _get_shebang(o_interpreter, task_vars, templar, o_args, remote_is_local=remote_is_local)
         if shebang is None:
             shebang = u'#!{0}'.format(o_interpreter)
 
@@ -1342,16 +1342,21 @@ def _extract_interpreter(b_module_data):
     string with the shebang, or None if no shebang is detected.
     """
 
-    shebang = None
+    interpreter = None
+    args = []
     b_lines = b_module_data.split(b"\n", 1)
     if b_lines[0].startswith(b"#!"):
         b_shebang = b_lines[0].strip()
 
         # shlex.split on python-2.6 needs bytes.  On python-3.x it needs text
-        args = shlex.split(to_native(b_shebang[2:], errors='surrogate_or_strict'))
-        shebang = to_text(args[0], errors='surrogate_or_strict')
+        n_args = shlex.split(to_native(b_shebang[2:], errors='surrogate_or_strict'))
 
-    return shebang
+        # convert args to text
+        n_args = [to_text(a, errors='surrogate_or_strict') for a in args]
+        interpreter = n_args[0]
+        args = n_args[1:]
+
+    return interpreter, args
 
 
 def modify_module(module_name, module_path, module_args, templar, task_vars=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
@@ -1392,11 +1397,11 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
     if module_style == 'binary':
         return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))
     elif shebang is None:
-        interpreter = _extract_interpreter(b_module_data)
+        interpreter, args = _extract_interpreter(b_module_data)
         # No interpreter/shebang, assume a binary module?
         if interpreter is not None:
 
-            shebang = _get_shebang(interpreter, task_vars, templar, args[1:], remote_is_local=remote_is_local)[0]
+            shebang = _get_shebang(interpreter, task_vars, templar, args, remote_is_local=remote_is_local)[0]
 
             b_lines = b_module_data.split(b"\n", 1)
             updated = False
