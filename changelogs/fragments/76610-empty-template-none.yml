@@ -1,0 +1,2 @@
+bugfixes:
+  - "Fix for when templating empty template file resulted in file with string 'None' (https://github.com/ansible/ansible/issues/76610)"

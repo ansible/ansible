@@ -756,3 +756,13 @@
 - assert:
     that:
       - out.rc == 0
+
+- template:
+    src: empty_template.j2
+    dest: "{{ output_dir }}/empty_template.templated"
+
+- assert:
+    that:
+      - test
+  vars:
+    test: "{{ lookup('file', '{{ output_dir }}/empty_template.templated')|length == 0 }}"
