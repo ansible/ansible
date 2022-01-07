@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # (c) 2017, Brian Coca <bcoca@ansible.com>
 # (c) 2017, Adam Miller <admiller@redhat.com>

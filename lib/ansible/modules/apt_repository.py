@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # encoding: utf-8
 
 # Copyright: (c) 2012, Matt Wright <matt@nobien.net>

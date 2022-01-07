@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # encoding: utf-8
 
 # (c) 2015-2016, Jiri Tyr <jiri.tyr@gmail.com>
