@@ -73,6 +73,7 @@ import re
 import shlex
 
 from ansible.plugins.become import BecomeBase
+from ansible.module_utils.six.moves import shlex_quote
 
 
 class BecomeModule(BecomeBase):
@@ -108,7 +109,7 @@ class BecomeModule(BecomeBase):
                     flags = shlex.join(reflag)
                 except AttributeError:
                     # for older pythons
-                    flags = ' '.join([shlex.quote(a) for a in reflag])
+                    flags = ' '.join([shlex_quote(a) for a in reflag])
 
             prompt = '-p "%s"' % (self.prompt)
 
