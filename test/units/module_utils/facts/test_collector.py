@@ -265,12 +265,12 @@ class TestGetCollectorNames(unittest.TestCase):
         valid_subsets = frozenset(['my_fact', 'something_else'])
         minimal_gather_subset = frozenset(['my_fact'])
 
-        self.assertRaisesRegexp(TypeError,
-                                r'Bad subset .* given to Ansible.*allowed\:.*all,.*my_fact.*',
-                                collector.get_collector_names,
-                                valid_subsets=valid_subsets,
-                                minimal_gather_subset=minimal_gather_subset,
-                                gather_subset=['my_fact', 'not_a_valid_gather_subset'])
+        self.assertRaisesRegex(TypeError,
+                               r'Bad subset .* given to Ansible.*allowed\:.*all,.*my_fact.*',
+                               collector.get_collector_names,
+                               valid_subsets=valid_subsets,
+                               minimal_gather_subset=minimal_gather_subset,
+                               gather_subset=['my_fact', 'not_a_valid_gather_subset'])
 
 
 class TestFindUnresolvedRequires(unittest.TestCase):
@@ -349,10 +349,10 @@ class TestResolveRequires(unittest.TestCase):
         all_fact_subsets = {'env': [default_collectors.EnvFactCollector],
                             'network': [default_collectors.LinuxNetworkCollector],
                             'virtual': [default_collectors.LinuxVirtualCollector]}
-        self.assertRaisesRegexp(collector.UnresolvedFactDep,
-                                'unresolved fact dep.*required_thing2',
-                                collector.resolve_requires,
-                                unresolved, all_fact_subsets)
+        self.assertRaisesRegex(collector.UnresolvedFactDep,
+                               'unresolved fact dep.*required_thing2',
+                               collector.resolve_requires,
+                               unresolved, all_fact_subsets)
 
     def test(self):
         unresolved = ['env', 'network']
@@ -556,8 +556,8 @@ class TestCollectorClassesFromGatherSubset(unittest.TestCase):
     def test_unknown_collector(self):
         # something claims 'unknown_collector' is a valid gather_subset, but there is
         # no FactCollector mapped to 'unknown_collector'
-        self.assertRaisesRegexp(TypeError,
-                                r'Bad subset.*unknown_collector.*given to Ansible.*allowed\:.*all,.*env.*',
-                                self._classes,
-                                all_collector_classes=default_collectors.collectors,
-                                gather_subset=['env', 'unknown_collector'])
+        self.assertRaisesRegex(TypeError,
+                               r'Bad subset.*unknown_collector.*given to Ansible.*allowed\:.*all,.*env.*',
+                               self._classes,
+                               all_collector_classes=default_collectors.collectors,
+                               gather_subset=['env', 'unknown_collector'])
