@@ -60,7 +60,8 @@ extends_documentation_fragment:
     - decrypt
 attributes:
     check_mode:
-        support: none
+        support: partial
+        details: while the script itself is arbitrary and cannot be subject to the check mode semantics it adds C(creates)/C(removes) options as a workaround
     diff_mode:
         support: none
     platform:

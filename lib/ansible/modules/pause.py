@@ -51,7 +51,7 @@ attributes:
     bypass_host_loop:
         support: full
     check_mode:
-        support: none
+        support: full
     connection:
         support: none
     delegation:

@@ -176,7 +176,8 @@
 - name: Assert that a change was reported but the script did not make changes
   assert:
     that:
-      - _check_mode_test is changed
+      - _check_mode_test is not changed
+      - _check_mode_test is skipped
       - not _afile_stat.stat.exists
 
 - name: Run script to create a file
