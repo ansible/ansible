@@ -216,6 +216,8 @@ DOCUMENTATION = '''
             - name: ANSIBLE_PIPELINING
             - name: ANSIBLE_SSH_PIPELINING
           ini:
+            - section: defaults
+              key: pipelining
             - section: connection
               key: pipelining
             - section: ssh_connection
