@@ -594,11 +594,7 @@ def _slurp(path):
 
 def _get_shebang(interpreter, task_vars, templar, args=tuple(), remote_is_local=False):
     """
-    Note not stellar API:
-       Returns None instead of always returning a shebang line.  Doing it this
-       way allows the caller to decide to use the shebang it read from the
-       file rather than trust that we reformatted what they already have
-       correctly.
+      Handles the different ways ansible allows overriding the shebang target for a module.
     """
     # FUTURE: add logical equivalence for python3 in the case of py3-only modules
 
@@ -644,15 +640,11 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple(), remote_is_local=
     if not interpreter_out:
         # nothing matched(None) or in case someone configures empty string or empty intepreter
         interpreter_out = interpreter
-        shebang = None
-    elif interpreter_out == interpreter:
-        # no change, no new shebang
-        shebang = None
-    else:
-        # set shebang cause we changed interpreter
-        shebang = u'#!' + interpreter_out
-        if args:
-            shebang = shebang + u' ' + u' '.join(args)
+
+    # set shebang
+    shebang = u'#!{0}'.format(interpreter_out)
+    if args:
+        shebang = shebang + u' ' + u' '.join(args)
 
     return shebang, interpreter_out
 
@@ -1246,8 +1238,6 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             o_interpreter = u'/usr/bin/python'
 
         shebang, interpreter = _get_shebang(o_interpreter, task_vars, templar, o_args, remote_is_local=remote_is_local)
-        if shebang is None:
-            shebang = u'#!{0}'.format(o_interpreter)
 
         # FUTURE: the module cache entry should be invalidated if we got this value from a host-dependent source
         rlimit_nofile = C.config.get_config_value('PYTHON_MODULE_RLIMIT_NOFILE', variables=task_vars)
@@ -1402,8 +1392,6 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
         if interpreter is not None:
 
             shebang = _get_shebang(interpreter, task_vars, templar, args, remote_is_local=remote_is_local)[0]
-            if shebang is None:
-                shebang = '#!{0}'.format(interpreter)
 
             # update shebang
             b_lines = b_module_data.split(b"\n", 1)
