@@ -60,7 +60,7 @@ def ansible_concat(nodes, convert_data, variable_start_string):
     head = list(islice(nodes, 2))
 
     if not head:
-        return None
+        return ''
 
     if len(head) == 1:
         out = _fail_on_undefined(head[0])
