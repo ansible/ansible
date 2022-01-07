@@ -1243,7 +1243,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
 
         o_interpreter, o_args = _extract_interpreter(b_module_data)
         if o_interpreter is None:
-            o_interpreter= u'/usr/bin/python'
+            o_interpreter = u'/usr/bin/python'
 
         shebang, interpreter = _get_shebang(o_interpreter, task_vars, templar, o_args, remote_is_local=remote_is_local)
         if shebang is None:
