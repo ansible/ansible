@@ -55,7 +55,7 @@ attributes:
     connection:
         support: none
     check_mode:
-        support: none
+        support: full
     delegation:
         support: none
         details: Aside from C(register) and/or in combination with C(delegate_facts), it has little effect.

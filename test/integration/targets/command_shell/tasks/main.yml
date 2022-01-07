@@ -155,6 +155,24 @@
     path: "{{ output_dir_test }}/afile.txt"
     state: absent
 
+- name: create afile.txt with create_afile.sh via command (check mode)
+  command: "{{ output_dir_test }}/create_afile.sh {{output_dir_test }}/afile.txt"
+  args:
+    creates: "{{ output_dir_test }}/afile.txt"
+  register: check_mode_result
+  check_mode: yes
+
+- assert:
+    that:
+      - check_mode_result.changed
+      - "'skipped' not in check_mode_result"
+
+- name: verify that afile.txt still does not exist
+  stat:
+    path: "{{output_dir_test}}/afile.txt"
+  register: stat_result
+  failed_when: stat_result.stat.exists
+
 - name: create afile.txt with create_afile.sh via command
   command: "{{ output_dir_test }}/create_afile.sh {{output_dir_test }}/afile.txt"
   args:
@@ -164,6 +182,18 @@
   file:
     path: "{{ output_dir_test }}/afile.txt"
     state: file
+
+- name: re-run previous command using creates with globbing (check mode)
+  command: "{{ output_dir_test }}/create_afile.sh {{ output_dir_test }}/afile.txt"
+  args:
+    creates: "{{ output_dir_test }}/afile.*"
+  register: check_mode_result
+  check_mode: yes
+
+- assert:
+    that:
+      - not check_mode_result.changed
+      - "'skipped' not in check_mode_result"
 
 - name: re-run previous command using creates with globbing
   command: "{{ output_dir_test }}/create_afile.sh {{ output_dir_test }}/afile.txt"
@@ -178,6 +208,24 @@
 
 # removes
 
+- name: remove afile.txt with remote_afile.sh via command (check mode)
+  command: "{{ output_dir_test }}/remove_afile.sh {{ output_dir_test }}/afile.txt"
+  args:
+    removes: "{{ output_dir_test }}/afile.txt"
+  register: check_mode_result
+  check_mode: yes
+
+- assert:
+    that:
+      - check_mode_result.changed
+      - "'skipped' not in check_mode_result"
+
+- name: verify that afile.txt still exists
+  stat:
+    path: "{{output_dir_test}}/afile.txt"
+  register: stat_result
+  failed_when: not stat_result.stat.exists
+
 - name: remove afile.txt with remote_afile.sh via command
   command: "{{ output_dir_test }}/remove_afile.sh {{ output_dir_test }}/afile.txt"
   args:
@@ -185,6 +233,18 @@
 
 - name: verify that afile.txt is absent
   file: path={{output_dir_test}}/afile.txt state=absent
+
+- name: re-run previous command using removes with globbing (check mode)
+  command: "{{ output_dir_test }}/remove_afile.sh {{ output_dir_test }}/afile.txt"
+  args:
+    removes: "{{ output_dir_test }}/afile.*"
+  register: check_mode_result
+  check_mode: yes
+
+- assert:
+    that:
+      - not check_mode_result.changed
+      - "'skipped' not in check_mode_result"
 
 - name: re-run previous command using removes with globbing
   command: "{{ output_dir_test }}/remove_afile.sh {{ output_dir_test }}/afile.txt"
@@ -450,6 +510,8 @@
   assert:
     that:
       - "'Command would have run if not in check mode' in result.msg"
+      - result.skipped
+      - not result.changed
 
 - name: test check mode creates/removes message
   command:
@@ -462,6 +524,8 @@
   assert:
     that:
       - "'Command would have run if not in check mode' in result.msg"
+      - "'skipped' not in result"
+      - result.changed
 
 - name: command symlink handling
   block:

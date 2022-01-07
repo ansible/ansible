@@ -90,7 +90,7 @@ attributes:
     bypass_host_loop:
         support: none
     check_mode:
-        support: none
+        support: full
     diff_mode:
         support: none
     platform:
