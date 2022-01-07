@@ -284,11 +284,11 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
         different_vault_string = data_from_yaml['different_secret']
 
         self.assertEqual(vault_string, another_vault_string)
-        self.assertNotEquals(vault_string, different_vault_string)
+        self.assertNotEqual(vault_string, different_vault_string)
 
         # More testing of __eq__/__ne__
         self.assertTrue('some string' != vault_string)
-        self.assertNotEquals('some string', vault_string)
+        self.assertNotEqual('some string', vault_string)
 
         # Note this is a compare of the str/unicode of these, they are different types
         # so we want to test self == other, and other == self etc

@@ -50,7 +50,7 @@ class TestConditional(unittest.TestCase):
 
     def test_undefined(self):
         when = [u"{{ some_undefined_thing }}"]
-        self.assertRaisesRegexp(errors.AnsibleError, "The conditional check '{{ some_undefined_thing }}' failed",
+        self.assertRaisesRegex(errors.AnsibleError, "The conditional check '{{ some_undefined_thing }}' failed",
                                 self._eval_con, when, {})
 
     def test_defined(self):
@@ -100,7 +100,7 @@ class TestConditional(unittest.TestCase):
 
         when = [u"some_dict.some_dict_key1 == hostvars['host3']"]
         # self._eval_con(when, variables)
-        self.assertRaisesRegexp(errors.AnsibleError,
+        self.assertRaisesRegex(errors.AnsibleError,
                                 r"The conditional check 'some_dict.some_dict_key1 == hostvars\['host3'\]' failed",
                                 # "The conditional check 'some_dict.some_dict_key1 == hostvars['host3']' failed",
                                 # "The conditional check 'some_dict.some_dict_key1 == hostvars['host3']' failed.",
@@ -116,7 +116,7 @@ class TestConditional(unittest.TestCase):
 
         # raises an exception when a non-string conditional is passed to extract_defined_undefined()
         when = [u"some_defined_dict_with_undefined_values"]
-        self.assertRaisesRegexp(errors.AnsibleError,
+        self.assertRaisesRegex(errors.AnsibleError,
                                 "The conditional check 'some_defined_dict_with_undefined_values' failed.",
                                 self._eval_con,
                                 when, variables)
@@ -129,7 +129,7 @@ class TestConditional(unittest.TestCase):
                                                                  }}
 
         when = [u"some_defined_dict_with_undefined_values is defined"]
-        self.assertRaisesRegexp(errors.AnsibleError,
+        self.assertRaisesRegex(errors.AnsibleError,
                                 "The conditional check 'some_defined_dict_with_undefined_values is defined' failed.",
                                 self._eval_con,
                                 when, variables)
@@ -195,7 +195,7 @@ class TestConditional(unittest.TestCase):
                 u'hostvars["some_host"] is defined',
                 u"{{ compare_targets.triple }} is defined",
                 u"{{ compare_targets.quadruple }} is defined"]
-        self.assertRaisesRegexp(errors.AnsibleError,
+        self.assertRaisesRegex(errors.AnsibleError,
                                 "The conditional check '{{ compare_targets.triple }} is defined' failed",
                                 self._eval_con,
                                 when, variables)

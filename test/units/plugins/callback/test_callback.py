@@ -56,7 +56,7 @@ class TestCallback(unittest.TestCase):
     def test_host_label(self):
         result = TaskResult(host=Host('host1'), task=mock_task, return_data={})
 
-        self.assertEquals(CallbackBase.host_label(result), 'host1')
+        self.assertEqual(CallbackBase.host_label(result), 'host1')
 
     def test_host_label_delegated(self):
         mock_task.delegate_to = 'host2'
@@ -65,7 +65,7 @@ class TestCallback(unittest.TestCase):
             task=mock_task,
             return_data={'_ansible_delegated_vars': {'ansible_host': 'host2'}},
         )
-        self.assertEquals(CallbackBase.host_label(result), 'host1 -> host2')
+        self.assertEqual(CallbackBase.host_label(result), 'host1 -> host2')
 
     # TODO: import callback module so we can patch callback.cli/callback.C
 

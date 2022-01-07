@@ -107,7 +107,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
 
     def test_empty_task(self):
         ds = [{}]
-        self.assertRaisesRegexp(errors.AnsibleParserError,
+        self.assertRaisesRegex(errors.AnsibleParserError,
                                 "no module/action detected in task",
                                 helpers.load_list_of_tasks,
                                 ds, play=self.mock_play,
@@ -115,7 +115,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
 
     def test_empty_task_use_handlers(self):
         ds = [{}]
-        self.assertRaisesRegexp(errors.AnsibleParserError,
+        self.assertRaisesRegex(errors.AnsibleParserError,
                                 "no module/action detected in task.",
                                 helpers.load_list_of_tasks,
                                 ds,
@@ -126,7 +126,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
 
     def test_one_bogus_block(self):
         ds = [{'block': None}]
-        self.assertRaisesRegexp(errors.AnsibleParserError,
+        self.assertRaisesRegex(errors.AnsibleParserError,
                                 "A malformed block was encountered",
                                 helpers.load_list_of_tasks,
                                 ds, play=self.mock_play,
@@ -172,7 +172,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
 
     def test_one_bogus_block_use_handlers(self):
         ds = [{'block': True}]
-        self.assertRaisesRegexp(errors.AnsibleParserError,
+        self.assertRaisesRegex(errors.AnsibleParserError,
                                 "A malformed block was encountered",
                                 helpers.load_list_of_tasks,
                                 ds, play=self.mock_play, use_handlers=True,
@@ -320,7 +320,7 @@ class TestLoadListOfRoles(unittest.TestCase, MixinForMocks):
 
     def test_empty_role(self):
         ds = [{}]
-        self.assertRaisesRegexp(errors.AnsibleError,
+        self.assertRaisesRegex(errors.AnsibleError,
                                 "role definitions must contain a role name",
                                 helpers.load_list_of_roles,
                                 ds, self.mock_play,
@@ -359,7 +359,7 @@ class TestLoadListOfBlocks(unittest.TestCase, MixinForMocks):
     def test_empty_block(self):
         ds = [{}]
         mock_play = MagicMock(name='MockPlay')
-        self.assertRaisesRegexp(errors.AnsibleParserError,
+        self.assertRaisesRegex(errors.AnsibleParserError,
                                 "no module/action detected in task",
                                 helpers.load_list_of_blocks,
                                 ds, mock_play,

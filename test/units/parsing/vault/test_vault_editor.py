@@ -142,7 +142,7 @@ class TestVaultEditor(unittest.TestCase):
 
         ve = self._vault_editor()
 
-        self.assertRaisesRegexp(errors.AnsibleError,
+        self.assertRaisesRegex(errors.AnsibleError,
                                 error_txt,
                                 ve._edit_file_helper,
                                 src_file_path,
@@ -249,7 +249,7 @@ class TestVaultEditor(unittest.TestCase):
         ve = self._vault_editor()
         ve.encrypt_file(src_file_path, self.vault_secret)
 
-        self.assertRaisesRegexp(errors.AnsibleError,
+        self.assertRaisesRegex(errors.AnsibleError,
                                 'The value for the new_password to rekey',
                                 ve.rekey_file,
                                 src_file_path,
@@ -264,7 +264,7 @@ class TestVaultEditor(unittest.TestCase):
         ve = self._vault_editor()
 
         new_password = 'password2:electricbugaloo'
-        self.assertRaisesRegexp(errors.AnsibleError,
+        self.assertRaisesRegex(errors.AnsibleError,
                                 'input is not vault encrypted data',
                                 ve.rekey_file,
                                 src_file_path, new_password)
@@ -288,7 +288,7 @@ class TestVaultEditor(unittest.TestCase):
         src_file_path = self._create_file(self._test_dir, 'src_file', content=src_file_contents)
 
         ve = self._vault_editor()
-        self.assertRaisesRegexp(errors.AnsibleError,
+        self.assertRaisesRegex(errors.AnsibleError,
                                 'input is not vault encrypted data',
                                 ve.plaintext,
                                 src_file_path)
@@ -426,7 +426,7 @@ class TestVaultEditor(unittest.TestCase):
         mock_sp_call.side_effect = faux_editor
 
         ve = self._vault_editor()
-        self.assertRaisesRegexp(errors.AnsibleError,
+        self.assertRaisesRegex(errors.AnsibleError,
                                 'input is not vault encrypted data',
                                 ve.edit_file,
                                 src_file_path)
@@ -437,7 +437,7 @@ class TestVaultEditor(unittest.TestCase):
         src_file_path = self._create_file(self._test_dir, 'src_file', content=src_contents)
 
         ve = self._vault_editor()
-        self.assertRaisesRegexp(errors.AnsibleError,
+        self.assertRaisesRegex(errors.AnsibleError,
                                 'please use .edit. instead',
                                 ve.create_file,
                                 src_file_path,
@@ -449,7 +449,7 @@ class TestVaultEditor(unittest.TestCase):
         src_file_path = self._create_file(self._test_dir, 'src_file', content=src_contents)
 
         ve = self._vault_editor()
-        self.assertRaisesRegexp(errors.AnsibleError,
+        self.assertRaisesRegex(errors.AnsibleError,
                                 'input is not vault encrypted data',
                                 ve.decrypt_file,
                                 src_file_path)

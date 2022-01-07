@@ -346,7 +346,7 @@ class TestActionBase(unittest.TestCase):
             self.assertEqual(runWithNoExpectation(execute), remote_paths)
 
         def assertThrowRegex(regex, execute=False):
-            self.assertRaisesRegexp(
+            self.assertRaisesRegex(
                 AnsibleError,
                 regex,
                 action_base._fixup_perms2,
