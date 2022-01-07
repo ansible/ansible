@@ -4,4 +4,5 @@ mock
 pytest
 pytest-mock
 pytest-xdist
+pytest-forked
 pyyaml
