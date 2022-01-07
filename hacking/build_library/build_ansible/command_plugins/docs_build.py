@@ -119,7 +119,7 @@ def generate_base_docs(args):
 
         # Generate the plugin rst
         return antsibull_docs.run(['antsibull-docs', 'stable', '--deps-file', modified_deps_file,
-                                   '--ansible-core-source', str(args.top_dir),
+                                   '--ansible-base-source', str(args.top_dir),
                                    '--dest-dir', args.output_dir])
 
         # If we make this more than just a driver for antsibull:
