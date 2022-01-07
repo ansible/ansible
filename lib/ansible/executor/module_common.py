@@ -1402,19 +1402,17 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
         if interpreter is not None:
 
             shebang = _get_shebang(interpreter, task_vars, templar, args, remote_is_local=remote_is_local)[0]
+            if shebang is None:
+                shebang = '#!{0}'.format(interpreter)
 
+            # update shebang
             b_lines = b_module_data.split(b"\n", 1)
-            updated = False
-            if shebang is not None:
-                b_lines[0] = to_bytes(shebang, errors='surrogate_or_strict', nonstring='passthru')
-                updated = True
+            b_lines[0] = to_bytes(shebang, errors='surrogate_or_strict', nonstring='passthru')
 
             if os.path.basename(interpreter).startswith(u'python'):
                 b_lines.insert(1, b_ENCODING_STRING)
-                updated = True
 
-            if updated:
-                b_module_data = b"\n".join(b_lines)
+            b_module_data = b"\n".join(b_lines)
 
     return (b_module_data, module_style, shebang)
 
