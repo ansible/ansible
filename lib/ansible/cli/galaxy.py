@@ -385,6 +385,8 @@ class GalaxyCLI(CLI):
                                         'canonical manifest hash.')
         verify_parser.add_argument('-r', '--requirements-file', dest='requirements',
                                    help='A file containing a list of collections to be verified.')
+        verify_parser.add_argument('--keyring', dest='keyring', default='~/.ansible/pubring.kbx',
+                                   help='The keyring used during signature verification')
 
     def add_install_options(self, parser, parents=None):
         galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
@@ -425,6 +427,8 @@ class GalaxyCLI(CLI):
                                         help='Include pre-release versions. Semantic versioning pre-releases are ignored by default')
             install_parser.add_argument('-U', '--upgrade', dest='upgrade', action='store_true', default=False,
                                         help='Upgrade installed collection artifacts. This will also update dependencies unless --no-deps is provided')
+            install_parser.add_argument('--keyring', dest='keyring', default='~/.ansible/pubring.kbx',
+                                        help='The keyring used during signature verification')
         else:
             install_parser.add_argument('-r', '--role-file', dest='requirements',
                                         help='A file containing a list of roles to be installed.')
@@ -1103,6 +1107,7 @@ class GalaxyCLI(CLI):
         collections = context.CLIARGS['args']
         search_paths = context.CLIARGS['collections_path']
         ignore_errors = context.CLIARGS['ignore_errors']
+        keyring = context.CLIARGS['keyring']
         local_verify_only = context.CLIARGS['offline']
         requirements_file = context.CLIARGS['requirements']
 
@@ -1118,6 +1123,7 @@ class GalaxyCLI(CLI):
             self.api_servers, ignore_errors,
             local_verify_only=local_verify_only,
             artifacts_manager=artifacts_manager,
+            keyring=keyring,
         )
 
         if any(result for result in results if not result.success):
@@ -1221,6 +1227,9 @@ class GalaxyCLI(CLI):
         allow_pre_release = context.CLIARGS.get('allow_pre_release', False)
         upgrade = context.CLIARGS.get('upgrade', False)
 
+        # FIXME: The keyring needs to be configurable even if collections and roles are being installed at the same time
+        keyring = context.CLIARGS.get('keyring', None)
+
         collections_path = C.COLLECTIONS_PATHS
         if len([p for p in collections_path if p.startswith(path)]) == 0:
             display.warning("The specified collections path '%s' is not part of the configured Ansible "
@@ -1237,6 +1246,7 @@ class GalaxyCLI(CLI):
             no_deps, force, force_with_deps, upgrade,
             allow_pre_release=allow_pre_release,
             artifacts_manager=artifacts_manager,
+            keyring=keyring,
         )
 
         return 0

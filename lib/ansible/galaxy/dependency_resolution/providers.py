@@ -28,10 +28,35 @@ from ansible.galaxy.dependency_resolution.versioning import (
     is_pre_release,
     meets_requirements,
 )
+from ansible.galaxy.dependency_resolution.gpg import get_signature_from_url
 from ansible.module_utils.six import string_types
 from ansible.utils.version import SemanticVersion
 
+from collections.abc import Set
 from resolvelib import AbstractProvider
+from urllib.error import HTTPError
+
+
+class PinnedCandidateRequests(Set):
+    def __init__(self, candidates):
+        self.candidates = set(candidates)
+
+    def __iter__(self):
+        return iter(self.candidates)
+
+    def __contains__(self, value):
+        for candidate in self.candidates:
+            for attr in ['fqcn', 'ver', 'src', 'type']:
+                if not hasattr(value, attr):
+                    return False
+                if getattr(value, attr) != getattr(candidate, attr):
+                    break
+            else:
+                return True
+        return False
+
+    def __len__(self):
+        return len(self.candidates)
 
 
 class CollectionDependencyProvider(AbstractProvider):
@@ -67,8 +92,10 @@ class CollectionDependencyProvider(AbstractProvider):
             Requirement.from_requirement_dict,
             art_mgr=concrete_artifacts_manager,
         )
-        self._pinned_candidate_requests = set(
-            Candidate(req.fqcn, req.ver, req.src, req.type)
+        self._pinned_candidate_requests = PinnedCandidateRequests(
+            # NOTE: User-provided signatures are supplemental, so signatures
+            # NOTE: are not used to determine if a candidate is user-requested
+            Candidate(req.fqcn, req.ver, req.src, req.type, None)
             for req in (user_requirements or ())
             if req.is_concrete_artifact or (
                 req.ver != '*' and
@@ -107,8 +134,11 @@ class CollectionDependencyProvider(AbstractProvider):
             # NOTE: with the `source:` set, it'll match the first check
             # NOTE: but it still can have entries with `src=None` so this
             # NOTE: normalized check is still necessary.
+            # NOTE:
+            # NOTE: User-provided signatures are supplemental, so signatures
+            # NOTE: are not used to determine if a candidate is user-requested
             return Candidate(
-                candidate.fqcn, candidate.ver, None, candidate.type,
+                candidate.fqcn, candidate.ver, None, candidate.type, None
             ) in self._pinned_candidate_requests
 
         return False
@@ -252,23 +282,28 @@ class CollectionDependencyProvider(AbstractProvider):
                         raise ValueError(version_err) from ex
 
             return [
-                Candidate(fqcn, version, _none_src_server, first_req.type)
+                Candidate(fqcn, version, _none_src_server, first_req.type, None)
                 for version, _none_src_server in coll_versions
             ]
 
-        latest_matches = sorted(
-            {
-                candidate for candidate in (
-                    Candidate(fqcn, version, src_server, 'galaxy')
-                    for version, src_server in coll_versions
+        latest_matches = []
+        for version, src_server in coll_versions:
+            tmp_candidate = Candidate(fqcn, version, src_server, 'galaxy', None)
+
+            unsatisfied = False
+            signatures = src_server.get_collection_signatures(first_req.namespace, first_req.name, version)
+            for requirement in requirements:
+                unsatisfied |= not self.is_satisfied_by(requirement, tmp_candidate)
+                signatures.extend(
+                    [get_signature_from_url(url, quiet=True) for url in requirement.signature_urls or []]
                 )
-                if all(self.is_satisfied_by(requirement, candidate) for requirement in requirements)
-                # FIXME
-                # if all(self.is_satisfied_by(requirement, candidate) and (
-                #     requirement.src is None or  # if this is true for some candidates but not all it will break key param - Nonetype can't be compared to str
-                #     requirement.src == candidate.src
-                # ))
-            },
+
+            if not unsatisfied:
+                latest_matches.append(
+                    Candidate(fqcn, version, src_server, 'galaxy', frozenset(signatures))
+                )
+
+        latest_matches.sort(
             key=lambda candidate: (
                 SemanticVersion(candidate.ver), candidate.src,
             ),

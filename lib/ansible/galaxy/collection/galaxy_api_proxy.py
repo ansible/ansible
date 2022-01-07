@@ -165,3 +165,30 @@ class MultiGalaxyAPIProxy:
             get_collection_version_metadata(collection_candidate).
             dependencies
         )
+
+    def get_signatures(self, fqcn, version):
+        namespace, name = fqcn.split('.')
+        last_err = None
+
+        for api in self._apis:
+            try:
+                return api.get_collection_signatures(namespace, name, version)
+            except GalaxyError as api_err:
+                last_err = api_err
+            except Exception as unknown_err:
+                # Warn for debugging purposes, since the Galaxy server may be unexpectedly down.
+                last_err = unknown_err
+                display.warning(
+                    "Skipping Galaxy server {server!s}. "
+                    "Got an unexpected error when getting "
+                    "available versions of collection {fqcn!s}: {err!s}".
+                    format(
+                        server=api.api_server,
+                        fqcn='%s.%s' % (namespace, name),
+                        err=to_text(unknown_err),
+                    )
+                )
+        if last_err:
+            raise last_err
+
+        return []

@@ -870,3 +870,8 @@ class GalaxyAPI:
         self._set_cache()
 
         return versions
+
+    @g_connect(['v2', 'v3'])
+    def get_collection_signatures(self, namespace, name, version):
+        # FIXME
+        return []

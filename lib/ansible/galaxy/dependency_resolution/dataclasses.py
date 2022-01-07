@@ -10,6 +10,7 @@ __metaclass__ = type
 import json
 import os
 from collections import namedtuple
+from collections.abc import MutableSequence
 from glob import iglob
 from urllib.parse import urlparse
 
@@ -34,7 +35,6 @@ import yaml
 from ansible.errors import AnsibleError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.six import raise_from
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 
@@ -158,11 +158,11 @@ class _ComputedReqKindsMixin:
                 ' collection directory.',
             )
 
-        tmp_inst_req = cls(None, None, dir_path, 'dir')
+        tmp_inst_req = cls(None, None, dir_path, 'dir', None)
         req_name = art_mgr.get_direct_collection_fqcn(tmp_inst_req)
         req_version = art_mgr.get_direct_collection_version(tmp_inst_req)
 
-        return cls(req_name, req_version, dir_path, 'dir')
+        return cls(req_name, req_version, dir_path, 'dir', None)
 
     @classmethod
     def from_dir_path_implicit(  # type: ignore[misc]
@@ -179,7 +179,7 @@ class _ComputedReqKindsMixin:
         u_dir_path = to_text(dir_path, errors='surrogate_or_strict')
         path_list = u_dir_path.split(os.path.sep)
         req_name = '.'.join(path_list[-2:])
-        return cls(req_name, '*', dir_path, 'dir')  # type: ignore[call-arg]
+        return cls(req_name, '*', dir_path, 'dir', None)  # type: ignore[call-arg]
 
     @classmethod
     def from_string(cls, collection_input, artifacts_manager):
@@ -201,6 +201,11 @@ class _ComputedReqKindsMixin:
         req_type = collection_req.get('type')
         # TODO: decide how to deprecate the old src API behavior
         req_source = collection_req.get('source', None)
+        req_signature_urls = collection_req.get('signatures', None)
+        if req_signature_urls:
+            if not isinstance(req_signature_urls, MutableSequence):
+                req_signature_urls = [req_signature_urls]
+            req_signature_urls = frozenset(req_signature_urls)
 
         if req_type is None:
             if (  # FIXME: decide on the future behavior:
@@ -312,7 +317,7 @@ class _ComputedReqKindsMixin:
                 format(not_url=req_source.api_server),
             )
 
-        tmp_inst_req = cls(req_name, req_version, req_source, req_type)
+        tmp_inst_req = cls(req_name, req_version, req_source, req_type, req_signature_urls)
 
         if req_type not in {'galaxy', 'subdirs'} and req_name is None:
             req_name = art_mgr.get_direct_collection_fqcn(tmp_inst_req)  # TODO: fix the cache key in artifacts manager?
@@ -323,6 +328,7 @@ class _ComputedReqKindsMixin:
         return cls(
             req_name, req_version,
             req_source, req_type,
+            req_signature_urls,
         )
 
     def __repr__(self):
@@ -415,13 +421,13 @@ class _ComputedReqKindsMixin:
 
 class Requirement(
         _ComputedReqKindsMixin,
-        namedtuple('Requirement', ('fqcn', 'ver', 'src', 'type')),
+        namedtuple('Requirement', ('fqcn', 'ver', 'src', 'type', 'signature_urls')),
 ):
     """An abstract requirement request."""
 
 
 class Candidate(
         _ComputedReqKindsMixin,
-        namedtuple('Candidate', ('fqcn', 'ver', 'src', 'type'))
+        namedtuple('Candidate', ('fqcn', 'ver', 'src', 'type', 'signatures'))
 ):
     """A concrete collection candidate with its version resolved."""
