@@ -246,6 +246,7 @@ def command_units(args):  # type: (UnitsConfig) -> None
             '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest.ini'),
             '--junit-xml', os.path.join(ResultType.JUNIT.path, 'python%s-%s-units.xml' % (python.version, test_context)),
             '--strict-markers',  # added in pytest 4.5.0
+            '--rootdir', data_context().content.root,
         ]
 
         if not data_context().content.collection:
