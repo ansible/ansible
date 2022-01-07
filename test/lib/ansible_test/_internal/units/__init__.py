@@ -95,7 +95,7 @@ def command_units(args):
 
         cmd = [
             'pytest',
-            '--boxed',
+            '--forked',
             '-r', 'a',
             '-n', str(args.num_workers) if args.num_workers else 'auto',
             '--color',
