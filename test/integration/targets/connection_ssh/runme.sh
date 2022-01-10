@@ -74,4 +74,4 @@ ANSIBLE_CONFIG=./test_ssh_defaults.cfg ansible-playbook verify_config.yml "$@"
 
 # ensure we handle cp with spaces correctly, otherwise would fail with
 # `"Failed to connect to the host via ssh: command-line line 0: keyword controlpath extra arguments at end of line"`
-ANSIBLE_SSH_CONTROL_PATH='/tmp/ssh cp with spaces' ansible -m ping testhost -e ansible_connection=ssh -i test_connection.inventory "$@"
+ANSIBLE_SSH_CONTROL_PATH='/tmp/ssh cp with spaces' ansible -m ping all -e ansible_connection=ssh -i test_connection.inventory "$@"
