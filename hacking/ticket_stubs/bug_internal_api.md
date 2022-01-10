@@ -8,7 +8,7 @@ The Ansible Python API is considered internal and an unsupported aspect of Ansib
 as such this is not considered a bug unless it causes an issue with Ansible command line tools
 (`ansible`, `ansible-playbook`, `ansible-doc`, etc).
 
-We do support the provided API for use by the development of plugins (modules, dynamic inventories, callbacks, strategies, etc),
+We do support the provided API for use in developing plugins (modules, dynamic inventories, callbacks, strategies, etc),
 but this does not seem to match that case.
 
 If you really need a stable API target to use Ansible consider using ansilbe-runner:
