@@ -177,30 +177,28 @@ class PlayIterator(metaclass=MetaPlayIterator):
         self._blocks = []
         self._variable_manager = variable_manager
 
-        # Default options to gather
-        gather_subset = self._play.gather_subset
-        gather_timeout = self._play.gather_timeout
-        fact_path = self._play.fact_path
-
         setup_block = Block(play=self._play)
         # Gathering facts with run_once would copy the facts from one host to
         # the others.
         setup_block.run_once = False
         setup_task = Task(block=setup_block)
         setup_task.action = 'gather_facts'
+        # TODO: hardcoded resolution here, but should use actual resolution code in the end,
+        #       in case of 'legacy' mismatch
+        setup_task.resolved_action = 'ansible.builtin.gather_facts'
         setup_task.name = 'Gathering Facts'
-        setup_task.args = {
-            'gather_subset': gather_subset,
-        }
+        setup_task.args = {}
 
         # Unless play is specifically tagged, gathering should 'always' run
         if not self._play.tags:
             setup_task.tags = ['always']
 
-        if gather_timeout:
-            setup_task.args['gather_timeout'] = gather_timeout
-        if fact_path:
-            setup_task.args['fact_path'] = fact_path
+        # Default options to gather
+        for option in ('gather_subset', 'gather_timeout', 'fact_path'):
+            value = getattr(self._play, option, None)
+            if value is not None:
+                setup_task.args[option] = value
+
         setup_task.set_loader(self._play._loader)
         # short circuit fact gathering if the entire playbook is conditional
         if self._play._included_conditional is not None:
