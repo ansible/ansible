@@ -28,7 +28,7 @@ from ansible.galaxy.dependency_resolution.versioning import (
     is_pre_release,
     meets_requirements,
 )
-from ansible.galaxy.collection.gpg import get_signature_from_url
+from ansible.galaxy.collection.gpg import get_signature_from_source
 from ansible.module_utils.six import string_types
 from ansible.utils.version import SemanticVersion
 
@@ -295,7 +295,7 @@ class CollectionDependencyProvider(AbstractProvider):
             for requirement in requirements:
                 unsatisfied |= not self.is_satisfied_by(requirement, tmp_candidate)
                 signatures.extend(
-                    [get_signature_from_url(url, quiet=True) for url in requirement.signature_urls or []]
+                    [get_signature_from_source(url, quiet=True) for url in requirement.signature_sources or []]
                 )
 
             if not unsatisfied:

@@ -87,7 +87,7 @@ def parse_gpg_errors(status_out, rc):
         yield cls(*fields)
 
 
-def get_signature_from_url(url, quiet=False):
+def get_signature_from_source(source, quiet=False):
     if not quiet:
         display.vvvv(f"Using signature at {url}")
     try:

@@ -119,7 +119,7 @@ from ansible.galaxy.dependency_resolution.versioning import meets_requirements
 from ansible.galaxy.collection.gpg import (
     run_gpg_verify,
     parse_gpg_errors,
-    get_signature_from_url
+    get_signature_from_source
 )
 from ansible.module_utils.six import raise_from
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -693,7 +693,7 @@ def verify_collections(
                     # NOTE: those alone validate the MANIFEST.json and the remote collection is not downloaded.
                     # NOTE: The remote MANIFEST.json is only used in verification if there are no signatures.
                     signatures.extend(
-                        [get_signature_from_url(url) for url in collection.signature_urls or []]
+                        [get_signature_from_source(source) for source in collection.signature_sources or []]
                     )
 
                     remote_collection = Candidate(

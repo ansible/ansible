@@ -201,11 +201,11 @@ class _ComputedReqKindsMixin:
         req_type = collection_req.get('type')
         # TODO: decide how to deprecate the old src API behavior
         req_source = collection_req.get('source', None)
-        req_signature_urls = collection_req.get('signatures', None)
-        if req_signature_urls:
-            if not isinstance(req_signature_urls, MutableSequence):
-                req_signature_urls = [req_signature_urls]
-            req_signature_urls = frozenset(req_signature_urls)
+        req_signature_sources = collection_req.get('signatures', None)
+        if req_signature_sources:
+            if not isinstance(req_signature_sources, MutableSequence):
+                req_signature_sources = [req_signature_sources]
+            req_signature_sources = frozenset(req_signature_sources)
 
         if req_type is None:
             if (  # FIXME: decide on the future behavior:
@@ -317,7 +317,7 @@ class _ComputedReqKindsMixin:
                 format(not_url=req_source.api_server),
             )
 
-        tmp_inst_req = cls(req_name, req_version, req_source, req_type, req_signature_urls)
+        tmp_inst_req = cls(req_name, req_version, req_source, req_type, req_signature_sources)
 
         if req_type not in {'galaxy', 'subdirs'} and req_name is None:
             req_name = art_mgr.get_direct_collection_fqcn(tmp_inst_req)  # TODO: fix the cache key in artifacts manager?
@@ -328,7 +328,7 @@ class _ComputedReqKindsMixin:
         return cls(
             req_name, req_version,
             req_source, req_type,
-            req_signature_urls,
+            req_signature_sources,
         )
 
     def __repr__(self):
@@ -421,7 +421,7 @@ class _ComputedReqKindsMixin:
 
 class Requirement(
         _ComputedReqKindsMixin,
-        namedtuple('Requirement', ('fqcn', 'ver', 'src', 'type', 'signature_urls')),
+        namedtuple('Requirement', ('fqcn', 'ver', 'src', 'type', 'signature_sources')),
 ):
     """An abstract requirement request."""
 
