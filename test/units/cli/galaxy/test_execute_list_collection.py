@@ -57,12 +57,14 @@ def mock_collection_objects(mocker):
             '1.5.0',
             None,
             'dir',
+            None,
         ),
         (
             'sandwiches.reuben',
             '2.5.0',
             None,
             'dir',
+            None,
         ),
     )
 
@@ -72,12 +74,14 @@ def mock_collection_objects(mocker):
             '1.0.0',
             None,
             'dir',
+            None,
         ),
         (
             'sandwiches.ham',
             '1.0.0',
             None,
             'dir',
+            None,
         ),
     )
 
