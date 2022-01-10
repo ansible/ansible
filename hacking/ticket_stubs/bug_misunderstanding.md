@@ -1,6 +1,3 @@
-Possible Misunderstanding
-=========================
-
 Hi!
 
 Thanks very much for your submission to Ansible.  It sincerely means a lot to us.
@@ -19,9 +16,14 @@ We would suggest:
 
    * THING THREE
 
-In the future, this might be a topic more well suited for the user list, which you can also post here if you'd like some more help with the above.
-   
-   * https://groups.google.com/forum/#!forum/ansible-project
+In the future, this might be a topic more well suited for the user list or chat channels.
+
+Because this project is very active, we're unlikely to see comments made on closed tickets and we lock them after some time.
+The mailing list and irc are great ways to ask questions, or post if you don't think this particular issue is resolved.
+
+See  this page for a complete and up to date list of communication channels and their purposes:
+
+   * https://docs.ansible.com/ansible/latest/community/communication.html
 
 Thank you once again for this and your interest in Ansible!
 
