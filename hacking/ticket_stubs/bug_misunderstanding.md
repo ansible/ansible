@@ -16,7 +16,7 @@ We would suggest:
 
    * THING THREE
 
-In the future, this might be a topic more well suited for the user list or chat channels.
+In the future, this might be a topic better suited for the user list or chat channels.
 
 Because this project is very active, we're unlikely to see comments made on closed tickets and we lock them after some time.
 The mailing list and irc are great ways to ask questions, or post if you don't think this particular issue is resolved.
