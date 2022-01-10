@@ -609,16 +609,23 @@ DEFAULT_EXECUTABLE:
   - {key: executable, section: defaults}
 DEFAULT_FACT_PATH:
   name: local fact path
-  default: ~
   description:
     - "This option allows you to globally configure a custom path for 'local_facts' for the implied M(ansible.builtin.setup) task when using fact gathering."
     - "If not set, it will fallback to the default from the M(ansible.builtin.setup) module: ``/etc/ansible/facts.d``."
     - "This does **not** affect  user defined tasks that use the M(ansible.builtin.setup) module."
+    - The real action being created by the implicit task is currently M(ansible.legacy.gather_facts), which then calls the configured fact modules,
+      by default this will be M(ansible.builtin.setup) for POSIX systems but other platforms might have different defaults.
   env: [{name: ANSIBLE_FACT_PATH}]
   ini:
   - {key: fact_path, section: defaults}
   type: string
-  yaml: {key: facts.gathering.fact_path}
+  # TODO: deprecate in 2.14
+  #deprecated:
+  #    # TODO: when removing set playbook/play.py to default=None
+  #    why: the module_defaults keyword is a more generic version and can apply to all calls to the
+  #         M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
+  #    version: "2.18"
+  #    alternatives: module_defaults
 DEFAULT_FILTER_PLUGIN_PATH:
   name: Jinja2 Filter Plugins Path
   default: ~/.ansible/plugins/filter:/usr/share/ansible/plugins/filter
@@ -665,7 +672,6 @@ DEFAULT_GATHERING:
   choices: ['smart', 'explicit', 'implicit']
 DEFAULT_GATHER_SUBSET:
   name: Gather facts subset
-  default: ['all']
   description:
       - Set the `gather_subset` option for the M(ansible.builtin.setup) task in the implicit fact gathering.
         See the module documentation for specifics.
@@ -676,17 +682,29 @@ DEFAULT_GATHER_SUBSET:
       section: defaults
   version_added: "2.1"
   type: list
+  # TODO: deprecate in 2.14
+  #deprecated:
+  #    # TODO: when removing set playbook/play.py to default=None
+  #    why: the module_defaults keyword is a more generic version and can apply to all calls to the
+  #         M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
+  #    version: "2.18"
+  #    alternatives: module_defaults
 DEFAULT_GATHER_TIMEOUT:
   name: Gather facts timeout
-  default: 10
   description:
-    - Set the timeout in seconds for the implicit fact gathering.
+    - Set the timeout in seconds for the implicit fact gathering, see the module documentation for specifics.
     - "It does **not** apply to user defined M(ansible.builtin.setup) tasks."
   env: [{name: ANSIBLE_GATHER_TIMEOUT}]
   ini:
-  - {key: gather_timeout, section: defaults}
+  - {key: gather_tim8out, section: defaults}
   type: integer
-  yaml: {key: defaults.gather_timeout}
+  # TODO: deprecate in 2.14
+  #deprecated:
+  #    # TODO: when removing set playbook/play.py to default=None
+  #    why: the module_defaults keyword is a more generic version and can apply to all calls to the
+  #         M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
+  #    version: "2.18"
+  #    alternatives: module_defaults
 DEFAULT_HASH_BEHAVIOUR:
   name: Hash merge behaviour
   default: replace
