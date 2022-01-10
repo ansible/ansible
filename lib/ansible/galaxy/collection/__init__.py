@@ -147,7 +147,7 @@ class CollectionVerifyResult:
 
 def verify_local_collection(
         local_collection, remote_collection,
-        artifacts_manager, keyring,
+        artifacts_manager,
 ):  # type: (Candidate, Optional[Candidate], ConcreteArtifactsManager, str) -> CollectionVerifyResult
     """Verify integrity of the locally installed collection.
 
@@ -199,7 +199,7 @@ def verify_local_collection(
         b_manifest_file = os.path.join(b_collection_path, b'MANIFEST.json')
         for signature in remote_collection.signatures:
             b_detached_signature = to_bytes(signature, errors='surrogate_or_strict')
-            if not verify_file_signature(b_manifest_file, b_detached_signature, keyring):
+            if not verify_file_signature(b_manifest_file, b_detached_signature, artifacts_manager.keyring):
                 valid = False
         if not valid:
             result.success = False
@@ -273,7 +273,7 @@ def verify_file_signature(b_manifest_file, b_detached_signature, keyring):
         if not verify_failed:
             display.vvvv(f"{gpg_result}")
             signature = to_text(b_detached_signature, errors='surrogate_or_strict')
-            verify_failed += f"Signature verification failed:"
+            verify_failed = "Signature verification failed:"
         verify_failed += f'\n      * {error.explain()}'
 
     if verify_failed:
@@ -483,7 +483,6 @@ def install_collections(
         upgrade,  # type: bool
         allow_pre_release,  # type: bool
         artifacts_manager,  # type: ConcreteArtifactsManager
-        keyring,  # type: str
 ):  # type: (...) -> None
     """Install Ansible collections to the path specified.
 
@@ -579,7 +578,7 @@ def install_collections(
                 continue
 
             try:
-                install(concrete_coll_pin, output_path, artifacts_manager, keyring)
+                install(concrete_coll_pin, output_path, artifacts_manager)
             except AnsibleError as err:
                 if ignore_errors:
                     display.warning(
@@ -632,7 +631,6 @@ def verify_collections(
         ignore_errors,  # type: bool
         local_verify_only,  # type: bool
         artifacts_manager,  # type: ConcreteArtifactsManager
-        keyring,  # type: str
 ):  # type: (...) -> List[CollectionVerifyResult]
     r"""Verify the integrity of locally installed collections.
 
@@ -730,7 +728,7 @@ def verify_collections(
 
                 result = verify_local_collection(
                     local_collection, remote_collection,
-                    artifacts_manager, keyring,
+                    artifacts_manager,
                 )
 
                 results.append(result)
@@ -1106,8 +1104,8 @@ def find_existing_collections(path, artifacts_manager):
             yield req
 
 
-def install(collection, path, artifacts_manager, keyring):  # FIXME: mv to dataclasses?
-    # type: (Candidate, str, ConcreteArtifactsManager, str) -> None
+def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
+    # type: (Candidate, str, ConcreteArtifactsManager) -> None
     """Install a collection under a given path.
 
     :param collection: Collection to be installed.
@@ -1132,7 +1130,13 @@ def install(collection, path, artifacts_manager, keyring):  # FIXME: mv to datac
     if collection.is_dir:
         install_src(collection, b_artifact_path, b_collection_path, artifacts_manager)
     else:
-        install_artifact(b_artifact_path, b_collection_path, artifacts_manager._b_working_directory, collection.signatures, keyring)
+        install_artifact(
+            b_artifact_path,
+            b_collection_path,
+            artifacts_manager._b_working_directory,
+            collection.signatures,
+            artifacts_manager.keyring
+        )
 
     display.display(
         '{coll!s} was installed successfully'.

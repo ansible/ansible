@@ -66,7 +66,7 @@ class ConcreteArtifactsManager:
         * retrieving the metadata out of the downloaded artifacts
     """
 
-    def __init__(self, b_working_directory, validate_certs=True):
+    def __init__(self, b_working_directory, validate_certs=True, keyring=None):
         # type: (bytes, bool) -> None
         """Initialize ConcreteArtifactsManager caches and costraints."""
         self._validate_certs = validate_certs  # type: bool
@@ -75,6 +75,8 @@ class ConcreteArtifactsManager:
         self._artifact_meta_cache = {}  # type: Dict[bytes, Dict[str, Optional[Union[str, List[str], Dict[str, str]]]]]
         self._galaxy_collection_cache = {}  # type: Dict[Union[Candidate, Requirement], Tuple[str, str, GalaxyToken]]
         self._b_working_directory = b_working_directory  # type: bytes
+
+        self.keyring = keyring
 
     def get_galaxy_artifact_path(self, collection):
         # type: (Union[Candidate, Requirement]) -> bytes
@@ -295,6 +297,7 @@ class ConcreteArtifactsManager:
             cls,  # type: Type[ConcreteArtifactsManager]
             temp_dir_base,  # type: str
             validate_certs=True,  # type: bool
+            keyring=None,  # type: str
     ):  # type: (...) -> Iterator[ConcreteArtifactsManager]
         """Custom ConcreteArtifactsManager constructor with temp dir.
 
@@ -309,7 +312,7 @@ class ConcreteArtifactsManager:
         )
         b_temp_path = to_bytes(temp_path, errors='surrogate_or_strict')
         try:
-            yield cls(b_temp_path, validate_certs)
+            yield cls(b_temp_path, validate_certs, keyring=keyring)
         finally:
             rmtree(b_temp_path)
 
