@@ -298,11 +298,46 @@ def verify_local_collection(
     _verify_file_hash(b_collection_path, file_manifest_filename, expected_hash, modified_content)
     file_manifest = get_json_from_validation_source(file_manifest_filename)
 
+    collection_dirs = set()
+    collection_files = {
+        os.path.join(b_collection_path, b'MANIFEST.json'),
+        os.path.join(b_collection_path, b'FILES.json'),
+    }
+
     # Use the file manifest to verify individual file checksums
     for manifest_data in file_manifest['files']:
+        name = manifest_data['name']
+
         if manifest_data['ftype'] == 'file':
+            collection_files.add(
+                os.path.join(b_collection_path, to_bytes(name, errors='surrogate_or_strict'))
+            )
             expected_hash = manifest_data['chksum_%s' % manifest_data['chksum_type']]
-            _verify_file_hash(b_collection_path, manifest_data['name'], expected_hash, modified_content)
+            _verify_file_hash(b_collection_path, name, expected_hash, modified_content)
+
+        if manifest_data['ftype'] == 'dir':
+            collection_dirs.add(
+                os.path.join(b_collection_path, to_bytes(name, errors='surrogate_or_strict'))
+            )
+
+    # Find any paths not in the FILES.json
+    for root, dirs, files in os.walk(b_collection_path):
+        for name in files:
+            full_path = os.path.join(root, name)
+            path = to_text(full_path[len(b_collection_path) + 1::], errors='surrogate_or_strict')
+
+            if full_path not in collection_files:
+                modified_content.append(
+                    ModifiedContent(filename=path, expected='the file does not exist', installed='the file exists')
+                )
+        for name in dirs:
+            full_path = os.path.join(root, name)
+            path = to_text(full_path[len(b_collection_path) + 1::], errors='surrogate_or_strict')
+
+            if full_path not in collection_dirs:
+                modified_content.append(
+                    ModifiedContent(filename=path, expected='the directory does not exist', installed='the directory exists')
+                )
 
     if modified_content:
         result.success = False
