@@ -28,7 +28,7 @@ Should you still wish to discuss things further, or if you disagree with our tho
 
 We'd be happy to discuss things.
 
-See  this page for a complete and up to date list of communication channels and their purposes:
+See  this page for a complete list of communication channels and their purposes:
 
    * https://docs.ansible.com/ansible/latest/community/communication.html
 
