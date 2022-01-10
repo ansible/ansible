@@ -5,7 +5,7 @@ to have an active community that is willing to submit feedback so that we may
 continue to make Ansible better.
 
 The Ansible Python API is considered internal and an unsupported aspect of Ansible,
-as such this is not considered a bug unless it causes an issue with an Ansible command line tools
+as such this is not considered a bug unless it causes an issue with Ansible command line tools
 (`ansible`, `ansible-playbook`, `ansible-doc`, etc).
 
 We do support the provided API for use by the development of plugins (modules, dynamic inventories, callbacks, strategies, etc),
