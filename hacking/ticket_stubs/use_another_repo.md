@@ -16,7 +16,7 @@ This appears to be something that should be filed against another project or bug
    * https://github.com/ansible/awx
    * https://github.com/ansible-collections/community.general
    * https://github.com/ansible-community/molecule
-   * For AAP or Tower licensees report issues via youre RedHat representative
+   * For AAP or Tower licensees report issues via your RedHat representative or https://issues.redhat.com
 
 If you can stop by the tracker or forum for one of those projects, we'd appreciate it.
 
