@@ -3,7 +3,7 @@
 # if you want known good versions of these dependencies
 # use known_good_reqs.txt instead
 
-antsibull >= 0.39.2
+antsibull >= 0.40.1
 docutils
 jinja2
 pygments >= 2.10.0
@@ -12,6 +12,6 @@ rstcheck
 sphinx
 sphinx-notfound-page >= 0.6
 sphinx-intl
-sphinx-ansible-theme >= 0.7.0
+sphinx-ansible-theme >= 0.9.0
 resolvelib
 straight.plugin # Needed for hacking/build-ansible.py which is the backend build script
