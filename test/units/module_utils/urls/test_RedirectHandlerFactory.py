@@ -130,9 +130,11 @@ def test_redir_validate_certs(urllib_req, request_body, mocker):
     assert opener_mock.add_handler.call_count == int(not HAS_SSLCONTEXT)
 
 
-def test_redir_http_error_308_urllib2(urllib_req, request_body):
+def test_redir_http_error_308_urllib2(urllib_req, request_body, mocker):
+    redir_mock = mocker.patch.object(urllib_request.HTTPRedirectHandler, 'redirect_request')
     handler = RedirectHandlerFactory('urllib2', False)
     inst = handler()
 
-    with pytest.raises(urllib_error.HTTPError):
-        inst.redirect_request(urllib_req, request_body, 308, '308 Permanent Redirect', {}, 'https://docs.ansible.com/')
+    inst.redirect_request(urllib_req, request_body, 308, '308 Permanent Redirect', {}, 'https://docs.ansible.com/')
+
+    assert redir_mock.call_count == 1
