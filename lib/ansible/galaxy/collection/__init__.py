@@ -116,7 +116,7 @@ from ansible.galaxy.dependency_resolution.errors import (
     CollectionDependencyInconsistentCandidate,
 )
 from ansible.galaxy.dependency_resolution.versioning import meets_requirements
-from ansible.galaxy.dependency_resolution.gpg import (
+from ansible.galaxy.collection.gpg import (
     run_gpg_verify,
     parse_gpg_errors,
     get_signature_from_url

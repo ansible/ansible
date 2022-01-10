@@ -28,7 +28,7 @@ from ansible.galaxy.dependency_resolution.versioning import (
     is_pre_release,
     meets_requirements,
 )
-from ansible.galaxy.dependency_resolution.gpg import get_signature_from_url
+from ansible.galaxy.collection.gpg import get_signature_from_url
 from ansible.module_utils.six import string_types
 from ansible.utils.version import SemanticVersion
 
