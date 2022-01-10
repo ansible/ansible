@@ -363,7 +363,6 @@ import subprocess
 import time
 
 from functools import wraps
-from ansible import constants as C
 from ansible.errors import (
     AnsibleAuthenticationFailure,
     AnsibleConnectionFailure,
@@ -777,7 +776,7 @@ class Connection(ConnectionBase):
                         self.port,
                         self.user
                     )
-                b_args = (b"-o", b"ControlPath=" + to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict'))
+                b_args = (b"-o", b'ControlPath="%s"' % to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict'))
                 self._add_args(b_command, b_args, u"found only ControlPersist; added ControlPath")
 
         # Finally, we add any caller-supplied extras.
