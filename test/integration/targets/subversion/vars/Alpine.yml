@@ -1,7 +1,0 @@
----
-subversion_packages:
-- subversion
-- mod_dav_svn
-- apache2-webdav
-apache_user: apache
-apache_group: apache

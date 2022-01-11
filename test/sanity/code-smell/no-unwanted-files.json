@@ -1,7 +1,0 @@
-{
-    "include_symlinks": true,
-    "prefixes": [
-        "lib/"
-    ],
-    "output": "path-message"
-}

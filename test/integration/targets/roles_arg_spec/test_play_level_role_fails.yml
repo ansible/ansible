@@ -1,5 +1,0 @@
----
-- hosts: localhost
-  gather_facts: false
-  roles:
-      - { role: a, invalid_str: "roles" }

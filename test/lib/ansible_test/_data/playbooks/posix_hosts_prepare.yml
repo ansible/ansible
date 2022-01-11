@@ -1,9 +1,0 @@
-- name: Prepare POSIX hosts file
-  hosts: all
-  gather_facts: no
-  tasks:
-    - name: Add container hostname(s) to hosts file
-      blockinfile:
-        path: /etc/hosts
-        block: "{{ '\n'.join(hosts_entries) }}"
-        unsafe_writes: yes

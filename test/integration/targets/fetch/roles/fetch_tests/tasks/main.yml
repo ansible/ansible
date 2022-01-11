@@ -1,5 +1,0 @@
-- import_tasks: setup.yml
-- import_tasks: normal.yml
-- import_tasks: symlink.yml
-- import_tasks: fail_on_missing.yml
-- import_tasks: failures.yml

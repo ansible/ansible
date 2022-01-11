@@ -1,6 +1,0 @@
-- hosts: testhost
-
-  tasks:
-    - include_role:
-        name: role
-        tasks_from: r1t1.yml

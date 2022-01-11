@@ -1,5 +1,0 @@
-- debug: msg='notify handler'
-  notify: handler name
-  changed_when: True
-  tags:
-    - lazy_evaluation

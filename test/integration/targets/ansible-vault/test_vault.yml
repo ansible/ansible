@@ -1,6 +1,0 @@
-- hosts: testhost
-  gather_facts: False
-  vars:
-    - output_dir: .
-  roles:
-    - { role: test_vault, tags: test_vault}

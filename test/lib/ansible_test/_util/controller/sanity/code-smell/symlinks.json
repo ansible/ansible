@@ -1,5 +1,0 @@
-{
-    "include_directories": true,
-    "include_symlinks": true,
-    "output": "path-message"
-}

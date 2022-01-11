@@ -1,8 +1,0 @@
-- hosts: localhost
-  gather_facts: false
-  tasks:
-    - ping:
-
-    - command: sleep 1
-      async: 2
-      poll: 1

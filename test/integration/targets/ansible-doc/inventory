@@ -1,1 +1,0 @@
-not_empty  # avoid empty empty hosts list warning without defining explicit localhost

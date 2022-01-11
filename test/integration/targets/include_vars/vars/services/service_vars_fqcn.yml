@@ -1,3 +1,0 @@
----
-service_name_fqcn: 'my_custom_service'
-service_name_tmpl_fqcn: '{{ service_name_fqcn }}'

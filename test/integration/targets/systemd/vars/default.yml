@@ -1,3 +1,0 @@
-ssh_service: sshd
-indirect_service: dummy
-sleep_bin_path: /usr/bin/sleep

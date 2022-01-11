@@ -1,2 +1,0 @@
-+ ansible-playbook -i inventory test_dryrun.yml
-++ set +x

@@ -1,4 +1,0 @@
-destructive
-shippable/posix/group1
-needs/httptester
-skip/aix

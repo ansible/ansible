@@ -1,3 +1,0 @@
-- name: "First task of blah role"
-  debug:
-      msg: "The string is {{ blah_str }}"

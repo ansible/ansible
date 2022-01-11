@@ -1,3 +1,0 @@
-- name: restore packages
-  package:
-    name: "{{ unarchive_packages }}"

@@ -1,7 +1,0 @@
-- name: Restore Windows hosts file
-  hosts: all
-  gather_facts: no
-  tasks:
-    - name: Remove container hostname(s) from hosts file
-      script:
-        cmd: "\"{{ playbook_dir }}/windows_hosts_restore.ps1\" -Hosts \"{{ '|'.join(hosts_entries) }}\""

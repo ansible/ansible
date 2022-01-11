@@ -1,6 +1,0 @@
-- name: Verify endpoints respond
-  uri:
-    url: "{{ item }}"
-    validate_certs: no
-  with_items:
-    - https://openshift-origin:8443/

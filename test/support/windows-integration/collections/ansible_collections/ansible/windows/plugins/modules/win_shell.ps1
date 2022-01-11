@@ -1,1 +1,0 @@
-../../../../../../plugins/modules/win_shell.ps1

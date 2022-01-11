@@ -1,3 +1,0 @@
-- missing_required_lib:
-    url: '{{ url|default(omit) }}'
-    reason: '{{ reason|default(omit) }}'

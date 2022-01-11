@@ -1,3 +1,0 @@
-allow_duplicates: yes
-dependencies:
-  - child_nested_dep

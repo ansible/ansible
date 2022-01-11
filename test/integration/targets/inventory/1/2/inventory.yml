@@ -1,3 +1,0 @@
-plugin: ansible.builtin.constructed
-groups:
-  webservers: inventory_hostname.startswith('web')

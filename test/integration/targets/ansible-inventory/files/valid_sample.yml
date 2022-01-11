@@ -1,7 +1,0 @@
-all:
-  children:
-    somegroup:
-      hosts:
-        something:
-          foo: bar
-    ungrouped: {}

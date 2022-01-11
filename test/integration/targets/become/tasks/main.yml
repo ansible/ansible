@@ -1,5 +1,0 @@
-- include_vars: default.yml
-
-- import_tasks: default.yml
-- import_tasks: sudo.yml
-- import_tasks: su.yml

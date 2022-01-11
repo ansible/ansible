@@ -1,3 +1,0 @@
-- command: "true"
-  notify:
-    - delegated assert handler

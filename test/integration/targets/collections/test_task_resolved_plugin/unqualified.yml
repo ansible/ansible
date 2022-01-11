@@ -1,8 +1,0 @@
----
-- hosts: localhost
-  gather_facts: no
-  tasks:
-    - legacy_action:
-    - legacy_module:
-    - debug:
-    - ping:

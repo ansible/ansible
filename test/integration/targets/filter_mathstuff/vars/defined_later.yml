@@ -1,3 +1,0 @@
-do_rekey:
-  - test: value
-rekeyed: "{{ do_rekey | rekey_on_member(defined_later) }}"

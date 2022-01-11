@@ -1,3 +1,0 @@
-# variables used for hash merging behavior testing
-test_hash:
-  group_vars_all: "this is in group_vars/all"

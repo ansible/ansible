@@ -1,3 +1,0 @@
-- name: null vars_files is okay
-  hosts: localhost
-  vars_files: null

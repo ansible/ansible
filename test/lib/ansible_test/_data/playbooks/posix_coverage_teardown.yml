@@ -1,8 +1,0 @@
-- name: Teardown POSIX code coverage configuration
-  hosts: all
-  gather_facts: no
-  tasks:
-    - name: Remove coverage temporary directory
-      file:
-        path: "{{ common_temp_dir }}"
-        state: absent

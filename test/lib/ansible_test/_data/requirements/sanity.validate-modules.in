@@ -1,3 +1,0 @@
-jinja2  # ansible-core requirement
-pyyaml  # needed for collection_detail.py
-voluptuous

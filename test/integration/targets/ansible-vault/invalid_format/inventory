@@ -1,5 +1,0 @@
-[broken-group-vars]
-broken.example.com
-
-[broken-host-vars]
-broken-host-vars.example.com

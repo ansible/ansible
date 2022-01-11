@@ -1,2 +1,0 @@
-- hosts: localhost
-  post_tasks: 123

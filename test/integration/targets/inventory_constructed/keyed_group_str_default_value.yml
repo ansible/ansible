@@ -1,5 +1,0 @@
-plugin: ansible.builtin.constructed
-keyed_groups:
-  - key: os
-    default_value: "fedora"
-    prefix: host

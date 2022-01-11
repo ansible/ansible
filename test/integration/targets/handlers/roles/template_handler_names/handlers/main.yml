@@ -1,5 +1,0 @@
-- name: handler name with {{ test_var }}
-  debug: msg='handler with var ran'
-
-- name: handler name
-  debug: msg='handler ran'

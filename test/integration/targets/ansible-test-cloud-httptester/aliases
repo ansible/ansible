@@ -1,3 +1,0 @@
-needs/httptester  # using legacy alias for testing purposes
-shippable/posix/group1
-context/controller

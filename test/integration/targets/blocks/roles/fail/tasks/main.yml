@@ -1,3 +1,0 @@
-- name: Fail
-  fail:
-    msg: fail

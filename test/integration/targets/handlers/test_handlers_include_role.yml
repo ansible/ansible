@@ -1,8 +1,0 @@
-- name: verify that play can include handler
-  hosts: testhost
-  tasks:
-    - include_role:
-        name: test_handlers_include_role
-      with_items:
-        - 1
-        - 2

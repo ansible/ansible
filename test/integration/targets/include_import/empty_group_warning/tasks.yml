@@ -1,3 +1,0 @@
-- name: test
-  debug:
-    msg: hello

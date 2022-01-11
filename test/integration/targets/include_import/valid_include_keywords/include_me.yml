@@ -1,6 +1,0 @@
-- debug:
-    msg: include_me
-- assert:
-    that:
-      - loopy == 1
-      - baz == 'qux'

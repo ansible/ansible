@@ -1,2 +1,0 @@
-pylint == 2.9.3  # currently vetted version
-pyyaml  # needed for collection_detail.py

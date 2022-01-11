@@ -1,7 +1,0 @@
-- name: Prepare Windows hosts file
-  hosts: all
-  gather_facts: no
-  tasks:
-    - name: Add container hostname(s) to hosts file
-      script:
-        cmd: "\"{{ playbook_dir }}/windows_hosts_prepare.ps1\" -Hosts \"{{ '|'.join(hosts_entries) }}\""

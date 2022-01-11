@@ -1,3 +1,0 @@
-# use a plugin defined in a content-adjacent collection to ensure we added it properly
-plugin: testns.content_adj.statichost
-hostname: dynamic_host_a

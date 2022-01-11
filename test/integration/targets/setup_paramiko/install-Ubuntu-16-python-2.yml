@@ -1,3 +1,0 @@
-- name: Install Paramiko for Python 2 on Ubuntu 16
-  apt:
-    name: python-paramiko

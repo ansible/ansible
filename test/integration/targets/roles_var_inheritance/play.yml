@@ -1,4 +1,0 @@
-- hosts: localhost
-  roles:
-    - A
-    - B

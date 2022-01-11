@@ -1,7 +1,0 @@
----
-- hosts: nonlockstep
-  gather_facts: false
-  tasks:
-    - command: sleep {{ i }}
-    - command: sleep {{ i }}
-    - command: sleep {{ i }}

@@ -1,4 +1,0 @@
-plugin_routing:
-  modules:
-    rerouted_module:
-      redirect: ansible.builtin.ping

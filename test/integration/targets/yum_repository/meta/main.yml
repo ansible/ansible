@@ -1,4 +1,0 @@
-dependencies:
-  - role: setup_rpm_repo
-    vars:
-      install_repos: no

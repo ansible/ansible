@@ -1,3 +1,0 @@
-- include_tasks: test_convert_snake_case.yml
-
-- include_tasks: test_convert_camelCase.yml

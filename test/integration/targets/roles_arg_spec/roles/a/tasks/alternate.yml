@@ -1,3 +1,0 @@
----
-- debug:
-    msg: "Role A (alternate) with {{ a_int }}"

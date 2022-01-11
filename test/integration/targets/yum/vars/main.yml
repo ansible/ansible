@@ -1,1 +1,0 @@
-multiarch_repo_baseurl: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/yum/multiarch-test-repo/RPMS/

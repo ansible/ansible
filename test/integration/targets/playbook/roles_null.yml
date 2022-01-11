@@ -1,3 +1,0 @@
-- name: null roles is okay
-  hosts: localhost
-  roles: null

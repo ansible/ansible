@@ -1,3 +1,0 @@
-- name: null vars prompt is okay
-  hosts: localhost
-  vars_prompt: null

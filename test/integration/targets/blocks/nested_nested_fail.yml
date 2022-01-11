@@ -1,3 +1,0 @@
-- import_tasks: nested_fail.yml
-  vars:
-    msg: "nested {{msg}}"

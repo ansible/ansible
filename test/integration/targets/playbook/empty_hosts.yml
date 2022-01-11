@@ -1,4 +1,0 @@
-- hosts: []
-  tasks:
-    - debug:
-        msg: does not run

@@ -1,2 +1,0 @@
-- set_fact:
-    standalone_role_var: True
