@@ -24,6 +24,7 @@ Because this project is very active, we're unlikely to see comments made on clos
 Should you still wish to discuss things further, or if you disagree with our thought process, please stop by one of our two mailing lists:
 
    * https://groups.google.com/forum/#!forum/ansible-devel
+   * Matrix: [#devel:ansible.im](https://matrix.to/#/#devel:ansible.im)
    * IRC: #ansible-devel on [irc.libera.chat](https://libera.chat/)
 
 We'd be happy to discuss things.
