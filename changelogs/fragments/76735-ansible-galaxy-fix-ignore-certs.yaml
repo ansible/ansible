@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - Fix using the '--ignore-certs' option when there are no configured galaxy servers.
