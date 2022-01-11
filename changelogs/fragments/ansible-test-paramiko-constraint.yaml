@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-test - Limit ``paramiko`` installation to versions before 2.9.0.
+    This is required to maintain support for systems which do not support RSA SHA-2 algorithms.
