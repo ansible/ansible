@@ -14,7 +14,7 @@ Release schedule
 =================
 
 
-:TBD: New Collections can be reviewed for inclusion in Ansible 5. Submit a request to include a new collection in this `GitHub Discussion <https://github.com/ansible-collections/ansible-inclusion/discussions/new>`_.
+:TBD: New Collections can be reviewed for inclusion in Ansible 6. Submit a request to include a new collection in this `GitHub Discussion <https://github.com/ansible-collections/ansible-inclusion/discussions/new>`_.
 :TBD: ansible-core feature freeze.
 :TBD: Start of ansible-core 2.13 betas (weekly, as needed).
 :TBD: Ansible-6.0.0 alpha1 (roughly biweekly ``ansible`` alphas timed to coincide with ``ansible-core-2.13`` pre-releases).
