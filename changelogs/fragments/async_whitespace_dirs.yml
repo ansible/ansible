@@ -1,0 +1,2 @@
+bugfixes:
+  - async_wrapper better tolerates strange characters in temp path (whitespases and similar).

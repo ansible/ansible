@@ -21,6 +21,7 @@ import syslog
 import multiprocessing
 
 from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils.six.moves import shlex_quote
 
 PY3 = sys.version_info[0] == 3
 
@@ -118,11 +119,13 @@ def _filter_non_json_lines(data):
 
 
 def _get_interpreter(module_path):
+
+    interpreter = None
     with open(module_path, 'rb') as module_fd:
         head = module_fd.read(1024)
-        if head[0:2] != b'#!':
-            return None
-        return head[2:head.index(b'\n')].strip().split(b' ')
+        if head[0:2] == b'#!':
+            interpreter = head[2:head.index(b'\n')].strip().split(b' ')
+    return interpreter
 
 
 def _make_temp_dir(path):
@@ -149,7 +152,7 @@ def jwrite(info):
         os.rename(jobfile, job_path)
 
 
-def _run_module(wrapped_cmd, jid):
+def _run_module(wrapped_cmd, jid, interpreter):
 
     jwrite({"started": 1, "finished": 0, "ansible_job_id": jid})
 
@@ -163,24 +166,26 @@ def _run_module(wrapped_cmd, jid):
     outdata = ''
     filtered_outdata = ''
     stderr = ''
+    result = {}
     try:
-        cmd = [to_bytes(c, errors='surrogate_or_strict') for c in shlex.split(wrapped_cmd)]
+        cmd = [to_bytes(shlex_quote(c), errors='surrogate_or_strict') for c in shlex.split(wrapped_cmd)]
         # call the module interpreter directly (for non-binary modules)
         # this permits use of a script for an interpreter on non-Linux platforms
-        interpreter = _get_interpreter(cmd[0])
         if interpreter:
+            # if defined interpreter is always list (interpreter + possible args)
             cmd = interpreter + cmd
-        script = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                  stderr=subprocess.PIPE)
+
+        script = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         (outdata, stderr) = script.communicate()
+        result['rc'] = script.returncode
         if PY3:
             outdata = outdata.decode('utf-8', 'surrogateescape')
             stderr = stderr.decode('utf-8', 'surrogateescape')
 
         (filtered_outdata, json_warnings) = _filter_non_json_lines(outdata)
 
-        result = json.loads(filtered_outdata)
+        result.update(json.loads(filtered_outdata))
 
         if json_warnings:
             # merge JSON junk warnings with any existing module warnings
@@ -192,30 +197,29 @@ def _run_module(wrapped_cmd, jid):
 
         if stderr:
             result['stderr'] = stderr
-        jwrite(result)
 
     except (OSError, IOError):
         e = sys.exc_info()[1]
-        result = {
+        result.update({
             "failed": 1,
             "cmd": wrapped_cmd,
             "msg": to_text(e),
             "outdata": outdata,  # temporary notice only
             "stderr": stderr
-        }
+        })
         result['ansible_job_id'] = jid
-        jwrite(result)
 
     except (ValueError, Exception):
-        result = {
+        result.update({
             "failed": 1,
             "cmd": wrapped_cmd,
             "data": outdata,  # temporary notice only
             "stderr": stderr,
             "msg": traceback.format_exc()
-        }
+        })
         result['ansible_job_id'] = jid
-        jwrite(result)
+
+    jwrite(result)
 
 
 def main():
@@ -229,6 +233,7 @@ def main():
     jid = "%s.%d" % (sys.argv[1], os.getpid())
     time_limit = sys.argv[2]
     wrapped_module = sys.argv[3]
+    interpreter = _get_interpreter(wrapped_module)
     argsfile = sys.argv[4]
     if '-tmp-' not in os.path.dirname(wrapped_module):
         preserve_tmp = True
@@ -339,7 +344,7 @@ def main():
             else:
                 # the child process runs the actual module
                 notice("Start module (%s)" % os.getpid())
-                _run_module(cmd, jid)
+                _run_module(cmd, jid, interpreter)
                 notice("Module complete (%s)" % os.getpid())
 
     except Exception:
