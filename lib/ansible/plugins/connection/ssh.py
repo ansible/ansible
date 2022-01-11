@@ -388,7 +388,7 @@ b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when th
                     )
 
 SSHPASS_AVAILABLE = None
-SSH_DEBUG = re.compile('^debug\d: .*')
+SSH_DEBUG = re.compile(r'^debug\d+: .*')
 
 
 class AnsibleControlPersistBrokenPipeError(AnsibleError):
