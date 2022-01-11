@@ -1,0 +1,18 @@
+- name: Testing end_play with multiple plays with strategy {{ test_strategy | default('linear') }}
+  hosts: testhost
+  gather_facts: no
+  strategy: "{{ test_strategy | default('linear') }}"
+  tasks:
+    - debug:
+        msg: "Play 1"
+    - meta: end_play
+    - fail:
+        msg: 'Failed to end using end_play'
+
+- name: Testing end_play with multiple plays with strategy {{ test_strategy | default('linear') }}
+  hosts: testhost
+  gather_facts: no
+  strategy: "{{ test_strategy | default('linear') }}"
+  tasks:
+    - debug:
+        msg: "Play 2"

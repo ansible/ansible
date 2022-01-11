@@ -55,6 +55,13 @@ for test_strategy in linear free; do
   [ "$(grep -c "Testing end_play on host" <<< "$out" )" -eq 1 ]
   grep -q "META: ending play" <<< "$out"
   grep -qv 'Failed to end using end_play' <<< "$out"
+
+  out="$(ansible-playbook test_end_play_multiple_plays.yml -i inventory.yml -e test_strategy=$test_strategy -vv "$@")"
+
+  grep -q "META: ending play" <<< "$out"
+  grep -q "Play 1" <<< "$out"
+  grep -q "Play 2" <<< "$out"
+  grep -qv 'Failed to end using end_play' <<< "$out"
 done
 
 # test end_batch meta task
