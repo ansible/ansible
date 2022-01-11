@@ -86,6 +86,47 @@
         state: absent
         allow_unauthenticated: yes
 
+- block:
+  - name: Install foo=1.0.0
+    apt:
+      name: foo=1.0.0
+
+  - name: Run version test matrix
+    apt:
+      name: foo{{ item.0 }}
+      default_release: '{{ item.1 }}'
+      state: '{{ item.2 | ternary("latest","present") }}'
+    check_mode: true
+    register: apt_result
+    loop:
+      # [filter, release, state_latest, expected]
+      - ["", null, false, null]
+      - ["", null, true, "1.0.1"]
+      - ["=1.0.0", null, false, null]
+      - ["=1.0.0", null, true, null]
+      - ["=1.0.1", null, false, "1.0.1"]
+      #- ["=1.0.*", null, false, null] # legacy behavior. should not upgrade without state=latest
+      - ["=1.0.*", null, true, "1.0.1"]
+      - [">=1.0.0", null, false, null]
+      - [">=1.0.0", null, true, "1.0.1"]
+      - [">=1.0.1", null, false, "1.0.1"]
+      - ["", "testing", false, null]
+      - ["", "testing", true, "2.0.1"]
+      - ["=2.0.0", null, false, "2.0.0"]
+      - [">=2.0.0", "testing", false, "2.0.1"]
+
+  - name: Validate version test matrix
+    assert:
+      that:
+        - (item.item.3 is not none) == (item.stdout is defined)
+        - item.item.3 is none or "Inst foo [1.0.0] (" + item.item.3 + " localhost [all])" in item.stdout_lines
+    loop: '{{ apt_result.results }}'
+
+  always:
+    - name: Uninstall foo
+      apt:
+        name: foo
+        state: absent
 
 # https://github.com/ansible/ansible/issues/35900
 - block:

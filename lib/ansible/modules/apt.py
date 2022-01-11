@@ -20,7 +20,7 @@ version_added: "0.0.2"
 options:
   name:
     description:
-      - A list of package names, like C(foo), or package specifier with version, like C(foo=1.0).
+      - A list of package names, like C(foo), or package specifier with version, like C(foo=1.0) or C(foo>=1.0).
         Name wildcards (fnmatch) like C(apt*) and version wildcards like C(foo=1.0*) are also supported.
     aliases: [ package, pkg ]
     type: list
@@ -454,24 +454,10 @@ class PolicyRcD(object):
 
 
 def package_split(pkgspec):
-    parts = pkgspec.split('=', 1)
-    version = None
+    parts = re.split(r'(>?=)', pkgspec, 1)
     if len(parts) > 1:
-        version = parts[1]
-    return parts[0], version
-
-
-def package_versions(pkgname, pkg, pkg_cache):
-    try:
-        versions = set(p.version for p in pkg.versions)
-    except AttributeError:
-        # assume older version of python-apt is installed
-        # apt.package.Package#versions require python-apt >= 0.7.9.
-        pkg_cache_list = (p for p in pkg_cache.Packages if p.Name == pkgname)
-        pkg_versions = (p.VersionList for p in pkg_cache_list)
-        versions = set(p.VerStr for p in itertools.chain(*pkg_versions))
-
-    return versions
+        return parts
+    return parts[0], None, None
 
 
 def package_version_compare(version, other_version):
@@ -481,7 +467,26 @@ def package_version_compare(version, other_version):
         return apt_pkg.VersionCompare(version, other_version)
 
 
-def package_status(m, pkgname, version, cache, state):
+def package_best_match(pkgname, version_cmp, version, release, cache):
+    policy = apt_pkg.Policy(cache)
+    if release:
+        # 990 is the priority used in `apt-get -t`
+        policy.create_pin('Release', pkgname, release, 990)
+    if version_cmp == "=":
+        # You can't pin to a minimum version, only equality with a glob
+        policy.create_pin('Version', pkgname, version, 991)
+    pkg = cache[pkgname]
+    pkgver = policy.get_candidate_ver(pkg)
+    if not pkgver:
+        return None
+    if version_cmp == "=" and not fnmatch.fnmatch(pkgver.ver_str, version):
+        # Even though we put in a pin policy, it can be ignored if there is no
+        # possible candidate.
+        return None
+    return pkgver.ver_str
+
+
+def package_status(m, pkgname, version_cmp, version, default_release, cache, state):
     try:
         # get the package from the cache, as well as the
         # low-level apt_pkg.Package object which contains
@@ -495,20 +500,21 @@ def package_status(m, pkgname, version, cache, state):
                 provided_packages = cache.get_providing_packages(pkgname)
                 if provided_packages:
                     is_installed = False
-                    upgradable = False
+                    version_installable = None
                     version_ok = False
                     # when virtual package providing only one package, look up status of target package
                     if cache.is_virtual_package(pkgname) and len(provided_packages) == 1:
                         package = provided_packages[0]
-                        installed, version_ok, upgradable, has_files = package_status(m, package.name, version, cache, state='install')
+                        installed, version_ok, version_installable, has_files = \
+                            package_status(m, package.name, version_cmp, version, default_release, cache, state='install')
                         if installed:
                             is_installed = True
-                    return is_installed, version_ok, upgradable, False
+                    return is_installed, version_ok, version_installable, False
                 m.fail_json(msg="No package matching '%s' is available" % pkgname)
             except AttributeError:
                 # python-apt version too old to detect virtual packages
-                # mark as upgradable and let apt-get install deal with it
-                return False, False, True, False
+                # mark as not installed and let apt-get install deal with it
+                return False, False, None, False
         else:
             return False, False, False, False
     try:
@@ -528,36 +534,29 @@ def package_status(m, pkgname, version, cache, state):
             # assume older version of python-apt is installed
             package_is_installed = pkg.isInstalled
 
-    version_is_installed = package_is_installed
-    if version:
-        versions = package_versions(pkgname, pkg, cache._cache)
-        avail_upgrades = fnmatch.filter(versions, version)
+    version_best = package_best_match(pkgname, version_cmp, version, default_release, cache._cache)
+    version_is_installed = False
+    version_installable = None
+    if package_is_installed:
+        try:
+            installed_version = pkg.installed.version
+        except AttributeError:
+            installed_version = pkg.installedVersion
 
-        if package_is_installed:
-            try:
-                installed_version = pkg.installed.version
-            except AttributeError:
-                installed_version = pkg.installedVersion
-
+        if version_cmp == "=":
             # check if the version is matched as well
             version_is_installed = fnmatch.fnmatch(installed_version, version)
-
-            # Only claim the package is upgradable if a candidate matches the version
-            package_is_upgradable = False
-            for candidate in avail_upgrades:
-                if package_version_compare(candidate, installed_version) > 0:
-                    package_is_upgradable = True
-                    break
+        elif version_cmp == ">=":
+            version_is_installed = apt_pkg.version_compare(installed_version, version) >= 0
         else:
-            package_is_upgradable = bool(avail_upgrades)
-    else:
-        try:
-            package_is_upgradable = pkg.is_upgradable
-        except AttributeError:
-            # assume older version of python-apt is installed
-            package_is_upgradable = pkg.isUpgradable
+            version_is_installed = True
 
-    return package_is_installed, version_is_installed, package_is_upgradable, has_files
+        if installed_version != version_best:
+            version_installable = version_best
+    else:
+        version_installable = version_best
+
+    return package_is_installed, version_is_installed, version_installable, has_files
 
 
 def expand_dpkg_options(dpkg_options_compressed):
@@ -581,7 +580,7 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     new_pkgspec = []
     if pkgspec:
         for pkgspec_pattern in pkgspec:
-            pkgname_pattern, version = package_split(pkgspec_pattern)
+            pkgname_pattern, version_cmp, version = package_split(pkgspec_pattern)
 
             # note that none of these chars is allowed in a (debian) pkgname
             if frozenset('*?[]!').intersection(pkgname_pattern):
@@ -671,19 +670,26 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             pkg_list.append("'%s'" % package)
             continue
 
-        name, version = package_split(package)
+        name, version_cmp, version = package_split(package)
         package_names.append(name)
-        installed, installed_version, upgradable, has_files = package_status(m, name, version, cache, state='install')
-        if (not installed and not only_upgrade) or (installed and not installed_version) or (upgrade and upgradable):
-            pkg_list.append("'%s'" % package)
-        if installed_version and upgradable and version:
+        installed, installed_version, version_installable, has_files = package_status(m, name, version_cmp, version, default_release, cache, state='install')
+        if (not installed and not only_upgrade) or (installed and not installed_version) or (upgrade and version_installable):
+            if version_installable or version:
+                pkg_list.append("'%s=%s'" % (name, version_installable or version))
+            else:
+                pkg_list.append("'%s'" % name)
+        elif installed_version and version_installable and version_cmp == "=":
             # This happens when the package is installed, a newer version is
             # available, and the version is a wildcard that matches both
             #
             # We do not apply the upgrade flag because we cannot specify both
             # a version and state=latest.  (This behaviour mirrors how apt
             # treats a version with wildcard in the package)
-            pkg_list.append("'%s'" % package)
+            #
+            # This is legacy behavior, and isn't documented (in fact it does
+            # things documentations says it shouldn't). It should not be relied
+            # upon.
+            pkg_list.append("'%s=%s'" % (name, version_installable))
     packages = ' '.join(pkg_list)
 
     if packages:
@@ -877,8 +883,8 @@ def remove(m, pkgspec, cache, purge=False, force=False,
     pkg_list = []
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
     for package in pkgspec:
-        name, version = package_split(package)
-        installed, installed_version, upgradable, has_files = package_status(m, name, version, cache, state='remove')
+        name, version_cmp, version = package_split(package)
+        installed, installed_version, upgradable, has_files = package_status(m, name, version_cmp, version, None, cache, state='remove')
         if installed_version or (has_files and purge):
             pkg_list.append("'%s'" % package)
     packages = ' '.join(pkg_list)
@@ -1340,8 +1346,6 @@ def main():
                 for package in packages:
                     if package.count('=') > 1:
                         module.fail_json(msg="invalid package spec: %s" % package)
-                    if latest and '=' in package:
-                        module.fail_json(msg='version number inconsistent with state=latest: %s' % package)
 
             if not packages:
                 if autoclean:
