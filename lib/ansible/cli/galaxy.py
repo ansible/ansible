@@ -567,6 +567,7 @@ class GalaxyCLI(CLI):
             self.api_servers.append(GalaxyAPI(
                 self.galaxy, 'default', C.GALAXY_SERVER, token=cmd_token,
                 priority=0,
+                validate_certs=validate_certs_fallback,
                 **galaxy_options
             ))
 
