@@ -1,0 +1,2 @@
+minor_changes:
+  - apt - Add support for using ">=" in package version number matching.
