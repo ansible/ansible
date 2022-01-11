@@ -190,7 +190,6 @@ class PlaybookExecutor:
                                 result = self._tqm.run(play=play)
                             except AnsibleEndPlay as e:
                                 result = e.result
-                                break_play = True
                                 break
 
                             # break the play if the result equals the special return code
