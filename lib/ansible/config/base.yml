@@ -696,7 +696,7 @@ DEFAULT_GATHER_TIMEOUT:
     - "It does **not** apply to user defined M(ansible.builtin.setup) tasks."
   env: [{name: ANSIBLE_GATHER_TIMEOUT}]
   ini:
-  - {key: gather_tim8out, section: defaults}
+  - {key: gather_timeout, section: defaults}
   type: integer
   # TODO: deprecate in 2.14
   #deprecated:
