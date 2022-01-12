@@ -1,3 +1,2 @@
 shippable/posix/group1
 destructive
-skip/aix  # currently unsupported by hostname module

@@ -3,6 +3,5 @@ needs/root
 skip/freebsd
 skip/osx
 skip/macos
-skip/aix
 shippable/posix/group3
 needs/target/setup_remote_tmp_dir
