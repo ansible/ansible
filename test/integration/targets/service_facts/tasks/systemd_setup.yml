@@ -39,4 +39,3 @@
     - "install_systemd_result.mode == '0644'"
     - "failed_service_result is changed"
     - "fake_service_started_result is changed"
-
