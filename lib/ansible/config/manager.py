@@ -547,8 +547,14 @@ class ConfigManager(object):
                     invalid_choices = value not in defs[config]['choices']
 
                 if invalid_choices:
+
+                    if isinstance(defs[config]['choices'], Mapping):
+                        valid = ', '.join(defs[config]['choices'].keys())
+                    else:
+                        valid = ', '.join(defs[config]['choices'])
+
                     raise AnsibleOptionsError('Invalid value "%s" for configuration option "%s", valid values are: %s' %
-                                              (value, to_native(_get_entry(plugin_type, plugin_name, config)), defs[config]['choices']))
+                                              (value, to_native(_get_entry(plugin_type, plugin_name, config)), valid))
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':
