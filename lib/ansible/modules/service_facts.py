@@ -70,7 +70,7 @@ ansible_facts:
         state:
           description:
           - State of the service.
-          - 'This commonly includes (but is not limited to) the following: C(running), C(failed), C(dead), C(exited), C(running), C(stopped) or C(unknown).'
+          - 'This commonly includes (but is not limited to) the following: C(running), C(failed), C(dead), C(exited), C(stopped) or C(unknown).'
           - Depending on the used init system additional states might be returned.
           returned: always
           type: str
