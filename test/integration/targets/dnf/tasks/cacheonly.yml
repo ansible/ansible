@@ -8,8 +8,9 @@
     state: latest
     cacheonly: true
   register: dnf_result
+  ignore_errors: true
 
-- name: Verify dnf has not changed
+- name: Verify dnf failed or has not changed
   assert:
     that:
-      - "not dnf_result is changed"
+      - "dnf_result is failed or not dnf_result is changed"
