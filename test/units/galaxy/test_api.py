@@ -509,11 +509,11 @@ def test_wait_import_task_with_failure(server_url, api_version, token_type, toke
             },
             'messages': [
                 {
-                    'level': 'ERROR',
+                    'level': 'ERrOR',
                     'message': u'Somé error',
                 },
                 {
-                    'level': 'WARNING',
+                    'level': 'WARNiNG',
                     'message': u'Some wärning',
                 },
                 {
