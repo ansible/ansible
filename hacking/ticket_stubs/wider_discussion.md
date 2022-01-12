@@ -14,7 +14,7 @@ Can you please post on ansible-development list so we can talk about this idea w
    * Matrix: [#devel:ansible.im](https://matrix.to/#/#devel:ansible.im)
    * #ansible-devel on [irc.libera.chat](https://libera.chat/)
 
-Or bring up in one of the weekly IRC meetings with the core group:
+Or bring up in one of the weekly Matrix/IRC meetings with the core group:
 
    * https://github.com/ansible/community/issues?q=is:open+label:meeting_agenda+label:core
 
