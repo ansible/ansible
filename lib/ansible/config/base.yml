@@ -1458,7 +1458,7 @@ HOST_PATTERN_MISMATCH:
   ini:
   - {key: host_pattern_mismatch, section: inventory}
   choices:
-    << *basic_error
+    <<: *basic_error
   version_added: "2.8"
 INTERPRETER_PYTHON:
   name: Python interpreter path (or automatic discovery behavior) used for module execution

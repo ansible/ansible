@@ -550,8 +550,12 @@ class ConfigManager(object):
 
                     if isinstance(defs[config]['choices'], Mapping):
                         valid = ', '.join(defs[config]['choices'].keys())
-                    else:
+                    elif isinstance(defs[config]['choices'], string_types):
+                        valid = defs[config]['choices']
+                    elif isinstance(defs[config]['choices'], Sequence):
                         valid = ', '.join(defs[config]['choices'])
+                    else:
+                        valid = defs[config]['choices']
 
                     raise AnsibleOptionsError('Invalid value "%s" for configuration option "%s", valid values are: %s' %
                                               (value, to_native(_get_entry(plugin_type, plugin_name, config)), valid))
