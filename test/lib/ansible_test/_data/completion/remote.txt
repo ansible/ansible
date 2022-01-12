@@ -7,5 +7,3 @@ rhel/7.9 python=2.7 provider=aws
 rhel/8.4 python=3.6,3.8 provider=aws
 rhel/9.0b python=3.9 provider=aws
 rhel provider=aws
-aix/7.2 python=2.7,3.7 python_dir=/opt/freeware/bin provider=ibmps
-aix python_dir=/opt/freeware/bin provider=ibmps

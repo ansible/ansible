@@ -80,36 +80,6 @@ pip_install() {
     done
 }
 
-bootstrap_remote_aix()
-{
-    chfs -a size=1G /
-    chfs -a size=4G /usr
-    chfs -a size=1G /var
-    chfs -a size=1G /tmp
-    chfs -a size=2G /opt
-
-    if [ "${python_version}" = "2.7" ]; then
-        python_package_version=""
-    else
-        python_package_version="3"
-    fi
-
-    packages="
-        gcc
-        python${python_package_version}
-        python${python_package_version}-devel
-        python${python_package_version}-pip
-        "
-
-    while true; do
-        # shellcheck disable=SC2086
-        yum install -q -y ${packages} \
-        && break
-        echo "Failed to install packages. Sleeping before trying again..."
-        sleep 10
-    done
-}
-
 bootstrap_remote_freebsd()
 {
     if [ "${python_version}" = "2.7" ]; then
@@ -335,7 +305,6 @@ bootstrap_remote()
         python_package_version="$(echo "${python_version}" | tr -d '.')"
 
         case "${platform}" in
-            "aix") bootstrap_remote_aix ;;
             "freebsd") bootstrap_remote_freebsd ;;
             "macos") bootstrap_remote_macos ;;
             "rhel") bootstrap_remote_rhel ;;
