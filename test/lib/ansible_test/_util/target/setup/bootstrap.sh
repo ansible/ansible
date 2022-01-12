@@ -129,6 +129,7 @@ bootstrap_remote_freebsd()
     if [ "${controller}" ]; then
         jinja2_pkg="py${python_package_version}-jinja2"
         cryptography_pkg="py${python_package_version}-cryptography"
+        pyyaml_pkg="py${python_package_version}-yaml"
 
         # Declare platform/python version combinations which do not have supporting OS packages available.
         # For these combinations ansible-test will use pip to install the requirements instead.
@@ -136,22 +137,23 @@ bootstrap_remote_freebsd()
             "12.2/3.8")
                 jinja2_pkg=""  # not available
                 cryptography_pkg=""  # not available
+                pyyaml_pkg=""  # not available
                 ;;
             "13.0/3.8")
                 jinja2_pkg=""  # not available
                 cryptography_pkg=""  # not available
+                pyyaml_pkg=""  # not available
                 ;;
             "13.0/3.9")
                 jinja2_pkg=""  # not available
                 cryptography_pkg=""  # not available
+                pyyaml_pkg=""  # not available
                 ;;
         esac
 
-        # PyYAML is never installed with an OS package since it does not include libyaml support.
-
         packages="
             ${packages}
-            libyaml
+            ${pyyaml_pkg}
             ${jinja2_pkg}
             ${cryptography_pkg}
             "
