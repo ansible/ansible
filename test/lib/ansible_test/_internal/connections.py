@@ -58,8 +58,6 @@ class Connection(metaclass=abc.ABCMeta):
                         src,  # type: t.IO[bytes]
                         ):
         """Extract the given archive file stream in the specified directory."""
-        # This will not work on AIX.
-        # However, AIX isn't supported as a controller, which is where this would be needed.
         tar_cmd = ['tar', 'oxzf', '-', '-C', chdir]
 
         retry(lambda: self.run(tar_cmd, stdin=src))
@@ -75,13 +73,11 @@ class Connection(metaclass=abc.ABCMeta):
         gzip_cmd = ['gzip']
 
         if exclude:
-            # This will not work on AIX.
-            # However, AIX isn't supported as a controller, which is where this would be needed.
             tar_cmd += ['--exclude', exclude]
 
         tar_cmd.append(name)
 
-        # Using gzip to compress the archive allows this to work on all POSIX systems we support, including AIX.
+        # Using gzip to compress the archive allows this to work on all POSIX systems we support.
         commands = [tar_cmd, gzip_cmd]
 
         sh_cmd = ['sh', '-c', ' | '.join(' '.join(shlex.quote(cmd) for cmd in command) for command in commands)]
