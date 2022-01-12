@@ -978,6 +978,9 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             ca_certs.append('/etc/openssl/certs')
         elif system == u'SunOS':
             paths_checked.append('/opt/local/etc/openssl/certs')
+        elif system == u'AIX':
+            paths_checked.append('/var/ssl/certs')
+            paths_checked.append('/opt/freeware/etc/ssl/certs')
 
         # fall back to a user-deployed cert in a standard
         # location if the OS platform one is not available
