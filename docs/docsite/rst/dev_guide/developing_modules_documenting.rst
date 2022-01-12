@@ -258,10 +258,6 @@ content in a uniform way:
 
 .. note::
 
-  Cross-references with ``R()`` currently **do not work** inside option and return value documentations. They do work however in the global description, notes, and ``seealso`` descriptions.
-
-.. note::
-
   For links between modules and documentation within a collection, you can use any of the options above. For links outside of your collection, use ``R()`` if available. Otherwise, use ``U()`` or ``L()`` with full URLs (not relative links). For modules, use ``M()`` with the FQCN or ``ansible.builtin`` as shown in the example. If you are creating your own documentation site, you will need to use the `intersphinx extension <https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html>`_ to convert ``R()`` and ``M()`` to the correct links.
 
 .. note::
