@@ -11,6 +11,7 @@ Because this project is very active, we're unlikely to see comments made on clos
 Can you please post on ansible-development list so we can talk about this idea with the wider group?
 
    * https://groups.google.com/forum/#!forum/ansible-devel
+   * Matrix: [#devel:ansible.im](https://matrix.to/#/#devel:ansible.im)
    * #ansible-devel on [irc.libera.chat](https://libera.chat/)
 
 Or bring up in one of the weekly IRC meetings with the core group:
