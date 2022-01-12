@@ -82,10 +82,14 @@ def with_collection_artifacts_manager(wrapped_method):
         if 'artifacts_manager' in kwargs:
             return wrapped_method(*args, **kwargs)
 
+        keyring = context.CLIARGS.get('keyring', None)
+        if keyring is not None:
+            keyring = GalaxyCLI._resolve_path(keyring)
+
         with ConcreteArtifactsManager.under_tmpdir(
                 C.DEFAULT_LOCAL_TMP,
                 validate_certs=not context.CLIARGS['ignore_certs'],
-                keyring=context.CLIARGS.get('keyring', None),
+                keyring=keyring,
         ) as concrete_artifact_cm:
             kwargs['artifacts_manager'] = concrete_artifact_cm
             return wrapped_method(*args, **kwargs)

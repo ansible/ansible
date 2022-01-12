@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     )
     from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
 
+from ansible.galaxy.collection.gpg import get_signature_from_source
 from ansible.galaxy.dependency_resolution.dataclasses import (
     Candidate,
     Requirement,
@@ -28,13 +29,11 @@ from ansible.galaxy.dependency_resolution.versioning import (
     is_pre_release,
     meets_requirements,
 )
-from ansible.galaxy.collection.gpg import get_signature_from_source
 from ansible.module_utils.six import string_types
 from ansible.utils.version import SemanticVersion
 
 from collections.abc import Set
 from resolvelib import AbstractProvider
-from urllib.error import HTTPError
 
 
 class PinnedCandidateRequests(Set):
@@ -293,9 +292,16 @@ class CollectionDependencyProvider(AbstractProvider):
             unsatisfied = False
             signatures = src_server.get_collection_signatures(first_req.namespace, first_req.name, version)
             for requirement in requirements:
+
                 unsatisfied |= not self.is_satisfied_by(requirement, tmp_candidate)
+                # FIXME
+                # unsatisfied |= not self.is_satisfied_by(requirement, tmp_candidate) or not (
+                #    requirement.src is None or  # if this is true for some candidates but not all it will break key param - Nonetype can't be compared to str
+                #    or requirement.src == candidate.src
+                # )
+
                 signatures.extend(
-                    [get_signature_from_source(url, quiet=True) for url in requirement.signature_sources or []]
+                    [get_signature_from_source(url) for url in requirement.signature_sources or []]
                 )
 
             if not unsatisfied:

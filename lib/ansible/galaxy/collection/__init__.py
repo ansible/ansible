@@ -105,6 +105,11 @@ from ansible.galaxy.collection.concrete_artifact_manager import (
     _tarfile_extract,
 )
 from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
+from ansible.galaxy.collection.gpg import (
+    run_gpg_verify,
+    parse_gpg_errors,
+    get_signature_from_source
+)
 from ansible.galaxy.dependency_resolution import (
     build_collection_dependency_resolver,
 )
@@ -116,11 +121,6 @@ from ansible.galaxy.dependency_resolution.errors import (
     CollectionDependencyInconsistentCandidate,
 )
 from ansible.galaxy.dependency_resolution.versioning import meets_requirements
-from ansible.galaxy.collection.gpg import (
-    run_gpg_verify,
-    parse_gpg_errors,
-    get_signature_from_source
-)
 from ansible.module_utils.six import raise_from
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.yaml import yaml_dump
@@ -148,7 +148,7 @@ class CollectionVerifyResult:
 def verify_local_collection(
         local_collection, remote_collection,
         artifacts_manager,
-):  # type: (Candidate, Optional[Candidate], ConcreteArtifactsManager, str) -> CollectionVerifyResult
+):  # type: (Candidate, Optional[Candidate], ConcreteArtifactsManager) -> CollectionVerifyResult
     """Verify integrity of the locally installed collection.
 
     :param local_collection: Collection being checked.
@@ -195,14 +195,12 @@ def verify_local_collection(
         # since we're not downloading this, just seed it with the value from disk
         manifest_hash = get_hash_from_validation_source(MANIFEST_FILENAME)
     elif remote_collection.signatures:
-        valid = True
         b_manifest_file = os.path.join(b_collection_path, b'MANIFEST.json')
         for signature in remote_collection.signatures:
             b_detached_signature = to_bytes(signature, errors='surrogate_or_strict')
             if not verify_file_signature(b_manifest_file, b_detached_signature, artifacts_manager.keyring):
-                valid = False
-        if not valid:
-            result.success = False
+                result.success = False
+        if not result.success:
             return result
         display.vvvv(f"GnuPG signature verification succeeded, verifying contents of {local_collection}")
         manifest_hash = get_hash_from_validation_source(MANIFEST_FILENAME)
@@ -266,24 +264,23 @@ def verify_local_collection(
 
 
 def verify_file_signature(b_manifest_file, b_detached_signature, keyring):
-    gpg_result, rc = run_gpg_verify(b_manifest_file, b_detached_signature, keyring)
+    gpg_result, rc = run_gpg_verify(b_manifest_file, b_detached_signature, keyring, display)
 
-    verify_failed = ""
-    for error in parse_gpg_errors(gpg_result, rc):
-        if not verify_failed:
-            display.vvvv(f"{gpg_result}")
-            signature = to_text(b_detached_signature, errors='surrogate_or_strict')
-            verify_failed = "Signature verification failed:"
-        verify_failed += f'\n      * {error.explain()}'
+    errors = None
+    if gpg_result:
+        errors = parse_gpg_errors(gpg_result, rc)
 
-    if verify_failed:
+    if errors:
+        verify_failed = "Signature verification failed:"
+        reasons = set(error.explain() for error in errors)
+        for reason in reasons:
+            verify_failed += f'\n      * {reason}'
         display.display(verify_failed)
         return False
-    elif rc:
+    if rc:
         display.display(f"Unexpected error: GnuPG signature verification failed with the return code {rc} and output {gpg_result}")
         return False
-    else:
-        return True
+    return True
 
 
 def build_collection(u_collection_path, u_output_path, force):
@@ -692,9 +689,10 @@ def verify_collections(
                     # NOTE: If there are no Galaxy server signatures, only user-provided signature URLs,
                     # NOTE: those alone validate the MANIFEST.json and the remote collection is not downloaded.
                     # NOTE: The remote MANIFEST.json is only used in verification if there are no signatures.
-                    signatures.extend(
-                        [get_signature_from_source(source) for source in collection.signature_sources or []]
-                    )
+                    signatures.extend([
+                        get_signature_from_source(source, display)
+                        for source in collection.signature_sources or []
+                    ])
 
                     remote_collection = Candidate(
                         collection.fqcn,
@@ -1169,7 +1167,7 @@ def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatur
                 if failed_verify:
                     raise AnsibleError(f"Not installing {collection_name} because GnuPG signature verification failed.")
                 else:
-                    display.vvvv(f"GnuPG signature verification succeeded, installing {collection_name}")
+                    display.vvvv(f"GnuPG signature verification succeeded for {collection_name}")
 
             files_member_obj = collection_tar.getmember('FILES.json')
             with _tarfile_extract(collection_tar, files_member_obj) as (dummy, files_obj):

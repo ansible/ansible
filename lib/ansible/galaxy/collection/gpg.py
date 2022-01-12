@@ -7,21 +7,19 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleError
+from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.urls import open_url
-from ansible.utils.display import Display
 
 import os
 import subprocess
 import textwrap
 
 from dataclasses import dataclass, fields as dc_fields
-from urllib.error import HTTPError
-
-display = Display()
+from urllib.error import HTTPError, URLError
 
 
-def run_gpg_verify(b_manifest_file, signature, keyring):
+def run_gpg_verify(b_manifest_file, signature, keyring, display):
     status_fd_read, status_fd_write = os.pipe()
 
     cmd = [
@@ -35,6 +33,8 @@ def run_gpg_verify(b_manifest_file, signature, keyring):
         '-',
         b_manifest_file,
     ]
+    cmd_str = ' '.join(to_text(arg) for arg in cmd)
+    display.vvvv(f"Running command '{cmd}'")
 
     try:
         p = subprocess.Popen(
@@ -44,20 +44,23 @@ def run_gpg_verify(b_manifest_file, signature, keyring):
             stderr=subprocess.PIPE,
             pass_fds=(status_fd_write,),
         )
-        stdout, stderr = p.communicate(input=signature)
+    except FileNotFoundError as err:
+        raise AnsibleError(
+            f"Failed during GnuPG verification with command '{cmd_str}': {exception}"
+        ) from err
     except subprocess.SubprocessError as err:
-        cmd_str = ' '.join([to_text(arg) for arg in cmd])
-        display.error(f"Failed during GnuPG verification with command '{cmd_str}':\n{err}")
-        p = None
+        raise AnsibleError(
+            f"Failed during GnuPG verification with command '{cmd_str}': {exception}"
+        ) from err
+    else:
+        stdout, stderr = p.communicate(input=signature)
     finally:
         os.close(status_fd_write)
 
-    if p is None:
-        return
-
-    rc = p.returncode
     with os.fdopen(status_fd_read) as f:
-        return f.read(), p.returncode
+        stdout = f.read()
+        display.vvvv(f"{stdout} (exit code {p.returncode})")
+        return stdout, p.returncode
 
 
 def parse_gpg_errors(status_out, rc):
@@ -87,28 +90,33 @@ def parse_gpg_errors(status_out, rc):
         yield cls(*fields)
 
 
-def get_signature_from_source(source, quiet=False):
-    if not quiet:
-        display.vvvv(f"Using signature at {url}")
+def get_signature_from_source(source, display=None):
+    if display is not None:
+        display.vvvv(f"Using signature at {source}")
     try:
-        resp = open_url(url, follow_redirects='safe')
-    except HTTPError as e:
+        with open_url(
+            to_text(source),
+            http_agent=user_agent(),
+            follow_redirects='safe'
+        ) as resp:
+            return resp.read()
+    except (HTTPError, URLError) as e:
         raise AnsibleError(
-            "Failed to open signature URL '{url}' for collection verification"
+            f"Failed to get signature for collection verification from '{source}': {e}"
         ) from e
-    return resp.read()
 
 
-@dataclass
+# TODO: Optimize with slots=True when the min Python version for the controller is >= 3.10
+@dataclass(frozen=True)
 class GpgBaseError(Exception):
     status: str
 
     def __post_init__(self):
         for field in dc_fields(self):
-            setattr(self, field.name, field.type(getattr(self, field.name)))
+            super().__setattr__(field.name, field.type(getattr(self, field.name)))
 
 
-@dataclass
+@dataclass(frozen=True)
 class GpgExpSig(GpgBaseError):
     keyid: str
     username: str
@@ -118,7 +126,7 @@ class GpgExpSig(GpgBaseError):
         return 'The signature with the keyid is good, but the signature is expired'
 
 
-@dataclass
+@dataclass(frozen=True)
 class GpgExpKeySig(GpgBaseError):
     keyid: str
     username: str
@@ -128,7 +136,7 @@ class GpgExpKeySig(GpgBaseError):
         return 'The signature with the keyid is good, but the signature was made by an expired key'
 
 
-@dataclass
+@dataclass(frozen=True)
 class GpgRevKeySig(GpgBaseError):
     keyid: str
     username: str
@@ -138,7 +146,7 @@ class GpgRevKeySig(GpgBaseError):
         return 'The signature with the keyid is good, but the signature was made by a revoked key'
 
 
-@dataclass
+@dataclass(frozen=True)
 class GpgBadSig(GpgBaseError):
     keyid: str
     username: str
@@ -148,7 +156,7 @@ class GpgBadSig(GpgBaseError):
         return 'The signature with the keyid has not been verified okay'
 
 
-@dataclass
+@dataclass(frozen=True)
 class GpgErrSig(GpgBaseError):
     keyid: str
     pkalgo: int
@@ -168,7 +176,7 @@ class GpgErrSig(GpgBaseError):
         )
 
 
-@dataclass
+@dataclass(frozen=True)
 class GpgNoPubkey(GpgBaseError):
     keyid: str
 
@@ -177,14 +185,14 @@ class GpgNoPubkey(GpgBaseError):
         return 'The public key is not available'
 
 
-@dataclass
+@dataclass(frozen=True)
 class GpgMissingPassPhrase(GpgBaseError):
     @staticmethod
     def explain():
         return 'No passphrase was supplied'
 
 
-@dataclass
+@dataclass(frozen=True)
 class GpgBadPassphrase(GpgBaseError):
     keyid: str
 
@@ -193,7 +201,7 @@ class GpgBadPassphrase(GpgBaseError):
         return 'The supplied passphrase was wrong or not given'
 
 
-@dataclass
+@dataclass(frozen=True)
 class GpgNoData(GpgBaseError):
     what: str
 
@@ -209,7 +217,7 @@ class GpgNoData(GpgBaseError):
         ''').strip()
 
 
-@dataclass
+@dataclass(frozen=True)
 class GpgUnexpected(GpgBaseError):
     what: str
 
@@ -225,7 +233,7 @@ class GpgUnexpected(GpgBaseError):
         ''').strip()
 
 
-@dataclass
+@dataclass(frozen=True)
 class GpgError(GpgBaseError):
     location: str
     code: int
@@ -236,7 +244,7 @@ class GpgError(GpgBaseError):
         return 'This is a generic error status message, it might be followed by error location specific data'
 
 
-@dataclass
+@dataclass(frozen=True)
 class GpgFailure(GpgBaseError):
     location: str
     code: int
@@ -246,14 +254,14 @@ class GpgFailure(GpgBaseError):
         return 'This is the counterpart to SUCCESS and used to indicate a program failure'
 
 
-@dataclass
+@dataclass(frozen=True)
 class GpgBadArmor(GpgBaseError):
     @staticmethod
     def explain():
         return 'The ASCII armor is corrupted'
 
 
-@dataclass
+@dataclass(frozen=True)
 class GpgKeyExpired(GpgBaseError):
     timestamp: int
 
@@ -262,14 +270,14 @@ class GpgKeyExpired(GpgBaseError):
         return 'The key has expired'
 
 
-@dataclass
+@dataclass(frozen=True)
 class GpgKeyRevoked(GpgBaseError):
     @staticmethod
     def explain():
         return 'The used key has been revoked by its owner'
 
 
-@dataclass
+@dataclass(frozen=True)
 class GpgNoSecKey(GpgBaseError):
     keyid: str
 
