@@ -98,8 +98,8 @@ stages:
               test: rhel/8.5@3.8
             - name: RHEL 9.0b
               test: rhel/9.0b
-            - name: FreeBSD 12.2
-              test: freebsd/12.2
+            - name: FreeBSD 12.3
+              test: freebsd/12.3
             - name: FreeBSD 13.0
               test: freebsd/13.0
           groups:

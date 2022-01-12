@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Add support for remote testing of FreeBSD 12.3.
