@@ -10,7 +10,7 @@
   register: dnf_result
   ignore_errors: true
 
-- name: Verify dnf failure
+- name: Verify dnf failed or has not changed
   assert:
     that:
-      - "dnf_result is failed"
+      - "dnf_result is failed or not dnf_result is changed"
