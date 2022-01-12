@@ -69,21 +69,29 @@ def _validate_action_group_metadata(action, found_group_metadata, fq_group_name)
         display.warning(" ".join(metadata_warnings))
 
 
-def get_field_attributes(class_object):
-    fattributes = {}
-    for class_obj in reversed(class_object.__mro__):
-        for name, attr in list(class_obj.__dict__.items()):
-            if not isinstance(attr, Attribute):
-                continue
-            fattributes[name] = attr
-            if attr.alias:
-                setattr(class_obj, attr.alias, attr)
-                fattributes[attr.name] = attr
+# FIXME use @property and @classmethod together which is possible since Python 3.9
+class _FABMeta(type):
 
-    return fattributes
+    @property
+    def fattributes(cls):
+        fattributes = {}
+        for class_obj in reversed(cls.__mro__):
+            for name, attr in list(class_obj.__dict__.items()):
+                if not isinstance(attr, Attribute):
+                    continue
+                fattributes[name] = attr
+                if attr.alias:
+                    setattr(class_obj, attr.alias, attr)
+                    fattributes[attr.alias] = attr
+        return fattributes
 
 
-class FieldAttributeBase:
+class FieldAttributeBase(metaclass=_FABMeta):
+
+    # FIXME use @property and @classmethod together which is possible since Python 3.9
+    @property
+    def fattributes(self):
+        return self.__class__.fattributes
 
     def __init__(self):
 
@@ -106,11 +114,6 @@ class FieldAttributeBase:
     @property
     def finalized(self):
         return self._finalized
-
-    @classmethod
-    def fattributes(cls):
-        # TODO cache this?
-        return get_field_attributes(cls)
 
     def dump_me(self, depth=0):
         ''' this is never called from production code, it is here to be used when debugging as a 'complex print' '''
@@ -157,7 +160,7 @@ class FieldAttributeBase:
 
         # Walk all attributes in the class. We sort them based on their priority
         # so that certain fields can be loaded before others, if they are dependent.
-        for name, attr in sorted(self.fattributes().items(), key=operator.itemgetter(1)):
+        for name, attr in sorted(self.fattributes.items(), key=operator.itemgetter(1)):
             # copy the value over unless a _load_field method is defined
             if name in ds:
                 method = getattr(self, '_load_%s' % name, None)
@@ -197,7 +200,7 @@ class FieldAttributeBase:
         not map to attributes for this object.
         '''
 
-        valid_attrs = frozenset(self.fattributes().keys())
+        valid_attrs = frozenset(self.fattributes)
         for key in ds:
             if key not in valid_attrs:
                 raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (key, self.__class__.__name__), obj=ds)
@@ -208,7 +211,7 @@ class FieldAttributeBase:
 
         if not self._validated:
             # walk all fields in the object
-            for (name, attribute) in self.fattributes().items():
+            for (name, attribute) in self.fattributes.items():
                 # run validator only if present
                 method = getattr(self, '_validate_%s' % name, None)
                 if method:
@@ -405,7 +408,7 @@ class FieldAttributeBase:
         parent attributes.
         '''
         if not self._squashed:
-            for name in self.fattributes().keys():
+            for name in self.fattributes:
                 setattr(self, name, getattr(self, name))
             self._squashed = True
 
@@ -419,8 +422,8 @@ class FieldAttributeBase:
         except RuntimeError as e:
             raise AnsibleError("Exceeded maximum object depth. This may have been caused by excessive role recursion", orig_exc=e)
 
-        for name in self.fattributes().keys():
-            setattr(new_me, name, shallowcopy(self.__dict__.get(name, Sentinel)))
+        for name in self.fattributes:
+            setattr(new_me, name, shallowcopy(getattr(self, f'_{name}', Sentinel)))
 
         new_me._loader = self._loader
         new_me._variable_manager = self._variable_manager
@@ -495,7 +498,7 @@ class FieldAttributeBase:
         # save the omit value for later checking
         omit_value = templar.available_variables.get('omit')
 
-        for (name, attribute) in self.fattributes().items():
+        for (name, attribute) in self.fattributes.items():
             if attribute.static:
                 value = getattr(self, name)
 
@@ -618,7 +621,7 @@ class FieldAttributeBase:
         Dumps all attributes to a dictionary
         '''
         attrs = {}
-        for (name, attribute) in self.fattributes().items():
+        for (name, attribute) in self.fattributes.items():
             attr = getattr(self, name)
             if attribute.isa == 'class' and hasattr(attr, 'serialize'):
                 attrs[name] = attr.serialize()
@@ -631,8 +634,8 @@ class FieldAttributeBase:
         Loads attributes from a dictionary
         '''
         for (attr, value) in attrs.items():
-            if attr in self.fattributes():
-                attribute = self.fattributes()[attr]
+            if attr in self.fattributes:
+                attribute = self.fattributes[attr]
                 if attribute.isa == 'class' and isinstance(value, dict):
                     obj = attribute.class_type()
                     obj.deserialize(value)
@@ -676,7 +679,7 @@ class FieldAttributeBase:
         if not isinstance(data, dict):
             raise AnsibleAssertionError('data (%s) should be a dict but is a %s' % (data, type(data)))
 
-        for (name, attribute) in self.fattributes().items():
+        for (name, attribute) in self.fattributes.items():
             if name in data:
                 setattr(self, name, data[name])
             else:

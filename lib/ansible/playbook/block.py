@@ -45,7 +45,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
-    # otherwise = FieldAttribute(name="otherwise", isa='list')
+    # otherwise = FieldAttribute(isa='list')
 
     def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, implicit=False):
         self._play = play
@@ -230,7 +230,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         '''
 
         data = dict()
-        for attr in self.fattributes():
+        for attr in self.fattributes:
             if attr not in ('block', 'rescue', 'always'):
                 data[attr] = getattr(self, attr)
 
@@ -256,7 +256,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
         # we don't want the full set of attributes (the task lists), as that
         # would lead to a serialize/deserialize loop
-        for attr in self.fattributes():
+        for attr in self.fattributes:
             if attr in data and attr not in ('block', 'rescue', 'always'):
                 setattr(self, attr, data.get(attr))
 
@@ -298,10 +298,10 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         '''
         Generic logic to get the attribute or parent attribute for a block value.
         '''
-        extend = self.fattributes().get(attr).extend
-        prepend = self.fattributes().get(attr).prepend
+        extend = self.fattributes.get(attr).extend
+        prepend = self.fattributes.get(attr).prepend
         try:
-            value = self.__dict__.get(attr, Sentinel)
+            value = getattr(self, f'_{attr}', Sentinel)
             # If parent is static, we can grab attrs from the parent
             # otherwise, defer to the grandparent
             if getattr(self._parent, 'statically_loaded', True):
@@ -315,7 +315,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                         if hasattr(_parent, '_get_parent_attribute'):
                             parent_value = _parent._get_parent_attribute(attr)
                         else:
-                            parent_value = _parent.__dict__.get(attr, Sentinel)
+                            parent_value = getattr(_parent, f'_{attr}', Sentinel)
                         if extend:
                             value = self._extend_value(value, parent_value, prepend)
                         else:
@@ -324,7 +324,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                     pass
             if self._role and (value is Sentinel or extend):
                 try:
-                    parent_value = self._role.__dict__.get(attr, Sentinel)
+                    parent_value = getattr(self._role, f'_{attr}', Sentinel)
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)
                     else:
@@ -334,7 +334,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                     if dep_chain and (value is Sentinel or extend):
                         dep_chain.reverse()
                         for dep in dep_chain:
-                            dep_value = dep.__dict__.get(attr, Sentinel)
+                            dep_value = getattr(dep, f'_{attr}', Sentinel)
                             if extend:
                                 value = self._extend_value(value, dep_value, prepend)
                             else:
@@ -346,7 +346,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                     pass
             if self._play and (value is Sentinel or extend):
                 try:
-                    play_value = self._play.__dict__.get(attr, Sentinel)
+                    play_value = getattr(self._play, f'_{attr}', Sentinel)
                     if play_value is not Sentinel:
                         if extend:
                             value = self._extend_value(value, play_value, prepend)

@@ -110,20 +110,21 @@ class Attribute:
         return other.priority >= self.priority
 
     def __get__(self, obj, obj_type=None):
-        value = obj.__dict__.get(self.name, Sentinel)
+        value = getattr(obj, f'_{self.name}', Sentinel)
 
         if value is Sentinel:
             value = self.default
             if callable(value):
                 value = value()
-                obj.__dict__[self.name] = value
+                setattr(obj, f'_{self.name}', value)
 
         return value
 
     def __set__(self, obj, value):
-        obj.__dict__[self.name] = value() if callable(value) else value
+        val = value() if callable(value) else value
+        setattr(obj, f'_{self.name}', val)
         if self.alias is not None:
-            obj.__dict__[self.alias] = obj.__dict__[self.name]
+            setattr(obj, f'_{self.alias}', val)
 
 
 class NonInheritableFieldAttribute(Attribute):
@@ -139,18 +140,18 @@ class FieldAttribute(Attribute):
 
     def __get__(self, obj, obj_type=None):
         if getattr(obj, '_squashed', False) or getattr(obj, '_finalized', False):
-            value = obj.__dict__.get(self.name, Sentinel)
+            value = getattr(obj, f'_{self.name}', Sentinel)
         else:
             try:
                 value = obj._get_parent_attribute(self.name)
             except AttributeError:
-                value = obj.__dict__.get(self.name, Sentinel)
+                value = getattr(obj, f'_{self.name}', Sentinel)
 
         if value is Sentinel:
             value = self.default
             if callable(value):
                 value = value()
-                obj.__dict__[self.name] = value
+                setattr(obj, f'_{self.name}', value)
 
         return value
 

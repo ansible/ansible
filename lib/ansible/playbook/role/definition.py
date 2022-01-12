@@ -210,7 +210,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
         role_def = dict()
         role_params = dict()
-        base_attribute_names = frozenset(self.fattributes().keys())
+        base_attribute_names = frozenset(self.fattributes)
         for (key, value) in ds.items():
             # use the list of FieldAttribute values to determine what is and is not
             # an extra parameter for this role (or sub-class of this role)

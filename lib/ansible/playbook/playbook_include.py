@@ -120,7 +120,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
             # those attached to each block (if any)
             if new_obj.when:
                 for task_block in (entry.pre_tasks + entry.roles + entry.tasks + entry.post_tasks):
-                    task_block.__dict__['when'] = new_obj.when[:] + task_block.when[:]
+                    task_block._when = new_obj.when[:] + task_block.when[:]
 
         return pb
 

@@ -182,7 +182,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         else:
             # Validate this untemplated field early on to guarantee we are dealing with a list.
             # This is also done in CollectionSearch._load_collections() but this runs before that call.
-            collections_list = self.get_validated_value('collections', self.fattributes()['collections'], collections_list, None)
+            collections_list = self.get_validated_value('collections', self.fattributes.get('collections'), collections_list, None)
 
         if default_collection and not self._role:  # FIXME: and not a collections role
             if collections_list:
@@ -460,10 +460,10 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         '''
         Generic logic to get the attribute or parent attribute for a task value.
         '''
-        extend = self.fattributes().get(attr).extend
-        prepend = self.fattributes().get(attr).prepend
+        extend = self.fattributes.get(attr).extend
+        prepend = self.fattributes.get(attr).prepend
         try:
-            value = self.__dict__.get(attr, Sentinel)
+            value = getattr(self, f'_{attr}', Sentinel)
             # If parent is static, we can grab attrs from the parent
             # otherwise, defer to the grandparent
             if getattr(self._parent, 'statically_loaded', True):
@@ -477,7 +477,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                     if attr != 'vars' and hasattr(_parent, '_get_parent_attribute'):
                         parent_value = _parent._get_parent_attribute(attr)
                     else:
-                        parent_value = _parent.__dict__.get(attr, Sentinel)
+                        parent_value = getattr(_parent, f'_{attr}', Sentinel)
 
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)

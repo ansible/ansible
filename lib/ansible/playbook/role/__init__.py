@@ -199,15 +199,19 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             self.add_parent(parent_role)
 
         # copy over all field attributes from the RoleInclude
-        # update self.__dict__ directly, to avoid squashing
-        for attr_name in self.fattributes().keys():
+        # update self._attr directly, to avoid squashing
+        for attr_name in self.fattributes:
             if attr_name in ('when', 'tags'):
-                self.__dict__[attr_name] = self._extend_value(
-                    self.__dict__.get(attr_name, Sentinel),
-                    role_include.__dict__.get(attr_name, Sentinel)
+                setattr(
+                    self,
+                    f'_{attr_name}',
+                    self._extend_value(
+                        getattr(self, f'_{attr_name}', Sentinel),
+                        getattr(role_include, f'_{attr_name}', Sentinel),
+                    )
                 )
             else:
-                self.__dict__[attr_name] = role_include.__dict__.get(attr_name, Sentinel)
+                setattr(self, f'_{attr_name}', getattr(role_include, f'_{attr_name}', Sentinel))
 
         # vars and default vars are regular dictionaries
         self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)

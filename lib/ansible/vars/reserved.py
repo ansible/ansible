@@ -39,11 +39,9 @@ def get_reserved_names(include_private=True):
     class_list = [Play, Role, Block, Task]
 
     for aclass in class_list:
-        aobj = aclass()
-
         # build ordered list to loop over and dict with attributes
-        for name in aobj.fattributes():
-            if 'private' in name:
+        for name, attr in aclass.fattributes.items():
+            if attr.private:
                 private.add(name)
             else:
                 public.add(name)
