@@ -509,15 +509,15 @@ def test_wait_import_task_with_failure(server_url, api_version, token_type, toke
             },
             'messages': [
                 {
-                    'level': 'error',
+                    'level': 'ERrOR',
                     'message': u'Somé error',
                 },
                 {
-                    'level': 'warning',
+                    'level': 'WARNiNG',
                     'message': u'Some wärning',
                 },
                 {
-                    'level': 'info',
+                    'level': 'INFO',
                     'message': u'Somé info',
                 },
             ],
@@ -549,7 +549,7 @@ def test_wait_import_task_with_failure(server_url, api_version, token_type, toke
     assert mock_display.mock_calls[0][1][0] == 'Waiting until Galaxy import task %s has completed' % full_import_uri
 
     assert mock_vvv.call_count == 1
-    assert mock_vvv.mock_calls[0][1][0] == u'Galaxy import message: info - Somé info'
+    assert mock_vvv.mock_calls[0][1][0] == u'Galaxy import message: INFO - Somé info'
 
     assert mock_warn.call_count == 1
     assert mock_warn.mock_calls[0][1][0] == u'Galaxy import warning message: Some wärning'
@@ -582,15 +582,15 @@ def test_wait_import_task_with_failure_no_error(server_url, api_version, token_t
             'error': {},
             'messages': [
                 {
-                    'level': 'error',
+                    'level': 'ERROR',
                     'message': u'Somé error',
                 },
                 {
-                    'level': 'warning',
+                    'level': 'WARNING',
                     'message': u'Some wärning',
                 },
                 {
-                    'level': 'info',
+                    'level': 'INFO',
                     'message': u'Somé info',
                 },
             ],
@@ -622,7 +622,7 @@ def test_wait_import_task_with_failure_no_error(server_url, api_version, token_t
     assert mock_display.mock_calls[0][1][0] == 'Waiting until Galaxy import task %s has completed' % full_import_uri
 
     assert mock_vvv.call_count == 1
-    assert mock_vvv.mock_calls[0][1][0] == u'Galaxy import message: info - Somé info'
+    assert mock_vvv.mock_calls[0][1][0] == u'Galaxy import message: INFO - Somé info'
 
     assert mock_warn.call_count == 1
     assert mock_warn.mock_calls[0][1][0] == u'Galaxy import warning message: Some wärning'
