@@ -153,6 +153,7 @@ bootstrap_remote_freebsd()
 
         packages="
             ${packages}
+            libyaml
             ${pyyaml_pkg}
             ${jinja2_pkg}
             ${cryptography_pkg}
