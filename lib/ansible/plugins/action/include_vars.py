@@ -100,6 +100,7 @@ class ActionModule(ActionBase):
         self._set_args()
 
         results = dict()
+        failed = False
         if self.source_dir:
             self._set_dir_defaults()
             self._set_root_dir()
