@@ -32,6 +32,7 @@ def get_file_content(path, default=None, strip=True):
     '''
     data = default
     if os.path.exists(path) and os.access(path, os.R_OK):
+        datafile = None
         try:
             datafile = open(path)
             try:
@@ -55,7 +56,8 @@ def get_file_content(path, default=None, strip=True):
             # ignore errors as some jails/containers might have readable permissions but not allow reads
             pass
         finally:
-            datafile.close()
+            if datafile is not None:
+                datafile.close()
 
     return data
 
