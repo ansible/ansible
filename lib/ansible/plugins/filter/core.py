@@ -223,6 +223,30 @@ def from_yaml_all(data):
         return yaml_load_all(text_type(to_text(data, errors='surrogate_or_strict')))
     return data
 
+def from_keyvalue(data, delimiter="=", skip_invalid=False):
+    '''Parse key/value pairs into a dict'''
+    regex = re.compile('\s*' + delimiter + '\s*')
+
+    lines = []
+    if (isinstance(data, string_types)):
+        lines = data.splitlines()
+    elif (isinstance(data, list)):
+        lines = data
+    else:
+        raise AnsibleFilterError('Filter only supports string or list types')
+
+    result = {}
+    for line in lines:
+        try:
+            (key, value) = re.split(regex, line, 1)
+            result[key] = value
+        except ValueError as e:
+            if (skip_invalid):
+                pass
+            else:
+                raise AnsibleFilterError('Unable to parse key/value(%s): %s' % (line, to_native(e)))
+
+    return result
 
 @pass_environment
 def rand(environment, end, start=None, step=None, seed=None):
@@ -575,6 +599,9 @@ class FilterModule(object):
             'to_nice_yaml': to_nice_yaml,
             'from_yaml': from_yaml,
             'from_yaml_all': from_yaml_all,
+
+            # keyvalue
+            'from_keyvalue': from_keyvalue,
 
             # path
             'basename': partial(unicode_wrap, os.path.basename),
