@@ -356,6 +356,8 @@ def download_collections(
             no_deps=no_deps,
             allow_pre_release=allow_pre_release,
             upgrade=False,
+            # Avoid overhead getting signatures since they are not currently applicable to downloaded collections
+            include_signatures=False,
         )
 
     b_output_path = to_bytes(output_path, errors='surrogate_or_strict')
@@ -480,6 +482,7 @@ def install_collections(
         upgrade,  # type: bool
         allow_pre_release,  # type: bool
         artifacts_manager,  # type: ConcreteArtifactsManager
+        disable_gpg_verify,  # type: bool
 ):  # type: (...) -> None
     """Install Ansible collections to the path specified.
 
@@ -556,6 +559,7 @@ def install_collections(
             no_deps=no_deps,
             allow_pre_release=allow_pre_release,
             upgrade=upgrade,
+            include_signatures=not disable_gpg_verify,
         )
 
     with _display_progress("Starting collection install process"):
@@ -1386,6 +1390,7 @@ def _resolve_depenency_map(
         no_deps,  # type: bool
         allow_pre_release,  # type: bool
         upgrade,  # type: bool
+        include_signatures,  # type: bool
 ):  # type: (...) -> Dict[str, Candidate]
     """Return the resolved dependency map."""
     collection_dep_resolver = build_collection_dependency_resolver(
@@ -1396,6 +1401,7 @@ def _resolve_depenency_map(
         with_deps=not no_deps,
         with_pre_releases=allow_pre_release,
         upgrade=upgrade,
+        include_signatures=include_signatures,
     )
     try:
         return collection_dep_resolver.resolve(

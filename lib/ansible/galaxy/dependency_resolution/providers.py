@@ -70,6 +70,7 @@ class CollectionDependencyProvider(AbstractProvider):
             with_deps=True,  # type: bool
             with_pre_releases=False,  # type: bool
             upgrade=False,  # type: bool
+            include_signatures=True,  # type: bool
     ):  # type: (...) -> None
         r"""Initialize helper attributes.
 
@@ -85,6 +86,15 @@ class CollectionDependencyProvider(AbstractProvider):
         :param with_pre_releases: A flag specifying whether the \
                                   resolver should skip pre-releases. \
                                   Off by default.
+
+        :param upgrade: A flag specifying whether the resolver should \
+                        skip matching versions that are not upgrades. \
+                        Off by default.
+
+        :param include_signatures: A flag to determine whether to retrieve \
+                                   signatures from the Galaxy APIs and \
+                                   include signatures in matching Candidates. \
+                                   On by default.
         """
         self._api_proxy = apis
         self._make_req_from_dict = functools.partial(
@@ -105,6 +115,7 @@ class CollectionDependencyProvider(AbstractProvider):
         self._with_deps = with_deps
         self._with_pre_releases = with_pre_releases
         self._upgrade = upgrade
+        self._include_signatures = include_signatures
 
     def _is_user_requested(self, candidate):  # type: (Candidate) -> bool
         """Check if the candidate is requested by the user."""
@@ -286,11 +297,13 @@ class CollectionDependencyProvider(AbstractProvider):
             ]
 
         latest_matches = []
+        signatures = []
         for version, src_server in coll_versions:
             tmp_candidate = Candidate(fqcn, version, src_server, 'galaxy', None)
 
             unsatisfied = False
-            signatures = src_server.get_collection_signatures(first_req.namespace, first_req.name, version)
+            if self._include_signatures:
+                signatures = src_server.get_collection_signatures(first_req.namespace, first_req.name, version)
             for requirement in requirements:
 
                 unsatisfied |= not self.is_satisfied_by(requirement, tmp_candidate)
@@ -300,6 +313,8 @@ class CollectionDependencyProvider(AbstractProvider):
                 #    or requirement.src == candidate.src
                 # )
 
+                if not self._include_signatures:
+                    continue
                 signatures.extend(
                     [get_signature_from_source(url) for url in requirement.signature_sources or []]
                 )
