@@ -103,7 +103,7 @@ class BecomeModule(BecomeBase):
                         continue
                     elif not flag.startswith('--'):
                         # handle -XnxxX flags only
-                        flag = re.sub(r'^(-\w*)n(\w*.*)', r'\1\2', flag, flags=re.DOTALL)
+                        flag = re.sub(r'^(-\w*)n(\w*.*)', r'\1\2', flag, flags=re.U)
                     reflag.append(flag)
                 try:
                     flags = shlex.join(reflag)
