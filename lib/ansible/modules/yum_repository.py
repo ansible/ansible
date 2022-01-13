@@ -24,7 +24,6 @@ options:
       - If set to C(yes) Yum will download packages and metadata from this
         repo in parallel, if possible.
     type: bool
-    default: 'yes'
   bandwidth:
     description:
       - Maximum available network bandwidth in bytes/second. Used with the
@@ -650,7 +649,7 @@ def main():
         username=dict(),
     )
 
-    argument_spec['async'] = dict(type='bool', default=True)
+    argument_spec['async'] = dict(type='bool')
 
     module = AnsibleModule(
         argument_spec=argument_spec,
