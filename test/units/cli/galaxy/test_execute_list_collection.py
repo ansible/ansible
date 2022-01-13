@@ -101,12 +101,14 @@ def mock_from_path(mocker):
                     '1.5.0',
                     None,
                     'dir',
+                    None,
                 ),
                 (
                     'sandwiches.pbj',
                     '1.0.0',
                     None,
                     'dir',
+                    None,
                 ),
             ),
             'sandwiches.ham': (
@@ -115,6 +117,7 @@ def mock_from_path(mocker):
                     '1.0.0',
                     None,
                     'dir',
+                    None,
                 ),
             ),
         }
