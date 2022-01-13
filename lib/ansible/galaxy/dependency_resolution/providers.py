@@ -45,7 +45,7 @@ class PinnedCandidateRequests(Set):
 
     def __contains__(self, value):
         for candidate in self.candidates:
-            for attr in ['fqcn', 'ver', 'src', 'type']:
+            for attr in ('fqcn', 'ver', 'src', 'type'):
                 if not hasattr(value, attr):
                     return False
                 if getattr(value, attr) != getattr(candidate, attr):

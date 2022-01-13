@@ -268,7 +268,7 @@ def verify_file_signature(b_manifest_file, b_detached_signature, keyring):
 
     errors = None
     if gpg_result:
-        errors = parse_gpg_errors(gpg_result, rc)
+        errors = parse_gpg_errors(gpg_result)
 
     if errors:
         verify_failed = "Signature verification failed:"

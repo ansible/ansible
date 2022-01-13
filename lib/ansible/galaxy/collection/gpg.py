@@ -3,9 +3,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 """Signature verification helpers."""
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
 from ansible.errors import AnsibleError
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.common.text.converters import to_text
@@ -44,13 +41,9 @@ def run_gpg_verify(b_manifest_file, signature, keyring, display):
             stderr=subprocess.PIPE,
             pass_fds=(status_fd_write,),
         )
-    except FileNotFoundError as err:
+    except (FileNotFoundError, subprocess.SubprocessError) as err:
         raise AnsibleError(
-            f"Failed during GnuPG verification with command '{cmd_str}': {exception}"
-        ) from err
-    except subprocess.SubprocessError as err:
-        raise AnsibleError(
-            f"Failed during GnuPG verification with command '{cmd_str}': {exception}"
+            f"Failed during GnuPG verification with command '{cmd_str}': {err}"
         ) from err
     else:
         stdout, stderr = p.communicate(input=signature)
@@ -63,15 +56,14 @@ def run_gpg_verify(b_manifest_file, signature, keyring, display):
         return stdout, p.returncode
 
 
-def parse_gpg_errors(status_out, rc):
-    errors = []
+def parse_gpg_errors(status_out):
     for line in status_out.splitlines():
         if not line:
             continue
         try:
-            _dummy, status, remainder = line.split(None, 2)
+            _dummy, status, remainder = line.split(maxsplit=2)
         except ValueError:
-            _dummy, status = line.split(None, 1)
+            _dummy, status = line.split(maxsplit=1)
             remainder = None
         try:
             cls = GPG_ERROR_MAP[status]

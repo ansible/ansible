@@ -7,7 +7,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
 import os
 from collections import namedtuple
 from collections.abc import MutableSequence
@@ -20,7 +19,7 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from typing import Tuple, Type, TypeVar
+    from typing import Type, TypeVar
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
     )
@@ -30,7 +29,6 @@ if TYPE_CHECKING:
         '_ComputedReqKindsMixin',
     )
 
-import yaml
 
 from ansible.errors import AnsibleError
 from ansible.galaxy.api import GalaxyAPI
