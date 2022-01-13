@@ -35,6 +35,8 @@ from ansible.utils.version import SemanticVersion
 from collections.abc import Set
 from resolvelib import AbstractProvider
 
+PINNED_CANDIDATE_ATTRS = ('fqcn', 'ver', 'src', 'type')
+
 
 class PinnedCandidateRequests(Set):
     def __init__(self, candidates):
@@ -45,7 +47,7 @@ class PinnedCandidateRequests(Set):
 
     def __contains__(self, value):
         for candidate in self.candidates:
-            for attr in ('fqcn', 'ver', 'src', 'type'):
+            for attr in PINNED_CANDIDATE_ATTRS:
                 if not hasattr(value, attr):
                     return False
                 if getattr(value, attr) != getattr(candidate, attr):
