@@ -168,13 +168,16 @@ def _run_module(wrapped_cmd, jid, interpreter):
     stderr = ''
     result = {}
     try:
-        cmd = [to_bytes(shlex_quote(c), errors='surrogate_or_strict') for c in shlex.split(wrapped_cmd)]
-        # call the module interpreter directly (for non-binary modules)
+        # call the module interpreter directly (for interpreted modules)
         # this permits use of a script for an interpreter on non-Linux platforms
         if interpreter:
             # if defined interpreter is always list (interpreter + possible args)
             cmd = interpreter + cmd
 
+        # ensure all options are properly quoted
+        cmd = [to_bytes(shlex_quote(c), errors='surrogate_or_strict') for c in shlex.split(cmd)]
+
+        # actually run it
         script = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         (outdata, stderr) = script.communicate()
