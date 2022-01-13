@@ -225,7 +225,7 @@ def from_yaml_all(data):
 
 def from_keyvalue(data, delimiter="=", skip_invalid=False):
     '''Parse key/value pairs into a dict'''
-    regex = re.compile('\s*' + delimiter + '\s*')
+    regex = re.compile(r'\s*' + delimiter + r'\s*')
 
     lines = []
     if (isinstance(data, string_types)):
