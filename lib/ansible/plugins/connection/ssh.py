@@ -836,7 +836,8 @@ class Connection(ConnectionBase):
             display_line = to_text(b_line).rstrip('\r\n')
             suppress_output = False
 
-            # display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, display_line))
+            # TODO: find out if why we need any become testing when not sudoable
+            display.debug("Become testing of line (source=%s, state=%s): '%s'" % (source, state, display_line))
             if self.become.expect_prompt() and self.become.check_password_prompt(b_line):
                 display.debug(u"become_prompt: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_prompt'] = True
@@ -845,12 +846,19 @@ class Connection(ConnectionBase):
                 display.debug(u"become_success: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_success'] = True
                 suppress_output = True
-            elif sudoable and self.become.check_incorrect_password(b_line):
-                display.debug(u"become_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
-                self._flags['become_error'] = True
-            elif sudoable and self.become.check_missing_password(b_line):
-                display.debug(u"become_nopasswd_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
-                self._flags['become_nopasswd_error'] = True
+            elif sudoable:
+                if hasattr(self.become, 'check_become_error'):
+                    self._flags['become_error'] = self.become.check_become_error(b_line)
+                    if self._flags['become_error']:
+                        display.debug(u"become_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
+                else:
+                    # TODO: deprecate this path
+                    if self.become.check_incorrect_password(b_line):
+                        self._flags['become_error'] = 'Incorrect password'
+                        display.debug(u"become_incorrect_password: (source=%s, state=%s): '%s'" % (source, state, display_line))
+                    elif self.become.check_missing_password(b_line):
+                        self._flags['become_error'] = 'Missing required password'
+                        display.debug(u"become_nopasswd_error: (source=%s, state=%s): '%s'" % (source, state, display_line))
 
             if not suppress_output:
                 output.append(b_line)
@@ -1082,15 +1090,10 @@ class Connection(ConnectionBase):
                         self._flags['become_success'] = False
                         state += 1
                     elif self._flags['become_error']:
-                        display.vvv(u'Escalation failed')
+                        display.vvv(u'Privilege escalation failed')
                         self._terminate_process(p)
                         self._flags['become_error'] = False
-                        raise AnsibleError('Incorrect %s password' % self.become.name)
-                    elif self._flags['become_nopasswd_error']:
-                        display.vvv(u'Escalation requires password')
-                        self._terminate_process(p)
-                        self._flags['become_nopasswd_error'] = False
-                        raise AnsibleError('Missing %s password' % self.become.name)
+                        raise AnsibleError('Become plugin (%s) error: %s' % (self.become.name, self._flags['become_error']))
                     elif self._flags['become_prompt']:
                         # This shouldn't happen, because we should see the "Sorry,
                         # try again" message first.
