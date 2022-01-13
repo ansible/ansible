@@ -9,9 +9,7 @@
 # fill in the values below and save this file without the .template extension.
 # This will cause ansible-test to use the given configuration instead of temporary credentials.
 #
-# NOTE: Automatic provisioning of Azure credentials requires one of:
-#       1) ansible-core-ci API key in ~/.ansible-core-ci.key
-#       2) Sherlock URL (including API key) in ~/.ansible-sherlock-ci.cfg
+# NOTE: Automatic provisioning of Azure credentials requires an ansible-core-ci API key in ~/.ansible-core-ci.key
 
 [default]
 # Provide either Service Principal or Active Directory credentials below.
