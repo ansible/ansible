@@ -388,6 +388,7 @@ b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when th
                     )
 
 SSHPASS_AVAILABLE = None
+SSH_DEBUG = re.compile(r'^debug\d+: .*')
 
 
 class AnsibleControlPersistBrokenPipeError(AnsibleError):
@@ -837,7 +838,10 @@ class Connection(ConnectionBase):
             suppress_output = False
 
             # display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, display_line))
-            if self.become.expect_prompt() and self.become.check_password_prompt(b_line):
+            if SSH_DEBUG.match(display_line):
+                # skip lines from ssh debug output to avoid false matches
+                pass
+            elif self.become.expect_prompt() and self.become.check_password_prompt(b_line):
                 display.debug(u"become_prompt: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_prompt'] = True
                 suppress_output = True
