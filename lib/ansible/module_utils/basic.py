@@ -1837,7 +1837,7 @@ class AnsibleModule(object):
 
     def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None,
                     use_unsafe_shell=False, prompt_regex=None, environ_update=None, umask=None, encoding='utf-8', errors='surrogate_or_strict',
-                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None, ignore_invalid_cwd=True):
+                    expand_user_and_vars=True, pass_fds=None, before_communicate_callback=None, ignore_invalid_cwd=True, handle_exceptions=True):
         '''
         Execute a command, returns rc, stdout, and stderr.
 
@@ -1891,6 +1891,9 @@ class AnsibleModule(object):
         :kw ignore_invalid_cwd: This flag indicates whether an invalid ``cwd``
             (non-existent or not a directory) should be ignored or should raise
             an exception.
+        :kw handle_exceptions: This flag indicates whether an exception will
+            be handled inline and issue a failed_json or if the caller should
+            handle it.
         :returns: A 3-tuple of return code (integer), stdout (native string),
             and stderr (native string).  On python2, stdout and stderr are both
             byte strings.  On python3, stdout and stderr are text strings converted
@@ -2080,10 +2083,16 @@ class AnsibleModule(object):
             rc = cmd.returncode
         except (OSError, IOError) as e:
             self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(e)))
-            self.fail_json(rc=e.errno, stdout=b'', stderr=b'', msg=to_native(e), cmd=self._clean_args(args))
+            if handle_exceptions:
+                self.fail_json(rc=e.errno, stdout=b'', stderr=b'', msg=to_native(e), cmd=self._clean_args(args))
+            else:
+                raise e
         except Exception as e:
             self.log("Error Executing CMD:%s Exception:%s" % (self._clean_args(args), to_native(traceback.format_exc())))
-            self.fail_json(rc=257, stdout=b'', stderr=b'', msg=to_native(e), exception=traceback.format_exc(), cmd=self._clean_args(args))
+            if handle_exceptions:
+                self.fail_json(rc=257, stdout=b'', stderr=b'', msg=to_native(e), exception=traceback.format_exc(), cmd=self._clean_args(args))
+            else:
+                raise e
 
         if rc != 0 and check_rc:
             msg = heuristic_log_sanitize(stderr.rstrip(), self.no_log_values)

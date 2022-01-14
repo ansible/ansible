@@ -1,0 +1,4 @@
+minor_changes:
+  - AnsibleModule.run_command() now has a toggle to allow caller to decide to handle exceptions from executing the command itself
+bugfixes:
+  - gather_facts/setup will not fail anymore if capsh is present but not executable
