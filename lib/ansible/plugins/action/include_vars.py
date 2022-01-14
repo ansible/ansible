@@ -174,7 +174,7 @@ class ActionModule(ActionBase):
                 self.source_dir = path.join(current_dir, self.source_dir)
 
     def _log_walk(self, error):
-       self._display.vvv('Issue with walking through %s: %s' % (to_native(error.filename), to_native(error)))
+       self._display.vvv('Issue with walking through "%s": %s' % (to_native(error.filename), to_native(error)))
 
     def _traverse_dir_depth(self):
         """ Recursively iterate over a directory and sort the files in
