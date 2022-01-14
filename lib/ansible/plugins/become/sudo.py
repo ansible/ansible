@@ -76,6 +76,9 @@ from ansible.plugins.become import BecomeBase
 from ansible.module_utils.six.moves import shlex_quote
 
 
+minus_n = re.compile(r'^(-\w*)n(\w*.*)', flags=re.U)
+
+
 class BecomeModule(BecomeBase):
 
     name = 'sudo'
@@ -103,7 +106,7 @@ class BecomeModule(BecomeBase):
                         continue
                     elif not flag.startswith('--'):
                         # handle -XnxxX flags only
-                        flag = re.sub(r'^(-\w*)n(\w*.*)', r'\1\2', flag, flags=re.U)
+                        flag = minus_n.sub(r'\1\2', flag)
                     reflag.append(flag)
                 try:
                     flags = shlex.join(reflag)
