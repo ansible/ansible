@@ -376,6 +376,7 @@ class ConfigCLI(CLI):
                 if config[setting].origin == 'default':
                     color = 'green'
                 elif config[setting].origin == 'REQUIRED':
+                    # should include '_terms', '_input', etc
                     color = 'red'
                 else:
                     color = 'yellow'
@@ -385,7 +386,7 @@ class ConfigCLI(CLI):
                 color = 'green'
                 msg = "%s(%s) = %s" % (setting, 'default', config[setting].get('default'))
 
-            if not context.CLIARGS['only_changed'] or changed:  # and setting not in ('_terms', '_input')):
+            if not context.CLIARGS['only_changed'] or changed:
                 text.append(stringc(msg, color))
 
         return text
