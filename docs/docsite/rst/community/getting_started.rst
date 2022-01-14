@@ -15,12 +15,13 @@ Welcome and thank you for getting more involved with the Ansible community. Here
    how_can_I_help
 
 
+
 Other ways to get involved
 ==========================
 
 Here are some other ways to connect with the Ansible community:
 
-* Find an`Ansible Meetup near me <https://www.meetup.com/topics/ansible/>`_
+* Find an `Ansible Meetup near me <https://www.meetup.com/topics/ansible/>`_
    communication
 * Learn more about Ansible:
 

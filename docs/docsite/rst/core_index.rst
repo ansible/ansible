@@ -51,6 +51,9 @@ This documentation covers the version of ``ansible-core`` noted in the upper lef
    :caption: Contributing to Ansible Core
 
    community/index
+   community/contributions
+   community/advanced_index
+   dev_guide/style_guide/index
 
 .. toctree::
    :maxdepth: 2

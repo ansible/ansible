@@ -40,6 +40,10 @@ Ansible releases a new major release approximately twice a year. The core applic
    :caption: Contributing to Ansible
 
    community/index
+   community/contributing_collections
+   community/maintainers
+   community/advanced_index
+   dev_guide/style_guide/index
 
 .. toctree::
    :maxdepth: 2
