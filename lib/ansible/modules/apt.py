@@ -82,6 +82,13 @@ options:
          Please also see C(man apt-get) for more information.'
     type: bool
     default: 'no'
+  clean:
+    description:
+      - Run the equivalent of C(apt-get clean) to clear out the local repository of retrieved package files. It removes everything but 
+        the lock file from /var/cache/apt/archives/ and /var/cache/apt/archives/partial/.
+      - Recommended to run this as a stand-alone operation.
+    type: bool
+    default: 'no'
   allow_unauthenticated:
     description:
       - Ignore if packages cannot be authenticated. This is useful for bootstrapping environments that manage their own apt-key setup.
@@ -303,6 +310,10 @@ EXAMPLES = '''
 - name: Remove dependencies that are no longer required
   apt:
     autoremove: yes
+
+- name: Run the equivalent of "apt-get clean" as a separate step
+  apt:
+    clean: yes
 '''
 
 RETURN = '''
