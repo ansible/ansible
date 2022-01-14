@@ -974,6 +974,17 @@ def cleanup(m, purge=False, force=False, operation=None,
 
     m.exit_json(changed=changed, stdout=out, stderr=err, diff=diff)
 
+def aptclean(m):
+    clean_rc, clean_out, clean_err = module.run_command(['apt-get', 'clean'])
+    if module._diff:
+        clean_diff = parse_diff(clean_out)
+    else:
+        clean_diff = {}
+    if clean_rc:
+        module.fail_json(msg="apt-get clean failed", stdout=clean_out, rc=clean_rc)
+    if clean_err:
+        module.fail_json(msg="apt-get clean failed: %s" % clean_err, stdout=clean_out, rc=clean_rc)
+    module.exit_json(changed=True, msg=clean_out, stdout=clean_out, stderr=clean_err, diff=clean_diff)
 
 def upgrade(m, mode="yes", force=False, default_release=None,
             use_apt_get=False,
@@ -1225,17 +1236,7 @@ def main():
     p = module.params
 
     if p['clean'] is True:
-        clean_rc, clean_out, clean_err = module.run_command(['apt-get', 'clean'])
-
-        if module._diff:
-            clean_diff = parse_diff(clean_out)
-        else:
-            clean_diff = {}
-        if clean_rc:
-            module.fail_json(msg="apt-get clean failed", stdout=clean_out, rc=clean_rc)
-        if clean_err:
-            module.fail_json(msg="apt-get clean failed: %s" % clean_err, stdout=clean_out, rc=clean_rc)
-        module.exit_json(changed=True, msg=clean_out, stdout=clean_out, stderr=clean_err, diff=clean_diff)
+        aptclean(module)
 
     if p['upgrade'] == 'no':
         p['upgrade'] = None
