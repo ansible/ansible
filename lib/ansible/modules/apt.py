@@ -1233,6 +1233,8 @@ def main():
             clean_diff = {}
         if clean_rc:
             module.fail_json(msg="apt-get clean failed", stdout=clean_out, rc=clean_rc)
+        if clean_err:
+            module.fail_json(msg="apt-get clean failed: %s" % clean_err, stdout=clean_out, rc=clean_rc)
         module.exit_json(changed=True, msg=clean_out, stdout=clean_out, stderr=clean_err, diff=clean_diff)
 
     if p['upgrade'] == 'no':
