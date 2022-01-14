@@ -7,9 +7,13 @@ Contributing to Ansible collections
 .. toctree::
    :maxdepth: 2
 
+   collection_development_process
    reporting_collections
+   documentation_contributions
    maintainers
    contributing_maintained_collections
+   other_tools_and_programs
+
 
 
 If you have a specific Ansible interest or expertise (for example, VMware, Linode, and so on, consider joining a :ref:`working group <working_group_list>`.

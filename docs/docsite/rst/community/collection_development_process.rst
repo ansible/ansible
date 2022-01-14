@@ -2,7 +2,7 @@
 
 ******************************************
 The Ansible Collections Development Cycle
-********************************************
+******************************************
 
 Ansible developers (including community contributors) add new features, fix bugs, and update code in many different repositories. The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-core``. Other repositories contain plugins and modules that enable Ansible to execute specific tasks, like adding a user to a particular database or configuring a particular network device. These repositories contain the source code for collections.
 
@@ -12,6 +12,7 @@ Development on collections also occurs at the macro and micro levels. Each colle
 
 .. contents::
    :local:
+
 
 Macro development: roadmaps, releases, and projects
 =====================================================================
