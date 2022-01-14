@@ -974,6 +974,7 @@ def cleanup(m, purge=False, force=False, operation=None,
 
     m.exit_json(changed=changed, stdout=out, stderr=err, diff=diff)
 
+
 def aptclean(m):
     clean_rc, clean_out, clean_err = m.run_command(['apt-get', 'clean'])
     if m._diff:
@@ -985,6 +986,7 @@ def aptclean(m):
     if clean_err:
         m.fail_json(msg="apt-get clean failed: %s" % clean_err, stdout=clean_out, rc=clean_rc)
     m.exit_json(changed=True, msg=clean_out, stdout=clean_out, stderr=clean_err, diff=clean_diff)
+
 
 def upgrade(m, mode="yes", force=False, default_release=None,
             use_apt_get=False,
