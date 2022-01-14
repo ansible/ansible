@@ -110,21 +110,38 @@ class Attribute:
         return other.priority >= self.priority
 
     def __get__(self, obj, obj_type=None):
-        value = getattr(obj, f'_{self.name}', Sentinel)
+        method = f'_get_attr_{self.name}'
+        if hasattr(obj, method):
+            # NOTE this appears to be not used in the codebase,
+            # _get_attr_connection has been replaced by ConnectionFieldAttribute.
+            # Leaving it here for test_attr_method from
+            # test/units/playbook/test_base.py to pass and for backwards compat.
+            if getattr(obj, '_squashed', False):
+                value = getattr(obj, f'_{self.name}', Sentinel)
+            else:
+                value = getattr(obj, method)()
+        else:
+            value = getattr(obj, f'_{self.name}', Sentinel)
 
         if value is Sentinel:
             value = self.default
             if callable(value):
                 value = value()
+                # FIXME call __set__?
                 setattr(obj, f'_{self.name}', value)
 
         return value
 
     def __set__(self, obj, value):
-        val = value() if callable(value) else value
-        setattr(obj, f'_{self.name}', val)
+        setattr(obj, f'_{self.name}', value)
         if self.alias is not None:
-            setattr(obj, f'_{self.alias}', val)
+            setattr(obj, f'_{self.alias}', value)
+
+    # NOTE this appears to be not needed in the codebase,
+    # leaving it here for test_attr_int_del from
+    # test/units/playbook/test_base.py to pass.
+    def __delete__(self, obj):
+        delattr(obj, f'_{self.name}')
 
 
 class NonInheritableFieldAttribute(Attribute):
@@ -145,7 +162,18 @@ class FieldAttribute(Attribute):
             try:
                 value = obj._get_parent_attribute(self.name)
             except AttributeError:
-                value = getattr(obj, f'_{self.name}', Sentinel)
+                method = f'_get_attr_{self.name}'
+                if hasattr(obj, method):
+                    # NOTE this appears to be not needed in the codebase,
+                    # _get_attr_connection has been replaced by ConnectionFieldAttribute.
+                    # Leaving it here for test_attr_method from
+                    # test/units/playbook/test_base.py to pass and for backwards compat.
+                    if getattr(obj, '_squashed', False):
+                        value = getattr(obj, f'_{self.name}', Sentinel)
+                    else:
+                        value = getattr(obj, method)()
+                else:
+                    value = getattr(obj, f'_{self.name}', Sentinel)
 
         if value is Sentinel:
             value = self.default
@@ -160,7 +188,7 @@ class ConnectionFieldAttribute(FieldAttribute):
     def __get__(self, obj, obj_type=None):
         from ansible.module_utils.compat.paramiko import paramiko
         from ansible.utils.ssh_functions import check_for_controlpersist
-        value = super(ConnectionFieldAttribute, self).__get__(obj, obj_type)
+        value = super().__get__(obj, obj_type)
 
         if value == 'smart':
             value = 'ssh'
