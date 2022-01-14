@@ -84,7 +84,7 @@ options:
     default: 'no'
   clean:
     description:
-      - Run the equivalent of C(apt-get clean) to clear out the local repository of retrieved package files. It removes everything but 
+      - Run the equivalent of C(apt-get clean) to clear out the local repository of retrieved package files. It removes everything but
         the lock file from /var/cache/apt/archives/ and /var/cache/apt/archives/partial/.
       - Recommended to run this as a stand-alone operation.
     type: bool
