@@ -162,8 +162,8 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         pc.prompt = False
         conn.become.prompt = False
-        pc.success_key = str(become_success_token)
-        conn.become.success = str(become_success_token)
+        pc.success_key = become_success_token
+        conn.become.success = become_success_token
         output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\nline 2\n%s\nline 3\n' % become_success_token, False)
         self.assertEqual(output, b'line 1\nline 2\nline 3\n')
         self.assertEqual(unprocessed, b'')
@@ -182,8 +182,8 @@ class TestConnectionBaseClass(unittest.TestCase):
 
         pc.prompt = False
         conn.become.prompt = True
-        pc.success_key = str(become_success_token)
-        conn.become.success = str(become_success_token)
+        pc.success_key = become_success_token
+        conn.become.success = become_success_token
         output, unprocessed = conn._examine_output(u'source', u'state', b'line 1\nline 2\ndebug1: %s\nline 3\n' % become_success_token, False)
         self.assertEqual(output, b'line 1\nline 2\ndebug1: %s\nline 3\n' % become_success_token)
         self.assertEqual(unprocessed, b'')
