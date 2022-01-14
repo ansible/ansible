@@ -1224,7 +1224,7 @@ def main():
 
     p = module.params
 
-    if p['clean'] == True:
+    if p['clean'] is True:
         clean_rc, clean_out, clean_err = module.run_command(['apt-get', 'clean'])
 
         if module._diff:
