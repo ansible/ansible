@@ -1125,6 +1125,7 @@ def main():
             policy_rc_d=dict(type='int', default=None),
             only_upgrade=dict(type='bool', default=False),
             force_apt_get=dict(type='bool', default=False),
+            clean=dict(type='bool', default=False),
             allow_unauthenticated=dict(type='bool', default=False, aliases=['allow-unauthenticated']),
             allow_downgrade=dict(type='bool', default=False, aliases=['allow-downgrade', 'allow_downgrades', 'allow-downgrades']),
             allow_change_held_packages=dict(type='bool', default=False),
@@ -1211,6 +1212,17 @@ def main():
     APT_GET_CMD = module.get_bin_path("apt-get")
 
     p = module.params
+
+    if p['clean'] == True:
+        clean_rc, clean_out, clean_err = module.run_command(['apt-get', 'clean'])
+
+        if module._diff:
+            clean_diff = parse_diff(clean_out)
+        else:
+            clean_diff = {}
+        if clean_rc:
+            module.fail_json(msg="apt-get clean failed", stdout=clean_out, rc=clean_rc)
+        module.exit_json(changed=True, msg=clean_out, stdout=clean_out, stderr=clean_err, diff=clean_diff)
 
     if p['upgrade'] == 'no':
         p['upgrade'] = None
