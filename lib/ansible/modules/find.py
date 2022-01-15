@@ -103,10 +103,9 @@ options:
     permissions:
         description:
             - Accepts a list of permissions to filter the results by, simmilar (but not equal!) to `find -perm`
-            - List Elements can e.g. be "o+r", "u-w" etc. 
-            - Having a '+' as 2nd char will exclude all files, that don't have the given permission
-            - Having a '-' as 2nd char will exclude all files, that have the given permission
-            - All permissions in the list are combined using `AND`
+            - Files that don't have any permission from the list, are excluded
+            - List Elements can e.g. be "o+r", "u+w" etc. 
+            - All permissions in the list are combined using `OR`
         type: list
     hidden:
         description:
@@ -401,23 +400,17 @@ def statinfo(st):
 
 def permission_filter(st, perm_list):
     '''filter files that have or have not a certain permission'''
-    def helper_check_boolattr(stinfo, perm, attr):
-        if perm[1] == '+':
-            return stinfo[attr]
-        if perm[1] == '-':
-            return not stinfo[attr]
-
     stinfo = statinfo(st)
     if perm_list is None:
         return True
     if iter(perm_list):
         for perm in perm_list:
             if perm[0].lower() == 'u':
-                return helper_check_boolattr(stinfo, perm, perm[2].lower() + 'usr')
+                return stinfo[perm[2].lower() + 'usr']
             elif perm[0].lower() == 'g':
-                return helper_check_boolattr(stinfo, perm, perm[2].lower() + 'grp')
+                return stinfo[perm[2].lower() + 'grp']
             elif perm[0].lower() == 'o':
-                return helper_check_boolattr(stinfo, perm, perm[2].lower() + 'oth')
+                return stinfo[perm[2].lower() + 'oth']
     return False
 
 def handle_walk_errors(e):
@@ -487,7 +480,7 @@ def main():
     # Check permissions parameter, if given
     if params['permissions'] is not None:
         for perm in params['permissions']:
-            if len(perm) != 3 or perm[0].lower() not in ['u', 'g', 'o'] or perm[1] not in ['+', '-'] or perm[2].lower() not in ['r', 'w', 'x']:
+            if len(perm) != 3 or perm[0].lower() not in ['u', 'g', 'o'] or perm[1]!= '+' or perm[2].lower() not in ['r', 'w', 'x']:
                 module.fail_json(permissions=params['permissions'], msg="'%s' is not valid permission in the format [u|g|o][+|-][r|w|x]" % to_native(perm))
 
     now = time.time()
