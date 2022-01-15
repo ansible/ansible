@@ -103,9 +103,9 @@ options:
     permissions:
         description:
             - Accepts a list of permissions to filter the results by. Similar (but not equal!) to `find -perm`
-            - Files that don't have any permission from the list, are excluded
-            - List Elements can e.g. be "o+r", "u+w" etc.
-            - All permissions in the list are combined using `OR`
+            - Unless the parameter is empty, files that don't have any permission from the list are excluded. 
+            - List elements can e.g. be "o+r", "u+w" etc.
+            - All permissions in the list are combined using `OR` - see examples for clarification
         type: list
         aliases: [ permission ]
         elements: str
@@ -216,6 +216,7 @@ EXAMPLES = r'''
         paths: /opt/myapp
         permissions:
           - u+x
+          
 - name: find all executable elements in a certain dir
     find: 
         paths: /opt/myapp
