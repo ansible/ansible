@@ -100,6 +100,14 @@ options:
         type: str
         choices: [ atime, ctime, mtime ]
         default: mtime
+    permissions:
+        description:
+            - Accepts a list of permissions to filter the results by, simmilar (but not equal!) to `find -perm`
+            - List Elements can e.g. be "o+r", "u-w" etc. 
+            - Having a '+' as 2nd char will exclude all files, that don't have the given permission
+            - Having a '-' as 2nd char will exclude all files, that have the given permission
+            - All permissions in the list are combined using `AND`
+        type: list
     hidden:
         description:
             - Set this to C(yes) to include hidden files, otherwise they will be ignored.
@@ -200,6 +208,12 @@ EXAMPLES = r'''
     patterns:
       - '^_[0-9]{2,4}_.*.log$'
       - '^[a-z]{1,5}_.*log$'
+
+- name: find only user executable files in a certain dir
+    find: 
+        paths: /opt/myapp
+        permissions:
+          - u+x
 
 '''
 
@@ -385,6 +399,26 @@ def statinfo(st):
         'isgid': bool(st.st_mode & stat.S_ISGID),
     }
 
+def permission_filter(st, perm_list):
+    '''filter files that have or have not a certain permission'''
+    def helper_check_boolattr(stinfo, perm, attr):
+        if perm[1] == '+':
+            return stinfo[attr]
+        if perm[1] == '-':
+            return not stinfo[attr]
+
+    stinfo = statinfo(st)
+    if perm_list is None:
+        return True
+    if iter(perm_list):
+        for perm in perm_list:
+            if perm[0].lower() == 'u':
+                return helper_check_boolattr(stinfo, perm, perm[2].lower() + 'usr')
+            elif perm[0].lower() == 'g':
+                return helper_check_boolattr(stinfo, perm, perm[2].lower() + 'grp')
+            elif perm[0].lower() == 'o':
+                return helper_check_boolattr(stinfo, perm, perm[2].lower() + 'oth')
+    return False
 
 def handle_walk_errors(e):
     raise e
@@ -400,6 +434,7 @@ def main():
             read_whole_file=dict(type='bool', default=False),
             file_type=dict(type='str', default="file", choices=['any', 'directory', 'file', 'link']),
             age=dict(type='str'),
+            permissions=dict(type='list', default=[], aliases=['permission'], elements='str'),
             age_stamp=dict(type='str', default="mtime", choices=['atime', 'ctime', 'mtime']),
             size=dict(type='str'),
             recurse=dict(type='bool', default=False),
@@ -449,6 +484,12 @@ def main():
         else:
             module.fail_json(size=params['size'], msg="failed to process size")
 
+    # Check permissions parameter, if given
+    if params['permissions'] is not None:
+        for perm in params['permissions']:
+            if len(perm) != 3 or perm[0].lower() not in ['u', 'g', 'o'] or perm[1] not in ['+', '-'] or perm[2].lower() not in ['r', 'w', 'x']:
+                module.fail_json(permissions=params['permissions'], msg="'%s' is not valid permission in the format [u|g|o][+|-][r|w|x]" % to_native(perm))
+
     now = time.time()
     msg = 'All paths examined'
     looked = 0
@@ -483,7 +524,9 @@ def main():
 
                     r = {'path': fsname}
                     if params['file_type'] == 'any':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex'])
+                            and agefilter(st, now, age, params['age_stamp'])
+                            and permission_filter(st, params['permissions'])):
 
                             r.update(statinfo(st))
                             if stat.S_ISREG(st.st_mode) and params['get_checksum']:
@@ -496,7 +539,9 @@ def main():
                                 filelist.append(r)
 
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex'])
+                            and agefilter(st, now, age, params['age_stamp'])
+                            and permission_filter(st, params['permissions'])):
 
                             r.update(statinfo(st))
                             filelist.append(r)
@@ -504,7 +549,8 @@ def main():
                     elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
                         if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
                            agefilter(st, now, age, params['age_stamp']) and \
-                           sizefilter(st, size) and contentfilter(fsname, params['contains'], params['read_whole_file']):
+                           sizefilter(st, size) and contentfilter(fsname, params['contains'], params['read_whole_file']) and \
+                           permission_filter(st, params['permissions']):
 
                             r.update(statinfo(st))
                             if params['get_checksum']:
@@ -512,7 +558,9 @@ def main():
                             filelist.append(r)
 
                     elif stat.S_ISLNK(st.st_mode) and params['file_type'] == 'link':
-                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
+                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex'])
+                            and agefilter(st, now, age, params['age_stamp'])
+                            and permission_filter(st, params['permissions'])):
 
                             r.update(statinfo(st))
                             filelist.append(r)
