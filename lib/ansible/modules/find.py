@@ -483,7 +483,7 @@ def main():
     if params['permissions'] is not None:
         for perm in params['permissions']:
             if len(perm) != 3 or perm[0].lower() not in ['u', 'g', 'o'] or perm[1] != '+' or perm[2].lower() not in ['r', 'w', 'x']:
-                module.fail_json(permissions=params['permissions'], msg="'%s' is not valid permission in the format [u|g|o][+|-][r|w|x]" % to_native(perm))
+                module.fail_json(permissions=params['permissions'], msg="'%s' is not valid permission in the format (u|g|o)+(r|w|x)" % to_native(perm))
 
     now = time.time()
     msg = 'All paths examined'
