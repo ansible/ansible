@@ -211,6 +211,15 @@ options:
         default: []
         version_added: "2.9"
 
+    clone_extra_args:
+        description:
+           - A list of extra arguments, to pass to git clone
+           - For availible options, see `man git`
+        type: list
+        elements: str
+        default: None
+        version_added: "2.13"
+
 requirements:
     - git>=1.7.1 (the command line tool)
 attributes:
@@ -277,6 +286,12 @@ EXAMPLES = '''
     dest: /src/ansible-examples
     single_branch: yes
     version: master
+
+- name: Example clone with extra_args
+  ansible.builtin.git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: /src/ansible-examples
+    clone_extra_args: "--no-checkout"
 
 - name: Avoid hanging when http(s) password is missing
   ansible.builtin.git:
@@ -523,7 +538,7 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
 
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
-          reference, refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch):
+          reference, refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch, clone_extra_args):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -551,6 +566,9 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
                         "HEAD, branches, tags or in combination with refspec.")
     if reference:
         cmd.extend(['--reference', str(reference)])
+
+    if clone_extra_args is not None:
+        cmd.extend(clone_extra_args)
 
     if single_branch:
         if git_version_used is None:
@@ -1153,6 +1171,7 @@ def main():
             archive=dict(type='path'),
             archive_prefix=dict(),
             separate_git_dir=dict(type='path'),
+            clone_extra_args=dict(type='list', default=None, aliases=['clone_extra_arg'], elements='str'),
         ),
         mutually_exclusive=[('separate_git_dir', 'bare'), ('accept_hostkey', 'accept_newhostkey')],
         required_by={'archive_prefix': ['archive']},
@@ -1180,6 +1199,7 @@ def main():
     archive = module.params['archive']
     archive_prefix = module.params['archive_prefix']
     separate_git_dir = module.params['separate_git_dir']
+    clone_extra_args = module.params['clone_extra_args']
 
     result = dict(changed=False, warnings=list())
 
@@ -1280,7 +1300,7 @@ def main():
             module.exit_json(**result)
         # there's no git config, so clone
         clone(git_path, module, repo, dest, remote, depth, version, bare, reference,
-              refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch)
+              refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch, clone_extra_args)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
