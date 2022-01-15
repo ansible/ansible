@@ -211,11 +211,18 @@ EXAMPLES = r'''
       - '^_[0-9]{2,4}_.*.log$'
       - '^[a-z]{1,5}_.*log$'
 
-- name: find only user executable files in a certain dir
-  find:
-    paths: /opt/myapp
-    permissions:
-      - u+x
+- name: find only user executable elements in a certain dir
+    find: 
+        paths: /opt/myapp
+        permissions:
+          - u+x
+- name: find all executable elements in a certain dir
+    find: 
+        paths: /opt/myapp
+        permissions:
+          - u+x
+          - g+x
+          - o+x
 
 '''
 
