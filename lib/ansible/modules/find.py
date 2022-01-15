@@ -102,7 +102,7 @@ options:
         default: mtime
     permissions:
         description:
-            - Accepts a list of permissions to filter the results by, simmilar (but not equal!) to `find -perm`
+            - Accepts a list of permissions to filter the results by. Similar (but not equal!) to `find -perm`
             - Files that don't have any permission from the list, are excluded
             - List Elements can e.g. be "o+r", "u+w" etc.
             - All permissions in the list are combined using `OR`
