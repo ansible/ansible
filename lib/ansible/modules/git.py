@@ -213,8 +213,8 @@ options:
 
     clone_extra_args:
         description:
-           - A list of extra arguments, to pass to git clone
-           - For availible options, see `man git`
+           - A list of additional arguments, to pass to git clone
+           - For availible options, see `man git clone`
         type: list
         elements: str
         default: None
