@@ -103,11 +103,25 @@ options:
     permissions:
         description:
             - Accepts a list of permissions to filter the results by. Similar (but not equal!) to `find -perm`
-            - Unless the parameter is empty, files that don't have any permission from the list are excluded. 
+            - Unless the parameter is empty, files that don't have any permission from the list are excluded.
             - List elements can e.g. be "o+r", "u+w" etc.
             - All permissions in the list are combined using `OR` - see examples for clarification
         type: list
         aliases: [ permission ]
+        elements: str
+        version_added: "2.13"
+    users:
+        description:
+            - If set, only elements owned by a user in the list are returned
+        type: list
+        aliases: [ user ]
+        elements: str
+        version_added: "2.13"
+    groups:
+        description:
+            - If set, only elements owned by a group in the list are returned
+        type: list
+        aliases: [ group ]
         elements: str
         version_added: "2.13"
     hidden:
@@ -212,18 +226,24 @@ EXAMPLES = r'''
       - '^[a-z]{1,5}_.*log$'
 
 - name: find only user executable elements in a certain dir
-    find: 
-        paths: /opt/myapp
-        permissions:
-          - u+x
-          
+  find:
+    paths: /opt/myapp
+    permissions:
+      - u+x
+
 - name: find all executable elements in a certain dir
-    find: 
-        paths: /opt/myapp
-        permissions:
-          - u+x
-          - g+x
-          - o+x
+  find:
+    paths: /opt/myapp
+    permissions:
+      - u+x
+      - g+x
+      - o+x
+
+- name: find all elements owned by user and group example
+  find:
+    paths: /etc
+    user: root
+    group: shadow
 
 '''
 
@@ -426,6 +446,22 @@ def permission_filter(st, perm_list):
     return False
 
 
+def owner_filter(st, users, groups):
+    '''filter files that do not belong to a certain owner/group'''
+    if (users is None or (iter(users) and len(users) < 1)) and \
+       (groups is None or (iter(groups) and len(groups) < 1)):
+        return True
+    if (iter(users) and len(users) > 0) or (iter(groups) and len(groups) > 0):
+        stinfo = statinfo(st)
+        if iter(users) and len(users) > 0:
+            if stinfo['pw_name'] not in users:
+                return False
+        if iter(groups) and len(groups) > 0:
+            if stinfo['gr_name'] not in groups:
+                return False
+    return True
+
+
 def handle_walk_errors(e):
     raise e
 
@@ -441,6 +477,8 @@ def main():
             file_type=dict(type='str', default="file", choices=['any', 'directory', 'file', 'link']),
             age=dict(type='str'),
             permissions=dict(type='list', default=[], aliases=['permission'], elements='str'),
+            users=dict(type='list', default=[], aliases=['user'], elements='str'),
+            groups=dict(type='list', default=[], aliases=['group'], elements='str'),
             age_stamp=dict(type='str', default="mtime", choices=['atime', 'ctime', 'mtime']),
             size=dict(type='str'),
             recurse=dict(type='bool', default=False),
@@ -530,9 +568,10 @@ def main():
 
                     r = {'path': fsname}
                     if params['file_type'] == 'any':
-                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex'])
-                           and agefilter(st, now, age, params['age_stamp'])
-                           and permission_filter(st, params['permissions'])):
+                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
+                           agefilter(st, now, age, params['age_stamp']) and \
+                           permission_filter(st, params['permissions']) and \
+                           owner_filter(st, params['users'], params['groups']):
 
                             r.update(statinfo(st))
                             if stat.S_ISREG(st.st_mode) and params['get_checksum']:
@@ -545,9 +584,10 @@ def main():
                                 filelist.append(r)
 
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
-                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex'])
-                           and agefilter(st, now, age, params['age_stamp'])
-                           and permission_filter(st, params['permissions'])):
+                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
+                           agefilter(st, now, age, params['age_stamp']) and \
+                           permission_filter(st, params['permissions']) and \
+                           owner_filter(st, params['users'], params['groups']):
 
                             r.update(statinfo(st))
                             filelist.append(r)
@@ -556,7 +596,8 @@ def main():
                         if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
                            agefilter(st, now, age, params['age_stamp']) and \
                            sizefilter(st, size) and contentfilter(fsname, params['contains'], params['read_whole_file']) and \
-                           permission_filter(st, params['permissions']):
+                           permission_filter(st, params['permissions']) and \
+                           owner_filter(st, params['users'], params['groups']):
 
                             r.update(statinfo(st))
                             if params['get_checksum']:
@@ -564,9 +605,10 @@ def main():
                             filelist.append(r)
 
                     elif stat.S_ISLNK(st.st_mode) and params['file_type'] == 'link':
-                        if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex'])
-                           and agefilter(st, now, age, params['age_stamp'])
-                           and permission_filter(st, params['permissions'])):
+                        if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
+                           agefilter(st, now, age, params['age_stamp']) and \
+                           permission_filter(st, params['permissions']) and \
+                           owner_filter(st, params['users'], params['groups']):
 
                             r.update(statinfo(st))
                             filelist.append(r)
