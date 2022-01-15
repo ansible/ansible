@@ -211,19 +211,11 @@ EXAMPLES = r'''
       - '^_[0-9]{2,4}_.*.log$'
       - '^[a-z]{1,5}_.*log$'
 
-- name: find only user executable elements in a certain dir
-    find: 
-        paths: /opt/myapp
-        permissions:
-          - u+x
-
-- name: find all executable elements in a certain dir
-    find: 
-        paths: /opt/myapp
-        permissions:
-          - u+x
-          - g+x
-          - o+x
+- name: find only user executable files in a certain dir
+  find:
+    paths: /opt/myapp
+    permissions:
+      - u+x
 
 '''
 
@@ -412,10 +404,10 @@ def statinfo(st):
 
 def permission_filter(st, perm_list):
     '''filter files that have or have not a certain permission'''
-    stinfo = statinfo(st)
     if perm_list is None or iter(perm_list) and len(perm_list) < 1:
         return True
     if iter(perm_list):
+        stinfo = statinfo(st)
         for perm in perm_list:
             if perm[0].lower() == 'u':
                 return stinfo[perm[2].lower() + 'usr']
