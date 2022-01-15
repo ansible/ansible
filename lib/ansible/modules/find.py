@@ -438,11 +438,14 @@ def permission_filter(st, perm_list):
         stinfo = statinfo(st)
         for perm in perm_list:
             if perm[0].lower() == 'u':
-                return stinfo[perm[2].lower() + 'usr']
+                if stinfo[perm[2].lower() + 'usr']:
+                    return True
             elif perm[0].lower() == 'g':
-                return stinfo[perm[2].lower() + 'grp']
+                if stinfo[perm[2].lower() + 'grp']:
+                    return True
             elif perm[0].lower() == 'o':
-                return stinfo[perm[2].lower() + 'oth']
+                if stinfo[perm[2].lower() + 'oth']:
+                    return True
     return False
 
 
