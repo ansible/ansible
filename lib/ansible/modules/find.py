@@ -412,7 +412,7 @@ def statinfo(st):
 
 def permission_filter(st, perm_list):
     '''filter files that have or have not a certain permission'''
-    if perm_list is None or iter(perm_list) and len(perm_list) < 1:
+    if perm_list is None or (iter(perm_list) and len(perm_list) < 1):
         return True
     if iter(perm_list):
         stinfo = statinfo(st)
