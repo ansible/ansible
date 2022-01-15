@@ -107,6 +107,9 @@ options:
             - List Elements can e.g. be "o+r", "u+w" etc.
             - All permissions in the list are combined using `OR`
         type: list
+        aliases: [ permission ]
+        elements: str
+        version_added: "2.13"
     hidden:
         description:
             - Set this to C(yes) to include hidden files, otherwise they will be ignored.
