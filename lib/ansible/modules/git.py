@@ -217,7 +217,8 @@ options:
            - For availible options, see `man git clone`
         type: list
         elements: str
-        default: None
+        aliases: [clone_extra_arg]
+        default: []
         version_added: "2.13"
 
 requirements:
@@ -567,7 +568,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
     if reference:
         cmd.extend(['--reference', str(reference)])
 
-    if clone_extra_args is not None:
+    if clone_extra_args is not None and iter(clone_extra_args) and len(clone_extra_args) > 0:
         cmd.extend(clone_extra_args)
 
     if single_branch:
@@ -1171,7 +1172,7 @@ def main():
             archive=dict(type='path'),
             archive_prefix=dict(),
             separate_git_dir=dict(type='path'),
-            clone_extra_args=dict(type='list', default=None, aliases=['clone_extra_arg'], elements='str'),
+            clone_extra_args=dict(type='list', default=[], aliases=['clone_extra_arg'], elements='str'),
         ),
         mutually_exclusive=[('separate_git_dir', 'bare'), ('accept_hostkey', 'accept_newhostkey')],
         required_by={'archive_prefix': ['archive']},
