@@ -104,7 +104,7 @@ options:
         description:
             - Accepts a list of permissions to filter the results by, simmilar (but not equal!) to `find -perm`
             - Files that don't have any permission from the list, are excluded
-            - List Elements can e.g. be "o+r", "u+w" etc. 
+            - List Elements can e.g. be "o+r", "u+w" etc.
             - All permissions in the list are combined using `OR`
         type: list
     hidden:
@@ -209,10 +209,10 @@ EXAMPLES = r'''
       - '^[a-z]{1,5}_.*log$'
 
 - name: find only user executable files in a certain dir
-    find: 
-        paths: /opt/myapp
-        permissions:
-          - u+x
+  find:
+    paths: /opt/myapp
+    permissions:
+      - u+x
 
 '''
 
@@ -398,10 +398,11 @@ def statinfo(st):
         'isgid': bool(st.st_mode & stat.S_ISGID),
     }
 
+
 def permission_filter(st, perm_list):
     '''filter files that have or have not a certain permission'''
     stinfo = statinfo(st)
-    if perm_list is None:
+    if perm_list is None or iter(perm_list) and len(perm_list) < 1:
         return True
     if iter(perm_list):
         for perm in perm_list:
@@ -412,6 +413,7 @@ def permission_filter(st, perm_list):
             elif perm[0].lower() == 'o':
                 return stinfo[perm[2].lower() + 'oth']
     return False
+
 
 def handle_walk_errors(e):
     raise e
@@ -480,7 +482,7 @@ def main():
     # Check permissions parameter, if given
     if params['permissions'] is not None:
         for perm in params['permissions']:
-            if len(perm) != 3 or perm[0].lower() not in ['u', 'g', 'o'] or perm[1]!= '+' or perm[2].lower() not in ['r', 'w', 'x']:
+            if len(perm) != 3 or perm[0].lower() not in ['u', 'g', 'o'] or perm[1] != '+' or perm[2].lower() not in ['r', 'w', 'x']:
                 module.fail_json(permissions=params['permissions'], msg="'%s' is not valid permission in the format [u|g|o][+|-][r|w|x]" % to_native(perm))
 
     now = time.time()
@@ -518,8 +520,8 @@ def main():
                     r = {'path': fsname}
                     if params['file_type'] == 'any':
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex'])
-                            and agefilter(st, now, age, params['age_stamp'])
-                            and permission_filter(st, params['permissions'])):
+                        and agefilter(st, now, age, params['age_stamp'])
+                        and permission_filter(st, params['permissions'])):
 
                             r.update(statinfo(st))
                             if stat.S_ISREG(st.st_mode) and params['get_checksum']:
@@ -533,8 +535,8 @@ def main():
 
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
                         if (pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex'])
-                            and agefilter(st, now, age, params['age_stamp'])
-                            and permission_filter(st, params['permissions'])):
+                        and agefilter(st, now, age, params['age_stamp'])
+                        and permission_filter(st, params['permissions'])):
 
                             r.update(statinfo(st))
                             filelist.append(r)
