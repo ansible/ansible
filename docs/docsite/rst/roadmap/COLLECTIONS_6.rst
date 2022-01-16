@@ -57,3 +57,10 @@ Ansible 6.x minor releases will occur approximately every three weeks if changes
 
 
 For more information, reach out on a mailing list or a chat channel - see :ref:`communication` for more details.
+
+Planned work
+============
+
+* Remove compatibility code which prevents parallel install of Ansible 6 with Ansible 2.9 or ansible-base 2.10
+* Stop installing files we have no use for.
+* Ship wheels (as ansible-core 2.13 will likely also do)
