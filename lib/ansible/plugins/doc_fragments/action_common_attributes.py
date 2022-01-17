@@ -21,6 +21,7 @@ attributes:
 '''
 
     ACTIONGROUPS = r'''
+options: {}
 attributes:
     action_group:
       description: Action is part of action_group(s), for convenient setting of module_defaults.
@@ -29,6 +30,7 @@ attributes:
 '''
 
     CONN = r'''
+options: {}
 attributes:
     become:
       description: Is usable alongside become keywords
@@ -39,12 +41,14 @@ attributes:
 '''
 
     FACTS = r'''
+options: {}
 attributes:
     facts:
       description: Action returns an C(ansible_facts) dictionary that will update existing host facts
 '''
 
     FILES = r'''
+options: {}
 attributes:
     safe_file_operations:
       description: Uses Ansbile's strict file operation functions to ensure proper permissions and avoid data corruption
@@ -53,6 +57,7 @@ attributes:
 '''
 
     FLOW = r'''
+options: {}
 attributes:
     action:
       description: Indicates this has a corresponding action plugin so some parts of the options can be executed on the controller
@@ -66,6 +71,7 @@ attributes:
             - This action will not work normally outside of lockstep strategies
 '''
     RAW = r'''
+options: {}
 attributes:
     raw:
       description: Indicates if an action takes a 'raw' or 'free form' string as an option and has it's own special parsing of it
