@@ -63,4 +63,4 @@ Planned work
 
 * Remove compatibility code which prevents parallel install of Ansible 6 with Ansible 2.9 or ansible-base 2.10
 * Stop installing files we have no use for.
-* Ship wheels (as ansible-core 2.13 will likely also do)
+* Ship Python wheels (as ansible-core 2.13 will likely also do) to improve installation performance
