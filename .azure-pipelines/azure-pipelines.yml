@@ -41,19 +41,6 @@ resources:
 pool: Standard
 
 stages:
-  - stage: Windows
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Server {0}
-          testFormat: windows/{0}/1
-          targets:
-            - test: 2012
-            - test: 2012-R2
-            - test: 2016
-            - test: 2019
-            - test: 2022
   - stage: Incidental_Windows
     displayName: Incidental Windows
     dependsOn: []
@@ -71,7 +58,6 @@ stages:
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:
-      - Windows
       - Incidental_Windows
     jobs:
       - template: templates/coverage.yml
