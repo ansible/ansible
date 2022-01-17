@@ -180,7 +180,7 @@ class _ComputedReqKindsMixin:
         return cls(req_name, '*', dir_path, 'dir', None)  # type: ignore[call-arg]
 
     @classmethod
-    def from_string(cls, collection_input, artifacts_manager):
+    def from_string(cls, collection_input, artifacts_manager, supplemental_signatures):
         req = {}
         if _is_concrete_artifact_pointer(collection_input):
             # Arg is a file path or URL to a collection
@@ -189,6 +189,7 @@ class _ComputedReqKindsMixin:
             req['name'], _sep, req['version'] = collection_input.partition(':')
             if not req['version']:
                 del req['version']
+        req['signatures'] = supplemental_signatures
 
         return cls.from_requirement_dict(req, artifacts_manager)
 

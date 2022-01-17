@@ -392,6 +392,11 @@ class GalaxyCLI(CLI):
                                    help='A file containing a list of collections to be verified.')
         verify_parser.add_argument('--keyring', dest='keyring', default='~/.ansible/pubring.kbx',
                                    help='The keyring used during signature verification')
+        verify_parser.add_argument('--signatures', dest='signatures',
+                                   help='Signature sources to verify the authenticity of the MANIFEST.json before installing the '
+                                        'collection from a Galaxy server. Use in conjunction with a positional collection name '
+                                        '(mutually exclusive with --requirements-file).')
+
 
     def add_install_options(self, parser, parents=None):
         galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
@@ -436,6 +441,10 @@ class GalaxyCLI(CLI):
                                         help='The keyring used during signature verification')
             install_parser.add_argument('--disable-gpg-verify', dest='disable_gpg_verify', action='store_true',
                                         help='Disable GPG signature verification when installing collections from a Galaxy server')
+            install_parser.add_argument('--signatures', dest='signatures',
+                                        help='Signature sources to verify the authenticity of the MANIFEST.json before installing the '
+                                             'collection from a Galaxy server. Use in conjunction with a positional collection name '
+                                             '(mutually exclusive with --requirements-file).')
         else:
             install_parser.add_argument('-r', '--role-file', dest='requirements',
                                         help='A file containing a list of roles to be installed.')
@@ -832,6 +841,7 @@ class GalaxyCLI(CLI):
 
     def _require_one_of_collections_requirements(
             self, collections, requirements_file,
+            signatures=None,
             artifacts_manager=None,
     ):
         if collections and requirements_file:
@@ -839,6 +849,12 @@ class GalaxyCLI(CLI):
         elif not collections and not requirements_file:
             raise AnsibleError("You must specify a collection name or a requirements file.")
         elif requirements_file:
+            if signatures is not None:
+                raise AnsibleError(
+                    "The --signatures option and --requirements-file are mutually exclusive. " \
+                    "Use the --signatures with positional collection_name args or provide a " \
+                    "'signatures' key for requirements in the --requirements-file."
+                )
             requirements_file = GalaxyCLI._resolve_path(requirements_file)
             requirements = self._parse_requirements_file(
                 requirements_file,
@@ -848,7 +864,7 @@ class GalaxyCLI(CLI):
         else:
             requirements = {
                 'collections': [
-                    Requirement.from_string(coll_input, artifacts_manager)
+                    Requirement.from_string(coll_input, artifacts_manager, signatures)
                     for coll_input in collections
                 ],
                 'roles': [],
@@ -1123,9 +1139,11 @@ class GalaxyCLI(CLI):
         ignore_errors = context.CLIARGS['ignore_errors']
         local_verify_only = context.CLIARGS['offline']
         requirements_file = context.CLIARGS['requirements']
+        signatures = context.CLIARGS['signatures']
 
         requirements = self._require_one_of_collections_requirements(
             collections, requirements_file,
+            signatures=signatures,
             artifacts_manager=artifacts_manager,
         )['collections']
 
@@ -1171,6 +1189,7 @@ class GalaxyCLI(CLI):
             collection_path = GalaxyCLI._resolve_path(context.CLIARGS['collections_path'])
             requirements = self._require_one_of_collections_requirements(
                 install_items, requirements_file,
+                signatures=context.CLIARGS.get('signatures'),
                 artifacts_manager=artifacts_manager,
             )
 
