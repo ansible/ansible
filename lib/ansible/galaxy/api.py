@@ -229,7 +229,7 @@ CollectionMetadata = collections.namedtuple('CollectionMetadata', ['namespace', 
 
 class CollectionVersionMetadata:
 
-    def __init__(self, namespace, name, version, download_url, artifact_sha256, dependencies):
+    def __init__(self, namespace, name, version, download_url, artifact_sha256, dependencies, signatures_url, signatures):
         """
         Contains common information about a collection on a Galaxy server to smooth through API differences for
         Collection and define a standard meta info for a collection.
@@ -247,6 +247,8 @@ class CollectionVersionMetadata:
         self.download_url = download_url
         self.artifact_sha256 = artifact_sha256
         self.dependencies = dependencies
+        self.signatures_url = signatures_url
+        self.signatures = signatures
 
 
 @functools.total_ordering
@@ -782,7 +784,7 @@ class GalaxyAPI:
 
         return CollectionVersionMetadata(data['namespace']['name'], data['collection']['name'], data['version'],
                                          data['download_url'], data['artifact']['sha256'],
-                                         data['metadata']['dependencies'])
+                                         data['metadata']['dependencies'], data.get('href'), data.get('signatures', []))
 
     @g_connect(['v2', 'v3'])
     def get_collection_versions(self, namespace, name):

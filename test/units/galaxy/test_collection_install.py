@@ -469,7 +469,7 @@ def test_build_requirement_from_name_with_prerelease(galaxy_server, monkeypatch,
     monkeypatch.setattr(galaxy_server, 'get_collection_versions', mock_get_versions)
 
     mock_get_info = MagicMock()
-    mock_get_info.return_value = api.CollectionVersionMetadata('namespace', 'collection', '2.0.1', None, None, {})
+    mock_get_info.return_value = api.CollectionVersionMetadata('namespace', 'collection', '2.0.1', None, None, {}, None, None)
     monkeypatch.setattr(galaxy_server, 'get_collection_version_metadata', mock_get_info)
 
     test_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
@@ -499,7 +499,7 @@ def test_build_requirment_from_name_with_prerelease_explicit(galaxy_server, monk
 
     mock_get_info = MagicMock()
     mock_get_info.return_value = api.CollectionVersionMetadata('namespace', 'collection', '2.0.1-beta.1', None, None,
-                                                               {})
+                                                               {}, None, None)
     monkeypatch.setattr(galaxy_server, 'get_collection_version_metadata', mock_get_info)
 
     test_dir = to_bytes(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
@@ -528,7 +528,7 @@ def test_build_requirement_from_name_second_server(galaxy_server, monkeypatch, t
     monkeypatch.setattr(galaxy_server, 'get_collection_versions', mock_get_versions)
 
     mock_get_info = MagicMock()
-    mock_get_info.return_value = api.CollectionVersionMetadata('namespace', 'collection', '1.0.3', None, None, {})
+    mock_get_info.return_value = api.CollectionVersionMetadata('namespace', 'collection', '1.0.3', None, None, {}, None, None)
     monkeypatch.setattr(galaxy_server, 'get_collection_version_metadata', mock_get_info)
 
     broken_server = copy.copy(galaxy_server)
@@ -615,7 +615,7 @@ def test_build_requirement_from_name_single_version(galaxy_server, monkeypatch, 
 
     mock_get_info = MagicMock()
     mock_get_info.return_value = api.CollectionVersionMetadata('namespace', 'collection', '2.0.0', None, None,
-                                                               {})
+                                                               {}, None, None)
     monkeypatch.setattr(galaxy_server, 'get_collection_version_metadata', mock_get_info)
 
     cli = GalaxyCLI(args=['ansible-galaxy', 'collection', 'install', 'namespace.collection:==2.0.0'])
@@ -651,7 +651,7 @@ def test_build_requirement_from_name_multiple_versions_one_match(galaxy_server, 
 
     mock_get_info = MagicMock()
     mock_get_info.return_value = api.CollectionVersionMetadata('namespace', 'collection', '2.0.1', None, None,
-                                                               {})
+                                                               {}, None, None)
     monkeypatch.setattr(galaxy_server, 'get_collection_version_metadata', mock_get_info)
 
     cli = GalaxyCLI(args=['ansible-galaxy', 'collection', 'install', 'namespace.collection:>=2.0.1,<2.0.2'])
@@ -685,7 +685,7 @@ def test_build_requirement_from_name_multiple_version_results(galaxy_server, mon
     monkeypatch.setattr(dependency_resolution.providers.CollectionDependencyProvider, 'find_matches', mock_find_matches)
 
     mock_get_info = MagicMock()
-    mock_get_info.return_value = api.CollectionVersionMetadata('namespace', 'collection', '2.0.5', None, None, {})
+    mock_get_info.return_value = api.CollectionVersionMetadata('namespace', 'collection', '2.0.5', None, None, {}, None, None)
     monkeypatch.setattr(galaxy_server, 'get_collection_version_metadata', mock_get_info)
 
     mock_get_versions = MagicMock()
@@ -719,7 +719,7 @@ def test_candidate_with_conflict(monkeypatch, tmp_path_factory, galaxy_server):
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(test_dir, validate_certs=False)
 
     mock_get_info = MagicMock()
-    mock_get_info.return_value = api.CollectionVersionMetadata('namespace', 'collection', '2.0.5', None, None, {})
+    mock_get_info.return_value = api.CollectionVersionMetadata('namespace', 'collection', '2.0.5', None, None, {}, None, None)
     monkeypatch.setattr(galaxy_server, 'get_collection_version_metadata', mock_get_info)
 
     mock_get_versions = MagicMock()
@@ -742,8 +742,8 @@ def test_dep_candidate_with_conflict(monkeypatch, tmp_path_factory, galaxy_serve
     concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(test_dir, validate_certs=False)
 
     mock_get_info_return = [
-        api.CollectionVersionMetadata('parent', 'collection', '2.0.5', None, None, {'namespace.collection': '!=1.0.0'}),
-        api.CollectionVersionMetadata('namespace', 'collection', '1.0.0', None, None, {}),
+        api.CollectionVersionMetadata('parent', 'collection', '2.0.5', None, None, {'namespace.collection': '!=1.0.0'}, None, None),
+        api.CollectionVersionMetadata('namespace', 'collection', '1.0.0', None, None, {}, None, None),
     ]
     mock_get_info = MagicMock(side_effect=mock_get_info_return)
     monkeypatch.setattr(galaxy_server, 'get_collection_version_metadata', mock_get_info)
@@ -775,7 +775,7 @@ def test_install_installed_collection(monkeypatch, tmp_path_factory, galaxy_serv
     monkeypatch.setattr(Display, 'display', mock_display)
 
     mock_get_info = MagicMock()
-    mock_get_info.return_value = api.CollectionVersionMetadata('namespace', 'collection', '1.2.3', None, None, {})
+    mock_get_info.return_value = api.CollectionVersionMetadata('namespace', 'collection', '1.2.3', None, None, {}, None, None)
     monkeypatch.setattr(galaxy_server, 'get_collection_version_metadata', mock_get_info)
 
     mock_get_versions = MagicMock(return_value=['1.2.3', '1.3.0'])

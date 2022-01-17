@@ -39,6 +39,7 @@ from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.galaxy.dependency_resolution.dataclasses import _GALAXY_YAML
 from ansible.galaxy.user_agent import user_agent
+from ansible.galaxy.api import GalaxyAPI
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.six import raise_from
@@ -74,9 +75,36 @@ class ConcreteArtifactsManager:
         self._galaxy_artifact_cache = {}  # type: Dict[Union[Candidate, Requirement], bytes]
         self._artifact_meta_cache = {}  # type: Dict[bytes, Dict[str, Optional[Union[str, List[str], Dict[str, str]]]]]
         self._galaxy_collection_cache = {}  # type: Dict[Union[Candidate, Requirement], Tuple[str, str, GalaxyToken]]
+        self._galaxy_collection_origin_cache = {}
         self._b_working_directory = b_working_directory  # type: bytes
 
         self.keyring = keyring
+
+    def get_galaxy_artifact_source_info(self, collection):
+        if not (collection.is_online_index_pointer and isinstance(collection.src, GalaxyAPI)):
+            return {}
+
+        server = collection.src.api_server
+
+        try:
+            download_url, _dummy, _dummy = self._galaxy_collection_cache[collection]
+            signatures_url, signatures = self._galaxy_collection_origin_cache[collection]
+        except KeyError as key_err:
+            raise RuntimeError(
+                'The is no known source for {coll!s}'.
+                format(coll=collection),
+            ) from key_err
+
+        return {
+            "info_format": "1.0.0",
+            "namespace": collection.namespace,
+            "name": collection.name,
+            "version": collection.ver,
+            "server": server,
+            "version_url": signatures_url,
+            "download_url": download_url,
+            "signatures": signatures,
+        }
 
     def get_galaxy_artifact_path(self, collection):
         # type: (Union[Candidate, Requirement]) -> bytes
@@ -282,7 +310,7 @@ class ConcreteArtifactsManager:
         self._artifact_meta_cache[collection.src] = collection_meta
         return collection_meta
 
-    def save_collection_source(self, collection, url, sha256_hash, token):
+    def save_collection_source(self, collection, url, sha256_hash, token, signatures_url, signatures):
         # type: (Candidate, str, str, GalaxyToken) -> None
         """Store collection URL, SHA256 hash and Galaxy API token.
 
@@ -290,6 +318,7 @@ class ConcreteArtifactsManager:
         download Galaxy-based collections with ``get_galaxy_artifact_path()``.
         """
         self._galaxy_collection_cache[collection] = url, sha256_hash, token
+        self._galaxy_collection_origin_cache[collection] = signatures_url, signatures
 
     @classmethod
     @contextmanager

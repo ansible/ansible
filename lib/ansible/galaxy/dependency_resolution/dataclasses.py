@@ -12,6 +12,7 @@ from collections import namedtuple
 from collections.abc import MutableSequence
 from glob import iglob
 from urllib.parse import urlparse
+from yaml import safe_load
 
 try:
     from typing import TYPE_CHECKING
@@ -33,6 +34,7 @@ if TYPE_CHECKING:
 from ansible.errors import AnsibleError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 
@@ -40,7 +42,7 @@ from ansible.utils.display import Display
 _ALLOW_CONCRETE_POINTER_IN_SOURCE = False  # NOTE: This is a feature flag
 _GALAXY_YAML = b'galaxy.yml'
 _MANIFEST_JSON = b'MANIFEST.json'
-
+_SOURCE_METADATA_FILE = b'GALAXY.yml'
 
 display = Display()
 
@@ -106,6 +108,36 @@ def _is_concrete_artifact_pointer(tested_str):
             _is_collection_namespace_dir,
         )
     )
+
+
+def _validate_v1_source_info_schema(namespace, name, version, metadata):
+    v1_schema = {
+        "info_format": {"value": "1.0.0"},
+        "download_url": {"type": str},
+        "version_url": {"type": str},
+        "server": {"type": str},
+        "signatures": {"type": list},
+        "name": {"value": name},
+        "namespace": {"value": namespace},
+        "version": {"value": version},
+    }
+    v1_signatures_subkeys = {"signature", "pubkey_fingerprint", "signing_service", "pulp_created"}
+
+    metadata_errors = []
+    if (missing := set(v1_schema.keys()).difference(set(metadata.keys()))):
+        metadata_errors.append(f"Missing keys {', '.join(missing)}")
+    for k in set(v1_schema.keys()).intersection(set(metadata.keys())):
+        if "value" in v1_schema[k] and metadata[k] != v1_schema[k]["value"]:
+            metadata_errors.append(f"Key {k} must be of value \'{v1_schema[k]['value']}\'")
+        if "type" in v1_schema[k] and not isinstance(metadata[k], v1_schema[k]["type"]):
+            metadata_errors.append(f"Key {k} must be of type \'{v1_schema[k]['type']}\'")
+        if k == 'signatures':
+            for signature_info in metadata[k]:
+                if (missing := v1_signatures_subkeys.difference(set(signature_info.keys()))):
+                    metadata_errors.append(f"Missing key 'signatures' subkeys {', '.join(missing)}")
+                if any(not isinstance(signature_info[subkey], str) for subkey in v1_signatures_subkeys):
+                    metadata_errors.append("Key 'signatures' subkeys must be of type 'str'")
+    return metadata_errors
 
 
 class _ComputedReqKindsMixin:
@@ -416,6 +448,47 @@ class _ComputedReqKindsMixin:
     @property
     def is_online_index_pointer(self):
         return not self.is_concrete_artifact
+
+    @property
+    def source_info(self):
+        return self._get_validated_source_info()
+
+    def _get_validated_source_info(self):
+        if self.type != "dir" or self.src is None or not _is_collection_dir(self.src):
+            return None
+
+        b_dir_name = to_bytes(f"{self.namespace}.{self.name}-{self.ver}.info", errors="surrogate_or_strict")
+        b_path_parts = self.src.split(to_bytes(os.path.sep, errors="surrogate_or_strict"))[0:-2]
+        b_source_info_path = os.path.join(
+            to_bytes(os.path.sep).join(b_path_parts),
+            b_dir_name,
+            _SOURCE_METADATA_FILE
+        )
+        source_info_path = to_text(b_source_info_path, errors='surrogate_or_strict')
+
+        if not os.path.isfile(b_source_info_path):
+            return None
+
+        try:
+            with open(b_source_info_path, mode='rb') as fd:
+                metadata = safe_load(fd)
+        except OSError as e:
+            display.warning(
+                f"Error getting collection source information at '{source_info_path}': {to_text(e, errors='surrogate_or_strict')}"
+            )
+            return None
+
+        if not isinstance(metadata, MutableMapping):
+            display.warning(f"Error getting collection source information at '{source_info_path}': expected a YAML dictionary")
+            return None
+
+        schema_errors = _validate_v1_source_info_schema(self.namespace, self.name, self.ver, metadata)
+        if schema_errors:
+            display.warning(f"Ignoring source metadata file at {source_info_path} due to the following errors:")
+            display.warning("\n".join(schema_errors))
+            display.warning(f"Correct the source metadata file by reinstalling the collection {self}")
+            return None
+        return metadata
 
 
 class Requirement(

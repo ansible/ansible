@@ -135,6 +135,8 @@ display = Display()
 MANIFEST_FORMAT = 1
 MANIFEST_FILENAME = 'MANIFEST.json'
 
+SOURCE_METADATA_FILE = 'GALAXY.yml'
+
 ModifiedContent = namedtuple('ModifiedContent', ['filename', 'expected', 'installed'])
 
 
@@ -191,18 +193,26 @@ def verify_local_collection(
             result.success = False
             return result
 
+    b_manifest_file = os.path.join(b_collection_path, to_bytes(MANIFEST_FILENAME))
+    signatures = []
+    if verify_local_only and local_collection.source_info is not None:
+        signatures = [info["signature"] for info in local_collection.source_info["signatures"]]
+    elif not verify_local_only and remote_collection.signatures:
+        signatures = remote_collection.signatures
+    for signature in signatures:
+        b_signature = to_bytes(signature, errors="surrogate_or_strict")
+        if not verify_file_signature(b_manifest_file, b_signature, artifacts_manager.keyring):
+            result.success = False
+
+    if not result.success:
+        return result
+    elif signatures:
+        display.vvvv(f"GnuPG signature verification succeeded, verifying contents of {local_collection}")
+
     if verify_local_only:
         # since we're not downloading this, just seed it with the value from disk
         manifest_hash = get_hash_from_validation_source(MANIFEST_FILENAME)
     elif remote_collection.signatures:
-        b_manifest_file = os.path.join(b_collection_path, b'MANIFEST.json')
-        for signature in remote_collection.signatures:
-            b_detached_signature = to_bytes(signature, errors='surrogate_or_strict')
-            if not verify_file_signature(b_manifest_file, b_detached_signature, artifacts_manager.keyring):
-                result.success = False
-        if not result.success:
-            return result
-        display.vvvv(f"GnuPG signature verification succeeded, verifying contents of {local_collection}")
         manifest_hash = get_hash_from_validation_source(MANIFEST_FILENAME)
     else:
         # fetch remote
@@ -1125,9 +1135,13 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
         u"Installing '{coll!s}' to '{path!s}'".
         format(coll=to_text(collection), path=collection_path),
     )
+    metadata_path = os.path.join(path, f"{collection.namespace}.{collection.name}-{collection.ver}.info")
+    b_metadata_path = to_bytes(metadata_path, errors='surrogate_or_strict')
 
     if os.path.exists(b_collection_path):
         shutil.rmtree(b_collection_path)
+    if os.path.exists(b_metadata_path):
+        shutil.rmtree(b_metadata_path)
 
     if collection.is_dir:
         install_src(collection, b_artifact_path, b_collection_path, artifacts_manager)
@@ -1139,11 +1153,32 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
             collection.signatures,
             artifacts_manager.keyring
         )
+        write_source_metadata(
+            collection,
+            b_metadata_path,
+            artifacts_manager
+        )
 
     display.display(
         '{coll!s} was installed successfully'.
         format(coll=to_text(collection)),
     )
+
+
+def write_source_metadata(collection, b_metadata_path, artifacts_manager):
+    source_data = artifacts_manager.get_galaxy_artifact_source_info(collection)
+    b_yaml_source_data = to_bytes(yaml_dump(source_data), errors='surrogate_or_strict')
+    dest_file = os.path.join(b_metadata_path, to_bytes(SOURCE_METADATA_FILE))
+    try:
+        os.mkdir(b_metadata_path, mode=0o0755)
+        with open(dest_file, mode='w+b') as fd:
+            os.chmod(fd.name, 0o0644)
+            fd.write(b_yaml_source_data)
+    except Exception:
+        # Ensure we don't leave the dir behind in case of a failure.
+        if os.path.isdir(b_metadata_path):
+            shutil.rmtree(b_metadata_path)
+        raise
 
 
 def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatures, keyring):

@@ -144,6 +144,8 @@ class MultiGalaxyAPIProxy:
                     version_metadata.download_url,
                     version_metadata.artifact_sha256,
                     api.token,
+                    version_metadata.signatures_url,
+                    version_metadata.signatures,
                 )
                 return version_metadata
 
