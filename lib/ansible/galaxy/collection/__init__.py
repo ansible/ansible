@@ -274,23 +274,20 @@ def verify_local_collection(
 
 
 def verify_file_signature(b_manifest_file, b_detached_signature, keyring):
-    gpg_result, rc = run_gpg_verify(b_manifest_file, b_detached_signature, keyring, display)
+    gpg_result, gpg_verification_rc = run_gpg_verify(b_manifest_file, b_detached_signature, keyring, display)
 
-    errors = None
-    if gpg_result:
-        errors = parse_gpg_errors(gpg_result)
-
-    if errors:
+    if gpg_result and (errors := parse_gpg_errors(gpg_result)):
         verify_failed = "Signature verification failed:"
         reasons = set(error.explain() for error in errors)
         for reason in reasons:
             verify_failed += f'\n      * {reason}'
         display.display(verify_failed)
         return False
-    if rc:
-        display.display(f"Unexpected error: GnuPG signature verification failed with the return code {rc} and output {gpg_result}")
-        return False
-    return True
+    if gpg_verification_rc:
+        display.display(
+            f"Unexpected error: GnuPG signature verification failed with the return code {gpg_verification_rc} and output {gpg_result}"
+        )
+    return not gpg_verification_rc
 
 
 def build_collection(u_collection_path, u_output_path, force):
@@ -1196,7 +1193,7 @@ def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatur
             _extract_tar_file(collection_tar, MANIFEST_FILENAME, b_collection_path, b_temp_path)
 
             if signatures:
-                b_manifest_file = os.path.join(b_collection_path, b'MANIFEST.json')
+                b_manifest_file = os.path.join(b_collection_path, to_bytes(MANIFEST_FILENAME))
                 failed_verify = any(
                     not verify_file_signature(b_manifest_file, signature, keyring)
                     for signature in signatures

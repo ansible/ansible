@@ -35,21 +35,23 @@ from ansible.utils.version import SemanticVersion
 from collections.abc import Set
 from resolvelib import AbstractProvider
 
-PINNED_CANDIDATE_ATTRS = ('fqcn', 'ver', 'src', 'type')
-
 
 class PinnedCandidateRequests(Set):
+    CANDIDATE_ATTRS = ('fqcn', 'ver', 'src', 'type')
+
     def __init__(self, candidates):
-        self.candidates = set(candidates)
+        self._candidates = set(candidates)
 
     def __iter__(self):
-        return iter(self.candidates)
+        return iter(self._candidates)
 
     def __contains__(self, value):
-        for candidate in self.candidates:
-            for attr in PINNED_CANDIDATE_ATTRS:
-                if not hasattr(value, attr):
-                    return False
+        if not isinstance(value, Candidate):
+            raise ValueError(
+                "Expected a Candidate object but got {value} ({type(value)})"
+            )
+        for candidate in self._candidates:
+            for attr in PinnedCandidateRequests.CANDIDATE_ATTRS:
                 if getattr(value, attr) != getattr(candidate, attr):
                     break
             else:
@@ -57,7 +59,7 @@ class PinnedCandidateRequests(Set):
         return False
 
     def __len__(self):
-        return len(self.candidates)
+        return len(self._candidates)
 
 
 class CollectionDependencyProvider(AbstractProvider):
