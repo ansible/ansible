@@ -621,14 +621,14 @@ class TaskExecutor:
                         self._final_q.send_callback(
                             'v2_runner_on_async_failed',
                             TaskResult(self._host.name,
-                                       self._task,    # We send the full task here, because the controller knows nothing about it, the TE created it
+                                       self._task._uuid,
                                        result,
                                        task_fields=self._task.dump_attrs()))
                     else:
                         self._final_q.send_callback(
                             'v2_runner_on_async_ok',
                             TaskResult(self._host.name,
-                                       self._task,    # We send the full task here, because the controller knows nothing about it, the TE created it
+                                       self._task._uuid,
                                        result,
                                        task_fields=self._task.dump_attrs()))
 
@@ -849,7 +849,7 @@ class TaskExecutor:
                     'v2_runner_on_async_poll',
                     TaskResult(
                         self._host.name,
-                        async_task,  # We send the full task here, because the controller knows nothing about it, the TE created it
+                        async_task._uuid,
                         async_result,
                         task_fields=self._task.dump_attrs(),
                     ),
