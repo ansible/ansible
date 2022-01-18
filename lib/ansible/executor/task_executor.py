@@ -851,7 +851,7 @@ class TaskExecutor:
                         self._host.name,
                         async_task._uuid,
                         async_result,
-                        task_fields=self._task.dump_attrs(),
+                        task_fields=async_task.dump_attrs(),
                     ),
                 )
 
