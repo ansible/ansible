@@ -1,0 +1,3 @@
+bugfixes:
+- async - Improve performance of sending async callback events by never sending the full task through the queue
+  (https://github.com/ansible/ansible/issues/76729)
