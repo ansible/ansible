@@ -1486,6 +1486,8 @@ INTERPRETER_PYTHON_DISTRO_MAP:
       '10': /usr/bin/python3
     fedora:
       '23': /usr/bin/python3
+    gentoo:
+      '2': /usr/bin/python
     oracle: *rhelish
     redhat: *rhelish
     rhel: *rhelish
