@@ -44,7 +44,7 @@ else
 fi
 # The below is an alternative to readlink -fn which doesn't exist on macOS
 # Source: http://stackoverflow.com/a/1678636
-FULL_PATH=$($PYTHON_BIN -c "import os; print(os.path.realpath('$HACKING_DIR'))")
+FULL_PATH=$("$PYTHON_BIN" -c "import os; print(os.path.realpath('$HACKING_DIR'))")
 export ANSIBLE_HOME="$(dirname "$FULL_PATH")"
 
 PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
@@ -70,7 +70,7 @@ gen_egg_info()
         # see https://github.com/ansible/ansible/pull/11967
         \rm -rf "$PREFIX_PYTHONPATH"/ansible*.egg-info
     fi
-    $PYTHON_BIN setup.py egg_info
+    "$PYTHON_BIN" setup.py egg_info
 }
 
 if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
