@@ -1,8 +1,8 @@
 .. _colllections_contributions:
 
-************************************
-Contributing to Ansible collections
-************************************
+*************************************
+Ansible Collections Contributor Guide
+*************************************
 
 .. toctree::
    :maxdepth: 2

@@ -42,6 +42,7 @@ Ansible releases a new major release approximately twice a year. The core applic
    community/index
    community/contributions_collections
    community/maintainers
+   community/contributions
    community/advanced_index
    dev_guide/style_guide/index
 

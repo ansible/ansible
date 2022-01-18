@@ -1,8 +1,10 @@
 .. _advanced_community_guide:
 
 **********************************************
-Guidelines for specific types of contributors
+Advanced Contributor Guide
 **********************************************
+
+This guide focuses on contributors who are committers, GitHub admins, or release managers.
 
 .. toctree::
    :maxdepth: 1

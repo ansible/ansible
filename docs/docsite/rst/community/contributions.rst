@@ -1,8 +1,8 @@
 .. _community_contributions:
 
-*****************************
-Contributing to ansible-core
-*****************************
+********************************
+ansible-core Contributors Guide
+********************************
 
 .. toctree::
    :maxdepth: 2
