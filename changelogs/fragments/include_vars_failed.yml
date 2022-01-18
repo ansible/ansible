@@ -1,0 +1,2 @@
+bugfixes:
+  - include_vars, properly initialize variable as there is corner case in which it can end up referenced and not defined

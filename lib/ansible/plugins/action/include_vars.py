@@ -100,6 +100,7 @@ class ActionModule(ActionBase):
         self._set_args()
 
         results = dict()
+        failed = False
         if self.source_dir:
             self._set_dir_defaults()
             self._set_root_dir()
@@ -172,13 +173,16 @@ class ActionModule(ActionBase):
                 )
                 self.source_dir = path.join(current_dir, self.source_dir)
 
+    def _log_walk(self, error):
+        self._display.vvv('Issue with walking through "%s": %s' % (to_native(error.filename), to_native(error)))
+
     def _traverse_dir_depth(self):
         """ Recursively iterate over a directory and sort the files in
             alphabetical order. Do not iterate pass the set depth.
             The default depth is unlimited.
         """
         current_depth = 0
-        sorted_walk = list(walk(self.source_dir))
+        sorted_walk = list(walk(self.source_dir, onerror=self._log_walk))
         sorted_walk.sort(key=lambda x: x[0])
         for current_root, current_dir, current_files in sorted_walk:
             current_depth += 1
