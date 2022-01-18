@@ -239,11 +239,18 @@ EXAMPLES = r'''
       - g+x
       - o+x
 
-- name: find all elements owned by user and group example
+- name: find all elements owned by user and group root:shadow
   find:
     paths: /etc
     user: root
     group: shadow
+
+- name: find all elements owned by one of the user in a given list
+  find:
+    paths: /etc
+    users: 
+      - user1
+      - user2
 
 '''
 
