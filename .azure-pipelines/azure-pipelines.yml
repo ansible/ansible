@@ -50,6 +50,7 @@ stages:
           nameFormat: Server {0}
           testFormat: i/windows/{0}
           targets:
+            - test: 2012
             - test: 2012-R2
             - test: 2016
             - test: 2019
