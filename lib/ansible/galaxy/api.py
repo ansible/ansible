@@ -875,5 +875,28 @@ class GalaxyAPI:
 
     @g_connect(['v2', 'v3'])
     def get_collection_signatures(self, namespace, name, version):
-        # FIXME
-        return []
+        """
+        Gets the collection signatures from the Galaxy server about a specific Collection version.
+
+        :param namespace: The collection namespace.
+        :param name: The collection name.
+        :param version: Version of the collection to get the information for.
+        :return: CollectionVersionMetadata about the collection at the version requested.
+        :return: A list of signature strings.
+        """
+        api_path = self.available_api_versions.get('v3', self.available_api_versions.get('v2'))
+        url_paths = [self.api_server, api_path, 'collections', namespace, name, 'versions', version, '/']
+
+        n_collection_url = _urljoin(*url_paths)
+        error_context_msg = 'Error when getting collection version metadata for %s.%s:%s from %s (%s)' \
+                            % (namespace, name, version, self.name, self.api_server)
+        data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg, cache=True)
+        self._set_cache()
+
+        try:
+            return [
+                signature_info["signature"] for signature_info in data["signatures"]
+            ]
+        except KeyError:
+            display.vvvv("Server {self._api_server} has not signed {namespace}.{name}:{version}")
+            return []
