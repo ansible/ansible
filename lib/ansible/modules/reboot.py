@@ -104,7 +104,7 @@ author:
 
 EXAMPLES = r'''
 - name: Unconditionally reboot the machine with all defaults
-  ransible.builtin.eboot:
+  ansible.builtin.reboot:
 
 - name: Reboot a slow machine that might have lots of updates to apply
   ansible.builtin.reboot:
