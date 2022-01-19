@@ -392,10 +392,10 @@ class GalaxyCLI(CLI):
                                    help='A file containing a list of collections to be verified.')
         verify_parser.add_argument('--keyring', dest='keyring', default='~/.ansible/pubring.kbx',
                                    help='The keyring used during signature verification')
-        verify_parser.add_argument('--signatures', dest='signatures',
-                                   help='Signature sources to verify the authenticity of the MANIFEST.json before installing the '
-                                        'collection from a Galaxy server. Use in conjunction with a positional collection name '
-                                        '(mutually exclusive with --requirements-file).')
+        verify_parser.add_argument('--signature', dest='signatures', action='append',
+                                   help='An additional signature source to verify the authenticity of the MANIFEST.json before using '
+                                        'it to verify the rest of the contents of a collection from a Galaxy server. Use in '
+                                        'conjunction with a positional collection name (mutually exclusive with --requirements-file).')
 
     def add_install_options(self, parser, parents=None):
         galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
@@ -441,10 +441,10 @@ class GalaxyCLI(CLI):
             install_parser.add_argument('--disable-gpg-verify', dest='disable_gpg_verify', action='store_true',
                                         default=C.GALAXY_DISABLE_GPG_VERIFY,
                                         help='Disable GPG signature verification when installing collections from a Galaxy server')
-            install_parser.add_argument('--signatures', dest='signatures',
-                                        help='Signature sources to verify the authenticity of the MANIFEST.json before installing the '
-                                             'collection from a Galaxy server. Use in conjunction with a positional collection name '
-                                             '(mutually exclusive with --requirements-file).')
+            install_parser.add_argument('--signature', dest='signatures', action='append',
+                                        help='An additional signature source to verify the authenticity of the MANIFEST.json before '
+                                             'installing the collection from a Galaxy server. Use in conjunction with a positional '
+                                             'collection name (mutually exclusive with --requirements-file).')
         else:
             install_parser.add_argument('-r', '--role-file', dest='requirements',
                                         help='A file containing a list of roles to be installed.')
@@ -1141,6 +1141,8 @@ class GalaxyCLI(CLI):
         local_verify_only = context.CLIARGS['offline']
         requirements_file = context.CLIARGS['requirements']
         signatures = context.CLIARGS['signatures']
+        if signatures is not None:
+            signatures = list(signatures)
 
         requirements = self._require_one_of_collections_requirements(
             collections, requirements_file,
@@ -1175,6 +1177,9 @@ class GalaxyCLI(CLI):
         install_items = context.CLIARGS['args']
         requirements_file = context.CLIARGS['requirements']
         collection_path = None
+        signatures = context.CLIARGS.get('signatures')
+        if signatures is not None:
+            signatures = list(signatures)
 
         if requirements_file:
             requirements_file = GalaxyCLI._resolve_path(requirements_file)
@@ -1190,7 +1195,7 @@ class GalaxyCLI(CLI):
             collection_path = GalaxyCLI._resolve_path(context.CLIARGS['collections_path'])
             requirements = self._require_one_of_collections_requirements(
                 install_items, requirements_file,
-                signatures=context.CLIARGS.get('signatures'),
+                signatures=signatures,
                 artifacts_manager=artifacts_manager,
             )
 
