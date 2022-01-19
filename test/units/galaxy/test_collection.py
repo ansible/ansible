@@ -218,7 +218,49 @@ def server_config(monkeypatch):
 
 
 @pytest.mark.parametrize('global_ignore_certs', [True, False])
-def test_validate_certs(global_ignore_certs, server_config, monkeypatch):
+def test_validate_certs(global_ignore_certs, monkeypatch):
+    cli_args = [
+        'ansible-galaxy',
+        'collection',
+        'install',
+        'namespace.collection:1.0.0',
+    ]
+    if global_ignore_certs:
+        cli_args.append('--ignore-certs')
+
+    galaxy_cli = GalaxyCLI(args=cli_args)
+    mock_execute_install = MagicMock()
+    monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
+    galaxy_cli.run()
+
+    assert len(galaxy_cli.api_servers) == 1
+    assert galaxy_cli.api_servers[0].validate_certs is not global_ignore_certs
+
+
+@pytest.mark.parametrize('global_ignore_certs', [True, False])
+def test_validate_certs_with_server_url(global_ignore_certs, monkeypatch):
+    cli_args = [
+        'ansible-galaxy',
+        'collection',
+        'install',
+        'namespace.collection:1.0.0',
+        '-s',
+        'https://galaxy.ansible.com'
+    ]
+    if global_ignore_certs:
+        cli_args.append('--ignore-certs')
+
+    galaxy_cli = GalaxyCLI(args=cli_args)
+    mock_execute_install = MagicMock()
+    monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
+    galaxy_cli.run()
+
+    assert len(galaxy_cli.api_servers) == 1
+    assert galaxy_cli.api_servers[0].validate_certs is not global_ignore_certs
+
+
+@pytest.mark.parametrize('global_ignore_certs', [True, False])
+def test_validate_certs_with_server_config(global_ignore_certs, server_config, monkeypatch):
     get_plugin_options = MagicMock(side_effect=server_config)
     monkeypatch.setattr(C.config, 'get_plugin_options', get_plugin_options)
 
