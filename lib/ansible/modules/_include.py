@@ -58,7 +58,7 @@ EXAMPLES = r'''
         msg: play1
 
 - name: Include a play after another play
-  include: otherplays.yaml
+  ansible.builtin.include: otherplays.yaml
 
 
 - hosts: all
