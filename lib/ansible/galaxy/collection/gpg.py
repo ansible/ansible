@@ -8,8 +8,10 @@ from ansible.module_utils.urls import open_url
 
 import os
 import subprocess
+import sys
 
 from dataclasses import dataclass, fields as dc_fields
+from functools import partial
 
 try:
     # NOTE: It's in Python 3 stdlib and can be installed on Python 2
@@ -22,6 +24,11 @@ except ImportError:
 if TYPE_CHECKING:
     from ansible.utils.display import Display
     from typing import Tuple, Iterator
+
+
+IS_PY310_PLUS = sys.version_info[:2] >= (3, 10)
+
+frozen_dataclass = partial(dataclass, frozen=True, **({'slots': True} if IS_PY310_PLUS else {}))
 
 
 def run_gpg_verify(
@@ -97,8 +104,7 @@ def parse_gpg_errors(status_out: str):  # -> Iterator[GpgBaseError]
         yield cls(*fields)
 
 
-# TODO: Optimize with slots=True when the min Python version for the controller is >= 3.10
-@dataclass(frozen=True)
+@frozen_dataclass
 class GpgBaseError(Exception):
     status: str
 
@@ -112,35 +118,35 @@ class GpgBaseError(Exception):
             super().__setattr__(field.name, field.type(getattr(self, field.name)))
 
 
-@dataclass(frozen=True)
+@frozen_dataclass
 class GpgExpSig(GpgBaseError):
     """The signature with the keyid is good, but the signature is expired."""
     keyid: str
     username: str
 
 
-@dataclass(frozen=True)
+@frozen_dataclass
 class GpgExpKeySig(GpgBaseError):
     """The signature with the keyid is good, but the signature was made by an expired key."""
     keyid: str
     username: str
 
 
-@dataclass(frozen=True)
+@frozen_dataclass
 class GpgRevKeySig(GpgBaseError):
     """The signature with the keyid is good, but the signature was made by a revoked key."""
     keyid: str
     username: str
 
 
-@dataclass(frozen=True)
+@frozen_dataclass
 class GpgBadSig(GpgBaseError):
     """The signature with the keyid has not been verified okay."""
     keyid: str
     username: str
 
 
-@dataclass(frozen=True)
+@frozen_dataclass
 class GpgErrSig(GpgBaseError):
     """"It was not possible to check the signature.  This may be caused by
     a missing public key or an unsupported algorithm.  A RC of 4
@@ -156,24 +162,24 @@ class GpgErrSig(GpgBaseError):
     fpr: str
 
 
-@dataclass(frozen=True)
+@frozen_dataclass
 class GpgNoPubkey(GpgBaseError):
     """The public key is not available."""
     keyid: str
 
 
-@dataclass(frozen=True)
+@frozen_dataclass
 class GpgMissingPassPhrase(GpgBaseError):
     """No passphrase was supplied."""
 
 
-@dataclass(frozen=True)
+@frozen_dataclass
 class GpgBadPassphrase(GpgBaseError):
     """The supplied passphrase was wrong or not given."""
     keyid: str
 
 
-@dataclass(frozen=True)
+@frozen_dataclass
 class GpgNoData(GpgBaseError):
     """No data has been found.  Codes for WHAT are:
     - 1 :: No armored data.
@@ -185,7 +191,7 @@ class GpgNoData(GpgBaseError):
     what: str
 
 
-@dataclass(frozen=True)
+@frozen_dataclass
 class GpgUnexpected(GpgBaseError):
     """No data has been found.  Codes for WHAT are:
     - 1 :: No armored data.
@@ -197,7 +203,7 @@ class GpgUnexpected(GpgBaseError):
     what: str
 
 
-@dataclass(frozen=True)
+@frozen_dataclass
 class GpgError(GpgBaseError):
     """This is a generic error status message, it might be followed by error location specific data."""
     location: str
@@ -205,30 +211,30 @@ class GpgError(GpgBaseError):
     more: str
 
 
-@dataclass(frozen=True)
+@frozen_dataclass
 class GpgFailure(GpgBaseError):
     """This is the counterpart to SUCCESS and used to indicate a program failure."""
     location: str
     code: int
 
 
-@dataclass(frozen=True)
+@frozen_dataclass
 class GpgBadArmor(GpgBaseError):
     """The ASCII armor is corrupted."""
 
 
-@dataclass(frozen=True)
+@frozen_dataclass
 class GpgKeyExpired(GpgBaseError):
     """The key has expired."""
     timestamp: int
 
 
-@dataclass(frozen=True)
+@frozen_dataclass
 class GpgKeyRevoked(GpgBaseError):
     """The used key has been revoked by its owner."""
 
 
-@dataclass(frozen=True)
+@frozen_dataclass
 class GpgNoSecKey(GpgBaseError):
     """The secret key is not available."""
     keyid: str
