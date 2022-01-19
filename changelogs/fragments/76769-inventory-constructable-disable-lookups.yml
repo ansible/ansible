@@ -1,0 +1,2 @@
+bugfixes:
+  - inventory - parameterize ``disable_lookups`` in ``Constructable`` (https://github.com/ansible/ansible/issues/76769).
