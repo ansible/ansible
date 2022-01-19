@@ -54,7 +54,7 @@ To support a variety of Unix-like operating systems and distributions, Ansible c
 .. code-block:: text
 
     [freebsd:vars]
-    ansible_python_interpreter=/usr/local/bin/python
+    ansible_python_interpreter=/usr/local/bin/python3.8
     [openbsd:vars]
     ansible_python_interpreter=/usr/local/bin/python3.8
 
