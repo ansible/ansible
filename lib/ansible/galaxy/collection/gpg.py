@@ -4,19 +4,32 @@
 """Signature verification helpers."""
 
 from ansible.errors import AnsibleError
-from ansible.galaxy.user_agent import user_agent
-from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.urls import open_url
 
 import os
 import subprocess
-import textwrap
 
 from dataclasses import dataclass, fields as dc_fields
-from urllib.error import HTTPError, URLError
+
+try:
+    # NOTE: It's in Python 3 stdlib and can be installed on Python 2
+    # NOTE: via `pip install typing`. Unnecessary in runtime.
+    # NOTE: `TYPE_CHECKING` is True during mypy-typecheck-time.
+    from typing import TYPE_CHECKING
+except ImportError:
+    TYPE_CHECKING = False
+
+if TYPE_CHECKING:
+    from ansible.utils.display import Display
+    from typing import Tuple, Iterator
 
 
-def run_gpg_verify(b_manifest_file, signature, keyring, display):
+def run_gpg_verify(
+    manifest_file,  # type: str
+    signature,  # type: str
+    keyring,  # type: str
+    display,  # type: Display
+):  # type: (...) -> Tuple[str, int]
     status_fd_read, status_fd_write = os.pipe()
 
     cmd = [
@@ -28,9 +41,9 @@ def run_gpg_verify(b_manifest_file, signature, keyring, display):
         '--no-default-keyring',
         f'--keyring={keyring}',
         '-',
-        b_manifest_file,
+        manifest_file,
     ]
-    cmd_str = ' '.join(to_text(arg) for arg in cmd)
+    cmd_str = ' '.join(cmd)
     display.vvvv(f"Running command '{cmd}'")
 
     try:
@@ -40,6 +53,7 @@ def run_gpg_verify(b_manifest_file, signature, keyring, display):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             pass_fds=(status_fd_write,),
+            encoding='utf8',
         )
     except (FileNotFoundError, subprocess.SubprocessError) as err:
         raise AnsibleError(
@@ -56,7 +70,7 @@ def run_gpg_verify(b_manifest_file, signature, keyring, display):
         return stdout, p.returncode
 
 
-def parse_gpg_errors(status_out):
+def parse_gpg_errors(status_out: str):  # -> Iterator[GpgBaseError]
     for line in status_out.splitlines():
         if not line:
             continue
@@ -65,6 +79,7 @@ def parse_gpg_errors(status_out):
         except ValueError:
             _dummy, status = line.split(maxsplit=1)
             remainder = None
+
         try:
             cls = GPG_ERROR_MAP[status]
         except KeyError:
@@ -82,26 +97,15 @@ def parse_gpg_errors(status_out):
         yield cls(*fields)
 
 
-def get_signature_from_source(source, display=None):
-    if display is not None:
-        display.vvvv(f"Using signature at {source}")
-    try:
-        with open_url(
-            to_text(source),
-            http_agent=user_agent(),
-            follow_redirects='safe'
-        ) as resp:
-            return resp.read()
-    except (HTTPError, URLError) as e:
-        raise AnsibleError(
-            f"Failed to get signature for collection verification from '{source}': {e}"
-        ) from e
-
-
 # TODO: Optimize with slots=True when the min Python version for the controller is >= 3.10
 @dataclass(frozen=True)
 class GpgBaseError(Exception):
     status: str
+
+    @classmethod
+    def get_gpg_error_description(cls) -> str:
+        """Return the current class description."""
+        return ' '.join(cls.__doc__.split())
 
     def __post_init__(self):
         for field in dc_fields(self):
@@ -110,46 +114,39 @@ class GpgBaseError(Exception):
 
 @dataclass(frozen=True)
 class GpgExpSig(GpgBaseError):
+    """The signature with the keyid is good, but the signature is expired."""
     keyid: str
     username: str
-
-    @staticmethod
-    def explain():
-        return 'The signature with the keyid is good, but the signature is expired'
 
 
 @dataclass(frozen=True)
 class GpgExpKeySig(GpgBaseError):
+    """The signature with the keyid is good, but the signature was made by an expired key."""
     keyid: str
     username: str
-
-    @staticmethod
-    def explain():
-        return 'The signature with the keyid is good, but the signature was made by an expired key'
 
 
 @dataclass(frozen=True)
 class GpgRevKeySig(GpgBaseError):
+    """The signature with the keyid is good, but the signature was made by a revoked key."""
     keyid: str
     username: str
-
-    @staticmethod
-    def explain():
-        return 'The signature with the keyid is good, but the signature was made by a revoked key'
 
 
 @dataclass(frozen=True)
 class GpgBadSig(GpgBaseError):
+    """The signature with the keyid has not been verified okay."""
     keyid: str
     username: str
-
-    @staticmethod
-    def explain():
-        return 'The signature with the keyid has not been verified okay'
 
 
 @dataclass(frozen=True)
 class GpgErrSig(GpgBaseError):
+    """"It was not possible to check the signature.  This may be caused by
+    a missing public key or an unsupported algorithm.  A RC of 4
+    indicates unknown algorithm, a 9 indicates a missing public
+    key.
+    """
     keyid: str
     pkalgo: int
     hashalgo: int
@@ -158,124 +155,83 @@ class GpgErrSig(GpgBaseError):
     rc: int
     fpr: str
 
-    @staticmethod
-    def explain():
-        return (
-            'It was not possible to check the signature.  This may be caused by '
-            'a missing public key or an unsupported algorithm.  A RC of 4 '
-            'indicates unknown algorithm, a 9 indicates a missing public '
-            'key.'
-        )
-
 
 @dataclass(frozen=True)
 class GpgNoPubkey(GpgBaseError):
+    """The public key is not available."""
     keyid: str
-
-    @staticmethod
-    def explain():
-        return 'The public key is not available'
 
 
 @dataclass(frozen=True)
 class GpgMissingPassPhrase(GpgBaseError):
-    @staticmethod
-    def explain():
-        return 'No passphrase was supplied'
+    """No passphrase was supplied."""
 
 
 @dataclass(frozen=True)
 class GpgBadPassphrase(GpgBaseError):
+    """The supplied passphrase was wrong or not given."""
     keyid: str
-
-    @staticmethod
-    def explain():
-        return 'The supplied passphrase was wrong or not given'
 
 
 @dataclass(frozen=True)
 class GpgNoData(GpgBaseError):
+    """No data has been found.  Codes for WHAT are:
+    - 1 :: No armored data.
+    - 2 :: Expected a packet but did not found one.
+    - 3 :: Invalid packet found, this may indicate a non OpenPGP
+           message.
+    - 4 :: Signature expected but not found.
+    """
     what: str
-
-    @staticmethod
-    def explain():
-        return textwrap.dedent('''
-            No data has been found.  Codes for WHAT are:
-            - 1 :: No armored data.
-            - 2 :: Expected a packet but did not found one.
-            - 3 :: Invalid packet found, this may indicate a non OpenPGP
-                   message.
-            - 4 :: Signature expected but not found
-        ''').strip()
 
 
 @dataclass(frozen=True)
 class GpgUnexpected(GpgBaseError):
+    """No data has been found.  Codes for WHAT are:
+    - 1 :: No armored data.
+    - 2 :: Expected a packet but did not found one.
+    - 3 :: Invalid packet found, this may indicate a non OpenPGP
+           message.
+    - 4 :: Signature expected but not found.
+    """
     what: str
-
-    @staticmethod
-    def explain():
-        return textwrap.dedent('''
-            No data has been found.  Codes for WHAT are:
-            - 1 :: No armored data.
-            - 2 :: Expected a packet but did not found one.
-            - 3 :: Invalid packet found, this may indicate a non OpenPGP
-                   message.
-            - 4 :: Signature expected but not found
-        ''').strip()
 
 
 @dataclass(frozen=True)
 class GpgError(GpgBaseError):
+    """This is a generic error status message, it might be followed by error location specific data."""
     location: str
     code: int
     more: str
 
-    @staticmethod
-    def explain():
-        return 'This is a generic error status message, it might be followed by error location specific data'
-
 
 @dataclass(frozen=True)
 class GpgFailure(GpgBaseError):
+    """This is the counterpart to SUCCESS and used to indicate a program failure."""
     location: str
     code: int
-
-    @staticmethod
-    def explain():
-        return 'This is the counterpart to SUCCESS and used to indicate a program failure'
 
 
 @dataclass(frozen=True)
 class GpgBadArmor(GpgBaseError):
-    @staticmethod
-    def explain():
-        return 'The ASCII armor is corrupted'
+    """The ASCII armor is corrupted."""
 
 
 @dataclass(frozen=True)
 class GpgKeyExpired(GpgBaseError):
+    """The key has expired."""
     timestamp: int
-
-    @staticmethod
-    def explain():
-        return 'The key has expired'
 
 
 @dataclass(frozen=True)
 class GpgKeyRevoked(GpgBaseError):
-    @staticmethod
-    def explain():
-        return 'The used key has been revoked by its owner'
+    """The used key has been revoked by its owner."""
 
 
 @dataclass(frozen=True)
 class GpgNoSecKey(GpgBaseError):
+    """The secret key is not available."""
     keyid: str
-
-    @staticmethod
-    def explain():
-        return 'The secret key is not available'
 
 
 GPG_ERROR_MAP = {

@@ -397,7 +397,6 @@ class GalaxyCLI(CLI):
                                         'collection from a Galaxy server. Use in conjunction with a positional collection name '
                                         '(mutually exclusive with --requirements-file).')
 
-
     def add_install_options(self, parser, parents=None):
         galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
 
@@ -851,8 +850,8 @@ class GalaxyCLI(CLI):
         elif requirements_file:
             if signatures is not None:
                 raise AnsibleError(
-                    "The --signatures option and --requirements-file are mutually exclusive. " \
-                    "Use the --signatures with positional collection_name args or provide a " \
+                    "The --signatures option and --requirements-file are mutually exclusive. "
+                    "Use the --signatures with positional collection_name args or provide a "
                     "'signatures' key for requirements in the --requirements-file."
                 )
             requirements_file = GalaxyCLI._resolve_path(requirements_file)

@@ -14,7 +14,7 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from typing import Dict, Iterable, Iterator, Tuple
+    from typing import Dict, Iterable, Iterator, Tuple, List
     from ansible.galaxy.api import CollectionVersionMetadata
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
@@ -168,8 +168,11 @@ class MultiGalaxyAPIProxy:
             dependencies
         )
 
-    def get_signatures(self, fqcn, version):
-        namespace, name = fqcn.split('.')
+    def get_signatures(self, collection_candidate):
+        # type: (Candidate) -> List[Dict[str, str]]
+        namespace = collection_candidate.namespace
+        name = collection_candidate.name
+        version = collection_candidate.ver
         last_err = None
 
         for api in self._apis:
@@ -186,7 +189,7 @@ class MultiGalaxyAPIProxy:
                     "available versions of collection {fqcn!s}: {err!s}".
                     format(
                         server=api.api_server,
-                        fqcn='%s.%s' % (namespace, name),
+                        fqcn=collection_candidate.fqcn,
                         err=to_text(unknown_err),
                     )
                 )

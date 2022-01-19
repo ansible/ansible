@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     )
     from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
 
-from ansible.galaxy.collection.gpg import get_signature_from_source
 from ansible.galaxy.dependency_resolution.dataclasses import (
     Candidate,
     Requirement,
@@ -37,6 +36,7 @@ from resolvelib import AbstractProvider
 
 
 class PinnedCandidateRequests(Set):
+    """Custom set class to store Candidate objects. Excludes the 'signatures' attribute when determining if a Candidate instance is in the set."""
     CANDIDATE_ATTRS = ('fqcn', 'ver', 'src', 'type')
 
     def __init__(self, candidates):
@@ -51,6 +51,9 @@ class PinnedCandidateRequests(Set):
                 "Expected a Candidate object but got {value} ({type(value)})"
             )
         for candidate in self._candidates:
+            # Compare Candidate attributes excluding "signatures" since it is
+            # unrelated to whether or not a matching Candidate is user-requested.
+            # Candidate objects in the set are not expected to have signatures.
             for attr in PinnedCandidateRequests.CANDIDATE_ATTRS:
                 if getattr(value, attr) != getattr(candidate, attr):
                     break
@@ -120,6 +123,7 @@ class CollectionDependencyProvider(AbstractProvider):
         self._with_pre_releases = with_pre_releases
         self._upgrade = upgrade
         self._include_signatures = include_signatures
+        self._artifacts_manager = concrete_artifacts_manager
 
     def _is_user_requested(self, candidate):  # type: (Candidate) -> bool
         """Check if the candidate is requested by the user."""
@@ -302,28 +306,30 @@ class CollectionDependencyProvider(AbstractProvider):
 
         latest_matches = []
         signatures = []
+        extra_signature_sources = []
         for version, src_server in coll_versions:
             tmp_candidate = Candidate(fqcn, version, src_server, 'galaxy', None)
 
             unsatisfied = False
-            if self._include_signatures:
-                signatures = src_server.get_collection_signatures(first_req.namespace, first_req.name, version)
             for requirement in requirements:
-
                 unsatisfied |= not self.is_satisfied_by(requirement, tmp_candidate)
                 # FIXME
                 # unsatisfied |= not self.is_satisfied_by(requirement, tmp_candidate) or not (
                 #    requirement.src is None or  # if this is true for some candidates but not all it will break key param - Nonetype can't be compared to str
                 #    or requirement.src == candidate.src
                 # )
-
+                if unsatisfied:
+                    break
                 if not self._include_signatures:
                     continue
-                signatures.extend(
-                    [get_signature_from_source(url) for url in requirement.signature_sources or []]
-                )
+
+                extra_signature_sources.extend(requirement.signature_sources or [])
 
             if not unsatisfied:
+                if self._include_signatures:
+                    signatures = src_server.get_collection_signatures(first_req.namespace, first_req.name, version)
+                    for extra_source in extra_signature_sources:
+                        signatures.append(self._artifacts_manager.get_signature_from_source(extra_source))
                 latest_matches.append(
                     Candidate(fqcn, version, src_server, 'galaxy', frozenset(signatures))
                 )

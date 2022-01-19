@@ -12,7 +12,7 @@ import tarfile
 import subprocess
 from contextlib import contextmanager
 from hashlib import sha256
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 from urllib.parse import urldefrag
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -68,19 +68,47 @@ class ConcreteArtifactsManager:
     """
 
     def __init__(self, b_working_directory, validate_certs=True, keyring=None):
-        # type: (bytes, bool) -> None
+        # type: (bytes, bool, str) -> None
         """Initialize ConcreteArtifactsManager caches and costraints."""
         self._validate_certs = validate_certs  # type: bool
         self._artifact_cache = {}  # type: Dict[bytes, bytes]
         self._galaxy_artifact_cache = {}  # type: Dict[Union[Candidate, Requirement], bytes]
         self._artifact_meta_cache = {}  # type: Dict[bytes, Dict[str, Optional[Union[str, List[str], Dict[str, str]]]]]
         self._galaxy_collection_cache = {}  # type: Dict[Union[Candidate, Requirement], Tuple[str, str, GalaxyToken]]
-        self._galaxy_collection_origin_cache = {}
+        self._galaxy_collection_origin_cache = {}  # type: Dict[Candidate, Tuple[str, List[Dict[str, str]]]]
         self._b_working_directory = b_working_directory  # type: bytes
+        self._supplemental_signature_cache = {}  # type: Dict[str, str]
+        self._keyring = keyring  # type: str
 
-        self.keyring = keyring
+    @property
+    def keyring(self):
+        return self._keyring
+
+    def get_signature_from_source(self, source: str, display: Display = None) -> str:
+        if display is not None:
+            display.vvvv(f"Using signature at {source}")
+
+        if source in self._supplemental_signature_cache:
+            return self._supplemental_signature_cache[source]
+
+        try:
+            with open_url(
+                source,
+                http_agent=user_agent(),
+                validate_certs=self._validate_certs,  # Is this overloading --ignore-certs?
+                follow_redirects='safe'
+            ) as resp:
+                signature = resp.read()
+        except (HTTPError, URLError) as e:
+            raise AnsibleError(
+                f"Failed to get signature for collection verification from '{source}': {e}"
+            ) from e
+
+        self._supplemental_signature_cache[source] = signature
+        return signature
 
     def get_galaxy_artifact_source_info(self, collection):
+        # type: (Candidate) -> Dict[str, Union[str, List[Dict[str, str]]]]
         if not (collection.is_online_index_pointer and isinstance(collection.src, GalaxyAPI)):
             return {}
 
@@ -311,7 +339,7 @@ class ConcreteArtifactsManager:
         return collection_meta
 
     def save_collection_source(self, collection, url, sha256_hash, token, signatures_url, signatures):
-        # type: (Candidate, str, str, GalaxyToken) -> None
+        # type: (Candidate, str, str, GalaxyToken, str, List[Dict[str, str]]) -> None
         """Store collection URL, SHA256 hash and Galaxy API token.
 
         This is a hook that is supposed to be called before attempting to

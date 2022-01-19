@@ -898,5 +898,5 @@ class GalaxyAPI:
                 signature_info["signature"] for signature_info in data["signatures"]
             ]
         except KeyError:
-            display.vvvv("Server {self._api_server} has not signed {namespace}.{name}:{version}")
+            display.vvvv(f"Server {self.api_server} has not signed {namespace}.{name}:{version}")
             return []

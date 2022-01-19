@@ -16,6 +16,7 @@ import stat
 import sys
 import tarfile
 import tempfile
+import textwrap
 import threading
 import time
 import yaml
@@ -108,7 +109,6 @@ from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
 from ansible.galaxy.collection.gpg import (
     run_gpg_verify,
     parse_gpg_errors,
-    get_signature_from_source
 )
 from ansible.galaxy.dependency_resolution import (
     build_collection_dependency_resolver,
@@ -193,15 +193,16 @@ def verify_local_collection(
             result.success = False
             return result
 
-    b_manifest_file = os.path.join(b_collection_path, to_bytes(MANIFEST_FILENAME))
+    manifest_file = os.path.join(to_text(b_collection_path, errors='surrogate_or_strict'), MANIFEST_FILENAME)
     signatures = []
     if verify_local_only and local_collection.source_info is not None:
         signatures = [info["signature"] for info in local_collection.source_info["signatures"]]
     elif not verify_local_only and remote_collection.signatures:
         signatures = remote_collection.signatures
+
     for signature in signatures:
-        b_signature = to_bytes(signature, errors="surrogate_or_strict")
-        if not verify_file_signature(b_manifest_file, b_signature, artifacts_manager.keyring):
+        signature = to_text(signature, errors="surrogate_or_strict")
+        if not verify_file_signature(manifest_file, signature, artifacts_manager.keyring):
             result.success = False
 
     if not result.success:
@@ -273,14 +274,19 @@ def verify_local_collection(
     return result
 
 
-def verify_file_signature(b_manifest_file, b_detached_signature, keyring):
-    gpg_result, gpg_verification_rc = run_gpg_verify(b_manifest_file, b_detached_signature, keyring, display)
+def verify_file_signature(manifest_file, detached_signature, keyring):
+    # type: (str, str, str) -> bool
+    gpg_result, gpg_verification_rc = run_gpg_verify(manifest_file, detached_signature, keyring, display)
 
     if gpg_result and (errors := parse_gpg_errors(gpg_result)):
         verify_failed = "Signature verification failed:"
-        reasons = set(error.explain() for error in errors)
+        text_wrapper = textwrap.TextWrapper(
+            initial_indent="    * ",  # 6 chars
+            subsequent_indent="      ",  # 6 chars
+        )
+        reasons = set(error.get_gpg_error_description() for error in errors)
         for reason in reasons:
-            verify_failed += f'\n      * {reason}'
+            verify_failed += '\n' + '\n'.join(text_wrapper.wrap(reason))
         display.display(verify_failed)
         return False
     if gpg_verification_rc:
@@ -696,12 +702,12 @@ def verify_collections(
                 if local_verify_only:
                     remote_collection = None
                 else:
-                    signatures = api_proxy.get_signatures(local_collection.fqcn, local_collection.ver)
+                    signatures = api_proxy.get_signatures(local_collection)
                     # NOTE: If there are no Galaxy server signatures, only user-provided signature URLs,
                     # NOTE: those alone validate the MANIFEST.json and the remote collection is not downloaded.
                     # NOTE: The remote MANIFEST.json is only used in verification if there are no signatures.
                     signatures.extend([
-                        get_signature_from_source(source, display)
+                        artifacts_manager.get_signature_from_source(source, display)
                         for source in collection.signature_sources or []
                     ])
 
@@ -1163,6 +1169,7 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
 
 
 def write_source_metadata(collection, b_metadata_path, artifacts_manager):
+    # type: (Candidate, bytes, ConcreteArtifactsManager) -> None
     source_data = artifacts_manager.get_galaxy_artifact_source_info(collection)
     b_yaml_source_data = to_bytes(yaml_dump(source_data), errors='surrogate_or_strict')
     dest_file = os.path.join(b_metadata_path, to_bytes(SOURCE_METADATA_FILE))
@@ -1193,11 +1200,11 @@ def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatur
             _extract_tar_file(collection_tar, MANIFEST_FILENAME, b_collection_path, b_temp_path)
 
             if signatures:
-                b_manifest_file = os.path.join(b_collection_path, to_bytes(MANIFEST_FILENAME))
-                failed_verify = any(
-                    not verify_file_signature(b_manifest_file, signature, keyring)
-                    for signature in signatures
-                )
+                manifest_file = os.path.join(to_text(b_collection_path, errors='surrogate_or_strict'), MANIFEST_FILENAME)
+                failed_verify = False
+                for signature in signatures:
+                    # Display all errors rather than break on the first found
+                    failed_verify |= not verify_file_signature(manifest_file, to_text(signature, errors='surrogate_or_strict'), keyring)
                 coll_path_parts = to_text(b_collection_path, errors='surrogate_or_strict').split(os.path.sep)
                 collection_name = '%s.%s' % (coll_path_parts[-2], coll_path_parts[-1])
                 if failed_verify:
