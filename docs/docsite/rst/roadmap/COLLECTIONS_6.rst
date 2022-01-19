@@ -15,12 +15,12 @@ Release schedule
 
 
 :2021-11-30: New Collections can be reviewed for inclusion in Ansible 6. Submit a request to include a new collection in this `GitHub Discussion <https://github.com/ansible-collections/ansible-inclusion/discussions/new>`_.
-:2022-03-28: ansible-core feature freeze.
+:2022-03-28: ansible-core feature freeze, stable-2.13 branch created.
 :2022-04-11: Start of ansible-core 2.13 betas (biweekly, as needed).
 :2022-04-12: Ansible-6.0.0 alpha1 (roughly biweekly ``ansible`` alphas timed to coincide with ``ansible-core-2.13`` pre-releases).
 :2022-04-26: Last day for new collections to be submitted for inclusion in Ansible-6. Collections MUST be reviewed and approved before being included. There is no guarantee that we will review every collection. The earlier your collection is submitted, the more likely it will be that your collection will be reviewed and the necessary feedback can be addressed in time for inclusion.
 :2022-04-27: Community Meeting topic: List any new collection reviews which block release. List any backwards incompatible collection releases that beta1 should try to accommodate.
-:2022-05-02: First ansible-core release candidate, stable-2.13 branch created.
+:2022-05-02: First ansible-core release candidate.
 :2022-05-03: Ansible-6.0.0 alpha2.
 :2022-05-10: Last day for new collections to be **reviewed and approved** for inclusion in Ansible-6.
 :2022-05-11: Community Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline.
