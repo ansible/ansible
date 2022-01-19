@@ -61,13 +61,13 @@ version_added: "2.3"
 
 EXAMPLES = r'''
 - name: Aggregating packages_installed stat per host
-  set_stats:
+  ansible.builtin.set_stats:
     data:
       packages_installed: 31
     per_host: yes
 
 - name: Aggregating random stats for all hosts using complex arguments
-  set_stats:
+  ansible.builtin.set_stats:
     data:
       one_stat: 11
       other_stat: "{{ local_var * 2 }}"
@@ -75,7 +75,7 @@ EXAMPLES = r'''
     per_host: no
 
 - name: Setting stats (not aggregating)
-  set_stats:
+  ansible.builtin.set_stats:
     data:
       the_answer: 42
     aggregate: no

@@ -44,12 +44,12 @@ author:
 
 EXAMPLES = r'''
 - name: Find out what the remote machine's mounts are
-  slurp:
+  ansible.builtin.slurp:
     src: /proc/mounts
   register: mounts
 
 - name: Print returned information
-  debug:
+  ansible.builtin.debug:
     msg: "{{ mounts['content'] | b64decode }}"
 
 # From the commandline, find the pid of the remote machine's sshd

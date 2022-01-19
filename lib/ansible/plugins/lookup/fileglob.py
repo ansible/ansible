@@ -25,10 +25,10 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: Display paths of all .txt files in dir
-  debug: msg={{ lookup('fileglob', '/my/path/*.txt') }}
+  ansible.builtin.debug: msg={{ lookup('ansible.builtin.fileglob', '/my/path/*.txt') }}
 
 - name: Copy each file over that matches the given pattern
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: "/etc/fooapp/"
     owner: "root"

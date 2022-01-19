@@ -73,12 +73,12 @@ author:
 
 EXAMPLES = '''
 - name: Ensure group "somegroup" exists
-  group:
+  ansible.builtin.group:
     name: somegroup
     state: present
 
 - name: Ensure group "docker" exists with correct gid
-  group:
+  ansible.builtin.group:
     name: docker
     state: present
     gid: 1750

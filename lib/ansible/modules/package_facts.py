@@ -57,15 +57,15 @@ attributes:
 
 EXAMPLES = '''
 - name: Gather the package facts
-  package_facts:
+  ansible.builtin.package_facts:
     manager: auto
 
 - name: Print the package facts
-  debug:
+  ansible.builtin.debug:
     var: ansible_facts.packages
 
 - name: Check whether a package called foobar is installed
-  debug:
+  ansible.builtin.debug:
     msg: "{{ ansible_facts.packages['foobar'] | length }} versions of foobar are installed!"
   when: "'foobar' in ansible_facts.packages"
 

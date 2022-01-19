@@ -63,32 +63,27 @@ author:
 
 EXAMPLES = '''
 - name: Get root user info
-  getent:
+  ansible.builtin.getent:
     database: passwd
     key: root
-<<<<<<< HEAD
 - ansible.builtin.debug:
     var: ansible_facts.getent_passwd
-=======
-- debug:
-    var: getent_passwd
->>>>>>> fix: remove FQCN from modules & plugins
 
 - name: Get all groups
-  getent:
+  ansible.builtin.getent:
     database: group
     split: ':'
 - ansible.builtin.debug:
     var: ansible_facts.getent_group
 
 - name: Get all hosts, split by tab
-  getent:
+  ansible.builtin.getent:
     database: hosts
 - ansible.builtin.debug:
     var: ansible_facts.getent_hosts
 
 - name: Get http service info, no error if missing
-  getent:
+  ansible.builtin.getent:
     database: services
     key: http
     fail_key: False
@@ -96,7 +91,7 @@ EXAMPLES = '''
     var: ansible_facts.getent_services
 
 - name: Get user password hash (requires sudo/root)
-  getent:
+  ansible.builtin.getent:
     database: shadow
     key: www-data
     split: ':'

@@ -103,32 +103,32 @@ requirements:
 
 EXAMPLES = '''
 - name: Add specified repository into sources list
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
     state: present
 
 - name: Add specified repository into sources list using specified filename
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb http://dl.google.com/linux/chrome/deb/ stable main
     state: present
     filename: google-chrome
 
 - name: Add source repository into sources list
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb-src http://archive.canonical.com/ubuntu hardy partner
     state: present
 
 - name: Remove specified repository from sources list
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
     state: absent
 
 - name: Add nginx stable repository from PPA and install its signing key on Ubuntu target
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: ppa:nginx/stable
 
 - name: Add nginx stable repository from PPA and install its signing key on Debian target
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: 'ppa:nginx/stable'
     codename: trusty
 '''

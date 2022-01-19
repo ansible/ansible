@@ -73,26 +73,26 @@ author:
 
 EXAMPLES = r'''
 - name: Print the gateway for each host when defined
-  debug:
+  ansible.builtin.debug:
     msg: System {{ inventory_hostname }} has gateway {{ ansible_default_ipv4.gateway }}
   when: ansible_default_ipv4.gateway is defined
 
 - name: Get uptime information
-  shell: /usr/bin/uptime
+  ansible.builtin.shell: /usr/bin/uptime
   register: result
 
 - name: Print return information from the previous task
-  debug:
+  ansible.builtin.debug:
     var: result
     verbosity: 2
 
 - name: Display all variables/facts known for a host
-  debug:
+  ansible.builtin.debug:
     var: hostvars[inventory_hostname]
     verbosity: 4
 
 - name: Prints two lines of messages, but only if there is an environment value set
-  debug:
+  ansible.builtin.debug:
     msg:
     - "Provisioning based on YOUR_KEY which is: {{ lookup('ansible.builtin.env', 'YOUR_KEY') }}"
     - "These servers were built using the password of '{{ password_used }}'. Please retain this for later use."

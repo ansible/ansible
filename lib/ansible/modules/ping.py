@@ -46,13 +46,13 @@ author:
 
 EXAMPLES = '''
 # Test we can logon to 'webservers' and execute python with json lib.
-# ansible webservers -m ping
+# ansible webservers -m ansible.builtin.ping
 
 - name: Example from an Ansible Playbook
-  ping:
+  ansible.builtin.ping:
 
 - name: Induce an exception to see what happens
-  ping:
+  ansible.builtin.ping:
     data: crash
 '''
 

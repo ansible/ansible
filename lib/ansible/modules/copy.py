@@ -155,7 +155,7 @@ attributes:
 
 EXAMPLES = r'''
 - name: Copy file with owner and permissions
-  copy:
+  ansible.builtin.copy:
     src: /srv/myfiles/foo.conf
     dest: /etc/foo.conf
     owner: foo
@@ -163,7 +163,7 @@ EXAMPLES = r'''
     mode: '0644'
 
 - name: Copy file with owner and permission, using symbolic representation
-  copy:
+  ansible.builtin.copy:
     src: /srv/myfiles/foo.conf
     dest: /etc/foo.conf
     owner: foo
@@ -171,7 +171,7 @@ EXAMPLES = r'''
     mode: u=rw,g=r,o=r
 
 - name: Another symbolic mode example, adding some permissions and removing others
-  copy:
+  ansible.builtin.copy:
     src: /srv/myfiles/foo.conf
     dest: /etc/foo.conf
     owner: foo
@@ -179,7 +179,7 @@ EXAMPLES = r'''
     mode: u+rw,g-wx,o-rwx
 
 - name: Copy a new "ntp.conf" file into place, backing up the original if it differs from the copied version
-  copy:
+  ansible.builtin.copy:
     src: /mine/ntp.conf
     dest: /etc/ntp.conf
     owner: root
@@ -188,31 +188,31 @@ EXAMPLES = r'''
     backup: yes
 
 - name: Copy a new "sudoers" file into place, after passing validation with visudo
-  copy:
+  ansible.builtin.copy:
     src: /mine/sudoers
     dest: /etc/sudoers
     validate: /usr/sbin/visudo -csf %s
 
 - name: Copy a "sudoers" file on the remote machine for editing
-  copy:
+  ansible.builtin.copy:
     src: /etc/sudoers
     dest: /etc/sudoers.edit
     remote_src: yes
     validate: /usr/sbin/visudo -csf %s
 
 - name: Copy using inline content
-  copy:
+  ansible.builtin.copy:
     content: '# This file was moved to /etc/other.conf'
     dest: /etc/mine.conf
 
 - name: If follow=yes, /path/to/file will be overwritten by contents of foo.conf
-  copy:
+  ansible.builtin.copy:
     src: /etc/foo.conf
     dest: /path/to/link  # link to /path/to/file
     follow: yes
 
 - name: If follow=no, /path/to/link will become a file and be overwritten by contents of foo.conf
-  copy:
+  ansible.builtin.copy:
     src: /etc/foo.conf
     dest: /path/to/link  # link to /path/to/file
     follow: no

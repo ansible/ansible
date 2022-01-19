@@ -97,7 +97,7 @@ EXAMPLES = r'''
   no_log: true
 
 - name: Generic question with multiple different responses
-  expect:
+  ansible.builtin.expect:
     command: /path/to/custom/command
     responses:
       Question:

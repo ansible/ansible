@@ -100,24 +100,24 @@ author:
 
 EXAMPLES = r'''
 - name: Store file into /tmp/fetched/host.example.com/tmp/somefile
-  fetch:
+  ansible.builtin.fetch:
     src: /tmp/somefile
     dest: /tmp/fetched
 
 - name: Specifying a path directly
-  fetch:
+  ansible.builtin.fetch:
     src: /tmp/somefile
     dest: /tmp/prefix-{{ inventory_hostname }}
     flat: yes
 
 - name: Specifying a destination path
-  fetch:
+  ansible.builtin.fetch:
     src: /tmp/uniquefile
     dest: /tmp/special/
     flat: yes
 
 - name: Storing in a path relative to the playbook
-  fetch:
+  ansible.builtin.fetch:
     src: /tmp/uniquefile
     dest: special/prefix-{{ inventory_hostname }}
     flat: yes

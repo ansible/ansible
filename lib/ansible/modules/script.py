@@ -77,29 +77,29 @@ attributes:
 
 EXAMPLES = r'''
 - name: Run a script with arguments (free form)
-  script: /some/local/script.sh --some-argument 1234
+  ansible.builtin.script: /some/local/script.sh --some-argument 1234
 
 - name: Run a script with arguments (using 'cmd' parameter)
-  script:
+  ansible.builtin.script:
     cmd: /some/local/script.sh --some-argument 1234
 
 - name: Run a script only if file.txt does not exist on the remote node
-  script: /some/local/create_file.sh --some-argument 1234
+  ansible.builtin.script: /some/local/create_file.sh --some-argument 1234
   args:
     creates: /the/created/file.txt
 
 - name: Run a script only if file.txt exists on the remote node
-  script: /some/local/remove_file.sh --some-argument 1234
+  ansible.builtin.script: /some/local/remove_file.sh --some-argument 1234
   args:
     removes: /the/removed/file.txt
 
 - name: Run a script using an executable in a non-system path
-  script: /some/local/script
+  ansible.builtin.script: /some/local/script
   args:
     executable: /some/remote/executable
 
 - name: Run a script using an executable in a system path
-  script: /some/local/script.py
+  ansible.builtin.script: /some/local/script.py
   args:
     executable: python3
 '''

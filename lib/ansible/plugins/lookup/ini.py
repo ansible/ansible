@@ -59,9 +59,9 @@ EXAMPLES = """
 
 - ansible.builtin.debug: msg="user.name is {{ lookup('ansible.builtin.ini', 'user.name', type='properties', file='user.properties') }}"
 
-- debug:
+- ansible.builtin.debug:
     msg: "{{ item }}"
-  loop: "{{ q('ansible.builtin.ini', '.*', section='section1', file='test.ini', re=True) }}"
+  loop: "{{ q('ansible.builtin.ansible.builtin.ini', '.*', section='section1', file='test.ini', re=True) }}"
 
 - name: Read an ini file with allow_no_value
   ansible.builtin.debug:

@@ -101,12 +101,12 @@ EXAMPLES = '''
     name: httpd
 
 - name: Stop service cron on debian, if running
-  systemd:
+  ansible.builtin.systemd:
     name: cron
     state: stopped
 
 - name: Restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
-  systemd:
+  ansible.builtin.systemd:
     state: restarted
     daemon_reload: yes
     name: crond
@@ -117,7 +117,7 @@ EXAMPLES = '''
     state: reloaded
 
 - name: Enable service httpd and ensure it is not masked
-  systemd:
+  ansible.builtin.systemd:
     name: httpd
     enabled: yes
     masked: no
@@ -129,15 +129,15 @@ EXAMPLES = '''
     enabled: yes
 
 - name: Just force systemd to reread configs (2.4 and above)
-  systemd:
+  ansible.builtin.systemd:
     daemon_reload: yes
 
 - name: Just force systemd to re-execute itself (2.8 and above)
-  systemd:
+  ansible.builtin.systemd:
     daemon_reexec: yes
 
 - name: Run a user service when XDG_RUNTIME_DIR is not set on remote login
-  systemd:
+  ansible.builtin.systemd:
     name: myservice
     state: started
     scope: user

@@ -41,10 +41,10 @@ author:
 
 EXAMPLES = r'''
 - name: Populate service facts
-  service_facts:
+  ansible.builtin.service_facts:
 
 - name: Print service facts
-  debug:
+  ansible.builtin.debug:
     var: ansible_facts.services
 '''
 

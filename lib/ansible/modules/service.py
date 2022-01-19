@@ -114,38 +114,38 @@ author:
 
 EXAMPLES = r'''
 - name: Start service httpd, if not started
-  service:
+  ansible.builtin.service:
     name: httpd
     state: started
 
 - name: Stop service httpd, if started
-  service:
+  ansible.builtin.service:
     name: httpd
     state: stopped
 
 - name: Restart service httpd, in all cases
-  service:
+  ansible.builtin.service:
     name: httpd
     state: restarted
 
 - name: Reload service httpd, in all cases
-  service:
+  ansible.builtin.service:
     name: httpd
     state: reloaded
 
 - name: Enable service httpd, and not touch the state
-  service:
+  ansible.builtin.service:
     name: httpd
     enabled: yes
 
 - name: Start service foo, based on running process /usr/bin/foo
-  service:
+  ansible.builtin.service:
     name: foo
     pattern: /usr/bin/foo
     state: started
 
 - name: Restart network service for interface eth0
-  service:
+  ansible.builtin.service:
     name: network
     state: restarted
     args: eth0

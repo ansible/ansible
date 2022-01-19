@@ -56,22 +56,22 @@ attributes:
 
 EXAMPLES = '''
 - name: Import a key from a url
-  rpm_key:
+  ansible.builtin.rpm_key:
     state: present
     key: http://apt.sw.be/RPM-GPG-KEY.dag.txt
 
 - name: Import a key from a file
-  rpm_key:
+  ansible.builtin.rpm_key:
     state: present
     key: /path/to/key.gpg
 
 - name: Ensure a key is not present in the db
-  rpm_key:
+  ansible.builtin.rpm_key:
     state: absent
     key: DEADB33F
 
 - name: Verify the key, using a fingerprint, before import
-  rpm_key:
+  ansible.builtin.rpm_key:
     key: /path/to/RPM-GPG-KEY.dag.txt
     fingerprint: EBC6 E12C 62B1 C734 026B  2122 A20E 5214 6B8D 79E6
 '''

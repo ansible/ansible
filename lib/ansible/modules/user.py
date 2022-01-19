@@ -290,41 +290,41 @@ author:
 
 EXAMPLES = r'''
 - name: Add the user 'johnd' with a specific uid and a primary group of 'admin'
-  user:
+  ansible.builtin.user:
     name: johnd
     comment: John Doe
     uid: 1040
     group: admin
 
 - name: Add the user 'james' with a bash shell, appending the group 'admins' and 'developers' to the user's groups
-  user:
+  ansible.builtin.user:
     name: james
     shell: /bin/bash
     groups: admins,developers
     append: yes
 
 - name: Remove the user 'johnd'
-  user:
+  ansible.builtin.user:
     name: johnd
     state: absent
     remove: yes
 
 - name: Create a 2048-bit SSH key for user jsmith in ~jsmith/.ssh/id_rsa
-  user:
+  ansible.builtin.user:
     name: jsmith
     generate_ssh_key: yes
     ssh_key_bits: 2048
     ssh_key_file: .ssh/id_rsa
 
 - name: Added a consultant whose account you want to expire
-  user:
+  ansible.builtin.user:
     name: james18
     shell: /bin/zsh
     groups: developers
     expires: 1422403387
 
 - name: Starting at Ansible 2.6, modify user, remove expiry time
-  user:
+  ansible.builtin.user:
     name: james18
     expires: -1
 
