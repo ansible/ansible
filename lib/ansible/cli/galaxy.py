@@ -439,6 +439,7 @@ class GalaxyCLI(CLI):
             install_parser.add_argument('--keyring', dest='keyring', default='~/.ansible/pubring.kbx',
                                         help='The keyring used during signature verification')
             install_parser.add_argument('--disable-gpg-verify', dest='disable_gpg_verify', action='store_true',
+                                        default=C.GALAXY_DISABLE_GPG_VERIFY,
                                         help='Disable GPG signature verification when installing collections from a Galaxy server')
             install_parser.add_argument('--signatures', dest='signatures',
                                         help='Signature sources to verify the authenticity of the MANIFEST.json before installing the '
@@ -452,6 +453,7 @@ class GalaxyCLI(CLI):
                 install_parser.add_argument('--keyring', dest='keyring', default='~/.ansible/pubring.kbx',
                                             help='The keyring used during collection signature verification')
                 install_parser.add_argument('--disable-gpg-verify', dest='disable_gpg_verify', action='store_true',
+                                            default=C.GALAXY_DISABLE_GPG_VERIFY,
                                             help='Disable GPG signature verification when installing collections from a Galaxy server')
 
             install_parser.add_argument('-g', '--keep-scm-meta', dest='keep_scm_meta', action='store_true',
