@@ -64,7 +64,7 @@ options:
             - "For systemd to work with 'user', the executing user must have its own instance of dbus started and accessible (systemd requirement)."
             - "The user dbus process is normally started during normal login, but not during the run of Ansible tasks.
               Otherwise you will probably get a 'Failed to connect to bus: no such file or directory' error."
-            - The user must have access, normally given via setting the ``XDG_RUNTIME_DIR`` variable, see example below.
+            - The user must have access, normally given via setting the C(XDG_RUNTIME_DIR) variable, see example below.
 
         type: str
         choices: [ system, user, global ]
@@ -81,7 +81,7 @@ notes:
     - Since 2.4, one of the following options is required C(state), C(enabled), C(masked), C(daemon_reload), (C(daemon_reexec) since 2.8),
       and all except C(daemon_reload) and (C(daemon_reexec) since 2.8) also require C(name).
     - Before 2.4 you always required C(name).
-    - Globs are not supported in name, i.e ``postgres*.service``.
+    - Globs are not supported in name, i.e C(postgres*.service).
     - Supports C(check_mode).
 requirements:
     - A system managed by systemd.
@@ -140,7 +140,7 @@ EXAMPLES = '''
 
 RETURN = '''
 status:
-    description: A dictionary with the key=value pairs returned from `systemctl show`.
+    description: A dictionary with the key=value pairs returned from C(systemctl show).
     returned: success
     type: complex
     sample: {

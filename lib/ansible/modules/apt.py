@@ -171,7 +171,7 @@ notes:
    - The apt-get commandline supports implicit regex matches here but we do not because it can let typos through easier
      (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for the user.
      Since we don't have warnings and prompts before installing we disallow this.Use an explicit fnmatch pattern if you want wildcarding)
-   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
+   - When used with a C(loop:) each package will be processed individually, it is much more efficient to pass the list directly to the I(name) option.
 '''
 
 EXAMPLES = '''

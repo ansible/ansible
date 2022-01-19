@@ -50,9 +50,9 @@ options:
     version_added: "2.0"
   list:
     description:
-      - "Package name to run the equivalent of yum list --show-duplicates <package> against. In addition to listing packages,
+      - "Package name to run the equivalent of yum list C(--show-duplicates <package>) against. In addition to listing packages,
         use can also list the following: C(installed), C(updates), C(available) and C(repos)."
-      - This parameter is mutually exclusive with C(name).
+      - This parameter is mutually exclusive with I(name).
     type: str
   state:
     description:
@@ -237,8 +237,8 @@ options:
     default: "yes"
     type: bool
 notes:
-  - When used with a `loop:` each package will be processed individually,
-    it is much more efficient to pass the list directly to the `name` option.
+  - When used with a C(loop:) each package will be processed individually,
+    it is much more efficient to pass the list directly to the I(name) option.
   - In versions prior to 1.9.2 this module installed and removed each package
     given to the yum module separately. This caused problems when packages
     specified by filename or url had to be installed or removed together. In
