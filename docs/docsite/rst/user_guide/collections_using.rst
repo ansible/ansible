@@ -270,6 +270,22 @@ In addition to the ``namespace.collection_name:version`` format, you can provide
 
 Verifying against ``tar.gz`` files is not supported. If your ``requirements.yml`` contains paths to tar files or URLs for installation, you can use the ``--ignore-errors`` flag to ensure that all collections using the ``namespace.name`` format in the file are processed.
 
+If a collection has been signed by the Galaxy server, the server will provide ASCII armored, detached signatures to verify the authenticity of the MANIFEST.json before using it to verify the collection's contents.
+
+Additional signature sources can be included in the ``requirements.yml`` file for each collection by using "signatures" key or for collection name(s) provided on the CLI by using the ``--signature`` option. Signature sources should be URIs.
+
+.. code-block:: bash
+
+   ansible-galaxy collection verify my_namespace.my_collection --signature https://examplehost.com/detached_signature.asc --signature file:///path/to/local/detached_signature.asc
+
+When a collection is installed from a Galaxy server, the signatures provided by the server to verify the collection's authenticity are saved alongside the installed collections. This data is usedto verify the internal consistency of the collection without querying the Galaxy server again when the ``--offline`` option is provided.
+
+.. code-block:: bash
+
+   ansible-galaxy collection verify my_namespace.my_collection --offline
+
+The keyring ``ansible-galaxy`` uses for GnuPG verification is ``~/.ansible/pubring.kbx`` by default. This can be configured to a different path with the ``--keyring`` option. Note that ``ansible-galaxy`` does not manage the keyring. Native GnuPG tooling should be used to obtain and import keys.
+
 .. _collections_using_playbook:
 
 Using collections in a Playbook

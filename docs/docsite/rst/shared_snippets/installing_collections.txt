@@ -69,3 +69,13 @@ You can also keep a collection adjacent to the current playbook, under a ``colle
 
 
 See :ref:`collection_structure` for details on the collection directory structure.
+
+Collections signed by a Galaxy server will be verified during installation with GnuPG. Signatures provided by the Galaxy server will be used to verify the collection's MANIFEST.json. If verification is unsuccessful, the collection will not be installed. GnuPG signature verification can be disabled with ``--disable-gpg-verify`` or by configuring :ref:`GALAXY_DISABLE_GPG_VERIFY`.
+
+Use the ``--signature`` option to verify the collection's MANIFEST.json with additional signatures to those provided by the Galaxy server. Supplemental signatures should be provided as a URIs.
+
+.. code-block:: bash
+
+   ansible-galaxy collection install my_namespace.my_collection --signature https://examplehost.com/detached_signature.asc --signature file:///path/to/local/detached_signature.asc
+
+The keyring ``ansible-galaxy`` uses for GnuPG verification is ``~/.ansible/pubring.kbx`` by default. This can be configured to a different path with the ``--keyring`` option. Note that ``ansible-galaxy`` does not manage the keyring. Native GnuPG tooling should be used to obtain and import keys.
