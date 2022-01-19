@@ -332,7 +332,7 @@ class Cacheable(object):
 
 class Constructable(object):
 
-    def _compose(self, template, variables):
+    def _compose(self, template, variables, disable_lookups=True):
         ''' helper method for plugins to compose variables for Ansible based on jinja2 expression and inventory vars'''
         t = self.templar
 
@@ -346,7 +346,8 @@ class Constructable(object):
         else:
             t.available_variables = variables
 
-        return t.template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string), disable_lookups=True)
+        return t.template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string),
+                          disable_lookups=disable_lookups)
 
     def _set_composite_vars(self, compose, variables, host, strict=False):
         ''' loops over compose entries to create vars for hosts '''
