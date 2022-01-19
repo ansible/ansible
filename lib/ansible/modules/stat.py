@@ -135,7 +135,7 @@ EXAMPLES = r'''
     get_checksum: no
 
 - name: Use sha256 to calculate checksum
- ansible.builtin. stat:
+  ansible.builtin.stat:
     path: /path/to/something
     checksum_algorithm: sha256
 '''
