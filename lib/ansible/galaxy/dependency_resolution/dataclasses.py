@@ -112,7 +112,7 @@ def _is_concrete_artifact_pointer(tested_str):
 
 def _validate_v1_source_info_schema(namespace, name, version, metadata):
     v1_schema = {
-        "info_format": {"value": "1.0.0"},
+        "format_version": {"value": "1.0.0"},
         "download_url": {"type": str},
         "version_url": {"type": str},
         "server": {"type": str},

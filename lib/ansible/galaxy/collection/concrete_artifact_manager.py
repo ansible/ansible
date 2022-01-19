@@ -124,7 +124,7 @@ class ConcreteArtifactsManager:
             ) from key_err
 
         return {
-            "info_format": "1.0.0",
+            "format_version": "1.0.0",
             "namespace": collection.namespace,
             "name": collection.name,
             "version": collection.ver,
