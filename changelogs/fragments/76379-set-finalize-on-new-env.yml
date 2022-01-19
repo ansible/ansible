@@ -1,0 +1,2 @@
+bugfixes:
+  - "``Templar.copy_with_new_env`` - set the ``finalize`` method of the new ``Templar`` object for the new environment (https://github.com/ansible/ansible/issues/76379)"
