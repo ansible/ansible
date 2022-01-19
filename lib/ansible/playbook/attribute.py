@@ -127,7 +127,6 @@ class Attribute:
             value = self.default
             if callable(value):
                 value = value()
-                # FIXME call __set__?
                 setattr(obj, f'_{self.name}', value)
 
         return value

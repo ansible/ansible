@@ -74,6 +74,7 @@ class _FABMeta(type):
 
     @property
     def fattributes(cls):
+        # FIXME is this worth caching?
         fattributes = {}
         for class_obj in reversed(cls.__mro__):
             for name, attr in list(class_obj.__dict__.items()):
