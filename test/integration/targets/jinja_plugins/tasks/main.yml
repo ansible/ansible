@@ -17,6 +17,8 @@
       - |
         result.stderr|regex_findall('bad_test')|length == 2
       - |
-        result.stderr|regex_findall('bad_collection_filter')|length == 2
+        result.stderr|regex_findall('bad_collection_filter')|length == 3
+      - |
+        result.stderr|regex_findall('bad_collection_filter2')|length == 1
       - |
         result.stderr|regex_findall('bad_collection_test')|length == 2
