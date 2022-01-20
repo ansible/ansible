@@ -49,6 +49,12 @@ Once this is done you can now use other Ansible modules apart from the ``raw`` m
 Setting the Python interpreter
 ------------------------------
 
+Before configuring the Python interpreter in FreeBSD please refer to the correct way to install Python to avoid any errors: 
+
+.. code-block:: text
+
+    pkg install python
+
 To support a variety of Unix-like operating systems and distributions, Ansible cannot always rely on the existing environment or ``env`` variables to locate the correct Python binary. By default, modules point at ``/usr/bin/python`` as this is the most common location. On BSD variants, this path may differ, so it is advised to inform Ansible of the binary's location, through the ``ansible_python_interpreter`` inventory variable. For example:
 
 .. code-block:: text
