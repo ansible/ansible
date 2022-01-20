@@ -98,8 +98,6 @@ You can choose any of the following ways to install ``ansible-core``:
 
 	Red Hat Ansible Automation Platform 2.0 repository only provides ``ansible-core`` 2.11 RPM package for RHEL 8 x86_64. You need to enable the Red Hat Ansible Automation Platform 2.0 repository for RHEL 8 x86_64 before installing the package with ``sudo subscription-manager repos --enable ansible-automation-platform-2.0-early-access-for-rhel-8-x86_64-rpms``. After enabling the repository, install the package with ``sudo dnf install ansible-core``.
 
-
-
 Ansible generally creates new releases twice a year. See :ref:`release_and_maintenance` for information on release timing and maintenance of older releases.
 
 .. _from_pip:
