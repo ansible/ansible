@@ -349,7 +349,7 @@ When using the ``collections`` variable, it is not necessary to add in ``ansible
 
 2. Support for older 3rd party plugin paths
 
-In general, it is preferable to use a module or plugin's FQCN over the ``collections`` keyword, and the short name for all content in ``ansible-base``.
+In general, it is preferable to use a module or plugin's FQCN over the ``collections`` keyword and the short name for all content in ``ansible-core``
 
 Using a playbook from a collection
 ==================================

@@ -195,7 +195,7 @@ EXAMPLES = r'''
     access_time: '{{ "%Y%m%d%H%M.%S" | strftime(stat_var.stat.atime) }}'
 
 - name: Recursively change ownership of a directory
-  file:
+  ansible.builtin.file:
     path: /etc/foo
     state: directory
     recurse: yes

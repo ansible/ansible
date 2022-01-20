@@ -105,26 +105,26 @@ author:
 
 EXAMPLES = """
 # Display facts from all hosts and store them indexed by I(hostname) at C(/tmp/facts).
-# ansible all -m setup --tree /tmp/facts
+# ansible all -m ansible.builtin.setup --tree /tmp/facts
 
 # Display only facts regarding memory found by ansible on all hosts and output them.
-# ansible all -m setup -a 'filter=ansible_*_mb'
+# ansible all -m ansible.builtin.setup -a 'filter=ansible_*_mb'
 
 # Display only facts returned by facter.
-# ansible all -m setup -a 'filter=facter_*'
+# ansible all -m ansible.builtin.setup -a 'filter=facter_*'
 
 # Collect only facts returned by facter.
-# ansible all -m setup -a 'gather_subset=!all,!any,facter'
+# ansible all -m ansible.builtin.setup -a 'gather_subset=!all,!any,facter'
 
 - name: Collect only facts returned by facter
-  setup:
+  ansible.builtin.setup:
     gather_subset:
       - '!all'
       - '!any'
       - facter
 
 - name: Collect only selected facts
-  setup:
+  ansible.builtin.setup:
     filter:
       - 'ansible_distribution'
       - 'ansible_machine_id'
