@@ -546,9 +546,8 @@ class JinjaPluginIntercept(MutableMapping):
                 except Exception as e:
                     raise TemplateSyntaxError(to_native(e), 0)
 
-                method_map = getattr(plugin_impl, self._method_map_name)
-
                 try:
+                    method_map = getattr(plugin_impl, self._method_map_name)
                     func_items = method_map().items()
                 except Exception as e:
                     display.warning(
