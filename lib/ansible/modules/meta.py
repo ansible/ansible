@@ -107,7 +107,7 @@ EXAMPLES = r'''
 - ansible.builtin.meta: clear_host_errors
 
 # Example showing how to reset an existing connection
-- user:
+- ansible.builtin.user:
     name: '{{ ansible_user }}'
     groups: input
 
