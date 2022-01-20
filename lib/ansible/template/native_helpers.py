@@ -58,6 +58,15 @@ def _fail_on_undefined(data):
 
 
 def ansible_eval_concat(nodes):
+    """Return a string of concatenated compiled nodes. Throw an undefined error
+    if any of the nodes is undefined.
+
+    If the result of concat appears to be a dictionary, list or bool,
+    try and convert it to such using literal_eval, the same mechanism as used
+    in jinja2_native.
+
+    Used in Templar.template() when jinja2_native=False and convert_data=True.
+    """
     head = list(islice(nodes, 2))
 
     if not head:
@@ -96,6 +105,12 @@ def ansible_eval_concat(nodes):
 
 
 def ansible_concat(nodes):
+    """Return a string of concatenated compiled nodes. Throw an undefined error
+    if any of the nodes is undefined. Other than that it is equivalent to
+    Jinja2's default concat function.
+
+    Used in Templar.template() when jinja2_native=False and convert_data=False.
+    """
     return ''.join([to_text(_fail_on_undefined(v)) for v in nodes])
 
 
