@@ -184,16 +184,6 @@ stages:
           targets:
             - test: 2.7
             - test: 3.6
-  - stage: Tower
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Python {0}
-          testFormat: tower/{0}/1
-          targets:
-            - test: 2.7
-            - test: 3.6
   - stage: Cloud
     dependsOn: []
     jobs:
@@ -226,7 +216,6 @@ stages:
       - AWS
       - vCenter
       - CloudStack
-      - Tower
       - Cloud
       - Hetzner
     jobs:
