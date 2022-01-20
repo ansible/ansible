@@ -77,6 +77,8 @@ You can choose any of the following ways to install the Ansible community packag
 * Install the latest release with your OS package manager (for Red Hat Enterprise Linux (TM), CentOS, Fedora, Debian, or Ubuntu).
 * Install with ``pip`` (the Python package manager).
 
+.. _install_core:
+
 Installing `ansible-core`
 -------------------------
 
@@ -85,11 +87,18 @@ Ansible also distributes a minimalist object called ``ansible-core`` (or ``ansib
 You can choose any of the following ways to install ``ansible-core``:
 
 * Install ``ansible-core`` (version 2.11 and greater) or ``ansible-base`` (version 2.10) with ``pip``.
+* Install ``ansible-core`` (version 2.11 and greater) RPM package with ``dnf``.
 * Install ``ansible-core`` from source from the ansible/ansible GitHub repository to access the development (``devel``) version to develop or test the latest features.
 
 .. note::
 
 	You should only run ``ansible-core`` from ``devel`` if you are modifying ``ansible-core``, or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
+
+.. note::
+
+	Red Hat Ansible Automation Platform 2.0 repository only provides ``ansible-core`` 2.11 RPM package for RHEL 8 x86_64. You need to enable the Red Hat Ansible Automation Platform 2.0 repository for RHEL 8 x86_64 before installing the package with ``sudo subscription-manager repos --enable ansible-automation-platform-2.0-early-access-for-rhel-8-x86_64-rpms``. After enabling the repository, install the package with ``sudo dnf install ansible-core``.
+
+
 
 Ansible generally creates new releases twice a year. See :ref:`release_and_maintenance` for information on release timing and maintenance of older releases.
 
@@ -243,7 +252,7 @@ RPMs for currently supported versions of RHEL and CentOS are also available from
 
 .. note::
 
-	Since Ansible 2.10 for RHEL is not available at this time,  continue to use Ansible 2.9.
+	Red Hat Ansible Automation Platform will not ship RPM package for Ansible 2.10+. Going forward, Red Hat Ansible Automation Platform will ship the ansible-core package as a standalone RPM and within execution environments, see :ref:`install_core`.
 
 Ansible can manage older operating systems that contain Python 2.6 or higher.
 
