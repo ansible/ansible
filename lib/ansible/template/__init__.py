@@ -54,7 +54,7 @@ from ansible.module_utils.common._collections_compat import Iterator, Sequence, 
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.compat.importlib import import_module
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
-from ansible.template.native_helpers import ansible_native_concat, ansible_concat
+from ansible.template.native_helpers import ansible_native_concat, ansible_eval_concat, ansible_concat
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.collection_loader import AnsibleCollectionRef
@@ -593,6 +593,22 @@ class JinjaPluginIntercept(MutableMapping):
         return len(self._delegatee)
 
 
+@_unroll_iterator
+def _ansible_finalize(thing):
+    """A custom finalize function for jinja2, which prevents None from being
+    returned. This avoids a string of ``"None"`` as ``None`` has no
+    importance in YAML.
+
+    The function is decorated with ``_unroll_iterator`` so that users are not
+    required to explicitly use ``|list`` to unroll a generator. This only
+    affects the scenario where the final result of templating
+    is a generator, e.g. ``range``, ``dict.items()`` and so on. Filters
+    which can produce a generator in the middle of a template are already
+    wrapped with ``_unroll_generator`` in ``JinjaPluginIntercept``.
+    """
+    return thing if thing is not None else ''
+
+
 class AnsibleEnvironment(NativeEnvironment):
     '''
     Our custom environment, which simply allows us to override the class-level
@@ -600,21 +616,26 @@ class AnsibleEnvironment(NativeEnvironment):
     '''
     context_class = AnsibleContext
     template_class = AnsibleJ2Template
+    concat = staticmethod(ansible_eval_concat)
 
     def __init__(self, *args, **kwargs):
-        super(AnsibleEnvironment, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.filters = JinjaPluginIntercept(self.filters, filter_loader)
         self.tests = JinjaPluginIntercept(self.tests, test_loader)
 
+        self.trim_blocks = True
 
-class AnsibleNativeEnvironment(NativeEnvironment):
-    def __new__(cls):
-        raise AnsibleAssertionError(
-            'It is not allowed to create instances of AnsibleNativeEnvironment. '
-            'The class is kept for backwards compatibility of '
-            'Templar.copy_with_new_env, see the method for more information.'
-        )
+        self.undefined = AnsibleUndefined
+        self.finalize = _ansible_finalize
+
+
+class AnsibleNativeEnvironment(AnsibleEnvironment):
+    concat = staticmethod(ansible_native_concat)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.finalize = _unroll_iterator(lambda thing: thing)
 
 
 class Templar:
@@ -626,20 +647,16 @@ class Templar:
         # NOTE shared_loader_obj is deprecated, ansible.plugins.loader is used
         # directly. Keeping the arg for now in case 3rd party code "uses" it.
         self._loader = loader
-        self._filters = None
-        self._tests = None
         self._available_variables = {} if variables is None else variables
         self._cached_result = {}
-        self._basedir = loader.get_basedir() if loader else './'
 
         self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
-        self.environment = AnsibleEnvironment(
-            trim_blocks=True,
-            undefined=AnsibleUndefined,
+        environment_class = AnsibleNativeEnvironment if C.DEFAULT_JINJA2_NATIVE else AnsibleEnvironment
+
+        self.environment = environment_class(
             extensions=self._get_extensions(),
-            finalize=self._finalize,
-            loader=FileSystemLoader(self._basedir),
+            loader=FileSystemLoader(loader.get_basedir() if loader else '.'),
         )
 
         # jinja2 global is inconsistent across versions, this normalizes them
@@ -662,47 +679,25 @@ class Templar:
     def copy_with_new_env(self, environment_class=AnsibleEnvironment, **kwargs):
         r"""Creates a new copy of Templar with a new environment.
 
-        Since Ansible 2.13 this method is being deprecated and is kept only
-        for backwards compatibility:
-            - AnsibleEnvironment is now based on NativeEnvironment
-            - AnsibleNativeEnvironment is replaced by what is effectively a dummy class
-              for purposes of this method, see below
-            - environment_class arg no longer controls what type of environment is created,
-              AnsibleEnvironment is used regardless of the value passed in environment_class
-            - environment_class is used to determine the value of jinja2_native of the newly
-              created Templar; if AnsibleNativeEnvironment is passed in environment_class
-              new_templar.jinja2_native is set to True, any other value will result in
-              new_templar.jinja2_native being set to False unless overriden by the value
-              passed in kwargs
-
-        :kwarg environment_class: See above.
+        :kwarg environment_class: Environment class used for creating a new environment.
         :kwarg \*\*kwargs: Optional arguments for the new environment that override existing
             environment attributes.
 
         :returns: Copy of Templar with updated environment.
         """
-        display.deprecated(
-            'Templar.copy_with_new_env is no longer used within Ansible codebase and is being deprecated. '
-            'For temporarily creating a new environment with custom arguments use set_temporary_context context manager. '
-            'To control whether the Templar uses the jinja2_native functionality set/unset Templar.jinja2_native instance attribute.',
-            version='2.14', collection_name='ansible.builtin'
-        )
-
         # We need to use __new__ to skip __init__, mainly not to create a new
         # environment there only to override it below
-        new_env = object.__new__(AnsibleEnvironment)
+        new_env = object.__new__(environment_class)
         new_env.__dict__.update(self.environment.__dict__)
 
         new_templar = object.__new__(Templar)
         new_templar.__dict__.update(self.__dict__)
         new_templar.environment = new_env
-        new_templar.environment.finalize = new_templar._finalize
 
         new_templar.jinja2_native = environment_class is AnsibleNativeEnvironment
 
         mapping = {
             'available_variables': new_templar,
-            'jinja2_native': self,
             'searchpath': new_env.loader,
         }
 
@@ -761,7 +756,6 @@ class Templar:
         """
         mapping = {
             'available_variables': self,
-            'jinja2_native': self,
             'searchpath': self.environment.loader,
         }
         original = {}
@@ -914,28 +908,6 @@ class Templar:
         # the variable didn't meet the conditions to be converted,
         # so just return it as-is
         return variable
-
-    @_unroll_iterator
-    def _finalize(self, thing):
-        """A custom finalize method for jinja2, which prevents None from being
-        returned. This avoids a string of ``"None"`` as ``None`` has no
-        importance in YAML.
-
-        The method is decorated with ``_unroll_iterator`` so that users are not
-        required to explicitly use ``|list`` to unroll a generator. This only
-        affects the scenario where the final result of templating
-        is a generator, e.g. ``range``, ``dict.items()`` and so on. Filters
-        which can produce a generator in the middle of a template are already
-        wrapped with ``_unroll_generator`` in ``JinjaPluginIntercept``.
-
-        If using jinja2_native we bypass this and return the actual value always.
-        """
-        # FIXME remove this special case for jinja2_native by creating separate
-        #       _finalized methods in AnsibleEnvironment/AnsibleNativeEnvironment.
-        if self.jinja2_native:
-            return thing
-
-        return thing if thing is not None else ''
 
     def _fail_lookup(self, name, *args, **kwargs):
         raise AnsibleError("The lookup `%s` was found, however lookups were disabled from templating" % name)
@@ -1092,10 +1064,10 @@ class Templar:
             rf = t.root_render_func(new_context)
 
             try:
-                if self.jinja2_native:
-                    res = ansible_native_concat(rf)
+                if not self.jinja2_native and not convert_data:
+                    res = ansible_concat(rf)
                 else:
-                    res = ansible_concat(rf, convert_data, myenv.variable_start_string)
+                    res = self.environment.concat(rf)
 
                 unsafe = getattr(new_context, 'unsafe', False)
                 if unsafe:
