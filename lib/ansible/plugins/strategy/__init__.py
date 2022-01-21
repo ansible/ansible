@@ -48,6 +48,7 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
+from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import loader as plugin_loader
 from ansible.template import Templar
@@ -471,9 +472,18 @@ class StrategyBase:
         if isinstance(task_result._task, string_types):
             # If the value is a string, it is ``Task._uuid``
             queue_cache_entry = (task_result._host.name, task_result._task)
-            found_task = self._queued_task_cache.get(queue_cache_entry)['task']
-            original_task = found_task.copy(exclude_parent=True, exclude_tasks=True)
-            original_task._parent = found_task._parent
+            try:
+                found_task = self._queued_task_cache[queue_cache_entry]['task']
+            except KeyError:
+                # This should only happen due to an implicit task created by the
+                # TaskExecutor, restrict this behavior to the explicit use case
+                # of an implicit async_status task
+                if task_result._task_fields.get('action') != 'async_status':
+                    raise
+                original_task = Task()
+            else:
+                original_task = found_task.copy(exclude_parent=True, exclude_tasks=True)
+                original_task._parent = found_task._parent
             original_task.from_attrs(task_result._task_fields)
             task_result._task = original_task
 
