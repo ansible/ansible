@@ -197,6 +197,8 @@ DOCUMENTATION = '''
           vars:
             - name: ansible_port
             - name: ansible_ssh_port
+          keyword:
+            - name: port
       remote_user:
           description:
               - User name with which to login to the remote server, normally set by the remote_user keyword.
@@ -211,6 +213,8 @@ DOCUMENTATION = '''
             - name: ansible_ssh_user
           cli:
             - name: user
+          keyword:
+            - name: remote_user
       pipelining:
           env:
             - name: ANSIBLE_PIPELINING

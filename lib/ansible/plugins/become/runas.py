@@ -25,6 +25,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_USER
               - name: ANSIBLE_RUNAS_USER
+            keyword:
+              - name: become_user
             required: True
         become_flags:
             description: Options to pass to runas, a space delimited list of k=v pairs
@@ -40,6 +42,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_FLAGS
               - name: ANSIBLE_RUNAS_FLAGS
+            keyword:
+              - name: become_flags
         become_pass:
             description: password
             ini:

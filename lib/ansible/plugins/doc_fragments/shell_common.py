@@ -64,6 +64,8 @@ options:
     default: [{}]
     description:
       - List of dictionaries of environment variables and their values to use when executing commands.
+    keyword:
+      - name: environment
   admin_users:
     type: list
     default: ['root', 'toor']

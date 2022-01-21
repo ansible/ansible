@@ -26,6 +26,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_USER
               - name: ANSIBLE_SU_USER
+            keyword:
+              - name: become_user
         become_exe:
             description: Su executable
             default: su
@@ -40,6 +42,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_EXE
               - name: ANSIBLE_SU_EXE
+            keyword:
+              - name: become_exe
         become_flags:
             description: Options to pass to su
             default: ''
@@ -54,6 +58,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_FLAGS
               - name: ANSIBLE_SU_FLAGS
+            keyword:
+              - name: become_flags
         become_pass:
             description: Password to pass to su
             required: False
