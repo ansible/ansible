@@ -26,6 +26,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_USER
               - name: ANSIBLE_SUDO_USER
+            keyword:
+              - name: become_user
         become_exe:
             description: Sudo executable
             default: sudo
@@ -40,6 +42,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_EXE
               - name: ANSIBLE_SUDO_EXE
+            keyword:
+              - name: become_exe
         become_flags:
             description: Options to pass to sudo
             default: -H -S -n
@@ -54,6 +58,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_FLAGS
               - name: ANSIBLE_SUDO_FLAGS
+            keyword:
+              - name: become_flags
         become_pass:
             description: Password to pass to sudo
             required: False

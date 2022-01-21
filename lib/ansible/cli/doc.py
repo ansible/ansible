@@ -1069,7 +1069,7 @@ class DocCLI(CLI, RoleMixin):
                     suboptions.append((subkey, opt.pop(subkey)))
 
             conf = {}
-            for config in ('env', 'ini', 'yaml', 'vars', 'keywords'):
+            for config in ('env', 'ini', 'yaml', 'vars', 'keyword'):
                 if config in opt and opt[config]:
                     # Create a copy so we don't modify the original (in case YAML anchors have been used)
                     conf[config] = [dict(item) for item in opt.pop(config)]

@@ -34,6 +34,8 @@ DOCUMENTATION = """
         vars:
             - name: ansible_user
             - name: ansible_winrm_user
+        keyword:
+            - name: remote_user
         type: str
       remote_password:
         description: Authentication password for the C(remote_user). Can be supplied as CLI option.
@@ -52,6 +54,8 @@ DOCUMENTATION = """
           - name: ansible_port
           - name: ansible_winrm_port
         default: 5986
+        keyword:
+            - name: port
         type: integer
       scheme:
         description:
