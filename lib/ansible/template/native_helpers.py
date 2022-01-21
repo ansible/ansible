@@ -8,6 +8,7 @@ __metaclass__ = type
 
 import ast
 from itertools import islice, chain
+from types import GeneratorType
 
 from jinja2.runtime import StrictUndefined
 
@@ -56,7 +57,16 @@ def _fail_on_undefined(data):
     return data
 
 
-def ansible_concat(nodes, convert_data, variable_start_string):
+def ansible_eval_concat(nodes):
+    """Return a string of concatenated compiled nodes. Throw an undefined error
+    if any of the nodes is undefined.
+
+    If the result of concat appears to be a dictionary, list or bool,
+    try and convert it to such using literal_eval, the same mechanism as used
+    in jinja2_native.
+
+    Used in Templar.template() when jinja2_native=False and convert_data=True.
+    """
     head = list(islice(nodes, 2))
 
     if not head:
@@ -70,20 +80,12 @@ def ansible_concat(nodes, convert_data, variable_start_string):
 
         out = to_text(out)
     else:
-        out = ''.join([to_text(_fail_on_undefined(v)) for v in chain(head, nodes)])
-
-    if not convert_data:
-        return out
+        if isinstance(nodes, GeneratorType):
+            nodes = chain(head, nodes)
+        out = ''.join([to_text(_fail_on_undefined(v)) for v in nodes])
 
     # if this looks like a dictionary, list or bool, convert it to such
-    do_eval = (
-        (
-            out.startswith(('{', '[')) and
-            not out.startswith(variable_start_string)
-        ) or
-        out in ('True', 'False')
-    )
-    if do_eval:
+    if out.startswith(('{', '[')) or out in ('True', 'False'):
         unsafe = hasattr(out, '__UNSAFE__')
         try:
             out = ast.literal_eval(
@@ -100,6 +102,16 @@ def ansible_concat(nodes, convert_data, variable_start_string):
                 out = wrap_var(out)
 
     return out
+
+
+def ansible_concat(nodes):
+    """Return a string of concatenated compiled nodes. Throw an undefined error
+    if any of the nodes is undefined. Other than that it is equivalent to
+    Jinja2's default concat function.
+
+    Used in Templar.template() when jinja2_native=False and convert_data=False.
+    """
+    return ''.join([to_text(_fail_on_undefined(v)) for v in nodes])
 
 
 def ansible_native_concat(nodes):
@@ -137,7 +149,9 @@ def ansible_native_concat(nodes):
         if not isinstance(out, string_types):
             return out
     else:
-        out = ''.join([to_text(_fail_on_undefined(v)) for v in chain(head, nodes)])
+        if isinstance(nodes, GeneratorType):
+            nodes = chain(head, nodes)
+        out = ''.join([to_text(_fail_on_undefined(v)) for v in nodes])
 
     try:
         return ast.literal_eval(
