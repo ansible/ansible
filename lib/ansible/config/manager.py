@@ -462,6 +462,12 @@ class ConfigManager(object):
                     origin = 'var: %s' % origin
 
                 # use playbook keywords if you have em
+                if value is None and defs[config].get('keyword') and keys:
+                    value, origin = self._loop_entries(keys, defs[config]['keyword'])
+                    origin = 'keyword: %s' % origin
+
+                # automap to keywords
+                # TODO: deprecate these in favor of explicit keyword above
                 if value is None and keys:
                     if config in keys:
                         value = keys[config]
