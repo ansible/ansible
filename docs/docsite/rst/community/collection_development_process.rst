@@ -1,8 +1,8 @@
-.. _community_development_process:
+.. _collection_development_process:
 
-*****************************
-The Ansible Development Cycle
-*****************************
+******************************************
+The Ansible Collections Development Cycle
+******************************************
 
 Ansible developers (including community contributors) add new features, fix bugs, and update code in many different repositories. The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-core``. Other repositories contain plugins and modules that enable Ansible to execute specific tasks, like adding a user to a particular database or configuring a particular network device. These repositories contain the source code for collections.
 
@@ -13,25 +13,22 @@ Development on collections also occurs at the macro and micro levels. Each colle
 .. contents::
    :local:
 
-Macro development: ``ansible-core`` roadmaps, releases, and projects
+
+Macro development: roadmaps, releases, and projects
 =====================================================================
 
-If you want to follow the conversation about what features will be added to ``ansible-core`` for upcoming releases and what bugs are being fixed, you can watch these resources:
+If you want to follow the conversation about what features will be added to the Ansible package for upcoming releases and what bugs are being fixed, you can watch these resources:
 
 * the :ref:`roadmaps`
 * the :ref:`Ansible Release Schedule <release_and_maintenance>`
 * various GitHub `projects <https://github.com/ansible/ansible/projects>`_ - for example:
 
    * the `2.12 release project <https://github.com/ansible/ansible/projects/43>`_
-   * the `core documentation project <https://github.com/ansible/ansible/projects/27>`_
-
-.. _community_pull_requests:
-
 
 Micro development: the lifecycle of a PR
 ========================================
 
-If you want to contribute a feature or fix a bug in ``ansible-core`` or in a collection, you must open a **pull request** ("PR" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general. The ultimate goal of any pull request is to get merged and become part of a collection or ``ansible-core``.
+If you want to contribute a feature or fix a bug in  a collection, you must open a **pull request** ("PR" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general. The ultimate goal of any pull request is to get merged and become part of a collection or ``ansible-core``.
 Here's an overview of the PR lifecycle:
 
 * Contributor opens a PR
@@ -138,12 +135,12 @@ Making your PR merge-worthy
 
 We do not merge every PR. Here are some tips for making your PR useful, attractive, and merge-worthy.
 
-.. _community_changelogs:
+.. _collection_changelogs:
 
 Changelogs
 ----------
 
-Changelogs help users and developers keep up with changes to ansible-core and Ansible collections. Ansible and many collections build changelogs for each release from fragments. For ansible-core and collections using this model, you **must** add a changelog fragment to any PR that changes functionality or fixes a bug.
+Changelogs help users and developers keep up with changes to Ansible collections. Many collections build changelogs for each release from fragments. For ansible-core and collections using this model, you **must** add a changelog fragment to any PR that changes functionality or fixes a bug.
 
 You do not need a changelog fragment for PRs that:
 
@@ -162,8 +159,6 @@ More precisely:
 * New jinja2 filter and test plugins, and also new roles and playbooks (for collections) must have a changelog fragment. See :ref:`changelogs_how_to_format_j2_roles_playbooks` or the `antsibull-changelog documentation for such changelog fragments <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst#adding-new-roles-playbooks-test-and-filter-plugins>`_ for information on what the fragments should look like.
 
 We build short summary changelogs for minor releases as well as for major releases. If you backport a bugfix, include a changelog fragment with the backport PR.
-
-.. _changelogs_how_to:
 
 Creating a changelog fragment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -203,8 +198,6 @@ A single changelog fragment may contain multiple sections but most will only con
 Each changelog entry must contain a link to its issue between parentheses at the end. If there is no corresponding issue, the entry must contain a link to the PR itself.
 
 Most changelog entries are ``bugfixes`` or ``minor_changes``.
-
-.. _changelogs_how_to_format:
 
 Changelog fragment entry format
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -248,7 +241,6 @@ You can find more example changelog fragments in the `changelog directory <https
 
 After you have written the changelog fragment for your PR, commit the file and include it with the pull request.
 
-.. _changelogs_how_to_format_j2_roles_playbooks:
 
 Changelog fragment entry format for new jinja2 plugins, roles, and playbooks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -294,53 +286,3 @@ While new modules and plugins that are not jinja2 filter or test plugins are men
         # plugins and modules: it should start with an upper-case letter and
         # not have a period at the end.
         description: Wipes a server
-
-.. _backport_process:
-
-Backporting merged PRs in ``ansible-core``
-===========================================
-
-All ``ansible-core`` PRs must be merged to the ``devel`` branch first. After a pull request has been accepted and merged to the ``devel`` branch, the following instructions will help you create a pull request to backport the change to a previous stable branch.
-
-We do **not** backport features.
-
-.. note::
-
-   These instructions assume that:
-
-    * ``stable-2.12`` is the targeted release branch for the backport
-    * ``https://github.com/ansible/ansible.git`` is configured as a ``git remote`` named ``upstream``. If you do not use a ``git remote`` named ``upstream``, adjust the instructions accordingly.
-    * ``https://github.com/<yourgithubaccount>/ansible.git`` is configured as a ``git remote`` named ``origin``. If you do not use a ``git remote`` named ``origin``, adjust the instructions accordingly.
-
-#. Prepare your devel, stable, and feature branches:
-
-.. code-block:: shell
-
-       git fetch upstream
-       git checkout -b backport/2.12/[PR_NUMBER_FROM_DEVEL] upstream/stable-2.12
-
-#. Cherry pick the relevant commit SHA from the devel branch into your feature branch, handling merge conflicts as necessary:
-
-.. code-block:: shell
-
-       git cherry-pick -x [SHA_FROM_DEVEL]
-
-#. Add a :ref:`changelog fragment <changelogs_how_to>` for the change, and commit it.
-
-#. Push your feature branch to your fork on GitHub:
-
-.. code-block:: shell
-
-       git push origin backport/2.12/[PR_NUMBER_FROM_DEVEL]
-
-#. Submit the pull request for ``backport/2.12/[PR_NUMBER_FROM_DEVEL]`` against the ``stable-2.12`` branch
-
-#. The Release Manager will decide whether to merge the backport PR before the next minor release. There isn't any need to follow up. Just ensure that the automated tests (CI) are green.
-
-.. note::
-
-    The branch name ``backport/2.12/[PR_NUMBER_FROM_DEVEL]`` is somewhat arbitrary, but conveys meaning about the purpose of the branch. This branch name format is not required, but it can be helpful, especially when making multiple backport PRs for multiple stable branches.
-
-.. note::
-
-    If you prefer, you can use CPython's cherry-picker tool (``pip install --user 'cherry-picker >= 1.3.2'``) to backport commits from devel to stable branches in Ansible. Take a look at the `cherry-picker documentation <https://pypi.org/p/cherry-picker#cherry-picking>`_ for details on installing, configuring, and using it.
