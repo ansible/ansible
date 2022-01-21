@@ -161,7 +161,8 @@ class Hostname(object):
         if self.use is not None:
             strat = globals()['%sStrategy' % STRATS[self.use]]
             self.strategy = strat(module)
-        elif self.platform == 'Linux' and ServiceMgrFactCollector.is_systemd_managed(module):
+        elif platform.system() == 'Linux' and ServiceMgrFactCollector.is_systemd_managed(module):
+            # This is Linux and systemd is active
             self.strategy = SystemdStrategy(module)
         else:
             self.strategy = self.strategy_class(module)
@@ -638,12 +639,6 @@ class DarwinStrategy(BaseStrategy):
             self.changed = True
 
 
-class FedoraHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Fedora'
-    strategy_class = SystemdStrategy
-
-
 class SLESHostname(Hostname):
     platform = 'Linux'
     distribution = 'Sles'
@@ -656,60 +651,6 @@ class SLESHostname(Hostname):
             raise ValueError()
     except ValueError:
         strategy_class = UnimplementedStrategy
-
-
-class OpenSUSEHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Opensuse'
-    strategy_class = SystemdStrategy
-
-
-class OpenSUSELeapHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Opensuse-leap'
-    strategy_class = SystemdStrategy
-
-
-class OpenSUSETumbleweedHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Opensuse-tumbleweed'
-    strategy_class = SystemdStrategy
-
-
-class AsteraHostname(Hostname):
-    platform = 'Linux'
-    distribution = '"astralinuxce"'
-    strategy_class = SystemdStrategy
-
-
-class ArchHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Arch'
-    strategy_class = SystemdStrategy
-
-
-class ArchARMHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Archarm'
-    strategy_class = SystemdStrategy
-
-
-class AlmaLinuxHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Almalinux'
-    strategy_class = SystemdStrategy
-
-
-class ManjaroHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Manjaro'
-    strategy_class = SystemdStrategy
-
-
-class ManjaroARMHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Manjaro-arm'
-    strategy_class = SystemdStrategy
 
 
 class RHELHostname(Hostname):
@@ -730,12 +671,6 @@ class AnolisOSHostname(Hostname):
     strategy_class = RedHatStrategy
 
 
-class ClearLinuxHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Clear-linux-os'
-    strategy_class = SystemdStrategy
-
-
 class CloudlinuxserverHostname(Hostname):
     platform = 'Linux'
     distribution = 'Cloudlinuxserver'
@@ -752,18 +687,6 @@ class AlinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Alinux'
     strategy_class = RedHatStrategy
-
-
-class CoreosHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Coreos'
-    strategy_class = SystemdStrategy
-
-
-class FlatcarHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Flatcar'
-    strategy_class = SystemdStrategy
 
 
 class ScientificHostname(Hostname):
@@ -904,18 +827,6 @@ class DarwinHostname(Hostname):
     strategy_class = DarwinStrategy
 
 
-class OsmcHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Osmc'
-    strategy_class = SystemdStrategy
-
-
-class PardusHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Pardus'
-    strategy_class = SystemdStrategy
-
-
 class VoidLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Void'
@@ -928,16 +839,10 @@ class PopHostname(Hostname):
     strategy_class = FileStrategy
 
 
-class RockyHostname(Hostname):
+class EurolinuxHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Rocky'
-    strategy_class = SystemdStrategy
-
-
-class RedosHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Redos'
-    strategy_class = SystemdStrategy
+    distribution = 'Eurolinux'
+    strategy_class = RedHatStrategy
 
 
 def main():
