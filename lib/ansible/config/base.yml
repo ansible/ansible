@@ -1485,7 +1485,7 @@ INTERPRETER_PYTHON:
 INTERPRETER_PYTHON_DISTRO_MAP:
   name: Mapping of known included platform pythons for various Linux distros
   default:
-    centos: &rhelish
+    redhat:
       '6': /usr/bin/python
       '8': /usr/libexec/platform-python
       '9': /usr/bin/python3
@@ -1494,10 +1494,6 @@ INTERPRETER_PYTHON_DISTRO_MAP:
       '10': /usr/bin/python3
     fedora:
       '23': /usr/bin/python3
-    oracle: *rhelish
-    redhat: *rhelish
-    rhel: *rhelish
-    rocky: *rhelish
     ubuntu:
       '14': /usr/bin/python
       '16': /usr/bin/python3
