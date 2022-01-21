@@ -1,8 +1,8 @@
 .. _style_guide:
 
-*******************
-Ansible style guide
-*******************
+**********************************
+Ansible documentation style guide
+**********************************
 
 Welcome to the Ansible style guide!
 To create clear, concise, consistent, useful materials on docs.ansible.com, follow these guidelines:
