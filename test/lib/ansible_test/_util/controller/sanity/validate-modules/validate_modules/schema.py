@@ -442,7 +442,7 @@ def list_dict_option_schema(for_collection, plugin_type):
                 'version_added': version(for_collection),
                 'version_added_collection': collection_name,
             }, extra=PREVENT_EXTRA),
-            partial(version_added, error_code='option-env-invalid-version-added')
+            partial(version_added, error_code='option-invalid-version-added')
         )
         ini_schema = All(
             Schema({
@@ -452,7 +452,7 @@ def list_dict_option_schema(for_collection, plugin_type):
                 'version_added': version(for_collection),
                 'version_added_collection': collection_name,
             }, extra=PREVENT_EXTRA),
-            partial(version_added, error_code='option-ini-invalid-version-added')
+            partial(version_added, error_code='option-invalid-version-added')
         )
         vars_schema = All(
             Schema({
@@ -461,7 +461,7 @@ def list_dict_option_schema(for_collection, plugin_type):
                 'version_added': version(for_collection),
                 'version_added_collection': collection_name,
             }, extra=PREVENT_EXTRA),
-            partial(version_added, error_code='option-vars-invalid-version-added')
+            partial(version_added, error_code='option-invalid-version-added')
         )
         cli_schema = All(
             Schema({
@@ -471,13 +471,23 @@ def list_dict_option_schema(for_collection, plugin_type):
                 'version_added': version(for_collection),
                 'version_added_collection': collection_name,
             }, extra=PREVENT_EXTRA),
-            partial(version_added, error_code='option-cli-invalid-version-added')
+            partial(version_added, error_code='option-invalid-version-added')
+        )
+        keyword_schema = All(
+            Schema({
+                Required('name'): Any(*string_types),
+                'deprecated': deprecated_schema,
+                'version_added': version(for_collection),
+                'version_added_collection': collection_name,
+            }, extra=PREVENT_EXTRA),
+            partial(version_added, error_code='option-invalid-version-added')
         )
         basic_option_schema.update({
             'env': [env_schema],
             'ini': [ini_schema],
             'vars': [vars_schema],
             'cli': [cli_schema],
+            'keyword': [keyword_schema],
             'deprecated': deprecated_schema,
         })
 
