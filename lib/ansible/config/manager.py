@@ -549,11 +549,11 @@ class ConfigManager(object):
                 if invalid_choices:
 
                     if isinstance(defs[config]['choices'], Mapping):
-                        valid = ', '.join(defs[config]['choices'].keys())
+                        valid = ', '.join([to_text(k) for k in defs[config]['choices'].keys()])
                     elif isinstance(defs[config]['choices'], string_types):
                         valid = defs[config]['choices']
                     elif isinstance(defs[config]['choices'], Sequence):
-                        valid = ', '.join(defs[config]['choices'])
+                        valid = ', '.join([to_text(c) for c in defs[config]['choices']])
                     else:
                         valid = defs[config]['choices']
 
