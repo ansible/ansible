@@ -15,7 +15,10 @@ from ansible.module_utils.distro import LinuxDistribution
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
 from ansible.module_utils.compat.version import LooseVersion
+from ansible.module_utils.facts.system.distribution import Distribution
 from traceback import format_exc
+
+OS_FAMILY_LOWER = {k.lower(): v.lower() for k, v in Distribution.OS_FAMILY.items()}
 
 display = Display()
 foundre = re.compile(r'(?s)PLATFORM[\r\n]+(.*)FOUND(.*)ENDFOUND')
@@ -107,7 +110,9 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         if not distro or not version:
             raise NotImplementedError('unable to get Linux distribution/version info')
 
-        version_map = platform_python_map.get(distro.lower().strip())
+        family = OS_FAMILY_LOWER.get(distro.lower().strip())
+
+        version_map = platform_python_map.get(distro.lower().strip()) or platform_python_map.get(family)
         if not version_map:
             raise NotImplementedError('unsupported Linux distribution: {0}'.format(distro))
 
