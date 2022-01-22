@@ -115,7 +115,7 @@ class GpgBaseError(Exception):
 
     def __post_init__(self):
         for field in dc_fields(self):
-            super().__setattr__(field.name, field.type(getattr(self, field.name)))
+            super(GpgBaseError, self).__setattr__(field.name, field.type(getattr(self, field.name)))
 
 
 @frozen_dataclass

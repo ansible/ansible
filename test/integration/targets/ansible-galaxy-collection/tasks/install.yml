@@ -528,6 +528,93 @@
     path: '{{ galaxy_dir }}/ansible_collections'
     state: absent
 
+- name: install simple collection from first accessible server with valid detached signature
+  command: ansible-galaxy collection install namespace1.name1 {{ galaxy_verbosity }} {{ signature_options }}
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+  vars:
+    signature_options: "--signature {{ signature }} --keyring {{ keyring }}"
+    signature: "file://{{ gpg_homedir }}/namespace1-name1-1.0.9-MANIFEST.json.asc"
+    keyring: "{{ gpg_homedir }}/pubring.kbx"
+  register: from_first_good_server
+
+- name: get installed files of install simple collection from first good server
+  find:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1'
+    file_type: file
+  register: install_normal_files
+
+- name: get the manifest of install simple collection from first good server
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1/MANIFEST.json'
+  register: install_normal_manifest
+
+- name: assert install simple collection from first good server
+  assert:
+    that:
+    - '"Installing ''namespace1.name1:1.0.9'' to" in from_first_good_server.stdout'
+    - install_normal_files.files | length == 3
+    - install_normal_files.files[0].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']
+    - install_normal_files.files[1].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']
+    - install_normal_files.files[2].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']
+    - (install_normal_manifest.content | b64decode | from_json).collection_info.version == '1.0.9'
+
+- name: Remove the collection
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1'
+    state: absent
+
+- name: install simple collection with invalid detached signature
+  command: ansible-galaxy collection install namespace1.name1 {{ galaxy_verbosity }} {{ signature_options }}
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+  vars:
+    signature_options: "--signature {{ signature }} --keyring {{ keyring }}"
+    signature: "file://{{ gpg_homedir }}/namespace2-name-1.0.0-MANIFEST.json.asc"
+    keyring: "{{ gpg_homedir }}/pubring.kbx"
+  ignore_errors: yes
+  register: invalid_signature
+
+- assert:
+    that:
+      - invalid_signature is failed
+      - "'Not installing namespace1.name1 because GnuPG signature verification failed.' in invalid_signature.stderr"
+      - expected_errors[0] in install_stdout
+      - expected_errors[1] in install_stdout
+  vars:
+    expected_errors:
+      - "* This is the counterpart to SUCCESS and used to indicate a program failure."
+      - "* The signature with the keyid has not been verified okay."
+    install_stdout: "{{ invalid_signature.stdout | regex_replace('\n', '') | regex_replace('      ', ' ') }}"
+
+- name: validate collection directory was not created
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1'
+    state: absent
+  register: collection_dir
+  check_mode: yes
+  failed_when: collection_dir is changed
+
+- name: disable signature verification and install simple collection with invalid detached signature
+  command: ansible-galaxy collection install namespace1.name1 {{ galaxy_verbosity }} {{ signature_options }}
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+  vars:
+    signature_options: "--signature {{ signature }} --keyring {{ keyring }} --disable-gpg-verify"
+    signature: "file://{{ gpg_homedir }}/namespace2-name-1.0.0-MANIFEST.json.asc"
+    keyring: "{{ gpg_homedir }}/pubring.kbx"
+  ignore_errors: yes
+  register: ignore_invalid_signature
+
+- assert:
+    that:
+      - ignore_invalid_signature is success
+      - '"Installing ''namespace1.name1:1.0.9'' to" in ignore_invalid_signature.stdout'
+
+- name: Remove the collection
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1'
+    state: absent
 
 - name: download collections with pre-release dep - {{ test_name }}
   command: ansible-galaxy collection download dep_with_beta.parent namespace1.name1:1.1.0-beta.1 -p '{{ galaxy_dir }}/scratch'

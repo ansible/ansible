@@ -278,13 +278,24 @@ def verify_file_signature(manifest_file, detached_signature, keyring):
     # type: (str, str, str) -> bool
     gpg_result, gpg_verification_rc = run_gpg_verify(manifest_file, detached_signature, keyring, display)
 
-    if gpg_result and (errors := parse_gpg_errors(gpg_result)):
-        verify_failed = "Signature verification failed:"
+    if gpg_result:
+        errors = parse_gpg_errors(gpg_result)
+        try:
+            error = next(errors)
+        except StopIteration:
+            if gpg_verification_rc:
+                display.display(
+                    f"Unexpected error: GnuPG signature verification failed with the return code {gpg_verification_rc} and output {gpg_result}"
+                )
+            return not gpg_verification_rc
+        else:
+            verify_failed = "Signature verification failed:"
+
         text_wrapper = textwrap.TextWrapper(
             initial_indent="    * ",  # 6 chars
             subsequent_indent="      ",  # 6 chars
         )
-        reasons = set(error.get_gpg_error_description() for error in errors)
+        reasons = set(error.get_gpg_error_description() for error in chain([error], errors))
         for reason in reasons:
             verify_failed += '\n' + '\n'.join(text_wrapper.wrap(reason))
         display.display(verify_failed)
