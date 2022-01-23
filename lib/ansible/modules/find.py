@@ -248,7 +248,7 @@ EXAMPLES = r'''
 - name: find all elements owned by one of the user in a given list
   find:
     paths: /etc
-    users: 
+    users:
       - user1
       - user2
 
