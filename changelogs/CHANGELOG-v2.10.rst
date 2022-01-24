@@ -5,6 +5,23 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
+v2.10.17rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2022-01-24
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- ansible-galaxy collection build - Ignore any existing ``MANIFEST.json`` and ``FILES.json`` in the root directory when building a collection.
+- ansible-test - Fix traceback in the ``validate-modules`` sanity test when testing an Ansible module without any callables.
+- backwards compatiblity copy of doc fragment action_common_attributes
+
 v2.10.16
 ========
 
