@@ -5,6 +5,33 @@ ansible-core 2.11 "Hey Hey, What Can I Do" Release Notes
 .. contents:: Topics
 
 
+v2.11.8rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2022-01-24
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- service_facts now handles more states/statuses from systemd and in a more reliable way (failed, not-found, masked).
+
+Bugfixes
+--------
+
+- ansible-galaxy collection build - Ignore any existing ``MANIFEST.json`` and ``FILES.json`` in the root directory when building a collection.
+- ansible-test - Fix traceback in the ``validate-modules`` sanity test when testing an Ansible module without any callables.
+- backwards compatiblity copy of doc fragment action_common_attributes
+- default callback - Ensure we compare FQCN also in lockstep logic, to ensure using the FQCN of a strategy plugin triggers the correct behavior in the default callback plugin. (https://github.com/ansible/ansible/issues/76782)
+- include_vars, properly initialize variable as there is corner case in which it can end up referenced and not defined
+- ssh connection - properly quote controlpersist path given by user to avoid issues with spaces and other characters
+- ssh connection avoid parsing ssh cli debug lines as they can match expected output at high verbosities.
+- unarchive - Fix zip archive file listing that caused issues with content postprocessing (https://github.com/ansible/ansible/issues/76067).
+
 v2.11.7
 =======
 
