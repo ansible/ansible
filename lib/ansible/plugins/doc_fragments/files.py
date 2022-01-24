@@ -64,7 +64,7 @@ options:
   unsafe_writes:
     description:
     - Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target filesystem object.
-    - By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target filesystem objecs,
+    - By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target filesystem objects,
       but sometimes systems are configured or just broken in ways that prevent this. One example is docker mounted filesystem objects,
       which cannot be updated atomically from inside the container and can only be written in an unsafe manner.
     - This option allows Ansible to fall back to unsafe methods of updating filesystem objects when atomic operations fail
