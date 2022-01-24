@@ -345,7 +345,7 @@ The ``collections`` keyword merely creates an ordered 'search path' for non-name
 
 When using the ``collections`` keyword, it is not necessary to add in ``ansible.builtin`` as part of the search list. When left omitted, the following content is available by default:
 
-1. Standard ansible modules and plugins available through ``ansible-base/ansible-core``
+1. Standard ansible modules and plugins available through ``ansible-base``/``ansible-core``
 
 2. Support for older 3rd party plugin paths
 
