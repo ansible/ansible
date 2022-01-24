@@ -99,8 +99,8 @@ Since version 2.8 Ansible provides a useful option `INTERPRETER_PYTHON_FALLBACK 
 
   ansible_interpreter_python_fallback=['/usr/local/bin/python', '/usr/local/bin/python3', '/usr/local/bin/python3.8']
 
-Debug
------
+Debug the discovery of Python
+"""""""""""""""""""""""""""""
 
 For example, given the inventory::
 
