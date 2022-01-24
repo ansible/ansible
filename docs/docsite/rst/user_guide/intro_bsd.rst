@@ -58,6 +58,128 @@ To support a variety of Unix-like operating systems and distributions, Ansible c
     [openbsd:vars]
     ansible_python_interpreter=/usr/local/bin/python3.8
 
+
+FreeBSD packages and ports
+""""""""""""""""""""""""""
+
+In FreeBSD, there is no guarantee that either ``/usr/local/bin/python`` executable file or a link to an executable file is installed by default. The best practice for a remote host, with respect to Ansible, is to install at least the Python version supported by Ansible, e.g. ``lang/python38``, and both ``lang/python3`` and ``lang/python``. Quoting from */usr/ports/lang/python3/pkg-descr*::
+
+  This is a meta port to the Python 3.x interpreter and provides symbolic links
+  to bin/python3, bin/pydoc3, bin/idle3 and so on to allow compatibility with
+  minor version agnostic python scripts.
+
+Quoting from */usr/ports/lang/python/pkg-descr*::
+
+  This is a meta port to the Python interpreter and provides symbolic links
+  to bin/python, bin/pydoc, bin/idle and so on to allow compatibility with
+  version agnostic python scripts.
+
+As a result the following packages are installed::
+
+  shell> pkg info | grep python
+  python-3.8_3,2                 "meta-port" for the default version of Python interpreter
+  python3-3_3                    Meta-port for the Python interpreter 3.x
+  python38-3.8.12_1              Interpreted object-oriented programming language
+
+and following executables and links::
+
+  shell> ll /usr/local/bin/ | grep python
+  lrwxr-xr-x  1 root  wheel       7 Jan 24 08:30 python@ -> python3
+  lrwxr-xr-x  1 root  wheel      14 Jan 24 08:30 python-config@ -> python3-config
+  lrwxr-xr-x  1 root  wheel       9 Jan 24 08:29 python3@ -> python3.8
+  lrwxr-xr-x  1 root  wheel      16 Jan 24 08:29 python3-config@ -> python3.8-config
+  -r-xr-xr-x  1 root  wheel    5248 Jan 13 01:12 python3.8*
+  -r-xr-xr-x  1 root  wheel    3153 Jan 13 01:12 python3.8-config*
+
+
+INTERPRETER_PYTHON_FALLBACK
+"""""""""""""""""""""""""""
+
+Since version 2.8 Ansible provides a useful option `INTERPRETER_PYTHON_FALLBACK <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#interpreter-python-fallback>`_ to specify a list of paths to search for Python. This list will be searched and the first one found will be used. For example, the configuration below would make the installation of the meta-ports in the previous section redundant::
+
+  ansible_interpreter_python_fallback=['/usr/local/bin/python', '/usr/local/bin/python3', '/usr/local/bin/python3.8']
+
+Debug
+-----
+
+For example, given the inventory::
+
+  shell> cat hosts
+  [test]
+  test_11
+  test_12
+  test_13
+
+  [test:vars]
+  ansible_connection=ssh
+  ansible_user=admin
+  ansible_become=yes
+  ansible_become_user=root
+  ansible_become_method=sudo
+  ansible_interpreter_python_fallback=['/usr/local/bin/python', '/usr/local/bin/python3', '/usr/local/bin/python3.8']
+  ansible_perl_interpreter=/usr/local/bin/perl
+
+The playbook below::
+
+  shell> cat playbook.yml
+  - hosts: test_11
+    gather_facts: false
+    tasks:
+      - command: which python
+        register: result
+      - debug:
+          var: result.stdout
+      - debug:
+          msg: |-
+            {% for i in _vars %}
+            {{ i }}:
+              {{ lookup('vars', i)|to_nice_yaml|indent(2) }}
+            {% endfor %}
+        vars:
+          _vars: "{{ query('varnames', '.*python.*') }}"
+
+displays the details::
+
+  shell> ansible-playbook -i hosts test-001.yml
+
+  PLAY [test_11] *******************************************************************************
+
+  TASK [command] *******************************************************************************
+  [WARNING]: Platform freebsd on host test_11 is using the discovered Python interpreter at
+  /usr/local/bin/python, but future installation of another Python interpreter could change the
+  meaning of that path. See https://docs.ansible.com/ansible-
+  core/2.12/reference_appendices/interpreter_discovery.html for more information.
+  changed: [test_11]
+
+  TASK [debug] *********************************************************************************
+  ok: [test_11] =>
+    result.stdout: /usr/local/bin/python
+
+  TASK [debug] *********************************************************************************
+  ok: [test_11] =>
+    msg: |-
+      ansible_interpreter_python_fallback:
+        - /usr/local/bin/python
+        - /usr/local/bin/python3
+        - /usr/local/bin/python3.8
+
+      discovered_interpreter_python:
+        /usr/local/bin/python
+
+      ansible_playbook_python:
+        /usr/bin/python3
+
+
+.. seealso::
+
+   `Interpreter Discovery <https://docs.ansible.com/ansible/latest/reference_appendices/interpreter_discovery.html>`_
+   `INTERPRETER_PYTHON <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#interpreter-python>`_
+   `INTERPRETER_PYTHON_FALLBACK <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#interpreter-python-fallback>`_
+
+
+Additional variables
+""""""""""""""""""""
+
 If you use additional plugins beyond those bundled with Ansible, you can set similar variables for ``bash``, ``perl`` or ``ruby``, depending on how the plugin is written. For example:
 
 .. code-block:: text
