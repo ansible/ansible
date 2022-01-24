@@ -5,6 +5,41 @@ ansible-core 2.12 "Dazed and Confused" Release Notes
 .. contents:: Topics
 
 
+v2.12.2rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2022-01-24
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Fix ``AttributeError`` when providing password file via ``--connection-password-file`` (https://github.com/ansible/ansible/issues/76530)
+- Fix ``end_play`` to end the current play only (https://github.com/ansible/ansible/issues/76672)
+- Templating - Ensure we catch exceptions when getting ``.filters`` and ``.tests`` attributes on their respective plugins and properly error, instead of aborting which results in no filters being added to the jinja2 environment
+- ``Templar.copy_with_new_env`` - set the ``finalize`` method of the new ``Templar`` object for the new environment (https://github.com/ansible/ansible/issues/76379)
+- ansible-config avoid showing _terms and _input when --only-changed.
+- ansible-galaxy - Fix using the '--ignore-certs' option when there is no server-specific configuration for the Galaxy server.
+- ansible-galaxy collection build - Ignore any existing ``MANIFEST.json`` and ``FILES.json`` in the root directory when building a collection.
+- ansible-test - Fix the ``import`` sanity test to work properly when Ansible's built-in vendoring support is in use.
+- ansible-test - Fix traceback in the ``validate-modules`` sanity test when testing an Ansible module without any callables.
+- ansible-test - Fix traceback when running from an install and delegating execution to a different Python interpreter.
+- ansible-test - Update help links to reference ``ansible-core`` instead of ``ansible``.
+- ansible-test - Update unit tests to use the ``--forked`` option instead of the deprecated ``--boxed`` option.
+- async - Improve performance of sending async callback events by never sending the full task through the queue (https://github.com/ansible/ansible/issues/76729)
+- default callback - Ensure we compare FQCN also in lockstep logic, to ensure using the FQCN of a strategy plugin triggers the correct behavior in the default callback plugin. (https://github.com/ansible/ansible/issues/76782)
+- hostname - Do not require SystemdStrategy subclasses for every distro (https://github.com/ansible/ansible/issues/76792)
+- include_vars, properly initialize variable as there is corner case in which it can end up referenced and not defined
+- ssh connection - properly quote controlpersist path given by user to avoid issues with spaces and other characters
+- ssh connection avoid parsing ssh cli debug lines as they can match expected output at high verbosities.
+- sudo become plugin, fix handling of non interactive flags, previous substitution was too naive
+- unarchive - Fix zip archive file listing that caused issues with content postprocessing (https://github.com/ansible/ansible/issues/76067).
+- yum - prevent storing unnecessary cache data by running `yum makecache fast` (https://github.com/ansible/ansible/issues/76336)
+
 v2.12.1
 =======
 
