@@ -94,8 +94,6 @@ You can choose any of the following ways to install ``ansible-core``:
 
 	You should only run ``ansible-core`` from ``devel`` if you are modifying ``ansible-core``, or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
 
-
-
 Ansible generally creates new releases twice a year. See :ref:`release_and_maintenance` for information on release timing and maintenance of older releases.
 
 .. _from_pip:
@@ -245,9 +243,6 @@ On CentOS:
     $ sudo yum install ansible
 
 RPMs for currently supported versions of RHEL and CentOS are also available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_.
-
-.. note::
-
 
 Ansible can manage older operating systems that contain Python 2.6 or higher.
 
