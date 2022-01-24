@@ -2082,3 +2082,43 @@ releases:
     - v2.11.7rc1_summary.yaml
     - win_LinkUtil-ignore-LIB.yml
     release_date: '2021-11-29'
+  2.11.8rc1:
+    changes:
+      bugfixes:
+      - ansible-galaxy collection build - Ignore any existing ``MANIFEST.json`` and
+        ``FILES.json`` in the root directory when building a collection.
+      - ansible-test - Fix traceback in the ``validate-modules`` sanity test when
+        testing an Ansible module without any callables.
+      - backwards compatiblity copy of doc fragment action_common_attributes
+      - default callback - Ensure we compare FQCN also in lockstep logic, to ensure
+        using the FQCN of a strategy plugin triggers the correct behavior in the default
+        callback plugin. (https://github.com/ansible/ansible/issues/76782)
+      - include_vars, properly initialize variable as there is corner case in which
+        it can end up referenced and not defined
+      - ssh connection - properly quote controlpersist path given by user to avoid
+        issues with spaces and other characters
+      - ssh connection avoid parsing ssh cli debug lines as they can match expected
+        output at high verbosities.
+      - unarchive - Fix zip archive file listing that caused issues with content postprocessing
+        (https://github.com/ansible/ansible/issues/76067).
+      minor_changes:
+      - service_facts now handles more states/statuses from systemd and in a more
+        reliable way (failed, not-found, masked).
+      release_summary: '| Release Date: 2022-01-24
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - 76069-fix-unarchive-file-listing-in-zip.yaml
+    - 76782-fqcn-compare-lockstep-strategies.yml
+    - aca_bcc.yml
+    - ansible-test-validate-modules-no-callable.yml
+    - galaxy-build-files-ignore.yml
+    - include_vars_failed.yml
+    - service_facts_systemd_improve.yml
+    - ssh_debug_noparse.yml
+    - ssh_quote_cp.yml
+    - v2.11.8rc1_summary.yaml
+    release_date: '2022-01-24'
