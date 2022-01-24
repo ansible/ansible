@@ -2068,6 +2068,26 @@ releases:
     - fix_cli_ssh_defaults.yml
     - v2.10.16rc1_summary.yaml
     release_date: '2021-11-29'
+  2.10.17rc1:
+    changes:
+      bugfixes:
+      - ansible-galaxy collection build - Ignore any existing ``MANIFEST.json`` and
+        ``FILES.json`` in the root directory when building a collection.
+      - ansible-test - Fix traceback in the ``validate-modules`` sanity test when
+        testing an Ansible module without any callables.
+      - backwards compatiblity copy of doc fragment action_common_attributes
+      release_summary: '| Release Date: 2022-01-24
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - aca_bcc.yml
+    - ansible-test-validate-modules-no-callable.yml
+    - galaxy-build-files-ignore.yml
+    - v2.10.17rc1_summary.yaml
+    release_date: '2022-01-24'
   2.10.1rc1:
     changes:
       bugfixes:
