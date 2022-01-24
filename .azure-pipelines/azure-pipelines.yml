@@ -79,10 +79,11 @@ stages:
           nameFormat: Server {0}
           testFormat: windows/{0}
           targets:
-#            - test: 2012
-#            - test: 2012-R2
+            - test: 2012
+            - test: 2012-R2
             - test: 2016
-#            - test: 2019
+            - test: 2019
+            - test: 2022
           groups:
             - 1
             - 2
