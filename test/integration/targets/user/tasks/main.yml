@@ -21,6 +21,11 @@
   meta: end_host
   when: ansible_distribution == 'Alpine'
 
+- name: ensure output directory exists
+  file:
+    dest: "{{ output_dir }}"
+    state: directory
+
 - import_tasks: test_create_user.yml
 - import_tasks: test_create_system_user.yml
 - import_tasks: test_create_user_uid.yml
