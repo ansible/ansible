@@ -4,10 +4,10 @@ from __future__ import annotations
 import typing as t
 
 from ...completion import (
-    DOCKER_COMPLETION,
-    NETWORK_COMPLETION,
-    REMOTE_COMPLETION,
-    WINDOWS_COMPLETION,
+    docker_completion,
+    network_completion,
+    remote_completion,
+    windows_completion,
     filter_completion,
 )
 
@@ -108,7 +108,7 @@ class DockerParser(PairParser):
 
     def get_left_parser(self, state):  # type: (ParserState) -> Parser
         """Return the parser for the left side."""
-        return NamespaceWrappedParser('name', ChoicesParser(list(filter_completion(DOCKER_COMPLETION, controller_only=self.controller)),
+        return NamespaceWrappedParser('name', ChoicesParser(list(filter_completion(docker_completion(), controller_only=self.controller)),
                                                             conditions=MatchConditions.CHOICE | MatchConditions.ANY))
 
     def get_right_parser(self, choice):  # type: (t.Any) -> Parser
@@ -128,7 +128,7 @@ class DockerParser(PairParser):
         """Generate and return documentation for this parser."""
         default = 'default'
         content = '\n'.join([f'  {image} ({", ".join(get_docker_pythons(image, self.controller, False))})'
-                             for image, item in filter_completion(DOCKER_COMPLETION, controller_only=self.controller).items()])
+                             for image, item in filter_completion(docker_completion(), controller_only=self.controller).items()])
 
         content += '\n'.join([
             '',
@@ -151,7 +151,7 @@ class PosixRemoteParser(PairParser):
 
     def get_left_parser(self, state):  # type: (ParserState) -> Parser
         """Return the parser for the left side."""
-        return NamespaceWrappedParser('name', PlatformParser(list(filter_completion(REMOTE_COMPLETION, controller_only=self.controller))))
+        return NamespaceWrappedParser('name', PlatformParser(list(filter_completion(remote_completion(), controller_only=self.controller))))
 
     def get_right_parser(self, choice):  # type: (t.Any) -> Parser
         """Return the parser for the right side."""
@@ -170,7 +170,7 @@ class PosixRemoteParser(PairParser):
         """Generate and return documentation for this parser."""
         default = get_fallback_remote_controller()
         content = '\n'.join([f'  {name} ({", ".join(get_remote_pythons(name, self.controller, False))})'
-                             for name, item in filter_completion(REMOTE_COMPLETION, controller_only=self.controller).items()])
+                             for name, item in filter_completion(remote_completion(), controller_only=self.controller).items()])
 
         content += '\n'.join([
             '',
@@ -190,7 +190,7 @@ class WindowsRemoteParser(PairParser):
 
     def get_left_parser(self, state):  # type: (ParserState) -> Parser
         """Return the parser for the left side."""
-        names = list(filter_completion(WINDOWS_COMPLETION))
+        names = list(filter_completion(windows_completion()))
 
         for target in state.root_namespace.targets or []:  # type: WindowsRemoteConfig
             names.remove(target.name)
@@ -203,7 +203,7 @@ class WindowsRemoteParser(PairParser):
 
     def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
         """Generate and return documentation for this parser."""
-        content = '\n'.join([f'  {name}' for name, item in filter_completion(WINDOWS_COMPLETION).items()])
+        content = '\n'.join([f'  {name}' for name, item in filter_completion(windows_completion()).items()])
 
         content += '\n'.join([
             '',
@@ -223,7 +223,7 @@ class NetworkRemoteParser(PairParser):
 
     def get_left_parser(self, state):  # type: (ParserState) -> Parser
         """Return the parser for the left side."""
-        names = list(filter_completion(NETWORK_COMPLETION))
+        names = list(filter_completion(network_completion()))
 
         for target in state.root_namespace.targets or []:  # type: NetworkRemoteConfig
             names.remove(target.name)
@@ -236,7 +236,7 @@ class NetworkRemoteParser(PairParser):
 
     def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
         """Generate and return documentation for this parser."""
-        content = '\n'.join([f'  {name}' for name, item in filter_completion(NETWORK_COMPLETION).items()])
+        content = '\n'.join([f'  {name}' for name, item in filter_completion(network_completion()).items()])
 
         content += '\n'.join([
             '',
