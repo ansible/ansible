@@ -39,7 +39,7 @@ from ansible.vars.fact_cache import FactCache
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
+from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars, merge_hash
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
@@ -677,16 +677,18 @@ class VariableManager:
         # Save the facts back to the backing store
         self._fact_cache[host] = host_cache
 
-    def set_nonpersistent_facts(self, host, facts):
+    def set_nonpersistent_facts(self, host, facts, aggregate=False, list_merge='replace'):
         '''
         Sets or updates the given facts for a host in the fact cache.
         '''
 
         if not isinstance(facts, Mapping):
             raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a Mapping but is a %s" % type(facts))
-
         try:
-            self._nonpersistent_fact_cache[host].update(facts)
+            if aggregate:
+                self._nonpersistent_fact_cache[host] = merge_hash(self._nonpersistent_fact_cache[host], facts, recursive=True, list_merge=list_merge)
+            else:
+                self._nonpersistent_fact_cache[host].update(facts)
         except KeyError:
             self._nonpersistent_fact_cache[host] = facts
 

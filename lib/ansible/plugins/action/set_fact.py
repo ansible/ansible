@@ -40,6 +40,8 @@ class ActionModule(ActionBase):
 
         facts = {}
         cacheable = boolean(self._task.args.pop('cacheable', False))
+        aggregate = boolean(self._task.args.pop('aggregate', False))
+        list_merge = self._task.args.pop('list_merge', 'replace')
 
         if self._task.args:
             for (k, v) in self._task.args.items():
@@ -61,6 +63,8 @@ class ActionModule(ActionBase):
             # just as _facts actions, we don't set changed=true as we are not modifying the actual host
             result['ansible_facts'] = facts
             result['_ansible_facts_cacheable'] = cacheable
+            result['_ansible_facts_aggregate'] = aggregate
+            result['_ansible_facts_list_merge'] = list_merge
         else:
             # this should not happen, but JIC we get here
             raise AnsibleActionFail('Unable to create any variables with provided arguments')
