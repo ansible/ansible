@@ -19,17 +19,17 @@ from .io import (
 
 from .completion import (
     CompletionConfig,
-    DOCKER_COMPLETION,
+    docker_completion,
     DockerCompletionConfig,
     InventoryCompletionConfig,
-    NETWORK_COMPLETION,
+    network_completion,
     NetworkRemoteCompletionConfig,
     PosixCompletionConfig,
     PosixRemoteCompletionConfig,
     PosixSshCompletionConfig,
-    REMOTE_COMPLETION,
+    remote_completion,
     RemoteCompletionConfig,
-    WINDOWS_COMPLETION,
+    windows_completion,
     WindowsRemoteCompletionConfig,
     filter_completion,
 )
@@ -277,7 +277,7 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
 
     def get_defaults(self, context):  # type: (HostContext) -> DockerCompletionConfig
         """Return the default settings."""
-        return filter_completion(DOCKER_COMPLETION).get(self.name) or DockerCompletionConfig(
+        return filter_completion(docker_completion()).get(self.name) or DockerCompletionConfig(
             name=self.name,
             image=self.name,
             placeholder=True,
@@ -285,7 +285,7 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
 
     def get_default_targets(self, context):  # type: (HostContext) -> t.List[ControllerConfig]
         """Return the default targets for this host config."""
-        if self.name in filter_completion(DOCKER_COMPLETION):
+        if self.name in filter_completion(docker_completion()):
             defaults = self.get_defaults(context)
             pythons = {version: defaults.get_python_path(version) for version in defaults.supported_pythons}
         else:
@@ -327,14 +327,14 @@ class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
 
     def get_defaults(self, context):  # type: (HostContext) -> PosixRemoteCompletionConfig
         """Return the default settings."""
-        return filter_completion(REMOTE_COMPLETION).get(self.name) or REMOTE_COMPLETION.get(self.platform) or PosixRemoteCompletionConfig(
+        return filter_completion(remote_completion()).get(self.name) or remote_completion().get(self.platform) or PosixRemoteCompletionConfig(
             name=self.name,
             placeholder=True,
         )
 
     def get_default_targets(self, context):  # type: (HostContext) -> t.List[ControllerConfig]
         """Return the default targets for this host config."""
-        if self.name in filter_completion(REMOTE_COMPLETION):
+        if self.name in filter_completion(remote_completion()):
             defaults = self.get_defaults(context)
             pythons = {version: defaults.get_python_path(version) for version in defaults.supported_pythons}
         else:
@@ -358,7 +358,7 @@ class WindowsRemoteConfig(RemoteConfig, WindowsConfig):
     """Configuration for a remoe Windows host."""
     def get_defaults(self, context):  # type: (HostContext) -> WindowsRemoteCompletionConfig
         """Return the default settings."""
-        return filter_completion(WINDOWS_COMPLETION).get(self.name) or WindowsRemoteCompletionConfig(
+        return filter_completion(windows_completion()).get(self.name) or WindowsRemoteCompletionConfig(
             name=self.name,
         )
 
@@ -381,7 +381,7 @@ class NetworkRemoteConfig(RemoteConfig, NetworkConfig):
 
     def get_defaults(self, context):  # type: (HostContext) -> NetworkRemoteCompletionConfig
         """Return the default settings."""
-        return filter_completion(NETWORK_COMPLETION).get(self.name) or NetworkRemoteCompletionConfig(
+        return filter_completion(network_completion()).get(self.name) or NetworkRemoteCompletionConfig(
             name=self.name,
         )
 
