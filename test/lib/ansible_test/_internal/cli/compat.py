@@ -26,8 +26,8 @@ from ..docker_util import (
 )
 
 from ..completion import (
-    DOCKER_COMPLETION,
-    REMOTE_COMPLETION,
+    docker_completion,
+    remote_completion,
     filter_completion,
 )
 
@@ -68,7 +68,7 @@ def controller_python(version):  # type: (t.Optional[str]) -> t.Optional[str]
 def get_fallback_remote_controller():  # type: () -> str
     """Return the remote fallback platform for the controller."""
     platform = 'freebsd'  # lower cost than RHEL and macOS
-    candidates = [item for item in filter_completion(REMOTE_COMPLETION).values() if item.controller_supported and item.platform == platform]
+    candidates = [item for item in filter_completion(remote_completion()).values() if item.controller_supported and item.platform == platform]
     fallback = sorted(candidates, key=lambda value: str_to_version(value.version), reverse=True)[0]
     return fallback.name
 
@@ -316,7 +316,7 @@ def get_legacy_host_config(
             targets = [ControllerConfig(python=VirtualPythonConfig(version=options.python or 'default',
                                                                    system_site_packages=options.venv_system_site_packages))]
     elif options.docker:
-        docker_config = filter_completion(DOCKER_COMPLETION).get(options.docker)
+        docker_config = filter_completion(docker_completion()).get(options.docker)
 
         if docker_config:
             if options.python and options.python not in docker_config.supported_pythons:
@@ -350,7 +350,7 @@ def get_legacy_host_config(
                 targets = [DockerConfig(name=options.docker, python=native_python(options),
                                         privileged=options.docker_privileged, seccomp=options.docker_seccomp, memory=options.docker_memory)]
     elif options.remote:
-        remote_config = filter_completion(REMOTE_COMPLETION).get(options.remote)
+        remote_config = filter_completion(remote_completion()).get(options.remote)
         context, reason = None, None
 
         if remote_config:
