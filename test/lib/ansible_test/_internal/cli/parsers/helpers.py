@@ -9,8 +9,8 @@ from ...constants import (
 )
 
 from ...completion import (
-    DOCKER_COMPLETION,
-    REMOTE_COMPLETION,
+    docker_completion,
+    remote_completion,
     filter_completion,
 )
 
@@ -23,7 +23,7 @@ from ...host_configs import (
 
 def get_docker_pythons(name, controller, strict):  # type: (str, bool, bool) -> t.List[str]
     """Return a list of docker instance Python versions supported by the specified host config."""
-    image_config = filter_completion(DOCKER_COMPLETION).get(name)
+    image_config = filter_completion(docker_completion()).get(name)
     available_pythons = CONTROLLER_PYTHON_VERSIONS if controller else SUPPORTED_PYTHON_VERSIONS
 
     if not image_config:
@@ -36,7 +36,7 @@ def get_docker_pythons(name, controller, strict):  # type: (str, bool, bool) -> 
 
 def get_remote_pythons(name, controller, strict):  # type: (str, bool, bool) -> t.List[str]
     """Return a list of remote instance Python versions supported by the specified host config."""
-    platform_config = filter_completion(REMOTE_COMPLETION).get(name)
+    platform_config = filter_completion(remote_completion()).get(name)
     available_pythons = CONTROLLER_PYTHON_VERSIONS if controller else SUPPORTED_PYTHON_VERSIONS
 
     if not platform_config:
