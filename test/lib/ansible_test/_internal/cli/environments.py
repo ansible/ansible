@@ -14,10 +14,10 @@ from ..constants import (
 )
 
 from ..completion import (
-    DOCKER_COMPLETION,
-    NETWORK_COMPLETION,
-    REMOTE_COMPLETION,
-    WINDOWS_COMPLETION,
+    docker_completion,
+    network_completion,
+    remote_completion,
+    windows_completion,
     filter_completion,
 )
 
@@ -425,9 +425,9 @@ def add_environment_docker(
 ):  # type: (...) -> None
     """Add environment arguments for running in docker containers."""
     if target_mode in (TargetMode.POSIX_INTEGRATION, TargetMode.SHELL):
-        docker_images = sorted(filter_completion(DOCKER_COMPLETION))
+        docker_images = sorted(filter_completion(docker_completion()))
     else:
-        docker_images = sorted(filter_completion(DOCKER_COMPLETION, controller_only=True))
+        docker_images = sorted(filter_completion(docker_completion(), controller_only=True))
 
     exclusive_parser.add_argument(
         '--docker',
@@ -538,7 +538,7 @@ def complete_windows(prefix: str, parsed_args: argparse.Namespace, **_) -> t.Lis
 
 def complete_network_platform(prefix: str, parsed_args: argparse.Namespace, **_) -> t.List[str]:
     """Return a list of supported network platforms matching the given prefix, excluding platforms already parsed from the command line."""
-    images = sorted(filter_completion(NETWORK_COMPLETION))
+    images = sorted(filter_completion(network_completion()))
 
     return [i for i in images if i.startswith(prefix) and (not parsed_args.platform or i not in parsed_args.platform)]
 
@@ -546,7 +546,7 @@ def complete_network_platform(prefix: str, parsed_args: argparse.Namespace, **_)
 def complete_network_platform_collection(prefix: str, parsed_args: argparse.Namespace, **_) -> t.List[str]:
     """Return a list of supported network platforms matching the given prefix, excluding collection platforms already parsed from the command line."""
     left = prefix.split('=')[0]
-    images = sorted(set(image.platform for image in filter_completion(NETWORK_COMPLETION).values()))
+    images = sorted(set(image.platform for image in filter_completion(network_completion()).values()))
 
     return [i + '=' for i in images if i.startswith(left) and (not parsed_args.platform_collection or i not in [x[0] for x in parsed_args.platform_collection])]
 
@@ -554,21 +554,21 @@ def complete_network_platform_collection(prefix: str, parsed_args: argparse.Name
 def complete_network_platform_connection(prefix: str, parsed_args: argparse.Namespace, **_) -> t.List[str]:
     """Return a list of supported network platforms matching the given prefix, excluding connection platforms already parsed from the command line."""
     left = prefix.split('=')[0]
-    images = sorted(set(image.platform for image in filter_completion(NETWORK_COMPLETION).values()))
+    images = sorted(set(image.platform for image in filter_completion(network_completion()).values()))
 
     return [i + '=' for i in images if i.startswith(left) and (not parsed_args.platform_connection or i not in [x[0] for x in parsed_args.platform_connection])]
 
 
 def get_remote_platform_choices(controller=False):  # type: (bool) -> t.List[str]
     """Return a list of supported remote platforms matching the given prefix."""
-    return sorted(filter_completion(REMOTE_COMPLETION, controller_only=controller))
+    return sorted(filter_completion(remote_completion(), controller_only=controller))
 
 
 def get_windows_platform_choices():  # type: () -> t.List[str]
     """Return a list of supported Windows versions matching the given prefix."""
-    return sorted(f'windows/{windows.version}' for windows in filter_completion(WINDOWS_COMPLETION).values())
+    return sorted(f'windows/{windows.version}' for windows in filter_completion(windows_completion()).values())
 
 
 def get_windows_version_choices():  # type: () -> t.List[str]
     """Return a list of supported Windows versions."""
-    return sorted(windows.version for windows in filter_completion(WINDOWS_COMPLETION).values())
+    return sorted(windows.version for windows in filter_completion(windows_completion()).values())
