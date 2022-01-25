@@ -49,7 +49,7 @@ Once this is done you can now use other Ansible modules apart from the ``raw`` m
 Setting the Python interpreter
 ------------------------------
 
-To support a variety of Unix-like operating systems and distributions, Ansible cannot always rely on the existing environment or ``env`` variables to locate the correct Python binary. By default, modules point at ``/usr/bin/python`` as this is the most common location. On BSD variants, this path may differ, so it is advised to inform Ansible of the binary's location, through the ``ansible_python_interpreter`` inventory variable. For example:
+To support a variety of Unix-like operating systems and distributions, Ansible cannot always rely on the existing environment or ``env`` variables to locate the correct Python binary. By default, modules point at ``/usr/bin/python`` as this is the most common location. On BSD variants, this path may differ, so it is advised to inform Ansible of the binary's location. See `INTERPRETER_PYTHON <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#interpreter-python>`_. For example, set ``ansible_python_interpreter`` inventory variable:
 
 .. code-block:: ini
 
@@ -78,7 +78,7 @@ Quoting from */usr/ports/lang/python/pkg-descr*
   to bin/python, bin/pydoc, bin/idle and so on to allow compatibility with
   version agnostic python scripts.
 
-As a result the following packages are installed
+As a result are installed the following packages
 
 .. code-block:: text
 
@@ -87,7 +87,7 @@ As a result the following packages are installed
   python3-3_3                    Meta-port for the Python interpreter 3.x
   python38-3.8.12_1              Interpreted object-oriented programming language
 
-and following executables and links
+and the following executables and links
 
 .. code-block:: text
 
@@ -103,11 +103,14 @@ and following executables and links
 INTERPRETER_PYTHON_FALLBACK
 """""""""""""""""""""""""""
 
-Since version 2.8 Ansible provides a useful option `INTERPRETER_PYTHON_FALLBACK <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#interpreter-python-fallback>`_ to specify a list of paths to search for Python. This list will be searched and the first one found will be used. For example, the configuration below would make the installation of the meta-ports in the previous section redundant
+Since version 2.8 Ansible provides a useful variable ``ansible_interpreter_python_fallback`` to specify a list of paths to search for Python. See `INTERPRETER_PYTHON_FALLBACK <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#interpreter-python-fallback>`_. This list will be searched and the first item found will be used. For example, the configuration below would make the installation of the meta-ports in the previous section redundant, i.e. if you don't install the Python meta ports the first two items in the list will be skipped and ``/usr/local/bin/python3.8`` will be discovered.
 
 .. code-block:: ini
 
   ansible_interpreter_python_fallback=['/usr/local/bin/python', '/usr/local/bin/python3', '/usr/local/bin/python3.8']
+
+
+You can use this variable, prolonged by the lower versions of Python, and put it, for example, into the ``group_vars/all``. Then, override it for specific groups in ``group_vars/{group1, group2, ...}`` and for specific hosts in ``host_vars/{host1, host2, ...}`` if needed. See `Variable precedence: Where should I put a variable? <https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#variable-precedence-where-should-i-put-a-variable>`_
 
 
 Debug the discovery of Python
@@ -186,14 +189,42 @@ displays the details
       ansible_playbook_python:
         /usr/bin/python3
 
-You can see that the first item from the list *ansible_interpreter_python_fallback* was discovered at the FreeBSD remote host. The variable *ansible_playbook_python* keeps the path to Python at the Linux controller who ran the playbook.
+You can see that the first item from the list ``ansible_interpreter_python_fallback`` was discovered at the FreeBSD remote host. The variable ``ansible_playbook_python`` keeps the path to Python at the Linux controller that ran the playbook.
+
+Regarding the warning, quoting from `INTERPRETER_PYTHON <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#interpreter-python>`_
+
+.. code-block:: text
+
+  The fallback behavior will issue a warning that the interpreter
+  should be set explicitly (since interpreters installed later may
+  change which one is used). This warning behavior can be disabled by
+  setting auto_silent or auto_legacy_silent. ...
+
+You can either ignore it or get rid of it by setting the variable ``ansible_python_interpreter=auto_silent`` because this is, actually, what you want by using ``/usr/local/bin/python`` (*"interpreters installed later may change which one is used"*). For example
+
+.. code-block:: ini
+
+  shell> cat hosts
+  [test]
+  test_11
+  test_12
+  test_13
+
+  [test:vars]
+  ansible_connection=ssh
+  ansible_user=admin
+  ansible_become=yes
+  ansible_become_user=root
+  ansible_become_method=sudo
+  ansible_interpreter_python_fallback=['/usr/local/bin/python', '/usr/local/bin/python3', '/usr/local/bin/python3.8']
+  ansible_python_interpreter=auto_silent
+  ansible_perl_interpreter=/usr/local/bin/perl
 
 
 .. seealso::
 
-   `Interpreter Discovery <https://docs.ansible.com/ansible/latest/reference_appendices/interpreter_discovery.html>`_
-   `INTERPRETER_PYTHON <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#interpreter-python>`_
-   `INTERPRETER_PYTHON_FALLBACK <https://docs.ansible.com/ansible/latest/reference_appendices/config.html#interpreter-python-fallback>`_
+   * `Interpreter Discovery <https://docs.ansible.com/ansible/latest/reference_appendices/interpreter_discovery.html>`_
+   * `FreeBSD Wiki: Ports/DEFAULT_VERSIONS <https://wiki.freebsd.org/Ports/DEFAULT_VERSIONS>`_
 
 
 Additional variables
