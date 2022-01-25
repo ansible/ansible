@@ -413,4 +413,4 @@ The following is an example RPM spec file that accomplishes this using this exam
 Using ``ansible.legacy`` to access local custom modules from collections-based roles
 =====================================================================================
 
-Some roles use :ref:`local custom modules <developing_locally>` that are not part of the role itself. When you move these roles into collections, they can no longer find those custom plugins. You can update the tasks directly by changing ``local_module_name`` to ``ansible.legacy.local_module_name``.
+Some roles within a collection use :ref:`local custom modules <developing_locally>` that are not part of the collection itself. If there is a conflict between the custom module short name and the collection module name, you need to specify which module your tasks call. You can update the tasks to change ``local_module_name`` to ``ansible.legacy.local_module_name`` to ensure you are using the custom module.
