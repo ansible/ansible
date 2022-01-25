@@ -554,8 +554,9 @@
     assert:
       that:
         - parent_dir_chdir.stdout != parent_dir_cd.stdout
-        - 'parent_dir_cd.stdout == "{{remote_tmp_dir}}/www"'
-        - 'parent_dir_chdir.stdout == "{{remote_tmp_dir}}/www_root"'
+        # These tests use endswith, to get around /private/tmp on macos
+        - 'parent_dir_cd.stdout.endswith(remote_tmp_dir ~ "/www")'
+        - 'parent_dir_chdir.stdout.endswith(remote_tmp_dir ~ "/www_root")'
 
 - name: Set print error command for Python 2
   set_fact:
