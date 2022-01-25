@@ -106,3 +106,4 @@ Ansible releases a new major release approximately twice a year. The core applic
    :caption: Roadmaps
 
    roadmap/ansible_roadmap_index.rst
+   roadmap/ansible_core_roadmap_index.rst
