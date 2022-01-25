@@ -1,6 +1,13 @@
+# Copyright (c), Ansible Project
+# Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 import re
 
 from ansible.module_utils._text import to_native
+from ansible.module_utils.six import string_types
 
 version_string = re.compile(r'^\d+\.\d+(?:\.\d+\w*)*$')
 date_string = re.compile(r'^\d{4}-\d{2}-\d{2}$')
@@ -42,9 +49,8 @@ class Deprecation():
         else:
             self.alternatives = alternatives
 
-        if self.alternatives is not None:
-            if not isinstance(self.alternatives, string_types):
-                raise Exception('Expected a string for deprecation "alternatives" but got "{0}" instead: {1}'.format(type(self.alternatives), self.alternatives))
+        if self.alternatives is not None and not isinstance(self.alternatives, string_types):
+            raise Exception('Expected a string for deprecation "alternatives" but got "{0}" instead: {1}'.format(type(self.alternatives), self.alternatives))
 
         # collection
         if collection_name is None:
@@ -59,8 +65,6 @@ class Deprecation():
         # no ansible.builtin release
         if self.collection_name == 'ansible.builtin':
             self.collection_name = 'ansible-core'
-
-        return self
 
     def __str__(self):
 
