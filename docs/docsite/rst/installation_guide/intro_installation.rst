@@ -362,7 +362,7 @@ The dependencies will be installed automatically after you approve them. For exa
 
 .. code-block:: bash
 
-    shell> > pkg info -d  py38-ansible
+    shell> pkg info -d  py38-ansible
     py38-ansible-4.3.0:
 		py38-ansible-core-2.11.3
                 python38-3.8.12
