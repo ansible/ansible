@@ -77,6 +77,8 @@ You can choose any of the following ways to install the Ansible community packag
 * Install the latest release with your OS package manager (for Red Hat Enterprise Linux (TM), CentOS, Fedora, Debian, or Ubuntu).
 * Install with ``pip`` (the Python package manager).
 
+.. _install_core:
+
 Installing `ansible-core`
 -------------------------
 
@@ -85,6 +87,7 @@ Ansible also distributes a minimalist object called ``ansible-core`` (or ``ansib
 You can choose any of the following ways to install ``ansible-core``:
 
 * Install ``ansible-core`` (version 2.11 and greater) or ``ansible-base`` (version 2.10) with ``pip``.
+* Install ``ansible-core`` (version 2.11 and greater) RPM package with ``dnf``.
 * Install ``ansible-core`` from source from the ansible/ansible GitHub repository to access the development (``devel``) version to develop or test the latest features.
 
 .. note::
@@ -240,10 +243,6 @@ On CentOS:
     $ sudo yum install ansible
 
 RPMs for currently supported versions of RHEL and CentOS are also available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_.
-
-.. note::
-
-	Since Ansible 2.10 for RHEL is not available at this time,  continue to use Ansible 2.9.
 
 Ansible can manage older operating systems that contain Python 2.6 or higher.
 
