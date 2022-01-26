@@ -35,7 +35,7 @@ ANSIBLE_COW_SELECTION:
 ANSIBLE_COW_ACCEPTLIST:
   name: Cowsay filter acceptance list
   default: ['bud-frogs', 'bunny', 'cheese', 'daemon', 'default', 'dragon', 'elephant-in-snake', 'elephant', 'eyes', 'hellokitty', 'kitty', 'luke-koala', 'meow', 'milk', 'moofasa', 'moose', 'ren', 'sheep', 'small', 'stegosaurus', 'stimpy', 'supermilker', 'three-eyes', 'turkey', 'turtle', 'tux', 'udder', 'vader-koala', 'vader', 'www']
-  description: White list of cowsay templates that are 'safe' to use, set to empty list if you want to enable all installed templates.
+  description: Accept list of cowsay templates that are 'safe' to use, set to empty list if you want to enable all installed templates.
   env:
   - name: ANSIBLE_COW_WHITELIST
     deprecated:
@@ -1943,7 +1943,7 @@ USE_PERSISTENT_CONNECTIONS:
 VARIABLE_PLUGINS_ENABLED:
   name: Vars plugin enabled list
   default: ['host_group_vars']
-  description: Whitelist for variable plugins that require it.
+  description: Accept list for variable plugins that require it.
   env: [{name: ANSIBLE_VARS_ENABLED}]
   ini:
   - {key: vars_plugins_enabled, section: defaults}

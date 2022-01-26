@@ -454,14 +454,14 @@ EXAMPLES = r'''
     set_dscp_mark_class: CS1
     protocol: tcp
 
-# Create the user-defined chain WHITELIST
+# Create the user-defined chain ALLOWLIST
 - iptables:
-    chain: WHITELIST
+    chain: ALLOWLIST
     chain_management: true
 
-# Delete the user-defined chain WHITELIST
+# Delete the user-defined chain ALLOWLIST
 - iptables:
-    chain: WHITELIST
+    chain: ALLOWLIST
     chain_management: true
     state: absent
 

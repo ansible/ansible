@@ -246,7 +246,7 @@ class PasslibHash(BaseHash):
 
         # Hashes from passlib.hash should be represented as ascii strings of hex
         # digits so this should not traceback.  If it's not representable as such
-        # we need to traceback and then blacklist such algorithms because it may
+        # we need to traceback and then block such algorithms because it may
         # impact calling code.
         return to_text(result, errors='strict')
 

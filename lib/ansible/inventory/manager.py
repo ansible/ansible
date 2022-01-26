@@ -208,7 +208,7 @@ class InventoryManager(object):
                 display.warning('Failed to load inventory plugin, skipping %s' % name)
 
         if not plugins:
-            raise AnsibleError("No inventory plugins available to generate inventory, make sure you have at least one whitelisted.")
+            raise AnsibleError("No inventory plugins available to generate inventory, make sure you have at least one enabled.")
 
         return plugins
 
