@@ -60,5 +60,5 @@ RETURN = """
 
 EXAMPLES = """
 # Display facts from all hosts and store them indexed by hostname at /tmp/facts.
-# ansible all -m gather_facts --tree /tmp/facts
+# ansible all -m ansible.builtin.gather_facts --tree /tmp/facts
 """
