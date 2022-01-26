@@ -16,7 +16,7 @@
 
 - name: set the dest file
   set_fact:
-      t_dest: "{{ output_dir + '/tfile_dest.txt' }}"
+      t_dest: "{{ remote_tmp_dir }}/tfile_dest.txt"
 
 - name: create the old file
   file:

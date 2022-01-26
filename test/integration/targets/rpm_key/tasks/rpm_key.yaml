@@ -13,7 +13,7 @@
 - name: Save gpg keys to a file
   copy:
     content: "{{ pubkeys['stdout'] }}\n"
-    dest: '{{ output_dir }}/pubkeys'
+    dest: '{{ remote_tmp_dir }}/pubkeys'
     mode: 0600
 
 #
@@ -183,7 +183,7 @@
   shell: "rpm -q  gpg-pubkey | xargs rpm -e"
 
 - name: Restore the gpg keys normally installed on the system
-  command: 'rpm --import {{ output_dir }}/pubkeys'
+  command: 'rpm --import {{ remote_tmp_dir }}/pubkeys'
 
 - name: Retrieve a list of gpg keys are installed for package checking
   shell: 'rpm -q gpg-pubkey | sort'
