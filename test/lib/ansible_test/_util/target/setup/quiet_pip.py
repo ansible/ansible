@@ -19,7 +19,7 @@ LOGGING_MESSAGE_FILTER = re.compile("^("
                                     "Requirement already satisfied.*"
                                     ")$")
 
-# [1] https://src.fedoraproject.org/rpms/python-pip/blob/master/f/emit-a-warning-when-running-with-root-privileges.patch
+# [1] https://src.fedoraproject.org/rpms/python-pip/blob/f34/f/emit-a-warning-when-running-with-root-privileges.patch
 
 WARNING_MESSAGE_FILTERS = (
     # DEPRECATION: Python 2.7 reached the end of its life on January 1st, 2020. Please upgrade your Python as Python 2.7 is no longer maintained.
