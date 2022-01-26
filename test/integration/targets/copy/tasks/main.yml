@@ -7,7 +7,7 @@
 
     - set_fact:
         local_temp_dir: '{{ tempfile_result.stdout }}'
-        remote_dir: '{{ output_dir }}'
+        remote_dir: '{{ remote_tmp_dir }}/copy'
         symlinks:
           ansible-test-abs-link: /tmp/ansible-test-abs-link
           ansible-test-abs-link-dir: /tmp/ansible-test-abs-link-dir

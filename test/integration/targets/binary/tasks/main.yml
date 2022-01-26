@@ -12,37 +12,37 @@
 - name: get checksums that we expect later files to have
   copy:
     src: from_playbook
-    dest: "{{ output_dir }}"
+    dest: "{{ remote_tmp_dir }}"
 
 - copy:
     src: b64_utf8
-    dest: "{{ output_dir }}"
+    dest: "{{ remote_tmp_dir }}"
 
 - copy:
     src: b64_latin1
-    dest: "{{ output_dir }}"
+    dest: "{{ remote_tmp_dir }}"
 
 - stat:
-    path: "{{ output_dir }}/from_playbook"
+    path: "{{ remote_tmp_dir }}/from_playbook"
   register: from_playbook
 
 - stat:
-    path: "{{ output_dir }}/b64_utf8"
+    path: "{{ remote_tmp_dir }}/b64_utf8"
   register: b64_utf8
 
 - stat:
-    path: "{{ output_dir }}/b64_latin1"
+    path: "{{ remote_tmp_dir }}/b64_latin1"
   register: b64_latin1
 
 # Tests themselves
 - name: copy with utf-8 content in a playbook
   copy:
     content: "{{ simple_accents }}\n"
-    dest: "{{ output_dir }}/from_playbook.txt"
+    dest: "{{ remote_tmp_dir }}/from_playbook.txt"
 
 - name: Check that copying utf-8 content matches
   stat:
-    path: "{{ output_dir }}/from_playbook.txt"
+    path: "{{ remote_tmp_dir }}/from_playbook.txt"
   register: results
 
 - assert:
@@ -52,11 +52,11 @@
 - name: copy with utf8 in a base64 encoded string
   copy:
     content: "{{ utf8_simple_accents|b64decode }}\n"
-    dest: "{{ output_dir }}/b64_utf8.txt"
+    dest: "{{ remote_tmp_dir }}/b64_utf8.txt"
 
 - name: Check that utf8 in a base64 string matches
   stat:
-    path: "{{ output_dir }}/b64_utf8.txt"
+    path: "{{ remote_tmp_dir }}/b64_utf8.txt"
   register: results
 
 - assert:
@@ -66,11 +66,11 @@
 - name: copy with latin1 in a base64 encoded string
   copy:
     content: "{{ latin1_simple_accents|b64decode }}\n"
-    dest: "{{ output_dir }}/b64_latin1.txt"
+    dest: "{{ remote_tmp_dir }}/b64_latin1.txt"
 
 - name: Check that latin1 in a base64 string matches
   stat:
-    path: "{{ output_dir }}/b64_latin1.txt"
+    path: "{{ remote_tmp_dir }}/b64_latin1.txt"
   register: results
 
 - assert:
@@ -83,11 +83,11 @@
 - name: Template with a unicode string from the playbook
   template:
     src: "from_playbook_template.j2"
-    dest: "{{ output_dir }}/from_playbook_template.txt"
+    dest: "{{ remote_tmp_dir }}/from_playbook_template.txt"
 
 - name: Check that writing a template from a playbook var matches
   stat:
-    path: "{{ output_dir }}/from_playbook_template.txt"
+    path: "{{ remote_tmp_dir }}/from_playbook_template.txt"
   register: results
 
 - assert:
@@ -97,11 +97,11 @@
 - name: Template with utf8 in a base64 encoded string
   template:
     src: "b64_utf8_template.j2"
-    dest: "{{ output_dir }}/b64_utf8_template.txt"
+    dest: "{{ remote_tmp_dir }}/b64_utf8_template.txt"
 
 - name: Check that writing a template from a base64 encoded utf8 string matches
   stat:
-    path: "{{ output_dir }}/b64_utf8_template.txt"
+    path: "{{ remote_tmp_dir }}/b64_utf8_template.txt"
   register: results
 
 - assert:
@@ -111,11 +111,11 @@
 - name: Template with latin1 in a base64 encoded string
   template:
     src: "b64_latin1_template.j2"
-    dest: "{{ output_dir }}/b64_latin1_template.txt"
+    dest: "{{ remote_tmp_dir }}/b64_latin1_template.txt"
 
 - name: Check that writing a template from a base64 encoded latin1 string matches
   stat:
-    path: "{{ output_dir }}/b64_latin1_template.txt"
+    path: "{{ remote_tmp_dir }}/b64_latin1_template.txt"
   register: results
 
 - assert:
