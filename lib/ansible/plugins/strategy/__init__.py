@@ -53,6 +53,7 @@ from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import loader as plugin_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
+from ansible.utils.fqcn import add_internal_fqcns
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.utils.vars import combine_vars
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
@@ -158,6 +159,12 @@ def debug_closure(func):
                 if next_action.result == NextAction.REDO:
                     # rollback host state
                     self._tqm.clear_failed_hosts()
+                    if task.run_once and iterator._play.strategy in add_internal_fqcns(('linear',)) and result.is_failed():
+                        for host_name, state in prev_host_states.items():
+                            if host_name == host.name:
+                                continue
+                            iterator.set_state_for_host(host_name, state)
+                            iterator._play._removed_hosts.remove(host_name)
                     iterator.set_state_for_host(host.name, prev_host_state)
                     for method, what in status_to_stats_map:
                         if getattr(result, method)():

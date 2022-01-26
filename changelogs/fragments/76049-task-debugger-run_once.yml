@@ -1,0 +1,2 @@
+bugfixes:
+  - "Fix task debugger to work with ``run_once`` using ``linear`` strategy (https://github.com/ansible/ansible/issues/76049)"
