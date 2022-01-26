@@ -34,7 +34,7 @@ sh==1.14.2
 six==1.16.0
 snowballstemmer==2.1.0
 Sphinx==4.2.0
-sphinx-ansible-theme==0.9.0
+sphinx-ansible-theme==0.9.1
 sphinx-notfound-page==0.8
 sphinx-rtd-theme==1.0.0
 sphinxcontrib-applehelp==1.0.2
