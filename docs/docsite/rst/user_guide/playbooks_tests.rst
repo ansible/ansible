@@ -32,7 +32,7 @@ The syntax for using a jinja test is as follows
 
 Such as
 
-.. code-block:: console  
+.. code-block:: console
 
     result is failed
 
@@ -317,6 +317,16 @@ The following tests can provide information about a path on the controller
         msg: "path is a mount"
       when: mypath is mount
 
+    - debug:
+        msg: "path is a directory"
+      when: mypath is directory
+      vars:
+         mypath: /my/patth
+
+    - debug:
+        msg: "path is a file"
+      when: "'/my/path' is file"
+
 
 Testing size formats
 ====================
@@ -435,13 +445,13 @@ When looking to determine types, it may be tempting to use the ``type_debug`` fi
           that:
           # Note that a string is classed as also being "iterable", "sequence" and "mapping"
           - a_string is string
-          
+
           # Note that a dictionary is classed as not being a "string", but is "iterable", "sequence" and "mapping"
           - a_dictionary is not string and a_dictionary is mapping
-          
+
           # Note that a list is classed as not being a "string" or "mapping" but is "iterable" and "sequence"
           - a_list is not string and a_list is not mapping and a_list is iterable
-          
+
       - name: "Number interpretation"
         vars:
           a_float: 1.01
@@ -453,23 +463,23 @@ When looking to determine types, it may be tempting to use the ``type_debug`` fi
           # Both a_float and an_integer are "number", but each has their own type as well
           - a_float is number and a_float is float
           - an_integer is number and an_integer is integer
-          
+
           # Both a_float_as_string and an_integer_as_string are not numbers
           - a_float_as_string is not number and a_float_as_string is string
           - an_integer_as_string is not number and a_float_as_string is string
-          
+
           # a_float or a_float_as_string when cast to a float and then to a string should match the same value cast only to a string
           - a_float | float | string == a_float | string
           - a_float_as_string | float | string == a_float_as_string | string
-          
+
           # Likewise an_integer and an_integer_as_string when cast to an integer and then to a string should match the same value cast only to an integer
           - an_integer | int | string == an_integer | string
           - an_integer_as_string | int | string == an_integer_as_string | string
-          
+
           # However, a_float or a_float_as_string cast as an integer and then a string does not match the same value cast to a string
           - a_float | int | string != a_float | string
           - a_float_as_string | int | string != a_float_as_string | string
-          
+
           # Again, Likewise an_integer and an_integer_as_string cast as a float and then a string does not match the same value cast to a string
           - an_integer | float | string != an_integer | string
           - an_integer_as_string | float | string != an_integer_as_string | string
@@ -491,7 +501,7 @@ When looking to determine types, it may be tempting to use the ``type_debug`` fi
           # Note that while other values may be cast to boolean values, these are the only ones which are natively considered boolean
           # Note also that `yes` is the only case sensitive variant of these values.
           - item is boolean
-    
+
 .. _builtin tests: https://jinja.palletsprojects.com/en/latest/templates/#builtin-tests
 
 .. seealso::
