@@ -221,29 +221,29 @@ author:
 
 EXAMPLES = r'''
 - name: Check that you can connect (GET) to a page and it returns a status 200
-  uri:
+  ansible.builtin.uri:
     url: http://www.example.com
 
 - name: Check that a page returns a status 200 and fail if the word AWESOME is not in the page contents
-  uri:
+  ansible.builtin.uri:
     url: http://www.example.com
     return_content: yes
   register: this
   failed_when: "'AWESOME' not in this.content"
 
 - name: Create a JIRA issue
-  uri:
+  ansible.builtin.uri:
     url: https://your.jira.example.com/rest/api/2/issue/
     user: your_username
     password: your_pass
     method: POST
-    body: "{{ lookup('file','issue.json') }}"
+    body: "{{ lookup('ansible.builtin.file','issue.json') }}"
     force_basic_auth: yes
     status_code: 201
     body_format: json
 
 - name: Login to a form based webpage, then use the returned cookie to access the app in later tasks
-  uri:
+  ansible.builtin.uri:
     url: https://your.form.based.auth.example.com/index.php
     method: POST
     body_format: form-urlencoded
@@ -255,7 +255,7 @@ EXAMPLES = r'''
   register: login
 
 - name: Login to a form based webpage using a list of tuples
-  uri:
+  ansible.builtin.uri:
     url: https://your.form.based.auth.example.com/index.php
     method: POST
     body_format: form-urlencoded
@@ -267,7 +267,7 @@ EXAMPLES = r'''
   register: login
 
 - name: Upload a file via multipart/form-multipart
-  uri:
+  ansible.builtin.uri:
     url: https://httpbin.org/post
     method: POST
     body_format: form-multipart
@@ -282,7 +282,7 @@ EXAMPLES = r'''
       text_form_field: value
 
 - name: Connect to website using a previously stored cookie
-  uri:
+  ansible.builtin.uri:
     url: https://your.form.based.auth.example.com/dashboard.php
     method: GET
     return_content: yes
@@ -290,7 +290,7 @@ EXAMPLES = r'''
       Cookie: "{{ login.cookies_string }}"
 
 - name: Queue build of a project in Jenkins
-  uri:
+  ansible.builtin.uri:
     url: http://{{ jenkins.host }}/job/{{ jenkins.job }}/build?token={{ jenkins.token }}
     user: "{{ jenkins.user }}"
     password: "{{ jenkins.password }}"
@@ -299,20 +299,20 @@ EXAMPLES = r'''
     status_code: 201
 
 - name: POST from contents of local file
-  uri:
+  ansible.builtin.uri:
     url: https://httpbin.org/post
     method: POST
     src: file.json
 
 - name: POST from contents of remote file
-  uri:
+  ansible.builtin.uri:
     url: https://httpbin.org/post
     method: POST
     src: /path/to/my/file.json
     remote_src: yes
 
 - name: Create workspaces in Log analytics Azure
-  uri:
+  ansible.builtin.uri:
     url: https://www.mms.microsoft.com/Embedded/Api/ConfigDataSources/LogManagementData/Save
     method: POST
     body_format: json
@@ -326,7 +326,7 @@ EXAMPLES = r'''
     body:
 
 - name: Pause play until a URL is reachable from this host
-  uri:
+  ansible.builtin.uri:
     url: "http://192.0.2.1/some/test"
     follow_redirects: none
     method: GET
@@ -339,7 +339,7 @@ EXAMPLES = r'''
 # https://github.com/ansible/ansible/issues/52705 where a proxy is defined
 # but you want to bypass proxy use on CIDR masks by using no_proxy
 - name: Work around a python issue that doesn't support no_proxy envvar
-  uri:
+  ansible.builtin.uri:
     follow_redirects: none
     validate_certs: false
     timeout: 5
@@ -351,7 +351,7 @@ EXAMPLES = r'''
     ip_address: 192.0.2.1
   environment: |
       {
-        {% for no_proxy in (lookup('env', 'no_proxy') | regex_replace('\s*,\s*', ' ') ).split() %}
+        {% for no_proxy in (lookup('ansible.builtin.env', 'no_proxy') | regex_replace('\s*,\s*', ' ') ).split() %}
           {% if no_proxy | regex_search('\/') and
                 no_proxy | ipaddr('net') != '' and
                 no_proxy | ipaddr('net') != false and

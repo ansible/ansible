@@ -111,7 +111,7 @@ attributes:
 EXAMPLES = r'''
 # Before Ansible 2.3, option 'dest' or 'name' was used instead of 'path'
 - name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /etc/ssh/sshd_config
     block: |
       Match User ansible-agent
@@ -119,7 +119,7 @@ EXAMPLES = r'''
 
 - name: Insert/Update eth0 configuration stanza in /etc/network/interfaces
         (it might be better to copy files into /etc/network/interfaces.d/)
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /etc/network/interfaces
     block: |
       iface eth0 inet static
@@ -127,14 +127,14 @@ EXAMPLES = r'''
           netmask 255.255.255.0
 
 - name: Insert/Update configuration using a local file and validate it
-  blockinfile:
-    block: "{{ lookup('file', './local/sshd_config') }}"
+  ansible.builtin.blockinfile:
+    block: "{{ lookup('ansible.builtin.file', './local/sshd_config') }}"
     path: /etc/ssh/sshd_config
     backup: yes
     validate: /usr/sbin/sshd -T -f %s
 
 - name: Insert/Update HTML surrounded by custom markers after <body> line
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /var/www/html/index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     insertafter: "<body>"
@@ -143,13 +143,13 @@ EXAMPLES = r'''
       <p>Last updated on {{ ansible_date_time.iso8601 }}</p>
 
 - name: Remove HTML as well as surrounding markers
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /var/www/html/index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     block: ""
 
 - name: Add mappings to /etc/hosts
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /etc/hosts
     block: |
       {{ item.ip }} {{ item.name }}

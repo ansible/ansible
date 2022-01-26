@@ -70,20 +70,20 @@ author:
 
 EXAMPLES = r'''
 - name: Tell the host about our servers it might want to ssh to
-  known_hosts:
+  ansible.builtin.known_hosts:
     path: /etc/ssh/ssh_known_hosts
     name: foo.com.invalid
-    key: "{{ lookup('file', 'pubkeys/foo.com.invalid') }}"
+    key: "{{ lookup('ansible.builtin.file', 'pubkeys/foo.com.invalid') }}"
 
 - name: Another way to call known_hosts
-  known_hosts:
+  ansible.builtin.known_hosts:
     name: host1.example.com   # or 10.9.8.77
     key: host1.example.com,10.9.8.77 ssh-rsa ASDeararAIUHI324324  # some key gibberish
     path: /etc/ssh/ssh_known_hosts
     state: present
 
 - name: Add host with custom SSH port
-  known_hosts:
+  ansible.builtin.known_hosts:
     name: '[host1.example.com]:2222'
     key: '[host1.example.com]:2222 ssh-rsa ASDeararAIUHI324324' # some key gibberish
     path: /etc/ssh/ssh_known_hosts

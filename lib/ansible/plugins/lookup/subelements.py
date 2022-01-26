@@ -56,7 +56,7 @@ EXAMPLES = """
               - "DB2.*:ALL"
   tasks:
     - name: Set authorized ssh key, extracting just that data from 'users'
-      authorized_key:
+      ansible.posix.authorized_key:
         user: "{{ item.0.name }}"
         key: "{{ lookup('file', item.1) }}"
       with_subelements:
@@ -64,7 +64,7 @@ EXAMPLES = """
          - authorized
 
     - name: Setup MySQL users, given the mysql hosts and privs subkey lists
-      mysql_user:
+      community.mysql.mysql_user:
         name: "{{ item.0.name }}"
         password: "{{ item.0.mysql.password }}"
         host: "{{ item.1 }}"
@@ -74,8 +74,8 @@ EXAMPLES = """
         - mysql.hosts
 
     - name: list groups for users that have them, don't error if groups key is missing
-      debug: var=item
-      loop: "{{ q('subelements', users, 'groups', {'skip_missing': True}) }}"
+      ansible.builtin.debug: var=item
+      loop: "{{ q('ansible.builtin.subelements', users, 'groups', {'skip_missing': True}) }}"
 """
 
 RETURN = """

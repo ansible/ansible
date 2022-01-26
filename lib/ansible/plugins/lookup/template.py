@@ -57,16 +57,16 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: show templating results
-  debug:
-    msg: "{{ lookup('template', './some_template.j2') }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.template', './some_template.j2') }}"
 
 - name: show templating results with different variable start and end string
-  debug:
-    msg: "{{ lookup('template', './some_template.j2', variable_start_string='[%', variable_end_string='%]') }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.template', './some_template.j2', variable_start_string='[%', variable_end_string='%]') }}"
 
 - name: show templating results with different comment start and end string
-  debug:
-    msg: "{{ lookup('template', './some_template.j2', comment_start_string='[#', comment_end_string='#]') }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.template', './some_template.j2', comment_start_string='[#', comment_end_string='#]') }}"
 """
 
 RETURN = """

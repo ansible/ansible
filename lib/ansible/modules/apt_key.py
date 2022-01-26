@@ -105,7 +105,7 @@ EXAMPLES = '''
 # Use armored file since utf-8 string is expected. Must be of "PGP PUBLIC KEY BLOCK" type.
 - name: Add a key from a file on the Ansible server
   ansible.builtin.apt_key:
-    data: "{{ lookup('file', 'apt.asc') }}"
+    data: "{{ lookup('ansible.builtin.file', 'apt.asc') }}"
     state: present
 
 - name: Add an Apt signing key to a specific keyring file

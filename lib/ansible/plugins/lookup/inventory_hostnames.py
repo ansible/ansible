@@ -22,7 +22,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: show all the hosts matching the pattern, i.e. all but the group www
-  debug:
+  ansible.builtin.debug:
     msg: "{{ item }}"
   with_inventory_hostnames:
     - all:!www
