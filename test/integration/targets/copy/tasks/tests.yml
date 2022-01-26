@@ -2263,7 +2263,7 @@
 - name: fail to copy an encrypted file without the password set
   copy:
     src: '{{role_path}}/files-different/vault/vault-file'
-    dest: '{{output_dir}}/file'
+    dest: '{{remote_tmp_dir}}/copy/file'
   register: fail_copy_encrypted_file
   ignore_errors: yes # weird failed_when doesn't work in this case
 
@@ -2276,7 +2276,7 @@
 - name: fail to copy a directory with an encrypted file without the password
   copy:
     src: '{{role_path}}/files-different/vault'
-    dest: '{{output_dir}}'
+    dest: '{{remote_tmp_dir}}/copy'
   register: fail_copy_directory_with_enc_file
   ignore_errors: yes
 
