@@ -222,7 +222,8 @@ def sanity_check(module, host, key, sshkeygen):
         rc, stdout, stderr = module.run_command(sshkeygen_command)
 
     if stdout == '':  # host not found
-        module.fail_json(msg="Host parameter does not match hashed host field in supplied key")
+        module.fail_json(msg="Host parameter does not match hashed host field in supplied key. "
+                             "For custom SSH port, name needs to specify port as well.")
 
 
 def search_for_host_key(module, host, key, path, sshkeygen):
