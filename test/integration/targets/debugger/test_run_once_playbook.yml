@@ -1,0 +1,12 @@
+- hosts: testhost, testhost2
+  gather_facts: false
+  debugger: on_failed
+  tasks:
+    - name: Task 1
+      assert:
+        that: 'false'
+      run_once: yes
+
+    - name: Task 2
+      debug:
+        msg: "Task 2 executed"
