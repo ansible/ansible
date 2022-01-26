@@ -46,7 +46,7 @@ author:
 
 EXAMPLES = '''
 # Test we can logon to 'webservers' and execute python with json lib.
-# ansible webservers -m ping
+# ansible webservers -m ansible.builtin.ping
 
 - name: Example from an Ansible Playbook
   ansible.builtin.ping:

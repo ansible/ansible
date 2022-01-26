@@ -73,16 +73,16 @@ author:
 
 EXAMPLES = r'''
 - name: Bootstrap a host without python2 installed
-  raw: dnf install -y python2 python2-dnf libselinux-python
+  ansible.builtin.raw: dnf install -y python2 python2-dnf libselinux-python
 
 - name: Run a command that uses non-posix shell-isms (in this example /bin/sh doesn't handle redirection and wildcards together but bash does)
-  raw: cat < /tmp/*txt
+  ansible.builtin.raw: cat < /tmp/*txt
   args:
     executable: /bin/bash
 
 - name: Safely use templated variables. Always use quote filter to avoid injection issues.
-  raw: "{{ package_mgr|quote }} {{ pkg_flags|quote }} install {{ python|quote }}"
+  ansible.builtin.raw: "{{ package_mgr|quote }} {{ pkg_flags|quote }} install {{ python|quote }}"
 
 - name: List user accounts on a Windows system
-  raw: Get-WmiObject -Class Win32_UserAccount
+  ansible.builtin.raw: Get-WmiObject -Class Win32_UserAccount
 '''

@@ -28,25 +28,25 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: Basic usage
-  debug:
-    msg: "{{ lookup('env', 'HOME') }} is the HOME environment variable."
+  ansible.builtin.debug:
+    msg: "'{{ lookup('ansible.builtin.env', 'HOME') }}' is the HOME environment variable."
 
 - name: Before 2.13, how to set default value if the variable is not defined.
         This cannot distinguish between USR undefined and USR=''.
-  debug:
-    msg: "{{ lookup('env', 'USR')|default('nobody', True) }} is the user."
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.env', 'USR')|default('nobody', True) }} is the user."
 
 - name: Example how to set default value if the variable is not defined, ignores USR=''
-  debug:
-    msg: "{{ lookup('env', 'USR', default='nobody') }} is the user."
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.env', 'USR', default='nobody') }} is the user."
 
 - name: Set default value to Undefined, if the variable is not defined
-  debug:
-    msg: "{{ lookup('env', 'USR', default=Undefined) }} is the user."
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.env', 'USR', default=Undefined) }} is the user."
 
 - name: Set default value to undef(), if the variable is not defined
-  debug:
-    msg: "{{ lookup('env', 'USR', default=undef()) }} is the user."
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.env', 'USR', default=undef()) }} is the user."
 """
 
 RETURN = """

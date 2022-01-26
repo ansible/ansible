@@ -82,22 +82,22 @@ author:
 
 EXAMPLES = r'''
 - name: Setting host facts using key=value pairs, this format can only create strings or booleans
-  set_fact: one_fact="something" other_fact="{{ local_var }}"
+  ansible.builtin.set_fact: one_fact="something" other_fact="{{ local_var }}"
 
 - name: Setting host facts using complex arguments
-  set_fact:
+  ansible.builtin.set_fact:
     one_fact: something
     other_fact: "{{ local_var * 2 }}"
     another_fact: "{{ some_registered_var.results | map(attribute='ansible_facts.some_fact') | list }}"
 
 - name: Setting facts so that they will be persisted in the fact cache
-  set_fact:
+  ansible.builtin.set_fact:
     one_fact: something
     other_fact: "{{ local_var * 2 }}"
     cacheable: yes
 
 - name: Creating list and dictionary variables
-  set_fact:
+  ansible.builtin.set_fact:
     one_dict:
         something: here
         other: there
@@ -105,9 +105,16 @@ EXAMPLES = r'''
         - a
         - b
         - c
+# As of Ansible 1.8, Ansible will convert boolean strings ('true', 'false', 'yes', 'no')
+# to proper boolean values when using the key=value syntax, however it is still
+# recommended that booleans be set using the complex argument style:
+- name: Setting booleans using complex argument style
+  ansible.builtin.set_fact:
+    one_fact: yes
+    other_fact: no
 
 - name: Creating list and dictionary variables using 'shorthand' YAML
-  set_fact:
+  ansible.builtin.set_fact:
     two_dict: {'something': here2, 'other': somewhere}
     two_list: [1,2,3]
 '''

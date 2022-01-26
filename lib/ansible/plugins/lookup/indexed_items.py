@@ -20,7 +20,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: indexed loop demo
-  debug:
+  ansible.builtin.debug:
     msg: "at array position {{ item.0 }} there is a value {{ item.1 }}"
   with_indexed_items:
     - "{{ some_list }}"
