@@ -55,7 +55,7 @@ def get_vars_from_path(loader, path, entities, stage):
 
     for plugin in vars_plugin_list:
         if plugin._load_name not in C.VARIABLE_PLUGINS_ENABLED and getattr(plugin, 'REQUIRES_WHITELIST', False):
-            # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
+            # 2.x plugins shipped with ansible should require enabling, older or non shipped should load automatically
             continue
 
         has_stage = hasattr(plugin, 'get_option') and plugin.has_option('stage')
