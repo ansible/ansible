@@ -7,12 +7,12 @@
 # Basic absolute symlink to a file
 #
 - name: create soft link to file
-  file: src={{output_file}} dest={{output_dir}}/soft.txt state=link
+  file: src={{output_file}} dest={{remote_tmp_dir_test}}/soft.txt state=link
   register: file1_result
 
 - name: Get stat info for the link
   stat:
-    path: '{{ output_dir }}/soft.txt'
+    path: '{{ remote_tmp_dir_test }}/soft.txt'
     follow: False
   register: file1_link_stat
 
@@ -27,12 +27,12 @@
 # Change an absolute soft link into a relative soft link
 #
 - name: change soft link to relative
-  file: src={{output_file|basename}} dest={{output_dir}}/soft.txt state=link
+  file: src={{output_file|basename}} dest={{remote_tmp_dir_test}}/soft.txt state=link
   register: file2_result
 
 - name: Get stat info for the link
   stat:
-    path: '{{ output_dir }}/soft.txt'
+    path: '{{ remote_tmp_dir_test }}/soft.txt'
     follow: False
   register: file2_link_stat
 
@@ -49,12 +49,12 @@
 # Check that creating the soft link a second time was idempotent
 #
 - name: soft link idempotency check
-  file: src={{output_file|basename}} dest={{output_dir}}/soft.txt state=link
+  file: src={{output_file|basename}} dest={{remote_tmp_dir_test}}/soft.txt state=link
   register: file3_result
 
 - name: Get stat info for the link
   stat:
-    path: '{{ output_dir }}/soft.txt'
+    path: '{{ remote_tmp_dir_test }}/soft.txt'
     follow: False
   register: file3_link_stat
 
@@ -71,7 +71,7 @@
 - name: fail to create soft link to non existent file
   file:
     src: '/nonexistent'
-    dest: '{{output_dir}}/soft2.txt'
+    dest: '{{remote_tmp_dir_test}}/soft2.txt'
     state: 'link'
     force: False
   register: file4_result
@@ -85,14 +85,14 @@
 - name: force creation soft link to non existent
   file:
     src: '/nonexistent'
-    dest: '{{ output_dir}}/soft2.txt'
+    dest: '{{ remote_tmp_dir_test}}/soft2.txt'
     state: 'link'
     force: True
   register: file5_result
 
 - name: Get stat info for the link
   stat:
-    path: '{{ output_dir }}/soft2.txt'
+    path: '{{ remote_tmp_dir_test }}/soft2.txt'
     follow: False
   register: file5_link_stat
 
@@ -106,7 +106,7 @@
 - name: Prove idempotence of force creation soft link to non existent
   file:
     src: '/nonexistent'
-    dest: '{{ output_dir }}/soft2.txt'
+    dest: '{{ remote_tmp_dir_test }}/soft2.txt'
     state: 'link'
     force: True
   register: file6a_result
@@ -207,19 +207,19 @@
 - name: create soft link to directory using absolute path
   file:
     src: '/'
-    dest: '{{ output_dir }}/root'
+    dest: '{{ remote_tmp_dir_test }}/root'
     state: 'link'
   register: file6_result
 
 - name: Get stat info for the link
   stat:
-    path: '{{ output_dir }}/root'
+    path: '{{ remote_tmp_dir_test }}/root'
     follow: False
   register: file6_link_stat
 
 - name: Get stat info for the pointed to file
   stat:
-    path: '{{ output_dir }}/root'
+    path: '{{ remote_tmp_dir_test }}/root'
     follow: True
   register: file6_links_dest_stat
 
@@ -248,41 +248,41 @@
 # Relative link to file
 - name: create a test sub-directory to link to
   file:
-    dest: '{{ output_dir }}/sub1'
+    dest: '{{ remote_tmp_dir_test }}/sub1'
     state: 'directory'
 
 - name: create a file to link to in the test sub-directory
   file:
-    dest: '{{ output_dir }}/sub1/file1'
+    dest: '{{ remote_tmp_dir_test }}/sub1/file1'
     state: 'touch'
 
 - name: create another test sub-directory to place links within
   file:
-    dest: '{{output_dir}}/sub2'
+    dest: '{{remote_tmp_dir_test}}/sub2'
     state: 'directory'
 
 - name: create soft link to relative file
   file:
     src: '../sub1/file1'
-    dest: '{{ output_dir }}/sub2/link1'
+    dest: '{{ remote_tmp_dir_test }}/sub2/link1'
     state: 'link'
   register: file7_result
 
 - name: Get stat info for the link
   stat:
-    path: '{{ output_dir }}/sub2/link1'
+    path: '{{ remote_tmp_dir_test }}/sub2/link1'
     follow: False
   register: file7_link_stat
 
 - name: Get stat info for the pointed to file
   stat:
-    path: '{{ output_dir }}/sub2/link1'
+    path: '{{ remote_tmp_dir_test }}/sub2/link1'
     follow: True
   register: file7_links_dest_stat
 
 - name: Get stat info for the file we intend to point to
   stat:
-    path: '{{ output_dir }}/sub1/file1'
+    path: '{{ remote_tmp_dir_test }}/sub1/file1'
     follow: False
   register: file7_dest_stat
 
@@ -302,25 +302,25 @@
 - name: create soft link to relative directory
   file:
     src: sub1
-    dest: '{{ output_dir }}/sub1-link'
+    dest: '{{ remote_tmp_dir_test }}/sub1-link'
     state: 'link'
   register: file8_result
 
 - name: Get stat info for the link
   stat:
-    path: '{{ output_dir }}/sub1-link'
+    path: '{{ remote_tmp_dir_test }}/sub1-link'
     follow: False
   register: file8_link_stat
 
 - name: Get stat info for the pointed to file
   stat:
-    path: '{{ output_dir }}/sub1-link'
+    path: '{{ remote_tmp_dir_test }}/sub1-link'
     follow: True
   register: file8_links_dest_stat
 
 - name: Get stat info for the file we intend to point to
   stat:
-    path: '{{ output_dir }}/sub1'
+    path: '{{ remote_tmp_dir_test }}/sub1'
     follow: False
   register: file8_dest_stat
 
@@ -341,26 +341,26 @@
 
 - name: create a test file
   copy:
-    dest: '{{output_dir}}/test_follow'
+    dest: '{{remote_tmp_dir_test}}/test_follow'
     content: 'this is a test file\n'
     mode: 0666
 
 - name: create a symlink to the test file
   file:
-    path: '{{output_dir}}/test_follow_link'
+    path: '{{remote_tmp_dir_test}}/test_follow_link'
     src: './test_follow'
     state: 'link'
 
 - name: modify the permissions on the link using follow=yes
   file:
-    path: '{{output_dir}}/test_follow_link'
+    path: '{{remote_tmp_dir_test}}/test_follow_link'
     mode: 0644
     follow: yes
   register: file9_result
 
 - name: stat the link target
   stat:
-    path: '{{output_dir}}/test_follow'
+    path: '{{remote_tmp_dir_test}}/test_follow'
   register: file9_stat
 
 - name: assert that the chmod worked
@@ -374,7 +374,7 @@
 #
 - name: attempt to modify the permissions of the link itself
   file:
-    path: '{{output_dir}}/test_follow_link'
+    path: '{{remote_tmp_dir_test}}/test_follow_link'
     src: './test_follow'
     state: 'link'
     mode: 0600
@@ -385,7 +385,7 @@
 # Just check that the underlying file was not changed
 - name: stat the link target
   stat:
-    path: '{{output_dir}}/test_follow'
+    path: '{{remote_tmp_dir_test}}/test_follow'
   register: file10_target_stat
 
 - name: assert that the link target was unmodified
@@ -399,19 +399,19 @@
 
   - name: Create a testing file
     file:
-      path: "{{ output_dir }}/test_follow1"
+      path: "{{ remote_tmp_dir_test }}/test_follow1"
       state: touch
 
   - name: Create a symlink and change mode of the original file, since follow == yes by default
     file:
-      src: "{{ output_dir }}/test_follow1"
-      dest: "{{ output_dir }}/test_follow1_link"
+      src: "{{ remote_tmp_dir_test }}/test_follow1"
+      dest: "{{ remote_tmp_dir_test }}/test_follow1_link"
       state: link
       mode: 0700
 
   - name: stat the original file
     stat:
-      path: "{{ output_dir }}/test_follow1"
+      path: "{{ remote_tmp_dir_test }}/test_follow1"
     register: stat_out
 
   - name: Check if the mode of the original file was set
@@ -425,8 +425,8 @@
         path: "{{ item }}"
         state: absent
       loop:
-        - "{{ output_dir }}/test_follow1"
-        - "{{ output_dir }}/test_follow1_link"
+        - "{{ remote_tmp_dir_test }}/test_follow1"
+        - "{{ remote_tmp_dir_test }}/test_follow1_link"
 
 # END #56928
 
@@ -435,7 +435,7 @@
 - name: Specify src without state
   file:
     src: "{{ output_file }}"
-    dest: "{{ output_dir }}/link.txt"
+    dest: "{{ remote_tmp_dir_test }}/link.txt"
   ignore_errors: yes
   register: src_state
 
@@ -448,35 +448,35 @@
 # Test creating a symlink when the destination exists and is a file
 - name: create a test file
   copy:
-    dest: '{{ output_dir }}/file.txt'
+    dest: '{{ remote_tmp_dir_test }}/file.txt'
     content: 'this is a test file\n'
     mode: 0666
 
 - name: Create a symlink with dest already a file
   file:
     src: '{{ output_file }}'
-    dest: '{{ output_dir }}/file.txt'
+    dest: '{{ remote_tmp_dir_test }}/file.txt'
     state: link
   ignore_errors: true
   register: dest_is_existing_file_fail
 
 - name: Stat to make sure the symlink was not created
   stat:
-    path: '{{ output_dir }}/file.txt'
+    path: '{{ remote_tmp_dir_test }}/file.txt'
     follow: false
   register: dest_is_existing_file_fail_stat
 
 - name: Forcefully a symlink with dest already a file
   file:
     src: '{{ output_file }}'
-    dest: '{{ output_dir }}/file.txt'
+    dest: '{{ remote_tmp_dir_test }}/file.txt'
     state: link
     force: true
   register: dest_is_existing_file_force
 
 - name: Stat to make sure the symlink was created
   stat:
-    path: '{{ output_dir }}/file.txt'
+    path: '{{ remote_tmp_dir_test }}/file.txt'
     follow: false
   register: dest_is_existing_file_force_stat
 
