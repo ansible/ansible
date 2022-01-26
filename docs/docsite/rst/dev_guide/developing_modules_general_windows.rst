@@ -474,7 +474,7 @@ modules to authentication with a service.
 
             [Parameter(Mandatory=$true)]
             [String]
-            $ResourceId
+            $ResourceId,
 
             [String]
             $State = 'present'
