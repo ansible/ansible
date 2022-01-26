@@ -139,4 +139,4 @@ Ansible automatically loads all plugins from certain directories adjacent to you
 Using ``ansible.legacy`` to access custom versions of an ``ansible.builtin`` module
 ===================================================================================
 
-If you need to override one of the ``ansible.builtin` modules, you need to use ``ansible.legacy`` as part of the fully-qualified collection name (FQCN). For example, if you had your own ``copy`` module, you would access it as ``ansible.legacy.copy``. See :ref:`using_ansible_legacy` for details on how to use custom modules with roles within a collection.
+If you need to override one of the ``ansible.builtin`` modules and are using FQCN, you need to use ``ansible.legacy`` as part of the fully-qualified collection name (FQCN). For example, if you had your own ``copy`` module, you would access it as ``ansible.legacy.copy``. See :ref:`using_ansible_legacy` for details on how to use custom modules with roles within a collection.
