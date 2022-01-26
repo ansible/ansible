@@ -343,6 +343,13 @@ In a playbook, you can control the collections Ansible searches for modules and 
 
 The ``collections`` keyword merely creates an ordered 'search path' for non-namespaced plugin and role references. It does not install content or otherwise change Ansible's behavior around the loading of plugins or roles. Note that an FQCN is still required for non-action or module plugins (for example, lookups, filters, tests).
 
+When using the ``collections`` keyword, it is not necessary to add in ``ansible.builtin`` as part of the search list. When left omitted, the following content is available by default:
+
+1. Standard ansible modules and plugins available through ``ansible-base``/``ansible-core``
+
+2. Support for older 3rd party plugin paths
+
+In general, it is preferable to use a module or plugin's FQCN over the ``collections`` keyword and the short name for all content in ``ansible-core``
 
 Using a playbook from a collection
 ==================================

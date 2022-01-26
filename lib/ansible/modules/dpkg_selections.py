@@ -43,7 +43,7 @@ notes:
 '''
 EXAMPLES = '''
 - name: Prevent python from being upgraded
-  dpkg_selections:
+  ansible.builtin.dpkg_selections:
     name: python
     selection: hold
 '''

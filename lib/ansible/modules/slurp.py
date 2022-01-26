@@ -53,7 +53,7 @@ EXAMPLES = r'''
     msg: "{{ mounts['content'] | b64decode }}"
 
 # From the commandline, find the pid of the remote machine's sshd
-# $ ansible host -m slurp -a 'src=/var/run/sshd.pid'
+# $ ansible host -m ansible.builtin.slurp -a 'src=/var/run/sshd.pid'
 # host | SUCCESS => {
 #     "changed": false,
 #     "content": "MjE3OQo=",

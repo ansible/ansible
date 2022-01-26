@@ -51,7 +51,7 @@ attributes:
 
 EXAMPLES = r'''
 - name: verify vars needed for this task file are present when included
-  validate_argument_spec:
+  ansible.builtin.validate_argument_spec:
         argument_spec: '{{required_data}}'
   vars:
     required_data:
@@ -68,14 +68,14 @@ EXAMPLES = r'''
 
 
 - name: verify vars needed for this task file are present when included, with spec from a spec file
-  validate_argument_spec:
-        argument_spec: "{{lookup('file', 'myargspec.yml')['specname']['options']}}"
+  ansible.builtin.validate_argument_spec:
+        argument_spec: "{{lookup('ansible.builtin.file', 'myargspec.yml')['specname']['options']}}"
 
 
 - name: verify vars needed for next include and not from inside it, also with params i'll only define there
   block:
-    - validate_argument_spec:
-        argument_spec: "{{lookup('file', 'nakedoptions.yml'}}"
+    - ansible.builtin.validate_argument_spec:
+        argument_spec: "{{lookup('ansible.builtin.file', 'nakedoptions.yml'}}"
         provided_arguments:
             but: "that i can define on the include itself, like in it's C(vars:) keyword"
 
