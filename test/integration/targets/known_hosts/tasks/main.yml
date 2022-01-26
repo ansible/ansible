@@ -374,4 +374,4 @@
   assert:
     that:
       - result is failed
-      - result.msg == 'Host parameter does not match hashed host field in supplied key'
+      - result.msg == 'Host parameter does not match hashed host field in supplied key. For custom SSH port, name needs to specify port as well.'
