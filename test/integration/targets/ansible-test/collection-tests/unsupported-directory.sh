@@ -4,7 +4,14 @@ set -eux -o pipefail
 
 cd "${WORK_DIR}"
 
-if ansible-test --help 1>stdout 2>stderr; then
+# some options should succeed even in an unsupported directory
+ansible-test --help
+ansible-test --version
+
+# the --help option should show the current working directory when it is unsupported
+ansible-test --help 2>&1 | grep '^Current working directory: '
+
+if ansible-test sanity 1>stdout 2>stderr; then
   echo "ansible-test did not fail"
   exit 1
 fi

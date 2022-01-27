@@ -34,9 +34,17 @@ from .provider.source.installed import (
     InstalledSource,
 )
 
+from .provider.source.unsupported import (
+    UnsupportedSource,
+)
+
 from .provider.layout import (
     ContentLayout,
     LayoutProvider,
+)
+
+from .provider.layout.unsupported import (
+    UnsupportedLayout,
 )
 
 
@@ -109,14 +117,20 @@ class DataContext:
                                 walk,  # type: bool
                                 ):  # type: (...) -> ContentLayout
         """Create a content layout using the given providers and root path."""
-        layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk)
+        try:
+            layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk)
+        except ProviderNotFoundForPath:
+            layout_provider = UnsupportedLayout(root)
 
         try:
             # Begin the search for the source provider at the layout provider root.
             # This intentionally ignores version control within subdirectories of the layout root, a condition which was previously an error.
             # Doing so allows support for older git versions for which it is difficult to distinguish between a super project and a sub project.
             # It also provides a better user experience, since the solution for the user would effectively be the same -- to remove the nested version control.
-            source_provider = find_path_provider(SourceProvider, source_providers, layout_provider.root, walk)
+            if isinstance(layout_provider, UnsupportedLayout):
+                source_provider = UnsupportedSource(layout_provider.root)
+            else:
+                source_provider = find_path_provider(SourceProvider, source_providers, layout_provider.root, walk)
         except ProviderNotFoundForPath:
             source_provider = UnversionedSource(layout_provider.root)
 
@@ -161,6 +175,42 @@ class DataContext:
         """Register the given payload callback."""
         self.payload_callbacks.append(callback)
 
+    def check_layout(self) -> None:
+        """Report an error if the layout is unsupported."""
+        if self.content.unsupported:
+            raise ApplicationError(self.explain_working_directory())
+
+    @staticmethod
+    def explain_working_directory() -> str:
+        """Return a message explaining the working directory requirements."""
+        blocks = [
+            'The current working directory must be within the source tree being tested.',
+            '',
+        ]
+
+        if ANSIBLE_SOURCE_ROOT:
+            blocks.append(f'Testing Ansible: {ANSIBLE_SOURCE_ROOT}/')
+            blocks.append('')
+
+        cwd = os.getcwd()
+
+        blocks.append('Testing an Ansible collection: {...}/ansible_collections/{namespace}/{collection}/')
+        blocks.append('Example #1: community.general -> ~/code/ansible_collections/community/general/')
+        blocks.append('Example #2: ansible.util -> ~/.ansible/collections/ansible_collections/ansible/util/')
+        blocks.append('')
+        blocks.append(f'Current working directory: {cwd}/')
+
+        if os.path.basename(os.path.dirname(cwd)) == 'ansible_collections':
+            blocks.append(f'Expected parent directory: {os.path.dirname(cwd)}/{{namespace}}/{{collection}}/')
+        elif os.path.basename(cwd) == 'ansible_collections':
+            blocks.append(f'Expected parent directory: {cwd}/{{namespace}}/{{collection}}/')
+        else:
+            blocks.append('No "ansible_collections" parent directory was found.')
+
+        message = '\n'.join(blocks)
+
+        return message
+
 
 @cache
 def data_context():  # type: () -> DataContext
@@ -173,21 +223,7 @@ def data_context():  # type: () -> DataContext
     for provider_type in provider_types:
         import_plugins('provider/%s' % provider_type)
 
-    try:
-        context = DataContext()
-    except ProviderNotFoundForPath:
-        options = [
-            ' - an Ansible collection: {...}/ansible_collections/{namespace}/{collection}/',
-        ]
-
-        if ANSIBLE_SOURCE_ROOT:
-            options.insert(0, ' - the Ansible source: %s/' % ANSIBLE_SOURCE_ROOT)
-
-        raise ApplicationError('''The current working directory must be at or below:
-
-%s
-
-Current working directory: %s''' % ('\n'.join(options), os.getcwd()))
+    context = DataContext()
 
     return context
 
