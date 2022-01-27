@@ -62,7 +62,7 @@ To support a variety of Unix-like operating systems and distributions, Ansible c
 FreeBSD packages and ports
 """"""""""""""""""""""""""
 
-In FreeBSD, there is no guarantee that either ``/usr/local/bin/python`` executable file or a link to an executable file is installed by default. The best practice for a remote host, with respect to Ansible, is to install at least the Python version supported by Ansible, e.g. ``lang/python38``, and both ``lang/python3`` and ``lang/python``. Quoting from */usr/ports/lang/python3/pkg-descr*
+In FreeBSD, there is no guarantee that either ``/usr/local/bin/python`` executable file or a link to an executable file is installed by default. The best practice for a remote host, with respect to Ansible, is to install at least the Python version supported by Ansible, e.g. ``lang/python38``, and both meta ports ``lang/python3`` and ``lang/python``. Quoting from */usr/ports/lang/python3/pkg-descr*:
 
 .. code-block:: text
 
@@ -70,7 +70,7 @@ In FreeBSD, there is no guarantee that either ``/usr/local/bin/python`` executab
   to bin/python3, bin/pydoc3, bin/idle3 and so on to allow compatibility with
   minor version agnostic python scripts.
 
-Quoting from */usr/ports/lang/python/pkg-descr*
+Quoting from */usr/ports/lang/python/pkg-descr*:
 
 .. code-block:: text
 
@@ -137,7 +137,7 @@ For example, given the inventory
 
 The playbook below
 
-.. code-block:: yaml
+.. code-block:: yaml+jinja
 
   shell> cat playbook.yml
   - hosts: test_11
