@@ -242,9 +242,8 @@ def main():
         original = None
         lines = []
     else:
-        f = open(path, 'rb')
-        original = f.read()
-        f.close()
+        with open(path, 'rb') as f:
+            original = f.read()
         lines = original.splitlines(True)
 
     diff = {'before': '',
