@@ -9,6 +9,7 @@ from .util import (
     ApplicationError,
     import_plugins,
     is_subdir,
+    is_valid_identifier,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_ROOT,
     ANSIBLE_SOURCE_ROOT,
@@ -180,8 +181,7 @@ class DataContext:
         if self.content.unsupported:
             raise ApplicationError(self.explain_working_directory())
 
-    @staticmethod
-    def explain_working_directory() -> str:
+    def explain_working_directory(self) -> str:
         """Return a message explaining the working directory requirements."""
         blocks = [
             'The current working directory must be within the source tree being tested.',
@@ -204,8 +204,15 @@ class DataContext:
             blocks.append(f'Expected parent directory: {os.path.dirname(cwd)}/{{namespace}}/{{collection}}/')
         elif os.path.basename(cwd) == 'ansible_collections':
             blocks.append(f'Expected parent directory: {cwd}/{{namespace}}/{{collection}}/')
-        else:
+        elif 'ansible_collections' not in cwd.split(os.path.sep):
             blocks.append('No "ansible_collections" parent directory was found.')
+
+        if self.content.collection:
+            if not is_valid_identifier(self.content.collection.namespace):
+                blocks.append(f'The namespace "{self.content.collection.namespace}" is an invalid identifier or a reserved keyword.')
+
+            if not is_valid_identifier(self.content.collection.name):
+                blocks.append(f'The name "{self.content.collection.name}" is an invalid identifier or a reserved keyword.')
 
         message = '\n'.join(blocks)
 
