@@ -33,10 +33,10 @@
     test_override:
     register: result
 
-  - name: Make sure the we used the local facts.py, not the one shipped with ansible
+  - name: Make sure the we used the local ansible_release.py, not the one shipped with ansible
     assert:
       that:
-        - result["data"] == "overridden facts.py"
+        - result["data"] == "overridden ansible_release.py"
 
   - name: Test that importing a module that only exists inside of a submodule does not work
     test_failure:
@@ -61,13 +61,16 @@
         - result.deprecations[-1].version == '9.99'
 
   - block:
+      - import_role:
+          name: setup_remote_tmp_dir
+
       - name: Get a string with a \0 in it
         command: echo -e 'hi\0foo'
         register: string_with_null
 
       - name: Use the null string as a module parameter
         lineinfile:
-          path: "{{ output_dir }}/nulltest"
+          path: "{{ remote_tmp_dir }}/nulltest"
           line: "{{ string_with_null.stdout }}"
           create: yes
         ignore_errors: yes
@@ -75,7 +78,7 @@
 
       - name: See if the file exists
         stat:
-          path: "{{ output_dir }}/nulltest"
+          path: "{{ remote_tmp_dir }}/nulltest"
         register: nullstat
 
       - assert:
@@ -94,7 +97,7 @@
             - nullstat.stat.exists == nulltest is successful
     always:
       - file:
-          path: "{{ output_dir }}/nulltest"
+          path: "{{ remote_tmp_dir }}/nulltest"
           state: absent
 
   - name: Test that date and datetime in module output works

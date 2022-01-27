@@ -1,11 +1,11 @@
 # setup
-- set_fact: output_dir_test={{output_dir}}/test_replace
+- set_fact: remote_tmp_dir_test={{remote_tmp_dir}}/test_replace
 
 - name: make sure our testing sub-directory does not exist
-  file: path="{{ output_dir_test }}" state=absent
+  file: path="{{ remote_tmp_dir_test }}" state=absent
 
 - name: create our testing sub-directory
-  file: path="{{ output_dir_test }}" state=directory
+  file: path="{{ remote_tmp_dir_test }}" state=directory
 
 # tests
 - name: create test files
@@ -15,19 +15,19 @@
                 We promptly judged antique ivory buckles for the next prize.
                 Jinxed wizards pluck ivy from the big quilt.
                 Jaded zombies acted quaintly but kept driving their oxen forward.
-      dest: "{{ output_dir_test }}/pangrams.{{ item }}.txt"
+      dest: "{{ remote_tmp_dir_test }}/pangrams.{{ item }}.txt"
   with_sequence: start=0 end=6 format=%02x #increment as needed
 
 
 ## test `before` option
 - name: remove all spaces before "quilt"
   replace:
-    path: "{{ output_dir_test }}/pangrams.00.txt"
+    path: "{{ remote_tmp_dir_test }}/pangrams.00.txt"
     before: 'quilt'
     regexp: ' '
   register: replace_test0
 
-- command: "cat {{ output_dir_test }}/pangrams.00.txt"
+- command: "cat {{ remote_tmp_dir_test }}/pangrams.00.txt"
   register: replace_cat0
 
 - name: validate before assertions
@@ -42,12 +42,12 @@
 ## test `after` option
 - name: remove all spaces after "promptly"
   replace:
-    path: "{{ output_dir_test }}/pangrams.01.txt"
+    path: "{{ remote_tmp_dir_test }}/pangrams.01.txt"
     after: 'promptly'
     regexp: ' '
   register: replace_test1
 
-- command: "cat {{ output_dir_test }}/pangrams.01.txt"
+- command: "cat {{ remote_tmp_dir_test }}/pangrams.01.txt"
   register: replace_cat1
 
 - name: validate after assertions
@@ -62,7 +62,7 @@
 ## test combined `before` and `after` options
 - name: before "promptly" but after "quilt", replace every "e" with a "3"
   replace:
-    path: "{{ output_dir_test }}/pangrams.02.txt"
+    path: "{{ remote_tmp_dir_test }}/pangrams.02.txt"
     before: 'promptly'
     after: 'quilt'
     regexp: 'e'
@@ -78,14 +78,14 @@
 
 - name: before "quilt" but after "promptly", replace every "e" with a "3"
   replace:
-    path: "{{ output_dir_test }}/pangrams.03.txt"
+    path: "{{ remote_tmp_dir_test }}/pangrams.03.txt"
     before: 'quilt'
     after: 'promptly'
     regexp: 'e'
     replace: '3'
   register: replace_test3
 
-- command: "cat {{ output_dir_test }}/pangrams.03.txt"
+- command: "cat {{ remote_tmp_dir_test }}/pangrams.03.txt"
   register: replace_cat3
 
 - name: validate before+after assertions
@@ -99,22 +99,22 @@
 ## test ^$ behavior in MULTILINE, and . behavior in absense of DOTALL
 - name: quote everything between bof and eof
   replace:
-    path: "{{ output_dir_test }}/pangrams.04.txt"
+    path: "{{ remote_tmp_dir_test }}/pangrams.04.txt"
     regexp: ^([\S\s]+)$
     replace: '"\1"'
   register: replace_test4_0
 
-- command: "cat {{ output_dir_test }}/pangrams.04.txt"
+- command: "cat {{ remote_tmp_dir_test }}/pangrams.04.txt"
   register: replace_cat4_0
 
 - name: quote everything between bol and eol
   replace:
-    path: "{{ output_dir_test }}/pangrams.04.txt"
+    path: "{{ remote_tmp_dir_test }}/pangrams.04.txt"
     regexp: ^(.+)$
     replace: '"\1"'
   register: replace_test4_1
 
-- command: "cat {{ output_dir_test }}/pangrams.04.txt"
+- command: "cat {{ remote_tmp_dir_test }}/pangrams.04.txt"
   register: replace_cat4_1
 
 - name: validate before+after assertions
@@ -132,29 +132,29 @@
 
 ## test \b escaping in short and long form
 - name: short form with unescaped word boundaries
-  replace: path="{{ output_dir_test }}/pangrams.05.txt" regexp='\b(.+)\b' replace='"\1"'
+  replace: path="{{ remote_tmp_dir_test }}/pangrams.05.txt" regexp='\b(.+)\b' replace='"\1"'
   register: replace_test5_0
 
 - name: short form with escaped word boundaries
-  replace: path="{{ output_dir_test }}/pangrams.05.txt" regexp='\\b(.+)\\b' replace='"\1"'
+  replace: path="{{ remote_tmp_dir_test }}/pangrams.05.txt" regexp='\\b(.+)\\b' replace='"\1"'
   register: replace_test5_1
 
-- command: "cat {{ output_dir_test }}/pangrams.05.txt"
+- command: "cat {{ remote_tmp_dir_test }}/pangrams.05.txt"
   register: replace_cat5_1
 
 - name: long form with unescaped word boundaries
   replace:
-    path: "{{ output_dir_test }}/pangrams.05.txt"
+    path: "{{ remote_tmp_dir_test }}/pangrams.05.txt"
     regexp: '\b(.+)\b'
     replace: '"\1"'
   register: replace_test5_2
 
-- command: "cat {{ output_dir_test }}/pangrams.05.txt"
+- command: "cat {{ remote_tmp_dir_test }}/pangrams.05.txt"
   register: replace_cat5_2
 
 - name: long form with escaped word boundaries
   replace:
-    path: "{{ output_dir_test }}/pangrams.05.txt"
+    path: "{{ remote_tmp_dir_test }}/pangrams.05.txt"
     regexp: '\\b(.+)\\b'
     replace: '"\1"'
   register: replace_test5_3
@@ -175,13 +175,13 @@
 ## test backup behaviors
 - name: replacement with backup
   replace:
-    path: "{{ output_dir_test }}/pangrams.06.txt"
+    path: "{{ remote_tmp_dir_test }}/pangrams.06.txt"
     regexp: ^(.+)$
     replace: '"\1"'
     backup: true
   register: replace_test6
 
-- command: "cat {{ output_dir_test }}/pangrams.06.txt"
+- command: "cat {{ remote_tmp_dir_test }}/pangrams.06.txt"
   register: replace_cat6_0
 
 - command: "cat {{ replace_test6.backup_file }}"
@@ -199,14 +199,14 @@
 ## test filesystem failures
 - name: fail on directory
   replace:
-    path: "{{ output_dir_test }}"
+    path: "{{ remote_tmp_dir_test }}"
     regexp: ^(.+)$
   register: replace_test7_1
   ignore_errors: true
 
 - name: fail on missing file
   replace:
-    path: "{{ output_dir_test }}/missing_file.txt"
+    path: "{{ remote_tmp_dir_test }}/missing_file.txt"
     regexp: ^(.+)$
   register: replace_test7_2
   ignore_errors: true
@@ -241,18 +241,18 @@
                 127.0.0.1
                 127.0.1.1
                 # end of group
-      dest: "{{ output_dir_test }}/addresses.txt"
+      dest: "{{ remote_tmp_dir_test }}/addresses.txt"
 
 - name: subsection madness
   replace:
-    path: "{{ output_dir_test }}/addresses.txt"
+    path: "{{ remote_tmp_dir_test }}/addresses.txt"
     after: '# start of group'
     before: '# end of group'
     regexp: '0'
     replace: '9'
   register: replace_test8
 
-- command: "cat {{ output_dir_test }}/addresses.txt"
+- command: "cat {{ remote_tmp_dir_test }}/addresses.txt"
   register: replace_cat8
 
 - name: validate before+after assertions
