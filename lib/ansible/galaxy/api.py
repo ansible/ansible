@@ -881,7 +881,6 @@ class GalaxyAPI:
         :param namespace: The collection namespace.
         :param name: The collection name.
         :param version: Version of the collection to get the information for.
-        :return: CollectionVersionMetadata about the collection at the version requested.
         :return: A list of signature strings.
         """
         api_path = self.available_api_versions.get('v3', self.available_api_versions.get('v2'))
