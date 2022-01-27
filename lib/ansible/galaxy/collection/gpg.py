@@ -217,7 +217,7 @@ class GpgError(GpgBaseError):
     """This is a generic error status message, it might be followed by error location specific data."""
     location: str
     code: int
-    more: str
+    more: str = ""
 
 
 @frozen_dataclass
