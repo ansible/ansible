@@ -86,7 +86,7 @@ options:
     description:
       - Run the equivalent of C(apt-get clean) to clear out the local repository of retrieved package files. It removes everything but
         the lock file from /var/cache/apt/archives/ and /var/cache/apt/archives/partial/.
-      - Recommended to run this as a stand-alone operation.
+      - Can be run as part of the package installation (clean runs before install) or as a separate step.
     type: bool
     default: 'no'
     version_added: "2.13"
@@ -986,7 +986,6 @@ def aptclean(m):
         m.fail_json(msg="apt-get clean failed", stdout=clean_out, rc=clean_rc)
     if clean_err:
         m.fail_json(msg="apt-get clean failed: %s" % clean_err, stdout=clean_out, rc=clean_rc)
-    m.exit_json(changed=True, msg=clean_out, stdout=clean_out, stderr=clean_err, diff=clean_diff)
 
 
 def upgrade(m, mode="yes", force=False, default_release=None,
