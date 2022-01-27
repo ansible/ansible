@@ -19,11 +19,11 @@
 - name: Create a UTF-8 file to test with
   copy:
     content: 'We are at the café'
-    dest: '{{ output_dir }}/foo.txt'
+    dest: '{{ remote_tmp_dir }}/foo.txt'
 
 - name: test slurping an existing file
   slurp:
-    src: '{{ output_dir }}/foo.txt'
+    src: '{{ remote_tmp_dir }}/foo.txt'
   register: slurp_existing
 
 - name: check slurp existing result
@@ -38,11 +38,11 @@
 - name: Create a binary file to test with
   copy:
     src: bar.bin
-    dest: '{{ output_dir }}/bar.bin'
+    dest: '{{ remote_tmp_dir }}/bar.bin'
 
 - name: test slurping a binary file
   slurp:
-    path: '{{ output_dir }}/bar.bin'
+    path: '{{ remote_tmp_dir }}/bar.bin'
   register: slurp_binary
   no_log: true
 

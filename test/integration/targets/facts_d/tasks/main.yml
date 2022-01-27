@@ -4,7 +4,7 @@
 - name: prep for local facts tests
   block:
     - name: set factdir var
-      set_fact: fact_dir={{output_dir}}/facts.d
+      set_fact: fact_dir={{remote_tmp_dir}}/facts.d
 
     - name: create fact dir
       file: path={{ fact_dir }} state=directory
