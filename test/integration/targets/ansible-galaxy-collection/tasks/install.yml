@@ -352,6 +352,19 @@
       - skip.me
     dest: '{{ galaxy_dir }}/ansible_collections/requirements-with-role.yml'
 
+- name: install roles from requirements file with collection-only keyring option
+  command: ansible-galaxy role install -r {{ req_file }} -s {{ test_name }} --keyring {{ keyring }}
+  vars:
+    req_file: '{{ galaxy_dir }}/ansible_collections/requirements-with-role.yml'
+    keyring: "{{ gpg_homedir }}/pubring.kbx"
+  ignore_errors: yes
+  register: invalid_opt
+
+- assert:
+    that:
+      - invalid_opt is failed
+      - "'unrecognized arguments: --keyring' in invalid_opt.stderr"
+
 # Need to run with -vvv to validate the roles will be skipped msg
 - name: install collections only with requirements-with-role.yml - {{ test_name }}
   command: ansible-galaxy collection install -r '{{ galaxy_dir }}/ansible_collections/requirements-with-role.yml' -s '{{ test_name }}' -vvv
@@ -409,6 +422,125 @@
     - '"Installing ''namespace9.name:1.0.0'' to" in install_req.stdout'
     - (install_req_actual.results[0].content | b64decode | from_json).collection_info.version == '1.0.0'
     - (install_req_actual.results[1].content | b64decode | from_json).collection_info.version == '1.0.0'
+
+- name: uninstall collections for next requirements file test
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/{{ collection }}/name'
+    state: absent
+  loop_control:
+    loop_var: collection
+  loop:
+    - namespace7
+    - namespace8
+    - namespace9
+
+- name: rewrite requirements file with collections and signatures
+  copy:
+    content: |
+      collections:
+      - name: namespace7.name
+        version: "1.0.0"
+        signatures:
+          - "file://{{ gpg_homedir }}/namespace7-name-1.0.0-MANIFEST.json.asc"
+          - "{{ not_mine }}"
+          - "{{ also_not_mine }}"
+      - namespace8.name
+      - name: namespace9.name
+        signatures:
+          - "file://{{ gpg_homedir }}/namespace9-name-1.0.0-MANIFEST.json.asc"
+    dest: '{{ galaxy_dir }}/ansible_collections/requirements.yaml'
+  vars:
+    not_mine: "file://{{ gpg_homedir }}/namespace1-name1-1.0.0-MANIFEST.json.asc"
+    also_not_mine: "file://{{ gpg_homedir }}/namespace1-name1-1.0.9-MANIFEST.json.asc"
+
+- name: install collection with mutually exclusive options
+  command: ansible-galaxy collection install -r {{ req_file }} -s {{ test_name }} {{ cli_signature }}
+  vars:
+    req_file: "{{ galaxy_dir }}/ansible_collections/requirements.yaml"
+    # --signature is an ansible-galaxy collection install subcommand, but mutually exclusive with -r
+    cli_signature: "--signature file://{{ gpg_homedir }}/namespace7-name-1.0.0-MANIFEST.json.asc"
+  ignore_errors: yes
+  register: mutually_exclusive_opts
+
+- assert:
+    that:
+      - mutually_exclusive_opts is failed
+      - expected_error in actual_error
+  vars:
+    expected_error: >-
+            The --signatures option and --requirements-file are mutually exclusive.
+            Use the --signatures with positional collection_name args or provide a
+            'signatures' key for requirements in the --requirements-file.
+    actual_error: "{{ mutually_exclusive_opts.stderr }}"
+
+- name: install collections with ansible-galaxy install -r with invalid signatures - {{ test_name }}
+  # Note that --keyring is a valid option for 'ansible-galaxy install -r ...', not just 'ansible-galaxy collection ...'
+  command: ansible-galaxy install -r {{ req_file }} -s {{ test_name }}  --keyring {{ keyring }}
+  register: install_req
+  ignore_errors: yes
+  vars:
+    req_file: "{{ galaxy_dir }}/ansible_collections/requirements.yaml"
+    keyring: "{{ gpg_homedir }}/pubring.kbx"
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+- name: assert invalid signature is fatal with ansible-galaxy install - {{ test_name }}
+  assert:
+    that:
+    - install_req is failed
+    - '"Installing ''namespace7.name:1.0.0'' to" in install_req.stdout'
+    - '"Not installing namespace7.name because GnuPG signature verification failed" in install_req.stderr'
+    # The other collections shouldn't be installed because they're listed
+    # after the failing collection and --ignore-errors was not provided
+    - '"Installing ''namespace8.name:1.0.0'' to" not in install_req.stdout'
+    - '"Installing ''namespace9.name:1.0.0'' to" not in install_req.stdout'
+
+- name: install collections with ansible-galaxy install and --ignore-errors - {{ test_name }}
+  command: ansible-galaxy install -r {{ req_file }} {{ cli_opts }}
+  register: install_req
+  vars:
+    req_file: "{{ galaxy_dir }}/ansible_collections/requirements.yaml"
+    cli_opts: "-s {{ test_name }} --keyring {{ keyring }} --ignore-errors"
+    keyring: "{{ gpg_homedir }}/pubring.kbx"
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+
+- name: get result of install collections with ansible-galaxy install - {{ test_name }}
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/{{ collection }}/name/MANIFEST.json'
+  register: install_req_actual
+  loop_control:
+    loop_var: collection
+  loop:
+  - namespace8
+  - namespace9
+
+- name: assert invalid signature is not fatal with ansible-galaxy install --ignore-errors - {{ test_name }}
+  assert:
+    that:
+    - install_req is success
+    - '"Installing ''namespace7.name:1.0.0'' to" in install_req.stdout'
+    - '"Signature verification failed for ''namespace7.name'' (return code 1)" in install_req.stdout'
+    - '"Not installing namespace7.name because GnuPG signature verification failed." in install_stderr'
+    - '"Failed to install collection namespace7.name:1.0.0 but skipping due to --ignore-errors being set." in install_stderr'
+    - '"Installing ''namespace8.name:1.0.0'' to" in install_req.stdout'
+    - '"Installing ''namespace9.name:1.0.0'' to" in install_req.stdout'
+    - (install_req_actual.results[0].content | b64decode | from_json).collection_info.version == '1.0.0'
+    - (install_req_actual.results[1].content | b64decode | from_json).collection_info.version == '1.0.0'
+  vars:
+    install_stderr: "{{ install_req.stderr | regex_replace(reset_color) | regex_replace(color) | regex_replace('\\n', ' ') }}"
+    reset_color: '\x1b\[0m'
+    color: '\x1b\[[0-9];[0-9]{2}m'
+
+- name: clean up collections from last test
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/{{ collection }}/name'
+    state: absent
+  loop_control:
+    loop_var: collection
+  loop:
+    - namespace8
+    - namespace9
 
 # Uncomment once pulp container is at pulp>=0.5.0
 #- name: install cache.cache at the current latest version
@@ -527,6 +659,41 @@
   file:
     path: '{{ galaxy_dir }}/ansible_collections'
     state: absent
+
+- name: install collection with signature with missing keyring
+  command: ansible-galaxy collection install namespace1.name1 {{ galaxy_verbosity }} {{ signature_option }} {{ keyring_option }}
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+  vars:
+    signature_option: "--signature file://{{ gpg_homedir }}/namespace1-name1-1.0.9-MANIFEST.json.asc"
+    keyring_option: '--keyring {{ gpg_homedir }}/i_do_not_exist.kbx'
+  ignore_errors: yes
+  register: keyring_error
+
+- assert:
+    that:
+      - keyring_error is failed
+      - expected_errors[0] in actual_error
+      - expected_errors[1] in actual_error
+      - expected_errors[2] in actual_error
+      - expected_warning in actual_warning
+  vars:
+    keyring: "{{ gpg_homedir }}/i_do_not_exist.kbx"
+    expected_errors:
+      - "Signature verification failed for 'namespace1.name1' (return code 2):"
+      - "* The public key is not available."
+      - >-
+              * It was not possible to check the signature. This may be caused
+              by a missing public key or an unsupported algorithm. A RC of 4
+              indicates unknown algorithm, a 9 indicates a missing public key.
+    expected_warning: >-
+              The GnuPG keyring '{{ keyring }}' used for collection
+              signature verification does not exist. Configure a keyring for
+              ansible-galaxy to use or disable signature verification.
+    actual_warning: "{{ keyring_error.stderr | regex_replace(reset_color) | regex_replace(color) | regex_replace('\\n', ' ') }}"
+    actual_error: "{{ keyring_error.stdout | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
+    reset_color: '\x1b\[0m'
+    color: '\x1b\[[0-9];[0-9]{2}m'
 
 - name: install simple collection from first accessible server with valid detached signature
   command: ansible-galaxy collection install namespace1.name1 {{ galaxy_verbosity }} {{ signature_options }}

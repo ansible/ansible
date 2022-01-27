@@ -291,7 +291,7 @@
 - assert:
     that:
       - verify.rc != 0
-      - "'Signature verification failed' in verify.stdout"
+      - '"Signature verification failed for ''namespace1.name1'' (return code 1)" in verify.stdout'
       - expected_errors[0] in verify_stdout
       - expected_errors[1] in verify_stdout
   vars:
@@ -314,7 +314,7 @@
 - assert:
     that:
       - verify.rc != 0
-      - "'Signature verification failed' in verify.stdout"
+      - '"Signature verification failed for ''namespace1.name1'' (return code 0)" in verify.stdout'
       - expected_errors[0] in verify_stdout
       - expected_errors[1] in verify_stdout
   vars:
