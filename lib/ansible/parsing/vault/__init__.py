@@ -398,9 +398,8 @@ class FileVaultSecret(VaultSecret):
 
         # TODO: replace with use of self.loader
         try:
-            f = open(filename, "rb")
-            vault_pass = f.read().strip()
-            f.close()
+            with open(filename, "rb") as f:
+                vault_pass = f.read().strip()
         except (OSError, IOError) as e:
             raise AnsibleError("Could not read vault password file %s: %s" % (filename, e))
 
