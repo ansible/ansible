@@ -68,6 +68,7 @@ def main(cli_args=None):  # type: (t.Optional[t.List[str]]) -> None
         target_names = None
 
         try:
+            data_context().check_layout()
             args.func(config)
         except PrimeContainers:
             pass

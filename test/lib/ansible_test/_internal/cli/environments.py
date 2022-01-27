@@ -59,6 +59,10 @@ from .converters import (
     key_value_type,
 )
 
+from .epilog import (
+    get_epilog,
+)
+
 from ..ci import (
     get_ci_provider,
 )
@@ -97,6 +101,8 @@ def add_environments(
 
     if not get_ci_provider().supports_core_ci_auth():
         sections.append('Remote provisioning options have been hidden since no Ansible Core CI API key was found.')
+
+    sections.append(get_epilog(completer))
 
     parser.formatter_class = argparse.RawDescriptionHelpFormatter
     parser.epilog = '\n\n'.join(sections)
