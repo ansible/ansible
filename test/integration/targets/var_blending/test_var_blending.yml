@@ -5,5 +5,4 @@
     vars_var: 123
   gather_facts: True
   roles:
-    - setup_remote_tmp_dir
     - { role: test_var_blending, parameterized_beats_default: 1234, tags: test_var_blending }

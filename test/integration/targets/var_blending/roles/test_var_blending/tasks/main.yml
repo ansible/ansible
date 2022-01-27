@@ -18,15 +18,18 @@
 
 - include_vars: more_vars.yml
 
+- set_fact:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+
 - name: deploy a template that will use variables at various levels
-  template: src=foo.j2 dest={{remote_tmp_dir}}/foo.templated 
+  template: src=foo.j2 dest={{output_dir}}/foo.templated 
   register: template_result
 
 - name: copy known good into place
-  copy: src=foo.txt dest={{remote_tmp_dir}}/foo.txt
+  copy: src=foo.txt dest={{output_dir}}/foo.txt
 
 - name: compare templated file to known good
-  shell: diff {{remote_tmp_dir}}/foo.templated {{remote_tmp_dir}}/foo.txt
+  shell: diff {{output_dir}}/foo.templated {{output_dir}}/foo.txt
   register: diff_result
 
 - name: verify templated file matches known good
@@ -48,7 +51,7 @@
       - same_value_as_var_name.same_value_as_var_name_var == 'same_value_as_var_name_var'
 
 - name: cleanup temporary template output
-  file: path={{remote_tmp_dir}}/foo.templated state=absent
+  file: path={{output_dir}}/foo.templated state=absent
 
 - name: cleanup temporary copy
-  file: path={{remote_tmp_dir}}/foo.txt state=absent
+  file: path={{output_dir}}/foo.txt state=absent

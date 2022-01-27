@@ -1,5 +1,4 @@
 - hosts: testhost
   gather_facts: yes
   roles:
-    - { role: setup_remote_tmp_dir }
     - { role: custom_tasks }

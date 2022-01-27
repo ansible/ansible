@@ -1,7 +1,10 @@
 ---
+- set_fact:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+
 - template:
     src: test
-    dest: "{{ remote_tmp_dir }}/templated_test"
+    dest: "{{ output_dir }}/templated_test"
   register: custom_template_result
 
 - debug:

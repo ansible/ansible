@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- set_fact:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+
 - name: show python interpreter
   debug:
      msg: "{{ ansible_python['executable'] }}"
@@ -29,7 +32,7 @@
   register: group
 
 - name: fill in a basic template
-  template: src=foo.j2 dest={{remote_tmp_dir}}/foo.templated mode=0644
+  template: src=foo.j2 dest={{output_dir}}/foo.templated mode=0644
   register: template_result
 
 - assert:
@@ -55,12 +58,12 @@
 - name: Check that non-ascii source and dest work
   template:
     src: 'café.j2'
-    dest: '{{ remote_tmp_dir }}/café.txt'
+    dest: '{{ output_dir }}/café.txt'
   register: template_results
 
 - name: Check that the resulting file exists
   stat:
-    path: '{{ remote_tmp_dir }}/café.txt'
+    path: '{{ output_dir }}/café.txt'
   register: stat_results
 
 - name: Check that template created the right file
@@ -71,14 +74,14 @@
 
 # test for import with context on jinja-2.9 See https://github.com/ansible/ansible/issues/20494
 - name: fill in a template using import with context ala issue 20494
-  template: src=import_with_context.j2 dest={{remote_tmp_dir}}/import_with_context.templated mode=0644
+  template: src=import_with_context.j2 dest={{output_dir}}/import_with_context.templated mode=0644
   register: template_result
 
 - name: copy known good import_with_context.expected into place
-  copy: src=import_with_context.expected dest={{remote_tmp_dir}}/import_with_context.expected
+  copy: src=import_with_context.expected dest={{output_dir}}/import_with_context.expected
 
 - name: compare templated file to known good import_with_context
-  shell: diff -uw {{remote_tmp_dir}}/import_with_context.templated {{remote_tmp_dir}}/import_with_context.expected
+  shell: diff -uw {{output_dir}}/import_with_context.templated {{output_dir}}/import_with_context.expected
   register: diff_result
 
 - name: verify templated import_with_context matches known good
@@ -89,10 +92,10 @@
 
 # test for nested include https://github.com/ansible/ansible/issues/34886
 - name: test if parent variables are defined in nested include
-  template: src=for_loop.j2 dest={{remote_tmp_dir}}/for_loop.templated mode=0644
+  template: src=for_loop.j2 dest={{output_dir}}/for_loop.templated mode=0644
 
 - name: save templated output
-  shell: "cat {{remote_tmp_dir}}/for_loop.templated"
+  shell: "cat {{output_dir}}/for_loop.templated"
   register: for_loop_out
 - debug: var=for_loop_out
 - name: verify variables got templated
@@ -104,14 +107,14 @@
 
 # test for 'import as' on jinja-2.9 See https://github.com/ansible/ansible/issues/20494
 - name: fill in a template using import as ala fails2 case in issue 20494
-  template: src=import_as.j2 dest={{remote_tmp_dir}}/import_as.templated mode=0644
+  template: src=import_as.j2 dest={{output_dir}}/import_as.templated mode=0644
   register: import_as_template_result
 
 - name: copy known good import_as.expected into place
-  copy: src=import_as.expected dest={{remote_tmp_dir}}/import_as.expected
+  copy: src=import_as.expected dest={{output_dir}}/import_as.expected
 
 - name: compare templated file to known good import_as
-  shell: diff -uw {{remote_tmp_dir}}/import_as.templated {{remote_tmp_dir}}/import_as.expected
+  shell: diff -uw {{output_dir}}/import_as.templated {{output_dir}}/import_as.expected
   register: import_as_diff_result
 
 - name: verify templated import_as matches known good
@@ -122,14 +125,14 @@
 
 # test for 'import as with context' on jinja-2.9 See https://github.com/ansible/ansible/issues/20494
 - name: fill in a template using import as with context ala fails2 case in issue 20494
-  template: src=import_as_with_context.j2 dest={{remote_tmp_dir}}/import_as_with_context.templated mode=0644
+  template: src=import_as_with_context.j2 dest={{output_dir}}/import_as_with_context.templated mode=0644
   register: import_as_with_context_template_result
 
 - name: copy known good import_as_with_context.expected into place
-  copy: src=import_as_with_context.expected dest={{remote_tmp_dir}}/import_as_with_context.expected
+  copy: src=import_as_with_context.expected dest={{output_dir}}/import_as_with_context.expected
 
 - name: compare templated file to known good import_as_with_context
-  shell: diff -uw {{remote_tmp_dir}}/import_as_with_context.templated {{remote_tmp_dir}}/import_as_with_context.expected
+  shell: diff -uw {{output_dir}}/import_as_with_context.templated {{output_dir}}/import_as_with_context.expected
   register: import_as_with_context_diff_result
 
 - name: verify templated import_as_with_context matches known good
@@ -143,7 +146,7 @@
 - name: Render a template with "comment_start_string" set to [#
   template:
     src: custom_comment_string.j2
-    dest: "{{remote_tmp_dir}}/custom_comment_string.templated"
+    dest: "{{output_dir}}/custom_comment_string.templated"
     comment_start_string: "[#"
     comment_end_string: "#]"
   register: custom_comment_string_result
@@ -163,7 +166,7 @@
 - name: Render a template with "trim_blocks" set to False
   template:
     src: trim_blocks.j2
-    dest: "{{remote_tmp_dir}}/trim_blocks_false.templated"
+    dest: "{{output_dir}}/trim_blocks_false.templated"
     trim_blocks: False
   register: trim_blocks_false_result
 
@@ -180,7 +183,7 @@
 - name: Render a template with "trim_blocks" set to True
   template:
     src: trim_blocks.j2
-    dest: "{{remote_tmp_dir}}/trim_blocks_true.templated"
+    dest: "{{output_dir}}/trim_blocks_true.templated"
     trim_blocks: True
   register: trim_blocks_true_result
 
@@ -199,7 +202,7 @@
 - name: Render a template with "lstrip_blocks" set to False
   template:
     src: lstrip_blocks.j2
-    dest: "{{remote_tmp_dir}}/lstrip_blocks_false.templated"
+    dest: "{{output_dir}}/lstrip_blocks_false.templated"
     lstrip_blocks: False
   register: lstrip_blocks_false_result
 
@@ -216,7 +219,7 @@
 - name: Render a template with "lstrip_blocks" set to True
   template:
     src: lstrip_blocks.j2
-    dest: "{{remote_tmp_dir}}/lstrip_blocks_true.templated"
+    dest: "{{output_dir}}/lstrip_blocks_true.templated"
     lstrip_blocks: True
   register: lstrip_blocks_true_result
   ignore_errors: True
@@ -239,10 +242,10 @@
   delegate_to: localhost
 
 - name: copy known good into place
-  copy: src=foo.txt dest={{remote_tmp_dir}}/foo.txt
+  copy: src=foo.txt dest={{output_dir}}/foo.txt
 
 - name: compare templated file to known good
-  shell: diff -uw {{remote_tmp_dir}}/foo.templated {{remote_tmp_dir}}/foo.txt
+  shell: diff -uw {{output_dir}}/foo.templated {{output_dir}}/foo.txt
   register: diff_result
 
 - name: verify templated file matches known good
@@ -254,7 +257,7 @@
 # VERIFY MODE
 
 - name: set file mode
-  file: path={{remote_tmp_dir}}/foo.templated mode=0644
+  file: path={{output_dir}}/foo.templated mode=0644
   register: file_result
 
 - name: ensure file mode did not change
@@ -265,17 +268,17 @@
 # VERIFY dest as a directory does not break file attributes
 # Note: expanduser is needed to go down the particular codepath that was broken before
 - name: setup directory for test
-  file: state=directory dest={{remote_tmp_dir | expanduser}}/template-dir mode=0755 owner=nobody group={{ group.stdout }}
+  file: state=directory dest={{output_dir | expanduser}}/template-dir mode=0755 owner=nobody group={{ group.stdout }}
 
 - name: set file mode when the destination is a directory
-  template: src=foo.j2 dest={{remote_tmp_dir | expanduser}}/template-dir/ mode=0600 owner=root group={{ group.stdout }}
+  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir/ mode=0600 owner=root group={{ group.stdout }}
 
 - name: set file mode when the destination is a directory
-  template: src=foo.j2 dest={{remote_tmp_dir | expanduser}}/template-dir/ mode=0600 owner=root group={{ group.stdout }}
+  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir/ mode=0600 owner=root group={{ group.stdout }}
   register: file_result
 
 - name: check that the file has the correct attributes
-  stat: path={{remote_tmp_dir | expanduser}}/template-dir/foo.j2
+  stat: path={{output_dir | expanduser}}/template-dir/foo.j2
   register: file_attrs
 
 - assert:
@@ -285,7 +288,7 @@
       - "file_attrs.stat.mode == '0600'"
 
 - name: check that the containing directory did not change attributes
-  stat: path={{remote_tmp_dir | expanduser}}/template-dir/
+  stat: path={{output_dir | expanduser}}/template-dir/
   register: dir_attrs
 
 - assert:
@@ -295,18 +298,18 @@
       - "dir_attrs.stat.mode == '0755'"
 
 - name: Check that template to a directory where the directory does not end with a / is allowed
-  template: src=foo.j2 dest={{remote_tmp_dir | expanduser}}/template-dir mode=0600 owner=root group={{ group.stdout }}
+  template: src=foo.j2 dest={{output_dir | expanduser}}/template-dir mode=0600 owner=root group={{ group.stdout }}
 
 - name: make a symlink to the templated file
   file:
-    path: '{{ remote_tmp_dir }}/foo.symlink'
-    src: '{{ remote_tmp_dir }}/foo.templated'
+    path: '{{ output_dir }}/foo.symlink'
+    src: '{{ output_dir }}/foo.templated'
     state: link
 
 - name: check that templating the symlink results in the file being templated
   template:
     src: foo.j2
-    dest: '{{remote_tmp_dir}}/foo.symlink'
+    dest: '{{output_dir}}/foo.symlink'
     mode: 0600
     follow: True
   register: template_result
@@ -316,7 +319,7 @@
       - "template_result.changed == True"
 
 - name: check that the file has the correct attributes
-  stat: path={{remote_tmp_dir | expanduser}}/template-dir/foo.j2
+  stat: path={{output_dir | expanduser}}/template-dir/foo.j2
   register: file_attrs
 
 - assert:
@@ -326,7 +329,7 @@
 - name: check that templating the symlink again makes no changes
   template:
     src: foo.j2
-    dest: '{{remote_tmp_dir}}/foo.symlink'
+    dest: '{{output_dir}}/foo.symlink'
     mode: 0600
     follow: True
   register: template_result
@@ -340,12 +343,12 @@
 - name: Create a temp dir for filename tests
   file:
     state: directory
-    dest: '{{ remote_tmp_dir }}/filename-tests'
+    dest: '{{ output_dir }}/filename-tests'
 
 - name: create a file with an unusual filename
   template:
     src: foo.j2
-    dest: "{{ remote_tmp_dir }}/filename-tests/foo t'e~m\\plated"
+    dest: "{{ output_dir }}/filename-tests/foo t'e~m\\plated"
   register: template_result
 
 - assert:
@@ -353,7 +356,7 @@
       - "template_result.changed == True"
 
 - name: check that the unusual filename was created
-  command: "ls {{ remote_tmp_dir }}/filename-tests/"
+  command: "ls {{ output_dir }}/filename-tests/"
   register: unusual_results
 
 - assert:
@@ -364,7 +367,7 @@
 - name: check that the unusual filename can be checked for changes
   template:
     src: foo.j2
-    dest: "{{ remote_tmp_dir }}/filename-tests/foo t'e~m\\plated"
+    dest: "{{ output_dir }}/filename-tests/foo t'e~m\\plated"
   register: template_result
 
 - assert:
@@ -375,12 +378,12 @@
 # check_mode
 
 - name: fill in a basic template in check mode
-  template: src=short.j2 dest={{remote_tmp_dir}}/short.templated
+  template: src=short.j2 dest={{output_dir}}/short.templated
   register: template_result
   check_mode: True
 
 - name: check file exists
-  stat: path={{remote_tmp_dir}}/short.templated
+  stat: path={{output_dir}}/short.templated
   register: templated
 
 - name: verify that the file was marked as changed in check mode but was not created
@@ -390,10 +393,10 @@
       - "template_result is changed"
 
 - name: fill in a basic template
-  template: src=short.j2 dest={{remote_tmp_dir}}/short.templated
+  template: src=short.j2 dest={{output_dir}}/short.templated
 
 - name: fill in a basic template in check mode
-  template: src=short.j2 dest={{remote_tmp_dir}}/short.templated
+  template: src=short.j2 dest={{output_dir}}/short.templated
   register: template_result
   check_mode: True
 
@@ -401,31 +404,31 @@
   assert:
     that:
       - "template_result is not changed"
-      - "'templated_var_loaded' in lookup('file', remote_tmp_dir + '/short.templated')"
+      - "'templated_var_loaded' in lookup('file', output_dir + '/short.templated')"
 
 - name: change var for the template
   set_fact:
     templated_var: "changed"
 
 - name: fill in a basic template with changed var in check mode
-  template: src=short.j2 dest={{remote_tmp_dir}}/short.templated
+  template: src=short.j2 dest={{output_dir}}/short.templated
   register: template_result
   check_mode: True
 
 - name: verify that the file was marked as changed in check mode but the content was not changed
   assert:
     that:
-      - "'templated_var_loaded' in lookup('file', remote_tmp_dir + '/short.templated')"
+      - "'templated_var_loaded' in lookup('file', output_dir + '/short.templated')"
       - "template_result is changed"
 
 # Create a template using a child template, to ensure that variables
 # are passed properly from the parent to subtemplate context (issue #20063)
 
 - name: test parent and subtemplate creation of context
-  template: src=parent.j2 dest={{remote_tmp_dir}}/parent_and_subtemplate.templated
+  template: src=parent.j2 dest={{output_dir}}/parent_and_subtemplate.templated
   register: template_result
 
-- stat: path={{remote_tmp_dir}}/parent_and_subtemplate.templated
+- stat: path={{output_dir}}/parent_and_subtemplate.templated
 
 - name: verify that the parent and subtemplate creation worked
   assert:
@@ -439,39 +442,39 @@
 
 - name: ensure test dir is absent
   file:
-    path: '{{ remote_tmp_dir | expanduser }}/hlink_dir'
+    path: '{{ output_dir | expanduser }}/hlink_dir'
     state: absent
 
 - name: create test dir
   file:
-    path: '{{ remote_tmp_dir | expanduser }}/hlink_dir'
+    path: '{{ output_dir | expanduser }}/hlink_dir'
     state: directory
 
 - name: template out test file to system 1
   template:
     src: foo.j2
-    dest: '{{ remote_tmp_dir | expanduser }}/hlink_dir/test_file'
+    dest: '{{ output_dir | expanduser }}/hlink_dir/test_file'
 
 - name: make hard link
   file:
-    src: '{{ remote_tmp_dir | expanduser }}/hlink_dir/test_file'
-    dest: '{{ remote_tmp_dir | expanduser }}/hlink_dir/test_file_hlink'
+    src: '{{ output_dir | expanduser }}/hlink_dir/test_file'
+    dest: '{{ output_dir | expanduser }}/hlink_dir/test_file_hlink'
     state: hard
 
 - name: template out test file to system 2
   template:
     src: foo.j2
-    dest: '{{ remote_tmp_dir | expanduser }}/hlink_dir/test_file'
+    dest: '{{ output_dir | expanduser }}/hlink_dir/test_file'
   register: hlink_result
 
 - name: check that the files are still hardlinked
   stat:
-    path: '{{ remote_tmp_dir | expanduser }}/hlink_dir/test_file'
+    path: '{{ output_dir | expanduser }}/hlink_dir/test_file'
   register: orig_file
 
 - name: check that the files are still hardlinked
   stat:
-    path: '{{ remote_tmp_dir | expanduser }}/hlink_dir/test_file_hlink'
+    path: '{{ output_dir | expanduser }}/hlink_dir/test_file_hlink'
   register: hlink_file
 
 # We've done nothing at this point to update the content of the file so it should still be hardlinked
@@ -488,7 +491,7 @@
 - name: fill in a basic template (Unix)
   template:
     src: foo2.j2
-    dest: '{{ remote_tmp_dir }}/foo.unix.templated'
+    dest: '{{ output_dir }}/foo.unix.templated'
   register: template_result
 
 - name: verify that the file was marked as changed (Unix)
@@ -499,7 +502,7 @@
 - name: fill in a basic template again (Unix)
   template:
     src: foo2.j2
-    dest: '{{ remote_tmp_dir }}/foo.unix.templated'
+    dest: '{{ output_dir }}/foo.unix.templated'
   register: template_result2
 
 - name: verify that the template was not changed (Unix)
@@ -511,16 +514,16 @@
 - name: copy known good into place (Unix)
   copy:
     src: foo.unix.txt
-    dest: '{{ remote_tmp_dir }}/foo.unix.txt'
+    dest: '{{ output_dir }}/foo.unix.txt'
 
 - name: Dump templated file (Unix)
-  command: hexdump -C {{ remote_tmp_dir }}/foo.unix.templated
+  command: hexdump -C {{ output_dir }}/foo.unix.templated
 
 - name: Dump expected file (Unix)
-  command: hexdump -C {{ remote_tmp_dir }}/foo.unix.txt
+  command: hexdump -C {{ output_dir }}/foo.unix.txt
 
 - name: compare templated file to known good (Unix)
-  command: diff -u {{ remote_tmp_dir }}/foo.unix.templated {{ remote_tmp_dir }}/foo.unix.txt
+  command: diff -u {{ output_dir }}/foo.unix.templated {{ output_dir }}/foo.unix.txt
   register: diff_result
 
 - name: verify templated file matches known good (Unix)
@@ -533,7 +536,7 @@
 - name: fill in a basic template (DOS)
   template:
     src: foo2.j2
-    dest: '{{ remote_tmp_dir }}/foo.dos.templated'
+    dest: '{{ output_dir }}/foo.dos.templated'
     newline_sequence: '\r\n'
   register: template_result
 
@@ -545,7 +548,7 @@
 - name: fill in a basic template again (DOS)
   template:
     src: foo2.j2
-    dest: '{{ remote_tmp_dir }}/foo.dos.templated'
+    dest: '{{ output_dir }}/foo.dos.templated'
     newline_sequence: '\r\n'
   register: template_result2
 
@@ -558,16 +561,16 @@
 - name: copy known good into place (DOS)
   copy:
     src: foo.dos.txt
-    dest: '{{ remote_tmp_dir }}/foo.dos.txt'
+    dest: '{{ output_dir }}/foo.dos.txt'
 
 - name: Dump templated file (DOS)
-  command: hexdump -C {{ remote_tmp_dir }}/foo.dos.templated
+  command: hexdump -C {{ output_dir }}/foo.dos.templated
 
 - name: Dump expected file (DOS)
-  command: hexdump -C {{ remote_tmp_dir }}/foo.dos.txt
+  command: hexdump -C {{ output_dir }}/foo.dos.txt
 
 - name: compare templated file to known good (DOS)
-  command: diff -u {{ remote_tmp_dir }}/foo.dos.templated {{ remote_tmp_dir }}/foo.dos.txt
+  command: diff -u {{ output_dir }}/foo.dos.templated {{ output_dir }}/foo.dos.txt
   register: diff_result
 
 - name: verify templated file matches known good (DOS)
@@ -580,16 +583,16 @@
 - name: copy known good into place (Unix)
   copy:
     src: foo.unix.txt
-    dest: '{{ remote_tmp_dir }}/foo.unix.txt'
+    dest: '{{ output_dir }}/foo.unix.txt'
 
 - name: Dump templated file (Unix)
-  command: hexdump -C {{ remote_tmp_dir }}/foo.unix.templated
+  command: hexdump -C {{ output_dir }}/foo.unix.templated
 
 - name: Dump expected file (Unix)
-  command: hexdump -C {{ remote_tmp_dir }}/foo.unix.txt
+  command: hexdump -C {{ output_dir }}/foo.unix.txt
 
 - name: compare templated file to known good (Unix)
-  command: diff -u {{ remote_tmp_dir }}/foo.unix.templated {{ remote_tmp_dir }}/foo.unix.txt
+  command: diff -u {{ output_dir }}/foo.unix.templated {{ output_dir }}/foo.unix.txt
   register: diff_result
 
 - name: verify templated file matches known good (Unix)
@@ -602,20 +605,20 @@
 - name: Create a template which has strange permissions
   copy:
     content: !unsafe '{{ ansible_managed }}\n'
-    dest: '{{ remote_tmp_dir }}/foo-template.j2'
+    dest: '{{ output_dir }}/foo-template.j2'
     mode: 0547
   delegate_to: localhost
 
 - name: Use template with mode=preserve
   template:
-    src: '{{ remote_tmp_dir }}/foo-template.j2'
-    dest: '{{ remote_tmp_dir }}/foo-templated.txt'
+    src: '{{ output_dir }}/foo-template.j2'
+    dest: '{{ output_dir }}/foo-templated.txt'
     mode: 'preserve'
   register: template_results
 
 - name: Get permissions from the templated file
   stat:
-    path: '{{ remote_tmp_dir }}/foo-templated.txt'
+    path: '{{ output_dir }}/foo-templated.txt'
   register: stat_results
 
 - name: Check that the resulting file has the correct permissions
@@ -633,18 +636,18 @@
 - name: Copy known good encoding_1252_*.expected into place
   copy:
     src: 'encoding_1252_{{ item | default("utf-8", true) }}.expected'
-    dest: '{{ remote_tmp_dir }}/encoding_1252_{{ item }}.expected'
+    dest: '{{ output_dir }}/encoding_1252_{{ item }}.expected'
   loop: '{{ template_encoding_1252_encodings }}'
 
 - name: Generate the encoding_1252_* files from templates using various encoding combinations
   template:
     src: 'encoding_1252.j2'
-    dest: '{{ remote_tmp_dir }}/encoding_1252_{{ item }}.txt'
+    dest: '{{ output_dir }}/encoding_1252_{{ item }}.txt'
     output_encoding: '{{ item }}'
   loop: '{{ template_encoding_1252_encodings }}'
 
 - name: Compare the encoding_1252_* templated files to known good
-  command: diff -u {{ remote_tmp_dir }}/encoding_1252_{{ item }}.expected {{ remote_tmp_dir }}/encoding_1252_{{ item }}.txt
+  command: diff -u {{ output_dir }}/encoding_1252_{{ item }}.expected {{ output_dir }}/encoding_1252_{{ item }}.txt
   register: encoding_1252_diff_result
   loop: '{{ template_encoding_1252_encodings }}'
 
@@ -693,14 +696,14 @@
 
 - template:
     src: template_destpath_test.j2
-    dest: "{{ remote_tmp_dir }}/template_destpath.templated"
+    dest: "{{ output_dir }}/template_destpath.templated"
 
 - copy:
-    content: "{{ remote_tmp_dir}}/template_destpath.templated\n"
-    dest: "{{ remote_tmp_dir }}/template_destpath.expected"
+    content: "{{ output_dir}}/template_destpath.templated\n"
+    dest: "{{ output_dir }}/template_destpath.expected"
 
 - name: compare templated file to known good template_destpath
-  shell: diff -uw {{remote_tmp_dir}}/template_destpath.templated {{remote_tmp_dir}}/template_destpath.expected
+  shell: diff -uw {{output_dir}}/template_destpath.templated {{output_dir}}/template_destpath.expected
   register: diff_result
 
 - name: verify templated template_destpath matches known good
@@ -720,9 +723,9 @@
 
 - template:
     src: template_import_macro_globals.j2
-    dest: "{{ remote_tmp_dir }}/template_import_macro_globals.templated"
+    dest: "{{ output_dir }}/template_import_macro_globals.templated"
 
-- command: "cat {{ remote_tmp_dir }}/template_import_macro_globals.templated"
+- command: "cat {{ output_dir }}/template_import_macro_globals.templated"
   register: out
 
 - assert:
@@ -735,7 +738,7 @@
 - name: test STRING_TYPE_FILTERS
   copy:
     content: "{{ a_dict | to_nice_json(indent=(indent_value|int))}}\n"
-    dest: "{{ remote_tmp_dir }}/string_type_filters.templated"
+    dest: "{{ output_dir }}/string_type_filters.templated"
   vars:
     a_dict:
       foo: bar
@@ -745,9 +748,9 @@
 - name: copy known good string_type_filters.expected into place
   copy:
     src: string_type_filters.expected
-    dest: "{{ remote_tmp_dir }}/string_type_filters.expected"
+    dest: "{{ output_dir }}/string_type_filters.expected"
 
-- command: "diff {{ remote_tmp_dir }}/string_type_filters.templated {{ remote_tmp_dir}}/string_type_filters.expected"
+- command: "diff {{ output_dir }}/string_type_filters.templated {{ output_dir}}/string_type_filters.expected"
   register: out
 
 - assert:
@@ -756,10 +759,10 @@
 
 - template:
     src: empty_template.j2
-    dest: "{{ remote_tmp_dir }}/empty_template.templated"
+    dest: "{{ output_dir }}/empty_template.templated"
 
 - assert:
     that:
       - test
   vars:
-    test: "{{ lookup('file', remote_tmp_dir ~ '/empty_template.templated')|length == 0 }}"
+    test: "{{ lookup('file', '{{ output_dir }}/empty_template.templated')|length == 0 }}"
