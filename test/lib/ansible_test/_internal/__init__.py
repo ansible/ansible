@@ -68,6 +68,7 @@ def main():
         target_names = None
 
         try:
+            data_context().check_layout()
             args.func(config)
         except PrimeContainers:
             pass

@@ -13,10 +13,17 @@ from .commands import (
     do_commands,
 )
 
+from .epilog import (
+    get_epilog,
+)
 
 from .compat import (
     HostSettings,
     convert_legacy_args,
+)
+
+from ..util import (
+    get_ansible_version,
 )
 
 
@@ -24,12 +31,8 @@ def parse_args():  # type: () -> argparse.Namespace
     """Parse command line arguments."""
     completer = CompositeActionCompletionFinder()
 
-    if completer.enabled:
-        epilog = 'Tab completion available using the "argcomplete" python package.'
-    else:
-        epilog = 'Install the "argcomplete" python package to enable tab completion.'
-
-    parser = argparse.ArgumentParser(epilog=epilog)
+    parser = argparse.ArgumentParser(prog='ansible-test', epilog=get_epilog(completer), formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('--version', action='version', version=f'%(prog)s version {get_ansible_version()}')
 
     do_commands(parser, completer)
 
