@@ -202,7 +202,7 @@ def verify_local_collection(
 
     for signature in signatures:
         signature = to_text(signature, errors="surrogate_or_strict")
-        if not verify_file_signature(manifest_file, signature, artifacts_manager.keyring):
+        if not verify_file_signature(local_collection.fqcn, manifest_file, signature, artifacts_manager.keyring):
             result.success = False
 
     if not result.success:
@@ -274,7 +274,7 @@ def verify_local_collection(
     return result
 
 
-def verify_file_signature(manifest_file, detached_signature, keyring):
+def verify_file_signature(collection_name, manifest_file, detached_signature, keyring):
     # type: (str, str, str) -> bool
     gpg_result, gpg_verification_rc = run_gpg_verify(manifest_file, detached_signature, keyring, display)
 
@@ -285,11 +285,12 @@ def verify_file_signature(manifest_file, detached_signature, keyring):
         except StopIteration:
             if gpg_verification_rc:
                 display.display(
-                    f"Unexpected error: GnuPG signature verification failed with the return code {gpg_verification_rc} and output {gpg_result}"
+                    f"Unexpected error for '{collection_name}': "
+                    f"GnuPG signature verification failed with the return code {gpg_verification_rc} and output {gpg_result}"
                 )
             return not gpg_verification_rc
         else:
-            verify_failed = "Signature verification failed:"
+            verify_failed = f"Signature verification failed for '{collection_name}' (return code {gpg_verification_rc}):"
 
         text_wrapper = textwrap.TextWrapper(
             initial_indent="    * ",  # 6 chars
@@ -302,7 +303,8 @@ def verify_file_signature(manifest_file, detached_signature, keyring):
         return False
     if gpg_verification_rc:
         display.display(
-            f"Unexpected error: GnuPG signature verification failed with the return code {gpg_verification_rc} and output {gpg_result}"
+            f"Unexpected error for '{collection_name}': "
+            f"GnuPG signature verification failed with the return code {gpg_verification_rc} and output {gpg_result}"
         )
     return not gpg_verification_rc
 
@@ -586,6 +588,7 @@ def install_collections(
             include_signatures=not disable_gpg_verify,
         )
 
+    keyring_exists = artifacts_manager.keyring is not None and os.path.isfile(artifacts_manager.keyring)
     with _display_progress("Starting collection install process"):
         for fqcn, concrete_coll_pin in dependency_map.items():
             if concrete_coll_pin.is_virtual:
@@ -601,6 +604,18 @@ def install_collections(
                     format(coll=to_text(concrete_coll_pin)),
                 )
                 continue
+
+            if not disable_gpg_verify and concrete_coll_pin.signatures and not keyring_exists:
+                # Duplicate warning msgs are not displayed
+                display.warning(
+                    "The GnuPG keyring '{keyring!s}' used for collection "
+                    "signature verification does not exist. "
+                    "Configure a keyring for ansible-galaxy to use "
+                    "or disable signature verification.".
+                    format(
+                        keyring=artifacts_manager.keyring
+                    )
+                )
 
             try:
                 install(concrete_coll_pin, output_path, artifacts_manager)
@@ -1182,6 +1197,8 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
 def write_source_metadata(collection, b_metadata_path, artifacts_manager):
     # type: (Candidate, bytes, ConcreteArtifactsManager) -> None
     source_data = artifacts_manager.get_galaxy_artifact_source_info(collection)
+    if source_data.get("signatures") is None:
+        return
     b_yaml_source_data = to_bytes(yaml_dump(source_data), errors='surrogate_or_strict')
     dest_file = os.path.join(b_metadata_path, to_bytes(SOURCE_METADATA_FILE))
     try:
@@ -1213,11 +1230,11 @@ def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatur
             if signatures:
                 manifest_file = os.path.join(to_text(b_collection_path, errors='surrogate_or_strict'), MANIFEST_FILENAME)
                 failed_verify = False
-                for signature in signatures:
-                    # Display all errors rather than break on the first found
-                    failed_verify |= not verify_file_signature(manifest_file, to_text(signature, errors='surrogate_or_strict'), keyring)
                 coll_path_parts = to_text(b_collection_path, errors='surrogate_or_strict').split(os.path.sep)
                 collection_name = '%s.%s' % (coll_path_parts[-2], coll_path_parts[-1])
+                for signature in signatures:
+                    # Display all errors rather than break on the first found
+                    failed_verify |= not verify_file_signature(collection_name, manifest_file, to_text(signature, errors='surrogate_or_strict'), keyring)
                 if failed_verify:
                     raise AnsibleError(f"Not installing {collection_name} because GnuPG signature verification failed.")
                 else:
