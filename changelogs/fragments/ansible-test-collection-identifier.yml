@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Stop early with an error if the current working directory contains an invalid collection namespace or name.
