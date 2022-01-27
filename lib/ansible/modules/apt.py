@@ -89,6 +89,7 @@ options:
       - Recommended to run this as a stand-alone operation.
     type: bool
     default: 'no'
+    version_added: "2.13"
   allow_unauthenticated:
     description:
       - Ignore if packages cannot be authenticated. This is useful for bootstrapping environments that manage their own apt-key setup.
