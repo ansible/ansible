@@ -205,9 +205,10 @@ def verify_local_collection(
         display.warning(
             "The GnuPG keyring used for collection signature "
             "verification was not configured but signatures were "
-            "provided by the Galaxy server to verify authenticity. "
-            "Configure a keyring for ansible-galaxy to use "
-            "or disable signature verification."
+            "provided by the Galaxy server. "
+            "Configure a keyring for ansible-galaxy to verify "
+            "the origin of the collection. "
+            "Skipping signature verification."
         )
     else:
         for signature in signatures:
@@ -622,7 +623,8 @@ def install_collections(
                     "verification was not configured but signatures were "
                     "provided by the Galaxy server to verify authenticity. "
                     "Configure a keyring for ansible-galaxy to use "
-                    "or disable signature verification."
+                    "or disable signature verification. "
+                    "Skipping signature verification."
                 )
 
             try:
