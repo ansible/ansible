@@ -16,16 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- set_fact: output_dir_test={{output_dir}}/test_find
+- set_fact: remote_tmp_dir_test={{remote_tmp_dir}}/test_find
 
 - name: make sure our testing sub-directory does not exist
   file:
-    path: "{{ output_dir_test }}"
+    path: "{{ remote_tmp_dir_test }}"
     state: absent
 
 - name: create our testing sub-directory
   file:
-    path: "{{ output_dir_test }}"
+    path: "{{ remote_tmp_dir_test }}"
     state: directory
 
 ##
@@ -34,7 +34,7 @@
 
 - name: make some directories
   file:
-      path: "{{ output_dir_test }}/{{ item }}"
+      path: "{{ remote_tmp_dir_test }}/{{ item }}"
       state: directory
   with_items:
       - a/b/c/d
@@ -42,7 +42,7 @@
 
 - name: make some files
   copy:
-      dest: "{{ output_dir_test }}/{{ item }}"
+      dest: "{{ remote_tmp_dir_test }}/{{ item }}"
       content: 'data'
   with_items:
       - a/1.txt
@@ -56,7 +56,7 @@
 
 - name: find the directories
   find:
-      paths: "{{ output_dir_test }}"
+      paths: "{{ remote_tmp_dir_test }}"
       file_type: directory
       recurse: yes
   register: find_test0
@@ -75,7 +75,7 @@
 
 - name: find the xml and img files
   find:
-      paths: "{{ output_dir_test }}"
+      paths: "{{ remote_tmp_dir_test }}"
       file_type: file
       patterns: "*.xml,*.img"
       recurse: yes
@@ -89,7 +89,7 @@
 
 - name: find the xml file
   find:
-      paths: "{{ output_dir_test }}"
+      paths: "{{ remote_tmp_dir_test }}"
       patterns: "*.xml"
       recurse: yes
   register: find_test2
@@ -103,7 +103,7 @@
 
 - name: find the xml file with empty excludes
   find:
-      paths: "{{ output_dir_test }}"
+      paths: "{{ remote_tmp_dir_test }}"
       patterns: "*.xml"
       recurse: yes
       excludes: []
@@ -119,7 +119,7 @@
 - name: Copy some files into the test dir
   copy:
       src: "{{ item }}"
-      dest: "{{ output_dir_test }}/{{ item }}"
+      dest: "{{ remote_tmp_dir_test }}/{{ item }}"
       mode: 0644
   with_items:
       - a.txt
@@ -127,7 +127,7 @@
 
 - name: Ensure '$' only matches the true end of the file with read_whole_file, not a line
   find:
-      paths: "{{ output_dir_test }}"
+      paths: "{{ remote_tmp_dir_test }}"
       patterns: "*.txt"
       contains: "KO$"
       read_whole_file: true
@@ -141,7 +141,7 @@
 
 - name: Match the end of the file successfully
   find:
-      paths: "{{ output_dir_test }}"
+      paths: "{{ remote_tmp_dir_test }}"
       patterns: "*.txt"
       contains: "OK$"
       read_whole_file: true
@@ -155,7 +155,7 @@
 
 - name: When read_whole_file=False, $ should match an individual line
   find:
-      paths: "{{ output_dir_test }}"
+      paths: "{{ remote_tmp_dir_test }}"
       patterns: "*.txt"
       contains: ".*KO$"
       read_whole_file: false
@@ -169,7 +169,7 @@
 
 - name: When read_whole_file=True, match across line boundaries
   find:
-      paths: "{{ output_dir_test }}"
+      paths: "{{ remote_tmp_dir_test }}"
       patterns: "*.txt"
       contains: "has\na few"
       read_whole_file: true
@@ -183,7 +183,7 @@
 
 - name: When read_whole_file=False, do not match across line boundaries
   find:
-      paths: "{{ output_dir_test }}"
+      paths: "{{ remote_tmp_dir_test }}"
       patterns: "*.txt"
       contains: "has\na few"
       read_whole_file: false
@@ -214,7 +214,7 @@
   block:
     - name: Get all files/directories in the path
       find:
-        paths: "{{ output_dir_test }}"
+        paths: "{{ remote_tmp_dir_test }}"
         recurse: yes
         file_type: any
       register: total_contents
@@ -226,7 +226,7 @@
 
     - name: Get files and directories with depth
       find:
-        paths: "{{ output_dir_test }}"
+        paths: "{{ remote_tmp_dir_test }}"
         recurse: yes
         file_type: any
         depth: 2
@@ -241,7 +241,7 @@
 
     - name: Find files with depth
       find:
-        paths: "{{ output_dir_test }}"
+        paths: "{{ remote_tmp_dir_test }}"
         depth: 2
         recurse: yes
       register: files_with_depth
@@ -254,7 +254,7 @@
           - files_with_depth.examined == 12
 - name: exclude with regex
   find:
-    paths: "{{ output_dir_test }}"
+    paths: "{{ remote_tmp_dir_test }}"
     recurse: yes
     use_regex: true
     exclude: .*\.ogg
@@ -266,32 +266,32 @@
 - name: assert we skipped the ogg file
   assert:
     that:
-      - '"{{ output_dir_test }}/e/f/g/h/8.ogg" not in find_test3_list'
+      - '"{{ remote_tmp_dir_test }}/e/f/g/h/8.ogg" not in find_test3_list'
 
 - name: create our age/size testing sub-directory
   file:
-    path: "{{ output_dir_test }}/astest"
+    path: "{{ remote_tmp_dir_test }}/astest"
     state: directory
 
 - name: create test file with old timestamps
   file:
-    path: "{{ output_dir_test }}/astest/old.txt"
+    path: "{{ remote_tmp_dir_test }}/astest/old.txt"
     state: touch
     modification_time: "202001011200.0"
 
 - name: create test file with current timestamps
   file:
-    path: "{{ output_dir_test }}/astest/new.txt"
+    path: "{{ remote_tmp_dir_test }}/astest/new.txt"
     state: touch
 
 - name: create hidden test file with current timestamps
   file:
-    path: "{{ output_dir_test }}/astest/.hidden.txt"
+    path: "{{ remote_tmp_dir_test }}/astest/.hidden.txt"
     state: touch
 
 - name: find files older than 1 week
   find:
-    path: "{{ output_dir_test }}/astest"
+    path: "{{ remote_tmp_dir_test }}/astest"
     age: 1w
     hidden: true
   register: result
@@ -303,11 +303,11 @@
   assert:
     that:
       - result.matched == 1
-      - '"{{ output_dir_test }}/astest/old.txt" in astest_list'
+      - '"{{ remote_tmp_dir_test }}/astest/old.txt" in astest_list'
 
 - name: find files newer than 1 week
   find:
-    path: "{{ output_dir_test }}/astest"
+    path: "{{ remote_tmp_dir_test }}/astest"
     age: -1w
   register: result
 
@@ -318,14 +318,14 @@
   assert:
     that:
       - result.matched == 1
-      - '"{{ output_dir_test }}/astest/new.txt" in astest_list'
+      - '"{{ remote_tmp_dir_test }}/astest/new.txt" in astest_list'
 
 - name: add some content to the new file
-  shell: "echo hello world > {{ output_dir_test }}/astest/new.txt"
+  shell: "echo hello world > {{ remote_tmp_dir_test }}/astest/new.txt"
 
 - name: find files with MORE than 5 bytes, also get checksums
   find:
-    path: "{{ output_dir_test }}/astest"
+    path: "{{ remote_tmp_dir_test }}/astest"
     size: 5
     hidden: true
     get_checksum: true
@@ -338,12 +338,12 @@
   assert:
     that:
       - result.matched == 1
-      - '"{{ output_dir_test }}/astest/new.txt" in astest_list'
+      - '"{{ remote_tmp_dir_test }}/astest/new.txt" in astest_list'
       - '"checksum" in result.files[0]'
 
 - name: find ANY item with LESS than 5 bytes, also get checksums
   find:
-    path: "{{ output_dir_test }}/astest"
+    path: "{{ remote_tmp_dir_test }}/astest"
     size: -5
     hidden: true
     get_checksum: true
@@ -357,6 +357,6 @@
   assert:
     that:
       - result.matched == 2
-      - '"{{ output_dir_test }}/astest/old.txt" in astest_list'
-      - '"{{ output_dir_test }}/astest/.hidden.txt" in astest_list'
+      - '"{{ remote_tmp_dir_test }}/astest/old.txt" in astest_list'
+      - '"{{ remote_tmp_dir_test }}/astest/.hidden.txt" in astest_list'
       - '"checksum" in result.files[0]'
