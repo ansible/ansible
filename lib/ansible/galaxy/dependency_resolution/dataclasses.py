@@ -234,6 +234,11 @@ class _ComputedReqKindsMixin:
         req_source = collection_req.get('source', None)
         req_signature_sources = collection_req.get('signatures', None)
         if req_signature_sources is not None:
+            if art_mgr.keyring is None:
+                raise AnsibleError(
+                    f"Signatures were provided to verify {req_name} but no keyring was configured."
+                )
+
             if not isinstance(req_signature_sources, MutableSequence):
                 req_signature_sources = [req_signature_sources]
             req_signature_sources = frozenset(req_signature_sources)

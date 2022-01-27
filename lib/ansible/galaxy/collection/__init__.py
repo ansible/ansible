@@ -200,20 +200,30 @@ def verify_local_collection(
     elif not verify_local_only and remote_collection.signatures:
         signatures = remote_collection.signatures
 
-    for signature in signatures:
-        signature = to_text(signature, errors="surrogate_or_strict")
-        if not verify_file_signature(local_collection.fqcn, manifest_file, signature, artifacts_manager.keyring):
-            result.success = False
+    keyring_configured = artifacts_manager.keyring is not None
+    if not keyring_configured and signatures:
+        display.warning(
+            "The GnuPG keyring used for collection signature "
+            "verification was not configured but signatures were "
+            "provided by the Galaxy server to verify authenticity. "
+            "Configure a keyring for ansible-galaxy to use "
+            "or disable signature verification."
+        )
+    else:
+        for signature in signatures:
+            signature = to_text(signature, errors="surrogate_or_strict")
+            if not verify_file_signature(local_collection.fqcn, manifest_file, signature, keyring):
+                result.success = False
 
-    if not result.success:
-        return result
-    elif signatures:
-        display.vvvv(f"GnuPG signature verification succeeded, verifying contents of {local_collection}")
+        if not result.success:
+            return result
+        elif signatures:
+            display.vvvv(f"GnuPG signature verification succeeded, verifying contents of {local_collection}")
 
     if verify_local_only:
         # since we're not downloading this, just seed it with the value from disk
         manifest_hash = get_hash_from_validation_source(MANIFEST_FILENAME)
-    elif remote_collection.signatures:
+    elif keyring_configured and remote_collection.signatures:
         manifest_hash = get_hash_from_validation_source(MANIFEST_FILENAME)
     else:
         # fetch remote
@@ -588,7 +598,7 @@ def install_collections(
             include_signatures=not disable_gpg_verify,
         )
 
-    keyring_exists = artifacts_manager.keyring is not None and os.path.isfile(artifacts_manager.keyring)
+    keyring_exists = artifacts_manager.keyring is not None
     with _display_progress("Starting collection install process"):
         for fqcn, concrete_coll_pin in dependency_map.items():
             if concrete_coll_pin.is_virtual:
@@ -608,13 +618,11 @@ def install_collections(
             if not disable_gpg_verify and concrete_coll_pin.signatures and not keyring_exists:
                 # Duplicate warning msgs are not displayed
                 display.warning(
-                    "The GnuPG keyring '{keyring!s}' used for collection "
-                    "signature verification does not exist. "
+                    "The GnuPG keyring used for collection signature "
+                    "verification was not configured but signatures were "
+                    "provided by the Galaxy server to verify authenticity. "
                     "Configure a keyring for ansible-galaxy to use "
-                    "or disable signature verification.".
-                    format(
-                        keyring=artifacts_manager.keyring
-                    )
+                    "or disable signature verification."
                 )
 
             try:
@@ -1227,7 +1235,7 @@ def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatur
             # Verify the signature on the MANIFEST.json before extracting anything else
             _extract_tar_file(collection_tar, MANIFEST_FILENAME, b_collection_path, b_temp_path)
 
-            if signatures:
+            if signatures and keyring is not None:
                 manifest_file = os.path.join(to_text(b_collection_path, errors='surrogate_or_strict'), MANIFEST_FILENAME)
                 failed_verify = False
                 coll_path_parts = to_text(b_collection_path, errors='surrogate_or_strict').split(os.path.sep)

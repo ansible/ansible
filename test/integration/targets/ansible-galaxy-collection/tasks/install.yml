@@ -473,6 +473,18 @@
             'signatures' key for requirements in the --requirements-file.
     actual_error: "{{ mutually_exclusive_opts.stderr }}"
 
+- name: install a collection with user-supplied signatures for verification but no keyring
+  command: ansible-galaxy collection install namespace1.name1:1.0.0 {{ cli_signature }}
+  vars:
+    cli_signature: "--signature file://{{ gpg_homedir }}/namespace1-name1-1.0.0-MANIFEST.json.asc"
+  ignore_errors: yes
+  register: required_together
+
+- assert:
+    that:
+      - required_together is failed
+      - '"ERROR! Signatures were provided to verify namespace1.name1 but no keyring was configured." in required_together.stderr'
+
 - name: install collections with ansible-galaxy install -r with invalid signatures - {{ test_name }}
   # Note that --keyring is a valid option for 'ansible-galaxy install -r ...', not just 'ansible-galaxy collection ...'
   command: ansible-galaxy install -r {{ req_file }} -s {{ test_name }}  --keyring {{ keyring }}
@@ -660,7 +672,7 @@
     path: '{{ galaxy_dir }}/ansible_collections'
     state: absent
 
-- name: install collection with signature with missing keyring
+- name: install collection with signature with invalid keyring
   command: ansible-galaxy collection install namespace1.name1 {{ galaxy_verbosity }} {{ signature_option }} {{ keyring_option }}
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
@@ -676,7 +688,7 @@
       - expected_errors[0] in actual_error
       - expected_errors[1] in actual_error
       - expected_errors[2] in actual_error
-      - expected_warning in actual_warning
+      - unexpected_warning not in actual_warning
   vars:
     keyring: "{{ gpg_homedir }}/i_do_not_exist.kbx"
     expected_errors:
@@ -686,14 +698,42 @@
               * It was not possible to check the signature. This may be caused
               by a missing public key or an unsupported algorithm. A RC of 4
               indicates unknown algorithm, a 9 indicates a missing public key.
-    expected_warning: >-
-              The GnuPG keyring '{{ keyring }}' used for collection
-              signature verification does not exist. Configure a keyring for
-              ansible-galaxy to use or disable signature verification.
+    unexpected_warning: >-
+              The GnuPG keyring used for collection signature
+              verification was not configured but signatures were
+              provided by the Galaxy server to verify authenticity.
+              Configure a keyring for ansible-galaxy to use
+              or disable signature verification.
     actual_warning: "{{ keyring_error.stderr | regex_replace(reset_color) | regex_replace(color) | regex_replace('\\n', ' ') }}"
     actual_error: "{{ keyring_error.stdout | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
     reset_color: '\x1b\[0m'
     color: '\x1b\[[0-9];[0-9]{2}m'
+
+# TODO: Uncomment once signatures are provided by pulp-galaxy-ng
+#- name: install collection with signature provided by Galaxy server (no keyring)
+#  command: ansible-galaxy collection install namespace1.name1 {{ galaxy_verbosity }}
+#  environment:
+#    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+#  ignore_errors: yes
+#  register: keyring_warning
+#
+#- name: assert a warning was given but signature verification did not occur without configuring the keyring
+#  assert:
+#    that:
+#      - keyring_warning is not failed
+#      - - '"Installing ''namespace1.name1:1.0.9'' to" in keyring_warning.stdout'
+#      # TODO: Don't just check the stdout, make sure the collection was installed.
+#      - expected_warning in actual_warning
+#  vars:
+#    expected_warning: >-
+#              The GnuPG keyring used for collection signature
+#              verification was not configured but signatures were
+#              provided by the Galaxy server to verify authenticity.
+#              Configure a keyring for ansible-galaxy to use
+#              or disable signature verification.
+#    actual_warning: "{{ keyring_warning.stderr | regex_replace(reset_color) | regex_replace(color) | regex_replace('\\n', ' ') }}"
+#    reset_color: '\x1b\[0m'
+#    color: '\x1b\[[0-9];[0-9]{2}m'
 
 - name: install simple collection from first accessible server with valid detached signature
   command: ansible-galaxy collection install namespace1.name1 {{ galaxy_verbosity }} {{ signature_options }}
