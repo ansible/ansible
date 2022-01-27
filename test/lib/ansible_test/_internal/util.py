@@ -6,6 +6,7 @@ import errno
 import fcntl
 import importlib.util
 import inspect
+import keyword
 import os
 import pkgutil
 import random
@@ -96,6 +97,11 @@ MODE_FILE_WRITE = MODE_FILE | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
 
 MODE_DIRECTORY = MODE_READ | stat.S_IWUSR | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 MODE_DIRECTORY_WRITE = MODE_DIRECTORY | stat.S_IWGRP | stat.S_IWOTH
+
+
+def is_valid_identifier(value: str) -> bool:
+    """Return True if the given value is a valid non-keyword Python identifier, otherwise return False."""
+    return value.isidentifier() and not keyword.iskeyword(value)
 
 
 def cache(func):  # type: (t.Callable[[], TValue]) -> t.Callable[[], TValue]
