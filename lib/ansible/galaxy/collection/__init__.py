@@ -212,7 +212,7 @@ def verify_local_collection(
     else:
         for signature in signatures:
             signature = to_text(signature, errors="surrogate_or_strict")
-            if not verify_file_signature(local_collection.fqcn, manifest_file, signature, keyring):
+            if not verify_file_signature(local_collection.fqcn, manifest_file, signature, artifacts_manager.keyring):
                 result.success = False
 
         if not result.success:
