@@ -1429,6 +1429,7 @@ GALAXY_DISABLE_GPG_VERIFY:
     key: disable_gpg_verify
   description:
   - Disable GPG signature verification during collection installation.
+  version_added: '2.13'
 HOST_KEY_CHECKING:
   # note: constant not in use by ssh plugin anymore
   # TODO: check non ssh connection plugins for use/migration
