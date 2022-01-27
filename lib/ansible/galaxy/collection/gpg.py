@@ -39,6 +39,9 @@ def run_gpg_verify(
 ):  # type: (...) -> Tuple[str, int]
     status_fd_read, status_fd_write = os.pipe()
 
+    # running the gpg command will create the keyring if it does not exist
+    remove_keybox = not os.path.exists(keyring)
+
     cmd = [
         'gpg',
         f'--status-fd={status_fd_write}',
@@ -70,6 +73,12 @@ def run_gpg_verify(
         stdout, stderr = p.communicate(input=signature)
     finally:
         os.close(status_fd_write)
+
+    if remove_keybox:
+        try:
+            os.remove(keyring)
+        except OSError:
+            pass
 
     with os.fdopen(status_fd_read) as f:
         stdout = f.read()
@@ -183,7 +192,7 @@ class GpgBadPassphrase(GpgBaseError):
 class GpgNoData(GpgBaseError):
     """No data has been found.  Codes for WHAT are:
     - 1 :: No armored data.
-    - 2 :: Expected a packet but did not found one.
+    - 2 :: Expected a packet but did not find one.
     - 3 :: Invalid packet found, this may indicate a non OpenPGP
            message.
     - 4 :: Signature expected but not found.
@@ -195,7 +204,7 @@ class GpgNoData(GpgBaseError):
 class GpgUnexpected(GpgBaseError):
     """No data has been found.  Codes for WHAT are:
     - 1 :: No armored data.
-    - 2 :: Expected a packet but did not found one.
+    - 2 :: Expected a packet but did not find one.
     - 3 :: Invalid packet found, this may indicate a non OpenPGP
            message.
     - 4 :: Signature expected but not found.
