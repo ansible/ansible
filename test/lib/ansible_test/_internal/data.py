@@ -117,7 +117,10 @@ class DataContext:
                                 walk,  # type: bool
                                 ):  # type: (...) -> ContentLayout
         """Create a content layout using the given providers and root path."""
-        layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk)
+        try:
+            layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk)
+        except ProviderNotFoundForPath:
+            layout_provider = UnsupportedLayout(root)
 
         try:
             # Begin the search for the source provider at the layout provider root.

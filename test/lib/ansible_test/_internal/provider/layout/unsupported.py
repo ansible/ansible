@@ -11,12 +11,12 @@ from . import (
 
 class UnsupportedLayout(LayoutProvider):
     """Layout provider for an unsupported directory layout."""
-    priority = 10000
+    sequence = 0  # disable automatic detection
 
     @staticmethod
     def is_content_root(path):  # type: (str) -> bool
         """Return True if the given path is a content root for this provider."""
-        return True
+        return False
 
     def create(self, root, paths):  # type: (str, t.List[str]) -> ContentLayout
         """Create a Layout using the given root and paths."""
