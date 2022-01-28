@@ -40,6 +40,13 @@ DOCUMENTATION = '''
         version_added: "2.8"
         env:
           - name: JUNIT_TASK_RELATIVE_PATH
+      replace_out_of_tree_path:
+        name: Replace out of tree path
+        default: none
+        description: Replace the directory portion of an out-of-tree relative task path with the given placeholder
+        version_added: "2.12.3"
+        env:
+          - name: JUNIT_REPLACE_OUT_OF_TREE_PATH
       fail_on_change:
         name: JUnit fail on change
         default: False
@@ -141,6 +148,7 @@ class CallbackModule(CallbackBase):
         self._include_setup_tasks_in_report = os.getenv('JUNIT_INCLUDE_SETUP_TASKS_IN_REPORT', 'True').lower()
         self._hide_task_arguments = os.getenv('JUNIT_HIDE_TASK_ARGUMENTS', 'False').lower()
         self._test_case_prefix = os.getenv('JUNIT_TEST_CASE_PREFIX', '')
+        self._replace_out_of_tree_path = os.getenv('JUNIT_REPLACE_OUT_OF_TREE_PATH', None)
         self._playbook_path = None
         self._playbook_name = None
         self._play_name = None
@@ -212,6 +220,9 @@ class CallbackModule(CallbackBase):
             junit_classname = os.path.relpath(task_data.path, self._task_relative_path)
         else:
             junit_classname = task_data.path
+
+        if self._replace_out_of_tree_path is not None and junit_classname.startswith('../'):
+            junit_classname = self._replace_out_of_tree_path + os.path.basename(junit_classname)
 
         if self._task_class == 'true':
             junit_classname = re.sub(r'\.yml:[0-9]+$', '', junit_classname)

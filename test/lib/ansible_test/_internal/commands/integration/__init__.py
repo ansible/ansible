@@ -777,6 +777,7 @@ def integration_environment(
     integration = dict(
         JUNIT_OUTPUT_DIR=ResultType.JUNIT.path,
         JUNIT_TASK_RELATIVE_PATH=test_env.test_dir,
+        JUNIT_REPLACE_OUT_OF_TREE_PATH='out-of-tree:',
         ANSIBLE_CALLBACKS_ENABLED=','.join(sorted(set(callback_plugins))),
         ANSIBLE_TEST_CI=args.metadata.ci_provider or get_ci_provider().code,
         ANSIBLE_TEST_COVERAGE='check' if args.coverage_check else ('yes' if args.coverage else ''),
