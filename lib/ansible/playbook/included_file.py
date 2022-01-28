@@ -43,6 +43,7 @@ class IncludedFile:
         self._task = task
         self._hosts = []
         self._is_role = is_role
+        self._results = []
 
     def add_host(self, host):
         if host not in self._hosts:
@@ -212,6 +213,7 @@ class IncludedFile:
 
                         try:
                             inc_file.add_host(original_host)
+                            inc_file._results.append(res)
                         except ValueError:
                             # The host already exists for this include, advance forward, this is a new include
                             idx += pos + 1

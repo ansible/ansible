@@ -970,6 +970,9 @@ class StrategyBase:
             else:
                 reason = to_text(e)
 
+            for r in included_file._results:
+                r._result['failed'] = True
+
             # mark all of the hosts including this file as failed, send callbacks,
             # and increment the stats for this host
             for host in included_file._hosts:

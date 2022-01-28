@@ -1,0 +1,19 @@
+- hosts: testhost,testhost2
+  gather_facts: no
+  any_errors_fatal: yes
+  tasks:
+    - name: EXPECTED FAILURE include_role that doesn't exist
+      include_role:
+        name: 'non-existant-role'
+      when:
+        - inventory_hostname == 'testhost2'
+        - test_name == 'test_include_role'
+
+    - name: EXPECTED FAILURE include_tasks that don't exist
+      include_tasks: non-existant.yml
+      when:
+        - inventory_hostname == 'testhost2'
+        - test_name == 'test_include_tasks'
+
+    - debug:
+        msg: 'any_errors_fatal_this_should_never_be_reached'

@@ -260,6 +260,9 @@ class StrategyModule(StrategyBase):
                     except AnsibleParserError:
                         raise
                     except AnsibleError as e:
+                        for r in included_file._results:
+                            r._result['failed'] = True
+
                         for host in included_file._hosts:
                             iterator.mark_host_failed(host)
                         display.warning(to_text(e))
