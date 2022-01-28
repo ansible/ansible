@@ -208,7 +208,6 @@ class IncludedFile:
                             # use idx + pos due to relative indexing
                             inc_file = included_files[idx + pos]
                         except ValueError:
-                            orig_inc_file._results.append(res)
                             included_files.append(orig_inc_file)
                             inc_file = orig_inc_file
 
