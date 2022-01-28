@@ -986,6 +986,7 @@ def aptclean(m):
         m.fail_json(msg="apt-get clean failed", stdout=clean_out, rc=clean_rc)
     if clean_err:
         m.fail_json(msg="apt-get clean failed: %s" % clean_err, stdout=clean_out, rc=clean_rc)
+    return clean_out, clean_err
 
 
 def upgrade(m, mode="yes", force=False, default_release=None,
@@ -1238,7 +1239,16 @@ def main():
     p = module.params
 
     if p['clean'] is True:
-        aptclean(module)
+        aptclean_stdout, aptclean_stderr = aptclean(module)
+        # If there is nothing else to do exit. This will set state as
+        #  changed based on if the cache was updated.
+        if not p['package'] and not p['upgrade'] and not p['deb']:
+            module.exit_json(
+                changed=True,
+                msg=aptclean_stdout,
+                stdout=aptclean_stdout,
+                stderr=aptclean_stderr
+            )
 
     if p['upgrade'] == 'no':
         p['upgrade'] = None
