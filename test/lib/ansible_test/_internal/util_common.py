@@ -32,7 +32,7 @@ from .util import (
     raw_command,
     ANSIBLE_TEST_DATA_ROOT,
     ANSIBLE_TEST_TARGET_ROOT,
-    ANSIBLE_TEST_TOOLS_ROOT,
+    ANSIBLE_TEST_TARGET_TOOLS_ROOT,
     ApplicationError,
     SubprocessError,
     generate_name,
@@ -451,7 +451,7 @@ def run_command(
 
 def yamlcheck(python):
     """Return True if PyYAML has libyaml support, False if it does not and None if it was not found."""
-    result = json.loads(raw_command([python.path, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'yamlcheck.py')], capture=True)[0])
+    result = json.loads(raw_command([python.path, os.path.join(ANSIBLE_TEST_TARGET_TOOLS_ROOT, 'yamlcheck.py')], capture=True)[0])
 
     if not result['yaml']:
         return None

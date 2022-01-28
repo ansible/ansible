@@ -1,6 +1,5 @@
 """Wrapper around yamllint that supports YAML embedded in Ansible modules."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import ast
 import json

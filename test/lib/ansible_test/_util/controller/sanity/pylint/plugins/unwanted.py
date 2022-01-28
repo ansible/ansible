@@ -1,7 +1,5 @@
 """A plugin for pylint to identify imports and functions which should not be used."""
-from __future__ import (absolute_import, division, print_function)
-
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 import typing as t
