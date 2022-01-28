@@ -72,7 +72,7 @@ class Deprecation():
 
         if self.when is None:
             msg += 'in a future release.'
-        if date_string.match(self.when):
+        elif date_string.match(self.when):
             msg += 'in a release after {0}.'.format(self.when)
         elif version_string.match(self.when):
             msg += 'in version {0}.'.format(self.when)
