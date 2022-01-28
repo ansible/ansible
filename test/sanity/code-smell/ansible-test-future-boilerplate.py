@@ -1,12 +1,19 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import ast
 import sys
 
 
 def main():
+    # The following directories contain code which must work under Python 2.x.
+    py2_compat = (
+        'test/lib/ansible_test/_util/target/',
+    )
+
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
+        if any(path.startswith(prefix) for prefix in py2_compat):
+            continue
+
         with open(path, 'rb') as path_fd:
             lines = path_fd.read().splitlines()
 
@@ -15,10 +22,15 @@ def main():
             # Files are allowed to be empty of everything including boilerplate
             missing = False
 
+        invalid_future = []
+
         for text in lines:
             if text == b'from __future__ import annotations':
                 missing = False
                 break
+
+            if text.startswith(b'from __future__ ') or text == b'__metaclass__ = type':
+                invalid_future.append(text.decode())
 
         if missing:
             with open(path) as file:
@@ -38,6 +50,9 @@ def main():
 
         if missing:
             print('%s: missing: from __future__ import annotations' % path)
+
+        for text in invalid_future:
+            print('%s: invalid: %s' % (path, text))
 
 
 if __name__ == '__main__':

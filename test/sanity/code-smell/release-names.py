@@ -20,8 +20,7 @@ Test that the release name is present in the list of used up release names
 """
 
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 from yaml import safe_load
 
