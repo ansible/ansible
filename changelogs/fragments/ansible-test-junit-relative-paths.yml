@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-test - Use relative paths in JUnit files generated during integration test runs.
+  - junit callback - Fix traceback during automatic fact gathering when using relative paths.

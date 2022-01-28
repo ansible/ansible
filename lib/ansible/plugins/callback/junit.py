@@ -208,7 +208,7 @@ class CallbackModule(CallbackBase):
         name = '[%s] %s: %s' % (host_data.name, task_data.play, task_data.name)
         duration = host_data.finish - task_data.start
 
-        if self._task_relative_path:
+        if self._task_relative_path and task_data.path:
             junit_classname = os.path.relpath(task_data.path, self._task_relative_path)
         else:
             junit_classname = task_data.path
