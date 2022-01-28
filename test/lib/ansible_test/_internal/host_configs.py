@@ -358,9 +358,7 @@ class WindowsRemoteConfig(RemoteConfig, WindowsConfig):
     """Configuration for a remoe Windows host."""
     def get_defaults(self, context):  # type: (HostContext) -> WindowsRemoteCompletionConfig
         """Return the default settings."""
-        return filter_completion(windows_completion()).get(self.name) or WindowsRemoteCompletionConfig(
-            name=self.name,
-        )
+        return filter_completion(windows_completion()).get(self.name) or windows_completion().get(self.platform)
 
 
 @dataclasses.dataclass
