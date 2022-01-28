@@ -376,12 +376,15 @@ class VaultCLI(CLI):
         # Format the encrypted strings and any corresponding stderr output
         outputs = self._format_output_vault_strings(b_plaintext_list, vault_id=self.encrypt_vault_id)
 
+        b_outs = []
         for output in outputs:
             err = output.get('err', None)
             out = output.get('out', '')
             if err:
                 sys.stderr.write(err)
-            print(out)
+            b_outs.append(to_bytes(out))
+
+        self.editor.write_data(b'\n'.join(b_outs), context.CLIARGS['output_file'] or '-')
 
         if sys.stdout.isatty():
             display.display("Encryption successful", stderr=True)
