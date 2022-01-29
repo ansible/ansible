@@ -1,2 +1,2 @@
-bug_fixes:
+bugfixes:
   - services_facts - Set incomplete warning when systemctl commands hit error.
