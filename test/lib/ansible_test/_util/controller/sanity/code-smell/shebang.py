@@ -40,84 +40,90 @@ byte_order_marks = (
 )
 
 
+def validate_shebang(shebang, mode, path):
+    executable = (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & mode
+
+    if not shebang or not shebang.startswith(b'#!'):
+        if executable:
+            print('%s:%d:%d: file without shebang should not be executable' % (path, 0, 0))
+
+        for mark, name in byte_order_marks:
+            if shebang.startswith(mark):
+                print('%s:%d:%d: file starts with a %s byte order mark' % (path, 0, 0, name))
+                break
+
+        return
+
+    is_module = False
+    is_integration = False
+
+    dirname = os.path.dirname(path)
+
+    if path.startswith('lib/ansible/modules/'):
+        is_module = True
+    elif re.search('^test/support/[^/]+/plugins/modules/', path):
+        is_module = True
+    elif re.search('^test/support/[^/]+/collections/ansible_collections/[^/]+/[^/]+/plugins/modules/', path):
+        is_module = True
+    elif path == 'test/lib/ansible_test/_util/target/cli/ansible_test_cli_stub.py':
+        pass  # ansible-test entry point must be executable and have a shebang
+    elif re.search(r'^lib/ansible/cli/[^/]+\.py', path):
+        pass  # cli entry points must be executable and have a shebang
+    elif path.startswith('examples/'):
+        return  # examples trigger some false positives due to location
+    elif path.startswith('lib/') or path.startswith('test/lib/'):
+        if executable:
+            print('%s:%d:%d: should not be executable' % (path, 0, 0))
+
+        if shebang:
+            print('%s:%d:%d: should not have a shebang' % (path, 0, 0))
+
+        return
+    elif path.startswith('test/integration/targets/') or path.startswith('tests/integration/targets/'):
+        is_integration = True
+
+        if dirname.endswith('/library') or '/plugins/modules' in dirname or dirname in (
+                # non-standard module library directories
+                'test/integration/targets/module_precedence/lib_no_extension',
+                'test/integration/targets/module_precedence/lib_with_extension',
+        ):
+            is_module = True
+    elif path.startswith('plugins/modules/'):
+        is_module = True
+
+    if is_module:
+        if executable:
+            print('%s:%d:%d: module should not be executable' % (path, 0, 0))
+
+        ext = os.path.splitext(path)[1]
+        expected_shebang = module_shebangs.get(ext)
+        expected_ext = ' or '.join(['"%s"' % k for k in module_shebangs])
+
+        if expected_shebang:
+            if shebang == expected_shebang:
+                return
+
+            print('%s:%d:%d: expected module shebang "%s" but found: %s' % (path, 1, 1, expected_shebang, shebang))
+        else:
+            print('%s:%d:%d: expected module extension %s but found: %s' % (path, 0, 0, expected_ext, ext))
+    else:
+        if is_integration:
+            allowed = integration_shebangs
+        else:
+            allowed = standard_shebangs
+
+        if shebang not in allowed:
+            print('%s:%d:%d: unexpected non-module shebang: %s' % (path, 1, 1, shebang))
+
+
 def main():
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
         with open(path, 'rb') as path_fd:
             shebang = path_fd.readline().strip()
             mode = os.stat(path).st_mode
-            executable = (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & mode
 
-            if not shebang or not shebang.startswith(b'#!'):
-                if executable:
-                    print('%s:%d:%d: file without shebang should not be executable' % (path, 0, 0))
+            validate_shebang(shebang, mode, path)
 
-                for mark, name in byte_order_marks:
-                    if shebang.startswith(mark):
-                        print('%s:%d:%d: file starts with a %s byte order mark' % (path, 0, 0, name))
-                        break
-
-                continue
-
-            is_module = False
-            is_integration = False
-
-            dirname = os.path.dirname(path)
-
-            if path.startswith('lib/ansible/modules/'):
-                is_module = True
-            elif re.search('^test/support/[^/]+/plugins/modules/', path):
-                is_module = True
-            elif re.search('^test/support/[^/]+/collections/ansible_collections/[^/]+/[^/]+/plugins/modules/', path):
-                is_module = True
-            elif path == 'test/lib/ansible_test/_util/target/cli/ansible_test_cli_stub.py':
-                pass  # ansible-test entry point must be executable and have a shebang
-            elif re.search(r'^lib/ansible/cli/[^/]+\.py', path):
-                pass  # cli entry points must be executable and have a shebang
-            elif path.startswith('examples/'):
-                continue  # examples trigger some false positives due to location
-            elif path.startswith('lib/') or path.startswith('test/lib/'):
-                if executable:
-                    print('%s:%d:%d: should not be executable' % (path, 0, 0))
-
-                if shebang:
-                    print('%s:%d:%d: should not have a shebang' % (path, 0, 0))
-
-                continue
-            elif path.startswith('test/integration/targets/') or path.startswith('tests/integration/targets/'):
-                is_integration = True
-
-                if dirname.endswith('/library') or '/plugins/modules' in dirname or dirname in (
-                        # non-standard module library directories
-                        'test/integration/targets/module_precedence/lib_no_extension',
-                        'test/integration/targets/module_precedence/lib_with_extension',
-                ):
-                    is_module = True
-            elif path.startswith('plugins/modules/'):
-                is_module = True
-
-            if is_module:
-                if executable:
-                    print('%s:%d:%d: module should not be executable' % (path, 0, 0))
-
-                ext = os.path.splitext(path)[1]
-                expected_shebang = module_shebangs.get(ext)
-                expected_ext = ' or '.join(['"%s"' % k for k in module_shebangs])
-
-                if expected_shebang:
-                    if shebang == expected_shebang:
-                        continue
-
-                    print('%s:%d:%d: expected module shebang "%s" but found: %s' % (path, 1, 1, expected_shebang, shebang))
-                else:
-                    print('%s:%d:%d: expected module extension %s but found: %s' % (path, 0, 0, expected_ext, ext))
-            else:
-                if is_integration:
-                    allowed = integration_shebangs
-                else:
-                    allowed = standard_shebangs
-
-                if shebang not in allowed:
-                    print('%s:%d:%d: unexpected non-module shebang: %s' % (path, 1, 1, shebang))
 
 
 if __name__ == '__main__':
