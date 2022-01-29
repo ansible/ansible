@@ -141,7 +141,7 @@ However, on POSIX systems, Ansible solves this problem in the following way:
 First, if :command:`setfacl` is installed and available in the remote ``PATH``,
 and the temporary directory on the remote host is mounted with POSIX.1e
 filesystem ACL support, Ansible will use POSIX ACLs to share the module file
-with the second unprivileged user.
+with the second unprivileged user. 
 
 Next, if POSIX ACLs are **not** available or :command:`setfacl` could not be
 run, Ansible will attempt to change ownership of the module file using
@@ -748,6 +748,13 @@ Limitations of become on Windows
   except Windows Server 2008 (non R2 version).
 
 * The Secondary Logon service ``seclogon`` must be running to use ``ansible_become_method: runas``
+
+Resolving Temporary File Error Messsages
+--------------------------------
+
+"Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user"
+* In Debian systems, this error can be resolved by installing the `acl` package, which provides the `setfacl` command.
+
 
 .. seealso::
 
