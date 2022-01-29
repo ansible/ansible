@@ -7,40 +7,40 @@ import stat
 import sys
 
 
+standard_shebangs = set([
+    b'#!/bin/bash -eu',
+    b'#!/bin/bash -eux',
+    b'#!/bin/sh',
+    b'#!/usr/bin/env bash',
+    b'#!/usr/bin/env fish',
+    b'#!/usr/bin/env pwsh',
+    b'#!/usr/bin/env python',
+    b'#!/usr/bin/make -f',
+])
+
+integration_shebangs = set([
+    b'#!/bin/sh',
+    b'#!/usr/bin/env bash',
+    b'#!/usr/bin/env python',
+])
+
+module_shebangs = {
+    '': b'#!/usr/bin/python',
+    '.py': b'#!/usr/bin/python',
+    '.ps1': b'#!powershell',
+}
+
+# see https://unicode.org/faq/utf_bom.html#bom1
+byte_order_marks = (
+    (b'\x00\x00\xFE\xFF', 'UTF-32 (BE)'),
+    (b'\xFF\xFE\x00\x00', 'UTF-32 (LE)'),
+    (b'\xFE\xFF', 'UTF-16 (BE)'),
+    (b'\xFF\xFE', 'UTF-16 (LE)'),
+    (b'\xEF\xBB\xBF', 'UTF-8'),
+)
+
+
 def main():
-    """Main entry point."""
-    standard_shebangs = set([
-        b'#!/bin/bash -eu',
-        b'#!/bin/bash -eux',
-        b'#!/bin/sh',
-        b'#!/usr/bin/env bash',
-        b'#!/usr/bin/env fish',
-        b'#!/usr/bin/env pwsh',
-        b'#!/usr/bin/env python',
-        b'#!/usr/bin/make -f',
-    ])
-
-    integration_shebangs = set([
-        b'#!/bin/sh',
-        b'#!/usr/bin/env bash',
-        b'#!/usr/bin/env python',
-    ])
-
-    module_shebangs = {
-        '': b'#!/usr/bin/python',
-        '.py': b'#!/usr/bin/python',
-        '.ps1': b'#!powershell',
-    }
-
-    # see https://unicode.org/faq/utf_bom.html#bom1
-    byte_order_marks = (
-        (b'\x00\x00\xFE\xFF', 'UTF-32 (BE)'),
-        (b'\xFF\xFE\x00\x00', 'UTF-32 (LE)'),
-        (b'\xFE\xFF', 'UTF-16 (BE)'),
-        (b'\xFF\xFE', 'UTF-16 (LE)'),
-        (b'\xEF\xBB\xBF', 'UTF-8'),
-    )
-
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
         with open(path, 'rb') as path_fd:
             shebang = path_fd.readline().strip()
