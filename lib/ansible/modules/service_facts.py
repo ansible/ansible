@@ -244,6 +244,8 @@ class SystemctlScanService(BaseService):
 
         # list units as systemd sees them
         rc, stdout, stderr = self.module.run_command("%s list-units --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
+        if rc != 0:
+            self.incomplete_warning = True
         for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line]:
 
             state_val = "stopped"
@@ -267,6 +269,8 @@ class SystemctlScanService(BaseService):
 
         # now try unit files for complete picture and final 'status'
         rc, stdout, stderr = self.module.run_command("%s list-unit-files --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
+        if rc != 0:
+            self.incomplete_warning = True
         for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line]:
             # there is one more column (VENDOR PRESET) from `systemctl list-unit-files` for systemd >= 245
             try:
@@ -275,6 +279,8 @@ class SystemctlScanService(BaseService):
                 self.module.fail_json(msg="Malformed output discovered from systemd list-unit-files: {0}".format(line))
             if service_name not in services:
                 rc, stdout, stderr = self.module.run_command("%s show %s --property=ActiveState" % (systemctl_path, service_name), use_unsafe_shell=True)
+                if rc != 0:
+                    self.incomplete_warning = True
                 state = 'unknown'
                 if not rc and stdout != '':
                     state = stdout.replace('ActiveState=', '').rstrip()
