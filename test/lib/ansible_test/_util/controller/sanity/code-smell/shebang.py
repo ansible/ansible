@@ -40,7 +40,25 @@ byte_order_marks = (
 )
 
 
+def is_excluded_path(path):
+    """
+    Determine if a path should be skipped from this sanity test.
+    Usually because it is not for use by Ansible, like files in roles/files.
+    """
+    if path.startswith('examples/'):
+        # examples trigger some false positives due to location
+        return True
+    if re.search('roles/[^/]+/files/', path) or re.search('roles/[^/]+/templates/', path):
+        # Ansible doesn't need to verify the data files and templates of roles
+        # see https://github.com/ansible/ansible/issues/76612
+        return True
+    return False
+
+
 def validate_shebang(shebang, mode, path):
+    if is_excluded_path(path):
+        return
+
     executable = (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & mode
 
     if not shebang or not shebang.startswith(b'#!'):
@@ -69,8 +87,6 @@ def validate_shebang(shebang, mode, path):
         pass  # ansible-test entry point must be executable and have a shebang
     elif re.search(r'^lib/ansible/cli/[^/]+\.py', path):
         pass  # cli entry points must be executable and have a shebang
-    elif path.startswith('examples/'):
-        return  # examples trigger some false positives due to location
     elif path.startswith('lib/') or path.startswith('test/lib/'):
         if executable:
             print('%s:%d:%d: should not be executable' % (path, 0, 0))
@@ -123,7 +139,6 @@ def main():
             mode = os.stat(path).st_mode
 
             validate_shebang(shebang, mode, path)
-
 
 
 if __name__ == '__main__':
