@@ -132,15 +132,15 @@ def validate_shebang(shebang, mode, path):
 
     if is_module:
         return validate_module_shebang(shebang, executable, path)
-    else:
-        if is_integration:
-            allowed = integration_shebangs
-        else:
-            allowed = standard_shebangs
 
-        if shebang not in allowed:
-            print('%s:%d:%d: unexpected non-module shebang: %s' % (path, 1, 1, shebang))
-            return False
+    if is_integration:
+        allowed = integration_shebangs
+    else:
+        allowed = standard_shebangs
+
+    if shebang not in allowed:
+        print('%s:%d:%d: unexpected non-module shebang: %s' % (path, 1, 1, shebang))
+        return False
     return True
 
 
