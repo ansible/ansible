@@ -117,7 +117,7 @@ def fileglob(pathname):
     return [g for g in glob.glob(pathname) if os.path.isfile(g)]
 
 
-def regex_replace(value='', pattern='', replacement='', ignorecase=False, multiline=False):
+def regex_replace(value='', pattern='', replacement='', ignorecase=False, multiline=False, dotall=False):
     ''' Perform a `re.sub` returning a string '''
 
     value = to_text(value, errors='surrogate_or_strict', nonstring='simplerepr')
@@ -127,11 +127,14 @@ def regex_replace(value='', pattern='', replacement='', ignorecase=False, multil
         flags |= re.I
     if multiline:
         flags |= re.M
+    if dotall:
+        flags |= re.S
+
     _re = re.compile(pattern, flags=flags)
     return _re.sub(replacement, value)
 
 
-def regex_findall(value, regex, multiline=False, ignorecase=False):
+def regex_findall(value, regex, multiline=False, ignorecase=False, dotall=False):
     ''' Perform re.findall and return the list of matches '''
 
     value = to_text(value, errors='surrogate_or_strict', nonstring='simplerepr')
@@ -141,6 +144,9 @@ def regex_findall(value, regex, multiline=False, ignorecase=False):
         flags |= re.I
     if multiline:
         flags |= re.M
+    if dotall:
+        flags |= re.S
+
     return re.findall(regex, value, flags)
 
 
@@ -165,6 +171,8 @@ def regex_search(value, regex, *args, **kwargs):
         flags |= re.I
     if kwargs.get('multiline'):
         flags |= re.M
+    if kwargs.get('dotall'):
+        flags |= re.S
 
     match = re.search(regex, value, flags)
     if match:
