@@ -55,6 +55,24 @@ def is_excluded_path(path):
     return False
 
 
+def validate_module_shebang(shebang, executable, path):
+    if executable:
+        print('%s:%d:%d: module should not be executable' % (path, 0, 0))
+
+    ext = os.path.splitext(path)[1]
+    expected_shebang = module_shebangs.get(ext)
+    expected_ext = ' or '.join(['"%s"' % k for k in module_shebangs])
+
+    if expected_shebang:
+        if shebang == expected_shebang:
+            return True
+
+        print('%s:%d:%d: expected module shebang "%s" but found: %s' % (path, 1, 1, expected_shebang, shebang))
+        return False
+    else:
+        print('%s:%d:%d: expected module extension %s but found: %s' % (path, 0, 0, expected_ext, ext))
+        return False
+
 def validate_shebang(shebang, mode, path):
     if is_excluded_path(path):
         return True
@@ -109,22 +127,7 @@ def validate_shebang(shebang, mode, path):
         is_module = True
 
     if is_module:
-        if executable:
-            print('%s:%d:%d: module should not be executable' % (path, 0, 0))
-
-        ext = os.path.splitext(path)[1]
-        expected_shebang = module_shebangs.get(ext)
-        expected_ext = ' or '.join(['"%s"' % k for k in module_shebangs])
-
-        if expected_shebang:
-            if shebang == expected_shebang:
-                return True
-
-            print('%s:%d:%d: expected module shebang "%s" but found: %s' % (path, 1, 1, expected_shebang, shebang))
-            return False
-        else:
-            print('%s:%d:%d: expected module extension %s but found: %s' % (path, 0, 0, expected_ext, ext))
-            return False
+        return validate_module_shebang(shebang, executable, path)
     else:
         if is_integration:
             allowed = integration_shebangs
