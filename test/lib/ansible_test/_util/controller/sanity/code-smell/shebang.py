@@ -56,8 +56,10 @@ def is_excluded_path(path):
 
 
 def validate_module_shebang(shebang, executable, path):
+    valid = True
     if executable:
         print('%s:%d:%d: module should not be executable' % (path, 0, 0))
+        valid = False
 
     ext = os.path.splitext(path)[1]
     expected_shebang = module_shebangs.get(ext)
@@ -65,7 +67,7 @@ def validate_module_shebang(shebang, executable, path):
 
     if expected_shebang:
         if shebang == expected_shebang:
-            return True
+            return valid
 
         print('%s:%d:%d: expected module shebang "%s" but found: %s' % (path, 1, 1, expected_shebang, shebang))
         return False
