@@ -64,13 +64,13 @@ def validate_shebang(shebang, mode, path):
     if not shebang or not shebang.startswith(b'#!'):
         if executable:
             print('%s:%d:%d: file without shebang should not be executable' % (path, 0, 0))
+            return False
 
         for mark, name in byte_order_marks:
             if shebang.startswith(mark):
                 print('%s:%d:%d: file starts with a %s byte order mark' % (path, 0, 0, name))
-                break
-
-        return
+                return False
+        return True
 
     is_module = False
     is_integration = False
@@ -90,11 +90,12 @@ def validate_shebang(shebang, mode, path):
     elif path.startswith('lib/') or path.startswith('test/lib/'):
         if executable:
             print('%s:%d:%d: should not be executable' % (path, 0, 0))
+            return False
 
         if shebang:
             print('%s:%d:%d: should not have a shebang' % (path, 0, 0))
-
-        return
+            return False
+        return True
     elif path.startswith('test/integration/targets/') or path.startswith('tests/integration/targets/'):
         is_integration = True
 
@@ -117,11 +118,13 @@ def validate_shebang(shebang, mode, path):
 
         if expected_shebang:
             if shebang == expected_shebang:
-                return
+                return True
 
             print('%s:%d:%d: expected module shebang "%s" but found: %s' % (path, 1, 1, expected_shebang, shebang))
+            return False
         else:
             print('%s:%d:%d: expected module extension %s but found: %s' % (path, 0, 0, expected_ext, ext))
+            return False
     else:
         if is_integration:
             allowed = integration_shebangs
@@ -130,6 +133,8 @@ def validate_shebang(shebang, mode, path):
 
         if shebang not in allowed:
             print('%s:%d:%d: unexpected non-module shebang: %s' % (path, 1, 1, shebang))
+            return False
+    return True
 
 
 def main():

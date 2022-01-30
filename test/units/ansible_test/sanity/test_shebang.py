@@ -39,4 +39,4 @@ class TestValidateShebang:
         assert self.shebang.validate_shebang(b"invalid shebang", 33268, "examples/file.sh")
 
     def test_included_path_no_early_exit_(self):
-        assert self.shebang.validate_shebang(b"#!/bin/bash", 33268, "file.sh") is None
+        assert not self.shebang.validate_shebang(b"invalid_shebang", 33268, "file.sh")
