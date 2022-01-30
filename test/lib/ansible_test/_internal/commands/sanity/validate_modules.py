@@ -166,13 +166,11 @@ class ValidateModulesTest(SanitySingleVersion):
 
             messages = json.loads(stdout)
 
-            plugin_errors = []
-
             for filename in messages:
                 output = messages[filename]
 
                 for item in output['errors']:
-                    plugin_errors.append(SanityMessage(
+                    errors.append(SanityMessage(
                         path=filename,
                         line=int(item['line']) if 'line' in item else 0,
                         column=int(item['column']) if 'column' in item else 0,
@@ -180,12 +178,13 @@ class ValidateModulesTest(SanitySingleVersion):
                         message=item['msg'],
                     ))
 
-            errors += settings.process_errors(plugin_errors, paths)
+        all_paths = [target.path for target in targets.include]
+        all_errors = settings.process_errors(errors, all_paths)
 
         if args.explain:
             return SanitySuccess(self.name)
 
-        if errors:
-            return SanityFailure(self.name, messages=errors)
+        if all_errors:
+            return SanityFailure(self.name, messages=all_errors)
 
         return SanitySuccess(self.name)
