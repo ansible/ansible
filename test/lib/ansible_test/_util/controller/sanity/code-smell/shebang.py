@@ -56,6 +56,7 @@ def is_excluded_path(path):
 
 
 def validate_module_shebang(shebang, executable, path):
+    """Validate the shebang for an Ansible module."""
     valid = True
     if executable:
         print('%s:%d:%d: module should not be executable' % (path, 0, 0))
@@ -65,15 +66,16 @@ def validate_module_shebang(shebang, executable, path):
     expected_shebang = module_shebangs.get(ext)
     expected_ext = ' or '.join(['"%s"' % k for k in module_shebangs])
 
-    if expected_shebang:
-        if shebang == expected_shebang:
-            return valid
-
-        print('%s:%d:%d: expected module shebang "%s" but found: %s' % (path, 1, 1, expected_shebang, shebang))
-        return False
-    else:
+    if not expected_shebang:
         print('%s:%d:%d: expected module extension %s but found: %s' % (path, 0, 0, expected_ext, ext))
         return False
+
+    if shebang != expected_shebang:
+        print('%s:%d:%d: expected module shebang "%s" but found: %s' % (path, 1, 1, expected_shebang, shebang))
+        return False
+
+    return valid
+
 
 def validate_shebang(shebang, mode, path):
     if is_excluded_path(path):
