@@ -206,25 +206,25 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
         seealso:
 
-        # Reference by module name
-        - module: cisco.aci.aci_tenant
+          # Reference by module name
+          - module: cisco.aci.aci_tenant
 
-        # Reference by module name, including description
-        - module: cisco.aci.aci_tenant
-          description: ACI module to create tenants on a Cisco ACI fabric.
+          # Reference by module name, including description
+          - module: cisco.aci.aci_tenant
+            description: ACI module to create tenants on a Cisco ACI fabric.
 
-        # Reference by rST documentation anchor
-        - ref: aci_guide
-          description: Detailed information on how to manage your ACI infrastructure using Ansible.
+          # Reference by rST documentation anchor
+          - ref: aci_guide
+            description: Detailed information on how to manage your ACI infrastructure using Ansible.
 
-        # Reference by rST documentation anchor (with custom title)
-        - ref: The official Ansible ACI guide <aci_guide>
-          description: Detailed information on how to manage your ACI infrastructure using Ansible.
+          # Reference by rST documentation anchor (with custom title)
+          - ref: The official Ansible ACI guide <aci_guide>
+            description: Detailed information on how to manage your ACI infrastructure using Ansible.
 
-        # Reference by Internet resource
-        - name: APIC Management Information Model reference
-          description: Complete reference of the APIC object model.
-          link: https://developer.cisco.com/docs/apic-mim-ref/
+          # Reference by Internet resource
+          - name: APIC Management Information Model reference
+            description: Complete reference of the APIC object model.
+            link: https://developer.cisco.com/docs/apic-mim-ref/
 
 
   * If you use ``ref:`` to link to an anchor that is not associated with a title, you must add a title to the ref for the link to work correctly.
@@ -325,8 +325,8 @@ For example, all AWS modules should include:
 .. code-block:: yaml+jinja
 
     extends_documentation_fragment:
-    - aws
-    - ec2
+      - aws
+      - ec2
 
 :ref:`docfragments_collections` describes how to incorporate documentation fragments in a collection.
 
