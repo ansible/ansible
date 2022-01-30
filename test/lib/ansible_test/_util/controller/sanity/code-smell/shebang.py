@@ -57,7 +57,7 @@ def is_excluded_path(path):
 
 def validate_shebang(shebang, mode, path):
     if is_excluded_path(path):
-        return
+        return True
 
     executable = (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH) & mode
 
