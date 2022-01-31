@@ -2068,6 +2068,17 @@ releases:
     - fix_cli_ssh_defaults.yml
     - v2.10.16rc1_summary.yaml
     release_date: '2021-11-29'
+  2.10.17:
+    changes:
+      release_summary: '| Release Date: 2022-01-31
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - v2.10.17_summary.yaml
+    release_date: '2022-01-31'
   2.10.17rc1:
     changes:
       bugfixes:
