@@ -1,0 +1,16 @@
+- name: outer
+  vars:
+    myvar: abc
+  block:
+    - assert:
+        that:
+          - "myvar == 'abc'"
+
+    - name: inner block
+      vars:
+        myvar: 123
+      block:
+
+      - assert:
+          that:
+            - myvar|int == 123
