@@ -1141,6 +1141,21 @@ releases:
     - v2.12.1rc1_summary.yaml
     - win_LinkUtil-ignore-LIB.yml
     release_date: '2021-11-29'
+  2.12.2:
+    changes:
+      bugfixes:
+      - ansible-test - Show an error message instead of a traceback when running outside
+        of a supported directory.
+      release_summary: '| Release Date: 2022-01-31
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Dazed and Confused
+    fragments:
+    - ansible-test-unsupported-directory-traceback.yaml
+    - v2.12.2_summary.yaml
+    release_date: '2022-01-31'
   2.12.2rc1:
     changes:
       bugfixes:
