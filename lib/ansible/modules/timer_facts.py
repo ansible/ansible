@@ -143,7 +143,6 @@ class SystemctlScanService(BaseService):
                 state_val = "running"
 
             timers[timer_name] = {"name": timer_name, "state": state_val, "status": status_val, "source": "systemd"}
-            
 
         # now try unit files for complete picture and final 'status'
         rc, stdout, stderr = self.module.run_command("%s list-unit-files --no-pager --type timer --all" % systemctl_path, use_unsafe_shell=True)
