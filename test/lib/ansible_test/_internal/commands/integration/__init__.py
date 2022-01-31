@@ -242,7 +242,7 @@ def integration_test_environment(
         ansible_config = ansible_config_src
         vars_file = os.path.join(data_context().content.root, data_context().content.integration_vars_path)
 
-        yield IntegrationEnvironment(integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
+        yield IntegrationEnvironment(data_context().content.root, integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
         return
 
     # When testing a collection, the temporary directory must reside within the collection.
@@ -321,7 +321,7 @@ def integration_test_environment(
                 make_dirs(os.path.dirname(file_dst))
                 shutil.copy2(file_src, file_dst)
 
-        yield IntegrationEnvironment(integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
+        yield IntegrationEnvironment(temp_dir, integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
     finally:
         if not args.explain:
             remove_tree(temp_dir)
@@ -591,7 +591,7 @@ def command_integration_script(
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
 
-        env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
+        env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env)
         cwd = os.path.join(test_env.targets_dir, target.relative_path)
 
         env.update(dict(
@@ -712,7 +712,7 @@ def command_integration_role(
             if args.verbosity:
                 cmd.append('-' + ('v' * args.verbosity))
 
-            env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
+            env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env)
             cwd = test_env.integration_dir
 
             env.update(dict(
@@ -767,6 +767,7 @@ def integration_environment(
         inventory_path,  # type: str
         ansible_config,  # type: t.Optional[str]
         env_config,  # type: t.Optional[CloudEnvironmentConfig]
+        test_env,  # type: IntegrationEnvironment
 ):  # type: (...) -> t.Dict[str, str]
     """Return a dictionary of environment variables to use when running the given integration test target."""
     env = ansible_environment(args, ansible_config=ansible_config)
@@ -775,6 +776,8 @@ def integration_environment(
 
     integration = dict(
         JUNIT_OUTPUT_DIR=ResultType.JUNIT.path,
+        JUNIT_TASK_RELATIVE_PATH=test_env.test_dir,
+        JUNIT_REPLACE_OUT_OF_TREE_PATH='out-of-tree:',
         ANSIBLE_CALLBACKS_ENABLED=','.join(sorted(set(callback_plugins))),
         ANSIBLE_TEST_CI=args.metadata.ci_provider or get_ci_provider().code,
         ANSIBLE_TEST_COVERAGE='check' if args.coverage_check else ('yes' if args.coverage else ''),
@@ -798,7 +801,8 @@ def integration_environment(
 
 class IntegrationEnvironment:
     """Details about the integration environment."""
-    def __init__(self, integration_dir, targets_dir, inventory_path, ansible_config, vars_file):
+    def __init__(self, test_dir, integration_dir, targets_dir, inventory_path, ansible_config, vars_file):
+        self.test_dir = test_dir
         self.integration_dir = integration_dir
         self.targets_dir = targets_dir
         self.inventory_path = inventory_path
