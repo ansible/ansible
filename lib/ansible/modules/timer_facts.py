@@ -99,7 +99,7 @@ class BaseService(object):
         self.incomplete_warning = False
 
 
-class SystemctlScanService(BaseService):
+class SystemctlScanTimer(BaseService):
 
     def systemd_enabled(self):
         # Check if init is the systemd command, using comm as cmdline could be symlink
@@ -170,7 +170,7 @@ def main():
     module.run_command_environ_update = dict(LANG=locale, LC_ALL=locale)
     all_timers = {}
     incomplete_warning = False
-    tmrmod = SystemctlScanService(module)
+    tmrmod = SystemctlScanTimer(module)
     tmr = tmrmod.gather_timers()
     if tmr is not None:
         all_timers.update(tmr)
