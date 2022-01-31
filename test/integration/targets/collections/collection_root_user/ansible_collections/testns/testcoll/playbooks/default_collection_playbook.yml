@@ -19,9 +19,9 @@
       block:
       - import_role:
           name: non_coll_role
-      - assert:
-          that:
-            - test_role_output.msg == test_role_input
+            #- assert:
+            #    that:
+            #      - test_role_output.msg == test_role_input
 
 - hosts: testhost
   vars:
