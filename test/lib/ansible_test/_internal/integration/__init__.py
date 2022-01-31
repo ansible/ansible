@@ -208,7 +208,7 @@ def integration_test_environment(args, target, inventory_path_src):
         ansible_config = ansible_config_src
         vars_file = os.path.join(data_context().content.root, data_context().content.integration_vars_path)
 
-        yield IntegrationEnvironment(integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
+        yield IntegrationEnvironment(data_context().content.root, integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
         return
 
     # When testing a collection, the temporary directory must reside within the collection.
@@ -286,7 +286,7 @@ def integration_test_environment(args, target, inventory_path_src):
                 make_dirs(os.path.dirname(file_dst))
                 shutil.copy2(file_src, file_dst)
 
-        yield IntegrationEnvironment(integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
+        yield IntegrationEnvironment(temp_dir, integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
     finally:
         if not args.explain:
             shutil.rmtree(temp_dir)
@@ -324,7 +324,8 @@ def integration_test_config_file(args, env_config, integration_dir):
 
 class IntegrationEnvironment:
     """Details about the integration environment."""
-    def __init__(self, integration_dir, targets_dir, inventory_path, ansible_config, vars_file):
+    def __init__(self, test_dir, integration_dir, targets_dir, inventory_path, ansible_config, vars_file):
+        self.test_dir = test_dir
         self.integration_dir = integration_dir
         self.targets_dir = targets_dir
         self.inventory_path = inventory_path
