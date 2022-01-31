@@ -12,7 +12,7 @@ module: timer_facts
 short_description: Return timer state information as fact data
 description:
      - Return timer state information as fact data for various timer management utilities.
-version_added: "2.5"
+version_added: "2.12.1"
 requirements: ["systemd"]
 extends_documentation_fragment:
   -  action_common_attributes
