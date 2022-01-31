@@ -132,8 +132,6 @@ stages:
               test: centos6
             - name: CentOS 7
               test: centos7
-            - name: CentOS 8
-              test: centos8
             - name: Fedora 30
               test: fedora30
             - name: Fedora 31
