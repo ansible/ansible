@@ -429,6 +429,10 @@ class TaskExecutor:
         templar = Templar(loader=self._loader, variables=variables)
 
         context_validation_error = None
+
+        # a certain subset of variables exist.
+        tempvars = module_response_deepcopy(variables)
+
         try:
             # TODO: remove play_context as this does not take delegation into account, task itself should hold values
             #  for connection/shell/become/terminal plugin options to finalize.
@@ -449,8 +453,6 @@ class TaskExecutor:
                 self._play_context.remote_addr = self._host.address
 
             # We also add "magic" variables back into the variables dict to make sure
-            # a certain subset of variables exist.
-            tempvars = module_response_deepcopy(variables)
             self._play_context.update_vars(tempvars)
 
         except AnsibleError as e:
