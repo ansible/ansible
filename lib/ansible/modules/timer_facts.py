@@ -12,7 +12,7 @@ module: timer_facts
 short_description: Return timer state information as fact data
 description:
      - Return timer state information as fact data for various timer management utilities.
-version_added: "2.12.1"
+version_added: "2.13"
 requirements: ["systemd"]
 extends_documentation_fragment:
   -  action_common_attributes
@@ -35,7 +35,7 @@ notes:
     the fact data value like C(ansible_facts.timers['zuul-gateway'])
   - AIX SRC was added in version 2.11.
 author:
-  - "@aconitumnapellus"
+  - aconitumnapellus (@aconitumnapellus)
 '''
 
 EXAMPLES = r'''
