@@ -1,0 +1,2 @@
+bugfixes:
+  - correctly inherit vars from parent in block (https://github.com/ansible/ansible/issues/75286).
