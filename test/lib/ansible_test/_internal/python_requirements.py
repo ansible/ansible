@@ -455,8 +455,8 @@ def get_cryptography_requirements(python):  # type: (PythonConfig) -> t.List[str
         # cryptography 3.4+ fails to install on many systems
         # this is a temporary work-around until a more permanent solution is available
         cryptography = 'cryptography < 3.4'
-        # no specific version of pyopenssl required, don't install it
-        pyopenssl = None
+        # pyopenssl 20.0.0 requires cryptography 35 or later
+        pyopenssl = 'pyopenssl < 22.0.0'
 
     requirements = [
         cryptography,
