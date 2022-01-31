@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.module_utils.six import string_types
+from functools import reduce
 
 
 def pct_to_int(value, num_items, min_value=1):
@@ -49,3 +50,10 @@ def deduplicate_list(original_list):
     """
     seen = set()
     return [x for x in original_list if x not in seen and not seen.add(x)]
+
+
+def dig(dictionary, *keys, default=None):
+    """
+    Returns nested value for keys, or returns default on key error.
+    """
+    return reduce(lambda d, key: d.get(key, default) if isinstance(d, dict) else default, keys, dictionary)

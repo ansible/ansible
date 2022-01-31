@@ -29,12 +29,13 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.loader import become_loader, connection_loader, shell_loader
 from ansible.playbook import Playbook
 from ansible.template import Templar
-from ansible.utils.helpers import pct_to_int
+from ansible.utils.helpers import pct_to_int, dig
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
 from ansible.utils.path import makedirs_safe
 from ansible.utils.ssh_functions import set_default_transport
 from ansible.utils.display import Display
+import itertools
 
 
 display = Display()
@@ -271,6 +272,29 @@ class PlaybookExecutor:
 
         return result
 
+    def _serialize_by_key(self, play, hosts):
+        '''
+        Returns a list of hosts, subdivided into batches based on
+        the hostvar specified in the play, sorted by count
+        '''
+
+        batches = []
+        k = play.serial_by_hostvar
+        if k:
+            def by_hostvar(x):
+                hostvars = x.get_vars()
+                v = dig(hostvars, *k.split("."), default="")
+                return (isinstance(v, str), v)
+
+            hosts_by_var = sorted(hosts, key=by_hostvar)
+
+            for _k, v in itertools.groupby(hosts_by_var, by_hostvar):
+                batches.append(list(v))
+            batches = sorted(batches, key=len, reverse=(play.order == 'reverse_sorted'))
+        else:
+            batches = [hosts]
+        return batches
+
     def _get_serialized_batches(self, play):
         '''
         Returns a list of hosts, subdivided into batches based on
@@ -280,6 +304,7 @@ class PlaybookExecutor:
         # make sure we have a unique list of hosts
         all_hosts = self._inventory.get_hosts(play.hosts, order=play.order)
         all_hosts_len = len(all_hosts)
+        all_hosts_by_key = self._serialize_by_key(play, all_hosts)
 
         # the serial value can be listed as a scalar or a list of
         # scalars, so we make sure it's a list here
@@ -289,31 +314,31 @@ class PlaybookExecutor:
 
         cur_item = 0
         serialized_batches = []
+        for batch in all_hosts_by_key:
+            while len(batch) > 0:
+                # get the serial value from current item in the list
+                serial = pct_to_int(serial_batch_list[cur_item], all_hosts_len)
 
-        while len(all_hosts) > 0:
-            # get the serial value from current item in the list
-            serial = pct_to_int(serial_batch_list[cur_item], all_hosts_len)
+                # if the serial count was not specified or is invalid, default to
+                # a list of all hosts, otherwise grab a chunk of the hosts equal
+                # to the current serial item size
+                if serial <= 0:
+                    serialized_batches.append(batch)
+                    break
+                else:
+                    play_hosts = []
+                    for x in range(serial):
+                        if len(batch) > 0:
+                            play_hosts.append(batch.pop(0))
 
-            # if the serial count was not specified or is invalid, default to
-            # a list of all hosts, otherwise grab a chunk of the hosts equal
-            # to the current serial item size
-            if serial <= 0:
-                serialized_batches.append(all_hosts)
-                break
-            else:
-                play_hosts = []
-                for x in range(serial):
-                    if len(all_hosts) > 0:
-                        play_hosts.append(all_hosts.pop(0))
+                    serialized_batches.append(play_hosts)
 
-                serialized_batches.append(play_hosts)
-
-            # increment the current batch list item number, and if we've hit
-            # the end keep using the last element until we've consumed all of
-            # the hosts in the inventory
-            cur_item += 1
-            if cur_item > len(serial_batch_list) - 1:
-                cur_item = len(serial_batch_list) - 1
+                # increment the current batch list item number, and if we've hit
+                # the end keep using the last element until we've consumed all of
+                # the hosts in the inventory
+                cur_item += 1
+                if cur_item > len(serial_batch_list) - 1:
+                    cur_item = len(serial_batch_list) - 1
 
         return serialized_batches
 

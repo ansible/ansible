@@ -26,6 +26,7 @@ from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook import Playbook
 from ansible.template import Templar
 from ansible.utils import context_objects as co
+from ansible.inventory.host import Host
 
 from units.mock.loader import DictDataLoader
 
@@ -76,6 +77,13 @@ class TestPlaybookExecutor(unittest.TestCase):
               tasks:
               - debug: var=inventory_hostname
             ''',
+            'serial_by_var.yml': '''
+            - hosts: all
+              gather_facts: no
+              serial_by_hostvar: ansible_port
+              tasks:
+              - debug: var=inventory_hostname
+            ''',
         })
 
         mock_inventory = MagicMock()
@@ -84,7 +92,7 @@ class TestPlaybookExecutor(unittest.TestCase):
         templar = Templar(loader=fake_loader)
 
         pbe = PlaybookExecutor(
-            playbooks=['no_serial.yml', 'serial_int.yml', 'serial_pct.yml', 'serial_list.yml', 'serial_list_mixed.yml'],
+            playbooks=['no_serial.yml', 'serial_int.yml', 'serial_pct.yml', 'serial_list.yml', 'serial_list_mixed.yml', 'serial_by_var.yml'],
             inventory=mock_inventory,
             variable_manager=mock_var_manager,
             loader=fake_loader,
@@ -146,3 +154,10 @@ class TestPlaybookExecutor(unittest.TestCase):
             pbe._get_serialized_batches(play),
             [['host0', 'host1'], ['host2', 'host3'], ['host4', 'host5'], ['host6', 'host7'], ['host8', 'host9'], ['host10']]
         )
+
+        playbook = Playbook.load(pbe._playbooks[5], variable_manager=mock_var_manager, loader=fake_loader)
+        play = playbook.get_plays()[0]
+        play.post_validate(templar)
+        host1, host2, host3 = Host(name='host1', port=1), Host(name='host2', port=1), Host(name='host3', port=3)
+        hosts = [host1, host2, host3]
+        self.assertEqual(pbe._serialize_by_key(play, hosts), [[host3], [host1, host2]])

@@ -20,7 +20,7 @@ __metaclass__ = type
 
 import unittest
 
-from ansible.utils.helpers import pct_to_int
+from ansible.utils.helpers import pct_to_int, dig
 
 
 class TestHelpers(unittest.TestCase):
@@ -32,3 +32,13 @@ class TestHelpers(unittest.TestCase):
         self.assertEqual(pct_to_int("1%", 10, 0), 0)
         self.assertEqual(pct_to_int("1", 100), 1)
         self.assertEqual(pct_to_int("10%", 100), 10)
+
+    def test_dig(self):
+        dictionary = {
+            "a": {
+                "a2": 1
+            }
+        }
+        self.assertEqual(dig(dictionary, "a", "a2"), 1)
+        self.assertEqual(dig(dictionary, "a", "b"), None)
+        self.assertEqual(dig(dictionary, "a", "b", default=3), 3)
