@@ -88,8 +88,6 @@ ansible_facts:
 '''
 
 
-import platform
-import re
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 
