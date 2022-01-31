@@ -29,7 +29,7 @@ from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import to_unsafe_text, wrap_var
-from ansible.vars.clean import namespace_facts, clean_facts
+from ansible.vars.clean import namespace_facts, clean_facts, module_response_deepcopy
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, isidentifier
 
@@ -450,7 +450,8 @@ class TaskExecutor:
 
             # We also add "magic" variables back into the variables dict to make sure
             # a certain subset of variables exist.
-            self._play_context.update_vars(variables)
+            tempvars = module_response_deepcopy(variables)
+            self._play_context.update_vars(tempvars)
 
         except AnsibleError as e:
             # save the error, which we'll raise later if we don't end up
@@ -462,7 +463,7 @@ class TaskExecutor:
         # the fact that the conditional may specify that the task be skipped due to a
         # variable not being present which would otherwise cause validation to fail
         try:
-            if not self._task.evaluate_conditional(templar, variables):
+            if not self._task.evaluate_conditional(templar, tempvars):
                 display.debug("when evaluation is False, skipping this task")
                 return dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
         except AnsibleError as e:
@@ -516,7 +517,7 @@ class TaskExecutor:
 
         if self._task.delegate_to:
             # use vars from delegated host (which already include task vars) instead of original host
-            cvars = variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
+            cvars = tempvars.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
             orig_vars = templar.available_variables
         else:
             # just use normal host vars
