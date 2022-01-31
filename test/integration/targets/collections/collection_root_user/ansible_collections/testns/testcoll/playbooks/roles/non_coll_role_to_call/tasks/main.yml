@@ -4,4 +4,4 @@
 
 - assert:
     that:
-    - non_coll_role_to_call_test_role_output is not defined or non_coll_role_to_call_test_role_output == test_role_output.msg
+    - 'non_coll_role_to_call_test_role_output.msg == "include another non-coll role"'
