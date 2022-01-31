@@ -367,9 +367,9 @@ The instructions can be found in :ref:`from_pip`.
 
 .. note::
 
-macOS 12.3 removes the Python 2 installation. The official recommendation for installing Python on macOS for use by Ansible is to use the installer provided by `Python.org <https://www.python.org/downloads/macos/>`_.
+    macOS 12.3 removes the Python 2 installation. The official recommendation for installing Python on macOS for use by Ansible is to use the installer provided by `Python.org <https://www.python.org/downloads/macos/>`_.
 
-Alternatively, you can choose to manually execute ``/usr/bin/python3`` provided along with macOS, and follow the instructions to install the Xcode developer tools. This is not listed as the official recommendation due to the extra dependencies.
+    Alternatively, you can choose to manually execute ``/usr/bin/python3`` provided along with macOS, and follow the instructions to install the Xcode developer tools. This is not listed as the official recommendation due to the extra dependencies.
 
 .. note::
 
