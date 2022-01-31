@@ -100,7 +100,7 @@ def get_ps(module, pattern):
     if rc == 0:
         for line in psout.splitlines():
             if pattern in line:
-                # FIXME: should add logic to prevent matching 'self', though that should be extreemly rare
+                # FIXME: should add logic to prevent matching 'self', though that should be extremely rare
                 found = True
                 break
     return found

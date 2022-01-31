@@ -80,7 +80,7 @@ namespace Ansible.Become
 
         public enum SECURITY_LOGON_TYPE
         {
-            System = 0, // Used only by the Sytem account
+            System = 0, // Used only by the System account
             Interactive = 2,
             Network,
             Batch,

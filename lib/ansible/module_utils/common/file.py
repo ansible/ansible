@@ -67,7 +67,7 @@ def is_executable(path):
     # This function's signature needs to be repeated
     # as the first line of its docstring.
     # This method is reused by the basic module,
-    # the repetion helps the basic module's html documentation come out right.
+    # the repetition helps the basic module's html documentation come out right.
     # http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_docstring_signature
     '''is_executable(path)
 

@@ -850,7 +850,7 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True, ca_path=N
             # Be conciliant with URIs containing a space
             newurl = newurl.replace(' ', '%20')
 
-            # Suport redirect with payload and original headers
+            # Support redirect with payload and original headers
             if code in (307, 308):
                 # Preserve payload and headers
                 headers = req.headers
