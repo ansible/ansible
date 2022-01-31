@@ -35,7 +35,7 @@ notes:
     the fact data value like C(ansible_facts.timers['zuul-gateway'])
   - AIX SRC was added in version 2.11.
 author:
-  - @aconitumnapellus
+  - "@aconitumnapellus"
 '''
 
 EXAMPLES = r'''
