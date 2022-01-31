@@ -120,8 +120,6 @@ stages:
               test: centos6
             - name: CentOS 7
               test: centos7
-            - name: CentOS 8
-              test: centos8
             - name: Fedora 33
               test: fedora33
             - name: Fedora 34
@@ -194,8 +192,6 @@ stages:
               test: centos6
             - name: CentOS 7
               test: centos7
-            - name: CentOS 8
-              test: centos8
             - name: Fedora 33
               test: fedora33
             - name: Fedora 34
