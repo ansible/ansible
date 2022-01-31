@@ -78,7 +78,7 @@ Function Convert-ToSID {
     }
     else {
         # when in a domain NTAccount(String) will favour domain lookups check
-        # if username is a local user and explictly search on the localhost for
+        # if username is a local user and explicitly search on the localhost for
         # that account
         $adsi = [ADSI]("WinNT://$env:COMPUTERNAME,computer")
         $user = $adsi.psbase.children | Where-Object { $_.schemaClassName -eq "user" -and $_.Name -eq $username }

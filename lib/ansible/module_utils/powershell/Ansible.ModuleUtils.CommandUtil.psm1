@@ -28,7 +28,7 @@ Function Get-ExecutablePath {
     Get's the full path to an executable, will search the directory specified or ones in the PATH env var.
 
     .PARAMETER executable
-    [String]The executable to seach for.
+    [String]The executable to search for.
 
     .PARAMETER directory
     [String] If set, the directory to search in.
