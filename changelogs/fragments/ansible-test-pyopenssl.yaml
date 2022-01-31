@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - When installing ``cryptography < 3.4`` also install ``pyopenssl < 22`` to avoid conflicts.
