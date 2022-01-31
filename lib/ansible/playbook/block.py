@@ -78,12 +78,11 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         Blocks do not store variables directly, however they may be a member
         of a role or task include which does, so return those if present.
         '''
-
-        all_vars = self.vars.copy()
-
+        all_vars = {}
         if self._parent:
             all_vars.update(self._parent.get_vars())
 
+        all_vars.update(self.vars)
         return all_vars
 
     @staticmethod
