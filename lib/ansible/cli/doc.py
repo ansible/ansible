@@ -10,7 +10,6 @@ __metaclass__ = type
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
 
-import datetime
 import json
 import pkgutil
 import os
@@ -42,7 +41,6 @@ from ansible.utils.collection_loader._collection_finder import _get_collection_n
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import (
     REJECTLIST,
-    remove_current_collection_from_versions_and_dates,
     get_docstring,
     get_versioned_doclink,
 )
@@ -255,7 +253,7 @@ class RoleMixin(object):
 
         return (fqcn, doc)
 
-    def _create_role_list(self, roles_path, collection_filter=None):
+    def _create_role_list(self):
         """Return a dict describing the listing of all roles with arg specs.
 
         :param role_paths: A tuple of one or more role paths.
@@ -285,6 +283,8 @@ class RoleMixin(object):
                },
             }
         """
+        roles_path = self._get_roles_path()
+        collection_filter = self._get_collection_filter()
         if not collection_filter:
             roles = self._find_all_normal_roles(roles_path)
         else:
@@ -305,7 +305,7 @@ class RoleMixin(object):
 
         return result
 
-    def _create_role_doc(self, role_names, roles_path, entry_point=None):
+    def _create_role_doc(self, role_names, entry_point=None):
         """
         :param role_names: A tuple of one or more role names.
         :param role_paths: A tuple of one or more role paths.
@@ -313,6 +313,7 @@ class RoleMixin(object):
 
         :returns: A dict indexed by role name, with 'collection', 'entry_points', and 'path' keys per role.
         """
+        roles_path = self._get_roles_path()
         roles = self._find_all_normal_roles(roles_path, name_filters=role_names)
         collroles = self._find_all_collection_roles(name_filters=role_names)
 
@@ -433,7 +434,7 @@ class DocCLI(CLI, RoleMixin):
         exclusive.add_argument("-l", "--list", action="store_true", default=False, dest='list_dir',
                                help='List available plugins. %s' % coll_filter)
         exclusive.add_argument("--metadata-dump", action="store_true", default=False, dest='dump',
-                               help='**For internal testing only** Dump json metadata for all plugins.')
+                               help='**For internal use only** Dump json metadata for all entries, ignores other options.')
 
     def post_process_args(self, options):
         options = super(DocCLI, self).post_process_args(options)
@@ -588,13 +589,24 @@ class DocCLI(CLI, RoleMixin):
 
         return data
 
-    def _list_plugins(self, plugin_type, loader):
+    def _get_collection_filter(self):
 
-        results = {}
         coll_filter = None
         if len(context.CLIARGS['args']) == 1:
             coll_filter = context.CLIARGS['args'][0]
+            if not AnsibleCollectionRef.is_valid_collection_name(coll_filter):
+                raise AnsibleError('Invalid collection name (must be of the form namespace.collection): {0}'.format(coll_filter))
+            elif len(context.CLIARGS['args']) > 1:
+                raise AnsibleOptionsError("Only a single collection filter is supported.")
 
+        return coll_filter
+
+    def _list_plugins(self, plugin_type, content):
+
+        results = {}
+        loader = DocCLI._prep_loader(plugin_type)
+
+        coll_filter = self._get_collection_filter()
         if coll_filter in ('ansible.builtin', 'ansible.legacy', '', None):
             paths = loader._get_paths_with_context()
             for path_context in paths:
@@ -603,31 +615,23 @@ class DocCLI(CLI, RoleMixin):
         add_collection_plugins(self.plugin_list, plugin_type, coll_filter=coll_filter)
 
         # get appropriate content depending on option
-        if context.CLIARGS['list_dir']:
+        if content == 'dir':
             results = self._get_plugin_list_descriptions(loader)
-        elif context.CLIARGS['list_files']:
+        elif content == 'files':
             results = self._get_plugin_list_filenames(loader)
-        # dump plugin desc/data as JSON
-        elif context.CLIARGS['dump']:
-            plugin_names = DocCLI.get_all_plugins_of_type(plugin_type)
-            for plugin_name in plugin_names:
-                plugin_info = DocCLI.get_plugin_metadata(plugin_type, plugin_name)
-                if plugin_info is not None:
-                    results[plugin_name] = plugin_info
-
+        else:
+            results = {k: {} for k in self.plugin_list}
+            self.plugin_list = set()  # reset for next iteration
         return results
 
-    def _get_plugins_docs(self, plugin_type, loader):
+    def _get_plugins_docs(self, plugin_type, names):
 
+        loader = DocCLI._prep_loader(plugin_type)
         search_paths = DocCLI.print_paths(loader)
-
-        # display specific plugin docs
-        if len(context.CLIARGS['args']) == 0:
-            raise AnsibleOptionsError("Incorrect options passed")
 
         # get the docs for plugins in the command line list
         plugin_docs = {}
-        for plugin in context.CLIARGS['args']:
+        for plugin in names:
             try:
                 doc, plainexamples, returndocs, metadata = DocCLI._get_plugin_doc(plugin, plugin_type, loader, search_paths)
             except PluginNotFound:
@@ -647,78 +651,102 @@ class DocCLI(CLI, RoleMixin):
 
         return plugin_docs
 
+    def _get_roles_path(self):
+        '''
+         Add any 'roles' subdir in playbook dir to the roles search path.
+         And as a last resort, add the playbook dir itself. Order being:
+           - 'roles' subdir of playbook dir
+           - DEFAULT_ROLES_PATH (default in cliargs)
+           - playbook dir (basedir)
+         NOTE: This matches logic in RoleDefinition._load_role_path() method.
+        '''
+        roles_path = context.CLIARGS['roles_path']
+        if context.CLIARGS['basedir'] is not None:
+            subdir = os.path.join(context.CLIARGS['basedir'], "roles")
+            if os.path.isdir(subdir):
+                roles_path = (subdir,) + roles_path
+            roles_path = roles_path + (context.CLIARGS['basedir'],)
+        return roles_path
+
+    @staticmethod
+    def _prep_loader(plugin_type):
+        ''' return a plugint type specific loader '''
+        loader = getattr(plugin_loader, '%s_loader' % plugin_type)
+
+        # add to plugin paths from command line
+        if context.CLIARGS['basedir'] is not None:
+            loader.add_directory(context.CLIARGS['basedir'], with_subdir=True)
+
+        if context.CLIARGS['module_path']:
+            for path in context.CLIARGS['module_path']:
+                if path:
+                    loader.add_directory(path)
+
+        # save only top level paths for errors
+        loader._paths = None  # reset so we can use subdirs later
+
+        return loader
+
     def run(self):
 
         super(DocCLI, self).run()
 
         basedir = context.CLIARGS['basedir']
-        plugin_type = context.CLIARGS['type']
+        plugin_type = context.CLIARGS['type'].lower()
         do_json = context.CLIARGS['json_format'] or context.CLIARGS['dump']
-        roles_path = context.CLIARGS['roles_path']
-        listing = context.CLIARGS['list_files'] or context.CLIARGS['list_dir'] or context.CLIARGS['dump']
+        listing = context.CLIARGS['list_files'] or context.CLIARGS['list_dir']
+
+        if context.CLIARGS['list_files']:
+            content = 'files'
+        elif context.CLIARGS['list_dir']:
+            content = 'dir'
+        else:
+            content = None
+
         docs = {}
 
         if basedir:
             AnsibleCollectionConfig.playbook_paths = basedir
 
-            # Add any 'roles' subdir in playbook dir to the roles search path.
-            # And as a last resort, add the playbook dir itself. Order being:
-            #   - 'roles' subdir of playbook dir
-            #   - DEFAULT_ROLES_PATH
-            #   - playbook dir
-            # NOTE: This matches logic in RoleDefinition._load_role_path() method.
-            subdir = os.path.join(basedir, "roles")
-            if os.path.isdir(subdir):
-                roles_path = (subdir,) + roles_path
-            roles_path = roles_path + (basedir,)
-
         if plugin_type not in TARGET_OPTIONS:
             raise AnsibleOptionsError("Unknown or undocumentable plugin type: %s" % plugin_type)
-        elif plugin_type == 'keyword':
 
-            if context.CLIARGS['dump']:
-                keys = DocCLI._list_keywords()
-                docs = DocCLI._get_keywords_docs(keys.keys())
-            elif listing:
+        if context.CLIARGS['dump']:
+            # we always dump all types, ignore restrictions
+            ptypes = TARGET_OPTIONS
+            docs['all'] = {}
+            for ptype in ptypes:
+                if ptype == 'role':
+                    roles = self._create_role_list()
+                    docs['all'][ptype] = self._create_role_doc(roles.keys(), context.CLIARGS['entry_point'])
+                elif ptype == 'keyword':
+                    names = DocCLI._list_keywords()
+                    docs['all'][ptype] = DocCLI._get_keywords_docs(names.keys())
+                else:
+                    plugin_names = self._list_plugins(ptype, None)
+                    docs['all'][ptype] = self._get_plugins_docs(ptype, plugin_names)
+                    # reset list after each type to avoid polution
+        elif listing:
+            if plugin_type == 'keyword':
                 docs = DocCLI._list_keywords()
+            elif plugin_type == 'role':
+                docs = self._create_role_list()
             else:
-                docs = DocCLI._get_keywords_docs(context.CLIARGS['args'])
-        elif plugin_type == 'role':
-            if context.CLIARGS['list_dir']:
-                # If an argument was given with --list, it is a collection filter
-                coll_filter = None
-                if len(context.CLIARGS['args']) == 1:
-                    coll_filter = context.CLIARGS['args'][0]
-                    if not AnsibleCollectionRef.is_valid_collection_name(coll_filter):
-                        raise AnsibleError('Invalid collection name (must be of the form namespace.collection): {0}'.format(coll_filter))
-                elif len(context.CLIARGS['args']) > 1:
-                    raise AnsibleOptionsError("Only a single collection filter is supported.")
-
-                docs = self._create_role_list(roles_path, collection_filter=coll_filter)
-            else:
-                docs = self._create_role_doc(context.CLIARGS['args'], roles_path, context.CLIARGS['entry_point'])
+                docs = self._list_plugins(plugin_type, content)
         else:
-            loader = getattr(plugin_loader, '%s_loader' % plugin_type)
+            # here we require a name
+            if len(context.CLIARGS['args']) == 0:
+                raise AnsibleOptionsError("Missing name(s), incorrect options passed for detailed documentation.")
 
-            # add to plugin paths from command line
-            basedir = context.CLIARGS['basedir']
-            if basedir:
-                AnsibleCollectionConfig.playbook_paths = basedir
-                loader.add_directory(basedir, with_subdir=True)
-
-            if context.CLIARGS['module_path']:
-                for path in context.CLIARGS['module_path']:
-                    if path:
-                        loader.add_directory(path)
-
-            # save only top level paths for errors
-            loader._paths = None  # reset so we can use subdirs below
-
-            if listing:
-                docs = self._list_plugins(plugin_type, loader)
+            if plugin_type == 'keyword':
+                docs = DocCLI._get_keywords_docs(context.CLIARGS['args'])
+            elif plugin_type == 'role':
+                docs = self._create_role_doc(context.CLIARGS['args'], context.CLIARGS['entry_point'])
             else:
-                docs = self._get_plugins_docs(plugin_type, loader)
+                # display specific plugin docs
+                docs = self._get_plugins_docs(plugin_type, context.CLIARGS['args'])
 
+        # Display the docs
         if do_json:
             jdump(docs)
         else:
@@ -764,44 +792,6 @@ class DocCLI(CLI, RoleMixin):
                 DocCLI.pager(''.join(text))
 
         return 0
-
-    @staticmethod
-    def get_all_plugins_of_type(plugin_type):
-        loader = getattr(plugin_loader, '%s_loader' % plugin_type)
-        plugin_list = set()
-        paths = loader._get_paths_with_context()
-        for path_context in paths:
-            plugins_to_add = DocCLI.find_plugins(path_context.path, path_context.internal, plugin_type)
-            plugin_list.update(plugins_to_add)
-        return sorted(set(plugin_list))
-
-    @staticmethod
-    def get_plugin_metadata(plugin_type, plugin_name):
-        # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-        loader = getattr(plugin_loader, '%s_loader' % plugin_type)
-        result = loader.find_plugin_with_context(plugin_name, mod_type='.py', ignore_deprecated=True, check_aliases=True)
-        if not result.resolved:
-            raise AnsibleError("unable to load {0} plugin named {1} ".format(plugin_type, plugin_name))
-        filename = result.plugin_resolved_path
-        collection_name = result.plugin_resolved_collection
-
-        try:
-            doc, __, __, __ = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0),
-                                            collection_name=collection_name, is_module=(plugin_type == 'module'))
-        except Exception:
-            display.vvv(traceback.format_exc())
-            raise AnsibleError("%s %s at %s has a documentation formatting error or is missing documentation." % (plugin_type, plugin_name, filename))
-
-        if doc is None:
-            # Removed plugins don't have any documentation
-            return None
-
-        return dict(
-            name=plugin_name,
-            namespace=DocCLI.namespace_from_plugin_filepath(filename, plugin_name, loader.package_path),
-            description=doc.get('short_description', "UNKNOWN"),
-            version_added=doc.get('version_added', "UNKNOWN")
-        )
 
     @staticmethod
     def namespace_from_plugin_filepath(filepath, plugin_name, basedir):
