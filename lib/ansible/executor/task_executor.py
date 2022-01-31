@@ -483,6 +483,9 @@ class TaskExecutor:
         if context_validation_error is not None and not (self._task.delegate_to and isinstance(context_validation_error, AnsibleUndefinedVariable)):
             raise context_validation_error  # pylint: disable=raising-bad-type
 
+        # set templar to use temp variables until loop is evaluated
+        templar.available_variables = tempvars
+
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
         if self._task.action in C._ACTION_ALL_INCLUDE_TASKS:
@@ -517,11 +520,10 @@ class TaskExecutor:
 
         if self._task.delegate_to:
             # use vars from delegated host (which already include task vars) instead of original host
-            cvars = tempvars.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
-            orig_vars = templar.available_variables
+            cvars = variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
         else:
             # just use normal host vars
-            cvars = orig_vars = variables
+            cvars = variables
 
         templar.available_variables = cvars
 
@@ -536,7 +538,7 @@ class TaskExecutor:
             self._connection._play_context = self._play_context
 
         plugin_vars = self._set_connection_options(cvars, templar)
-        templar.available_variables = orig_vars
+        templar.available_variables = variables
 
         # TODO: eventually remove this block as this should be a 'consequence' of 'forced_local' modules
         # special handling for python interpreter for network_os, default to ansible python unless overriden

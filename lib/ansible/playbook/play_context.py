@@ -330,7 +330,6 @@ class PlayContext(Base):
             except AttributeError:
                 continue
 
-
     def _get_attr_connection(self):
         ''' connections are special, this takes care of responding correctly '''
         conn_type = None
