@@ -165,7 +165,7 @@ class LinuxHardware(Hardware):
         i = 0
         vendor_id_occurrence = 0
         model_name_occurrence = 0
-        processor_occurence = 0
+        processor_occurrence = 0
         physid = 0
         coreid = 0
         sockets = {}
@@ -219,7 +219,7 @@ class LinuxHardware(Hardware):
                 if key == 'model name':
                     model_name_occurrence += 1
                 if key == 'processor':
-                    processor_occurence += 1
+                    processor_occurrence += 1
                 i += 1
             elif key == 'physical id':
                 physid = val
@@ -248,7 +248,7 @@ class LinuxHardware(Hardware):
         # The fields for Power CPUs include 'processor' and 'cpu'.
         # Always use 'processor' count for ARM and Power systems
         if collected_facts.get('ansible_architecture', '').startswith(('armv', 'aarch', 'ppc')):
-            i = processor_occurence
+            i = processor_occurrence
 
         # FIXME
         if collected_facts.get('ansible_architecture') != 's390x':
@@ -281,7 +281,7 @@ class LinuxHardware(Hardware):
                 # if the number of processors available to the module's
                 # thread cannot be determined, the processor count
                 # reported by /proc will be the default:
-                cpu_facts['processor_nproc'] = processor_occurence
+                cpu_facts['processor_nproc'] = processor_occurrence
 
                 try:
                     cpu_facts['processor_nproc'] = len(
