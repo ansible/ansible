@@ -5,13 +5,13 @@ ansible-core 2.12 "Dazed and Confused" Release Notes
 .. contents:: Topics
 
 
-v2.12.2rc1
-==========
+v2.12.2
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2022-01-24
+| Release Date: 2022-01-31
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
@@ -28,6 +28,7 @@ Bugfixes
 - ansible-test - Fix the ``import`` sanity test to work properly when Ansible's built-in vendoring support is in use.
 - ansible-test - Fix traceback in the ``validate-modules`` sanity test when testing an Ansible module without any callables.
 - ansible-test - Fix traceback when running from an install and delegating execution to a different Python interpreter.
+- ansible-test - Show an error message instead of a traceback when running outside of a supported directory.
 - ansible-test - Update help links to reference ``ansible-core`` instead of ``ansible``.
 - ansible-test - Update unit tests to use the ``--forked`` option instead of the deprecated ``--boxed`` option.
 - async - Improve performance of sending async callback events by never sending the full task through the queue (https://github.com/ansible/ansible/issues/76729)
