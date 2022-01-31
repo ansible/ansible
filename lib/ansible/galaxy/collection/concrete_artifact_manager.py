@@ -12,7 +12,7 @@ import tarfile
 import subprocess
 from contextlib import contextmanager
 from hashlib import sha256
-from urllib.error import HTTPError, URLError
+from urllib.error import URLError
 from urllib.parse import urldefrag
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -37,9 +37,9 @@ if TYPE_CHECKING:
 
 from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
+from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.dependency_resolution.dataclasses import _GALAXY_YAML
 from ansible.galaxy.user_agent import user_agent
-from ansible.galaxy.api import GalaxyAPI
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.six import raise_from
@@ -63,6 +63,7 @@ class ConcreteArtifactsManager:
         * keeping track of local ones
         * keeping track of Galaxy API tokens for downloads from Galaxy'ish
           as well as the artifact hashes
+        * keeping track of Galaxy API signatures for downloads from Galaxy'ish
         * caching all of above
         * retrieving the metadata out of the downloaded artifacts
     """
@@ -84,34 +85,8 @@ class ConcreteArtifactsManager:
     def keyring(self):
         return self._keyring
 
-    def get_signature_from_source(self, source: str, display: Display = None) -> str:
-        if display is not None:
-            display.vvvv(f"Using signature at {source}")
-
-        if source in self._supplemental_signature_cache:
-            return self._supplemental_signature_cache[source]
-
-        try:
-            with open_url(
-                source,
-                http_agent=user_agent(),
-                validate_certs=self._validate_certs,  # Is this overloading --ignore-certs?
-                follow_redirects='safe'
-            ) as resp:
-                signature = resp.read()
-        except (HTTPError, URLError) as e:
-            raise AnsibleError(
-                f"Failed to get signature for collection verification from '{source}': {e}"
-            ) from e
-
-        self._supplemental_signature_cache[source] = signature
-        return signature
-
     def get_galaxy_artifact_source_info(self, collection):
         # type: (Candidate) -> Dict[str, Union[str, List[Dict[str, str]]]]
-        if not (collection.is_online_index_pointer and isinstance(collection.src, GalaxyAPI)):
-            return {}
-
         server = collection.src.api_server
 
         try:

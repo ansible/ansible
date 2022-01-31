@@ -50,7 +50,6 @@ if TYPE_CHECKING:
     else:  # Python 2 + Python 3.4-3.7
         from typing_extensions import Literal
 
-    from ansible.galaxy.api import GalaxyAPI
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
     )
@@ -98,6 +97,7 @@ if TYPE_CHECKING:
 import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
+from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection.concrete_artifact_manager import (
     _consume_file,
     _download_file,
@@ -109,6 +109,7 @@ from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
 from ansible.galaxy.collection.gpg import (
     run_gpg_verify,
     parse_gpg_errors,
+    get_signature_from_source
 )
 from ansible.galaxy.dependency_resolution import (
     build_collection_dependency_resolver,
@@ -135,9 +136,46 @@ display = Display()
 MANIFEST_FORMAT = 1
 MANIFEST_FILENAME = 'MANIFEST.json'
 
-SOURCE_METADATA_FILE = 'GALAXY.yml'
-
 ModifiedContent = namedtuple('ModifiedContent', ['filename', 'expected', 'installed'])
+
+
+class CollectionSignatureError(Exception):
+    def __init__(self, reasons=None, stdout=None, rc=None):
+        self.reasons = reasons
+        self.stdout = stdout
+        self.rc = rc
+
+        self._reason_wrapper = None
+
+    def _report_unexpected(self, collection_name):
+        return (
+            f"Unexpected error for '{collection_name}': "
+            f"GnuPG signature verification failed with the return code {self.rc} and output {self.stdout}"
+        )
+
+    def _report_expected(self, collection_name):
+        header = f"Signature verification failed for '{collection_name}' (return code {self.rc}):"
+        return header + self._format_reasons()
+
+    def _format_reasons(self):
+        if self._reason_wrapper is None:
+            self._reason_wrapper = textwrap.TextWrapper(
+                initial_indent="    * ",  # 6 chars
+                subsequent_indent="      ",  # 6 chars
+            )
+
+        wrapped_reasons = [
+            '\n'.join(self._reason_wrapper.wrap(reason))
+            for reason in self.reasons
+        ]
+
+        return '\n' + '\n'.join(wrapped_reasons)
+
+    def report(self, collection_name):
+        if self.reasons:
+            return self._report_expected(collection_name)
+
+        return self._report_unexpected(collection_name)
 
 
 # FUTURE: expose actual verify result details for a collection on this object, maybe reimplement as dataclass on py3.8+
@@ -212,10 +250,11 @@ def verify_local_collection(
         )
     else:
         for signature in signatures:
-            signature = to_text(signature, errors="surrogate_or_strict")
-            if not verify_file_signature(local_collection.fqcn, manifest_file, signature, artifacts_manager.keyring):
+            try:
+                verify_file_signature(manifest_file, to_text(signature, errors='surrogate_or_strict'), artifacts_manager.keyring)
+            except CollectionSignatureError as error:
+                display.vvvv(error.report(local_collection.fqcn))
                 result.success = False
-
         if not result.success:
             return result
         elif signatures:
@@ -285,8 +324,9 @@ def verify_local_collection(
     return result
 
 
-def verify_file_signature(collection_name, manifest_file, detached_signature, keyring):
-    # type: (str, str, str) -> bool
+def verify_file_signature(manifest_file, detached_signature, keyring):
+    # type: (str, str, str) -> None
+    """Run the gpg command and parse any errors. Raises CollectionSignatureError on failure."""
     gpg_result, gpg_verification_rc = run_gpg_verify(manifest_file, detached_signature, keyring, display)
 
     if gpg_result:
@@ -294,30 +334,15 @@ def verify_file_signature(collection_name, manifest_file, detached_signature, ke
         try:
             error = next(errors)
         except StopIteration:
-            if gpg_verification_rc:
-                display.display(
-                    f"Unexpected error for '{collection_name}': "
-                    f"GnuPG signature verification failed with the return code {gpg_verification_rc} and output {gpg_result}"
-                )
-            return not gpg_verification_rc
+            pass
         else:
-            verify_failed = f"Signature verification failed for '{collection_name}' (return code {gpg_verification_rc}):"
-
-        text_wrapper = textwrap.TextWrapper(
-            initial_indent="    * ",  # 6 chars
-            subsequent_indent="      ",  # 6 chars
-        )
-        reasons = set(error.get_gpg_error_description() for error in chain([error], errors))
-        for reason in reasons:
-            verify_failed += '\n' + '\n'.join(text_wrapper.wrap(reason))
-        display.display(verify_failed)
-        return False
+            reasons = set(error.get_gpg_error_description() for error in chain([error], errors))
+            raise CollectionSignatureError(reasons=reasons, stdout=gpg_result, rc=gpg_verification_rc)
     if gpg_verification_rc:
-        display.display(
-            f"Unexpected error for '{collection_name}': "
-            f"GnuPG signature verification failed with the return code {gpg_verification_rc} and output {gpg_result}"
-        )
-    return not gpg_verification_rc
+        raise CollectionSignatureError(stdout=gpg_result, rc=gpg_verification_rc)
+
+    # No errors and rc is 0, verify was successful
+    return None
 
 
 def build_collection(u_collection_path, u_output_path, force):
@@ -743,7 +768,7 @@ def verify_collections(
                     # NOTE: those alone validate the MANIFEST.json and the remote collection is not downloaded.
                     # NOTE: The remote MANIFEST.json is only used in verification if there are no signatures.
                     signatures.extend([
-                        artifacts_manager.get_signature_from_source(source, display)
+                        get_signature_from_source(source, display)
                         for source in collection.signature_sources or []
                     ])
 
@@ -1174,13 +1199,9 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
         u"Installing '{coll!s}' to '{path!s}'".
         format(coll=to_text(collection), path=collection_path),
     )
-    metadata_path = os.path.join(path, f"{collection.namespace}.{collection.name}-{collection.ver}.info")
-    b_metadata_path = to_bytes(metadata_path, errors='surrogate_or_strict')
 
     if os.path.exists(b_collection_path):
         shutil.rmtree(b_collection_path)
-    if os.path.exists(b_metadata_path):
-        shutil.rmtree(b_metadata_path)
 
     if collection.is_dir:
         install_src(collection, b_artifact_path, b_collection_path, artifacts_manager)
@@ -1192,11 +1213,12 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
             collection.signatures,
             artifacts_manager.keyring
         )
-        write_source_metadata(
-            collection,
-            b_metadata_path,
-            artifacts_manager
-        )
+        if (collection.is_online_index_pointer and isinstance(collection.src, GalaxyAPI)):
+            write_source_metadata(
+                collection,
+                b_collection_path,
+                artifacts_manager
+            )
 
     display.display(
         '{coll!s} was installed successfully'.
@@ -1204,23 +1226,43 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
     )
 
 
-def write_source_metadata(collection, b_metadata_path, artifacts_manager):
+def write_source_metadata(collection, b_collection_path, artifacts_manager):
     # type: (Candidate, bytes, ConcreteArtifactsManager) -> None
     source_data = artifacts_manager.get_galaxy_artifact_source_info(collection)
-    if source_data.get("signatures") is None:
-        return
+
     b_yaml_source_data = to_bytes(yaml_dump(source_data), errors='surrogate_or_strict')
-    dest_file = os.path.join(b_metadata_path, to_bytes(SOURCE_METADATA_FILE))
+    b_info_dest = collection.construct_galaxy_info_path(b_collection_path)
+    b_info_dir = os.path.split(b_info_dest)[0]
+
+    if os.path.exists(b_info_dir):
+        shutil.rmtree(b_info_dir)
+
     try:
-        os.mkdir(b_metadata_path, mode=0o0755)
-        with open(dest_file, mode='w+b') as fd:
-            os.chmod(fd.name, 0o0644)
+        os.mkdir(b_info_dir, mode=0o0755)
+        with open(b_info_dest, mode='w+b') as fd:
             fd.write(b_yaml_source_data)
+        os.chmod(b_info_dest, 0o0644)
     except Exception:
         # Ensure we don't leave the dir behind in case of a failure.
-        if os.path.isdir(b_metadata_path):
-            shutil.rmtree(b_metadata_path)
+        if os.path.isdir(b_info_dir):
+            shutil.rmtree(b_info_dir)
         raise
+
+
+def verify_artifact_manifest(manifest_file, signatures, keyring):
+    # type: (str, str, List[str]) -> None
+    failed_verify = False
+    coll_path_parts = to_text(manifest_file, errors='surrogate_or_strict').split(os.path.sep)
+    collection_name = '%s.%s' % (coll_path_parts[-3], coll_path_parts[-2])  # get 'ns' and 'coll' from /path/to/ns/coll/MANIFEST.json
+    for signature in signatures:
+        try:
+            verify_file_signature(manifest_file, to_text(signature, errors='surrogate_or_strict'), keyring)
+        except CollectionSignatureError as error:
+            display.vvvv(error.report(collection_name))
+            failed_verify = True
+    if failed_verify:
+        raise AnsibleError(f"Not installing {collection_name} because GnuPG signature verification failed.")
+    display.vvvv(f"GnuPG signature verification succeeded for {collection_name}")
 
 
 def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatures, keyring):
@@ -1239,16 +1281,7 @@ def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatur
 
             if signatures and keyring is not None:
                 manifest_file = os.path.join(to_text(b_collection_path, errors='surrogate_or_strict'), MANIFEST_FILENAME)
-                failed_verify = False
-                coll_path_parts = to_text(b_collection_path, errors='surrogate_or_strict').split(os.path.sep)
-                collection_name = '%s.%s' % (coll_path_parts[-2], coll_path_parts[-1])
-                for signature in signatures:
-                    # Display all errors rather than break on the first found
-                    failed_verify |= not verify_file_signature(collection_name, manifest_file, to_text(signature, errors='surrogate_or_strict'), keyring)
-                if failed_verify:
-                    raise AnsibleError(f"Not installing {collection_name} because GnuPG signature verification failed.")
-                else:
-                    display.vvvv(f"GnuPG signature verification succeeded for {collection_name}")
+                verify_artifact_manifest(manifest_file, signatures, keyring)
 
             files_member_obj = collection_tar.getmember('FILES.json')
             with _tarfile_extract(collection_tar, files_member_obj) as (dummy, files_obj):

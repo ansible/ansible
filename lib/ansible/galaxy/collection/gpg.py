@@ -4,14 +4,17 @@
 """Signature verification helpers."""
 
 from ansible.errors import AnsibleError
+from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.urls import open_url
 
+import contextlib
 import os
 import subprocess
 import sys
 
 from dataclasses import dataclass, fields as dc_fields
 from functools import partial
+from urllib.error import HTTPError, URLError
 
 try:
     # NOTE: It's in Python 3 stdlib and can be installed on Python 2
@@ -23,12 +26,31 @@ except ImportError:
 
 if TYPE_CHECKING:
     from ansible.utils.display import Display
-    from typing import Tuple, Iterator
+    from typing import Tuple, Iterator, Optional
 
 
 IS_PY310_PLUS = sys.version_info[:2] >= (3, 10)
 
 frozen_dataclass = partial(dataclass, frozen=True, **({'slots': True} if IS_PY310_PLUS else {}))
+
+
+def get_signature_from_source(source, display=None):  # type: (str, Optional[Display]) -> str
+    if display is not None:
+        display.vvvv(f"Using signature at {source}")
+    try:
+        with open_url(
+            source,
+            http_agent=user_agent(),
+            validate_certs=True,
+            follow_redirects='safe'
+        ) as resp:
+            signature = resp.read()
+    except (HTTPError, URLError) as e:
+        raise AnsibleError(
+            f"Failed to get signature for collection verification from '{source}': {e}"
+        ) from e
+
+    return signature
 
 
 def run_gpg_verify(
@@ -75,18 +97,18 @@ def run_gpg_verify(
         os.close(status_fd_write)
 
     if remove_keybox:
-        try:
+        with contextlib.suppress(OSError):
             os.remove(keyring)
-        except OSError:
-            pass
 
     with os.fdopen(status_fd_read) as f:
         stdout = f.read()
-        display.vvvv(f"{stdout} (exit code {p.returncode})")
+        display.vvvv(
+            f"stdout: \n{stdout}\nstderr: \n{stderr}\n(exit code {p.returncode})"
+        )
         return stdout, p.returncode
 
 
-def parse_gpg_errors(status_out: str):  # -> Iterator[GpgBaseError]
+def parse_gpg_errors(status_out):  # type: (str) -> Iterator[GpgBaseError]
     for line in status_out.splitlines():
         if not line:
             continue

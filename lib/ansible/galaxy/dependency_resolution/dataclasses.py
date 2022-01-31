@@ -35,6 +35,7 @@ from ansible.errors import AnsibleError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 
@@ -45,6 +46,67 @@ _MANIFEST_JSON = b'MANIFEST.json'
 _SOURCE_METADATA_FILE = b'GALAXY.yml'
 
 display = Display()
+
+
+def get_validated_source_info(b_source_info_path, namespace, name, version):
+    source_info_path = to_text(b_source_info_path, errors='surrogate_or_strict')
+
+    if not os.path.isfile(b_source_info_path):
+        return None
+
+    try:
+        with open(b_source_info_path, mode='rb') as fd:
+            metadata = safe_load(fd)
+    except OSError as e:
+        display.warning(
+            f"Error getting collection source information at '{source_info_path}': {to_text(e, errors='surrogate_or_strict')}"
+        )
+        return None
+
+    if not isinstance(metadata, MutableMapping):
+        display.warning(f"Error getting collection source information at '{source_info_path}': expected a YAML dictionary")
+        return None
+
+    schema_errors = _validate_v1_source_info_schema(namespace, name, version, metadata)
+    if schema_errors:
+        display.warning(f"Ignoring source metadata file at {source_info_path} due to the following errors:")
+        display.warning("\n".join(schema_errors))
+        display.warning("Correct the source metadata file by reinstalling the collection.")
+        return None
+
+    return metadata
+
+
+def _validate_v1_source_info_schema(namespace, name, version, provided_arguments):
+    argument_spec_data = dict(
+        format_version=dict(choices=["1.0.0"]),
+        download_url=dict(),
+        version_url=dict(),
+        server=dict(),
+        signatures=dict(
+            type=list,
+            suboptions=dict(
+                signature=dict(),
+                pubkey_fingerprint=dict(),
+                signing_service=dict(),
+                pulp_created=dict(),
+            )
+        ),
+        name=dict(choices=[name]),
+        namespace=dict(choices=[namespace]),
+        version=dict(choices=[version]),
+    )
+
+    if not isinstance(argument_spec_data, dict):
+        raise AnsibleError('Incorrect type for argument_spec, expected dict and got %s' % type(argument_spec_data))
+
+    if not isinstance(provided_arguments, dict):
+        raise AnsibleError('Incorrect type for provided_arguments, expected dict and got %s' % type(provided_arguments))
+
+    validator = ArgumentSpecValidator(argument_spec_data)
+    validation_result = validator.validate(provided_arguments)
+
+    return validation_result.error_messages
 
 
 def _is_collection_src_dir(dir_path):
@@ -110,37 +172,26 @@ def _is_concrete_artifact_pointer(tested_str):
     )
 
 
-def _validate_v1_source_info_schema(namespace, name, version, metadata):
-    v1_schema = {
-        "format_version": {"value": "1.0.0"},
-        "download_url": {"type": str},
-        "version_url": {"type": str},
-        "server": {"type": str},
-        "signatures": {"type": list},
-        "name": {"value": name},
-        "namespace": {"value": namespace},
-        "version": {"value": version},
-    }
-    v1_signatures_subkeys = {"signature", "pubkey_fingerprint", "signing_service", "pulp_created"}
-
-    metadata_errors = []
-    if (missing := set(v1_schema.keys()).difference(set(metadata.keys()))):
-        metadata_errors.append(f"Missing keys {', '.join(missing)}")
-    for k in set(v1_schema.keys()).intersection(set(metadata.keys())):
-        if "value" in v1_schema[k] and metadata[k] != v1_schema[k]["value"]:
-            metadata_errors.append(f"Key {k} must be of value \'{v1_schema[k]['value']}\'")
-        if "type" in v1_schema[k] and not isinstance(metadata[k], v1_schema[k]["type"]):
-            metadata_errors.append(f"Key {k} must be of type \'{v1_schema[k]['type']}\'")
-        if k == 'signatures':
-            for signature_info in metadata[k]:
-                if (missing := v1_signatures_subkeys.difference(set(signature_info.keys()))):
-                    metadata_errors.append(f"Missing key 'signatures' subkeys {', '.join(missing)}")
-                if any(not isinstance(signature_info[subkey], str) for subkey in v1_signatures_subkeys):
-                    metadata_errors.append("Key 'signatures' subkeys must be of type 'str'")
-    return metadata_errors
-
-
 class _ComputedReqKindsMixin:
+
+    def __init__(self, *args, **kwargs):
+        if not self.may_have_offline_galaxy_info:
+            self._source_info = None
+        else:
+            # Store Galaxy metadata adjacent to the namespace of the collection
+            # Chop off the last two parts of the path (/ns/coll) to get the dir containing the ns
+            b_src = to_bytes(self.src, errors='surrogate_or_strict')
+            b_path_parts = b_src.split(to_bytes(os.path.sep))[0:-2]
+            b_path = to_bytes(os.path.sep).join(b_path_parts)
+
+            info_path = self.construct_galaxy_info_path(b_path)
+
+            self._source_info = get_validated_source_info(
+                info_path,
+                self.namespace,
+                self.name,
+                self.ver
+            )
 
     @classmethod
     def from_dir_path_as_unknown(  # type: ignore[misc]
@@ -388,6 +439,26 @@ class _ComputedReqKindsMixin:
             format(fqcn=to_text(self.fqcn), ver=to_text(self.ver))
         )
 
+    @property
+    def may_have_offline_galaxy_info(self):
+        if self.fqcn is None:
+            # Virtual collection
+            return False
+        elif not self.is_dir or self.src is None or not _is_collection_dir(self.src):
+            # Not a dir or isn't on-disk
+            return False
+        return True
+
+    def construct_galaxy_info_path(self, b_metadata_dir):
+        if not self.may_have_offline_galaxy_info and not self.type == 'galaxy':
+            raise TypeError('Only installed collections from a Galaxy server have offline Galaxy info')
+
+        # ns.coll-1.0.0.info
+        b_dir_name = to_bytes(f"{self.namespace}.{self.name}-{self.ver}.info", errors="surrogate_or_strict")
+
+        # collections/ansible_collections/ns.coll-1.0.0.info/GALAXY.yml
+        return os.path.join(b_metadata_dir, b_dir_name, _SOURCE_METADATA_FILE)
+
     def _get_separate_ns_n_name(self):  # FIXME: use LRU cache
         return self.fqcn.split('.')
 
@@ -456,55 +527,38 @@ class _ComputedReqKindsMixin:
 
     @property
     def source_info(self):
-        return self._get_validated_source_info()
+        return self._source_info
 
-    def _get_validated_source_info(self):
-        if self.type != "dir" or self.src is None or not _is_collection_dir(self.src):
-            return None
 
-        b_dir_name = to_bytes(f"{self.namespace}.{self.name}-{self.ver}.info", errors="surrogate_or_strict")
-        b_path_parts = self.src.split(to_bytes(os.path.sep, errors="surrogate_or_strict"))[0:-2]
-        b_source_info_path = os.path.join(
-            to_bytes(os.path.sep).join(b_path_parts),
-            b_dir_name,
-            _SOURCE_METADATA_FILE
-        )
-        source_info_path = to_text(b_source_info_path, errors='surrogate_or_strict')
+RequirementNamedTuple = namedtuple('Requirement', ('fqcn', 'ver', 'src', 'type', 'signature_sources'))
 
-        if not os.path.isfile(b_source_info_path):
-            return None
 
-        try:
-            with open(b_source_info_path, mode='rb') as fd:
-                metadata = safe_load(fd)
-        except OSError as e:
-            display.warning(
-                f"Error getting collection source information at '{source_info_path}': {to_text(e, errors='surrogate_or_strict')}"
-            )
-            return None
-
-        if not isinstance(metadata, MutableMapping):
-            display.warning(f"Error getting collection source information at '{source_info_path}': expected a YAML dictionary")
-            return None
-
-        schema_errors = _validate_v1_source_info_schema(self.namespace, self.name, self.ver, metadata)
-        if schema_errors:
-            display.warning(f"Ignoring source metadata file at {source_info_path} due to the following errors:")
-            display.warning("\n".join(schema_errors))
-            display.warning(f"Correct the source metadata file by reinstalling the collection {self}")
-            return None
-        return metadata
+CandidateNamedTuple = namedtuple('Candidate', ('fqcn', 'ver', 'src', 'type', 'signatures'))
 
 
 class Requirement(
         _ComputedReqKindsMixin,
-        namedtuple('Requirement', ('fqcn', 'ver', 'src', 'type', 'signature_sources')),
+        RequirementNamedTuple,
 ):
     """An abstract requirement request."""
+
+    def __new__(cls, *args, **kwargs):
+        self = RequirementNamedTuple.__new__(cls, *args, **kwargs)
+        return self
+
+    def __init__(self, *args, **kwargs):
+        super(Requirement, self).__init__()
 
 
 class Candidate(
         _ComputedReqKindsMixin,
-        namedtuple('Candidate', ('fqcn', 'ver', 'src', 'type', 'signatures'))
+        CandidateNamedTuple,
 ):
     """A concrete collection candidate with its version resolved."""
+
+    def __new__(cls, *args, **kwargs):
+        self = CandidateNamedTuple.__new__(cls, *args, **kwargs)
+        return self
+
+    def __init__(self, *args, **kwargs):
+        super(Candidate, self).__init__()

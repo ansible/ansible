@@ -175,7 +175,13 @@ class MultiGalaxyAPIProxy:
         version = collection_candidate.ver
         last_err = None
 
-        for api in self._apis:
+        api_lookup_order = (
+            (collection_candidate.src, )
+            if isinstance(collection_candidate.src, GalaxyAPI)
+            else self._apis
+        )
+
+        for api in api_lookup_order:
             try:
                 return api.get_collection_signatures(namespace, name, version)
             except GalaxyError as api_err:

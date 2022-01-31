@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     )
     from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
 
+from ansible.galaxy.collection.gpg import get_signature_from_source
 from ansible.galaxy.dependency_resolution.dataclasses import (
     Candidate,
     Requirement,
@@ -47,9 +48,7 @@ class PinnedCandidateRequests(Set):
 
     def __contains__(self, value):
         if not isinstance(value, Candidate):
-            raise ValueError(
-                "Expected a Candidate object but got {value} ({type(value)})"
-            )
+            raise ValueError(f"Expected a Candidate object but got {value!r}")
         for candidate in self._candidates:
             # Compare Candidate attributes excluding "signatures" since it is
             # unrelated to whether or not a matching Candidate is user-requested.
@@ -123,7 +122,6 @@ class CollectionDependencyProvider(AbstractProvider):
         self._with_pre_releases = with_pre_releases
         self._upgrade = upgrade
         self._include_signatures = include_signatures
-        self._artifacts_manager = concrete_artifacts_manager
 
     def _is_user_requested(self, candidate):  # type: (Candidate) -> bool
         """Check if the candidate is requested by the user."""
@@ -329,7 +327,7 @@ class CollectionDependencyProvider(AbstractProvider):
                 if self._include_signatures:
                     signatures = src_server.get_collection_signatures(first_req.namespace, first_req.name, version)
                     for extra_source in extra_signature_sources:
-                        signatures.append(self._artifacts_manager.get_signature_from_source(extra_source))
+                        signatures.append(get_signature_from_source(extra_source))
                 latest_matches.append(
                     Candidate(fqcn, version, src_server, 'galaxy', frozenset(signatures))
                 )
