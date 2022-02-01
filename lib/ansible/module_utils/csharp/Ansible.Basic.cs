@@ -128,6 +128,7 @@ namespace Ansible.Basic
             {
                 if (tmpdir == null)
                 {
+#if WINDOWS
                     SecurityIdentifier user = WindowsIdentity.GetCurrent().User;
                     DirectorySecurity dirSecurity = new DirectorySecurity();
                     dirSecurity.SetOwner(user);
@@ -136,6 +137,7 @@ namespace Ansible.Basic
                         InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
                         PropagationFlags.None, AccessControlType.Allow);
                     dirSecurity.AddAccessRule(ace);
+#endif
 
                     string baseDir = Path.GetFullPath(Environment.ExpandEnvironmentVariables(remoteTmp));
                     if (!Directory.Exists(baseDir))
@@ -145,7 +147,9 @@ namespace Ansible.Basic
                         {
 #if CORECLR
                             DirectoryInfo createdDir = Directory.CreateDirectory(baseDir);
+#if WINDOWS
                             FileSystemAclExtensions.SetAccessControl(createdDir, dirSecurity);
+#endif
 #else
                             Directory.CreateDirectory(baseDir, dirSecurity);
 #endif
@@ -161,6 +165,7 @@ namespace Ansible.Basic
                             Warn(String.Format("Unable to use '{0}' as temporary directory, falling back to system tmp '{1}': {2}", baseDir, envTmp, failedMsg));
                             baseDir = envTmp;
                         }
+#if WINDOWS
                         else
                         {
                             NTAccount currentUser = (NTAccount)user.Translate(typeof(NTAccount));
@@ -168,6 +173,7 @@ namespace Ansible.Basic
                             warnMsg += "this may cause issues when running as another user. To avoid this, create the remote_tmp dir with the correct permissions manually";
                             Warn(warnMsg);
                         }
+#endif
                     }
 
                     string dateTime = DateTime.Now.ToFileTime().ToString();
@@ -175,7 +181,9 @@ namespace Ansible.Basic
                     string newTmpdir = Path.Combine(baseDir, dirName);
 #if CORECLR
                     DirectoryInfo tmpdirInfo = Directory.CreateDirectory(newTmpdir);
+#if WINDOWS
                     FileSystemAclExtensions.SetAccessControl(tmpdirInfo, dirSecurity);
+#endif
 #else
                     Directory.CreateDirectory(newTmpdir, dirSecurity);
 #endif
@@ -339,6 +347,7 @@ namespace Ansible.Basic
             if (NoLog)
                 return;
 
+#if WINDOWS
             string logSource = "Ansible";
             bool logSourceExists = false;
             try
@@ -378,6 +387,9 @@ namespace Ansible.Basic
                     warnings.Add(String.Format("Unknown error when creating event log entry: {0}", e.Message));
                 }
             }
+#else
+            return;
+#endif
         }
 
         public void Warn(string message)
