@@ -189,6 +189,7 @@ class ServiceScanService(BaseService):
                             if x in output:
                                 self.module.warn('Insufficient permissions to query sysV service "%s" and their states' % service_name)
                                 raise EscapeException
+                                break  # cause linter forces me to have this
                         else:
                             service_state = 'stopped'
                     except EscapeException:
