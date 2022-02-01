@@ -1,0 +1,4 @@
+bugfixes:
+  - ansible-test - Install ``pyopenssl`` when installing ``cryptography`` to make sure a compatible version is used.
+minor_changes:
+  - ansible-test - Integration and unit tests no longer install ``cryptography`` if it is already installed.
