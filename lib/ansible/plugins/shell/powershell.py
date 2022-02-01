@@ -82,7 +82,7 @@ class ShellModule(ShellBase):
         # use normpath() to remove doubled slashed and convert forward to backslashes
         parts = [ntpath.normpath(self._unquote(arg)) for arg in args]
 
-        # Becuase ntpath.join treats any component that begins with a backslash as an absolute path,
+        # Because ntpath.join treats any component that begins with a backslash as an absolute path,
         # we have to strip slashes from at least the beginning, otherwise join will ignore all previous
         # path components except for the drive.
         return ntpath.join(parts[0], *[part.strip('\\') for part in parts[1:]])
