@@ -1790,6 +1790,12 @@ The ``urlsplit`` filter extracts the fragment, hostname, netloc, password, path,
 Searching strings with regular expressions
 ------------------------------------------
 
+Each function supports the following flags:
+
+- multiline
+- ignorecase
+- dotall
+
 To search in a string or extract parts of a string with a regular expression, use the ``regex_search`` filter:
 
 .. code-block:: yaml+jinja
