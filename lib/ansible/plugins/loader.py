@@ -1042,10 +1042,10 @@ class Jinja2Loader(PluginLoader):
         # Instead, calling code deduplicates jinja2 plugin names when loading each file.
         kwargs['_dedupe'] = False
 
-        # TODO: move this to initalization and extract/dedupe plugin names in loader and offset this from
+        # TODO: move this to initialization and extract/dedupe plugin names in loader and offset this from
         # caller. It would have to cache/refresh on add_directory to reevaluate plugin list and dedupe.
         # Another option is to always prepend 'ansible.legac'y and force the collection path to
-        # load/find plugins, just need to check compatiblity of that approach.
+        # load/find plugins, just need to check compatibility of that approach.
         # This would also enable get/find_plugin for these type of plugins.
 
         # We have to instantiate a list of all files so that we can reverse the list.

@@ -52,7 +52,7 @@ class CallbackModule(CallbackBase):
         super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         if TREE_DIR:
-            # TREE_DIR comes from the CLI option --tree, only avialable for adhoc
+            # TREE_DIR comes from the CLI option --tree, only available for adhoc
             self.tree = unfrackpath(TREE_DIR)
         else:
             self.tree = self.get_option('directory')

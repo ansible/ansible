@@ -66,7 +66,7 @@ def to_nice_yaml(a, indent=4, *args, **kw):
 def to_json(a, *args, **kw):
     ''' Convert the value to JSON '''
 
-    # defualts for filters
+    # defaults for filters
     if 'vault_to_text' not in kw:
         kw['vault_to_text'] = True
     if 'preprocess_unsafe' not in kw:

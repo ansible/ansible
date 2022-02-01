@@ -175,7 +175,7 @@ class CliconfBase(AnsiblePlugin):
 
         :param flags: For devices that support configuration filtering, this
             keyword argument is used to filter the returned configuration.
-            The use of this keyword argument is device dependent adn will be
+            The use of this keyword argument is device dependent and will be
             silently ignored on devices that do not support it.
 
         :param format: For devices that support fetching different configuration

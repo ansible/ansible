@@ -954,7 +954,7 @@ class AnsibleCollectionRef:
             return False
 
         return all(
-            # NOTE: keywords and identifiers are different in differnt Pythons
+            # NOTE: keywords and identifiers are different in different Pythons
             not iskeyword(ns_or_name) and is_python_identifier(ns_or_name)
             for ns_or_name in collection_name.split(u'.')
         )
