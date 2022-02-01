@@ -158,6 +158,9 @@ class CallbackModule(CallbackBase):
 
         self._task_data = {}
 
+        if self._replace_out_of_tree_path is not None:
+            self._replace_out_of_tree_path = to_text(self._replace_out_of_tree_path)
+
         if not os.path.exists(self._output_dir):
             os.makedirs(self._output_dir)
 
@@ -217,12 +220,12 @@ class CallbackModule(CallbackBase):
         duration = host_data.finish - task_data.start
 
         if self._task_relative_path and task_data.path:
-            junit_classname = os.path.relpath(task_data.path, self._task_relative_path)
+            junit_classname = to_text(os.path.relpath(to_bytes(task_data.path), to_bytes(self._task_relative_path)))
         else:
             junit_classname = task_data.path
 
         if self._replace_out_of_tree_path is not None and junit_classname.startswith('../'):
-            junit_classname = self._replace_out_of_tree_path + os.path.basename(junit_classname)
+            junit_classname = self._replace_out_of_tree_path + to_text(os.path.basename(to_bytes(junit_classname)))
 
         if self._task_class == 'true':
             junit_classname = re.sub(r'\.yml:[0-9]+$', '', junit_classname)
