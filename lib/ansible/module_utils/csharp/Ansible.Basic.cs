@@ -383,6 +383,7 @@ namespace Ansible.Basic
                 }
             }
 #else
+            // Windows Event Log is only available on Windows
             return;
 #endif
         }
