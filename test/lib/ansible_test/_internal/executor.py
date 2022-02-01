@@ -242,6 +242,16 @@ def get_setuptools_version(args, python):  # type: (EnvironmentConfig, str) -> t
         raise
 
 
+def is_cryptography_available(python):  # type: (str) -> bool
+    """Return True if cryptography is available for the given python."""
+    try:
+        raw_command([python, '-c', 'import cryptography'], capture=True)
+    except SubprocessError:
+        return False
+
+    return True
+
+
 def install_cryptography(args, python, python_version, pip):  # type: (EnvironmentConfig, str, str, t.List[str]) -> None
     """
     Install cryptography for the specified environment.
@@ -254,16 +264,21 @@ def install_cryptography(args, python, python_version, pip):  # type: (Environme
     # the installed version of setuptools affects the version of cryptography to install
     run_command(args, generate_pip_install(pip, '', packages=['setuptools']))
 
+    # skip cryptography installation if it's already available
+    # this avoids installing pyopenssl when cryptography is already present
+    if is_cryptography_available(python):
+        return
+
     # install the latest cryptography version that the current requirements can support
     # use a custom constraints file to avoid the normal constraints file overriding the chosen version of cryptography
     # if not installed here later install commands may try to install an unsupported version due to the presence of older setuptools
     # this is done instead of upgrading setuptools to allow tests to function with older distribution provided versions of setuptools
     run_command(args, generate_pip_install(pip, '',
-                                           packages=[get_cryptography_requirement(args, python, python_version)],
+                                           packages=get_cryptography_requirements(args, python, python_version),
                                            constraints=os.path.join(ANSIBLE_TEST_DATA_ROOT, 'cryptography-constraints.txt')))
 
 
-def get_cryptography_requirement(args, python, python_version):  # type: (EnvironmentConfig, str, str) -> str
+def get_cryptography_requirements(args, python, python_version):  # type: (EnvironmentConfig, str, str) -> t.List[str]
     """
     Return the correct cryptography requirement for the given python version.
     The version of cryptography installed depends on the python version, setuptools version and openssl version.
@@ -276,20 +291,28 @@ def get_cryptography_requirement(args, python, python_version):  # type: (Enviro
             # cryptography 2.2+ requires python 2.7+
             # see https://github.com/pyca/cryptography/blob/master/CHANGELOG.rst#22---2018-03-19
             cryptography = 'cryptography < 2.2'
+            # pyopenssl 18.0.0 requires cryptography 2.2.1 or later
+            pyopenssl = 'pyopenssl < 18.0.0'
         elif openssl_version and openssl_version < (1, 1, 0):
             # cryptography 3.2 requires openssl 1.1.x or later
             # see https://cryptography.io/en/latest/changelog.html#v3-2
             cryptography = 'cryptography < 3.2'
+            # pyopenssl 20.0.0 requires cryptography 3.2 or later
+            pyopenssl = 'pyopenssl < 20.0.0'
         else:
             # cryptography 3.4+ fails to install on many systems
             # this is a temporary work-around until a more permanent solution is available
             cryptography = 'cryptography < 3.4'
+            # pyopenssl 20.0.0 requires cryptography 35 or later
+            pyopenssl = 'pyopenssl < 22.0.0'
     else:
         # cryptography 2.1+ requires setuptools 18.5+
         # see https://github.com/pyca/cryptography/blob/62287ae18383447585606b9d0765c0f1b8a9777c/setup.py#L26
         cryptography = 'cryptography < 2.1'
+        # pyopenssl 17.5.0 requires cryptography 2.1.4 or later
+        pyopenssl = 'pyopenssl < 17.5.0'
 
-    return cryptography
+    return [cryptography, pyopenssl]
 
 
 def install_command_requirements(args, python_version=None, context=None, enable_pyyaml_check=False):
