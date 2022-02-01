@@ -128,7 +128,7 @@ namespace Ansible.Basic
             {
 #if !WINDOWS
                 throw new NotImplementedException("Tmpdir is only supported on Windows");
-#endif
+#else
                 if (tmpdir == null)
                 {
                     SecurityIdentifier user = WindowsIdentity.GetCurrent().User;
@@ -188,6 +188,7 @@ namespace Ansible.Basic
                         cleanupFiles.Add(tmpdir);
                 }
                 return tmpdir;
+#endif
             }
         }
 
