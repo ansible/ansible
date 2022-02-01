@@ -95,10 +95,6 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 
 
-class EscapeException(Exception):
-    pass
-
-
 class BaseService(object):
 
     def __init__(self, module):
@@ -184,16 +180,12 @@ class ServiceScanService(BaseService):
                 # elif rc in (1,3):
                 else:
                     output = stderr.lower()
-                    try:
-                        for x in ('root', 'permission', 'not in sudoers'):
-                            if x in output:
-                                self.module.warn('Insufficient permissions to query sysV service "%s" and their states' % service_name)
-                                raise EscapeException
-                                break  # cause linter forces me to have this
-                        else:
-                            service_state = 'stopped'
-                    except EscapeException:
-                        continue
+                    for x in ('root', 'permission', 'not in sudoers'):
+                        if x in output:
+                            self.module.warn('Insufficient permissions to query sysV service "%s" and their states' % service_name)
+                            break
+                    else:
+                        service_state = 'stopped'
 
                 service_data = {"name": service_name, "state": service_state, "status": service_status, "source": "sysv"}
                 services[service_name] = service_data
