@@ -75,7 +75,7 @@ DOCUMENTATION = '''
       test_case_prefix:
         name: Prefix to find actual test cases
         default: <empty>
-        description: Consider a task only as test case if it has this value as prefix. Additionaly failing tasks are recorded as failed test cases.
+        description: Consider a task only as test case if it has this value as prefix. Additionally failing tasks are recorded as failed test cases.
         version_added: "2.8"
         env:
           - name: JUNIT_TEST_CASE_PREFIX
@@ -127,7 +127,7 @@ class CallbackModule(CallbackBase):
                                      Default: True
         JUNIT_HIDE_TASK_ARGUMENTS (optional): Hide the arguments for a task
                                      Default: False
-        JUNIT_TEST_CASE_PREFIX (optional): Consider a task only as test case if it has this value as prefix. Additionaly failing tasks are recorded as failed
+        JUNIT_TEST_CASE_PREFIX (optional): Consider a task only as test case if it has this value as prefix. Additionally failing tasks are recorded as failed
                                      test cases.
                                      Default: <empty>
     """
