@@ -2,7 +2,7 @@ Hi!
 
 Thank you very much for your submission to Ansible. It sincerely means a lot to us that you've taken the time to contribute.
 
-Since Ansible 2.10 we are no longer accepting new one off modules/plugins into Ansible core.  However, we recommend looking into providing this functionality through Ansible Galaxy via Ansible Collections. You can find more information about collections at:
+Since Ansible 2.10 we are no longer accepting new modules/plugins into Ansible core.  However, we recommend looking into providing this functionality through Ansible Galaxy via Ansible Collections. You can find more information about collections at:
 
    * https://docs.ansible.com/ansible/devel/dev_guide/developing_collections.html.
 
