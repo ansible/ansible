@@ -84,9 +84,9 @@ from ansible.module_utils.six import PY3, text_type
 
 STRATS = {
     'alpine': 'Alpine',
-    'debian': 'Debian',
+    'debian': 'Systemd',
     'freebsd': 'FreeBSD',
-    'generic': 'Generic',
+    'generic': 'Base',
     'macos': 'Darwin',
     'macosx': 'Darwin',
     'darwin': 'Darwin',
