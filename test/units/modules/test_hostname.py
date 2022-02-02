@@ -51,6 +51,7 @@ class TestHostname(ModuleTestCase):
             else:
                 self.assertTrue(issubclass(cls, hostname.BaseStrategy))
 
+
 class TestRedhatStrategy(ModuleTestCase):
     def setUp(self):
         super(TestRedhatStrategy, self).setUp()
