@@ -1,6 +1,6 @@
 Hi!
 
-Thanks very much for your submission to Ansible.  It sincerely means a lot to us that you've taken time to contribute.
+Thanks very much for your submission to Ansible.  It means a lot to us that you've taken time to contribute.
 
 It looks like the work from this pull request is a duplicate of the following PR(s):
 
