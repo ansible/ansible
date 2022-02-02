@@ -38,7 +38,7 @@ class CallbackModule(CallbackBase):
         else:
             return "%s | %s | rc=%s | (stdout) %s" % (hostname, caption, result.get('rc', -1), stdout)
 
-    def v2_runner_on_failed(self, result, ignore_errors=False):
+    def v2_runner_on_failed(self, result, ignore_errors=False, rescued=False):
         if 'exception' in result._result:
             if self._display.verbosity < 3:
                 # extract just the actual error message from the exception text

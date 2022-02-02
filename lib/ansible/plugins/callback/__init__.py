@@ -444,7 +444,7 @@ class CallbackBase(AnsiblePlugin):
     def on_any(self, *args, **kwargs):
         pass
 
-    def runner_on_failed(self, host, res, ignore_errors=False):
+    def runner_on_failed(self, host, res, ignore_errors=False, rescued=False):
         pass
 
     def runner_on_ok(self, host, res):
@@ -508,9 +508,9 @@ class CallbackBase(AnsiblePlugin):
     def v2_on_any(self, *args, **kwargs):
         self.on_any(args, kwargs)
 
-    def v2_runner_on_failed(self, result, ignore_errors=False):
+    def v2_runner_on_failed(self, result, ignore_errors=False, rescued=False):
         host = result._host.get_name()
-        self.runner_on_failed(host, result._result, ignore_errors)
+        self.runner_on_failed(host, result._result, ignore_errors, rescued)
 
     def v2_runner_on_ok(self, result):
         host = result._host.get_name()

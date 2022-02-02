@@ -306,7 +306,7 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_handler_task_start(self, task):
         self._start_task(task)
 
-    def v2_runner_on_failed(self, result, ignore_errors=False):
+    def v2_runner_on_failed(self, result, ignore_errors=False, rescued=False):
         if ignore_errors and self._fail_on_ignore != 'true':
             self._finish_task('ok', result)
         else:

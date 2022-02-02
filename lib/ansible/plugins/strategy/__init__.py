@@ -567,6 +567,7 @@ class StrategyBase:
             role_ran = False
             if task_result.is_failed():
                 role_ran = True
+                rescued = False
                 ignore_errors = original_task.ignore_errors
                 if not ignore_errors:
                     display.debug("marking %s as failed" % original_host.name)
@@ -600,6 +601,7 @@ class StrategyBase:
                                 ansible_failed_result=task_result._result,
                             ),
                         )
+                        rescued = True
                     else:
                         self._tqm._stats.increment('failures', original_host.name)
                 else:
@@ -607,7 +609,7 @@ class StrategyBase:
                     self._tqm._stats.increment('ignored', original_host.name)
                     if 'changed' in task_result._result and task_result._result['changed']:
                         self._tqm._stats.increment('changed', original_host.name)
-                self._tqm.send_callback('v2_runner_on_failed', task_result, ignore_errors=ignore_errors)
+                self._tqm.send_callback('v2_runner_on_failed', task_result, ignore_errors=ignore_errors, rescued=rescued)
             elif task_result.is_unreachable():
                 ignore_unreachable = original_task.ignore_unreachable
                 if not ignore_unreachable:
