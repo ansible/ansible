@@ -128,6 +128,7 @@ namespace Ansible.Basic
             {
                 if (tmpdir == null)
                 {
+#if WINDOWS
                     SecurityIdentifier user = WindowsIdentity.GetCurrent().User;
                     DirectorySecurity dirSecurity = new DirectorySecurity();
                     dirSecurity.SetOwner(user);
@@ -183,6 +184,9 @@ namespace Ansible.Basic
 
                     if (!KeepRemoteFiles)
                         cleanupFiles.Add(tmpdir);
+#else
+                    throw new NotImplementedException("Tmpdir is only supported on Windows");
+#endif
                 }
                 return tmpdir;
             }
@@ -339,6 +343,7 @@ namespace Ansible.Basic
             if (NoLog)
                 return;
 
+#if WINDOWS
             string logSource = "Ansible";
             bool logSourceExists = false;
             try
@@ -378,6 +383,10 @@ namespace Ansible.Basic
                     warnings.Add(String.Format("Unknown error when creating event log entry: {0}", e.Message));
                 }
             }
+#else
+            // Windows Event Log is only available on Windows
+            return;
+#endif
         }
 
         public void Warn(string message)
