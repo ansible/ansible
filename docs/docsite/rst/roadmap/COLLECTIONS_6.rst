@@ -17,7 +17,7 @@ Release schedule
 :2022-03-28: ansible-core feature freeze, stable-2.13 branch created.
 :2022-04-11: Start of ansible-core 2.13 betas (biweekly, as needed).
 :2022-04-12: Ansible-6.0.0 alpha1 (roughly biweekly ``ansible`` alphas timed to coincide with ``ansible-core-2.13`` pre-releases).
-:2022-04-27: Community Meeting topic: List any new collection reviews which block release. List any backwards incompatible collection releases that beta1 should try to accommodate.
+:2022-04-27: Community Meeting topic: List any backwards incompatible collection releases that beta1 should try to accommodate.
 :2022-05-02: First ansible-core release candidate.
 :2022-05-03: Ansible-6.0.0 alpha2.
 :2022-05-11: Community Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline.
