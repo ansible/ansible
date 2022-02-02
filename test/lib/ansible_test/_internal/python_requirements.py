@@ -452,11 +452,11 @@ def get_cryptography_requirements(python):  # type: (PythonConfig) -> t.List[str
         # pyopenssl 20.0.0 requires cryptography 3.2 or later
         pyopenssl = 'pyopenssl < 20.0.0'
     else:
-        # cryptography 3.4+ fails to install on many systems
-        # this is a temporary work-around until a more permanent solution is available
-        cryptography = 'cryptography < 3.4'
-        # pyopenssl 20.0.0 requires cryptography 35 or later
-        pyopenssl = 'pyopenssl < 22.0.0'
+        # cryptography 3.4+ builds require a working rust toolchain
+        # systems bootstrapped using ansible-core-ci can access additional wheels through the spare-tire package index
+        cryptography = 'cryptography'
+        # any future installation of pyopenssl is free to use any compatible version of cryptography
+        pyopenssl = ''
 
     requirements = [
         cryptography,
