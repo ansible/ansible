@@ -1,6 +1,6 @@
 Hi!
 
-Thanks very much for your interest in Ansible.  It sincerely means a lot to us.
+Thanks very much for your interest in Ansible.  It means a lot to us.
 
 This appears to be a user question, and we'd like to direct these kinds of things to either the mailing list or the IRC channel.
 
