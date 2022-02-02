@@ -126,11 +126,9 @@ namespace Ansible.Basic
         {
             get
             {
-#if !WINDOWS
-                throw new NotImplementedException("Tmpdir is only supported on Windows");
-#else
                 if (tmpdir == null)
                 {
+#if WINDOWS
                     SecurityIdentifier user = WindowsIdentity.GetCurrent().User;
                     DirectorySecurity dirSecurity = new DirectorySecurity();
                     dirSecurity.SetOwner(user);
@@ -186,9 +184,11 @@ namespace Ansible.Basic
 
                     if (!KeepRemoteFiles)
                         cleanupFiles.Add(tmpdir);
+#else
+                    throw new NotImplementedException("Tmpdir is only supported on Windows");
+#endif
                 }
                 return tmpdir;
-#endif
             }
         }
 
