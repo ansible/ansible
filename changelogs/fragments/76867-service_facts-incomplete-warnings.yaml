@@ -1,2 +1,2 @@
 bugfixes:
-  - services_facts - Set incomplete warning when systemctl commands hit error.
+  - service_facts - Set incomplete warning when systemctl commands hit an error (https://github.com/ansible/ansible/issues/76867).
