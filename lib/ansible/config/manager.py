@@ -371,7 +371,6 @@ class ConfigManager(object):
                         options.append(option_name)
         return options
 
-
     def get_configuration_definition(self, name, plugin_type=None, plugin_name=None):
 
         ret = {}
