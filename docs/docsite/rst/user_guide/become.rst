@@ -753,7 +753,7 @@ Resolving Temporary File Error Messsages
 ----------------------------------------
 
 "Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user"
-* In Debian systems, this error can be resolved by installing the `acl` package, which provides the `setfacl` command.
+* This error can be resolved by installing the package that provides the ``setfacl`` command. (This is frequently the ``acl`` package but check your OS documentation.
 
 
 .. seealso::
