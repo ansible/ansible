@@ -29,7 +29,7 @@ from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import to_unsafe_text, wrap_var
-from ansible.vars.clean import namespace_facts, clean_facts, module_response_deepcopy
+from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, isidentifier
 
@@ -431,7 +431,7 @@ class TaskExecutor:
         context_validation_error = None
 
         # a certain subset of variables exist.
-        tempvars = module_response_deepcopy(variables)
+        tempvars = variables.copy()
 
         try:
             # TODO: remove play_context as this does not take delegation into account, task itself should hold values
