@@ -26,8 +26,6 @@ variables:
     value: ansible
   - name: coverageBranches
     value: devel
-  - name: pipelinesCoverage
-    value: coverage
   - name: entryPoint
     value: test/utils/shippable/shippable.sh
   - name: fetchDepth
