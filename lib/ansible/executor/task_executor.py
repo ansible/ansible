@@ -520,6 +520,10 @@ class TaskExecutor:
                 variable_params.update(self._task.args)
                 self._task.args = variable_params
 
+        # free tempvars up, not used anymore, cvars and vars_copy should be mainly used after this point
+        # updating the original 'variables' at the end
+        tempvars = {}
+
         if self._task.delegate_to:
             # use vars from delegated host (which already include task vars) instead of original host
             cvars = variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
@@ -536,6 +540,8 @@ class TaskExecutor:
         if (not self._connection or
                 not getattr(self._connection, 'connected', False) or
                 self._connection._load_name != connection_candidate or
+                # pc compare, left here for old plugins, but should be irrelevant for those
+                # using get_option, since they are cleared each iteration.
                 self._play_context.remote_addr != self._connection._play_context.remote_addr):
             self._connection = connection_candidate
         else:
@@ -546,7 +552,7 @@ class TaskExecutor:
         plugin_vars = self._set_connection_options(cvars, templar)
         vars_copy = variables.copy()
         self._connection.update_vars(vars_copy)
-        templar.available_variables = tempvars
+        templar.available_variables = vars_copy
 
         # TODO: eventually remove this block as this should be a 'consequence' of 'forced_local' modules
         # special handling for python interpreter for network_os, default to ansible python unless overriden
