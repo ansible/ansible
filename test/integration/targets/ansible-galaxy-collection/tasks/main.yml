@@ -82,7 +82,6 @@
     server: galaxy_ng
     collections: '{{ collection_list }}'
     signature_dir: '{{ gpg_homedir }}'
-    user: '{{ gpg_user }}'
   environment:
     ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
 

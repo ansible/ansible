@@ -704,6 +704,7 @@ def test_get_collection_version_metadata_no_version(api_version, token_type, ver
     mock_open = MagicMock()
     mock_open.side_effect = [
         StringIO(to_text(json.dumps({
+            'href': 'https://galaxy.server.com/api/{api}/namespace/name/versions/{version}/'.format(api=api_version, version=version),
             'download_url': 'https://downloadme.com',
             'artifact': {
                 'sha256': 'ac47b6fac117d7c171812750dacda655b04533cf56b31080b82d1c0db3c9d80f',

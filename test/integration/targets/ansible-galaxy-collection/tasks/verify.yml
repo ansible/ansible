@@ -298,7 +298,11 @@
     expected_errors:
       - "* This is the counterpart to SUCCESS and used to indicate a program failure."
       - "* The signature with the keyid has not been verified okay."
-    verify_stdout: "{{ verify.stdout | regex_replace('\n', '') | regex_replace('      ', ' ') }}"
+    stdout_no_color: "{{ verify.stdout | regex_replace(reset_color) | regex_replace(color) }}"
+    # Remove formatting from the reason so it's one line
+    verify_stdout: "{{ stdout_no_color | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
+    reset_color: '\x1b\[0m'
+    color: '\x1b\[[0-9];[0-9]{2}m'
 
 - include_tasks: revoke_gpg_key.yml
 
@@ -321,7 +325,11 @@
     expected_errors:
       - "* The used key has been revoked by its owner."
       - "* The signature with the keyid is good, but the signature was made by a revoked key."
-    verify_stdout: "{{ verify.stdout | regex_replace('\n', '') | regex_replace('      ', ' ') }}"
+    stdout_no_color: "{{ verify.stdout | regex_replace(reset_color) | regex_replace(color) }}"
+    # Remove formatting from the reason so it's one line
+    verify_stdout: "{{ stdout_no_color | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
+    reset_color: '\x1b\[0m'
+    color: '\x1b\[[0-9];[0-9]{2}m'
 
 - name: empty installed collections
   file:

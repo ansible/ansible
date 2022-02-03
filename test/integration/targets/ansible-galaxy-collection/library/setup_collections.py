@@ -172,13 +172,12 @@ def publish_collection(module, collection):
     return result
 
 
-def sign_manifest(signature_path, manifest_path, module, result):
-    result['gpg_detach_sign'] = {'signature_path': signature_path}
+def sign_manifest(signature_path, manifest_path, module, collection_setup_result):
+    collection_setup_result['gpg_detach_sign'] = {'signature_path': signature_path}
 
     status_fd_read, status_fd_write = os.pipe()
     gpg_cmd = [
         "gpg",
-        "--quiet",
         "--batch",
         "--pinentry-mode",
         "loopback",
@@ -188,8 +187,6 @@ def sign_manifest(signature_path, manifest_path, module, result):
         "--homedir",
         module.params['signature_dir'],
         "--detach-sign",
-        "--default-key",
-        module.params['user'],
         "--armor",
         "--output",
         signature_path,
@@ -205,15 +202,15 @@ def sign_manifest(signature_path, manifest_path, module, result):
             encoding='utf8',
         )
     except (FileNotFoundError, subprocess.SubprocessError) as err:
-        result['gpg_detach_sign']['error'] = "Failed during GnuPG verification with command '{gpg_cmd}': {err}".format(
+        collection_setup_result['gpg_detach_sign']['error'] = "Failed during GnuPG verification with command '{gpg_cmd}': {err}".format(
             gpg_cmd=gpg_cmd, err=err
         )
     else:
         stdout, stderr = p.communicate()
+        collection_setup_result['gpg_detach_sign']['stdout'] = stdout
         if stderr:
-            result['gpg_detach_sign']['error'] = "Failed during GnuPG verification with command '{gpg_cmd}': {stderr}".format(
-                gpg_cmd=gpg_cmd, stderr=stderr
-            )
+            error = "Failed during GnuPG verification with command '{gpg_cmd}':\n{stderr}".format(gpg_cmd=gpg_cmd, stderr=stderr)
+            collection_setup_result['gpg_detach_sign']['error'] = error
     finally:
         os.close(status_fd_write)
 
@@ -235,7 +232,6 @@ def run_module():
             ),
         ),
         signature_dir=dict(type='path', default=None),
-        user=dict(type='str', default=None),
     )
 
     module = AnsibleModule(
