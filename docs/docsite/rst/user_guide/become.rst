@@ -749,6 +749,13 @@ Limitations of become on Windows
 
 * The Secondary Logon service ``seclogon`` must be running to use ``ansible_become_method: runas``
 
+Resolving Temporary File Error Messsages
+----------------------------------------
+
+"Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user"
+* This error can be resolved by installing the package that provides the ``setfacl`` command. (This is frequently the ``acl`` package but check your OS documentation.
+
+
 .. seealso::
 
    `Mailing List <https://groups.google.com/forum/#!forum/ansible-project>`_
