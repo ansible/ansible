@@ -683,7 +683,7 @@ class CLI(ABC):
                 # enter post mortem mode.
                 raise
             have_cli_options = bool(context.CLIARGS)
-            display.error("Unexpected Exception, this is probably a bug: %s" % to_text(e), wrap_text=False)
+            display.error("Unexpected Exception, this is probably a bug (use -vvv to get more details): %s" % to_text(e), wrap_text=False)
             if not have_cli_options or have_cli_options and context.CLIARGS['verbosity'] > 2:
                 log_only = False
                 if hasattr(e, 'orig_exc'):
