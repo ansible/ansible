@@ -32,6 +32,15 @@ Playbook
        vars:
          ansible_async_dir: /path/to/my/custom/dir
 
+* The ``undef()`` function is added to the templating environment for creating undefined variables directly in a template. Optionally, a hint may be provided for variables which are intended to be overridden.
+
+.. code-block:: yaml
+
+   vars:
+     old: "{{ undef }}"
+     new: "{{ undef() }}"
+     new_with_hint: "{{ undef(hint='You must override this variable') }}"
+
 Python Interpreter Discovery
 ============================
 
