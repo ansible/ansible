@@ -363,20 +363,17 @@ Installing Ansible on macOS
 
 The preferred way to install Ansible on a Mac is with ``pip``.
 
-The instructions can be found in :ref:`from_pip`. If you are running macOS version 10.12 or older, then you should upgrade to the latest ``pip`` to connect to the Python Package Index securely. It should be noted that pip must be run as a module on macOS, and the linked ``pip`` instructions will show you how to do that.
+The instructions can be found in :ref:`from_pip`.
+
+.. note::
+
+    macOS 12.3 removes the Python 2 installation. The official recommendation for installing Python on macOS for use by Ansible is to use the installer provided by `Python.org <https://www.python.org/downloads/macos/>`_.
+
+    Alternately, you can choose to manually execute ``/usr/bin/python3`` provided along with macOS, and follow the instructions to install the Xcode developer tools. This is not listed as the official recommendation due to the extra dependencies.
 
 .. note::
 
     If you have Ansible 2.9 or older installed or Ansible 3, see :ref:`pip_upgrade`.
-
-
-.. note::
-
-   macOS by default is configured for a small number of file handles, so if you want to use 15 or more forks you'll need to raise the ulimit with ``sudo launchctl limit maxfiles unlimited``. This command can also fix any "Too many open files" errors.
-
-If you are installing on macOS Mavericks (10.9), you may encounter some noise from your compiler. A workaround is to do the following::
-
-    $ CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install --user ansible
 
 
 .. _from_pkgutil:
