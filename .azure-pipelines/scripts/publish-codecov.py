@@ -88,7 +88,7 @@ def download_file(url: str, dest: pathlib.Path, flags: int, dry_run: bool = Fals
 
 def main():
     args = parse_args()
-    url = 'https://ansible-ci-files.s3.amazonaws.com/codecov/linux/codecov'
+    url = 'https://ci-files.testing.ansible.com/codecov/linux/codecov'
     with tempfile.TemporaryDirectory(prefix='codecov-') as tmpdir:
         codecov_bin = pathlib.Path(tmpdir) / 'codecov'
         download_file(url, codecov_bin, 0o755, args.dry_run)
