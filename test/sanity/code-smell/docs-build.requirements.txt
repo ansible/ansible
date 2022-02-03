@@ -4,7 +4,7 @@ aiohttp==3.8.0
 aiosignal==1.2.0
 alabaster==0.7.12
 ansible-pygments==0.1.0
-antsibull==0.40.1
+antsibull==0.41.0
 antsibull-changelog==0.12.0
 async-timeout==4.0.1
 asyncio-pool==0.5.2
@@ -34,7 +34,7 @@ sh==1.14.2
 six==1.16.0
 snowballstemmer==2.1.0
 Sphinx==4.2.0
-sphinx-ansible-theme==0.9.0
+sphinx-ansible-theme==0.9.1
 sphinx-notfound-page==0.8
 sphinx-rtd-theme==1.0.0
 sphinxcontrib-applehelp==1.0.2
