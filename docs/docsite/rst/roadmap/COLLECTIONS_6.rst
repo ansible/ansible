@@ -14,20 +14,17 @@ Release schedule
 =================
 
 
-:2021-11-30: New Collections can be reviewed for inclusion in Ansible 6. Submit a request to include a new collection in this `GitHub Discussion <https://github.com/ansible-collections/ansible-inclusion/discussions/new>`_.
 :2022-03-28: ansible-core feature freeze, stable-2.13 branch created.
 :2022-04-11: Start of ansible-core 2.13 betas (biweekly, as needed).
 :2022-04-12: Ansible-6.0.0 alpha1 (roughly biweekly ``ansible`` alphas timed to coincide with ``ansible-core-2.13`` pre-releases).
-:2022-04-26: Last day for new collections to be submitted for inclusion in Ansible-6. Collections MUST be reviewed and approved before being included. There is no guarantee that we will review every collection. The earlier your collection is submitted, the more likely it will be that your collection will be reviewed and the necessary feedback can be addressed in time for inclusion.
-:2022-04-27: Community Meeting topic: List any new collection reviews which block release. List any backwards incompatible collection releases that beta1 should try to accommodate.
+:2022-04-27: Community Meeting topic: List any backwards incompatible collection releases that beta1 should try to accommodate.
 :2022-05-02: First ansible-core release candidate.
 :2022-05-03: Ansible-6.0.0 alpha2.
-:2022-05-10: Last day for new collections to be **reviewed and approved** for inclusion in Ansible-6.
 :2022-05-11: Community Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline.
 :2022-05-17: Ansible-6.0.0 alpha3.
 :2022-05-23: Ansible-core-2.13 released.
-:2022-05-23: Last day for collections to make backwards incompatible releases that will be accepted into Ansible-6.
-:2022-05-24: Create the ansible-build-data directory and files for Ansible-7. New collection approvals will target this.
+:2022-05-23: Last day for collections to make backwards incompatible releases that will be accepted into Ansible-6. This includes adding new collections to Ansible 6.0.0; from now on new collections have to wait for 6.1.0 or later.
+:2022-05-24: Create the ansible-build-data directory and files for Ansible-7.
 :2022-05-24: Ansible-6.0.0 beta1 -- feature freeze [1]_ (weekly beta releases; collection owners and interested users should test for bugs).
 :2022-05-31: Ansible-6.0.0 beta2.
 :2022-06-07: Ansible-6.0.0 rc1 [2]_ [3]_ (weekly release candidates as needed; test and alert us to any blocker bugs).  Blocker bugs will slip release.
