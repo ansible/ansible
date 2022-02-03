@@ -238,7 +238,10 @@ class ConnectionBase(AnsiblePlugin):
 
         for varname in C.COMMON_CONNECTION_VARS:
             value = None
-            if 'password' in varname or 'passwd' in varname:
+            if varname in variables:
+                # dont update existing
+                continue
+            elif 'password' in varname or 'passwd' in varname:
                 # no secrets!
                 continue
             elif varname == 'ansible_connection':
@@ -257,11 +260,12 @@ class ConnectionBase(AnsiblePlugin):
                     for prop, var_list in C.MAGIC_VARIABLE_MAPPING.items():
                         if varname in var_list:
                             try:
-                                variables[varname] = getattr(self._play_context, prop)
+                                value = getattr(self._play_context, prop)
                                 break
                             except AttributeError:
                                 # it was not defined, fine to ignore
                                 continue
+
             if value is not None:
                 display.debug('Set connection var {0} to {1}'.format(varname, value))
                 variables[varname] = value
