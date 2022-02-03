@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Use https://ci-files.testing.ansible.com/ for instance bootstrapping instead of an S3 endpoint.
