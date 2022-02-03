@@ -3,7 +3,7 @@
 all:
 	# Compiled versions of these binary modules are available at the url below.
 	# This avoids a dependency on go and keeps the binaries out of our git repository.
-	# https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_binary_modules/
+	# https://ci-files.testing.ansible.com/test/integration/roles/test_binary_modules/
 	cd library; \
 	GOOS=linux   GOARCH=amd64   go build -o helloworld_linux_x86_64       helloworld.go; \
 	GOOS=linux   GOARCH=ppc64le go build -o helloworld_linux_ppc64le      helloworld.go; \
