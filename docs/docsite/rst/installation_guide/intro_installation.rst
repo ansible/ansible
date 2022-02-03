@@ -330,7 +330,7 @@ To install the newest version, you may need to unmask the Ansible package prior 
 Installing Ansible on FreeBSD
 -----------------------------
 
-You can install Ansible on FreeBSD either from a package or from a port. See the FreeBSD handbook `Chapter 4. Installing Applications: Packages and Ports <https://docs.freebsd.org/en/books/handbook/ports/>`_. A best practice is to use the packages on the fresh installation of the system and both update and upgrade from the ports later. It's not recommended to mix the installation from packages and ports, i.e. keep updating and upgrading from the ports. See the warning in the FreeBSD handbook `4.5. Using the Ports Collection <https://docs.freebsd.org/en/books/handbook/ports/#ports-using>`_.
+You can install Ansible on FreeBSD either from a package or from a port. See the FreeBSD handbook `Chapter 4. Installing Applications: Packages and Ports <https://docs.freebsd.org/en/books/handbook/ports/>`_. A best practice is to use the packages on the fresh installation of the system and both update and upgrade from the ports later. It's not recommended to mix the installation from packages and ports, that is,  keep updating and upgrading from the ports. See the warning in the FreeBSD handbook `4.5. Using the Ports Collection <https://docs.freebsd.org/en/books/handbook/ports/#ports-using>`_.
 
 
 FreeBSD packages
