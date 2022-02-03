@@ -50,7 +50,7 @@ install_pip() {
     if ! "${python_interpreter}" -m pip.__main__ --version --disable-pip-version-check 2>/dev/null; then
         case "${python_version}" in
             *)
-                pip_bootstrap_url="https://ansible-ci-files.s3.amazonaws.com/ansible-test/get-pip-20.3.4.py"
+                pip_bootstrap_url="https://ci-files.testing.ansible.com/ansible-test/get-pip-20.3.4.py"
                 ;;
         esac
 
