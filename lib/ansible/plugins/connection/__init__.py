@@ -235,7 +235,6 @@ class ConnectionBase(AnsiblePlugin):
         Adds 'magic' variables relating to connections to the variable dictionary provided.
         In case users need to access from the play, this is a legacy from runner.
         '''
-
         for varname in C.COMMON_CONNECTION_VARS:
             value = None
             if varname in variables:

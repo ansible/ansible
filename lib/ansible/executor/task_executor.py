@@ -529,19 +529,24 @@ class TaskExecutor:
 
         templar.available_variables = cvars
 
+        # in case connection changed since previous iteration
+        connection_candidate =  self._get_connection(cvars, templar)
+
         # get the connection and the handler for this execution
         if (not self._connection or
                 not getattr(self._connection, 'connected', False) or
+                self._connection._load_name != connection_candidate or
                 self._play_context.remote_addr != self._connection._play_context.remote_addr):
-            self._connection = self._get_connection(cvars, templar)
+            self._connection = connection_candidate
         else:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed
             self._connection._play_context = self._play_context
 
         plugin_vars = self._set_connection_options(cvars, templar)
-        self._connection.update_vars(variables)
-        templar.available_variables = variables
+        vars_copy = variables.copy()
+        self._connection.update_vars(vars_copy)
+        templar.available_variables = tempvars
 
         # TODO: eventually remove this block as this should be a 'consequence' of 'forced_local' modules
         # special handling for python interpreter for network_os, default to ansible python unless overriden
@@ -579,10 +584,6 @@ class TaskExecutor:
         if delay < 0:
             delay = 1
 
-        # make a copy of the job vars here, in case we need to update them
-        # with the registered variable value later on when testing conditions
-        vars_copy = variables.copy()
-
         display.debug("starting attempt loop")
         result = None
         for attempt in range(1, retries + 1):
@@ -591,7 +592,7 @@ class TaskExecutor:
                 if self._task.timeout:
                     old_sig = signal.signal(signal.SIGALRM, task_timeout)
                     signal.alarm(self._task.timeout)
-                result = self._handler.run(task_vars=variables)
+                result = self._handler.run(task_vars=vars_copy)
             except (AnsibleActionFail, AnsibleActionSkip) as e:
                 return e.result
             except AnsibleConnectionFailure as e:
