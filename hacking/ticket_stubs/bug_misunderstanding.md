@@ -1,6 +1,6 @@
 Hi!
 
-Thanks very much for your submission to Ansible.  It sincerely means a lot to us.
+Thanks very much for your submission to Ansible.  It means a lot to us.
 
 We believe the ticket you have filed is being somewhat misunderstood, as one thing works a little differently than stated.
 

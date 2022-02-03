@@ -1,6 +1,6 @@
 Hi!
 
-Thanks very much for your submission to Ansible.  It sincerely means a lot to us.
+Thanks very much for your submission to Ansible.  It means a lot to us.
 
 We are interested in this idea and would like to see a wider discussion on it on one of our lists.
 Reasons for this include:
