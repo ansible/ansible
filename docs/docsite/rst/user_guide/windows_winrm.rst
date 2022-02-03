@@ -187,8 +187,7 @@ Following example shows how to import the issuing certificate:
 
 .. code-block:: powershell
 
-    $cert = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2
-    $cert.Import("cert.pem")
+    $cert = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2 "cert.pem"
 
     $store_name = [System.Security.Cryptography.X509Certificates.StoreName]::Root
     $store_location = [System.Security.Cryptography.X509Certificates.StoreLocation]::LocalMachine
@@ -205,8 +204,7 @@ The code to import the client certificate public key is:
 
 .. code-block:: powershell
 
-    $cert = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2
-    $cert.Import("cert.pem")
+    $cert = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2 "cert.pem"
 
     $store_name = [System.Security.Cryptography.X509Certificates.StoreName]::TrustedPeople
     $store_location = [System.Security.Cryptography.X509Certificates.StoreLocation]::LocalMachine
