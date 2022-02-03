@@ -336,7 +336,7 @@ You can install Ansible on FreeBSD either from a package or from a port. See the
 FreeBSD packages
 ^^^^^^^^^^^^^^^^
 
-The installation from the packages is simpler, compared to the installation from the ports. See the details in the FreeBSD handbook `4.3. Finding Software <https://docs.freebsd.org/en/books/handbook/ports/#ports-finding-applications>`_ and `4.4. Using pkg for Binary Package Management <https://docs.freebsd.org/en/books/handbook/ports/#pkgng-intro>`_. Take a look at available packages, e.g.
+The installation from the packages is simpler, compared to the installation from the ports. See the details in the FreeBSD handbook `4.3. Finding Software <https://docs.freebsd.org/en/books/handbook/ports/#ports-finding-applications>`_ and `4.4. Using pkg for Binary Package Management <https://docs.freebsd.org/en/books/handbook/ports/#pkgng-intro>`_. Take a look at available packages, for example:
 
 .. code-block:: bash
 
