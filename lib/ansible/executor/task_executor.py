@@ -540,6 +540,7 @@ class TaskExecutor:
             self._connection._play_context = self._play_context
 
         plugin_vars = self._set_connection_options(cvars, templar)
+        self._connection.update_vars(variables)
         templar.available_variables = variables
 
         # TODO: eventually remove this block as this should be a 'consequence' of 'forced_local' modules

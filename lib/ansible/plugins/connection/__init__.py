@@ -230,6 +230,28 @@ class ConnectionBase(AnsiblePlugin):
     def reset(self):
         display.warning("Reset is not implemented for this connection")
 
+    def update_vars(self, variables):
+        '''
+        Adds 'magic' variables relating to connections to the variable dictionary provided.
+        In case users need to access from the play, this is a legacy from runner.
+        '''
+
+        for varname in C.COMMON_CONNECTION_VARS:
+            value = None
+            if 'password' in varname:
+                continue
+            elif varname == 'ansible_connection':
+                value = self._load_name
+            elif varname == 'ansible_shell_type':
+                value = self._shell._load_name
+            else:
+                options = C.config.get_plugin_options_from_var('connection', self._load_name, varname)
+                if options:
+                    value = self.get_option(options[0])  # for these variables there should be only one option
+            if value is not None:
+                display.debug('Set connection var {0} to {1}'.format(varname, value))
+                variables[varname] = value
+
 
 class NetworkConnectionBase(ConnectionBase):
     """
