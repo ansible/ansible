@@ -42,4 +42,3 @@ We are migrating these guides into collections. Please update your links for the
    :caption: Virtualization & Containerization Guides
 
    guide_vagrant
-   guide_vmware
