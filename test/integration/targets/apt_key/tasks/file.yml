@@ -1,6 +1,6 @@
 - name: Get Fedora GPG Key
   get_url:
-    url: https://ansible-ci-files.s3.us-east-1.amazonaws.com/test/integration/targets/apt_key/fedora.gpg
+    url: https://ci-files.testing.ansible.com/test/integration/targets/apt_key/fedora.gpg
     dest: /tmp/fedora.gpg
 
 - name: Ensure clean slate
@@ -42,7 +42,7 @@
 
 - name: add key from url
   apt_key:
-    url: https://ansible-ci-files.s3.us-east-1.amazonaws.com/test/integration/targets/apt_key/fedora.gpg
+    url: https://ci-files.testing.ansible.com/test/integration/targets/apt_key/fedora.gpg
   register: apt_key_url
 
 - name: verify key from url
