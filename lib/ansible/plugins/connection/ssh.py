@@ -25,6 +25,7 @@ DOCUMENTATION = '''
     options:
       host:
           description: Hostname/IP to connect to.
+          default: inventory_hostname
           vars:
                - name: inventory_hostname
                - name: ansible_host
