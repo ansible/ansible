@@ -144,6 +144,7 @@ from .integration import (
     get_inventory_relative_path,
     check_inventory,
     delegate_inventory,
+    IntegrationEnvironment,
 )
 
 from .data import (
@@ -1540,7 +1541,7 @@ def run_setup_targets(args, test_dir, target_names, targets_dict, targets_execut
         targets_executed.add(target_name)
 
 
-def integration_environment(args, target, test_dir, inventory_path, ansible_config, env_config):
+def integration_environment(args, target, test_dir, inventory_path, ansible_config, env_config, test_env):
     """
     :type args: IntegrationConfig
     :type target: IntegrationTarget
@@ -1548,6 +1549,7 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
     :type inventory_path: str
     :type ansible_config: str | None
     :type env_config: CloudEnvironmentConfig | None
+    :type test_env: IntegrationEnvironment
     :rtype: dict[str, str]
     """
     env = ansible_environment(args, ansible_config=ansible_config)
@@ -1561,6 +1563,8 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
 
     integration = dict(
         JUNIT_OUTPUT_DIR=ResultType.JUNIT.path,
+        JUNIT_TASK_RELATIVE_PATH=test_env.test_dir,
+        JUNIT_REPLACE_OUT_OF_TREE_PATH='out-of-tree:',
         ANSIBLE_CALLBACK_WHITELIST=','.join(sorted(set(callback_plugins))),
         ANSIBLE_TEST_CI=args.metadata.ci_provider or get_ci_provider().code,
         ANSIBLE_TEST_COVERAGE='check' if args.coverage_check else ('yes' if args.coverage else ''),
@@ -1607,7 +1611,7 @@ def command_integration_script(args, target, test_dir, inventory_path, temp_path
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
 
-        env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
+        env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env)
         cwd = os.path.join(test_env.targets_dir, target.relative_path)
 
         env.update(dict(
@@ -1715,7 +1719,7 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
             if args.verbosity:
                 cmd.append('-' + ('v' * args.verbosity))
 
-            env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
+            env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env)
             cwd = test_env.integration_dir
 
             env.update(dict(
