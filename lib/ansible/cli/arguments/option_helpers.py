@@ -210,7 +210,9 @@ def create_base_parser(prog, usage="", desc=None, epilog=None):
 def add_verbosity_options(parser):
     """Add options for verbosity"""
     parser.add_argument('-v', '--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
-                        help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
+                        help="Causes Ansible to print more debug messages. Adding multiple -v will increase the verbosity, "
+                             "the builtin plugins currently evaluate up to -vvvvvv. A reasonable level to start is -vvv, "
+                             "connection debugging might require -vvvv.")
 
 
 def add_async_options(parser):
