@@ -541,7 +541,7 @@ class TaskExecutor:
 
         # use magic var if it exists, if not, let task inheritance do it's thing.
         if cvars.get('ansible_connection') is not None:
-            current_connection  = templar.template(cvars['ansible_connection'])
+            current_connection = templar.template(cvars['ansible_connection'])
         else:
             current_connection = self._task.connection
 
