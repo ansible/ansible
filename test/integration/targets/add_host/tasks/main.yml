@@ -157,3 +157,20 @@
   assert:
     that:
       - badinput is failed
+
+- name: Add hosts in a loop
+  add_host:
+    name: 'host_{{item}}'
+  loop:
+    - 1
+    - 2
+    - 2
+  register: add_host_loop_res
+
+- name: verify correct changed results
+  assert:
+    that:
+      - add_host_loop_res.results[0] is changed
+      - add_host_loop_res.results[1] is changed
+      - add_host_loop_res.results[2] is not changed
+      - add_host_loop_res is changed

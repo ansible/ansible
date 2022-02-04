@@ -268,6 +268,14 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             e.message += '\nThis error can be suppressed as a warning using the "invalid_task_attribute_failed" configuration'
             raise e
 
+    def _validate_changed_when(self, attr, name, value):
+        if not isinstance(value, list):
+            setattr(self, name, [value])
+
+    def _validate_failed_when(self, attr, name, value):
+        if not isinstance(value, list):
+            setattr(self, name, [value])
+
     def post_validate(self, templar):
         '''
         Override of base class post_validate, to also do final validation on

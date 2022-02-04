@@ -71,3 +71,41 @@
       - invalid_conditional is failed
       - invalid_conditional.stdout is defined
       - invalid_conditional.changed_when_result is contains('boomboomboom')
+
+- add_host:
+    name: 'host_{{item}}'
+  loop:
+    - 1
+    - 2
+  changed_when: item == 2
+  register: add_host_loop_res
+
+- assert:
+    that:
+      - add_host_loop_res.results[0] is not changed
+      - add_host_loop_res.results[1] is changed
+      - add_host_loop_res is changed
+
+- group_by:
+    key: "test_{{ item }}"
+  loop:
+    - 1
+    - 2
+  changed_when: item == 2
+  register: group_by_loop_res
+
+- assert:
+    that:
+      - group_by_loop_res.results[0] is not changed
+      - group_by_loop_res.results[1] is changed
+      - group_by_loop_res is changed
+
+- name: use changed in changed_when
+  add_host:
+    name: 'host_3'
+  changed_when: add_host_loop_res is changed
+  register: add_host_loop_res
+
+- assert:
+    that:
+      - add_host_loop_res is changed
