@@ -21,7 +21,9 @@ __metaclass__ = type
 
 from ansible.inventory.group import Group
 from ansible.module_utils.common._collections_compat import Mapping, MutableMapping
+from ansible.parsing.utils.addresses import patterns
 from ansible.utils.vars import combine_vars, get_unique_id
+
 
 __all__ = ['Host']
 
@@ -153,7 +155,11 @@ class Host:
     def get_magic_vars(self):
         results = {}
         results['inventory_hostname'] = self.name
-        results['inventory_hostname_short'] = self.name.split('.')[0]
+        if patterns['ipv4'].match(self.name) or patterns['ipv6'].match(self.name):
+            results['inventory_hostname_short'] = self.name
+        else:
+            results['inventory_hostname_short'] = self.name.split('.')[0]
+
         results['group_names'] = sorted([g.name for g in self.get_groups() if g.name != 'all'])
 
         return results
