@@ -140,7 +140,7 @@ class HostState:
                 # and insert included handlers after include,
                 # that is where the handler to be executed
                 # next will be picked up from
-                self._handlers[i+1:i+1] = handler_blocks
+                self._handlers[i + 1:i + 1] = handler_blocks
                 return True
 
         return False
