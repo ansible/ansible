@@ -130,23 +130,16 @@ class HostState:
         return False
 
     def add_included_handlers(self, handler_blocks):
-        if not handler_blocks:
+        try:
+            include_idx = self._handlers.index(handler_blocks[0]._parent)
+        except (IndexError, ValueError) as e:
             return False
-
-        include_uuid = handler_blocks[0]._parent._uuid
-        for i, h in enumerate(self._handlers):
-            # find the include task in handlers
-            if h._uuid == include_uuid:
-                # and insert included handlers after include,
-                # that is where the handler to be executed
-                # next will be picked up from
-                self._handlers[i + 1:i + 1] = handler_blocks
-                return True
-
-        return False
+        else:
+            self._handlers[include_idx + 1:include_idx + 1] = handler_blocks
+            return True
 
     def remove_handlers(self):
-        del(self._handlers[:])
+        self._handlers.clear()
 
     def copy(self):
         new_state = HostState(self._blocks)
