@@ -23,7 +23,11 @@ class ActionModule(ActionBase):
         # deal with 'setup specific arguments'
         if fact_module not in C._ACTION_SETUP:
             # network facts modules must support gather_subset
-            if not self._connection._load_name.endswith(('.network_cli', '.httpapi', '.netconf')):
+            try:
+                name = self._connection.redirected_names[-1].replace('ansible.netcommon', '', 1)
+            except (IndexError, AttributeError):
+                name = self._connection._load_name.split('.')[-1]
+            if name not in ('network_cli', 'httpapi', 'netconf'):
                 subset = mod_args.pop('gather_subset', None)
                 if subset not in ('all', ['all']):
                     self._display.warning('Ignoring subset(%s) for %s' % (subset, fact_module))
