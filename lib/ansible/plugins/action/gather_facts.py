@@ -22,6 +22,7 @@ class ActionModule(ActionBase):
 
         # deal with 'setup specific arguments'
         if fact_module not in C._ACTION_SETUP:
+            # TODO: remove in favor of controller side argspec detecing valid arguments
             # network facts modules must support gather_subset
             try:
                 name = self._connection.redirected_names[-1].replace('ansible.netcommon', '', 1)
