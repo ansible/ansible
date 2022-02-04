@@ -8,11 +8,11 @@ Each collection community can set its own rules and workflow for managing pull r
 
 Maintainers review and merge pull requests following the `Ansible Code of Conduct <https://docs.ansible.com/ansible/latest/community/code_of_conduct.html>`_, `Review checklist <review_checklist.rst>`_, and the `Committer guidelines <https://docs.ansible.com/ansible/devel/community/committer_guidelines.html#general-rules>`_.
 
-There can be two kinds of maintainers: :ref:`collection maintainers<Collection maintainers>` and :ref:`module maintainers<Module maintainers>`.
+There can be two kinds of maintainers: :ref:`collection_maintainers` and :ref:`module_maintainers`.
 
 For the both kinds it is worth keeping in mind that “with great power comes great responsibility”.
 
-.. _Collection maintainers:
+.. _collection_maintainers:
 
 Collection maintainers
 ----------------------
@@ -23,7 +23,7 @@ They have the commit right and can merge pull requests among other permissions.
 
 If applicable, the collection maintainers expand a pull of module maintainers.
 
-.. _Module maintainers:
+.. _module_maintainers:
 
 Module maintainers
 ------------------
