@@ -97,12 +97,10 @@ def _validate_v1_source_info_schema(namespace, name, version, provided_arguments
         version=dict(choices=[version]),
     )
 
-    if not isinstance(argument_spec_data, dict):
-        raise AnsibleError('Incorrect type for argument_spec, expected dict and got %s' % type(argument_spec_data))
-
     if not isinstance(provided_arguments, dict):
-        raise AnsibleError('Incorrect type for provided_arguments, expected dict and got %s' % type(provided_arguments))
-
+        raise AnsibleError(
+            f'Invalid offline source info for {namespace}.{name}:{version}, expected a dict and got {type(provided_arguments)}'
+        )
     validator = ArgumentSpecValidator(argument_spec_data)
     validation_result = validator.validate(provided_arguments)
 
