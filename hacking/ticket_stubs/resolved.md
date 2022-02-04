@@ -1,20 +1,16 @@
-Closing This Ticket
-===================
-
 Hi!
 
-We believe recent commits (likely detailed above) should resolve this question or problem for you.
+We have ascertained that the following PR/commits should resolve this question or problem for you.
 
-This will also be included in the next major release.
+<< INSERT SHA/PR LINK HERE >>
 
-If you continue seeing any problems related to this issue, or if you have any further questions, please let us know by stopping by one of the two mailing lists, as appropriate:
+This should be included newer releases starting with << RELEASE/the next [major] release(s) >>.
 
-   * https://groups.google.com/forum/#!forum/ansible-project - for user questions, tips, and tricks
-   * https://groups.google.com/forum/#!forum/ansible-devel - for strategy, future planning, and questions about writing code
+Because this project is very active, we're unlikely to see comments made on closed tickets and we lock them after some time.
+The mailing list and irc are great ways to ask questions, or post if you don't think this particular issue is resolved.
 
-Because this project is very active, we're unlikely to see comments made on closed tickets, but the mailing list is a great way to ask questions, or post if you don't think this particular
-issue is resolved.
+See  this page for a complete list of communication channels and their purposes:
+
+   * https://docs.ansible.com/ansible/latest/community/communication.html
 
 Thank you!
-
-
