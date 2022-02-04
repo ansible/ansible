@@ -13,7 +13,7 @@ You can set up a ``requirements.yml`` file to install multiple collections in on
      version: 'version range identifiers (default: ``*``)'
      source: 'The Galaxy URL to pull the collection from (default: ``--api-server`` from cmdline)'
 
-You can specify five keys for each collection entry:
+You can specify the following keys for each collection entry:
 
   * ``name``
   * ``version``
