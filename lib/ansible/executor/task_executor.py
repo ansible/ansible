@@ -480,7 +480,7 @@ class TaskExecutor:
             raise self._loop_eval_error  # pylint: disable=raising-bad-type
 
         # if we ran into an error while setting up the PlayContext, raise it now, unless is known issue with delegation
-        if context_validation_error is not None and not (self._task.delegate_to and isinstance(context_validation_error, AnsibleUndefinedVariable)):
+        if context_validation_error is not None and not (self._task.delegate_to and isinstance(context_validation_error,(AnsibleParserError, AnsibleUndefinedVariable))):
             raise context_validation_error  # pylint: disable=raising-bad-type
 
         # if this task is a TaskInclude, we just return now with a success code so the
@@ -502,7 +502,7 @@ class TaskExecutor:
         # Now we do final validation on the task, which sets all fields to their final values.
         try:
             self._task.post_validate(templar=templar)
-        except AnsibleError:
+        except AnsibleError as e:
             raise
         except Exception:
             return dict(changed=False, failed=True, _ansible_no_log=self._play_context.no_log, exception=to_text(traceback.format_exc()))
