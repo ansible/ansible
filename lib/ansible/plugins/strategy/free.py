@@ -242,7 +242,7 @@ class StrategyModule(StrategyBase):
             )
 
             if len(included_files) > 0:
-                final_task_blocks = dict((host, []) for host in hosts_left)
+                all_blocks = dict((host, []) for host in hosts_left)
                 for included_file in included_files:
                     display.debug("collecting new blocks for %s" % included_file)
                     try:
@@ -284,12 +284,12 @@ class StrategyModule(StrategyBase):
                         final_block = new_block.filter_tagged_tasks(task_vars)
                         for host in hosts_left:
                             if host in included_file._hosts:
-                                final_task_blocks[host].append(final_block)
+                                all_blocks[host].append(final_block)
                     display.debug("done collecting new blocks for %s" % included_file)
 
                 display.debug("adding all collected blocks from %d included file(s) to iterator" % len(included_files))
-                for host, tasks in final_task_blocks.items():
-                    iterator.add_tasks(host, tasks)
+                for host in hosts_left:
+                    iterator.add_tasks(host, all_blocks[host])
                 display.debug("done adding collected blocks to iterator")
 
             # pause briefly so we don't spin lock

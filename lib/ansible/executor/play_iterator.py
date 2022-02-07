@@ -279,7 +279,7 @@ class PlayIterator:
             # if we run past the end of the list we know we're done with
             # this block
             try:
-                block = state.get_current_block()
+                block = state._blocks[state.cur_block]
             except IndexError:
                 state.run_state = IteratingStates.COMPLETE
                 return (state, None)
@@ -476,9 +476,9 @@ class PlayIterator:
                 state.tasks_child_state = self._set_failed_state(state.tasks_child_state)
             else:
                 state.fail_state |= FailedStates.TASKS
-                if state.get_current_block().rescue:
+                if state._blocks[state.cur_block].rescue:
                     state.run_state = IteratingStates.RESCUE
-                elif state.get_current_block().always:
+                elif state._blocks[state.cur_block].always:
                     state.run_state = IteratingStates.ALWAYS
                 elif state.handlers and self._play.force_handlers:
                     state.run_state = IteratingStates.HANDLERS
@@ -490,7 +490,7 @@ class PlayIterator:
                 state.rescue_child_state = self._set_failed_state(state.rescue_child_state)
             else:
                 state.fail_state |= FailedStates.RESCUE
-                if state.get_current_block().always:
+                if state._blocks[state.cur_block].always:
                     state.run_state = IteratingStates.ALWAYS
                 elif state.handlers and self._play.force_handlers:
                     state.run_state = IteratingStates.HANDLERS
@@ -542,7 +542,7 @@ class PlayIterator:
             else:
                 return not (state.did_rescue and state.fail_state & FailedStates.ALWAYS == 0)
         elif state.run_state == IteratingStates.TASKS and self._check_failed_state(state.tasks_child_state):
-            cur_block = state.get_current_block()
+            cur_block = state._blocks[state.cur_block]
             if len(cur_block.rescue) > 0 and state.fail_state & FailedStates.RESCUE == 0:
                 return False
             else:
@@ -591,7 +591,7 @@ class PlayIterator:
             if state.tasks_child_state:
                 state.tasks_child_state = self._insert_tasks_into_state(state.tasks_child_state, task_list)
             else:
-                target_block = state.get_current_block().copy()
+                target_block = state._blocks[state.cur_block].copy()
                 before = target_block.block[:state.cur_regular_task]
                 after = target_block.block[state.cur_regular_task:]
                 target_block.block = before + task_list + after
@@ -600,7 +600,7 @@ class PlayIterator:
             if state.rescue_child_state:
                 state.rescue_child_state = self._insert_tasks_into_state(state.rescue_child_state, task_list)
             else:
-                target_block = state.get_current_block().copy()
+                target_block = state._blocks[state.cur_block].copy()
                 before = target_block.rescue[:state.cur_rescue_task]
                 after = target_block.rescue[state.cur_rescue_task:]
                 target_block.rescue = before + task_list + after
@@ -609,7 +609,7 @@ class PlayIterator:
             if state.always_child_state:
                 state.always_child_state = self._insert_tasks_into_state(state.always_child_state, task_list)
             else:
-                target_block = state.get_current_block().copy()
+                target_block = state._blocks[state.cur_block].copy()
                 before = target_block.always[:state.cur_always_task]
                 after = target_block.always[state.cur_always_task:]
                 target_block.always = before + task_list + after

@@ -375,11 +375,13 @@ class StrategyModule(StrategyBase):
                 if len(included_files) > 0:
                     display.debug("we have included files to process")
 
-                    display.debug("generating final_task_blocks data")
-                    final_task_blocks = dict((host, []) for host in hosts_left)
-                    display.debug("done generating final_task_blocks data")
+                    display.debug("generating all_blocks data")
+                    all_blocks = dict((host, []) for host in hosts_left)
+                    display.debug("done generating all_blocks data")
                     for included_file in included_files:
                         display.debug("processing included file: %s" % included_file._filename)
+                        # included hosts get the task list while those excluded get an equal-length
+                        # list of noop tasks, to make sure that they continue running in lock-step
                         try:
                             if included_file._is_role:
                                 new_ir = self._copy_included_file(included_file)
@@ -414,15 +416,13 @@ class StrategyModule(StrategyBase):
                                 final_block = new_block.filter_tagged_tasks(task_vars)
                                 display.debug("done filtering new block on tags")
 
-                                # included hosts get the task list while those excluded get an equal-length
-                                # list of noop tasks, to make sure that they continue running in lock-step
                                 noop_block = self._prepare_and_create_noop_block_from(final_block, task._parent, iterator)
 
                                 for host in hosts_left:
                                     if host in included_file._hosts:
-                                        final_task_blocks[host].append(final_block)
+                                        all_blocks[host].append(final_block)
                                     else:
-                                        final_task_blocks[host].append(noop_block)
+                                        all_blocks[host].append(noop_block)
                             display.debug("done iterating over new_blocks loaded from include file")
                         except AnsibleParserError:
                             raise
@@ -440,8 +440,8 @@ class StrategyModule(StrategyBase):
                     # accumulated blocks to their list of tasks
                     display.debug("extending task lists for all hosts with included blocks")
 
-                    for host, tasks in final_task_blocks.items():
-                        iterator.add_tasks(host, tasks)
+                    for host in hosts_left:
+                        iterator.add_tasks(host, all_blocks[host])
 
                     display.debug("done extending task lists")
                     display.debug("done processing included files")
