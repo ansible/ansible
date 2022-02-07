@@ -356,14 +356,12 @@ class StrategyModule(StrategyBase):
                 noop_handler.implicit = True
                 noop_handler.set_loader(iterator._play._loader)
                 if iterator.host_states:
-                    max_len = max(len(host_state.handlers) for host_name, host_state in iterator.host_states.items())
+                    max_handlers = max(len(host_state.handlers) for host_name, host_state in iterator.host_states.items())
                     for host_name, host_state in iterator.host_states.items():
                         if host_state.run_state == IteratingStates.HANDLERS:
                             continue
-                        num_handlers = len(host_state.handlers)
-                        for _ in range(0, max_len - num_handlers):
-                            # need to bypass iterator.add_handlers which dedupes handlers
-                            host_state._handlers.append(noop_handler)
+                        # need to bypass iterator.add_handlers which dedupes handlers
+                        host_state._handlers.extend([noop_handler] * (max_handlers - len(host_state.handlers)))
 
                 included_files = IncludedFile.process_include_results(
                     host_results,
@@ -392,8 +390,9 @@ class StrategyModule(StrategyBase):
                                     loader=self._loader,
                                 )
                             else:
-                                if isinstance(included_file._task, Handler):
-                                    new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=True)
+                                is_handler = isinstance(included_file._task, Handler)
+                                new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=is_handler)
+                                if is_handler:
                                     # TODO filter tags to allow tags on handlers
                                     iterator._play.handlers.extend(new_blocks)
                                     for host in included_file._hosts:
@@ -401,8 +400,6 @@ class StrategyModule(StrategyBase):
                                             iterator.add_included_handlers(host, new_blocks)
                                     # short-circuit the loop here because we already added included handlers into iterator
                                     continue
-                                else:
-                                    new_blocks = self._load_included_file(included_file, iterator=iterator)
 
                             display.debug("iterating over new_blocks loaded from include file")
                             for new_block in new_blocks:

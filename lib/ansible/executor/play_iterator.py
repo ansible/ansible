@@ -119,7 +119,7 @@ class HostState:
     def get_current_block(self):
         return self._blocks[self.cur_block]
 
-    def get_current_handler(self):
+    def pop_current_handler(self):
         return self._handlers.popleft()
 
     def add_handler(self, handler):
@@ -452,7 +452,7 @@ class PlayIterator:
                     elif len(state.handlers) == 0:
                         state.run_state = state.pre_flushing_run_state
                     else:
-                        task = state.get_current_handler()
+                        task = state.pop_current_handler()
                         if isinstance(task, Block):
                             state.handlers_child_state = HostState(blocks=[task])
                             state.handlers_child_state.run_state = IteratingStates.TASKS

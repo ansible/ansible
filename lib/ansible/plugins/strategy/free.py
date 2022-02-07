@@ -255,8 +255,9 @@ class StrategyModule(StrategyBase):
                                 loader=self._loader,
                             )
                         else:
-                            if isinstance(included_file._task, Handler):
-                                new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=True)
+                            is_handler = isinstance(included_file._task, Handler)
+                            new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=is_handler)
+                            if is_handler:
                                 # TODO filter tags to allow tags on handlers
                                 iterator._play.handlers.extend(new_blocks)
                                 for host in included_file._hosts:
@@ -264,8 +265,6 @@ class StrategyModule(StrategyBase):
                                         iterator.add_included_handlers(host, new_blocks)
                                 # short-circuit the loop here because we already added included handlers into iterator
                                 continue
-                            else:
-                                new_blocks = self._load_included_file(included_file, iterator=iterator)
                     except AnsibleParserError:
                         raise
                     except AnsibleError as e:

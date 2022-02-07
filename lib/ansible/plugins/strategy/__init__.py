@@ -497,7 +497,7 @@ class StrategyBase:
             # iterate in reversed order since last handler loaded with the same name wins
             for handler_block in reversed(handler_blocks):
                 if not handler_block.name:
-                    # unnamed block, implicit or user-defined, treat all tasks within the block.block as separate handlers
+                    # unnamed block, implicit or user-defined, treat all tasks within the block.block as separate handlers,
                     # rescue and always sections are ignored
                     handlers = handler_block.block
                 else:
@@ -547,7 +547,6 @@ class StrategyBase:
                             target_handler = search_handler_blocks_by_name(handler_name, [handler])
                             if target_handler is not None:
                                 return target_handler
-            return None
 
         cur_pass = 0
         while True:
