@@ -361,6 +361,16 @@ class ConfigManager(object):
                     pvars.append(var_entry['name'])
         return pvars
 
+    def get_plugin_options_from_var(self, plugin_type, name, variable):
+
+        options = []
+        for option_name, pdef in self.get_configuration_definitions(plugin_type, name).items():
+            if 'vars' in pdef and pdef['vars']:
+                for var_entry in pdef['vars']:
+                    if variable == var_entry['name']:
+                        options.append(option_name)
+        return options
+
     def get_configuration_definition(self, name, plugin_type=None, plugin_name=None):
 
         ret = {}
