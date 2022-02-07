@@ -469,7 +469,8 @@ def update_timestamp_for_file(path, mtime, atime, diff=None):
 
             set_time = (atime, mtime)
 
-        os.utime(b_path, set_time)
+        if not module.check_mode:
+            os.utime(b_path, set_time)
 
         if diff is not None:
             if 'before' not in diff:
