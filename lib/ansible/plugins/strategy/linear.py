@@ -354,9 +354,8 @@ class StrategyModule(StrategyBase):
                 noop_handler.action = 'meta'
                 noop_handler.args['_raw_params'] = 'noop'
                 noop_handler.implicit = True
-                #noop_handler.set_loader(iterator._play._loader)
-                #if iterator.host_states:
-                max_handlers = max(len(host_state.handlers) for host_name, host_state in iterator.host_states.items())
+                noop_handler.set_loader(iterator._play._loader)
+                max_handlers = max((len(host_state.handlers) for host_name, host_state in iterator.host_states.items()), default=0)
                 for host_name, host_state in iterator.host_states.items():
                     if host_state.run_state == IteratingStates.HANDLERS:
                         continue
