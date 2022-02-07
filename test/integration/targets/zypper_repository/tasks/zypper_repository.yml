@@ -125,3 +125,4 @@
     priority: 100
     auto_import_keys: true
     state: "present"
+  when: ansible_distribution_version is version('15.2', 'gt')  # openSUSE Leap 15.2 is EOL and packages are no longer available
