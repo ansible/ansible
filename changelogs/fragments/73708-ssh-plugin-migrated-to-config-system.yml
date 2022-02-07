@@ -1,0 +1,5 @@
+known_issues:
+  - "ssh connection - SSH connection plugin uses the config system, some parameters have been renamed and moved from the global configuration to the SSH connection plugin. For example use ``lookup('config', 'control_path', plugin_name='ssh', plugin_type='connection')`` instead of ``lookup('config', 'ANSIBLE_SSH_CONTROL_PATH')``. The affected parameters are: ``ssh_args`` (was ``ANSIBLE_SSH_ARGS``), ``control_path`` (was ``ANSIBLE_SSH_CONTROL_PATH``), ``control_path_dir`` (was ``ANSIBLE_SSH_CONTROL_PATH_DIR``), ``ssh_executable`` (was ``ANSIBLE_SSH_EXECUTABLE``), ``reconnection_retries`` (was ``ANSIBLE_SSH_RETRIES``), ``scp_if_ssh`` (was ``DEFAULT_SCP_IF_SSH``), ``sftp_batch_mode`` (was ``DEFAULT_SFTP_BATCH_MODE``), ``ssh_transfer_method`` (was ``DEFAULT_SSH_TRANSFER_METHOD``)."
+
+minor_changes:
+  - ssh connection - environment variable ``ANSIBLE_SSH_TIMEOUT`` has been added
