@@ -43,8 +43,10 @@ options:
         default: "HEAD"
     accept_hostkey:
         description:
-            - If C(yes), ensure that "-o StrictHostKeyChecking=no" is
-              present as an ssh option.
+            - Will ensure or not that "-o StrictHostKeyChecking=no" is present as an ssh option.
+            - Be aware that this disables a protection against MITM attacks.
+            - Those using OpenSSH >= 7.5 might want to set I(ssh_opt) to 'StrictHostKeyChecking=accept-new'
+              instead, it does not remove the MITM issue but it does restrict it to the first attempt.
         type: bool
         default: 'no'
         version_added: "1.5"
@@ -59,16 +61,19 @@ options:
         version_added: "2.12"
     ssh_opts:
         description:
-            - Creates a wrapper script and exports the path as GIT_SSH
-              which git then automatically uses to override ssh arguments.
-              An example value could be "-o StrictHostKeyChecking=no"
-              (although this particular option is better set by
-              I(accept_hostkey)).
+            - Options git will pass to ssh when used as protocol, it works via GIT_SSH_OPTIONS.
+            - For older versions it appends GIT_SSH_OPTIONS to GIT_SSH/GIT_SSH_COMMAND.
+            - Other options can add to this list, like I(key_file) and I(accept_hostkey).
+            - An example value could be "-o StrictHostKeyChecking=no" (although this particular
+              option is better set by I(accept_hostkey)).
+            - The module ensures that 'BatchMode=yes' is always present to avoid prompts.
         type: str
         version_added: "1.5"
+
     key_file:
         description:
             - Specify an optional private key file path, on the target host, to use for the checkout.
+            - This ensures 'IdentitiesOnly=yes' is present in ssh_opts.
         type: path
         version_added: "1.5"
     reference:
@@ -418,57 +423,88 @@ def get_submodule_update_params(module, git_path, cwd):
     return params
 
 
-def write_ssh_wrapper(module_tmpdir):
+def write_ssh_wrapper(module):
+    '''
+        This writes an shell wrapper for ssh options to be used with git
+        this is only relevant for older versions of gitthat cannot
+        handle the options themselves. Returns path to the script
+    '''
     try:
         # make sure we have full permission to the module_dir, which
         # may not be the case if we're sudo'ing to a non-root user
-        if os.access(module_tmpdir, os.W_OK | os.R_OK | os.X_OK):
-            fd, wrapper_path = tempfile.mkstemp(prefix=module_tmpdir + '/')
+        if os.access(module.tmpdir, os.W_OK | os.R_OK | os.X_OK):
+            fd, wrapper_path = tempfile.mkstemp(prefix=module.tmpdir + '/')
         else:
             raise OSError
     except (IOError, OSError):
         fd, wrapper_path = tempfile.mkstemp()
-    fh = os.fdopen(fd, 'w+b')
+
+    # use existing git_ssh/ssh_command, fallback to 'ssh'
     template = b("""#!/bin/sh
-if [ -z "$GIT_SSH_OPTS" ]; then
-    BASEOPTS=""
-else
-    BASEOPTS=$GIT_SSH_OPTS
-fi
+%s $GIT_SSH_OPTS
+""" % os.environ.get('GIT_SSH', os.environ.get('GIT_SSH_COMMAND', 'ssh')))
 
-# Let ssh fail rather than prompt
-BASEOPTS="$BASEOPTS -o BatchMode=yes"
+    # write it
+    with os.fdopen(fd, 'w+b') as fh:
+        fh.write(template)
 
-if [ -z "$GIT_KEY" ]; then
-    ssh $BASEOPTS "$@"
-else
-    ssh -i "$GIT_KEY" -o IdentitiesOnly=yes $BASEOPTS "$@"
-fi
-""")
-    fh.write(template)
-    fh.close()
+    # set execute
     st = os.stat(wrapper_path)
     os.chmod(wrapper_path, st.st_mode | stat.S_IEXEC)
+
+    module.debug('Wrote temp git ssh wrapper (%s): %s' % (wrapper_path, template))
+
+    # ensure we cleanup after ourselves
+    module.add_cleanup_file(path=wrapper_path)
+
     return wrapper_path
 
 
-def set_git_ssh(ssh_wrapper, key_file, ssh_opts):
+def set_git_ssh_env(key_file, ssh_opts, git_version, module):
+    '''
+        use environment variables to configure git's ssh execution,
+        which varies by version but this functino should handle all.
+    '''
 
-    if os.environ.get("GIT_SSH"):
-        del os.environ["GIT_SSH"]
-    os.environ["GIT_SSH"] = ssh_wrapper
+    # initialise to existing ssh opts and/or append user provided
+    if ssh_opts is None:
+        ssh_opts = os.environ.get('GIT_SSH_OPTS', '')
+    else:
+        ssh_opts = os.environ.get('GIT_SSH_OPTS', '') + ' ' + ssh_opts
 
-    if os.environ.get("GIT_KEY"):
-        del os.environ["GIT_KEY"]
+    # hostkey acceptance
+    accept_key = "StrictHostKeyChecking=no"
+    if module.params['accept_hostkey'] and accept_key not in ssh_opts:
+        ssh_opts += " -o %s" % accept_key
 
+    # avoid prompts
+    force_batch = 'BatchMode=yes'
+    if force_batch not in ssh_opts:
+        ssh_opts += ' -o %s' % (force_batch)
+
+    # deal with key file
     if key_file:
         os.environ["GIT_KEY"] = key_file
 
-    if os.environ.get("GIT_SSH_OPTS"):
-        del os.environ["GIT_SSH_OPTS"]
+        ikey = 'IdentitiesOnly=yes'
+        if ikey not in ssh_opts:
+            ssh_opts += ' -o %s' % ikey
 
-    if ssh_opts:
-        os.environ["GIT_SSH_OPTS"] = ssh_opts
+    # we should always have finalized string here.
+    os.environ["GIT_SSH_OPTS"] = ssh_opts
+
+    # older than 2.3 does not know how to use git_ssh_opts,
+    # so we force it into ssh command var
+    if git_version < LooseVersion('2.3.0'):
+
+        # these versions don't support GIT_SSH_OPTS so have to write wrapper
+        wrapper = write_ssh_wrapper(module)
+
+        # force use of git_ssh_opts via wrapper
+        os.environ["GIT_SSH"] = wrapper
+
+        # same as above but older git uses git_ssh_command
+        os.environ["GIT_SSH_COMMAND"] = wrapper
 
 
 def get_version(module, git_path, dest, ref="HEAD"):
@@ -1122,8 +1158,8 @@ def create_archive(git_path, module, dest, archive, archive_prefix, version, rep
         git_archive(git_path, module, dest, archive, archive_fmt, archive_prefix, version)
         result.update(changed=True)
 
-
 # ===========================================
+
 
 def main():
     module = AnsibleModule(
@@ -1246,14 +1282,11 @@ def main():
             )
         gitconfig = os.path.join(repo_path, 'config')
 
-    # create a wrapper script and export
-    # GIT_SSH=<path> as an environment variable
-    # for git to use the wrapper script
-    ssh_wrapper = write_ssh_wrapper(module.tmpdir)
-    set_git_ssh(ssh_wrapper, key_file, ssh_opts)
-    module.add_cleanup_file(path=ssh_wrapper)
-
+    # iface changes so need it to make decisions
     git_version_used = git_version(git_path, module)
+
+    # GIT_SSH=<path> as an environment variable, might create sh wrapper script for older versions.
+    set_git_ssh_env(key_file, ssh_opts, git_version_used, module)
 
     if depth is not None and git_version_used < LooseVersion('1.9.1'):
         module.warn("git version is too old to fully support the depth argument. Falling back to full checkouts.")
