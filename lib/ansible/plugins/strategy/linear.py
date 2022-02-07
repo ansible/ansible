@@ -350,21 +350,19 @@ class StrategyModule(StrategyBase):
 
                 self.update_active_connections(results)
 
-                # handlers are special, similarly to included tasks,
-                # in that whether they are executed is known at runtime
-                # and as such noop tasks need to be added after each lock-step
-                # because we have no way of indicating which handler is "first"
-                # in the PlayIterator
                 noop_handler = Handler()
                 noop_handler.action = 'meta'
                 noop_handler.args['_raw_params'] = 'noop'
                 noop_handler.implicit = True
                 noop_handler.set_loader(iterator._play._loader)
                 if iterator.host_states:
-                    max_len = max(len(host_state._handlers) for host_name, host_state in iterator.host_states.items())
+                    max_len = max(len(host_state.handlers) for host_name, host_state in iterator.host_states.items())
                     for host_name, host_state in iterator.host_states.items():
-                        num_handlers = len(host_state._handlers)
+                        if host_state.run_state == IteratingStates.HANDLERS:
+                            continue
+                        num_handlers = len(host_state.handlers)
                         for _ in range(0, max_len - num_handlers):
+                            # need to bypass iterator.add_handlers which dedupes handlers
                             host_state._handlers.append(noop_handler)
 
                 included_files = IncludedFile.process_include_results(

@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import fnmatch
 
+from collections import deque
 from enum import IntEnum, IntFlag
 
 from ansible import constants as C
@@ -58,13 +59,12 @@ class FailedStates(IntFlag):
 class HostState:
     def __init__(self, blocks):
         self._blocks = blocks[:]
-        self._handlers = []
+        self._handlers = deque()
 
         self.cur_block = 0
         self.cur_regular_task = 0
         self.cur_rescue_task = 0
         self.cur_always_task = 0
-        self.cur_handlers_task = 0
         self.run_state = IteratingStates.SETUP
         self.fail_state = FailedStates.NONE
         self.pre_flushing_run_state = None
@@ -80,14 +80,13 @@ class HostState:
         return "HostState(%r, %r)" % (self._blocks, self._handlers)
 
     def __str__(self):
-        return ("HOST STATE: block=%d, task=%d, rescue=%d, always=%d, handler=%d, run_state=%s, fail_state=%s, pre_flushing_run_state=%s, pending_setup=%s, "
+        return ("HOST STATE: block=%d, task=%d, rescue=%d, always=%d, run_state=%s, fail_state=%s, pre_flushing_run_state=%s, pending_setup=%s, "
                 "tasks child state? (%s), rescue child state? (%s), always child state? (%s), handlers child state? (%s), "
                 "did rescue? %s, did start at task? %s" % (
                     self.cur_block,
                     self.cur_regular_task,
                     self.cur_rescue_task,
                     self.cur_always_task,
-                    self.cur_handlers_task,
                     self.run_state,
                     self.fail_state,
                     self.pre_flushing_run_state,
@@ -105,7 +104,7 @@ class HostState:
             return False
 
         for attr in ('_blocks', '_handlers',
-                     'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task', 'cur_handlers_task',
+                     'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
                      'run_state', 'fail_state', 'pre_flushing_run_state', 'pending_setup',
                      'tasks_child_state', 'rescue_child_state', 'always_child_state', 'handlers_child_state'):
             if getattr(self, attr) != getattr(other, attr):
@@ -121,7 +120,7 @@ class HostState:
         return self._blocks[self.cur_block]
 
     def get_current_handler(self):
-        return self._handlers[self.cur_handlers_task]
+        return self._handlers.popleft()
 
     def add_handler(self, handler):
         if handler not in self._handlers:
@@ -130,25 +129,19 @@ class HostState:
         return False
 
     def add_included_handlers(self, handler_blocks):
-        try:
-            include_idx = self._handlers.index(handler_blocks[0]._parent)
-        except (IndexError, ValueError) as e:
-            return False
-        else:
-            self._handlers[include_idx + 1:include_idx + 1] = handler_blocks
-            return True
+        # deque.extendleft reverses order
+        self._handlers.extendleft(reversed(handler_blocks))
 
     def remove_handlers(self):
         self._handlers.clear()
 
     def copy(self):
         new_state = HostState(self._blocks)
-        new_state._handlers = self._handlers[:]
+        new_state._handlers = self._handlers.copy()
         new_state.cur_block = self.cur_block
         new_state.cur_regular_task = self.cur_regular_task
         new_state.cur_rescue_task = self.cur_rescue_task
         new_state.cur_always_task = self.cur_always_task
-        new_state.cur_handlers_task = self.cur_handlers_task
         new_state.run_state = self.run_state
         new_state.fail_state = self.fail_state
         new_state.pre_flushing_run_state = self.pre_flushing_run_state
@@ -327,7 +320,6 @@ class PlayIterator:
                         state.cur_regular_task = 0
                         state.cur_rescue_task = 0
                         state.cur_always_task = 0
-                        state.cur_handlers_task = 0
                         state.tasks_child_state = None
                         state.rescue_child_state = None
                         state.always_child_state = None
@@ -430,7 +422,6 @@ class PlayIterator:
                             state.cur_regular_task = 0
                             state.cur_rescue_task = 0
                             state.cur_always_task = 0
-                            state.cur_handlers_task = 0
                             state.run_state = IteratingStates.TASKS
                             state.tasks_child_state = None
                             state.rescue_child_state = None
@@ -458,9 +449,7 @@ class PlayIterator:
                 else:
                     if state.fail_state != FailedStates.NONE and not self._play.force_handlers:
                         state.run_state = IteratingStates.COMPLETE
-                    elif state.cur_handlers_task >= len(state.handlers):
-                        state.remove_handlers()
-                        state.cur_handlers_task = 0
+                    elif len(state.handlers) == 0:
                         state.run_state = state.pre_flushing_run_state
                     else:
                         task = state.get_current_handler()
@@ -468,7 +457,6 @@ class PlayIterator:
                             state.handlers_child_state = HostState(blocks=[task])
                             state.handlers_child_state.run_state = IteratingStates.TASKS
                             task = None
-                        state.cur_handlers_task += 1
 
             elif state.run_state == IteratingStates.COMPLETE:
                 return (state, None)
