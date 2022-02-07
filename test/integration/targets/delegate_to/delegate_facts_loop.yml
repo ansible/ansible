@@ -18,4 +18,4 @@
         that:
           - "'test' in hostvars[item]"
           - hostvars[item]['test'] == 123
-      loop: "{{ groups['all'] | difference(['localhost']) }}"
+      loop: "{{ groups['all'] | difference(['localhost'])}}"
