@@ -1,12 +1,14 @@
 - hosts: localhost
   gather_facts: no
   tasks:
+  # NOTE: 6 & 7 work in debug mode, but for some reason do not correctly interpolate
+  # in set_fact/assert their ansible_host resolution
     - set_fact:
         test: 123
       delegate_to: "{{ item }}"
       delegate_facts: true
       when: test is not defined
-      loop: "{{ groups['all'] | difference(['localhost']) }}"
+      loop: "{{ groups['all'] | difference(['localhost', 'testhost6', 'testhost7']) }}"
 
     - name: ensure we didnt create it on current host
       assert:
@@ -18,4 +20,4 @@
         that:
           - "'test' in hostvars[item]"
           - hostvars[item]['test'] == 123
-      loop: "{{ groups['all'] | difference(['localhost']) }}"
+      loop: "{{ groups['all'] | difference(['localhost', 'testhost6', 'testhost7']) }}"
