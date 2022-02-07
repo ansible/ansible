@@ -1,0 +1,3 @@
+minor_changes:
+  - ansible-test - Update the ``alpine`` container to version 3.3.0.
+    This updates the base image from 3.14.2 to 3.15.0, which includes support for installing binary wheels using pip.
