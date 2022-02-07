@@ -480,8 +480,19 @@ class TaskExecutor:
             raise self._loop_eval_error  # pylint: disable=raising-bad-type
 
         # if we ran into an error while setting up the PlayContext, raise it now, unless is known issue with delegation
-        if context_validation_error is not None and not (self._task.delegate_to and isinstance(context_validation_error,(AnsibleParserError, AnsibleUndefinedVariable))):
-            raise context_validation_error  # pylint: disable=raising-bad-type
+        # and undefined vars (correct values are in cvars later on and connection plugins, if still error, blows up there)
+        if context_validation_error is not None:
+            raiseit = True
+            if self._task.delegate_to:
+                if isinstance(context_validation_error, AnsibleUndefinedVariable):
+                    raiseit = False
+                elif isinstance(context_validation_error, AnsibleParserError):
+                    # parser error, might be cause by undef too
+                    orig_exc = getattr(context_validation_error, 'orig_exc', None)
+                    if isinstance(orig_exc, AnsibleUndefinedVariable):
+                        raiseit = False
+            if raiseit:
+                raise context_validation_error  # pylint: disable=raising-bad-type
 
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
