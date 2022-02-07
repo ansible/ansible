@@ -1282,7 +1282,8 @@ class StrategyBase:
                 play_context.remote_addr = target_host.address
 
             # We also add "magic" variables back into the variables dict to make sure
-            # a certain subset of variables exist.
+            # a certain subset of variables exist. This 'mostly' works here cause meta
+            # disregards the loop, but should not really use play_context at all
             play_context.update_vars(all_vars)
 
             if target_host in self._active_connections:
