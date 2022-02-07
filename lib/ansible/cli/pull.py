@@ -168,7 +168,11 @@ class PullCLI(CLI):
         # Now construct the ansible command
         node = platform.node()
         host = socket.getfqdn()
-        limit_opts = 'localhost,%s,127.0.0.1' % ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
+        hostnames = ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
+        if hostnames:
+            limit_opts = 'localhost,%s,127.0.0.1' % hostnames
+        else:
+            limit_opts = 'localhost,127.0.0.1'
         base_opts = '-c local '
         if context.CLIARGS['verbosity'] > 0:
             base_opts += ' -%s' % ''.join(["v" for x in range(0, context.CLIARGS['verbosity'])])
