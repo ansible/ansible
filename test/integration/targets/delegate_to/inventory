@@ -7,3 +7,11 @@ testhost5 ansible_connection=fakelocal
 
 [all:vars]
 ansible_python_interpreter="{{ ansible_playbook_python }}"
+
+[delegated_vars]
+testhost6 myhost=127.0.0.3
+testhost7 myhost=127.0.0.4
+
+[delegated_vars:vars]
+ansible_host={{myhost}}
+ansible_connection=ssh

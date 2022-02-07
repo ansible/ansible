@@ -1,0 +1,2 @@
+bugfixes:
+  - ssh connection now uses more correct host source as play_context can ignore loop/delegation variations.

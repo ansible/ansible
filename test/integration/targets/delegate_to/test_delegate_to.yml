@@ -56,3 +56,27 @@
 
     - name: remove test file
       file: path={{ output_dir }}/tmp.txt state=absent
+
+
+- name: verify delegation with per host vars
+  hosts: testhost6
+  gather_facts: yes
+  tasks:
+    - debug: msg={{ansible_facts['env']}}
+
+    - name: ensure normal facts still work as expected
+      assert:
+        that:
+          - '"127.0.0.3" in ansible_facts["env"]["SSH_CONNECTION"]'
+
+    - name: Test delegate_to with other host defined using same named var
+      setup:
+      register: setup_results
+      delegate_to: testhost7
+
+    - debug: msg={{setup_results.ansible_facts.ansible_env}}
+
+    - name: verify ssh plugin resolves variable for ansible_host correctly
+      assert:
+        that:
+          - '"127.0.0.4" in setup_results.ansible_facts.ansible_env["SSH_CONNECTION"]'

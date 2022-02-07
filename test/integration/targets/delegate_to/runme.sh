@@ -48,7 +48,7 @@ ANSIBLE_SSH_ARGS='-C -o ControlMaster=auto -o ControlPersist=60s -o UserKnownHos
 # this test is not doing what it says it does, also relies on var that should not be available
 #ansible-playbook test_loop_control.yml -v "$@"
 
-ansible-playbook test_delegate_to_loop_randomness.yml -v "$@"
+ansible-playbook test_delegate_to_loop_randomness.yml -i inventory -v "$@"
 
 ansible-playbook delegate_and_nolog.yml -i inventory -v "$@"
 
