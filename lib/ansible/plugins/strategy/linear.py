@@ -354,14 +354,14 @@ class StrategyModule(StrategyBase):
                 noop_handler.action = 'meta'
                 noop_handler.args['_raw_params'] = 'noop'
                 noop_handler.implicit = True
-                noop_handler.set_loader(iterator._play._loader)
-                if iterator.host_states:
-                    max_handlers = max(len(host_state.handlers) for host_name, host_state in iterator.host_states.items())
-                    for host_name, host_state in iterator.host_states.items():
-                        if host_state.run_state == IteratingStates.HANDLERS:
-                            continue
-                        # need to bypass iterator.add_handlers which dedupes handlers
-                        host_state._handlers.extend([noop_handler] * (max_handlers - len(host_state.handlers)))
+                #noop_handler.set_loader(iterator._play._loader)
+                #if iterator.host_states:
+                max_handlers = max(len(host_state.handlers) for host_name, host_state in iterator.host_states.items())
+                for host_name, host_state in iterator.host_states.items():
+                    if host_state.run_state == IteratingStates.HANDLERS:
+                        continue
+                    # need to bypass iterator.add_handlers which dedupes handlers
+                    host_state._handlers.extend([noop_handler] * (max_handlers - len(host_state.handlers)))
 
                 included_files = IncludedFile.process_include_results(
                     host_results,
