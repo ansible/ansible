@@ -67,8 +67,8 @@ Repeated tasks can be written as standard loops over a simple list of strings. Y
         state: present
         groups: "wheel"
       loop:
-         - testuser1
-         - testuser2
+        - testuser1
+        - testuser2
 
 You can define the list in a variables file, or in the 'vars' section of your play, then refer to the name of the list in the task.
 
