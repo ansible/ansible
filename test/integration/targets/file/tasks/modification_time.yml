@@ -18,6 +18,7 @@
     modification_time: "{{ modification_timestamp }}"
     modification_time_format: "%Y%m%d%H%M.%S"
   check_mode: true
+  register: file_change_check_mode
 
 - name: Re-stat the file
   stat:
@@ -26,19 +27,44 @@
 
 - name: Confirm check_mode did not change the file
   assert:
-    that: initial_file_stat.stat.mtime == check_mode_stat.stat.mtime
+    that:
+      - initial_file_stat.stat.mtime == check_mode_stat.stat.mtime
+      # Ensure the changed flag was set
+      - file_change_check_mode.changed
+      # Ensure the diff is present
+      # Note: file diff always contains the path
+      - file_change_check_mode.diff.after | length > 1
 
 - name: Set a modification time for real
   ansible.builtin.file:
     path: "{{ output_file }}"
     modification_time: "{{ modification_timestamp }}"
     modification_time_format: "%Y%m%d%H%M.%S"
+  register: file_change_no_check_mode
 
-- name: Final stat of the file
+- name: Stat of the file after the change
   stat:
     path: "{{ output_file }}"
-  register: final_stat
+  register: change_stat
 
 - name: Confirm the modification time changed
   assert:
-    that: initial_file_stat.stat.mtime != final_stat.stat.mtime
+    that:
+      - initial_file_stat.stat.mtime != change_stat.stat.mtime
+      - file_change_no_check_mode.changed
+      # Note: file diff always contains the path
+      - file_change_no_check_mode.diff.after | length > 1
+
+- name: Set a modification time a second time to confirm no changes or diffs
+  ansible.builtin.file:
+    path: "{{ output_file }}"
+    modification_time: "{{ modification_timestamp }}"
+    modification_time_format: "%Y%m%d%H%M.%S"
+  register: file_change_no_check_mode_second
+
+- name: Confirm no changes made registered
+  assert:
+    that:
+      - not file_change_no_check_mode_second.changed
+      # Note: file diff always contains the path
+      - file_change_no_check_mode_second.diff.after | length == 1
