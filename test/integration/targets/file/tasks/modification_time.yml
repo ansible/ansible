@@ -1,0 +1,44 @@
+# file module tests for dealing with modification_time
+
+- name: Initialize the test output dir
+  import_tasks: initialize.yml
+
+- name: Setup the modification time for the tests
+  set_fact:
+    modification_timestamp: "202202081414.00"
+
+- name: Get stat info for the file
+  stat:
+    path: "{{ output_file }}"
+  register: initial_file_stat
+
+- name: Set a modification time in check_mode
+  ansible.builtin.file:
+    path: "{{ output_file }}"
+    modification_time: "{{ modification_timestamp }}"
+    modification_time_format: "%Y%m%d%H%M.%S"
+  check_mode: true
+
+- name: Re-stat the file
+  stat:
+    path: "{{ output_file }}"
+  register: check_mode_stat
+
+- name: Confirm check_mode did not change the file
+  assert:
+    that: initial_file_stat.stat.mtime == check_mode_stat.stat.mtime
+
+- name: Set a modification time for real
+  ansible.builtin.file:
+    path: "{{ output_file }}"
+    modification_time: "{{ modification_timestamp }}"
+    modification_time_format: "%Y%m%d%H%M.%S"
+
+- name: Final stat of the file
+  stat:
+    path: "{{ output_file }}"
+  register: final_stat
+
+- name: Confirm the modification time changed
+  assert:
+    that: initial_file_stat.stat.mtime != final_stat.stat.mtime
