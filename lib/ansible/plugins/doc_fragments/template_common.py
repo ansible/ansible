@@ -116,8 +116,6 @@ notes:
   i.e. C(#jinja2:variable_start_string:'[%', variable_end_string:'%]', trim_blocks: False)
   which changes the variable interpolation markers to C([% var %]) instead of C({{ var }}).
   This is the best way to prevent evaluation of things that look like, but should not be Jinja2.
-- Using raw/endraw in Jinja2 will not work as you expect because templates in Ansible are recursively
-  evaluated.
 - To find Byte Order Marks in files, use C(Format-Hex <file> -Count 16) on Windows, and use C(od -a -t x1 -N 16 <file>)
   on Linux.
 '''
