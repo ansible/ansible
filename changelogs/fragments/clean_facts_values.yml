@@ -1,0 +1,2 @@
+bugfixes:
+  - cleaning facts will now only warn about the variable name and not post the content, which can be undesireable to disclose
