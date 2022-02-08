@@ -132,9 +132,6 @@ class HostState:
         # deque.extendleft reverses order
         self._handlers.extendleft(reversed(handler_blocks))
 
-    def remove_handlers(self):
-        self._handlers.clear()
-
     def copy(self):
         new_state = HostState(self._blocks)
         new_state._handlers = self._handlers.copy()
@@ -483,7 +480,6 @@ class PlayIterator:
                 elif state.handlers and self._play.force_handlers:
                     state.run_state = IteratingStates.HANDLERS
                 else:
-                    state.remove_handlers()
                     state.run_state = IteratingStates.COMPLETE
         elif state.run_state == IteratingStates.RESCUE:
             if state.rescue_child_state is not None:
@@ -495,7 +491,6 @@ class PlayIterator:
                 elif state.handlers and self._play.force_handlers:
                     state.run_state = IteratingStates.HANDLERS
                 else:
-                    state.remove_handlers()
                     state.run_state = IteratingStates.COMPLETE
         elif state.run_state == IteratingStates.ALWAYS:
             if state.always_child_state is not None:
@@ -505,13 +500,11 @@ class PlayIterator:
                 if state.handlers and self._play.force_handlers:
                     state.run_state = IteratingStates.HANDLERS
                 else:
-                    state.remove_handlers()
                     state.run_state = IteratingStates.COMPLETE
         elif state.run_state == IteratingStates.HANDLERS:
             if state.handlers_child_state is not None:
                 state.handlers_child_state = self._set_failed_state(state.handlers_child_state)
             else:
-                state.remove_handlers()
                 state.fail_state |= IteratingStates.HANDLERS
                 state.run_state = IteratingStates.COMPLETE
         return state
