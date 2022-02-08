@@ -182,6 +182,7 @@ def collect_requirements(
         minimize,  # type: bool
         command,  # type: t.Optional[str]
         sanity,  # type: t.Optional[str]
+        sanity_cryptography=False,  # type: bool
 ):  # type: (...) -> t.List[PipCommand]
     """Collect requirements for the given Python using the specified arguments."""
     commands = []  # type: t.List[PipCommand]
@@ -193,7 +194,7 @@ def collect_requirements(
         commands.extend(collect_package_install(packages=[f'coverage=={COVERAGE_REQUIRED_VERSION}'], constraints=False))
 
     if cryptography:
-        commands.extend(collect_package_install(packages=get_cryptography_requirements(python)))
+        commands.extend(collect_package_install(packages=get_cryptography_requirements(python, sanity_cryptography)))
 
     if ansible or command:
         commands.extend(collect_general_install(command, ansible))
@@ -438,7 +439,7 @@ def is_cryptography_available(python):  # type: (str) -> bool
     return True
 
 
-def get_cryptography_requirements(python):  # type: (PythonConfig) -> t.List[str]
+def get_cryptography_requirements(python, sanity):  # type: (PythonConfig, bool) -> t.List[str]
     """
     Return the correct cryptography and pyopenssl requirements for the given python version.
     The version of cryptography installed depends on the python version and openssl version.
@@ -452,11 +453,17 @@ def get_cryptography_requirements(python):  # type: (PythonConfig) -> t.List[str
         # pyopenssl 20.0.0 requires cryptography 3.2 or later
         pyopenssl = 'pyopenssl < 20.0.0'
     else:
-        # cryptography 3.4+ builds require a working rust toolchain
-        # systems bootstrapped using ansible-core-ci can access additional wheels through the spare-tire package index
-        cryptography = 'cryptography'
-        # any future installation of pyopenssl is free to use any compatible version of cryptography
-        pyopenssl = ''
+        if sanity:
+            # cryptography 3.4+ builds require a working rust toolchain
+            cryptography = 'cryptography < 3.4'
+            # pyopenssl not required, don't install it
+            pyopenssl = ''
+        else:
+            # cryptography 3.4+ builds require a working rust toolchain
+            # systems bootstrapped using ansible-core-ci can access additional wheels through the spare-tire package index
+            cryptography = 'cryptography'
+            # any future installation of pyopenssl is free to use any compatible version of cryptography
+            pyopenssl = ''
 
     requirements = [
         cryptography,
