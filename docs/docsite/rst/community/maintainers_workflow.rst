@@ -6,7 +6,7 @@ Backporting and Ansible inclusion
 
 Each collection community can set its own rules and workflow for managing pull requests, bug reports, documentation issues, and feature requests, as well as adding and replacing maintainers. Maintainers review and merge pull requests following the :ref:`code_of_conduct`, :ref:`maintainer_requirements`, and the :ref:`Committer guidelines <committer_general_rules>`.
 
-There can be two kinds of maintainers: :ref:`collection_maintainers` and :ref:`module_maintainers`. For the both kinds it is worth keeping in mind that “with great power comes great responsibility”.
+There can be two kinds of maintainers: :ref:`collection_maintainers` and :ref:`module_maintainers`.
 
 .. _collection_maintainers:
 
