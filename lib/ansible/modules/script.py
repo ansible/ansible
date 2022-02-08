@@ -102,4 +102,7 @@ EXAMPLES = r'''
   ansible.builtin.script: /some/local/script.py
   args:
     executable: python3
+
+- name: Run a Powershell script on a windows host
+  script: subdirectories/under/path/with/your/playbook/script.ps1
 '''
