@@ -1095,6 +1095,7 @@ def create_sanity_virtualenv(
         minimize=minimize,
         # used by non-import tests
         sanity=context,
+        sanity_cryptography=ansible,
     )
 
     if commands:
