@@ -52,6 +52,8 @@
 - name: Test _diff_peek
   import_tasks: diff_peek.yml
 
+- name: Test modification time
+  import_tasks: modification_time.yml
 
 # These tests need to be organized by state parameter into separate files later
 
