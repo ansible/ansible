@@ -29,32 +29,57 @@ import subprocess
 import sys
 import tempfile
 import traceback
+import warnings
 
 from collections import OrderedDict
 from contextlib import contextmanager
-from ansible.module_utils.compat.version import StrictVersion, LooseVersion
 from fnmatch import fnmatch
 
 import yaml
+
+from voluptuous.humanize import humanize_error
+
+
+def setup_collection_loader():
+    """
+    Configure the collection loader if a collection is being tested.
+    This must be done before the plugin loader is imported.
+    """
+    if '--collection' not in sys.argv:
+        return
+
+    # noinspection PyProtectedMember
+    from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+
+    collections_paths = os.environ.get('ANSIBLE_COLLECTIONS_PATH', '').split(os.pathsep)
+    collection_loader = _AnsibleCollectionFinder(collections_paths)
+    # noinspection PyProtectedMember
+    collection_loader._install()  # pylint: disable=protected-access
+
+    warnings.filterwarnings(
+        "ignore",
+        "AnsibleCollectionFinder has already been configured")
+
+
+setup_collection_loader()
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS, NEW_STYLE_PYTHON_MODULE_RE
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.common.parameters import DEFAULT_TYPE_VALIDATORS
+from ansible.module_utils.compat.version import StrictVersion, LooseVersion
+from ansible.module_utils.basic import to_bytes
+from ansible.module_utils.six import PY3, with_metaclass, string_types
 from ansible.plugins.loader import fragment_loader
-from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
 from ansible.utils.plugin_docs import REJECTLIST, add_collection_to_versions_and_dates, add_fragments, get_docstring
 from ansible.utils.version import SemanticVersion
-from ansible.module_utils.basic import to_bytes
 
 from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_argument_spec
 
 from .schema import ansible_module_kwargs_schema, doc_schema, return_schema
 
 from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, is_empty, parse_yaml, parse_isodate
-from voluptuous.humanize import humanize_error
 
-from ansible.module_utils.six import PY3, with_metaclass, string_types
 
 if PY3:
     # Because there is no ast.TryExcept in Python 3 ast module
@@ -2246,11 +2271,6 @@ class PythonPackageValidator(Validator):
             )
 
 
-def setup_collection_loader():
-    collections_paths = os.environ.get('ANSIBLE_COLLECTIONS_PATH', '').split(os.pathsep)
-    _AnsibleCollectionFinder(collections_paths)
-
-
 def re_compile(value):
     """
     Argparse expects things to raise TypeError, re.compile raises an re.error
@@ -2303,7 +2323,6 @@ def run():
 
     routing = None
     if args.collection:
-        setup_collection_loader()
         routing_file = 'meta/runtime.yml'
         # Load meta/runtime.yml if it exists, as it may contain deprecation information
         if os.path.isfile(routing_file):
