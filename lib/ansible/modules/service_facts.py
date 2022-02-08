@@ -78,9 +78,18 @@ ansible_facts:
           description:
           - State of the service.
           - Either C(enabled), C(disabled), C(static), C(indirect) or C(unknown).
+          - Depending on the systemd version additional status' may be returned.
           returned: systemd systems or RedHat/SUSE flavored sysvinit/upstart or OpenBSD
           type: str
           sample: enabled
+        load_state:
+          description:
+          - Load state of the service.
+          - Either C(loaded), C(not-found), C(bad-setting), C(error) or C(masked).
+          returned: systemd systems
+          type: str
+          sample: loaded
+          version_added: "2.13"
         name:
           description: Name of the service.
           returned: always
@@ -234,7 +243,6 @@ class SystemctlScanService(BaseService):
         return False
 
     def gather_services(self):
-        BAD_STATES = frozenset(['not-found', 'masked', 'failed'])
         services = {}
         if not self.systemd_enabled():
             return None
@@ -243,44 +251,32 @@ class SystemctlScanService(BaseService):
             return None
 
         # list units as systemd sees them
-        rc, stdout, stderr = self.module.run_command("%s list-units --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
-        for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line]:
-
-            state_val = "stopped"
-            status_val = "unknown"
-            fields = line.split()
-            for bad in BAD_STATES:
-                if bad in fields:  # dot is 0
-                    status_val = bad
-                    fields = fields[1:]
-                    break
-            else:
-                # active/inactive
-                status_val = fields[2]
-
-            # array is normalize so predictable now
-            service_name = fields[0]
-            if fields[3] == "running":
-                state_val = "running"
-
-            services[service_name] = {"name": service_name, "state": state_val, "status": status_val, "source": "systemd"}
+        cmd = [systemctl_path, "list-units", "--no-pager", "--type", "service", "--all", "--plain", "--no-legend"]
+        rc, stdout, stderr = self.module.run_command(cmd, use_unsafe_shell=True)
+        for line in [svc_line.split() for svc_line in stdout.split('\n') if '.service' in svc_line]:
+            service_name = line[0]
+            load_state = line[1]
+            status_val = line[2]
+            state_val = line[3]
+            services[service_name] = {"name": service_name, "state": state_val, "status": status_val, "load_state": load_state, "source": "systemd"}
 
         # now try unit files for complete picture and final 'status'
-        rc, stdout, stderr = self.module.run_command("%s list-unit-files --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
-        for line in [svc_line for svc_line in stdout.split('\n') if '.service' in svc_line]:
-            # there is one more column (VENDOR PRESET) from `systemctl list-unit-files` for systemd >= 245
-            try:
-                service_name, status_val = line.split()[:2]
-            except IndexError:
-                self.module.fail_json(msg="Malformed output discovered from systemd list-unit-files: {0}".format(line))
+        cmd = [systemctl_path, "list-unit-files", "--no-pager", "--type", "service", "--all", "--plain", "--no-legend"]
+        rc, stdout, stderr = self.module.run_command(cmd, use_unsafe_shell=True)
+        for line in [svc_line.split() for svc_line in stdout.split('\n') if '.service' in svc_line]:
+            service_name = line[0]
+            load_state = line[1]
             if service_name not in services:
-                rc, stdout, stderr = self.module.run_command("%s show %s --property=ActiveState" % (systemctl_path, service_name), use_unsafe_shell=True)
+                cmd = [systemctl_path, "show", service_name, "-p", "ActiveState,LoadState,SubState"]
+                rc, show_service_stdout, stderr = self.module.run_command(cmd, use_unsafe_shell=True)
                 state = 'unknown'
+                status_val = 'unknown'
                 if not rc and stdout != '':
-                    state = stdout.replace('ActiveState=', '').rstrip()
-                services[service_name] = {"name": service_name, "state": state, "status": status_val, "source": "systemd"}
-            elif services[service_name]["status"] not in BAD_STATES:
-                services[service_name]["status"] = status_val
+                    show_service_stdout = [i.partition("=")[2] for i in show_service_stdout.split()]
+                    status_val = show_service_stdout[0]
+                    load_state = show_service_stdout[1]
+                    state = show_service_stdout[2]
+                services[service_name] = {"name": service_name, "state": state, "status": status_val, "load_state": load_state, "source": "systemd"}
 
         return services
 
