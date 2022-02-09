@@ -315,10 +315,7 @@ class PluginLoader:
         if not self.package:
             return []
         if not hasattr(self, 'package_path'):
-            m = __import__(self.package)
-            parts = self.package.split('.')[1:]
-            for parent_mod in parts:
-                m = getattr(m, parent_mod)
+            m = import_module(self.package)
             self.package_path = to_text(os.path.dirname(m.__file__), errors='surrogate_or_strict')
         if subdirs:
             return self._all_directories(self.package_path)
