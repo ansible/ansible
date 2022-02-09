@@ -38,6 +38,19 @@ class TestHostname(ModuleTestCase):
                     m.return_value.write.called,
                     msg='%s called write, should not have' % str(cls))
 
+    def test_all_named_strategies_exist(self):
+        """Loop through the STRATS and see if anything is missing."""
+        for _name, prefix in hostname.STRATS.items():
+            classname = "%sStrategy" % prefix
+            cls = getattr(hostname, classname, None)
+
+            if cls is None:
+                self.assertFalse(
+                    cls is None, "%s is None, should be a subclass" % classname
+                )
+            else:
+                self.assertTrue(issubclass(cls, hostname.BaseStrategy))
+
 
 class TestRedhatStrategy(ModuleTestCase):
     def setUp(self):

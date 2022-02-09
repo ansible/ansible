@@ -1,4 +1,5 @@
 - name: Run hostname module for real now
+  become: 'yes'
   hostname:
     name: crocodile.ansible.test.doesthiswork.net.example.com
   register: hn2
@@ -8,6 +9,7 @@
   register: current_after_hn2
 
 - name: Run hostname again to ensure it does not change
+  become: 'yes'
   hostname:
     name: crocodile.ansible.test.doesthiswork.net.example.com
   register: hn3
