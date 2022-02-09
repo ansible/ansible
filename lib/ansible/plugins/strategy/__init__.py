@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import abc
 import cmd
 import functools
 import os
@@ -202,7 +203,7 @@ def debug_closure(func):
     return inner
 
 
-class StrategyBase:
+class StrategyBase(metaclass=abc.ABCMeta):
 
     '''
     This is the base class for strategy plugins, which contains some common
@@ -1007,8 +1008,9 @@ class StrategyBase:
     def _cond_not_supported_warn(self, task_name):
         display.warning("%s task does not support when conditional" % task_name)
 
+    @abc.abstractmethod
     def _flush_handlers(self, iterator, host):
-        raise NotImplementedError
+        ...
 
     def _execute_meta(self, task, play_context, iterator, target_host):
 
