@@ -37,6 +37,7 @@ from ansible.executor.play_iterator import IteratingStates, FailedStates
 from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.handler import Handler
+from ansible.playbook.handler_block import HandlerBlock
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
 from ansible.plugins.loader import action_loader
@@ -48,8 +49,6 @@ display = Display()
 
 
 class StrategyModule(StrategyBase):
-
-    noop_task = None
 
     def _replace_with_noop(self, target):
         if self.noop_task is None:
@@ -64,7 +63,7 @@ class StrategyModule(StrategyBase):
         return result
 
     def _create_noop_block_from(self, original_block, parent):
-        noop_block = Block(parent_block=parent)
+        noop_block = original_block.__class__(parent_block=parent)
         noop_block.block = self._replace_with_noop(original_block.block)
         noop_block.always = self._replace_with_noop(original_block.always)
         noop_block.rescue = self._replace_with_noop(original_block.rescue)
@@ -350,17 +349,39 @@ class StrategyModule(StrategyBase):
 
                 self.update_active_connections(results)
 
+                # FIXME this handler lock-step code is horrible
                 noop_handler = Handler()
                 noop_handler.action = 'meta'
                 noop_handler.args['_raw_params'] = 'noop'
                 noop_handler.implicit = True
                 noop_handler.set_loader(iterator._play._loader)
+
+                self.noop_task = noop_handler
+
                 max_handlers = max((len(s.handlers) for _, s in iterator.host_states.items()), default=0)
+                noop_handlers = []
+
+                for host, state in iterator.host_states.items():
+                    if len(state.handlers) != max_handlers:
+                        continue
+                    handlers_notified = 0
+                    for r in host_results:
+                        if r._host.name == host:
+                            handlers_notified = len(r._result.get('_ansible_notified', []))
+                            break
+                    for handler in list(state.handlers)[-handlers_notified:]:
+                        if isinstance(handler, Handler):
+                            noop_handlers.append(noop_handler)
+                        else:
+                            noop_handlers.append(self._create_noop_block_from(handler, None))
+                    break
+
                 for _, state in iterator.host_states.items():
                     if state.run_state == IteratingStates.HANDLERS:
                         continue
-                    # need to bypass iterator.add_handlers which dedupes handlers
-                    state._handlers.extend([noop_handler] * (max_handlers - len(state.handlers)))
+                    if len(state.handlers) != max_handlers:
+                        # need to bypass iterator.add_handlers which dedupes handlers
+                        state._handlers.extend(noop_handlers)
 
                 included_files = IncludedFile.process_include_results(
                     host_results,
