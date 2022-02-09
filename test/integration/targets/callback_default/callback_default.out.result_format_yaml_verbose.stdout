@@ -187,11 +187,13 @@ TASK [replace] *****************************************************************
 changed: [testhost] => 
     changed: true
     msg: 1 replacements made
+    rc: 0
 
 TASK [replace] *****************************************************************
 ok: [testhost] => 
     changed: false
     msg: 1 replacements made
+    rc: 0
 
 RUNNING HANDLER [Test handler 1] ***********************************************
 changed: [testhost] => 
