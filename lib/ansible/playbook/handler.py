@@ -37,9 +37,6 @@ class Handler(Task):
         ''' returns a human readable representation of the handler '''
         return "HANDLER: %s" % self.get_name()
 
-    def __eq__(self, other):
-        return isinstance(other, Handler) and self._uuid == other._uuid
-
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
         t = Handler(block=block, role=role, task_include=task_include)

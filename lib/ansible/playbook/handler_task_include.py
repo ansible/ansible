@@ -28,9 +28,6 @@ class HandlerTaskInclude(Handler, TaskInclude):
 
     VALID_INCLUDE_KEYWORDS = TaskInclude.VALID_INCLUDE_KEYWORDS.union(('listen',))
 
-    def __hash__(self):
-        return hash(self._uuid)
-
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
         t = HandlerTaskInclude(block=block, role=role, task_include=task_include)
