@@ -390,7 +390,7 @@ class GalaxyCLI(CLI):
                                         'canonical manifest hash.')
         verify_parser.add_argument('-r', '--requirements-file', dest='requirements',
                                    help='A file containing a list of collections to be verified.')
-        verify_parser.add_argument('--keyring', dest='keyring', default=None,
+        verify_parser.add_argument('--keyring', dest='keyring', default=C.GALAXY_GPG_KEYRING,
                                    help='The keyring used during signature verification')  # Eventually default to ~/.ansible/pubring.kbx?
         verify_parser.add_argument('--signature', dest='signatures', action='append',
                                    help='An additional signature source to verify the authenticity of the MANIFEST.json before using '
@@ -436,7 +436,7 @@ class GalaxyCLI(CLI):
                                         help='Include pre-release versions. Semantic versioning pre-releases are ignored by default')
             install_parser.add_argument('-U', '--upgrade', dest='upgrade', action='store_true', default=False,
                                         help='Upgrade installed collection artifacts. This will also update dependencies unless --no-deps is provided')
-            install_parser.add_argument('--keyring', dest='keyring', default=None,
+            install_parser.add_argument('--keyring', dest='keyring', default=C.GALAXY_GPG_KEYRING,
                                         help='The keyring used during signature verification')  # Eventually default to ~/.ansible/pubring.kbx?
             install_parser.add_argument('--disable-gpg-verify', dest='disable_gpg_verify', action='store_true',
                                         default=C.GALAXY_DISABLE_GPG_VERIFY,
@@ -450,7 +450,7 @@ class GalaxyCLI(CLI):
                                         help='A file containing a list of roles to be installed.')
             if self._implicit_role and ('-r' in self._raw_args or '--role-file' in self._raw_args):
                 # Any collections in the requirements files will also be installed
-                install_parser.add_argument('--keyring', dest='keyring', default='~/.ansible/pubring.kbx',
+                install_parser.add_argument('--keyring', dest='keyring', default=C.GALAXY_GPG_KEYRING,
                                             help='The keyring used during collection signature verification')
                 install_parser.add_argument('--disable-gpg-verify', dest='disable_gpg_verify', action='store_true',
                                             default=C.GALAXY_DISABLE_GPG_VERIFY,
