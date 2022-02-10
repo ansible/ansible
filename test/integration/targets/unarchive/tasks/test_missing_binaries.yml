@@ -37,7 +37,10 @@
       # which alone is sufficient to run unarchive.
       # Exclude /usr/bin from the PATH to test having no binary available.
       environment:
-        PATH: "{{ lookup('pipe', 'echo ${PATH%:/usr/bin}') }}"
+        PATH: "{{ ENV_PATH }}"
+      vars:
+        ENV_PATH: "{{ lookup('env', 'PATH') | regex_replace(re, '') }}"
+        re: "[^A-Za-z](\/usr\/bin:?)"
 
     - name: Ensure tasks worked as expected
       assert:
