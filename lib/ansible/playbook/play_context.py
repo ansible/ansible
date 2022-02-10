@@ -297,7 +297,7 @@ class PlayContext(Base):
             if not new_info.connection_user:
                 new_info.connection_user = new_info.remote_user
 
-        # for case in which conneciton plugin still uses pc.remote_addr and in it's own options
+        # for case in which connection plugin still uses pc.remote_addr and in it's own options
         # specifies 'default: inventory_hostname', but never added to vars:
         if new_info.remote_addr == 'inventory_hostname':
             new_info.remote_addr = variables.get('inventory_hostname')
