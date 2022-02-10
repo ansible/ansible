@@ -1,0 +1,4 @@
+bugfixes:
+  - copy remote_src=false - fix return values when src (specified with a trailing slash)
+    contains a directory and subdirectories containing a single file
+    (https://github.com/ansible/ansible/issues/38938).
