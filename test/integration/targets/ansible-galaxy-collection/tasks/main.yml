@@ -70,6 +70,8 @@
     server: '{{ galaxy_ng_server }}'
     v3: true
 
+- include_tasks: setup_gpg.yml
+
 # We use a module for this so we can speed up the test time.
 # For pulp interactions, we only upload to galaxy_ng which shares
 # the same repo and distribution with pulp_ansible
@@ -79,6 +81,7 @@
   setup_collections:
     server: galaxy_ng
     collections: '{{ collection_list }}'
+    signature_dir: '{{ gpg_homedir }}'
   environment:
     ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
 
@@ -174,6 +177,7 @@
   args:
     apply:
       environment:
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}'
         ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
   vars:
     test_api_fallback: 'pulp_v2'

@@ -16,6 +16,7 @@ import stat
 import sys
 import tarfile
 import tempfile
+import textwrap
 import threading
 import time
 import yaml
@@ -49,7 +50,6 @@ if TYPE_CHECKING:
     else:  # Python 2 + Python 3.4-3.7
         from typing_extensions import Literal
 
-    from ansible.galaxy.api import GalaxyAPI
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
     )
@@ -97,6 +97,7 @@ if TYPE_CHECKING:
 import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
+from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection.concrete_artifact_manager import (
     _consume_file,
     _download_file,
@@ -105,6 +106,11 @@ from ansible.galaxy.collection.concrete_artifact_manager import (
     _tarfile_extract,
 )
 from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
+from ansible.galaxy.collection.gpg import (
+    run_gpg_verify,
+    parse_gpg_errors,
+    get_signature_from_source
+)
 from ansible.galaxy.dependency_resolution import (
     build_collection_dependency_resolver,
 )
@@ -131,6 +137,45 @@ MANIFEST_FORMAT = 1
 MANIFEST_FILENAME = 'MANIFEST.json'
 
 ModifiedContent = namedtuple('ModifiedContent', ['filename', 'expected', 'installed'])
+
+
+class CollectionSignatureError(Exception):
+    def __init__(self, reasons=None, stdout=None, rc=None):
+        self.reasons = reasons
+        self.stdout = stdout
+        self.rc = rc
+
+        self._reason_wrapper = None
+
+    def _report_unexpected(self, collection_name):
+        return (
+            f"Unexpected error for '{collection_name}': "
+            f"GnuPG signature verification failed with the return code {self.rc} and output {self.stdout}"
+        )
+
+    def _report_expected(self, collection_name):
+        header = f"Signature verification failed for '{collection_name}' (return code {self.rc}):"
+        return header + self._format_reasons()
+
+    def _format_reasons(self):
+        if self._reason_wrapper is None:
+            self._reason_wrapper = textwrap.TextWrapper(
+                initial_indent="    * ",  # 6 chars
+                subsequent_indent="      ",  # 6 chars
+            )
+
+        wrapped_reasons = [
+            '\n'.join(self._reason_wrapper.wrap(reason))
+            for reason in self.reasons
+        ]
+
+        return '\n' + '\n'.join(wrapped_reasons)
+
+    def report(self, collection_name):
+        if self.reasons:
+            return self._report_expected(collection_name)
+
+        return self._report_unexpected(collection_name)
 
 
 # FUTURE: expose actual verify result details for a collection on this object, maybe reimplement as dataclass on py3.8+
@@ -166,12 +211,59 @@ def verify_local_collection(
     modified_content = []  # type: List[ModifiedContent]
 
     verify_local_only = remote_collection is None
-    if verify_local_only:
-        # partial away the local FS detail so we can just ask generically during validation
-        get_json_from_validation_source = functools.partial(_get_json_from_installed_dir, b_collection_path)
-        get_hash_from_validation_source = functools.partial(_get_file_hash, b_collection_path)
 
+    # partial away the local FS detail so we can just ask generically during validation
+    get_json_from_validation_source = functools.partial(_get_json_from_installed_dir, b_collection_path)
+    get_hash_from_validation_source = functools.partial(_get_file_hash, b_collection_path)
+
+    if not verify_local_only:
+        # Compare installed version versus requirement version
+        if local_collection.ver != remote_collection.ver:
+            err = (
+                "{local_fqcn!s} has the version '{local_ver!s}' but "
+                "is being compared to '{remote_ver!s}'".format(
+                    local_fqcn=local_collection.fqcn,
+                    local_ver=local_collection.ver,
+                    remote_ver=remote_collection.ver,
+                )
+            )
+            display.display(err)
+            result.success = False
+            return result
+
+    manifest_file = os.path.join(to_text(b_collection_path, errors='surrogate_or_strict'), MANIFEST_FILENAME)
+    signatures = []
+    if verify_local_only and local_collection.source_info is not None:
+        signatures = [info["signature"] for info in local_collection.source_info["signatures"]]
+    elif not verify_local_only and remote_collection.signatures:
+        signatures = remote_collection.signatures
+
+    keyring_configured = artifacts_manager.keyring is not None
+    if not keyring_configured and signatures:
+        display.warning(
+            "The GnuPG keyring used for collection signature "
+            "verification was not configured but signatures were "
+            "provided by the Galaxy server. "
+            "Configure a keyring for ansible-galaxy to verify "
+            "the origin of the collection. "
+            "Skipping signature verification."
+        )
+    else:
+        for signature in signatures:
+            try:
+                verify_file_signature(manifest_file, to_text(signature, errors='surrogate_or_strict'), artifacts_manager.keyring)
+            except CollectionSignatureError as error:
+                display.vvvv(error.report(local_collection.fqcn))
+                result.success = False
+        if not result.success:
+            return result
+        elif signatures:
+            display.vvvv(f"GnuPG signature verification succeeded, verifying contents of {local_collection}")
+
+    if verify_local_only:
         # since we're not downloading this, just seed it with the value from disk
+        manifest_hash = get_hash_from_validation_source(MANIFEST_FILENAME)
+    elif keyring_configured and remote_collection.signatures:
         manifest_hash = get_hash_from_validation_source(MANIFEST_FILENAME)
     else:
         # fetch remote
@@ -188,20 +280,6 @@ def verify_local_collection(
         # partial away the tarball details so we can just ask generically during validation
         get_json_from_validation_source = functools.partial(_get_json_from_tar_file, b_temp_tar_path)
         get_hash_from_validation_source = functools.partial(_get_tar_file_hash, b_temp_tar_path)
-
-        # Compare installed version versus requirement version
-        if local_collection.ver != remote_collection.ver:
-            err = (
-                "{local_fqcn!s} has the version '{local_ver!s}' but "
-                "is being compared to '{remote_ver!s}'".format(
-                    local_fqcn=local_collection.fqcn,
-                    local_ver=local_collection.ver,
-                    remote_ver=remote_collection.ver,
-                )
-            )
-            display.display(err)
-            result.success = False
-            return result
 
         # Verify the downloaded manifest hash matches the installed copy before verifying the file manifest
         manifest_hash = get_hash_from_validation_source(MANIFEST_FILENAME)
@@ -244,6 +322,27 @@ def verify_local_collection(
         )
 
     return result
+
+
+def verify_file_signature(manifest_file, detached_signature, keyring):
+    # type: (str, str, str) -> None
+    """Run the gpg command and parse any errors. Raises CollectionSignatureError on failure."""
+    gpg_result, gpg_verification_rc = run_gpg_verify(manifest_file, detached_signature, keyring, display)
+
+    if gpg_result:
+        errors = parse_gpg_errors(gpg_result)
+        try:
+            error = next(errors)
+        except StopIteration:
+            pass
+        else:
+            reasons = set(error.get_gpg_error_description() for error in chain([error], errors))
+            raise CollectionSignatureError(reasons=reasons, stdout=gpg_result, rc=gpg_verification_rc)
+    if gpg_verification_rc:
+        raise CollectionSignatureError(stdout=gpg_result, rc=gpg_verification_rc)
+
+    # No errors and rc is 0, verify was successful
+    return None
 
 
 def build_collection(u_collection_path, u_output_path, force):
@@ -319,6 +418,8 @@ def download_collections(
             no_deps=no_deps,
             allow_pre_release=allow_pre_release,
             upgrade=False,
+            # Avoid overhead getting signatures since they are not currently applicable to downloaded collections
+            include_signatures=False,
         )
 
     b_output_path = to_bytes(output_path, errors='surrogate_or_strict')
@@ -443,6 +544,7 @@ def install_collections(
         upgrade,  # type: bool
         allow_pre_release,  # type: bool
         artifacts_manager,  # type: ConcreteArtifactsManager
+        disable_gpg_verify,  # type: bool
 ):  # type: (...) -> None
     """Install Ansible collections to the path specified.
 
@@ -456,7 +558,7 @@ def install_collections(
     :param force_deps: Re-install a collection as well as its dependencies if they have already been installed.
     """
     existing_collections = {
-        Requirement(coll.fqcn, coll.ver, coll.src, coll.type)
+        Requirement(coll.fqcn, coll.ver, coll.src, coll.type, None)
         for coll in find_existing_collections(output_path, artifacts_manager)
     }
 
@@ -506,7 +608,8 @@ def install_collections(
         else existing_collections
     )
     preferred_collections = {
-        Candidate(coll.fqcn, coll.ver, coll.src, coll.type)
+        # NOTE: No need to include signatures if the collection is already installed
+        Candidate(coll.fqcn, coll.ver, coll.src, coll.type, None)
         for coll in preferred_requirements
     }
     with _display_progress("Process install dependency map"):
@@ -518,8 +621,10 @@ def install_collections(
             no_deps=no_deps,
             allow_pre_release=allow_pre_release,
             upgrade=upgrade,
+            include_signatures=not disable_gpg_verify,
         )
 
+    keyring_exists = artifacts_manager.keyring is not None
     with _display_progress("Starting collection install process"):
         for fqcn, concrete_coll_pin in dependency_map.items():
             if concrete_coll_pin.is_virtual:
@@ -535,6 +640,17 @@ def install_collections(
                     format(coll=to_text(concrete_coll_pin)),
                 )
                 continue
+
+            if not disable_gpg_verify and concrete_coll_pin.signatures and not keyring_exists:
+                # Duplicate warning msgs are not displayed
+                display.warning(
+                    "The GnuPG keyring used for collection signature "
+                    "verification was not configured but signatures were "
+                    "provided by the Galaxy server to verify authenticity. "
+                    "Configure a keyring for ansible-galaxy to use "
+                    "or disable signature verification. "
+                    "Skipping signature verification."
+                )
 
             try:
                 install(concrete_coll_pin, output_path, artifacts_manager)
@@ -647,20 +763,31 @@ def verify_collections(
                 if local_verify_only:
                     remote_collection = None
                 else:
+                    signatures = api_proxy.get_signatures(local_collection)
+                    # NOTE: If there are no Galaxy server signatures, only user-provided signature URLs,
+                    # NOTE: those alone validate the MANIFEST.json and the remote collection is not downloaded.
+                    # NOTE: The remote MANIFEST.json is only used in verification if there are no signatures.
+                    signatures.extend([
+                        get_signature_from_source(source, display)
+                        for source in collection.signature_sources or []
+                    ])
+
                     remote_collection = Candidate(
                         collection.fqcn,
                         collection.ver if collection.ver != '*'
                         else local_collection.ver,
                         None, 'galaxy',
+                        frozenset(signatures),
                     )
 
                     # Download collection on a galaxy server for comparison
                     try:
-                        # NOTE: Trigger the lookup. If found, it'll cache
-                        # NOTE: download URL and token in artifact manager.
-                        api_proxy.get_collection_version_metadata(
-                            remote_collection,
-                        )
+                        # NOTE: If there are no signatures, trigger the lookup. If found,
+                        # NOTE: it'll cache download URL and token in artifact manager.
+                        if not signatures:
+                            api_proxy.get_collection_version_metadata(
+                                remote_collection,
+                            )
                     except AnsibleError as e:  # FIXME: does this actually emit any errors?
                         # FIXME: extract the actual message and adjust this:
                         expected_error_msg = (
@@ -1079,7 +1206,19 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
     if collection.is_dir:
         install_src(collection, b_artifact_path, b_collection_path, artifacts_manager)
     else:
-        install_artifact(b_artifact_path, b_collection_path, artifacts_manager._b_working_directory)
+        install_artifact(
+            b_artifact_path,
+            b_collection_path,
+            artifacts_manager._b_working_directory,
+            collection.signatures,
+            artifacts_manager.keyring
+        )
+        if (collection.is_online_index_pointer and isinstance(collection.src, GalaxyAPI)):
+            write_source_metadata(
+                collection,
+                b_collection_path,
+                artifacts_manager
+            )
 
     display.display(
         '{coll!s} was installed successfully'.
@@ -1087,20 +1226,67 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
     )
 
 
-def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path):
+def write_source_metadata(collection, b_collection_path, artifacts_manager):
+    # type: (Candidate, bytes, ConcreteArtifactsManager) -> None
+    source_data = artifacts_manager.get_galaxy_artifact_source_info(collection)
+
+    b_yaml_source_data = to_bytes(yaml_dump(source_data), errors='surrogate_or_strict')
+    b_info_dest = collection.construct_galaxy_info_path(b_collection_path)
+    b_info_dir = os.path.split(b_info_dest)[0]
+
+    if os.path.exists(b_info_dir):
+        shutil.rmtree(b_info_dir)
+
+    try:
+        os.mkdir(b_info_dir, mode=0o0755)
+        with open(b_info_dest, mode='w+b') as fd:
+            fd.write(b_yaml_source_data)
+        os.chmod(b_info_dest, 0o0644)
+    except Exception:
+        # Ensure we don't leave the dir behind in case of a failure.
+        if os.path.isdir(b_info_dir):
+            shutil.rmtree(b_info_dir)
+        raise
+
+
+def verify_artifact_manifest(manifest_file, signatures, keyring):
+    # type: (str, str, List[str]) -> None
+    failed_verify = False
+    coll_path_parts = to_text(manifest_file, errors='surrogate_or_strict').split(os.path.sep)
+    collection_name = '%s.%s' % (coll_path_parts[-3], coll_path_parts[-2])  # get 'ns' and 'coll' from /path/to/ns/coll/MANIFEST.json
+    for signature in signatures:
+        try:
+            verify_file_signature(manifest_file, to_text(signature, errors='surrogate_or_strict'), keyring)
+        except CollectionSignatureError as error:
+            display.vvvv(error.report(collection_name))
+            failed_verify = True
+    if failed_verify:
+        raise AnsibleError(f"Not installing {collection_name} because GnuPG signature verification failed.")
+    display.vvvv(f"GnuPG signature verification succeeded for {collection_name}")
+
+
+def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatures, keyring):
     """Install a collection from tarball under a given path.
 
     :param b_coll_targz_path: Collection tarball to be installed.
     :param b_collection_path: Collection dirs layout path.
     :param b_temp_path: Temporary dir path.
+    :param signatures: frozenset of signatures to verify the MANIFEST.json
+    :param keyring: The keyring used during GPG verification
     """
     try:
         with tarfile.open(b_coll_targz_path, mode='r') as collection_tar:
+            # Verify the signature on the MANIFEST.json before extracting anything else
+            _extract_tar_file(collection_tar, MANIFEST_FILENAME, b_collection_path, b_temp_path)
+
+            if signatures and keyring is not None:
+                manifest_file = os.path.join(to_text(b_collection_path, errors='surrogate_or_strict'), MANIFEST_FILENAME)
+                verify_artifact_manifest(manifest_file, signatures, keyring)
+
             files_member_obj = collection_tar.getmember('FILES.json')
             with _tarfile_extract(collection_tar, files_member_obj) as (dummy, files_obj):
                 files = json.loads(to_text(files_obj.read(), errors='surrogate_or_strict'))
 
-            _extract_tar_file(collection_tar, MANIFEST_FILENAME, b_collection_path, b_temp_path)
             _extract_tar_file(collection_tar, 'FILES.json', b_collection_path, b_temp_path)
 
             for file_info in files['files']:
@@ -1314,6 +1500,7 @@ def _resolve_depenency_map(
         no_deps,  # type: bool
         allow_pre_release,  # type: bool
         upgrade,  # type: bool
+        include_signatures,  # type: bool
 ):  # type: (...) -> Dict[str, Candidate]
     """Return the resolved dependency map."""
     collection_dep_resolver = build_collection_dependency_resolver(
@@ -1324,6 +1511,7 @@ def _resolve_depenency_map(
         with_deps=not no_deps,
         with_pre_releases=allow_pre_release,
         upgrade=upgrade,
+        include_signatures=include_signatures,
     )
     try:
         return collection_dep_resolver.resolve(

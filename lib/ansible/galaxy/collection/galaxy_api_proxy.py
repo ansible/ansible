@@ -14,7 +14,7 @@ except ImportError:
     TYPE_CHECKING = False
 
 if TYPE_CHECKING:
-    from typing import Dict, Iterable, Iterator, Tuple
+    from typing import Dict, Iterable, Iterator, Tuple, List
     from ansible.galaxy.api import CollectionVersionMetadata
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
@@ -144,6 +144,8 @@ class MultiGalaxyAPIProxy:
                     version_metadata.download_url,
                     version_metadata.artifact_sha256,
                     api.token,
+                    version_metadata.signatures_url,
+                    version_metadata.signatures,
                 )
                 return version_metadata
 
@@ -165,3 +167,39 @@ class MultiGalaxyAPIProxy:
             get_collection_version_metadata(collection_candidate).
             dependencies
         )
+
+    def get_signatures(self, collection_candidate):
+        # type: (Candidate) -> List[Dict[str, str]]
+        namespace = collection_candidate.namespace
+        name = collection_candidate.name
+        version = collection_candidate.ver
+        last_err = None
+
+        api_lookup_order = (
+            (collection_candidate.src, )
+            if isinstance(collection_candidate.src, GalaxyAPI)
+            else self._apis
+        )
+
+        for api in api_lookup_order:
+            try:
+                return api.get_collection_signatures(namespace, name, version)
+            except GalaxyError as api_err:
+                last_err = api_err
+            except Exception as unknown_err:
+                # Warn for debugging purposes, since the Galaxy server may be unexpectedly down.
+                last_err = unknown_err
+                display.warning(
+                    "Skipping Galaxy server {server!s}. "
+                    "Got an unexpected error when getting "
+                    "available versions of collection {fqcn!s}: {err!s}".
+                    format(
+                        server=api.api_server,
+                        fqcn=collection_candidate.fqcn,
+                        err=to_text(unknown_err),
+                    )
+                )
+        if last_err:
+            raise last_err
+
+        return []

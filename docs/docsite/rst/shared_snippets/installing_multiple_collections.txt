@@ -13,14 +13,27 @@ You can set up a ``requirements.yml`` file to install multiple collections in on
      version: 'version range identifiers (default: ``*``)'
      source: 'The Galaxy URL to pull the collection from (default: ``--api-server`` from cmdline)'
 
-You can specify four keys for each collection entry:
+You can specify the following keys for each collection entry:
 
   * ``name``
   * ``version``
+  * ``signatures``
   * ``source``
   * ``type``
 
 The ``version`` key uses the same range identifier format documented in :ref:`collections_older_version`. 
+
+The ``signatures`` key accepts a list of signature sources that are used to supplement those found on the Galaxy server during collection installation and ``ansible-galaxy collection verify``. Signature sources should be URIs that contain the detached signature. These are only used for collections on Galaxy servers. The ``--keyring`` CLI option must be provided if signatures are specified.
+
+.. code-block:: yaml
+
+   collections:
+     - name: namespace.name
+       version: 1.0.0
+       type: galaxy
+       signatures:
+         - https://examplehost.com/detached_signature.asc
+         - file:///path/to/local/detached_signature.asc
 
 The ``type`` key can be set to ``file``, ``galaxy``, ``git``, ``url``, ``dir``, or ``subdirs``. If ``type`` is omitted, the ``name`` key is used to implicitly determine the source of the collection.
 

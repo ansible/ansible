@@ -1,5 +1,7 @@
 galaxy_verbosity: "{{ '' if not ansible_verbosity else '-' ~ ('v' * ansible_verbosity) }}"
 
+gpg_homedir: "{{ galaxy_dir }}/gpg"
+
 pulp_repositories:
   - published
   - secondary
