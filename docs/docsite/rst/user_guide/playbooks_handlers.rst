@@ -55,16 +55,16 @@ In this example playbook, the second task notifies the handler. A single task ca
         - Restart memcached
         - Restart apache
 
-    handlers:
-    - name: Restart memcached
-      ansible.builtin.service:
-        name: memcached
-        state: restarted
+      handlers:
+        - name: Restart memcached
+          ansible.builtin.service:
+            name: memcached
+            state: restarted
 
-    - name: Restart apache
-      ansible.builtin.service:
-        name: apache
-        state: restarted
+        - name: Restart apache
+          ansible.builtin.service:
+            name: apache
+            state: restarted
 
 Controlling when handlers run
 -----------------------------
