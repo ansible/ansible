@@ -50,6 +50,7 @@ In this example playbook, the second task notifies the handler. A single task ca
 
 .. code-block:: yaml
 
+    tasks:
     - name: Template configuration file
       ansible.builtin.template:
         src: template.j2
