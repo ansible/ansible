@@ -78,6 +78,8 @@ RETURN = '''
 '''
 
 import os
+import subprocess
+import tarfile
 import tempfile
 import yaml
 
@@ -141,6 +143,21 @@ def publish_collection(module, collection):
             'stderr': stderr,
         }
 
+        if module.params['signature_dir'] is not None:
+            # To test user-provided signatures, we need to sign the MANIFEST.json before publishing
+
+            # Extract the tarfile to sign the MANIFEST.json
+            with tarfile.open(collection_path, mode='r') as collection_tar:
+                collection_tar.extractall(path=os.path.join(collection_dir, '%s-%s-%s' % (namespace, name, version)))
+
+            manifest_path = os.path.join(collection_dir, '%s-%s-%s' % (namespace, name, version), 'MANIFEST.json')
+            signature_path = os.path.join(module.params['signature_dir'], '%s-%s-%s-MANIFEST.json.asc' % (namespace, name, version))
+            sign_manifest(signature_path, manifest_path, module, result)
+
+            # Create the tarfile containing the signed MANIFEST.json
+            with tarfile.open(collection_path, "w:gz") as tar:
+                tar.add(os.path.join(collection_dir, '%s-%s-%s' % (namespace, name, version)), arcname=os.path.sep)
+
     publish_args = ['ansible-galaxy', 'collection', 'publish', collection_path, '--server', module.params['server']]
     if module.params['token']:
         publish_args.extend(['--token', module.params['token']])
@@ -153,6 +170,49 @@ def publish_collection(module, collection):
     }
 
     return result
+
+
+def sign_manifest(signature_path, manifest_path, module, collection_setup_result):
+    collection_setup_result['gpg_detach_sign'] = {'signature_path': signature_path}
+
+    status_fd_read, status_fd_write = os.pipe()
+    gpg_cmd = [
+        "gpg",
+        "--batch",
+        "--pinentry-mode",
+        "loopback",
+        "--yes",
+        "--passphrase",
+        "SECRET",
+        "--homedir",
+        module.params['signature_dir'],
+        "--detach-sign",
+        "--armor",
+        "--output",
+        signature_path,
+        manifest_path,
+    ]
+    try:
+        p = subprocess.Popen(
+            gpg_cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            pass_fds=(status_fd_write,),
+            encoding='utf8',
+        )
+    except (FileNotFoundError, subprocess.SubprocessError) as err:
+        collection_setup_result['gpg_detach_sign']['error'] = "Failed during GnuPG verification with command '{gpg_cmd}': {err}".format(
+            gpg_cmd=gpg_cmd, err=err
+        )
+    else:
+        stdout, stderr = p.communicate()
+        collection_setup_result['gpg_detach_sign']['stdout'] = stdout
+        if stderr:
+            error = "Failed during GnuPG verification with command '{gpg_cmd}':\n{stderr}".format(gpg_cmd=gpg_cmd, stderr=stderr)
+            collection_setup_result['gpg_detach_sign']['error'] = error
+    finally:
+        os.close(status_fd_write)
 
 
 def run_module():
@@ -171,6 +231,7 @@ def run_module():
                 use_symlink=dict(type='bool', default=False),
             ),
         ),
+        signature_dir=dict(type='path', default=None),
     )
 
     module = AnsibleModule(
