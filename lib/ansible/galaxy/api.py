@@ -229,7 +229,7 @@ CollectionMetadata = collections.namedtuple('CollectionMetadata', ['namespace', 
 
 class CollectionVersionMetadata:
 
-    def __init__(self, namespace, name, version, download_url, artifact_sha256, dependencies):
+    def __init__(self, namespace, name, version, download_url, artifact_sha256, dependencies, signatures_url, signatures):
         """
         Contains common information about a collection on a Galaxy server to smooth through API differences for
         Collection and define a standard meta info for a collection.
@@ -240,6 +240,8 @@ class CollectionVersionMetadata:
         :param download_url: The URL to download the collection.
         :param artifact_sha256: The SHA256 of the collection artifact for later verification.
         :param dependencies: A dict of dependencies of the collection.
+        :param signatures_url: The URL to the specific version of the collection.
+        :param signatures: The list of signatures found at the signatures_url.
         """
         self.namespace = namespace
         self.name = name
@@ -247,6 +249,8 @@ class CollectionVersionMetadata:
         self.download_url = download_url
         self.artifact_sha256 = artifact_sha256
         self.dependencies = dependencies
+        self.signatures_url = signatures_url
+        self.signatures = signatures
 
 
 @functools.total_ordering
@@ -780,9 +784,11 @@ class GalaxyAPI:
         data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg, cache=True)
         self._set_cache()
 
+        signatures = data.get('signatures') or []
+
         return CollectionVersionMetadata(data['namespace']['name'], data['collection']['name'], data['version'],
                                          data['download_url'], data['artifact']['sha256'],
-                                         data['metadata']['dependencies'])
+                                         data['metadata']['dependencies'], data['href'], signatures)
 
     @g_connect(['v2', 'v3'])
     def get_collection_versions(self, namespace, name):
@@ -870,3 +876,31 @@ class GalaxyAPI:
         self._set_cache()
 
         return versions
+
+    @g_connect(['v2', 'v3'])
+    def get_collection_signatures(self, namespace, name, version):
+        """
+        Gets the collection signatures from the Galaxy server about a specific Collection version.
+
+        :param namespace: The collection namespace.
+        :param name: The collection name.
+        :param version: Version of the collection to get the information for.
+        :return: A list of signature strings.
+        """
+        api_path = self.available_api_versions.get('v3', self.available_api_versions.get('v2'))
+        url_paths = [self.api_server, api_path, 'collections', namespace, name, 'versions', version, '/']
+
+        n_collection_url = _urljoin(*url_paths)
+        error_context_msg = 'Error when getting collection version metadata for %s.%s:%s from %s (%s)' \
+                            % (namespace, name, version, self.name, self.api_server)
+        data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg, cache=True)
+        self._set_cache()
+
+        try:
+            signatures = data["signatures"]
+        except KeyError:
+            # Noisy since this is used by the dep resolver, so require more verbosity than Galaxy calls
+            display.vvvvvv(f"Server {self.api_server} has not signed {namespace}.{name}:{version}")
+            return []
+        else:
+            return [signature_info["signature"] for signature_info in signatures]

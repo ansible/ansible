@@ -37,6 +37,7 @@ if TYPE_CHECKING:
 
 from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
+from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.dependency_resolution.dataclasses import _GALAXY_YAML
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -62,19 +63,51 @@ class ConcreteArtifactsManager:
         * keeping track of local ones
         * keeping track of Galaxy API tokens for downloads from Galaxy'ish
           as well as the artifact hashes
+        * keeping track of Galaxy API signatures for downloads from Galaxy'ish
         * caching all of above
         * retrieving the metadata out of the downloaded artifacts
     """
 
-    def __init__(self, b_working_directory, validate_certs=True):
-        # type: (bytes, bool) -> None
+    def __init__(self, b_working_directory, validate_certs=True, keyring=None):
+        # type: (bytes, bool, str) -> None
         """Initialize ConcreteArtifactsManager caches and costraints."""
         self._validate_certs = validate_certs  # type: bool
         self._artifact_cache = {}  # type: Dict[bytes, bytes]
         self._galaxy_artifact_cache = {}  # type: Dict[Union[Candidate, Requirement], bytes]
         self._artifact_meta_cache = {}  # type: Dict[bytes, Dict[str, Optional[Union[str, List[str], Dict[str, str]]]]]
         self._galaxy_collection_cache = {}  # type: Dict[Union[Candidate, Requirement], Tuple[str, str, GalaxyToken]]
+        self._galaxy_collection_origin_cache = {}  # type: Dict[Candidate, Tuple[str, List[Dict[str, str]]]]
         self._b_working_directory = b_working_directory  # type: bytes
+        self._supplemental_signature_cache = {}  # type: Dict[str, str]
+        self._keyring = keyring  # type: str
+
+    @property
+    def keyring(self):
+        return self._keyring
+
+    def get_galaxy_artifact_source_info(self, collection):
+        # type: (Candidate) -> Dict[str, Union[str, List[Dict[str, str]]]]
+        server = collection.src.api_server
+
+        try:
+            download_url, _dummy, _dummy = self._galaxy_collection_cache[collection]
+            signatures_url, signatures = self._galaxy_collection_origin_cache[collection]
+        except KeyError as key_err:
+            raise RuntimeError(
+                'The is no known source for {coll!s}'.
+                format(coll=collection),
+            ) from key_err
+
+        return {
+            "format_version": "1.0.0",
+            "namespace": collection.namespace,
+            "name": collection.name,
+            "version": collection.ver,
+            "server": server,
+            "version_url": signatures_url,
+            "download_url": download_url,
+            "signatures": signatures,
+        }
 
     def get_galaxy_artifact_path(self, collection):
         # type: (Union[Candidate, Requirement]) -> bytes
@@ -280,14 +313,15 @@ class ConcreteArtifactsManager:
         self._artifact_meta_cache[collection.src] = collection_meta
         return collection_meta
 
-    def save_collection_source(self, collection, url, sha256_hash, token):
-        # type: (Candidate, str, str, GalaxyToken) -> None
+    def save_collection_source(self, collection, url, sha256_hash, token, signatures_url, signatures):
+        # type: (Candidate, str, str, GalaxyToken, str, List[Dict[str, str]]) -> None
         """Store collection URL, SHA256 hash and Galaxy API token.
 
         This is a hook that is supposed to be called before attempting to
         download Galaxy-based collections with ``get_galaxy_artifact_path()``.
         """
         self._galaxy_collection_cache[collection] = url, sha256_hash, token
+        self._galaxy_collection_origin_cache[collection] = signatures_url, signatures
 
     @classmethod
     @contextmanager
@@ -295,6 +329,7 @@ class ConcreteArtifactsManager:
             cls,  # type: Type[ConcreteArtifactsManager]
             temp_dir_base,  # type: str
             validate_certs=True,  # type: bool
+            keyring=None,  # type: str
     ):  # type: (...) -> Iterator[ConcreteArtifactsManager]
         """Custom ConcreteArtifactsManager constructor with temp dir.
 
@@ -309,7 +344,7 @@ class ConcreteArtifactsManager:
         )
         b_temp_path = to_bytes(temp_path, errors='surrogate_or_strict')
         try:
-            yield cls(b_temp_path, validate_certs)
+            yield cls(b_temp_path, validate_certs, keyring=keyring)
         finally:
             rmtree(b_temp_path)
 

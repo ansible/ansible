@@ -1448,6 +1448,27 @@ GALAXY_CACHE_DIR:
     key: cache_dir
   type: path
   version_added: '2.11'
+GALAXY_DISABLE_GPG_VERIFY:
+  default: false
+  type: bool
+  env:
+  - name: ANSIBLE_GALAXY_DISABLE_GPG_VERIFY
+  ini:
+  - section: galaxy
+    key: disable_gpg_verify
+  description:
+  - Disable GPG signature verification during collection installation.
+  version_added: '2.13'
+GALAXY_GPG_KEYRING:
+  type: path
+  env:
+  - name: ANSIBLE_GALAXY_GPG_KEYRING
+  ini:
+  - section: galaxy
+    key: gpg_keyring
+  description:
+  - Configure the keyring used for GPG signature verification during collection installation and verification.
+  version_added: '2.13'
 HOST_KEY_CHECKING:
   # note: constant not in use by ssh plugin anymore
   # TODO: check non ssh connection plugins for use/migration

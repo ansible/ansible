@@ -1,0 +1,24 @@
+minor_changes:
+- >-
+  ``ansible-galaxy collection [install|verify]`` - use gpg to verify the authenticity of
+  the signed ``MANIFEST.json`` with ASCII armored detached signatures provided by the Galaxy
+  server. The keyring (which is not managed by ``ansible-galaxy``) must be provided with
+  the ``--keyring`` option to use signature verification.
+  If no ``--keyring`` is specified and the collection to ``install|verify`` has associated
+  detached signatures on the Galaxy server, a warning is provided.
+- >-
+  ``ansible-galaxy collection [install|verify]`` - allow user-provided signature sources
+  in addition to those from the Galaxy server.
+  Each collection entry in a requirements file can specify a ``signatures`` key followed by
+  a list of sources.
+  Collection name(s) provided on the CLI can specify additional signature sources by using
+  the ``--signatures`` CLI option.
+  Signature sources should be URIs that can be opened with ``urllib.request.urlopen()``, such as
+  "https://example.com/path/to/detached_signature.asc" or "file:///path/to/detached_signature.asc".
+  The ``--keyring`` option must be specified if signature sources are provided.
+- >-
+  ``ansible-galaxy collection install`` - Store Galaxy server metadata alongside installed
+  collections for provenance. Signatures obtained from the Galaxy server can be used for offline
+  verification with ``ansible-galaxy collection verify --offline``.
+- >-
+  ``ansible-galaxy collection install`` - Add a global toggle to turn off GPG signature verification.

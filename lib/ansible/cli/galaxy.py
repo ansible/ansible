@@ -82,9 +82,14 @@ def with_collection_artifacts_manager(wrapped_method):
         if 'artifacts_manager' in kwargs:
             return wrapped_method(*args, **kwargs)
 
+        keyring = context.CLIARGS.get('keyring', None)
+        if keyring is not None:
+            keyring = GalaxyCLI._resolve_path(keyring)
+
         with ConcreteArtifactsManager.under_tmpdir(
                 C.DEFAULT_LOCAL_TMP,
                 validate_certs=not context.CLIARGS['ignore_certs'],
+                keyring=keyring,
         ) as concrete_artifact_cm:
             kwargs['artifacts_manager'] = concrete_artifact_cm
             return wrapped_method(*args, **kwargs)
@@ -385,6 +390,12 @@ class GalaxyCLI(CLI):
                                         'canonical manifest hash.')
         verify_parser.add_argument('-r', '--requirements-file', dest='requirements',
                                    help='A file containing a list of collections to be verified.')
+        verify_parser.add_argument('--keyring', dest='keyring', default=C.GALAXY_GPG_KEYRING,
+                                   help='The keyring used during signature verification')  # Eventually default to ~/.ansible/pubring.kbx?
+        verify_parser.add_argument('--signature', dest='signatures', action='append',
+                                   help='An additional signature source to verify the authenticity of the MANIFEST.json before using '
+                                        'it to verify the rest of the contents of a collection from a Galaxy server. Use in '
+                                        'conjunction with a positional collection name (mutually exclusive with --requirements-file).')
 
     def add_install_options(self, parser, parents=None):
         galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
@@ -425,9 +436,26 @@ class GalaxyCLI(CLI):
                                         help='Include pre-release versions. Semantic versioning pre-releases are ignored by default')
             install_parser.add_argument('-U', '--upgrade', dest='upgrade', action='store_true', default=False,
                                         help='Upgrade installed collection artifacts. This will also update dependencies unless --no-deps is provided')
+            install_parser.add_argument('--keyring', dest='keyring', default=C.GALAXY_GPG_KEYRING,
+                                        help='The keyring used during signature verification')  # Eventually default to ~/.ansible/pubring.kbx?
+            install_parser.add_argument('--disable-gpg-verify', dest='disable_gpg_verify', action='store_true',
+                                        default=C.GALAXY_DISABLE_GPG_VERIFY,
+                                        help='Disable GPG signature verification when installing collections from a Galaxy server')
+            install_parser.add_argument('--signature', dest='signatures', action='append',
+                                        help='An additional signature source to verify the authenticity of the MANIFEST.json before '
+                                             'installing the collection from a Galaxy server. Use in conjunction with a positional '
+                                             'collection name (mutually exclusive with --requirements-file).')
         else:
             install_parser.add_argument('-r', '--role-file', dest='requirements',
                                         help='A file containing a list of roles to be installed.')
+            if self._implicit_role and ('-r' in self._raw_args or '--role-file' in self._raw_args):
+                # Any collections in the requirements files will also be installed
+                install_parser.add_argument('--keyring', dest='keyring', default=C.GALAXY_GPG_KEYRING,
+                                            help='The keyring used during collection signature verification')
+                install_parser.add_argument('--disable-gpg-verify', dest='disable_gpg_verify', action='store_true',
+                                            default=C.GALAXY_DISABLE_GPG_VERIFY,
+                                            help='Disable GPG signature verification when installing collections from a Galaxy server')
+
             install_parser.add_argument('-g', '--keep-scm-meta', dest='keep_scm_meta', action='store_true',
                                         default=False,
                                         help='Use tar instead of the scm archive option when packaging the role.')
@@ -816,6 +844,7 @@ class GalaxyCLI(CLI):
 
     def _require_one_of_collections_requirements(
             self, collections, requirements_file,
+            signatures=None,
             artifacts_manager=None,
     ):
         if collections and requirements_file:
@@ -823,6 +852,12 @@ class GalaxyCLI(CLI):
         elif not collections and not requirements_file:
             raise AnsibleError("You must specify a collection name or a requirements file.")
         elif requirements_file:
+            if signatures is not None:
+                raise AnsibleError(
+                    "The --signatures option and --requirements-file are mutually exclusive. "
+                    "Use the --signatures with positional collection_name args or provide a "
+                    "'signatures' key for requirements in the --requirements-file."
+                )
             requirements_file = GalaxyCLI._resolve_path(requirements_file)
             requirements = self._parse_requirements_file(
                 requirements_file,
@@ -832,7 +867,7 @@ class GalaxyCLI(CLI):
         else:
             requirements = {
                 'collections': [
-                    Requirement.from_string(coll_input, artifacts_manager)
+                    Requirement.from_string(coll_input, artifacts_manager, signatures)
                     for coll_input in collections
                 ],
                 'roles': [],
@@ -1107,9 +1142,13 @@ class GalaxyCLI(CLI):
         ignore_errors = context.CLIARGS['ignore_errors']
         local_verify_only = context.CLIARGS['offline']
         requirements_file = context.CLIARGS['requirements']
+        signatures = context.CLIARGS['signatures']
+        if signatures is not None:
+            signatures = list(signatures)
 
         requirements = self._require_one_of_collections_requirements(
             collections, requirements_file,
+            signatures=signatures,
             artifacts_manager=artifacts_manager,
         )['collections']
 
@@ -1140,6 +1179,9 @@ class GalaxyCLI(CLI):
         install_items = context.CLIARGS['args']
         requirements_file = context.CLIARGS['requirements']
         collection_path = None
+        signatures = context.CLIARGS.get('signatures')
+        if signatures is not None:
+            signatures = list(signatures)
 
         if requirements_file:
             requirements_file = GalaxyCLI._resolve_path(requirements_file)
@@ -1155,6 +1197,7 @@ class GalaxyCLI(CLI):
             collection_path = GalaxyCLI._resolve_path(context.CLIARGS['collections_path'])
             requirements = self._require_one_of_collections_requirements(
                 install_items, requirements_file,
+                signatures=signatures,
                 artifacts_manager=artifacts_manager,
             )
 
@@ -1219,6 +1262,7 @@ class GalaxyCLI(CLI):
         ignore_errors = context.CLIARGS['ignore_errors']
         no_deps = context.CLIARGS['no_deps']
         force_with_deps = context.CLIARGS['force_with_deps']
+        disable_gpg_verify = context.CLIARGS['disable_gpg_verify']
         # If `ansible-galaxy install` is used, collection-only options aren't available to the user and won't be in context.CLIARGS
         allow_pre_release = context.CLIARGS.get('allow_pre_release', False)
         upgrade = context.CLIARGS.get('upgrade', False)
@@ -1239,6 +1283,7 @@ class GalaxyCLI(CLI):
             no_deps, force, force_with_deps, upgrade,
             allow_pre_release=allow_pre_release,
             artifacts_manager=artifacts_manager,
+            disable_gpg_verify=disable_gpg_verify,
         )
 
         return 0

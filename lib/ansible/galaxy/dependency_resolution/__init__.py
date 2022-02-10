@@ -36,6 +36,7 @@ def build_collection_dependency_resolver(
         with_deps=True,  # type: bool
         with_pre_releases=False,  # type: bool
         upgrade=False,  # type: bool
+        include_signatures=True,  # type: bool
 ):  # type: (...) -> CollectionDependencyResolver
     """Return a collection dependency resolver.
 
@@ -51,6 +52,7 @@ def build_collection_dependency_resolver(
             with_deps=with_deps,
             with_pre_releases=with_pre_releases,
             upgrade=upgrade,
+            include_signatures=include_signatures,
         ),
         CollectionDependencyReporter(),
     )
