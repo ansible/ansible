@@ -961,6 +961,19 @@ class ZipZArchive(ZipArchive):
             ('unzip', 'zipinfo_cmd_path'),
         )
 
+    def can_handle_archive(self):
+        unzip_available, error_msg = super(ZipZArchive, self).can_handle_archive()
+
+        if not unzip_available:
+            return unzip_available, error_msg
+
+        # Ensure unzip -Z is available before we use it in is_unarchive
+        cmd = [self.zipinfo_cmd_path, self.zipinfoflag]
+        rc, out, err = self.module.run_command(cmd)
+        if 'zipinfo' in out.lower():
+            return True, None
+        return False, 'Command "unzip -Z" could not handle archive: %s' % err
+
 
 # try handlers in order and return the one that works or bail if none work
 def pick_handler(src, dest, file_args, module):
