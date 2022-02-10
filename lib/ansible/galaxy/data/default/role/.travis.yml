@@ -9,7 +9,7 @@ sudo: false
 addons:
   apt:
     packages:
-    - python-pip
+      - python-pip
 
 install:
   # Install ansible
