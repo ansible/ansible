@@ -481,6 +481,7 @@ class ActionModule(ActionBase):
 
         # If source is a directory populate our list else source is a file and translate it to a tuple.
         if os.path.isdir(to_bytes(source, errors='surrogate_or_strict')):
+            dest_type = 'directory'
             # Get a list of the files we want to replicate on the remote side
             source_files = _walk_dirs(source, local_follow=local_follow,
                                       trailing_slash_detector=self._connection._shell.path_has_trailing_slash)
@@ -493,6 +494,8 @@ class ActionModule(ActionBase):
             # symlinks and any number of directories?  In the original code,
             # empty directories are not copied....
         else:
+            # If dest is a directory the file will be copied into it
+            dest_type = 'directory' if self._connection._shell.path_has_trailing_slash(dest) else 'file'
             source_files['files'] = [(source, os.path.basename(source))]
 
         changed = False
@@ -583,15 +586,40 @@ class ActionModule(ActionBase):
 
             changed = changed or module_return.get('changed', False)
 
-        if module_executed and len(source_files['files']) == 1:
+        # Only update the result with the module_result returned by the files or symlink module exec if there is one.
+        one_file_normal = len(source_files['files']) == 1 and not source_files['symlinks']
+        one_file_symlink = len(source_files['symlinks']) == 1 and not source_files['files']
+
+        if module_executed and (one_file_normal or one_file_symlink):
+            # Including only the last module_return seems arbitrary/not especially helpful if src is a dir.
+            # TODO: Return all module_returns in the result?
             result.update(module_return)
 
+            # The module_return may contain 'state' and 'changed' results which reflect the last module executed, not the overall result.
+            # Ensure 'changed' reflects whether any of the executed modules made a change.
+            # Ensure 'state' reflects the top level dest.
+            result['changed'] = changed
+            result['state'] = dest_type
+
+            # 1. Don't special-case dest to return the path if dest is a directory. Otherwise a src dir like:
+            # toplevel/
+            # ├── file.txt
+            # ├── subdir
+            # │   └── nested_subdir
+            # └── subdir2
+            # will return the last directory processed as the result.
+            # The precedence is files -> directories -> symlinks, last wins.
+            # 2. As soon as a second file or symlink is added to the src dir,
+            # the returned dest will reflect the dest dir.
+            # So just do that for consistency if the dest_type isn't also a file.
+            if dest_type == 'directory' and 'dest' not in result:
+                result['dest'] = dest
             # the file module returns the file path as 'path', but
             # the copy module uses 'dest', so add it if it's not there
-            if 'path' in result and 'dest' not in result:
+            elif 'path' in result and 'dest' not in result:
                 result['dest'] = result['path']
         else:
-            result.update(dict(dest=dest, src=source, changed=changed))
+            result.update(dict(dest=dest, src=source, changed=changed, state=dest_type))
 
         # Delete tmp path
         self._remove_tmp_path(self._connection._shell.tmpdir)

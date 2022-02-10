@@ -30,6 +30,8 @@
   assert:
     that:
       - "file_result_check.mode == '0444'"
+      - copy_result.changed
+      - copy_result.dest == "{{ remote_file }}"
 
 # same as expanduser & expandvars
 - command: 'echo {{ remote_dir }}'
@@ -466,6 +468,7 @@
   assert:
     that:
       - "recursive_copy_result is changed"
+      - recursive_copy_result.state == 'directory'
 
 - name: Check that a file in a directory was transferred
   stat:
@@ -623,6 +626,7 @@
   assert:
     that:
       - "recursive_copy_result is changed"
+      - recursive_copy_result.state == 'directory'
 
 - name: Check that a file in a directory was transferred
   stat:
@@ -1027,7 +1031,7 @@
     path: '{{ remote_dir }}/destination'
     state: absent
 
-# Try again with no trailing slash
+# Try again with trailing slash
 
 - name: Create a directory to place the test output in
   file:
@@ -1038,6 +1042,7 @@
   copy:
     src: '{{ local_temp_dir }}/source_recursive/'
     dest: '{{ remote_dir }}/destination'
+  register: recursive_copy_result
 
 - name: Stat the recursively copied directory
   stat:
@@ -1055,9 +1060,48 @@
 - name: Assert with trailing slash, only the file is copied
   assert:
     that:
+      - recursive_copy_result.changed
+      - recursive_copy_result.state == 'directory'
       - "not copied_stat.results[0].stat.exists"
       - "not copied_stat.results[1].stat.exists"
       - "copied_stat.results[2].stat.exists"
+
+#
+# Recursive copy a dir containing a subdir and within that a single file (trailing slash)
+#
+
+- name: Test recursive copy to directory trailing slash containing a single deeply nested file
+  copy:
+    src: 38938/
+    dest: "{{ remote_subdir }}"
+  register: recursive_copy_result
+
+- debug:
+    var: recursive_copy_result
+    verbosity: 1
+
+- name: Assert that the recursive copy did something
+  assert:
+    that:
+      - "recursive_copy_result is changed"
+      - recursive_copy_result.state == 'directory'
+
+- name: Test recursive copy to directory trailing slash containing a single deeply nested file
+  copy:
+    src: 38938/
+    dest: "{{ remote_subdir }}"
+  register: recursive_copy_result
+
+- debug:
+    var: recursive_copy_result
+    verbosity: 1
+
+- name: Assert that the recursive copy did something
+  assert:
+    that:
+      - "recursive_copy_result is not changed"
+      - recursive_copy_result.state == 'directory'
+      - recursive_copy_result.dest == '{{ remote_subdir }}/'
 
 #
 # Recursive copy with relative paths (#34893)
