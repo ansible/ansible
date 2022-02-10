@@ -301,6 +301,8 @@ class PlayContext(Base):
         # specifies 'default: inventory_hostname', but never added to vars:
         if new_info.remote_addr == 'inventory_hostname':
             new_info.remote_addr = variables.get('inventory_hostname')
+            display.warning('The "%s" connection plugin has an improperly configured remote target value, '
+                            'forcing "inventory_hostname" templated value instead of the string' % new_info.connection)
 
         # set no_log to default if it was not previously set
         if new_info.no_log is None:
