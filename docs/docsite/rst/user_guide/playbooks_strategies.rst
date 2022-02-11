@@ -105,6 +105,9 @@ In the above example, if we had 6 hosts in the group 'webservers', Ansible would
     web6      : ok=2    changed=2    unreachable=0    failed=0
 
 
+.. note::
+   Setting the batch size with ``serial`` changes the scope of the Ansible failures to the batch size, not the entire host list. You can use  :ref:`ignore_unreachable <ignore_unreachable>` or :ref:`max_fail_percentage <maximum_failure_percentage>` to modify this behavior.
+
 You can also specify a percentage with the ``serial`` keyword. Ansible applies the percentage to the total number of hosts in a play to determine the number of hosts per pass:
 
 .. code-block:: yaml
