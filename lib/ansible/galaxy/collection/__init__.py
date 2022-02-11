@@ -1170,8 +1170,12 @@ def find_existing_collections(path, artifacts_manager):
                     b_collection_path,
                     artifacts_manager,
                 )
-            except ValueError as val_err:
-                raise_from(AnsibleError(val_err), val_err)
+            except (AnsibleError, TypeError, ValueError) as val_err:
+                #raise_from(AnsibleError(val_err), val_err)
+                display.warning(
+                    u"Skipping invalid collection {coll!s} at '{path!s}' due to: {val_err}".
+                    format(coll=to_text(req), path=to_text(req.src), val_err=val_err)
+                )
 
             display.vvv(
                 u"Found installed collection {coll!s} at '{path!s}'".

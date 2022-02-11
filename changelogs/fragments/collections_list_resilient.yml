@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy collection list is now more resilient to invalid/incomplete collections and will now warn and continue to list vs stopping at first error.
