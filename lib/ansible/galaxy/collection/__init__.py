@@ -1176,6 +1176,7 @@ def find_existing_collections(path, artifacts_manager):
                     u"Skipping invalid collection {coll!s} at '{path!s}' due to: {val_err}".
                     format(coll=to_text(req), path=to_text(req.src), val_err=val_err)
                 )
+                continue
 
             display.vvv(
                 u"Found installed collection {coll!s} at '{path!s}'".
