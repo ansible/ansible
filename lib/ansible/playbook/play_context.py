@@ -297,6 +297,13 @@ class PlayContext(Base):
             if not new_info.connection_user:
                 new_info.connection_user = new_info.remote_user
 
+        # for case in which connection plugin still uses pc.remote_addr and in it's own options
+        # specifies 'default: inventory_hostname', but never added to vars:
+        if new_info.remote_addr == 'inventory_hostname':
+            new_info.remote_addr = variables.get('inventory_hostname')
+            display.warning('The "%s" connection plugin has an improperly configured remote target value, '
+                            'forcing "inventory_hostname" templated value instead of the string' % new_info.connection)
+
         # set no_log to default if it was not previously set
         if new_info.no_log is None:
             new_info.no_log = C.DEFAULT_NO_LOG
