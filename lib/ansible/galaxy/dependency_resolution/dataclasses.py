@@ -238,9 +238,9 @@ class _ComputedReqKindsMixin:
             )
 
         tmp_inst_req = cls(None, None, dir_path, 'dir', None)
+        req_version = art_mgr.get_direct_collection_version(tmp_inst_req)
         try:
             req_name = art_mgr.get_direct_collection_fqcn(tmp_inst_req)
-            req_version = art_mgr.get_direct_collection_version(tmp_inst_req)
         except TypeError as err:
             # Looks like installed/source dir but isn't: doesn't have valid metadata.
             display.warning(
