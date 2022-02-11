@@ -5,7 +5,6 @@
         test: 123
       delegate_to: "{{ item }}"
       delegate_facts: true
-      when: test is not defined
       loop: "{{ groups['all'] | difference(['localhost']) }}"
 
     - name: ensure we didnt create it on current host

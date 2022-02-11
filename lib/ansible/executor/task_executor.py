@@ -786,8 +786,7 @@ class TaskExecutor:
 
         if 'ansible_facts' in result and self._task.action not in C._ACTION_DEBUG:
             if self._task.action in C._ACTION_WITH_CLEAN_FACTS:
-                if not (self._task.delegate_to and self._task.delegate_facts):
-                    variables.update(result['ansible_facts'])
+                variables.update(result['ansible_facts'])
             else:
                 # TODO: cleaning of facts should eventually become part of taskresults instead of vars
                 af = wrap_var(result['ansible_facts'])
