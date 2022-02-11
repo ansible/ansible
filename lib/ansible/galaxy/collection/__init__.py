@@ -19,15 +19,12 @@ import tempfile
 import textwrap
 import threading
 import time
-import yaml
 
 from collections import namedtuple
 from contextlib import contextmanager
-from ansible.module_utils.compat.version import LooseVersion
 from hashlib import sha256
 from io import BytesIO
 from itertools import chain
-from yaml.error import YAMLError
 
 # NOTE: Adding type ignores is a hack for mypy to shut up wrt bug #1153
 try:
@@ -96,11 +93,9 @@ if TYPE_CHECKING:
 
 import ansible.constants as C
 from ansible.errors import AnsibleError
-from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection.concrete_artifact_manager import (
     _consume_file,
-    _download_file,
     _get_json_from_installed_dir,
     _get_meta_from_src_dir,
     _tarfile_extract,
@@ -128,7 +123,6 @@ from ansible.module_utils.common.yaml import yaml_dump
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
-from ansible.utils.version import SemanticVersion
 
 
 display = Display()
@@ -1170,12 +1164,13 @@ def find_existing_collections(path, artifacts_manager):
                     b_collection_path,
                     artifacts_manager,
                 )
-            except (AnsibleError, TypeError, ValueError) as val_err:
-                #raise_from(AnsibleError(val_err), val_err)
+            except (AnsibleError, TypeError, ValueError) as err:
+                import traceback
                 display.warning(
-                    u"Skipping invalid collection {coll!s} at '{path!s}' due to: {val_err}".
-                    format(coll=to_text(req), path=to_text(req.src), val_err=val_err)
+                    u"Skipping invalid collection {coll!s} at '{path!s}' due to: {err}".
+                    format(coll=to_text(req), path=to_text(req.src), err=err)
                 )
+                display.vvv(traceback.format_exc())
                 continue
 
             display.vvv(
