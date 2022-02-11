@@ -29,13 +29,13 @@
   tasks:
   - name: construct different fact per host in loop
     set_fact:
-      vm_name : "{{ cluster_name }}-{{item}}"
+      vm_name: "{{ cluster_name }}-{{item}}"
     delegate_to: "{{ item }}"
     delegate_facts: True
     with_items: "{{ groups['all'] }}"
 
   - name: ensure the fact is personalized for each host
-     assert:
+    assert:
       that:
         - hostvars[item]['vm_name'].endswith(item)
     loop: "{{ groups['all'] }}"
