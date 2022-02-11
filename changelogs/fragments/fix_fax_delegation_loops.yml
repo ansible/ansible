@@ -1,0 +1,2 @@
+bugfixes:
+  - task_executor reverts the change to push facts into delegated vars on loop finalization as result managing code already handles this and was duplicating effort to wrong result.
