@@ -1164,10 +1164,10 @@ def find_existing_collections(path, artifacts_manager):
                     b_collection_path,
                     artifacts_manager,
                 )
-            except (AnsibleError, TypeError, ValueError) as err:
+            except (AnsibleError, ValueError) as err:
                 import traceback
                 display.warning(
-                    u"Skipping invalid collection {coll!s} at '{path!s}' due to: {err}".
+                    u"Incomplete data on invalid collection {coll!s} at '{path!s}' due to: {err}".
                     format(coll=to_text(req), path=to_text(req.src), err=err)
                 )
                 display.vvv(traceback.format_exc())

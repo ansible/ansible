@@ -214,9 +214,12 @@ class _ComputedReqKindsMixin:
             )
 
         try:
-            return cls.from_dir_path(dir_path, art_mgr)
+            candidate = cls.from_dir_path(dir_path, art_mgr)
+            print('1', candidate)
         except ValueError:
-            return cls.from_dir_path_implicit(dir_path)
+            candidate = cls.from_dir_path_implicit(dir_path)
+            print('2', candidate)
+        return candidate
 
     @classmethod
     def from_dir_path(cls, dir_path, art_mgr):
