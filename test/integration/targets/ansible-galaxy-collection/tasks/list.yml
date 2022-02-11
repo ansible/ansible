@@ -67,7 +67,7 @@
 
 - assert:
     that:
-      - "item.value | length == 3"
+      - "item.value | length == 4"
       - "item.value['dev.collection1'].version == '*'"
       - "item.value['dev.collection2'].version == 'placeholder'"
       - "item.value['dev.collection3'].version == '*'"
@@ -81,7 +81,7 @@
 
 - assert:
     that:
-      - "item.value | length == 3"
+      - "item.value | length == 4"
       - "item.value['dev.collection1'].version == '*'"
       - "item.value['dev.collection2'].version == 'placeholder'"
       - "item.value['dev.collection3'].version == '*'"
