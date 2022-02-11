@@ -24,6 +24,8 @@ By default Ansible stops executing tasks on a host when a task fails on that hos
 
 The ``ignore_errors`` directive only works when the task is able to run and returns a value of 'failed'. It does not make Ansible ignore undefined variable errors, connection failures, execution issues (for example, missing packages), or syntax errors.
 
+.. _ignore_unreachable:
+
 Ignoring unreachable host errors
 ================================
 
@@ -145,7 +147,7 @@ Ansible lets you define when a particular task has "changed" a remote node using
 
     tasks:
 
-      - name: Report 'changed' when the return code is not equal to 2 
+      - name: Report 'changed' when the return code is not equal to 2
         ansible.builtin.shell: /usr/bin/billybass --mode="take me to the river"
         register: bass_result
         changed_when: "bass_result.rc != 2"
