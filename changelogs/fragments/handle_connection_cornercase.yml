@@ -1,0 +1,2 @@
+bugfixes:
+  - play_context now compensates for when a conneciton sets the default to inventory_hostname but skips adding it to the vars.
