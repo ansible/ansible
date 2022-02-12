@@ -170,6 +170,13 @@ def validate_signature_count(value):
     return value
 
 
+def _dump_requirements_file(collections):
+    requirements_file = {
+        "collections": collections
+    }
+    return yaml_dump(requirements_file)
+
+
 class GalaxyCLI(CLI):
     '''command to manage Ansible roles in shared repositories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.'''
 
@@ -355,7 +362,7 @@ class GalaxyCLI(CLI):
         list_parser.add_argument(galaxy_type, help=galaxy_type.capitalize(), nargs='?', metavar=galaxy_type)
 
         if galaxy_type == 'collection':
-            list_parser.add_argument('--format', dest='output_format', choices=('human', 'yaml', 'json'), default='human',
+            list_parser.add_argument('--format', dest='output_format', choices=('human', 'yaml', 'json', 'requirements'), default='human',
                                      help="Format to display the list of collections in.")
 
     def add_search_options(self, parser, parents=None):
@@ -1588,7 +1595,7 @@ class GalaxyCLI(CLI):
                 except ValueError as val_err:
                     six.raise_from(AnsibleError(val_err), val_err)
 
-                if output_format in {'yaml', 'json'}:
+                if output_format in {'yaml', 'json', 'requirements'}:
                     collections_in_paths[collection_path] = {
                         collection.fqcn: {'version': collection.ver}
                     }
@@ -1618,7 +1625,7 @@ class GalaxyCLI(CLI):
                     display.vvv("No collections found at {0}".format(collection_path))
                     continue
 
-                if output_format in {'yaml', 'json'}:
+                if output_format in {'yaml', 'json', 'requirements'}:
                     collections_in_paths[collection_path] = {
                         collection.fqcn: {'version': collection.ver} for collection in collections
                     }
@@ -1647,6 +1654,8 @@ class GalaxyCLI(CLI):
             display.display(json.dumps(collections_in_paths))
         elif output_format == 'yaml':
             display.display(yaml_dump(collections_in_paths))
+        elif output_format == 'requirements':
+            display.display(_dump_requirements_file(collections_in_paths))
 
         return 0
 
@@ -1806,7 +1815,6 @@ class GalaxyCLI(CLI):
         display.display(resp['status'])
 
         return True
-
 
 def main(args=None):
     GalaxyCLI.cli_executor(args)
