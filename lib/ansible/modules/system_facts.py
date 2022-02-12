@@ -403,7 +403,43 @@ ansible_facts:
               description: NIC’s maximum transmission unit expressed in bytes.
               type: int
               returned: always
-        net_io_counters_pernic:
+        net_io_counters:
+          description: I/O statistics per NIC
+          type: dict
+          returned: when explicitely specified in B(subsets) field or B(subsets) empty
+          contains:
+            bytes_sent:
+              description: number of bytes sent
+              type: int
+              returned: always
+            bytes_recv:
+              description: number of bytes received
+              type: int
+              returned: always
+            packets_sent:
+              description: number of packets sent
+              type: int
+              returned: always
+            packets_recv:
+              description: number of packets received
+              type: int
+              returned: always
+            errin:
+              description: total number of errors while receiving
+              type: int
+              returned: always
+            errout:
+              description: total number of errors while sending
+              type: int
+              returned: always
+            dropin:
+              description: total number of incoming packets which were dropped
+              type: int
+              returned: always
+            dropout:
+              description: total number of outgoing packets which were dropped
+              type: int
+              returned: always
         pids:
         resolv_conf:
         sensors_battery:
