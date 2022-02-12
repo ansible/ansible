@@ -79,6 +79,38 @@ options:
       - name
       - username
     required: false
+    choices:
+      - children
+      - cpu_affinity
+      - cwd
+      - threads
+      - username
+      - environ
+      - uids
+      - exe
+      - memory_full_info
+      - connections
+      - cpu_percent
+      - open_files
+      - memory_percent
+      - cmdline
+      - name
+      - num_threads
+      - io_counters
+      - nice
+      - num_ctx_switches
+      - terminal
+      - status
+      - cpu_times
+      - create_time
+      - gids
+      - ppid
+      - ionice
+      - cpu_num
+      - pid
+      - memory_info
+      - num_fds
+      - memory_maps
 
   net_connections_kind:
     description:
@@ -441,6 +473,13 @@ ansible_facts:
               type: int
               returned: always
         pids:
+          description:
+            - List of current PIDs.
+            - To get a complete list of culumns, refer please to the parameter B(pid_columns).
+            - If column B(children) mentionned, the complete process tree will be returned.
+            - Some column retrievals could have a heavy impact to the performance (i.e. B(children)).
+          returned: when explicitely specified in B(subsets) field or B(subsets) empty
+          type: list
         resolv_conf:
         sensors_battery:
         sensors_fans:
