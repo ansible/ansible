@@ -519,13 +519,89 @@ ansible_facts:
             - For more information about returned please refer to https://psutil.readthedocs.io/en/latest/#psutil.sensors_temperatures
           returned: always
           type: dict
+        virtual_memory:
+          description: Return statistics about system memory usage expressed in bytes.
+          type: dict
+          returned: when explicitely specified in B(subsets) field or B(subsets) empty.
+          contains:
+            used:
+              returned: always
+              type: int
+            free:
+              returned: always
+              type: int
+            active:
+              returned: only POSIX
+              type: int
+            inactive:
+              returned: only POSIX
+              type: int
+            buffers:
+              returned: only POSIX
+              type: int
+            cached:
+              returned: only POSIX
+              type: int
+            shared:
+              returned: only POSIX
+              type: int
+            slab:
+              returned: only POSIX
+              type: int
+            wired:
+              returned: only POSIX
+              type: int
 
         swap_memory:
+          description: Return statistics about swap memory usage expressed in bytes.
+          type: dict
+          returned: when explicitely specified in B(subsets) field or B(subsets) empty.
+          contains:
+            used:
+              returned: always
+              type: int
+            free:
+              returned: always
+              type: int
+            percent:
+              description: he percentage usage calculated as C((total - available) / total * 100).
+              returned: always
+              type: int
+            sin:
+              description: the number of bytes the system has swapped in from disk (cumulative).
+              returned: only POSIX
+              type: int
+            sout:
+              description: the number of bytes the system has swapped out from disk (cumulative).
+              returned: only POSIX
+              type: int
         users:
-        virtual_memory:
-
-      sample: |-
-
+          description: Return users currently connected on the system.
+          type: list
+          returned: when explicitely specified in B(subsets) field or B(subsets) empty.
+          contains:
+            name:
+              description: the name of the user.
+              type: str
+              returned: always
+            terminal:
+              description: the tty or pseudo-tty associated with the user, if any, else None.
+              type: str
+              returned: always
+            host:
+              description: the host name associated with the entry, if any.
+              type: str
+              returned: always
+            started:
+              description: the creation time expressed in seconds since the epoch.
+              type: float
+              returned: always
+            pid:
+              description:
+                - The PID of the login process (like sshd, tmux, gdm-session-worker, ...).
+                - On Windows and OpenBSD this is always set to None.
+              type: int
+              returned: always
 """
 
 from ansible.module_utils._text import to_text
