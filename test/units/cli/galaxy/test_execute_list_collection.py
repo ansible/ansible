@@ -45,48 +45,49 @@ def cliargs(collections_paths=None, collection_name=None):
     }
 
 
+collection_args_1 = (
+    (
+        'sandwiches.pbj',
+        '1.5.0',
+        None,
+        'dir',
+        None,
+    ),
+    (
+        'sandwiches.reuben',
+        '2.5.0',
+        None,
+        'dir',
+        None,
+    ),
+)
+
+collection_args_2 = (
+    (
+        'sandwiches.pbj',
+        '1.0.0',
+        None,
+        'dir',
+        None,
+    ),
+    (
+        'sandwiches.ham',
+        '1.0.0',
+        None,
+        'dir',
+        None,
+    ),
+)
+
+collections_path_1 = [Requirement(*cargs) for cargs in collection_args_1]
+collections_path_2 = [Requirement(*cargs) for cargs in collection_args_2]
+
+
 @pytest.fixture
 def mock_collection_objects(mocker):
     mocker.patch('ansible.cli.galaxy.GalaxyCLI._resolve_path', side_effect=['/root/.ansible/collections', '/usr/share/ansible/collections'])
     mocker.patch('ansible.cli.galaxy.validate_collection_path',
                  side_effect=['/root/.ansible/collections/ansible_collections', '/usr/share/ansible/collections/ansible_collections'])
-
-    collection_args_1 = (
-        (
-            'sandwiches.pbj',
-            '1.5.0',
-            None,
-            'dir',
-            None,
-        ),
-        (
-            'sandwiches.reuben',
-            '2.5.0',
-            None,
-            'dir',
-            None,
-        ),
-    )
-
-    collection_args_2 = (
-        (
-            'sandwiches.pbj',
-            '1.0.0',
-            None,
-            'dir',
-            None,
-        ),
-        (
-            'sandwiches.ham',
-            '1.0.0',
-            None,
-            'dir',
-            None,
-        ),
-    )
-
-    collections_path_1 = [Requirement(*cargs) for cargs in collection_args_1]
-    collections_path_2 = [Requirement(*cargs) for cargs in collection_args_2]
 
     mocker.patch('ansible.cli.galaxy.find_existing_collections', side_effect=[collections_path_1, collections_path_2])
 
