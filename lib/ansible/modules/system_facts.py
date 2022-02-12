@@ -308,12 +308,101 @@ ansible_facts:
               returned: always
               type: int
             percent:
-               returned: always
+              returned: always
               type: int
         hosts:
+          description: Shows the content of /etc/hosts file as a dict.
+          returned: when explicitely specified in B(subsets) field or B(subsets) empty (only POSIX)
+          type: dict
         net_connections:
+          description:
+            - netstat-like list of socket connections.
+            - The type of connection depends on parameter B(net_connections_kind)
+          returned: when explicitely specified in B(subsets) field or B(subsets) empty
+          type: list
+          contains:
+            family:
+              description: address kind
+              type: str
+              returned: always
+            laddr_ip:
+              description: local IP address
+              type: str
+              returned: always
+            laddr_port:
+              description: local port
+              type: int
+              returned: always
+            raddr_ip:
+              description: remote IP address
+              type: str
+              returned: always
+            raddr_port:
+              description: remote port
+              type: int
+              returned: always
+            type:
+              description: the address type, either SOCK_STREAM, SOCK_DGRAM or SOCK_SEQPACKET.
+              type: str
+              returned: always
+            fd:
+              description: file descriptor
+              type: int
+              returned: always
+            pid:
+              description: process ID
+              type: int
+              returned: always
+            status:
+              description: socket status
+              type: str
+              returned: always
         net_if_addrs:
+          description: List of addresses per NIC
+          returned: when explicitely specified in B(subsets) field or B(subsets) empty
+          type: dict
+          contains:
+            family:
+              description: the address family, either AF_INET or AF_INET6 or psutil.AF_LINK, which refers to a MAC address.
+              type: str
+              returned: always
+            address:
+              description: the primary NIC IP address
+              type: str
+              returned: always
+            netmask:
+              description: the netmask address
+              type: str
+              returned: if exists
+            broadcast:
+              description: the broadcast address
+              type: str
+              returned: if exists
+            ptp:
+              description: point to point
+              type: str
+              returned: if exists
         net_if_stats:
+          description: Stats per NIC
+          returned: when explicitely specified in B(subsets) field or B(subsets) empty
+          type: dict
+          contains:
+            isup:
+              description: indicates if NIC is up or not.
+              type: bool
+              returned: always
+            duplex:
+              description: the duplex communication type; it can be either NIC_DUPLEX_FULL, NIC_DUPLEX_HALF or NIC_DUPLEX_UNKNOWN
+              type: int
+              returned: always
+            speed:
+              description: the NIC speed expressed in mega bits (MB)
+              type: int
+              returned: always
+            mtu:
+              description: NIC’s maximum transmission unit expressed in bytes.
+              type: int
+              returned: always
         net_io_counters_pernic:
         pids:
         resolv_conf:
