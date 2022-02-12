@@ -170,11 +170,42 @@ def validate_signature_count(value):
     return value
 
 
-def _dump_requirements_file(collections):
+def _dump_collections_as_requirements(gathered_collections):
+    """
+    Dump the collections in the format required by requirements.txt for installation.
+
+    : param gathered_collections: Dict[str, List[Requirement]]
+    """
     requirements_file = {
-        "collections": collections
+        "collections": gathered_collections
     }
     return yaml_dump(requirements_file)
+
+
+def _dump_collections_as_yaml(gathered_collections):
+    """
+    Dump the collections in the YAML format
+
+    : param gathered_collections: Dict[str, List[Requirement]]
+    """
+    marshalled = {
+        path: {collection.fqcn: {'version': collection.ver} for collection in collections}
+        for path, collections in gathered_collections.items()
+    }
+    return yaml_dump(marshalled)
+
+
+def _dump_collections_as_json(gathered_collections):
+    """
+    Dump the collections in the JSON format
+
+    : param gathered_collections: Dict[str, List[Requirement]]
+    """
+    marshalled = {
+        path: {collection.fqcn: {'version': collection.ver} for collection in collections}
+        for path, collections in gathered_collections.items()
+    }
+    return json.dumps(marshalled)
 
 
 class GalaxyCLI(CLI):
@@ -1596,10 +1627,7 @@ class GalaxyCLI(CLI):
                     six.raise_from(AnsibleError(val_err), val_err)
 
                 if output_format in {'yaml', 'json', 'requirements'}:
-                    collections_in_paths[collection_path] = {
-                        collection.fqcn: {'version': collection.ver}
-                    }
-
+                    collections_in_paths[collection_path] = [collection]
                     continue
 
                 fqcn_width, version_width = _get_collection_widths([collection])
@@ -1626,9 +1654,7 @@ class GalaxyCLI(CLI):
                     continue
 
                 if output_format in {'yaml', 'json', 'requirements'}:
-                    collections_in_paths[collection_path] = {
-                        collection.fqcn: {'version': collection.ver} for collection in collections
-                    }
+                    collections_in_paths[collection_path] = collections
 
                     continue
 
@@ -1651,11 +1677,11 @@ class GalaxyCLI(CLI):
             raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
 
         if output_format == 'json':
-            display.display(json.dumps(collections_in_paths))
+            display.display(_dump_collections_as_json(collections_in_paths))
         elif output_format == 'yaml':
-            display.display(yaml_dump(collections_in_paths))
+            display.display(_dump_collections_as_yaml(collections_in_paths))
         elif output_format == 'requirements':
-            display.display(_dump_requirements_file(collections_in_paths))
+            display.display(_dump_collections_as_requirements(collections_in_paths))
 
         return 0
 
@@ -1815,6 +1841,7 @@ class GalaxyCLI(CLI):
         display.display(resp['status'])
 
         return True
+
 
 def main(args=None):
     GalaxyCLI.cli_executor(args)
