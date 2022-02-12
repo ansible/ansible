@@ -481,9 +481,45 @@ ansible_facts:
           returned: when explicitely specified in B(subsets) field or B(subsets) empty
           type: list
         resolv_conf:
+          description: Returns the content of /etc/resolv.conf file.
+          returned: when explicitely specified in B(subsets) field or B(subsets) empty (only POSIX)
+          type: dict
+          contains:
+            search:
+              type: list
+            nameserver:
+              type: list
         sensors_battery:
+          description: battery status information.
+          type: dict
+          returned: when explicitely specified in B(subsets) field or B(subsets) empty (only POSIX)
+          contains:
+            percent:
+              description: Battery power left as a percentage.
+              type: float
+              returned: always
+            secsleft:
+              description:
+                - An approximation how many seconds are left before the battery runs out of power.
+                - 'POWER_TIME_UNLIMITED' if power cable plugged.
+              type: float or str
+              returned: always
+            power_plugged:
+              description: Returns true if power cable plugged.
+              type: bool
+              returned: always
         sensors_fans:
+          description:
+            - Returns hardware fan speed.
+            - For more information about returned please refer to https://psutil.readthedocs.io/en/latest/#psutil.sensors_fans
+          returned: always
+          type: dict
         sensors_temperatures:
+            - Returns hardware temperatures.
+            - For more information about returned please refer to https://psutil.readthedocs.io/en/latest/#psutil.sensors_temperatures
+          returned: always
+          type: dict
+
         swap_memory:
         users:
         virtual_memory:
