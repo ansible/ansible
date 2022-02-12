@@ -176,8 +176,11 @@ def _dump_collections_as_requirements(gathered_collections):
 
     : param gathered_collections: Dict[str, List[Requirement]]
     """
+    collections = sum(gathered_collections.values(), [])
+    marshalled = [{'name': collection.fqcn, 'version': collection.ver} for collection in collections]
+
     requirements_file = {
-        "collections": gathered_collections
+        "collections": marshalled
     }
     return yaml_dump(requirements_file)
 
