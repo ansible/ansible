@@ -61,7 +61,7 @@ options:
       - net_connections
       - net_if_addrs
       - net_if_stats
-      - net_io_counters_pernic
+      - net_io_counters
       - pids
       - resolv_conf
       - sensors_battery
