@@ -1549,6 +1549,8 @@ class GalaxyCLI(CLI):
         roles_search_paths = context.CLIARGS['roles_path']
         role_name = context.CLIARGS['role']
 
+        found_roles = {}
+
         for path in roles_search_paths:
             role_path = GalaxyCLI._resolve_path(path)
             if os.path.isdir(path):
@@ -1564,6 +1566,7 @@ class GalaxyCLI(CLI):
                     role_found = True
                     display.display('# %s' % os.path.dirname(gr.path))
                     _display_role(gr)
+                    found_roles[role_path] = [gr]
                     break
                 warnings.append("- the role %s was not found" % role_name)
             else:
@@ -1576,11 +1579,13 @@ class GalaxyCLI(CLI):
                     continue
 
                 display.display('# %s' % role_path)
+                found_roles[role_path] = []
                 path_files = os.listdir(role_path)
                 for path_file in path_files:
                     gr = GalaxyRole(self.galaxy, self.api, path_file, path=path)
                     if gr.metadata:
                         _display_role(gr)
+                        found_roles[role_path].append(gr)
 
         # Do not warn if the role was found in any of the search paths
         if role_found and role_name:
