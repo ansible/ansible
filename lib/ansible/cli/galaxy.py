@@ -232,6 +232,21 @@ def _dump_collections_as_human(gathered_collections):
     return '\n'.join(out_lines)
 
 
+def _marshall_role(gr):
+    """
+    Collect role attributes that we want to print
+
+    : param role: GalaxyRole
+    """
+    install_info = gr.install_info
+    version = None
+    if install_info:
+        version = install_info.get("version", None)
+    if not version:
+        version = "(unknown version)"
+    return {"name": gr.name, "version": version}
+
+
 def _dump_roles_as_human(gathered_roles):
     out_lines = []
     for role_path, roles in gathered_roles.items():
@@ -241,6 +256,13 @@ def _dump_roles_as_human(gathered_roles):
 
     return '\n'.join(out_lines)
 
+
+def _marshall_roles_for_serialisation(gathered_roles):
+    return {path: list(map(_marshall_role, roles)) for path, roles in gathered_roles.items()}
+
+def _dump_roles_as_requirements(gathered_roles):
+    roles = sum(_marshall_roles_for_serialisation(gathered_roles).values(), [])
+    return yaml_dump({"roles": roles})
 
 class GalaxyCLI(CLI):
     '''command to manage Ansible roles in shared repositories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.'''
@@ -426,7 +448,8 @@ class GalaxyCLI(CLI):
 
         list_parser.add_argument(galaxy_type, help=galaxy_type.capitalize(), nargs='?', metavar=galaxy_type)
 
-        if galaxy_type == 'collection':
+
+        if galaxy_type == 'collection' or galaxy_type == 'role':
             list_parser.add_argument('--format', dest='output_format', choices=('human', 'yaml', 'json', 'requirements'), default='human',
                                      help="Format to display the list of collections in.")
 
@@ -1555,6 +1578,7 @@ class GalaxyCLI(CLI):
         warnings = []
         roles_search_paths = context.CLIARGS['roles_path']
         role_name = context.CLIARGS['role']
+        output_format = context.CLIARGS['output_format']
 
         found_roles = {}
 
@@ -1594,7 +1618,15 @@ class GalaxyCLI(CLI):
         if role_found and role_name:
             warnings = []
 
-        _dump_roles_as_human(found_roles)
+        if output_format == 'human':
+            display.display(_dump_roles_as_human(found_roles))
+        elif output_format == 'json':
+            display.display(json.dumps(_marshall_roles_for_serialisation(found_roles)))
+        elif output_format == 'yaml':
+            display.display(yaml_dump(_marshall_roles_for_serialisation(found_roles)))
+        elif output_format == 'requirements':
+            display.display(_dump_roles_as_requirements(found_roles))
+
 
         for w in warnings:
             display.warning(w)
