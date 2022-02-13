@@ -10,7 +10,7 @@ import pytest
 import json
 
 from ansible import context
-from ansible.cli.galaxy import GalaxyCLI, _dump_collections_as_json, _dump_collections_as_requirements, _dump_collections_as_yaml
+from ansible.cli.galaxy import GalaxyCLI, _dump_collections
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import collection
 from ansible.galaxy.dependency_resolution.dataclasses import Requirement
@@ -274,7 +274,7 @@ def test_execute_list_collection_one_invalid_path(mocker, capsys, mock_collectio
 
 def test_dump_collections_as_yaml():
     """Test that dumping to yaml looks as expected"""
-    result = _dump_collections_as_yaml(found_collections)
+    result = _dump_collections(found_collections, 'yaml')
     deserialised = yaml_load(result)
     assert len(deserialised) == 2, "not all directories dumped"
 
@@ -290,7 +290,7 @@ def test_dump_collections_as_yaml():
 
 def test_dump_collections_as_json():
     """Test that dumping to json looks as expected"""
-    result = _dump_collections_as_json(found_collections)
+    result = _dump_collections(found_collections, 'json')
     deserialised = json.loads(result)
 
     assert len(deserialised) == 2, "not all directories dumped"
@@ -307,7 +307,7 @@ def test_dump_collections_as_json():
 
 def test_dump_collections_as_requirements():
     """Test that dumping to requirements can be read as requirements input"""
-    result = _dump_collections_as_requirements(found_collections)
+    result = _dump_collections(found_collections, 'requirements')
     # dump results to a file
     with tempfile.NamedTemporaryFile() as requirements_file:
         requirements_file.write(result.encode("utf-8"))

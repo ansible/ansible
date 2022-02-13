@@ -222,6 +222,23 @@ def _dump_collections_as_human(gathered_collections):
     return '\n'.join(out_lines)
 
 
+def _dump_collections(collections_in_paths, output_format):
+    if output_format == 'human':
+        return _dump_collections_as_human(collections_in_paths)
+    elif output_format in {'json', 'yaml'}:
+        marshalled = {
+            path: {collection.fqcn: {'version': collection.ver} for collection in collections}
+            for path, collections in collections_in_paths.items()
+        }
+        if output_format == 'json':
+            return json.dumps(marshalled)
+        elif output_format == 'yaml':
+            return yaml_dump(marshalled)
+    elif output_format == 'requirements':
+        collections = sum(collections_in_paths.values(), [])
+        marshalled = [{'name': collection.fqcn, 'version': collection.ver} for collection in collections]
+        return yaml_dump({"collections": marshalled})
+
 def _marshall_role(gr):
     """
     Collect role attributes that we want to print
@@ -1714,16 +1731,7 @@ class GalaxyCLI(CLI):
         if not path_found:
             raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
 
-        if output_format == 'human':
-            formatted_collections = _dump_collections_as_human(collections_in_paths)
-        elif output_format == 'json':
-            formatted_collections = _dump_collections_as_json(collections_in_paths)
-        elif output_format == 'yaml':
-            formatted_collections = _dump_collections_as_yaml(collections_in_paths)
-        elif output_format == 'requirements':
-            formatted_collections = _dump_collections_as_requirements(collections_in_paths)
-
-        display.display(formatted_collections)
+        display.display(_dump_collections(collections_in_paths, output_format))
 
         return 0
 
