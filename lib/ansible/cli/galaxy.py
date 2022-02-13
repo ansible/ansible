@@ -41,8 +41,7 @@ from ansible.galaxy.collection.concrete_artifact_manager import (
     ConcreteArtifactsManager,
 )
 from ansible.galaxy.collection.gpg import GPG_ERROR_MAP
-from ansible.galaxy.dependency_resolution.dataclasses import Requirement
-
+from ansible.galaxy.dependency_resolution.dataclasses import Candidate, Requirement
 from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoTokenSentinel
 from ansible.module_utils.ansible_release import __version__ as ansible_version
@@ -139,7 +138,7 @@ def _display_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwid
 
 
 def _get_collection_widths(collections):
-    if not is_iterable(collections):
+    if isinstance(collections, Requirement) or isinstance(collections, Candidate):
         collections = (collections, )
 
     fqcn_set = {to_text(c.fqcn) for c in collections}
@@ -205,7 +204,7 @@ def _dump_collections_as_human(gathered_collections):
     """
     Dump the collections in a human-readable format
 
-    : param gathered_collections: Dict[str, List[Requirement]]
+    : param gathered_collections: Dict[str, List[Candidate]]
     """
     out_lines = []
 

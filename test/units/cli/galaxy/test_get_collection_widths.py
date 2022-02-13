@@ -28,7 +28,5 @@ def test_get_collection_widths(collection_objects):
 
 def test_get_collection_widths_single_collection(mocker):
     mocked_collection = Requirement('sandwiches.club', '3.0.0', None, 'galaxy', None)
-    # Make this look like it is not iterable
-    mocker.patch('ansible.cli.galaxy.is_iterable', return_value=False)
 
     assert _get_collection_widths(mocked_collection) == (15, 5)
