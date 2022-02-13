@@ -1564,8 +1564,6 @@ class GalaxyCLI(CLI):
                 gr = GalaxyRole(self.galaxy, self.api, role_name, path=os.path.join(role_path, role_name))
                 if os.path.isdir(gr.path):
                     role_found = True
-                    display.display('# %s' % os.path.dirname(gr.path))
-                    _display_role(gr)
                     found_roles[role_path] = [gr]
                     break
                 warnings.append("- the role %s was not found" % role_name)
@@ -1578,18 +1576,22 @@ class GalaxyCLI(CLI):
                     warnings.append("- the configured path %s, exists, but it is not a directory." % role_path)
                     continue
 
-                display.display('# %s' % role_path)
                 found_roles[role_path] = []
                 path_files = os.listdir(role_path)
                 for path_file in path_files:
                     gr = GalaxyRole(self.galaxy, self.api, path_file, path=path)
                     if gr.metadata:
-                        _display_role(gr)
                         found_roles[role_path].append(gr)
 
         # Do not warn if the role was found in any of the search paths
         if role_found and role_name:
             warnings = []
+
+        for role_path, roles in found_roles.items():
+            display.display('# %s' % role_path)
+            for gr in roles:
+                _display_role(gr)
+
 
         for w in warnings:
             display.warning(w)
