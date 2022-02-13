@@ -136,7 +136,7 @@ def _display_role(gr):
         version = install_info.get("version", None)
     if not version:
         version = "(unknown version)"
-    display.display("- %s, %s" % (gr.name, version))
+    return "- %s, %s" % (gr.name, version)
 
 
 def _display_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwidth=7):
@@ -225,12 +225,19 @@ def _dump_collections_as_human(gathered_collections):
         fqcn_width, version_width = _get_collection_widths(collections)
         out_lines.append(_display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width))
 
-        # display.display(out_lines[-1])
-        # display.display("^^^^^^^")
-
         # Sort collections by the namespace and name
         for collection in sorted(collections, key=to_text):
             out_lines.append(_display_collection(collection, fqcn_width, version_width))
+
+    return '\n'.join(out_lines)
+
+
+def _dump_roles_as_human(gathered_roles):
+    out_lines = []
+    for role_path, roles in gathered_roles.items():
+        out_lines.append('# %s' % role_path)
+        for gr in roles:
+            out_lines.append(_display_role(gr))
 
     return '\n'.join(out_lines)
 
@@ -1587,11 +1594,7 @@ class GalaxyCLI(CLI):
         if role_found and role_name:
             warnings = []
 
-        for role_path, roles in found_roles.items():
-            display.display('# %s' % role_path)
-            for gr in roles:
-                _display_role(gr)
-
+        _dump_roles_as_human(found_roles)
 
         for w in warnings:
             display.warning(w)
