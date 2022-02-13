@@ -1629,16 +1629,6 @@ class GalaxyCLI(CLI):
                 except ValueError as val_err:
                     six.raise_from(AnsibleError(val_err), val_err)
 
-                if output_format in {'yaml', 'json', 'requirements'}:
-                    collections_in_paths[collection_path] = collections
-                    continue
-
-                fqcn_width, version_width = _get_collection_widths(collections)
-
-                _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
-                for collection in sorted(collections, key=to_text):
-                    _display_collection(collection, fqcn_width, version_width)
-
             else:
                 # list all collections
                 collection_path = validate_collection_path(path)
@@ -1657,18 +1647,17 @@ class GalaxyCLI(CLI):
                     display.vvv("No collections found at {0}".format(collection_path))
                     continue
 
-                if output_format in {'yaml', 'json', 'requirements'}:
-                    collections_in_paths[collection_path] = collections
+            if output_format in {'yaml', 'json', 'requirements'}:
+                collections_in_paths[collection_path] = collections
+                continue
 
-                    continue
+            # Display header
+            fqcn_width, version_width = _get_collection_widths(collections)
+            _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
 
-                # Display header
-                fqcn_width, version_width = _get_collection_widths(collections)
-                _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
-
-                # Sort collections by the namespace and name
-                for collection in sorted(collections, key=to_text):
-                    _display_collection(collection, fqcn_width, version_width)
+            # Sort collections by the namespace and name
+            for collection in sorted(collections, key=to_text):
+                _display_collection(collection, fqcn_width, version_width)
 
         # Do not warn if the specific collection was found in any of the search paths
         if collection_found and collection_name:
