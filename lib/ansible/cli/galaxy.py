@@ -1622,21 +1622,22 @@ class GalaxyCLI(CLI):
                 collection_found = True
 
                 try:
-                    collection = Requirement.from_dir_path_as_unknown(
+                    collections = [Requirement.from_dir_path_as_unknown(
                         b_collection_path,
                         artifacts_manager,
-                    )
+                    )]
                 except ValueError as val_err:
                     six.raise_from(AnsibleError(val_err), val_err)
 
                 if output_format in {'yaml', 'json', 'requirements'}:
-                    collections_in_paths[collection_path] = [collection]
+                    collections_in_paths[collection_path] = collections
                     continue
 
-                fqcn_width, version_width = _get_collection_widths([collection])
+                fqcn_width, version_width = _get_collection_widths(collections)
 
                 _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
-                _display_collection(collection, fqcn_width, version_width)
+                for collection in sorted(collections, key=to_text):
+                    _display_collection(collection, fqcn_width, version_width)
 
             else:
                 # list all collections
