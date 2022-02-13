@@ -214,7 +214,7 @@ def _dump_collections_as_json(gathered_collections):
 def _dump_collections_as_human(gathered_collections):
     """
     Dump the collections in a human-readable format
-    
+
     : param gathered_collections: Dict[str, List[Requirement]]
     """
     out_lines = []
@@ -233,6 +233,7 @@ def _dump_collections_as_human(gathered_collections):
             out_lines.append(_display_collection(collection, fqcn_width, version_width))
 
     return '\n'.join(out_lines)
+
 
 class GalaxyCLI(CLI):
     '''command to manage Ansible roles in shared repositories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.'''
@@ -1682,15 +1683,16 @@ class GalaxyCLI(CLI):
         if not path_found:
             raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
 
-
         if output_format == 'human':
-            display.display(_dump_collections_as_human(collections_in_paths))
+            formatted_collections = _dump_collections_as_human(collections_in_paths)
         elif output_format == 'json':
-            display.display(_dump_collections_as_json(collections_in_paths))
+            formatted_collections = _dump_collections_as_json(collections_in_paths)
         elif output_format == 'yaml':
-            display.display(_dump_collections_as_yaml(collections_in_paths))
+            formatted_collections = _dump_collections_as_yaml(collections_in_paths)
         elif output_format == 'requirements':
-            display.display(_dump_collections_as_requirements(collections_in_paths))
+            formatted_collections = _dump_collections_as_requirements(collections_in_paths)
+
+        display.display(formatted_collections)
 
         return 0
 
