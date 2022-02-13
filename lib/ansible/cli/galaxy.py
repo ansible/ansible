@@ -129,16 +129,6 @@ def _display_header(path, h1, h2, w1=10, w2=7):
     ))
 
 
-def _display_role(gr):
-    install_info = gr.install_info
-    version = None
-    if install_info:
-        version = install_info.get("version", None)
-    if not version:
-        version = "(unknown version)"
-    return "- %s, %s" % (gr.name, version)
-
-
 def _display_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwidth=7):
     return('{fqcn:{cwidth}} {version:{vwidth}}'.format(
         fqcn=to_text(collection.fqcn),
@@ -242,8 +232,6 @@ def _marshall_role(gr):
     version = None
     if install_info:
         version = install_info.get("version", None)
-    if not version:
-        version = "(unknown version)"
     return {"name": gr.name, "version": version}
 
 
@@ -252,7 +240,7 @@ def _dump_roles_as_human(gathered_roles):
     for role_path, roles in gathered_roles.items():
         out_lines.append('# %s' % role_path)
         for gr in roles:
-            out_lines.append(_display_role(gr))
+            out_lines.append("- %s, %s" % (gr['name'], gr.get('version', "(unknown version)")))
 
     return '\n'.join(out_lines)
 
@@ -261,7 +249,7 @@ def _dump_roles(gathered_roles, output_format):
     marshalled_roles = {path: list(map(_marshall_role, roles)) for path, roles in gathered_roles.items()}
 
     if output_format == 'human':
-        return _dump_roles_as_human(gathered_roles)
+        return _dump_roles_as_human(marshalled_roles)
     elif output_format == 'json':
         return json.dumps(marshalled_roles)
     elif output_format == 'yaml':
