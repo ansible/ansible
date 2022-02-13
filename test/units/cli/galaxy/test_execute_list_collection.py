@@ -3,16 +3,41 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+import tempfile
 __metaclass__ = type
 
 import pytest
+import json
 
 from ansible import context
-from ansible.cli.galaxy import GalaxyCLI
+from ansible.cli.galaxy import GalaxyCLI, _dump_collections_as_json, _dump_collections_as_requirements, _dump_collections_as_yaml
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import collection
 from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.yaml import yaml_load
+
+
+collection_args_1 = (
+    ('sandwiches.pbj', '1.5.0', None, 'dir', None),
+    ('sandwiches.reuben', '2.5.0', None, 'dir', None),
+)
+collection_args_2 = (
+    ('sandwiches.pbj', '1.0.0', None, 'dir', None),
+    ('sandwiches.ham', '1.0.0', None, 'dir', None),
+)
+path_1 = '/root/.ansible/collections'
+path_2 = '/usr/share/ansible/collections'
+
+
+collections_path_1 = [Requirement(*cargs) for cargs in collection_args_1]
+collections_path_2 = [Requirement(*cargs) for cargs in collection_args_2]
+
+
+found_collections = {
+    path_1 + "/ansible_collections": collections_path_1,
+    path_2 + "/ansible_collections": collections_path_2,
+}
 
 
 def path_exists(path):
@@ -43,44 +68,6 @@ def cliargs(collections_paths=None, collection_name=None):
         'type': 'collection',
         'output_format': 'human'
     }
-
-
-collection_args_1 = (
-    (
-        'sandwiches.pbj',
-        '1.5.0',
-        None,
-        'dir',
-        None,
-    ),
-    (
-        'sandwiches.reuben',
-        '2.5.0',
-        None,
-        'dir',
-        None,
-    ),
-)
-
-collection_args_2 = (
-    (
-        'sandwiches.pbj',
-        '1.0.0',
-        None,
-        'dir',
-        None,
-    ),
-    (
-        'sandwiches.ham',
-        '1.0.0',
-        None,
-        'dir',
-        None,
-    ),
-)
-
-collections_path_1 = [Requirement(*cargs) for cargs in collection_args_1]
-collections_path_2 = [Requirement(*cargs) for cargs in collection_args_2]
 
 
 @pytest.fixture
@@ -283,3 +270,51 @@ def test_execute_list_collection_one_invalid_path(mocker, capsys, mock_collectio
     # Only a partial test of the output
 
     assert err == '[WARNING]: - the configured path nope, exists, but it is not a directory.\n'
+
+
+def test_dump_collections_as_yaml():
+    """Test that dumping to yaml looks as expected"""
+    result = _dump_collections_as_yaml(found_collections)
+    deserialised = yaml_load(result)
+    assert len(deserialised) == 2, "not all directories dumped"
+
+    found_1 = deserialised[path_1 + "/ansible_collections"]
+    assert len(found_1) == len(collections_path_1)
+    for item in collections_path_1:
+        assert item.fqcn in found_1
+    found_2 = deserialised[path_2 + "/ansible_collections"]
+    assert len(found_2) == len(collections_path_2)
+    for item in collections_path_2:
+        assert item.fqcn in found_2
+
+
+def test_dump_collections_as_json():
+    """Test that dumping to json looks as expected"""
+    result = _dump_collections_as_json(found_collections)
+    deserialised = json.loads(result)
+
+    assert len(deserialised) == 2, "not all directories dumped"
+
+    found_1 = deserialised[path_1 + "/ansible_collections"]
+    assert len(found_1) == len(collections_path_1)
+    for item in collections_path_1:
+        assert item.fqcn in found_1
+    found_2 = deserialised[path_2 + "/ansible_collections"]
+    assert len(found_2) == len(collections_path_2)
+    for item in collections_path_2:
+        assert item.fqcn in found_2
+
+
+def test_dump_collections_as_requirements():
+    """Test that dumping to requirements can be read as requirements input"""
+    result = _dump_collections_as_requirements(found_collections)
+    # dump results to a file
+    with tempfile.NamedTemporaryFile() as requirements_file:
+        requirements_file.write(result.encode("utf-8"))
+        requirements_file.flush()
+
+        # read the requirements file
+        galaxy = GalaxyCLI(["--help"])  # any args, doesn't matter
+        deserialised = galaxy._parse_requirements_file(requirements_file.name)
+
+        assert len(deserialised["collections"]) == len(collections_path_1) + len(collections_path_2)
