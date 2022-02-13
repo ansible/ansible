@@ -211,6 +211,23 @@ def _dump_collections_as_json(gathered_collections):
     return json.dumps(marshalled)
 
 
+def _dump_collections_as_human(gathered_collections):
+    """
+    Dump the collections in a human-readable format
+    
+    : param gathered_collections: Dict[str, List[Requirement]]
+    """
+
+    for collection_path, collections in gathered_collections.items():
+
+        # Display header
+        fqcn_width, version_width = _get_collection_widths(collections)
+        _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
+
+        # Sort collections by the namespace and name
+        for collection in sorted(collections, key=to_text):
+            _display_collection(collection, fqcn_width, version_width)
+
 class GalaxyCLI(CLI):
     '''command to manage Ansible roles in shared repositories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.'''
 
@@ -1647,17 +1664,7 @@ class GalaxyCLI(CLI):
                     display.vvv("No collections found at {0}".format(collection_path))
                     continue
 
-            if output_format in {'yaml', 'json', 'requirements'}:
-                collections_in_paths[collection_path] = collections
-                continue
-
-            # Display header
-            fqcn_width, version_width = _get_collection_widths(collections)
-            _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
-
-            # Sort collections by the namespace and name
-            for collection in sorted(collections, key=to_text):
-                _display_collection(collection, fqcn_width, version_width)
+            collections_in_paths[collection_path] = collections
 
         # Do not warn if the specific collection was found in any of the search paths
         if collection_found and collection_name:
@@ -1669,7 +1676,10 @@ class GalaxyCLI(CLI):
         if not path_found:
             raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --{0}s-path".format(context.CLIARGS['type']))
 
-        if output_format == 'json':
+
+        if output_format == 'human':
+            _dump_collections_as_human(collections_in_paths)
+        elif output_format == 'json':
             display.display(_dump_collections_as_json(collections_in_paths))
         elif output_format == 'yaml':
             display.display(_dump_collections_as_yaml(collections_in_paths))
