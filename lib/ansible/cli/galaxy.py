@@ -118,7 +118,7 @@ def with_collection_artifacts_manager(wrapped_method):
 
 
 def _display_header(path, h1, h2, w1=10, w2=7):
-    display.display('\n# {0}\n{1:{cwidth}} {2:{vwidth}}\n{3} {4}\n'.format(
+    return ('\n# {0}\n{1:{cwidth}} {2:{vwidth}}\n{3} {4}'.format(
         path,
         h1,
         h2,
@@ -140,7 +140,7 @@ def _display_role(gr):
 
 
 def _display_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwidth=7):
-    display.display('{fqcn:{cwidth}} {version:{vwidth}}'.format(
+    return('{fqcn:{cwidth}} {version:{vwidth}}'.format(
         fqcn=to_text(collection.fqcn),
         version=collection.ver,
         cwidth=max(cwidth, min_cwidth),  # Make sure the width isn't smaller than the header
@@ -217,16 +217,22 @@ def _dump_collections_as_human(gathered_collections):
     
     : param gathered_collections: Dict[str, List[Requirement]]
     """
+    out_lines = []
 
     for collection_path, collections in gathered_collections.items():
 
         # Display header
         fqcn_width, version_width = _get_collection_widths(collections)
-        _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
+        out_lines.append(_display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width))
+
+        # display.display(out_lines[-1])
+        # display.display("^^^^^^^")
 
         # Sort collections by the namespace and name
         for collection in sorted(collections, key=to_text):
-            _display_collection(collection, fqcn_width, version_width)
+            out_lines.append(_display_collection(collection, fqcn_width, version_width))
+
+    return '\n'.join(out_lines)
 
 class GalaxyCLI(CLI):
     '''command to manage Ansible roles in shared repositories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.'''
@@ -1678,7 +1684,7 @@ class GalaxyCLI(CLI):
 
 
         if output_format == 'human':
-            _dump_collections_as_human(collections_in_paths)
+            display.display(_dump_collections_as_human(collections_in_paths))
         elif output_format == 'json':
             display.display(_dump_collections_as_json(collections_in_paths))
         elif output_format == 'yaml':

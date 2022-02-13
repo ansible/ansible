@@ -8,9 +8,8 @@ __metaclass__ = type
 from ansible.cli.galaxy import _display_header
 
 
-def test_display_header_default(capsys):
-    _display_header('/collections/path', 'h1', 'h2')
-    out, err = capsys.readouterr()
+def test_display_header_default():
+    out = _display_header('/collections/path', 'h1', 'h2')
     out_lines = out.splitlines()
 
     assert out_lines[0] == ''
@@ -19,9 +18,8 @@ def test_display_header_default(capsys):
     assert out_lines[3] == '---------- -------'
 
 
-def test_display_header_widths(capsys):
-    _display_header('/collections/path', 'Collection', 'Version', 18, 18)
-    out, err = capsys.readouterr()
+def test_display_header_widths():
+    out = _display_header('/collections/path', 'Collection', 'Version', 18, 18)
     out_lines = out.splitlines()
 
     assert out_lines[0] == ''
@@ -30,9 +28,8 @@ def test_display_header_widths(capsys):
     assert out_lines[3] == '------------------ ------------------'
 
 
-def test_display_header_small_widths(capsys):
-    _display_header('/collections/path', 'Col', 'Ver', 1, 1)
-    out, err = capsys.readouterr()
+def test_display_header_small_widths():
+    out = _display_header('/collections/path', 'Col', 'Ver', 1, 1)
     out_lines = out.splitlines()
 
     assert out_lines[0] == ''
