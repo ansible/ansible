@@ -257,12 +257,18 @@ def _dump_roles_as_human(gathered_roles):
     return '\n'.join(out_lines)
 
 
-def _marshall_roles_for_serialisation(gathered_roles):
-    return {path: list(map(_marshall_role, roles)) for path, roles in gathered_roles.items()}
+def _dump_roles(gathered_roles, output_format):
+    marshalled_roles = {path: list(map(_marshall_role, roles)) for path, roles in gathered_roles.items()}
 
-def _dump_roles_as_requirements(gathered_roles):
-    roles = sum(_marshall_roles_for_serialisation(gathered_roles).values(), [])
-    return yaml_dump({"roles": roles})
+    if output_format == 'human':
+        return _dump_roles_as_human(gathered_roles)
+    elif output_format == 'json':
+        return json.dumps(marshalled_roles)
+    elif output_format == 'yaml':
+        return yaml_dump(marshalled_roles)
+    elif output_format == 'requirements':
+        return yaml_dump({"roles": sum(marshalled_roles.values(), [])})
+
 
 class GalaxyCLI(CLI):
     '''command to manage Ansible roles in shared repositories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.'''
@@ -1618,15 +1624,7 @@ class GalaxyCLI(CLI):
         if role_found and role_name:
             warnings = []
 
-        if output_format == 'human':
-            display.display(_dump_roles_as_human(found_roles))
-        elif output_format == 'json':
-            display.display(json.dumps(_marshall_roles_for_serialisation(found_roles)))
-        elif output_format == 'yaml':
-            display.display(yaml_dump(_marshall_roles_for_serialisation(found_roles)))
-        elif output_format == 'requirements':
-            display.display(_dump_roles_as_requirements(found_roles))
-
+        display.display(_dump_roles(found_roles, output_format))
 
         for w in warnings:
             display.warning(w)
