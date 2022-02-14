@@ -20,6 +20,7 @@ DOCUMENTATION = """
         description:
             - Whether to convert YAML into data. If False, strings that are YAML will be left untouched.
             - Mutually exclusive with the jinja2_native option.
+        default: true
       variable_start_string:
         description: The string marking the beginning of a print statement.
         default: '{{'
