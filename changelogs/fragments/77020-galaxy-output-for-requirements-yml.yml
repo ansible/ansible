@@ -1,0 +1,4 @@
+---
+minor_changes:
+  - ansible-galaxy - Collections and Roles can now be listed in a format compatible for the requirements.yml file
+  - ansible-galaxy - Roles can also be listed in JSON and YAML format
