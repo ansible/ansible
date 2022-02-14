@@ -1,0 +1,3 @@
+bugfixes:
+- template lookup - restore inadvertently deleted default for ``convert_data``
+  (https://github.com/ansible/ansible/issues/77004)
