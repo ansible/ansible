@@ -25,3 +25,10 @@
 - assert:
     that:
       - "hello_world_comment|trim == 'Hello world!'"
+
+# 77004
+- assert:
+    that:
+      - lookup('template', 'dict.j2') is mapping
+      - lookup('template', 'dict.j2', convert_data=True) is mapping
+      - lookup('template', 'dict.j2', convert_data=False) is not mapping
