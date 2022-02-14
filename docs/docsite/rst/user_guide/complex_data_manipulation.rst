@@ -293,7 +293,7 @@ An example on how to use facts to find a host's data that meets condition X:
   vars:
     uptime_of_host_most_recently_rebooted: "{{ansible_play_hosts_all | map('extract', hostvars, 'ansible_uptime_seconds') | sort | first}}"
 
-Using an example on `reddit <https://www.reddit.com/r/ansible/comments/gj5a93/trying_to_get_uptime_from_seconds/fqj2qr3/>`_, to show the 'uptime in days/hours/minutes/seconds' (assumes facts where gathered).
+An example to show a host uptime in days/hours/minutes/seconds (assumes facts where gathered).
 
 .. code-block:: YAML+Jinja
 
