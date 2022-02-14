@@ -29,8 +29,10 @@ import random
 import subprocess
 import sys
 import textwrap
+import threading
 import time
 
+from functools import partial
 from struct import unpack, pack
 from termios import TIOCGWINSZ
 
@@ -39,6 +41,7 @@ from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import text_type
 from ansible.utils.color import stringc
+from ansible.utils.lock import lock_decorator
 from ansible.utils.singleton import Singleton
 from ansible.utils.unsafe_proxy import wrap_var
 
@@ -202,6 +205,10 @@ class Display(metaclass=Singleton):
 
     def __init__(self, verbosity=0):
 
+        self._final_q = None
+
+        self._display_lock = threading.Lock()
+
         self.columns = None
         self.verbosity = verbosity
 
@@ -230,6 +237,15 @@ class Display(metaclass=Singleton):
 
         self._set_column_width()
 
+    def __getattribute__(self, name):
+        attr = object.__getattribute__(self, name)
+        if not callable(attr):
+            return attr
+        if (queue := object.__getattribute__(self, '_final_q')) is not None:
+            ret = partial(queue.send_display, name)
+            return ret
+        return attr
+
     def set_cowsay_info(self):
         if C.ANSIBLE_NOCOWS:
             return
@@ -241,6 +257,7 @@ class Display(metaclass=Singleton):
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
 
+    @lock_decorator(attr='_display_lock')
     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True):
         """ Display a message to the user
 

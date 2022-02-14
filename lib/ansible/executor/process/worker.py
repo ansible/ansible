@@ -146,6 +146,8 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         # pr = cProfile.Profile()
         # pr.enable()
 
+        display._final_q = self._final_q
+
         try:
             # execute the task and build a TaskResult from the result
             display.debug("running TaskExecutor() for %s/%s" % (self._host, self._task))

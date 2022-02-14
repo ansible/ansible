@@ -41,7 +41,7 @@ from ansible.executor import action_write_locks
 from ansible.executor.play_iterator import IteratingStates, FailedStates
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
-from ansible.executor.task_queue_manager import CallbackSend
+from ansible.executor.task_queue_manager import CallbackSend, DisplaySend
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.connection import Connection, ConnectionError
@@ -116,6 +116,8 @@ def results_thread_main(strategy):
             result = strategy._final_q.get()
             if isinstance(result, StrategySentinel):
                 break
+            elif isinstance(result, DisplaySend):
+                getattr(display, result.method_name)(*result.args, **result.kwargs)
             elif isinstance(result, CallbackSend):
                 for arg in result.args:
                     if isinstance(arg, TaskResult):

@@ -58,6 +58,13 @@ class CallbackSend:
         self.kwargs = kwargs
 
 
+class DisplaySend:
+    def __init__(self, method_name, *args, **kwargs):
+        self.method_name = method_name
+        self.args = args
+        self.kwargs = kwargs
+
+
 class FinalQueue(multiprocessing.queues.Queue):
     def __init__(self, *args, **kwargs):
         kwargs['ctx'] = multiprocessing_context
@@ -76,6 +83,12 @@ class FinalQueue(multiprocessing.queues.Queue):
             tr = TaskResult(*args, **kwargs)
         self.put(
             tr,
+            block=False
+        )
+
+    def send_display(self, method_name, *args, **kwargs):
+        self.put(
+            DisplaySend(method_name, *args, **kwargs),
             block=False
         )
 
