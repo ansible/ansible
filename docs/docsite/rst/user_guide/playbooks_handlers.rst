@@ -23,22 +23,22 @@ This playbook, ``verify-apache.yml``, contains a single play with a handler.
         max_clients: 200
       remote_user: root
       tasks:
-      - name: Ensure apache is at the latest version
-        ansible.builtin.yum:
-          name: httpd
-          state: latest
+        - name: Ensure apache is at the latest version
+          ansible.builtin.yum:
+            name: httpd
+            state: latest
 
-      - name: Write the apache config file
-        ansible.builtin.template:
-          src: /srv/httpd.j2
-          dest: /etc/httpd.conf
-        notify:
-        - Restart apache
+        - name: Write the apache config file
+          ansible.builtin.template:
+            src: /srv/httpd.j2
+            dest: /etc/httpd.conf
+          notify:
+          - Restart apache
 
-      - name: Ensure apache is running
-        ansible.builtin.service:
-          name: httpd
-          state: started
+        - name: Ensure apache is running
+          ansible.builtin.service:
+            name: httpd
+            state: started
 
       handlers:
         - name: Restart apache
@@ -46,7 +46,7 @@ This playbook, ``verify-apache.yml``, contains a single play with a handler.
             name: httpd
             state: restarted
 
-In this example playbook, the second task notifies the handler. A single task can notify more than one handler.
+In this example playbook, the second task notifies the handler. A single task can notify more than one handler:
 
 .. code-block:: yaml
 
@@ -59,16 +59,16 @@ In this example playbook, the second task notifies the handler. A single task ca
         - Restart memcached
         - Restart apache
 
-      handlers:
-        - name: Restart memcached
-          ansible.builtin.service:
-            name: memcached
-            state: restarted
+    handlers:
+      - name: Restart memcached
+        ansible.builtin.service:
+          name: memcached
+          state: restarted
 
-        - name: Restart apache
-          ansible.builtin.service:
-            name: apache
-            state: restarted
+      - name: Restart apache
+        ansible.builtin.service:
+          name: apache
+          state: restarted
 
 Controlling when handlers run
 -----------------------------
@@ -119,6 +119,7 @@ Instead, place variables in the task parameters of your handler. You can load th
 Handlers can also "listen" to generic topics, and tasks can notify those topics as follows:
 
 .. code-block:: yaml
+
 
     handlers:
       - name: Restart memcached
