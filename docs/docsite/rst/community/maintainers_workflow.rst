@@ -1,10 +1,30 @@
 .. _maintainers_workflow:
 
+.. _Releasing:
+
+Releasing collections
+======================
+
+Collection maintainers release all supported stable versions of the collections regularly,
+provided that there have been enough changes merged to release.
+
+Generally, releasing in the collections consists of:
+
+1. Planning and announcement.
+2. Generating a changelog.
+3. Creating a release git tag and pushing it.
+4. Automatic publishing the release tarball on `Ansible Galaxy <https://galaxy.ansible.com/>`_ by `Zuul <https://dashboard.zuul.ansible.com/t/ansible/builds?pipeline=release>`_.
+5. Final announcement.
 
 Backporting and Ansible inclusion
 ==================================
 
-Each collection community can set its own rules and workflow for managing pull requests, bug reports, documentation issues, and feature requests, as well as adding and replacing maintainers. Maintainers review and merge pull requests following the :ref:`code_of_conduct`, :ref:`maintainer_requirements`, and the :ref:`Committer guidelines <committer_general_rules>`.
+Each collection community can set its own rules and workflow for managing pull requests, bug reports, documentation issues, and feature requests, as well as adding and replacing maintainers. Maintainers review and merge pull requests following the:
+
+* :ref:`code_of_conduct`
+* :ref:`maintainer_requirements`
+* :ref:`Committer guidelines <committer_general_rules>`.
+* :ref:`PR review checklist <https://github.com/ansible/community-docs/blob/main/review_checklist.rst>`_
 
 There can be two kinds of maintainers: :ref:`collection_maintainers` and :ref:`module_maintainers`.
 

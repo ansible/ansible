@@ -35,7 +35,7 @@ To nominate a candidate, please create a GitHub issue in the relevant collection
 Communicating as a collection maintainer
 -----------------------------------------
 
- Maintainers must subscribe to the `"Changes impacting collection contributors and maintainers" GitHub repo <https://github.com/ansible-collections/news-for-maintainers>`_ and should subscribe to the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_.
+ Maintainers must subscribe to the `"Changes impacting collection contributors and maintainers" GitHub repo <https://github.com/ansible-collections/news-for-maintainers>`_ and the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_. If you have something important to announce through the newsletter (for example, recent releases ), see the `Bullhorn's wiki page <https://github.com/ansible/community/wiki/News#the-bullhorn>`_ to learn how.
 
 
 Collection contributors and maintainers should also communicate through:
@@ -48,8 +48,25 @@ Collection contributors and maintainers should also communicate through:
 
 See :ref:`communication` for more details on these communication channels.
 
+Community Topics
+----------------
+
+The Community and the `Steering Committee <https://github.com/ansible/community-docs/blob/main/ansible_community_steering_committee.rst>`_ asynchronously discuss and vote on the `Community Topics <https://github.com/ansible-community/community-topics/issues>`_ which impact the whole project or its parts including collections and packaging.
+
+Share your opinion and vote on the topics to help the community make the best decisions.
 
 .. _expanding_community:
+
+Contributor Summits
+-------------------
+
+
+The quarterly Ansible Contributor Summit is a global event that provides our contributors a great opportunity to meet each other, communicate, share ideas, and see that there are other real persons behind the messages on Matrix/Libera.Chat IRC or GitHub. In other words, it gives a sense of community. Watch the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_ for information when the next contributor summit, invite contributors you know, and take part in the event together.
+
+Weekly community Matrix/IRC meetings
+------------------------------------
+
+The Community and the Steering Committee come together at weekly meetings in the ``#ansible-community`` :ref:`Matrix/Libera.Chat <https://docs.ansible.com/ansible/devel/community/communication.html#real-time-chat>` channel to discuss important project-scale questions. See the `schedule <https://github.com/ansible/community/blob/main/meetings/README.md#schedule>`_ and join.
 
 Expanding the collection community
 ===================================
