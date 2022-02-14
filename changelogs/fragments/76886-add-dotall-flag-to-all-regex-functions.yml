@@ -1,2 +1,2 @@
 minor_changes:
-  - core - Add dotall flag to all regex functions
+  - core - Add dotall flag to all regex functions (https://github.com/ansible/ansible/pull/76886).
