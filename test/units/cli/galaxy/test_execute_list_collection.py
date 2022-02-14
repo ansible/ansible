@@ -17,27 +17,7 @@ from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common.yaml import yaml_load
 
-
-collection_args_1 = (
-    ('sandwiches.pbj', '1.5.0', None, 'dir', None),
-    ('sandwiches.reuben', '2.5.0', None, 'dir', None),
-)
-collection_args_2 = (
-    ('sandwiches.pbj', '1.0.0', None, 'dir', None),
-    ('sandwiches.ham', '1.0.0', None, 'dir', None),
-)
-path_1 = '/root/.ansible/collections'
-path_2 = '/usr/share/ansible/collections'
-
-
-collections_path_1 = [Requirement(*cargs) for cargs in collection_args_1]
-collections_path_2 = [Requirement(*cargs) for cargs in collection_args_2]
-
-
-found_collections = {
-    path_1 + "/ansible_collections": collections_path_1,
-    path_2 + "/ansible_collections": collections_path_2,
-}
+from .conftest import cliargs, found_collections, expected_collections_serialiased, collections_path_1, collections_path_2
 
 
 def path_exists(path):
@@ -56,18 +36,6 @@ def isdir(path):
         return False
     else:
         return True
-
-
-def cliargs(collections_paths=None, collection_name=None):
-    if collections_paths is None:
-        collections_paths = ['~/root/.ansible/collections', '/usr/share/ansible/collections']
-
-    context.CLIARGS._store = {
-        'collections_path': collections_paths,
-        'collection': collection_name,
-        'type': 'collection',
-        'output_format': 'human'
-    }
 
 
 @pytest.fixture
@@ -278,14 +246,7 @@ def test_dump_collections_as_yaml():
     deserialised = yaml_load(result)
     assert len(deserialised) == 2, "not all directories dumped"
 
-    found_1 = deserialised[path_1 + "/ansible_collections"]
-    assert len(found_1) == len(collections_path_1)
-    for item in collections_path_1:
-        assert item.fqcn in found_1
-    found_2 = deserialised[path_2 + "/ansible_collections"]
-    assert len(found_2) == len(collections_path_2)
-    for item in collections_path_2:
-        assert item.fqcn in found_2
+    assert deserialised == expected_collections_serialiased
 
 
 def test_dump_collections_as_json():
@@ -295,14 +256,7 @@ def test_dump_collections_as_json():
 
     assert len(deserialised) == 2, "not all directories dumped"
 
-    found_1 = deserialised[path_1 + "/ansible_collections"]
-    assert len(found_1) == len(collections_path_1)
-    for item in collections_path_1:
-        assert item.fqcn in found_1
-    found_2 = deserialised[path_2 + "/ansible_collections"]
-    assert len(found_2) == len(collections_path_2)
-    for item in collections_path_2:
-        assert item.fqcn in found_2
+    assert deserialised == expected_collections_serialiased
 
 
 def test_dump_collections_as_requirements():
@@ -317,4 +271,4 @@ def test_dump_collections_as_requirements():
         galaxy = GalaxyCLI(["--help"])  # any args, doesn't matter
         deserialised = galaxy._parse_requirements_file(requirements_file.name)
 
-        assert len(deserialised["collections"]) == len(collections_path_1) + len(collections_path_2)
+        assert len(deserialised["collections"]) == 4

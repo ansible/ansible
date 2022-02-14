@@ -238,6 +238,7 @@ def _dump_collections(collections_in_paths, output_format):
         marshalled = [{'name': collection.fqcn, 'version': collection.ver} for collection in collections]
         return yaml_dump({"collections": marshalled})
 
+
 def _marshall_role(gr):
     """
     Collect role attributes that we want to print
@@ -460,7 +461,6 @@ class GalaxyCLI(CLI):
         list_parser.set_defaults(func=self.execute_list)
 
         list_parser.add_argument(galaxy_type, help=galaxy_type.capitalize(), nargs='?', metavar=galaxy_type)
-
 
         if galaxy_type == 'collection' or galaxy_type == 'role':
             list_parser.add_argument('--format', dest='output_format', choices=('human', 'yaml', 'json', 'requirements'), default='human',

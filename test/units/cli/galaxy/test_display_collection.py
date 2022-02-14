@@ -5,8 +5,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-import pytest
-
 from ansible.cli.galaxy import _display_collection
 from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 

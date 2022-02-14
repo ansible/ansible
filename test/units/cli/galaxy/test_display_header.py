@@ -12,29 +12,29 @@ from ansible.cli.galaxy import _display_header
 
 def test_display_header_default():
     out = _display_header('/collections/path', 'h1', 'h2')
-    assert out == textwrap.dedent('''\
-        
-        # /collections/path
-        h1         h2     
-        ---------- -------'''
+    assert out == (
+        '\n'
+        '# /collections/path\n'
+        'h1         h2     \n'
+        '---------- -------'
     )
 
 
 def test_display_header_widths():
     out = _display_header('/collections/path', 'Collection', 'Version', 18, 18)
-    assert out == textwrap.dedent('''\
-        
-        # /collections/path
-        Collection         Version           
-        ------------------ ------------------'''
+    assert out == (
+        '\n'
+        '# /collections/path\n'
+        'Collection         Version           \n'
+        '------------------ ------------------'
     )
 
 
 def test_display_header_small_widths():
     out = _display_header('/collections/path', 'Col', 'Ver', 1, 1)
-    assert out == textwrap.dedent('''\
-        
-        # /collections/path
-        Col Ver
-        --- ---'''
+    assert out == textwrap.dedent(
+        '\n'
+        '# /collections/path\n'
+        'Col Ver\n'
+        '--- ---'
     )

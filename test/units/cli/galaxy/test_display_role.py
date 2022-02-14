@@ -15,15 +15,10 @@ from ansible.galaxy.role import GalaxyRole
 
 from ansible.cli.galaxy import _marshall_role
 
-@pytest.fixture(autouse=True)
-def galaxy_server():
-    context.CLIARGS._store = {'ignore_certs': False, 'type': 'role'}
-    galaxy_api = api.GalaxyAPI(None, 'test_server', 'https://galaxy.ansible.com')
-    return galaxy_api
-
 
 test_role_name = "test.role"
 test_role_version = "0.0.1"
+
 
 def test_marshall_role(galaxy_server):
     role = GalaxyRole(Galaxy(), galaxy_server, test_role_name)
@@ -38,11 +33,11 @@ def test_marshall_role_no_install_info(galaxy_server):
     role = GalaxyRole(Galaxy(), galaxy_server, test_role_name, version=test_role_version)
     result = _marshall_role(role)
     assert result["name"] == test_role_name
-    assert result["version"] == None
+    assert result["version"] is None
 
 
 def test_marshall_role_no_version(galaxy_server):
     role = GalaxyRole(Galaxy(), galaxy_server, test_role_name)
     result = _marshall_role(role)
     assert result["name"] == test_role_name
-    assert result["version"] == None
+    assert result["version"] is None
