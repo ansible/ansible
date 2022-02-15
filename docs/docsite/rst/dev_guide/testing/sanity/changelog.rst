@@ -15,3 +15,5 @@ One or more of the following sections are required:
 - known_issues
 
 New modules and plugins must not be included in changelog fragments.
+
+See :ref:`collection_changelogs` for details.

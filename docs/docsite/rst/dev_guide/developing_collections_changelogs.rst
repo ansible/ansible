@@ -70,6 +70,8 @@ If your collection is part of Ansible, use one of the following three options  t
 
 .. seealso::
 
+   :ref:`collection_changelogs`
+       Learn how to create good changelog fragments.
    :ref:`collections`
        Learn how to install and use collections.
    :ref:`contributing_maintained_collections`
