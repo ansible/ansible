@@ -215,7 +215,7 @@ def verify_local_collection(
             "the origin of the collection. "
             "Skipping signature verification."
         )
-    else:
+    elif keyring_configured:
         if not verify_file_signatures(
             local_collection.fqcn,
             manifest_file,
@@ -362,6 +362,9 @@ def verify_file_signatures(fqcn, manifest_file, detached_signatures, keyring, re
             for msg in error_messages:
                 display.vvvv(msg)
         return verified
+    # FIXME: If there are no signatures, should this return False because required_successful_count was not met?
+    # Would error if the keyring is configured and there are no signatures.
+    # return False
     return True
 
 
