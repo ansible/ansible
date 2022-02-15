@@ -43,8 +43,8 @@ We do not merge every PR. Here are some tips for making your PR useful, attracti
 
 .. _collection_changelogs:
 
-Changelogs
-----------
+Creating changelog fragments
+-----------------------------
 
 Changelogs help users and developers keep up with changes to Ansible collections. Many collections build changelogs for each release from fragments. For collections that use this model, you **must** add a changelog fragment to any PR that changes functionality or fixes a bug.
 
