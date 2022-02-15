@@ -24,7 +24,7 @@ Each collection community can set its own rules and workflow for managing pull r
 * :ref:`code_of_conduct`
 * :ref:`maintainer_requirements`
 * :ref:`Committer guidelines <committer_general_rules>`.
-* :ref:`PR review checklist <https://github.com/ansible/community-docs/blob/main/review_checklist.rst>`_
+* `PR review checklist <https://github.com/ansible/community-docs/blob/main/review_checklist.rst>`_
 
 There can be two kinds of maintainers: :ref:`collection_maintainers` and :ref:`module_maintainers`.
 
