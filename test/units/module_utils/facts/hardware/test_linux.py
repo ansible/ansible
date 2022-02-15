@@ -25,7 +25,7 @@ from ansible.module_utils.facts import timeout
 
 from ansible.module_utils.facts.hardware import linux
 
-from . linux_data import LSBLK_OUTPUT, LSBLK_OUTPUT_2, LSBLK_UUIDS, MTAB, MTAB_ENTRIES, BIND_MOUNTS, STATVFS_INFO, UDEVADM_UUID, UDEVADM_OUTPUT, SG_INQ_OUTPUTS
+from . linux_data import LSBLK_OUTPUT, LSBLK_OUTPUT_2, LSBLK_UUIDS, MTAB, MTAB_ENTRIES, VALID_MOUNTS, BIND_MOUNTS, STATVFS_INFO, UDEVADM_UUID, UDEVADM_OUTPUT, SG_INQ_OUTPUTS
 
 with open(os.path.join(os.path.dirname(__file__), '../fixtures/findmount_output.txt')) as f:
     FINDMNT_OUTPUT = f.read()
@@ -86,6 +86,10 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
 
         self.maxDiff = 4096
         self.assertDictEqual(home_info, home_expected)
+
+        # Check that all mounts points were parsed correctly
+        parsed_mounts = [m['device'] for m in mount_facts['mounts']]
+        self.assertListEqual(VALID_MOUNTS, parsed_mounts)
 
     @patch('ansible.module_utils.facts.hardware.linux.get_file_content', return_value=MTAB)
     def test_get_mtab_entries(self, mock_get_file_content):

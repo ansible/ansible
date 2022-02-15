@@ -93,7 +93,7 @@ cgroup /sys/fs/cgroup/hugetlb cgroup rw,nosuid,nodev,noexec,relatime,hugetlb 0 0
 cgroup /sys/fs/cgroup/perf_event cgroup rw,nosuid,nodev,noexec,relatime,perf_event 0 0
 cgroup /sys/fs/cgroup/net_cls,net_prio cgroup rw,nosuid,nodev,noexec,relatime,net_cls,net_prio 0 0
 configfs /sys/kernel/config configfs rw,relatime 0 0
-pool1/root / zfs rw,relatime,xattr,noacl 0 0
+pool1/m.e-d_i:a /mnt/media zfs rw,relatime,xattr,noacl 0 0
 pool1/root:/var /var zfs rw,noatime,xattr,posixacl 0 0
 /dev/mapper/fedora_dhcp129--186-root / ext4 rw,seclabel,relatime,data=ordered 0 0
 selinuxfs /sys/fs/selinux selinuxfs rw,relatime 0 0
@@ -256,8 +256,8 @@ MTAB_ENTRIES = [
     ],
     ['configfs', '/sys/kernel/config', 'configfs', 'rw,relatime', '0', '0'],
     [
-        'pool1/root',
-        '/',
+        'pool1/m.e-d_i:a',
+        '/mnt/media',
         'zfs',
         'rw,relatime,xattr,noacl',
         '0',
@@ -337,6 +337,16 @@ MTAB_ENTRIES = [
         '0'
     ],
     ['fusectl', '/sys/fs/fuse/connections', 'fusectl', 'rw,relatime', '0', '0']]
+
+VALID_MOUNTS = [
+    'pool1/m.e-d_i:a',
+    'pool1/root:/var',
+    '/dev/mapper/fedora_dhcp129--186-root',
+    '/dev/loop0',
+    '/dev/sda1',
+    '/dev/sdz4',
+    '/dev/mapper/fedora_dhcp129--186-home'
+]
 
 STATVFS_INFO = {'/': {'block_available': 10192323,
                       'block_size': 4096,
