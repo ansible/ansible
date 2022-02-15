@@ -656,6 +656,14 @@ class DnfModule(YumDnf):
         if self.releasever is not None:
             conf.substitutions['releasever'] = self.releasever
 
+        if conf.substitutions.get('releasever') is None:
+            self.module.warn(
+                'Unable to detect release version (use "releasever" option to specify release version)'
+            )
+            # values of conf.substitutions are expected to be strings
+            # setting this to an empty string instead of None appears to mimic the DNF CLI behavior
+            conf.substitutions['releasever'] = ''
+
         # Set skip_broken (in dnf this is strict=0)
         if self.skip_broken:
             conf.strict = 0
