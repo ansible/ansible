@@ -75,7 +75,8 @@ from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
 from ansible.galaxy.collection.gpg import (
     run_gpg_verify,
     parse_gpg_errors,
-    get_signature_from_source
+    get_signature_from_source,
+    GPG_ERROR_MAP,
 )
 from ansible.galaxy.dependency_resolution import (
     build_collection_dependency_resolver,
@@ -105,10 +106,11 @@ ModifiedContent = namedtuple('ModifiedContent', ['filename', 'expected', 'instal
 
 
 class CollectionSignatureError(Exception):
-    def __init__(self, reasons=None, stdout=None, rc=None):
+    def __init__(self, reasons=None, stdout=None, rc=None, ignore=False):
         self.reasons = reasons
         self.stdout = stdout
         self.rc = rc
+        self.ignore = ignore
 
         self._reason_wrapper = None
 
@@ -214,13 +216,15 @@ def verify_local_collection(
             "Skipping signature verification."
         )
     else:
-        for signature in signatures:
-            try:
-                verify_file_signature(manifest_file, to_text(signature, errors='surrogate_or_strict'), artifacts_manager.keyring)
-            except CollectionSignatureError as error:
-                display.vvvv(error.report(local_collection.fqcn))
-                result.success = False
-        if not result.success:
+        if not verify_file_signatures(
+            local_collection.fqcn,
+            manifest_file,
+            signatures,
+            artifacts_manager.keyring,
+            artifacts_manager.required_successful_signature_count,
+            artifacts_manager.ignore_signature_errors,
+        ):
+            result.success = False
             return result
         elif signatures:
             display.vvvv(f"GnuPG signature verification succeeded, verifying contents of {local_collection}")
@@ -324,8 +328,45 @@ def verify_local_collection(
     return result
 
 
-def verify_file_signature(manifest_file, detached_signature, keyring):
-    # type: (str, str, str) -> None
+def verify_file_signatures(fqcn, manifest_file, detached_signatures, keyring, required_successful_count, ignore_signature_errors):
+    # type: (str, str, List[str], str, int, List[str]) -> bool
+    successful = 0
+    error_messages = []
+
+    for signature in detached_signatures:
+        signature = to_text(signature, errors='surrogate_or_strict')
+        try:
+            verify_file_signature(manifest_file, signature, keyring, ignore_signature_errors)
+        except CollectionSignatureError as error:
+            if error.ignore:
+                continue
+            error_messages.append(error.report(fqcn))
+        else:
+            successful += 1
+            if successful == required_successful_count:
+                break
+
+    if detached_signatures:
+        # TODO: bikeshed finer points
+        # Should skipped errors be treated as 'success'? Currently, skipped errors are ignored, not successful or failed.
+        # If yes, and all errors were ignored and there were no truly successful signatures, we may want (?) to warn + add a toggle to make it an error.
+        if required_successful_count == -1:
+            verified = not error_messages and successful
+            if not verified:
+                display.vvvv(f"Signature verification failed for '{fqcn}': failed signatures or no successful signatures")
+        else:
+            verified = required_successful_count == successful
+            if not verified:
+                display.vvvv(f"Signature verification failed for '{fqcn}': fewer successful signatures than required")
+        if not verified:
+            for msg in error_messages:
+                display.vvvv(msg)
+        return verified
+    return True
+
+
+def verify_file_signature(manifest_file, detached_signature, keyring, ignore_signature_errors):
+    # type: (str, str, str, int, List[str]) -> None
     """Run the gpg command and parse any errors. Raises CollectionSignatureError on failure."""
     gpg_result, gpg_verification_rc = run_gpg_verify(manifest_file, detached_signature, keyring, display)
 
@@ -336,8 +377,19 @@ def verify_file_signature(manifest_file, detached_signature, keyring):
         except StopIteration:
             pass
         else:
-            reasons = set(error.get_gpg_error_description() for error in chain([error], errors))
-            raise CollectionSignatureError(reasons=reasons, stdout=gpg_result, rc=gpg_verification_rc)
+            reasons = []
+            ignored_reasons = 0
+
+            for error in chain([error], errors):
+                # Get error status (dict key) from the class (dict value)
+                status_code = list(GPG_ERROR_MAP.keys())[list(GPG_ERROR_MAP.values()).index(error.__class__)]
+                if status_code in ignore_signature_errors:
+                    ignored_reasons += 1
+                reasons.append(error.get_gpg_error_description())
+
+            ignore = len(reasons) == ignored_reasons
+            raise CollectionSignatureError(reasons=set(reasons), stdout=gpg_result, rc=gpg_verification_rc, ignore=ignore)
+
     if gpg_verification_rc:
         raise CollectionSignatureError(stdout=gpg_result, rc=gpg_verification_rc)
 
@@ -1211,7 +1263,9 @@ def install(collection, path, artifacts_manager):  # FIXME: mv to dataclasses?
             b_collection_path,
             artifacts_manager._b_working_directory,
             collection.signatures,
-            artifacts_manager.keyring
+            artifacts_manager.keyring,
+            artifacts_manager.required_successful_signature_count,
+            artifacts_manager.ignore_signature_errors,
         )
         if (collection.is_online_index_pointer and isinstance(collection.src, GalaxyAPI)):
             write_source_metadata(
@@ -1249,23 +1303,17 @@ def write_source_metadata(collection, b_collection_path, artifacts_manager):
         raise
 
 
-def verify_artifact_manifest(manifest_file, signatures, keyring):
-    # type: (str, str, str) -> None
+def verify_artifact_manifest(manifest_file, signatures, keyring, required_signature_count, ignore_signature_errors):
+    # type: (str, list[str], str, int, list[str]) -> None
     failed_verify = False
     coll_path_parts = to_text(manifest_file, errors='surrogate_or_strict').split(os.path.sep)
     collection_name = '%s.%s' % (coll_path_parts[-3], coll_path_parts[-2])  # get 'ns' and 'coll' from /path/to/ns/coll/MANIFEST.json
-    for signature in signatures:
-        try:
-            verify_file_signature(manifest_file, to_text(signature, errors='surrogate_or_strict'), keyring)
-        except CollectionSignatureError as error:
-            display.vvvv(error.report(collection_name))
-            failed_verify = True
-    if failed_verify:
+    if not verify_file_signatures(collection_name, manifest_file, signatures, keyring, required_signature_count, ignore_signature_errors):
         raise AnsibleError(f"Not installing {collection_name} because GnuPG signature verification failed.")
     display.vvvv(f"GnuPG signature verification succeeded for {collection_name}")
 
 
-def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatures, keyring):
+def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatures, keyring, required_signature_count, ignore_signature_errors):
     """Install a collection from tarball under a given path.
 
     :param b_coll_targz_path: Collection tarball to be installed.
@@ -1273,6 +1321,8 @@ def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatur
     :param b_temp_path: Temporary dir path.
     :param signatures: frozenset of signatures to verify the MANIFEST.json
     :param keyring: The keyring used during GPG verification
+    :param required_signature_count: The number of signatures that must successfully verify the collection
+    :param ignore_signature_errors: GPG errors to ignore during signature verification
     """
     try:
         with tarfile.open(b_coll_targz_path, mode='r') as collection_tar:
@@ -1281,7 +1331,7 @@ def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatur
 
             if signatures and keyring is not None:
                 manifest_file = os.path.join(to_text(b_collection_path, errors='surrogate_or_strict'), MANIFEST_FILENAME)
-                verify_artifact_manifest(manifest_file, signatures, keyring)
+                verify_artifact_manifest(manifest_file, signatures, keyring, required_signature_count, ignore_signature_errors)
 
             files_member_obj = collection_tar.getmember('FILES.json')
             with _tarfile_extract(collection_tar, files_member_obj) as (dummy, files_obj):
