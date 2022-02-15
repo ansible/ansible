@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf - ensure releasever is passed into libdnf as string (https://github.com/ansible/ansible/issues/77010)
