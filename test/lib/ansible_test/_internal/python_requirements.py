@@ -231,20 +231,20 @@ def collect_requirements(
     if command in ('integration', 'windows-integration', 'network-integration'):
         commands.extend(collect_integration_install(command, controller))
 
-    if (sanity or minimize) and bool(any(isinstance(command, PipInstall) for command in commands)):
+    if (sanity or minimize) and any(isinstance(command, PipInstall) for command in commands):
         # bootstrap the managed virtual environment, which will have been created without any installed packages
         # sanity tests which install no packages skip this step
         commands = collect_bootstrap(python) + commands
 
         # most infrastructure packages can be removed from sanity test virtual environments after they've been created
         # removing them reduces the size of environments cached in containers
-        packages = list(get_venv_packages(python))
+        uninstall_packages = list(get_venv_packages(python))
 
         if not minimize:
             # installed packages may have run-time dependencies on setuptools
-            packages.remove('setuptools')
+            uninstall_packages.remove('setuptools')
 
-        commands.extend(collect_uninstall(packages=packages))
+        commands.extend(collect_uninstall(packages=uninstall_packages))
 
     return commands
 
