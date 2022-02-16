@@ -82,6 +82,14 @@ options:
          Please also see C(man apt-get) for more information.'
     type: bool
     default: 'no'
+  clean:
+    description:
+      - Run the equivalent of C(apt-get clean) to clear out the local repository of retrieved package files. It removes everything but
+        the lock file from /var/cache/apt/archives/ and /var/cache/apt/archives/partial/.
+      - Can be run as part of the package installation (clean runs before install) or as a separate step.
+    type: bool
+    default: 'no'
+    version_added: "2.13"
   allow_unauthenticated:
     description:
       - Ignore if packages cannot be authenticated. This is useful for bootstrapping environments that manage their own apt-key setup.
@@ -303,6 +311,10 @@ EXAMPLES = '''
 - name: Remove dependencies that are no longer required
   ansible.builtin.apt:
     autoremove: yes
+
+- name: Run the equivalent of "apt-get clean" as a separate step
+  apt:
+    clean: yes
 '''
 
 RETURN = '''
@@ -964,6 +976,19 @@ def cleanup(m, purge=False, force=False, operation=None,
     m.exit_json(changed=changed, stdout=out, stderr=err, diff=diff)
 
 
+def aptclean(m):
+    clean_rc, clean_out, clean_err = m.run_command(['apt-get', 'clean'])
+    if m._diff:
+        clean_diff = parse_diff(clean_out)
+    else:
+        clean_diff = {}
+    if clean_rc:
+        m.fail_json(msg="apt-get clean failed", stdout=clean_out, rc=clean_rc)
+    if clean_err:
+        m.fail_json(msg="apt-get clean failed: %s" % clean_err, stdout=clean_out, rc=clean_rc)
+    return clean_out, clean_err
+
+
 def upgrade(m, mode="yes", force=False, default_release=None,
             use_apt_get=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False, fail_on_autoremove=False,
@@ -1125,6 +1150,7 @@ def main():
             policy_rc_d=dict(type='int', default=None),
             only_upgrade=dict(type='bool', default=False),
             force_apt_get=dict(type='bool', default=False),
+            clean=dict(type='bool', default=False),
             allow_unauthenticated=dict(type='bool', default=False, aliases=['allow-unauthenticated']),
             allow_downgrade=dict(type='bool', default=False, aliases=['allow-downgrade', 'allow_downgrades', 'allow-downgrades']),
             allow_change_held_packages=dict(type='bool', default=False),
@@ -1211,6 +1237,18 @@ def main():
     APT_GET_CMD = module.get_bin_path("apt-get")
 
     p = module.params
+
+    if p['clean'] is True:
+        aptclean_stdout, aptclean_stderr = aptclean(module)
+        # If there is nothing else to do exit. This will set state as
+        #  changed based on if the cache was updated.
+        if not p['package'] and not p['upgrade'] and not p['deb']:
+            module.exit_json(
+                changed=True,
+                msg=aptclean_stdout,
+                stdout=aptclean_stdout,
+                stderr=aptclean_stderr
+            )
 
     if p['upgrade'] == 'no':
         p['upgrade'] = None
