@@ -237,20 +237,6 @@ class Display(metaclass=Singleton):
 
         self._set_column_width()
 
-    def __getattribute__(self, name):
-        """This method proxies calls to Display methods from forks, to pass
-        the call over the queue for parent process dispatch. This behavior is toggled
-        by whether or not there is a _final_q set on Display.
-
-        Otherwise, all functions directly execute as listed below.
-        """
-        attr = object.__getattribute__(self, name)
-        if not callable(attr):
-            return attr
-        if (queue := object.__getattribute__(self, '_final_q')) is not None:
-            return partial(queue.send_display, name)
-        return attr
-
     def set_cowsay_info(self):
         if C.ANSIBLE_NOCOWS:
             return
@@ -268,6 +254,10 @@ class Display(metaclass=Singleton):
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
         """
+
+        if self._final_q:
+            return self._final_q.send_display(msg, color=color, stderr=stderr,
+                                              screen_only=screen_only, log_only=log_only, newline=newline)
 
         nocolor = msg
 

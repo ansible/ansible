@@ -23,6 +23,7 @@ import cmd
 import functools
 import os
 import pprint
+import queue
 import sys
 import threading
 import time
@@ -30,7 +31,6 @@ import traceback
 
 from collections import deque
 from multiprocessing import Lock
-from queue import Queue
 
 from jinja2.exceptions import UndefinedError
 
@@ -117,7 +117,7 @@ def results_thread_main(strategy):
             if isinstance(result, StrategySentinel):
                 break
             elif isinstance(result, DisplaySend):
-                getattr(display, result.method_name)(*result.args, **result.kwargs)
+                display.display(*result.args, **result.kwargs)
             elif isinstance(result, CallbackSend):
                 for arg in result.args:
                     if isinstance(arg, TaskResult):
@@ -138,7 +138,7 @@ def results_thread_main(strategy):
                 display.warning('Received an invalid object (%s) in the result queue: %r' % (type(result), result))
         except (IOError, EOFError):
             break
-        except Queue.Empty:
+        except queue.Empty:
             pass
 
 
