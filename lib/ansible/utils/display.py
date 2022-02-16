@@ -32,7 +32,6 @@ import textwrap
 import threading
 import time
 
-from functools import partial
 from struct import unpack, pack
 from termios import TIOCGWINSZ
 
