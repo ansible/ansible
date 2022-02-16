@@ -507,8 +507,9 @@
     - '"Installing ''namespace8.name:1.0.0'' to" not in install_req.stdout'
     - '"Installing ''namespace9.name:1.0.0'' to" not in install_req.stdout'
 
+# This command is hardcoded with -vvvv purposefully to evaluate extra verbosity messages
 - name: install collections with ansible-galaxy install and --ignore-errors - {{ test_name }}
-  command: ansible-galaxy install -r {{ req_file }} {{ cli_opts }} {{ galaxy_verbosity }}
+  command: ansible-galaxy install -r {{ req_file }} {{ cli_opts }} -vvvv
   register: install_req
   vars:
     req_file: "{{ galaxy_dir }}/ansible_collections/requirements.yaml"
@@ -527,6 +528,7 @@
   - namespace8
   - namespace9
 
+# SIVEL
 - name: assert invalid signature is not fatal with ansible-galaxy install --ignore-errors - {{ test_name }}
   assert:
     that:
@@ -672,8 +674,9 @@
     path: '{{ galaxy_dir }}/ansible_collections'
     state: absent
 
+# This command is hardcoded with -vvvv purposefully to evaluate extra verbosity messages
 - name: install collection with signature with invalid keyring
-  command: ansible-galaxy collection install namespace1.name1 {{ galaxy_verbosity }} {{ signature_option }} {{ keyring_option }}
+  command: ansible-galaxy collection install namespace1.name1 -vvvv {{ signature_option }} {{ keyring_option }}
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
   vars:
@@ -775,8 +778,9 @@
     path: '{{ galaxy_dir }}/ansible_collections/namespace1'
     state: absent
 
+# This command is hardcoded with -vvvv purposefully to evaluate extra verbosity messages
 - name: install simple collection with invalid detached signature
-  command: ansible-galaxy collection install namespace1.name1 {{ galaxy_verbosity }} {{ signature_options }}
+  command: ansible-galaxy collection install namespace1.name1 -vvvv {{ signature_options }}
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
   vars:
