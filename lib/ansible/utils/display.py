@@ -255,6 +255,9 @@ class Display(metaclass=Singleton):
         """
 
         if self._final_q:
+            # If _final_q is set, that means we are in a WorkerProcess
+            # and instead of displaying messages directly from the fork
+            # we will proxy them through the queue
             return self._final_q.send_display(msg, color=color, stderr=stderr,
                                               screen_only=screen_only, log_only=log_only, newline=newline)
 
