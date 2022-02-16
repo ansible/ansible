@@ -24,8 +24,8 @@
         dest: "{{ user.home }}/tarball-top-folder/foo-unarchive.txt"
         mode: preserve
 
-    - name: Create a tarball as root
-      shell: tar -czf test-tarball.tar.gz tarball-top-folder/
+    - name: Create a tarball as root. This tarball won't list the top folder when doing "tar tvf test-tarball.tar.gz"
+      shell: tar -czf test-tarball.tar.gz tarball-top-folder/foo-unarchive.txt
       args:
         chdir: "{{ user.home }}"
         creates: "{{ user.home }}/test-tarball.tar.gz"
