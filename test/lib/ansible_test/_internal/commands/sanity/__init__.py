@@ -1127,6 +1127,7 @@ def create_sanity_virtualenv(
 
         write_text_file(meta_install, virtualenv_install)
 
+        # false positive: pylint: disable=no-member
         if any(isinstance(command, PipInstall) and command.has_package('pyyaml') for command in commands):
             virtualenv_yaml = yamlcheck(virtualenv_python)
         else:

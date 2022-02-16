@@ -206,6 +206,7 @@ test/integration/targets/win_script/files/test_script_with_args.ps1 pslint:PSAvo
 test/integration/targets/win_script/files/test_script_with_splatting.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/lib/ansible_test/_data/requirements/sanity.pslint.ps1 pslint:PSCustomUseLiteralPath # Uses wildcards on purpose
 test/lib/ansible_test/_util/target/setup/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
+test/lib/ansible_test/_util/target/setup/requirements.py replace-urlopen
 test/support/integration/plugins/inventory/aws_ec2.py pylint:use-a-generator
 test/support/integration/plugins/modules/ec2_group.py pylint:use-a-generator
 test/support/integration/plugins/modules/timezone.py pylint:disallowed-name
