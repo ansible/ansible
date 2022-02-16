@@ -279,8 +279,9 @@
     that:
       - verify.rc == 0
 
+# This command is hardcoded with -vvvv purposefully to evaluate extra verbosity messages
 - name: verify the installed collection with invalid detached signature
-  command: ansible-galaxy collection verify namespace1.name1:1.0.0 {{ galaxy_verbosity }} {{ signature_options }}
+  command: ansible-galaxy collection verify namespace1.name1:1.0.0 -vvvv {{ signature_options }}
   vars:
     signature_options: "--signature {{ signature }} --keyring {{ keyring }}"
     signature: "file://{{ gpg_homedir }}/namespace1-name1-1.0.9-MANIFEST.json.asc"
@@ -306,8 +307,9 @@
 
 - include_tasks: revoke_gpg_key.yml
 
+# This command is hardcoded with -vvvv purposefully to evaluate extra verbosity messages
 - name: verify the installed collection with a revoked detached signature
-  command: ansible-galaxy collection verify namespace1.name1:1.0.0 {{ galaxy_verbosity }} {{ signature_options }}
+  command: ansible-galaxy collection verify namespace1.name1:1.0.0 -vvvv {{ signature_options }}
   vars:
     signature_options: "--signature {{ signature }} --keyring {{ keyring }}"
     signature: "file://{{ gpg_homedir }}/namespace1-name1-1.0.0-MANIFEST.json.asc"
