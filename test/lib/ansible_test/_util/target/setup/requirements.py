@@ -172,6 +172,11 @@ def version(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
 def common_pip_environment():  # type: () -> t.Dict[str, str]
     """Return common environment variables used to run pip."""
     env = os.environ.copy()
+    env.update(
+        # work around setuptools induced failure when running in a venv with system-site-packages enabled
+        # see: https://github.com/pypa/setuptools/issues/2957
+        SETUPTOOLS_USE_DISTUTILS='stdlib',
+    )
 
     return env
 

@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Add work-around for ``setuptools`` induced failure when running in an ansible-test managed venv with system-site-packages enabled.
