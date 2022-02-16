@@ -33,11 +33,11 @@ There can be two kinds of maintainers: :ref:`collection_maintainers` and :ref:`m
 Collection maintainers
 ----------------------
 
-Collection-scope maintainers are contributors who have the ``write`` or higher access level in a collection. They have the commit right and can merge pull requests among other permissions.
+Collection-scope maintainers are contributors who have the ``write`` or higher access level in a collection. They have commit rights and can merge pull requests, among other permissions.
 
 When a collection maintainer considers a contribution to a file significant enough
-(it can be, for example, fixing a complex bug, adding a feature, providing regular reviews, and so on),
-they can offer the author to become a module maintainer.
+(for example, fixing a complex bug, adding a feature, providing regular reviews, and so on),
+they can invite the author to become a module maintainer.
 
 
 .. _module_maintainers:
@@ -67,7 +67,7 @@ Backporting
 Collection maintainers backport merged pull requests to stable branches
 following the `semantic versioning <https://semver.org/>`_ and release policies of the collections.
 
-The manual backport process is similar to the :ref: `ansible-core backporting guidelines <backport_process>`.
+The manual backport process is similar to the :ref:`ansible-core backporting guidelines <backport_process>`.
 
 For convenience, backporting can be implemented automatically using GitHub bots (for example, with the `Patchback app <https://github.com/apps/patchback>`_) and labeling as it is done in `community.general <https://github.com/ansible-collections/community.general>`_ and `community.network <https://github.com/ansible-collections/community.network>`_.
 
@@ -87,7 +87,7 @@ If you feel you don't have time to maintain your collection any more, you should
 - Inform other maintainers about it.
 - If the collection is under the ``ansible-collections`` organization, also inform relevant :ref:`communication_irc`, the ``community`` chat channels on IRC or matrix, or by email ``ansible-community@redhat.com``.
 - Look at active contributors in the collection to find new maintainers among them. Discuss the potential candidates with other maintainers or with the community team.
-- If you failed to find a replacement, create a pinned issue in the collection which announces that the collection needs new maintainers.
+- If you failed to find a replacement, create a pinned issue in the collection, announcing that the collection needs new maintainers.
 - Make the same announcement through the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_.
 - Please be around to discuss potential candidates found by other maintainers or by the community team.
 

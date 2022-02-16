@@ -3,10 +3,10 @@
 Maintainer responsibilities
 ===========================
 
-An Ansible collection maintainer is a contributor trusted by the community who makes significant and regular contributions to the project and shown themselves as a specialist in the related area.
+An Ansible collection maintainer is a contributor trusted by the community who makes significant and regular contributions to the project and who has shown themselves as a specialist in the related area.
 Collection maintainers have :ref:`extended permissions<collection_maintainers>` in the collection scope.
 
-Ansible collection maintainers provide feedback, responses, or actions on pull requests or issues to the collection(s) they maintain in a reasonably timely manner. You can also update the contributor guidelines for that collection, in collaboration with the Ansible community team and the other maintainers of that collection.
+Ansible collection maintainers provide feedback, responses, or actions on pull requests or issues to the collection(s) they maintain in a reasonably timely manner. They can also update the contributor guidelines for that collection, in collaboration with the Ansible community team and the other maintainers of that collection.
 
 In general, collection maintainers:
 
@@ -17,7 +17,7 @@ In general, collection maintainers:
 - :ref:`Backport <Backporting>` changes to stable branches.
 - Address or assign issues to appropriate contributors.
 - Release collections.
-- Watch that collections adhere to the `Collection Requirements <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`_,
+- Ensure that collections adhere to the `Collection Requirements <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`_,
 - Track changes announced in `News for collection contributors and maintainers <https://github.com/ansible-collections/news-for-maintainers>`_ and update a collection in accordance with these changes.
 - Subscribe and submit news to the  `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_.
 - :ref:`Build a healthy community <expanding_community>` to increase the number of active contributors and maintainers around collections.
@@ -30,7 +30,7 @@ How to become a maintainer
 
 A person who is interested in becoming a maintainer and satisfies the :ref:`requirements<maintainer_requirements>` may either self-nominate or be nominated by another maintainer.
 
-To nominate a candidate, please create a GitHub issue in the relevant collection repository. If there is no response, the repository is not actively maintained, or the current maintainers do not have permissions to add the candidate, please create the issue under `ansible/community <https://github.com/ansible/community>`_ repository.
+To nominate a candidate, please create a GitHub issue in the relevant collection repository. If there is no response, the repository is not actively maintained, or the current maintainers do not have permissions to add the candidate, please create the issue in the `ansible/community <https://github.com/ansible/community>`_ repository.
 
 Communicating as a collection maintainer
 -----------------------------------------
@@ -40,9 +40,9 @@ Communicating as a collection maintainer
 
 Collection contributors and maintainers should also communicate through:
 
-* :ref:`communication_irc` appropriate to their collection, or if none exist, the general community and developer chat channels.
+* :ref:`communication_irc` appropriate to their collection, or if none exist, the general community and developer chat channels
 * Mailing lists such as `ansible-announce <https://groups.google.com/d/forum/ansible-announce>`_ and `ansible-devel <https://groups.google.com/d/forum/ansible-devel>`_
-* Collection project boards, issues, and GitHub discussions in corresponding repositories/
+* Collection project boards, issues, and GitHub discussions in corresponding repositories
 * Quarterly Contributor Summits.
 * Ansiblefest and local meetups.
 
