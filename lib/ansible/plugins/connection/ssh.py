@@ -1242,7 +1242,9 @@ class Connection(ConnectionBase):
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self.user), host=self._play_context.remote_addr)
+        self.host = self.get_option('host') or self._play_context.remote_addr
+
+        display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self.user), host=self.host)
 
         if getattr(self._shell, "_IS_WINDOWS", False):
             # Become method 'runas' is done in the wrapper that is executed,
@@ -1286,6 +1288,8 @@ class Connection(ConnectionBase):
 
         super(Connection, self).put_file(in_path, out_path)
 
+        self.host = self.get_option('host') or self._play_context.remote_addr
+
         display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self.host)
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_native(in_path)))
@@ -1300,6 +1304,8 @@ class Connection(ConnectionBase):
 
         super(Connection, self).fetch_file(in_path, out_path)
 
+        self.host = self.get_option('host') or self._play_context.remote_addr
+
         display.vvv(u"FETCH {0} TO {1}".format(in_path, out_path), host=self.host)
 
         # need to add / if path is rooted
@@ -1311,6 +1317,7 @@ class Connection(ConnectionBase):
     def reset(self):
 
         run_reset = False
+        self.host = self.get_option('host') or self._play_context.remote_addr
 
         # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
         # only run the reset if the ControlPath already exists or if it isn't configured and ControlPersist is set
