@@ -49,6 +49,8 @@ Roles on Core
 * :ref:`Module maintainers <maintainers>`: Module maintainers own specific modules and have indirect commit access through the current module pull request mechanisms.
 * :ref:`Collection maintainers <maintainers>`: Collection maintainers own specific collections and have commit access to them. Each collection can set its own rules for contributions.
 
+.. _committer_general_rules:
+
 General rules
 =============
 Individuals with direct commit access are entrusted with powers that allow them to do a broad variety of things--probably more than we can write down. Rather than rules, treat these as general *guidelines*, individuals with this power are expected to use their best judgement.
