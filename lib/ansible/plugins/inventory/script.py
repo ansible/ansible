@@ -26,7 +26,7 @@ DOCUMENTATION = '''
           C(--host) will only be used if no C(_meta) key is present.
           This is a performance optimization as the script would be called per host otherwise.
     notes:
-        - Whitelisted in configuration by default.
+        - Enabled in configuration by default.
         - The plugin does not cache results because external inventory scripts are responsible for their own caching.
 '''
 
