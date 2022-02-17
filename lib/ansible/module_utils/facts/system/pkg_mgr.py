@@ -82,9 +82,12 @@ class PkgMgrFactCollector(BaseFactCollector):
                 # just default to dnf
                 pkg_mgr_name = 'dnf'
         elif collected_facts['ansible_distribution'] == 'Amazon':
-            if int(collected_facts['ansible_distribution_version']) < 2022:
-                pkg_mgr_name = 'yum'
-            else:
+            try:
+                if int(collected_facts['ansible_distribution_version']) < 2022:
+                    pkg_mgr_name = 'yum'
+                else:
+                    pkg_mgr_name = 'dnf'
+            except ValueError:
                 pkg_mgr_name = 'dnf'
         else:
             # If it's not one of the above and it's Red Hat family of distros, assume
