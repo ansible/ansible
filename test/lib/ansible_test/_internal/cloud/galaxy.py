@@ -100,7 +100,7 @@ class GalaxyProvider(CloudProvider):
         # the newer update is available.
         self.pulp = os.environ.get(
             'ANSIBLE_PULP_CONTAINER',
-            'docker.io/pulp/pulp-galaxy-ng@sha256:b79a7be64eff86d8f58db9ca83ed4967bd8b4e45c99addb17a91d11926480cf1'
+            'quay.io/ansible/pulp-galaxy-ng:b79a7be64eff'
         )
 
         self.containers = []

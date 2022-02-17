@@ -53,7 +53,7 @@ class OpenShiftCloudProvider(CloudProvider):
         super(OpenShiftCloudProvider, self).__init__(args, config_extension='.kubeconfig')
 
         # The image must be pinned to a specific version to guarantee CI passes with the version used.
-        self.image = 'openshift/origin:v3.9.0'
+        self.image = 'quay.io/ansible/openshift-origin:v3.9.0'
         self.container_name = ''
 
     def filter(self, targets, exclude):
