@@ -73,7 +73,7 @@ class AnsiblePlugin(ABC):
         ''' assumes that any generated deprecats have been 'locally' sourced '''
 
         for deprecation in C.config.DEPRECATED[:]:
-            msg =  "{0}'s {1} {2}. Alternatives: {2}".format(self._load_name, deprecation[0], deprecation[1]['why'], deprecation[1]['alternatives'])
+            msg = "{0}'s {1} {2}. Alternatives: {2}".format(self._load_name, deprecation[0], deprecation[1]['why'], deprecation[1]['alternatives'])
             display.deprecated(msg, version=deprecation[1]['version'])
             C.config.DEPRECATED.remove(deprecation)
 
