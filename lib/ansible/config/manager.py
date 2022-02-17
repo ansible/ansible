@@ -533,7 +533,7 @@ class ConfigManager(object):
                                     value = temp_value
                                     origin = cfile
                                     if 'deprecated' in ini_entry:
-                                        self.DEPRECATED.append(('[%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
+                                        self.DEPRECATED.append(('Ini [%s]%s' % (ini_entry['section'], ini_entry['key']), ini_entry['deprecated']))
                         except Exception as e:
                             sys.stderr.write("Error while loading ini config %s: %s" % (cfile, to_native(e)))
                     elif ftype == 'yaml':
@@ -557,6 +557,10 @@ class ConfigManager(object):
                             value = t.render(variables)
                         except Exception:
                             pass  # not templatable
+
+                elif 'deprecated' in defs[config]:
+                    # not default, so it is set, so we should notify if deprecated
+                    self.DEPRECATED.append(('Option "%s"' % (config), defs[config]['deprecated']))
 
             # ensure correct type, can raise exceptions on mismatched types
             try:

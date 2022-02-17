@@ -69,6 +69,14 @@ class AnsiblePlugin(ABC):
             possible_fqcns.add(name)
         return bool(possible_fqcns.intersection(set(self.ansible_aliases)))
 
+    def _handle_deprecations(self):
+        ''' assumes that any generated deprecats have been 'locally' sourced '''
+
+        for deprecation in C.config.DEPRECATED[:]:
+            msg =  "{0}'s {1} {2}. Alternatives: {2}".format(self._load_name, deprecation[0], deprecation[1]['why'], deprecation[1]['alternatives'])
+            display.deprecated(msg, version=deprecation[1]['version'])
+            C.config.DEPRECATED.remove(deprecation)
+
     def get_option(self, option, hostvars=None):
         if option not in self._options:
             try:
@@ -76,6 +84,9 @@ class AnsiblePlugin(ABC):
             except AnsibleError as e:
                 raise KeyError(to_native(e))
             self.set_option(option, option_value)
+
+            self._handle_deprecations()
+
         return self._options.get(option)
 
     def get_options(self, hostvars=None):
@@ -101,6 +112,8 @@ class AnsiblePlugin(ABC):
         # this is needed to support things like winrm that can have extended protocol options we don't directly handle
         if self.allow_extras and var_options and '_extras' in var_options:
             self.set_option('_extras', var_options['_extras'])
+
+        self._handle_deprecations()
 
     def has_option(self, option):
         if not self._options:
