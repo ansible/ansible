@@ -1,0 +1,2 @@
+bugfixes:
+  - "Fix handlers execution with ``serial`` in the ``linear`` strategy (https://github.com/ansible/ansible/issues/54991)"

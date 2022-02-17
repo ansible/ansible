@@ -118,3 +118,7 @@ grep out.txt -e "\[WARNING\]: Handler 'handler name with {{ test_var }}' is unus
 # Test include_role and import_role cannot be used as handlers
 ansible-playbook test_role_as_handler.yml "$@"  2>&1 | tee out.txt
 grep out.txt -e "ERROR! Using 'include_role' as a handler is not supported."
+
+# Test flush_handlers meta task does not imply any_errors_fatal
+ansible-playbook 54991.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'handler ran')" = "4" ]
