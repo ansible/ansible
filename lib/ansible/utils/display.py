@@ -18,6 +18,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import contextlib
 import ctypes.util
 import errno
 import fcntl
@@ -41,6 +42,7 @@ from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import text_type
 from ansible.utils.color import stringc
 from ansible.utils.lock import lock_decorator
+from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.utils.singleton import Singleton
 from ansible.utils.unsafe_proxy import wrap_var
 
@@ -206,7 +208,7 @@ class Display(metaclass=Singleton):
 
         self._final_q = None
 
-        self._display_lock = threading.Lock()
+        self._lock = threading.Lock()
 
         self.columns = None
         self.verbosity = verbosity
@@ -235,6 +237,25 @@ class Display(metaclass=Singleton):
                 self.b_cowsay = False
 
         self._set_column_width()
+
+    @property
+    def _display_lock(self):
+        """Return the lock only when _final_q is not set, when set, return a nullcontext
+        to prevent deadlocks
+        """
+        if self._final_q:
+            return contextlib.nullcontext()
+        return self._lock
+
+    def set_queue(self, queue):
+        """Set the _final_q on Display, so that we know to proxy display over the queue
+        instead of directly writing to stdout/stderr from forks
+
+        This is only needed in ansible.executor.process.worker:WorkerProcess._run
+        """
+        if multiprocessing_context.parent_process() is None:
+            raise RuntimeError('queue cannot be set in parent process')
+        self._final_q = queue
 
     def set_cowsay_info(self):
         if C.ANSIBLE_NOCOWS:
@@ -292,13 +313,15 @@ class Display(metaclass=Singleton):
 
             fileobj.write(msg2)
 
-            try:
-                fileobj.flush()
-            except IOError as e:
-                # Ignore EPIPE in case fileobj has been prematurely closed, eg.
-                # when piping to "head -n1"
-                if e.errno != errno.EPIPE:
-                    raise
+            # With locks, and the fact that we aren't printing from forks
+            # just write, and let the system flush. Everything should come out peachy
+            # try:
+            #     fileobj.flush()
+            # except IOError as e:
+            #     # Ignore EPIPE in case fileobj has been prematurely closed, eg.
+            #     # when piping to "head -n1"
+            #     if e.errno != errno.EPIPE:
+            #         raise
 
         if logger and not screen_only:
             # We first convert to a byte string so that we get rid of

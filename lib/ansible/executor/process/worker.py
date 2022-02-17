@@ -131,7 +131,7 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
             #
             # We should no longer have a problem with ``Display``, as it now proxies over
             # the queue from a fork. However, to avoid any issues with plugins that may
-            # be doing their own printing, this has been left for now.
+            # be doing their own printing, this has been kept.
             #
             # This happens at the very end to avoid that deadlock, by simply side
             # stepping it. This should not be treated as a long term fix.
@@ -150,7 +150,8 @@ class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defin
         # pr = cProfile.Profile()
         # pr.enable()
 
-        display._final_q = self._final_q
+        # Set the queue on Display so calls to Display.display are proxied over the queue
+        display.set_queue(self._final_q)
 
         try:
             # execute the task and build a TaskResult from the result
