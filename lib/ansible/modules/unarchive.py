@@ -1044,6 +1044,7 @@ def main():
     # Run only if we found differences (idempotence) or diff was missing
     if res_args.get('diff', True) and not module.check_mode:
         # do we need to change perms?
+        top_folders = []
         for filename in handler.files_in_archive:
             file_args['path'] = os.path.join(b_dest, to_bytes(filename, errors='surrogate_or_strict'))
 
@@ -1051,6 +1052,21 @@ def main():
                 res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
             except (IOError, OSError) as e:
                 module.fail_json(msg="Unexpected error when accessing exploded file: %s" % to_native(e), **res_args)
+
+            if '/' in filename:
+                top_folder_path = filename.split('/')[0]
+                if top_folder_path not in top_folders:
+                    top_folders.append(top_folder_path)
+
+        # make sure top folders have the right permissions
+        # https://github.com/ansible/ansible/issues/35426
+        if top_folders:
+            for f in top_folders:
+                file_args['path'] = "%s/%s" % (dest, f)
+                try:
+                    res_args['changed'] = module.set_fs_attributes_if_different(file_args, res_args['changed'], expand=False)
+                except (IOError, OSError) as e:
+                    module.fail_json(msg="Unexpected error when accessing exploded file: %s" % to_native(e), **res_args)
 
     if module.params['list_files']:
         res_args['files'] = handler.files_in_archive
