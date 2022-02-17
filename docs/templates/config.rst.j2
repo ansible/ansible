@@ -40,6 +40,17 @@ Ansible will process the above list and use the first file found, all others are
         inventory = /etc/ansible/hosts  ; This points to the file that lists your hosts
 
 
+.. _generating_ansible.cfg:
+
+Generating a sample ``ansible.cfg`` file
+-----------------------------------------
+
+You can generate a fully-commented example ``ansible.cfg`` file, for example::
+
+   $ ansible-config init -t all --format ini > ansible.cfg
+
+
+
 .. _cfg_in_world_writable_dir:
 
 Avoiding security risks with ``ansible.cfg`` in the current directory
