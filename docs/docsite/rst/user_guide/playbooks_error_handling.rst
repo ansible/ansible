@@ -170,7 +170,7 @@ You can also combine multiple conditions to override "changed" result.
 
 .. note::
 
-    Just like ``when`` these 2 conditionals do not require templating delimiters (``{{ }}``) as they are implied.
+    Just like ``when`` these two conditionals do not require templating delimiters (``{{ }}``) as they are implied.
 
 See :ref:`controlling_what_defines_failure` for more conditional syntax examples.
 
