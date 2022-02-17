@@ -63,7 +63,7 @@ options:
   permanent:
     description:
       - Should this configuration be in the running firewalld configuration or persist across reboots.
-      - As of Ansible 2.3, permanent operations can operate on firewalld configs when it is not running (requires firewalld >= 3.0.9).
+      - As of Ansible 2.3, permanent operations can operate on firewalld configs when it is not running (requires firewalld >= 0.3.9).
       - Note that if this is C(no), immediate is assumed C(yes).
     type: bool
   immediate:
