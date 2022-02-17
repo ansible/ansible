@@ -689,6 +689,9 @@ For 'non host vars' you can use the :ref:`vars lookup<vars_lookup>` plugin:
 
      {{ lookup('vars', 'somevar_' ~ other_var) }}
 
+A sure way to know if a keyword requires ``{{ }}`` or even supports templating is using ``ansible-doc -t keyword <name>``,
+this will return documentation on the keyword including a ``template`` field with the values ``explicit`` (requires ``{{ }}``),
+``implicit`` (assumes ``{{ }}``, so no needed) or ``static`` (no templating supported, all characters will be interpreted literally)
 
 .. _why_no_wheel:
 
