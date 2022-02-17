@@ -83,7 +83,7 @@ class PkgMgrFactCollector(BaseFactCollector):
                 pkg_mgr_name = 'dnf'
         elif collected_facts['ansible_distribution'] == 'Amazon':
             try:
-                if int(collected_facts['ansible_distribution_version']) < 2022:
+                if int(collected_facts['ansible_distribution_major_version']) < 2022:
                     pkg_mgr_name = 'yum'
                 else:
                     pkg_mgr_name = 'dnf'
