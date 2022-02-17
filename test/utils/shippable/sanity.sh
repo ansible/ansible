@@ -14,7 +14,7 @@ else
 fi
 
 case "${group}" in
-    1) options=(--skip-test pylint --skip-test ansible-doc --skip-test docs-build --skip-test package-data --skip-test changelog --skip-test validate-modules) ;;
+    1) options=(--test import ping) ;;
     2) options=(                   --test      ansible-doc --test      docs-build --test      package-data --test      changelog) ;;
     3) options=(--test pylint --exclude test/units/ --exclude lib/ansible/module_utils/) ;;
     4) options=(--test pylint           test/units/           lib/ansible/module_utils/) ;;
