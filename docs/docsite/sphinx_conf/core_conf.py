@@ -102,6 +102,8 @@ exclude_patterns = [
     'community/contributing_maintained_collections.rst',
     'community/collection_development_process.rst',
     'community/maintainers.rst',
+    'community/maintainers_guidelines.rst',
+    'community/maintainers_workflow.rst',
     'porting_guides/porting_guides.rst',
     'porting_guides/porting_guide_[1-9]*',
     'roadmap/index.rst',

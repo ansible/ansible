@@ -1,0 +1,131 @@
+.. _maintainer_requirements:
+
+Maintainer responsibilities
+===========================
+
+An Ansible collection maintainer is a contributor trusted by the community who makes significant and regular contributions to the project and who has shown themselves as a specialist in the related area.
+Collection maintainers have :ref:`extended permissions<collection_maintainers>` in the collection scope.
+
+Ansible collection maintainers provide feedback, responses, or actions on pull requests or issues to the collection(s) they maintain in a reasonably timely manner. They can also update the contributor guidelines for that collection, in collaboration with the Ansible community team and the other maintainers of that collection.
+
+In general, collection maintainers:
+
+- Act in accordance with the :ref:`code_of_conduct`.
+- Subscribe to the collection repository they maintain (click :guilabel:`Watch > All activity` in GitHub).
+- Keep README, development guidelines, and other general collection :ref:`maintainer_documentation` relevant.
+- Review and commit changes made by other contributors.
+- :ref:`Backport <Backporting>` changes to stable branches.
+- Address or assign issues to appropriate contributors.
+- Release collections.
+- Ensure that collections adhere to the `Collection Requirements <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`_,
+- Track changes announced in `News for collection contributors and maintainers <https://github.com/ansible-collections/news-for-maintainers>`_ and update a collection in accordance with these changes.
+- Subscribe and submit news to the  `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_.
+- :ref:`Build a healthy community <expanding_community>` to increase the number of active contributors and maintainers around collections.
+- Revise these guidelines to improve the maintainer experience for yourself and others.
+
+Multiple maintainers can divide responsibilities among each other.
+
+How to become a maintainer
+--------------------------
+
+A person who is interested in becoming a maintainer and satisfies the :ref:`requirements<maintainer_requirements>` may either self-nominate or be nominated by another maintainer.
+
+To nominate a candidate, please create a GitHub issue in the relevant collection repository. If there is no response, the repository is not actively maintained, or the current maintainers do not have permissions to add the candidate, please create the issue in the `ansible/community <https://github.com/ansible/community>`_ repository.
+
+Communicating as a collection maintainer
+-----------------------------------------
+
+ Maintainers must subscribe to the `"Changes impacting collection contributors and maintainers" GitHub repo <https://github.com/ansible-collections/news-for-maintainers>`_ and the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_. If you have something important to announce through the newsletter (for example, recent releases ), see the `Bullhorn's wiki page <https://github.com/ansible/community/wiki/News#the-bullhorn>`_ to learn how.
+
+
+Collection contributors and maintainers should also communicate through:
+
+* :ref:`communication_irc` appropriate to their collection, or if none exist, the general community and developer chat channels
+* Mailing lists such as `ansible-announce <https://groups.google.com/d/forum/ansible-announce>`_ and `ansible-devel <https://groups.google.com/d/forum/ansible-devel>`_
+* Collection project boards, issues, and GitHub discussions in corresponding repositories
+* Quarterly Contributor Summits.
+* Ansiblefest and local meetups.
+
+See :ref:`communication` for more details on these communication channels.
+
+Community Topics
+----------------
+
+The Community and the `Steering Committee <https://github.com/ansible/community-docs/blob/main/ansible_community_steering_committee.rst>`_ asynchronously discuss and vote on the `Community Topics <https://github.com/ansible-community/community-topics/issues>`_ which impact the whole project or its parts including collections and packaging.
+
+Share your opinion and vote on the topics to help the community make the best decisions.
+
+.. _expanding_community:
+
+Contributor Summits
+-------------------
+
+
+The quarterly Ansible Contributor Summit is a global event that provides our contributors a great opportunity to meet each other, communicate, share ideas, and see that there are other real persons behind the messages on Matrix/Libera.Chat IRC or GitHub. In other words, it gives a sense of community. Watch the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_ for information when the next contributor summit, invite contributors you know, and take part in the event together.
+
+Weekly community Matrix/IRC meetings
+------------------------------------
+
+The Community and the Steering Committee come together at weekly meetings in the ``#ansible-community`` :ref:`Matrix/Libera.Chat <https://docs.ansible.com/ansible/devel/community/communication.html#real-time-chat>` channel to discuss important project-scale questions. See the `schedule <https://github.com/ansible/community/blob/main/meetings/README.md#schedule>`_ and join.
+
+Expanding the collection community
+===================================
+
+.. note::
+
+  If you discover good ways to expand a community or make it more robust, edit this section with your ideas to share with other collection maintainers.
+
+Here are some ways you can expand the community around your collection:
+
+  * Give :ref:`newcomers a positive first experience <collection_new_contributors>`.
+  * Have :ref:`good documentation <maintainer_documentation>` with guidelines for new contributors.
+  * Make people feel welcome personally and individually.
+  * Use labels to show easy fixes and leave non-critical easy fixes to newcomers and offer to mentor them.
+  * Be responsive in issues, PRs and other communication.
+  * Conduct PR days regularly.
+  * Maintain a zero-tolerance policy towards behavior violating the :ref:`code_of_conduct`.
+  * Put information about how people can register code of conduct violations in your ``README`` and ``CONTRIBUTING`` files.
+  * Include quick ways contributors can help and other documentation in your ``README``.
+  * Add and keep updated the ``CONTRIBUTORS`` and ``MAINTAINERS`` files.
+  * Create a pinned issue to announce that the collection welcomes new maintainers and contributors.
+  * Look for new maintainers among active contributors.
+  * Announce that your collection welcomes new maintainers.
+  * Take part and congratulate new maintainers in Contributor Summits.
+
+
+.. _collection_new_contributors:
+
+Encouraging new contributors
+-----------------------------
+
+Easy fix items are the best way to attract and mentor new contributors. You should triage incoming issues to mark them with labels such as ``easyfix``, ``waiting_on_contributor``, and ``docs``. where appropriate. Do not fix these trivial non-critical bugs yourself. Instead, mentor a person who would like to contribute.
+
+For some easy fix issues, you could ask the issue reporter whether they want to fix the issue themselves providing the link to a quickstart guide for creating PRs.
+
+Conduct pull request days regularly. You could plan PR days, for example, in the last Friday of every month when you and other maintainers go through all open issues and pull requests focusing on old ones, asking people if you can help, and so on. If there are pull requests that look abandoned (for example, there is no response on your help offers since the previous PR day), announce that anyone else interested can complete the pull request.
+
+Promote active contributors satisfying :ref:`requirements<maintainer_requirements>` to maintainers. Revise contributors activity regularly.
+
+If your collection found new maintainers, announce that fact in the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_ and during the next Contributor Summit congratulating and thanking them for the work done. You can mention all the people promoted since the previous summit. Remember to invite the other maintainers to the Summit in advance.
+
+
+
+.. _maintainer_documentation:
+
+Maintaining good collection documentation
+==========================================
+
+Maintainers look after the collection documentation to ensure it matches the :ref:`style_guide`. This includes keeping the following documents accurate and updated regularly:
+
+* Collection module/plugin documentation that adheres to the :ref:`Ansible documentation format <module_documenting>`.
+* Collection user guides that follow the :ref:`Collection documentation format <collections_doc_dir>`.
+* Repository files that includes at least a ``README`` and ``CONTRIBUTING`` file.
+
+A good ``README`` includes a description of the collection, a link to the :ref:`code_of_conduct`, and details on how to contribute or a pointer to the ``CONTRIBUTING`` file. If your collection is a part of Ansible (is shipped with Ansible package), highlight that fact at the top of the collection's ``README``.
+
+ The ``CONTRIBUTING`` file includes all the details or links to the details on how a new or continuing contributor can contribute to this collection. The ``CONTRIBUTING`` file should include:
+
+* Information or links to new contributor guidelines, such as a quickstart on opening PRs.
+* Information or links to contributor requirements, such as unit and integration test requirements.
+
+You can optionally include a ``CONTRIBUTORS`` and ``MAINTAINERS`` file to list the collection contributors and maintainers.
