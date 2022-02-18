@@ -231,23 +231,6 @@ class TestParseParameters(unittest.TestCase):
         self.assertRaises(AnsibleError, password._parse_parameters, testcase['term'])
 
 
-class TestReadPasswordFile(unittest.TestCase):
-    def setUp(self):
-        self.os_path_exists = password.os.path.exists
-
-    def tearDown(self):
-        password.os.path.exists = self.os_path_exists
-
-    def test_no_password_file(self):
-        password.os.path.exists = lambda x: False
-        self.assertEqual(password._read_password_file(b'/nonexistent'), None)
-
-    def test_with_password_file(self):
-        password.os.path.exists = lambda x: True
-        with patch.object(builtins, 'open', mock_open(read_data=b'Testing\n')) as m:
-            self.assertEqual(password._read_password_file(b'/etc/motd'), u'Testing')
-
-
 class TestGenCandidateChars(unittest.TestCase):
     def _assert_gen_candidate_chars(self, testcase):
         expected_candidate_chars = testcase['candidate_chars']

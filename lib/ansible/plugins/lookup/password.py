@@ -193,22 +193,6 @@ def _parse_parameters(term, kwargs=None):
     return relpath, params
 
 
-def _read_password_file(b_path):
-    """Read the contents of a password file and return it
-    :arg b_path: A byte string containing the path to the password file
-    :returns: a text string containing the contents of the password file or
-        None if no password file was present.
-    """
-    content = None
-
-    if os.path.exists(b_path):
-        with open(b_path, 'rb') as f:
-            b_content = f.read().rstrip()
-        content = to_text(b_content, errors='surrogate_or_strict')
-
-    return content
-
-
 def _gen_candidate_chars(characters):
     '''Generate a string containing all valid chars as defined by ``characters``
 
@@ -349,7 +333,13 @@ class LookupModule(LookupBase):
             # make sure only one process finishes all the job first
             first_process, lockfile = _get_lock(b_path)
 
-            content = _read_password_file(b_path)
+            content = None
+
+            # Read the contents of a password file and return it
+            if os.path.exists(b_path):
+                b_contents, show_data = self._loader._get_file_contents(b_path)
+                content = to_text(b_contents, errors='surrogate_or_strict')
+                content = content.rstrip()
 
             if content is None or b_path == to_bytes('/dev/null'):
                 plaintext_password = random_password(params['length'], chars, params['seed'])
