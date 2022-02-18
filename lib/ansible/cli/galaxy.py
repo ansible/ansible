@@ -1712,19 +1712,21 @@ class GalaxyCLI(CLI):
             response = self.api.search_collections(search, page_size=page_size)
             # platforms=context.CLIARGS['platforms'], tags=context.CLIARGS['galaxy_tags'], author=context.CLIARGS['author'])
 
-        if response['count'] == 0:
+        count = response.get('count', response.get('collection').get('count'))
+        if count  == 0:
             display.display("No %s match your search." % content, color=C.COLOR_ERROR)
             return True
 
         data = [u'']
 
-        if response['count'] > page_size:
-            data.append(u"Found %d %s matching your search. Showing first %s." % (response['count'], content, page_size))
+        if count > page_size:
+            data.append(u"Found %d %s matching your search. Showing first %s." % (count, content, page_size))
         else:
-            data.append(u"Found %d %s matching your search:" % (response['count'], content))
+            data.append(u"Found %d %s matching your search:" % (count, content))
 
         max_len = []
-        for package in response['results']:
+        results = response.get('results', response.get('collection').get('results'))
+        for package in results:
             if content == 'role':
                 max_len.append(len(package['username'] + '.' + package['name']))
             else:
@@ -1736,13 +1738,13 @@ class GalaxyCLI(CLI):
             data.append(format_str % (u"Name", u"Description"))
             data.append(format_str % (u"----", u"-----------"))
         else:
-            data.append(format_str % (u"Namespace", u"Name"))
-            data.append(format_str % (u"---------", u"----"))
-        for package in response['results']:
+            data.append(format_str % (u"Name", u"latest"))
+            data.append(format_str % (u"----", u"------"))
+        for package in results:
             if content == 'role':
                 data.append(format_str % (u'%s.%s' % (package['username'], package['name']), package['description']))
             else:
-                data.append(format_str % (package['namespace']['name'], package['name']))
+                data.append(format_str % (u'%s.%s' % (package['namespace']['name'], package['name']), package['latest_version']['version']))
 
         data = u'\n'.join(data)
         self.pager(data)
