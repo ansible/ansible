@@ -35,12 +35,8 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 from units.mock.yaml_helper import YamlTestUtils
 from units.mock.vault_helper import TextVaultSecret
 
-try:
-    from _yaml import ParserError
-    from _yaml import ScannerError
-except ImportError:
-    from yaml.parser import ParserError
-    from yaml.scanner import ScannerError
+from yaml.parser import ParserError
+from yaml.scanner import ScannerError
 
 
 class NameStringIO(StringIO):
