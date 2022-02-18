@@ -84,7 +84,11 @@ class PkgMgrFactCollector(BaseFactCollector):
         elif collected_facts['ansible_distribution'] == 'Amazon':
             try:
                 if int(collected_facts['ansible_distribution_major_version']) < 2022:
-                    pkg_mgr_name = 'yum'
+                    for dnf in [pkg_mgr for pkg_mgr in PKG_MGRS if pkg_mgr['name'] == 'dnf']:
+                        if os.path.exists(dnf['path']):
+                            pkg_mgr_name = 'dnf'
+                        else:
+                            pkg_mgr_name = 'yum'
                 else:
                     pkg_mgr_name = 'dnf'
             except ValueError:
