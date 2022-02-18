@@ -268,6 +268,7 @@ class GalaxyCLI(CLI):
         self.add_install_options(collection_parser, parents=[common, force, cache_options])
         self.add_list_options(collection_parser, parents=[common, collections_path])
         self.add_verify_options(collection_parser, parents=[common, collections_path])
+        self.add_search_options(collection_parser, parents=[common])
 
         # Add sub parser for the Galaxy role actions
         role = type_parser.add_parser('role', help='Manage an Ansible Galaxy role.')
@@ -1695,36 +1696,53 @@ class GalaxyCLI(CLI):
         page_size = 1000
         search = None
 
+        # role or collection
+        content = context.CLIARGS['type']
+
         if context.CLIARGS['args']:
             search = '+'.join(context.CLIARGS['args'])
 
         if not search and not context.CLIARGS['platforms'] and not context.CLIARGS['galaxy_tags'] and not context.CLIARGS['author']:
             raise AnsibleError("Invalid query. At least one search term, platform, galaxy tag or author must be provided.")
 
-        response = self.api.search_roles(search, platforms=context.CLIARGS['platforms'],
+        if content == 'role':
+            response = self.api.search_roles(search, platforms=context.CLIARGS['platforms'],
                                          tags=context.CLIARGS['galaxy_tags'], author=context.CLIARGS['author'], page_size=page_size)
+        elif content == 'collection':
+            response = self.api.search_collections(search, page_size=page_size)
+            # platforms=context.CLIARGS['platforms'], tags=context.CLIARGS['galaxy_tags'], author=context.CLIARGS['author'])
 
         if response['count'] == 0:
-            display.display("No roles match your search.", color=C.COLOR_ERROR)
-            return 1
+            display.display("No %s match your search." % content, color=C.COLOR_ERROR)
+            return True
 
         data = [u'']
 
         if response['count'] > page_size:
-            data.append(u"Found %d roles matching your search. Showing first %s." % (response['count'], page_size))
+            data.append(u"Found %d %s matching your search. Showing first %s." % (response['count'], content, page_size))
         else:
-            data.append(u"Found %d roles matching your search:" % response['count'])
+            data.append(u"Found %d %s matching your search:" % (response['count'], content))
 
         max_len = []
-        for role in response['results']:
-            max_len.append(len(role['username'] + '.' + role['name']))
+        for package in response['results']:
+            if content == 'role':
+                max_len.append(len(package['username'] + '.' + package['name']))
+            else:
+                max_len.append(len(package['name']))
         name_len = max(max_len)
         format_str = u" %%-%ds %%s" % name_len
         data.append(u'')
-        data.append(format_str % (u"Name", u"Description"))
-        data.append(format_str % (u"----", u"-----------"))
-        for role in response['results']:
-            data.append(format_str % (u'%s.%s' % (role['username'], role['name']), role['description']))
+        if content == 'role':
+            data.append(format_str % (u"Name", u"Description"))
+            data.append(format_str % (u"----", u"-----------"))
+        else:
+            data.append(format_str % (u"Namespace", u"Name"))
+            data.append(format_str % (u"---------", u"----"))
+        for package in response['results']:
+            if content == 'role':
+                data.append(format_str % (u'%s.%s' % (package['username'], package['name']), package['description']))
+            else:
+                data.append(format_str % (package['namespace']['name'], package['name']))
 
         data = u'\n'.join(data)
         self.pager(data)

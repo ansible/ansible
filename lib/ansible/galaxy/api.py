@@ -911,3 +911,32 @@ class GalaxyAPI:
             return []
         else:
             return [signature_info["signature"] for signature_info in signatures]
+
+
+    @g_connect(['v2', 'v3'])
+    def search_collections(self, term, **kwargs):
+        """
+        Searches the galaxy server for matching collections or namespaces
+
+        :param term :  term to search
+        :param name: The collection name.
+        :param version: Version of the collection to get the information for.
+        :return: A list of signature strings.
+        """
+
+        author = kwargs.get('author', None)
+        namespace = kwargs.get('namespace', None)
+        platforms = kwargs.get('platforms', None)
+        page_size = kwargs.get('page_size', None)
+        tags = kwargs.get('tags', None)
+
+        # https://galaxy.ansible.com/search?keywords=<term>&order_by=-relevance&deprecated=false&type=collection&page=1
+        api_path = self.available_api_versions.get('v3', self.available_api_versions.get('v2'))
+        url_paths = [self.api_server, api_path, 'collections',  '/?search=%s' % term]
+
+        n_collection_url = _urljoin(*url_paths)
+        error_context_msg = 'Error when searching for collection' 
+        data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg, cache=True)
+        self._set_cache()
+
+        return data
