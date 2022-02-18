@@ -1,5 +1,4 @@
 OS := $(shell uname -s)
-SITELIB = $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"):
 PLUGIN_FORMATTER=../../hacking/build-ansible.py docs-build
 TESTING_FORMATTER=../bin/testing_formatter.sh
 KEYWORD_DUMPER=../../hacking/build-ansible.py document-keywords
