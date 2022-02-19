@@ -527,12 +527,19 @@ class LinuxHardware(Hardware):
         return mount_size, uuid
 
     @staticmethod
-    def _is_blocking_mount(device, fstype):
-        # The only mounts starting without slashes should be network mounts, special filesystems
-        # and ZFS (which we want to keep)
-        if not device.startswith(('/', '\\')) and fstype != 'zfs':
-            return True
-        if fstype == 'none':
+    def _is_special_mount(device, fstype):
+        # The mounts not starting with slashes are zfs, network mounts and
+        # special pseudo file systems.
+        regular_filesystems = [
+            'ceph',
+            'cifs',
+            'fuse',
+            'glusterfs',
+            'gpfs',
+            'nfs',
+            'zfs'
+        ]
+        if device.startswith(('/', '\\')) or fstype in regular_filesystems:
             return True
         return False
 
@@ -555,7 +562,7 @@ class LinuxHardware(Hardware):
 
             device, mount, fstype, options = fields[0], fields[1], fields[2], fields[3]
 
-            if self._is_blocking_mount(device, fstype):
+            if self._is_special_mount(device, fstype):
                 continue
 
             mount_info = {'mount': mount,
