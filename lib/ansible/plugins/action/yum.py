@@ -18,8 +18,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleActionFail
-from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
-from ansible.module_utils.errors import UnsupportedError
 from ansible.module_utils.yumdnf import yumdnf_argument_spec
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
