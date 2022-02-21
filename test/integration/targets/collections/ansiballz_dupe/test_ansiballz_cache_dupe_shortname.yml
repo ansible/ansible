@@ -1,0 +1,8 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - ping:
+
+    - ping:
+      collections:
+        - duplicate.name
