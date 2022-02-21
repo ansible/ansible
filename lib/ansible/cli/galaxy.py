@@ -1706,14 +1706,14 @@ class GalaxyCLI(CLI):
             raise AnsibleError("Invalid query. At least one search term, platform, galaxy tag or author must be provided.")
 
         if content == 'role':
-            response = self.api.search_roles(search, platforms=context.CLIARGS['platforms'],
-                                         tags=context.CLIARGS['galaxy_tags'], author=context.CLIARGS['author'], page_size=page_size)
+            response = self.api.search_roles(search, platforms=context.CLIARGS['platforms'], tags=context.CLIARGS['galaxy_tags'],
+                                             author=context.CLIARGS['author'], page_size=page_size)
         elif content == 'collection':
             response = self.api.search_collections(search, page_size=page_size)
             # platforms=context.CLIARGS['platforms'], tags=context.CLIARGS['galaxy_tags'], author=context.CLIARGS['author'])
 
         count = response.get('count', response.get('collection').get('count'))
-        if count  == 0:
+        if count == 0:
             display.display("No %s match your search." % content, color=C.COLOR_ERROR)
             return True
 

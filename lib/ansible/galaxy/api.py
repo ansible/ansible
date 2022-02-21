@@ -912,7 +912,6 @@ class GalaxyAPI:
         else:
             return [signature_info["signature"] for signature_info in signatures]
 
-
     @g_connect(['v2', 'v3'])
     def search_collections(self, term, **kwargs):
         """
@@ -930,14 +929,14 @@ class GalaxyAPI:
         page_size = kwargs.get('page_size', None)
         tags = kwargs.get('tags', None)
 
-        #   api/internal/ui/search/?keywords=docker&order_by=-relevance&page=1&deprecated=false&type=collection
+        # api/internal/ui/search/?keywords=docker&order_by=-relevance&page=1&deprecated=false&type=collection
         # https://galaxy.ansible.com/search?keywords=<term>&order_by=-relevance&deprecated=false&type=collection&page=1
-        api_path = self.available_api_versions.get('v3', self.available_api_versions.get('v2'))
-        #url_paths = [self.api_server, api_path, 'collections',  '/?search=%s' % term]
+        # api_path = self.available_api_versions.get('v3', self.available_api_versions.get('v2'))
+        # url_paths = [self.api_server, api_path, 'collections',  '/?search=%s' % term]
         url_paths = ['https://galaxy.ansible.com', 'api', 'internal', 'ui', 'search', '/?type=collection&deprecated=false&keywords=%s' % term]
 
         n_collection_url = _urljoin(*url_paths)
-        error_context_msg = 'Error when searching for collection' 
+        error_context_msg = 'Error when searching for collection'
         data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg, cache=True)
         self._set_cache()
 
