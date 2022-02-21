@@ -174,6 +174,8 @@ For example, to run tests for the ``ping`` module on a Ubuntu 18.04 container:
 
     ansible-test integration ping --docker ubuntu1804
 
+.. _test_container_images:
+
 Container Images
 ----------------
 
