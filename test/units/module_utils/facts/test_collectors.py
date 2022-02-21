@@ -410,7 +410,7 @@ class TestServiceMgrFacts(BaseFactsTest):
     @patch('ansible.module_utils.facts.system.service_mgr.get_file_content', return_value='runit-init')
     @patch('ansible.module_utils.facts.system.service_mgr.os.path.islink', side_effect=lambda x: x == '/sbin/init')
     @patch('ansible.module_utils.facts.system.service_mgr.os.readlink', side_effect=lambda x: '/sbin/runit-init' if x == '/sbin/init' else '/bin/false')
-    def test_service_mgr_runit_two(self, mock_gfc, mock_opl, mock_orl):
+    def test_service_mgr_runit_three(self, mock_gfc, mock_opl, mock_orl):
         # /proc/1/comm contains 'runit-init', ps fails, service manager is runit
         # should end up return 'runit'
         module = self._mock_module()
