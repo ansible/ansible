@@ -540,8 +540,8 @@ class LinuxHardware(Hardware):
             'zfs'
         ]
         if device.startswith(('/', '\\')) or fstype in regular_filesystems:
-            return True
-        return False
+            return False
+        return True
 
     def get_mount_facts(self):
 
