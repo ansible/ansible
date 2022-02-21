@@ -33,45 +33,6 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
 
-    def validate_argument_spec(self, argument_spec=None,
-                               mutually_exclusive=None,
-                               required_together=None,
-                               required_one_of=None,
-                               required_if=None,
-                               required_by=None,
-                               ):
-        # We should probably put this on ActionBase
-
-        new_module_args = self._task.args.copy()
-
-        validator = ArgumentSpecValidator(
-            argument_spec,
-            mutually_exclusive=mutually_exclusive,
-            required_together=required_together,
-            required_one_of=required_one_of,
-            required_if=required_if,
-            required_by=required_by,
-        )
-        validation_result = validator.validate(new_module_args)
-
-        new_module_args.update(validation_result.validated_parameters)
-
-        try:
-            error = validation_result.errors[0]
-        except IndexError:
-            error = None
-
-        # Fail for validation errors, even in check mode
-        if error:
-            msg = validation_result.errors.msg
-            if isinstance(error, UnsupportedError):
-                msg = "Unsupported parameters for ({name}) {kind}: {msg}".format(name=self._load_name, kind='module', msg=msg)
-
-            raise AnsibleActionFail(msg)
-
-        return validation_result, new_module_args
-
-
     def run(self, tmp=None, task_vars=None):
         '''
         Action plugin handler for yum3 vs yum4(dnf) operations.
