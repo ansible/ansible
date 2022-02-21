@@ -539,7 +539,9 @@ class LinuxHardware(Hardware):
             'nfs',
             'zfs'
         ]
-        if device.startswith(('/', '\\')) or fstype in regular_filesystems:
+        if device.startswith(('/', '\\')) and fstype != 'none':
+            return False
+        if fstype in regular_filesystems:
             return False
         return True
 
