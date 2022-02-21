@@ -1,0 +1,2 @@
+bugfixes:
+  - playbook/strategy have more informative 'attribute' based errors for playbook objects and handlers.
