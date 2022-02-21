@@ -66,7 +66,7 @@
         appear to be a git repository")
 
 - name: test using name as a git repo without git+ prefix
-  command: 'ansible-galaxy collection install -r name_without_type.yml'
+  command: 'ansible-galaxy collection install -r name_without_type.yml --no-deps'
   register: result
   ignore_errors: true
   args:
@@ -83,13 +83,13 @@
     dest: '{{ scm_path }}/amazon.aws/'
 
 - name: test using name as a git repo
-  command: 'ansible-galaxy collection install -r git_prefix_name.yml'
+  command: 'ansible-galaxy collection install -r git_prefix_name.yml --no-deps'
   register: result
   args:
     chdir: '{{ galaxy_dir }}/requirements'
 
 - name: test using name plus type as a git repo
-  command: 'ansible-galaxy collection install -r name_and_type.yml --force'
+  command: 'ansible-galaxy collection install -r name_and_type.yml --force --no-deps'
   register: result
   args:
     chdir: '{{ galaxy_dir }}/requirements'
