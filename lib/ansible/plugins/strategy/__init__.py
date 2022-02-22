@@ -1045,7 +1045,7 @@ class StrategyBase:
                             break
                 except AttributeError as e:
                     display.vvv(traceback.format_exc())
-                    raise AnsibleParserError("Invalid handler deffinition for '%s'" % (handler.get_name()), orig_exc=e)
+                    raise AnsibleParserError("Invalid handler definition for '%s'" % (handler.get_name()), orig_exc=e)
         return result
 
     def _do_handler_run(self, handler, handler_name, iterator, play_context, notified_hosts=None):
