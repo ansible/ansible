@@ -252,15 +252,16 @@ def _marshall_role(gr):
     return {"name": gr.name, "version": version}
 
 
-def _dump_roles_as_human(gathered_roles):
+def _dump_roles_as_human(marshalled_roles):
+    """Dump roles marshalled with _marshall_role to human-readable text."""
     out_lines = []
-    for role_path, roles in gathered_roles.items():
+    for role_path, roles in marshalled_roles.items():
         out_lines.append('# %s' % role_path)
         for gr in roles:
             version = gr['version']
             if version is None:
                 version = "(unknown version)"
-            out_lines.append("- %s, %s" % (gr['name'], version ))
+            out_lines.append("- %s, %s" % (gr['name'], version))
 
     return '\n'.join(out_lines)
 
