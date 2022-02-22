@@ -49,7 +49,7 @@ def human_to_bytes(number, default_unit=None, isbits=False):
         if 'Mb'/'Kb'/... is passed, the ValueError will be rased.
 
     When isbits is True, converts bits from a human-readable format to integer.
-        example: human_to_bytes('1Mb', isbits=True) returns 1048576 (int) -
+        example: human_to_bytes('1Mb', isbits=True) returns 8388608 (int) -
         string bits representation was passed and return as a number or bits.
         The function expects 'b' (lowercase) as a bit identifier, e.g. 'Mb'/'Kb'/etc.
         if 'MB'/'KB'/... is passed, the ValueError will be rased.
