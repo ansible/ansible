@@ -240,7 +240,10 @@ def _dump_roles_as_human(gathered_roles):
     for role_path, roles in gathered_roles.items():
         out_lines.append('# %s' % role_path)
         for gr in roles:
-            out_lines.append("- %s, %s" % (gr['name'], gr.get('version', "(unknown version)")))
+            version = gr['version']
+            if version is None:
+                version = "(unknown version)"
+            out_lines.append("- %s, %s" % (gr['name'], version ))
 
     return '\n'.join(out_lines)
 
