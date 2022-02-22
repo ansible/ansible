@@ -211,7 +211,8 @@ def collect_requirements(
     if virtualenv:
         # sanity tests on Python 2.x install virtualenv when it is too old or is not already installed and the `--requirements` option is given
         # the last version of virtualenv with no dependencies is used to minimize the changes made outside a virtual environment
-        commands.extend(collect_package_install(packages=['virtualenv==16.7.12'], constraints=False))
+        virtualenv_version = '15.2.0' if python.version == '2.6' else '16.7.12'
+        commands.extend(collect_package_install(packages=[f'virtualenv=={virtualenv_version}'], constraints=False))
 
     if coverage:
         commands.extend(collect_package_install(packages=[f'coverage=={COVERAGE_REQUIRED_VERSION}'], constraints=False))
