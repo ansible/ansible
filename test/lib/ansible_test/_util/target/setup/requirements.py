@@ -81,7 +81,7 @@ def bootstrap(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
     pip_version = options['pip_version']
     packages = options['packages']
 
-    url = 'https://ci-files.testing.ansible.com/ansible-test/get-pip-%s.py' % pip_version
+    url = 'https://ansible-ci-files.s3.amazonaws.com/ansible-test/get-pip-%s.py' % pip_version
     cache_path = os.path.expanduser('~/.ansible/test/cache/get_pip_%s.py' % pip_version.replace(".", "_"))
     temp_path = cache_path + '.download'
 
