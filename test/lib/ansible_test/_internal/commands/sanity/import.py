@@ -73,6 +73,10 @@ from ...host_configs import (
     PythonConfig,
 )
 
+from ...venv import (
+    get_virtualenv_version,
+)
+
 
 def _get_module_test(module_restrictions):  # type: (bool) -> t.Callable[[str], bool]
     """Create a predicate which tests whether a path can be used by modules or not."""
@@ -100,9 +104,10 @@ class ImportTest(SanityMultipleVersion):
 
         paths = [target.path for target in targets.include]
 
-        if python.version.startswith('2.'):
+        if python.version.startswith('2.') and (get_virtualenv_version(args, python.path) or (0,)) < (13,):
             # hack to make sure that virtualenv is available under Python 2.x
             # on Python 3.x we can use the built-in venv
+            # version 13+ is required to use the `--no-wheel` option
             try:
                 install_requirements(args, python, virtualenv=True, controller=False)  # sanity (import)
             except PipUnavailableError as ex:
@@ -112,9 +117,9 @@ class ImportTest(SanityMultipleVersion):
 
         messages = []
 
-        for import_type, test, controller in (
-                ('module', _get_module_test(True), False),
-                ('plugin', _get_module_test(False), True),
+        for import_type, test in (
+                ('module', _get_module_test(True)),
+                ('plugin', _get_module_test(False)),
         ):
             if import_type == 'plugin' and python.version in REMOTE_ONLY_PYTHON_VERSIONS:
                 continue
@@ -124,7 +129,7 @@ class ImportTest(SanityMultipleVersion):
             if not data and not args.prime_venvs:
                 continue
 
-            virtualenv_python = create_sanity_virtualenv(args, python, f'{self.name}.{import_type}', ansible=controller, coverage=args.coverage, minimize=True)
+            virtualenv_python = create_sanity_virtualenv(args, python, f'{self.name}.{import_type}', coverage=args.coverage, minimize=True)
 
             if not virtualenv_python:
                 display.warning(f'Skipping sanity test "{self.name}" on Python {python.version} due to missing virtual environment support.')
@@ -143,7 +148,7 @@ class ImportTest(SanityMultipleVersion):
             )
 
             if data_context().content.collection:
-                external_python = create_sanity_virtualenv(args, args.controller_python, self.name, context=self.name)
+                external_python = create_sanity_virtualenv(args, args.controller_python, self.name)
 
                 env.update(
                     SANITY_COLLECTION_FULL_NAME=data_context().content.collection.full_name,
