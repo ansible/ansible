@@ -1,0 +1,12 @@
+jinja2 == 3.0.1
+PyYAML == 5.4.1
+cryptography == 3.3.2
+packaging == 21.0
+resolvelib == 0.5.4
+
+# dependencies
+MarkupSafe == 2.0.1
+cffi == 1.15.0
+pycparser == 2.20
+pyparsing == 2.4.7
+six == 1.16.0
