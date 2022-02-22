@@ -462,9 +462,8 @@ class GalaxyCLI(CLI):
 
         list_parser.add_argument(galaxy_type, help=galaxy_type.capitalize(), nargs='?', metavar=galaxy_type)
 
-        if galaxy_type == 'collection' or galaxy_type == 'role':
-            list_parser.add_argument('--format', dest='output_format', choices=('human', 'yaml', 'json', 'requirements'), default='human',
-                                     help="Format to display the list of collections in.")
+        list_parser.add_argument('--format', dest='output_format', choices=('human', 'yaml', 'json', 'requirements'), default='human',
+                                 help="Format to display the list of collections in.")
 
     def add_search_options(self, parser, parents=None):
         search_parser = parser.add_parser('search', parents=parents,
