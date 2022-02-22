@@ -312,7 +312,12 @@ def get_cryptography_requirements(args, python, python_version):  # type: (Envir
         # pyopenssl 17.5.0 requires cryptography 2.1.4 or later
         pyopenssl = 'pyopenssl < 17.5.0'
 
-    return [cryptography, pyopenssl]
+    requirements = [cryptography, pyopenssl]
+
+    if args.command == 'sanity':
+        requirements.remove(pyopenssl)  # sanity tests do not use pyopenssl
+
+    return requirements
 
 
 def install_command_requirements(args, python_version=None, context=None, enable_pyyaml_check=False):
