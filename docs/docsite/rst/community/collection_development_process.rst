@@ -136,7 +136,7 @@ A single changelog fragment may contain multiple sections but most will only con
   .. code-block:: yaml
 
     bugfixes:
-      - apt_repository - fix crash caused by ``cache.update()`` raising an ``IOError`` due to a timeout in ``apt update`` (https://github.com/ansible/ansible/issues/51995).
+      - apt_repository - fix crash caused by  a timeout. The ``cache.update()`` was raising an ``IOError`` because of a timeout in ``apt update`` (https://github.com/ansible/ansible/issues/51995).
 
 
 **known_issues**
