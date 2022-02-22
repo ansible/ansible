@@ -7,11 +7,11 @@ __metaclass__ = type
 
 import textwrap
 
-from ansible.cli.galaxy import _display_header
+from ansible.cli.galaxy import _format_header
 
 
 def test_display_header_default():
-    out = _display_header('/collections/path', 'h1', 'h2')
+    out = _format_header('/collections/path', 'h1', 'h2')
     assert out == (
         '\n'
         '# /collections/path\n'
@@ -21,7 +21,7 @@ def test_display_header_default():
 
 
 def test_display_header_widths():
-    out = _display_header('/collections/path', 'Collection', 'Version', 18, 18)
+    out = _format_header('/collections/path', 'Collection', 'Version', 18, 18)
     assert out == (
         '\n'
         '# /collections/path\n'
@@ -31,7 +31,7 @@ def test_display_header_widths():
 
 
 def test_display_header_small_widths():
-    out = _display_header('/collections/path', 'Col', 'Ver', 1, 1)
+    out = _format_header('/collections/path', 'Col', 'Ver', 1, 1)
     assert out == textwrap.dedent(
         '\n'
         '# /collections/path\n'

@@ -116,7 +116,7 @@ def with_collection_artifacts_manager(wrapped_method):
     return method_wrapper
 
 
-def _display_header(path, h1, h2, w1=10, w2=7):
+def _format_header(path, h1, h2, w1=10, w2=7):
     return ('\n# {0}\n{1:{cwidth}} {2:{vwidth}}\n{3} {4}'.format(
         path,
         h1,
@@ -128,7 +128,7 @@ def _display_header(path, h1, h2, w1=10, w2=7):
     ))
 
 
-def _display_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwidth=7):
+def _format_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwidth=7):
     return('{fqcn:{cwidth}} {version:{vwidth}}'.format(
         fqcn=to_text(collection.fqcn),
         version=collection.ver,
@@ -212,11 +212,11 @@ def _dump_collections_as_human(gathered_collections):
 
         # Display header
         fqcn_width, version_width = _get_collection_widths(collections)
-        out_lines.append(_display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width))
+        out_lines.append(_format_header(collection_path, 'Collection', 'Version', fqcn_width, version_width))
 
         # Sort collections by the namespace and name
         for collection in sorted(collections, key=to_text):
-            out_lines.append(_display_collection(collection, fqcn_width, version_width))
+            out_lines.append(_format_collection(collection, fqcn_width, version_width))
 
     return '\n'.join(out_lines)
 
