@@ -48,3 +48,4 @@ setuptools < 37 ; python_version == '2.6' # setuptools 37 and later require pyth
 setuptools < 45 ; python_version == '2.7' # setuptools 45 and later require python 3.5 or later
 gssapi < 1.6.0 ; python_version <= '2.7' # gssapi 1.6.0 and later require python 3 or later
 MarkupSafe < 2.0.0 ; python_version < '3.6' # MarkupSafe >= 2.0.0. requires Python >= 3.6
+MarkupSafe < 2.1.0 ; python_version >= '3.6' # MarkupSafe 2.1.0 and later require setuptools 39.2+ or installation from a wheel, which not all environments support
