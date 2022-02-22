@@ -74,7 +74,7 @@ class AnsiblePlugin(ABC):
 
         for deprecation in C.config.DEPRECATED[:]:
             msg = "{0}'s {1} {2}. Alternatives: {2}".format(self._load_name, deprecation[0], deprecation[1]['why'], deprecation[1]['alternatives'])
-            display.deprecated(msg, version=deprecation[1]['version'])
+            display.deprecated(msg, version=deprecation[1]['version'])  # pytlint: ansible-invalid-deprecated-version
             C.config.DEPRECATED.remove(deprecation)
 
     def get_option(self, option, hostvars=None):
