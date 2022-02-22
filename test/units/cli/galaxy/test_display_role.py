@@ -7,10 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-import pytest
-
-from ansible import context
-from ansible.galaxy import api, Galaxy
+from ansible.galaxy import Galaxy
 from ansible.galaxy.role import GalaxyRole
 
 from ansible.cli.galaxy import _dump_roles_as_human, _marshall_role
