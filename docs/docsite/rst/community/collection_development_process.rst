@@ -28,7 +28,7 @@ If you want to contribute a feature or fix a bug in  a collection, you must open
 
 Here's an overview of the PR lifecycle:
 
-* Contributor opens a PR
+* :ref:`Contributor opens a PR <collection_quickstart>`
 * CI runs the test suite
 * Developers, maintainers, community review the PR
 * Contributor addresses any feedback from reviewers
