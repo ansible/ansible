@@ -67,13 +67,13 @@ You can write two different kinds of integration tests:
 
 For examples, see the `integration tests in community.general <https://github.com/ansible-collections/community.general/tree/master/tests/integration/targets/>`_. See also :ref:`testing_integration` for more details.
 
-Since integration tests can install requirements, and set-up, start and stop services, we recommended running them in docker containers or otherwise restricted environments whenever possible. By default, ``ansible-test`` supports Docker images for several operating systems. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/docker.txt>`_ for all options. Use the ``default`` image mainly for platform-independent integration tests, such as those for cloud modules. The following examples use the ``centos8`` image.
+Since integration tests can install requirements, and set-up, start and stop services, we recommended running them in docker containers or otherwise restricted environments whenever possible. By default, ``ansible-test`` supports Docker images for several operating systems. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/docker.txt>`_ for all options. Use the ``default`` image mainly for platform-independent integration tests, such as those for cloud modules. The following examples use the ``fedora35`` image.
 
 To execute all integration tests for a collection:
 
 .. code-block:: shell-session
 
-    ansible-test integration --docker centos8 -v
+    ansible-test integration --docker fedora35 -v
 
 If you want more detailed output, run the command with ``-vvv`` instead of ``-v``. Alternatively, specify ``--retry-on-error`` to automatically re-run failed tests with higher verbosity levels.
 
@@ -81,7 +81,7 @@ To execute only the integration tests in a specific directory:
 
 .. code-block:: shell-session
 
-    ansible-test integration --docker centos8 -v connection_bar
+    ansible-test integration --docker fedora35 -v connection_bar
 
 You can specify multiple target names. Each target name is the name of a directory in ``tests/integration/targets/``.
 
