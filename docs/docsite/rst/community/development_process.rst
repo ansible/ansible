@@ -177,28 +177,75 @@ To create a changelog entry, create a new file with a unique name in the ``chang
 A single changelog fragment may contain multiple sections but most will only contain one section. The toplevel keys (bugfixes, major_changes, and so on) are defined in the `config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ for our `release note tool <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst>`_. Here are the valid sections and a description of each:
 
 **breaking_changes**
-  Changes that break existing playbooks or roles. This includes any change to existing behavior that forces users to update tasks. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+  MUST include changes that break existing playbooks or roles. This includes any change to existing behavior that forces users to update tasks. Breaking changes means the user MUST make a change when they update. Breaking changes MUST only happen in a major release of the collection. Write in present tense and clearly describe the new behavior that the end user must now follow. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+
+  .. code-block:: yaml
+
+    breaking_changes:
+      - ansible-test - automatic installation of requirements for cloud test plugins no longer occurs. The affected test plugins are ``aws``, ``azure``, ``cs``, ``hcloud``, ``nios``, ``opennebula``, ``openshift`` and ``vcenter``. Collections should instead use one of the supported integration test requirements files, such as the ``tests/integration/requirements.txt`` file (https://github.com/ansible/ansible/pull/75605).
+
 
 **major_changes**
-  Major changes to Ansible itself. Generally does not include module or plugin changes. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+  Major changes to ansible-core or a collection. SHOULD NOT include individual module or plugin changes. MUST include non-breaking changes that impact all or most of a collection (for example, updates to support a new SDK version across the collection). Major changes mean the user can CHOOSE to make a change when they update but do not have to. Could be used to announce an important upcoming EOL or breaking change in a future release. (ideally 6 months in advance, if known. See `this example <https://github.com/ansible-collections/community.general/blob/stable-1/CHANGELOG.rst#v1313>`_). Write in present tense and describe what is new. Optionally, include a 'Previously..." sentence to help the user identify where old behavior should now change. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+
+  .. code-block:: yaml
+
+    major_changes:
+      - ansible-test - all cloud plugins which use containers can now be used with all POSIX and Windows hosts. Previously the plugins did not work with Windows at all, and support for hosts created with the ``--remote`` option was inconsistent (https://github.com/ansible/ansible/pull/74216).
 
 **minor_changes**
-  Minor changes to Ansible, modules, or plugins. This includes new features, new parameters added to modules, or behavior changes to existing parameters.
+  Minor changes to ansible-core, modules, or plugins. This includes new parameters added to modules, or non-breaking behavior changes to existing parameters, such as adding additional values to choices[]. Minor changes are enhancements, not bug fixes. Write in present tense.
+
+  .. code-block:: yaml
+
+    minor_changes:
+      - lineinfile - add warning when using an empty regexp (https://github.com/ansible/ansible/issues/29443).
+
 
 **deprecated_features**
-  Features that have been deprecated and are scheduled for removal in a future release. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+  Features that have been deprecated and are scheduled for removal in a future release. Use past tense and include an alternative, where available for what is being deprecated.. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+
+  .. code-block:: yaml
+
+    deprecated_features:
+      - include action - is deprecated in favor of ``include_tasks``, ``import_tasks`` and ``import_playbook`` (https://github.com/ansible/ansible/pull/71262).
+
 
 **removed_features**
-  Features that were previously deprecated and are now removed. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+  Features that were previously deprecated and are now removed. Use past tense and include an alternative, where available for what is being deprecated. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+
+  .. code-block:: yaml
+
+    removed_features:
+      - _get_item() alias - removed from callback plugin base class which had been deprecated in favor of ``_get_item_label()`` (https://github.com/ansible/ansible/pull/70233).
+
 
 **security_fixes**
-  Fixes that address CVEs or resolve security concerns. Include links to CVE information.
+  Fixes that address CVEs or resolve security concerns. MUST use security_fixes for any CVEs. Use present tense. Include links to CVE information.
+
+  .. code-block:: yaml
+
+    security_fixes:
+      - set_options -do not include params in exception when a call to ``set_options`` fails. Additionally, block the exception that is returned from being displayed to stdout. (CVE-2021-3620).
+
 
 **bugfixes**
-  Fixes that resolve issues.
+  Fixes that resolve issues. SHOULD not be used for minor enhancements (use ``minor_change`` instead). Use past tense to describe the problem and present tense to describe the fix.
+
+  .. code-block:: yaml
+
+    bugfixes:
+      - ansible_play_batch - variable included unreachable hosts. Fix now saves unreachable hosts between plays by adding them to the PlayIterator's ``_play._removed_hosts`` (https://github.com/ansible/ansible/issues/66945).
+
 
 **known_issues**
-  Known issues that are currently not fixed or will not be fixed.
+  Known issues that are currently not fixed or will not be fixed. Use present tense and where available, use imperative tense for a workaround.
+
+  .. code-block:: yaml
+
+    known_issues:
+      - ansible-test - tab completion anywhere other than the end of the command with the new composite options provides incorrect results (https://github.com/kislyuk/argcomplete/issues/351).
+
 
 Each changelog entry must contain a link to its issue between parentheses at the end. If there is no corresponding issue, the entry must contain a link to the PR itself.
 
