@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-test - Add constraint for ``MarkupSafe < 2.1.0`` on Python 3.6 and later.
+                   This avoids installation failures when old ``pip`` or ``setuptools`` packages are present.
