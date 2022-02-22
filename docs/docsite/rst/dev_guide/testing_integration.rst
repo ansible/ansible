@@ -72,7 +72,7 @@ outside of those test subdirectories.  They will also not reconfigure or bounce 
 
 .. note:: Running integration tests within containers
 
-   To protect your system from any potential changes caused by integration tests, and to ensure a sensible set of dependencies are available we recommend that you always run integration tests with the ``--docker`` option, for example ``--docker centos8``. See the `list of supported container images <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/docker.txt>`_ for options (the ``default`` image is used for sanity and unit tests, as well as for platform independent integration tests such as those for cloud modules).
+   To protect your system from any potential changes caused by integration tests, and to ensure a sensible set of dependencies are available we recommend that you always run integration tests with the ``--docker`` option, for example ``--docker ubuntu2004``. See the `list of supported container images <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/docker.txt>`_ for options (the ``default`` image is used for sanity and unit tests, as well as for platform independent integration tests such as those for cloud modules).
 
 Run as follows for all POSIX platform tests executed by our CI system in a Fedora 34 container:
 
@@ -177,27 +177,13 @@ For example, to run tests for the ``ping`` module on a Ubuntu 18.04 container:
 Container Images
 ----------------
 
-Python 3
-^^^^^^^^
+Container images are updated regularly. To see the current list of container images:
 
-Most container images are for testing with Python 3:
+.. code-block:: bash
 
-  - alpine3
-  - centos8
-  - fedora33
-  - fedora34
-  - opensuse15
-  - ubuntu1804
-  - ubuntu2004
+  ansible-test integration --help
 
-Python 2
-^^^^^^^^
-
-To test with Python 2 use the following images:
-
-  - centos7
-  - opensuse15py2
-
+The list is under the **target docker images and supported python version** heading.
 
 Legacy Cloud Tests
 ==================
