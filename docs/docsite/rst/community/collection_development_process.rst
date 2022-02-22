@@ -87,7 +87,7 @@ A single changelog fragment may contain multiple sections but most will only con
 
 
 **major_changes**
-  Major changes to ansible-core or a collection. SHOULD not include individual module or plugin changes. MUST include non-breaking changes that impact all or most of a collection (for example, updates to support a new SDK version across the collection). Major changes mean the user can CHOOSE to make a change when they update but do not have to. Could be used to announce an important upcoming EOL or breaking change in a future release. (ideally 6 months in advance, if known. See `this example <https://github.com/ansible-collections/community.general/blob/stable-1/CHANGELOG.rst#v1313>`_). Write in present tense and describe what is new. Optionally, include a 'Previously..." sentence to help the user identify where old behavior should now change. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+  Major changes to ansible-core or a collection. SHOULD NOT include individual module or plugin changes. MUST include non-breaking changes that impact all or most of a collection (for example, updates to support a new SDK version across the collection). Major changes mean the user can CHOOSE to make a change when they update but do not have to. Could be used to announce an important upcoming EOL or breaking change in a future release. (ideally 6 months in advance, if known. See `this example <https://github.com/ansible-collections/community.general/blob/stable-1/CHANGELOG.rst#v1313>`_). Write in present tense and describe what is new. Optionally, include a 'Previously..." sentence to help the user identify where old behavior should now change. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
 
   .. code-block:: yaml
 
@@ -95,7 +95,7 @@ A single changelog fragment may contain multiple sections but most will only con
       - bitbucket_* modules - client_id is no longer marked as ``no_log=true``. If you relied on its value not showing up in logs and output, mark the whole tasks with ``no_log: true`` (https://github.com/ansible-collections/community.general/pull/2045).
 
 **minor_changes**
-  Minor changes to ansible-core, modules, or plugins. This includes new parameters added to modules, or non-breaking behavior changes to existing parameters, such as adding additional values to choices[]. Minor changes are enhancements, not bug fixes. Write in present tense.
+  Minor changes to ansible-core, modules, or plugins. This includes new parameters added to modules, or non-breaking behavior changes to existing parameters, such as adding new values to choices[]. Minor changes are enhancements, not bug fixes. Write in present tense.
 
   .. code-block:: yaml
 
@@ -104,7 +104,7 @@ A single changelog fragment may contain multiple sections but most will only con
 
 
 **deprecated_features**
-  Features that have been deprecated and are scheduled for removal in a future release. Use past tense and include an alternative, where available for what is being deprecated.. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+  Features that have been deprecated and are scheduled for removal in a future release. Write in past tense. Include an alternative, where available, for the feature being deprecated. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
 
   .. code-block:: yaml
 
@@ -113,7 +113,7 @@ A single changelog fragment may contain multiple sections but most will only con
 
 
 **removed_features**
-  Features that were previously deprecated and are now removed. Use past tense and include an alternative, where available for what is being deprecated. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+  Features that were previously deprecated and are now removed. Write in past tense. Include an alternative, where available, for the feature being deprecated. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
 
   .. code-block:: yaml
 
@@ -122,7 +122,7 @@ A single changelog fragment may contain multiple sections but most will only con
 
 
 **security_fixes**
-  Fixes that address CVEs or resolve security concerns. MUST use security_fixes for any CVEs. Use present tense. Include links to CVE information.
+  Fixes that address CVEs or resolve security concerns. MUST use security_fixes for any CVEs. Write in present tense. Include links to CVE information.
 
   .. code-block:: yaml
 
@@ -131,7 +131,7 @@ A single changelog fragment may contain multiple sections but most will only con
 
 
 **bugfixes**
-  Fixes that resolve issues. SHOULD not be used for minor enhancements (use ``minor_change`` instead). Use past tense to describe the problem and present tense to describe the fix.
+  Fixes that resolve issues. SHOULD NOT be used for minor enhancements (use ``minor_change`` instead). Write in past tense to describe the problem and present tense to describe the fix.
 
   .. code-block:: yaml
 
@@ -140,12 +140,12 @@ A single changelog fragment may contain multiple sections but most will only con
 
 
 **known_issues**
-  Known issues that are currently not fixed or will not be fixed. Use present tense and where available, use imperative tense for a workaround.
+  Known issues that are currently not fixed or will not be fixed. Write in present tense to describe the problem and in imperative tense to describe any available workaround.
 
   .. code-block:: yaml
 
     known_issues:
-      - idrac_user - module may error out with the message unable to perform the import or export operation because there are pending attribute changes or a configuration job is in progress. Wait for the job to complete and run the task again.(https://github.com/dell/dellemc-openmanage-ansible-modules/pull/303).
+      - idrac_user - module may error out with the message ``unable to perform the import or export operation`` because there are pending attribute changes or a configuration job is in progress. Wait for the job to complete and run the task again.(https://github.com/dell/dellemc-openmanage-ansible-modules/pull/303).
 
 
 
