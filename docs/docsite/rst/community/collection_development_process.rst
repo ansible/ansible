@@ -71,35 +71,83 @@ Creating a changelog fragment
 
 A basic changelog fragment is a ``.yaml`` or ``.yml`` file placed in the ``changelogs/fragments/`` directory.  Each file contains a yaml dict with keys like ``bugfixes`` or ``major_changes`` followed by a list of changelog entries of bugfixes or features.  Each changelog entry is rst embedded inside of the yaml file which means that certain constructs would need to be escaped so they can be interpreted by rst and not by yaml (or escaped for both yaml and rst if you prefer).  Each PR **must** use a new fragment file rather than adding to an existing one, so we can trace the change back to the PR that introduced it.
 
-PRs which add a new module or plugin do not necessarily need a changelog fragment. See the previous section :ref:`community_changelogs`. Also see the next section :ref:`changelogs_how_to_format` for the precise format changelog fragments should have.
+PRs which add a new module or plugin do not necessarily need a changelog fragment. See :ref:`community_changelogs`. Also see :ref:`changelogs_how_to_format` for the precise format changelog fragments should have.
 
 To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory of the corresponding repository. The file name should include the PR number and a description of the change. It must end with the file extension ``.yaml`` or ``.yml``. For example: ``40696-user-backup-shadow-file.yaml``
 
 A single changelog fragment may contain multiple sections but most will only contain one section. The toplevel keys (bugfixes, major_changes, and so on) are defined in the `config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ for our `release note tool <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst>`_. Here are the valid sections and a description of each:
 
 **breaking_changes**
-  Changes that break existing playbooks or roles. This includes any change to existing behavior that forces users to update tasks. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+  MUST include changes that break existing playbooks or roles. This includes any change to existing behavior that forces users to update tasks. Breaking changes means the user MUST make a change when they update. Breaking changes MUST only happen in a major release of the collection. Write in present tense and clearly describe the new behavior that the end user must now follow. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+
+  .. code-block:: yaml
+
+    breaking_changes:
+      - ec2_instance - instance wait for state behavior has changed. If plays require the old behavior of waiting for the instance monitoring status to become OK when launching a new instance, the action will need to specify ``state: started`` (https://github.com/ansible-collections/amazon.aws/pull/481).
+
 
 **major_changes**
-  Major changes to Ansible itself. Generally does not include module or plugin changes. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+  Major changes to ansible-core or a collection. SHOULD NOT include individual module or plugin changes. MUST include non-breaking changes that impact all or most of a collection (for example, updates to support a new SDK version across the collection). Major changes mean the user can CHOOSE to make a change when they update but do not have to. Could be used to announce an important upcoming EOL or breaking change in a future release. (ideally 6 months in advance, if known. See `this example <https://github.com/ansible-collections/community.general/blob/stable-1/CHANGELOG.rst#v1313>`_). Write in present tense and describe what is new. Optionally, include a 'Previously..." sentence to help the user identify where old behavior should now change. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+
+  .. code-block:: yaml
+
+    major_changes:
+      - bitbucket_* modules - client_id is no longer marked as ``no_log=true``. If you relied on its value not showing up in logs and output, mark the whole tasks with ``no_log: true`` (https://github.com/ansible-collections/community.general/pull/2045).
 
 **minor_changes**
-  Minor changes to Ansible, modules, or plugins. This includes new features, new parameters added to modules, or behavior changes to existing parameters.
+  Minor changes to ansible-core, modules, or plugins. This includes new parameters added to modules, or non-breaking behavior changes to existing parameters, such as adding new values to choices[]. Minor changes are enhancements, not bug fixes. Write in present tense.
+
+  .. code-block:: yaml
+
+    minor_changes:
+      - nmcli - adds ``routes6`` and ``route_metric6`` parameters for supporting IPv6 routes (https://github.com/ansible-collections/community.general/issues/4059).
+
 
 **deprecated_features**
-  Features that have been deprecated and are scheduled for removal in a future release. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+  Features that have been deprecated and are scheduled for removal in a future release. Write in past tense. Include an alternative, where available, for the feature being deprecated. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+
+  .. code-block:: yaml
+
+    deprecated_features:
+      - mail callback plugin - not specifying ``sender`` is deprecated and will be disallowed in ``community.general`` 6.0.0 (https://github.com/ansible-collections/community.general/pull/4140).
+
 
 **removed_features**
-  Features that were previously deprecated and are now removed. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+  Features that were previously deprecated and are now removed. Write in past tense. Include an alternative, where available, for the feature being deprecated. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+
+  .. code-block:: yaml
+
+    removed_features:
+      - acme_account_facts - the deprecated redirect has been removed. Use ``community.crypto.acme_account_info`` instead (https://github.com/ansible-collections/community.crypto/pull/290).
+
 
 **security_fixes**
-  Fixes that address CVEs or resolve security concerns. Include links to CVE information.
+  Fixes that address CVEs or resolve security concerns. MUST use security_fixes for any CVEs. Write in present tense. Include links to CVE information.
+
+  .. code-block:: yaml
+
+    security_fixes:
+      - win_psexec - ensure password is masked in ``psexec_``command return result (https://github.com/ansible-collections/community.windows/issues/43).
+
 
 **bugfixes**
-  Fixes that resolve issues.
+  Fixes that resolve issues. SHOULD NOT be used for minor enhancements (use ``minor_change`` instead). Write in past tense to describe the problem and present tense to describe the fix.
+
+  .. code-block:: yaml
+
+    bugfixes:
+      - apt_repository - fix crash caused by  a timeout. The ``cache.update()`` was raising an ``IOError`` because of a timeout in ``apt update`` (https://github.com/ansible/ansible/issues/51995).
+
 
 **known_issues**
-  Known issues that are currently not fixed or will not be fixed.
+  Known issues that are currently not fixed or will not be fixed. Write in present tense to describe the problem and in imperative tense to describe any available workaround.
+
+  .. code-block:: yaml
+
+    known_issues:
+      - idrac_user - module may error out with the message ``unable to perform the import or export operation`` because there are pending attribute changes or a configuration job is in progress. Wait for the job to complete and run the task again.(https://github.com/dell/dellemc-openmanage-ansible-modules/pull/303).
+
+
 
 Each changelog entry must contain a link to its issue between parentheses at the end. If there is no corresponding issue, the entry must contain a link to the PR itself.
 
