@@ -346,26 +346,25 @@ def verify_file_signatures(fqcn, manifest_file, detached_signatures, keyring, re
             if successful == required_successful_count:
                 break
 
-    if detached_signatures:
-        # TODO: bikeshed finer points
-        # Should skipped errors be treated as 'success'? Currently, skipped errors are ignored, not successful or failed.
-        # If yes, and all errors were ignored and there were no truly successful signatures, we may want (?) to warn + add a toggle to make it an error.
-        if required_successful_count == -1:
-            verified = not error_messages and successful
-            if not verified:
-                display.vvvv(f"Signature verification failed for '{fqcn}': failed signatures or no successful signatures")
-        else:
-            verified = required_successful_count == successful
-            if not verified:
-                display.vvvv(f"Signature verification failed for '{fqcn}': fewer successful signatures than required")
+    # If a signature fails verification but all the gpg errors are ignored, it is not part of the failed or successful count.
+    if required_successful_count == -1:
+        verified = not error_messages
         if not verified:
-            for msg in error_messages:
-                display.vvvv(msg)
-        return verified
-    # FIXME: If there are no signatures, should this return False because required_successful_count was not met?
-    # Would error if the keyring is configured and there are no signatures.
-    # return False
-    return True
+            display.vvvv(f"Signature verification failed for '{fqcn}': failed signatures or no successful signatures")
+        # elif not successful and detached_signatures:
+        #     warn because no signatures were successful but the status codes were ignored?
+        # elif not detached_signatures:
+        #     warn because no signatures were found but requested 'all'? none == all?
+    else:
+        verified = required_successful_count == successful
+        # if not detached_signatures:
+        #    warn instead of error if no signatures are found?
+        if not verified:
+            display.vvvv(f"Signature verification failed for '{fqcn}': fewer successful signatures than required")
+    if not verified:
+        for msg in error_messages:
+            display.vvvv(msg)
+    return verified
 
 
 def verify_file_signature(manifest_file, detached_signature, keyring, ignore_signature_errors):

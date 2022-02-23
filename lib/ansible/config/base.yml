@@ -1461,7 +1461,6 @@ GALAXY_GPG_KEYRING:
   description:
   - Configure the keyring used for GPG signature verification during collection installation and verification.
   version_added: '2.13'
-# TODO: bikeshed
 GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES:
   type: list
   env:
@@ -1491,7 +1490,6 @@ GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES:
   - KEYEXPIRED
   - KEYREVOKED
   - NO_SECKEY
-# TODO: bikeshed
 GALAXY_REQUIRED_VALID_SIGNATURE_COUNT:
   type: int
   default: 1
