@@ -14,7 +14,6 @@ from .init import (
 from .util import (
     ApplicationError,
     display,
-    MAXFD,
 )
 
 from .delegation import (
@@ -62,7 +61,6 @@ def main():
         configure_timeout(config)
 
         display.info('RLIMIT_NOFILE: %s' % (CURRENT_RLIMIT_NOFILE,), verbosity=2)
-        display.info('MAXFD: %d' % MAXFD, verbosity=2)
 
         delegate_args = None
         target_names = None
