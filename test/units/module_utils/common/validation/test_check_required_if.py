@@ -53,7 +53,7 @@ def test_check_required_if_missing_multiple():
     assert to_native(e.value) == expected
 
 
-def test_check_required_if_missing_multiple():
+def test_check_required_if_missing_multiple_with_context():
     arguments_terms = [["state", "present", ("path", "owner")]]
     params = {
         "state": "present",
