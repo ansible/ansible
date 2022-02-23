@@ -26,6 +26,7 @@ import pprint
 import sys
 import threading
 import time
+import traceback
 
 from collections import deque
 from multiprocessing import Lock
@@ -42,7 +43,7 @@ from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.executor.task_queue_manager import CallbackSend
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.handler import Handler
@@ -1037,10 +1038,14 @@ class StrategyBase:
             #        but this may take some work in the iterator and gets tricky when
             #        we consider the ability of meta tasks to flush handlers
             for handler in handler_block.block:
-                if handler.notified_hosts:
-                    result = self._do_handler_run(handler, handler.get_name(), iterator=iterator, play_context=play_context)
-                    if not result:
-                        break
+                try:
+                    if handler.notified_hosts:
+                        result = self._do_handler_run(handler, handler.get_name(), iterator=iterator, play_context=play_context)
+                        if not result:
+                            break
+                except AttributeError as e:
+                    display.vvv(traceback.format_exc())
+                    raise AnsibleParserError("Invalid handler definition for '%s'" % (handler.get_name()), orig_exc=e)
         return result
 
     def _do_handler_run(self, handler, handler_name, iterator, play_context, notified_hosts=None):
