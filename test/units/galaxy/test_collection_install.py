@@ -17,7 +17,7 @@ import tarfile
 import yaml
 
 from io import BytesIO, StringIO
-from units.compat.mock import MagicMock
+from mock import MagicMock
 
 import ansible.module_utils.six.moves.urllib.error as urllib_error
 

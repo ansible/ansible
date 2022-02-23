@@ -25,8 +25,8 @@ import pytest
 
 from units.compat import mock
 from units.compat import unittest
-from units.compat.mock import MagicMock
-from units.compat.mock import patch
+from mock import MagicMock
+from mock import patch
 from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ConnectionBase

@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.compat import unittest
-from units.compat.mock import MagicMock
+from mock import MagicMock
 
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.playbook import Playbook
