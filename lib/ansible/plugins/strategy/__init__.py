@@ -1054,8 +1054,9 @@ class StrategyBase(metaclass=abc.ABCMeta):
         elif meta_action == 'clear_host_errors':
             if _evaluate_conditional(target_host):
                 for host in self._inventory.get_hosts(iterator._play.hosts):
-                    # if self._tqm._failed_hosts.get(host.name):
-                    #     iterator.set_run_state_for_host(host.name, IteratingStates.HANDLERS)
+                    if self._tqm._failed_hosts.get(host.name):
+                        iterator.set_run_state_for_host(host.name, IteratingStates.HANDLERS)
+                        iterator.host_states[host.name].pre_flushing_run_state = IteratingStates.COMPLETE
                     self._tqm._failed_hosts.pop(host.name, False)
                     self._tqm._unreachable_hosts.pop(host.name, False)
                     iterator.set_fail_state_for_host(host.name, FailedStates.NONE)

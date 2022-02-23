@@ -170,7 +170,7 @@ class StrategyModule(StrategyBase):
                 s = iterator.get_active_state(state)
                 if task is None:
                     continue
-                if (s.run_state == cur_state and s.cur_block == cur_block) or state.run_state == IteratingStates.HANDLERS:
+                if (s.run_state == cur_state and s.cur_block == cur_block):# or state.run_state == IteratingStates.HANDLERS:
                     iterator.set_state_for_host(host.name, state)
                     rvals.append((host, task))
                 else:
