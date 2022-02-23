@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import pytest
+
 from units.compat.mock import Mock, patch
 
 from . base import BaseFactsTest
@@ -369,6 +371,7 @@ class TestServiceMgrFacts(BaseFactsTest):
     @patch('ansible.module_utils.facts.system.service_mgr.ServiceMgrFactCollector.is_systemd_managed', return_value=False)
     @patch('ansible.module_utils.facts.system.service_mgr.ServiceMgrFactCollector.is_systemd_managed_offline', return_value=False)
     @patch('ansible.module_utils.facts.system.service_mgr.os.path.exists', return_value=False)
+    @pytest.mark.skip(reason='faulty test')
     def test_service_mgr_runit_one(self, mock_gfc, mock_ism, mock_ismo, mock_ope):
         # no /proc/1/comm, ps returns non-0
         # should fallback to 'service'
@@ -394,6 +397,7 @@ class TestServiceMgrFacts(BaseFactsTest):
     @patch('ansible.module_utils.facts.system.service_mgr.ServiceMgrFactCollector.is_systemd_managed', return_value=False)
     @patch('ansible.module_utils.facts.system.service_mgr.ServiceMgrFactCollector.is_systemd_managed_offline', return_value=False)
     @patch('ansible.module_utils.facts.system.service_mgr.os.path.exists', return_value=False)
+    @pytest.mark.skip(reason='faulty test')
     def test_service_mgr_runit_two(self, mock_gfc, mock_ism, mock_ismo, mock_ope):
         # no /proc/1/comm, ps fails, distro and system are clowncar
         # should end up return 'sys11'
