@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.compat import unittest
-from units.compat.mock import Mock, patch
+from mock import Mock, patch
 
 
 class BaseFactsTest(unittest.TestCase):

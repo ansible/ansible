@@ -3,7 +3,8 @@ __metaclass__ = type
 
 import os
 
-from units.compat import mock
+import mock
+
 from units.compat import unittest
 
 from ansible.modules import apt_key

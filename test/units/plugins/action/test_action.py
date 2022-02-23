@@ -25,7 +25,7 @@ import re
 
 from ansible import constants as C
 from units.compat import unittest
-from units.compat.mock import patch, MagicMock, mock_open
+from mock import patch, MagicMock, mock_open
 
 from ansible.errors import AnsibleError, AnsibleAuthenticationFailure
 from ansible.module_utils.six import text_type

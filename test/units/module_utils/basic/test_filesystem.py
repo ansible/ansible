@@ -9,7 +9,7 @@ __metaclass__ = type
 
 from units.mock.procenv import ModuleTestCase
 
-from units.compat.mock import patch, MagicMock
+from mock import patch, MagicMock
 from ansible.module_utils.six.moves import builtins
 
 realimport = builtins.__import__

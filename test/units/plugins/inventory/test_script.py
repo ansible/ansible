@@ -22,11 +22,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import pytest
+import mock
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.loader import PluginLoader
-from units.compat import mock
 from units.compat import unittest
 from ansible.module_utils._text import to_bytes, to_native
 

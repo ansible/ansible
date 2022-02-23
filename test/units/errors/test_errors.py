@@ -21,7 +21,7 @@ __metaclass__ = type
 
 
 from units.compat import unittest
-from units.compat.mock import mock_open, patch
+from mock import mock_open, patch
 from ansible.errors import AnsibleError
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 

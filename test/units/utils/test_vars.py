@@ -22,7 +22,9 @@ __metaclass__ = type
 
 from collections import defaultdict
 
-from units.compat import mock, unittest
+import mock
+
+from units.compat import unittest
 from ansible.errors import AnsibleError
 from ansible.utils.vars import combine_vars, merge_hash
 

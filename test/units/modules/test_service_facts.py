@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from units.compat import unittest
-from units.compat.mock import patch
+from mock import patch
 
 from ansible.module_utils import basic
 from ansible.modules.service_facts import AIXScanService
