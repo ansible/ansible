@@ -36,7 +36,7 @@ def main():
             constraints = raw_constraints.strip()
             comment = requirement.group('comment')
 
-            is_pinned = re.search('^ *== *[0-9.]+(\\.post[0-9]+)?$', constraints)
+            is_pinned = re.search('^ *== *[0-9.]+(\\.post[0-9]+|a[0-9]+|b[0-9]+)?$', constraints)
 
             if is_sanity:
                 sanity = frozen_sanity.setdefault(name, [])
