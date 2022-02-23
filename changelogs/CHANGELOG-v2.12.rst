@@ -5,6 +5,53 @@ ansible-core 2.12 "Dazed and Confused" Release Notes
 .. contents:: Topics
 
 
+v2.12.3rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2022-02-23
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- The collection loader now reports a Python warning if an attempt is made to install the Ansible collection loader a second time. Previously this condition was reported using an Ansible warning.
+- ansible-test - Installation of ``cryptography`` is no longer version constrained when ``openssl`` 1.1.0 or later is installed.
+- ansible-test - Requirements for the plugin import test are now frozen.
+- ansible-test - The ``pip`` and ``wheel`` packages are removed from all sanity test virtual environments after installation completes to reduce their size. Previously they were only removed from the environments used for the ``import`` sanity test.
+- ansible-test - The hash for all managed sanity test virtual environments has changed. Containers that include ``ansible-test sanity --prime-venvs`` will need to be rebuilt to continue using primed virtual environments.
+- ansible-test - Update ``pip`` used to bootstrap remote FreeBSD instances from version 20.3.4 to 21.3.1.
+- ansible-test - Update the ``alpine`` container to version 3.3.0. This updates the base image from 3.14.2 to 3.15.0, which includes support for installing binary wheels using pip.
+- ansible-test - Update the ``galaxy`` test plugin to get its container from a copy on quay.io.
+- ansible-test - Update the ``openshift`` test plugin to get its container from a copy on quay.io.
+- junit callback - Add support for replacing the directory portion of out-of-tree relative task paths with a placeholder.
+
+Bugfixes
+--------
+
+- ansible-test - All virtual environments managed by ansible-test are marked as usable after being bootstrapped, to avoid errors caused by use of incomplete environments. Previously this was only done for sanity tests. Existing environments from previous versions of ansible-test will be recreated on demand due to lacking the new marker.
+- ansible-test - Fix the ``validate-modules`` sanity test to avoid double-loading the collection loader and possibly failing on import of the ``packaging`` module.
+- ansible-test - Import ``yaml.cyaml.CParser`` instead of ``_yaml.CParser`` in the ``yamllint`` sanity test.
+- ansible-test - Replace the directory portion of out-of-tree paths in JUnit files from integration tests with the ``out-of-tree:`` prefix.
+- ansible-test - Sanity tests run with the ``--requirements` option for Python 2.x now install ``virtualenv`` when it is missing or too old. Previously it was only installed if missing. Version 16.7.12 is now installed instead of the latest version on Python 2.7.
+- ansible-test - The ``import`` sanity test no longer reports errors about ``packaging`` being missing when testing collections.
+- ansible-test - Update the ``default`` containers to version 4.2.0.
+- ansible-test - Use https://ci-files.testing.ansible.com/ for instance bootstrapping instead of an S3 endpoint.
+- ansible-test - Use relative paths in JUnit files generated during integration test runs.
+- ansible-test - Virtual environments managed by ansible-test now use consistent versions of ``pip``, ``setuptools`` and ``wheel``. This avoids issues with virtual environments containing outdated or dysfunctional versions of these tools. The initial bootstrapping of ``pip`` is done by ansible-test from an HTTPS endpoint instead of creating the virtual environment with it already present.
+- cleaning facts will now only warn about the variable name and not post the content, which can be undesireable to disclose
+- correctly inherit vars from parent in block (https://github.com/ansible/ansible/issues/75286).
+- gather_facts action now handles the move of base connection plugin types into collections to add/prevent subset argument correctly
+- junit callback - Fix traceback during automatic fact gathering when using relative paths.
+- junit callback - Fix unicode error when handling non-ASCII task paths.
+- ssh connection now uses more correct host source as play_context can ignore loop/delegation variations.
+- task_executor reverts the change to push facts into delegated vars on loop finalization as result managing code already handles this and was duplicating effort to wrong result.
+- template lookup - restore inadvertently deleted default for ``convert_data`` (https://github.com/ansible/ansible/issues/77004)
+- unarchive - Make extraction work when the LANGUAGE environment variable is set to a non-English locale.
+
 v2.12.2
 =======
 
