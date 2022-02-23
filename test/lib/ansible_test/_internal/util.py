@@ -52,12 +52,6 @@ TValue = t.TypeVar('TValue')
 
 PYTHON_PATHS = {}  # type: t.Dict[str, str]
 
-try:
-    # noinspection PyUnresolvedReferences
-    MAXFD = subprocess.MAXFD
-except AttributeError:
-    MAXFD = -1
-
 COVERAGE_CONFIG_NAME = 'coveragerc'
 
 ANSIBLE_TEST_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
