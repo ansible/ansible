@@ -118,7 +118,7 @@ class TestModArgsDwim:
 
         assert err.value.args[0] == msg
 
-    def test_multiple_actions(self):
+    def test_multiple_actions_ping_shell(self):
         args_dict = {'ping': 'data=hi', 'shell': 'echo hi'}
         m = ModuleArgsParser(args_dict)
         with pytest.raises(AnsibleParserError) as err:
