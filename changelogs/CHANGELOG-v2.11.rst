@@ -5,6 +5,39 @@ ansible-core 2.11 "Hey Hey, What Can I Do" Release Notes
 .. contents:: Topics
 
 
+v2.11.9rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2022-02-23
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Integration and unit tests no longer install ``cryptography`` if it is already installed.
+- ansible-test - Update the ``galaxy`` test plugin to get its container from a copy on quay.io.
+- ansible-test - Update the ``openshift`` test plugin to get its container from a copy on quay.io.
+- junit callback - Add support for replacing the directory portion of out-of-tree relative task paths with a placeholder.
+
+Bugfixes
+--------
+
+- ansible-test - Add constraint for ``MarkupSafe < 2.1.0`` on Python 3.6 and later. This avoids installation failures when old ``pip`` or ``setuptools`` packages are present.
+- ansible-test - Install ``pyopenssl`` when installing ``cryptography`` to make sure a compatible version is used (except for sanity tests).
+- ansible-test - Replace the directory portion of out-of-tree paths in JUnit files from integration tests with the ``out-of-tree:`` prefix.
+- ansible-test - Update unit tests to use the ``--forked`` option instead of the deprecated ``--boxed`` option.
+- ansible-test - Use relative paths in JUnit files generated during integration test runs.
+- cleaning facts will now only warn about the variable name and not post the content, which can be undesireable to disclose
+- correctly inherit vars from parent in block (https://github.com/ansible/ansible/issues/75286).
+- gather_facts action now handles the move of base connection plugin types into collections to add/prevent subset argument correctly
+- junit callback - Fix traceback during automatic fact gathering when using relative paths.
+- junit callback - Fix unicode error when handling non-ASCII task paths.
+- ssh connection now uses more correct host source as play_context can ignore loop/delegation variations.
+
 v2.11.8
 =======
 
