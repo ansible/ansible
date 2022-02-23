@@ -1,0 +1,2 @@
+bugfixes:
+  - Detect package manager for Amazon Linux 2022 (AL2022) as dnf
