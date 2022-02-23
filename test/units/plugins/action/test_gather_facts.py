@@ -19,7 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.compat import unittest
-from units.compat.mock import MagicMock, patch
+from mock import MagicMock, patch
 
 from ansible import constants as C
 from ansible.playbook.task import Task

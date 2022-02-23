@@ -12,7 +12,7 @@ import os
 
 import pytest
 
-from units.compat.mock import MagicMock
+from mock import MagicMock
 from ansible.module_utils import basic
 from ansible.module_utils.api import basic_auth_argument_spec, rate_limit_argument_spec, retry_argument_spec
 from ansible.module_utils.common import warnings

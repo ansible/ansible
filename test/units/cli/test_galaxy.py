@@ -41,7 +41,7 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
 from units.compat import unittest
-from units.compat.mock import patch, MagicMock
+from mock import patch, MagicMock
 
 
 @pytest.fixture(autouse='function')

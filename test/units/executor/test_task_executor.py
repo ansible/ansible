@@ -22,7 +22,7 @@ __metaclass__ = type
 import mock
 
 from units.compat import unittest
-from units.compat.mock import patch, MagicMock
+from mock import patch, MagicMock
 from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor, remove_omit
 from ansible.plugins.loader import action_loader, lookup_loader

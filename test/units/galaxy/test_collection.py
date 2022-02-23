@@ -15,7 +15,7 @@ import uuid
 
 from hashlib import sha256
 from io import BytesIO
-from units.compat.mock import MagicMock, mock_open, patch
+from mock import MagicMock, mock_open, patch
 
 import ansible.constants as C
 from ansible import context

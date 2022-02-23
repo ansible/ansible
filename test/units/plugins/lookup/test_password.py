@@ -32,7 +32,7 @@ import pytest
 from units.mock.loader import DictDataLoader
 
 from units.compat import unittest
-from units.compat.mock import mock_open, patch
+from mock import mock_open, patch
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import builtins

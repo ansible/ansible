@@ -26,7 +26,7 @@ import pytest
 
 # for testing
 from units.compat import unittest
-from units.compat.mock import patch, MagicMock, mock_open, Mock
+from mock import patch, MagicMock, mock_open, Mock
 
 from ansible.module_utils.facts.sysctl import get_sysctl
 

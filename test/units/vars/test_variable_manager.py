@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 
 from units.compat import unittest
-from units.compat.mock import MagicMock, patch
+from mock import MagicMock, patch
 from ansible.inventory.manager import InventoryManager
 from ansible.module_utils.six import iteritems
 from ansible.playbook.play import Play

@@ -16,7 +16,7 @@ import tempfile
 import time
 
 from io import BytesIO, StringIO
-from units.compat.mock import MagicMock
+from mock import MagicMock
 
 import ansible.constants as C
 from ansible import context
