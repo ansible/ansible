@@ -11,7 +11,7 @@ import tempfile
 
 import pytest
 
-from units.compat.mock import patch, MagicMock
+from mock import patch, MagicMock
 from ansible.modules import async_wrapper
 
 from pprint import pprint

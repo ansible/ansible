@@ -8,7 +8,7 @@ __metaclass__ = type
 
 import pytest
 
-from units.compat.mock import Mock
+from mock import Mock
 
 
 @pytest.fixture

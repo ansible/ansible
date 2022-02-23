@@ -30,7 +30,7 @@ from binascii import hexlify
 import pytest
 
 from units.compat import unittest
-from units.compat.mock import patch, MagicMock
+from mock import patch, MagicMock
 
 from ansible import errors
 from ansible.module_utils import six
