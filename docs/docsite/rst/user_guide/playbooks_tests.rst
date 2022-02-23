@@ -159,7 +159,7 @@ The ``version`` test accepts the following operators
 
     <, lt, <=, le, >, gt, >=, ge, ==, =, eq, !=, <>, ne
 
-This test also accepts a 3rd parameter, ``strict`` which defines if strict version parsing as defined by ``distutils.version.StrictVersion`` should be used.  The default is ``False`` (using ``distutils.version.LooseVersion``), ``True`` enables strict version parsing
+This test also accepts a 3rd parameter, ``strict`` which defines if strict version parsing as defined by ``ansible.module_utils.compat.version.StrictVersion`` should be used.  The default is ``False`` (using ``ansible.module_utils.compat.version.LooseVersion``), ``True`` enables strict version parsing
 
 .. code-block:: yaml+jinja
 
