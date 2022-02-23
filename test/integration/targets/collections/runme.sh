@@ -100,6 +100,9 @@ ansible-playbook inventory_test.yml -i a.statichost.yml -i redirected.statichost
 # test plugin loader redirect_list
 ansible-playbook test_redirect_list.yml -v "$@"
 
+# test ansiballz cache dupe
+ansible-playbook ansiballz_dupe/test_ansiballz_cache_dupe_shortname.yml -v "$@"
+
 # test adjacent with --playbook-dir
 export ANSIBLE_COLLECTIONS_PATH=''
 ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED=1 ansible-inventory --list --export --playbook-dir=. -v "$@"
