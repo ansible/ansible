@@ -82,7 +82,7 @@ class ValidateModulesTest(SanitySingleVersion):
 
         cmd = [
             python.path,
-            os.path.join(SANITY_ROOT, 'validate-modules', 'validate-modules'),
+            os.path.join(SANITY_ROOT, 'validate-modules', 'validate.py'),
             '--format', 'json',
             '--arg-spec',
         ] + paths
