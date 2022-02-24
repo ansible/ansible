@@ -1,0 +1,2 @@
+bugfixes:
+  - extend timeout for ansible-galaxy when communicating with the galaxy server api, and apply it to all interactions with the api
