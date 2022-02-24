@@ -49,7 +49,7 @@ or as a group variable in inventory:
 
 .. seealso::
 
-  :ref:`ansible_collections.ansible.builtin.ssh_connection`
+  :ref:`ssh_connection`
       Details on the ``remote_user`` keyword and ``ansible_user`` variable.
   :ref:`general_precedence_rules`
     Details on Ansible precedence rules.
