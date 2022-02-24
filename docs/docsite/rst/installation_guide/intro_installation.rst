@@ -264,6 +264,15 @@ To configure the PPA on your machine and install Ansible run these commands:
 
 .. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties". You may want to use ``apt-get`` instead of ``apt`` in older versions. Also, be aware that only newer distributions (in other words, 18.04, 18.10, and so on) have a ``-u`` or ``--update`` flag, so adjust your script accordingly.
 
+If you are reinstalling Ansible, you must first fully uninstall all Ansible packages.
+The following command uninstalls ``ansible-package`` and the other packages that were installed with Ansible:
+
+.. code-block:: bash
+
+    $ sudo apt autoremove ansible
+
+The ``sudo apt remove ansible`` command only removes ``ansible-package``.
+
 Installing Ansible on Debian
 ----------------------------
 
