@@ -86,7 +86,7 @@ General channels
 
 The clickable links will take you directly to the relevant Matrix room in your browser; room/channel information is also given for use in other clients:
 
-- `Community social room and posting news for Bullhorn newsletter <https://matrix.to:/#/#social:ansible.im>`_ - ``Matrix:#social:ansible.im | IRC: #ansible-social``
+- `Community social room and posting news for the Bullhorn newsletter <https://matrix.to:/#/#social:ansible.im>`_ - ``Matrix:#social:ansible.im | IRC: #ansible-social``
 - `General usage and support questions <https://matrix.to:/#/#users:ansible.im>`_ - ``Matrix: #users:ansible.im | IRC: #ansible``
 - `Discussions on developer topics and code related to features or bugs <https://matrix.to/#/#devel:ansible.im>`_ - ``Matrix: #devel:ansible.im | IRC: #ansible-devel``
 - `Discussions on community and collections related topics <https://matrix.to:/#/#community:ansible.im>`_ - ``Matrix: #community:ansible.im | IRC: #ansible-community``
