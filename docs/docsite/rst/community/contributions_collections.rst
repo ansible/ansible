@@ -9,6 +9,7 @@ Ansible Collections Contributor Guide
 
    collection_development_process
    reporting_collections
+   create_pr_quick_start
    documentation_contributions
    maintainers
    contributing_maintained_collections
