@@ -651,10 +651,11 @@ def _validate_argument_values(argument_spec, parameters, options_context=None, e
             if param in parameters:
                 # Allow one or more when type='list' param with choices
                 if isinstance(parameters[param], list):
-                    diff_list = ", ".join([item for item in parameters[param] if item not in choices])
+                    diff_list = [item for item in parameters[param] if item not in choices]
                     if diff_list:
                         choices_str = ", ".join([to_native(c) for c in choices])
-                        msg = "value of %s must be one or more of: %s. Got no match for: %s" % (param, choices_str, diff_list)
+                        diff_str = ", ".join(diff_list)
+                        msg = "value of %s must be one or more of: %s. Got no match for: %s" % (param, choices_str, diff_str)
                         if options_context:
                             msg = "{0} found in {1}".format(msg, " -> ".join(options_context))
                         errors.append(ArgumentValueError(msg))
