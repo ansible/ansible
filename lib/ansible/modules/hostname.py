@@ -257,7 +257,7 @@ class FileStrategy(BaseStrategy):
             return ''
 
         try:
-            return get_file_lines(self.FILE)
+            return get_file_content(self.FILE, default='', strip=True)
         except Exception as e:
             self.module.fail_json(
                 msg="failed to read hostname: %s" % to_native(e),
