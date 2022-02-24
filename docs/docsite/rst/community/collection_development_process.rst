@@ -83,7 +83,7 @@ A single changelog fragment may contain multiple sections but most will only con
   .. code-block:: yaml
 
     breaking_changes:
-      - ec2_instance - instance wait for state behavior has changed. If plays require the old behavior of waiting for the instance monitoring status to become OK when launching a new instance, the action will need to specify ``state: started`` (https://github.com/ansible-collections/amazon.aws/pull/481).
+      - ec2_instance - instance wait for state behavior no longer waits for the instance monitoring status to become OK when launching a new instance. If plays require the old behavior, the action will need to specify ``state: started`` (https://github.com/ansible-collections/amazon.aws/pull/481).
 
 
 **major_changes**
