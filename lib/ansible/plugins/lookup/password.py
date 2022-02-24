@@ -30,9 +30,8 @@ DOCUMENTATION = """
         description:
            - Which hash scheme to encrypt the returning password, should be one hash scheme from C(passlib.hash; md5_crypt, bcrypt, sha256_crypt, sha512_crypt).
            - If not provided, the password will be returned in plain text.
-           - Note that the password is always stored as plain text, only the returning password is encrypted.
+           - Note that the password is stored as plain text, unless vault is used, only the returning password is encrypted.
            - Encrypt also forces saving the salt value for idempotence.
-           - Note that before 2.6 this option was incorrectly labeled as a boolean for a long time.
       ident:
         description:
           - Specify version of Bcrypt algorithm to be used while using C(encrypt) as C(bcrypt).
@@ -63,11 +62,14 @@ DOCUMENTATION = """
           - A seed to initialize the random number generator.
           - Identical seeds will yield identical passwords.
           - Use this for random-but-idempotent password generation.
-        type: str
+        type: string
+      vault:
+        version_added: "2.13"
+        description:
+          - Use the vault secret or reference passed to encrypt the file
     notes:
-      - A great alternative to the password lookup plugin,
-        if you don't need to generate random passwords on a per-host basis,
-        would be to use Vault in playbooks.
+      - A vaulted variable or file would be a great alternative to the password lookup plugin,
+        if you don't need to generate random passwords on a per-host basis.
         Read the documentation there and consider using it first,
         it will be more desirable for most applications.
       - If the file already exists, no data will be written to it.
@@ -77,6 +79,7 @@ DOCUMENTATION = """
         the target file must be readable by the playbook user, or, if it does not exist,
         the playbook user must have sufficient privileges to create it.
         (So, for example, attempts to write into areas such as /etc will fail unless the entire playbook is being run as root).'
+      - The plugin will unvault the file automatically if the required secret is present
 """
 
 EXAMPLES = """
@@ -129,6 +132,7 @@ import hashlib
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.splitter import parse_kv
+from ansible.parsing.vault import VaultEditor, VaultLib
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.encrypt import BaseHash, do_encrypt, random_password, random_salt
 from ansible.utils.path import makedirs_safe
@@ -275,14 +279,19 @@ def _format_content(password, salt, encrypt=None, ident=None):
     return u'%s salt=%s' % (password, salt)
 
 
-def _write_password_file(b_path, content):
+def _write_password_file(b_path, content, vault):
     b_pathdir = os.path.dirname(b_path)
     makedirs_safe(b_pathdir, mode=0o700)
 
-    with open(b_path, 'wb') as f:
-        os.chmod(b_path, 0o600)
-        b_content = to_bytes(content, errors='surrogate_or_strict') + b'\n'
-        f.write(b_content)
+    b_content = to_bytes(content, errors='surrogate_or_strict') + b'\n'
+
+    if vault:
+        veditor = VaultEditor(VaultLib(vault))
+        veditor.create_file(b_path, b_content)
+    else:
+        with open(b_path, 'wb') as f:
+            os.chmod(b_path, 0o600)
+            f.write(b_content)
 
 
 def _get_lock(b_path):
@@ -366,7 +375,7 @@ class LookupModule(LookupBase):
 
             if changed and b_path != to_bytes('/dev/null'):
                 content = _format_content(plaintext_password, salt, encrypt=encrypt, ident=ident)
-                _write_password_file(b_path, content)
+                _write_password_file(b_path, content, self.get_option('vault'))
 
             if first_process:
                 # let other processes continue
