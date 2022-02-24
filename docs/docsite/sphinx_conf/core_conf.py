@@ -98,6 +98,7 @@ exclude_patterns = [
     'network',
     'scenario_guides',
     'community/contributions_collections.rst',
+    'community/create_pr_quick_start.rst',
     'community/reporting_collections.rst',
     'community/contributing_maintained_collections.rst',
     'community/collection_development_process.rst',

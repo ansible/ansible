@@ -28,7 +28,7 @@ If you want to contribute a feature or fix a bug in  a collection, you must open
 
 Here's an overview of the PR lifecycle:
 
-* Contributor opens a PR
+* :ref:`Contributor opens a PR <collection_quickstart>`
 * CI runs the test suite
 * Developers, maintainers, community review the PR
 * Contributor addresses any feedback from reviewers
@@ -39,9 +39,9 @@ Here's an overview of the PR lifecycle:
 Making your PR merge-worthy
 ===========================
 
-We do not merge every PR. Here are some tips for making your PR useful, attractive, and merge-worthy.
+We do not merge every PR. See :ref:`collection_quickstart` for  tips to make your PR useful, attractive, and merge-worthy.
 
-.. _collection_changelogs:
+.. _collection_changelog_fragments:
 
 Creating changelog fragments
 -----------------------------
