@@ -163,8 +163,7 @@ Test your changes
     $ flake8 path/to/changed_file.py
 
 
-	This shows unused imports, which is not shown by sanity tests, as well as other common issues.
-
+  This shows unused imports, which is not shown by sanity tests, as well as other common issues.
   Optionally, you can use the ``--max-line-length=160`` command-line argument.
 
 2. Run sanity tests:
