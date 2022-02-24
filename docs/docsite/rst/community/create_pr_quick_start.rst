@@ -154,13 +154,16 @@ See :ref:`module_contribution` for some general guidelines about Ansible module 
 Test your changes
 =================
 
+1. Install ``flake8`` (``pip install flake8``, or install the corresponding package on your operating system).
+
 1. Run ``flake8`` against a changed file:
 
   .. code-block:: bash
 
     $ flake8 path/to/changed_file.py
 
-  It is worth installing (``pip install flake8``, or install the corresponding package on your operating system) and running ``flake8`` against the changed file(s) first. It shows unused imports, which is not shown by sanity tests (see the next step), as well as other common issues.
+		This shows unused imports, which is not shown by sanity tests (see the next step), as well as other common issues.
+
 
   Optionally, you can use the ``--max-line-length=160`` command-line argument.
 
@@ -179,7 +182,7 @@ Test your changes
 
     $ ansible-test integration name_of_test_subdirectory --docker -v
 
-  For example, if the tests files you changed are stored in ``tests/integration/targets/test_mysql_user/``, the command is:
+  For example, if the test files you changed are stored in ``tests/integration/targets/test_mysql_user/``, the command is:
 
   .. code-block:: bash
 
@@ -219,7 +222,7 @@ Submit a pull request
     $ git add /path/to/changed/file
     $ git commit -m "module_name_you_fixed: fix crash when ..."
 
-2. Push the branch to the ``origin`` (your fork):
+2. Push the branch to ``origin`` (your fork):
 
   .. code-block:: bash
 
@@ -237,7 +240,7 @@ Submit a pull request
 
   b. Put ``Fixes + link to the issue`` in the pull request's description.
 
-  c. Put ``[WIP] + short description`` in the pull request's title. It's often a good idea to mention the name of the module/plugin you are modifying at the beginning of the description.
+  c. Put ``[WIP] + short description`` in the pull request's title. Mention the name of the module/plugin you are modifying at the beginning of the description.
 
   d. Click :guilabel:`Create pull request`.
 
@@ -255,8 +258,8 @@ Submit a pull request
     .. code-block:: bash
 
       $ git add changelogs/fragments/myfragment.yml
-        $ git commit -m "Add changelog fragment"
-          $ git push origin name_of_my_branch
+      $ git commit -m "Add changelog fragment"
+      $ git push origin name_of_my_branch
 
 7. Verify the CI tests pass that run automatically on Red Hat infrastructure after every commit.
 
