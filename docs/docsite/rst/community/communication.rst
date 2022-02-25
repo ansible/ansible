@@ -56,7 +56,7 @@ Matrix chat supports:
 * no line limits
 * images
 
-The room links in the :ref:`list below<general_channels>` will take you directly to the relevant rooms. For more information, see the community-hosted `Matrix FAQ <https://hackmd.io/@ansible-community/community-matrix-faq>`_.
+The room links in the :ref:`general_channels` will take you directly to the relevant rooms. For more information, see the community-hosted `Matrix FAQ <https://hackmd.io/@ansible-community/community-matrix-faq>`_.
 
 Ansible community on IRC
 ------------------------
