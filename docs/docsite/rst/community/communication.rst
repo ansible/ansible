@@ -148,7 +148,7 @@ Create a new issue in the `repository <https://github.com/ansible-community/comm
 * Community collection best practices and `requirements <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`_
 * `Community collection inclusion policy <https://github.com/ansible-collections/ansible-inclusion/blob/main/README.md>`_
 * `The Community governance <https://github.com/ansible/community-docs/blob/main/ansible_community_steering_committee.rst>`_
-* Other proposals of importance that need the Committee's attention
+* Other proposals of importance that need the Committee or overall Ansible community attention
 
 Ansible Automation Platform support questions
 =============================================
