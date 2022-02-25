@@ -297,7 +297,7 @@ Tables
 
 
 Colors and other visual information
-  * Avoid instructions that rely solely on sensory characteristics. For example, do not use “Click the square, blue button to continue.”
+  * Avoid instructions that rely solely on sensory characteristics. For example, do not use ``Click the square, blue button to continue.``
   * Convey information by methods and not by color alone.
   * Ensure there is sufficient contrast between foreground and background text or graphical elements in images and diagrams.
   * Instructions for navigating through an interface make sense without directional indicators such as left, right, above, and below.
