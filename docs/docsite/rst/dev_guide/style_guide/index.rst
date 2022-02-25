@@ -183,7 +183,7 @@ Long pages, or pages with multiple levels of headers, can also include a local T
 
 .. note::
 
-	Avoid raw URLs. RST and sphinx allow ::code:`https;//my.example.com`, but this is unhelpful for those using screen readers. ``:ref:`` links automatically pick up the header from the anchor, but for external links, always use the ::code:`link title <link-url>`_` format.
+	Avoid raw URLs. RST and sphinx allow ::code:`https://my.example.com`, but this is unhelpful for those using screen readers. ``:ref:`` links automatically pick up the header from the anchor, but for external links, always use the ::code:`link title <link-url>`_` format.
 
 .. _adding_anchors_rst:
 
@@ -266,7 +266,7 @@ Accessibility guidelines
 Ansible documentation has a goal to be more accessible. Use the following guidelines to help us reach this goal.
 
 Images and alternative text
-  Ensure all icons, images, diagrams, and non text elements have a meaningful alternative-text description. Do no include screen caps of CLI output. use ``code-block`` instead.
+  Ensure all icons, images, diagrams, and non text elements have a meaningful alternative-text description. Do not include screen captures of CLI output. Use ``code-block`` instead.
 
   .. code-block:: text
 
