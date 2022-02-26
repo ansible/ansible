@@ -69,7 +69,7 @@ class ConcreteArtifactsManager:
     """
 
     def __init__(self, b_working_directory, validate_certs=True, keyring=None, timeout=60):
-        # type: (bytes, bool, str) -> None
+        # type: (bytes, bool, str, int) -> None
         """Initialize ConcreteArtifactsManager caches and costraints."""
         self._validate_certs = validate_certs  # type: bool
         self._artifact_cache = {}  # type: Dict[bytes, bytes]
@@ -427,7 +427,7 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
 
 # FIXME: use random subdirs while preserving the file names
 def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeout=60):
-    # type: (str, bytes, Optional[str], bool, GalaxyToken) -> bytes
+    # type: (str, bytes, Optional[str], bool, GalaxyToken, int) -> bytes
     # ^ NOTE: used in download and verify_collections ^
     b_tarball_name = to_bytes(
         url.rsplit('/', 1)[1], errors='surrogate_or_strict',
