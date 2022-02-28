@@ -301,7 +301,6 @@ Colors and other visual information
   * Convey information by methods and not by color alone.
   * Ensure there is sufficient contrast between foreground and background text or graphical elements in images and diagrams.
   * Instructions for navigating through an interface make sense without directional indicators such as left, right, above, and below.
-  * Nest headers in order from H1 to H2, H3, and so forth, without skipping heading levels. See :ref:`headers_style` for the correct order.
 
 Accessibility resources
 ------------------------
