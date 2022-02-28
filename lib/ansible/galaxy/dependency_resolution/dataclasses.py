@@ -176,13 +176,7 @@ class _ComputedReqKindsMixin:
         if not self.may_have_offline_galaxy_info:
             self._source_info = None
         else:
-            # Store Galaxy metadata adjacent to the namespace of the collection
-            # Chop off the last two parts of the path (/ns/coll) to get the dir containing the ns
-            b_src = to_bytes(self.src, errors='surrogate_or_strict')
-            b_path_parts = b_src.split(to_bytes(os.path.sep))[0:-2]
-            b_path = to_bytes(os.path.sep).join(b_path_parts)
-
-            info_path = self.construct_galaxy_info_path(b_path)
+            info_path = self.construct_galaxy_info_path(to_bytes(self.src, errors='surrogate_or_strict'))
 
             self._source_info = get_validated_source_info(
                 info_path,
@@ -447,9 +441,15 @@ class _ComputedReqKindsMixin:
             return False
         return True
 
-    def construct_galaxy_info_path(self, b_metadata_dir):
+    def construct_galaxy_info_path(self, b_collection_path):
         if not self.may_have_offline_galaxy_info and not self.type == 'galaxy':
             raise TypeError('Only installed collections from a Galaxy server have offline Galaxy info')
+
+        # Store Galaxy metadata adjacent to the namespace of the collection
+        # Chop off the last two parts of the path (/ns/coll) to get the dir containing the ns
+        b_src = to_bytes(b_collection_path, errors='surrogate_or_strict')
+        b_path_parts = b_src.split(to_bytes(os.path.sep))[0:-2]
+        b_metadata_dir = to_bytes(os.path.sep).join(b_path_parts)
 
         # ns.coll-1.0.0.info
         b_dir_name = to_bytes(f"{self.namespace}.{self.name}-{self.ver}.info", errors="surrogate_or_strict")
