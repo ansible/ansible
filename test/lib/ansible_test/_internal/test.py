@@ -218,7 +218,7 @@ class TestFailure(TestResult):
             command,  # type: str
             test,  # type: str
             python_version=None,  # type: t.Optional[str]
-            messages=None,  # type: t.Optional[t.List[TestMessage]]
+            messages=None,  # type: t.Optional[t.Sequence[TestMessage]]
             summary=None,  # type: t.Optional[str]
     ):
         super().__init__(command, test, python_version)

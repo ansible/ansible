@@ -206,7 +206,7 @@ class LayoutProvider(PathProvider):
 
 def paths_to_tree(paths):  # type: (t.List[str]) -> t.Tuple[t.Dict[str, t.Any], t.List[str]]
     """Return a filesystem tree from the given list of paths."""
-    tree = {}, []
+    tree = {}, []  # type: t.Tuple[t.Dict[str, t.Any], t.List[str]]
 
     for path in paths:
         parts = path.split(os.path.sep)

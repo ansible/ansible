@@ -142,9 +142,9 @@ def install_requirements(
 
     if ansible:
         try:
-            ansible_cache = install_requirements.ansible_cache
+            ansible_cache = install_requirements.ansible_cache  # type: ignore[attr-defined]
         except AttributeError:
-            ansible_cache = install_requirements.ansible_cache = {}
+            ansible_cache = install_requirements.ansible_cache = {}  # type: ignore[attr-defined]
 
         ansible_installed = ansible_cache.get(python.path)
 
@@ -492,7 +492,7 @@ def prepare_pip_script(commands):  # type: (t.List[PipCommand]) -> str
 
 def usable_pip_file(path):  # type: (t.Optional[str]) -> bool
     """Return True if the specified pip file is usable, otherwise False."""
-    return path and os.path.exists(path) and os.path.getsize(path)
+    return bool(path) and os.path.exists(path) and bool(os.path.getsize(path))
 
 
 # Cryptography

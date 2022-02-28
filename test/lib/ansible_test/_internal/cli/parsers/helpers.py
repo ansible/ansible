@@ -27,7 +27,7 @@ def get_docker_pythons(name, controller, strict):  # type: (str, bool, bool) -> 
     available_pythons = CONTROLLER_PYTHON_VERSIONS if controller else SUPPORTED_PYTHON_VERSIONS
 
     if not image_config:
-        return [] if strict else available_pythons
+        return [] if strict else list(available_pythons)
 
     supported_pythons = [python for python in image_config.supported_pythons if python in available_pythons]
 
@@ -40,7 +40,7 @@ def get_remote_pythons(name, controller, strict):  # type: (str, bool, bool) -> 
     available_pythons = CONTROLLER_PYTHON_VERSIONS if controller else SUPPORTED_PYTHON_VERSIONS
 
     if not platform_config:
-        return [] if strict else available_pythons
+        return [] if strict else list(available_pythons)
 
     supported_pythons = [python for python in platform_config.supported_pythons if python in available_pythons]
 
@@ -54,6 +54,6 @@ def get_controller_pythons(controller_config, strict):  # type: (HostConfig, boo
     elif isinstance(controller_config, PosixRemoteConfig):
         pythons = get_remote_pythons(controller_config.name, False, strict)
     else:
-        pythons = SUPPORTED_PYTHON_VERSIONS
+        pythons = list(SUPPORTED_PYTHON_VERSIONS)
 
     return pythons

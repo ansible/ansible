@@ -5,6 +5,7 @@ import typing as t
 
 from ...host_configs import (
     NativePythonConfig,
+    PythonConfig,
     VirtualPythonConfig,
 )
 
@@ -18,6 +19,7 @@ from ..argparsing.parsers import (
     Parser,
     ParserError,
     ParserState,
+    ParserBoundary,
 )
 
 
@@ -58,7 +60,7 @@ class PythonParser(Parser):
     The origin host and unknown environments assume all relevant Python versions are available.
     """
     def __init__(self,
-                 versions,  # type: t.List[str]
+                 versions,  # type: t.Sequence[str]
                  *,
                  allow_default,  # type: bool
                  allow_venv,  # type: bool
@@ -85,8 +87,12 @@ class PythonParser(Parser):
 
     def parse(self, state):  # type: (ParserState) -> t.Any
         """Parse the input from the given state and return the result."""
+        boundary: ParserBoundary
+
         with state.delimit('@/', required=False) as boundary:
             version = ChoicesParser(self.first_choices).parse(state)
+
+        python: PythonConfig
 
         if version == 'venv':
             with state.delimit('@/', required=False) as boundary:
@@ -156,7 +162,7 @@ class SshConnectionParser(Parser):
 
         setattr(namespace, 'user', user)
 
-        with state.delimit(':', required=False) as colon:
+        with state.delimit(':', required=False) as colon:  # type: ParserBoundary
             host = AnyParser(no_match_message=f'Expected {{host}} from: {self.EXPECTED_FORMAT}').parse(state)
 
         setattr(namespace, 'host', host)

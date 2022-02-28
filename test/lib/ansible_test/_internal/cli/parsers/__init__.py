@@ -142,7 +142,7 @@ class WindowsTargetParser(TargetsNamespaceParser, TypeParser):
 
     def get_internal_parsers(self, targets):  # type: (t.List[WindowsConfig]) -> t.Dict[str, Parser]
         """Return a dictionary of type names and type parsers."""
-        parsers = {}
+        parsers = {}  # type: t.Dict[str, Parser]
 
         if self.allow_inventory and not targets:
             parsers.update(
@@ -184,7 +184,7 @@ class NetworkTargetParser(TargetsNamespaceParser, TypeParser):
 
     def get_internal_parsers(self, targets):  # type: (t.List[NetworkConfig]) -> t.Dict[str, Parser]
         """Return a dictionary of type names and type parsers."""
-        parsers = {}
+        parsers = {}  # type: t.Dict[str, Parser]
 
         if self.allow_inventory and not targets:
             parsers.update(

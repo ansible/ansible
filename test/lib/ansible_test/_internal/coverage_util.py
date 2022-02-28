@@ -110,7 +110,7 @@ def get_coverage_environment(
 def get_coverage_config(args):  # type: (TestConfig) -> str
     """Return the path to the coverage config, creating the config if it does not already exist."""
     try:
-        return get_coverage_config.path
+        return get_coverage_config.path  # type: ignore[attr-defined]
     except AttributeError:
         pass
 
@@ -122,10 +122,12 @@ def get_coverage_config(args):  # type: (TestConfig) -> str
         temp_dir = tempfile.mkdtemp()
         atexit.register(lambda: remove_tree(temp_dir))
 
-    path = get_coverage_config.path = os.path.join(temp_dir, COVERAGE_CONFIG_NAME)
+    path = os.path.join(temp_dir, COVERAGE_CONFIG_NAME)
 
     if not args.explain:
         write_text_file(path, coverage_config)
+
+    get_coverage_config.path = path  # type: ignore[attr-defined]
 
     return path
 

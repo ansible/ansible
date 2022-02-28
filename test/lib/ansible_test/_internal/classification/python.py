@@ -236,7 +236,7 @@ class ModuleUtilFinder(ast.NodeVisitor):
     def __init__(self, path, module_utils):  # type: (str, t.Set[str]) -> None
         self.path = path
         self.module_utils = module_utils
-        self.imports = set()
+        self.imports = set()  # type: t.Set[str]
 
         # implicitly import parent package
 
@@ -277,7 +277,6 @@ class ModuleUtilFinder(ast.NodeVisitor):
             # While that will usually be true, there are exceptions which will result in this resolution being incorrect.
             self.module = path_to_module(os.path.join(data_context().content.collection.directory, self.path))
 
-    # noinspection PyPep8Naming
     # pylint: disable=locally-disabled, invalid-name
     def visit_Import(self, node):  # type: (ast.Import) -> None
         """Visit an import node."""
@@ -287,7 +286,6 @@ class ModuleUtilFinder(ast.NodeVisitor):
         # import ansible_collections.{ns}.{col}.plugins.module_utils.module_utils.MODULE[.MODULE]
         self.add_imports([alias.name for alias in node.names], node.lineno)
 
-    # noinspection PyPep8Naming
     # pylint: disable=locally-disabled, invalid-name
     def visit_ImportFrom(self, node):  # type: (ast.ImportFrom) -> None
         """Visit an import from node."""

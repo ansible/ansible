@@ -199,7 +199,7 @@ def get_ansible_python_path(args):  # type: (CommonConfig) -> str
     If a temporary directory is required, it will be cached for the lifetime of the process and cleaned up at exit.
     """
     try:
-        return get_ansible_python_path.python_path
+        return get_ansible_python_path.python_path  # type: ignore[attr-defined]
     except AttributeError:
         pass
 
@@ -217,7 +217,7 @@ def get_ansible_python_path(args):  # type: (CommonConfig) -> str
     if not args.explain:
         generate_egg_info(python_path)
 
-    get_ansible_python_path.python_path = python_path
+    get_ansible_python_path.python_path = python_path  # type: ignore[attr-defined]
 
     return python_path
 

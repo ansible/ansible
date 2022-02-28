@@ -12,6 +12,7 @@ from .io import (
 )
 
 from .config import (
+    CommonConfig,
     EnvironmentConfig,
     IntegrationConfig,
     ShellConfig,
@@ -35,6 +36,7 @@ from .util_common import (
 
 from .containers import (
     support_container_context,
+    ContainerDatabase,
 )
 
 from .data import (
@@ -67,7 +69,7 @@ from .provisioning import (
 
 
 @contextlib.contextmanager
-def delegation_context(args, host_state):  # type: (EnvironmentConfig, HostState) -> None
+def delegation_context(args, host_state):  # type: (EnvironmentConfig, HostState) -> t.Iterator[None]
     """Context manager for serialized host state during delegation."""
     make_dirs(ResultType.TMP.path)
 
@@ -87,8 +89,10 @@ def delegation_context(args, host_state):  # type: (EnvironmentConfig, HostState
             args.host_path = None
 
 
-def delegate(args, host_state, exclude, require):  # type: (EnvironmentConfig, HostState, t.List[str], t.List[str]) -> None
+def delegate(args, host_state, exclude, require):  # type: (CommonConfig, HostState, t.List[str], t.List[str]) -> None
     """Delegate execution of ansible-test to another environment."""
+    assert isinstance(args, EnvironmentConfig)
+
     with delegation_context(args, host_state):
         if isinstance(args, TestConfig):
             args.metadata.ci_provider = get_ci_provider().code
@@ -141,7 +145,7 @@ def delegate_command(args, host_state, exclude, require):  # type: (EnvironmentC
         if not args.allow_destructive:
             options.append('--allow-destructive')
 
-    with support_container_context(args, ssh) as containers:
+    with support_container_context(args, ssh) as containers:  # type: t.Optional[ContainerDatabase]
         if containers:
             options.extend(['--containers', json.dumps(containers.to_dict())])
 

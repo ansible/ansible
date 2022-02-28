@@ -311,9 +311,9 @@ def get_units_ansible_python_path(args, test_context):  # type: (UnitsConfig, st
         return get_ansible_python_path(args)
 
     try:
-        cache = get_units_ansible_python_path.cache
+        cache = get_units_ansible_python_path.cache  # type: ignore[attr-defined]
     except AttributeError:
-        cache = get_units_ansible_python_path.cache = {}
+        cache = get_units_ansible_python_path.cache = {}  # type: ignore[attr-defined]
 
     python_path = cache.get(test_context)
 

@@ -28,6 +28,10 @@ from ...environments import (
     add_environments,
 )
 
+from ...completers import (
+    register_completer,
+)
+
 
 def do_network_integration(
         subparsers,
@@ -51,11 +55,11 @@ def do_network_integration(
 
     add_integration_common(network_integration)
 
-    network_integration.add_argument(
+    register_completer(network_integration.add_argument(
         '--testcase',
         metavar='TESTCASE',
         help='limit a test to a specified testcase',
-    ).completer = complete_network_testcase
+    ), complete_network_testcase)
 
     add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.NETWORK_INTEGRATION)  # network-integration
 

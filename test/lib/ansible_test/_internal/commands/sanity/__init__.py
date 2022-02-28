@@ -142,7 +142,7 @@ def command_sanity(args):  # type: (SanityConfig) -> None
     if not targets.include:
         raise AllTargetsSkipped()
 
-    tests = sanity_get_tests()
+    tests = list(sanity_get_tests())
 
     if args.test:
         disabled = []
@@ -169,6 +169,8 @@ def command_sanity(args):  # type: (SanityConfig) -> None
 
     total = 0
     failed = []
+
+    result: t.Optional[TestResult]
 
     for test in tests:
         if args.list_tests:
@@ -201,14 +203,14 @@ def command_sanity(args):  # type: (SanityConfig) -> None
                 else:
                     raise Exception('Unsupported test type: %s' % type(test))
 
-                all_targets = targets.targets
+                all_targets = list(targets.targets)
 
                 if test.all_targets:
-                    usable_targets = targets.targets
+                    usable_targets = list(targets.targets)
                 elif test.no_targets:
-                    usable_targets = tuple()
+                    usable_targets = []
                 else:
-                    usable_targets = targets.include
+                    usable_targets = list(targets.include)
 
                 all_targets = SanityTargets.filter_and_inject_targets(test, all_targets)
                 usable_targets = SanityTargets.filter_and_inject_targets(test, usable_targets)
@@ -503,12 +505,15 @@ class SanityIgnoreParser:
     def load(args):  # type: (SanityConfig) -> SanityIgnoreParser
         """Return the current SanityIgnore instance, initializing it if needed."""
         try:
-            return SanityIgnoreParser.instance
+            return SanityIgnoreParser.instance  # type: ignore[attr-defined]
         except AttributeError:
             pass
 
-        SanityIgnoreParser.instance = SanityIgnoreParser(args)
-        return SanityIgnoreParser.instance
+        instance = SanityIgnoreParser(args)
+
+        SanityIgnoreParser.instance = instance  # type: ignore[attr-defined]
+
+        return instance
 
 
 class SanityIgnoreProcessor:
@@ -571,7 +576,7 @@ class SanityIgnoreProcessor:
 
     def get_errors(self, paths):  # type: (t.List[str]) -> t.List[SanityMessage]
         """Return error messages related to issues with the file."""
-        messages = []
+        messages = []  # type: t.List[SanityMessage]
 
         # unused errors
 
@@ -621,7 +626,7 @@ class SanityFailure(TestFailure):
             self,
             test,  # type: str
             python_version=None,  # type: t.Optional[str]
-            messages=None,  # type: t.Optional[t.List[SanityMessage]]
+            messages=None,  # type: t.Optional[t.Sequence[SanityMessage]]
             summary=None,  # type: t.Optional[str]
     ):  # type: (...) -> None
         super().__init__(COMMAND, test, python_version, messages, summary)
@@ -633,7 +638,7 @@ class SanityMessage(TestMessage):
 
 class SanityTargets:
     """Sanity test target information."""
-    def __init__(self, targets, include):  # type: (t.Tuple[TestTarget], t.Tuple[TestTarget]) -> None
+    def __init__(self, targets, include):  # type: (t.Tuple[TestTarget, ...], t.Tuple[TestTarget, ...]) -> None
         self.targets = targets
         self.include = include
 
@@ -671,11 +676,13 @@ class SanityTargets:
     def get_targets():  # type: () -> t.Tuple[TestTarget, ...]
         """Return a tuple of sanity test targets. Uses a cached version when available."""
         try:
-            return SanityTargets.get_targets.targets
+            return SanityTargets.get_targets.targets  # type: ignore[attr-defined]
         except AttributeError:
-            SanityTargets.get_targets.targets = tuple(sorted(walk_sanity_targets()))
+            targets = tuple(sorted(walk_sanity_targets()))
 
-        return SanityTargets.get_targets.targets
+        SanityTargets.get_targets.targets = targets  # type: ignore[attr-defined]
+
+        return targets
 
 
 class SanityTest(metaclass=abc.ABCMeta):
@@ -695,7 +702,7 @@ class SanityTest(metaclass=abc.ABCMeta):
         # Because these errors can be unpredictable they behave differently than normal error codes:
         #  * They are not reported by default. The `--enable-optional-errors` option must be used to display these errors.
         #  * They cannot be ignored. This is done to maintain the integrity of the ignore system.
-        self.optional_error_codes = set()
+        self.optional_error_codes = set()  # type: t.Set[str]
 
     @property
     def error_code(self):  # type: () -> t.Optional[str]
@@ -952,7 +959,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
             elif self.output == 'path-message':
                 pattern = '^(?P<path>[^:]*): (?P<message>.*)$'
             else:
-                pattern = ApplicationError('Unsupported output type: %s' % self.output)
+                raise ApplicationError('Unsupported output type: %s' % self.output)
 
         if not self.no_targets:
             data = '\n'.join(paths)

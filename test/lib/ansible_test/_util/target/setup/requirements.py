@@ -291,12 +291,11 @@ def make_dirs(path):  # type: (str) -> None
             raise
 
 
-def open_binary_file(path, mode='rb'):  # type: (str, str) -> t.BinaryIO
+def open_binary_file(path, mode='rb'):  # type: (str, str) -> t.IO[bytes]
     """Open the given path for binary access."""
     if 'b' not in mode:
         raise Exception('mode must include "b" for binary files: %s' % mode)
 
-    # noinspection PyTypeChecker
     return io.open(to_bytes(path), mode)  # pylint: disable=consider-using-with
 
 

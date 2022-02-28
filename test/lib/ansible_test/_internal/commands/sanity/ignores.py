@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import typing as t
 
 from . import (
     SanityFailure,
@@ -38,7 +39,7 @@ class IgnoresTest(SanityVersionNeutral):
     def test(self, args, targets):  # type: (SanityConfig, SanityTargets) -> TestResult
         sanity_ignore = SanityIgnoreParser.load(args)
 
-        messages = []
+        messages = []  # type: t.List[SanityMessage]
 
         # parse errors
 

@@ -96,6 +96,7 @@ from .connections import (
 )
 
 from .become import (
+    Become,
     Su,
     Sudo,
 )
@@ -109,11 +110,11 @@ TRemoteConfig = t.TypeVar('TRemoteConfig', bound=RemoteConfig)
 @dataclasses.dataclass(frozen=True)
 class Inventory:
     """Simple representation of an Ansible inventory."""
-    host_groups: t.Dict[str, t.Dict[str, t.Dict[str, str]]]
+    host_groups: t.Dict[str, t.Dict[str, t.Dict[str, t.Union[str, int]]]]
     extra_groups: t.Optional[t.Dict[str, t.List[str]]] = None
 
     @staticmethod
-    def create_single_host(name, variables):  # type: (str, t.Dict[str, str]) -> Inventory
+    def create_single_host(name, variables):  # type: (str, t.Dict[str, t.Union[str, int]]) -> Inventory
         """Return an inventory instance created from the given hostname and variables."""
         return Inventory(host_groups=dict(all={name: variables}))
 
@@ -448,7 +449,7 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
         self.wait_until_ready()
 
-    def get_inventory_variables(self):
+    def get_inventory_variables(self):  # type: () -> t.Dict[str, t.Optional[t.Union[str, int]]]
         """Return inventory variables for accessing this host."""
         core_ci = self.wait_for_instance()
         connection = core_ci.connection
@@ -461,7 +462,7 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
             ansible_user=connection.username,
             ansible_ssh_private_key_file=core_ci.ssh_key.key,
             ansible_network_os=f'{self.config.collection}.{self.config.platform}' if self.config.collection else self.config.platform,
-        )
+        )  # type: t.Dict[str, t.Optional[t.Union[str, int]]]
 
         return variables
 
@@ -562,7 +563,7 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
         )
 
         if settings.user == 'root':
-            become = None
+            become = None  # type: t.Optional[Become]
         elif self.config.platform == 'freebsd':
             become = Su()
         elif self.config.platform == 'macos':
@@ -672,7 +673,7 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
         self.wait_until_ready()
 
-    def get_inventory_variables(self):
+    def get_inventory_variables(self):  # type: () -> t.Dict[str, t.Optional[t.Union[str, int]]]
         """Return inventory variables for accessing this host."""
         core_ci = self.wait_for_instance()
         connection = core_ci.connection
@@ -686,7 +687,7 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
             ansible_user=connection.username,
             ansible_password=connection.password,
             ansible_ssh_private_key_file=core_ci.ssh_key.key,
-        )
+        )  # type: t.Dict[str, t.Optional[t.Union[str, int]]]
 
         # HACK: force 2016 to use NTLM + HTTP message encryption
         if self.config.version == '2016':

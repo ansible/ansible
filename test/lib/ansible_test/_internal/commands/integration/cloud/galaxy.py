@@ -145,8 +145,8 @@ class GalaxyEnvironment(CloudEnvironment):
     """Galaxy environment plugin. Updates integration test environment after delegation."""
     def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
         """Return environment configuration for use in the test environment after delegation."""
-        pulp_user = self._get_cloud_config('PULP_USER')
-        pulp_password = self._get_cloud_config('PULP_PASSWORD')
+        pulp_user = str(self._get_cloud_config('PULP_USER'))
+        pulp_password = str(self._get_cloud_config('PULP_PASSWORD'))
         pulp_host = self._get_cloud_config('PULP_HOST')
         galaxy_port = self._get_cloud_config('GALAXY_PORT')
         pulp_port = self._get_cloud_config('PULP_PORT')

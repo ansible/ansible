@@ -315,7 +315,6 @@ def get_coverage_group(args, coverage_file):  # type: (CoverageCombineConfig, st
     """Return the name of the coverage group for the specified coverage file, or None if no group was found."""
     parts = os.path.basename(coverage_file).split('=', 4)
 
-    # noinspection PyTypeChecker
     if len(parts) != 5 or not parts[4].startswith('coverage.'):
         return None
 

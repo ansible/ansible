@@ -22,6 +22,7 @@ from .util import (
     open_binary_file,
     verify_sys_executable,
     version_to_str,
+    type_guard,
 )
 
 from .thread import (
@@ -88,10 +89,9 @@ class HostState:
         if not self.target_profiles:
             raise Exception('No target profiles found.')
 
-        if not all(isinstance(target, profile_type) for target in self.target_profiles):
-            raise Exception(f'Target profile(s) are not of the required type: {profile_type}')
+        assert type_guard(self.target_profiles, profile_type)
 
-        return self.target_profiles
+        return t.cast(t.List[THostProfile], self.target_profiles)
 
 
 def prepare_profiles(
