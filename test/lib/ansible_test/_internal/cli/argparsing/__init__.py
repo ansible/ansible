@@ -37,7 +37,7 @@ class RegisteredCompletionFinder(OptionCompletionFinder):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.registered_completions = None  # type: t.Optional[str]
+        self.registered_completions = None  # type: t.Optional[t.List[str]]
 
     def completer(
             self,
@@ -138,10 +138,12 @@ class CompositeActionCompletionFinder(RegisteredCompletionFinder):
     def get_completions(
             self,
             prefix,  # type: str
-            action,  # type: CompositeAction
+            action,  # type: argparse.Action
             parsed_args,  # type: argparse.Namespace
     ):  # type: (...) -> t.List[str]
         """Return a list of completions appropriate for the given prefix and action, taking into account the arguments that have already been parsed."""
+        assert isinstance(action, CompositeAction)
+
         state = ParserState(
             mode=ParserMode.LIST if self.list_mode else ParserMode.COMPLETE,
             remainder=prefix,
@@ -236,6 +238,8 @@ def complete(
 ):  # type: (...) -> Completion
     """Perform argument completion using the given completer and return the completion result."""
     value = state.remainder
+
+    answer: Completion
 
     try:
         completer.parse(state)

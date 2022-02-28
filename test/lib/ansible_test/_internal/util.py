@@ -255,8 +255,8 @@ def raw_command(
         data=None,  # type: t.Optional[str]
         cwd=None,  # type: t.Optional[str]
         explain=False,  # type: bool
-        stdin=None,  # type: t.Optional[t.BinaryIO]
-        stdout=None,  # type: t.Optional[t.BinaryIO]
+        stdin=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
+        stdout=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
         cmd_verbosity=1,  # type: int
         str_errors='strict',  # type: str
         error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
@@ -568,7 +568,7 @@ class Display:
             self,
             message,  # type: str
             color=None,  # type: t.Optional[str]
-            fd=sys.stdout,  # type: t.TextIO
+            fd=sys.stdout,  # type: t.IO[str]
             truncate=False,  # type: bool
     ):  # type: (...) -> None
         """Display a message."""

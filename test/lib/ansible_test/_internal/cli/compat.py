@@ -55,7 +55,7 @@ from ..data import (
 )
 
 
-def filter_python(version, versions):  # type: (t.Optional[str], t.Optional[t.List[str]]) -> t.Optional[str]
+def filter_python(version, versions):  # type: (t.Optional[str], t.Optional[t.Sequence[str]]) -> t.Optional[str]
     """If a Python version is given and is in the given version list, return that Python version, otherwise return None."""
     return version if version in versions else None
 
@@ -260,9 +260,11 @@ def controller_targets(
         mode,  # type: TargetMode
         options,  # type: LegacyHostOptions
         controller,  # type: ControllerHostConfig
-):  # type: (...) -> t.List[ControllerConfig]
+):  # type: (...) -> t.List[HostConfig]
     """Return the configuration for controller targets."""
     python = native_python(options)
+
+    targets: t.List[HostConfig]
 
     if python:
         targets = [ControllerConfig(python=python)]
@@ -283,7 +285,7 @@ def native_python(options):  # type: (LegacyHostOptions) -> t.Optional[NativePyt
 def get_legacy_host_config(
         mode,  # type: TargetMode
         options,  # type: LegacyHostOptions
-):  # type: (...) -> t.Tuple[HostConfig, t.List[HostConfig], t.Optional[FallbackDetail]]
+):  # type: (...) -> t.Tuple[ControllerHostConfig, t.List[HostConfig], t.Optional[FallbackDetail]]
     """
     Returns controller and target host configs derived from the provided legacy host options.
     The goal is to match the original behavior, by using non-split testing whenever possible.
@@ -295,6 +297,9 @@ def get_legacy_host_config(
     remote_fallback = get_fallback_remote_controller()
 
     controller_fallback = None  # type: t.Optional[t.Tuple[str, str, FallbackReason]]
+
+    controller: t.Optional[ControllerHostConfig]
+    targets: t.List[HostConfig]
 
     if options.venv:
         if controller_python(options.python) or not options.python:
@@ -470,6 +475,8 @@ def default_targets(
     controller,  # type: ControllerHostConfig
 ):  # type: (...) -> t.List[HostConfig]
     """Return a list of default targets for the given target mode."""
+    targets: t.List[HostConfig]
+
     if mode == TargetMode.WINDOWS_INTEGRATION:
         targets = [WindowsInventoryConfig(path=os.path.abspath(os.path.join(data_context().content.integration_path, 'inventory.winrm')))]
     elif mode == TargetMode.NETWORK_INTEGRATION:

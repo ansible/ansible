@@ -170,6 +170,8 @@ def command_sanity(args):  # type: (SanityConfig) -> None
     total = 0
     failed = []
 
+    result: t.Optional[TestResult]
+
     for test in tests:
         if args.list_tests:
             display.info(test.name)
@@ -574,7 +576,7 @@ class SanityIgnoreProcessor:
 
     def get_errors(self, paths):  # type: (t.List[str]) -> t.List[SanityMessage]
         """Return error messages related to issues with the file."""
-        messages = []
+        messages = []  # type: t.List[SanityMessage]
 
         # unused errors
 
@@ -624,7 +626,7 @@ class SanityFailure(TestFailure):
             self,
             test,  # type: str
             python_version=None,  # type: t.Optional[str]
-            messages=None,  # type: t.Optional[t.List[SanityMessage]]
+            messages=None,  # type: t.Optional[t.Sequence[SanityMessage]]
             summary=None,  # type: t.Optional[str]
     ):  # type: (...) -> None
         super().__init__(COMMAND, test, python_version, messages, summary)
@@ -636,7 +638,7 @@ class SanityMessage(TestMessage):
 
 class SanityTargets:
     """Sanity test target information."""
-    def __init__(self, targets, include):  # type: (t.Tuple[TestTarget], t.Tuple[TestTarget]) -> None
+    def __init__(self, targets, include):  # type: (t.Tuple[TestTarget, ...], t.Tuple[TestTarget, ...]) -> None
         self.targets = targets
         self.include = include
 
@@ -700,7 +702,7 @@ class SanityTest(metaclass=abc.ABCMeta):
         # Because these errors can be unpredictable they behave differently than normal error codes:
         #  * They are not reported by default. The `--enable-optional-errors` option must be used to display these errors.
         #  * They cannot be ignored. This is done to maintain the integrity of the ignore system.
-        self.optional_error_codes = set()
+        self.optional_error_codes = set()  # type: t.Set[str]
 
     @property
     def error_code(self):  # type: () -> t.Optional[str]

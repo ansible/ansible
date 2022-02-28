@@ -441,8 +441,8 @@ def docker_exec(
         cmd,  # type: t.List[str]
         options=None,  # type: t.Optional[t.List[str]]
         capture=False,  # type: bool
-        stdin=None,  # type: t.Optional[t.BinaryIO]
-        stdout=None,  # type: t.Optional[t.BinaryIO]
+        stdin=None,  # type: t.Optional[t.IO[bytes]]
+        stdout=None,  # type: t.Optional[t.IO[bytes]]
         data=None,  # type: t.Optional[str]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Execute the given command in the specified container."""
@@ -471,8 +471,8 @@ def docker_command(
         args,  # type: CommonConfig
         cmd,  # type: t.List[str]
         capture=False,  # type: bool
-        stdin=None,  # type: t.Optional[t.BinaryIO]
-        stdout=None,  # type: t.Optional[t.BinaryIO]
+        stdin=None,  # type: t.Optional[t.IO[bytes]]
+        stdout=None,  # type: t.Optional[t.IO[bytes]]
         always=False,  # type: bool
         data=None,  # type: t.Optional[str]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]

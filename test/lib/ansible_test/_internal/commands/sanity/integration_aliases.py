@@ -127,7 +127,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
     def ci_test_groups(self):  # type: () -> t.Dict[str, t.List[int]]
         """Return a dictionary of CI test names and their group(s)."""
         if not self._ci_test_groups:
-            test_groups = {}
+            test_groups = {}  # type: t.Dict[str, t.Set[int]]
 
             for stage in self._ci_config['stages']:
                 for job in stage['jobs']:
@@ -324,7 +324,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         return messages
 
-    def check_changes(self, args, results):  # type: (SanityConfig, t.Dict[str, t.Any]) -> None
+    def check_changes(self, args, results):  # type: (SanityConfig, Results) -> None
         """Check changes and store results in the provided results dictionary."""
         integration_targets = list(walk_integration_targets())
         module_targets = list(walk_module_targets())

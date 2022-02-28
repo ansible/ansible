@@ -236,7 +236,7 @@ class ModuleUtilFinder(ast.NodeVisitor):
     def __init__(self, path, module_utils):  # type: (str, t.Set[str]) -> None
         self.path = path
         self.module_utils = module_utils
-        self.imports = set()
+        self.imports = set()  # type: t.Set[str]
 
         # implicitly import parent package
 

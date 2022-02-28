@@ -15,6 +15,7 @@ from ..target import (
     walk_sanity_targets,
     load_integration_prefixes,
     analyze_integration_target_dependencies,
+    IntegrationTarget,
 )
 
 from ..util import (
@@ -63,14 +64,14 @@ def categorize_changes(args, paths, verbose_command=None):  # type: (TestConfig,
         'integration': set(),
         'windows-integration': set(),
         'network-integration': set(),
-    }
+    }  # type: t.Dict[str, t.Set[str]]
 
     focused_commands = collections.defaultdict(set)
 
-    deleted_paths = set()
-    original_paths = set()
-    additional_paths = set()
-    no_integration_paths = set()
+    deleted_paths = set()  # type: t.Set[str]
+    original_paths = set()  # type: t.Set[str]
+    additional_paths = set()  # type: t.Set[str]
+    no_integration_paths = set()  # type: t.Set[str]
 
     for path in paths:
         if not os.path.exists(path):
@@ -205,11 +206,11 @@ class PathMapper:
         self.prefixes = load_integration_prefixes()
         self.integration_dependencies = analyze_integration_target_dependencies(self.integration_targets)
 
-        self.python_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
-        self.powershell_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
-        self.csharp_module_utils_imports = {}  # populated on first use to reduce overhead when not needed
+        self.python_module_utils_imports = {}  # type: t.Dict[str, t.Set[str]]  # populated on first use to reduce overhead when not needed
+        self.powershell_module_utils_imports = {}  # type: t.Dict[str, t.Set[str]]  # populated on first use to reduce overhead when not needed
+        self.csharp_module_utils_imports = {}  # type: t.Dict[str, t.Set[str]]  # populated on first use to reduce overhead when not needed
 
-        self.paths_to_dependent_targets = {}
+        self.paths_to_dependent_targets = {}  # type: t.Dict[str, t.Set[IntegrationTarget]]
 
         for target in self.integration_targets:
             for path in target.needs_file:
@@ -341,7 +342,7 @@ class PathMapper:
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
 
-        minimal = {}
+        minimal = {}  # type: t.Dict[str, str]
 
         if os.path.sep not in path:
             if filename in (
@@ -630,7 +631,7 @@ class PathMapper:
         filename = os.path.basename(path)
         dummy, ext = os.path.splitext(filename)
 
-        minimal = {}
+        minimal = {}  # type: t.Dict[str, str]
 
         if path.startswith('changelogs/'):
             return minimal
@@ -674,7 +675,7 @@ class PathMapper:
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
 
-        minimal = {}
+        minimal = {}  # type: t.Dict[str, str]
 
         if path.startswith('bin/'):
             return all_tests(self.args)  # broad impact, run all tests

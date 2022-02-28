@@ -218,7 +218,7 @@ class TestConfig(EnvironmentConfig):
         self.failure_ok = getattr(args, 'failure_ok', False)  # type: bool
 
         self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
-        self.metadata_path = None
+        self.metadata_path = None  # type: t.Optional[str]
 
         if self.coverage_check:
             self.coverage = True

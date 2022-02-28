@@ -246,8 +246,8 @@ def add_legacy_environment_options(
         target_mode,  # type: TargetMode
 ):
     """Add legacy options for controlling the test environment."""
-    environment = parser.add_argument_group(
-        title='environment arguments (mutually exclusive with "composite environment arguments" below)')  # type: argparse.ArgumentParser
+    environment: argparse.ArgumentParser = parser.add_argument_group(  # type: ignore[assignment]  # real type private
+        title='environment arguments (mutually exclusive with "composite environment arguments" below)')
 
     add_environments_python(environment, target_mode)
     add_environments_host(environment, controller_mode, target_mode)
@@ -258,6 +258,8 @@ def add_environments_python(
         target_mode,  # type: TargetMode
 ):  # type: (...) -> None
     """Add environment arguments to control the Python version(s) used."""
+    python_versions: t.Tuple[str, ...]
+
     if target_mode.has_python:
         python_versions = SUPPORTED_PYTHON_VERSIONS
     else:
@@ -283,7 +285,7 @@ def add_environments_host(
         target_mode  # type: TargetMode
 ):  # type: (...) -> None
     """Add environment arguments for the given host and argument modes."""
-    environments_exclusive_group = environments_parser.add_mutually_exclusive_group()  # type: argparse.ArgumentParser
+    environments_exclusive_group: argparse.ArgumentParser = environments_parser.add_mutually_exclusive_group()  # type: ignore[assignment]  # real type private
 
     add_environment_local(environments_exclusive_group)
     add_environment_venv(environments_exclusive_group, environments_parser)

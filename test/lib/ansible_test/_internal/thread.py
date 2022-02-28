@@ -8,14 +8,14 @@ import queue
 import typing as t
 
 
-TCallable = t.TypeVar('TCallable', bound=t.Callable)
+TCallable = t.TypeVar('TCallable', bound=t.Callable[..., t.Any])
 
 
 class WrappedThread(threading.Thread):
     """Wrapper around Thread which captures results and exceptions."""
     def __init__(self, action):  # type: (t.Callable[[], t.Any]) -> None
         super().__init__()
-        self._result = queue.Queue()
+        self._result = queue.Queue()  # type: queue.Queue[t.Any]
         self.action = action
         self.result = None
 

@@ -35,7 +35,7 @@ class Bootstrap:
         """The bootstrap type to pass to the bootstrapping script."""
         return self.__class__.__name__.replace('Bootstrap', '').lower()
 
-    def get_variables(self):  # type: () -> t.Dict[str, str]
+    def get_variables(self):  # type: () -> t.Dict[str, t.Union[str, t.List[str]]]
         """The variables to template in the boostrapping script."""
         return dict(
             bootstrap_type=self.bootstrap_type,
@@ -65,7 +65,7 @@ class Bootstrap:
 @dataclasses.dataclass
 class BootstrapDocker(Bootstrap):
     """Bootstrap docker instances."""
-    def get_variables(self):  # type: () -> t.Dict[str, str]
+    def get_variables(self):  # type: () -> t.Dict[str, t.Union[str, t.List[str]]]
         """The variables to template in the boostrapping script."""
         variables = super().get_variables()
 
@@ -83,7 +83,7 @@ class BootstrapRemote(Bootstrap):
     platform: str
     platform_version: str
 
-    def get_variables(self):  # type: () -> t.Dict[str, str]
+    def get_variables(self):  # type: () -> t.Dict[str, t.Union[str, t.List[str]]]
         """The variables to template in the boostrapping script."""
         variables = super().get_variables()
 

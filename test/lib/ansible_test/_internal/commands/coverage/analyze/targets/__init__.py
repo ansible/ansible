@@ -38,7 +38,7 @@ class CoverageAnalyzeTargetsConfig(CoverageAnalyzeConfig):
 
 def make_report(target_indexes, arcs, lines):  # type: (TargetIndexes, Arcs, Lines) -> t.Dict[str, t.Any]
     """Condense target indexes, arcs and lines into a compact report."""
-    set_indexes = {}
+    set_indexes = {}  # type: TargetSetIndexes
     arc_refs = dict((path, dict((format_arc(arc), get_target_set_index(indexes, set_indexes)) for arc, indexes in data.items())) for path, data in arcs.items())
     line_refs = dict((path, dict((line, get_target_set_index(indexes, set_indexes)) for line, indexes in data.items())) for path, data in lines.items())
 
