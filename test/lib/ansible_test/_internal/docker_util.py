@@ -154,7 +154,7 @@ def get_docker_preferred_network_name(args):  # type: (EnvironmentConfig) -> str
     - the default docker network (returns None)
     """
     try:
-        return get_docker_preferred_network_name.network
+        return get_docker_preferred_network_name.network  # type: ignore[attr-defined]
     except AttributeError:
         pass
 
@@ -171,14 +171,14 @@ def get_docker_preferred_network_name(args):  # type: (EnvironmentConfig) -> str
             container = docker_inspect(args, current_container_id, always=True)
             network = container.get_network_name()
 
-    get_docker_preferred_network_name.network = network
+    get_docker_preferred_network_name.network = network  # type: ignore[attr-defined]
 
     return network
 
 
 def is_docker_user_defined_network(network):  # type: (str) -> bool
     """Return True if the network being used is a user-defined network."""
-    return network and network != 'bridge'
+    return bool(network) and network != 'bridge'
 
 
 def docker_pull(args, image):  # type: (EnvironmentConfig, str) -> None
@@ -247,7 +247,7 @@ def docker_run(
 
             return stdout.strip()
         except SubprocessError as ex:
-            display.error(ex)
+            display.error(ex.message)
             display.warning('Failed to run docker image "%s". Waiting a few seconds before trying again.' % image)
             time.sleep(3)
 
@@ -265,7 +265,7 @@ def docker_start(args, container_id, options=None):  # type: (EnvironmentConfig,
         try:
             return docker_command(args, ['start'] + options + [container_id], capture=True)
         except SubprocessError as ex:
-            display.error(ex)
+            display.error(ex.message)
             display.warning('Failed to start docker container "%s". Waiting a few seconds before trying again.' % container_id)
             time.sleep(3)
 
@@ -441,8 +441,8 @@ def docker_exec(
         cmd,  # type: t.List[str]
         options=None,  # type: t.Optional[t.List[str]]
         capture=False,  # type: bool
-        stdin=None,  # type: t.Optional[t.BinaryIO]
-        stdout=None,  # type: t.Optional[t.BinaryIO]
+        stdin=None,  # type: t.Optional[t.IO[bytes]]
+        stdout=None,  # type: t.Optional[t.IO[bytes]]
         data=None,  # type: t.Optional[str]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Execute the given command in the specified container."""
@@ -471,8 +471,8 @@ def docker_command(
         args,  # type: CommonConfig
         cmd,  # type: t.List[str]
         capture=False,  # type: bool
-        stdin=None,  # type: t.Optional[t.BinaryIO]
-        stdout=None,  # type: t.Optional[t.BinaryIO]
+        stdin=None,  # type: t.Optional[t.IO[bytes]]
+        stdout=None,  # type: t.Optional[t.IO[bytes]]
         always=False,  # type: bool
         data=None,  # type: t.Optional[str]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]

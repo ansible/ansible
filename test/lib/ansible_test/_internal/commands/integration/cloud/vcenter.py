@@ -107,14 +107,14 @@ class VcenterEnvironment(CloudEnvironment):
             ansible_vars.update(dict(parser.items('DEFAULT', raw=True)))
         except KeyError:  # govcsim
             env_vars = dict(
-                VCENTER_HOSTNAME=self._get_cloud_config('vcenter_hostname'),
+                VCENTER_HOSTNAME=str(self._get_cloud_config('vcenter_hostname')),
                 VCENTER_USERNAME='user',
                 VCENTER_PASSWORD='pass',
             )
 
             ansible_vars = dict(
-                vcsim=self._get_cloud_config('vcenter_hostname'),
-                vcenter_hostname=self._get_cloud_config('vcenter_hostname'),
+                vcsim=str(self._get_cloud_config('vcenter_hostname')),
+                vcenter_hostname=str(self._get_cloud_config('vcenter_hostname')),
                 vcenter_username='user',
                 vcenter_password='pass',
             )

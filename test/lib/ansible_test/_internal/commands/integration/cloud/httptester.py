@@ -87,6 +87,6 @@ class HttptesterEnvironment(CloudEnvironment):
         return CloudEnvironmentConfig(
             env_vars=dict(
                 HTTPTESTER='1',  # backwards compatibility for tests intended to work with or without HTTP Tester
-                KRB5_PASSWORD=self._get_cloud_config(KRB5_PASSWORD_ENV),
+                KRB5_PASSWORD=str(self._get_cloud_config(KRB5_PASSWORD_ENV)),
             )
         )
