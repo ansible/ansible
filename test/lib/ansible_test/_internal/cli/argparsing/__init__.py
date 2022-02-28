@@ -91,16 +91,15 @@ class CompositeAction(argparse.Action, metaclass=abc.ABCMeta):
     def __init__(
             self,
             *args,
-            dest,  # type: str
             **kwargs,
     ):
-        del dest
-
         self.definition = self.create_parser()
         self.documentation_state[type(self)] = documentation_state = DocumentationState()
         self.definition.document(documentation_state)
 
-        super().__init__(*args, dest=self.definition.dest, **kwargs)
+        kwargs.update(dest=self.definition.dest)
+
+        super().__init__(*args, **kwargs)
 
         register_safe_action(type(self))
 
