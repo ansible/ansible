@@ -463,7 +463,7 @@ class DocCLI(CLI, RoleMixin):
         exclusive.add_argument("--metadata-dump", action="store_true", default=False, dest='dump',
                                help='**For internal use only** Dump json metadata for all entries, ignores other options.')
 
-        self.parser.add_argument("--dont-fail-on-errors", action="store_true", default=False, dest='dont_fail_on_errors',
+        self.parser.add_argument("--no-fail-on-errors", action="store_true", default=False, dest='no_fail_on_errors',
                                  help='**For internal use only** Only used for --metadata-dump. '
                                       'Do not fail on errors. Report the error message in the JSON instead.')
 
@@ -768,16 +768,16 @@ class DocCLI(CLI, RoleMixin):
             docs['all'] = {}
             for ptype in ptypes:
                 if ptype == 'role':
-                    roles = self._create_role_list(fail_on_errors=not context.CLIARGS['dont_fail_on_errors'])
+                    roles = self._create_role_list(fail_on_errors=not context.CLIARGS['no_fail_on_errors'])
                     docs['all'][ptype] = self._create_role_doc(
-                        roles.keys(), context.CLIARGS['entry_point'], fail_on_errors=not context.CLIARGS['dont_fail_on_errors'])
+                        roles.keys(), context.CLIARGS['entry_point'], fail_on_errors=not context.CLIARGS['no_fail_on_errors'])
                 elif ptype == 'keyword':
                     names = DocCLI._list_keywords()
                     docs['all'][ptype] = DocCLI._get_keywords_docs(names.keys())
                 else:
                     plugin_names = self._list_plugins(ptype, None)
                     docs['all'][ptype] = self._get_plugins_docs(
-                        ptype, plugin_names, fail_on_errors=not context.CLIARGS['dont_fail_on_errors'])
+                        ptype, plugin_names, fail_on_errors=not context.CLIARGS['no_fail_on_errors'])
                     # reset list after each type to avoid polution
         elif listing:
             if plugin_type == 'keyword':
