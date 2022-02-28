@@ -72,7 +72,6 @@ def open_text_file(path, mode='r'):  # type: (str, str) -> t.TextIO
     if 'b' in mode:
         raise Exception('mode cannot include "b" for text files: %s' % mode)
 
-    # noinspection PyTypeChecker
     return io.open(to_bytes(path), mode, encoding=ENCODING)  # pylint: disable=consider-using-with
 
 
@@ -81,7 +80,6 @@ def open_binary_file(path, mode='rb'):  # type: (str, str) -> t.BinaryIO
     if 'b' not in mode:
         raise Exception('mode must include "b" for binary files: %s' % mode)
 
-    # noinspection PyTypeChecker
     return io.open(to_bytes(path), mode)  # pylint: disable=consider-using-with
 
 

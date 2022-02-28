@@ -26,7 +26,7 @@ class WrappedThread(threading.Thread):
         """
         # We truly want to catch anything that the worker thread might do including call sys.exit.
         # Therefore we catch *everything* (including old-style class exceptions)
-        # noinspection PyBroadException, PyPep8
+        # noinspection PyBroadException
         try:
             self._result.put((self.action(), None))
         # pylint: disable=locally-disabled, bare-except

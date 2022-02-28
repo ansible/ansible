@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import errno
-# noinspection PyCompatibility
 import fcntl
 import importlib.util
 import inspect
@@ -23,7 +22,6 @@ import shlex
 import typing as t
 
 from struct import unpack, pack
-# noinspection PyCompatibility
 from termios import TIOCGWINSZ
 
 from .encoding import (
@@ -467,7 +465,6 @@ def is_binary_file(path):  # type: (str) -> bool
         return True
 
     with open_binary_file(path) as path_fd:
-        # noinspection PyTypeChecker
         return b'\0' in path_fd.read(4096)
 
 
@@ -772,7 +769,6 @@ def load_module(path, name):  # type: (str, str) -> None
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
-    # noinspection PyUnresolvedReferences
     spec.loader.exec_module(module)
 
 

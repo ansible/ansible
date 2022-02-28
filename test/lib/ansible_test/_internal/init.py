@@ -1,7 +1,6 @@
 """Early initialization for ansible-test before most other imports have been performed."""
 from __future__ import annotations
 
-# noinspection PyCompatibility
 import resource
 
 from .constants import (

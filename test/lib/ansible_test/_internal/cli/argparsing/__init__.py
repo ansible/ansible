@@ -88,7 +88,6 @@ class CompositeAction(argparse.Action, metaclass=abc.ABCMeta):
     """Base class for actions that parse composite arguments."""
     documentation_state = {}  # type: t.Dict[t.Type[CompositeAction], DocumentationState]
 
-    # noinspection PyUnusedLocal
     def __init__(
             self,
             *args,

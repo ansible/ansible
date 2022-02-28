@@ -106,7 +106,6 @@ class AwsCloudEnvironment(CloudEnvironment):
             tiny_prefix=uuid.uuid4().hex[0:12]
         )
 
-        # noinspection PyTypeChecker
         ansible_vars.update(dict(parser.items('default')))
 
         display.sensitive.add(ansible_vars.get('aws_secret_key'))

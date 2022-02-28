@@ -246,7 +246,6 @@ def add_legacy_environment_options(
         target_mode,  # type: TargetMode
 ):
     """Add legacy options for controlling the test environment."""
-    # noinspection PyTypeChecker
     environment = parser.add_argument_group(
         title='environment arguments (mutually exclusive with "composite environment arguments" below)')  # type: argparse.ArgumentParser
 
@@ -284,7 +283,6 @@ def add_environments_host(
         target_mode  # type: TargetMode
 ):  # type: (...) -> None
     """Add environment arguments for the given host and argument modes."""
-    # noinspection PyTypeChecker
     environments_exclusive_group = environments_parser.add_mutually_exclusive_group()  # type: argparse.ArgumentParser
 
     add_environment_local(environments_exclusive_group)

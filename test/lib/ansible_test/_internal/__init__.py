@@ -78,7 +78,6 @@ def main(cli_args=None):  # type: (t.Optional[t.List[str]]) -> None
             delegate_args = (ex.host_state, ex.exclude, ex.require)
 
         if delegate_args:
-            # noinspection PyTypeChecker
             delegate(config, *delegate_args)
 
         if target_names:
