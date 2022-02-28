@@ -2133,6 +2133,17 @@ releases:
     - ssh_quote_cp.yml
     - v2.11.8rc1_summary.yaml
     release_date: '2022-01-24'
+  2.11.9:
+    changes:
+      release_summary: '| Release Date: 2022-02-28
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - v2.11.9_summary.yaml
+    release_date: '2022-02-28'
   2.11.9rc1:
     changes:
       bugfixes:
