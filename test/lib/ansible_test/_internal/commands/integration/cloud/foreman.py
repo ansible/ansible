@@ -85,8 +85,8 @@ class ForemanEnvironment(CloudEnvironment):
     def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
         """Return environment configuration for use in the test environment after delegation."""
         env_vars = dict(
-            FOREMAN_HOST=self._get_cloud_config('FOREMAN_HOST'),
-            FOREMAN_PORT=self._get_cloud_config('FOREMAN_PORT'),
+            FOREMAN_HOST=str(self._get_cloud_config('FOREMAN_HOST')),
+            FOREMAN_PORT=str(self._get_cloud_config('FOREMAN_PORT')),
         )
 
         return CloudEnvironmentConfig(

@@ -206,7 +206,7 @@ class CloudBase(metaclass=abc.ABCMeta):
     @property
     def setup_executed(self):  # type: () -> bool
         """True if setup has been executed, otherwise False."""
-        return self._get_cloud_config(self._SETUP_EXECUTED, False)
+        return t.cast(bool, self._get_cloud_config(self._SETUP_EXECUTED, False))
 
     @setup_executed.setter
     def setup_executed(self, value):  # type: (bool) -> None
@@ -216,7 +216,7 @@ class CloudBase(metaclass=abc.ABCMeta):
     @property
     def config_path(self):  # type: () -> str
         """Path to the configuration file."""
-        return os.path.join(data_context().content.root, self._get_cloud_config(self._CONFIG_PATH))
+        return os.path.join(data_context().content.root, str(self._get_cloud_config(self._CONFIG_PATH)))
 
     @config_path.setter
     def config_path(self, value):  # type: (str) -> None
@@ -226,7 +226,7 @@ class CloudBase(metaclass=abc.ABCMeta):
     @property
     def resource_prefix(self):  # type: () -> str
         """Resource prefix."""
-        return self._get_cloud_config(self._RESOURCE_PREFIX)
+        return str(self._get_cloud_config(self._RESOURCE_PREFIX))
 
     @resource_prefix.setter
     def resource_prefix(self, value):  # type: (str) -> None
@@ -236,7 +236,7 @@ class CloudBase(metaclass=abc.ABCMeta):
     @property
     def managed(self):  # type: () -> bool
         """True if resources are managed by ansible-test, otherwise False."""
-        return self._get_cloud_config(self._MANAGED)
+        return t.cast(bool, self._get_cloud_config(self._MANAGED))
 
     @managed.setter
     def managed(self, value):  # type: (bool) -> None
