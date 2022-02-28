@@ -7,7 +7,7 @@ __metaclass__ = type
 
 
 from units.compat import unittest
-from units.compat.mock import patch, MagicMock
+from mock import patch, MagicMock
 
 from ansible.executor.play_iterator import PlayIterator
 from ansible.playbook import Playbook

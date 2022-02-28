@@ -168,6 +168,10 @@ You can also combine multiple conditions to override "changed" result.
         - '"ERROR" in result.stderr'
         - result.rc == 2
 
+.. note::
+
+    Just like ``when`` these two conditionals do not require templating delimiters (``{{ }}``) as they are implied.
+
 See :ref:`controlling_what_defines_failure` for more conditional syntax examples.
 
 Ensuring success for command and shell

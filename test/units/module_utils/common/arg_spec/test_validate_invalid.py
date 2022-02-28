@@ -100,6 +100,14 @@ INVALID_SPECS = [
         {'req': None},
         set(),
         "missing required arguments: req"
+    ),
+    (
+        'blank_values',
+        {'ch_param': {'elements': 'str', 'type': 'list', 'choices': ['a', 'b']}},
+        {'ch_param': ['']},
+        {'ch_param': ['']},
+        set(),
+        "value of ch_param must be one or more of"
     )
 ]
 

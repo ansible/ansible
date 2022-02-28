@@ -68,7 +68,7 @@ class ConcreteArtifactsManager:
         * retrieving the metadata out of the downloaded artifacts
     """
 
-    def __init__(self, b_working_directory, validate_certs=True, keyring=None):
+    def __init__(self, b_working_directory, validate_certs=True, keyring=None, timeout=60):
         # type: (bytes, bool, str) -> None
         """Initialize ConcreteArtifactsManager caches and costraints."""
         self._validate_certs = validate_certs  # type: bool
@@ -80,6 +80,7 @@ class ConcreteArtifactsManager:
         self._b_working_directory = b_working_directory  # type: bytes
         self._supplemental_signature_cache = {}  # type: Dict[str, str]
         self._keyring = keyring  # type: str
+        self.timeout = timeout  # type: int
 
     @property
     def keyring(self):
@@ -202,6 +203,7 @@ class ConcreteArtifactsManager:
                     self._b_working_directory,
                     expected_hash=None,  # NOTE: URLs don't support checksums
                     validate_certs=self._validate_certs,
+                    timeout=self.timeout
                 )
             except URLError as err:
                 raise_from(
@@ -424,7 +426,7 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
 
 
 # FIXME: use random subdirs while preserving the file names
-def _download_file(url, b_path, expected_hash, validate_certs, token=None):
+def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeout=60):
     # type: (str, bytes, Optional[str], bool, GalaxyToken) -> bytes
     # ^ NOTE: used in download and verify_collections ^
     b_tarball_name = to_bytes(
@@ -447,6 +449,7 @@ def _download_file(url, b_path, expected_hash, validate_certs, token=None):
         validate_certs=validate_certs,
         headers=None if token is None else token.headers(),
         unredirected_headers=['Authorization'], http_agent=user_agent(),
+        timeout=timeout
     )
 
     with open(b_file_path, 'wb') as download_file:  # type: BinaryIO

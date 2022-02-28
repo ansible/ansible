@@ -209,11 +209,7 @@ class PosixProfile(HostProfile[TPosixConfig], metaclass=abc.ABCMeta):
             python = self.config.python
 
             if isinstance(python, VirtualPythonConfig):
-                python = VirtualPythonConfig(
-                    version=python.version,
-                    system_site_packages=python.system_site_packages,
-                    path=os.path.join(get_virtual_python(self.args, python), 'bin', 'python'),
-                )
+                python = get_virtual_python(self.args, python)
 
             self.state['python'] = python
 

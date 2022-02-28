@@ -26,7 +26,7 @@ import pytest
 
 # for testing
 from units.compat import unittest
-from units.compat.mock import Mock, patch
+from mock import Mock, patch
 
 from ansible.module_utils import facts
 from ansible.module_utils.facts import hardware

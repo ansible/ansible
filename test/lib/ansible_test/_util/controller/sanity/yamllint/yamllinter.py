@@ -12,7 +12,7 @@ import yaml
 from yaml.resolver import Resolver
 from yaml.constructor import SafeConstructor
 from yaml.error import MarkedYAMLError
-from _yaml import CParser  # pylint: disable=no-name-in-module
+from yaml.cyaml import CParser
 
 from yamllint import linter
 from yamllint.config import YamlLintConfig

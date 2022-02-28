@@ -20,14 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from io import StringIO
-import sys
-import pytest
 
-from units.compat import mock
 from units.compat import unittest
-from units.compat.mock import MagicMock
-from units.compat.mock import patch
-from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.loader import become_loader

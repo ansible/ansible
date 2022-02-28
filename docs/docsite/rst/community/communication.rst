@@ -56,7 +56,7 @@ Matrix chat supports:
 * no line limits
 * images
 
-The room links in the list below will take you directly to the relevant rooms. For more information, see the community-hosted `Matrix FAQ <https://hackmd.io/@ansible-community/community-matrix-faq>`_.
+The room links in the :ref:`general_channels` will take you directly to the relevant rooms. For more information, see the community-hosted `Matrix FAQ <https://hackmd.io/@ansible-community/community-matrix-faq>`_.
 
 Ansible community on IRC
 ------------------------
@@ -79,11 +79,14 @@ Our IRC channels may require you to register your IRC nickname. If you receive a
 
 as described in the `libera.chat docs <https://libera.chat/guides/findingchannels>`_.
 
+.. _general_channels:
+
 General channels
 ----------------
 
 The clickable links will take you directly to the relevant Matrix room in your browser; room/channel information is also given for use in other clients:
 
+- `Community social room and posting news for the Bullhorn newsletter <https://matrix.to:/#/#social:ansible.im>`_ - ``Matrix: #social:ansible.im | IRC: #ansible-social``
 - `General usage and support questions <https://matrix.to:/#/#users:ansible.im>`_ - ``Matrix: #users:ansible.im | IRC: #ansible``
 - `Discussions on developer topics and code related to features or bugs <https://matrix.to/#/#devel:ansible.im>`_ - ``Matrix: #devel:ansible.im | IRC: #ansible-devel``
 - `Discussions on community and collections related topics <https://matrix.to:/#/#community:ansible.im>`_ - ``Matrix: #community:ansible.im | IRC: #ansible-community``
@@ -134,6 +137,19 @@ Meetings on chat
 
 The Ansible community holds regular meetings on various topics on Matrix/IRC, and anyone who is interested is invited to participate. For more information about Ansible meetings, consult the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
 
+Ansible Community Topics
+========================
+
+The `Ansible Community Steering Committee <https://github.com/ansible/community-docs/blob/main/ansible_community_steering_committee.rst>`_ uses the `community-topics repository <https://github.com/ansible-community/community-topics/issues>`_ to asynchronously discuss with the Community and vote on Community topics in corresponding issues.
+
+Create a new issue in the `repository <https://github.com/ansible-community/community-topics/issues>`_ if you want to discuss an idea that impacts any of the following:
+
+* Ansible Community
+* Community collection best practices and `requirements <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`_
+* `Community collection inclusion policy <https://github.com/ansible-collections/ansible-inclusion/blob/main/README.md>`_
+* `The Community governance <https://github.com/ansible/community-docs/blob/main/ansible_community_steering_committee.rst>`_
+* Other proposals of importance that need the Committee or overall Ansible community attention
+
 Ansible Automation Platform support questions
 =============================================
 
@@ -144,9 +160,10 @@ If you have a question about Ansible Automation Platform, visit `Red Hat support
 The Bullhorn
 ============
 
-**The Bullhorn** is our newsletter for the Ansible developer community.
-If you have any questions or content you would like to share, please reach out to us at the-bullhorn@redhat.com, or directly `contribute/suggest content <https://github.com/ansible/community/issues/546>`_ for upcoming issues.
+**The Bullhorn** is our newsletter for the Ansible contributor community. Please `subscribe <https://eepurl.com/gZmiEP>`_ to receive it.
 
-Read past issues `here <https://github.com/ansible/community/wiki/News>`_.
+If you have any content you would like to share, please `contribute/suggest it <https://github.com/ansible/community/wiki/News#the-bullhorn>`_ for upcoming releases.
 
-`Subscribe <https://eepurl.com/gZmiEP>`_ to receive it.
+If you have any questions, please reach out to us at ``the-bullhorn@redhat.com``.
+
+Read past issues on the official Bullhorn's `wiki page <https://github.com/ansible/community/wiki/News#the-bullhorn>`_.

@@ -9,7 +9,7 @@ __metaclass__ = type
 
 import pytest
 
-from units.compat.mock import patch
+from mock import patch
 
 from ansible.module_utils.six.moves import builtins
 

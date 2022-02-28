@@ -21,8 +21,7 @@ __metaclass__ = type
 
 
 from units.compat import unittest
-from units.compat.builtins import BUILTINS
-from units.compat.mock import mock_open, patch
+from mock import mock_open, patch
 from ansible.errors import AnsibleError
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
 
@@ -87,7 +86,7 @@ class TestErrors(unittest.TestCase):
         m = mock_open()
         m.return_value.readlines.return_value = ['this is line 1\n']
 
-        with patch('{0}.open'.format(BUILTINS), m):
+        with patch('builtins.open', m):
             # this line will be found in the file
             self.obj.ansible_pos = ('foo.yml', 1, 1)
             e = AnsibleError(self.message, self.obj)
@@ -110,7 +109,7 @@ class TestErrors(unittest.TestCase):
         m = mock_open()
         m.return_value.readlines.return_value = ['this line has unicode \xf0\x9f\x98\xa8 in it!\n']
 
-        with patch('{0}.open'.format(BUILTINS), m):
+        with patch('builtins.open', m):
             # this line will be found in the file
             self.obj.ansible_pos = ('foo.yml', 1, 1)
             e = AnsibleError(self.unicode_message, self.obj)
@@ -125,7 +124,7 @@ class TestErrors(unittest.TestCase):
         m = mock_open()
         m.return_value.readlines.return_value = ['this is line 1\n', 'this is line 2\n', 'this is line 3\n']
 
-        with patch('{0}.open'.format(BUILTINS), m):
+        with patch('builtins.open', m):
             # If the error occurs in the last line of the file, use the correct index to get the line
             # and avoid the IndexError
             self.obj.ansible_pos = ('foo.yml', 4, 1)
@@ -141,7 +140,7 @@ class TestErrors(unittest.TestCase):
         m = mock_open()
         m.return_value.readlines.return_value = ['this is line 1\n', 'this is line 2\n', 'this is line 3\n', '  \n', '   \n', ' ']
 
-        with patch('{0}.open'.format(BUILTINS), m):
+        with patch('builtins.open', m):
             self.obj.ansible_pos = ('foo.yml', 5, 1)
             e = AnsibleError(self.message, self.obj)
             self.assertEqual(
