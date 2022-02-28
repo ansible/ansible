@@ -58,7 +58,7 @@ attributes:
         support: partial
     delegation:
         details:
-            - while variable assignment can be delegated to a different host the execution context is always the current invenotory_hostname
+            - while variable assignment can be delegated to a different host the execution context is always the current inventory_hostname
             - connection variables, if set at all, would reflect the host it would target, even if we are not connecting at all in this case
         support: partial
     diff_mode:
