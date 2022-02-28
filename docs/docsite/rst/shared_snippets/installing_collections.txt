@@ -78,6 +78,8 @@ Use the ``--signature`` option to verify the collection's ``MANIFEST.json`` with
 
    ansible-galaxy collection install my_namespace.my_collection --signature https://examplehost.com/detached_signature.asc --keyring ~/.ansible/pubring.kbx
 
+GnuPG verification only occurs for collections installed from a Galaxy server. User-provided signatures are not used to verify collections installed from git repositories, source directories, or URLs/paths to tar.gz files.
+
 By default, verification is considered successful if a minimum of 1 signature successfully verifies the collection. The number of required signatures can be configured with ``--required-valid-signature-count`` or :ref:`GALAXY_REQUIRED_VALID_SIGNATURE_COUNT`. All signatures can be required by setting the option to -1.
 
 .. code-block:: bash

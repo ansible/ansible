@@ -199,11 +199,11 @@ def verify_local_collection(
             return result
 
     manifest_file = os.path.join(to_text(b_collection_path, errors='surrogate_or_strict'), MANIFEST_FILENAME)
-    signatures = []
+    signatures = list(local_collection.signatures)
     if verify_local_only and local_collection.source_info is not None:
-        signatures = [info["signature"] for info in local_collection.source_info["signatures"]]
+        signatures = [info["signature"] for info in local_collection.source_info["signatures"]] + signatures
     elif not verify_local_only and remote_collection.signatures:
-        signatures = remote_collection.signatures
+        signatures = list(remote_collection.signatures) + signatures
 
     keyring_configured = artifacts_manager.keyring is not None
     if not keyring_configured and signatures:
@@ -350,7 +350,7 @@ def verify_file_signatures(fqcn, manifest_file, detached_signatures, keyring, re
     if required_successful_count == -1:
         verified = not error_messages
         if not verified:
-            display.vvvv(f"Signature verification failed for '{fqcn}': failed signatures or no successful signatures")
+            display.display(f"Signature verification failed for '{fqcn}': failed signatures or no successful signatures")
         # elif not successful and detached_signatures:
         #     warn because no signatures were successful but the status codes were ignored?
         # elif not detached_signatures:
@@ -360,7 +360,7 @@ def verify_file_signatures(fqcn, manifest_file, detached_signatures, keyring, re
         # if not detached_signatures:
         #    warn instead of error if no signatures are found?
         if not verified:
-            display.vvvv(f"Signature verification failed for '{fqcn}': fewer successful signatures than required")
+            display.display(f"Signature verification failed for '{fqcn}': fewer successful signatures than required")
     if not verified:
         for msg in error_messages:
             display.vvvv(msg)
@@ -810,6 +810,18 @@ def verify_collections(
                     local_collection = Candidate.from_dir_path(
                         b_search_path, artifacts_manager,
                     )
+                    supplemental_signatures = [
+                        get_signature_from_source(source, display)
+                        for source in collection.signature_sources or []
+                    ]
+                    local_collection = Candidate(
+                        local_collection.fqcn,
+                        local_collection.ver,
+                        local_collection.src,
+                        local_collection.type,
+                        signatures=frozenset(supplemental_signatures),
+                    )
+
                     break
                 else:
                     raise AnsibleError(message=default_err)
@@ -818,9 +830,6 @@ def verify_collections(
                     remote_collection = None
                 else:
                     signatures = api_proxy.get_signatures(local_collection)
-                    # NOTE: If there are no Galaxy server signatures, only user-provided signature URLs,
-                    # NOTE: those alone validate the MANIFEST.json and the remote collection is not downloaded.
-                    # NOTE: The remote MANIFEST.json is only used in verification if there are no signatures.
                     signatures.extend([
                         get_signature_from_source(source, display)
                         for source in collection.signature_sources or []
@@ -838,7 +847,10 @@ def verify_collections(
                     try:
                         # NOTE: If there are no signatures, trigger the lookup. If found,
                         # NOTE: it'll cache download URL and token in artifact manager.
-                        if not signatures:
+                        # NOTE: If there are no Galaxy server signatures, only user-provided signature URLs,
+                        # NOTE: those alone validate the MANIFEST.json and the remote collection is not downloaded.
+                        # NOTE: The remote MANIFEST.json is only used in verification if there are no signatures.
+                        if not signatures and not collection.signature_sources:
                             api_proxy.get_collection_version_metadata(
                                 remote_collection,
                             )
