@@ -961,7 +961,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
             elif self.output == 'path-message':
                 pattern = '^(?P<path>[^:]*): (?P<message>.*)$'
             else:
-                pattern = ApplicationError('Unsupported output type: %s' % self.output)
+                raise ApplicationError('Unsupported output type: %s' % self.output)
 
         if not self.no_targets:
             data = '\n'.join(paths)
