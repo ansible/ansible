@@ -312,7 +312,7 @@ def get_legacy_host_config(
             targets = controller_targets(mode, options, controller)
 
             # Target sanity tests either have no Python requirements or manage their own virtual environments.
-            # Thus there is no point in setting up virtual environments ahead of time for them.
+            # Thus, there is no point in setting up virtual environments ahead of time for them.
 
             if mode == TargetMode.UNITS:
                 targets = [ControllerConfig(python=VirtualPythonConfig(version=target.python.version, path=target.python.path,

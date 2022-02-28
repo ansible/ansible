@@ -325,7 +325,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
         return messages
 
     def check_changes(self, args, results):  # type: (SanityConfig, Results) -> None
-        """Check changes and store results in the provided results dictionary."""
+        """Check changes and store results in the provided result dictionary."""
         integration_targets = list(walk_integration_targets())
         module_targets = list(walk_module_targets())
 

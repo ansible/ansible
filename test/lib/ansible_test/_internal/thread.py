@@ -25,7 +25,7 @@ class WrappedThread(threading.Thread):
         Do not override. Do not call directly. Executed by the start() method.
         """
         # We truly want to catch anything that the worker thread might do including call sys.exit.
-        # Therefore we catch *everything* (including old-style class exceptions)
+        # Therefore, we catch *everything* (including old-style class exceptions)
         # noinspection PyBroadException
         try:
             self._result.put((self.action(), None))

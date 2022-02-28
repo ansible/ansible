@@ -161,7 +161,7 @@ class EnvironmentConfig(CommonConfig):
     def only_targets(self, target_type):  # type: (t.Type[THostConfig]) -> t.List[THostConfig]
         """
         Return a list of target host configurations.
-        Requires that there are one or more targets, all of the specified type.
+        Requires that there are one or more targets, all the specified type.
         """
         if not self.targets:
             raise Exception('There must be one or more targets.')

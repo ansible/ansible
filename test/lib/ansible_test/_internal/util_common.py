@@ -195,6 +195,7 @@ def process_scoped_temporary_directory(args, prefix='ansible-test-', suffix=None
 
 @contextlib.contextmanager
 def named_temporary_file(args, prefix, suffix, directory, content):  # type: (CommonConfig, str, str, t.Optional[str], str) -> t.Iterator[str]
+    """Context manager for a named temporary file."""
     if args.explain:
         yield os.path.join(directory or '/tmp', '%stemp%s' % (prefix, suffix))
     else:

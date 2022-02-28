@@ -114,7 +114,7 @@ class AuthHelper(metaclass=abc.ABCMeta):
     def initialize_private_key(self):  # type: () -> str
         """
         Initialize and publish a new key pair (if needed) and return the private key.
-        The private key is cached across ansible-test invocations so it is only generated and published once per CI job.
+        The private key is cached across ansible-test invocations, so it is only generated and published once per CI job.
         """
         path = os.path.expanduser('~/.ansible-core-ci-private.key')
 
