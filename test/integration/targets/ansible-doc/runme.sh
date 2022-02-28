@@ -103,3 +103,10 @@ test "$current_out" == "$expected_out"
 
 # just ensure it runs
 ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --playbook-dir /dev/null
+
+# ensure that --metadata-dump does not fail when --no-fail-on-errors is supplied
+ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --no-fail-on-errors --playbook-dir broken-docs testns.testcol
+
+# ensure that --metadata-dump does fail when --no-fail-on-errors is not supplied
+output=$(ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --playbook-dir broken-docs testns.testcol 2>&1 | grep -c 'ERROR!' || true)
+test "$output" -eq 1
