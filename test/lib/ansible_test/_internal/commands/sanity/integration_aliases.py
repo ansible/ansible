@@ -1,6 +1,7 @@
 """Sanity test to check integration test aliases."""
 from __future__ import annotations
 
+import dataclasses
 import json
 import textwrap
 import os
@@ -209,7 +210,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
                 path=self.CI_YML,
             )])
 
-        results = dict(
+        results = Results(
             comments=[],
             labels={},
         )
@@ -217,7 +218,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
         self.load_ci_config(python)
         self.check_changes(args, results)
 
-        write_json_test_results(ResultType.BOT, 'data-sanity-ci.json', results)
+        write_json_test_results(ResultType.BOT, 'data-sanity-ci.json', results.__dict__)
 
         messages = []
 
@@ -369,8 +370,8 @@ class IntegrationAliasesTest(SanitySingleVersion):
             unsupported_tests=bool(unsupported_targets),
         )
 
-        results['comments'] += comments
-        results['labels'].update(labels)
+        results.comments += comments
+        results.labels.update(labels)
 
     def format_comment(self, template, targets):  # type: (str, t.List[str]) -> t.Optional[str]
         """Format and return a comment based on the given template and targets, or None if there are no targets."""
@@ -387,3 +388,10 @@ class IntegrationAliasesTest(SanitySingleVersion):
         message = textwrap.dedent(template).strip().format(**data)
 
         return message
+
+
+@dataclasses.dataclass
+class Results:
+    """Check results."""
+    comments: t.List[str]
+    labels: t.Dict[str, bool]
