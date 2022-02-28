@@ -95,6 +95,11 @@ def write_report(args, report, path):  # type: (CoverageAnalyzeTargetsConfig, t.
     ), verbosity=1)
 
 
+def format_line(value):  # type: (int) -> str
+    """Format line as a string."""
+    return str(value)  # putting this in a function keeps both pylint and mypy happy
+
+
 def format_arc(value):  # type: (t.Tuple[int, int]) -> str
     """Format an arc tuple as a string."""
     return '%d:%d' % value

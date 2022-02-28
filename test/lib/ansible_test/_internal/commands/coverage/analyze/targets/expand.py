@@ -19,6 +19,7 @@ from . import (
     CoverageAnalyzeTargetsConfig,
     expand_indexes,
     format_arc,
+    format_line,
     read_report,
 )
 
@@ -43,7 +44,7 @@ def command_coverage_analyze_targets_expand(args):  # type: (CoverageAnalyzeTarg
 
     report = dict(
         arcs=expand_indexes(covered_path_arcs, covered_targets, format_arc),
-        lines=expand_indexes(covered_path_lines, covered_targets, str),
+        lines=expand_indexes(covered_path_lines, covered_targets, format_line),
     )
 
     if not args.explain:
