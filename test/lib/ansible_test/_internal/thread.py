@@ -58,4 +58,4 @@ def mutex(func):  # type: (TCallable) -> TCallable
         with lock:
             return func(*args, **kwargs)
 
-    return wrapper
+    return wrapper  # type: ignore[return-value]  # requires https://www.python.org/dev/peps/pep-0612/ support
