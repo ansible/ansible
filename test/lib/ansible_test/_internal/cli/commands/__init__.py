@@ -11,6 +11,7 @@ from ...util import (
 
 from ..completers import (
     complete_target,
+    register_completer,
 )
 
 from ..environments import (
@@ -110,33 +111,33 @@ def do_commands(
 
     testing = test.add_argument_group(title='common testing arguments')
 
-    testing.add_argument(
+    register_completer(testing.add_argument(
         'include',
         metavar='TARGET',
         nargs='*',
         help='test the specified target',
-    ).completer = functools.partial(complete_target, completer)
+    ), functools.partial(complete_target, completer))
 
-    testing.add_argument(
+    register_completer(testing.add_argument(
         '--include',
         metavar='TARGET',
         action='append',
         help='include the specified target',
-    ).completer = functools.partial(complete_target, completer)
+    ), functools.partial(complete_target, completer))
 
-    testing.add_argument(
+    register_completer(testing.add_argument(
         '--exclude',
         metavar='TARGET',
         action='append',
         help='exclude the specified target',
-    ).completer = functools.partial(complete_target, completer)
+    ), functools.partial(complete_target, completer))
 
-    testing.add_argument(
+    register_completer(testing.add_argument(
         '--require',
         metavar='TARGET',
         action='append',
         help='require the specified target',
-    ).completer = functools.partial(complete_target, completer)
+    ), functools.partial(complete_target, completer))
 
     testing.add_argument(
         '--coverage',
