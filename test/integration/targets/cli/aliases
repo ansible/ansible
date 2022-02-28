@@ -4,3 +4,4 @@ needs/ssh
 needs/target/setup_pexpect
 shippable/posix/group3
 context/controller
+skip/rhel/7.9
