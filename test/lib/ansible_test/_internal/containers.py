@@ -223,7 +223,7 @@ def run_support_container(
 def get_container_database(args):  # type: (EnvironmentConfig) -> ContainerDatabase
     """Return the current container database, creating it as needed, or returning the one provided on the command line through delegation."""
     try:
-        return get_container_database.database
+        return get_container_database.database  # type: ignore[attr-defined]
     except AttributeError:
         pass
 
@@ -236,9 +236,9 @@ def get_container_database(args):  # type: (EnvironmentConfig) -> ContainerDatab
 
     display.info('>>> Container Database\n%s' % json.dumps(database.to_dict(), indent=4, sort_keys=True), verbosity=3)
 
-    get_container_database.database = database
+    get_container_database.database = database  # type: ignore[attr-defined]
 
-    return get_container_database.database
+    return database
 
 
 class ContainerAccess:

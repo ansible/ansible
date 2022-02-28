@@ -166,7 +166,7 @@ class CryptographyAuthHelper(AuthHelper, metaclass=abc.ABCMeta):
         private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
         public_key = private_key.public_key()
 
-        private_key_pem = to_text(private_key.private_bytes(
+        private_key_pem = to_text(private_key.private_bytes(  # type: ignore[attr-defined]  # documented method, but missing from type stubs
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption(),

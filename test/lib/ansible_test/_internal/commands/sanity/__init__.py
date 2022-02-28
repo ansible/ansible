@@ -503,12 +503,15 @@ class SanityIgnoreParser:
     def load(args):  # type: (SanityConfig) -> SanityIgnoreParser
         """Return the current SanityIgnore instance, initializing it if needed."""
         try:
-            return SanityIgnoreParser.instance
+            return SanityIgnoreParser.instance  # type: ignore[attr-defined]
         except AttributeError:
             pass
 
-        SanityIgnoreParser.instance = SanityIgnoreParser(args)
-        return SanityIgnoreParser.instance
+        instance = SanityIgnoreParser(args)
+
+        SanityIgnoreParser.instance = instance  # type: ignore[attr-defined]
+
+        return instance
 
 
 class SanityIgnoreProcessor:
@@ -671,11 +674,13 @@ class SanityTargets:
     def get_targets():  # type: () -> t.Tuple[TestTarget, ...]
         """Return a tuple of sanity test targets. Uses a cached version when available."""
         try:
-            return SanityTargets.get_targets.targets
+            return SanityTargets.get_targets.targets  # type: ignore[attr-defined]
         except AttributeError:
-            SanityTargets.get_targets.targets = tuple(sorted(walk_sanity_targets()))
+            targets = tuple(sorted(walk_sanity_targets()))
 
-        return SanityTargets.get_targets.targets
+        SanityTargets.get_targets.targets = targets  # type: ignore[attr-defined]
+
+        return targets
 
 
 class SanityTest(metaclass=abc.ABCMeta):

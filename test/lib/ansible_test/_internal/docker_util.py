@@ -154,7 +154,7 @@ def get_docker_preferred_network_name(args):  # type: (EnvironmentConfig) -> str
     - the default docker network (returns None)
     """
     try:
-        return get_docker_preferred_network_name.network
+        return get_docker_preferred_network_name.network  # type: ignore[attr-defined]
     except AttributeError:
         pass
 
@@ -171,7 +171,7 @@ def get_docker_preferred_network_name(args):  # type: (EnvironmentConfig) -> str
             container = docker_inspect(args, current_container_id, always=True)
             network = container.get_network_name()
 
-    get_docker_preferred_network_name.network = network
+    get_docker_preferred_network_name.network = network  # type: ignore[attr-defined]
 
     return network
 

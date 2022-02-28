@@ -247,9 +247,9 @@ def run_virtualenv(args,  # type: EnvironmentConfig
 def get_virtualenv_version(args, python):  # type: (EnvironmentConfig, str) -> t.Optional[t.Tuple[int, ...]]
     """Get the virtualenv version for the given python intepreter, if available, otherwise return None."""
     try:
-        cache = get_virtualenv_version.cache
+        cache = get_virtualenv_version.cache  # type: ignore[attr-defined]
     except AttributeError:
-        cache = get_virtualenv_version.cache = {}
+        cache = get_virtualenv_version.cache = {}  # type: ignore[attr-defined]
 
     if python not in cache:
         try:

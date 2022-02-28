@@ -142,9 +142,9 @@ def install_requirements(
 
     if ansible:
         try:
-            ansible_cache = install_requirements.ansible_cache
+            ansible_cache = install_requirements.ansible_cache  # type: ignore[attr-defined]
         except AttributeError:
-            ansible_cache = install_requirements.ansible_cache = {}
+            ansible_cache = install_requirements.ansible_cache = {}  # type: ignore[attr-defined]
 
         ansible_installed = ansible_cache.get(python.path)
 
