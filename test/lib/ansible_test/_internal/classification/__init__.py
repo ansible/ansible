@@ -156,18 +156,18 @@ def categorize_changes(args, paths, verbose_command=None):  # type: (TestConfig,
         if any(target == 'all' for target in targets):
             commands[command] = {'all'}
 
-    commands = dict((c, sorted(targets)) for c, targets in commands.items() if targets)
+    sorted_commands = dict((c, sorted(targets)) for c, targets in commands.items() if targets)
     focused_commands = dict((c, sorted(targets)) for c, targets in focused_commands.items())
 
-    for command, targets in commands.items():
+    for command, targets in sorted_commands.items():
         if targets == ['all']:
-            commands[command] = []  # changes require testing all targets, do not filter targets
+            sorted_commands[command] = []  # changes require testing all targets, do not filter targets
 
     changes = ChangeDescription()
     changes.command = verbose_command
     changes.changed_paths = sorted(original_paths)
     changes.deleted_paths = sorted(deleted_paths)
-    changes.regular_command_targets = commands
+    changes.regular_command_targets = sorted_commands
     changes.focused_command_targets = focused_commands
     changes.no_integration_paths = sorted(no_integration_paths)
 
@@ -373,7 +373,7 @@ class PathMapper:
                 'integration': target.name if 'posix/' in target.aliases else None,
                 'windows-integration': target.name if 'windows/' in target.aliases else None,
                 'network-integration': target.name if 'network/' in target.aliases else None,
-                FOCUSED_TARGET: True,
+                FOCUSED_TARGET: target.name,
             }
 
         if is_subdir(path, data_context().content.integration_path):
@@ -431,7 +431,7 @@ class PathMapper:
                     'integration': self.posix_integration_by_module.get(module_name) if ext == '.py' else None,
                     'windows-integration': self.windows_integration_by_module.get(module_name) if ext in ['.cs', '.ps1'] else None,
                     'network-integration': self.network_integration_by_module.get(module_name),
-                    FOCUSED_TARGET: True,
+                    FOCUSED_TARGET: module_name,
                 }
 
             return minimal
@@ -583,7 +583,7 @@ class PathMapper:
                 'windows-integration': target.name if target and 'windows/' in target.aliases else None,
                 'network-integration': target.name if target and 'network/' in target.aliases else None,
                 'units': units_path,
-                FOCUSED_TARGET: target is not None,
+                FOCUSED_TARGET: target.name if target else None,
             }
 
         if is_subdir(path, data_context().content.plugin_paths['filter']):

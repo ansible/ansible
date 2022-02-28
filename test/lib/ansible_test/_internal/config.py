@@ -169,7 +169,7 @@ class EnvironmentConfig(CommonConfig):
 
         assert type_guard(self.targets, target_type)
 
-        return self.targets
+        return t.cast(t.List[THostConfig], self.targets)
 
     @property
     def target_type(self):  # type: () -> t.Type[HostConfig]

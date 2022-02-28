@@ -91,7 +91,7 @@ class HostState:
 
         assert type_guard(self.target_profiles, profile_type)
 
-        return self.target_profiles
+        return t.cast(t.List[THostProfile], self.target_profiles)
 
 
 def prepare_profiles(

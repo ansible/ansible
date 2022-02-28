@@ -237,8 +237,8 @@ def convert_legacy_args(
     args.targets = targets
 
     if used_default_pythons:
-        targets = t.cast(t.List[ControllerConfig], targets)
-        skipped_python_versions = sorted_versions(list(set(SUPPORTED_PYTHON_VERSIONS) - {target.python.version for target in targets}))
+        control_targets = t.cast(t.List[ControllerConfig], targets)
+        skipped_python_versions = sorted_versions(list(set(SUPPORTED_PYTHON_VERSIONS) - {target.python.version for target in control_targets}))
     else:
         skipped_python_versions = []
 
@@ -309,14 +309,21 @@ def get_legacy_host_config(
             controller = OriginConfig(python=VirtualPythonConfig(version='default', system_site_packages=options.venv_system_site_packages))
 
         if mode in (TargetMode.SANITY, TargetMode.UNITS):
-            targets = controller_targets(mode, options, controller)
+            python = native_python(options)
+
+            if python:
+                control_targets = [ControllerConfig(python=python)]
+            else:
+                control_targets = controller.get_default_targets(HostContext(controller_config=controller))
 
             # Target sanity tests either have no Python requirements or manage their own virtual environments.
             # Thus, there is no point in setting up virtual environments ahead of time for them.
 
             if mode == TargetMode.UNITS:
                 targets = [ControllerConfig(python=VirtualPythonConfig(version=target.python.version, path=target.python.path,
-                                                                       system_site_packages=options.venv_system_site_packages)) for target in targets]
+                                                                       system_site_packages=options.venv_system_site_packages)) for target in control_targets]
+            else:
+                targets = t.cast(t.List[HostConfig], control_targets)
         else:
             targets = [ControllerConfig(python=VirtualPythonConfig(version=options.python or 'default',
                                                                    system_site_packages=options.venv_system_site_packages))]
@@ -453,17 +460,19 @@ def handle_non_posix_targets(
             targets = [WindowsInventoryConfig(path=options.inventory)]
     elif mode == TargetMode.NETWORK_INTEGRATION:
         if options.platform:
-            targets = [NetworkRemoteConfig(name=platform, provider=options.remote_provider) for platform in options.platform]
+            network_targets = [NetworkRemoteConfig(name=platform, provider=options.remote_provider) for platform in options.platform]
 
             for platform, collection in options.platform_collection or []:
-                for entry in targets:
+                for entry in network_targets:
                     if entry.platform == platform:
                         entry.collection = collection
 
             for platform, connection in options.platform_connection or []:
-                for entry in targets:
+                for entry in network_targets:
                     if entry.platform == platform:
                         entry.connection = connection
+
+            targets = t.cast(t.List[HostConfig], network_targets)
         else:
             targets = [NetworkInventoryConfig(path=options.inventory)]
 
@@ -482,7 +491,7 @@ def default_targets(
     elif mode == TargetMode.NETWORK_INTEGRATION:
         targets = [NetworkInventoryConfig(path=os.path.abspath(os.path.join(data_context().content.integration_path, 'inventory.networking')))]
     elif mode.multiple_pythons:
-        targets = controller.get_default_targets(HostContext(controller_config=controller))
+        targets = t.cast(t.List[HostConfig], controller.get_default_targets(HostContext(controller_config=controller)))
     else:
         targets = [ControllerConfig()]
 
