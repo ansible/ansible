@@ -107,7 +107,7 @@ class SshProcess:
                 dst = (dst_host, dst_port)
             else:
                 # explain mode
-                dst = list(self.pending_forwards)[0]
+                dst = self.pending_forwards[0]
                 src_port = random.randint(40000, 50000)
 
             self.pending_forwards.remove(dst)

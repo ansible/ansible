@@ -142,7 +142,7 @@ def command_sanity(args):  # type: (SanityConfig) -> None
     if not targets.include:
         raise AllTargetsSkipped()
 
-    tests = sanity_get_tests()
+    tests = list(sanity_get_tests())
 
     if args.test:
         disabled = []
@@ -203,14 +203,14 @@ def command_sanity(args):  # type: (SanityConfig) -> None
                 else:
                     raise Exception('Unsupported test type: %s' % type(test))
 
-                all_targets = targets.targets
+                all_targets = list(targets.targets)
 
                 if test.all_targets:
-                    usable_targets = targets.targets
+                    usable_targets = list(targets.targets)
                 elif test.no_targets:
-                    usable_targets = tuple()
+                    usable_targets = []
                 else:
-                    usable_targets = targets.include
+                    usable_targets = list(targets.include)
 
                 all_targets = SanityTargets.filter_and_inject_targets(test, all_targets)
                 usable_targets = SanityTargets.filter_and_inject_targets(test, usable_targets)

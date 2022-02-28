@@ -111,7 +111,7 @@ def categorize_changes(args, paths, verbose_command=None):  # type: (TestConfig,
             tests = all_tests(args)  # not categorized, run all tests
             display.warning('Path not categorized: %s' % path)
         else:
-            focused_target = tests.pop(FOCUSED_TARGET, False) and path in original_paths
+            focused_target = bool(tests.pop(FOCUSED_TARGET, None)) and path in original_paths
 
             tests = dict((key, value) for key, value in tests.items() if value)
 

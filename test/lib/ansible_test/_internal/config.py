@@ -96,7 +96,7 @@ class EnvironmentConfig(CommonConfig):
                 not isinstance(self.controller, OriginConfig)
                 or isinstance(self.controller.python, VirtualPythonConfig)
                 or self.controller.python.version != version_to_str(sys.version_info[:2])
-                or verify_sys_executable(self.controller.python.path)
+                or bool(verify_sys_executable(self.controller.python.path))
             )
 
         self.docker_network = args.docker_network  # type: t.Optional[str]

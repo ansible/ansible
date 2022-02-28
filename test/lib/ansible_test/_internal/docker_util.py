@@ -178,7 +178,7 @@ def get_docker_preferred_network_name(args):  # type: (EnvironmentConfig) -> str
 
 def is_docker_user_defined_network(network):  # type: (str) -> bool
     """Return True if the network being used is a user-defined network."""
-    return network and network != 'bridge'
+    return bool(network) and network != 'bridge'
 
 
 def docker_pull(args, image):  # type: (EnvironmentConfig, str) -> None
