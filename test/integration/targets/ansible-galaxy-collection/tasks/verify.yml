@@ -251,6 +251,16 @@
 - name: append a newline to a module to modify the checksum
   shell: "echo '' >> {{ module_path }}"
 
+- name: create a new module file
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/plugins/modules/test_new_file.py'
+    state: touch
+
+- name: create a new directory
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/ansible_test/verify/plugins/modules/test_new_dir'
+    state: directory
+
 - name: verify modified collection locally-only (should fail)
   command: ansible-galaxy collection verify --offline ansible_test.verify
   register: verify
@@ -261,6 +271,8 @@
       - verify.rc != 0
       - "'Collection ansible_test.verify contains modified content in the following files:' in verify.stdout"
       - "'plugins/modules/test_module.py' in verify.stdout"
+      - "'plugins/modules/test_new_file.py' in verify.stdout"
+      - "'plugins/modules/test_new_dir' in verify.stdout"
 
 # TODO: add a test for offline Galaxy signature metadata
 
