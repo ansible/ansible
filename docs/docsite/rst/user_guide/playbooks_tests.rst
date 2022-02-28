@@ -22,7 +22,7 @@ Test syntax
 
 `Test syntax <https://jinja.palletsprojects.com/en/latest/templates/#tests>`_ varies from `filter syntax <https://jinja.palletsprojects.com/en/latest/templates/#filters>`_ (``variable | filter``). Historically Ansible has registered tests as both jinja tests and jinja filters, allowing for them to be referenced using filter syntax.
 
-As of Ansible 2.5, using a jinja test as a filter will generate a warning.
+As of Ansible 2.5, using a jinja test as a filter will generate a deprecation warning. As of Ansible 2.9+ using jinja test syntax is required.
 
 The syntax for using a jinja test is as follows
 
