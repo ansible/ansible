@@ -24,6 +24,11 @@ import typing as t
 from struct import unpack, pack
 from termios import TIOCGWINSZ
 
+try:
+    from typing_extensions import TypeGuard  # TypeGuard was added in Python 3.9
+except ImportError:
+    TypeGuard = None
+
 from .encoding import (
     to_bytes,
     to_optional_bytes,
@@ -820,6 +825,21 @@ def verify_sys_executable(path):  # type: (str) -> t.Optional[str]
         return None
 
     return expected_executable
+
+
+def type_guard(sequence: t.Sequence[t.Any], guard_type: t.Type[C]) -> TypeGuard[t.Sequence[C]]:
+    """
+    Raises an exception if any item in the given sequence does not match the specified guard type.
+    Use with assert so that type checkers are aware of the type guard.
+    """
+    invalid_types = set(type(item) for item in sequence if not isinstance(item, guard_type))
+
+    if not invalid_types:
+        return True
+
+    invalid_type_names = sorted(str(item) for item in invalid_types)
+
+    raise Exception(f'Sequence required to contain only {guard_type} includes: {", ".join(invalid_type_names)}')
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

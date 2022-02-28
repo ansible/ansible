@@ -10,6 +10,7 @@ from .util import (
     display,
     verify_sys_executable,
     version_to_str,
+    type_guard,
 )
 
 from .util_common import (
@@ -166,9 +167,7 @@ class EnvironmentConfig(CommonConfig):
         if not self.targets:
             raise Exception('There must be one or more targets.')
 
-        for target in self.targets:
-            if not isinstance(target, target_type):
-                raise Exception(f'Target is {type(target_type)} instead of {target_type}.')
+        assert type_guard(self.targets, target_type)
 
         return self.targets
 
