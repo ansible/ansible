@@ -201,7 +201,7 @@ def run_venv(args,  # type: EnvironmentConfig
         remove_tree(path)
 
         if args.verbosity > 1:
-            display.error(ex)
+            display.error(ex.message)
 
         return False
 
@@ -237,7 +237,7 @@ def run_virtualenv(args,  # type: EnvironmentConfig
         remove_tree(path)
 
         if args.verbosity > 1:
-            display.error(ex)
+            display.error(ex.message)
 
         return False
 
@@ -258,7 +258,7 @@ def get_virtualenv_version(args, python):  # type: (EnvironmentConfig, str) -> t
             stdout = ''
 
             if args.verbosity > 1:
-                display.error(ex)
+                display.error(ex.message)
 
         version = None
 

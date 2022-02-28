@@ -247,7 +247,7 @@ def docker_run(
 
             return stdout.strip()
         except SubprocessError as ex:
-            display.error(ex)
+            display.error(ex.message)
             display.warning('Failed to run docker image "%s". Waiting a few seconds before trying again.' % image)
             time.sleep(3)
 
@@ -265,7 +265,7 @@ def docker_start(args, container_id, options=None):  # type: (EnvironmentConfig,
         try:
             return docker_command(args, ['start'] + options + [container_id], capture=True)
         except SubprocessError as ex:
-            display.error(ex)
+            display.error(ex.message)
             display.warning('Failed to start docker container "%s". Waiting a few seconds before trying again.' % container_id)
             time.sleep(3)
 

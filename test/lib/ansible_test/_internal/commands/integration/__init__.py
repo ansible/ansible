@@ -525,7 +525,7 @@ def command_integration_filtered(
                 failed.append(target)
 
                 if args.continue_on_error:
-                    display.error(ex)
+                    display.error(str(ex))
                     continue
 
                 display.notice('To resume at this test target, use the option: --start-at %s' % target.name)
