@@ -18,6 +18,7 @@ from ...executor import (
 )
 
 from ...connections import (
+    Connection,
     LocalConnection,
     SshConnection,
 )
@@ -55,13 +56,13 @@ def command_shell(args):  # type: (ShellConfig) -> None
 
     if isinstance(target_profile, ControllerProfile):
         # run the shell locally unless a target was requested
-        con = LocalConnection(args)
+        con = LocalConnection(args)  # type: Connection
     else:
         # a target was requested, connect to it over SSH
         con = target_profile.get_controller_target_connections()[0]
 
     if isinstance(con, SshConnection) and args.raw:
-        cmd = []
+        cmd = []  # type: t.List[str]
     elif isinstance(target_profile, PosixProfile):
         cmd = []
 

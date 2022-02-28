@@ -24,3 +24,8 @@ def complete_choices(choices: t.List[str], prefix: str, **_) -> t.List[str]:
     """Perform completion using the provided choices."""
     matches = [choice for choice in choices if choice.startswith(prefix)]
     return matches
+
+
+def register_completer(action: argparse.Action, completer) -> None:
+    """Register the given completer with the specified action."""
+    action.completer = completer  # type: ignore[attr-defined]  # intentionally using an attribute that does not exist

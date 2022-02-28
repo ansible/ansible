@@ -59,8 +59,8 @@ def get_cloud_plugins():  # type: () -> t.Tuple[t.Dict[str, t.Type[CloudProvider
     """Import cloud plugins and load them into the plugin dictionaries."""
     import_plugins('commands/integration/cloud')
 
-    providers = {}
-    environments = {}
+    providers = {}  # type: t.Dict[str, t.Type[CloudProvider]]
+    environments = {}  # type: t.Dict[str, t.Type[CloudEnvironment]]
 
     load_plugins(CloudProvider, providers)
     load_plugins(CloudEnvironment, environments)
@@ -134,7 +134,7 @@ def cloud_filter(args, targets):  # type: (IntegrationConfig, t.Tuple[Integratio
     if args.metadata.cloud_config is not None:
         return []  # cloud filter already performed prior to delegation
 
-    exclude = []
+    exclude = []  # type: t.List[str]
 
     for provider in get_cloud_providers(args, targets):
         provider.filter(targets, exclude)
@@ -206,7 +206,7 @@ class CloudBase(metaclass=abc.ABCMeta):
     @property
     def setup_executed(self):  # type: () -> bool
         """True if setup has been executed, otherwise False."""
-        return self._get_cloud_config(self._SETUP_EXECUTED, False)
+        return t.cast(bool, self._get_cloud_config(self._SETUP_EXECUTED, False))
 
     @setup_executed.setter
     def setup_executed(self, value):  # type: (bool) -> None
@@ -216,7 +216,7 @@ class CloudBase(metaclass=abc.ABCMeta):
     @property
     def config_path(self):  # type: () -> str
         """Path to the configuration file."""
-        return os.path.join(data_context().content.root, self._get_cloud_config(self._CONFIG_PATH))
+        return os.path.join(data_context().content.root, str(self._get_cloud_config(self._CONFIG_PATH)))
 
     @config_path.setter
     def config_path(self, value):  # type: (str) -> None
@@ -226,7 +226,7 @@ class CloudBase(metaclass=abc.ABCMeta):
     @property
     def resource_prefix(self):  # type: () -> str
         """Resource prefix."""
-        return self._get_cloud_config(self._RESOURCE_PREFIX)
+        return str(self._get_cloud_config(self._RESOURCE_PREFIX))
 
     @resource_prefix.setter
     def resource_prefix(self, value):  # type: (str) -> None
@@ -236,7 +236,7 @@ class CloudBase(metaclass=abc.ABCMeta):
     @property
     def managed(self):  # type: () -> bool
         """True if resources are managed by ansible-test, otherwise False."""
-        return self._get_cloud_config(self._MANAGED)
+        return t.cast(bool, self._get_cloud_config(self._MANAGED))
 
     @managed.setter
     def managed(self, value):  # type: (bool) -> None

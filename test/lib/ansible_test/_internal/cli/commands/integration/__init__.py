@@ -5,6 +5,7 @@ import argparse
 
 from ...completers import (
     complete_target,
+    register_completer,
 )
 
 from ...environments import (
@@ -43,12 +44,12 @@ def do_integration(
 def add_integration_common(
         parser,  # type: argparse.ArgumentParser
 ):
-    """Add common integration argumetns."""
-    parser.add_argument(
+    """Add common integration arguments."""
+    register_completer(parser.add_argument(
         '--start-at',
         metavar='TARGET',
         help='start at the specified target',
-    ).completer = complete_target
+    ), complete_target)
 
     parser.add_argument(
         '--start-at-task',
