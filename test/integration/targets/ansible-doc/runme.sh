@@ -104,6 +104,27 @@ test "$current_out" == "$expected_out"
 # just ensure it runs
 ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --playbook-dir /dev/null
 
+# create broken role argument spec
+mkdir -p broken-docs/collections/ansible_collections/testns/testcol/roles/testrole/meta
+cat <<EOF > broken-docs/collections/ansible_collections/testns/testcol/roles/testrole/meta/main.yml
+---
+dependencies:
+galaxy_info:
+
+argument_specs:
+    main:
+        short_description: testns.testcol.testrole short description for main entry point
+        description:
+            - Longer description for testns.testcol.testrole main entry point.
+        author: Ansible Core (@ansible)
+        options:
+            opt1:
+                description: opt1 description
+                    broken:
+                type: "str"
+                required: true
+EOF
+
 # ensure that --metadata-dump does not fail when --no-fail-on-errors is supplied
 ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --no-fail-on-errors --playbook-dir broken-docs testns.testcol
 
