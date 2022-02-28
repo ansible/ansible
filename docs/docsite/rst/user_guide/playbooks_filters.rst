@@ -1266,7 +1266,7 @@ address. For example, to get the IP address itself from a CIDR, you can use:
 .. code-block:: yaml+jinja
 
   {{ '192.0.2.1/24' | ansible.netcommon.ipaddr('address') }}
-  # => 192.168.0.1
+  # => 192.0.2.1
 
 More information about ``ipaddr`` filter and complete usage guide can be found
 in :ref:`playbooks_filters_ipaddr`.
