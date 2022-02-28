@@ -37,7 +37,7 @@ class RegisteredCompletionFinder(OptionCompletionFinder):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.registered_completions = None  # type: t.Optional[str]
+        self.registered_completions = None  # type: t.Optional[t.List[str]]
 
     def completer(
             self,
@@ -88,20 +88,18 @@ class CompositeAction(argparse.Action, metaclass=abc.ABCMeta):
     """Base class for actions that parse composite arguments."""
     documentation_state = {}  # type: t.Dict[t.Type[CompositeAction], DocumentationState]
 
-    # noinspection PyUnusedLocal
     def __init__(
             self,
             *args,
-            dest,  # type: str
             **kwargs,
     ):
-        del dest
-
         self.definition = self.create_parser()
         self.documentation_state[type(self)] = documentation_state = DocumentationState()
         self.definition.document(documentation_state)
 
-        super().__init__(*args, dest=self.definition.dest, **kwargs)
+        kwargs.update(dest=self.definition.dest)
+
+        super().__init__(*args, **kwargs)
 
         register_safe_action(type(self))
 
@@ -139,10 +137,12 @@ class CompositeActionCompletionFinder(RegisteredCompletionFinder):
     def get_completions(
             self,
             prefix,  # type: str
-            action,  # type: CompositeAction
+            action,  # type: argparse.Action
             parsed_args,  # type: argparse.Namespace
     ):  # type: (...) -> t.List[str]
         """Return a list of completions appropriate for the given prefix and action, taking into account the arguments that have already been parsed."""
+        assert isinstance(action, CompositeAction)
+
         state = ParserState(
             mode=ParserMode.LIST if self.list_mode else ParserMode.COMPLETE,
             remainder=prefix,
@@ -237,6 +237,8 @@ def complete(
 ):  # type: (...) -> Completion
     """Perform argument completion using the given completer and return the completion result."""
     value = state.remainder
+
+    answer: Completion
 
     try:
         completer.parse(state)

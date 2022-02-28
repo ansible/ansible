@@ -223,7 +223,7 @@ def run_support_container(
 def get_container_database(args):  # type: (EnvironmentConfig) -> ContainerDatabase
     """Return the current container database, creating it as needed, or returning the one provided on the command line through delegation."""
     try:
-        return get_container_database.database
+        return get_container_database.database  # type: ignore[attr-defined]
     except AttributeError:
         pass
 
@@ -236,9 +236,9 @@ def get_container_database(args):  # type: (EnvironmentConfig) -> ContainerDatab
 
     display.info('>>> Container Database\n%s' % json.dumps(database.to_dict(), indent=4, sort_keys=True), verbosity=3)
 
-    get_container_database.database = database
+    get_container_database.database = database  # type: ignore[attr-defined]
 
-    return get_container_database.database
+    return database
 
 
 class ContainerAccess:
@@ -457,7 +457,7 @@ class SupportContainerContext:
 def support_container_context(
         args,  # type: EnvironmentConfig
         ssh,  # type: t.Optional[SshConnectionDetail]
-):  # type: (...) -> t.Optional[ContainerDatabase]
+):  # type: (...) -> t.Iterator[t.Optional[ContainerDatabase]]
     """Create a context manager for integration tests that use support containers."""
     if not isinstance(args, (IntegrationConfig, UnitsConfig, SanityConfig, ShellConfig)):
         yield None  # containers are only needed for commands that have targets (hosts or pythons)
@@ -514,7 +514,7 @@ def create_support_container_context(
 
     try:
         port_forwards = process.collect_port_forwards()
-        contexts = {}
+        contexts = {}  # type: t.Dict[str, t.Dict[str, ContainerAccess]]
 
         for forward, forwarded_port in port_forwards.items():
             access_host, access_port = forward
@@ -702,8 +702,8 @@ def create_container_hooks(
         else:
             managed_type = 'posix'
 
-        control_state = {}
-        managed_state = {}
+        control_state = {}  # type: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]]
+        managed_state = {}  # type: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]]
 
         def pre_target(target):
             """Configure hosts for SSH port forwarding required by the specified target."""
@@ -722,7 +722,7 @@ def create_container_hooks(
 
 def create_managed_contexts(control_contexts):  # type: (t.Dict[str, t.Dict[str, ContainerAccess]]) -> t.Dict[str, t.Dict[str, ContainerAccess]]
     """Create managed contexts from the given control contexts."""
-    managed_contexts = {}
+    managed_contexts = {}  # type: t.Dict[str, t.Dict[str, ContainerAccess]]
 
     for context_name, control_context in control_contexts.items():
         managed_context = managed_contexts[context_name] = {}
@@ -789,7 +789,7 @@ def forward_ssh_ports(
     hosts_entries = create_hosts_entries(test_context)
     inventory = generate_ssh_inventory(ssh_connections)
 
-    with named_temporary_file(args, 'ssh-inventory-', '.json', None, inventory) as inventory_path:
+    with named_temporary_file(args, 'ssh-inventory-', '.json', None, inventory) as inventory_path:  # type: str
         run_playbook(args, inventory_path, playbook, dict(hosts_entries=hosts_entries))
 
     ssh_processes = []  # type: t.List[SshProcess]
@@ -822,7 +822,7 @@ def cleanup_ssh_ports(
 
     inventory = generate_ssh_inventory(ssh_connections)
 
-    with named_temporary_file(args, 'ssh-inventory-', '.json', None, inventory) as inventory_path:
+    with named_temporary_file(args, 'ssh-inventory-', '.json', None, inventory) as inventory_path:  # type: str
         run_playbook(args, inventory_path, playbook, dict(hosts_entries=hosts_entries))
 
     if ssh_processes:

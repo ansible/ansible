@@ -14,17 +14,17 @@ from .encoding import (
 )
 
 
-def read_json_file(path):  # type: (t.AnyStr) -> t.Any
+def read_json_file(path):  # type: (str) -> t.Any
     """Parse and return the json content from the specified path."""
     return json.loads(read_text_file(path))
 
 
-def read_text_file(path):  # type: (t.AnyStr) -> t.Text
+def read_text_file(path):  # type: (str) -> t.Text
     """Return the contents of the specified path as text."""
     return to_text(read_binary_file(path))
 
 
-def read_binary_file(path):  # type: (t.AnyStr) -> bytes
+def read_binary_file(path):  # type: (str) -> bytes
     """Return the contents of the specified path as bytes."""
     with open_binary_file(path) as file_obj:
         return file_obj.read()
@@ -43,7 +43,7 @@ def write_json_file(path,  # type: str
                     content,  # type: t.Any
                     create_directories=False,  # type: bool
                     formatted=True,  # type: bool
-                    encoder=None,  # type: t.Optional[t.Callable[[t.Any], t.Any]]
+                    encoder=None,  # type: t.Optional[t.Type[json.JSONEncoder]]
                     ):  # type: (...) -> str
     """Write the given json content to the specified path, optionally creating missing directories."""
     text_content = json.dumps(content,
@@ -67,21 +67,19 @@ def write_text_file(path, content, create_directories=False):  # type: (str, str
         file_obj.write(to_bytes(content))
 
 
-def open_text_file(path, mode='r'):  # type: (str, str) -> t.TextIO
+def open_text_file(path, mode='r'):  # type: (str, str) -> t.IO[str]
     """Open the given path for text access."""
     if 'b' in mode:
         raise Exception('mode cannot include "b" for text files: %s' % mode)
 
-    # noinspection PyTypeChecker
     return io.open(to_bytes(path), mode, encoding=ENCODING)  # pylint: disable=consider-using-with
 
 
-def open_binary_file(path, mode='rb'):  # type: (str, str) -> t.BinaryIO
+def open_binary_file(path, mode='rb'):  # type: (str, str) -> t.IO[bytes]
     """Open the given path for binary access."""
     if 'b' not in mode:
         raise Exception('mode must include "b" for binary files: %s' % mode)
 
-    # noinspection PyTypeChecker
     return io.open(to_bytes(path), mode)  # pylint: disable=consider-using-with
 
 

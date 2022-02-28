@@ -129,7 +129,7 @@ class DataContext:
             # Doing so allows support for older git versions for which it is difficult to distinguish between a super project and a sub project.
             # It also provides a better user experience, since the solution for the user would effectively be the same -- to remove the nested version control.
             if isinstance(layout_provider, UnsupportedLayout):
-                source_provider = UnsupportedSource(layout_provider.root)
+                source_provider = UnsupportedSource(layout_provider.root)  # type: SourceProvider
             else:
                 source_provider = find_path_provider(SourceProvider, source_providers, layout_provider.root, walk)
         except ProviderNotFoundForPath:

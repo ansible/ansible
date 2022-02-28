@@ -55,7 +55,7 @@ from ..data import (
 )
 
 
-def filter_python(version, versions):  # type: (t.Optional[str], t.Optional[t.List[str]]) -> t.Optional[str]
+def filter_python(version, versions):  # type: (t.Optional[str], t.Optional[t.Sequence[str]]) -> t.Optional[str]
     """If a Python version is given and is in the given version list, return that Python version, otherwise return None."""
     return version if version in versions else None
 
@@ -237,8 +237,8 @@ def convert_legacy_args(
     args.targets = targets
 
     if used_default_pythons:
-        targets = t.cast(t.List[ControllerConfig], targets)
-        skipped_python_versions = sorted_versions(list(set(SUPPORTED_PYTHON_VERSIONS) - {target.python.version for target in targets}))
+        control_targets = t.cast(t.List[ControllerConfig], targets)
+        skipped_python_versions = sorted_versions(list(set(SUPPORTED_PYTHON_VERSIONS) - {target.python.version for target in control_targets}))
     else:
         skipped_python_versions = []
 
@@ -260,9 +260,11 @@ def controller_targets(
         mode,  # type: TargetMode
         options,  # type: LegacyHostOptions
         controller,  # type: ControllerHostConfig
-):  # type: (...) -> t.List[ControllerConfig]
+):  # type: (...) -> t.List[HostConfig]
     """Return the configuration for controller targets."""
     python = native_python(options)
+
+    targets: t.List[HostConfig]
 
     if python:
         targets = [ControllerConfig(python=python)]
@@ -283,7 +285,7 @@ def native_python(options):  # type: (LegacyHostOptions) -> t.Optional[NativePyt
 def get_legacy_host_config(
         mode,  # type: TargetMode
         options,  # type: LegacyHostOptions
-):  # type: (...) -> t.Tuple[HostConfig, t.List[HostConfig], t.Optional[FallbackDetail]]
+):  # type: (...) -> t.Tuple[ControllerHostConfig, t.List[HostConfig], t.Optional[FallbackDetail]]
     """
     Returns controller and target host configs derived from the provided legacy host options.
     The goal is to match the original behavior, by using non-split testing whenever possible.
@@ -296,6 +298,9 @@ def get_legacy_host_config(
 
     controller_fallback = None  # type: t.Optional[t.Tuple[str, str, FallbackReason]]
 
+    controller: t.Optional[ControllerHostConfig]
+    targets: t.List[HostConfig]
+
     if options.venv:
         if controller_python(options.python) or not options.python:
             controller = OriginConfig(python=VirtualPythonConfig(version=options.python or 'default', system_site_packages=options.venv_system_site_packages))
@@ -304,14 +309,21 @@ def get_legacy_host_config(
             controller = OriginConfig(python=VirtualPythonConfig(version='default', system_site_packages=options.venv_system_site_packages))
 
         if mode in (TargetMode.SANITY, TargetMode.UNITS):
-            targets = controller_targets(mode, options, controller)
+            python = native_python(options)
+
+            if python:
+                control_targets = [ControllerConfig(python=python)]
+            else:
+                control_targets = controller.get_default_targets(HostContext(controller_config=controller))
 
             # Target sanity tests either have no Python requirements or manage their own virtual environments.
-            # Thus there is no point in setting up virtual environments ahead of time for them.
+            # Thus, there is no point in setting up virtual environments ahead of time for them.
 
             if mode == TargetMode.UNITS:
                 targets = [ControllerConfig(python=VirtualPythonConfig(version=target.python.version, path=target.python.path,
-                                                                       system_site_packages=options.venv_system_site_packages)) for target in targets]
+                                                                       system_site_packages=options.venv_system_site_packages)) for target in control_targets]
+            else:
+                targets = t.cast(t.List[HostConfig], control_targets)
         else:
             targets = [ControllerConfig(python=VirtualPythonConfig(version=options.python or 'default',
                                                                    system_site_packages=options.venv_system_site_packages))]
@@ -448,17 +460,19 @@ def handle_non_posix_targets(
             targets = [WindowsInventoryConfig(path=options.inventory)]
     elif mode == TargetMode.NETWORK_INTEGRATION:
         if options.platform:
-            targets = [NetworkRemoteConfig(name=platform, provider=options.remote_provider) for platform in options.platform]
+            network_targets = [NetworkRemoteConfig(name=platform, provider=options.remote_provider) for platform in options.platform]
 
             for platform, collection in options.platform_collection or []:
-                for entry in targets:
+                for entry in network_targets:
                     if entry.platform == platform:
                         entry.collection = collection
 
             for platform, connection in options.platform_connection or []:
-                for entry in targets:
+                for entry in network_targets:
                     if entry.platform == platform:
                         entry.connection = connection
+
+            targets = t.cast(t.List[HostConfig], network_targets)
         else:
             targets = [NetworkInventoryConfig(path=options.inventory)]
 
@@ -470,12 +484,14 @@ def default_targets(
     controller,  # type: ControllerHostConfig
 ):  # type: (...) -> t.List[HostConfig]
     """Return a list of default targets for the given target mode."""
+    targets: t.List[HostConfig]
+
     if mode == TargetMode.WINDOWS_INTEGRATION:
         targets = [WindowsInventoryConfig(path=os.path.abspath(os.path.join(data_context().content.integration_path, 'inventory.winrm')))]
     elif mode == TargetMode.NETWORK_INTEGRATION:
         targets = [NetworkInventoryConfig(path=os.path.abspath(os.path.join(data_context().content.integration_path, 'inventory.networking')))]
     elif mode.multiple_pythons:
-        targets = controller.get_default_targets(HostContext(controller_config=controller))
+        targets = t.cast(t.List[HostConfig], controller.get_default_targets(HostContext(controller_config=controller)))
     else:
         targets = [ControllerConfig()]
 

@@ -21,8 +21,8 @@ class Metadata:
     """Metadata object for passing data to delegated tests."""
     def __init__(self):
         """Initialize metadata."""
-        self.changes = {}  # type: t.Dict[str, t.Tuple[t.Tuple[int, int]]]
-        self.cloud_config = None  # type: t.Optional[t.Dict[str, str]]
+        self.changes = {}  # type: t.Dict[str, t.Tuple[t.Tuple[int, int], ...]]
+        self.cloud_config = None  # type: t.Optional[t.Dict[str, t.Dict[str, t.Union[int, str, bool]]]]
         self.change_description = None  # type: t.Optional[ChangeDescription]
         self.ci_provider = None  # type: t.Optional[str]
 

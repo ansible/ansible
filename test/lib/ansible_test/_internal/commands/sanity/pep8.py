@@ -92,7 +92,7 @@ class Pep8Test(SanitySingleVersion):
         else:
             results = []
 
-        results = [SanityMessage(
+        messages = [SanityMessage(
             message=r['message'],
             path=r['path'],
             line=int(r['line']),
@@ -101,7 +101,7 @@ class Pep8Test(SanitySingleVersion):
             code=r['code'],
         ) for r in results]
 
-        errors = settings.process_errors(results, paths)
+        errors = settings.process_errors(messages, paths)
 
         if errors:
             return SanityFailure(self.name, messages=errors)

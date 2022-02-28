@@ -53,6 +53,7 @@ from ..config import (
 
 from .completers import (
     complete_choices,
+    register_completer,
 )
 
 from .converters import (
@@ -175,40 +176,40 @@ def add_composite_environment_options(
     if controller_mode == ControllerMode.NO_DELEGATION:
         composite_parser.set_defaults(controller=None)
     else:
-        composite_parser.add_argument(
+        register_completer(composite_parser.add_argument(
             '--controller',
             metavar='OPT',
             action=register_action_type(DelegatedControllerAction if controller_mode == ControllerMode.DELEGATED else OriginControllerAction),
             help='configuration for the controller',
-        ).completer = completer.completer
+        ), completer.completer)
 
     if target_mode == TargetMode.NO_TARGETS:
         composite_parser.set_defaults(targets=[])
     elif target_mode == TargetMode.SHELL:
         group = composite_parser.add_mutually_exclusive_group()
 
-        group.add_argument(
+        register_completer(group.add_argument(
             '--target-posix',
             metavar='OPT',
             action=register_action_type(PosixSshTargetAction),
             help='configuration for the target',
-        ).completer = completer.completer
+        ), completer.completer)
 
         suppress = None if get_ci_provider().supports_core_ci_auth() else argparse.SUPPRESS
 
-        group.add_argument(
+        register_completer(group.add_argument(
             '--target-windows',
             metavar='OPT',
             action=WindowsSshTargetAction if suppress else register_action_type(WindowsSshTargetAction),
             help=suppress or 'configuration for the target',
-        ).completer = completer.completer
+        ), completer.completer)
 
-        group.add_argument(
+        register_completer(group.add_argument(
             '--target-network',
             metavar='OPT',
             action=NetworkSshTargetAction if suppress else register_action_type(NetworkSshTargetAction),
             help=suppress or 'configuration for the target',
-        ).completer = completer.completer
+        ), completer.completer)
     else:
         if target_mode.multiple_pythons:
             target_option = '--target-python'
@@ -230,12 +231,12 @@ def add_composite_environment_options(
 
         target_action = target_actions[target_mode]
 
-        composite_parser.add_argument(
+        register_completer(composite_parser.add_argument(
             target_option,
             metavar='OPT',
             action=register_action_type(target_action),
             help=target_help,
-        ).completer = completer.completer
+        ), completer.completer)
 
     return action_types
 
@@ -246,9 +247,8 @@ def add_legacy_environment_options(
         target_mode,  # type: TargetMode
 ):
     """Add legacy options for controlling the test environment."""
-    # noinspection PyTypeChecker
-    environment = parser.add_argument_group(
-        title='environment arguments (mutually exclusive with "composite environment arguments" below)')  # type: argparse.ArgumentParser
+    environment: argparse.ArgumentParser = parser.add_argument_group(  # type: ignore[assignment]  # real type private
+        title='environment arguments (mutually exclusive with "composite environment arguments" below)')
 
     add_environments_python(environment, target_mode)
     add_environments_host(environment, controller_mode, target_mode)
@@ -259,6 +259,8 @@ def add_environments_python(
         target_mode,  # type: TargetMode
 ):  # type: (...) -> None
     """Add environment arguments to control the Python version(s) used."""
+    python_versions: t.Tuple[str, ...]
+
     if target_mode.has_python:
         python_versions = SUPPORTED_PYTHON_VERSIONS
     else:
@@ -284,8 +286,7 @@ def add_environments_host(
         target_mode  # type: TargetMode
 ):  # type: (...) -> None
     """Add environment arguments for the given host and argument modes."""
-    # noinspection PyTypeChecker
-    environments_exclusive_group = environments_parser.add_mutually_exclusive_group()  # type: argparse.ArgumentParser
+    environments_exclusive_group: argparse.ArgumentParser = environments_parser.add_mutually_exclusive_group()  # type: ignore[assignment]  # real type private
 
     add_environment_local(environments_exclusive_group)
     add_environment_venv(environments_exclusive_group, environments_parser)
@@ -305,28 +306,28 @@ def add_environment_network(
     environments_parser,  # type: argparse.ArgumentParser
 ):  # type: (...) -> None
     """Add environment arguments for running on a windows host."""
-    environments_parser.add_argument(
+    register_completer(environments_parser.add_argument(
         '--platform',
         metavar='PLATFORM',
         action='append',
         help='network platform/version',
-    ).completer = complete_network_platform
+    ), complete_network_platform)
 
-    environments_parser.add_argument(
+    register_completer(environments_parser.add_argument(
         '--platform-collection',
         type=key_value_type,
         metavar='PLATFORM=COLLECTION',
         action='append',
         help='collection used to test platform',
-    ).completer = complete_network_platform_collection
+    ), complete_network_platform_collection)
 
-    environments_parser.add_argument(
+    register_completer(environments_parser.add_argument(
         '--platform-connection',
         type=key_value_type,
         metavar='PLATFORM=CONNECTION',
         action='append',
         help='connection used to test platform',
-    ).completer = complete_network_platform_connection
+    ), complete_network_platform_connection)
 
     environments_parser.add_argument(
         '--inventory',
@@ -339,12 +340,12 @@ def add_environment_windows(
         environments_parser,  # type: argparse.ArgumentParser
 ):  # type: (...) -> None
     """Add environment arguments for running on a windows host."""
-    environments_parser.add_argument(
+    register_completer(environments_parser.add_argument(
         '--windows',
         metavar='VERSION',
         action='append',
         help='windows version',
-    ).completer = complete_windows
+    ), complete_windows)
 
     environments_parser.add_argument(
         '--inventory',
@@ -435,13 +436,13 @@ def add_environment_docker(
     else:
         docker_images = sorted(filter_completion(docker_completion(), controller_only=True))
 
-    exclusive_parser.add_argument(
+    register_completer(exclusive_parser.add_argument(
         '--docker',
         metavar='IMAGE',
         nargs='?',
         const='default',
         help='run from a docker container',
-    ).completer = functools.partial(complete_choices, docker_images)
+    ), functools.partial(complete_choices, docker_images))
 
     environments_parser.add_argument(
         '--docker-privileged',
@@ -480,12 +481,12 @@ def add_global_remote(
 
     suppress = None if get_ci_provider().supports_core_ci_auth() else argparse.SUPPRESS
 
-    parser.add_argument(
+    register_completer(parser.add_argument(
         '--remote-stage',
         metavar='STAGE',
         default='prod',
         help=suppress or 'remote stage to use: prod, dev',
-    ).completer = complete_remote_stage
+    ), complete_remote_stage)
 
     parser.add_argument(
         '--remote-endpoint',
@@ -518,11 +519,11 @@ def add_environment_remote(
 
     suppress = None if get_ci_provider().supports_core_ci_auth() else argparse.SUPPRESS
 
-    exclusive_parser.add_argument(
+    register_completer(exclusive_parser.add_argument(
         '--remote',
         metavar='NAME',
         help=suppress or 'run from a remote instance',
-    ).completer = functools.partial(complete_choices, remote_platforms)
+    ), functools.partial(complete_choices, remote_platforms))
 
     environments_parser.add_argument(
         '--remote-provider',

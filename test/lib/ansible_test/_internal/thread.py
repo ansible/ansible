@@ -8,14 +8,14 @@ import queue
 import typing as t
 
 
-TCallable = t.TypeVar('TCallable', bound=t.Callable)
+TCallable = t.TypeVar('TCallable', bound=t.Callable[..., t.Any])
 
 
 class WrappedThread(threading.Thread):
     """Wrapper around Thread which captures results and exceptions."""
     def __init__(self, action):  # type: (t.Callable[[], t.Any]) -> None
         super().__init__()
-        self._result = queue.Queue()
+        self._result = queue.Queue()  # type: queue.Queue[t.Any]
         self.action = action
         self.result = None
 
@@ -25,8 +25,8 @@ class WrappedThread(threading.Thread):
         Do not override. Do not call directly. Executed by the start() method.
         """
         # We truly want to catch anything that the worker thread might do including call sys.exit.
-        # Therefore we catch *everything* (including old-style class exceptions)
-        # noinspection PyBroadException, PyPep8
+        # Therefore, we catch *everything* (including old-style class exceptions)
+        # noinspection PyBroadException
         try:
             self._result.put((self.action(), None))
         # pylint: disable=locally-disabled, bare-except
@@ -58,4 +58,4 @@ def mutex(func):  # type: (TCallable) -> TCallable
         with lock:
             return func(*args, **kwargs)
 
-    return wrapper
+    return wrapper  # type: ignore[return-value]  # requires https://www.python.org/dev/peps/pep-0612/ support

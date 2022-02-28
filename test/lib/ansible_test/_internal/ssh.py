@@ -47,7 +47,7 @@ class SshProcess:
     """Wrapper around an SSH process."""
     def __init__(self, process):  # type: (t.Optional[subprocess.Popen]) -> None
         self._process = process
-        self.pending_forwards = None  # type: t.Optional[t.Set[t.Tuple[str, int]]]
+        self.pending_forwards = None  # type: t.Optional[t.List[t.Tuple[str, int]]]
 
         self.forwards = {}  # type: t.Dict[t.Tuple[str, int], int]
 
@@ -71,7 +71,7 @@ class SshProcess:
 
     def collect_port_forwards(self):  # type: (SshProcess) -> t.Dict[t.Tuple[str, int], int]
         """Collect port assignments for dynamic SSH port forwards."""
-        errors = []
+        errors = []  # type: t.List[str]
 
         display.info('Collecting %d SSH port forward(s).' % len(self.pending_forwards), verbosity=2)
 
@@ -107,7 +107,7 @@ class SshProcess:
                 dst = (dst_host, dst_port)
             else:
                 # explain mode
-                dst = list(self.pending_forwards)[0]
+                dst = self.pending_forwards[0]
                 src_port = random.randint(40000, 50000)
 
             self.pending_forwards.remove(dst)
@@ -202,7 +202,7 @@ def create_ssh_port_forwards(
     """
     options = dict(
         LogLevel='INFO',  # info level required to get messages on stderr indicating the ports assigned to each forward
-    )
+    )  # type: t.Dict[str, t.Union[str, int]]
 
     cli_args = []
 
@@ -221,7 +221,7 @@ def create_ssh_port_redirects(
         redirects,  # type: t.List[t.Tuple[int, str, int]]
 ):  # type: (...) -> SshProcess
     """Create SSH port redirections using the provided list of tuples (bind_port, target_host, target_port)."""
-    options = {}
+    options = {}  # type: t.Dict[str, t.Union[str, int]]
     cli_args = []
 
     for bind_port, target_host, target_port in redirects:

@@ -10,6 +10,7 @@ from .util import (
     display,
     verify_sys_executable,
     version_to_str,
+    type_guard,
 )
 
 from .util_common import (
@@ -96,7 +97,7 @@ class EnvironmentConfig(CommonConfig):
                 not isinstance(self.controller, OriginConfig)
                 or isinstance(self.controller.python, VirtualPythonConfig)
                 or self.controller.python.version != version_to_str(sys.version_info[:2])
-                or verify_sys_executable(self.controller.python.path)
+                or bool(verify_sys_executable(self.controller.python.path))
             )
 
         self.docker_network = args.docker_network  # type: t.Optional[str]
@@ -161,16 +162,14 @@ class EnvironmentConfig(CommonConfig):
     def only_targets(self, target_type):  # type: (t.Type[THostConfig]) -> t.List[THostConfig]
         """
         Return a list of target host configurations.
-        Requires that there are one or more targets, all of the specified type.
+        Requires that there are one or more targets, all the specified type.
         """
         if not self.targets:
             raise Exception('There must be one or more targets.')
 
-        for target in self.targets:
-            if not isinstance(target, target_type):
-                raise Exception(f'Target is {type(target_type)} instead of {target_type}.')
+        assert type_guard(self.targets, target_type)
 
-        return self.targets
+        return t.cast(t.List[THostConfig], self.targets)
 
     @property
     def target_type(self):  # type: () -> t.Type[HostConfig]
@@ -218,7 +217,7 @@ class TestConfig(EnvironmentConfig):
         self.failure_ok = getattr(args, 'failure_ok', False)  # type: bool
 
         self.metadata = Metadata.from_file(args.metadata) if args.metadata else Metadata()
-        self.metadata_path = None
+        self.metadata_path = None  # type: t.Optional[str]
 
         if self.coverage_check:
             self.coverage = True

@@ -201,7 +201,7 @@ def run_venv(args,  # type: EnvironmentConfig
         remove_tree(path)
 
         if args.verbosity > 1:
-            display.error(ex)
+            display.error(ex.message)
 
         return False
 
@@ -237,7 +237,7 @@ def run_virtualenv(args,  # type: EnvironmentConfig
         remove_tree(path)
 
         if args.verbosity > 1:
-            display.error(ex)
+            display.error(ex.message)
 
         return False
 
@@ -245,11 +245,11 @@ def run_virtualenv(args,  # type: EnvironmentConfig
 
 
 def get_virtualenv_version(args, python):  # type: (EnvironmentConfig, str) -> t.Optional[t.Tuple[int, ...]]
-    """Get the virtualenv version for the given python intepreter, if available, otherwise return None."""
+    """Get the virtualenv version for the given python interpreter, if available, otherwise return None."""
     try:
-        cache = get_virtualenv_version.cache
+        cache = get_virtualenv_version.cache  # type: ignore[attr-defined]
     except AttributeError:
-        cache = get_virtualenv_version.cache = {}
+        cache = get_virtualenv_version.cache = {}  # type: ignore[attr-defined]
 
     if python not in cache:
         try:
@@ -258,7 +258,7 @@ def get_virtualenv_version(args, python):  # type: (EnvironmentConfig, str) -> t
             stdout = ''
 
             if args.verbosity > 1:
-                display.error(ex)
+                display.error(ex.message)
 
         version = None
 

@@ -271,7 +271,7 @@ class WindowsCoverageHandler(CoverageHandler[WindowsConfig]):
     @property
     def is_active(self):  # type: () -> bool
         """True if the handler should be used, otherwise False."""
-        return self.profiles and not self.args.coverage_check
+        return bool(self.profiles) and not self.args.coverage_check
 
     def setup(self):  # type: () -> None
         """Perform setup for code coverage."""
