@@ -8,7 +8,7 @@ __metaclass__ = type
 
 
 from ansible.module_utils.six import binary_type, text_type
-from ansible.module_utils.common._collections_compat import Hashable, Mapping, Sequence
+from ansible.module_utils.common._collections_compat import Hashable, Mapping, MutableMapping, Sequence
 
 
 class ImmutableDict(Hashable, Mapping):
@@ -67,7 +67,8 @@ class ImmutableDict(Hashable, Mapping):
 
 def is_string(seq):
     """Identify whether the input has a string-like type (inclding bytes)."""
-    return isinstance(seq, (text_type, binary_type))
+    # AnsibleVaultEncryptedUnicode inherits from Sequence, but is expected to be a string like object
+    return isinstance(seq, (text_type, binary_type)) or getattr(seq, '__ENCRYPTED__', False)
 
 
 def is_iterable(seq, include_strings=False):

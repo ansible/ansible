@@ -9,7 +9,7 @@ import fcntl
 import os
 import shlex
 
-from abc import abstractmethod, abstractproperty
+from abc import abstractmethod
 from functools import wraps
 
 from ansible import constants as C
@@ -121,7 +121,8 @@ class ConnectionBase(AnsiblePlugin):
             # In Python3, shlex.split doesn't work on a byte string.
             return [to_text(x.strip()) for x in shlex.split(argstring) if x.strip()]
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def transport(self):
         """String used to identify this Connection class from other classes"""
         pass
@@ -229,38 +230,44 @@ class ConnectionBase(AnsiblePlugin):
     def reset(self):
         display.warning("Reset is not implemented for this connection")
 
-    # NOTE: these password functions are all become specific, the name is
-    # confusing as it does not handle 'protocol passwords'
-    # DEPRECATED:
-    # These are kept for backwards compatiblity
-    # Use the methods provided by the become plugins instead
-    def check_become_success(self, b_output):
-        display.deprecated(
-            "Connection.check_become_success is deprecated, calling code should be using become plugins instead",
-            version="2.12", collection_name='ansible.builtin'
-        )
-        return self.become.check_success(b_output)
+    def update_vars(self, variables):
+        '''
+        Adds 'magic' variables relating to connections to the variable dictionary provided.
+        In case users need to access from the play, this is a legacy from runner.
+        '''
+        for varname in C.COMMON_CONNECTION_VARS:
+            value = None
+            if varname in variables:
+                # dont update existing
+                continue
+            elif 'password' in varname or 'passwd' in varname:
+                # no secrets!
+                continue
+            elif varname == 'ansible_connection':
+                # its me mom!
+                value = self._load_name
+            elif varname == 'ansible_shell_type':
+                # its my cousin ...
+                value = self._shell._load_name
+            else:
+                # deal with generic options if the plugin supports em (for exmaple not all connections have a remote user)
+                options = C.config.get_plugin_options_from_var('connection', self._load_name, varname)
+                if options:
+                    value = self.get_option(options[0])  # for these variables there should be only one option
+                elif 'become' not in varname:
+                    # fallback to play_context, unles becoem related  TODO: in the end should come from task/play and not pc
+                    for prop, var_list in C.MAGIC_VARIABLE_MAPPING.items():
+                        if varname in var_list:
+                            try:
+                                value = getattr(self._play_context, prop)
+                                break
+                            except AttributeError:
+                                # it was not defined, fine to ignore
+                                continue
 
-    def check_password_prompt(self, b_output):
-        display.deprecated(
-            "Connection.check_password_prompt is deprecated, calling code should be using become plugins instead",
-            version="2.12", collection_name='ansible.builtin'
-        )
-        return self.become.check_password_prompt(b_output)
-
-    def check_incorrect_password(self, b_output):
-        display.deprecated(
-            "Connection.check_incorrect_password is deprecated, calling code should be using become plugins instead",
-            version="2.12", collection_name='ansible.builtin'
-        )
-        return self.become.check_incorrect_password(b_output)
-
-    def check_missing_password(self, b_output):
-        display.deprecated(
-            "Connection.check_missing_password is deprecated, calling code should be using become plugins instead",
-            version="2.12", collection_name='ansible.builtin'
-        )
-        return self.become.check_missing_password(b_output)
+            if value is not None:
+                display.debug('Set connection var {0} to {1}'.format(varname, value))
+                variables[varname] = value
 
 
 class NetworkConnectionBase(ConnectionBase):

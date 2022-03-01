@@ -1,0 +1,12 @@
+---
+- debug:
+    msg: "Role C that includes Role A with var {{ c_int }}"
+
+- name: "Role C import_role A with a_str {{ a_str }}"
+  import_role:
+    name: a
+
+- name: "Role C include_role A with a_int {{ a_int }}"
+  include_role:
+    name: a
+    tasks_from: "alternate"

@@ -17,7 +17,7 @@ from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
-from ansible.template import generate_ansible_template_vars
+from ansible.template import generate_ansible_template_vars, AnsibleEnvironment
 
 
 class ActionModule(ActionBase):
@@ -37,7 +37,7 @@ class ActionModule(ActionBase):
         # Options type validation
         # stings
         for s_type in ('src', 'dest', 'state', 'newline_sequence', 'variable_start_string', 'variable_end_string', 'block_start_string',
-                       'block_end_string'):
+                       'block_end_string', 'comment_start_string', 'comment_end_string'):
             if s_type in self._task.args:
                 value = ensure_type(self._task.args[s_type], 'string')
                 if value is not None and not isinstance(value, string_types):
@@ -61,19 +61,9 @@ class ActionModule(ActionBase):
         variable_end_string = self._task.args.get('variable_end_string', None)
         block_start_string = self._task.args.get('block_start_string', None)
         block_end_string = self._task.args.get('block_end_string', None)
+        comment_start_string = self._task.args.get('comment_start_string', None)
+        comment_end_string = self._task.args.get('comment_end_string', None)
         output_encoding = self._task.args.get('output_encoding', 'utf-8') or 'utf-8'
-
-        # Option `lstrip_blocks' was added in Jinja2 version 2.7.
-        if lstrip_blocks:
-            try:
-                import jinja2.defaults
-            except ImportError:
-                raise AnsibleError('Unable to import Jinja2 defaults for determining Jinja2 features.')
-
-            try:
-                jinja2.defaults.LSTRIP_BLOCKS
-            except AttributeError:
-                raise AnsibleError("Option `lstrip_blocks' is only available in Jinja2 versions >=2.7")
 
         wrong_sequences = ["\\n", "\\r", "\\r\\n"]
         allowed_sequences = ["\n", "\r", "\r\n"]
@@ -129,14 +119,23 @@ class ActionModule(ActionBase):
 
                 # add ansible 'template' vars
                 temp_vars = task_vars.copy()
-                temp_vars.update(generate_ansible_template_vars(source, dest))
+                temp_vars.update(generate_ansible_template_vars(self._task.args.get('src', None), source, dest))
 
-                with self._templar.set_temporary_context(searchpath=searchpath, newline_sequence=newline_sequence,
-                                                         block_start_string=block_start_string, block_end_string=block_end_string,
-                                                         variable_start_string=variable_start_string, variable_end_string=variable_end_string,
-                                                         trim_blocks=trim_blocks, lstrip_blocks=lstrip_blocks,
-                                                         available_variables=temp_vars):
-                    resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
+                # force templar to use AnsibleEnvironment to prevent issues with native types
+                # https://github.com/ansible/ansible/issues/46169
+                templar = self._templar.copy_with_new_env(environment_class=AnsibleEnvironment,
+                                                          searchpath=searchpath,
+                                                          newline_sequence=newline_sequence,
+                                                          block_start_string=block_start_string,
+                                                          block_end_string=block_end_string,
+                                                          variable_start_string=variable_start_string,
+                                                          variable_end_string=variable_end_string,
+                                                          comment_start_string=comment_start_string,
+                                                          comment_end_string=comment_end_string,
+                                                          trim_blocks=trim_blocks,
+                                                          lstrip_blocks=lstrip_blocks,
+                                                          available_variables=temp_vars)
+                resultant = templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
             except AnsibleAction:
                 raise
             except Exception as e:
@@ -151,7 +150,7 @@ class ActionModule(ActionBase):
 
             # remove 'template only' options:
             for remove in ('newline_sequence', 'block_start_string', 'block_end_string', 'variable_start_string', 'variable_end_string',
-                           'trim_blocks', 'lstrip_blocks', 'output_encoding'):
+                           'comment_start_string', 'comment_end_string', 'trim_blocks', 'lstrip_blocks', 'output_encoding'):
                 new_task.args.pop(remove, None)
 
             local_tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)
@@ -168,7 +167,8 @@ class ActionModule(ActionBase):
                         follow=follow,
                     ),
                 )
-                copy_action = self._shared_loader_obj.action_loader.get('copy',
+                # call with ansible.legacy prefix to eliminate collisions with collections while still allowing local override
+                copy_action = self._shared_loader_obj.action_loader.get('ansible.legacy.copy',
                                                                         task=new_task,
                                                                         connection=self._connection,
                                                                         play_context=self._play_context,

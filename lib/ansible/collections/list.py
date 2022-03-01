@@ -8,6 +8,7 @@ import os
 
 from collections import defaultdict
 
+from ansible.errors import AnsibleError
 from ansible.collections import is_collection_path
 from ansible.module_utils._text import to_bytes
 from ansible.utils.collection_loader import AnsibleCollectionConfig
@@ -54,40 +55,48 @@ def list_collection_dirs(search_paths=None, coll_filter=None):
     :return: list of collection directory paths
     """
 
+    collection = None
+    namespace = None
+    if coll_filter is not None:
+        if '.' in coll_filter:
+            try:
+                (namespace, collection) = coll_filter.split('.')
+            except ValueError:
+                raise AnsibleError("Invalid collection pattern supplied: %s" % coll_filter)
+        else:
+            namespace = coll_filter
+
     collections = defaultdict(dict)
     for path in list_valid_collection_paths(search_paths):
 
-        b_path = to_bytes(path)
-        if os.path.isdir(b_path):
-            b_coll_root = to_bytes(os.path.join(path, 'ansible_collections'))
+        if os.path.basename(path) != 'ansible_collections':
+            path = os.path.join(path, 'ansible_collections')
 
-            if os.path.exists(b_coll_root) and os.path.isdir(b_coll_root):
-                coll = None
-                if coll_filter is None:
-                    namespaces = os.listdir(b_coll_root)
-                else:
-                    if '.' in coll_filter:
-                        (nsp, coll) = coll_filter.split('.')
+        b_coll_root = to_bytes(path, errors='surrogate_or_strict')
+
+        if os.path.exists(b_coll_root) and os.path.isdir(b_coll_root):
+
+            if namespace is None:
+                namespaces = os.listdir(b_coll_root)
+            else:
+                namespaces = [namespace]
+
+            for ns in namespaces:
+                b_namespace_dir = os.path.join(b_coll_root, to_bytes(ns))
+
+                if os.path.isdir(b_namespace_dir):
+
+                    if collection is None:
+                        colls = os.listdir(b_namespace_dir)
                     else:
-                        nsp = coll_filter
-                    namespaces = [nsp]
+                        colls = [collection]
 
-                for ns in namespaces:
-                    b_namespace_dir = os.path.join(b_coll_root, to_bytes(ns))
+                    for mycoll in colls:
 
-                    if os.path.isdir(b_namespace_dir):
-
-                        if coll is None:
-                            colls = os.listdir(b_namespace_dir)
-                        else:
-                            colls = [coll]
-
-                        for collection in colls:
-
-                            # skip dupe collections as they will be masked in execution
-                            if collection not in collections[ns]:
-                                b_coll = to_bytes(collection)
-                                b_coll_dir = os.path.join(b_namespace_dir, b_coll)
-                                if is_collection_path(b_coll_dir):
-                                    collections[ns][collection] = b_coll_dir
-                                    yield b_coll_dir
+                        # skip dupe collections as they will be masked in execution
+                        if mycoll not in collections[ns]:
+                            b_coll = to_bytes(mycoll)
+                            b_coll_dir = os.path.join(b_namespace_dir, b_coll)
+                            if is_collection_path(b_coll_dir):
+                                collections[ns][mycoll] = b_coll_dir
+                                yield b_coll_dir

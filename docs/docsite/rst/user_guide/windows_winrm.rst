@@ -74,7 +74,9 @@ The following example shows host vars configured for basic authentication:
     ansible_winrm_transport: basic
 
 Basic authentication is not enabled by default on a Windows host but can be
-enabled by running the following in PowerShell::
+enabled by running the following in PowerShell:
+
+.. code-block:: powershell
 
     Set-Item -Path WSMan:\localhost\Service\Auth\Basic -Value $true
 
@@ -93,7 +95,9 @@ The following example shows host vars configured for certificate authentication:
     ansible_winrm_transport: certificate
 
 Certificate authentication is not enabled by default on a Windows host but can
-be enabled by running the following in PowerShell::
+be enabled by running the following in PowerShell:
+
+.. code-block:: powershell
 
     Set-Item -Path WSMan:\localhost\Service\Auth\Certificate -Value $true
 
@@ -183,8 +187,7 @@ Following example shows how to import the issuing certificate:
 
 .. code-block:: powershell
 
-    $cert = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2
-    $cert.Import("cert.pem")
+    $cert = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2 "cert.pem"
 
     $store_name = [System.Security.Cryptography.X509Certificates.StoreName]::Root
     $store_location = [System.Security.Cryptography.X509Certificates.StoreLocation]::LocalMachine
@@ -201,8 +204,7 @@ The code to import the client certificate public key is:
 
 .. code-block:: powershell
 
-    $cert = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2
-    $cert.Import("cert.pem")
+    $cert = New-Object -TypeName System.Security.Cryptography.X509Certificates.X509Certificate2 "cert.pem"
 
     $store_name = [System.Security.Cryptography.X509Certificates.StoreName]::TrustedPeople
     $store_location = [System.Security.Cryptography.X509Certificates.StoreLocation]::LocalMachine
@@ -214,7 +216,9 @@ The code to import the client certificate public key is:
 
 Mapping a Certificate to an Account
 +++++++++++++++++++++++++++++++++++
-Once the certificate has been imported, map it to the local user account::
+Once the certificate has been imported, map it to the local user account:
+
+.. code-block:: powershell
 
     $username = "username"
     $password = ConvertTo-SecureString -String "password" -AsPlainText -Force
@@ -281,6 +285,7 @@ The following example shows host vars configured for Kerberos authentication:
     ansible_user: username@MY.DOMAIN.COM
     ansible_password: Password
     ansible_connection: winrm
+    ansible_port: 5985
     ansible_winrm_transport: kerberos
 
 As of Ansible version 2.3, the Kerberos ticket will be created based on
@@ -288,7 +293,9 @@ As of Ansible version 2.3, the Kerberos ticket will be created based on
 Ansible or when ``ansible_winrm_kinit_mode`` is ``manual``, a Kerberos
 ticket must already be obtained. See below for more details.
 
-There are some extra host variables that can be set::
+There are some extra host variables that can be set:
+
+.. code-block:: yaml
 
     ansible_winrm_kinit_mode: managed/manual (manual means Ansible will not obtain a ticket)
     ansible_winrm_kinit_cmd: the kinit binary to use to obtain a Kerberos ticket (default to kinit)
@@ -440,7 +447,9 @@ work. To troubleshoot Kerberos issues, ensure that:
   process to fail.
 
 * Ensure that the fully qualified domain name for the domain is configured in
-  the ``krb5.conf`` file. To check this, run::
+  the ``krb5.conf`` file. To check this, run:
+
+  .. code-block:: console
 
     kinit -C username@MY.DOMAIN.COM
     klist
@@ -474,7 +483,9 @@ To use CredSSP authentication, the host vars are configured like so:
     ansible_connection: winrm
     ansible_winrm_transport: credssp
 
-There are some extra host variables that can be set as shown below::
+There are some extra host variables that can be set as shown below:
+
+.. code-block:: yaml
 
     ansible_winrm_credssp_disable_tlsv1_2: when true, will not use TLS 1.2 in the CredSSP auth process
 
@@ -521,7 +532,9 @@ another certificate.
     certificate. With CredSSP, message transport still occurs over the WinRM listener,
     but the TLS-encrypted messages inside the channel use the service-level certificate.
 
-To explicitly set the certificate to use for CredSSP::
+To explicitly set the certificate to use for CredSSP:
+
+.. code-block:: powershell
 
     # Note the value $certificate_thumbprint will be different in each
     # situation, this needs to be set based on the cert that is used.
@@ -572,7 +585,9 @@ A last resort is to disable the encryption requirement on the Windows host. This
 should only be used for development and debugging purposes, as anything sent
 from Ansible can be viewed, manipulated and also the remote session can completely
 be taken over by anyone on the same network. To disable the encryption
-requirement::
+requirement:
+
+.. code-block:: powershell
 
     Set-Item -Path WSMan:\localhost\Service\AllowUnencrypted -Value $true
 
@@ -744,7 +759,9 @@ As WinRM runs over the HTTP protocol, using HTTPS means that the TLS protocol
 is used to encrypt the WinRM messages. TLS will automatically attempt to
 negotiate the best protocol and cipher suite that is available to both the
 client and the server. If a match cannot be found then Ansible will error out
-with a message similar to::
+with a message similar to:
+
+.. code-block:: ansible-output
 
     HTTPSConnectionPool(host='server', port=5986): Max retries exceeded with url: /wsman (Caused by SSLError(SSLError(1, '[SSL: UNSUPPORTED_PROTOCOL] unsupported protocol (_ssl.c:1056)')))
 
@@ -762,12 +779,16 @@ manually.
     affected by this issue and can use TLS 1.2.
 
 To verify what protocol the Windows host supports, you can run the following
-command on the Ansible controller::
+command on the Ansible controller:
+
+.. code-block:: shell
 
     openssl s_client -connect <hostname>:5986
 
 The output will contain information about the TLS session and the ``Protocol``
-line will display the version that was negotiated::
+line will display the version that was negotiated:
+
+.. code-block:: console
 
     New, TLSv1/SSLv3, Cipher is ECDHE-RSA-AES256-SHA
     Server public key is 2048 bit
@@ -909,5 +930,5 @@ Some of these limitations can be mitigated by doing one of the following:
        Windows specific module list, all implemented in PowerShell
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

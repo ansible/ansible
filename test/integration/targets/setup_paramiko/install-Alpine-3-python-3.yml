@@ -1,0 +1,9 @@
+- name: Setup remote constraints
+  include_tasks: setup-remote-constraints.yml
+- name: Install Paramiko for Python 3 on Alpine
+  pip: # no apk package manager in core, just use pip
+    name: paramiko
+    extra_args: "-c {{ remote_constraints }}"
+  environment:
+    # Not sure why this fixes the test, but it does.
+    SETUPTOOLS_USE_DISTUTILS: stdlib

@@ -1,6 +1,5 @@
 """Payload management for sending Ansible files and test content to other systems (VMs, containers)."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import atexit
 import os
@@ -8,8 +7,11 @@ import stat
 import tarfile
 import tempfile
 import time
+import typing as t
 
-from . import types as t
+from .constants import (
+    ANSIBLE_BIN_SYMLINK_MAP,
+)
 
 from .config import (
     IntegrationConfig,
@@ -32,24 +34,8 @@ from .util_common import (
 )
 
 # improve performance by disabling uid/gid lookups
-tarfile.pwd = None
-tarfile.grp = None
-
-# this bin symlink map must exactly match the contents of the bin directory
-# it is necessary for payload creation to reconstruct the bin directory when running ansible-test from an installed version of ansible
-ANSIBLE_BIN_SYMLINK_MAP = {
-    'ansible': '../lib/ansible/cli/scripts/ansible_cli_stub.py',
-    'ansible-config': 'ansible',
-    'ansible-connection': '../lib/ansible/cli/scripts/ansible_connection_cli_stub.py',
-    'ansible-console': 'ansible',
-    'ansible-doc': 'ansible',
-    'ansible-galaxy': 'ansible',
-    'ansible-inventory': 'ansible',
-    'ansible-playbook': 'ansible',
-    'ansible-pull': 'ansible',
-    'ansible-test': '../test/lib/ansible_test/_data/cli/ansible_test_cli_stub.py',
-    'ansible-vault': 'ansible',
-}
+tarfile.pwd = None  # type: ignore[attr-defined]  # undocumented attribute
+tarfile.grp = None  # type: ignore[attr-defined]  # undocumented attribute
 
 
 def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
@@ -83,8 +69,8 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
 
         collection_layouts = data_context().create_collection_layouts()
 
-        content_files = []
-        extra_files = []
+        content_files = []  # type: t.List[t.Tuple[str, str]]
+        extra_files = []  # type: t.List[t.Tuple[str, str]]
 
         for layout in collection_layouts:
             if layout == data_context().content:
@@ -120,7 +106,7 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
 
     start = time.time()
 
-    with tarfile.TarFile.open(dst_path, mode='w:gz', compresslevel=4, format=tarfile.GNU_FORMAT) as tar:
+    with tarfile.open(dst_path, mode='w:gz', compresslevel=4, format=tarfile.GNU_FORMAT) as tar:
         for src, dst in files:
             display.info('%s -> %s' % (src, dst), verbosity=4)
             tar.add(src, dst, filter=filters.get(dst))

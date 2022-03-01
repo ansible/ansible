@@ -22,7 +22,6 @@ __metaclass__ = type
 from jinja2.utils import missing
 
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
-from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common._collections_compat import Mapping
 
@@ -40,7 +39,7 @@ class AnsibleJ2Vars(Mapping):
     To facilitate using builtin jinja2 things like range, globals are also handled here.
     '''
 
-    def __init__(self, templar, globals, locals=None, *extras):
+    def __init__(self, templar, globals, locals=None):
         '''
         Initializes this object with a valid Templar() object, as
         well as several dictionaries of variables representing
@@ -49,10 +48,9 @@ class AnsibleJ2Vars(Mapping):
 
         self._templar = templar
         self._globals = globals
-        self._extras = extras
         self._locals = dict()
         if isinstance(locals, dict):
-            for key, val in iteritems(locals):
+            for key, val in locals.items():
                 if val is not missing:
                     if key[:2] == 'l_':
                         self._locals[key[2:]] = val
@@ -60,40 +58,33 @@ class AnsibleJ2Vars(Mapping):
                         self._locals[key] = val
 
     def __contains__(self, k):
-        if k in self._templar.available_variables:
-            return True
         if k in self._locals:
             return True
-        for i in self._extras:
-            if k in i:
-                return True
+        if k in self._templar.available_variables:
+            return True
         if k in self._globals:
             return True
         return False
 
     def __iter__(self):
         keys = set()
-        keys.update(self._templar.available_variables, self._locals, self._globals, *self._extras)
+        keys.update(self._templar.available_variables, self._locals, self._globals)
         return iter(keys)
 
     def __len__(self):
         keys = set()
-        keys.update(self._templar.available_variables, self._locals, self._globals, *self._extras)
+        keys.update(self._templar.available_variables, self._locals, self._globals)
         return len(keys)
 
     def __getitem__(self, varname):
-        if varname not in self._templar.available_variables:
-            if varname in self._locals:
-                return self._locals[varname]
-            for i in self._extras:
-                if varname in i:
-                    return i[varname]
-            if varname in self._globals:
-                return self._globals[varname]
-            else:
-                raise KeyError("undefined variable: %s" % varname)
-
-        variable = self._templar.available_variables[varname]
+        if varname in self._locals:
+            return self._locals[varname]
+        if varname in self._templar.available_variables:
+            variable = self._templar.available_variables[varname]
+        elif varname in self._globals:
+            return self._globals[varname]
+        else:
+            raise KeyError("undefined variable: %s" % varname)
 
         # HostVars is special, return it as-is, as is the special variable
         # 'vars', which contains the vars structure
@@ -104,8 +95,8 @@ class AnsibleJ2Vars(Mapping):
             value = None
             try:
                 value = self._templar.template(variable)
-            except AnsibleUndefinedVariable:
-                raise
+            except AnsibleUndefinedVariable as e:
+                raise AnsibleUndefinedVariable("%s: %s" % (to_native(variable), e.message))
             except Exception as e:
                 msg = getattr(e, 'message', None) or to_native(e)
                 raise AnsibleError("An unhandled exception occurred while templating '%s'. "
@@ -121,10 +112,9 @@ class AnsibleJ2Vars(Mapping):
         if locals is None:
             return self
 
-        # FIXME run this only on jinja2>=2.9?
         # prior to version 2.9, locals contained all of the vars and not just the current
         # local vars so this was not necessary for locals to propagate down to nested includes
         new_locals = self._locals.copy()
         new_locals.update(locals)
 
-        return AnsibleJ2Vars(self._templar, self._globals, locals=new_locals, *self._extras)
+        return AnsibleJ2Vars(self._templar, self._globals, locals=new_locals)

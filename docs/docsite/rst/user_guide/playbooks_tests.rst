@@ -4,7 +4,7 @@
 Tests
 *****
 
-`Tests <http://jinja.pocoo.org/docs/dev/templates/#tests>`_ in Jinja are a way of evaluating template expressions and returning True or False. Jinja ships with many of these. See `builtin tests`_ in the official Jinja template documentation.
+`Tests <https://jinja.palletsprojects.com/en/latest/templates/#tests>`_ in Jinja are a way of evaluating template expressions and returning True or False. Jinja ships with many of these. See `builtin tests`_ in the official Jinja template documentation.
 
 The main difference between tests and filters are that Jinja tests are used for comparisons, whereas filters are used for data manipulation, and have different applications in jinja. Tests can also be used in list processing filters, like ``map()`` and ``select()`` to choose items in the list.
 
@@ -20,15 +20,19 @@ In addition to those Jinja2 tests, Ansible supplies a few more and users can eas
 Test syntax
 ===========
 
-`Test syntax <http://jinja.pocoo.org/docs/dev/templates/#tests>`_ varies from `filter syntax <http://jinja.pocoo.org/docs/dev/templates/#filters>`_ (``variable | filter``). Historically Ansible has registered tests as both jinja tests and jinja filters, allowing for them to be referenced using filter syntax.
+`Test syntax <https://jinja.palletsprojects.com/en/latest/templates/#tests>`_ varies from `filter syntax <https://jinja.palletsprojects.com/en/latest/templates/#filters>`_ (``variable | filter``). Historically Ansible has registered tests as both jinja tests and jinja filters, allowing for them to be referenced using filter syntax.
 
-As of Ansible 2.5, using a jinja test as a filter will generate a warning.
+As of Ansible 2.5, using a jinja test as a filter will generate a deprecation warning. As of Ansible 2.9+ using jinja test syntax is required.
 
-The syntax for using a jinja test is as follows::
+The syntax for using a jinja test is as follows
+
+.. code-block:: console
 
     variable is test_name
 
-Such as::
+Such as
+
+.. code-block:: console
 
     result is failed
 
@@ -37,29 +41,33 @@ Such as::
 Testing strings
 ===============
 
-To match strings against a substring or a regular expression, use the ``match``, ``search`` or ``regex`` tests::
+To match strings against a substring or a regular expression, use the ``match``, ``search`` or ``regex`` tests
+
+.. code-block:: yaml
 
     vars:
-      url: "http://example.com/users/foo/resources/bar"
+      url: "https://example.com/users/foo/resources/bar"
 
     tasks:
         - debug:
             msg: "matched pattern 1"
-          when: url is match("http://example.com/users/.*/resources/")
+          when: url is match("https://example.com/users/.*/resources")
 
         - debug:
             msg: "matched pattern 2"
-          when: url is search("/users/.*/resources/.*")
+          when: url is search("users/.*/resources/.*")
 
         - debug:
             msg: "matched pattern 3"
-          when: url is search("/users/")
+          when: url is search("users")
 
         - debug:
             msg: "matched pattern 4"
-          when: url is regex("example.com/\w+/foo")
+          when: url is regex("example\.com/\w+/foo")
 
-``match`` succeeds if it finds the pattern at the beginning of the string, while ``search`` succeeds if it finds the pattern anywhere within string. By default, ``regex`` works like ``search``, but ``regex`` can be configured to perform other tests as well.
+``match`` succeeds if it finds the pattern at the beginning of the string, while ``search`` succeeds if it finds the pattern anywhere within string. By default, ``regex`` works like ``search``, but ``regex`` can be configured to perform other tests as well, by passing the ``match_type`` keyword argument. In particular, ``match_type`` determines the ``re`` method that gets used to perform the search. The full list can be found in the relevant Python documentation `here <https://docs.python.org/3/library/re.html#regular-expression-objects>`_.
+
+All of the string tests also take optional ``ignorecase`` and ``multiline`` arguments. These correspond to ``re.I`` and ``re.M`` from Python's ``re`` library, respectively.
 
 .. _testing_vault:
 
@@ -137,21 +145,41 @@ Comparing versions
 To compare a version number, such as checking if the ``ansible_facts['distribution_version']``
 version is greater than or equal to '12.04', you can use the ``version`` test.
 
-The ``version`` test can also be used to evaluate the ``ansible_facts['distribution_version']``::
+The ``version`` test can also be used to evaluate the ``ansible_facts['distribution_version']``
+
+.. code-block:: yaml+jinja
 
     {{ ansible_facts['distribution_version'] is version('12.04', '>=') }}
 
 If ``ansible_facts['distribution_version']`` is greater than or equal to 12.04, this test returns True, otherwise False.
 
-The ``version`` test accepts the following operators::
+The ``version`` test accepts the following operators
+
+.. code-block:: console
 
     <, lt, <=, le, >, gt, >=, ge, ==, =, eq, !=, <>, ne
 
-This test also accepts a 3rd parameter, ``strict`` which defines if strict version parsing as defined by ``distutils.version.StrictVersion`` should be used.  The default is ``False`` (using ``distutils.version.LooseVersion``), ``True`` enables strict version parsing::
+This test also accepts a 3rd parameter, ``strict`` which defines if strict version parsing as defined by ``ansible.module_utils.compat.version.StrictVersion`` should be used.  The default is ``False`` (using ``ansible.module_utils.compat.version.LooseVersion``), ``True`` enables strict version parsing
+
+.. code-block:: yaml+jinja
 
     {{ sample_version_var is version('1.0', operator='lt', strict=True) }}
 
-When using ``version`` in a playbook or role, don't use ``{{ }}`` as described in the `FAQ <https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#when-should-i-use-also-how-to-interpolate-variables-or-dynamic-variable-names>`_::
+As of Ansible 2.11 the ``version`` test accepts a ``version_type`` parameter which is mutually exclusive with ``strict``, and accepts the following values
+
+.. code-block:: console
+
+    loose, strict, semver, semantic
+
+Using ``version_type`` to compare a semantic version would be achieved like the following
+
+.. code-block:: yaml+jinja
+
+    {{ sample_semver_var is version('2.0.0-rc.1+build.123', 'lt', version_type='semver') }}
+
+When using ``version`` in a playbook or role, don't use ``{{ }}`` as described in the `FAQ <https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#when-should-i-use-also-how-to-interpolate-variables-or-dynamic-variable-names>`_
+
+.. code-block:: yaml
 
     vars:
         my_version: 1.2.3
@@ -170,7 +198,9 @@ Set theory tests
 
 .. note:: In 2.5 ``issubset`` and ``issuperset`` were renamed to ``subset`` and ``superset``
 
-To see if a list includes or is included by another list, you can use 'subset' and 'superset'::
+To see if a list includes or is included by another list, you can use 'subset' and 'superset'
+
+.. code-block:: yaml
 
     vars:
         a: [1,2,3,4,5]
@@ -192,7 +222,9 @@ Testing if a list contains a value
 .. versionadded:: 2.8
 
 Ansible includes a ``contains`` test which operates similarly, but in reverse of the Jinja2 provided ``in`` test.
-The ``contains`` test is designed to work with the ``select``, ``reject``, ``selectattr``, and ``rejectattr`` filters::
+The ``contains`` test is designed to work with the ``select``, ``reject``, ``selectattr``, and ``rejectattr`` filters
+
+.. code-block:: yaml
 
     vars:
       lacp_groups:
@@ -220,12 +252,14 @@ The ``contains`` test is designed to work with the ``select``, ``reject``, ``sel
       - debug:
           msg: "{{ (lacp_groups|selectattr('interfaces', 'contains', 'em1')|first).master }}"
 
-.. versionadded:: 2.4
-
 Testing if a list value is True
 ===============================
 
-You can use `any` and `all` to check if any or all elements in a list are true or not::
+.. versionadded:: 2.4
+
+You can use `any` and `all` to check if any or all elements in a list are true or not
+
+.. code-block:: yaml
 
   vars:
     mylist:
@@ -252,7 +286,9 @@ Testing paths
 
 .. note:: In 2.5 the following tests were renamed to remove the ``is_`` prefix
 
-The following tests can provide information about a path on the controller::
+The following tests can provide information about a path on the controller
+
+.. code-block:: yaml
 
     - debug:
         msg: "path is a directory"
@@ -281,6 +317,16 @@ The following tests can provide information about a path on the controller::
         msg: "path is a mount"
       when: mypath is mount
 
+    - debug:
+        msg: "path is a directory"
+      when: mypath is directory
+      vars:
+         mypath: /my/patth
+
+    - debug:
+        msg: "path is a file"
+      when: "'/my/path' is file"
+
 
 Testing size formats
 ====================
@@ -294,7 +340,9 @@ Human readable
 
 Asserts whether the given string is human readable or not.
 
-For example::
+For example
+
+.. code-block:: yaml+jinja
 
   - name: "Human Readable"
     assert:
@@ -306,7 +354,9 @@ For example::
         - '"0.10 GB" == 102400000|human_readable(unit="G")'
         - '"0.10 Gb" == 102400000|human_readable(isbits=True, unit="G")'
 
-This would result in::
+This would result in
+
+.. code-block:: json
 
     { "changed": false, "msg": "All assertions passed" }
 
@@ -315,7 +365,9 @@ Human to bytes
 
 Returns the given string in the Bytes format.
 
-For example::
+For example
+
+.. code-block:: yaml+jinja
 
   - name: "Human to Bytes"
     assert:
@@ -329,7 +381,9 @@ For example::
         - "{{  '1.1 GB'|human_to_bytes}} == 1181116006"
         - "{{'10.00 Kb'|human_to_bytes(isbits=True)}} == 10240"
 
-This would result in::
+This would result in
+
+.. code-block:: json
 
     { "changed": false, "msg": "All assertions passed" }
 
@@ -339,7 +393,9 @@ This would result in::
 Testing task results
 ====================
 
-The following tasks are illustrative of the tests meant to check the status of tasks::
+The following tasks are illustrative of the tests meant to check the status of tasks
+
+.. code-block:: yaml
 
     tasks:
 
@@ -370,8 +426,83 @@ The following tasks are illustrative of the tests meant to check the status of t
 
 .. note:: From 2.1, you can also use success, failure, change, and skip so that the grammar matches, for those who need to be strict about it.
 
+.. _type_tests:
 
-.. _builtin tests: http://jinja.palletsprojects.com/templates/#builtin-tests
+Type Tests
+==========
+
+When looking to determine types, it may be tempting to use the ``type_debug`` filter and compare that to the string name of that type, however, you should instead use type test comparisons, such as:
+
+.. code-block:: yaml
+
+    tasks:
+      - name: "String interpretation"
+        vars:
+          a_string: "A string"
+          a_dictionary: {"a": "dictionary"}
+          a_list: ["a", "list"]
+        assert:
+          that:
+          # Note that a string is classed as also being "iterable", "sequence" and "mapping"
+          - a_string is string
+
+          # Note that a dictionary is classed as not being a "string", but is "iterable", "sequence" and "mapping"
+          - a_dictionary is not string and a_dictionary is mapping
+
+          # Note that a list is classed as not being a "string" or "mapping" but is "iterable" and "sequence"
+          - a_list is not string and a_list is not mapping and a_list is iterable
+
+      - name: "Number interpretation"
+        vars:
+          a_float: 1.01
+          a_float_as_string: "1.01"
+          an_integer: 1
+          an_integer_as_string: "1"
+        assert:
+          that:
+          # Both a_float and an_integer are "number", but each has their own type as well
+          - a_float is number and a_float is float
+          - an_integer is number and an_integer is integer
+
+          # Both a_float_as_string and an_integer_as_string are not numbers
+          - a_float_as_string is not number and a_float_as_string is string
+          - an_integer_as_string is not number and a_float_as_string is string
+
+          # a_float or a_float_as_string when cast to a float and then to a string should match the same value cast only to a string
+          - a_float | float | string == a_float | string
+          - a_float_as_string | float | string == a_float_as_string | string
+
+          # Likewise an_integer and an_integer_as_string when cast to an integer and then to a string should match the same value cast only to an integer
+          - an_integer | int | string == an_integer | string
+          - an_integer_as_string | int | string == an_integer_as_string | string
+
+          # However, a_float or a_float_as_string cast as an integer and then a string does not match the same value cast to a string
+          - a_float | int | string != a_float | string
+          - a_float_as_string | int | string != a_float_as_string | string
+
+          # Again, Likewise an_integer and an_integer_as_string cast as a float and then a string does not match the same value cast to a string
+          - an_integer | float | string != an_integer | string
+          - an_integer_as_string | float | string != an_integer_as_string | string
+
+      - name: "Native Boolean interpretation"
+        loop:
+        - yes
+        - true
+        - True
+        - TRUE
+        - no
+        - No
+        - NO
+        - false
+        - False
+        - FALSE
+        assert:
+          that:
+          # Note that while other values may be cast to boolean values, these are the only ones which are natively considered boolean
+          # Note also that `yes` is the only case sensitive variant of these values.
+          - item is boolean
+
+.. _builtin tests: https://jinja.palletsprojects.com/en/latest/templates/#builtin-tests
 
 .. seealso::
 
@@ -389,5 +520,5 @@ The following tasks are illustrative of the tests meant to check the status of t
        Tips and tricks for playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

@@ -52,7 +52,7 @@ Facts
 Static Loop Keyword
 -------------------
 
-- A simpler altenative to ``with_``, ``loop:`` only takes a list
+- A simpler alternative to ``with_``, ``loop:`` only takes a list
 - Remove complexity from loops, lookups are still available to users
 - Less confusing having a static directive vs a one that is dynamic depending on plugins loaded.
 
@@ -60,8 +60,8 @@ Vault
 -----
 - Vault secrets client inc new 'keyring' client
 
-Runtime Check on Modules for Blacklisting
------------------------------------------
+Runtime Check on Modules for Disabling
+--------------------------------------
 - Filter on things like "supported_by" in module metadata
 - Provide users with an option of "warning, error or allow/ignore"
 - Configurable via ansible.cfg and environment variable
@@ -80,7 +80,7 @@ Windows
   - win_updates **(done)**
 
     - Fix win_updates to detect (or request) become
-    - Add whitelist/blacklist features to win_updates
+    - Add enable/disable features to win_updates
   - win_dsc further improvements **(done)**
 
 General Cloud
@@ -97,7 +97,7 @@ AWS
 
   - ec2_instance
   - ec2_vpc: Allow the addition of secondary IPv4 CIDRS to existing VPCs.
-  - AWS Network Load Balancer support (NLB module, ASG support, etc)
+  - AWS Network Load Balancer support (NLB module, ASG support, and so on)
   - rds_instance
 
 Azure
@@ -109,8 +109,8 @@ Azure
 Network Roadmap
 ---------------
 - Refactor common network shared code into package **(done)**
-- Convert various nxos modules to leverage declarative intent **(done)**
-- Refactor various modules to leverage the cliconf plugin **(done)**
+- Convert various nxos modules to use declarative intent **(done)**
+- Refactor various modules to use the cliconf plugin **(done)**
 - Add various missing declarative modules for supported platforms and functions **(done)**
 - Implement a feature that handles platform differences and feature unavailability **(done)**
 - netconf-config.py should provide control for deployment strategy
@@ -120,7 +120,7 @@ Network Roadmap
 - Implements jsonrpc message passing for ansible-connection **(done)**
 - Improve logging for ansible-connection **(done)**
 - Improve stdout output for failures whilst using persistent connection **(done)**
-- Create IOS-XR NetConf Plugin and refactor iosxr modules to leverage netconf plugin **(done)**
+- Create IOS-XR NetConf Plugin and refactor iosxr modules to use netconf plugin **(done)**
 - Refactor junos modules to use netconf plugin **(done)**
 - Filters: Add a filter to convert XML response from a network device to JSON object **(done)**
 

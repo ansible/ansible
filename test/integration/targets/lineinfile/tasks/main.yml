@@ -19,7 +19,7 @@
 - name: deploy the test file for lineinfile
   copy:
     src: test.txt
-    dest: "{{ output_dir }}/test.txt"
+    dest: "{{ remote_tmp_dir }}/test.txt"
   register: result
 
 - name: assert that the test file was deployed
@@ -29,9 +29,62 @@
       - "result.checksum == '5feac65e442c91f557fc90069ce6efc4d346ab51'"
       - "result.state == 'file'"
 
+- name: "create a file that does not yet exist with `create: yes` and produce diff"
+  lineinfile:
+    dest: "{{ remote_tmp_dir }}/a/a.txt"
+    state: present
+    line: "First line"
+    create: yes
+  diff: yes
+  register: result1
+
+- name: assert that a diff was returned
+  assert:
+    that:
+      - result1.diff | length > 0
+
+- name: stat the new file
+  stat:
+    path: "{{ remote_tmp_dir }}/a/a.txt"
+  register: result
+
+- name: assert that the file exists
+  assert:
+    that:
+      - result.stat.exists
+
+- block:
+    - name: "EXPECTED FAILURE - test source file does not exist w/o `create: yes`"
+      lineinfile:
+        path: "/some/where/that/doesnotexist.txt"
+        state: present
+        line: "Doesn't matter"
+    - fail:
+        msg: "Should not get here"
+  rescue:
+    - name: Validate failure
+      assert:
+        that:
+          - "'Destination /some/where/that/doesnotexist.txt does not exist !' in ansible_failed_result.msg"
+
+- block:
+    - name: EXPECTED FAILURE - test invalid `validate` value
+      lineinfile:
+        path: "{{ remote_tmp_dir }}/test.txt"
+        state: present
+        line: "Doesn't matter"
+        validate: '/some/path'
+    - fail:
+        msg: "Should not get here"
+  rescue:
+    - name: Validate failure
+      assert:
+        that:
+          - "'validate must contain %s: /some/path' in ansible_failed_result.msg"
+
 - name: insert a line at the beginning of the file, and back it up
   lineinfile:
-    dest: "{{ output_dir }}/test.txt"
+    dest: "{{ remote_tmp_dir }}/test.txt"
     state: present
     line: "New line at the beginning"
     insertbefore: "BOF"
@@ -40,7 +93,7 @@
 
 - name: insert a line at the beginning of the file again
   lineinfile:
-    dest: "{{ output_dir }}/test.txt"
+    dest: "{{ remote_tmp_dir }}/test.txt"
     state: present
     line: "New line at the beginning"
     insertbefore: "BOF"
@@ -66,7 +119,7 @@
 
 - name: stat the test after the insert at the head
   stat:
-    path: "{{ output_dir }}/test.txt"
+    path: "{{ remote_tmp_dir }}/test.txt"
   register: result
 
 - name: assert test hash is what we expect for the file with the insert at the head
@@ -76,7 +129,7 @@
 
 - name: insert a line at the end of the file
   lineinfile:
-    dest: "{{ output_dir }}/test.txt"
+    dest: "{{ remote_tmp_dir }}/test.txt"
     state: present
     line: "New line at the end"
     insertafter: "EOF"
@@ -90,7 +143,7 @@
 
 - name: stat the test after the insert at the end
   stat:
-    path: "{{ output_dir }}/test.txt"
+    path: "{{ remote_tmp_dir }}/test.txt"
   register: result
 
 - name: assert test checksum matches after the insert at the end
@@ -100,7 +153,7 @@
 
 - name: insert a line after the first line
   lineinfile:
-    dest: "{{ output_dir }}/test.txt"
+    dest: "{{ remote_tmp_dir }}/test.txt"
     state: present
     line: "New line after line 1"
     insertafter: "^This is line 1$"
@@ -114,7 +167,7 @@
 
 - name: stat the test after insert after the first line
   stat:
-    path: "{{ output_dir }}/test.txt"
+    path: "{{ remote_tmp_dir }}/test.txt"
   register: result
 
 - name: assert test checksum matches after the insert after the first line
@@ -124,7 +177,7 @@
 
 - name: insert a line before the last line
   lineinfile:
-    dest: "{{ output_dir }}/test.txt"
+    dest: "{{ remote_tmp_dir }}/test.txt"
     state: present
     line: "New line before line 5"
     insertbefore: "^This is line 5$"
@@ -138,7 +191,7 @@
 
 - name: stat the test after the insert before the last line
   stat:
-    path: "{{ output_dir }}/test.txt"
+    path: "{{ remote_tmp_dir }}/test.txt"
   register: result
 
 - name: assert test checksum matches after the insert before the last line
@@ -148,7 +201,7 @@
 
 - name: Replace a line with backrefs
   lineinfile:
-    dest: "{{ output_dir }}/test.txt"
+    dest: "{{ remote_tmp_dir }}/test.txt"
     state: present
     line: "This is line 3"
     backrefs: yes
@@ -157,13 +210,13 @@
 
 - name: Replace a line with backrefs again
   lineinfile:
-    dest: "{{ output_dir }}/test.txt"
+    dest: "{{ remote_tmp_dir }}/test.txt"
     state: present
     line: "This is line 3"
     backrefs: yes
     regexp: "^(REF) .* \\1$"
   register: backrefs_result2
-- command: cat {{ output_dir }}/test.txt
+- command: cat {{ remote_tmp_dir }}/test.txt
 
 - name: assert that the line with backrefs was changed
   assert:
@@ -174,7 +227,7 @@
 
 - name: stat the test after the backref line was replaced
   stat:
-    path: "{{ output_dir }}/test.txt"
+    path: "{{ remote_tmp_dir }}/test.txt"
   register: result
 
 - name: assert test checksum matches after backref line was replaced
@@ -184,7 +237,7 @@
 
 - name: remove the middle line
   lineinfile:
-    dest: "{{ output_dir }}/test.txt"
+    dest: "{{ remote_tmp_dir }}/test.txt"
     state: absent
     regexp: "^This is line 3$"
   register: result
@@ -197,7 +250,7 @@
 
 - name: stat the test after the middle line was removed
   stat:
-    path: "{{ output_dir }}/test.txt"
+    path: "{{ remote_tmp_dir }}/test.txt"
   register: result
 
 - name: assert test checksum matches after the middle line was removed
@@ -207,7 +260,7 @@
 
 - name: run a validation script that succeeds
   lineinfile:
-    dest: "{{ output_dir }}/test.txt"
+    dest: "{{ remote_tmp_dir }}/test.txt"
     state: absent
     regexp: "^This is line 5$"
     validate: "true %s"
@@ -221,7 +274,7 @@
 
 - name: stat the test after the validation succeeded
   stat:
-    path: "{{ output_dir }}/test.txt"
+    path: "{{ remote_tmp_dir }}/test.txt"
   register: result
 
 - name: assert test checksum matches after the validation succeeded
@@ -231,7 +284,7 @@
 
 - name: run a validation script that fails
   lineinfile:
-    dest: "{{ output_dir }}/test.txt"
+    dest: "{{ remote_tmp_dir }}/test.txt"
     state: absent
     regexp: "^This is line 1$"
     validate: "/bin/false %s"
@@ -245,7 +298,7 @@
 
 - name: stat the test after the validation failed
   stat:
-    path: "{{ output_dir }}/test.txt"
+    path: "{{ remote_tmp_dir }}/test.txt"
   register: result
 
 - name: assert test checksum matches the previous after the validation failed
@@ -253,9 +306,11 @@
     that:
       - "result.stat.checksum == 'ab56c210ea82839a54487464800fed4878cb2608'"
 
+- import_tasks: test_string01.yml
+
 - name: use create=yes
   lineinfile:
-    dest: "{{ output_dir }}/new_test.txt"
+    dest: "{{ remote_tmp_dir }}/new_test.txt"
     create: yes
     insertbefore: BOF
     state: present
@@ -270,7 +325,7 @@
 
 - name: validate that the newly created file exists
   stat:
-    path: "{{ output_dir }}/new_test.txt"
+    path: "{{ remote_tmp_dir }}/new_test.txt"
   register: result
   ignore_errors: yes
 
@@ -301,12 +356,12 @@
 - name: testnoeof deploy the file for lineinfile
   copy:
     src: testnoeof.txt
-    dest: "{{ output_dir }}/testnoeof.txt"
+    dest: "{{ remote_tmp_dir }}/testnoeof.txt"
   register: result
 
 - name: testnoeof insert a line at the end of the file
   lineinfile:
-    dest: "{{ output_dir }}/testnoeof.txt"
+    dest: "{{ remote_tmp_dir }}/testnoeof.txt"
     state: present
     line: "New line at the end"
     insertafter: "EOF"
@@ -320,7 +375,7 @@
 
 - name: insert a multiple lines at the end of the file
   lineinfile:
-    dest: "{{ output_dir }}/test.txt"
+    dest: "{{ remote_tmp_dir }}/test.txt"
     state: present
     line: "This is a line\nwith \\n character"
     insertafter: "EOF"
@@ -334,7 +389,7 @@
 
 - name: testnoeof stat the no newline EOF test after the insert at the end
   stat:
-    path: "{{ output_dir }}/testnoeof.txt"
+    path: "{{ remote_tmp_dir }}/testnoeof.txt"
   register: result
 
 - name: testnoeof assert test checksum matches after the insert at the end
@@ -346,12 +401,12 @@
 - name: testempty deploy the testempty file for lineinfile
   copy:
     src: testempty.txt
-    dest: "{{ output_dir }}/testempty.txt"
+    dest: "{{ remote_tmp_dir }}/testempty.txt"
   register: result
 
 - name: testempty insert a line at the end of the file
   lineinfile:
-    dest: "{{ output_dir }}/testempty.txt"
+    dest: "{{ remote_tmp_dir }}/testempty.txt"
     state: present
     line: "New line at the end"
     insertafter: "EOF"
@@ -365,7 +420,7 @@
 
 - name: testempty stat the test after the insert at the end
   stat:
-    path: "{{ output_dir }}/testempty.txt"
+    path: "{{ remote_tmp_dir }}/testempty.txt"
   register: result
 
 - name: testempty assert test checksum matches after the insert at the end
@@ -374,7 +429,7 @@
       - "result.stat.checksum == 'f440dc65ea9cec3fd496c1479ddf937e1b949412'"
 
 - stat:
-    path: "{{ output_dir }}/test.txt"
+    path: "{{ remote_tmp_dir }}/test.txt"
   register: result
 
 - name: assert test checksum matches after inserting multiple lines
@@ -384,7 +439,7 @@
 
 - name: replace a line with backrefs included in the line
   lineinfile:
-    dest: "{{ output_dir }}/test.txt"
+    dest: "{{ remote_tmp_dir }}/test.txt"
     state: present
     line: "New \\1 created with the backref"
     backrefs: yes
@@ -399,7 +454,7 @@
 
 - name: stat the test after the backref line was replaced
   stat:
-    path: "{{ output_dir }}/test.txt"
+    path: "{{ remote_tmp_dir }}/test.txt"
   register: result
 
 - name: assert test checksum matches after backref line was replaced
@@ -412,7 +467,7 @@
 
 - name: create a new file for testing quoting issues
   file:
-    dest: "{{ output_dir }}/test_quoting.txt"
+    dest: "{{ remote_tmp_dir }}/test_quoting.txt"
     state: touch
   register: result
 
@@ -423,7 +478,7 @@
 
 - name: use with_items to add code-like strings to the quoting txt file
   lineinfile:
-    dest: "{{ output_dir }}/test_quoting.txt"
+    dest: "{{ remote_tmp_dir }}/test_quoting.txt"
     line: "{{ item }}"
     insertbefore: BOF
   with_items:
@@ -445,7 +500,7 @@
 
 - name: stat the quote test file
   stat:
-    path: "{{ output_dir }}/test_quoting.txt"
+    path: "{{ remote_tmp_dir }}/test_quoting.txt"
   register: result
 
 - name: assert test checksum matches after backref line was replaced
@@ -455,7 +510,7 @@
 
 - name: insert a line into the quoted file with a single quote
   lineinfile:
-    dest: "{{ output_dir }}/test_quoting.txt"
+    dest: "{{ remote_tmp_dir }}/test_quoting.txt"
     line: "import g'"
   register: result
 
@@ -466,7 +521,7 @@
 
 - name: stat the quote test file
   stat:
-    path: "{{ output_dir }}/test_quoting.txt"
+    path: "{{ remote_tmp_dir }}/test_quoting.txt"
   register: result
 
 - name: assert test checksum matches after backref line was replaced
@@ -476,7 +531,7 @@
 
 - name: insert a line into the quoted file with many double quotation strings
   lineinfile:
-    dest: "{{ output_dir }}/test_quoting.txt"
+    dest: "{{ remote_tmp_dir }}/test_quoting.txt"
     line: "\"quote\" and \"unquote\""
   register: result
 
@@ -487,7 +542,7 @@
 
 - name: stat the quote test file
   stat:
-    path: "{{ output_dir }}/test_quoting.txt"
+    path: "{{ remote_tmp_dir }}/test_quoting.txt"
   register: result
 
 - name: assert test checksum matches after backref line was replaced
@@ -501,7 +556,7 @@
 - name: Deploy the testmultiple file
   copy:
     src: testmultiple.txt
-    dest: "{{ output_dir }}/testmultiple.txt"
+    dest: "{{ remote_tmp_dir }}/testmultiple.txt"
   register: result
 
 - name: Assert that the testmultiple file was deployed
@@ -514,7 +569,7 @@
 # Test insertafter
 - name: Write the same line to a file inserted after different lines
   lineinfile:
-    path: "{{ output_dir }}/testmultiple.txt"
+    path: "{{ remote_tmp_dir }}/testmultiple.txt"
     insertafter: "{{ item.regex }}"
     line: "{{ item.replace }}"
   register: _multitest_1
@@ -530,7 +585,7 @@
 
 - name: Do the same thing again to check for changes
   lineinfile:
-    path: "{{ output_dir }}/testmultiple.txt"
+    path: "{{ remote_tmp_dir }}/testmultiple.txt"
     insertafter: "{{ item.regex }}"
     line: "{{ item.replace }}"
   register: _multitest_2
@@ -546,7 +601,7 @@
 
 - name: Stat the insertafter file
   stat:
-    path: "{{ output_dir }}/testmultiple.txt"
+    path: "{{ remote_tmp_dir }}/testmultiple.txt"
   register: result
 
 - name: Assert that the insertafter file matches expected checksum
@@ -559,7 +614,7 @@
 - name: Deploy the testmultiple file
   copy:
     src: testmultiple.txt
-    dest: "{{ output_dir }}/testmultiple.txt"
+    dest: "{{ remote_tmp_dir }}/testmultiple.txt"
   register: result
 
 - name: Assert that the testmultiple file was deployed
@@ -571,7 +626,7 @@
 
 - name: Write the same line to a file inserted before different lines
   lineinfile:
-    path: "{{ output_dir }}/testmultiple.txt"
+    path: "{{ remote_tmp_dir }}/testmultiple.txt"
     insertbefore: "{{ item.regex }}"
     line: "{{ item.replace }}"
   register: _multitest_3
@@ -587,7 +642,7 @@
 
 - name: Do the same thing again to check for changes
   lineinfile:
-    path: "{{ output_dir }}/testmultiple.txt"
+    path: "{{ remote_tmp_dir }}/testmultiple.txt"
     insertbefore: "{{ item.regex }}"
     line: "{{ item.replace }}"
   register: _multitest_4
@@ -603,7 +658,7 @@
 
 - name: Stat the insertbefore file
   stat:
-    path: "{{ output_dir }}/testmultiple.txt"
+    path: "{{ remote_tmp_dir }}/testmultiple.txt"
   register: result
 
 - name: Assert that the insertbefore file matches expected checksum
@@ -618,7 +673,7 @@
 - name: Deploy the test.conf file
   copy:
     src: test.conf
-    dest: "{{ output_dir }}/test.conf"
+    dest: "{{ remote_tmp_dir }}/test.conf"
   register: result
 
 - name: Assert that the test.conf file was deployed
@@ -631,7 +686,7 @@
 # Test instertafter
 - name: Insert lines after with regexp
   lineinfile:
-    path: "{{ output_dir }}/test.conf"
+    path: "{{ remote_tmp_dir }}/test.conf"
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
     insertafter: "{{ item.after }}"
@@ -640,7 +695,7 @@
 
 - name: Do the same thing again and check for changes
   lineinfile:
-    path: "{{ output_dir }}/test.conf"
+    path: "{{ remote_tmp_dir }}/test.conf"
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
     insertafter: "{{ item.after }}"
@@ -658,7 +713,7 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/test.conf"
+    path: "{{ remote_tmp_dir }}/test.conf"
   register: result
 
 - name: Assert that the file contents match what is expected
@@ -668,7 +723,7 @@
 
 - name: Do the same thing a third time without regexp and check for changes
   lineinfile:
-    path: "{{ output_dir }}/test.conf"
+    path: "{{ remote_tmp_dir }}/test.conf"
     line: "{{ item.line }}"
     insertafter: "{{ item.after }}"
   with_items: "{{ test_befaf_regexp }}"
@@ -676,7 +731,7 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/test.conf"
+    path: "{{ remote_tmp_dir }}/test.conf"
   register: result
 
 - name: Assert that the file was changed when no regexp was provided
@@ -687,7 +742,7 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/test.conf"
+    path: "{{ remote_tmp_dir }}/test.conf"
   register: result
 
 - name: Assert that the file contents match what is expected
@@ -699,7 +754,7 @@
 - name: Deploy the test.conf file
   copy:
     src: test.conf
-    dest: "{{ output_dir }}/test.conf"
+    dest: "{{ remote_tmp_dir }}/test.conf"
   register: result
 
 - name: Assert that the test.conf file was deployed
@@ -711,7 +766,7 @@
 
 - name: Insert lines before with regexp
   lineinfile:
-    path: "{{ output_dir }}/test.conf"
+    path: "{{ remote_tmp_dir }}/test.conf"
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
     insertbefore: "{{ item.before }}"
@@ -720,7 +775,7 @@
 
 - name: Do the same thing again and check for changes
   lineinfile:
-    path: "{{ output_dir }}/test.conf"
+    path: "{{ remote_tmp_dir }}/test.conf"
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
     insertbefore: "{{ item.before }}"
@@ -738,7 +793,7 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/test.conf"
+    path: "{{ remote_tmp_dir }}/test.conf"
   register: result
 
 - name: Assert that the file contents match what is expected
@@ -748,7 +803,7 @@
 
 - name: Do the same thing a third time without regexp and check for changes
   lineinfile:
-    path: "{{ output_dir }}/test.conf"
+    path: "{{ remote_tmp_dir }}/test.conf"
     line: "{{ item.line }}"
     insertbefore: "{{ item.before }}"
   with_items: "{{ test_befaf_regexp }}"
@@ -756,7 +811,7 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/test.conf"
+    path: "{{ remote_tmp_dir }}/test.conf"
   register: result
 
 - name: Assert that the file was changed when no regexp was provided
@@ -767,7 +822,7 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/test.conf"
+    path: "{{ remote_tmp_dir }}/test.conf"
   register: result
 
 - name: Assert that the file contents match what is expected
@@ -778,25 +833,25 @@
 - name: Copy empty file to test with insertbefore
   copy:
     src: testempty.txt
-    dest: "{{ output_dir }}/testempty.txt"
+    dest: "{{ remote_tmp_dir }}/testempty.txt"
 
 - name: Add a line to empty file with insertbefore
   lineinfile:
-    path: "{{ output_dir }}/testempty.txt"
+    path: "{{ remote_tmp_dir }}/testempty.txt"
     line: top
     insertbefore: '^not in the file$'
   register: oneline_insbefore_test1
 
 - name: Add a line to file with only one line using insertbefore
   lineinfile:
-    path: "{{ output_dir }}/testempty.txt"
+    path: "{{ remote_tmp_dir }}/testempty.txt"
     line: top
     insertbefore: '^not in the file$'
   register: oneline_insbefore_test2
 
 - name: Stat the file
   stat:
-    path:  "{{ output_dir }}/testempty.txt"
+    path:  "{{ remote_tmp_dir }}/testempty.txt"
   register: oneline_insbefore_file
 
 - name: Assert that insertebefore worked properly with a one line file
@@ -806,7 +861,8 @@
       - oneline_insbefore_test2 is not changed
       - oneline_insbefore_file.stat.checksum == '4dca56d05a21f0d018cd311f43e134e4501cf6d9'
 
-###################################################################
+- import_tasks: test_string02.yml
+
 # Issue 29443
 # When using an empty regexp, replace the last line (since it matches every line)
 # but also provide a warning.
@@ -814,7 +870,7 @@
 - name: Deploy the test file for lineinfile
   copy:
     src: test.txt
-    dest: "{{ output_dir }}/test.txt"
+    dest: "{{ remote_tmp_dir }}/test.txt"
   register: result
 
 - name: Assert that the test file was deployed
@@ -826,14 +882,14 @@
 
 - name: Insert a line in the file using an empty string as a regular expression
   lineinfile:
-    path: "{{ output_dir }}/test.txt"
+    path: "{{ remote_tmp_dir }}/test.txt"
     regexp: ''
     line: This is line 6
   register: insert_empty_regexp
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/test.txt"
+    path: "{{ remote_tmp_dir }}/test.txt"
   register: result
 
 - name: Assert that the file contents match what is expected and a warning was displayed
@@ -849,13 +905,56 @@
       If this is desired, use '^' to match every line in the file and avoid this warning.
 
 ###################################################################
+# When using an empty search string, replace the last line (since it matches every line)
+# but also provide a warning.
+
+- name: Deploy the test file for lineinfile
+  copy:
+    src: teststring.txt
+    dest: "{{ remote_tmp_dir }}/teststring.txt"
+  register: result
+
+- name: Assert that the test file was deployed
+  assert:
+    that:
+      - result is changed
+      - result.checksum == '481c2b73fe062390afdd294063a4f8285d69ac85'
+      - result.state == 'file'
+
+- name: Insert a line in the file using an empty string as a search string
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/teststring.txt"
+    search_string: ''
+    line: This is line 6
+  register: insert_empty_literal
+
+- name: Stat the file
+  stat:
+    path: "{{ remote_tmp_dir }}/teststring.txt"
+  register: result
+
+- name: Assert that the file contents match what is expected and a warning was displayed
+  assert:
+    that:
+      - insert_empty_literal is changed
+      - warning_message in insert_empty_literal.warnings
+      - result.stat.checksum == 'eaa79f878557d4bd8d96787a850526a0facab342'
+  vars:
+    warning_message: >-
+      The search string is an empty string, which will match every line in the file.
+      This may have unintended consequences, such as replacing the last line in the file rather than appending.
+
+- name: meta
+  meta: end_play
+
+###################################################################
 ## Issue #58923
 ## Using firstmatch with insertafter and ensure multiple lines are not inserted
 
 - name: Deploy the firstmatch test file
   copy:
     src: firstmatch.txt
-    dest: "{{ output_dir }}/firstmatch.txt"
+    dest: "{{ remote_tmp_dir }}/firstmatch.txt"
   register: result
 
 - name: Assert that the test file was deployed
@@ -867,7 +966,7 @@
 
 - name: Insert a line before an existing line using firstmatch
   lineinfile:
-    path: "{{ output_dir }}/firstmatch.txt"
+    path: "{{ remote_tmp_dir }}/firstmatch.txt"
     line: INSERT
     insertafter: line1
     firstmatch: yes
@@ -875,7 +974,7 @@
 
 - name: Insert a line before an existing line using firstmatch again
   lineinfile:
-    path: "{{ output_dir }}/firstmatch.txt"
+    path: "{{ remote_tmp_dir }}/firstmatch.txt"
     line: INSERT
     insertafter: line1
     firstmatch: yes
@@ -883,7 +982,7 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/firstmatch.txt"
+    path: "{{ remote_tmp_dir }}/firstmatch.txt"
   register: result
 
 - name: Assert that the file was modified appropriately
@@ -901,7 +1000,7 @@
 - name: Deploy the test file
   copy:
     src: test_58923.txt
-    dest: "{{ output_dir }}/test_58923.txt"
+    dest: "{{ remote_tmp_dir }}/test_58923.txt"
   register: initial_file
 
 - name: Assert that the test file was deployed
@@ -922,7 +1021,7 @@
 # Regexp is not present in the file, so the line must be inserted after ^#!/bin/sh
 - name: Add the line using firstmatch, regexp, and insertafter
   lineinfile:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
     insertafter: '^#!/bin/sh'
     regexp: ^export FISHEYE_OPTS
     firstmatch: true
@@ -931,12 +1030,12 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
   register: insertafter_test1_file
 
 - name: Add the line using firstmatch, regexp, and insertafter again
   lineinfile:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
     insertafter: '^#!/bin/sh'
     regexp: ^export FISHEYE_OPTS
     firstmatch: true
@@ -948,7 +1047,7 @@
 # so nothing has been added:
 - name: Stat the file again
   stat:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
   register: insertafter_test2_file
 
 - name: Assert insertafter tests gave the expected results
@@ -963,7 +1062,7 @@
 - name: Deploy the test file
   copy:
     src: test_58923.txt
-    dest: "{{ output_dir }}/test_58923.txt"
+    dest: "{{ remote_tmp_dir }}/test_58923.txt"
   register: initial_file
 
 - name: Assert that the test file was deployed
@@ -975,7 +1074,7 @@
 
 - name: Insert the line using firstmatch and insertafter without regexp
   lineinfile:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
     insertafter: '^#!/bin/sh'
     firstmatch: true
     line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
@@ -983,12 +1082,12 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
   register: insertafter_test3_file
 
 - name: Insert the line using firstmatch and insertafter without regexp again
   lineinfile:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
     insertafter: '^#!/bin/sh'
     firstmatch: true
     line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
@@ -996,7 +1095,7 @@
 
 - name: Stat the file again
   stat:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
   register: insertafter_test4_file
 
 - name: Assert insertafter without regexp tests gave the expected results
@@ -1012,7 +1111,7 @@
 - name: Deploy the test file
   copy:
     src: test_58923.txt
-    dest: "{{ output_dir }}/test_58923.txt"
+    dest: "{{ remote_tmp_dir }}/test_58923.txt"
   register: initial_file
 
 - name: Assert that the test file was deployed
@@ -1024,7 +1123,7 @@
 
 - name: Add the line using regexp, firstmatch, and insertbefore
   lineinfile:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
     insertbefore: '^#!/bin/sh'
     regexp: ^export FISHEYE_OPTS
     firstmatch: true
@@ -1033,12 +1132,12 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
   register: insertbefore_test1_file
 
 - name: Add the line using regexp, firstmatch, and insertbefore again
   lineinfile:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
     insertbefore: '^#!/bin/sh'
     regexp: ^export FISHEYE_OPTS
     firstmatch: true
@@ -1047,7 +1146,7 @@
 
 - name: Stat the file again
   stat:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
   register: insertbefore_test2_file
 
 - name: Assert insertbefore with regexp tests gave the expected results
@@ -1063,7 +1162,7 @@
 - name: Deploy the test file
   copy:
     src: test_58923.txt
-    dest: "{{ output_dir }}/test_58923.txt"
+    dest: "{{ remote_tmp_dir }}/test_58923.txt"
   register: initial_file
 
 - name: Assert that the test file was deployed
@@ -1075,7 +1174,7 @@
 
 - name: Add the line using insertbefore and firstmatch
   lineinfile:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
     insertbefore: '^#!/bin/sh'
     firstmatch: true
     line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
@@ -1083,12 +1182,12 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
   register: insertbefore_test3_file
 
 - name: Add the line using insertbefore and firstmatch again
   lineinfile:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
     insertbefore: '^#!/bin/sh'
     firstmatch: true
     line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
@@ -1096,7 +1195,7 @@
 
 - name: Stat the file again
   stat:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
   register: insertbefore_test4_file
 
 # Test when the line is presented in the file but
@@ -1105,7 +1204,7 @@
     Add the line using insertbefore and firstmatch when the regexp line
     is presented but not close to insertbefore spot
   lineinfile:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
     insertbefore: '   Darwin\*\) if \[ -z \"\$JAVA_HOME\" \] ; then'
     firstmatch: true
     line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
@@ -1113,7 +1212,7 @@
 
 - name: Stat the file again
   stat:
-    path: "{{ output_dir }}/test_58923.txt"
+    path: "{{ remote_tmp_dir }}/test_58923.txt"
   register: insertbefore_test5_file
 
 - name: Assert insertbefore with regexp tests gave the expected results
@@ -1126,19 +1225,133 @@
       - insertbefore_test5 is not changed
       - insertbefore_test5_file.stat.checksum == '3c6630b9d44f561ea9ad999be56a7504cadc12f7'
 
+########################################################################################
+# Same tests for literal
+
+# Test insertafter with literal
+- name: Deploy the test file
+  copy:
+    src: teststring_58923.txt
+    dest: "{{ remote_tmp_dir }}/teststring_58923.txt"
+  register: initial_file
+
+- name: Assert that the test file was deployed
+  assert:
+    that:
+      - initial_file is changed
+      - initial_file.checksum == 'b6379ba43261c451a62102acb2c7f438a177c66e'
+      - initial_file.state == 'file'
+
+# Regarding the documentation:
+# If the search string is passed to both search_string and
+# insertafter, insertafter is only honored if no match for search_string is found.
+# Therefore,
+# when search_string expressions are passed to both search_string and insertafter, then:
+# 1. search_string was found -> ignore insertafter, replace the founded line
+# 2. search_string was not found -> insert the line after 'insertafter' line
+
+# literal is not present in the file, so the line must be inserted after ^#!/bin/sh
+- name: Add the line using firstmatch, regexp, and insertafter
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/teststring_58923.txt"
+    insertafter: '^#!/bin/sh'
+    search_string: export FISHEYE_OPTS
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertafter_test1
+
+- name: Stat the file
+  stat:
+    path: "{{ remote_tmp_dir }}/teststring_58923.txt"
+  register: insertafter_test1_file
+
+- name: Add the line using firstmatch, literal, and insertafter again
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/teststring_58923.txt"
+    insertafter: '^#!/bin/sh'
+    search_string: export FISHEYE_OPTS
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertafter_test2
+
+# Check of the prev step.
+# We tried to add the same line with the same playbook,
+# so nothing has been added:
+- name: Stat the file again
+  stat:
+    path: "{{ remote_tmp_dir }}/teststring_58923.txt"
+  register: insertafter_test2_file
+
+- name: Assert insertafter tests gave the expected results
+  assert:
+    that:
+      - insertafter_test1 is changed
+      - insertafter_test1_file.stat.checksum == '9232aed6fe88714964d9e29d13e42cd782070b08'
+      - insertafter_test2 is not changed
+      - insertafter_test2_file.stat.checksum == '9232aed6fe88714964d9e29d13e42cd782070b08'
+
+# Test insertbefore with literal
+- name: Deploy the test file
+  copy:
+    src: teststring_58923.txt
+    dest: "{{ remote_tmp_dir }}/teststring_58923.txt"
+  register: initial_file
+
+- name: Assert that the test file was deployed
+  assert:
+    that:
+      - initial_file is changed
+      - initial_file.checksum == 'b6379ba43261c451a62102acb2c7f438a177c66e'
+      - initial_file.state == 'file'
+
+- name: Add the line using literal, firstmatch, and insertbefore
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/teststring_58923.txt"
+    insertbefore: '^#!/bin/sh'
+    search_string: export FISHEYE_OPTS
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertbefore_test1
+
+- name: Stat the file
+  stat:
+    path: "{{ remote_tmp_dir }}/teststring_58923.txt"
+  register: insertbefore_test1_file
+
+- name: Add the line using literal, firstmatch, and insertbefore again
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/teststring_58923.txt"
+    insertbefore: '^#!/bin/sh'
+    search_string: export FISHEYE_OPTS
+    firstmatch: true
+    line: export FISHEYE_OPTS="-Xmx4096m -Xms2048m"
+  register: insertbefore_test2
+
+- name: Stat the file again
+  stat:
+    path: "{{ remote_tmp_dir }}/teststring_58923.txt"
+  register: insertbefore_test2_file
+
+- name: Assert insertbefore with literal tests gave the expected results
+  assert:
+    that:
+      - insertbefore_test1 is changed
+      - insertbefore_test1_file.stat.checksum == '3c6630b9d44f561ea9ad999be56a7504cadc12f7'
+      - insertbefore_test2 is not changed
+      - insertbefore_test2_file.stat.checksum == '3c6630b9d44f561ea9ad999be56a7504cadc12f7'
 
 # Test inserting a line at the end of the file using regexp with insertafter
 # https://github.com/ansible/ansible/issues/63684
 - name: Create a file by inserting a line
   lineinfile:
-    path: "{{ output_dir }}/testend.txt"
+    path: "{{ remote_tmp_dir }}/testend.txt"
     create: yes
     line: testline
   register: testend1
 
 - name: Insert a line at the end of the file
   lineinfile:
-    path: "{{ output_dir }}/testend.txt"
+    path: "{{ remote_tmp_dir }}/testend.txt"
     insertafter: testline
     regexp: line at the end
     line: line at the end
@@ -1146,7 +1359,36 @@
 
 - name: Stat the file
   stat:
-    path: "{{ output_dir }}/testend.txt"
+    path: "{{ remote_tmp_dir }}/testend.txt"
+  register: testend_file
+
+- name: Assert inserting at the end gave the expected results.
+  assert:
+    that:
+      - testend1 is changed
+      - testend2 is changed
+      - testend_file.stat.checksum == 'ef36116966836ce04f6b249fd1837706acae4e19'
+
+# Test inserting a line at the end of the file using search_string with insertafter
+
+- name: Create a file by inserting a line
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/testendliteral.txt"
+    create: yes
+    line: testline
+  register: testend1
+
+- name: Insert a line at the end of the file
+  lineinfile:
+    path: "{{ remote_tmp_dir }}/testendliteral.txt"
+    insertafter: testline
+    search_string: line at the end
+    line: line at the end
+  register: testend2
+
+- name: Stat the file
+  stat:
+    path: "{{ remote_tmp_dir }}/testendliteral.txt"
   register: testend_file
 
 - name: Assert inserting at the end gave the expected results.

@@ -1,0 +1,2 @@
+astream_name: '@httpd:2.4/common'
+astream_name_no_stream: '@httpd/common'

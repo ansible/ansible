@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Installation of ``cryptography`` is no longer version constrained when ``openssl`` 1.1.0 or later is installed.

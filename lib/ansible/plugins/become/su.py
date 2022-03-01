@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    become: su
+    name: su
     short_description: Substitute User
     description:
         - This become plugins allows your remote/login user to execute commands as another user via the su utility.
@@ -26,6 +26,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_USER
               - name: ANSIBLE_SU_USER
+            keyword:
+              - name: become_user
         become_exe:
             description: Su executable
             default: su
@@ -40,6 +42,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_EXE
               - name: ANSIBLE_SU_EXE
+            keyword:
+              - name: become_exe
         become_flags:
             description: Options to pass to su
             default: ''
@@ -54,6 +58,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_FLAGS
               - name: ANSIBLE_SU_FLAGS
+            keyword:
+              - name: become_flags
         become_pass:
             description: Password to pass to su
             required: False
@@ -71,7 +77,10 @@ DOCUMENTATION = """
             description:
                 - List of localized strings to match for prompt detection
                 - If empty we'll use the built in one
+                - Do NOT add a colon (:) to your custom entries. Ansible adds a colon at the end of each prompt;
+                  if you add another one in your string, your prompt will fail with a "Timeout" error.
             default: []
+            type: list
             ini:
               - section: su_become_plugin
                 key: localized_prompts
@@ -82,9 +91,9 @@ DOCUMENTATION = """
 """
 
 import re
+import shlex
 
 from ansible.module_utils._text import to_bytes
-from ansible.module_utils.six.moves import shlex_quote
 from ansible.plugins.become import BecomeBase
 
 
@@ -155,4 +164,4 @@ class BecomeModule(BecomeBase):
         user = self.get_option('become_user') or ''
         success_cmd = self._build_success_command(cmd, shell)
 
-        return "%s %s %s -c %s" % (exe, flags, user, shlex_quote(success_cmd))
+        return "%s %s %s -c %s" % (exe, flags, user, shlex.quote(success_cmd))

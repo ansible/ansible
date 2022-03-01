@@ -12,9 +12,10 @@ import os
 
 import pytest
 
-from units.compat.mock import MagicMock
+from mock import MagicMock
 from ansible.module_utils import basic
 from ansible.module_utils.api import basic_auth_argument_spec, rate_limit_argument_spec, retry_argument_spec
+from ansible.module_utils.common import warnings
 from ansible.module_utils.common.warnings import get_deprecation_messages, get_warning_messages
 from ansible.module_utils.six import integer_types, string_types
 from ansible.module_utils.six.moves import builtins
@@ -84,7 +85,9 @@ INVALID_SPECS = (
     ({'arg': {'type': 'list', 'elements': MOCK_VALIDATOR_FAIL}}, {'arg': [1, "bad"]}, "bad conversion"),
     # unknown parameter
     ({'arg': {'type': 'int'}}, {'other': 'bad', '_ansible_module_name': 'ansible_unittest'},
-     'Unsupported parameters for (ansible_unittest) module: other Supported parameters include: arg'),
+     'Unsupported parameters for (ansible_unittest) module: other. Supported parameters include: arg.'),
+    ({'arg': {'type': 'int', 'aliases': ['argument']}}, {'other': 'bad', '_ansible_module_name': 'ansible_unittest'},
+     'Unsupported parameters for (ansible_unittest) module: other. Supported parameters include: arg (argument).'),
     # parameter is required
     ({'arg': {'required': True}}, {}, 'missing required arguments: arg'),
 )
@@ -398,8 +401,10 @@ class TestComplexArgSpecs:
         assert am.params['bar3'][1] == 'test/'
 
     @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'zodraz': 'one'}], indirect=['stdin'])
-    def test_deprecated_alias(self, capfd, mocker, stdin, complex_argspec):
+    def test_deprecated_alias(self, capfd, mocker, stdin, complex_argspec, monkeypatch):
         """Test a deprecated alias"""
+        monkeypatch.setattr(warnings, '_global_deprecations', [])
+
         am = basic.AnsibleModule(**complex_argspec)
 
         assert "Alias 'zodraz' is deprecated." in get_deprecation_messages()[0]['msg']
@@ -494,7 +499,7 @@ class TestComplexOptions:
         # Missing required option
         ({'foobar': [{}]}, 'missing required arguments: foo found in foobar'),
         # Invalid option
-        ({'foobar': [{"foo": "hello", "bam": "good", "invalid": "bad"}]}, 'module: invalid found in foobar. Supported parameters include'),
+        ({'foobar': [{"foo": "hello", "bam": "good", "invalid": "bad"}]}, 'module: foobar.invalid. Supported parameters include'),
         # Mutually exclusive options found
         ({'foobar': [{"foo": "test", "bam": "bad", "bam1": "bad", "baz": "req_to"}]},
          'parameters are mutually exclusive: bam|bam1 found in foobar'),
@@ -518,7 +523,7 @@ class TestComplexOptions:
         ({'foobar': {}}, 'missing required arguments: foo found in foobar'),
         # Invalid option
         ({'foobar': {"foo": "hello", "bam": "good", "invalid": "bad"}},
-         'module: invalid found in foobar. Supported parameters include'),
+         'module: foobar.invalid. Supported parameters include'),
         # Mutually exclusive options found
         ({'foobar': {"foo": "test", "bam": "bad", "bam1": "bad", "baz": "req_to"}},
          'parameters are mutually exclusive: bam|bam1 found in foobar'),

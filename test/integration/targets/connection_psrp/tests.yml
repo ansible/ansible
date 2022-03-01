@@ -83,3 +83,51 @@
       - shell_unicode_output.rc == 0
       - "shell_unicode_output.stdout == '\U0001F4A9\n'"
       - shell_unicode_output.stderr == ''
+
+  - name: copy empty file
+    win_copy:
+      src: empty.txt
+      dest: C:\Windows\TEMP\empty.txt
+    register: copy_empty
+
+  - name: get result of copy empty file
+    win_stat:
+      path: C:\Windows\TEMP\empty.txt
+      get_checksum: yes
+    register: copy_empty_actual
+
+  - name: assert copy empty file
+    assert:
+      that:
+      - copy_empty.checksum == 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+      - copy_empty_actual.stat.checksum == 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+      - copy_empty_actual.stat.size == 0
+
+  - block:
+    - name: fetch empty file
+      fetch:
+        src: C:\Windows\TEMP\empty.txt
+        dest: /tmp/empty.txt
+        flat: yes
+      register: fetch_empty
+
+    - name: get result of fetch empty file
+      stat:
+        path: /tmp/empty.txt
+        get_checksum: yes
+      register: fetch_empty_actual
+      delegate_to: localhost
+
+    - name: assert fetch empty file
+      assert:
+        that:
+        - fetch_empty.checksum == 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+        - fetch_empty_actual.stat.checksum == 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+        - fetch_empty_actual.stat.size == 0
+
+    always:
+    - name: remove tmp file
+      file:
+        path: /tmp/empty.txt
+        state: absent
+      delegate_to: localhost

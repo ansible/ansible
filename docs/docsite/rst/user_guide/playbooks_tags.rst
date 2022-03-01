@@ -6,8 +6,8 @@ Tags
 
 If you have a large playbook, it may be useful to run only specific parts of it instead of running the entire playbook. You can do this with Ansible tags. Using tags to execute or skip selected tasks is a two-step process:
 
-   #. Add tags to your tasks, either individually or with tag inheritance from a block, play, role, or import
-   #. Select or skip tags when you run your playbook
+   #. Add tags to your tasks, either individually or with tag inheritance from a block, play, role, or import.
+   #. Select or skip tags when you run your playbook.
 
 .. contents::
    :local:
@@ -25,8 +25,8 @@ At the simplest level, you can apply one or more tags to an individual task. You
 .. code-block:: yaml
 
    tasks:
-   - install the servers
-     yum:
+   - name: Install the servers
+     ansible.builtin.yum:
        name:
        - httpd
        - memcached
@@ -35,8 +35,8 @@ At the simplest level, you can apply one or more tags to an individual task. You
      - packages
      - webservers
 
-   - configure the service
-     template:
+   - name: Configure the service
+     ansible.builtin.template:
        src: templates/src.j2
        dest: /etc/foo.conf
      tags:
@@ -49,29 +49,29 @@ You can apply the same tag to more than one individual task. This example tags s
    ---
    # file: roles/common/tasks/main.yml
 
-   - name: be sure ntp is installed
-     yum:
+   - name: Install ntp
+     ansible.builtin.yum:
        name: ntp
        state: present
      tags: ntp
 
-   - name: be sure ntp is configured
-     template:
+   - name: Configure ntp
+     ansible.builtin.template:
        src: ntp.conf.j2
        dest: /etc/ntp.conf
      notify:
      - restart ntpd
      tags: ntp
 
-   - name: be sure ntpd is running and enabled
-     service:
+   - name: Enable and run ntpd
+     ansible.builtin.service:
        name: ntpd
        state: started
        enabled: yes
      tags: ntp
 
-   - name: be sure file sharing is installed
-     yum:
+   - name: Install NFS utils
+     ansible.builtin.yum:
        name:
        - nfs-utils
        - nfs-util-lib
@@ -94,7 +94,7 @@ You add tags to includes the same way you add tags to any other task:
    ---
    # file: roles/common/tasks/main.yml
 
-   - name: dynamic re-use of database tasks
+   - name: Dynamic re-use of database tasks
      include_tasks: db.yml
      tags: db
 
@@ -105,7 +105,8 @@ You can add a tag only to the dynamic include of a role. In this example, the ``
    ---
    - hosts: webservers
      tasks:
-       - include_role:
+       - name: Include the bar role
+         include_role:
            name: bar
          tags:
            - foo
@@ -127,27 +128,29 @@ If you want to apply a tag to many, but not all, of the tasks in your play, use 
 .. code-block:: yaml
 
    # myrole/tasks/main.yml
-   tasks:
-   - block:
+   - name: ntp tasks
      tags: ntp
-     - name: be sure ntp is installed
-       yum:
+     block:
+     - name: Install ntp
+       ansible.builtin.yum:
          name: ntp
          state: present
-     - name: be sure ntp is configured
-       template:
+
+     - name: Configure ntp
+       ansible.builtin.template:
          src: ntp.conf.j2
          dest: /etc/ntp.conf
        notify:
        - restart ntpd
-     - name: be sure ntpd is running and enabled
-       service:
+
+     - name: Enable and run ntpd
+       ansible.builtin.service:
          name: ntpd
          state: started
          enabled: yes
 
-   - name: be sure file sharing is installed
-     yum:
+   - name: Install NFS utils
+     ansible.builtin.yum:
        name:
        - nfs-utils
        - nfs-util-lib
@@ -164,20 +167,20 @@ If all the tasks in a play should get the same tag, you can add the tag at the l
    - hosts: all
      tags: ntp
      tasks:
-     - name: be sure ntp is installed
-       yum:
+     - name: Install ntp
+       ansible.builtin.yum:
          name: ntp
          state: present
 
-     - name: be sure ntp is configured
-       template:
+     - name: Configure ntp
+       ansible.builtin.template:
          src: ntp.conf.j2
          dest: /etc/ntp.conf
        notify:
        - restart ntpd
 
-     - name: be sure ntpd is running and enabled
-       service:
+     - name: Enable and run ntpd
+       ansible.builtin.service:
          name: ntpd
          state: started
          enabled: yes
@@ -194,7 +197,7 @@ There are three ways to add tags to roles:
 
   #. Add the same tag or tags to all tasks in the role by setting tags under ``roles``. See examples in this section.
   #. Add the same tag or tags to all tasks in the role by setting tags on a static ``import_role`` in your playbook. See examples in :ref:`tags_on_imports`.
-  #. Add a tag or tags to to individual tasks or blocks within the role itself. This is the only approach that allows you to select or skip some tasks within the role. To select or skip tasks within the role, you must have tags set on individual tasks or blocks, use the dynamic ``include_role`` in your playbook, and add the same tag or tags to the include. When you use this approach, and then run your playbook with ``--tags foo``, Ansible runs the include itself plus any tasks in the role that also have the tag ``foo``. See :ref:`tags_on_includes` for details.
+  #. Add a tag or tags to individual tasks or blocks within the role itself. This is the only approach that allows you to select or skip some tasks within the role. To select or skip tasks within the role, you must have tags set on individual tasks or blocks, use the dynamic ``include_role`` in your playbook, and add the same tag or tags to the include. When you use this approach, and then run your playbook with ``--tags foo``, Ansible runs the include itself plus any tasks in the role that also have the tag ``foo``. See :ref:`tags_on_includes` for details.
 
 When you incorporate a role in your playbook statically with the ``roles`` keyword, Ansible adds any tags you define to all the tasks in the role. For example:
 
@@ -232,13 +235,15 @@ You can also apply a tag or tags to all the tasks imported by the static ``impor
    ---
    - hosts: webservers
      tasks:
-       - import_role:
+       - name: Import the foo role
+         import_role:
            name: foo
          tags:
            - bar
            - baz
 
-       - import_tasks: foo.yml
+       - name: Import tasks from foo.yml
+         import_tasks: foo.yml
          tags: [ web, foo ]
 
 .. _apply_keyword:
@@ -252,7 +257,7 @@ If you want tag inheritance, you probably want to use imports. However, using bo
 
 .. code-block:: yaml
 
-   - name: applies the db tag to the include and to all tasks in db.yaml
+   - name: Apply the db tag to the include and to all tasks in db.yaml
      include_tasks:
        file: db.yml
        # adds 'db' tag to tasks within db.yml
@@ -266,7 +271,8 @@ Or you can use a block:
 .. code-block:: yaml
 
      - block:
-        - include_tasks: db.yml
+        - name: Include tasks from db.yml
+          include_tasks: db.yml
        tags: db
 
 .. _special_tags:
@@ -281,12 +287,14 @@ For example:
 .. code-block:: yaml
 
    tasks:
-   - debug:
+   - name: Print a message
+     ansible.builtin.debug:
        msg: "Always runs"
      tags:
      - always
 
-   - debug:
+   - name: Print a message
+     ansible.builtin.debug:
        msg: "runs when you use tag1"
      tags:
      - tag1
@@ -295,6 +303,10 @@ For example:
    * Fact gathering is tagged with 'always' by default. It is only skipped if
      you apply a tag and then use a different tag in ``--tags`` or the same
      tag in ``--skip-tags``.
+
+.. warning::
+   * The role argument specification validation task is tagged with 'always' by default. This validation
+     will be skipped if you use ``--skip-tags always``.
 
 .. versionadded:: 2.5
 
@@ -305,8 +317,9 @@ For example:
 .. code-block:: yaml
 
    tasks:
-     - Rarely-used debug task
-       debug: msg="{{ showmevar }}"
+     - name: Run the rarely-used debug task
+       ansible.builtin.debug:
+        msg: '{{ showmevar }}'
        tags: [ never, debug ]
 
 The rarely-used debug task in the example above only runs when you specifically request the ``debug`` or ``never`` tags.
@@ -321,8 +334,8 @@ Once you have added tags to your tasks, includes, blocks, plays, roles, and impo
 :ref:`ansible-playbook` offers five tag-related command-line options:
 
 * ``--tags all`` - run all tasks, ignore tags (default behavior)
-* ``--tags [tag1, tag2]`` - run only tasks with the tags ``tag1`` and ``tag2``
-* ``--skip-tags [tag3, tag4]`` - run all tasks except those with the tags ``tag3`` and ``tag4``
+* ``--tags [tag1, tag2]`` - run only tasks with either the tag ``tag1`` or the tag ``tag2``
+* ``--skip-tags [tag3, tag4]`` - run all tasks except those with either the tag ``tag3`` or the tag ``tag4``
 * ``--tags tagged`` - run only tasks with at least one tag
 * ``--tags untagged`` - run only tasks with no tags
 
@@ -371,19 +384,19 @@ If you have a role or a tasks file with tags defined at the task or block level,
 
    # mixed.yml
    tasks:
-   - name: task with no tags
-     debug:
+   - name: Run the task with no tags
+     ansible.builtin.debug:
        msg: this task has no tags
 
-   - name: tagged task
-     debug:
+   - name: Run the tagged task
+     ansible.builtin.debug:
        msg: this task is tagged with mytag
      tags: mytag
 
    - block:
-     - name: First block task with mytag
+     - name: Run the first block task with mytag
        ...
-     - name: Second block task with mytag
+     - name: Run the second block task with mytag
        ...
      tags:
      - mytag
@@ -395,7 +408,8 @@ And you might include the tasks file above in a playbook:
    # myplaybook.yml
    - hosts: all
      tasks:
-     - include_tasks:
+     - name: Run tasks from mixed.yml
+       include_tasks:
          name: mixed.yml
        tags: mytag
 
@@ -414,5 +428,5 @@ If you run or skip certain tags by default, you can use the :ref:`TAGS_RUN` and 
        Playbook organization by roles
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

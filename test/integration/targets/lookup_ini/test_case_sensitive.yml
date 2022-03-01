@@ -1,0 +1,31 @@
+- name: Test case sensitive option
+  hosts: all
+
+  tasks:
+    - name: Lookup a file with keys that differ only in case with case sensitivity enabled
+      debug:
+        msg: "{{ lookup('ini', 'name', file='duplicate_case_check.ini', section='reggae', case_sensitive=True) }}"
+      register: duplicate_case_sensitive_name
+
+    - name: Lookup a file with keys that differ only in case with case sensitivity enabled
+      debug:
+        msg: "{{ lookup('ini', 'NAME', file='duplicate_case_check.ini', section='reggae', case_sensitive=True) }}"
+      register: duplicate_case_sensitive_NAME
+
+    - name: Lookup a properties file with keys that differ only in case with case sensitivity enabled
+      debug:
+        msg: "{{ lookup('ini', 'name', file='lookup_case_check.properties', type='properties', case_sensitive=True) }}"
+      register: duplicate_case_sensitive_properties_name
+
+    - name: Lookup a properties file with keys that differ only in case with case sensitivity enabled
+      debug:
+        msg: "{{ lookup('ini', 'NAME', file='lookup_case_check.properties', type='properties', case_sensitive=True) }}"
+      register: duplicate_case_sensitive_properties_NAME
+
+    - name: Ensure the correct case-sensitive values were retieved
+      assert:
+        that:
+          - duplicate_case_sensitive_name.msg == 'bob'
+          - duplicate_case_sensitive_NAME.msg == 'marley'
+          - duplicate_case_sensitive_properties_name.msg == 'captain'
+          - duplicate_case_sensitive_properties_NAME.msg == 'fantastic'

@@ -23,7 +23,9 @@ You can use the same ``unsafe`` data type in variables you define, to prevent te
     ---
     mypassword: !unsafe 234%234{435lkj{{lkjsdf
 
-In a playbook::
+In a playbook:
+
+.. code-block:: yaml
 
     ---
     hosts: all
@@ -32,7 +34,9 @@ In a playbook::
     tasks:
         ...
 
-For complex variables such as hashes or arrays, use ``!unsafe`` on the individual elements::
+For complex variables such as hashes or arrays, use ``!unsafe`` on the individual elements:
+
+.. code-block:: yaml
 
     ---
     my_unsafe_array:
@@ -48,7 +52,9 @@ YAML anchors and aliases: sharing variable values
 =================================================
 
 `YAML anchors and aliases <https://yaml.org/spec/1.2/spec.html#id2765878>`_ help you define, maintain, and use shared variable values in a flexible way.
-You define an anchor with ``&``, then refer to it using an alias, denoted with ``*``. Here's an example that sets three values with an anchor, uses two of those values with an alias, and overrides the third value::
+You define an anchor with ``&``, then refer to it using an alias, denoted with ``*``. Here's an example that sets three values with an anchor, uses two of those values with an alias, and overrides the third value:
+
+.. code-block:: yaml
 
     ---
     ...
@@ -67,13 +73,17 @@ You define an anchor with ``&``, then refer to it using an alias, denoted with `
 Here, ``app1`` and ``app2`` share the values for ``opts`` and ``port`` using the anchor ``&jvm_opts`` and the alias ``*jvm_opts``.
 The value for ``path`` is merged by ``<<`` or `merge operator <https://yaml.org/type/merge.html>`_.
 
-Anchors and aliases also let you share complex sets of variable values, including nested variables. If you have one variable value that includes another variable value, you can define them separately::
+Anchors and aliases also let you share complex sets of variable values, including nested variables. If you have one variable value that includes another variable value, you can define them separately:
+
+.. code-block:: yaml
 
       vars:
         webapp_version: 1.0
         webapp_custom_name: ToDo_App-1.0
 
-This is inefficient and, at scale, means more maintenance. To incorporate the version value in the name, you can use an anchor in ``app_version`` and an alias in ``custom_name``::
+This is inefficient and, at scale, means more maintenance. To incorporate the version value in the name, you can use an anchor in ``app_version`` and an alias in ``custom_name``:
+
+.. code-block:: yaml
 
       vars:
         webapp:
@@ -82,7 +92,9 @@ This is inefficient and, at scale, means more maintenance. To incorporate the ve
                 - "ToDo_App"
                 - *my_version
 
-Now, you can re-use the value of ``app_version`` within the value of  ``custom_name`` and use the output in a template::
+Now, you can re-use the value of ``app_version`` within the value of  ``custom_name`` and use the output in a template:
+
+.. code-block:: yaml
 
     ---
     - name: Using values nested inside dictionary
@@ -95,7 +107,7 @@ Now, you can re-use the value of ``app_version`` within the value of  ``custom_n
                 - *my_version
       tasks:
       - name: Using Anchor value
-        debug:
+        ansible.builtin.debug:
             msg: My app is called "{{ webapp.custom_name | join('-') }}".
 
 You've anchored the value of ``version`` with the ``&my_version`` anchor, and re-used it with the ``*my_version`` alias. Anchors and aliases let you access nested values inside dictionaries.
@@ -104,7 +116,9 @@ You've anchored the value of ``version`` with the ``&my_version`` anchor, and re
 
    :ref:`playbooks_variables`
        All about variables
+   :ref:`complex_data_manipulation`
+       Doing complex data manipulation in Ansible
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

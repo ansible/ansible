@@ -6,7 +6,7 @@ Rackspace Cloud Guide
 Introduction
 ````````````
 
-.. note:: This section of the documentation is under construction. We are in the process of adding more examples about the Rackspace modules and how they work together.  Once complete, there will also be examples for Rackspace Cloud in `ansible-examples <https://github.com/ansible/ansible-examples/>`_.
+.. note:: Rackspace functionality in Ansible is not maintained and users should consider the `OpenStack collection <https://galaxy.ansible.com/openstack/cloud>`_ instead.
 
 Ansible contains a number of core modules for interacting with Rackspace Cloud.  
 
@@ -100,7 +100,7 @@ The 'rax' module provides the ability to provision instances within Rackspace Cl
    them as module arguments, or by specifying the location of a credentials
    file.
 
-Here is a basic example of provisioning an instance in ad-hoc mode:
+Here is a basic example of provisioning an instance in ad hoc mode:
 
 .. code-block:: bash
 
@@ -154,7 +154,7 @@ to the next section.
 Host Inventory
 ``````````````
 
-Once your nodes are spun up, you'll probably want to talk to them again.  The best way to handle this is to use the "rax" inventory plugin, which dynamically queries Rackspace Cloud and tells Ansible what nodes you have to manage.  You might want to use this even if you are spinning up cloud instances via other tools, including the Rackspace Cloud user interface. The inventory plugin can be used to group resources by metadata, region, OS, etc.  Utilizing metadata is highly recommended in "rax" and can provide an easy way to sort between host groups and roles. If you don't want to use the ``rax.py`` dynamic inventory script, you could also still choose to manually manage your INI inventory file, though this is less recommended.
+Once your nodes are spun up, you'll probably want to talk to them again.  The best way to handle this is to use the "rax" inventory plugin, which dynamically queries Rackspace Cloud and tells Ansible what nodes you have to manage.  You might want to use this even if you are spinning up cloud instances via other tools, including the Rackspace Cloud user interface. The inventory plugin can be used to group resources by metadata, region, OS, and so on.  Utilizing metadata is highly recommended in "rax" and can provide an easy way to sort between host groups and roles. If you don't want to use the ``rax.py`` dynamic inventory script, you could also still choose to manually manage your INI inventory file, though this is less recommended.
 
 In Ansible it is quite possible to use multiple dynamic inventory plugins along with INI file data.  Just put them in a common directory and be sure the scripts are chmod +x, and the INI-based ones are not.
 
@@ -167,7 +167,7 @@ To use the Rackspace dynamic inventory script, copy ``rax.py`` into your invento
 
 .. note:: Dynamic inventory scripts (like ``rax.py``) are saved in ``/usr/share/ansible/inventory`` if Ansible has been installed globally.  If installed to a virtualenv, the inventory scripts are installed to ``$VIRTUALENV/share/inventory``.
 
-.. note:: Users of :ref:`ansible_tower` will note that dynamic inventory is natively supported by Tower, and all you have to do is associate a group with your Rackspace Cloud credentials, and it will easily synchronize without going through these steps::
+.. note:: Users of :ref:`ansible_platform` will note that dynamic inventory is natively supported by the controller in the platform, and all you have to do is associate a group with your Rackspace Cloud credentials, and it will easily synchronize without going through these steps::
 
     $ RAX_CREDS_FILE=~/.raxpub ansible all -i rax.py -m setup
 
@@ -314,7 +314,7 @@ This can be achieved with the ``rax_facts`` module and an inventory file similar
 
 While you don't need to know how it works, it may be interesting to know what kind of variables are returned.
 
-The ``rax_facts`` module provides facts as followings, which match the ``rax.py`` inventory script:
+The ``rax_facts`` module provides facts as following, which match the ``rax.py`` inventory script:
 
 .. code-block:: json
 
@@ -782,15 +782,14 @@ Advanced Usage
 
 .. _awx_autoscale:
 
-Autoscaling with Tower
-++++++++++++++++++++++
+Autoscaling with AWX or Red Hat Ansible Automation Platform
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-:ref:`ansible_tower` also contains a very nice feature for auto-scaling use cases.  
-In this mode, a simple curl script can call a defined URL and the server will "dial out" to the requester 
-and configure an instance that is spinning up.  This can be a great way to reconfigure ephemeral nodes.
-See the Tower documentation for more details.  
+The GUI component of :ref:`Red Hat Ansible Automation Platform <ansible_tower>` also contains a very nice feature for auto-scaling use cases.  In this mode, a simple curl script can call
+a defined URL and the server will "dial out" to the requester and configure an instance that is spinning up.  This can be a great way
+to reconfigure ephemeral nodes.  See `the documentation on provisioning callbacks <https://docs.ansible.com/ansible-tower/latest/html/userguide/job_templates.html#provisioning-callbacks>`_ for more details.
 
-A benefit of using the callback in Tower over pull mode is that job results are still centrally recorded 
+A benefit of using the callback approach over pull mode is that job results are still centrally recorded 
 and less information has to be shared with remote hosts.
 
 .. _pending_information:

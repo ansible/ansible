@@ -1,2 +1,0 @@
-bugfixes:
-  - winrm - preserve winrm forensic data on put_file failures

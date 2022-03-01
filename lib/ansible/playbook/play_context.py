@@ -21,20 +21,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-import pwd
-import sys
-
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleError
 from ansible.module_utils.compat.paramiko import paramiko
-from ansible.module_utils.six import iteritems
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.plugins import get_plugin_class
 from ansible.utils.display import Display
-from ansible.plugins.loader import get_shell_plugin
 from ansible.utils.ssh_functions import check_for_controlpersist
 
 
@@ -103,15 +96,6 @@ class PlayContext(Base):
     # docker FIXME: remove these
     _docker_extra_args = FieldAttribute(isa='string')
 
-    # ssh # FIXME: remove these
-    _ssh_executable = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_EXECUTABLE)
-    _ssh_args = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_ARGS)
-    _ssh_common_args = FieldAttribute(isa='string')
-    _sftp_extra_args = FieldAttribute(isa='string')
-    _scp_extra_args = FieldAttribute(isa='string')
-    _ssh_extra_args = FieldAttribute(isa='string')
-    _ssh_transfer_method = FieldAttribute(isa='string', default=C.DEFAULT_SSH_TRANSFER_METHOD)
-
     # ???
     _connection_lockfd = FieldAttribute(isa='int')
 
@@ -172,7 +156,7 @@ class PlayContext(Base):
             if option:
                 flag = options[option].get('name')
                 if flag:
-                    setattr(self, flag, self.connection.get_option(flag))
+                    setattr(self, flag, plugin.get_option(flag))
 
     def set_attributes_from_play(self, play):
         self.force_handlers = play.force_handlers
@@ -190,10 +174,6 @@ class PlayContext(Base):
         # For now, they are likely to be moved to FieldAttribute defaults
         self.private_key_file = context.CLIARGS.get('private_key_file')  # Else default
         self.verbosity = context.CLIARGS.get('verbosity')  # Else default
-        self.ssh_common_args = context.CLIARGS.get('ssh_common_args')  # Else default
-        self.ssh_extra_args = context.CLIARGS.get('ssh_extra_args')  # Else default
-        self.sftp_extra_args = context.CLIARGS.get('sftp_extra_args')  # Else default
-        self.scp_extra_args = context.CLIARGS.get('scp_extra_args')  # Else default
 
         # Not every cli that uses PlayContext has these command line args so have a default
         self.start_at_task = context.CLIARGS.get('start_at_task', None)  # Else default
@@ -213,10 +193,8 @@ class PlayContext(Base):
         # loop through a subset of attributes on the task object and set
         # connection fields based on their values
         for attr in TASK_ATTRIBUTE_OVERRIDES:
-            if hasattr(task, attr):
-                attr_val = getattr(task, attr)
-                if attr_val is not None:
-                    setattr(new_info, attr, attr_val)
+            if (attr_val := getattr(task, attr, None)) is not None:
+                setattr(new_info, attr, attr_val)
 
         # next, use the MAGIC_VARIABLE_MAPPING dictionary to update this
         # connection info object with 'magic' variables from the variable list.
@@ -273,7 +251,7 @@ class PlayContext(Base):
                     setattr(new_info, 'executable', variables.get(exe_var))
 
         attrs_considered = []
-        for (attr, variable_names) in iteritems(C.MAGIC_VARIABLE_MAPPING):
+        for (attr, variable_names) in C.MAGIC_VARIABLE_MAPPING.items():
             for variable_name in variable_names:
                 if attr in attrs_considered:
                     continue
@@ -313,15 +291,18 @@ class PlayContext(Base):
                 elif getattr(new_info, 'connection', None) == 'local' and (not remote_addr_local or not inv_hostname_local):
                     setattr(new_info, 'connection', C.DEFAULT_TRANSPORT)
 
-        # if the final connection type is local, reset the remote_user value to that of the currently logged in user
-        # this ensures any become settings are obeyed correctly
         # we store original in 'connection_user' for use of network/other modules that fallback to it as login user
-        # connection_user to be deprecated once connection=local is removed for
-        # network modules
+        # connection_user to be deprecated once connection=local is removed for, as local resets remote_user
         if new_info.connection == 'local':
             if not new_info.connection_user:
                 new_info.connection_user = new_info.remote_user
-            new_info.remote_user = pwd.getpwuid(os.getuid()).pw_name
+
+        # for case in which connection plugin still uses pc.remote_addr and in it's own options
+        # specifies 'default: inventory_hostname', but never added to vars:
+        if new_info.remote_addr == 'inventory_hostname':
+            new_info.remote_addr = variables.get('inventory_hostname')
+            display.warning('The "%s" connection plugin has an improperly configured remote target value, '
+                            'forcing "inventory_hostname" templated value instead of the string' % new_info.connection)
 
         # set no_log to default if it was not previously set
         if new_info.no_log is None:
@@ -337,43 +318,6 @@ class PlayContext(Base):
 
     def set_become_plugin(self, plugin):
         self._become_plugin = plugin
-
-    def make_become_cmd(self, cmd, executable=None):
-        """ helper function to create privilege escalation commands """
-        display.deprecated(
-            "PlayContext.make_become_cmd should not be used, the calling code should be using become plugins instead",
-            version="2.12", collection_name='ansible.builtin'
-        )
-
-        if not cmd or not self.become:
-            return cmd
-
-        become_method = self.become_method
-
-        # load/call become plugins here
-        plugin = self._become_plugin
-
-        if plugin:
-            options = {
-                'become_exe': self.become_exe or become_method,
-                'become_flags': self.become_flags or '',
-                'become_user': self.become_user,
-                'become_pass': self.become_pass
-            }
-            plugin.set_options(direct=options)
-
-            if not executable:
-                executable = self.executable
-
-            shell = get_shell_plugin(executable=executable)
-            cmd = plugin.build_become_command(cmd, shell)
-            # for backwards compat:
-            if self.become_pass:
-                self.prompt = plugin.prompt
-        else:
-            raise AnsibleError("Privilege escalation method not found: %s" % become_method)
-
-        return cmd
 
     def update_vars(self, variables):
         '''
@@ -399,7 +343,7 @@ class PlayContext(Base):
         if self._attributes['connection'] == 'smart':
             conn_type = 'ssh'
             # see if SSH can support ControlPersist if not use paramiko
-            if not check_for_controlpersist(self.ssh_executable) and paramiko is not None:
+            if not check_for_controlpersist('ssh') and paramiko is not None:
                 conn_type = "paramiko"
 
         # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems

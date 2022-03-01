@@ -1,0 +1,3 @@
+dependencies:
+  - role: setup_passlib
+    when: ansible_facts.distribution == 'MacOSX'

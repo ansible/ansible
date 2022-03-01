@@ -3,7 +3,7 @@
   hosts: testhost
   gather_facts: no
   tasks:
-  - debug: 
+  - debug:
       msg: 'ansible_check_mode: {{ansible_check_mode}}'
 
   - name: Command
@@ -23,12 +23,12 @@
   gather_facts: no
   check_mode: true
   tasks:
-  - debug: 
+  - debug:
       msg: 'ansible_check_mode: {{ansible_check_mode}}'
 
   - name: Command
     command: ls -l
- 
+
   - name: "Command with check_mode: false"
     command: ls -l
     check_mode: false
@@ -43,7 +43,7 @@
   gather_facts: no
   check_mode: false
   tasks:
-  - debug: 
+  - debug:
       msg: 'ansible_check_mode: {{ansible_check_mode}}'
 
   - name: Command

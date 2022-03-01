@@ -29,7 +29,7 @@ from json import dumps
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils.six import iteritems, string_types, PY3
+from ansible.module_utils.six import string_types, PY3
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
 from ansible.parsing.splitter import parse_kv
@@ -79,12 +79,12 @@ def _validate_mutable_mappings(a, b):
         )
 
 
-def combine_vars(a, b):
+def combine_vars(a, b, merge=None):
     """
     Return a copy of dictionaries of variables based on configured hash behavior
     """
 
-    if C.DEFAULT_HASH_BEHAVIOUR == "merge":
+    if merge or merge is None and C.DEFAULT_HASH_BEHAVIOUR == "merge":
         return merge_hash(a, b)
     else:
         # HASH_BEHAVIOUR == 'replace'
@@ -129,7 +129,7 @@ def merge_hash(x, y, recursive=True, list_merge='replace'):
     # there is a high probability x will be the "default" dict the user
     # want to "patch" with y
     # therefore x will have much more elements than y
-    for key, y_value in iteritems(y):
+    for key, y_value in y.items():
         # if `key` isn't in x
         # update x and move on to the next element of y
         if key not in x:
@@ -288,7 +288,7 @@ portable between the two. The following changes were made:
     * True, False and None are reserved keywords (these are reserved keywords
       on Python 3 as opposed to Python 2)
 
-:arg ident: A text string of indentifier to check. Note: It is callers
+:arg ident: A text string of identifier to check. Note: It is callers
     responsibility to convert ident to text if it is not already.
 
 Originally posted at http://stackoverflow.com/a/29586366

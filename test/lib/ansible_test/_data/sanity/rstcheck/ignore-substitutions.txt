@@ -1,5 +1,0 @@
-version
-release
-today
-br
-_

@@ -12,11 +12,40 @@ To install a collection hosted in Galaxy:
 
    ansible-galaxy collection install my_namespace.my_collection
 
+To upgrade a collection to the latest available version from the Galaxy server you can use the ``--upgrade`` option:
+
+.. code-block:: bash
+
+   ansible-galaxy collection install my_namespace.my_collection --upgrade
+
 You can also directly use the tarball from your build:
 
 .. code-block:: bash
 
    ansible-galaxy collection install my_namespace-my_collection-1.0.0.tar.gz -p ./collections
+
+You can build and install a collection from a local source directory. The ``ansible-galaxy`` utility builds the collection using the ``MANIFEST.json`` or ``galaxy.yml``
+metadata in the directory.
+
+.. code-block:: bash
+
+   ansible-galaxy collection install /path/to/collection -p ./collections
+
+You can also install multiple collections in a namespace directory.
+
+.. code-block:: text
+
+   ns/
+   ├── collection1/
+   │   ├── MANIFEST.json
+   │   └── plugins/
+   └── collection2/
+       ├── galaxy.yml
+       └── plugins/
+
+.. code-block:: bash
+
+   ansible-galaxy collection install /path/to/ns -p ./collections
 
 .. note::
     The install command automatically appends the path ``ansible_collections`` to the one specified  with the ``-p`` option unless the
@@ -40,3 +69,11 @@ You can also keep a collection adjacent to the current playbook, under a ``colle
 
 
 See :ref:`collection_structure` for details on the collection directory structure.
+
+Collections signed by a Galaxy server can be verified during installation with GnuPG. To opt into signature verification, configure a keyring for ``ansible-galaxy`` with native GnuPG tooling and provide the file path with the ``--keyring`` CLI option. Signatures provided by the Galaxy server will be used to verify the collection's ``MANIFEST.json``. If verification is unsuccessful, the collection will not be installed. GnuPG signature verification can be disabled with ``--disable-gpg-verify`` or by configuring :ref:`GALAXY_DISABLE_GPG_VERIFY`.
+
+Use the ``--signature`` option to verify the collection's ``MANIFEST.json`` with additional signatures to those provided by the Galaxy server. Supplemental signatures should be provided as URIs.
+
+.. code-block:: bash
+
+   ansible-galaxy collection install my_namespace.my_collection --signature https://examplehost.com/detached_signature.asc --signature file:///path/to/local/detached_signature.asc --keyring ~/.ansible/pubring.kbx

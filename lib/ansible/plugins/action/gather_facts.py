@@ -21,10 +21,14 @@ class ActionModule(ActionBase):
         mod_args = self._task.args.copy()
 
         # deal with 'setup specific arguments'
-        if fact_module != 'setup':
-
+        if fact_module not in C._ACTION_SETUP:
+            # TODO: remove in favor of controller side argspec detecing valid arguments
             # network facts modules must support gather_subset
-            if self._connection._load_name not in ('network_cli', 'httpapi', 'netconf'):
+            try:
+                name = self._connection.redirected_names[-1].replace('ansible.netcommon.', '', 1)
+            except (IndexError, AttributeError):
+                name = self._connection._load_name.split('.')[-1]
+            if name not in ('network_cli', 'httpapi', 'netconf'):
                 subset = mod_args.pop('gather_subset', None)
                 if subset not in ('all', ['all']):
                     self._display.warning('Ignoring subset(%s) for %s' % (subset, fact_module))
@@ -42,7 +46,14 @@ class ActionModule(ActionBase):
         mod_args = dict((k, v) for k, v in mod_args.items() if v is not None)
 
         # handle module defaults
-        mod_args = get_action_args_with_defaults(fact_module, mod_args, self._task.module_defaults, self._templar, self._task._ansible_internal_redirect_list)
+        resolved_fact_module = self._shared_loader_obj.module_loader.find_plugin_with_context(
+            fact_module, collection_list=self._task.collections
+        ).resolved_fqcn
+
+        mod_args = get_action_args_with_defaults(
+            resolved_fact_module, mod_args, self._task.module_defaults, self._templar,
+            action_groups=self._task._parent._play._action_groups
+        )
 
         return mod_args
 
@@ -63,12 +74,14 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         result['ansible_facts'] = {}
 
-        modules = C.config.get_config_value('FACTS_MODULES', variables=task_vars)
+        # copy the value with list() so we don't mutate the config
+        modules = list(C.config.get_config_value('FACTS_MODULES', variables=task_vars))
+
         parallel = task_vars.pop('ansible_facts_parallel', self._task.args.pop('parallel', None))
         if 'smart' in modules:
             connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
             network_os = self._task.args.get('network_os', task_vars.get('ansible_network_os', task_vars.get('ansible_facts', {}).get('network_os')))
-            modules.extend([connection_map.get(network_os or self._connection._load_name, 'setup')])
+            modules.extend([connection_map.get(network_os or self._connection._load_name, 'ansible.legacy.setup')])
             modules.pop(modules.index('smart'))
 
         failed = {}
@@ -104,7 +117,7 @@ class ActionModule(ActionBase):
             while jobs:
                 for module in jobs:
                     poll_args = {'jid': jobs[module]['ansible_job_id'], '_async_dir': os.path.dirname(jobs[module]['results_file'])}
-                    res = self._execute_module(module_name='async_status', module_args=poll_args, task_vars=task_vars, wrap_async=False)
+                    res = self._execute_module(module_name='ansible.legacy.async_status', module_args=poll_args, task_vars=task_vars, wrap_async=False)
                     if res.get('finished', 0) == 1:
                         if res.get('failed', False):
                             failed[module] = res

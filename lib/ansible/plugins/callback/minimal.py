@@ -7,12 +7,14 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    callback: minimal
+    name: minimal
     type: stdout
     short_description: minimal Ansible screen output
     version_added: historical
     description:
         - This is the default output callback used by the ansible command (ad-hoc)
+    extends_documentation_fragment:
+      - result_format_callback
 '''
 
 from ansible.plugins.callback import CallbackBase

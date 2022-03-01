@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2015, Matt Martz <matt@sivel.net>
@@ -12,7 +11,7 @@ DOCUMENTATION = r'''
 ---
 module: expect
 version_added: '2.0'
-short_description: Executes a command and responds to prompts.
+short_description: Executes a command and responds to prompts
 description:
      - The C(expect) module executes a command and responds to prompts.
      - The given command will be executed on all selected nodes. It will not be
@@ -23,6 +22,7 @@ options:
     description:
       - The command module takes command to run.
     required: true
+    type: str
   creates:
     type: path
     description:
@@ -56,37 +56,49 @@ options:
 requirements:
   - python >= 2.6
   - pexpect >= 3.3
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        support: none
+    diff_mode:
+        support: none
+    platform:
+        support: full
+        platforms: posix
 notes:
   - If you want to run a command through the shell (say you are using C(<),
-    C(>), C(|), etc), you must specify a shell in the command such as
+    C(>), C(|), and so on), you must specify a shell in the command such as
     C(/bin/bash -c "/path/to/something | grep else").
   - The question, or key, under I(responses) is a python regex match. Case
     insensitive searches are indicated with a prefix of C(?i).
+  - The C(pexpect) library used by this module operates with a search window
+    of 2000 bytes, and does not use a multiline regex match. To perform a
+    start of line bound match, use a pattern like ``(?m)^pattern``
   - By default, if a question is encountered multiple times, its string
     response will be repeated. If you need different responses for successive
     question matches, instead of a string response, use a list of strings as
     the response. The list functionality is new in 2.1.
-  - The M(expect) module is designed for simple scenarios. For more complex
-    needs, consider the use of expect code with the M(shell) or M(script)
-    modules. (An example is part of the M(shell) module documentation)
+  - The M(ansible.builtin.expect) module is designed for simple scenarios.
+    For more complex needs, consider the use of expect code with the M(ansible.builtin.shell)
+    or M(ansible.builtin.script) modules. (An example is part of the M(ansible.builtin.shell) module documentation).
 seealso:
-- module: script
-- module: shell
+- module: ansible.builtin.script
+- module: ansible.builtin.shell
 author: "Matt Martz (@sivel)"
 '''
 
 EXAMPLES = r'''
 - name: Case insensitive password string match
-  expect:
-    command: passwd username
+  ansible.builtin.expect:
+    ansible.builtin.command: passwd username
     responses:
       (?i)password: "MySekretPa$$word"
   # you don't want to show passwords in your logs
   no_log: true
 
 - name: Generic question with multiple different responses
-  expect:
-    command: /path/to/custom/command
+  ansible.builtin.expect:
+    ansible.builtin.command: /path/to/custom/command
     responses:
       Question:
         - response1
@@ -107,11 +119,11 @@ except ImportError:
     HAS_PEXPECT = False
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_bytes, to_native, to_text
 
 
 def response_closure(module, question, responses):
-    resp_gen = (u'%s\n' % to_text(r).rstrip(u'\n') for r in responses)
+    resp_gen = (b'%s\n' % to_bytes(r).rstrip(b'\n') for r in responses)
 
     def wrapped(info):
         try:
@@ -155,9 +167,9 @@ def main():
         if isinstance(value, list):
             response = response_closure(module, key, value)
         else:
-            response = u'%s\n' % to_text(value).rstrip(u'\n')
+            response = b'%s\n' % to_bytes(value).rstrip(b'\n')
 
-        events[to_text(key)] = response
+        events[to_bytes(key)] = response
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
@@ -195,13 +207,18 @@ def main():
     try:
         try:
             # Prefer pexpect.run from pexpect>=4
-            out, rc = pexpect.run(args, timeout=timeout, withexitstatus=True,
-                                  events=events, cwd=chdir, echo=echo,
-                                  encoding='utf-8')
+            b_out, rc = pexpect.run(args, timeout=timeout, withexitstatus=True,
+                                    events=events, cwd=chdir, echo=echo,
+                                    encoding=None)
         except TypeError:
-            # Use pexpect.runu in pexpect>=3.3,<4
-            out, rc = pexpect.runu(args, timeout=timeout, withexitstatus=True,
-                                   events=events, cwd=chdir, echo=echo)
+            # Use pexpect._run in pexpect>=3.3,<4
+            # pexpect.run doesn't support `echo`
+            # pexpect.runu doesn't support encoding=None
+            b_out, rc = pexpect._run(args, timeout=timeout, withexitstatus=True,
+                                     events=events, extra_args=None, logfile=None,
+                                     cwd=chdir, env=None, _spawn=pexpect.spawn,
+                                     echo=echo)
+
     except (TypeError, AttributeError) as e:
         # This should catch all insufficient versions of pexpect
         # We deem them insufficient for their lack of ability to specify
@@ -216,12 +233,12 @@ def main():
     endd = datetime.datetime.now()
     delta = endd - startd
 
-    if out is None:
-        out = ''
+    if b_out is None:
+        b_out = b''
 
     result = dict(
         cmd=args,
-        stdout=out.rstrip('\r\n'),
+        stdout=to_native(b_out).rstrip('\r\n'),
         rc=rc,
         start=str(startd),
         end=str(endd),

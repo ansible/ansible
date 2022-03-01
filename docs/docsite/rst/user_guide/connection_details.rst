@@ -47,10 +47,17 @@ or as a group variable in inventory:
       vars:
         ansible_user: admin
 
+.. seealso::
+
+  :ref:`ssh_connection`
+      Details on the ``remote_user`` keyword and ``ansible_user`` variable.
+  :ref:`general_precedence_rules`
+    Details on Ansible precedence rules.
+
 Setting up SSH keys
 -------------------
 
-By default, Ansible assumes you are using SSH keys to connect to remote machines.  SSH keys are encouraged, but you can use password authentication if needed with the ``--ask-pass`` option. If you need to provide a password for :ref:`privilege escalation <become>` (sudo, pbrun, etc.), use ``--ask-become-pass``.
+By default, Ansible assumes you are using SSH keys to connect to remote machines.  SSH keys are encouraged, but you can use password authentication if needed with the ``--ask-pass`` option. If you need to provide a password for :ref:`privilege escalation <become>` (sudo, pbrun, and so on), use ``--ask-become-pass``.
 
 .. include:: shared_snippets/SSH_password_prompt.txt
 

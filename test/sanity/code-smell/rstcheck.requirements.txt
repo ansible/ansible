@@ -1,0 +1,25 @@
+# edit "rstcheck.requirements.in" and generate with: hacking/update-sanity-requirements.py --test rstcheck
+alabaster==0.7.12
+Babel==2.9.1
+certifi==2021.10.8
+charset-normalizer==2.0.7
+docutils==0.17.1
+idna==3.3
+imagesize==1.3.0
+Jinja2==3.0.3
+MarkupSafe==2.0.1
+packaging==21.2
+Pygments==2.10.0
+pyparsing==2.4.7
+pytz==2021.3
+requests==2.26.0
+rstcheck==3.3.1
+snowballstemmer==2.1.0
+Sphinx==4.2.0
+sphinxcontrib-applehelp==1.0.2
+sphinxcontrib-devhelp==1.0.2
+sphinxcontrib-htmlhelp==2.0.0
+sphinxcontrib-jsmath==1.0.1
+sphinxcontrib-qthelp==1.0.3
+sphinxcontrib-serializinghtml==1.1.5
+urllib3==1.26.7

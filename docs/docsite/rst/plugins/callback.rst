@@ -1,23 +1,20 @@
 .. _callback_plugins:
 
-Callback Plugins
+Callback plugins
 ================
 
 .. contents::
    :local:
    :depth: 2
 
-Callback plugins enable adding new behaviors to Ansible when responding to events.
-By default, callback plugins control most of the output you see when running the command line programs,
-but can also be used to add additional output, integrate with other tools and marshall the events to a storage backend.
+Callback plugins enable adding new behaviors to Ansible when responding to events. By default, callback plugins control most of the output you see when running the command line programs, but can also be used to add additional output, integrate with other tools and marshal the events to a storage backend. If necessary, you can :ref:`create custom callback plugins <developing_callbacks>`.
 
 .. _callback_examples:
 
 Example callback plugins
 ------------------------
 
-The :ref:`log_plays <log_plays_callback>` callback is an example of how to record playbook events to a log file,
-and the :ref:`mail <mail_callback>` callback sends email on playbook failures.
+The :ref:`log_plays <log_plays_callback>` callback is an example of how to record playbook events to a log file, and the :ref:`mail <mail_callback>` callback sends email on playbook failures.
 
 The :ref:`say <say_callback>` callback responds with computer synthesized speech in relation to playbook events.
 
@@ -26,15 +23,15 @@ The :ref:`say <say_callback>` callback responds with computer synthesized speech
 Enabling callback plugins
 -------------------------
 
-You can activate a custom callback by either dropping it into a ``callback_plugins`` directory adjacent to your play,  inside a role, or by putting it in one of the callback directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
+You can activate a custom callback by either dropping it into a ``callback_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the callback directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
 
 Plugins are loaded in alphanumeric order. For example, a plugin implemented in a file named `1_first.py` would run before a plugin file named `2_second.py`.
 
-Most callbacks shipped with Ansible are disabled by default and need to be whitelisted in your :ref:`ansible.cfg <ansible_configuration_settings>` file in order to function. For example:
+Most callbacks shipped with Ansible are disabled by default and need to be enabled in your :ref:`ansible.cfg <ansible_configuration_settings>` file in order to function. For example:
 
 .. code-block:: ini
 
-  #callback_whitelist = timer, mail, profile_roles, collection_namespace.collection_name.custom_callback
+  #callbacks_enabled = timer, mail, profile_roles, collection_namespace.collection_name.custom_callback
 
 Setting a callback plugin for ``ansible-playbook``
 --------------------------------------------------
@@ -53,11 +50,10 @@ or for my custom callback:
 
 This only affects :ref:`ansible-playbook` by default.
 
-Setting a callback plugin for ad-hoc commands
+Setting a callback plugin for ad hoc commands
 ---------------------------------------------
 
-The :ref:`ansible` ad hoc command specifically uses a different callback plugin for stdout,
-so there is an extra setting in :ref:`ansible_configuration_settings` you need to add to use the stdout callback defined above:
+The :ref:`ansible` ad hoc command specifically uses a different callback plugin for stdout, so there is an extra setting in :ref:`ansible_configuration_settings` you need to add to use the stdout callback defined above:
 
 .. code-block:: ini
 
@@ -82,20 +78,20 @@ Use ``ansible-doc -t callback <plugin name>`` to see specific documents and exam
 .. seealso::
 
    :ref:`action_plugins`
-       Ansible Action plugins
+       Action plugins
    :ref:`cache_plugins`
-       Ansible cache plugins
+       Cache plugins
    :ref:`connection_plugins`
-       Ansible connection plugins
+       Connection plugins
    :ref:`inventory_plugins`
-       Ansible inventory plugins
+       Inventory plugins
    :ref:`shell_plugins`
-       Ansible Shell plugins
+       Shell plugins
    :ref:`strategy_plugins`
-       Ansible Strategy plugins
+       Strategy plugins
    :ref:`vars_plugins`
-       Ansible Vars plugins
+       Vars plugins
    `User Mailing List <https://groups.google.com/forum/#!forum/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `webchat.freenode.net <https://webchat.freenode.net>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

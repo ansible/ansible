@@ -26,12 +26,11 @@ __metaclass__ = type
 import itertools
 import math
 
-from jinja2.filters import environmentfilter
+from jinja2.filters import pass_environment
 
 from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.common.text import formatters
 from ansible.module_utils.six import binary_type, text_type
-from ansible.module_utils.six.moves import zip, zip_longest
 from ansible.module_utils.common._collections_compat import Hashable, Mapping, Iterable
 from ansible.module_utils._text import to_native, to_text
 from ansible.utils.display import Display
@@ -42,25 +41,24 @@ try:
 except ImportError:
     HAS_UNIQUE = False
 
+
 display = Display()
 
 
-@environmentfilter
-def unique(environment, a, case_sensitive=False, attribute=None):
+@pass_environment
+# Use case_sensitive=None as a sentinel value, so we raise an error only when
+# explicitly set and cannot be handle (by Jinja2 w/o 'unique' or fallback version)
+def unique(environment, a, case_sensitive=None, attribute=None):
 
     def _do_fail(e):
-        if case_sensitive or attribute:
+        if case_sensitive is False or attribute:
             raise AnsibleFilterError("Jinja2's unique filter failed and we cannot fall back to Ansible's version "
                                      "as it does not support the parameters supplied", orig_exc=e)
 
     error = e = None
     try:
         if HAS_UNIQUE:
-            c = do_unique(environment, a, case_sensitive=case_sensitive, attribute=attribute)
-            if isinstance(a, Hashable):
-                c = set(c)
-            else:
-                c = list(c)
+            c = list(do_unique(environment, a, case_sensitive=bool(case_sensitive), attribute=attribute))
     except TypeError as e:
         error = e
         _do_fail(e)
@@ -72,39 +70,37 @@ def unique(environment, a, case_sensitive=False, attribute=None):
     if not HAS_UNIQUE or error:
 
         # handle Jinja2 specific attributes when using Ansible's version
-        if case_sensitive or attribute:
-            raise AnsibleFilterError("Ansible's unique filter does not support case_sensitive nor attribute parameters, "
+        if case_sensitive is False or attribute:
+            raise AnsibleFilterError("Ansible's unique filter does not support case_sensitive=False nor attribute parameters, "
                                      "you need a newer version of Jinja2 that provides their version of the filter.")
 
-        if isinstance(a, Hashable):
-            c = set(a)
-        else:
-            c = []
-            for x in a:
-                if x not in c:
-                    c.append(x)
+        c = []
+        for x in a:
+            if x not in c:
+                c.append(x)
+
     return c
 
 
-@environmentfilter
+@pass_environment
 def intersect(environment, a, b):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) & set(b)
     else:
-        c = unique(environment, [x for x in a if x in b])
+        c = unique(environment, [x for x in a if x in b], True)
     return c
 
 
-@environmentfilter
+@pass_environment
 def difference(environment, a, b):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) - set(b)
     else:
-        c = unique(environment, [x for x in a if x not in b])
+        c = unique(environment, [x for x in a if x not in b], True)
     return c
 
 
-@environmentfilter
+@pass_environment
 def symmetric_difference(environment, a, b):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) ^ set(b)
@@ -114,23 +110,13 @@ def symmetric_difference(environment, a, b):
     return c
 
 
-@environmentfilter
+@pass_environment
 def union(environment, a, b):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) | set(b)
     else:
-        c = unique(environment, a + b)
+        c = unique(environment, a + b, True)
     return c
-
-
-def min(a):
-    _min = __builtins__.get('min')
-    return _min(a)
-
-
-def max(a):
-    _max = __builtins__.get('max')
-    return _max(a)
 
 
 def logarithm(x, base=math.e):
@@ -194,6 +180,9 @@ def rekey_on_member(data, key, duplicates='error'):
 
     new_obj = {}
 
+    # Ensure the positional args are defined - raise jinja2.exceptions.UndefinedError if not
+    bool(data) and bool(key)
+
     if isinstance(data, Mapping):
         iterate_over = data.values()
     elif isinstance(data, Iterable) and not isinstance(data, (text_type, binary_type)):
@@ -232,10 +221,6 @@ class FilterModule(object):
 
     def filters(self):
         filters = {
-            # general math
-            'min': min,
-            'max': max,
-
             # exponents and logarithms
             'log': logarithm,
             'pow': power,
@@ -260,7 +245,7 @@ class FilterModule(object):
 
             # zip
             'zip': zip,
-            'zip_longest': zip_longest,
+            'zip_longest': itertools.zip_longest,
 
         }
 

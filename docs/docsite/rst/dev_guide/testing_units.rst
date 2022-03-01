@@ -53,7 +53,9 @@ If you are running unit tests against things other than modules, such as module 
 
    ansible-test units --docker -v test/units/module_utils/basic/test_imports.py
 
-For advanced usage see the online help::
+For advanced usage see the online help:
+
+.. code:: shell
 
    ansible-test units --help
 
@@ -98,41 +100,45 @@ Extending unit tests
 
 
 Structuring Unit Tests
-``````````````````````
+----------------------
 
 Ansible drives unit tests through `pytest <https://docs.pytest.org/en/latest/>`_. This
 means that tests can either be written a simple functions which are included in any file
 name like ``test_<something>.py`` or as classes.
 
-Here is an example of a function::
+Here is an example of a function:
+
+.. code:: python
 
   #this function will be called simply because it is called test_*()
 
-  def test_add()
+  def test_add():
       a = 10
       b = 23
       c = 33
-      assert a + b = c
+      assert a + b == c
 
-Here is an example of a class::
+Here is an example of a class:
+
+.. code:: python
 
   import unittest
 
-  class AddTester(unittest.TestCase)
+  class AddTester(unittest.TestCase):
 
-      def SetUp()
+      def SetUp():
           self.a = 10
           self.b = 23
 
       # this function will
-      def test_add()
+      def test_add():
         c = 33
-        assert self.a + self.b = c
+        assert self.a + self.b == c
 
      # this function will
-      def test_subtract()
+      def test_subtract():
         c = -13
-        assert self.a - self.b = c
+        assert self.a - self.b == c
 
 Both methods work fine in most circumstances; the function-based interface is simpler and
 quicker and so that's probably where you should start when you are just trying to add a
@@ -151,37 +157,30 @@ directory, which is then included directly.
 
 
 Module test case common code
-````````````````````````````
+----------------------------
 
-Keep common code as specific as possible within the `test/units/` directory structure. For
-example, if it's specific to testing Amazon modules, it should be in
-`test/units/modules/cloud/amazon/`. Don't import common unit test code from directories
-outside the current or parent directories.
+Keep common code as specific as possible within the `test/units/` directory structure.
+Don't import common unit test code from directories outside the current or parent directories.
 
 Don't import other unit tests from a unit test. Any common code should be in dedicated
 files that aren't themselves tests.
 
 
 Fixtures files
-``````````````
+--------------
 
 To mock out fetching results from devices, or provide other complex data structures that
 come from external libraries, you can use ``fixtures`` to read in pre-generated data.
 
-Text files live in ``test/units/modules/network/PLATFORM/fixtures/``
+You can check how `fixtures <https://github.com/ansible/ansible/tree/devel/test/units/module_utils/facts/fixtures/cpuinfo>`_
+are used in `cpuinfo fact tests <https://github.com/ansible/ansible/blob/9f72ff80e3fe173baac83d74748ad87cb6e20e64/test/units/module_utils/facts/hardware/linux_data.py#L384>`_
 
-Data is loaded using the ``load_fixture`` method
-
-See `eos_banner test
-<https://github.com/ansible/ansible/blob/devel/test/units/modules/network/eos/test_eos_banner.py>`_
-for a practical example.
-
-If you are simulating APIs you may find that python placebo is useful.  See
+If you are simulating APIs you may find that Python placebo is useful.  See
 :ref:`testing_units_modules` for more information.
 
 
 Code Coverage For New or Updated Unit Tests
-```````````````````````````````````````````
+-------------------------------------------
 New code will be missing from the codecov.io coverage reports (see :ref:`developing_testing`), so
 local reporting is needed.  Most ``ansible-test`` commands allow you to collect code
 coverage; this is particularly useful when to indicate where to extend testing.

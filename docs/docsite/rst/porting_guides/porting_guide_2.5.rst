@@ -20,7 +20,7 @@ Playbook
 Dynamic includes and attribute inheritance
 ------------------------------------------
 
-In Ansible version 2.4, the concept of dynamic includes (``include_tasks``) versus static imports (``import_tasks``) was introduced to clearly define the differences in how ``include`` works between dynamic and static includes.
+In Ansible version 2.4, the concept of dynamic includes (``include_tasks``), as opposed to static imports (``import_tasks``), was introduced to clearly define the differences in how ``include`` works between dynamic and static includes.
 
 All attributes applied to a dynamic ``include_*`` would only apply to the include itself, while attributes applied to a
 static ``import_*`` would be inherited by the tasks within.

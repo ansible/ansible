@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2016, Krzysztof Magosa <krzysztof@magosa.pl>
@@ -17,8 +16,8 @@ short_description: Creates temporary files and directories
 description:
   - The C(tempfile) module creates temporary files and directories. C(mktemp) command takes different parameters on various systems, this module helps
     to avoid troubles related to that. Files/directories created by module are accessible only by creator. In case you need to make them world-accessible
-    you need to use M(file) module.
-  - For Windows targets, use the M(win_tempfile) module instead.
+    you need to use M(ansible.builtin.file) module.
+  - For Windows targets, use the M(ansible.windows.win_tempfile) module instead.
 options:
   state:
     description:
@@ -41,27 +40,35 @@ options:
       - Suffix of file/directory name created by module.
     type: str
     default: ""
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        support: none
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 seealso:
-- module: file
-- module: win_tempfile
+- module: ansible.builtin.file
+- module: ansible.windows.win_tempfile
 author:
   - Krzysztof Magosa (@krzysztof-magosa)
 '''
 
 EXAMPLES = """
 - name: Create temporary build directory
-  tempfile:
+  ansible.builtin.tempfile:
     state: directory
     suffix: build
 
 - name: Create temporary file
-  tempfile:
+  ansible.builtin.tempfile:
     state: file
     suffix: temp
   register: tempfile_1
 
 - name: Use the registered var and the file module to remove the temporary file
-  file:
+  ansible.builtin.file:
     path: "{{ tempfile_1.path }}"
     state: absent
   when: tempfile_1.path is defined
@@ -69,7 +76,7 @@ EXAMPLES = """
 
 RETURN = '''
 path:
-  description: Path to created file or directory
+  description: Path to created file or directory.
   returned: success
   type: str
   sample: "/tmp/ansible.bMlvdk"
@@ -101,7 +108,7 @@ def main():
                 dir=module.params['path'],
             )
             close(handle)
-        elif module.params['state'] == 'directory':
+        else:
             path = mkdtemp(
                 prefix=module.params['prefix'],
                 suffix=module.params['suffix'],

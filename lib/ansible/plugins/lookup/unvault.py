@@ -4,8 +4,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: unvault
-    author: ansible core team
+    name: unvault
+    author: Ansible Core Team
     version_added: "2.10"
     short_description: read vaulted file(s) contents
     description:
@@ -19,13 +19,15 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-- debug: msg="the value of foo.txt is {{lookup('unvault', '/etc/foo.txt')|to_string }}"
+- ansible.builtin.debug: msg="the value of foo.txt is {{lookup('ansible.builtin.unvault', '/etc/foo.txt')|to_string }}"
 """
 
 RETURN = """
   _raw:
     description:
       - content of file(s) as bytes
+    type: list
+    elements: raw
 """
 
 from ansible.errors import AnsibleParserError
@@ -40,9 +42,9 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
-        self.set_options(direct=kwargs)
-
         ret = []
+
+        self.set_options(var_options=variables, direct=kwargs)
 
         for term in terms:
             display.debug("Unvault lookup term: %s" % term)
@@ -54,7 +56,7 @@ class LookupModule(LookupBase):
                 actual_file = self._loader.get_real_file(lookupfile, decrypt=True)
                 with open(actual_file, 'rb') as f:
                     b_contents = f.read()
-                ret.append(b_contents)
+                ret.append(to_text(b_contents))
             else:
                 raise AnsibleParserError('Unable to find file matching "%s" ' % term)
 

@@ -6,7 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     author: Ansible Core Team
-    connection: paramiko
+    name: paramiko
     short_description: Run tasks via python ssh (paramiko)
     description:
         - Use the python ssh implementation (Paramiko) to connect to targets
@@ -23,6 +23,7 @@ DOCUMENTATION = """
             - Address of the remote target
         default: inventory_hostname
         vars:
+            - name: inventory_hostname
             - name: ansible_host
             - name: ansible_ssh_host
             - name: ansible_paramiko_host
@@ -44,6 +45,8 @@ DOCUMENTATION = """
             - section: paramiko_connection
               key: remote_user
               version_added: '2.5'
+        keyword:
+            - name: remote_user
       password:
         description:
           - Secret used to either login the ssh server or as a passphrase for ssh keys that require it
@@ -138,7 +141,7 @@ import sys
 import re
 
 from termios import tcflush, TCIFLUSH
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 from binascii import hexlify
 
 from ansible.errors import (
@@ -148,8 +151,6 @@ from ansible.errors import (
     AnsibleFileNotFound,
 )
 from ansible.module_utils.compat.paramiko import PARAMIKO_IMPORT_ERR, paramiko
-from ansible.module_utils.six import iteritems
-from ansible.module_utils.six.moves import input
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe
@@ -241,6 +242,8 @@ class Connection(ConnectionBase):
             self.ssh = SSH_CONNECTION_CACHE[cache_key]
         else:
             self.ssh = SSH_CONNECTION_CACHE[cache_key] = self._connect_uncached()
+
+        self._connected = True
         return self
 
     def _set_log_channel(self, name):
@@ -498,8 +501,8 @@ class Connection(ConnectionBase):
 
     def _any_keys_added(self):
 
-        for hostname, keys in iteritems(self.ssh._host_keys):
-            for keytype, key in iteritems(keys):
+        for hostname, keys in self.ssh._host_keys.items():
+            for keytype, key in keys.items():
                 added_this_time = getattr(key, '_added_by_ansible_this_time', False)
                 if added_this_time:
                     return True
@@ -519,23 +522,25 @@ class Connection(ConnectionBase):
 
         with open(filename, 'w') as f:
 
-            for hostname, keys in iteritems(self.ssh._host_keys):
+            for hostname, keys in self.ssh._host_keys.items():
 
-                for keytype, key in iteritems(keys):
+                for keytype, key in keys.items():
 
                     # was f.write
                     added_this_time = getattr(key, '_added_by_ansible_this_time', False)
                     if not added_this_time:
                         f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
 
-            for hostname, keys in iteritems(self.ssh._host_keys):
+            for hostname, keys in self.ssh._host_keys.items():
 
-                for keytype, key in iteritems(keys):
+                for keytype, key in keys.items():
                     added_this_time = getattr(key, '_added_by_ansible_this_time', False)
                     if added_this_time:
                         f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
 
     def reset(self):
+        if not self._connected:
+            return
         self.close()
         self._connect()
 

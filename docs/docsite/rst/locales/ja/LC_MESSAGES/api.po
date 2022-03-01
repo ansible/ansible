@@ -1,0 +1,94 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2021 Red Hat, Inc.
+# This file is distributed under the same license as the Ansible package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Ansible devel\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-02-23 10:50+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.9.0\n"
+
+#: ../../rst/api/index.rst:5
+msgid "Ansible API Documentation"
+msgstr "Ansible API のドキュメント"
+
+#: ../../rst/api/index.rst:7
+msgid "The Ansible API is under construction. These stub references for attributes, classes, functions, methods, and modules will be documented in future. The :ref:`module utilities <ansible.module_utils>` included in ``ansible.module_utils.basic`` and ``AnsibleModule`` are documented under Reference & Appendices."
+msgstr "Ansible API を構築中です。属性、クラス、関数、メソッド、およびモジュールのスタブ参照の説明は、今後追加されます。``ansible.module_utils.basic`` および ``AnsibleModule`` に含まれる「:ref:`モジュールユーティリティー <ansible.module_utils>`」、「参照および付録」に記載されています。"
+
+#: ../../rst/api/index.rst:14
+msgid "Attributes"
+msgstr "属性"
+
+#: ../../rst/api/index.rst:18
+msgid "The parameters accepted by the module."
+msgstr "モジュールで受け入れられるパラメーターです。"
+
+#: ../../rst/api/index.rst:24
+msgid "Deprecated in favor of ansibleModule._selinux_special_fs."
+msgstr "ansibleModule._selinux_special_fs が導入されたため、非推奨となりました。"
+
+#: ../../rst/api/index.rst:36
+msgid "(formerly ansible.module_utils.basic.SELINUX_SPECIAL_FS)"
+msgstr "(以前は ansible.module_utils.basic.SELINUX_SPECIAL_FS)"
+
+#: ../../rst/api/index.rst:50
+msgid "Classes"
+msgstr "クラス"
+
+#: ../../rst/api/index.rst:55
+msgid "The basic utilities for AnsibleModule."
+msgstr "AnsibleModule の基本的なユーティリティーです。"
+
+#: ../../rst/api/index.rst:59
+msgid "The main class for an Ansible module."
+msgstr "Ansible モジュールのメインクラスです。"
+
+#: ../../rst/api/index.rst:63
+msgid "Functions"
+msgstr "関数"
+
+#: ../../rst/api/index.rst:67
+msgid "Load parameters."
+msgstr "パラメーターを読み込みます。"
+
+#: ../../rst/api/index.rst:71
+msgid "Methods"
+msgstr "メソッド"
+
+#: ../../rst/api/index.rst:75
+msgid "Logs the output of Ansible."
+msgstr "Ansible の出力をログに記録します。"
+
+#: ../../rst/api/index.rst:79
+msgid "Debugs Ansible."
+msgstr "Ansible をデバッグします。"
+
+#: ../../rst/api/index.rst:83
+msgid "Retrieves the path for executables."
+msgstr "実行可能ファイルのパスを取得します。"
+
+#: ../../rst/api/index.rst:87
+msgid "Runs a command within an Ansible module."
+msgstr "Ansible モジュール内でコマンドを実行します。"
+
+#: ../../rst/api/index.rst:91
+msgid "Exits and returns a failure."
+msgstr "終了して、失敗を返します。"
+
+#: ../../rst/api/index.rst:95
+msgid "Exits and returns output."
+msgstr "終了して、出力を返します。"
+
+#: ../../rst/api/index.rst:99
+msgid "Modules"
+msgstr "モジュール"
+

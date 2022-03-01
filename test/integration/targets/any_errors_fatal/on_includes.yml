@@ -4,4 +4,4 @@
   hosts: testhost,testhost2
   any_errors_fatal: True
   tasks:
-     - include: test_fatal.yml
+     - import_tasks: test_fatal.yml

@@ -1,14 +1,20 @@
+#!/usr/bin/env python
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# PYTHON_ARGCOMPLETE_OK
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+# ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
+from ansible.cli import CLI
 
 import datetime
 import os
 import platform
 import random
+import shlex
 import shutil
 import socket
 import sys
@@ -16,11 +22,9 @@ import time
 
 from ansible import constants as C
 from ansible import context
-from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.six.moves import shlex_quote
 from ansible.plugins.loader import module_loader
 from ansible.utils.cmd_functions import run_cmd
 from ansible.utils.display import Display
@@ -40,6 +44,8 @@ class PullCLI(CLI):
         excellent way to gather and analyze remote logs from ansible-pull.
     '''
 
+    name = 'ansible-pull'
+
     DEFAULT_REPO_TYPE = 'git'
     DEFAULT_PLAYBOOK = 'local.yml'
     REPO_CHOICES = ('git', 'subversion', 'hg', 'bzr')
@@ -47,7 +53,6 @@ class PullCLI(CLI):
         1: 'File does not exist',
         2: 'File is not readable',
     }
-    SUPPORTED_REPO_MODULES = ['git']
     ARGUMENTS = {'playbook.yml': 'The name of one the YAML format files to run as an Ansible playbook.'
                                  'This can be a relative path within the checkout. By default, Ansible will'
                                  "look for a playbook based on the host's fully-qualified domain name,"
@@ -94,7 +99,8 @@ class PullCLI(CLI):
                                       'This is a useful way to disperse git requests')
         self.parser.add_argument('-f', '--force', dest='force', default=False, action='store_true',
                                  help='run the playbook even if the repository could not be updated')
-        self.parser.add_argument('-d', '--directory', dest='dest', default=None, help='directory to checkout repository to')
+        self.parser.add_argument('-d', '--directory', dest='dest', default=None,
+                                 help='absolute path of repository checkout directory (relative paths are not supported)')
         self.parser.add_argument('-U', '--url', dest='url', default=None, help='URL of the playbook repository')
         self.parser.add_argument('--full', dest='fullclone', action='store_true', help='Do a full clone, instead of a shallow one.')
         self.parser.add_argument('-C', '--checkout', dest='checkout',
@@ -140,8 +146,8 @@ class PullCLI(CLI):
         if not options.url:
             raise AnsibleOptionsError("URL for repository not specified, use -h for help")
 
-        if options.module_name not in self.SUPPORTED_REPO_MODULES:
-            raise AnsibleOptionsError("Unsupported repo module %s, choices are %s" % (options.module_name, ','.join(self.SUPPORTED_REPO_MODULES)))
+        if options.module_name not in self.REPO_CHOICES:
+            raise AnsibleOptionsError("Unsupported repo module %s, choices are %s" % (options.module_name, ','.join(self.REPO_CHOICES)))
 
         display.verbosity = options.verbosity
         self.validate_conflicts(options)
@@ -162,7 +168,11 @@ class PullCLI(CLI):
         # Now construct the ansible command
         node = platform.node()
         host = socket.getfqdn()
-        limit_opts = 'localhost,%s,127.0.0.1' % ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
+        hostnames = ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
+        if hostnames:
+            limit_opts = 'localhost,%s,127.0.0.1' % hostnames
+        else:
+            limit_opts = 'localhost,127.0.0.1'
         base_opts = '-c local '
         if context.CLIARGS['verbosity'] > 0:
             base_opts += ' -%s' % ''.join(["v" for x in range(0, context.CLIARGS['verbosity'])])
@@ -173,7 +183,7 @@ class PullCLI(CLI):
         if not inv_opts:
             inv_opts = " -i localhost, "
             # avoid interpreter discovery since we already know which interpreter to use on localhost
-            inv_opts += '-e %s ' % shlex_quote('ansible_python_interpreter=%s' % sys.executable)
+            inv_opts += '-e %s ' % shlex.quote('ansible_python_interpreter=%s' % sys.executable)
 
         # SCM specific options
         if context.CLIARGS['module_name'] == 'git':
@@ -228,7 +238,7 @@ class PullCLI(CLI):
                                                               context.CLIARGS['module_name'],
                                                               repo_opts, limit_opts)
         for ev in context.CLIARGS['extra_vars']:
-            cmd += ' -e %s' % shlex_quote(ev)
+            cmd += ' -e %s' % shlex.quote(ev)
 
         # Nap?
         if context.CLIARGS['sleep']:
@@ -263,7 +273,7 @@ class PullCLI(CLI):
                 cmd += " --vault-id=%s" % vault_id
 
         for ev in context.CLIARGS['extra_vars']:
-            cmd += ' -e %s' % shlex_quote(ev)
+            cmd += ' -e %s' % shlex.quote(ev)
         if context.CLIARGS['become_ask_pass']:
             cmd += ' --ask-become-pass'
         if context.CLIARGS['skip_tags']:
@@ -311,19 +321,26 @@ class PullCLI(CLI):
     @staticmethod
     def select_playbook(path):
         playbook = None
+        errors = []
         if context.CLIARGS['args'] and context.CLIARGS['args'][0] is not None:
-            playbook = os.path.join(path, context.CLIARGS['args'][0])
-            rc = PullCLI.try_playbook(playbook)
-            if rc != 0:
-                display.warning("%s: %s" % (playbook, PullCLI.PLAYBOOK_ERRORS[rc]))
-                return None
+            playbooks = []
+            for book in context.CLIARGS['args']:
+                book_path = os.path.join(path, book)
+                rc = PullCLI.try_playbook(book_path)
+                if rc != 0:
+                    errors.append("%s: %s" % (book_path, PullCLI.PLAYBOOK_ERRORS[rc]))
+                    continue
+                playbooks.append(book_path)
+            if 0 < len(errors):
+                display.warning("\n".join(errors))
+            elif len(playbooks) == len(context.CLIARGS['args']):
+                playbook = " ".join(playbooks)
             return playbook
         else:
             fqdn = socket.getfqdn()
             hostpb = os.path.join(path, fqdn + '.yml')
             shorthostpb = os.path.join(path, fqdn.split('.')[0] + '.yml')
             localpb = os.path.join(path, PullCLI.DEFAULT_PLAYBOOK)
-            errors = []
             for pb in [hostpb, shorthostpb, localpb]:
                 rc = PullCLI.try_playbook(pb)
                 if rc == 0:
@@ -334,3 +351,11 @@ class PullCLI(CLI):
             if playbook is None:
                 display.warning("\n".join(errors))
             return playbook
+
+
+def main(args=None):
+    PullCLI.cli_executor(args)
+
+
+if __name__ == '__main__':
+    main()

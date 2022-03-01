@@ -19,6 +19,7 @@ from ansible.release import __version__ as ansible_base__version__
 # Pylint doesn't understand Python3 namespace modules.
 # pylint: disable=relative-beyond-top-level
 from ..commands import Command
+from ..errors import InvalidUserInput, MissingUserInput
 # pylint: enable=relative-beyond-top-level
 
 
@@ -27,6 +28,71 @@ __metaclass__ = type
 
 DEFAULT_TOP_DIR = pathlib.Path(__file__).parents[4]
 DEFAULT_OUTPUT_DIR = pathlib.Path(__file__).parents[4] / 'docs/docsite'
+
+
+class NoSuchFile(Exception):
+    """An expected file was not found."""
+
+
+#
+# Helpers
+#
+
+def find_latest_ansible_dir(build_data_working):
+    """Find the most recent ansible major version."""
+    # imports here so that they don't cause unnecessary deps for all of the plugins
+    from packaging.version import InvalidVersion, Version
+
+    ansible_directories = glob.glob(os.path.join(build_data_working, '[0-9.]*'))
+
+    # Find the latest ansible version directory
+    latest = None
+    latest_ver = Version('0')
+    for directory_name in (d for d in ansible_directories if os.path.isdir(d)):
+        try:
+            new_version = Version(os.path.basename(directory_name))
+        except InvalidVersion:
+            continue
+
+        # For the devel build, we only need ansible.in, so make sure it's there
+        if not os.path.exists(os.path.join(directory_name, 'ansible.in')):
+            continue
+
+        if new_version > latest_ver:
+            latest_ver = new_version
+            latest = directory_name
+
+    if latest is None:
+        raise NoSuchFile('Could not find an ansible data directory in {0}'.format(build_data_working))
+
+    return latest
+
+
+def find_latest_deps_file(build_data_working, ansible_version):
+    """Find the most recent ansible deps file for the given ansible major version."""
+    # imports here so that they don't cause unnecessary deps for all of the plugins
+    from packaging.version import Version
+
+    data_dir = os.path.join(build_data_working, ansible_version)
+    deps_files = glob.glob(os.path.join(data_dir, '*.deps'))
+    if not deps_files:
+        raise Exception('No deps files exist for version {0}'.format(ansible_version))
+
+    # Find the latest version of the deps file for this major version
+    latest = None
+    latest_ver = Version('0')
+    for filename in deps_files:
+        with open(filename, 'r') as f:
+            deps_data = yaml.safe_load(f.read())
+        new_version = Version(deps_data['_ansible_version'])
+        if new_version > latest_ver:
+            latest_ver = new_version
+            latest = filename
+
+    if latest is None:
+        raise NoSuchFile('Could not find an ansible deps file in {0}'.format(data_dir))
+
+    return latest
 
 
 #
@@ -44,8 +110,8 @@ def generate_base_docs(args):
         #
         modified_deps_file = os.path.join(tmp_dir, 'ansible.deps')
 
-        # The _acd_version doesn't matter
-        deps_file_contents = {'_acd_version': ansible_base__version__,
+        # The _ansible_version doesn't matter since we're only building docs for base
+        deps_file_contents = {'_ansible_version': ansible_base__version__,
                               '_ansible_base_version': ansible_base__version__}
 
         with open(modified_deps_file, 'w') as f:
@@ -53,7 +119,7 @@ def generate_base_docs(args):
 
         # Generate the plugin rst
         return antsibull_docs.run(['antsibull-docs', 'stable', '--deps-file', modified_deps_file,
-                                   '--ansible-base-cache', str(args.top_dir),
+                                   '--ansible-base-source', str(args.top_dir),
                                    '--dest-dir', args.output_dir])
 
         # If we make this more than just a driver for antsibull:
@@ -70,45 +136,41 @@ def generate_full_docs(args):
     # imports here so that they don't cause unnecessary deps for all of the plugins
     import sh
     from antsibull.cli import antsibull_docs
-    from packaging.version import Version
-
-    ansible_base_ver = Version(ansible_base__version__)
-    ansible_base_major_ver = '{0}.{1}'.format(ansible_base_ver.major, ansible_base_ver.minor)
 
     with TemporaryDirectory() as tmp_dir:
         sh.git(['clone', 'https://github.com/ansible-community/ansible-build-data'], _cwd=tmp_dir)
-        deps_files = glob.glob(os.path.join(tmp_dir, 'ansible-build-data',
-                                            ansible_base_major_ver, '*.deps'))
-        if not deps_files:
-            raise Exception('No deps files exist for version {0}'.format(ansible_base_major_ver))
+        # If we want to validate that the ansible version and ansible-base branch version match,
+        # this would be the place to do it.
 
-        # Find the latest version of the deps file for this version
-        latest = None
-        latest_ver = Version('0')
-        for filename in deps_files:
-            with open(filename, 'r') as f:
+        build_data_working = os.path.join(tmp_dir, 'ansible-build-data')
+        if args.ansible_build_data:
+            build_data_working = args.ansible_build_data
+
+        ansible_version = args.ansible_version
+        if ansible_version is None:
+            ansible_version = find_latest_ansible_dir(build_data_working)
+            params = ['devel', '--pieces-file', os.path.join(ansible_version, 'ansible.in')]
+        else:
+            latest_filename = find_latest_deps_file(build_data_working, ansible_version)
+
+            # Make a copy of the deps file so that we can set the ansible-base version we'll use
+            modified_deps_file = os.path.join(tmp_dir, 'ansible.deps')
+            shutil.copyfile(latest_filename, modified_deps_file)
+
+            # Put our version of ansible-base into the deps file
+            with open(modified_deps_file, 'r') as f:
                 deps_data = yaml.safe_load(f.read())
-            new_version = Version(deps_data['_ansible_base_version'])
-            if new_version > latest_ver:
-                latest_ver = new_version
-                latest = filename
 
-        # Make a copy of the deps file so that we can set the ansible-base version to use
-        modified_deps_file = os.path.join(tmp_dir, 'ansible.deps')
-        shutil.copyfile(latest, modified_deps_file)
+            deps_data['_ansible_base_version'] = ansible_base__version__
 
-        # Put our version of ansible-base into the deps file
-        with open(modified_deps_file, 'r') as f:
-            deps_data = yaml.safe_load(f.read())
+            with open(modified_deps_file, 'w') as f:
+                f.write(yaml.dump(deps_data))
 
-        deps_data['_ansible_base_version'] = ansible_base__version__
-
-        with open(modified_deps_file, 'w') as f:
-            f.write(yaml.dump(deps_data))
+            params = ['stable', '--deps-file', modified_deps_file]
 
         # Generate the plugin rst
-        return antsibull_docs.run(['antsibull-docs', 'stable', '--deps-file', modified_deps_file,
-                                   '--ansible-base-cache', str(args.top_dir),
+        return antsibull_docs.run(['antsibull-docs'] + params +
+                                  ['--ansible-base-source', str(args.top_dir),
                                    '--dest-dir', args.output_dir])
 
         # If we make this more than just a driver for antsibull:
@@ -132,6 +194,8 @@ class CollectionPluginDocs(Command):
                             ' documentation location that says the module is in a collection and'
                             ' point to generated plugin documentation under the collections/'
                             ' hierarchy.')
+        # I think we should make the actions a subparser but need to look in git history and see if
+        # we tried that and changed it for some reason.
         parser.add_argument('action', action='store', choices=('full', 'base', 'named'),
                             default='full', help=cls._ACTION_HELP)
         parser.add_argument("-o", "--output-dir", action="store", dest="output_dir",
@@ -145,10 +209,21 @@ class CollectionPluginDocs(Command):
                             dest="limit_to", default=None,
                             help="Limit building module documentation to comma-separated list of"
                             " plugins. Specify non-existing plugin name for no plugins.")
+        parser.add_argument('--ansible-version', action='store',
+                            dest='ansible_version', default=None,
+                            help='The version of the ansible package to make documentation for.'
+                            '  This only makes sense when used with full.')
+        parser.add_argument('--ansible-build-data', action='store',
+                            dest='ansible_build_data', default=None,
+                            help='A checkout of the ansible-build-data repo.  Useful for'
+                            ' debugging.')
 
     @staticmethod
     def main(args):
-        # normalize CLI args
+        # normalize and validate CLI args
+
+        if args.ansible_version and args.action != 'full':
+            raise InvalidUserInput('--ansible-version is only for use with "full".')
 
         if not args.output_dir:
             args.output_dir = os.path.abspath(str(DEFAULT_OUTPUT_DIR))

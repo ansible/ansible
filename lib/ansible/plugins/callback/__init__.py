@@ -21,28 +21,26 @@ __metaclass__ = type
 
 import difflib
 import json
-import os
+import re
 import sys
-import warnings
-
+import textwrap
+from collections import OrderedDict
 from copy import deepcopy
 
 from ansible import constants as C
 from ansible.module_utils.common._collections_compat import MutableMapping
-from ansible.module_utils.six import PY3
-from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import to_text
+from ansible.module_utils.six import text_type
 from ansible.parsing.ajson import AnsibleJSONEncoder
+from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible.parsing.yaml.objects import AnsibleUnicode
 from ansible.plugins import AnsiblePlugin, get_plugin_class
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
+from ansible.utils.unsafe_proxy import AnsibleUnsafeText, NativeJinjaUnsafeText
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
-if PY3:
-    # OrderedDict is needed for a backwards compat shim on Python3.x only
-    # https://github.com/ansible/ansible/pull/49512
-    from collections import OrderedDict
-else:
-    OrderedDict = None
+import yaml
 
 global_display = Display()
 
@@ -51,6 +49,88 @@ __all__ = ["CallbackBase"]
 
 
 _DEBUG_ALLOWED_KEYS = frozenset(('msg', 'exception', 'warnings', 'deprecations'))
+_YAML_TEXT_TYPES = (text_type, AnsibleUnicode, AnsibleUnsafeText, NativeJinjaUnsafeText)
+# Characters that libyaml/pyyaml consider breaks
+_YAML_BREAK_CHARS = '\n\x85\u2028\u2029'  # NL, NEL, LS, PS
+# regex representation of libyaml/pyyaml of a space followed by a break character
+_SPACE_BREAK_RE = re.compile(fr' +([{_YAML_BREAK_CHARS}])')
+
+
+class _AnsibleCallbackDumper(AnsibleDumper):
+    def __init__(self, lossy=False):
+        self._lossy = lossy
+
+    def __call__(self, *args, **kwargs):
+        # pyyaml expects that we are passing an object that can be instantiated, but to
+        # smuggle the ``lossy`` configuration, we do that in ``__init__`` and then
+        # define this ``__call__`` that will mimic the ability for pyyaml to instantiate class
+        super().__init__(*args, **kwargs)
+        return self
+
+
+def _should_use_block(scalar):
+    """Returns true if string should be in block format based on the existence of various newline separators"""
+    # This method of searching is faster than using a regex
+    for ch in _YAML_BREAK_CHARS:
+        if ch in scalar:
+            return True
+    return False
+
+
+class _SpecialCharacterTranslator:
+    def __getitem__(self, ch):
+        # "special character" logic from pyyaml yaml.emitter.Emitter.analyze_scalar, translated to decimal
+        # for perf w/ str.translate
+        if (ch == 10 or
+            32 <= ch <= 126 or
+            ch == 133 or
+            160 <= ch <= 55295 or
+            57344 <= ch <= 65533 or
+            65536 <= ch < 1114111)\
+                and ch != 65279:
+            return ch
+        return None
+
+
+def _filter_yaml_special(scalar):
+    """Filter a string removing any character that libyaml/pyyaml declare as special"""
+    return scalar.translate(_SpecialCharacterTranslator())
+
+
+def _munge_data_for_lossy_yaml(scalar):
+    """Modify a string so that analyze_scalar in libyaml/pyyaml will allow block formatting"""
+    # we care more about readability than accuracy, so...
+    # ...libyaml/pyyaml does not permit trailing spaces for block scalars
+    scalar = scalar.rstrip()
+    # ...libyaml/pyyaml does not permit tabs for block scalars
+    scalar = scalar.expandtabs()
+    # ...libyaml/pyyaml only permits special characters for double quoted scalars
+    scalar = _filter_yaml_special(scalar)
+    # ...libyaml/pyyaml only permits spaces followed by breaks for double quoted scalars
+    return _SPACE_BREAK_RE.sub(r'\1', scalar)
+
+
+def _pretty_represent_str(self, data):
+    """Uses block style for multi-line strings"""
+    data = text_type(data)
+    if _should_use_block(data):
+        style = '|'
+        if self._lossy:
+            data = _munge_data_for_lossy_yaml(data)
+    else:
+        style = self.default_style
+
+    node = yaml.representer.ScalarNode('tag:yaml.org,2002:str', data, style=style)
+    if self.alias_key is not None:
+        self.represented_objects[self.alias_key] = node
+    return node
+
+
+for data_type in _YAML_TEXT_TYPES:
+    _AnsibleCallbackDumper.add_representer(
+        data_type,
+        _pretty_represent_str
+    )
 
 
 class CallbackBase(AnsiblePlugin):
@@ -74,6 +154,7 @@ class CallbackBase(AnsiblePlugin):
             self._display.vvvv('Loading callback plugin %s of type %s, v%s from %s' % (name, ctype, version, sys.modules[self.__module__].__file__))
 
         self.disabled = False
+        self.wants_implicit_tasks = False
 
         self._plugin_options = {}
         if options is not None:
@@ -98,14 +179,50 @@ class CallbackBase(AnsiblePlugin):
         # load from config
         self._plugin_options = C.config.get_plugin_options(get_plugin_class(self), self._load_name, keys=task_keys, variables=var_options, direct=direct)
 
+    @staticmethod
+    def host_label(result):
+        """Return label for the hostname (& delegated hostname) of a task
+        result.
+        """
+        label = "%s" % result._host.get_name()
+        if result._task.delegate_to and result._task.delegate_to != result._host.get_name():
+            # show delegated host
+            label += " -> %s" % result._task.delegate_to
+            # in case we have 'extra resolution'
+            ahost = result._result.get('_ansible_delegated_vars', {}).get('ansible_host', result._task.delegate_to)
+            if result._task.delegate_to != ahost:
+                label += "(%s)" % ahost
+        return label
+
     def _run_is_verbose(self, result, verbosity=0):
         return ((self._display.verbosity > verbosity or result._result.get('_ansible_verbose_always', False) is True)
                 and result._result.get('_ansible_verbose_override', False) is False)
 
-    def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
+    def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False, serialize=True):
+        try:
+            result_format = self.get_option('result_format')
+        except KeyError:
+            # Callback does not declare result_format nor extend result_format_callback
+            result_format = 'json'
 
-        if not indent and (result.get('_ansible_verbose_always') or self._display.verbosity > 2):
+        try:
+            pretty_results = self.get_option('pretty_results')
+        except KeyError:
+            # Callback does not declare pretty_results nor extend result_format_callback
+            pretty_results = None
+
+        indent_conditions = (
+            result.get('_ansible_verbose_always'),
+            pretty_results is None and result_format != 'json',
+            pretty_results is True,
+            self._display.verbosity > 2,
+        )
+
+        if not indent and any(indent_conditions):
             indent = 4
+        if pretty_results is False:
+            # pretty_results=False overrides any specified indentation
+            indent = None
 
         # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
         abridged_result = strip_internal_keys(module_response_deepcopy(result))
@@ -122,18 +239,48 @@ class CallbackBase(AnsiblePlugin):
         if 'exception' in abridged_result:
             del abridged_result['exception']
 
-        try:
-            jsonified_results = json.dumps(abridged_result, cls=AnsibleJSONEncoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
-        except TypeError:
-            # Python3 bug: throws an exception when keys are non-homogenous types:
-            # https://bugs.python.org/issue25457
-            # sort into an OrderedDict and then json.dumps() that instead
-            if not OrderedDict:
-                raise
-            jsonified_results = json.dumps(OrderedDict(sorted(abridged_result.items(), key=to_text)),
-                                           cls=AnsibleJSONEncoder, indent=indent,
-                                           ensure_ascii=False, sort_keys=False)
-        return jsonified_results
+        if not serialize:
+            # Just return ``abridged_result`` without going through serialization
+            # to permit callbacks to take advantage of ``_dump_results``
+            # that want to further modify the result, or use custom serialization
+            return abridged_result
+
+        if result_format == 'json':
+            try:
+                return json.dumps(abridged_result, cls=AnsibleJSONEncoder, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+            except TypeError:
+                # Python3 bug: throws an exception when keys are non-homogenous types:
+                # https://bugs.python.org/issue25457
+                # sort into an OrderedDict and then json.dumps() that instead
+                if not OrderedDict:
+                    raise
+                return json.dumps(OrderedDict(sorted(abridged_result.items(), key=to_text)),
+                                  cls=AnsibleJSONEncoder, indent=indent,
+                                  ensure_ascii=False, sort_keys=False)
+        elif result_format == 'yaml':
+            # None is a sentinel in this case that indicates default behavior
+            # default behavior for yaml is to prettify results
+            lossy = pretty_results in (None, True)
+            if lossy:
+                # if we already have stdout, we don't need stdout_lines
+                if 'stdout' in abridged_result and 'stdout_lines' in abridged_result:
+                    abridged_result['stdout_lines'] = '<omitted>'
+
+                # if we already have stderr, we don't need stderr_lines
+                if 'stderr' in abridged_result and 'stderr_lines' in abridged_result:
+                    abridged_result['stderr_lines'] = '<omitted>'
+
+            return '\n%s' % textwrap.indent(
+                yaml.dump(
+                    abridged_result,
+                    allow_unicode=True,
+                    Dumper=_AnsibleCallbackDumper(lossy=lossy),
+                    default_flow_style=False,
+                    indent=indent,
+                    # sort_keys=sort_keys  # This requires PyYAML>=5.1
+                ),
+                ' ' * (indent or 4)
+            )
 
     def _handle_warnings(self, res):
         ''' display warnings, if enabled and any exist in the result '''
@@ -162,7 +309,35 @@ class CallbackBase(AnsiblePlugin):
             self._display.display(msg, color=C.COLOR_ERROR, stderr=use_stderr)
 
     def _serialize_diff(self, diff):
-        return json.dumps(diff, sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
+        try:
+            result_format = self.get_option('result_format')
+        except KeyError:
+            # Callback does not declare result_format nor extend result_format_callback
+            result_format = 'json'
+
+        try:
+            pretty_results = self.get_option('pretty_results')
+        except KeyError:
+            # Callback does not declare pretty_results nor extend result_format_callback
+            pretty_results = None
+
+        if result_format == 'json':
+            return json.dumps(diff, sort_keys=True, indent=4, separators=(u',', u': ')) + u'\n'
+        elif result_format == 'yaml':
+            # None is a sentinel in this case that indicates default behavior
+            # default behavior for yaml is to prettify results
+            lossy = pretty_results in (None, True)
+            return '%s\n' % textwrap.indent(
+                yaml.dump(
+                    diff,
+                    allow_unicode=True,
+                    Dumper=_AnsibleCallbackDumper(lossy=lossy),
+                    default_flow_style=False,
+                    indent=4,
+                    # sort_keys=sort_keys  # This requires PyYAML>=5.1
+                ),
+                '    '
+            )
 
     def _get_diff(self, difflist):
 
@@ -247,7 +422,7 @@ class CallbackBase(AnsiblePlugin):
         ''' removes data from results for display '''
 
         # mostly controls that debug only outputs what it was meant to
-        if task_name == 'debug':
+        if task_name in C._ACTION_DEBUG:
             if 'msg' in result:
                 # msg should be alone
                 for key in list(result.keys()):
@@ -257,6 +432,11 @@ class CallbackBase(AnsiblePlugin):
                 # 'var' value as field, so eliminate others and what is left should be varname
                 for hidme in self._hide_in_debug:
                     result.pop(hidme, None)
+
+    def _print_task_path(self, task, color=C.COLOR_DEBUG):
+        path = task.get_path()
+        if path:
+            self._display.display(u"task path: %s" % path, color=color)
 
     def set_play_context(self, play_context):
         pass
@@ -345,7 +525,6 @@ class CallbackBase(AnsiblePlugin):
         host = result._host.get_name()
         self.runner_on_unreachable(host, result._result)
 
-    # FIXME: not called
     def v2_runner_on_async_poll(self, result):
         host = result._host.get_name()
         jid = result._result.get('ansible_job_id')
@@ -353,16 +532,18 @@ class CallbackBase(AnsiblePlugin):
         clock = 0
         self.runner_on_async_poll(host, result._result, jid, clock)
 
-    # FIXME: not called
     def v2_runner_on_async_ok(self, result):
         host = result._host.get_name()
         jid = result._result.get('ansible_job_id')
         self.runner_on_async_ok(host, result._result, jid)
 
-    # FIXME: not called
     def v2_runner_on_async_failed(self, result):
         host = result._host.get_name()
+        # Attempt to get the async job ID. If the job does not finish before the
+        # async timeout value, the ID may be within the unparsed 'async_result' dict.
         jid = result._result.get('ansible_job_id')
+        if not jid and 'async_result' in result._result:
+            jid = result._result['async_result'].get('ansible_job_id')
         self.runner_on_async_failed(host, result._result, jid)
 
     def v2_playbook_on_start(self, playbook):

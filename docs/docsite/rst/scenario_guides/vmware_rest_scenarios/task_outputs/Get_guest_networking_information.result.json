@@ -1,0 +1,17 @@
+{
+    "value": {
+        "dns": {
+            "ip_addresses": [
+                "10.0.2.3"
+            ],
+            "search_domains": [
+                "localdomain"
+            ]
+        },
+        "dns_values": {
+            "domain_name": "localdomain",
+            "host_name": "localhost.localdomain"
+        }
+    },
+    "changed": false
+}

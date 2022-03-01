@@ -12,15 +12,21 @@ With Ansible you can retrieve or discover certain variables containing informati
 Ansible facts
 =============
 
-Ansible facts are data related to your remote systems, including operating systems, IP addresses, attached filesystems, and more. You can access this data in the ``ansible_facts`` variable. By default, you can also access some Ansible facts as top-level variables with the ``ansible_`` prefix. You can disable this behavior using the :ref:`INJECT_FACTS_AS_VARS` setting. To see all available facts, add this task to a play::
+Ansible facts are data related to your remote systems, including operating systems, IP addresses, attached filesystems, and more. You can access this data in the ``ansible_facts`` variable. By default, you can also access some Ansible facts as top-level variables with the ``ansible_`` prefix. You can disable this behavior using the :ref:`INJECT_FACTS_AS_VARS` setting. To see all available facts, add this task to a play:
 
-    - debug: var=ansible_facts
+.. code-block:: yaml
 
-To see the 'raw' information as gathered, run this command at the command line::
+    - name: Print all available facts
+      ansible.builtin.debug:
+        var: ansible_facts
 
-    ansible <hostname> -m setup
+To see the 'raw' information as gathered, run this command at the command line:
 
-Facts include a large amount of variable data, which may look like this on Ansible 2.7:
+.. code-block:: shell
+
+    ansible <hostname> -m ansible.builtin.setup
+
+Facts include a large amount of variable data, which may look like this:
 
 .. code-block:: json
 
@@ -481,22 +487,39 @@ Facts include a large amount of variable data, which may look like this on Ansib
         "module_setup": true
     }
 
-You can reference the model of the first disk in the facts shown above in a template or playbook as::
+You can reference the model of the first disk in the facts shown above in a template or playbook as:
+
+.. code-block:: jinja
 
     {{ ansible_facts['devices']['xvda']['model'] }}
 
-To reference the system hostname::
+To reference the system hostname:
+
+.. code-block:: jinja
 
     {{ ansible_facts['nodename'] }}
 
 You can use facts in conditionals (see :ref:`playbooks_conditionals`) and also in templates. You can also use facts to create dynamic groups of hosts that match particular criteria, see the :ref:`group_by module <group_by_module>` documentation for details.
+
+.. note:: Because ``ansible_date_time`` is created and cached when Ansible gathers facts before each playbook run, it can get stale with long-running playbooks. If your playbook takes a long time to run, use the ``pipe`` filter (for example, ``lookup('pipe', 'date +%Y-%m-%d.%H:%M:%S')``) or :ref:`now() <templating_now>` with a Jinja 2 template instead of ``ansible_date_time``.
+
+.. _fact_requirements:
+
+Package requirements for fact gathering
+---------------------------------------
+
+On some distros, you may see missing fact values or facts set to default values because the packages that support gathering those facts are not installed by default. You can install the necessary packages on your remote hosts using the OS package manager. Known dependencies include:
+
+* Linux Network fact gathering -  Depends on  the ``ip`` binary, commonly included in the ``iproute2`` package.
 
 .. _fact_caching:
 
 Caching facts
 -------------
 
-Like registered variables, facts are stored in memory by default. However, unlike registered variables, facts can be gathered independently and cached for repeated use. With cached facts, you can refer to facts from one system when configuring a second system, even if Ansible executes the current play on the second system first. For example::
+Like registered variables, facts are stored in memory by default. However, unlike registered variables, facts can be gathered independently and cached for repeated use. With cached facts, you can refer to facts from one system when configuring a second system, even if Ansible executes the current play on the second system first. For example:
+
+.. code-block:: jinja
 
     {{ hostvars['asdf.example.com']['ansible_facts']['os_family'] }}
 
@@ -509,7 +532,9 @@ Fact caching can improve performance. If you manage thousands of hosts, you can 
 Disabling facts
 ---------------
 
-By default, Ansible gathers facts at the beginning of each play. If you do not need to gather facts (for example, if you know know everything about your systems centrally), you can turn off fact gathering at the play level to improve scalability. Disabling facts may particularly improve performance in push mode with very large numbers of systems, or if you are using Ansible on experimental platforms. To disable fact gathering::
+By default, Ansible gathers facts at the beginning of each play. If you do not need to gather facts (for example, if you know everything about your systems centrally), you can turn off fact gathering at the play level to improve scalability. Disabling facts may particularly improve performance in push mode with very large numbers of systems, or if you are using Ansible on experimental platforms. To disable fact gathering:
+
+.. code-block:: yaml
 
     - hosts: whatever
       gather_facts: no
@@ -517,7 +542,7 @@ By default, Ansible gathers facts at the beginning of each play. If you do not n
 Adding custom facts
 -------------------
 
-The setup module in Ansible automatically discovers a standard set of facts about each host. If you want to add custom values to your facts, you can write a custom facts module, set temporary facts with a ``set_fact`` task, or provide permanent custom facts using the facts.d directory.
+The setup module in Ansible automatically discovers a standard set of facts about each host. If you want to add custom values to your facts, you can write a custom facts module, set temporary facts with a ``ansible.builtin.set_fact`` task, or provide permanent custom facts using the facts.d directory.
 
 .. _local_facts:
 
@@ -530,35 +555,47 @@ You can add static custom facts by adding static files to facts.d, or add dynami
 
 To use facts.d, create an ``/etc/ansible/facts.d`` directory on the remote host or hosts. If you prefer a different directory, create it and specify it using the ``fact_path`` play keyword. Add files to the directory to supply your custom facts. All file names must end with ``.fact``. The files can be JSON, INI, or executable files returning JSON.
 
-To add static facts, simply add a file with the ``.facts`` extension. For example, create ``/etc/ansible/facts.d/preferences.fact`` with this content::
+To add static facts, simply add a file with the ``.fact`` extension. For example, create ``/etc/ansible/facts.d/preferences.fact`` with this content:
+
+.. code-block:: ini
 
     [general]
     asdf=1
     bar=2
 
-The next time fact gathering runs, your facts will include a hash variable fact named ``general`` with ``asdf`` and ``bar`` as members. To validate this, run the following::
+.. note:: Make sure the file is not executable as this will break the ``ansible.builtin.setup`` module.
 
-    ansible <hostname> -m setup -a "filter=ansible_local"
+The next time fact gathering runs, your facts will include a hash variable fact named ``general`` with ``asdf`` and ``bar`` as members. To validate this, run the following:
 
-And you will see your custom fact added::
+.. code-block:: shell
 
-    "ansible_local": {
+    ansible <hostname> -m ansible.builtin.setup -a "filter=ansible_local"
+
+And you will see your custom fact added:
+
+.. code-block:: json
+
+    {
+        "ansible_local": {
             "preferences": {
                 "general": {
                     "asdf" : "1",
                     "bar"  : "2"
                 }
             }
-     }
+        }
+    }
 
-The ansible_local namespace separates custom facts created by facts.d from system facts or variables defined elsewhere in the playbook, so variables will not override each other. You can access this custom fact in a template or playbook as::
+The ansible_local namespace separates custom facts created by facts.d from system facts or variables defined elsewhere in the playbook, so variables will not override each other. You can access this custom fact in a template or playbook as:
+
+.. code-block:: jinja
 
      {{ ansible_local['preferences']['general']['asdf'] }}
 
 .. note:: The key part in the key=value pairs will be converted into lowercase inside the ansible_local variable. Using the example above, if the ini file contained ``XYZ=3`` in the ``[general]`` section, then you should expect to access it as: ``{{ ansible_local['preferences']['general']['xyz'] }}`` and not ``{{ ansible_local['preferences']['general']['XYZ'] }}``. This is because Ansible uses Python's `ConfigParser`_ which passes all option names through the `optionxform`_ method and this method's default implementation converts option names to lower case.
 
-.. _ConfigParser: https://docs.python.org/2/library/configparser.html
-.. _optionxform: https://docs.python.org/2/library/configparser.html#ConfigParser.RawConfigParser.optionxform
+.. _ConfigParser: https://docs.python.org/3/library/configparser.html
+.. _optionxform: https://docs.python.org/3/library/configparser.html#ConfigParser.RawConfigParser.optionxform
 
 You can also use facts.d to execute a script on the remote host, generating dynamic custom facts to the ansible_local namespace. For example, you can generate a list of all users that exist on a remote host as a fact about that host. To generate dynamic custom facts using facts.d:
 
@@ -568,19 +605,27 @@ You can also use facts.d to execute a script on the remote host, generating dyna
   #. Make sure your script is executable by the Ansible connection user.
   #. Gather facts to execute the script and add the JSON output to ansible_local.
 
-By default, fact gathering runs once at the beginning of each play. If you create a custom fact using facts.d in a playbook, it will be available in the next play that gathers facts. If you want to use it in the same play where you created it, you must explicitly re-run the setup module. For example::
+By default, fact gathering runs once at the beginning of each play. If you create a custom fact using facts.d in a playbook, it will be available in the next play that gathers facts. If you want to use it in the same play where you created it, you must explicitly re-run the setup module. For example:
+
+.. code-block:: yaml
 
   - hosts: webservers
     tasks:
 
-      - name: create directory for ansible custom facts
-        file: state=directory recurse=yes path=/etc/ansible/facts.d
+      - name: Create directory for ansible custom facts
+        ansible.builtin.file:
+          state: directory
+          recurse: yes
+          path: /etc/ansible/facts.d
 
-      - name: install custom ipmi fact
-        copy: src=ipmi.fact dest=/etc/ansible/facts.d
+      - name: Install custom ipmi fact
+        ansible.builtin.copy:
+          src: ipmi.fact
+          dest: /etc/ansible/facts.d
 
-      - name: re-read facts after adding custom fact
-        setup: filter=ansible_local
+      - name: Re-read facts after adding custom fact
+        ansible.builtin.setup:
+          filter: ansible_local
 
 If you use this pattern frequently, a custom facts module would be more efficient than facts.d.
 
@@ -593,7 +638,9 @@ You can access information about Ansible operations, including the python versio
 
 The most commonly used magic variables are ``hostvars``, ``groups``, ``group_names``, and ``inventory_hostname``. With ``hostvars``, you can access variables defined for any host in the play, at any point in a playbook. You can access Ansible facts using the ``hostvars`` variable too, but only after you have gathered (or cached) facts.
 
-If you want to configure your database server using the value of a 'fact' from another node, or the value of an inventory variable assigned to another node, you can use ``hostvars`` in a template or on an action line::
+If you want to configure your database server using the value of a 'fact' from another node, or the value of an inventory variable assigned to another node, you can use ``hostvars`` in a template or on an action line:
+
+.. code-block:: jinja
 
     {{ hostvars['test.example.com']['ansible_facts']['distribution'] }}
 
@@ -652,12 +699,16 @@ Ansible version
 
 .. versionadded:: 1.8
 
-To adapt playbook behavior to different versions of Ansible, you can use the variable ``ansible_version``, which has the following structure::
+To adapt playbook behavior to different versions of Ansible, you can use the variable ``ansible_version``, which has the following structure:
 
-    "ansible_version": {
-        "full": "2.0.0.2",
-        "major": 2,
-        "minor": 0,
-        "revision": 0,
-        "string": "2.0.0.2"
+.. code-block:: json
+
+    {
+        "ansible_version": {
+            "full": "2.10.1",
+            "major": 2,
+            "minor": 10,
+            "revision": 1,
+            "string": "2.10.1"
+        }
     }

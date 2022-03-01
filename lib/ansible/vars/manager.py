@@ -23,11 +23,7 @@ import os
 import sys
 
 from collections import defaultdict
-
-try:
-    from hashlib import sha1
-except ImportError:
-    from sha import sha as sha1
+from hashlib import sha1
 
 from jinja2.exceptions import UndefinedError
 
@@ -37,7 +33,7 @@ from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import Mapping, MutableMapping, Sequence
-from ansible.module_utils.six import iteritems, text_type, string_types
+from ansible.module_utils.six import text_type, string_types
 from ansible.plugins.loader import lookup_loader
 from ansible.vars.fact_cache import FactCache
 from ansible.template import Templar
@@ -219,7 +215,7 @@ class VariableManager:
             # if we have a task in this context, and that task has a role, make
             # sure it sees its defaults above any other roles, as we previously
             # (v1) made sure each task had a copy of its roles default vars
-            if task._role is not None and (play or task.action == 'include_role'):
+            if task._role is not None and (play or task.action in C._ACTION_INCLUDE_ROLE):
                 all_vars = _combine_and_track(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()),
                                               "role '%s' defaults" % task._role.name)
 
@@ -328,6 +324,9 @@ class VariableManager:
                 for vars_file_item in vars_files:
                     # create a set of temporary vars here, which incorporate the extra
                     # and magic vars so we can properly template the vars_files entries
+                    # NOTE: this makes them depend on host vars/facts so things like
+                    #       ansible_facts['os_distribution'] can be used, ala include_vars.
+                    #       Consider DEPRECATING this in the future, since we have include_vars ...
                     temp_vars = combine_vars(all_vars, self._extra_vars)
                     temp_vars = combine_vars(temp_vars, magic_variables)
                     templar = Templar(loader=self._loader, variables=temp_vars)
@@ -352,7 +351,10 @@ class VariableManager:
                                     "a list of string types after template expansion" % vars_file
                                 )
                             try:
-                                data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
+                                play_search_stack = play.get_search_path()
+                                found_file = real_file = self._loader.path_dwim_relative_stack(play_search_stack, 'vars', vars_file)
+                                decrypted_file = self._loader.get_real_file(found_file)
+                                data = preprocess_vars(self._loader.load_from_file(decrypted_file, unsafe=True))
                                 if data is not None:
                                     for item in data:
                                         all_vars = _combine_and_track(all_vars, item, "play vars_files from '%s'" % vars_file)
@@ -363,9 +365,9 @@ class VariableManager:
                             except AnsibleParserError:
                                 raise
                         else:
-                            # if include_delegate_to is set to False, we ignore the missing
-                            # vars file here because we're working on a delegated host
-                            if include_delegate_to:
+                            # if include_delegate_to is set to False or we don't have a host, we ignore the missing
+                            # vars file here because we're working on a delegated host or require host vars, see NOTE above
+                            if include_delegate_to and host:
                                 raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
                     except (UndefinedError, AnsibleUndefinedVariable):
                         if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
@@ -426,15 +428,15 @@ class VariableManager:
         if task:
             all_vars['environment'] = task.environment
 
-        # if we have a task and we're delegating to another host, figure out the
-        # variables for that host now so we don't have to rely on hostvars later
-        if task and task.delegate_to is not None and include_delegate_to:
-            all_vars['ansible_delegated_vars'], all_vars['_ansible_loop_cache'] = self._get_delegated_vars(play, task, all_vars)
-
         # 'vars' magic var
         if task or play:
             # has to be copy, otherwise recursive ref
             all_vars['vars'] = all_vars.copy()
+
+        # if we have a host and task and we're delegating to another host,
+        # figure out the variables for that host now so we don't have to rely on host vars later
+        if task and host and task.delegate_to is not None and include_delegate_to:
+            all_vars['ansible_delegated_vars'], all_vars['_ansible_loop_cache'] = self._get_delegated_vars(play, task, all_vars)
 
         display.debug("done with get_vars()")
         if C.DEFAULT_DEBUG:
@@ -443,8 +445,7 @@ class VariableManager:
         else:
             return all_vars
 
-    def _get_magic_variables(self, play, host, task, include_hostvars, include_delegate_to,
-                             _hosts=None, _hosts_all=None):
+    def _get_magic_variables(self, play, host, task, include_hostvars, include_delegate_to, _hosts=None, _hosts_all=None):
         '''
         Returns a dictionary of so-called "magic" variables in Ansible,
         which are special variables we set internally for use.
@@ -457,7 +458,7 @@ class VariableManager:
 
         if play:
             # This is a list of all role names of all dependencies for all roles for this play
-            dependency_role_names = list(set([d.get_name() for r in play.roles for d in r.get_all_dependencies()]))
+            dependency_role_names = list({d.get_name() for r in play.roles for d in r.get_all_dependencies()})
             # This is a list of all role names of all roles for this play
             play_role_names = [r.get_name() for r in play.roles]
 
@@ -487,7 +488,7 @@ class VariableManager:
             variables['groups'] = self._inventory.get_groups_dict()
             if play:
                 templar = Templar(loader=self._loader)
-                if templar.is_template(play.hosts):
+                if not play.finalized and templar.is_template(play.hosts):
                     pattern = 'all'
                 else:
                     pattern = play.hosts or 'all'
@@ -508,7 +509,7 @@ class VariableManager:
         # the 'omit' value allows params to be left out if the variable they are based on is undefined
         variables['omit'] = self._omit_token
         # Set options vars
-        for option, option_value in iteritems(self._options_vars):
+        for option, option_value in self._options_vars.items():
             variables[option] = option_value
 
         if self._hostvars is not None and include_hostvars:
@@ -517,6 +518,12 @@ class VariableManager:
         return variables
 
     def _get_delegated_vars(self, play, task, existing_variables):
+        # This method has a lot of code copied from ``TaskExecutor._get_loop_items``
+        # if this is failing, and ``TaskExecutor._get_loop_items`` is not
+        # then more will have to be copied here.
+        # TODO: dedupe code here and with ``TaskExecutor._get_loop_items``
+        #       this may be possible once we move pre-processing pre fork
+
         if not hasattr(task, 'loop'):
             # This "task" is not a Task, so we need to skip it
             return {}, None
@@ -525,16 +532,41 @@ class VariableManager:
         # as we're fetching vars before post_validate has been called on
         # the task that has been passed in
         vars_copy = existing_variables.copy()
+
+        # get search path for this task to pass to lookup plugins
+        vars_copy['ansible_search_path'] = task.get_search_path()
+
+        # ensure basedir is always in (dwim already searches here but we need to display it)
+        if self._loader.get_basedir() not in vars_copy['ansible_search_path']:
+            vars_copy['ansible_search_path'].append(self._loader.get_basedir())
+
         templar = Templar(loader=self._loader, variables=vars_copy)
 
         items = []
         has_loop = True
         if task.loop_with is not None:
             if task.loop_with in lookup_loader:
+                fail = True
+                if task.loop_with == 'first_found':
+                    # first_found loops are special. If the item is undefined then we want to fall through to the next
+                    fail = False
                 try:
                     loop_terms = listify_lookup_plugin_terms(terms=task.loop, templar=templar,
-                                                             loader=self._loader, fail_on_undefined=True, convert_bare=False)
-                    items = wrap_var(lookup_loader.get(task.loop_with, loader=self._loader, templar=templar).run(terms=loop_terms, variables=vars_copy))
+                                                             loader=self._loader, fail_on_undefined=fail, convert_bare=False)
+
+                    if not fail:
+                        loop_terms = [t for t in loop_terms if not templar.is_template(t)]
+
+                    mylookup = lookup_loader.get(task.loop_with, loader=self._loader, templar=templar)
+
+                    # give lookup task 'context' for subdir (mostly needed for first_found)
+                    for subdir in ['template', 'var', 'file']:  # TODO: move this to constants?
+                        if subdir in task.action:
+                            break
+                    setattr(mylookup, '_subdir', subdir + 's')
+
+                    items = wrap_var(mylookup.run(terms=loop_terms, variables=vars_copy))
+
                 except AnsibleTemplateError:
                     # This task will be skipped later due to this, so we just setup
                     # a dummy array for the later code so it doesn't fail

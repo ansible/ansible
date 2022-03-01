@@ -1,2 +1,2 @@
 ---
-- { include: cli.yaml, tags: ['cli'] }
+- { import_tasks: cli.yaml, tags: ['cli'] }

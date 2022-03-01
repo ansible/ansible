@@ -54,7 +54,7 @@ You can download collections from Automation Hub at the command line. Automation
       server_list = automation_hub
 
       [galaxy_server.automation_hub]
-      url=https://cloud.redhat.com/api/automation-hub/
+      url=https://console.redhat.com/api/automation-hub/
       auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
       token=my_ah_token
 
@@ -82,6 +82,11 @@ Downloading a collection for offline use
 -----------------------------------------
 
 .. include:: ../shared_snippets/download_tarball_collections.txt
+
+Installing a collection from source files
+-----------------------------------------
+
+.. include:: ../shared_snippets/installing_collections_file.rst
 
 Installing a collection from a git repository
 ---------------------------------------------
@@ -160,7 +165,7 @@ This returns everything found in Galaxy for the role:
         scm: None
         src: username.repo_name
         stargazers_count: 0
-        travis_status_url: https://travis-ci.org/username/repo_name.svg?branch=master
+        travis_status_url: https://travis-ci.org/username/repo_name.svg?branch=main
         version:
         watchers_count: 1
 
@@ -226,7 +231,7 @@ To install a specific version of a role from Galaxy, append a comma and the valu
 
 .. code-block:: bash
 
-   $ ansible-galaxy install geerlingguy.apache,v1.0.0
+   $ ansible-galaxy install geerlingguy.apache,1.0.0
 
 It is also possible to point directly to the git repository and specify a branch name or commit hash as the version. For example, the following will
 install a specific commit:
@@ -270,13 +275,16 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
     # from galaxy
     - name: yatesr.timezone
 
+    # from locally cloned git repository (git+file:// requires full paths)
+    - src: git+file:///home/bennojoy/nginx
+
     # from GitHub
     - src: https://github.com/bennojoy/nginx
 
     # from GitHub, overriding the name and specifying a specific tag
     - name: nginx_role
       src: https://github.com/bennojoy/nginx
-      version: master
+      version: main
 
     # from GitHub, specifying a specific commit hash
     - src: https://github.com/bennojoy/nginx
@@ -284,15 +292,15 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
 
     # from a webserver, where the role is packaged in a tar.gz
     - name: http-role-gz
-      src: https://some.webserver.example.com/files/master.tar.gz
+      src: https://some.webserver.example.com/files/main.tar.gz
 
     # from a webserver, where the role is packaged in a tar.bz2
     - name: http-role-bz2
-      src: https://some.webserver.example.com/files/master.tar.bz2
+      src: https://some.webserver.example.com/files/main.tar.bz2
 
     # from a webserver, where the role is packaged in a tar.xz (Python 3.x only)
     - name: http-role-xz
-      src: https://some.webserver.example.com/files/master.tar.xz
+      src: https://some.webserver.example.com/files/main.tar.xz
 
     # from Bitbucket
     - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
@@ -303,7 +311,7 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
       scm: hg
 
     # from GitLab or other git-based scm, using git+ssh
-    - src: git@gitlab.company.com:mygroup/ansible-base.git
+    - src: git@gitlab.company.com:mygroup/ansible-core.git
       scm: git
       version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
 
@@ -314,7 +322,7 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
 Installing roles and collections from the same requirements.yml file
 ---------------------------------------------------------------------
 
-You can install roles and collections from the same requirements files, with some caveats.
+You can install roles and collections from the same requirements files
 
 .. code-block:: yaml
 
@@ -329,10 +337,6 @@ You can install roles and collections from the same requirements files, with som
       - name: geerlingguy.php_roles
         version: 0.9.3
         source: https://galaxy.ansible.com
-
-.. note::
-   While both roles and collections can be specified in one requirements file, they need to be installed separately.
-   The ``ansible-galaxy role install -r requirements.yml`` will only install roles and  ``ansible-galaxy collection install -r requirements.yml -p ./`` will only install collections.
 
 Installing multiple roles from multiple files
 ---------------------------------------------
@@ -349,7 +353,7 @@ Below are the contents of the :file:`webserver.yml` file:
     - src: https://github.com/bennojoy/nginx
 
     # from Bitbucket
-    - src: git+http://bitbucket.org/willthames/git-ansible-galaxy
+    - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
       version: v1.4
 
 The following shows the contents of the :file:`requirements.yml` file that now includes the :file:`webserver.yml` file:
@@ -382,7 +386,7 @@ There are two ways to define the dependencies of a role:
 Using ``meta/requirements.yml``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-`.. versionadded:: 2.10`
+.. versionadded:: 2.10
 
 You can create the file ``meta/requirements.yml`` and define dependencies in the same format used for :file:`requirements.yml` described in the `Installing multiple roles from a file`_ section.
 

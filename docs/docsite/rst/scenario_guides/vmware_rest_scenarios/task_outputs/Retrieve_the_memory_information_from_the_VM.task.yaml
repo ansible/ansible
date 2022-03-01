@@ -1,0 +1,4 @@
+- name: Retrieve the memory information from the VM
+  vmware.vmware_rest.vcenter_vm_hardware_memory_info:
+    vm: '{{ test_vm1_info.id }}'
+  register: _result

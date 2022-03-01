@@ -39,12 +39,6 @@ except ImportError:
     Version = None
 
 try:
-    # use C version if possible for speedup
-    from yaml import CSafeLoader as SafeLoader
-except ImportError:
-    from yaml import SafeLoader
-
-try:
     import importlib.util
     imp = None
 except ImportError:
@@ -135,19 +129,36 @@ class PluginLoadContext(object):
         self.removal_version = None
         self.deprecation_warnings = []
         self.resolved = False
+        self._resolved_fqcn = None
+
+    @property
+    def resolved_fqcn(self):
+        if not self.resolved:
+            return
+
+        if not self._resolved_fqcn:
+            final_plugin = self.redirect_list[-1]
+            if AnsibleCollectionRef.is_valid_fqcr(final_plugin) and final_plugin.startswith('ansible.legacy.'):
+                final_plugin = final_plugin.split('ansible.legacy.')[-1]
+            if self.plugin_resolved_collection and not AnsibleCollectionRef.is_valid_fqcr(final_plugin):
+                final_plugin = self.plugin_resolved_collection + '.' + final_plugin
+            self._resolved_fqcn = final_plugin
+
+        return self._resolved_fqcn
 
     def record_deprecation(self, name, deprecation, collection_name):
         if not deprecation:
             return self
 
-        warning_text = deprecation.get('warning_text', None)
+        # The `or ''` instead of using `.get(..., '')` makes sure that even if the user explicitly
+        # sets `warning_text` to `~` (None) or `false`, we still get an empty string.
+        warning_text = deprecation.get('warning_text', None) or ''
         removal_date = deprecation.get('removal_date', None)
         removal_version = deprecation.get('removal_version', None)
         # If both removal_date and removal_version are specified, use removal_date
         if removal_date is not None:
             removal_version = None
-        if not warning_text:
-            warning_text = '{0} has been deprecated'.format(name)
+        warning_text = '{0} has been deprecated.{1}{2}'.format(name, ' ' if warning_text else '', warning_text)
 
         display.deprecated(warning_text, date=removal_date, version=removal_version, collection_name=collection_name)
 
@@ -312,7 +323,7 @@ class PluginLoader:
             parts = self.package.split('.')[1:]
             for parent_mod in parts:
                 m = getattr(m, parent_mod)
-            self.package_path = os.path.dirname(m.__file__)
+            self.package_path = to_text(os.path.dirname(m.__file__), errors='surrogate_or_strict')
         if subdirs:
             return self._all_directories(self.package_path)
         return [self.package_path]
@@ -331,12 +342,15 @@ class PluginLoader:
         # look in any configured plugin paths, allow one level deep for subcategories
         if self.config is not None:
             for path in self.config:
-                path = os.path.realpath(os.path.expanduser(path))
+                path = os.path.abspath(os.path.expanduser(path))
                 if subdirs:
                     contents = glob.glob("%s/*" % path) + glob.glob("%s/*/*" % path)
                     for c in contents:
+                        c = to_text(c, errors='surrogate_or_strict')
                         if os.path.isdir(c) and c not in ret:
                             ret.append(PluginPathContext(c, False))
+
+                path = to_text(path, errors='surrogate_or_strict')
                 if path not in ret:
                     ret.append(PluginPathContext(path, False))
 
@@ -435,7 +449,7 @@ class PluginLoader:
             entry = collection_meta.get('plugin_routing', {}).get(plugin_type, {}).get(subdir_qualified_resource, None)
         return entry
 
-    def _find_fq_plugin(self, fq_name, extension, plugin_load_context):
+    def _find_fq_plugin(self, fq_name, extension, plugin_load_context, ignore_deprecated=False):
         """Search builtin paths to find a plugin. No external paths are searched,
         meaning plugins inside roles inside collections will be ignored.
         """
@@ -454,7 +468,8 @@ class PluginLoader:
             deprecation = routing_metadata.get('deprecation', None)
 
             # this will no-op if there's no deprecation metadata for this plugin
-            plugin_load_context.record_deprecation(fq_name, deprecation, acr.collection)
+            if not ignore_deprecated:
+                plugin_load_context.record_deprecation(fq_name, deprecation, acr.collection)
 
             tombstone = routing_metadata.get('tombstone', None)
 
@@ -462,7 +477,8 @@ class PluginLoader:
             if tombstone:
                 removal_date = tombstone.get('removal_date')
                 removal_version = tombstone.get('removal_version')
-                warning_text = tombstone.get('warning_text') or '{0} has been removed.'.format(fq_name)
+                warning_text = tombstone.get('warning_text') or ''
+                warning_text = '{0} has been removed.{1}{2}'.format(fq_name, ' ' if warning_text else '', warning_text)
                 removed_msg = display.get_deprecation_message(msg=warning_text, version=removal_version,
                                                               date=removal_date, removed=True,
                                                               collection_name=acr.collection)
@@ -477,6 +493,11 @@ class PluginLoader:
             if redirect:
                 # FIXME: remove once this is covered in debug or whatever
                 display.vv("redirecting (type: {0}) {1} to {2}".format(plugin_type, fq_name, redirect))
+                # The name doing the redirection is added at the beginning of _resolve_plugin_step,
+                # but if the unqualified name is used in conjunction with the collections keyword, only
+                # the unqualified name is in the redirect list.
+                if fq_name not in plugin_load_context.redirect_list:
+                    plugin_load_context.redirect_list.append(fq_name)
                 return plugin_load_context.redirect(redirect)
                 # TODO: non-FQCN case, do we support `.` prefix for current collection, assume it with no dots, require it for subdirs in current, or ?
 
@@ -602,9 +623,15 @@ class PluginLoader:
                                                                        plugin_load_context, ignore_deprecated, check_aliases, suffix)
                     else:
                         # 'ansible.builtin' should be handled here. This means only internal, or builtin, paths are searched.
-                        plugin_load_context = self._find_fq_plugin(candidate_name, suffix, plugin_load_context=plugin_load_context)
+                        plugin_load_context = self._find_fq_plugin(candidate_name, suffix, plugin_load_context=plugin_load_context,
+                                                                   ignore_deprecated=ignore_deprecated)
 
-                        if candidate_name != plugin_load_context.original_name and candidate_name not in plugin_load_context.redirect_list:
+                        # Pending redirects are added to the redirect_list at the beginning of _resolve_plugin_step.
+                        # Once redirects are resolved, ensure the final FQCN is added here.
+                        # e.g. 'ns.coll.module' is included rather than only 'module' if a collections list is provided:
+                        # - module:
+                        #   collections: ['ns.coll']
+                        if plugin_load_context.resolved and candidate_name not in plugin_load_context.redirect_list:
                             plugin_load_context.redirect_list.append(candidate_name)
 
                     if plugin_load_context.resolved or plugin_load_context.pending_redirect:  # if we got an answer or need to chase down a redirect, return
@@ -657,16 +684,18 @@ class PluginLoader:
         #       we need to make sure we don't want to add additional directories
         #       (add_directory()) once we start using the iterator.
         #       We can use _get_paths_with_context() since add_directory() forces a cache refresh.
-        for path_context in (p for p in self._get_paths_with_context() if p.path not in self._searched_paths and os.path.isdir(p.path)):
-            path = path_context.path
+        for path_with_context in (p for p in self._get_paths_with_context() if p.path not in self._searched_paths and os.path.isdir(to_bytes(p.path))):
+            path = path_with_context.path
+            b_path = to_bytes(path)
             display.debug('trying %s' % path)
             plugin_load_context.load_attempts.append(path)
+            internal = path_with_context.internal
             try:
-                full_paths = (os.path.join(path, f) for f in os.listdir(path))
+                full_paths = (os.path.join(b_path, f) for f in os.listdir(b_path))
             except OSError as e:
                 display.warning("Error accessing plugin paths: %s" % to_text(e))
 
-            for full_path in (f for f in full_paths if os.path.isfile(f) and not f.endswith('__init__.py')):
+            for full_path in (to_native(f) for f in full_paths if os.path.isfile(f) and not f.endswith(b'__init__.py')):
                 full_name = os.path.basename(full_path)
 
                 # HACK: We have no way of executing python byte compiled files as ansible modules so specifically exclude them
@@ -674,15 +703,15 @@ class PluginLoader:
                 # For all other plugins we want .pyc and .pyo should be valid
                 if any(full_path.endswith(x) for x in C.MODULE_IGNORE_EXTS):
                     continue
-
                 splitname = os.path.splitext(full_name)
                 base_name = splitname[0]
-                internal = path_context.internal
                 try:
                     extension = splitname[1]
                 except IndexError:
                     extension = ''
 
+                # everything downstream expects unicode
+                full_path = to_text(full_path, errors='surrogate_or_strict')
                 # Module found, now enter it into the caches that match this file
                 if base_name not in self._plugin_path_cache['']:
                     self._plugin_path_cache[''][base_name] = PluginPathContext(full_path, internal)
@@ -727,7 +756,8 @@ class PluginLoader:
         # last ditch, if it's something that can be redirected, look for a builtin redirect before giving up
         candidate_fqcr = 'ansible.builtin.{0}'.format(name)
         if '.' not in name and AnsibleCollectionRef.is_valid_fqcr(candidate_fqcr):
-            return self._find_fq_plugin(fq_name=candidate_fqcr, extension=suffix, plugin_load_context=plugin_load_context)
+            return self._find_fq_plugin(fq_name=candidate_fqcr, extension=suffix, plugin_load_context=plugin_load_context,
+                                        ignore_deprecated=ignore_deprecated)
 
         return plugin_load_context.nope('{0} is not eligible for last-chance resolution'.format(name))
 
@@ -895,7 +925,7 @@ class PluginLoader:
         found_in_cache = True
 
         for i in self._get_paths():
-            all_matches.extend(glob.glob(os.path.join(i, "*.py")))
+            all_matches.extend(glob.glob(to_native(os.path.join(i, "*.py"))))
 
         loaded_modules = set()
         for path in sorted(all_matches, key=os.path.basename):
@@ -903,10 +933,16 @@ class PluginLoader:
             basename = os.path.basename(name)
 
             if basename == '__init__' or basename in _PLUGIN_FILTERS[self.package]:
+                # either empty or ignored by the module blocklist
+                continue
+
+            if basename == 'base' and self.package == 'ansible.plugins.cache':
+                # cache has legacy 'base.py' file, which is wrapper for __init__.py
                 continue
 
             if dedupe and basename in loaded_modules:
                 continue
+
             loaded_modules.add(basename)
 
             if path_only:
@@ -965,50 +1001,59 @@ class Jinja2Loader(PluginLoader):
 
     The filter and test plugins are Jinja2 plugins encapsulated inside of our plugin format.
     The way the calling code is setup, we need to do a few things differently in the all() method
+
+    We can't use the base class version because of file == plugin assumptions and dedupe logic
     """
     def find_plugin(self, name, collection_list=None):
-        # Nothing using Jinja2Loader use this method.  We can't use the base class version because
-        # we deduplicate differently than the base class
-        if '.' in name:
+
+        if '.' in name:  # NOTE: this is wrong way, use: AnsibleCollectionRef.is_valid_fqcr(name) or collection_list
             return super(Jinja2Loader, self).find_plugin(name, collection_list=collection_list)
 
-        raise AnsibleError('No code should call find_plugin for Jinja2Loaders (Not implemented)')
+        # Nothing is currently using this method
+        raise AnsibleError('No code should call "find_plugin" for Jinja2Loaders (Not implemented)')
 
     def get(self, name, *args, **kwargs):
-        # Nothing using Jinja2Loader use this method.  We can't use the base class version because
-        # we deduplicate differently than the base class
-        if '.' in name:
+
+        if '.' in name:  # NOTE: this is wrong way to detect collection, see note above for example
             return super(Jinja2Loader, self).get(name, *args, **kwargs)
 
-        raise AnsibleError('No code should call find_plugin for Jinja2Loaders (Not implemented)')
+        # Nothing is currently using this method
+        raise AnsibleError('No code should call "get" for Jinja2Loaders (Not implemented)')
 
     def all(self, *args, **kwargs):
         """
         Differences with :meth:`PluginLoader.all`:
 
-        * We do not deduplicate ansible plugin names.  This is because we don't care about our
-          plugin names, here.  We care about the names of the actual jinja2 plugins which are inside
-          of our plugins.
-        * We reverse the order of the list of plugins compared to other PluginLoaders.  This is
+        * Unlike other plugin types, file != plugin, a file can contain multiple plugins (of same type).
+          This is why we do not deduplicate ansible file names at this point, we mostly care about
+          the names of the actual jinja2 plugins which are inside of our files.
+        * We reverse the order of the list of files compared to other PluginLoaders.  This is
           because of how calling code chooses to sync the plugins from the list.  It adds all the
-          Jinja2 plugins from one of our Ansible plugins into a dict.  Then it adds the Jinja2
-          plugins from the next Ansible plugin, overwriting any Jinja2 plugins that had the same
+          Jinja2 plugins from one of our Ansible files into a dict.  Then it adds the Jinja2
+          plugins from the next Ansible file, overwriting any Jinja2 plugins that had the same
           name.  This is an encapsulation violation (the PluginLoader should not know about what
           calling code does with the data) but we're pushing the common code here.  We'll fix
           this in the future by moving more of the common code into this PluginLoader.
         * We return a list.  We could iterate the list instead but that's extra work for no gain because
           the API receiving this doesn't care.  It just needs an iterable
+        * This method will NOT fetch collection plugins, only those that would be expected under 'ansible.legacy'.
         """
-        # We don't deduplicate ansible plugin names.  Instead, calling code deduplicates jinja2
-        # plugin names.
+        # We don't deduplicate ansible file names.
+        # Instead, calling code deduplicates jinja2 plugin names when loading each file.
         kwargs['_dedupe'] = False
 
-        # We have to instantiate a list of all plugins so that we can reverse it.  We reverse it so
-        # that calling code will deduplicate this correctly.
-        plugins = list(super(Jinja2Loader, self).all(*args, **kwargs))
-        plugins.reverse()
+        # TODO: move this to initialization and extract/dedupe plugin names in loader and offset this from
+        # caller. It would have to cache/refresh on add_directory to reevaluate plugin list and dedupe.
+        # Another option is to always prepend 'ansible.legac'y and force the collection path to
+        # load/find plugins, just need to check compatibility of that approach.
+        # This would also enable get/find_plugin for these type of plugins.
 
-        return plugins
+        # We have to instantiate a list of all files so that we can reverse the list.
+        # We reverse it so that calling code will deduplicate this correctly.
+        files = list(super(Jinja2Loader, self).all(*args, **kwargs))
+        files .reverse()
+
+        return files
 
 
 def _load_plugin_filter():
@@ -1105,7 +1150,8 @@ def _does_collection_support_ansible_version(requirement_string, ansible_version
 
 def _configure_collection_loader():
     if AnsibleCollectionConfig.collection_finder:
-        display.warning('AnsibleCollectionFinder has already been configured')
+        # this must be a Python warning so that it can be filtered out by the import sanity test
+        warnings.warn('AnsibleCollectionFinder has already been configured')
         return
 
     finder = _AnsibleCollectionFinder(C.config.get_config_value('COLLECTIONS_PATHS'), C.config.get_config_value('COLLECTIONS_SCAN_SYS_PATH'))

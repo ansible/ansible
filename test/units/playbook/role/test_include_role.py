@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.compat import unittest
-from units.compat.mock import patch
+from mock import patch
 
 from ansible.playbook import Play
 from ansible.playbook.role_include import IncludeRole
@@ -104,6 +104,9 @@ class TestIncludeRole(unittest.TestCase):
 
     def get_tasks_vars(self, play, tasks):
         for task in self.flatten_tasks(tasks):
+            if task.implicit:
+                # skip meta: role_complete
+                continue
             role = task._role
             if not role:
                 continue

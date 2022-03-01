@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2014, 2015 YAEGASHI Takeshi <yaegashi@debian.org>
@@ -86,20 +85,33 @@ options:
     default: END
     version_added: '2.5'
 notes:
-  - This module supports check mode.
   - When using 'with_*' loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
   - Option I(follow) has been removed in Ansible 2.5, because this module modifies the contents of the file so I(follow=no) doesn't make sense.
   - When more then one block should be handled in one file you must change the I(marker) per task.
 extends_documentation_fragment:
-- files
-- validate
+    - action_common_attributes
+    - action_common_attributes.files
+    - files
+    - validate
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    safe_file_operations:
+      support: full
+    platform:
+      support: full
+      platforms: posix
+    vault:
+      support: none
 '''
 
 EXAMPLES = r'''
 # Before Ansible 2.3, option 'dest' or 'name' was used instead of 'path'
 - name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /etc/ssh/sshd_config
     block: |
       Match User ansible-agent
@@ -107,7 +119,7 @@ EXAMPLES = r'''
 
 - name: Insert/Update eth0 configuration stanza in /etc/network/interfaces
         (it might be better to copy files into /etc/network/interfaces.d/)
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /etc/network/interfaces
     block: |
       iface eth0 inet static
@@ -115,14 +127,14 @@ EXAMPLES = r'''
           netmask 255.255.255.0
 
 - name: Insert/Update configuration using a local file and validate it
-  blockinfile:
-    block: "{{ lookup('file', './local/sshd_config') }}"
+  ansible.builtin.blockinfile:
+    block: "{{ lookup('ansible.builtin.file', './local/sshd_config') }}"
     path: /etc/ssh/sshd_config
     backup: yes
     validate: /usr/sbin/sshd -T -f %s
 
 - name: Insert/Update HTML surrounded by custom markers after <body> line
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /var/www/html/index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     insertafter: "<body>"
@@ -131,13 +143,13 @@ EXAMPLES = r'''
       <p>Last updated on {{ ansible_date_time.iso8601 }}</p>
 
 - name: Remove HTML as well as surrounding markers
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /var/www/html/index.html
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
     block: ""
 
 - name: Add mappings to /etc/hosts
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: /etc/hosts
     block: |
       {{ item.ip }} {{ item.name }}
@@ -209,7 +221,6 @@ def main():
         add_file_common_args=True,
         supports_check_mode=True
     )
-
     params = module.params
     path = params['path']
 
@@ -231,9 +242,8 @@ def main():
         original = None
         lines = []
     else:
-        f = open(path, 'rb')
-        original = f.read()
-        f.close()
+        with open(path, 'rb') as f:
+            original = f.read()
         lines = original.splitlines(True)
 
     diff = {'before': '',
@@ -266,9 +276,6 @@ def main():
     marker0 = re.sub(b(r'{mark}'), b(params['marker_begin']), marker) + b(os.linesep)
     marker1 = re.sub(b(r'{mark}'), b(params['marker_end']), marker) + b(os.linesep)
     if present and block:
-        # Escape sequences like '\n' need to be handled in Ansible 1.x
-        if module.ansible_version.startswith('1.'):
-            block = re.sub('', block, '')
         if not block.endswith(b(os.linesep)):
             block += b(os.linesep)
         blocklines = [marker0] + block.splitlines(True) + [marker1]
@@ -302,8 +309,12 @@ def main():
         lines[n1:n0 + 1] = []
         n0 = n1
 
-    lines[n0:n0] = blocklines
+    # Ensure there is a line separator before the block of lines to be inserted
+    if n0 > 0:
+        if not lines[n0 - 1].endswith(b(os.linesep)):
+            lines[n0 - 1] += b(os.linesep)
 
+    lines[n0:n0] = blocklines
     if lines:
         result = b''.join(lines)
     else:
@@ -325,9 +336,10 @@ def main():
         msg = 'Block inserted'
         changed = True
 
+    backup_file = None
     if changed and not module.check_mode:
         if module.boolean(params['backup']) and path_exists:
-            module.backup_local(path)
+            backup_file = module.backup_local(path)
         # We should always follow symlinks so that we change the real file
         real_path = os.path.realpath(params['path'])
         write_changes(module, result, real_path)
@@ -342,7 +354,11 @@ def main():
     attr_diff['after_header'] = '%s (file attributes)' % path
 
     difflist = [diff, attr_diff]
-    module.exit_json(changed=changed, msg=msg, diff=difflist)
+
+    if backup_file is None:
+        module.exit_json(changed=changed, msg=msg, diff=difflist)
+    else:
+        module.exit_json(changed=changed, msg=msg, diff=difflist, backup_file=backup_file)
 
 
 if __name__ == '__main__':

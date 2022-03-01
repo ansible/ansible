@@ -19,7 +19,7 @@ Modules
 Ansible works by connecting to your nodes and pushing out scripts called "Ansible modules" to them. Most modules accept parameters that describe the desired state of the system.
 Ansible then executes these modules (over SSH by default), and removes them when finished. Your library of modules can reside on any machine, and there are no servers, daemons, or databases required.
 
-You can :ref:`write your own modules <developing_modules_general>`, though you should first consider :ref:`whether you should <developing_modules>`. Typically you'll work with your favorite terminal program, a text editor, and probably a version control system to keep track of changes to your content. You may write specialized modules in any language that can return JSON (Ruby, Python, bash, etc).
+You can :ref:`write your own modules <developing_modules_general>`, though you should first consider :ref:`whether you should <developing_modules>`. Typically you'll work with your favorite terminal program, a text editor, and probably a version control system to keep track of changes to your content. You may write specialized modules in any language that can return JSON (Ruby, Python, bash, and so on).
 
 Module utilities
 ================
@@ -34,13 +34,15 @@ Plugins
 Inventory
 =========
 
-By default, Ansible represents the machines it manages in a file (INI, YAML, etc.) that puts all of your managed machines in groups of your own choosing.
+By default, Ansible represents the machines it manages in a file (INI, YAML, and so on) that puts all of your managed machines in groups of your own choosing.
 
 To add new machines, there is no additional SSL signing server involved, so there's never any hassle deciding why a particular machine didn't get linked up due to obscure NTP or DNS issues.
 
 If there's another source of truth in your infrastructure, Ansible can also connect to that. Ansible can draw inventory, group, and variable information from sources like EC2, Rackspace, OpenStack, and more.
 
-Here's what a plain text inventory file looks like::
+Here's what a plain text inventory file looks like:
+
+.. code-block:: text
 
     ---
     [webservers]
@@ -62,19 +64,21 @@ Playbooks can finely orchestrate multiple slices of your infrastructure topology
 
 Ansible's approach to orchestration is one of finely-tuned simplicity, as we believe your automation code should make perfect sense to you years down the road and there should be very little to remember about special syntax or features.
 
-Here's what a simple playbook looks like::
+Here's what a simple playbook looks like:
+
+.. code-block:: yaml
 
     ---
     - hosts: webservers
-    serial: 5 # update 5 machines at a time
-    roles:
-    - common
-    - webapp
+      serial: 5 # update 5 machines at a time
+      roles:
+      - common
+      - webapp
 
     - hosts: content_servers
-    roles:
-    - common
-    - content
+      roles:
+      - common
+      - content
 
 .. _ansible_search_path:
 

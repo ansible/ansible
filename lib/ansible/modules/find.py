@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2014, Ruggero Marchei <ruggero.marchei@daemonzone.net>
@@ -19,7 +18,7 @@ version_added: "2.0"
 short_description: Return a list of files based on specific criteria
 description:
     - Return a list of files based on specific criteria. Multiple criteria are AND'd together.
-    - For Windows targets, use the M(win_find) module instead.
+    - For Windows targets, use the M(ansible.windows.win_find) module instead.
 options:
     age:
         description:
@@ -29,7 +28,7 @@ options:
               first letter of any of those words (e.g., "1w").
         type: str
     patterns:
-        default: '*'
+        default: []
         description:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
             - The patterns restrict the list of files to be returned to those whose basenames match at
@@ -41,6 +40,7 @@ options:
             - This parameter expects a list, which can be either comma separated or YAML. If any of the
               patterns contain a comma, make sure to put them in a list to avoid splitting the patterns
               in undesirable ways.
+            - Defaults to '*' when C(use_regex=False), or '.*' when C(use_regex=True).
         type: list
         aliases: [ pattern ]
         elements: str
@@ -56,7 +56,17 @@ options:
     contains:
         description:
             - A regular expression or pattern which should be matched against the file content.
+            - Works only when I(file_type) is C(file).
         type: str
+    read_whole_file:
+        description:
+            - When doing a C(contains) search, determines whether the whole file should be read into
+              memory or if the regex should be applied to the file line-by-line.
+            - Setting this to C(true) can have performance and memory implications for large files.
+            - This uses C(re.search()) instead of C(re.match()).
+        type: bool
+        default: false
+        version_added: "2.11"
     paths:
         description:
             - List of paths of directories to search. All paths must be fully qualified.
@@ -118,48 +128,57 @@ options:
             - Default is unlimited depth.
         type: int
         version_added: "2.6"
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        details: since this action does not modify the target it just executes normally during check mode
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 seealso:
-- module: win_find
+- module: ansible.windows.win_find
 '''
 
 
 EXAMPLES = r'''
 - name: Recursively find /tmp files older than 2 days
-  find:
+  ansible.builtin.find:
     paths: /tmp
     age: 2d
     recurse: yes
 
 - name: Recursively find /tmp files older than 4 weeks and equal or greater than 1 megabyte
-  find:
+  ansible.builtin.find:
     paths: /tmp
     age: 4w
     size: 1m
     recurse: yes
 
 - name: Recursively find /var/tmp files with last access time greater than 3600 seconds
-  find:
+  ansible.builtin.find:
     paths: /var/tmp
     age: 3600
     age_stamp: atime
     recurse: yes
 
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz
-  find:
+  ansible.builtin.find:
     paths: /var/log
     patterns: '*.old,*.log.gz'
     size: 10m
 
 # Note that YAML double quotes require escaping backslashes but yaml single quotes do not.
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz via regex
-  find:
+  ansible.builtin.find:
     paths: /var/log
     patterns: "^.*?\\.(?:old|log\\.gz)$"
     size: 10m
     use_regex: yes
 
 - name: Find /var/log all directories, exclude nginx and mysql
-  find:
+  ansible.builtin.find:
     paths: /var/log
     recurse: no
     file_type: directory
@@ -167,14 +186,14 @@ EXAMPLES = r'''
 
 # When using patterns that contain a comma, make sure they are formatted as lists to avoid splitting the pattern
 - name: Use a single pattern that contains a comma formatted as a list
-  find:
+  ansible.builtin.find:
     paths: /var/log
     file_type: file
     use_regex: yes
     patterns: ['^_[0-9]{2,4}_.*.log$']
 
 - name: Use multiple patterns that contain a comma formatted as a YAML list
-  find:
+  ansible.builtin.find:
     paths: /var/log
     file_type: file
     use_regex: yes
@@ -209,6 +228,12 @@ examined:
     returned: success
     type: int
     sample: 34
+skipped_paths:
+    description: skipped paths and reasons they were skipped
+    returned: success
+    type: dict
+    sample: {"/laskdfj": "'/laskdfj' is not a directory"}
+    version_added: '2.12'
 '''
 
 import fnmatch
@@ -219,6 +244,7 @@ import re
 import stat
 import time
 
+from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -283,11 +309,12 @@ def sizefilter(st, size):
     return False
 
 
-def contentfilter(fsname, pattern):
+def contentfilter(fsname, pattern, read_whole_file=False):
     """
     Filter files which contain the given expression
     :arg fsname: Filename to scan for lines matching a pattern
     :arg pattern: Pattern to look for inside of line
+    :arg read_whole_file: If true, the whole file is read into memory before the regex is applied against it. Otherwise, the regex is applied line-by-line.
     :rtype: bool
     :returns: True if one of the lines in fsname matches the pattern. Otherwise False
     """
@@ -298,6 +325,9 @@ def contentfilter(fsname, pattern):
 
     try:
         with open(fsname) as f:
+            if read_whole_file:
+                return bool(prog.search(f.read()))
+
             for line in f:
                 if prog.match(line):
                     return True
@@ -356,13 +386,18 @@ def statinfo(st):
     }
 
 
+def handle_walk_errors(e):
+    raise e
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
             paths=dict(type='list', required=True, aliases=['name', 'path'], elements='str'),
-            patterns=dict(type='list', default=['*'], aliases=['pattern'], elements='str'),
+            patterns=dict(type='list', default=[], aliases=['pattern'], elements='str'),
             excludes=dict(type='list', aliases=['exclude'], elements='str'),
             contains=dict(type='str'),
+            read_whole_file=dict(type='bool', default=False),
             file_type=dict(type='str', default="file", choices=['any', 'directory', 'file', 'link']),
             age=dict(type='str'),
             age_stamp=dict(type='str', default="mtime", choices=['atime', 'ctime', 'mtime']),
@@ -379,7 +414,18 @@ def main():
 
     params = module.params
 
+    # Set the default match pattern to either a match-all glob or
+    # regex depending on use_regex being set.  This makes sure if you
+    # set excludes: without a pattern pfilter gets something it can
+    # handle.
+    if not params['patterns']:
+        if params['use_regex']:
+            params['patterns'] = ['.*']
+        else:
+            params['patterns'] = ['*']
+
     filelist = []
+    skipped = {}
 
     if params['age'] is None:
         age = None
@@ -404,12 +450,16 @@ def main():
             module.fail_json(size=params['size'], msg="failed to process size")
 
     now = time.time()
-    msg = ''
+    msg = 'All paths examined'
     looked = 0
+    has_warnings = False
     for npath in params['paths']:
         npath = os.path.expanduser(os.path.expandvars(npath))
-        if os.path.isdir(npath):
-            for root, dirs, files in os.walk(npath, followlinks=params['follow']):
+        try:
+            if not os.path.isdir(npath):
+                raise Exception("'%s' is not a directory" % to_native(npath))
+
+            for root, dirs, files in os.walk(npath, onerror=handle_walk_errors, followlinks=params['follow']):
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
                     fsname = os.path.normpath(os.path.join(root, fsobj))
@@ -417,14 +467,18 @@ def main():
                         wpath = npath.rstrip(os.path.sep) + os.path.sep
                         depth = int(fsname.count(os.path.sep)) - int(wpath.count(os.path.sep)) + 1
                         if depth > params['depth']:
+                            # Empty the list used by os.walk to avoid traversing deeper unnecessarily
+                            del(dirs[:])
                             continue
                     if os.path.basename(fsname).startswith('.') and not params['hidden']:
                         continue
 
                     try:
                         st = os.lstat(fsname)
-                    except Exception:
-                        msg += "%s was skipped as it does not seem to be a valid file or it cannot be accessed\n" % fsname
+                    except (IOError, OSError) as e:
+                        module.warn("Skipped entry '%s' due to this access issue: %s\n" % (fsname, to_text(e)))
+                        skipped[fsname] = to_text(e)
+                        has_warnings = True
                         continue
 
                     r = {'path': fsname}
@@ -434,7 +488,12 @@ def main():
                             r.update(statinfo(st))
                             if stat.S_ISREG(st.st_mode) and params['get_checksum']:
                                 r['checksum'] = module.sha1(fsname)
-                            filelist.append(r)
+
+                            if stat.S_ISREG(st.st_mode):
+                                if sizefilter(st, size):
+                                    filelist.append(r)
+                            else:
+                                filelist.append(r)
 
                     elif stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
                         if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
@@ -445,7 +504,7 @@ def main():
                     elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
                         if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
                            agefilter(st, now, age, params['age_stamp']) and \
-                           sizefilter(st, size) and contentfilter(fsname, params['contains']):
+                           sizefilter(st, size) and contentfilter(fsname, params['contains'], params['read_whole_file']):
 
                             r.update(statinfo(st))
                             if params['get_checksum']:
@@ -460,11 +519,15 @@ def main():
 
                 if not params['recurse']:
                     break
-        else:
-            msg += "%s was skipped as it does not seem to be a valid directory or it cannot be accessed\n" % npath
+        except Exception as e:
+            skipped[npath] = to_text(e)
+            module.warn("Skipped '%s' path due to this access issue: %s\n" % (to_text(npath), skipped[npath]))
+            has_warnings = True
 
+    if has_warnings:
+        msg = 'Not all paths examined, check warnings for details'
     matched = len(filelist)
-    module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked)
+    module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked, skipped_paths=skipped)
 
 
 if __name__ == '__main__':

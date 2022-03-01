@@ -1,0 +1,2 @@
+minor_changes:
+  - "PlayIterator - introduce public methods to access ``PlayIterator._host_states`` (https://github.com/ansible/ansible/pull/74416)"

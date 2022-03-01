@@ -9,6 +9,7 @@ import sys
 
 from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils.compat.importlib import import_module
+from ansible.modules import ping as ping_module
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import (
     _AnsibleCollectionFinder, _AnsibleCollectionLoader, _AnsibleCollectionNSPkgLoader, _AnsibleCollectionPkgLoader,
@@ -16,7 +17,7 @@ from ansible.utils.collection_loader._collection_finder import (
     _get_collection_name_from_path, _get_collection_role_path, _get_collection_metadata, _iter_modules_impl
 )
 from ansible.utils.collection_loader._collection_config import _EventSource
-from units.compat.mock import MagicMock, NonCallableMagicMock, patch
+from mock import MagicMock, NonCallableMagicMock, patch
 
 
 # fixture to ensure we always clean up the import stuff when we're done
@@ -28,6 +29,17 @@ def teardown(*args, **kwargs):
 # BEGIN STANDALONE TESTS - these exercise behaviors of the individual components without the import machinery
 
 
+@pytest.mark.skipif(not PY3, reason='Testing Python 2 codepath (find_module) on Python 3')
+def test_find_module_py3():
+    dir_to_a_file = os.path.dirname(ping_module.__file__)
+    path_hook_finder = _AnsiblePathHookFinder(_AnsibleCollectionFinder(), dir_to_a_file)
+
+    # setuptools may fall back to find_module on Python 3 if find_spec returns None
+    # see https://github.com/pypa/setuptools/pull/2918
+    assert path_hook_finder.find_spec('missing') is None
+    assert path_hook_finder.find_module('missing') is None
+
+
 def test_finder_setup():
     # ensure scalar path is listified
     f = _AnsibleCollectionFinder(paths='/bogus/bogus')
@@ -35,19 +47,22 @@ def test_finder_setup():
 
     # ensure sys.path paths that have an ansible_collections dir are added to the end of the collections paths
     with patch.object(sys, 'path', ['/bogus', default_test_collection_paths[1], '/morebogus', default_test_collection_paths[0]]):
-        f = _AnsibleCollectionFinder(paths=['/explicit', '/other'])
-        assert f._n_collection_paths == ['/explicit', '/other', default_test_collection_paths[1], default_test_collection_paths[0]]
+        with patch('os.path.isdir', side_effect=lambda x: b'bogus' not in x):
+            f = _AnsibleCollectionFinder(paths=['/explicit', '/other'])
+            assert f._n_collection_paths == ['/explicit', '/other', default_test_collection_paths[1], default_test_collection_paths[0]]
 
     configured_paths = ['/bogus']
     playbook_paths = ['/playbookdir']
-    f = _AnsibleCollectionFinder(paths=configured_paths)
-    assert f._n_collection_paths == configured_paths
-    f.set_playbook_paths(playbook_paths)
-    assert f._n_collection_paths == extend_paths(playbook_paths, 'collections') + configured_paths
+    with patch.object(sys, 'path', ['/bogus', '/playbookdir']) and patch('os.path.isdir', side_effect=lambda x: b'bogus' in x):
+        f = _AnsibleCollectionFinder(paths=configured_paths)
+        assert f._n_collection_paths == configured_paths
 
-    # ensure scalar playbook_paths gets listified
-    f.set_playbook_paths(playbook_paths[0])
-    assert f._n_collection_paths == extend_paths(playbook_paths, 'collections') + configured_paths
+        f.set_playbook_paths(playbook_paths)
+        assert f._n_collection_paths == extend_paths(playbook_paths, 'collections') + configured_paths
+
+        # ensure scalar playbook_paths gets listified
+        f.set_playbook_paths(playbook_paths[0])
+        assert f._n_collection_paths == extend_paths(playbook_paths, 'collections') + configured_paths
 
 
 def test_finder_not_interested():
@@ -527,8 +542,6 @@ def test_default_collection_config():
     assert AnsibleCollectionConfig.default_collection is None
     AnsibleCollectionConfig.default_collection = 'foo.bar'
     assert AnsibleCollectionConfig.default_collection == 'foo.bar'
-    with pytest.raises(ValueError):
-        AnsibleCollectionConfig.default_collection = 'bar.baz'
 
 
 def test_default_collection_detection():
@@ -592,6 +605,22 @@ def test_bogus_imports():
     for bogus_import in bogus_imports:
         with pytest.raises(ImportError):
             import_module(bogus_import)
+
+
+def test_empty_vs_no_code():
+    finder = get_default_finder()
+    reset_collections_loader_state(finder)
+
+    from ansible_collections.testns import testcoll  # synthetic package with no code on disk
+    from ansible_collections.testns.testcoll.plugins import module_utils  # real package with empty code file
+
+    # ensure synthetic packages have no code object at all (prevent bogus coverage entries)
+    assert testcoll.__loader__.get_source(testcoll.__name__) is None
+    assert testcoll.__loader__.get_code(testcoll.__name__) is None
+
+    # ensure empty package inits do have a code object
+    assert module_utils.__loader__.get_source(module_utils.__name__) == b''
+    assert module_utils.__loader__.get_code(module_utils.__name__) is not None
 
 
 def test_finder_playbook_paths():
@@ -702,10 +731,31 @@ def test_fqcr_parsing_valid(ref, ref_type, expected_collection,
 
 
 @pytest.mark.parametrize(
+    ('fqcn', 'expected'),
+    (
+        ('ns1.coll2', True),
+        ('ns1#coll2', False),
+        ('def.coll3', False),
+        ('ns4.return', False),
+        ('assert.this', False),
+        ('import.that', False),
+        ('.that', False),
+        ('this.', False),
+        ('.', False),
+        ('', False),
+    ),
+)
+def test_fqcn_validation(fqcn, expected):
+    """Vefiry that is_valid_collection_name validates FQCN correctly."""
+    assert AnsibleCollectionRef.is_valid_collection_name(fqcn) is expected
+
+
+@pytest.mark.parametrize(
     'ref,ref_type,expected_error_type,expected_error_expression',
     [
         ('no_dots_at_all_action', 'action', ValueError, 'is not a valid collection reference'),
         ('no_nscoll.myaction', 'action', ValueError, 'is not a valid collection reference'),
+        ('no_nscoll%myaction', 'action', ValueError, 'is not a valid collection reference'),
         ('ns.coll.myaction', 'bogus', ValueError, 'invalid collection ref_type'),
     ])
 def test_fqcr_parsing_invalid(ref, ref_type, expected_error_type, expected_error_expression):

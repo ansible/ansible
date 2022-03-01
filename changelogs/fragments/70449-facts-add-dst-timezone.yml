@@ -1,2 +1,0 @@
-minor_changes:
-  - facts - add new fact ``date_time['tz_dst']``, which returns the daylight saving timezone (https://github.com/ansible/ansible/issues/69004).

@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    inventory: yaml
+    name: yaml
     version_added: "2.4"
     short_description: Uses a specific YAML file as an inventory source.
     description:
@@ -16,7 +16,7 @@ DOCUMENTATION = '''
         - File MUST have a valid extension, defined in configuration.
     notes:
         - If you want to set vars for the C(all) group inside the inventory file, the C(all) group must be the first entry in the file.
-        - Whitelisted in configuration by default.
+        - Enabled in configuration by default.
     options:
       yaml_extensions:
         description: list of 'valid' extensions for files containing YAML

@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
@@ -18,50 +17,73 @@ version_added: "0.0.1"
 short_description: Deploy software (or files) from git checkouts
 description:
     - Manage I(git) checkouts of repositories to deploy files or software.
+extends_documentation_fragment: action_common_attributes
 options:
     repo:
         description:
             - git, SSH, or HTTP(S) protocol address of the git repository.
+        type: str
         required: true
         aliases: [ name ]
     dest:
         description:
             - The path of where the repository should be checked out. This
-              parameter is required, unless C(clone) is set to C(no).
+              is equivalent to C(git clone [repo_url] [directory]). The repository
+              named in I(repo) is not appended to this path and the destination directory must be empty. This
+              parameter is required, unless I(clone) is set to C(no).
+        type: path
         required: true
     version:
         description:
             - What version of the repository to check out. This can be
               the literal string C(HEAD), a branch name, a tag name.
-              It can also be a I(SHA-1) hash, in which case C(refspec) needs
+              It can also be a I(SHA-1) hash, in which case I(refspec) needs
               to be specified if the given revision is not already available.
+        type: str
         default: "HEAD"
     accept_hostkey:
         description:
-            - if C(yes), ensure that "-o StrictHostKeyChecking=no" is
-              present as an ssh option.
+            - Will ensure or not that "-o StrictHostKeyChecking=no" is present as an ssh option.
+            - Be aware that this disables a protection against MITM attacks.
+            - Those using OpenSSH >= 7.5 might want to set I(ssh_opt) to 'StrictHostKeyChecking=accept-new'
+              instead, it does not remove the MITM issue but it does restrict it to the first attempt.
         type: bool
         default: 'no'
         version_added: "1.5"
+    accept_newhostkey:
+        description:
+            - As of OpenSSH 7.5, "-o StrictHostKeyChecking=accept-new" can be
+              used which is safer and will only accepts host keys which are
+              not present or are the same. if C(yes), ensure that
+              "-o StrictHostKeyChecking=accept-new" is present as an ssh option.
+        type: bool
+        default: 'no'
+        version_added: "2.12"
     ssh_opts:
         description:
-            - Creates a wrapper script and exports the path as GIT_SSH
-              which git then automatically uses to override ssh arguments.
-              An example value could be "-o StrictHostKeyChecking=no"
-              (although this particular option is better set via
-              C(accept_hostkey)).
+            - Options git will pass to ssh when used as protocol, it works via GIT_SSH_OPTIONS.
+            - For older versions it appends GIT_SSH_OPTIONS to GIT_SSH/GIT_SSH_COMMAND.
+            - Other options can add to this list, like I(key_file) and I(accept_hostkey).
+            - An example value could be "-o StrictHostKeyChecking=no" (although this particular
+              option is better set by I(accept_hostkey)).
+            - The module ensures that 'BatchMode=yes' is always present to avoid prompts.
+        type: str
         version_added: "1.5"
+
     key_file:
         description:
             - Specify an optional private key file path, on the target host, to use for the checkout.
+            - This ensures 'IdentitiesOnly=yes' is present in ssh_opts.
+        type: path
         version_added: "1.5"
     reference:
         description:
-            - Reference repository (see "git clone --reference ...")
+            - Reference repository (see "git clone --reference ...").
         version_added: "1.4"
     remote:
         description:
             - Name of the remote.
+        type: str
         default: "origin"
     refspec:
         description:
@@ -71,13 +93,14 @@ options:
               the I(SHA-1).
               Uses the same syntax as the C(git fetch) command.
               An example value could be "refs/meta/config".
+        type: str
         version_added: "1.9"
     force:
         description:
             - If C(yes), any modified files in the working
               repository will be discarded.  Prior to 0.7, this was always
-              'yes' and could not be disabled.  Prior to 1.9, the default was
-              `yes`
+              C(yes) and could not be disabled.  Prior to 1.9, the default was
+              C(yes).
         type: bool
         default: 'no'
         version_added: "0.7"
@@ -86,16 +109,17 @@ options:
             - Create a shallow clone with a history truncated to the specified
               number or revisions. The minimum possible value is C(1), otherwise
               ignored. Needs I(git>=1.9.1) to work correctly.
+        type: int
         version_added: "1.2"
     clone:
         description:
-            - If C(no), do not clone the repository even if it does not exist locally
+            - If C(no), do not clone the repository even if it does not exist locally.
         type: bool
         default: 'yes'
         version_added: "1.9"
     update:
         description:
-            - If C(no), do not retrieve new revisions from the origin repository
+            - If C(no), do not retrieve new revisions from the origin repository.
             - Operations like archive will work on the existing (old) repository and might
               not respond to changes to the options version or remote.
         type: bool
@@ -105,10 +129,11 @@ options:
         description:
             - Path to git executable to use. If not supplied,
               the normal mechanism for resolving binary paths will be used.
+        type: path
         version_added: "1.4"
     bare:
         description:
-            - if C(yes), repository will be created as a bare repo, otherwise
+            - If C(yes), repository will be created as a bare repo, otherwise
               it will be a standard repo with a workspace.
         type: bool
         default: 'no'
@@ -117,11 +142,12 @@ options:
         description:
             - The umask to set before doing any checkouts, or any other
               repository maintenance.
+        type: raw
         version_added: "2.2"
 
     recursive:
         description:
-            - if C(no), repository will be cloned without the --recursive
+            - If C(no), repository will be cloned without the --recursive
               option, skipping sub-modules.
         type: bool
         default: 'yes'
@@ -129,14 +155,14 @@ options:
 
     single_branch:
         description:
-            - Clone only the history leading to the tip of the specified C(branch)
+            - Clone only the history leading to the tip of the specified revision.
         type: bool
         default: 'no'
         version_added: '2.11'
 
     track_submodules:
         description:
-            - if C(yes), submodules will track the latest commit on their
+            - If C(yes), submodules will track the latest commit on their
               master branch (or other branch specified in .gitmodules).  If
               C(no), submodules will be kept at the revision specified by the
               main project. This is equivalent to specifying the --remote flag
@@ -147,8 +173,8 @@ options:
 
     verify_commit:
         description:
-            - if C(yes), when cloning or checking out a C(version) verify the
-              signature of a GPG signed commit. This requires C(git) version>=2.1.0
+            - If C(yes), when cloning or checking out a I(version) verify the
+              signature of a GPG signed commit. This requires git version>=2.1.0
               to be installed. The commit MUST be signed and the public key MUST
               be present in the GPG keyring.
         type: bool
@@ -160,14 +186,15 @@ options:
             - Specify archive file path with extension. If specified, creates an
               archive file of the specified format containing the tree structure
               for the source tree.
-              Allowed archive formats ["zip", "tar.gz", "tar", "tgz"]
+              Allowed archive formats ["zip", "tar.gz", "tar", "tgz"].
             - This will clone and perform git archive from local directory as not
               all git servers support git archive.
+        type: path
         version_added: "2.4"
 
     archive_prefix:
         description:
-            - Specify a prefix to add to each file path in archive. Requires C(archive) to be specified.
+            - Specify a prefix to add to each file path in archive. Requires I(archive) to be specified.
         version_added: "2.10"
         type: str
 
@@ -175,6 +202,7 @@ options:
         description:
             - The path to place the cloned repository. If specified, Git repository
               can be separated from working tree.
+        type: path
         version_added: "2.7"
 
     gpg_whitelist:
@@ -182,13 +210,21 @@ options:
            - A list of trusted GPG fingerprints to compare to the fingerprint of the
              GPG-signed commit.
            - Only used when I(verify_commit=yes).
+           - Use of this feature requires Git 2.6+ due to its reliance on git's C(--raw) flag to C(verify-commit) and C(verify-tag).
         type: list
+        elements: str
         default: []
         version_added: "2.9"
 
 requirements:
     - git>=1.7.1 (the command line tool)
-
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    platform:
+        platforms: posix
 notes:
     - "If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt,
@@ -199,61 +235,71 @@ notes:
 
 EXAMPLES = '''
 - name: Git checkout
-  git:
+  ansible.builtin.git:
     repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     version: release-0.22
 
 - name: Read-write git checkout from github
-  git:
+  ansible.builtin.git:
     repo: git@github.com:mylogin/hello.git
     dest: /home/mylogin/hello
 
 - name: Just ensuring the repo checkout exists
-  git:
+  ansible.builtin.git:
     repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     update: no
 
 - name: Just get information about the repository whether or not it has already been cloned locally
-  git:
+  ansible.builtin.git:
     repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     clone: no
     update: no
 
 - name: Checkout a github repo and use refspec to fetch all pull requests
-  git:
+  ansible.builtin.git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     refspec: '+refs/pull/*:refs/heads/*'
 
 - name: Create git archive from repo
-  git:
+  ansible.builtin.git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     archive: /tmp/ansible-examples.zip
 
 - name: Clone a repo with separate git directory
-  git:
+  ansible.builtin.git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     separate_git_dir: /src/ansible-examples.git
 
-# Example clone of a single branch
-- git:
+- name: Example clone of a single branch
+  ansible.builtin.git:
+    repo: https://github.com/ansible/ansible-examples.git
+    dest: /src/ansible-examples
     single_branch: yes
-    branch: master
+    version: master
+
+- name: Avoid hanging when http(s) password is missing
+  ansible.builtin.git:
+    repo: https://github.com/ansible/could-be-a-private-repo
+    dest: /src/from-private-repo
+  environment:
+    GIT_TERMINAL_PROMPT: 0 # reports "terminal prompts disabled" on missing password
+    # or GIT_ASKPASS: /bin/true # for git before version 2.3.0, reports "Authentication failed" on missing password
 '''
 
 RETURN = '''
 after:
-    description: last commit revision of the repository retrieved during the update
+    description: Last commit revision of the repository retrieved during the update.
     returned: success
     type: str
     sample: 4c020102a9cd6fe908c9a4a326a38f972f63a903
 before:
-    description: commit revision before the repository was updated, "null" for new repository
+    description: Commit revision before the repository was updated, "null" for new repository.
     returned: success
     type: str
     sample: 67c04ebe40a003bda0efb34eacfb93b0cafdf628
@@ -268,12 +314,12 @@ warnings:
     type: str
     sample: git version is too old to fully support the depth argument. Falling back to full checkouts.
 git_dir_now:
-    description: Contains the new path of .git directory if it's changed
+    description: Contains the new path of .git directory if it is changed.
     returned: success
     type: str
     sample: /path/to/new/git/dir
 git_dir_before:
-    description: Contains the original path of .git directory if it's changed
+    description: Contains the original path of .git directory if it is changed.
     returned: success
     type: str
     sample: /path/to/old/git/dir
@@ -287,11 +333,13 @@ import stat
 import sys
 import shutil
 import tempfile
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six import b, string_types
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.locale import get_best_parsable_locale
+from ansible.module_utils.common.process import get_bin_path
+from ansible.module_utils.six import b, string_types
 
 
 def relocate_repo(module, result, repo_dir, old_repo_dir, worktree_dir):
@@ -375,57 +423,88 @@ def get_submodule_update_params(module, git_path, cwd):
     return params
 
 
-def write_ssh_wrapper(module_tmpdir):
+def write_ssh_wrapper(module):
+    '''
+        This writes an shell wrapper for ssh options to be used with git
+        this is only relevant for older versions of gitthat cannot
+        handle the options themselves. Returns path to the script
+    '''
     try:
         # make sure we have full permission to the module_dir, which
         # may not be the case if we're sudo'ing to a non-root user
-        if os.access(module_tmpdir, os.W_OK | os.R_OK | os.X_OK):
-            fd, wrapper_path = tempfile.mkstemp(prefix=module_tmpdir + '/')
+        if os.access(module.tmpdir, os.W_OK | os.R_OK | os.X_OK):
+            fd, wrapper_path = tempfile.mkstemp(prefix=module.tmpdir + '/')
         else:
             raise OSError
     except (IOError, OSError):
         fd, wrapper_path = tempfile.mkstemp()
-    fh = os.fdopen(fd, 'w+b')
+
+    # use existing git_ssh/ssh_command, fallback to 'ssh'
     template = b("""#!/bin/sh
-if [ -z "$GIT_SSH_OPTS" ]; then
-    BASEOPTS=""
-else
-    BASEOPTS=$GIT_SSH_OPTS
-fi
+%s $GIT_SSH_OPTS
+""" % os.environ.get('GIT_SSH', os.environ.get('GIT_SSH_COMMAND', 'ssh')))
 
-# Let ssh fail rather than prompt
-BASEOPTS="$BASEOPTS -o BatchMode=yes"
+    # write it
+    with os.fdopen(fd, 'w+b') as fh:
+        fh.write(template)
 
-if [ -z "$GIT_KEY" ]; then
-    ssh $BASEOPTS "$@"
-else
-    ssh -i "$GIT_KEY" -o IdentitiesOnly=yes $BASEOPTS "$@"
-fi
-""")
-    fh.write(template)
-    fh.close()
+    # set execute
     st = os.stat(wrapper_path)
     os.chmod(wrapper_path, st.st_mode | stat.S_IEXEC)
+
+    module.debug('Wrote temp git ssh wrapper (%s): %s' % (wrapper_path, template))
+
+    # ensure we cleanup after ourselves
+    module.add_cleanup_file(path=wrapper_path)
+
     return wrapper_path
 
 
-def set_git_ssh(ssh_wrapper, key_file, ssh_opts):
+def set_git_ssh_env(key_file, ssh_opts, git_version, module):
+    '''
+        use environment variables to configure git's ssh execution,
+        which varies by version but this functino should handle all.
+    '''
 
-    if os.environ.get("GIT_SSH"):
-        del os.environ["GIT_SSH"]
-    os.environ["GIT_SSH"] = ssh_wrapper
+    # initialise to existing ssh opts and/or append user provided
+    if ssh_opts is None:
+        ssh_opts = os.environ.get('GIT_SSH_OPTS', '')
+    else:
+        ssh_opts = os.environ.get('GIT_SSH_OPTS', '') + ' ' + ssh_opts
 
-    if os.environ.get("GIT_KEY"):
-        del os.environ["GIT_KEY"]
+    # hostkey acceptance
+    accept_key = "StrictHostKeyChecking=no"
+    if module.params['accept_hostkey'] and accept_key not in ssh_opts:
+        ssh_opts += " -o %s" % accept_key
 
+    # avoid prompts
+    force_batch = 'BatchMode=yes'
+    if force_batch not in ssh_opts:
+        ssh_opts += ' -o %s' % (force_batch)
+
+    # deal with key file
     if key_file:
         os.environ["GIT_KEY"] = key_file
 
-    if os.environ.get("GIT_SSH_OPTS"):
-        del os.environ["GIT_SSH_OPTS"]
+        ikey = 'IdentitiesOnly=yes'
+        if ikey not in ssh_opts:
+            ssh_opts += ' -o %s' % ikey
 
-    if ssh_opts:
-        os.environ["GIT_SSH_OPTS"] = ssh_opts
+    # we should always have finalized string here.
+    os.environ["GIT_SSH_OPTS"] = ssh_opts
+
+    # older than 2.3 does not know how to use git_ssh_opts,
+    # so we force it into ssh command var
+    if git_version < LooseVersion('2.3.0'):
+
+        # these versions don't support GIT_SSH_OPTS so have to write wrapper
+        wrapper = write_ssh_wrapper(module)
+
+        # force use of git_ssh_opts via wrapper
+        os.environ["GIT_SSH"] = wrapper
+
+        # same as above but older git uses git_ssh_command
+        os.environ["GIT_SSH_COMMAND"] = wrapper
 
 
 def get_version(module, git_path, dest, ref="HEAD"):
@@ -435,6 +514,21 @@ def get_version(module, git_path, dest, ref="HEAD"):
     rc, stdout, stderr = module.run_command(cmd, cwd=dest)
     sha = to_native(stdout).rstrip('\n')
     return sha
+
+
+def ssh_supports_acceptnewhostkey(module):
+    try:
+        ssh_path = get_bin_path('ssh')
+    except ValueError as err:
+        module.fail_json(
+            msg='Remote host is missing ssh command, so you cannot '
+            'use acceptnewhostkey option.', details=to_text(err))
+    supports_acceptnewhostkey = True
+    cmd = [ssh_path, '-o', 'StrictHostKeyChecking=accept-new', '-V']
+    rc, stdout, stderr = module.run_command(cmd)
+    if rc != 0:
+        supports_acceptnewhostkey = False
+    return supports_acceptnewhostkey
 
 
 def get_submodule_versions(git_path, module, dest, version='HEAD'):
@@ -704,7 +798,8 @@ def get_repo_path(dest, bare):
         if os.path.isabs(gitdir):
             repo_path = gitdir
         else:
-            repo_path = os.path.join(repo_path.split('.git')[0], gitdir)
+            # Use original destination directory with data from .git file.
+            repo_path = os.path.join(dest, gitdir)
         if not os.path.isdir(repo_path):
             raise ValueError('%s is not a directory' % repo_path)
     return repo_path
@@ -958,7 +1053,9 @@ def verify_commit_sign(git_path, module, dest, version, gpg_whitelist):
         git_sub = "verify-tag"
     else:
         git_sub = "verify-commit"
-    cmd = "%s %s %s --raw" % (git_path, git_sub, version)
+    cmd = "%s %s %s" % (git_path, git_sub, version)
+    if gpg_whitelist:
+        cmd += " --raw"
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg='Failed to verify GPG signature of commit/tag "%s"' % version, stdout=out, stderr=err, rc=rc)
@@ -1061,8 +1158,8 @@ def create_archive(git_path, module, dest, archive, archive_prefix, version, rep
         git_archive(git_path, module, dest, archive, archive_fmt, archive_prefix, version)
         result.update(changed=True)
 
-
 # ===========================================
+
 
 def main():
     module = AnsibleModule(
@@ -1078,8 +1175,9 @@ def main():
             clone=dict(default='yes', type='bool'),
             update=dict(default='yes', type='bool'),
             verify_commit=dict(default='no', type='bool'),
-            gpg_whitelist=dict(default=[], type='list'),
+            gpg_whitelist=dict(default=[], type='list', elements='str'),
             accept_hostkey=dict(default='no', type='bool'),
+            accept_newhostkey=dict(default='no', type='bool'),
             key_file=dict(default=None, type='path', required=False),
             ssh_opts=dict(default=None, required=False),
             executable=dict(default=None, type='path'),
@@ -1092,7 +1190,7 @@ def main():
             archive_prefix=dict(),
             separate_git_dir=dict(type='path'),
         ),
-        mutually_exclusive=[('separate_git_dir', 'bare')],
+        mutually_exclusive=[('separate_git_dir', 'bare'), ('accept_hostkey', 'accept_newhostkey')],
         required_by={'archive_prefix': ['archive']},
         supports_check_mode=True
     )
@@ -1123,10 +1221,20 @@ def main():
 
     if module.params['accept_hostkey']:
         if ssh_opts is not None:
-            if "-o StrictHostKeyChecking=no" not in ssh_opts:
+            if ("-o StrictHostKeyChecking=no" not in ssh_opts) and ("-o StrictHostKeyChecking=accept-new" not in ssh_opts):
                 ssh_opts += " -o StrictHostKeyChecking=no"
         else:
             ssh_opts = "-o StrictHostKeyChecking=no"
+
+    if module.params['accept_newhostkey']:
+        if not ssh_supports_acceptnewhostkey(module):
+            module.warn("Your ssh client does not support accept_newhostkey option, therefore it cannot be used.")
+        else:
+            if ssh_opts is not None:
+                if ("-o StrictHostKeyChecking=no" not in ssh_opts) and ("-o StrictHostKeyChecking=accept-new" not in ssh_opts):
+                    ssh_opts += " -o StrictHostKeyChecking=accept-new"
+            else:
+                ssh_opts = "-o StrictHostKeyChecking=accept-new"
 
     # evaluate and set the umask before doing anything else
     if umask is not None:
@@ -1136,7 +1244,7 @@ def main():
             umask = int(umask, 8)
         except Exception:
             module.fail_json(msg="umask must be an octal integer",
-                             details=str(sys.exc_info()[1]))
+                             details=to_text(sys.exc_info()[1]))
         os.umask(umask)
 
     # Certain features such as depth require a file:/// protocol for path based urls
@@ -1146,7 +1254,8 @@ def main():
 
     # We screenscrape a huge amount of git commands so use C locale anytime we
     # call run_command()
-    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+    locale = get_best_parsable_locale(module)
+    module.run_command_environ_update = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale, LC_CTYPE=locale)
 
     if separate_git_dir:
         separate_git_dir = os.path.realpath(separate_git_dir)
@@ -1173,14 +1282,11 @@ def main():
             )
         gitconfig = os.path.join(repo_path, 'config')
 
-    # create a wrapper script and export
-    # GIT_SSH=<path> as an environment variable
-    # for git to use the wrapper script
-    ssh_wrapper = write_ssh_wrapper(module.tmpdir)
-    set_git_ssh(ssh_wrapper, key_file, ssh_opts)
-    module.add_cleanup_file(path=ssh_wrapper)
-
+    # iface changes so need it to make decisions
     git_version_used = git_version(git_path, module)
+
+    # GIT_SSH=<path> as an environment variable, might create sh wrapper script for older versions.
+    set_git_ssh_env(key_file, ssh_opts, git_version_used, module)
 
     if depth is not None and git_version_used < LooseVersion('1.9.1'):
         module.warn("git version is too old to fully support the depth argument. Falling back to full checkouts.")
@@ -1231,11 +1337,11 @@ def main():
         if local_mods:
             # failure should happen regardless of check mode
             if not force:
-                module.fail_json(msg="Local modifications exist in repository (force=no).", **result)
+                module.fail_json(msg="Local modifications exist in the destination: " + dest + " (force=no).", **result)
             # if force and in non-check mode, do a reset
             if not module.check_mode:
                 reset(git_path, module, dest)
-                result.update(changed=True, msg='Local modifications exist.')
+                result.update(changed=True, msg='Local modifications exist in the destination: ' + dest)
 
         # exit if already at desired sha version
         if module.check_mode:

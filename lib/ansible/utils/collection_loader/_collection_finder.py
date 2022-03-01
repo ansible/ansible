@@ -1,6 +1,9 @@
 # (c) 2019 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+# CAUTION: This implementation of the collection loader is used by ansible-test.
+#          Because of this, it must be compatible with all Python versions supported on the controller or remote.
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -9,6 +12,8 @@ import os.path
 import pkgutil
 import re
 import sys
+from keyword import iskeyword
+from tokenize import Name as _VALID_IDENTIFIER_REGEX
 
 
 # DO NOT add new non-stdlib import deps here, this loader is used by external tools (eg ansible-test import sanity)
@@ -33,11 +38,46 @@ except ImportError:
     # 2.7 has a global reload function instead...
     reload_module = reload  # pylint:disable=undefined-variable
 
+try:
+    from importlib.util import spec_from_loader
+except ImportError:
+    pass
+
+try:
+    from importlib.machinery import FileFinder
+except ImportError:
+    HAS_FILE_FINDER = False
+else:
+    HAS_FILE_FINDER = True
+
 # NB: this supports import sanity test providing a different impl
 try:
     from ._collection_meta import _meta_yml_to_dict
 except ImportError:
     _meta_yml_to_dict = None
+
+
+if not hasattr(__builtins__, 'ModuleNotFoundError'):
+    # this was introduced in Python 3.6
+    ModuleNotFoundError = ImportError
+
+
+_VALID_IDENTIFIER_STRING_REGEX = re.compile(
+    ''.join((_VALID_IDENTIFIER_REGEX, r'\Z')),
+)
+
+
+try:  # NOTE: py3/py2 compat
+    # py2 mypy can't deal with try/excepts
+    is_python_identifier = str.isidentifier  # type: ignore[attr-defined]
+except AttributeError:  # Python 2
+    def is_python_identifier(tested_str):  # type: (str) -> bool
+        """Determine whether the given string is a Python identifier."""
+        # Ref: https://stackoverflow.com/a/55802320/595220
+        return bool(re.match(_VALID_IDENTIFIER_STRING_REGEX, tested_str))
+
+
+PB_EXTENSIONS = ('.yml', '.yaml')
 
 
 class _AnsibleCollectionFinder:
@@ -53,19 +93,22 @@ class _AnsibleCollectionFinder:
         # expand any placeholders in configured paths
         paths = [os.path.expanduser(to_native(p, errors='surrogate_or_strict')) for p in paths]
 
+        # add syspaths if needed
         if scan_sys_paths:
-            # append all sys.path entries with an ansible_collections package
-            for path in sys.path:
-                if (
-                        path not in paths and
-                        os.path.isdir(to_bytes(
-                            os.path.join(path, 'ansible_collections'),
-                            errors='surrogate_or_strict',
-                        ))
-                ):
-                    paths.append(path)
+            paths.extend(sys.path)
 
-        self._n_configured_paths = paths
+        good_paths = []
+        # expand any placeholders in configured paths
+        for p in paths:
+
+            # ensure we always have ansible_collections
+            if os.path.basename(p) == 'ansible_collections':
+                p = os.path.dirname(p)
+
+            if p not in good_paths and os.path.isdir(to_bytes(os.path.join(p, 'ansible_collections'), errors='surrogate_or_strict')):
+                good_paths.append(p)
+
+        self._n_configured_paths = good_paths
         self._n_cached_collection_paths = None
         self._n_cached_collection_qualified_paths = None
 
@@ -103,8 +146,14 @@ class _AnsibleCollectionFinder:
         path = to_native(path)
         interesting_paths = self._n_cached_collection_qualified_paths
         if not interesting_paths:
-            interesting_paths = [os.path.join(p, 'ansible_collections') for p in
-                                 self._n_collection_paths]
+            interesting_paths = []
+            for p in self._n_collection_paths:
+                if os.path.basename(p) != 'ansible_collections':
+                    p = os.path.join(p, 'ansible_collections')
+
+                if p not in interesting_paths:
+                    interesting_paths.append(p)
+
             interesting_paths.insert(0, self._ansible_pkg_path)
             self._n_cached_collection_qualified_paths = interesting_paths
 
@@ -142,9 +191,7 @@ class _AnsibleCollectionFinder:
             return
         reload_module(m)
 
-    def find_module(self, fullname, path=None):
-        # Figure out what's being asked for, and delegate to a special-purpose loader
-
+    def _get_loader(self, fullname, path=None):
         split_name = fullname.split('.')
         toplevel_pkg = split_name[0]
         module_to_find = split_name[-1]
@@ -165,22 +212,40 @@ class _AnsibleCollectionFinder:
         if part_count > 1 and path is None:
             raise ValueError('path must be specified for subpackages (trying to find {0})'.format(fullname))
 
+        if toplevel_pkg == 'ansible':
+            # something under the ansible package, delegate to our internal loader in case of redirections
+            initialize_loader = _AnsibleInternalRedirectLoader
+        elif part_count == 1:
+            initialize_loader = _AnsibleCollectionRootPkgLoader
+        elif part_count == 2:  # ns pkg eg, ansible_collections, ansible_collections.somens
+            initialize_loader = _AnsibleCollectionNSPkgLoader
+        elif part_count == 3:  # collection pkg eg, ansible_collections.somens.somecoll
+            initialize_loader = _AnsibleCollectionPkgLoader
+        else:
+            # anything below the collection
+            initialize_loader = _AnsibleCollectionLoader
+
         # NB: actual "find"ing is delegated to the constructors on the various loaders; they'll ImportError if not found
         try:
-            if toplevel_pkg == 'ansible':
-                # something under the ansible package, delegate to our internal loader in case of redirections
-                return _AnsibleInternalRedirectLoader(fullname=fullname, path_list=path)
-            if part_count == 1:
-                return _AnsibleCollectionRootPkgLoader(fullname=fullname, path_list=path)
-            if part_count == 2:  # ns pkg eg, ansible_collections, ansible_collections.somens
-                return _AnsibleCollectionNSPkgLoader(fullname=fullname, path_list=path)
-            elif part_count == 3:  # collection pkg eg, ansible_collections.somens.somecoll
-                return _AnsibleCollectionPkgLoader(fullname=fullname, path_list=path)
-            # anything below the collection
-            return _AnsibleCollectionLoader(fullname=fullname, path_list=path)
+            return initialize_loader(fullname=fullname, path_list=path)
         except ImportError:
             # TODO: log attempt to load context
             return None
+
+    def find_module(self, fullname, path=None):
+        # Figure out what's being asked for, and delegate to a special-purpose loader
+        return self._get_loader(fullname, path)
+
+    def find_spec(self, fullname, path, target=None):
+        loader = self._get_loader(fullname, path)
+
+        if loader is None:
+            return None
+
+        spec = spec_from_loader(fullname, loader)
+        if spec is not None and hasattr(loader, '_subpackage_search_paths'):
+            spec.submodule_search_locations = loader._subpackage_search_paths
+        return spec
 
 
 # Implements a path_hook finder for iter_modules (since it's only path based). This finder does not need to actually
@@ -209,14 +274,13 @@ class _AnsiblePathHookFinder:
 
     _filefinder_path_hook = _get_filefinder_path_hook()
 
-    def find_module(self, fullname, path=None):
-        # we ignore the passed in path here- use what we got from the path hook init
+    def _get_finder(self, fullname):
         split_name = fullname.split('.')
         toplevel_pkg = split_name[0]
 
         if toplevel_pkg == 'ansible_collections':
             # collections content? delegate to the collection finder
-            return self._collection_finder.find_module(fullname, path=[self._pathctx])
+            return self._collection_finder
         else:
             # Something else; we'd normally restrict this to `ansible` descendent modules so that any weird loader
             # behavior that arbitrary Python modules have can be serviced by those loaders. In some dev/test
@@ -235,13 +299,37 @@ class _AnsiblePathHookFinder:
                         # might not be in some other situation...
                         return None
 
-                spec = self._file_finder.find_spec(fullname)
-                if not spec:
-                    return None
-                return spec.loader
-            else:
-                # call py2's internal loader
-                return pkgutil.ImpImporter(self._pathctx).find_module(fullname)
+                return self._file_finder
+
+            # call py2's internal loader
+            return pkgutil.ImpImporter(self._pathctx)
+
+    def find_module(self, fullname, path=None):
+        # we ignore the passed in path here- use what we got from the path hook init
+        finder = self._get_finder(fullname)
+
+        if finder is None:
+            return None
+        elif HAS_FILE_FINDER and isinstance(finder, FileFinder):
+            # this codepath is erroneously used under some cases in py3,
+            # and the find_module method on FileFinder does not accept the path arg
+            # see https://github.com/pypa/setuptools/pull/2918
+            return finder.find_module(fullname)
+        else:
+            return finder.find_module(fullname, path=[self._pathctx])
+
+    def find_spec(self, fullname, target=None):
+        split_name = fullname.split('.')
+        toplevel_pkg = split_name[0]
+
+        finder = self._get_finder(fullname)
+
+        if finder is None:
+            return None
+        elif toplevel_pkg == 'ansible_collections':
+            return finder.find_spec(fullname, path=[self._pathctx])
+        else:
+            return finder.find_spec(fullname)
 
     def iter_modules(self, prefix):
         # NB: this currently represents only what's on disk, and does not handle package redirection
@@ -335,6 +423,23 @@ class _AnsibleCollectionPkgLoaderBase:
 
         return module_path, has_code, package_path
 
+    def exec_module(self, module):
+        # short-circuit redirect; avoid reinitializing existing modules
+        if self._redirect_module:
+            return
+
+        # execute the module's code in its namespace
+        code_obj = self.get_code(self._fullname)
+        if code_obj is not None:  # things like NS packages that can't have code on disk will return None
+            exec(code_obj, module.__dict__)
+
+    def create_module(self, spec):
+        # short-circuit redirect; we've already imported the redirected module, so just alias it and return it
+        if self._redirect_module:
+            return self._redirect_module
+        else:
+            return None
+
     def load_module(self, fullname):
         # short-circuit redirect; we've already imported the redirected module, so just alias it and return it
         if self._redirect_module:
@@ -355,7 +460,9 @@ class _AnsibleCollectionPkgLoaderBase:
 
         with self._new_or_existing_module(fullname, **module_attrs) as module:
             # execute the module's code in its namespace
-            exec(self.get_code(fullname), module.__dict__)
+            code_obj = self.get_code(fullname)
+            if code_obj is not None:  # things like NS packages that can't have code on disk will return None
+                exec(code_obj, module.__dict__)
 
             return module
 
@@ -428,8 +535,11 @@ class _AnsibleCollectionPkgLoaderBase:
             filename = '<string>'
 
         source_code = self.get_source(fullname)
-        if not source_code:
-            source_code = ''
+
+        # for things like synthetic modules that really have no source on disk, don't return a code object at all
+        # vs things like an empty package init (which has an empty string source on disk)
+        if source_code is None:
+            return None
 
         self._compiled_code = compile(source=source_code, filename=filename, mode='exec', flags=0, dont_inherit=True)
 
@@ -484,11 +594,9 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
             # only search within the first collection we found
             self._subpackage_search_paths = [self._subpackage_search_paths[0]]
 
-    def load_module(self, fullname):
+    def _load_module(self, module):
         if not _meta_yml_to_dict:
             raise ValueError('ansible.utils.collection_loader._meta_yml_to_dict is not set')
-
-        module = super(_AnsibleCollectionPkgLoader, self).load_module(fullname)
 
         module._collection_meta = {}
         # TODO: load collection metadata, cache in __loader__ state
@@ -519,6 +627,17 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
 
         return module
 
+    def exec_module(self, module):
+        super(_AnsibleCollectionPkgLoader, self).exec_module(module)
+        self._load_module(module)
+
+    def create_module(self, spec):
+        return None
+
+    def load_module(self, fullname):
+        module = super(_AnsibleCollectionPkgLoader, self).load_module(fullname)
+        return self._load_module(module)
+
     def _canonicalize_meta(self, meta_dict):
         # TODO: rewrite import keys and all redirect targets that start with .. (current namespace) and . (current collection)
         # OR we could do it all on the fly?
@@ -534,15 +653,6 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
         #         redirect = plugin_dict.get('redirect', '')
         #         if redirect.startswith('..'):
         #             redirect =  redirect[2:]
-
-        action_groups = meta_dict.pop('action_groups', {})
-        meta_dict['action_groups'] = {}
-        for group_name in action_groups:
-            for action_name in action_groups[group_name]:
-                if action_name in meta_dict['action_groups']:
-                    meta_dict['action_groups'][action_name].append(group_name)
-                else:
-                    meta_dict['action_groups'][action_name] = [group_name]
 
         return meta_dict
 
@@ -638,6 +748,17 @@ class _AnsibleInternalRedirectLoader:
         if not self._redirect:
             raise ImportError('not redirected, go ask path_hook')
 
+    def exec_module(self, module):
+        # should never see this
+        if not self._redirect:
+            raise ValueError('no redirect found for {0}'.format(module.__spec__.name))
+
+        # Replace the module with the redirect
+        sys.modules[module.__spec__.name] = import_module(self._redirect)
+
+    def create_module(self, spec):
+        return None
+
     def load_module(self, fullname):
         # since we're delegating to other loaders, this should only be called for internal redirects where we answered
         # find_module with this loader, in which case we'll just directly import the redirection target, insert it into
@@ -658,12 +779,11 @@ class AnsibleCollectionRef:
     VALID_REF_TYPES = frozenset(to_text(r) for r in ['action', 'become', 'cache', 'callback', 'cliconf', 'connection',
                                                      'doc_fragments', 'filter', 'httpapi', 'inventory', 'lookup',
                                                      'module_utils', 'modules', 'netconf', 'role', 'shell', 'strategy',
-                                                     'terminal', 'test', 'vars'])
+                                                     'terminal', 'test', 'vars', 'playbook'])
 
     # FIXME: tighten this up to match Python identifier reqs, etc
-    VALID_COLLECTION_NAME_RE = re.compile(to_text(r'^(\w+)\.(\w+)$'))
     VALID_SUBDIRS_RE = re.compile(to_text(r'^\w+(\.\w+)*$'))
-    VALID_FQCR_RE = re.compile(to_text(r'^\w+\.\w+\.\w+(\.\w+)*$'))  # can have 0-N included subdirs as well
+    VALID_FQCR_RE = re.compile(to_text(r'^\w+(\.\w+){2,}$'))  # can have 0-N included subdirs as well
 
     def __init__(self, collection_name, subdirs, resource, ref_type):
         """
@@ -703,6 +823,8 @@ class AnsibleCollectionRef:
 
         if self.ref_type == u'role':
             package_components.append(u'roles')
+        elif self.ref_type == u'playbook':
+            package_components.append(u'playbooks')
         else:
             # we assume it's a plugin
             package_components += [u'plugins', self.ref_type]
@@ -711,8 +833,8 @@ class AnsibleCollectionRef:
             package_components.append(self.subdirs)
             fqcr_components.append(self.subdirs)
 
-        if self.ref_type == u'role':
-            # roles are their own resource
+        if self.ref_type in (u'role', u'playbook'):
+            # playbooks and roles are their own resource
             package_components.append(self.resource)
 
         fqcr_components.append(self.resource)
@@ -746,10 +868,17 @@ class AnsibleCollectionRef:
 
         ref = to_text(ref, errors='strict')
         ref_type = to_text(ref_type, errors='strict')
+        ext = ''
 
-        resource_splitname = ref.rsplit(u'.', 1)
-        package_remnant = resource_splitname[0]
-        resource = resource_splitname[1]
+        if ref_type == u'playbook' and ref.endswith(PB_EXTENSIONS):
+            resource_splitname = ref.rsplit(u'.', 2)
+            package_remnant = resource_splitname[0]
+            resource = resource_splitname[1]
+            ext = '.' + resource_splitname[2]
+        else:
+            resource_splitname = ref.rsplit(u'.', 1)
+            package_remnant = resource_splitname[0]
+            resource = resource_splitname[1]
 
         # split the left two components of the collection package name off, anything remaining is plugin-type
         # specific subdirs to be added back on below the plugin type
@@ -761,7 +890,7 @@ class AnsibleCollectionRef:
 
         collection_name = u'.'.join(package_splitname[0:2])
 
-        return AnsibleCollectionRef(collection_name, subdirs, resource, ref_type)
+        return AnsibleCollectionRef(collection_name, subdirs, resource + ext, ref_type)
 
     @staticmethod
     def try_parse_fqcr(ref, ref_type):
@@ -821,26 +950,71 @@ class AnsibleCollectionRef:
 
         collection_name = to_text(collection_name)
 
-        return bool(re.match(AnsibleCollectionRef.VALID_COLLECTION_NAME_RE, collection_name))
+        if collection_name.count(u'.') != 1:
+            return False
+
+        return all(
+            # NOTE: keywords and identifiers are different in different Pythons
+            not iskeyword(ns_or_name) and is_python_identifier(ns_or_name)
+            for ns_or_name in collection_name.split(u'.')
+        )
+
+
+def _get_collection_playbook_path(playbook):
+
+    acr = AnsibleCollectionRef.try_parse_fqcr(playbook, u'playbook')
+    if acr:
+        try:
+            # get_collection_path
+            pkg = import_module(acr.n_python_collection_package_name)
+        except (IOError, ModuleNotFoundError) as e:
+            # leaving e as debug target, even though not used in normal code
+            pkg = None
+
+        if pkg:
+            cpath = os.path.join(sys.modules[acr.n_python_collection_package_name].__file__.replace('__synthetic__', 'playbooks'))
+
+            if acr.subdirs:
+                paths = [to_native(x) for x in acr.subdirs.split(u'.')]
+                paths.insert(0, cpath)
+                cpath = os.path.join(*paths)
+
+            path = os.path.join(cpath, to_native(acr.resource))
+            if os.path.exists(to_bytes(path)):
+                return acr.resource, path, acr.collection
+            elif not acr.resource.endswith(PB_EXTENSIONS):
+                for ext in PB_EXTENSIONS:
+                    path = os.path.join(cpath, to_native(acr.resource + ext))
+                    if os.path.exists(to_bytes(path)):
+                        return acr.resource, path, acr.collection
+    return None
 
 
 def _get_collection_role_path(role_name, collection_list=None):
-    acr = AnsibleCollectionRef.try_parse_fqcr(role_name, 'role')
+    return _get_collection_resource_path(role_name, u'role', collection_list)
 
+
+def _get_collection_resource_path(name, ref_type, collection_list=None):
+
+    if ref_type == u'playbook':
+        # they are handled a bit diff due to 'extension variance' and no collection_list
+        return _get_collection_playbook_path(name)
+
+    acr = AnsibleCollectionRef.try_parse_fqcr(name, ref_type)
     if acr:
         # looks like a valid qualified collection ref; skip the collection_list
         collection_list = [acr.collection]
         subdirs = acr.subdirs
         resource = acr.resource
     elif not collection_list:
-        return None  # not a FQ role and no collection search list spec'd, nothing to do
+        return None  # not a FQ and no collection search list spec'd, nothing to do
     else:
-        resource = role_name  # treat as unqualified, loop through the collection search list to try and resolve
+        resource = name  # treat as unqualified, loop through the collection search list to try and resolve
         subdirs = ''
 
     for collection_name in collection_list:
         try:
-            acr = AnsibleCollectionRef(collection_name=collection_name, subdirs=subdirs, resource=resource, ref_type='role')
+            acr = AnsibleCollectionRef(collection_name=collection_name, subdirs=subdirs, resource=resource, ref_type=ref_type)
             # FIXME: error handling/logging; need to catch any import failures and move along
             pkg = import_module(acr.n_python_package_name)
 
@@ -849,7 +1023,7 @@ def _get_collection_role_path(role_name, collection_list=None):
                 path = os.path.dirname(to_bytes(sys.modules[acr.n_python_package_name].__file__, errors='surrogate_or_strict'))
                 return resource, to_text(path, errors='surrogate_or_strict'), collection_name
 
-        except IOError:
+        except (IOError, ModuleNotFoundError) as e:
             continue
         except Exception as ex:
             # FIXME: pick out typical import errors first, then error logging
@@ -867,8 +1041,8 @@ def _get_collection_name_from_path(path):
     :return: collection name or None
     """
 
-    # FIXME: mess with realpath canonicalization or not?
-    path = to_native(path)
+    # ensure we compare full paths since pkg path will be abspath
+    path = to_native(os.path.abspath(to_bytes(path)))
 
     path_parts = path.split('/')
     if path_parts.count('ansible_collections') != 1:
@@ -893,6 +1067,7 @@ def _get_collection_name_from_path(path):
 
     original_path_prefix = os.path.join('/', *path_parts[0:ac_pos + 3])
 
+    imported_pkg_path = to_native(os.path.abspath(to_bytes(imported_pkg_path)))
     if original_path_prefix != imported_pkg_path:
         return None
 

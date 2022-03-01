@@ -402,7 +402,9 @@ The YAML specification considers the following `escape sequences <https://yaml.o
 
 * ``\U........`` -- 8-digit hex escape
 
-Here are some examples on how to write Windows paths::
+Here are some examples on how to write Windows paths:
+
+.. code-block:: ini
 
     # GOOD
     tempdir: C:\Windows\Temp
@@ -423,7 +425,9 @@ This is an example which will fail:
     # FAILS
     tempdir: "C:\Windows\Temp"
 
-This example shows the use of single quotes when they are required::
+This example shows the use of single quotes when they are required:
+
+.. code-block:: yaml+jinja
 
     ---
     - name: Copy tomcat config
@@ -433,7 +437,7 @@ This example shows the use of single quotes when they are required::
 
 Legacy key=value Style
 ----------------------
-The legacy ``key=value`` syntax is used on the command line for ad-hoc commands,
+The legacy ``key=value`` syntax is used on the command line for ad hoc commands,
 or inside playbooks. The use of this style is discouraged within playbooks
 because backslash characters need to be escaped, making playbooks harder to read.
 The legacy syntax depends on the specific implementation in Ansible, and quoting
@@ -509,5 +513,5 @@ guides for Windows modules differ substantially from those for standard standard
        Windows specific module list, all implemented in PowerShell
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

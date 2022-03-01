@@ -1,0 +1,42 @@
+{
+    "testns.testcol.noop_vars_plugin": {
+        "doc": {
+            "collection": "testns.testcol",
+            "deprecated": {
+                "alternative": "Use some other module",
+                "removed_from_collection": "testns.testcol2",
+                "removed_in": "3.0.0",
+                "why": "Test deprecation"
+            },
+            "description": "don't test loading host and group vars from a collection",
+            "filename": "./collections/ansible_collections/testns/testcol/plugins/vars/noop_vars_plugin.py",
+            "options": {
+                "stage": {
+                    "choices": [
+                        "all",
+                        "inventory",
+                        "task"
+                    ],
+                    "default": "all",
+                    "env": [
+                        {
+                            "name": "ANSIBLE_VARS_PLUGIN_STAGE"
+                        }
+                    ],
+                    "ini": [
+                        {
+                            "key": "stage",
+                            "section": "testns.testcol.noop_vars_plugin"
+                        }
+                    ],
+                    "type": "str"
+                }
+            },
+            "short_description": "Do NOT load host and group vars",
+            "vars": "noop_vars_plugin"
+        },
+        "examples": null,
+        "metadata": null,
+        "return": null
+    }
+}

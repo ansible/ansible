@@ -4,8 +4,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: varnames
-    author: Ansible Core
+    name: varnames
+    author: Ansible Core Team
     version_added: "2.8"
     short_description: Lookup matching variable names
     description:
@@ -18,7 +18,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: List variables that start with qz_
-  debug: msg="{{ lookup('varnames', '^qz_.+')}}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.varnames', '^qz_.+')}}"
   vars:
     qz_1: hello
     qz_2: world
@@ -26,13 +26,13 @@ EXAMPLES = """
     qz_: "I won't show either"
 
 - name: Show all variables
-  debug: msg="{{ lookup('varnames', '.+')}}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.varnames', '.+')}}"
 
 - name: Show variables with 'hosts' in their names
-  debug: msg="{{ lookup('varnames', 'hosts')}}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.varnames', 'hosts')}}"
 
 - name: Find several related variables that end specific way
-  debug: msg="{{ lookup('varnames', '.+_zone$', '.+_location$') }}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.varnames', '.+_zone$', '.+_location$') }}"
 
 """
 
@@ -58,8 +58,7 @@ class LookupModule(LookupBase):
         if variables is None:
             raise AnsibleError('No variables available to search')
 
-        # no options, yet
-        # self.set_options(direct=kwargs)
+        self.set_options(var_options=variables, direct=kwargs)
 
         ret = []
         variable_names = list(variables.keys())

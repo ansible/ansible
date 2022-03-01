@@ -1,5 +1,11 @@
 galaxy_verbosity: "{{ '' if not ansible_verbosity else '-' ~ ('v' * ansible_verbosity) }}"
 
+gpg_homedir: "{{ galaxy_dir }}/gpg"
+
+pulp_repositories:
+  - published
+  - secondary
+
 publish_namespaces:
   - ansible_test
 
@@ -69,8 +75,28 @@ collection_list:
   # Complex dependency resolution
   - namespace: parent_dep
     name: parent_collection
+    version: 0.0.1
+    dependencies:
+      child_dep.child_collection: '<0.5.0'
+  - namespace: parent_dep
+    name: parent_collection
+    version: 1.0.0
     dependencies:
       child_dep.child_collection: '>=0.5.0,<1.0.0'
+  - namespace: parent_dep
+    name: parent_collection
+    version: 1.1.0
+    dependencies:
+      child_dep.child_collection: '>=0.9.9,<=1.0.0'
+  - namespace: parent_dep
+    name: parent_collection
+    version: 2.0.0
+    dependencies:
+      child_dep.child_collection: '>=1.0.0'
+  - namespace: parent_dep2
+    name: parent_collection
+    dependencies:
+      child_dep.child_collection: '0.5.0'
   - namespace: child_dep
     name: child_collection
     version: 0.4.0
@@ -84,6 +110,9 @@ collection_list:
       child_dep.child_dep2: '!=1.2.3'
   - namespace: child_dep
     name: child_collection
+    version: 1.0.0
+    dependencies:
+      child_dep.child_dep2: '!=1.2.3'
   - namespace: child_dep
     name: child_dep2
     version: 1.2.2
@@ -110,3 +139,14 @@ collection_list:
   - namespace: symlink
     name: symlink
     use_symlink: yes
+
+  # Caching update tests
+  - namespace: cache
+    name: cache
+    version: 1.0.0
+
+  # Dep with beta version
+  - namespace: dep_with_beta
+    name: parent
+    dependencies:
+      namespace1.name1: '*'

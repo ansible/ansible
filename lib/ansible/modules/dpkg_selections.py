@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
 # Copyright: Ansible Project
@@ -20,19 +19,31 @@ author:
 options:
     name:
         description:
-            - Name of the package
+            - Name of the package.
         required: true
+        type: str
     selection:
         description:
             - The selection state to set the package to.
         choices: [ 'install', 'hold', 'deinstall', 'purge' ]
         required: true
+        type: str
+extends_documentation_fragment:
+- action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    platform:
+        support: full
+        platforms: debian
 notes:
     - This module won't cause any packages to be installed/removed/purged, use the C(apt) module for that.
 '''
 EXAMPLES = '''
 - name: Prevent python from being upgraded
-  dpkg_selections:
+  ansible.builtin.dpkg_selections:
     name: python
     selection: hold
 '''
@@ -44,7 +55,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=True),
-            selection=dict(choices=['install', 'hold', 'deinstall', 'purge'])
+            selection=dict(choices=['install', 'hold', 'deinstall', 'purge'], required=True)
         ),
         supports_check_mode=True,
     )

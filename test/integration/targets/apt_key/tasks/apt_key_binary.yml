@@ -1,0 +1,12 @@
+---
+
+- name: Ensure import of binary key downloaded using URLs works
+  apt_key:
+    url: https://ci-files.testing.ansible.com/test/integration/targets/apt_key/apt-key-example-binary.gpg
+  register: apt_key_binary_test
+
+- name: Validate the results
+  assert:
+      that:
+          - 'apt_key_binary_test.changed is defined'
+          - 'apt_key_binary_test.changed'

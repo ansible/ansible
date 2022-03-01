@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import contextlib
 import fnmatch
@@ -21,17 +19,24 @@ def assemble_files_to_ship(complete_file_list):
     # All files which are in the repository except these:
     ignore_patterns = (
         # Developer-only tools
+        '.azure-pipelines/*',
         '.github/*',
         '.github/*/*',
         'changelogs/fragments/*',
         'hacking/backport/*',
-        'hacking/shippable/*',
+        'hacking/azp/*',
         'hacking/tests/*',
         'hacking/ticket_stubs/*',
         'test/sanity/code-smell/botmeta.*',
+        'test/sanity/code-smell/release-names.*',
         'test/utils/*',
         'test/utils/*/*',
         'test/utils/*/*/*',
+        'test/results/.tmp/*',
+        'test/results/.tmp/*/*',
+        'test/results/.tmp/*/*/*',
+        'test/results/.tmp/*/*/*/*',
+        'test/results/.tmp/*/*/*/*/*',
         '.git*',
     )
     ignore_files = frozenset((
@@ -48,12 +53,19 @@ def assemble_files_to_ship(complete_file_list):
         'hacking/report.py',
         'hacking/return_skeleton_generator.py',
         'hacking/test-module',
-        'hacking/test-module.py',
         'test/support/README.md',
+        'test/lib/ansible_test/_internal/commands/sanity/bin_symlinks.py',
+        'test/lib/ansible_test/_internal/commands/sanity/integration_aliases.py',
         '.cherry_picker.toml',
         '.mailmap',
+        # Generated as part of a build step
+        'docs/docsite/rst/conf.py',
+        'docs/docsite/rst/index.rst',
         # Possibly should be included
         'examples/scripts/uptime.py',
+        'examples/scripts/my_test.py',
+        'examples/scripts/my_test_info.py',
+        'examples/scripts/my_test_facts.py',
         'examples/DOCUMENTATION.yml',
         'examples/play.yml',
         'examples/hosts.yaml',
@@ -63,22 +75,27 @@ def assemble_files_to_ship(complete_file_list):
         'hacking/env-setup',
         'hacking/env-setup.fish',
         'MANIFEST',
+        'setup.cfg',
+        # docs for test files not included in sdist
+        'docs/docsite/rst/dev_guide/testing/sanity/bin-symlinks.rst',
+        'docs/docsite/rst/dev_guide/testing/sanity/botmeta.rst',
+        'docs/docsite/rst/dev_guide/testing/sanity/integration-aliases.rst',
+        'docs/docsite/rst/dev_guide/testing/sanity/release-names.rst',
     ))
 
     # These files are generated and then intentionally added to the sdist
 
     # Manpages
+    ignore_script = ('ansible-connection', 'ansible-test')
     manpages = ['docs/man/man1/ansible.1']
     for dirname, dummy, files in os.walk('bin'):
         for filename in files:
-            path = os.path.join(dirname, filename)
-            if os.path.islink(path):
-                if os.readlink(path) == 'ansible':
-                    manpages.append('docs/man/man1/%s.1' % filename)
+            if filename in ignore_script:
+                continue
+            manpages.append('docs/man/man1/%s.1' % filename)
 
     # Misc
     misc_generated_files = [
-        'SYMLINK_CACHE.json',
         'PKG-INFO',
     ]
 
@@ -99,7 +116,11 @@ def assemble_files_to_install(complete_file_list):
     """
     This looks for all of the files which should show up in an installation of ansible
     """
-    ignore_patterns = tuple()
+    ignore_patterns = (
+        # Tests excluded from sdist
+        'test/lib/ansible_test/_internal/commands/sanity/bin_symlinks.py',
+        'test/lib/ansible_test/_internal/commands/sanity/integration_aliases.py',
+    )
 
     pkg_data_files = []
     for path in complete_file_list:
@@ -212,8 +233,9 @@ def install_sdist(tmp_dir, sdist_dir):
         raise Exception('sdist install failed:\n%s' % stderr)
 
     # Determine the prefix for the installed files
-    match = re.search('^creating (%s/.*?/(?:site|dist)-packages)/ansible$' %
+    match = re.search('^copying .* -> (%s/.*?/(?:site|dist)-packages)/ansible$' %
                       tmp_dir, stdout, flags=re.M)
+
     return match.group(1)
 
 
@@ -245,10 +267,17 @@ def check_sdist_files_are_wanted(sdist_dir, to_ship_files):
             dirname = ''
 
         for filename in files:
+            if filename == 'setup.cfg':
+                continue
+
             path = os.path.join(dirname, filename)
             if path not in to_ship_files:
+
                 if fnmatch.fnmatch(path, 'changelogs/CHANGELOG-v2.[0-9]*.rst'):
                     # changelog files are expected
+                    continue
+
+                if fnmatch.fnmatch(path, 'lib/ansible_core.egg-info/*'):
                     continue
 
                 # FIXME: ansible-test doesn't pass the paths of symlinks to us so we aren't
@@ -271,7 +300,7 @@ def check_installed_contains_expected(install_dir, to_install_files):
 
 
 EGG_RE = re.compile('ansible[^/]+\\.egg-info/(PKG-INFO|SOURCES.txt|'
-                    'dependency_links.txt|not-zip-safe|requires.txt|top_level.txt)$')
+                    'dependency_links.txt|not-zip-safe|requires.txt|top_level.txt|entry_points.txt)$')
 
 
 def check_installed_files_are_wanted(install_dir, to_install_files):

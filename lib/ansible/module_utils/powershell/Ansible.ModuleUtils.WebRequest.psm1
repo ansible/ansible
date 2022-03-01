@@ -214,11 +214,13 @@ Function Get-AnsibleWebRequest {
 
     if ($UseDefaultCredential -and $web_request -is [System.Net.HttpWebRequest]) {
         $web_request.UseDefaultCredentials = $true
-    } elseif ($UrlUsername) {
+    }
+    elseif ($UrlUsername) {
         if ($ForceBasicAuth) {
             $auth_value = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $UrlUsername, $UrlPassword)))
             $web_request.Headers.Add("Authorization", "Basic $auth_value")
-        } else {
+        }
+        else {
             $credential = New-Object -TypeName System.Net.NetworkCredential -ArgumentList $UrlUsername, $UrlPassword
             $web_request.Credentials = $credential
         }
@@ -238,7 +240,8 @@ Function Get-AnsibleWebRequest {
                 $cert = New-Object -TypeName "$crypto_ns.X509Certificate2" -ArgumentList @(
                     $ClientCert, $ClientCertPassword
                 )
-            } catch [System.Security.Cryptography.CryptographicException] {
+            }
+            catch [System.Security.Cryptography.CryptographicException] {
                 Write-Error -Message "Failed to read client certificate at '$ClientCert'" -Exception $_.Exception -Category SecurityError
                 return
             }
@@ -250,9 +253,11 @@ Function Get-AnsibleWebRequest {
 
     if (-not $UseProxy) {
         $proxy = $null
-    } elseif ($ProxyUrl) {
+    }
+    elseif ($ProxyUrl) {
         $proxy = New-Object -TypeName System.Net.WebProxy -ArgumentList $ProxyUrl, $true
-    } else  {
+    }
+    else {
         $proxy = $web_request.Proxy
     }
 
@@ -260,15 +265,17 @@ Function Get-AnsibleWebRequest {
     # proxy to work with, otherwise just ignore the credentials property.
     if ($null -ne $proxy) {
         if ($ProxyUseDefaultCredential) {
-            # Weird hack, $web_request.Proxy returns an IWebProxy object which only gurantees the Credentials
+            # Weird hack, $web_request.Proxy returns an IWebProxy object which only guarantees the Credentials
             # property. We cannot set UseDefaultCredentials so we just set the Credentials to the
             # DefaultCredentials in the CredentialCache which does the same thing.
             $proxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials
-        } elseif ($ProxyUsername) {
+        }
+        elseif ($ProxyUsername) {
             $proxy.Credentials = New-Object -TypeName System.Net.NetworkCredential -ArgumentList @(
                 $ProxyUsername, $ProxyPassword
             )
-        } else {
+        }
+        else {
             $proxy.Credentials = $null
         }
     }
@@ -305,7 +312,8 @@ Function Get-AnsibleWebRequest {
         if ($Headers -and $Headers.ContainsKey("User-Agent")) {
             if ($HttpAgent -eq $ansible_web_request_options.http_agent.default) {
                 $HttpAgent = $Headers['User-Agent']
-            } elseif ($null -ne $Module) {
+            }
+            elseif ($null -ne $Module) {
                 $Module.Warn("The 'User-Agent' header and the 'http_agent' was set, using the 'http_agent' for web request")
             }
         }
@@ -316,7 +324,8 @@ Function Get-AnsibleWebRequest {
             safe {
                 if ($web_request.Method -in @("GET", "HEAD")) {
                     $web_request.AllowAutoRedirect = $true
-                } else {
+                }
+                else {
                     $web_request.AllowAutoRedirect = $false
                 }
             }
@@ -325,7 +334,8 @@ Function Get-AnsibleWebRequest {
 
         if ($MaximumRedirection -eq 0) {
             $web_request.AllowAutoRedirect = $false
-        } else {
+        }
+        else {
             $web_request.MaximumAutomaticRedirections = $MaximumRedirection
         }
     }
@@ -388,16 +398,16 @@ Function Invoke-WithWebRequest {
     #>
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [System.Object]
         [ValidateScript({ $_.GetType().FullName -eq 'Ansible.Basic.AnsibleModule' })]
         $Module,
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [System.Net.WebRequest]
         $Request,
 
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [ScriptBlock]
         $Script,
 
@@ -415,7 +425,8 @@ Function Invoke-WithWebRequest {
         try {
             $Body.CopyTo($request_st)
             $request_st.Flush()
-        } finally {
+        }
+        finally {
             $request_st.Close()
         }
     }
@@ -423,7 +434,8 @@ Function Invoke-WithWebRequest {
     try {
         try {
             $web_response = $Request.GetResponse()
-        } catch [System.Net.WebException] {
+        }
+        catch [System.Net.WebException] {
             # A WebResponse with a status code not in the 200 range will raise a WebException. We check if the
             # exception raised contains the actual response and continue on if IgnoreBadResponse is set. We also
             # make sure we set the status_code return value on the Module object if possible
@@ -436,7 +448,8 @@ Function Invoke-WithWebRequest {
                     $Module.Result.status_code = $_.Exception.Response.StatusCode
                     throw $_
                 }
-            } else {
+            }
+            else {
                 throw $_
             }
         }
@@ -445,7 +458,8 @@ Function Invoke-WithWebRequest {
             # A FileWebResponse won't have these properties set
             $Module.Result.msg = "OK"
             $Module.Result.status_code = 200
-        } else {
+        }
+        else {
             $Module.Result.msg = $web_response.StatusDescription
             $Module.Result.status_code = $web_response.StatusCode
         }
@@ -454,10 +468,12 @@ Function Invoke-WithWebRequest {
         try {
             # Invoke the ScriptBlock and pass in WebResponse and ResponseStream
             &$Script -Response $web_response -Stream $response_stream
-        } finally {
+        }
+        finally {
             $response_stream.Dispose()
         }
-    } finally {
+    }
+    finally {
         if ($web_response) {
             $web_response.Close()
         }
@@ -483,28 +499,28 @@ Function Get-AnsibleWebRequestSpec {
 # Kept here for backwards compat as this variable was added in Ansible 2.9. Ultimately this util should be removed
 # once the deprecation period has been added.
 $ansible_web_request_options = @{
-    method = @{ type="str" }
-    follow_redirects = @{ type="str"; choices=@("all","none","safe"); default="safe" }
-    headers = @{ type="dict" }
-    http_agent = @{ type="str"; default="ansible-httpget" }
-    maximum_redirection = @{ type="int"; default=50 }
-    timeout = @{ type="int"; default=30 }  # Was defaulted to 10 in win_get_url but 30 in win_uri so we use 30
-    validate_certs = @{ type="bool"; default=$true }
+    method = @{ type = "str" }
+    follow_redirects = @{ type = "str"; choices = @("all", "none", "safe"); default = "safe" }
+    headers = @{ type = "dict" }
+    http_agent = @{ type = "str"; default = "ansible-httpget" }
+    maximum_redirection = @{ type = "int"; default = 50 }
+    timeout = @{ type = "int"; default = 30 }  # Was defaulted to 10 in win_get_url but 30 in win_uri so we use 30
+    validate_certs = @{ type = "bool"; default = $true }
 
     # Credential options
-    client_cert = @{ type="str" }
-    client_cert_password = @{ type="str"; no_log=$true }
-    force_basic_auth = @{ type="bool"; default=$false }
-    url_username = @{ type="str" }
-    url_password = @{ type="str"; no_log=$true }
-    use_default_credential = @{ type="bool"; default=$false }
+    client_cert = @{ type = "str" }
+    client_cert_password = @{ type = "str"; no_log = $true }
+    force_basic_auth = @{ type = "bool"; default = $false }
+    url_username = @{ type = "str" }
+    url_password = @{ type = "str"; no_log = $true }
+    use_default_credential = @{ type = "bool"; default = $false }
 
     # Proxy options
-    use_proxy = @{ type="bool"; default=$true }
-    proxy_url = @{ type="str" }
-    proxy_username = @{ type="str" }
-    proxy_password = @{ type="str"; no_log=$true }
-    proxy_use_default_credential = @{ type="bool"; default=$false }
+    use_proxy = @{ type = "bool"; default = $true }
+    proxy_url = @{ type = "str" }
+    proxy_username = @{ type = "str" }
+    proxy_password = @{ type = "str"; no_log = $true }
+    proxy_use_default_credential = @{ type = "bool"; default = $false }
 }
 
 $export_members = @{

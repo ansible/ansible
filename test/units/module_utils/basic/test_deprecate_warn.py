@@ -10,6 +10,8 @@ import json
 
 import pytest
 
+from ansible.module_utils.common import warnings
+
 
 @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
 def test_warn(am, capfd):
@@ -23,7 +25,9 @@ def test_warn(am, capfd):
 
 
 @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
-def test_deprecate(am, capfd):
+def test_deprecate(am, capfd, monkeypatch):
+    monkeypatch.setattr(warnings, '_global_deprecations', [])
+
     am.deprecate('deprecation1')
     am.deprecate('deprecation2', '2.3')  # pylint: disable=ansible-deprecated-no-collection-name
     am.deprecate('deprecation3', version='2.4')  # pylint: disable=ansible-deprecated-no-collection-name
@@ -67,7 +71,7 @@ def test_deprecate_without_list(am, capfd):
 
 
 @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
-def test_deprecate_without_list(am, capfd):
+def test_deprecate_without_list_version_date_not_set(am, capfd):
     with pytest.raises(AssertionError) as ctx:
         am.deprecate('Simple deprecation warning', date='', version='')
     assert ctx.value.args[0] == "implementation error -- version and date must not both be set"

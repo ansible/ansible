@@ -1,0 +1,4 @@
+plugin: cache_host
+cache: true
+cache_plugin: jsonfile
+cache_connection: ./cache

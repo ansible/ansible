@@ -4,7 +4,7 @@
 Understanding privilege escalation: become
 ******************************************
 
-Ansible uses existing privilege escalation systems to execute tasks with root privileges or with another user's permissions. Because this feature allows you to 'become' another user, different from the user that logged into the machine (remote user), we call it ``become``. The ``become`` keyword leverages existing privilege escalation tools like `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, `ksu`, `runas`, `machinectl` and others.
+Ansible uses existing privilege escalation systems to execute tasks with root privileges or with another user's permissions. Because this feature allows you to 'become' another user, different from the user that logged into the machine (remote user), we call it ``become``. The ``become`` keyword uses existing privilege escalation tools like `sudo`, `su`, `pfexec`, `doas`, `pbrun`, `dzdo`, `ksu`, `runas`, `machinectl` and others.
 
 .. contents::
    :local:
@@ -147,7 +147,10 @@ Next, if POSIX ACLs are **not** available or :command:`setfacl` could not be
 run, Ansible will attempt to change ownership of the module file using
 :command:`chown` for systems which support doing so as an unprivileged user.
 
-New in Ansible 2.10, if the :command:`chown` fails, Ansible will then check the
+New in Ansible 2.11, at this point, Ansible will try :command:`chmod +a` which
+is a macOS-specific way of setting ACLs on files.
+
+New in Ansible 2.10, if all of the above fails, Ansible will then check the
 value of the configuration setting ``ansible_common_remote_group``. Many
 systems will allow a given user to change the group ownership of a file to a
 group the user is in. As a result, if the second unprivileged user (the
@@ -232,7 +235,7 @@ Not supported by all connection plugins
 
 Privilege escalation methods must also be supported by the connection plugin
 used. Most connection plugins will warn if they do not support become. Some
-will just ignore it as they always run as root (jail, chroot, etc).
+will just ignore it as they always run as root (jail, chroot, and so on).
 
 Only one method may be enabled per host
 ---------------------------------------
@@ -252,7 +255,7 @@ or '/bin/chmod' as the allowed commands this will fail with ansible as those
 paths won't match with the temporary file that Ansible creates to run the
 module. If you have security rules that constrain your sudo/pbrun/doas environment
 to running specific command paths only, use Ansible from a special account that
-does not have this constraint, or use :ref:`ansible_tower` to manage indirect access to SSH credentials.
+does not have this constraint, or use AWX or the :ref:`ansible_platform` to manage indirect access to SSH credentials.
 
 May not access environment variables populated by pamd_systemd
 --------------------------------------------------------------
@@ -288,7 +291,7 @@ Become and network automation
 
 As of version 2.6, Ansible supports ``become`` for privilege escalation (entering ``enable`` mode or privileged EXEC mode) on all Ansible-maintained network platforms that support ``enable`` mode. Using ``become`` replaces the ``authorize`` and ``auth_pass`` options in a ``provider`` dictionary.
 
-You must set the connection type to either ``connection: network_cli`` or ``connection: httpapi`` to use ``become`` for privilege escalation on network devices. Check the :ref:`platform_options` and :ref:`network_modules` documentation for details.
+You must set the connection type to either ``connection: ansible.netcommon.network_cli`` or ``connection: ansible.netcommon.httpapi`` to use ``become`` for privilege escalation on network devices. Check the :ref:`platform_options` documentation for details.
 
 You can use escalated privileges on only the specific tasks that need them, on an entire play, or on all plays. Adding ``become: yes`` and ``become_method: enable`` instructs Ansible to enter ``enable`` mode before executing the task, play, or playbook where those parameters are set.
 
@@ -303,7 +306,7 @@ To set ``enable`` mode for a specific task, add ``become`` at the task level:
 .. code-block:: yaml
 
    - name: Gather facts (eos)
-     eos_facts:
+     arista.eos.eos_facts:
        gather_subset:
          - "!hardware"
      become: yes
@@ -318,7 +321,7 @@ To set enable mode for all tasks in a single play, add ``become`` at the play le
      become_method: enable
      tasks:
        - name: Gather facts (eos)
-         eos_facts:
+         arista.eos.eos_facts:
            gather_subset:
              - "!hardware"
 
@@ -331,8 +334,8 @@ Often you wish for all tasks in all plays to run using privilege mode, that is b
 
 .. code-block:: yaml
 
-   ansible_connection: network_cli
-   ansible_network_os: eos
+   ansible_connection: ansible.netcommon.network_cli
+   ansible_network_os: arista.eos.eos
    ansible_user: myuser
    ansible_become: yes
    ansible_become_method: enable
@@ -404,7 +407,8 @@ task:
 
 .. code-block:: yaml
 
-    - win_whoami:
+    - Check my user name
+      ansible.windows.win_whoami:
       become: yes
 
 The output will look something similar to the below:
@@ -531,7 +535,7 @@ If running on a version of Ansible that is older than 2.5 or the normal
   .. code-block:: yaml
 
     - name: grant the ansible user the SeTcbPrivilege right
-      win_user_right:
+      ansible.windows.win_user_right:
         name: SeTcbPrivilege
         users: '{{ansible_user}}'
         action: add
@@ -629,7 +633,7 @@ or with this Ansible task:
 .. code-block:: yaml
 
    - name: allow blank password on become
-     win_regedit:
+     ansible.windows.win_regedit:
        path: HKLM:\SYSTEM\CurrentControlSet\Control\Lsa
        name: LimitBlankPasswordUse
        data: 0
@@ -704,7 +708,7 @@ Here are some examples of how to use ``become_flags`` with Windows tasks:
 .. code-block:: yaml
 
   - name: copy a file from a fileshare with custom credentials
-    win_copy:
+    ansible.windows.win_copy:
       src: \\server\share\data\file.txt
       dest: C:\temp\file.txt
       remote_src: yes
@@ -716,12 +720,12 @@ Here are some examples of how to use ``become_flags`` with Windows tasks:
       ansible_become_flags: logon_type=new_credentials logon_flags=netcredentials_only
 
   - name: run a command under a batch logon
-    win_whoami:
+    ansible.windows.win_whoami:
     become: yes
     become_flags: logon_type=batch
 
   - name: run a command and not load the user profile
-    win_whomai:
+    ansible.windows.win_whomai:
     become: yes
     become_flags: logon_flags=
 
@@ -745,9 +749,16 @@ Limitations of become on Windows
 
 * The Secondary Logon service ``seclogon`` must be running to use ``ansible_become_method: runas``
 
+Resolving Temporary File Error Messsages
+----------------------------------------
+
+"Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user"
+* This error can be resolved by installing the package that provides the ``setfacl`` command. (This is frequently the ``acl`` package but check your OS documentation.
+
+
 .. seealso::
 
    `Mailing List <https://groups.google.com/forum/#!forum/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-   `webchat.freenode.net <https://webchat.freenode.net>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

@@ -13,7 +13,7 @@
 - name: Save gpg keys to a file
   copy:
     content: "{{ pubkeys['stdout'] }}\n"
-    dest: '{{ output_dir }}/pubkeys'
+    dest: '{{ remote_tmp_dir }}/pubkeys'
     mode: 0600
 
 #
@@ -21,17 +21,17 @@
 #
 - name: download EPEL GPG key
   get_url:
-    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-7
+    url: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-7
     dest: /tmp/RPM-GPG-KEY-EPEL-7
 
 - name: download sl rpm
   get_url:
-    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/sl-5.02-1.el7.x86_64.rpm
+    url: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/sl-5.02-1.el7.x86_64.rpm
     dest: /tmp/sl.rpm
 
 - name: download Mono key
   get_url:
-    url: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/mono.gpg
+    url: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/mono.gpg
     dest: /tmp/mono.gpg
 
 - name: remove EPEL GPG key from keyring
@@ -96,7 +96,7 @@
 - name: remove GPG key from url
   rpm_key:
     state: absent
-    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-7
+    key: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-7
 
 - name: Confirm key is missing
   shell: "rpm --checksig /tmp/sl.rpm"
@@ -112,7 +112,7 @@
 - name: add GPG key from url
   rpm_key:
     state: present
-    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-7
+    key: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-7
 
 - name: check GPG signature of sl. Should return okay
   shell: "rpm --checksig /tmp/sl.rpm"
@@ -128,7 +128,7 @@
 - name: add very first key on system
   rpm_key:
     state: present
-    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-7
+    key: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/RPM-GPG-KEY-EPEL-7
 
 - name: check GPG signature of sl. Should return okay
   shell: "rpm --checksig /tmp/sl.rpm"
@@ -140,7 +140,7 @@
 
 - name: Issue 20325 - Verify fingerprint of key, invalid fingerprint - EXPECTED FAILURE
   rpm_key:
-    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY.dag
+    key: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/RPM-GPG-KEY.dag
     fingerprint: 1111 1111 1111 1111 1111 1111 1111 1111 1111 1111
   register: result
   failed_when: result is success
@@ -154,7 +154,7 @@
 
 - name: Issue 20325 - Verify fingerprint of key, valid fingerprint
   rpm_key:
-    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY.dag
+    key: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/RPM-GPG-KEY.dag
     fingerprint: EBC6 E12C 62B1 C734 026B 2122 A20E 5214 6B8D 79E6
   register: result
 
@@ -166,7 +166,7 @@
 
 - name: Issue 20325 - Verify fingerprint of key, valid fingerprint - Idempotent check
   rpm_key:
-    key: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/rpm_key/RPM-GPG-KEY.dag
+    key: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/RPM-GPG-KEY.dag
     fingerprint: EBC6 E12C 62B1 C734 026B 2122 A20E 5214 6B8D 79E6
   register: result
 
@@ -183,7 +183,7 @@
   shell: "rpm -q  gpg-pubkey | xargs rpm -e"
 
 - name: Restore the gpg keys normally installed on the system
-  command: 'rpm --import {{ output_dir }}/pubkeys'
+  command: 'rpm --import {{ remote_tmp_dir }}/pubkeys'
 
 - name: Retrieve a list of gpg keys are installed for package checking
   shell: 'rpm -q gpg-pubkey | sort'

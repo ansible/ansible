@@ -1,0 +1,5 @@
+plugin: ansible.builtin.constructed
+keyed_groups:
+  - key: tags
+    prefix: tag
+    default_value: "running"

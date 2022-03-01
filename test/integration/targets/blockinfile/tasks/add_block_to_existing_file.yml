@@ -1,0 +1,52 @@
+- name: copy the sshd_config to the test dir
+  copy:
+    src: sshd_config
+    dest: "{{ remote_tmp_dir_test }}"
+
+- name: insert/update "Match User" configuration block in sshd_config
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/sshd_config"
+    block: |
+      Match User ansible-agent
+      PasswordAuthentication no
+    backup: yes
+  register: blockinfile_test0
+
+- name: ensure we have a bcackup file
+  assert:
+    that:
+      - "'backup_file' in blockinfile_test0"
+
+- name: check content
+  shell: 'grep -c -e "Match User ansible-agent" -e "PasswordAuthentication no" {{ remote_tmp_dir_test }}/sshd_config'
+  register: blockinfile_test0_grep
+
+- debug:
+    var: blockinfile_test0
+    verbosity: 1
+
+- debug:
+    var: blockinfile_test0_grep
+    verbosity: 1
+
+- name: validate first example results
+  assert:
+    that:
+      - 'blockinfile_test0.changed is defined'
+      - 'blockinfile_test0.msg is defined'
+      - 'blockinfile_test0.changed'
+      - 'blockinfile_test0.msg == "Block inserted"'
+      - 'blockinfile_test0_grep.stdout == "2"'
+
+- name: check idemptotence
+  blockinfile:
+    path: "{{ remote_tmp_dir_test }}/sshd_config"
+    block: |
+      Match User ansible-agent
+      PasswordAuthentication no
+  register: blockinfile_test1
+
+- name: validate idempotence results
+  assert:
+    that:
+      - 'not blockinfile_test1.changed'

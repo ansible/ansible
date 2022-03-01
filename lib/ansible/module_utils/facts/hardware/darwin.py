@@ -17,6 +17,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import struct
+import time
+
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.sysctl import get_sysctl
@@ -32,6 +35,7 @@ class DarwinHardware(Hardware):
     - model
     - osversion
     - osrevision
+    - uptime_seconds
     """
     platform = 'Darwin'
 
@@ -42,10 +46,12 @@ class DarwinHardware(Hardware):
         mac_facts = self.get_mac_facts()
         cpu_facts = self.get_cpu_facts()
         memory_facts = self.get_memory_facts()
+        uptime_facts = self.get_uptime_facts()
 
         hardware_facts.update(mac_facts)
         hardware_facts.update(cpu_facts)
         hardware_facts.update(memory_facts)
+        hardware_facts.update(uptime_facts)
 
         return hardware_facts
 
@@ -124,6 +130,28 @@ class DarwinHardware(Hardware):
             memory_facts['memfree_mb'] = memory_facts['memtotal_mb'] - (total_used // 1024 // 1024)
 
         return memory_facts
+
+    def get_uptime_facts(self):
+        # On Darwin, the default format is annoying to parse.
+        # Use -b to get the raw value and decode it.
+        sysctl_cmd = self.module.get_bin_path('sysctl')
+        cmd = [sysctl_cmd, '-b', 'kern.boottime']
+
+        # We need to get raw bytes, not UTF-8.
+        rc, out, err = self.module.run_command(cmd, encoding=None)
+
+        # kern.boottime returns seconds and microseconds as two 64-bits
+        # fields, but we are only interested in the first field.
+        struct_format = '@L'
+        struct_size = struct.calcsize(struct_format)
+        if rc != 0 or len(out) < struct_size:
+            return {}
+
+        (kern_boottime, ) = struct.unpack(struct_format, out[:struct_size])
+
+        return {
+            'uptime_seconds': int(time.time() - kern_boottime),
+        }
 
 
 class DarwinHardwareCollector(HardwareCollector):

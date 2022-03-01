@@ -1,0 +1,5 @@
+- name: remove repos
+  yum_repository:
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ repos }}"

@@ -15,7 +15,9 @@ When you set a value with ``environment:`` at the play or block level, it is ava
 Setting the remote environment in a task
 ----------------------------------------
 
-You can set the environment directly at the task level::
+You can set the environment directly at the task level.
+
+.. code-block:: yaml
 
     - hosts: all
       remote_user: root
@@ -23,13 +25,15 @@ You can set the environment directly at the task level::
       tasks:
 
         - name: Install cobbler
-          package:
+          ansible.builtin.package:
             name: cobbler
             state: present
           environment:
             http_proxy: http://proxy.example.com:8080
 
-You can re-use environment settings by defining them as variables in your play and accessing them in a task as you would access any stored Ansible variable::
+You can re-use environment settings by defining them as variables in your play and accessing them in a task as you would access any stored Ansible variable.
+
+.. code-block:: yaml
 
     - hosts: all
       remote_user: root
@@ -42,12 +46,14 @@ You can re-use environment settings by defining them as variables in your play a
       tasks:
 
         - name: Install cobbler
-          package:
+          ansible.builtin.package:
             name: cobbler
             state: present
           environment: "{{ proxy_env }}"
 
-You can store environment settings for re-use in multiple playbooks by defining them in a group_vars file::
+You can store environment settings for re-use in multiple playbooks by defining them in a group_vars file.
+
+.. code-block:: yaml
 
     ---
     # file: group_vars/boston
@@ -58,7 +64,9 @@ You can store environment settings for re-use in multiple playbooks by defining 
       http_proxy: http://proxy.bos.example.com:8080
       https_proxy: http://proxy.bos.example.com:8080
 
-You can set the remote environment at the play level::
+You can set the remote environment at the play level.
+
+.. code-block:: yaml
 
     - hosts: testing
 
@@ -74,7 +82,9 @@ These examples show proxy settings, but you can provide any number of settings t
 Working with language-specific version managers
 ===============================================
 
-Some language-specific version managers (such as rbenv and nvm) require you to set environment variables while these tools are in use. When using these tools manually, you usually source some environment variables from a script or from lines added to your shell configuration file. In Ansible, you can do this with the environment keyword at the play level::
+Some language-specific version managers (such as rbenv and nvm) require you to set environment variables while these tools are in use. When using these tools manually, you usually source some environment variables from a script or from lines added to your shell configuration file. In Ansible, you can do this with the environment keyword at the play level.
+
+.. code-block:: yaml+jinja
 
     ---
     ### A playbook demonstrating a common npm workflow:
@@ -94,19 +104,19 @@ Some language-specific version managers (such as rbenv and nvm) require you to s
         PATH: /var/local/nvm/versions/node/v4.2.1/bin:{{ ansible_env.PATH }}
 
       tasks:
-      - name: check for package.json
-        stat:
+      - name: Check for package.json
+        ansible.builtin.stat:
           path: '{{ node_app_dir }}/package.json'
         register: packagejson
 
-      - name: npm prune
-        command: npm prune
+      - name: Run npm prune
+        ansible.builtin.command: npm prune
         args:
           chdir: '{{ node_app_dir }}'
         when: packagejson.stat.exists
 
-      - name: npm install
-        npm:
+      - name: Run npm install
+        community.general.npm:
           path: '{{ node_app_dir }}'
         when: packagejson.stat.exists
 
@@ -116,11 +126,13 @@ Some language-specific version managers (such as rbenv and nvm) require you to s
 .. warning::
     Environment variables are normally passed in clear text (shell plugin dependent) so they are not a recommended way of passing secrets to the module being executed.
 
-You can also specify the environment at the task level::
+You can also specify the environment at the task level.
+
+.. code-block:: yaml+jinja
 
     ---
-    - name: install ruby 2.3.1
-      command: rbenv install {{ rbenv_ruby_version }}
+    - name: Install ruby 2.3.1
+      ansible.builtin.command: rbenv install {{ rbenv_ruby_version }}
       args:
         creates: '{{ rbenv_root }}/versions/{{ rbenv_ruby_version }}/bin/ruby'
       vars:
@@ -137,5 +149,5 @@ You can also specify the environment at the task level::
        An introduction to playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

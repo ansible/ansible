@@ -1,0 +1,40 @@
+- name: Create a user account and configure ssh access
+  hosts: testhost
+  gather_facts: no
+
+  tasks:
+    - import_role:
+        name: fetch_tests
+        tasks_from: setup.yml
+      vars:
+        # Keep the remote temp dir and cache the remote_tmp_dir fact. The directory itself
+        # and the fact that contains the path are needed in a separate ansible-playbook run.
+        setup_remote_tmp_dir_skip_cleanup: yes
+        setup_remote_tmp_dir_cache_path: yes
+        skip_cleanup: yes
+
+    # This prevents ssh access. It is fixed in some container images but not all.
+    # https://github.com/ansible/distro-test-containers/pull/70
+    - name: Remove /run/nologin
+      file:
+        path: /run/nologin
+        state: absent
+
+    # Setup ssh access for the unprivileged user.
+    - name: Get home directory for temporary user
+      command: echo ~fetcher
+      register: fetcher_home
+
+    - name: Create .ssh dir
+      file:
+        path: "{{ fetcher_home.stdout }}/.ssh"
+        state: directory
+        owner: fetcher
+        mode: '0700'
+
+    - name: Configure authorized_keys
+      copy:
+        src: "~root/.ssh/authorized_keys"
+        dest: "{{ fetcher_home.stdout }}/.ssh/authorized_keys"
+        owner: fetcher
+        mode: '0600'

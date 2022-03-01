@@ -32,12 +32,15 @@ docs/man/man3/*
 docs/docsite/_build
 docs/docsite/*.html
 docs/docsite/htmlout
+docs/docsite/rst/conf.py
+docs/docsite/rst/index.rst
 docs/docsite/rst/cli/ansible-*.rst
 docs/docsite/rst/cli/ansible.rst
 docs/docsite/rst/dev_guide/collections_galaxy_meta.rst
 docs/docsite/rst/dev_guide/testing/sanity/index.rst.new
 docs/docsite/rst/modules/*.rst
 docs/docsite/rst/collections/*.rst
+!docs/docsite/rst/collections/all_plugins.rst
 docs/docsite/rst/collections/*/*.rst
 docs/docsite/rst/playbooks_directives.rst
 docs/docsite/rst/plugins_by_category.rst
@@ -49,12 +52,10 @@ docs/docsite/searchindex.js
 docs/docsite/_static/*.gif
 docs/docsite/_static/*.png
 docs/docsite/_static/websupport.js
-# deb building stuff...
-/debian/
-deb-build
 # Vim swap files
 *.swp
 *.swo
+[._]*.un~
 credentials.yml
 # test output
 *.retry
@@ -79,7 +80,12 @@ Vagrantfile
 /lib/ansible.egg-info/
 # First used in the `devel` branch during Ansible 2.10 development.
 /lib/ansible_base.egg-info/
-/shippable/
+# First used in the `devel` branch during Ansible 2.11 development.
+/lib/ansible_core.egg-info/
+# vendored lib dir
+lib/ansible/_vendor/*
+!lib/ansible/_vendor/__init__.py
+# test stuff
 /test/integration/cloud-config-*.*
 !/test/integration/cloud-config-*.*.template
 .python-version

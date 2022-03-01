@@ -1,19 +1,38 @@
 - name: Install all collections in a repo, one of which has a recursive dependency
-  command: 'ansible-galaxy collection install git+file://{{ galaxy_dir }}/development/namespace_1/.git'
+  command: 'ansible-galaxy collection install git+file://{{ scm_path }}/namespace_1/.git'
   register: command
 
 - assert:
     that:
-      - command.stdout_lines | length == 9
-      - command.stdout_lines[0] == "Starting galaxy collection install process"
-      - command.stdout_lines[1] == "Process install dependency map"
-      - command.stdout_lines[2] == "Starting collection install process"
-      - "'namespace_1.collection_1' in command.stdout_lines[3]"
-      - "'namespace_1.collection_1' in command.stdout_lines[4]"
-      - "'namespace_1.collection_1' in command.stdout_lines[5]"
-      - "'namespace_2.collection_2' in command.stdout_lines[6]"
-      - "'namespace_2.collection_2' in command.stdout_lines[7]"
-      - "'namespace_2.collection_2' in command.stdout_lines[8]"
+      - command.stdout_lines | length == 12
+      - >-
+        'Starting galaxy collection install process'
+        in command.stdout_lines
+      - >-
+        'Starting collection install process'
+        in command.stdout_lines
+      - >-
+        "Installing 'namespace_1.collection_1:1.0.0' to
+        '{{ install_path }}/namespace_1/collection_1'"
+        in command.stdout_lines
+      - >-
+        'Created collection for namespace_1.collection_1:1.0.0 at
+        {{ install_path }}/namespace_1/collection_1'
+        in command.stdout_lines
+      - >-
+        'namespace_1.collection_1:1.0.0 was installed successfully'
+        in command.stdout_lines
+      - >-
+        "Installing 'namespace_2.collection_2:1.0.0' to
+        '{{ install_path }}/namespace_2/collection_2'"
+        in command.stdout_lines
+      - >-
+        'Created collection for namespace_2.collection_2:1.0.0 at
+        {{ install_path }}/namespace_2/collection_2'
+        in command.stdout_lines
+      - >-
+        'namespace_2.collection_2:1.0.0 was installed successfully'
+        in command.stdout_lines
 
 - name: list installed collections
   command: 'ansible-galaxy collection list'
@@ -25,21 +44,40 @@
       - "'namespace_2.collection_2' in installed_collections.stdout"
 
 - name: Install a specific collection in a repo with a recursive dependency
-  command: 'ansible-galaxy collection install git+file://{{ galaxy_dir }}/development/namespace_1/.git#/collection_1/ --force-with-deps'
+  command: 'ansible-galaxy collection install git+file://{{ scm_path }}/namespace_1/.git#/collection_1/ --force-with-deps'
   register: command
 
 - assert:
     that:
-      - command.stdout_lines | length == 9
-      - command.stdout_lines[0] == "Starting galaxy collection install process"
-      - command.stdout_lines[1] == "Process install dependency map"
-      - command.stdout_lines[2] == "Starting collection install process"
-      - "'namespace_1.collection_1' in command.stdout_lines[3]"
-      - "'namespace_1.collection_1' in command.stdout_lines[4]"
-      - "'namespace_1.collection_1' in command.stdout_lines[5]"
-      - "'namespace_2.collection_2' in command.stdout_lines[6]"
-      - "'namespace_2.collection_2' in command.stdout_lines[7]"
-      - "'namespace_2.collection_2' in command.stdout_lines[8]"
+      - command.stdout_lines | length == 12
+      - >-
+        'Starting galaxy collection install process'
+        in command.stdout_lines
+      - >-
+        'Starting collection install process'
+        in command.stdout_lines
+      - >-
+        "Installing 'namespace_1.collection_1:1.0.0' to
+        '{{ install_path }}/namespace_1/collection_1'"
+        in command.stdout_lines
+      - >-
+        'Created collection for namespace_1.collection_1:1.0.0 at
+        {{ install_path }}/namespace_1/collection_1'
+        in command.stdout_lines
+      - >-
+        'namespace_1.collection_1:1.0.0 was installed successfully'
+        in command.stdout_lines
+      - >-
+        "Installing 'namespace_2.collection_2:1.0.0' to
+        '{{ install_path }}/namespace_2/collection_2'"
+        in command.stdout_lines
+      - >-
+        'Created collection for namespace_2.collection_2:1.0.0 at
+        {{ install_path }}/namespace_2/collection_2'
+        in command.stdout_lines
+      - >-
+        'namespace_2.collection_2:1.0.0 was installed successfully'
+        in command.stdout_lines
 
 - name: list installed collections
   command: 'ansible-galaxy collection list'

@@ -1,0 +1,53 @@
+---
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: test magic vars for hosts without any failed/unreachable (no serial)
+      assert:
+        that:
+          - ansible_play_batch | length == 3
+          - ansible_play_hosts | length == 3
+          - ansible_play_hosts_all | length == 3
+      run_once: True
+
+    - ping:
+      failed_when: "inventory_hostname == 'failed'"
+
+    - meta: clear_host_errors
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: test host errors were cleared
+      assert:
+        that:
+          - ansible_play_batch | length == 3
+          - ansible_play_hosts | length == 3
+          - ansible_play_hosts_all | length == 3
+      run_once: True
+
+    - ping:
+      failed_when: "inventory_hostname == 'failed'"
+
+    - name: test magic vars exclude failed/unreachable hosts
+      assert:
+        that:
+          - ansible_play_batch | length == 1
+          - ansible_play_hosts | length == 1
+          - "ansible_play_batch == ['successful']"
+          - "ansible_play_hosts == ['successful']"
+          - ansible_play_hosts_all | length == 3
+      run_once: True
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: test failed/unreachable persists between plays
+      assert:
+        that:
+          - ansible_play_batch | length == 1
+          - ansible_play_hosts | length == 1
+          - "ansible_play_batch == ['successful']"
+          - "ansible_play_hosts == ['successful']"
+          - ansible_play_hosts_all | length == 3
+      run_once: True

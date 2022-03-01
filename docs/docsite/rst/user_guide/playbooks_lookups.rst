@@ -11,7 +11,9 @@ Lookup plugins retrieve data from outside sources such as files, databases, key/
 Using lookups in variables
 ==========================
 
-You can populate variables using lookups. Ansible evaluates the value each time it is executed in a task (or template)::
+You can populate variables using lookups. Ansible evaluates the value each time it is executed in a task (or template).
+
+.. code-block:: yaml+jinja
 
     vars:
       motd_value: "{{ lookup('file', '/etc/motd') }}"
@@ -19,7 +21,7 @@ You can populate variables using lookups. Ansible evaluates the value each time 
       - debug:
           msg: "motd value is {{ motd_value }}"
 
-For more details and a list of lookup plugins in ansible-base, see :ref:`plugins_lookup`. You may also find lookup plugins in collections. You can review a list of lookup plugins installed on your control machine with the command ``ansible-doc -l -t lookup``.
+For more details and a list of lookup plugins in ansible-core, see :ref:`plugins_lookup`. You may also find lookup plugins in collections. You can review a list of lookup plugins installed on your control machine with the command ``ansible-doc -l -t lookup``.
 
 .. seealso::
 
@@ -33,5 +35,5 @@ For more details and a list of lookup plugins in ansible-base, see :ref:`plugins
        Looping in playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

@@ -2,24 +2,11 @@
 Primitive replacement for requests to avoid extra dependency.
 Avoids use of urllib2 due to lack of SNI support.
 """
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import json
 import time
-
-try:
-    from urllib import urlencode
-except ImportError:
-    # noinspection PyCompatibility, PyUnresolvedReferences
-    from urllib.parse import urlencode  # pylint: disable=locally-disabled, import-error, no-name-in-module
-
-try:
-    # noinspection PyCompatibility
-    from urlparse import urlparse, urlunparse, parse_qs
-except ImportError:
-    # noinspection PyCompatibility, PyUnresolvedReferences
-    from urllib.parse import urlparse, urlunparse, parse_qs  # pylint: disable=locally-disabled, ungrouped-imports
+import typing as t
 
 from .util import (
     ApplicationError,
@@ -35,12 +22,7 @@ from .util_common import (
 
 class HttpClient:
     """Make HTTP requests via curl."""
-    def __init__(self, args, always=False, insecure=False, proxy=None):
-        """
-        :type args: CommonConfig
-        :type always: bool
-        :type insecure: bool
-        """
+    def __init__(self, args, always=False, insecure=False, proxy=None):  # type: (CommonConfig, bool, bool, t.Optional[str]) -> None
         self.args = args
         self.always = always
         self.insecure = insecure
@@ -49,37 +31,20 @@ class HttpClient:
         self.username = None
         self.password = None
 
-    def get(self, url):
-        """
-        :type url: str
-        :rtype: HttpResponse
-        """
+    def get(self, url):  # type: (str) -> HttpResponse
+        """Perform an HTTP GET and return the response."""
         return self.request('GET', url)
 
-    def delete(self, url):
-        """
-        :type url: str
-        :rtype: HttpResponse
-        """
+    def delete(self, url):  # type: (str) -> HttpResponse
+        """Perform an HTTP DELETE and return the response."""
         return self.request('DELETE', url)
 
-    def put(self, url, data=None, headers=None):
-        """
-        :type url: str
-        :type data: str | None
-        :type headers: dict[str, str] | None
-        :rtype: HttpResponse
-        """
+    def put(self, url, data=None, headers=None):  # type: (str, t.Optional[str], t.Optional[t.Dict[str, str]]) -> HttpResponse
+        """Perform an HTTP PUT and return the response."""
         return self.request('PUT', url, data, headers)
 
-    def request(self, method, url, data=None, headers=None):
-        """
-        :type method: str
-        :type url: str
-        :type data: str | None
-        :type headers: dict[str, str] | None
-        :rtype: HttpResponse
-        """
+    def request(self, method, url, data=None, headers=None):  # type: (str, str, t.Optional[str], t.Optional[t.Dict[str, str]]) -> HttpResponse
+        """Perform an HTTP request and return the response."""
         cmd = ['curl', '-s', '-S', '-i', '-X', method]
 
         if self.insecure:
@@ -148,22 +113,14 @@ class HttpClient:
 
 class HttpResponse:
     """HTTP response from curl."""
-    def __init__(self, method, url, status_code, response):
-        """
-        :type method: str
-        :type url: str
-        :type status_code: int
-        :type response: str
-        """
+    def __init__(self, method, url, status_code, response):  # type: (str, str, int, str) -> None
         self.method = method
         self.url = url
         self.status_code = status_code
         self.response = response
 
-    def json(self):
-        """
-        :rtype: any
-        """
+    def json(self):  # type: () -> t.Any
+        """Return the response parsed as JSON, raising an exception if parsing fails."""
         try:
             return json.loads(self.response)
         except ValueError:
@@ -172,10 +129,6 @@ class HttpResponse:
 
 class HttpError(ApplicationError):
     """HTTP response as an error."""
-    def __init__(self, status, message):
-        """
-        :type status: int
-        :type message: str
-        """
-        super(HttpError, self).__init__('%s: %s' % (status, message))
+    def __init__(self, status, message):  # type: (int, str) -> None
+        super().__init__('%s: %s' % (status, message))
         self.status = status

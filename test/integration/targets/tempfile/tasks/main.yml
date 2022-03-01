@@ -1,0 +1,63 @@
+- name: Create a temporary file with defaults
+  tempfile:
+  register: temp_file_default
+
+- name: Create a temporary directory with defaults
+  tempfile:
+    state: directory
+  register: temp_dir_default
+
+- name: Create a temporary file with optional parameters
+  tempfile:
+    path: "{{ remote_tmp_dir }}"
+    prefix: hello.
+    suffix: .goodbye
+  register: temp_file_options
+
+- name: Create a temporary directory with optional parameters
+  tempfile:
+    state: directory
+    path: "{{ remote_tmp_dir }}"
+    prefix: hello.
+    suffix: .goodbye
+  register: temp_dir_options
+
+- name: Create a temporary file in a non-existent directory
+  tempfile:
+    path: "{{ remote_tmp_dir }}/does_not_exist"
+  register: temp_file_non_existent_path
+  ignore_errors: yes
+
+- name: Create a temporary directory in a non-existent directory
+  tempfile:
+    state: directory
+    path: "{{ remote_tmp_dir }}/does_not_exist"
+  register: temp_dir_non_existent_path
+  ignore_errors: yes
+
+- name: Check results
+  assert:
+    that:
+      - temp_file_default is changed
+      - temp_file_default.state == 'file'
+      - temp_file_default.path | basename | split('.') | first == 'ansible'
+
+      - temp_dir_default is changed
+      - temp_dir_default.state == 'directory'
+      - temp_dir_default.path | basename | split('.') | first == 'ansible'
+
+      - temp_file_options is changed
+      - temp_file_options.state == 'file'
+      - temp_file_options.path.startswith(remote_tmp_dir)
+      - temp_file_options.path | basename | split('.') | first == 'hello'
+      - temp_file_options.path | basename | split('.') | last == 'goodbye'
+
+      - temp_dir_options is changed
+      - temp_dir_options.state == 'directory'
+      - temp_dir_options.path.startswith(remote_tmp_dir)
+      - temp_dir_options.path | basename | split('.') | first == 'hello'
+      - temp_dir_options.path | basename | split('.') | last == 'goodbye'
+
+      - temp_file_non_existent_path is failed
+
+      - temp_dir_non_existent_path is failed

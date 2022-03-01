@@ -1,5 +1,10 @@
 action_groups:
   testgroup:
+    # Test metadata 'extend_group' feature does not get stuck in a recursive loop
+    - metadata:
+        extend_group: othergroup
+    - metadata
+    - ping
     - testns.testcoll.echo1
     - testns.testcoll.echo2
 # note we can define defaults for an action
@@ -7,3 +12,28 @@ action_groups:
 # note we can define defaults in this group for actions/modules in another collection
     - testns.othercoll.other_echoaction
     - testns.othercoll.other_echo1
+  othergroup:
+    - metadata:
+        extend_group:
+          - testgroup
+  empty_metadata:
+    - metadata: {}
+  bad_metadata_format:
+    - unexpected_key:
+        key: value
+      metadata:
+        extend_group: testgroup
+  multiple_metadata:
+    - metadata:
+        extend_group: testgroup
+    - metadata:
+        extend_group: othergroup
+  bad_metadata_options:
+    - metadata:
+        unexpected_key: testgroup
+  bad_metadata_type:
+    - metadata: [testgroup]
+  bad_metadata_option_type:
+    - metadata:
+        extend_group:
+          name: testgroup

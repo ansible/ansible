@@ -13,7 +13,8 @@ Function Import-PrivilegeUtil {
     $msg = "Import-PrivilegeUtil is deprecated and no longer needed, this cmdlet will be removed in a future version"
     if ((Get-Command -Name Add-DeprecationWarning -ErrorAction SilentlyContinue) -and (Get-Variable -Name result -ErrorAction SilentlyContinue)) {
         Add-DeprecationWarning -obj $result.Value -message $msg -version 2.12
-    } else {
+    }
+    else {
         $module = Get-Variable -Name module -ErrorAction SilentlyContinue
         if ($null -ne $module -and $module.Value.GetType().FullName -eq "Ansible.Basic.AnsibleModule") {
             $module.Value.Deprecate($msg, "2.12")
@@ -37,7 +38,7 @@ Function Get-AnsiblePrivilege {
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory=$true)][String]$Name
+        [Parameter(Mandatory = $true)][String]$Name
     )
 
     if (-not [Ansible.Privilege.PrivilegeUtil]::CheckPrivilegeName($Name)) {
@@ -49,7 +50,8 @@ Function Get-AnsiblePrivilege {
     if ($privilege_info.ContainsKey($Name)) {
         $status = $privilege_info.$Name
         return $status.HasFlag([Ansible.Privilege.PrivilegeAttributes]::Enabled)
-    } else {
+    }
+    else {
         return $null
     }
 }
@@ -70,11 +72,11 @@ Function Set-AnsiblePrivilege {
     #>
     [CmdletBinding(SupportsShouldProcess)]
     param(
-        [Parameter(Mandatory=$true)][String]$Name,
-        [Parameter(Mandatory=$true)][bool]$Value
+        [Parameter(Mandatory = $true)][String]$Name,
+        [Parameter(Mandatory = $true)][bool]$Value
     )
 
-    $action = switch($Value) {
+    $action = switch ($Value) {
         $true { "Enable" }
         $false { "Disable" }
     }
@@ -82,7 +84,8 @@ Function Set-AnsiblePrivilege {
     $current_state = Get-AnsiblePrivilege -Name $Name
     if ($current_state -eq $Value) {
         return  # no change needs to occur
-    } elseif ($null -eq $current_state) {
+    }
+    elseif ($null -eq $current_state) {
         # once a privilege is removed from a token we cannot do anything with it
         throw [System.InvalidOperationException] "Cannot $($action.ToLower()) the privilege '$Name' as it has been removed from the token"
     }

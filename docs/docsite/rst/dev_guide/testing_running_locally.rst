@@ -44,12 +44,12 @@ Environment Variables
 When using environment variables to manipulate tests there some limitations to keep in mind. Environment variables are:
 
 * Not propagated from the host to the test environment when using the ``--docker`` or ``--remote`` options.
-* Not exposed to the test environment unless whitelisted in ``test/lib/ansible_test/_internal/util.py`` in the ``common_environment`` function.
+* Not exposed to the test environment unless enabled in ``test/lib/ansible_test/_internal/util.py`` in the ``common_environment`` function.
 
     Example: ``ANSIBLE_KEEP_REMOTE_FILES=1`` can be set when running ``ansible-test integration --venv``. However, using the ``--docker`` option would
     require running ``ansible-test shell`` to gain access to the Docker environment. Once at the shell prompt, the environment variable could be set
     and the tests executed. This is useful for debugging tests inside a container by following the
-    :ref:`Debugging AnsibleModule-based modules <debugging_ansiblemodule_based_modules>` instructions.
+    :ref:`Debugging AnsibleModule-based modules <debugging_modules>` instructions.
 
 Interactive Shell
 =================
@@ -70,7 +70,9 @@ be written.  Online reports are available but only cover the ``devel`` branch (s
 Add the ``--coverage`` option to any test command to collect code coverage data.  If you
 aren't using the ``--venv`` or ``--docker`` options which create an isolated python
 environment then you may have to use the ``--requirements`` option to ensure that the
-correct version of the coverage module is installed::
+correct version of the coverage module is installed:
+
+.. code-block:: shell-session
 
    ansible-test coverage erase
    ansible-test units --coverage apt
@@ -84,6 +86,8 @@ Reports can be generated in several different formats:
 * ``ansible-test coverage html`` - HTML report.
 * ``ansible-test coverage xml`` - XML report.
 
-To clear data between test runs, use the ``ansible-test coverage erase`` command. For a full list of features see the online help::
+To clear data between test runs, use the ``ansible-test coverage erase`` command. For a full list of features see the online help:
+
+.. code-block:: shell-session
 
    ansible-test coverage --help

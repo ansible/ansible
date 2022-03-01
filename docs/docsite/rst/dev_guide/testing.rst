@@ -13,7 +13,7 @@ Why test your Ansible contributions?
 
 If you're a developer, one of the most valuable things you can do is to look at GitHub issues and help fix bugs, since bug-fixing is almost always prioritized over feature development.  Even for non-developers, helping to test pull requests for bug fixes and features is still immensely valuable.
 
-Ansible users who understand how to write playbooks and roles should be able to test their work.  GitHub pull requests will automatically run a variety of tests (e.g., Shippable) that show bugs in action.  However, contributors must also test their work outside of the automated GitHub checks and show evidence of these tests in the PR to ensure that their work will be more likely to be reviewed and merged.
+Ansible users who understand how to write playbooks and roles should be able to test their work.  GitHub pull requests will automatically run a variety of tests (for example, Azure Pipelines) that show bugs in action.  However, contributors must also test their work outside of the automated GitHub checks and show evidence of these tests in the PR to ensure that their work will be more likely to be reviewed and merged.
 
 Read on to learn how Ansible is tested, how to test your contributions locally, and how to extend testing capabilities.
 
@@ -51,16 +51,18 @@ able to add integration tests and so GitHub pull requests with integration tests
 bugs in action will also be a great way to help.
 
 
-Testing within GitHub & Shippable
-=================================
+Testing within GitHub & Azure Pipelines
+=======================================
 
 
 Organization
 ------------
 
-When Pull Requests (PRs) are created they are tested using Shippable, a Continuous Integration (CI) tool. Results are shown at the end of every PR.
+When Pull Requests (PRs) are created they are tested using Azure Pipelines, a Continuous Integration (CI) tool. Results are shown at the end of every PR.
 
-When Shippable detects an error and it can be linked back to a file that has been modified in the PR then the relevant lines will be added as a GitHub comment. For example::
+When Azure Pipelines detects an error and it can be linked back to a file that has been modified in the PR then the relevant lines will be added as a GitHub comment. For example:
+
+.. code-block:: text
 
    The test `ansible-test sanity --test pep8` failed with the following errors:
 
@@ -69,13 +71,17 @@ When Shippable detects an error and it can be linked back to a file that has bee
    The test `ansible-test sanity --test validate-modules` failed with the following error:
    lib/ansible/modules/network/foo/bar.py:0:0: E307 version_added should be 2.4. Currently 2.3
 
-From the above example we can see that ``--test pep8`` and ``--test validate-modules`` have identified an issue. The commands given allow you to run the same tests locally to ensure you've fixed all issues without having to push your changes to GitHub and wait for Shippable, for example:
+From the above example we can see that ``--test pep8`` and ``--test validate-modules`` have identified an issue. The commands given allow you to run the same tests locally to ensure you've fixed all issues without having to push your changes to GitHub and wait for Azure Pipelines, for example:
 
-If you haven't already got Ansible available, use the local checkout by running::
+If you haven't already got Ansible available, use the local checkout by running:
+
+.. code-block:: shell-session
 
   source hacking/env-setup
 
-Then run the tests detailed in the GitHub comment::
+Then run the tests detailed in the GitHub comment:
+
+.. code-block:: shell-session
 
   ansible-test sanity --test pep8
   ansible-test sanity --test validate-modules
@@ -90,13 +96,13 @@ Occasionally you may find your PR fails due to a reason unrelated to your change
 * a temporary issue accessing an external resource, such as a yum or git repo
 * a timeout creating a virtual machine to run the tests on
 
-If either of these issues appear to be the case, you can rerun the Shippable test by:
+If either of these issues appear to be the case, you can rerun the Azure Pipelines test by:
 
 * adding a comment with ``/rebuild`` (full rebuild) or ``/rebuild_failed`` (rebuild only failed CI nodes) to the PR
 * closing and re-opening the PR (full rebuild)
 * making another change to the PR and pushing to GitHub
 
-If the issue persists, please contact us in ``#ansible-devel`` on Freenode IRC.
+If the issue persists, please contact us in the ``#ansible-devel`` chat channel (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_).
 
 
 How to test a PR
@@ -123,11 +129,12 @@ Here's how:
    sent may have mistakes or malicious code that could have a negative impact on your system. We recommend
    doing all testing on a virtual machine, whether a cloud instance, or locally.  Some users like Vagrant
    or Docker for this, but they are optional. It is also useful to have virtual machines of different Linux or
-   other flavors, since some features (apt vs. yum, for example) are specific to those OS versions.
+   other flavors, since some features (for example, package managers such as apt or yum) are specific to those OS versions.
 
 
-Create a fresh area to work::
+Create a fresh area to work:
 
+.. code-block:: shell-session
 
    git clone https://github.com/ansible/ansible.git ansible-pr-testing
    cd ansible-pr-testing
@@ -140,7 +147,9 @@ Next, find the pull request you'd like to test and make note of its number. It w
 
    It is important that the PR request target be ``ansible:devel``, as we do not accept pull requests into any other branch. Dot releases are cherry-picked manually by Ansible staff.
 
-Use the pull request number when you fetch the proposed changes and create your branch for testing::
+Use the pull request number when you fetch the proposed changes and create your branch for testing:
+
+.. code-block:: shell-session
 
    git fetch origin refs/pull/XXXX/head:testing_PRXXXX
    git checkout testing_PRXXXX
@@ -156,7 +165,9 @@ The first command fetches the proposed changes from the pull request and creates
 The Ansible source includes a script that allows you to use Ansible directly from source without requiring a
 full installation that is frequently used by developers on Ansible.
 
-Simply source it (to use the Linux/Unix terminology) to begin using it immediately::
+Simply source it (to use the Linux/Unix terminology) to begin using it immediately:
+
+.. code-block:: shell-session
 
    source ./hacking/env-setup
 
@@ -174,6 +185,32 @@ Some ideas of what to test are:
 * Test to see if any Python backtraces returned (that's a bug)
 * Test on different operating systems, or against different library versions
 
+Run sanity tests
+^^^^^^^^^^^^^^^^
+
+.. code:: shell
+
+   ansible-test sanity
+
+More information: :ref:`testing_sanity`
+
+Run unit tests
+^^^^^^^^^^^^^^
+
+.. code:: shell
+
+   ansible-test units
+
+More information: :ref:`testing_units`
+
+Run integration tests
+^^^^^^^^^^^^^^^^^^^^^
+
+.. code:: shell
+
+   ansible-test integration -v ping
+
+More information: :ref:`testing_integration`
 
 Any potential issues should be added as comments on the pull request (and it's acceptable to comment if the feature works as well), remembering to include the output of ``ansible --version``
 
@@ -194,7 +231,7 @@ If the PR does not resolve the issue, or if you see any failures from the unit/i
    |   \```
 
 Code Coverage Online
-````````````````````
+^^^^^^^^^^^^^^^^^^^^
 
 `The online code coverage reports <https://codecov.io/gh/ansible/ansible>`_ are a good way
 to identify areas for testing improvement in Ansible.  By following red colors you can

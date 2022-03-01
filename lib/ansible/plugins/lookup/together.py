@@ -5,8 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: together
-    author:  Bradley Young <young.bradley@gmail.com>
+    name: together
+    author:  Bradley Young (!UNKNOWN) <young.bradley@gmail.com>
     version_added: '1.3'
     short_description: merges lists into synchronized list
     description:
@@ -22,7 +22,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: item.0 returns from the 'a' list, item.1 returns from the '1' list
-  debug:
+  ansible.builtin.debug:
     msg: "{{ item.0 }} and {{ item.1 }}"
   with_together:
     - ['a', 'b', 'c', 'd']
@@ -32,9 +32,12 @@ EXAMPLES = """
 RETURN = """
   _list:
     description: synchronized list
+    type: list
+    elements: list
 """
+import itertools
+
 from ansible.errors import AnsibleError
-from ansible.module_utils.six.moves import zip_longest
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
 
@@ -62,4 +65,4 @@ class LookupModule(LookupBase):
         if len(my_list) == 0:
             raise AnsibleError("with_together requires at least one element in each list")
 
-        return [self._flatten(x) for x in zip_longest(*my_list, fillvalue=None)]
+        return [self._flatten(x) for x in itertools.zip_longest(*my_list, fillvalue=None)]

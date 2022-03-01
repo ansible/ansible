@@ -1,0 +1,6 @@
+shippable/posix/group1
+context/controller
+skip/freebsd  # No sshpass
+skip/osx  # No sshpass
+skip/macos # No sshpass
+skip/rhel  # No sshpass

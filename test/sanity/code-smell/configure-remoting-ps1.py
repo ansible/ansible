@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
 
@@ -11,7 +9,7 @@ def main():
     # required to be packaged with ansible-test and must match the original file, but cannot be a symbolic link
     # the packaged version is needed to run tests when ansible-test has been installed
     # keeping the packaged version identical to the original makes sure tests cover both files
-    packaged = 'test/lib/ansible_test/_data/setup/ConfigureRemotingForAnsible.ps1'
+    packaged = 'test/lib/ansible_test/_util/target/setup/ConfigureRemotingForAnsible.ps1'
 
     copy_valid = False
 

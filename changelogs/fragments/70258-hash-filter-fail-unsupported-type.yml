@@ -1,2 +1,0 @@
-minor_changes:
-  - hash filter - fail when unsupported hash type is passed as an argument (https://github.com/ansible/ansible/issues/70258)

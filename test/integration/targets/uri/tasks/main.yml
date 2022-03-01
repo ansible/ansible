@@ -19,8 +19,8 @@
 - name: set role facts
   set_fact:
     http_port: 15260
-    files_dir: '{{ output_dir|expanduser }}/files'
-    checkout_dir: '{{ output_dir }}/git'
+    files_dir: '{{ remote_tmp_dir|expanduser }}/files'
+    checkout_dir: '{{ remote_tmp_dir }}/git'
 
 - name: create a directory to serve files from
   file:
@@ -39,10 +39,10 @@
 
 - copy:
     src: "testserver.py"
-    dest: "{{ output_dir }}/testserver.py"
+    dest: "{{ remote_tmp_dir }}/testserver.py"
 
 - name: start SimpleHTTPServer
-  shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ output_dir}}/testserver.py {{ http_port }}
+  shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ remote_tmp_dir}}/testserver.py {{ http_port }}
   async: 120 # this test set can take ~1m to run on FreeBSD (via Shippable)
   poll: 0
 
@@ -91,12 +91,12 @@
 - name: test https fetch to a site with mismatched hostname and certificate
   uri:
     url: "https://{{ badssl_host }}/"
-    dest: "{{ output_dir }}/shouldnotexist.html"
+    dest: "{{ remote_tmp_dir }}/shouldnotexist.html"
   ignore_errors: True
   register: result
 
 - stat:
-    path: "{{ output_dir }}/shouldnotexist.html"
+    path: "{{ remote_tmp_dir }}/shouldnotexist.html"
   register: stat_result
 
 - name: Assert that the file was not downloaded
@@ -111,18 +111,18 @@
 
 - name: Clean up any cruft from the results directory
   file:
-    name: "{{ output_dir }}/kreitz.html"
+    name: "{{ remote_tmp_dir }}/kreitz.html"
     state: absent
 
 - name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no
   uri:
     url: "https://{{ badssl_host }}/"
-    dest: "{{ output_dir }}/kreitz.html"
+    dest: "{{ remote_tmp_dir }}/kreitz.html"
     validate_certs: no
   register: result
 
 - stat:
-    path: "{{ output_dir }}/kreitz.html"
+    path: "{{ remote_tmp_dir }}/kreitz.html"
   register: stat_result
 
 - name: Assert that the file was downloaded
@@ -130,6 +130,67 @@
     that:
       - "stat_result.stat.exists == true"
       - "result.changed == true"
+
+- name: "get ca certificate {{ self_signed_host }}"
+  get_url:
+    url: "http://{{ httpbin_host }}/ca2cert.pem"
+    dest: "{{ remote_tmp_dir }}/ca2cert.pem"
+
+- name: test https fetch to a site with self signed certificate using ca_path
+  uri:
+    url: "https://{{ self_signed_host }}:444/"
+    dest: "{{ remote_tmp_dir }}/self-signed_using_ca_path.html"
+    ca_path: "{{ remote_tmp_dir }}/ca2cert.pem"
+    validate_certs: yes
+  register: result
+
+- stat:
+    path: "{{ remote_tmp_dir }}/self-signed_using_ca_path.html"
+  register: stat_result
+
+- name: Assert that the file was downloaded
+  assert:
+    that:
+      - "stat_result.stat.exists == true"
+      - "result.changed == true"
+
+- name: test https fetch to a site with self signed certificate without using ca_path
+  uri:
+    url: "https://{{ self_signed_host }}:444/"
+    dest: "{{ remote_tmp_dir }}/self-signed-without_using_ca_path.html"
+    validate_certs: yes
+  register: result
+  ignore_errors: true
+
+- stat:
+    path: "{{ remote_tmp_dir }}/self-signed-without_using_ca_path.html"
+  register: stat_result
+
+- name: Assure that https access to a host with self-signed certificate without providing ca_path fails
+  assert:
+    that:
+      - "stat_result.stat.exists == false"
+      - result is failed
+      - "'certificate verify failed' in result.msg"
+
+- name: Locate ca-bundle
+  stat:
+    path: '{{ item }}'
+  loop:
+    - /etc/ssl/certs/ca-bundle.crt
+    - /etc/ssl/certs/ca-certificates.crt
+    - /var/lib/ca-certificates/ca-bundle.pem
+    - /usr/local/share/certs/ca-root-nss.crt
+    - '{{ macos_cafile.stdout_lines|default(["/_i_dont_exist_ca.pem"])|first }}'
+    - /etc/ssl/cert.pem
+  register: ca_bundle_candidates
+
+- name: Test that ca_path can be a full bundle
+  uri:
+    url: "https://{{ httpbin_host }}/get"
+    ca_path: '{{ ca_bundle }}'
+  vars:
+    ca_bundle: '{{ ca_bundle_candidates.results|selectattr("stat.exists")|map(attribute="item")|first }}'
 
 - name: test redirect without follow_redirects
   uri:
@@ -185,6 +246,43 @@
     password: passwd
     headers:
       Cookie: "fake=fake_value"
+
+- name: test digest auth failure
+  uri:
+    url: 'https://{{ httpbin_host }}/digest-auth/auth/user/passwd'
+    user: user
+    password: wrong
+    headers:
+      Cookie: "fake=fake_value"
+  register: result
+  failed_when: result.status != 401
+
+- name: test unredirected_headers
+  uri:
+    url: 'https://{{ httpbin_host }}/redirect-to?status_code=301&url=/basic-auth/user/passwd'
+    user: user
+    password: passwd
+    force_basic_auth: true
+    unredirected_headers:
+      - authorization
+  ignore_errors: true
+  register: unredirected_headers
+
+- name: test omitting unredirected headers
+  uri:
+    url: 'https://{{ httpbin_host }}/redirect-to?status_code=301&url=/basic-auth/user/passwd'
+    user: user
+    password: passwd
+    force_basic_auth: true
+  register: redirected_headers
+
+- name: ensure unredirected_headers caused auth to fail
+  assert:
+    that:
+      - unredirected_headers is failed
+      - unredirected_headers.status == 401
+      - redirected_headers is successful
+      - redirected_headers.status == 200
 
 - name: test PUT
   uri:
@@ -297,10 +395,25 @@
   with_items: "{{ uri_os_packages[ansible_os_family].step2 | default([]) }}"
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
 
+- name: create constraints path
+  set_fact:
+    remote_constraints: "{{ remote_tmp_dir }}/constraints.txt"
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
+- name: create constraints file
+  copy:
+    content: |
+      cryptography == 2.1.4
+      idna == 2.5
+      pyopenssl == 17.5.0
+      six == 1.13.0
+      urllib3 == 1.23
+    dest: "{{ remote_constraints }}"
+  when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool
+
 - name: install urllib3 and pyopenssl via pip
   pip:
     name: "{{ item }}"
-    state: latest
     extra_args: "-c {{ remote_constraints }}"
   with_items:
     - urllib3
@@ -432,6 +545,16 @@
       - multipart.json.form.text_form_field1 == 'value1'
       - multipart.json.form.text_form_field2 == 'value2'
 
+# https://github.com/ansible/ansible/issues/74276 - verifies we don't have a traceback
+- name: multipart/form-data with invalid value
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body_format: form-multipart
+    body:
+      integer_value: 1
+  register: multipart_invalid
+  failed_when: 'multipart_invalid.msg != "failed to parse body as form-multipart: value must be a string, or mapping, cannot be type int"'
 
 - name: Validate invalid method
   uri:
@@ -559,16 +682,16 @@
 - name: Create a testing file
   copy:
     content: "content"
-    dest: "{{ output_dir }}/output"
+    dest: "{{ remote_tmp_dir }}/output"
 
 - name: Download a file from non existing location
   uri:
     url: http://does/not/exist
-    dest: "{{ output_dir }}/output"
+    dest: "{{ remote_tmp_dir }}/output"
   ignore_errors: yes
 
 - name: Save testing file's output
-  command: "cat {{ output_dir }}/output"
+  command: "cat {{ remote_tmp_dir }}/output"
   register: file_out
 
 - name: Test the testing file was not overwritten
@@ -578,7 +701,7 @@
 
 - name: Clean up
   file:
-    dest: "{{ output_dir }}/output"
+    dest: "{{ remote_tmp_dir }}/output"
     state: absent
 
 - name: Test follow_redirects=none
@@ -598,3 +721,12 @@
 
 - name: Check return-content
   import_tasks: return-content.yml
+
+- name: Test use_gssapi=True
+  include_tasks:
+    file: use_gssapi.yml
+    apply:
+      environment:
+        KRB5_CONFIG: '{{ krb5_config }}'
+        KRB5CCNAME: FILE:{{ remote_tmp_dir }}/krb5.cc
+  when: krb5_config is defined

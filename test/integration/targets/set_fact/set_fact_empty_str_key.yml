@@ -1,0 +1,15 @@
+- name: Test set_fact for empty string as a key
+  hosts: testhost
+  gather_facts: no
+  vars:
+    value: 1
+  tasks:
+    - name: Define fact with key as an empty string
+      set_fact:
+        foo:
+          "": "bar{{ value }}"
+
+    - name: Verify the parsed value of the key
+      assert:
+        that:
+          - foo == {"":"bar1"}

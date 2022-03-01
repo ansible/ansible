@@ -23,5 +23,5 @@ esac
 
 # shellcheck disable=SC2086
 ansible-test sanity --color -v --junit ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
-    --docker --docker-keep-git --base-branch "${base_branch}" \
+    --docker --keep-git --base-branch "${base_branch}" \
     "${options[@]}" --allow-disabled

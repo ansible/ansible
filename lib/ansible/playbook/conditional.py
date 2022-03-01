@@ -28,7 +28,7 @@ from jinja2.exceptions import UndefinedError
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import text_type
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.playbook.attribute import FieldAttribute
 from ansible.utils.display import Display
 
@@ -88,16 +88,30 @@ class Conditional:
         if hasattr(self, '_ds'):
             ds = getattr(self, '_ds')
 
+        result = True
         try:
             for conditional in self.when:
-                if not self._check_conditional(conditional, templar, all_vars):
-                    return False
-        except Exception as e:
-            raise AnsibleError(
-                "The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds
-            )
 
-        return True
+                # do evaluation
+                if conditional is None or conditional == '':
+                    res = True
+                elif isinstance(conditional, bool):
+                    res = conditional
+                else:
+                    res = self._check_conditional(conditional, templar, all_vars)
+
+                # only update if still true, preserve false
+                if result:
+                    result = res
+
+                display.debug("Evaluated conditional (%s): %s" % (conditional, res))
+                if not result:
+                    break
+
+        except Exception as e:
+            raise AnsibleError("The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds)
+
+        return result
 
     def _check_conditional(self, conditional, templar, all_vars):
         '''
@@ -107,23 +121,11 @@ class Conditional:
         '''
 
         original = conditional
-        if conditional is None or conditional == '':
-            return True
-
-        # this allows for direct boolean assignments to conditionals "when: False"
-        if isinstance(conditional, bool):
-            return conditional
 
         if templar.is_template(conditional):
             display.warning('conditional statements should not include jinja2 '
                             'templating delimiters such as {{ }} or {%% %%}. '
                             'Found: %s' % conditional)
-
-        bare_vars_warning = False
-        if C.CONDITIONAL_BARE_VARS:
-            if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
-                conditional = all_vars[conditional]
-                bare_vars_warning = True
 
         # make sure the templar is using the variables specified with this method
         templar.available_variables = all_vars
@@ -132,10 +134,7 @@ class Conditional:
             # if the conditional is "unsafe", disable lookups
             disable_lookups = hasattr(conditional, '__UNSAFE__')
             conditional = templar.template(conditional, disable_lookups=disable_lookups)
-            if bare_vars_warning and not isinstance(conditional, bool):
-                display.deprecated('evaluating %r as a bare variable, this behaviour will go away and you might need to add |bool'
-                                   ' to the expression in the future. Also see CONDITIONAL_BARE_VARS configuration toggle' % original,
-                                   version="2.12", collection_name='ansible.builtin')
+
             if not isinstance(conditional, text_type) or conditional == "":
                 return conditional
 
@@ -172,12 +171,8 @@ class Conditional:
                             inside_yield=inside_yield
                         )
             try:
-                e = templar.environment.overlay()
-                e.filters.update(templar.environment.filters)
-                e.tests.update(templar.environment.tests)
-
-                res = e._parse(conditional, None, None)
-                res = generate(res, e, None, None)
+                res = templar.environment.parse(conditional, None, None)
+                res = generate(res, templar.environment, None, None)
                 parsed = ast.parse(res, mode='exec')
 
                 cnv = CleansingNodeVisitor()
@@ -186,6 +181,8 @@ class Conditional:
                 raise AnsibleError("Invalid conditional detected: %s" % to_native(e))
 
             # and finally we generate and template the presented string and look at the resulting string
+            # NOTE The spaces around True and False are intentional to short-circuit literal_eval for
+            #      jinja2_native=False and avoid its expensive calls.
             presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
             val = templar.template(presented, disable_lookups=disable_lookups).strip()
             if val == "True":

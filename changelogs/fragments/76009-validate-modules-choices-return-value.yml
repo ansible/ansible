@@ -1,0 +1,2 @@
+minor_changes:
+  - "ansible-test validate_modules - allow ``choices`` for return values (https://github.com/ansible/ansible/pull/76009)."

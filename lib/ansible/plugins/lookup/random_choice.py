@@ -5,8 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: random_choice
-    author: Michael DeHaan <michael.dehaan@gmail.com>
+    name: random_choice
+    author: Michael DeHaan
     version_added: "1.1"
     short_description: return random element from list
     description:
@@ -17,7 +17,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: Magic 8 ball for MUDs
-  debug:
+  ansible.builtin.debug:
     msg: "{{ item }}"
   with_random_choice:
      - "go through the door"
@@ -30,6 +30,7 @@ RETURN = """
   _raw:
     description:
       - random item
+    type: raw
 """
 import random
 

@@ -7,10 +7,12 @@ __metaclass__ = type
 from os import path, walk
 import re
 
+import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_text
 from ansible.plugins.action import ActionBase
+from ansible.utils.vars import combine_vars
 
 
 class ActionModule(ActionBase):
@@ -20,7 +22,7 @@ class ActionModule(ActionBase):
     VALID_FILE_EXTENSIONS = ['yaml', 'yml', 'json']
     VALID_DIR_ARGUMENTS = ['dir', 'depth', 'files_matching', 'ignore_files', 'extensions', 'ignore_unknown_extensions']
     VALID_FILE_ARGUMENTS = ['file', '_raw_params']
-    VALID_ALL = ['name']
+    VALID_ALL = ['name', 'hash_behaviour']
 
     def _set_dir_defaults(self):
         if not self.depth:
@@ -46,6 +48,7 @@ class ActionModule(ActionBase):
     def _set_args(self):
         """ Set instance variables based on the arguments that were passed """
 
+        self.hash_behaviour = self._task.args.get('hash_behaviour', None)
         self.return_results_as_name = self._task.args.get('name', None)
         self.source_dir = self._task.args.get('dir', None)
         self.source_file = self._task.args.get('file', None)
@@ -97,6 +100,7 @@ class ActionModule(ActionBase):
         self._set_args()
 
         results = dict()
+        failed = False
         if self.source_dir:
             self._set_dir_defaults()
             self._set_root_dir()
@@ -135,6 +139,11 @@ class ActionModule(ActionBase):
         if failed:
             result['failed'] = failed
             result['message'] = err_msg
+        elif self.hash_behaviour is not None and self.hash_behaviour != C.DEFAULT_HASH_BEHAVIOUR:
+            merge_hashes = self.hash_behaviour == 'merge'
+            for key, value in results.items():
+                old_value = task_vars.get(key, None)
+                results[key] = combine_vars(old_value, value, merge=merge_hashes)
 
         result['ansible_included_var_files'] = self.included_files
         result['ansible_facts'] = results
@@ -164,13 +173,16 @@ class ActionModule(ActionBase):
                 )
                 self.source_dir = path.join(current_dir, self.source_dir)
 
+    def _log_walk(self, error):
+        self._display.vvv('Issue with walking through "%s": %s' % (to_native(error.filename), to_native(error)))
+
     def _traverse_dir_depth(self):
         """ Recursively iterate over a directory and sort the files in
             alphabetical order. Do not iterate pass the set depth.
             The default depth is unlimited.
         """
         current_depth = 0
-        sorted_walk = list(walk(self.source_dir))
+        sorted_walk = list(walk(self.source_dir, onerror=self._log_walk))
         sorted_walk.sort(key=lambda x: x[0])
         for current_root, current_dir, current_files in sorted_walk:
             current_depth += 1

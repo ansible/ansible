@@ -38,7 +38,7 @@ Ignore File Location
 The location of the ignore file depends on the type of content being tested.
 
 Ansible Collections
-~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^
 
 Since sanity tests change between Ansible releases, a separate ignore file is needed for each Ansible major release.
 
@@ -47,7 +47,7 @@ The filename is ``tests/sanity/ignore-X.Y.txt`` where ``X.Y`` is the Ansible rel
 Maintaining a separate file for each Ansible release allows a collection to pass tests for multiple versions of Ansible.
 
 Ansible
-~~~~~~~
+^^^^^^^
 
 When testing Ansible, all ignores are placed in the ``test/sanity/ignore.txt`` file.
 

@@ -4,3 +4,6 @@
 - include: inner.yml
   with_items:
   - '1'
+- ansible.builtin.include: inner_fqcn.yml
+  with_items:
+  - '1'

@@ -1,13 +1,16 @@
+#!/usr/bin/env python
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# PYTHON_ARGCOMPLETE_OK
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+# ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
+from ansible.cli import CLI
 from ansible import constants as C
 from ansible import context
-from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
@@ -25,13 +28,13 @@ class AdHocCLI(CLI):
         this command allows you to define and run a single task 'playbook' against a set of hosts
     '''
 
+    name = 'ansible'
+
     def init_parser(self):
         ''' create an options parser for bin/ansible '''
         super(AdHocCLI, self).init_parser(usage='%prog <host-pattern> [options]',
-                                          desc="Define and run a single task 'playbook' against"
-                                          " a set of hosts",
-                                          epilog="Some modules do not make sense in Ad-Hoc (include,"
-                                          " meta, etc)")
+                                          desc="Define and run a single task 'playbook' against a set of hosts",
+                                          epilog="Some actions do not make sense in Ad-Hoc (include, meta, etc)")
 
         opt_help.add_runas_options(self.parser)
         opt_help.add_inventory_options(self.parser)
@@ -44,12 +47,14 @@ class AdHocCLI(CLI):
         opt_help.add_fork_options(self.parser)
         opt_help.add_module_options(self.parser)
         opt_help.add_basedir_options(self.parser)
+        opt_help.add_tasknoplay_options(self.parser)
 
         # options unique to ansible ad-hoc
         self.parser.add_argument('-a', '--args', dest='module_args',
-                                 help="module arguments", default=C.DEFAULT_MODULE_ARGS)
+                                 help="The action's options in space separated k=v format: -a 'opt1=val1 opt2=val2'",
+                                 default=C.DEFAULT_MODULE_ARGS)
         self.parser.add_argument('-m', '--module-name', dest='module_name',
-                                 help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
+                                 help="Name of the action to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
                                  default=C.DEFAULT_MODULE_NAME)
         self.parser.add_argument('args', metavar='pattern', help='host pattern')
 
@@ -66,10 +71,11 @@ class AdHocCLI(CLI):
     def _play_ds(self, pattern, async_val, poll):
         check_raw = context.CLIARGS['module_name'] in C.MODULE_REQUIRE_ARGS
 
-        mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': parse_kv(context.CLIARGS['module_args'], check_raw=check_raw)}}
+        mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': parse_kv(context.CLIARGS['module_args'], check_raw=check_raw)},
+                  'timeout': context.CLIARGS['task_timeout']}
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
-        if context.CLIARGS['module_name'] not in ('include_role', 'include_tasks') and any(frozenset((async_val, poll))):
+        if context.CLIARGS['module_name'] not in C._ACTION_ALL_INCLUDE_ROLE_TASKS and any(frozenset((async_val, poll))):
             mytask['async_val'] = async_val
             mytask['poll'] = poll
 
@@ -87,6 +93,7 @@ class AdHocCLI(CLI):
         # only thing left should be host pattern
         pattern = to_text(context.CLIARGS['args'], errors='surrogate_or_strict')
 
+        # handle password prompts
         sshpass = None
         becomepass = None
 
@@ -96,6 +103,7 @@ class AdHocCLI(CLI):
         # get basic objects
         loader, inventory, variable_manager = self._play_prereqs()
 
+        # get list of hosts to execute against
         try:
             hosts = self.get_host_list(inventory, context.CLIARGS['subset'], pattern)
         except AnsibleError:
@@ -105,12 +113,14 @@ class AdHocCLI(CLI):
                 hosts = []
                 display.warning("No hosts matched, nothing to do")
 
+        # just listing hosts?
         if context.CLIARGS['listhosts']:
             display.display('  hosts (%d):' % len(hosts))
             for host in hosts:
                 display.display('    %s' % host)
             return 0
 
+        # verify we have arguments if we know we need em
         if context.CLIARGS['module_name'] in C.MODULE_REQUIRE_ARGS and not context.CLIARGS['module_args']:
             err = "No argument passed to %s module" % context.CLIARGS['module_name']
             if pattern.endswith(".yml"):
@@ -118,10 +128,11 @@ class AdHocCLI(CLI):
             raise AnsibleOptionsError(err)
 
         # Avoid modules that don't work with ad-hoc
-        if context.CLIARGS['module_name'] in ('import_playbook',):
+        if context.CLIARGS['module_name'] in C._ACTION_IMPORT_PLAYBOOK:
             raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands"
                                       % context.CLIARGS['module_name'])
 
+        # construct playbook objects to wrap task
         play_ds = self._play_ds(pattern, context.CLIARGS['seconds'], context.CLIARGS['poll_interval'])
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
@@ -142,7 +153,7 @@ class AdHocCLI(CLI):
 
         run_tree = False
         if context.CLIARGS['tree']:
-            C.DEFAULT_CALLBACK_WHITELIST.append('tree')
+            C.CALLBACKS_ENABLED.append('tree')
             C.TREE_DIR = context.CLIARGS['tree']
             run_tree = True
 
@@ -173,3 +184,11 @@ class AdHocCLI(CLI):
                 loader.cleanup_all_tmp_files()
 
         return result
+
+
+def main(args=None):
+    AdHocCLI.cli_executor(args)
+
+
+if __name__ == '__main__':
+    main()

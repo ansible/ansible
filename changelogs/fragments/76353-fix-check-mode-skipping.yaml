@@ -1,0 +1,4 @@
+bugfixes:
+  - shell/command - only skip in check mode if the options `creates` and `removes` are both None.
+  - shell/command - only return changed as True if the task has not been skipped.
+  - script - skip in check mode if the plugin cannot determine if a change will occur (i.e. neither `creates` or `removes` are provided).

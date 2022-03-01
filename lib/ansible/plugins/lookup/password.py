@@ -7,12 +7,12 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: password
+    name: password
     version_added: "1.1"
     author:
-      - Daniel Hokka Zakrisson <daniel@hozac.com>
-      - Javier Candeira <javier@candeira.com>
-      - Maykel Moya <mmoya@speedyrails.com>
+      - Daniel Hokka Zakrisson (!UNKNOWN) <daniel@hozac.com>
+      - Javier Candeira (!UNKNOWN) <javier@candeira.com>
+      - Maykel Moya (!UNKNOWN) <mmoya@speedyrails.com>
     short_description: retrieve or generate a random password, stored in a file
     description:
       - Generates a random plaintext password and stores it in a file at a given filepath.
@@ -28,23 +28,42 @@ DOCUMENTATION = """
          required: True
       encrypt:
         description:
-           - Which hash scheme to encrypt the returning password, should be one hash scheme from C(passlib.hash).
+           - Which hash scheme to encrypt the returning password, should be one hash scheme from C(passlib.hash; md5_crypt, bcrypt, sha256_crypt, sha512_crypt).
            - If not provided, the password will be returned in plain text.
            - Note that the password is always stored as plain text, only the returning password is encrypted.
            - Encrypt also forces saving the salt value for idempotence.
            - Note that before 2.6 this option was incorrectly labeled as a boolean for a long time.
+      ident:
+        description:
+          - Specify version of Bcrypt algorithm to be used while using C(encrypt) as C(bcrypt).
+          - The parameter is only available for C(bcrypt) - U(https://passlib.readthedocs.io/en/stable/lib/passlib.hash.bcrypt.html#passlib.hash.bcrypt).
+          - Other hash types will simply ignore this parameter.
+          - 'Valid values for this parameter are: C(2), C(2a), C(2y), C(2b).'
+        type: string
+        version_added: "2.12"
       chars:
         version_added: "1.4"
         description:
           - Define comma separated list of names that compose a custom character set in the generated passwords.
-          - 'By default generated passwords contain a random mix of upper and lowercase ASCII letters, the numbers 0-9 and punctuation (". , : - _").'
-          - "They can be either parts of Python's string module attributes (ascii_letters,digits, etc) or are used literally ( :, -)."
+          - 'By default generated passwords contain a random mix of upper and lowercase ASCII letters, the numbers 0-9, and punctuation (". , : - _").'
+          - "They can be either parts of Python's string module attributes or represented literally ( :, -)."
+          - "Though string modules can vary by Python version, valid values for both major releases include:
+            'ascii_lowercase', 'ascii_uppercase', 'digits', 'hexdigits', 'octdigits', 'printable', 'punctuation' and 'whitespace'."
+          - Be aware that Python's 'hexdigits' includes lower and upper case versions of a-f, so it is not a good choice as it doubles
+            the chances of those values for systems that won't distinguish case, distorting the expected entropy.
           - "To enter comma use two commas ',,' somewhere - preferably at the end. Quotes and double quotes are not supported."
         type: string
       length:
         description: The length of the generated password.
         default: 20
         type: integer
+      seed:
+        version_added: "2.12"
+        description:
+          - A seed to initialize the random number generator.
+          - Identical seeds will yield identical passwords.
+          - Use this for random-but-idempotent password generation.
+        type: str
     notes:
       - A great alternative to the password lookup plugin,
         if you don't need to generate random passwords on a per-host basis,
@@ -62,34 +81,44 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: create a mysql user with a random password
-  mysql_user:
+  community.mysql.mysql_user:
     name: "{{ client }}"
-    password: "{{ lookup('password', 'credentials/' + client + '/' + tier + '/' + role + '/mysqlpassword length=15') }}"
+    password: "{{ lookup('ansible.builtin.password', 'credentials/' + client + '/' + tier + '/' + role + '/mysqlpassword length=15') }}"
     priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
 
 - name: create a mysql user with a random password using only ascii letters
-  mysql_user:
+  community.mysql.mysql_user:
     name: "{{ client }}"
-    password: "{{ lookup('password', '/tmp/passwordfile chars=ascii_letters') }}"
+    password: "{{ lookup('ansible.builtin.password', '/tmp/passwordfile chars=ascii_letters') }}"
     priv: '{{ client }}_{{ tier }}_{{ role }}.*:ALL'
 
 - name: create a mysql user with an 8 character random password using only digits
-  mysql_user:
+  community.mysql.mysql_user:
     name: "{{ client }}"
-    password: "{{ lookup('password', '/tmp/passwordfile length=8 chars=digits') }}"
+    password: "{{ lookup('ansible.builtin.password', '/tmp/passwordfile length=8 chars=digits') }}"
     priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
 
 - name: create a mysql user with a random password using many different char sets
-  mysql_user:
+  community.mysql.mysql_user:
     name: "{{ client }}"
-    password: "{{ lookup('password', '/tmp/passwordfile chars=ascii_letters,digits,hexdigits,punctuation') }}"
+    password: "{{ lookup('ansible.builtin.password', '/tmp/passwordfile chars=ascii_letters,digits,punctuation') }}"
     priv: "{{ client }}_{{ tier }}_{{ role }}.*:ALL"
+
+- name: create lowercase 8 character name for Kubernetes pod name
+  ansible.builtin.set_fact:
+    random_pod_name: "web-{{ lookup('ansible.builtin.password', '/dev/null chars=ascii_lowercase,digits length=8') }}"
+
+- name: create random but idempotent password
+  ansible.builtin.set_fact:
+    password: "{{ lookup('ansible.builtin.password', '/dev/null', seed=inventory_hostname) }}"
 """
 
 RETURN = """
 _raw:
   description:
     - a password
+  type: list
+  elements: str
 """
 
 import os
@@ -102,12 +131,12 @@ from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.encrypt import do_encrypt, random_password, random_salt
+from ansible.utils.encrypt import BaseHash, do_encrypt, random_password, random_salt
 from ansible.utils.path import makedirs_safe
 
 
 DEFAULT_LENGTH = 20
-VALID_PARAMS = frozenset(('length', 'encrypt', 'chars'))
+VALID_PARAMS = frozenset(('length', 'encrypt', 'chars', 'ident', 'seed'))
 
 
 def _parse_parameters(term):
@@ -145,6 +174,8 @@ def _parse_parameters(term):
     # Set defaults
     params['length'] = int(params.get('length', DEFAULT_LENGTH))
     params['encrypt'] = params.get('encrypt', None)
+    params['ident'] = params.get('ident', None)
+    params['seed'] = params.get('seed', None)
 
     params['chars'] = params.get('chars', None)
     if params['chars']:
@@ -231,13 +262,16 @@ def _parse_content(content):
     return password, salt
 
 
-def _format_content(password, salt, encrypt=None):
+def _format_content(password, salt, encrypt=None, ident=None):
     """Format the password and salt for saving
     :arg password: the plaintext password to save
     :arg salt: the salt to use when encrypting a password
     :arg encrypt: Which method the user requests that this password is encrypted.
         Note that the password is saved in clear.  Encrypt just tells us if we
         must save the salt value for idempotence.  Defaults to None.
+    :arg ident: Which version of BCrypt algorithm to be used.
+        Valid only if value of encrypt is bcrypt.
+        Defaults to None.
     :returns: a text string containing the formatted information
 
     .. warning:: Passwords are saved in clear.  This is because the playbooks
@@ -250,6 +284,8 @@ def _format_content(password, salt, encrypt=None):
     if not salt:
         raise AnsibleAssertionError('_format_content was called with encryption requested but no salt value')
 
+    if ident:
+        return u'%s salt=%s ident=%s' % (password, salt, ident)
     return u'%s salt=%s' % (password, salt)
 
 
@@ -314,26 +350,38 @@ class LookupModule(LookupBase):
             content = _read_password_file(b_path)
 
             if content is None or b_path == to_bytes('/dev/null'):
-                plaintext_password = random_password(params['length'], chars)
+                plaintext_password = random_password(params['length'], chars, params['seed'])
                 salt = None
                 changed = True
             else:
                 plaintext_password, salt = _parse_content(content)
 
-            if params['encrypt'] and not salt:
+            encrypt = params['encrypt']
+            if encrypt and not salt:
                 changed = True
-                salt = random_salt()
+                try:
+                    salt = random_salt(BaseHash.algorithms[encrypt].salt_size)
+                except KeyError:
+                    salt = random_salt()
+
+            ident = params['ident']
+            if encrypt and not ident:
+                changed = True
+                try:
+                    ident = BaseHash.algorithms[encrypt].implicit_ident
+                except KeyError:
+                    ident = None
 
             if changed and b_path != to_bytes('/dev/null'):
-                content = _format_content(plaintext_password, salt, encrypt=params['encrypt'])
+                content = _format_content(plaintext_password, salt, encrypt=encrypt, ident=ident)
                 _write_password_file(b_path, content)
 
             if first_process:
                 # let other processes continue
                 _release_lock(lockfile)
 
-            if params['encrypt']:
-                password = do_encrypt(plaintext_password, params['encrypt'], salt=salt)
+            if encrypt:
+                password = do_encrypt(plaintext_password, encrypt, salt=salt, ident=ident)
                 ret.append(password)
             else:
                 ret.append(plaintext_password)

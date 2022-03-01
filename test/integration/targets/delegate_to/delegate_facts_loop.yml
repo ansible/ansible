@@ -1,0 +1,40 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - set_fact:
+        test: 123
+      delegate_to: "{{ item }}"
+      delegate_facts: true
+      loop: "{{ groups['all'] | difference(['localhost']) }}"
+
+    - name: ensure we didnt create it on current host
+      assert:
+        that:
+          - test is undefined
+
+    - name: ensure facts get created
+      assert:
+        that:
+          - "'test' in hostvars[item]"
+          - hostvars[item]['test'] == 123
+      loop: "{{ groups['all'] | difference(['localhost'])}}"
+
+
+- name: test that we don't polute whole group with one value
+  hosts: localhost
+  gather_facts: no
+  vars:
+    cluster_name: bleh
+  tasks:
+  - name: construct different fact per host in loop
+    set_fact:
+      vm_name: "{{ cluster_name }}-{{item}}"
+    delegate_to: "{{ item }}"
+    delegate_facts: True
+    with_items: "{{ groups['all'] }}"
+
+  - name: ensure the fact is personalized for each host
+    assert:
+      that:
+        - hostvars[item]['vm_name'].endswith(item)
+    loop: "{{ groups['all'] }}"

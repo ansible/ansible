@@ -5,8 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: fileglob
-    author: Michael DeHaan <michael.dehaan@gmail.com>
+    name: fileglob
+    author: Michael DeHaan
     version_added: "1.4"
     short_description: list files matching a pattern
     description:
@@ -19,16 +19,16 @@ DOCUMENTATION = """
     notes:
       - Patterns are only supported on files, not directory/paths.
       - Matching is against local system files on the Ansible controller.
-        To iterate a list of files on a remote node, use the M(find) module.
+        To iterate a list of files on a remote node, use the M(ansible.builtin.find) module.
       - Returns a string list of paths joined by commas, or an empty list if no files match. For a 'true list' pass C(wantlist=True) to the lookup.
 """
 
 EXAMPLES = """
 - name: Display paths of all .txt files in dir
-  debug: msg={{ lookup('fileglob', '/my/path/*.txt') }}
+  ansible.builtin.debug: msg={{ lookup('ansible.builtin.fileglob', '/my/path/*.txt') }}
 
 - name: Copy each file over that matches the given pattern
-  copy:
+  ansible.builtin.copy:
     src: "{{ item }}"
     dest: "/etc/fooapp/"
     owner: "root"
@@ -41,6 +41,8 @@ RETURN = """
   _list:
     description:
       - list of files
+    type: list
+    elements: path
 """
 
 import os
@@ -74,7 +76,8 @@ class LookupModule(LookupBase):
             for dwimmed_path in found_paths:
                 if dwimmed_path:
                     globbed = glob.glob(to_bytes(os.path.join(dwimmed_path, term_file), errors='surrogate_or_strict'))
-                    ret.extend(to_text(g, errors='surrogate_or_strict') for g in globbed if os.path.isfile(g))
-                    if ret:
+                    term_results = [to_text(g, errors='surrogate_or_strict') for g in globbed if os.path.isfile(g)]
+                    if term_results:
+                        ret.extend(term_results)
                         break
         return ret

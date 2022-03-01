@@ -8,11 +8,13 @@ Function Load-CommandUtils {
     .SYNOPSIS
     No-op, as the C# types are automatically loaded.
     #>
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseSingularNouns", "", Justification = "Cannot change the name now")]
     Param()
     $msg = "Load-CommandUtils is deprecated and no longer needed, this cmdlet will be removed in a future version"
     if ((Get-Command -Name Add-DeprecationWarning -ErrorAction SilentlyContinue) -and (Get-Variable -Name result -ErrorAction SilentlyContinue)) {
         Add-DeprecationWarning -obj $result.Value -message $msg -version 2.12
-    } else {
+    }
+    else {
         $module = Get-Variable -Name module -ErrorAction SilentlyContinue
         if ($null -ne $module -and $module.Value.GetType().FullName -eq "Ansible.Basic.AnsibleModule") {
             $module.Value.Deprecate($msg, "2.12")
@@ -26,7 +28,7 @@ Function Get-ExecutablePath {
     Get's the full path to an executable, will search the directory specified or ones in the PATH env var.
 
     .PARAMETER executable
-    [String]The executable to seach for.
+    [String]The executable to search for.
 
     .PARAMETER directory
     [String] If set, the directory to search in.
@@ -47,13 +49,15 @@ Function Get-ExecutablePath {
 
     if ($full_path -ne $executable -and $directory -ne $null) {
         $file = Get-Item -LiteralPath "$directory\$executable" -Force -ErrorAction SilentlyContinue
-    } else {
+    }
+    else {
         $file = Get-Item -LiteralPath $executable -Force -ErrorAction SilentlyContinue
     }
 
     if ($null -ne $file) {
         $executable_path = $file.FullName
-    } else {
+    }
+    else {
         $executable_path = [Ansible.Process.ProcessUtil]::SearchPath($executable)
     }
     return $executable_path
@@ -110,7 +114,7 @@ Function Run-Command {
     # run the command and get the results
     $command_result = [Ansible.Process.ProcessUtil]::CreateProcess($executable, $command, $working_directory, $environment, $stdin, $output_encoding_override)
 
-    return ,@{
+    return , @{
         executable = $executable
         stdout = $command_result.StandardOut
         stderr = $command_result.StandardError

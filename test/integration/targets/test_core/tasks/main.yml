@@ -87,7 +87,7 @@
   ignore_errors: yes
   register: misuse_of_changed
 
-# providing artificial task results since there are no modules in ansible-base that provide a 'results' list instead of 'changed'
+# providing artificial task results since there are no modules in ansible-core that provide a 'results' list instead of 'changed'
 - name: Prepare artificial task results
   set_fact:
     results_all_changed:
@@ -217,6 +217,42 @@
   ignore_errors: yes
   register: version_bad_value
 
+- name: Try version with both strict and version_type
+  debug:
+    msg: "{{ '1.0' is version('1.0', strict=False, version_type='loose') }}"
+  ignore_errors: yes
+  register: version_strict_version_type
+
+- name: Try version with bad version_type
+  debug:
+    msg: "{{ '1.0' is version('1.0', version_type='boom') }}"
+  ignore_errors: yes
+  register: version_bad_version_type
+
+- name: Try version with bad semver
+  debug:
+    msg: "{{ 'nope' is version('nopenope', version_type='semver') }}"
+  ignore_errors: yes
+  register: version_bad_semver
+
+- name: Try version with empty input value
+  debug:
+    msg: "{{ '' is version('1.0', '>') }}"
+  ignore_errors: yes
+  register: version_empty_input
+
+- name: Try version with empty comparison value
+  debug:
+    msg: "{{ '1.0' is version('', '>') }}"
+  ignore_errors: yes
+  register: version_empty_comparison
+
+- name: Try version with empty input and comparison values
+  debug:
+    msg: "{{ '' is version('', '>') }}"
+  ignore_errors: yes
+  register: version_empty_both
+
 - name: Assert version tests work
   assert:
     that:
@@ -234,8 +270,18 @@
       - "'2.0' is version('1.0', '>', true)"
       - "'1.0' is version('1.0', '<=', true)"
       - "'1.0' is version('1.0', '>=', true)"
+      - "'1.2.3' is version('2.0.0', 'lt', version_type='semver')"
       - version_bad_operator is failed
       - version_bad_value is failed
+      - version_strict_version_type is failed
+      - version_bad_version_type is failed
+      - version_bad_semver is failed
+      - version_empty_input is failed
+      - version_empty_input is search('version value cannot be empty')
+      - version_empty_comparison is failed
+      - version_empty_comparison is search('to compare against cannot be empty')
+      - version_empty_both is failed
+      - version_empty_both is search('version value cannot be empty')
 
 - name: Assert any tests work
   assert:
@@ -266,7 +312,7 @@
       - '"off" is not truthy(convert_bool=True)'
       - '"fred" is truthy(convert_bool=True)'
       - '{} is not truthy'
-      - '{"key": "value"} is truthy'      
+      - '{"key": "value"} is truthy'
 
 - name: Assert falsy tests work
   assert:

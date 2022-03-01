@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-galaxy - Change the output verbosity level of the download message from 3 to 0 (https://github.com/ansible/ansible/issues/70010)
-  - ansible-galaxy - Add installation successful message

@@ -1,2 +1,0 @@
-bugfixes:
-  - remove contradictory recomendation from template docs. https://github.com/ansible/ansible/issues/63484

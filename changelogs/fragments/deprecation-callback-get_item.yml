@@ -1,2 +1,0 @@
-removed_features:
-  - Removed `_get_item()` alias from callback plugin base class which had been deprecated in favor of `_get_item_label()`.

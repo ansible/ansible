@@ -1,0 +1,28 @@
+- name: EXPECTED FAILURE test improper validate
+  blockinfile:
+    path: "{{ remote_tmp_dir }}/validate.txt"
+    block: |
+      line1
+      line2
+    create: yes
+    validate: grep
+  ignore_errors: yes
+
+- name: EXPECTED FAILURE test failure to validate
+  blockinfile:
+    path: "{{ remote_tmp_dir }}/validate.txt"
+    block: |
+      line1
+      line2
+    create: yes
+    validate: grep line47 %s
+  ignore_errors: yes
+
+- name: Test proper validate
+  blockinfile:
+    path: "{{ remote_tmp_dir }}/validate.txt"
+    block: |
+      line1
+      line2
+    create: yes
+    validate: grep line1 %s

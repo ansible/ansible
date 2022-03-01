@@ -1,2 +1,0 @@
-bugfixes:
- - Continue execution when  'flatten' filter when it hits a None/null value as part of the list.

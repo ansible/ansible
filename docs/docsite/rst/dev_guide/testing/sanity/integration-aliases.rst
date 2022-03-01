@@ -74,7 +74,7 @@ Platform versions, as specified using the ``--remote`` option with ``/`` removed
 
 Windows versions, as specified using the ``--windows`` option can also be skipped:
 
-- ``skip/windows/2008`` - Skip tests on Windows Server 2008.
+- ``skip/windows/2012`` - Skip tests on Windows Server 2012.
 - ``skip/windows/2012-R2`` - Skip tests on Windows Server 2012 R2.
 
 Aliases can be used to skip Python major versions using one of the following:
@@ -155,6 +155,7 @@ Some of the available aliases are:
 - ``cloud/aws``
 - ``cloud/azure``
 - ``cloud/cs``
+- ``cloud/digitalocean``
 - ``cloud/foreman``
 - ``cloud/openshift``
 - ``cloud/tower``
@@ -179,4 +180,4 @@ Each issue will be assigned to one of the following projects:
 Questions
 ---------
 
-For questions about integration tests reach out to @mattclay or @gundalow on GitHub or ``#ansible-devel`` on IRC.
+For questions about integration tests reach out to @mattclay or @gundalow on GitHub or the ``#ansible-devel`` chat channel (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_).

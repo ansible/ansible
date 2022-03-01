@@ -1,0 +1,2 @@
+bugfixes:
+  - service_facts module will now give more meaningful warnings when it fails to gather data.

@@ -19,6 +19,8 @@ __metaclass__ = type
 import os
 import json
 import re
+import struct
+import time
 
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.timeout import TimeoutError, timeout
@@ -37,6 +39,7 @@ class FreeBSDHardware(Hardware):
     - processor_cores
     - processor_count
     - devices
+    - uptime_seconds
     """
     platform = 'FreeBSD'
     DMESG_BOOT = '/var/run/dmesg.boot'
@@ -46,6 +49,7 @@ class FreeBSDHardware(Hardware):
 
         cpu_facts = self.get_cpu_facts()
         memory_facts = self.get_memory_facts()
+        uptime_facts = self.get_uptime_facts()
         dmi_facts = self.get_dmi_facts()
         device_facts = self.get_device_facts()
 
@@ -57,6 +61,7 @@ class FreeBSDHardware(Hardware):
 
         hardware_facts.update(cpu_facts)
         hardware_facts.update(memory_facts)
+        hardware_facts.update(uptime_facts)
         hardware_facts.update(dmi_facts)
         hardware_facts.update(device_facts)
         hardware_facts.update(mount_facts)
@@ -120,6 +125,28 @@ class FreeBSDHardware(Hardware):
                 memory_facts['swapfree_mb'] = int(data[3]) // 1024
 
         return memory_facts
+
+    def get_uptime_facts(self):
+        # On FreeBSD, the default format is annoying to parse.
+        # Use -b to get the raw value and decode it.
+        sysctl_cmd = self.module.get_bin_path('sysctl')
+        cmd = [sysctl_cmd, '-b', 'kern.boottime']
+
+        # We need to get raw bytes, not UTF-8.
+        rc, out, err = self.module.run_command(cmd, encoding=None)
+
+        # kern.boottime returns seconds and microseconds as two 64-bits
+        # fields, but we are only interested in the first field.
+        struct_format = '@L'
+        struct_size = struct.calcsize(struct_format)
+        if rc != 0 or len(out) < struct_size:
+            return {}
+
+        (kern_boottime, ) = struct.unpack(struct_format, out[:struct_size])
+
+        return {
+            'uptime_seconds': int(time.time() - kern_boottime),
+        }
 
     @timeout()
     def get_mount_facts(self):

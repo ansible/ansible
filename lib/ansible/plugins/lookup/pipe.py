@@ -5,8 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-    lookup: pipe
-    author: Daniel Hokka Zakrisson <daniel@hozac.com>
+    name: pipe
+    author: Daniel Hokka Zakrisson (!UNKNOWN) <daniel@hozac.com>
     version_added: "0.9"
     short_description: read output from a command
     description:
@@ -28,18 +28,20 @@ DOCUMENTATION = r"""
 
 EXAMPLES = r"""
 - name: raw result of running date command"
-  debug:
-    msg: "{{ lookup('pipe', 'date') }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.pipe', 'date') }}"
 
 - name: Always use quote filter to make sure your variables are safe to use with shell
-  debug:
-    msg: "{{ lookup('pipe', 'getent passwd ' + myuser | quote ) }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.pipe', 'getent passwd ' + myuser | quote ) }}"
 """
 
 RETURN = r"""
   _string:
     description:
       - stdout from command
+    type: list
+    elements: str
 """
 
 import subprocess
@@ -55,7 +57,7 @@ class LookupModule(LookupBase):
         ret = []
         for term in terms:
             '''
-            http://docs.python.org/2/library/subprocess.html#popen-constructor
+            https://docs.python.org/3/library/subprocess.html#popen-constructor
 
             The shell argument (which defaults to False) specifies whether to use the
             shell as the program to execute. If shell is True, it is recommended to pass

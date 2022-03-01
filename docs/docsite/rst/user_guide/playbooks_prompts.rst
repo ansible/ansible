@@ -9,48 +9,55 @@ If you want your playbook to prompt the user for certain input, add a 'vars_prom
 .. contents::
    :local:
 
-Here is a most basic example::
+Here is a most basic example:
+
+.. code-block:: yaml
 
     ---
     - hosts: all
       vars_prompt:
 
         - name: username
-          prompt: "What is your username?"
+          prompt: What is your username?
           private: no
 
         - name: password
-          prompt: "What is your password?"
+          prompt: What is your password?
 
       tasks:
 
-        - debug:
+        - name: Print a message
+          ansible.builtin.debug:
             msg: 'Logging in as {{ username }}'
 
 The user input is hidden by default but it can be made visible by setting ``private: no``.
 
 .. note::
-    Prompts for individual ``vars_prompt`` variables will be skipped for any variable that is already defined through the command line ``--extra-vars`` option, or when running from a non-interactive session (such as cron or Ansible Tower). See :ref:`passing_variables_on_the_command_line`.
+    Prompts for individual ``vars_prompt`` variables will be skipped for any variable that is already defined through the command line ``--extra-vars`` option, or when running from a non-interactive session (such as cron or Ansible AWX). See :ref:`passing_variables_on_the_command_line`.
 
-If you have a variable that changes infrequently, you can provide a default value that can be overridden::
+If you have a variable that changes infrequently, you can provide a default value that can be overridden.
+
+.. code-block:: yaml
 
    vars_prompt:
 
-     - name: "release_version"
-       prompt: "Product release version"
+     - name: release_version
+       prompt: Product release version
        default: "1.0"
 
-Encrypting values supplied by ``vars_prompt``
----------------------------------------------
+Hashing values supplied by ``vars_prompt``
+------------------------------------------
 
-You can encrypt the entered value so you can use it, for instance, with the user module to define a password::
+You can hash the entered value so you can use it, for instance, with the user module to define a password:
+
+.. code-block:: yaml
 
    vars_prompt:
 
-     - name: "my_password2"
-       prompt: "Enter password2"
+     - name: my_password2
+       prompt: Enter password2
        private: yes
-       encrypt: "sha512_crypt"
+       encrypt: sha512_crypt
        confirm: yes
        salt_size: 7
 
@@ -80,7 +87,7 @@ of size 8.
 
 .. versionadded:: 2.7
 
-If you do not have Passlib installed, Ansible uses the `crypt <https://docs.python.org/2/library/crypt.html>`_ library as a fallback. Ansible supports at most four crypt schemes, depending on your platform at most the following crypt schemes are supported:
+If you do not have Passlib installed, Ansible uses the `crypt <https://docs.python.org/3/library/crypt.html>`_ library as a fallback. Ansible supports at most four crypt schemes, depending on your platform at most the following crypt schemes are supported:
 
 - *bcrypt* - BCrypt
 - *md5_crypt* - MD5 Crypt
@@ -93,11 +100,13 @@ If you do not have Passlib installed, Ansible uses the `crypt <https://docs.pyth
 Allowing special characters in ``vars_prompt`` values
 -----------------------------------------------------
 
-Some special characters, such as ``{`` and ``%`` can create templating errors. If you need to accept special characters, use the ``unsafe`` option::
+Some special characters, such as ``{`` and ``%`` can create templating errors. If you need to accept special characters, use the ``unsafe`` option:
+
+.. code-block:: yaml
 
    vars_prompt:
-     - name: "my_password_with_weird_chars"
-       prompt: "Enter password"
+     - name: my_password_with_weird_chars
+       prompt: Enter password
        unsafe: yes
        private: yes
 
@@ -111,5 +120,5 @@ Some special characters, such as ``{`` and ``%`` can create templating errors. I
        All about variables
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

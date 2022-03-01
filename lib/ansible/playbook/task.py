@@ -19,12 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils._text import to_native
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import string_types
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.plugins.loader import lookup_loader
@@ -91,12 +89,10 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
 
-        # This is a reference of all the candidate action names for transparent execution of module_defaults with redirected content
-        # This isn't a FieldAttribute to prevent it from being set via the playbook
-        self._ansible_internal_redirect_list = []
-
         self._role = role
         self._parent = None
+        self.implicit = False
+        self.resolved_action = None
 
         if task_include:
             self._parent = task_include
@@ -105,23 +101,13 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
         super(Task, self).__init__()
 
-    def get_path(self):
-        ''' return the absolute path of the task with its line number '''
-
-        path = ""
-        if hasattr(self, '_ds') and hasattr(self._ds, '_data_source') and hasattr(self._ds, '_line_number'):
-            path = "%s:%s" % (self._ds._data_source, self._ds._line_number)
-        elif hasattr(self._parent._play, '_ds') and hasattr(self._parent._play._ds, '_data_source') and hasattr(self._parent._play._ds, '_line_number'):
-            path = "%s:%s" % (self._parent._play._ds._data_source, self._parent._play._ds._line_number)
-        return path
-
     def get_name(self, include_role_fqcn=True):
         ''' return the name of the task '''
 
         if self._role:
             role_name = self._role.get_name(include_role_fqcn=include_role_fqcn)
 
-        if self._role and self.name and role_name not in self.name:
+        if self._role and self.name:
             return "%s : %s" % (role_name, self.name)
         elif self.name:
             return self.name
@@ -138,7 +124,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             return ds
         elif isinstance(ds, dict):
             buf = ""
-            for (k, v) in iteritems(ds):
+            for (k, v) in ds.items():
                 if k.startswith('_'):
                     continue
                 buf = buf + "%s=%s " % (k, v)
@@ -152,7 +138,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
     def __repr__(self):
         ''' returns a human readable representation of the task '''
-        if self.get_name() == 'meta':
+        if self.get_name() in C._ACTION_META:
             return "TASK: meta (%s)" % self.args['_raw_params']
         else:
             return "TASK: %s" % self.get_name()
@@ -220,17 +206,17 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         except AnsibleParserError as e:
             # if the raises exception was created with obj=ds args, then it includes the detail
             # so we dont need to add it so we can just re raise.
-            if e._obj:
+            if e.obj:
                 raise
             # But if it wasn't, we can add the yaml object now to get more detail
             raise AnsibleParserError(to_native(e), obj=ds, orig_exc=e)
         else:
-            self._ansible_internal_redirect_list = args_parser.internal_redirect_list[:]
+            self.resolved_action = args_parser.resolved_action
 
         # the command/shell/script modules used to support the `cmd` arg,
         # which corresponds to what we now call _raw_params, so move that
         # value over to _raw_params (assuming it is empty)
-        if action in ('command', 'shell', 'script'):
+        if action in C._ACTION_HAS_CMD:
             if 'cmd' in args:
                 if args.get('_raw_params', '') != '':
                     raise AnsibleError("The 'cmd' argument cannot be used when other raw parameters are specified."
@@ -251,27 +237,17 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         else:
             new_ds['vars'] = dict()
 
-        for (k, v) in iteritems(ds):
+        for (k, v) in ds.items():
             if k in ('action', 'local_action', 'args', 'delegate_to') or k == action or k == 'shell':
                 # we don't want to re-assign these values, which were determined by the ModuleArgsParser() above
                 continue
             elif k.startswith('with_') and k.replace("with_", "") in lookup_loader:
                 # transform into loop property
                 self._preprocess_with_loop(ds, new_ds, k, v)
+            elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
+                new_ds[k] = v
             else:
-                # pre-2.0 syntax allowed variables for include statements at the top level of the task,
-                # so we move those into the 'vars' dictionary here, and show a deprecation message
-                # as we will remove this at some point in the future.
-                if action in ('include',) and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
-                    display.deprecated("Specifying include variables at the top-level of the task is deprecated."
-                                       " Please see:\nhttps://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
-                                       " for currently supported syntax regarding included files and variables",
-                                       version="2.12", collection_name='ansible.builtin')
-                    new_ds['vars'][k] = v
-                elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
-                    new_ds[k] = v
-                else:
-                    display.warning("Ignoring invalid attribute: %s" % k)
+                display.warning("Ignoring invalid attribute: %s" % k)
 
         return super(Task, self).preprocess_data(new_ds)
 
@@ -291,6 +267,14 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         except AnsibleParserError as e:
             e.message += '\nThis error can be suppressed as a warning using the "invalid_task_attribute_failed" configuration'
             raise e
+
+    def _validate_changed_when(self, attr, name, value):
+        if not isinstance(value, list):
+            setattr(self, name, [value])
+
+    def _validate_failed_when(self, attr, name, value):
+        if not isinstance(value, list):
+            setattr(self, name, [value])
 
     def post_validate(self, templar):
         '''
@@ -326,7 +310,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                     env[k] = templar.template(v, convert_bare=False)
                 except AnsibleUndefinedVariable as e:
                     error = to_native(e)
-                    if self.action in ('setup', 'gather_facts') and 'ansible_facts.env' in error or 'ansible_env' in error:
+                    if self.action in C._ACTION_FACT_GATHERING and 'ansible_facts.env' in error or 'ansible_env' in error:
                         # ignore as fact gathering is required for 'env' facts
                         return
                     raise
@@ -393,15 +377,12 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         all_vars = dict()
         if self._parent:
             all_vars.update(self._parent.get_include_params())
-        if self.action in ('include', 'include_tasks', 'include_role'):
+        if self.action in C._ACTION_ALL_INCLUDES:
             all_vars.update(self.vars)
         return all_vars
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
         new_me = super(Task, self).copy()
-
-        # if the task has an associated list of candidate names, copy it to the new object too
-        new_me._ansible_internal_redirect_list = self._ansible_internal_redirect_list[:]
 
         new_me._parent = None
         if self._parent and not exclude_parent:
@@ -410,6 +391,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         new_me._role = None
         if self._role:
             new_me._role = self._role
+
+        new_me.implicit = self.implicit
+        new_me.resolved_action = self.resolved_action
 
         return new_me
 
@@ -424,8 +408,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             if self._role:
                 data['role'] = self._role.serialize()
 
-            if self._ansible_internal_redirect_list:
-                data['_ansible_internal_redirect_list'] = self._ansible_internal_redirect_list[:]
+            data['implicit'] = self.implicit
+            data['resolved_action'] = self.resolved_action
 
         return data
 
@@ -455,7 +439,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             self._role = r
             del data['role']
 
-        self._ansible_internal_redirect_list = data.get('_ansible_internal_redirect_list', [])
+        self.implicit = data.get('implicit', False)
+        self.resolved_action = data.get('resolved_action')
 
         super(Task, self).deserialize(data)
 
@@ -503,31 +488,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             pass
 
         return value
-
-    def get_dep_chain(self):
-        if self._parent:
-            return self._parent.get_dep_chain()
-        else:
-            return None
-
-    def get_search_path(self):
-        '''
-        Return the list of paths you should search for files, in order.
-        This follows role/playbook dependency chain.
-        '''
-        path_stack = []
-
-        dep_chain = self.get_dep_chain()
-        # inside role: add the dependency chain from current to dependent
-        if dep_chain:
-            path_stack.extend(reversed([x._role_path for x in dep_chain]))
-
-        # add path of task itself, unless it is already in the list
-        task_dir = os.path.dirname(self.get_path())
-        if task_dir not in path_stack:
-            path_stack.append(task_dir)
-
-        return path_stack
 
     def all_parents_static(self):
         if self._parent:

@@ -133,7 +133,7 @@ def clean_facts(facts):
     # next we remove any connection plugin specific vars
     for conn_path in connection_loader.all(path_only=True):
         conn_name = os.path.splitext(os.path.basename(conn_path))[0]
-        re_key = re.compile('^ansible_%s_' % conn_name)
+        re_key = re.compile('^ansible_%s_' % re.escape(conn_name))
         for fact_key in fact_keys:
             # most lightweight VM or container tech creates devices with this pattern, this avoids filtering them out
             if (re_key.match(fact_key) and not fact_key.endswith(('_bridge', '_gwbridge'))) or fact_key.startswith('ansible_become_'):
@@ -152,13 +152,7 @@ def clean_facts(facts):
     # then we remove them (except for ssh host keys)
     for r_key in remove_keys:
         if not r_key.startswith('ansible_ssh_host_key_'):
-            try:
-                r_val = to_text(data[r_key])
-                if len(r_val) > 24:
-                    r_val = '%s ... %s' % (r_val[:13], r_val[-6:])
-            except Exception:
-                r_val = ' <failed to convert value to a string> '
-            display.warning("Removed restricted key from module data: %s = %s" % (r_key, r_val))
+            display.warning("Removed restricted key from module data: %s" % (r_key))
             del data[r_key]
 
     return strip_internal_keys(data)

@@ -36,18 +36,12 @@ from termios import TIOCGWINSZ
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
-from ansible.module_utils._text import to_bytes, to_text, to_native
-from ansible.module_utils.six import with_metaclass, text_type
+from ansible.module_utils._text import to_bytes, to_text
+from ansible.module_utils.six import text_type
 from ansible.utils.color import stringc
 from ansible.utils.singleton import Singleton
 from ansible.utils.unsafe_proxy import wrap_var
 
-try:
-    # Python 2
-    input = raw_input
-except NameError:
-    # Python 3, we already have raw_input
-    pass
 
 _LIBC = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
 # Set argtypes, to avoid segfault if the wrong type is provided,
@@ -174,7 +168,8 @@ logger = None
 if getattr(C, 'DEFAULT_LOG_PATH'):
     path = C.DEFAULT_LOG_PATH
     if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
-        logging.basicConfig(filename=path, level=logging.DEBUG,
+        # NOTE: level is kept at INFO to avoid security disclosures caused by certain libraries when using DEBUG
+        logging.basicConfig(filename=path, level=logging.INFO,  # DO NOT set to logging.DEBUG
                             format='%(asctime)s p=%(process)d u=%(user)s n=%(name)s | %(message)s')
 
         logger = logging.getLogger('ansible')
@@ -203,7 +198,7 @@ b_COW_PATHS = (
 )
 
 
-class Display(with_metaclass(Singleton, object)):
+class Display(metaclass=Singleton):
 
     def __init__(self, verbosity=0):
 
@@ -224,9 +219,11 @@ class Display(with_metaclass(Singleton, object)):
             try:
                 cmd = subprocess.Popen([self.b_cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (out, err) = cmd.communicate()
-                self.cows_available = set([to_text(c) for c in out.split()])
-                if C.ANSIBLE_COW_WHITELIST and any(C.ANSIBLE_COW_WHITELIST):
-                    self.cows_available = set(C.ANSIBLE_COW_WHITELIST).intersection(self.cows_available)
+                if cmd.returncode:
+                    raise Exception
+                self.cows_available = {to_text(c) for c in out.split()}  # set comprehension
+                if C.ANSIBLE_COW_ACCEPTLIST and any(C.ANSIBLE_COW_ACCEPTLIST):
+                    self.cows_available = set(C.ANSIBLE_COW_ACCEPTLIST).intersection(self.cows_available)
             except Exception:
                 # could not execute cowsay for some reason
                 self.b_cowsay = False
@@ -351,7 +348,7 @@ class Display(with_metaclass(Singleton, object)):
             msg += '.'
 
         if collection_name == 'ansible.builtin':
-            collection_name = 'ansible-base'
+            collection_name = 'ansible-core'
 
         if removed:
             header = '[DEPRECATED]: {0}'.format(msg)

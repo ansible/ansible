@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # (c) 2018, Ansible Project
 #
@@ -22,14 +21,13 @@ a newer upstream release.
 """
 
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import fnmatch
 import json
 import re
 import sys
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 
 import packaging.specifiers
 
@@ -140,6 +138,9 @@ def main():
     files_with_bundled_metadata = get_files_with_bundled_metadata(paths)
 
     for filename in files_with_bundled_metadata.difference(bundled_libs):
+        if filename.startswith('test/support/'):
+            continue  # bundled support code does not need to be updated or tracked
+
         print('{0}: ERROR: File contains _BUNDLED_METADATA but needs to be added to'
               ' test/sanity/code-smell/update-bundled.py'.format(filename))
 

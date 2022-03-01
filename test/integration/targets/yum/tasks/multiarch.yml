@@ -1,0 +1,154 @@
+- block:
+    - name: Set up test yum repo
+      yum_repository:
+        name: multiarch-test-repo
+        description: ansible-test multiarch test repo
+        baseurl: "{{ multiarch_repo_baseurl }}"
+        gpgcheck: no
+        repo_gpgcheck: no
+
+    - name: Install two out of date packages from the repo
+      yum:
+        name:
+          - multiarch-a-1.0
+          - multiarch-b-1.0
+      register: outdated
+
+    - name: See what we installed
+      command: rpm -q multiarch-a multiarch-b
+      register: rpm_q
+
+    # Here we assume we're running on x86_64 (and limit to this in main.yml)
+    # (avoid comparing ansible_architecture because we only have test RPMs
+    # for i686 and x86_64 and ansible_architecture could be other things.)
+    - name: Assert that we got the right architecture
+      assert:
+        that:
+          - outdated is changed
+          - outdated.changes.installed | length == 2
+          - rpm_q.stdout_lines | length == 2
+          - rpm_q.stdout_lines[0].endswith('x86_64')
+          - rpm_q.stdout_lines[1].endswith('x86_64')
+
+    - name: Install the same versions, but i686 instead
+      yum:
+        name:
+          - multiarch-a-1.0*.i686
+          - multiarch-b-1.0*.i686
+      register: outdated_i686
+
+    - name: See what we installed
+      command: rpm -q multiarch-a multiarch-b
+      register: rpm_q
+
+    - name: Assert that all four are installed
+      assert:
+        that:
+          - outdated_i686 is changed
+          - outdated.changes.installed | length == 2
+          - rpm_q.stdout_lines | length == 4
+
+    - name: Update them all to 2.0
+      yum:
+        name: multiarch-*
+        state: latest
+        update_only: true
+      register: yum_latest
+
+    - name: Assert that all were updated and shown in results
+      assert:
+        that:
+          - yum_latest is changed
+          # This is just testing UI stability. The behavior is arguably not
+          # correct, because multiple packages are being updated. But the
+          # "because of (at least)..." wording kinda locks us in to only
+          # showing one update in this case. :(
+          - yum_latest.changes.updated | length == 1
+
+    - name: Downgrade them so we can upgrade them a different way
+      yum:
+        name:
+          - multiarch-a-1.0*
+          - multiarch-b-1.0*
+        allow_downgrade: true
+      register: downgrade
+
+    - name: See what we installed
+      command: rpm -q multiarch-a multiarch-b --queryformat '%{name}-%{version}.%{arch}\n'
+      register: rpm_q
+
+    - name: Ensure downgrade worked
+      assert:
+        that:
+          - downgrade is changed
+          - rpm_q.stdout_lines | sort == ['multiarch-a-1.0.i686', 'multiarch-a-1.0.x86_64', 'multiarch-b-1.0.i686', 'multiarch-b-1.0.x86_64']
+
+    # This triggers a different branch of logic that the partial wildcard
+    # above, but we're limited to check_mode here since it's '*'.
+    - name: Upgrade with full wildcard
+      yum:
+        name: '*'
+        state: latest
+        update_only: true
+        update_cache: true
+      check_mode: true
+      register: full_wildcard
+
+    # https://github.com/ansible/ansible/issues/73284
+    - name: Ensure we report things correctly (both arches)
+      assert:
+        that:
+          - full_wildcard is changed
+          - full_wildcard.changes.updated | filter_list_of_tuples_by_first_param('multiarch', startswith=True) | length == 4
+
+    - name: Downgrade them so we can upgrade them a different way
+      yum:
+        name:
+          - multiarch-a-1.0*
+          - multiarch-b-1.0*
+        allow_downgrade: true
+      register: downgrade
+
+    - name: Try to install again via virtual provides, should be unchanged
+      yum:
+        name:
+          - virtual-provides-multiarch-a
+          - virtual-provides-multiarch-b
+        state: present
+      register: install_vp
+
+    - name: Ensure the above did not change
+      assert:
+        that:
+          - install_vp is not changed
+
+    - name: Try to upgrade via virtual provides
+      yum:
+        name:
+          - virtual-provides-multiarch-a
+          - virtual-provides-multiarch-b
+        state: latest
+        update_only: true
+      register: upgrade_vp
+
+    - name: Ensure we report things correctly (both arches)
+      assert:
+        that:
+          - upgrade_vp is changed
+          # This is just testing UI stability, like above.
+          # We'll only have one package in "updated" per spec, even though
+          # (in this case) two are getting updated per spec.
+          - upgrade_vp.changes.updated | length == 2
+
+  always:
+    - name: Remove test yum repo
+      yum_repository:
+        name: multiarch-test-repo
+        state: absent
+
+    - name: Remove all test packages installed
+      yum:
+        name:
+          - multiarch-*
+          - virtual-provides-multiarch-*
+        state: absent

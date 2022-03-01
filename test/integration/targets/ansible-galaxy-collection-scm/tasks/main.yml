@@ -5,13 +5,14 @@
 
 - name: Test installing collections from git repositories
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}'
+    ANSIBLE_COLLECTIONS_PATHS: "{{ galaxy_dir }}/collections"
   vars:
     cleanup: True
     galaxy_dir: "{{ galaxy_dir }}"
   block:
 
   - include_tasks: ./setup.yml
+  - include_tasks: ./requirements.yml
   - include_tasks: ./individual_collection_repo.yml
   - include_tasks: ./setup_multi_collection_repo.yml
   - include_tasks: ./multi_collection_repo_all.yml
@@ -22,6 +23,9 @@
   - include_tasks: ./multi_collection_repo_individual.yml
   - include_tasks: ./setup_recursive_scm_dependency.yml
   - include_tasks: ./scm_dependency_deduplication.yml
+  - include_tasks: ./download.yml
+  - include_tasks: ./setup_collection_bad_version.yml
+  - include_tasks: ./test_invalid_version.yml
 
   always:
 
@@ -30,11 +34,23 @@
       path: '{{ item }}'
       state: absent
     loop:
-      - '{{ galaxy_dir }}/ansible_collections'
-      - '{{ galaxy_dir }}/development'
+      - "{{ install_path }}"
+      - "{{ alt_install_path }}"
+      - "{{ scm_path }}"
 
   - name: remove git
     package:
       name: git
       state: absent
     when: git_install is changed
+
+  # This gets dragged in as a dependency of git on FreeBSD.
+  # We need to remove it too when done.
+  - name: remove python37 if necessary
+    package:
+      name: python37
+      state: absent
+    when:
+      - git_install is changed
+      - ansible_distribution == 'FreeBSD'
+      - ansible_python.version.major == 2

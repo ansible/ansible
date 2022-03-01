@@ -14,13 +14,13 @@ Starting with Ansible 2.10, related modules should be developed in a collection.
 Before you start coding
 =======================
 
-This list of prerequisites is designed to help ensure that you develop high-quality modules that work well with ansible-base and provide a seamless user experience.
+This list of prerequisites is designed to help ensure that you develop high-quality modules that work well with ansible-core and provide a seamless user experience.
 
 * Read though all the pages linked off :ref:`developing_modules_general`; paying particular focus to the :ref:`developing_modules_checklist`.
 * We encourage PEP 8 compliance. See :ref:`testing_pep8` for more information.
 * We encourage supporting :ref:`Python 2.6+ and Python 3.5+ <developing_python_3>`.
 * Look at Ansible Galaxy and review the naming conventions in your functional area (such as cloud, networking, databases).
-* With great power comes great responsibility: Ansible collection maintainers have a duty to help keep content up to date. As with all successful community projects, collection maintainers should keep a watchful eye for reported issues and contributions.
+* With great power comes great responsibility: Ansible collection maintainers have a duty to help keep content up to date and release collections they are responsible for regularly. As with all successful community projects, collection maintainers should keep a watchful eye for reported issues and contributions.
 * We strongly recommend unit and/or integration tests. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see :ref:`developing_testing` and the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
 
 
@@ -45,6 +45,8 @@ Speak to us
 
 Circulating your ideas before coding helps you adopt good practices and avoid common mistakes. After reading the "Before you start coding" section you should have a reasonable idea of the structure of your modules. Write a list of your proposed plugin and/or module names, with a short description of what each one does. Circulate that list on IRC or a mailing list so the Ansible community can review your ideas for consistency and familiarity. Names and functionality that are consistent, predictable, and familiar make your collection easier to use.
 
+.. _developing_in_groups_support:
+
 Where to get support
 ====================
 
@@ -53,8 +55,8 @@ Ansible has a thriving and knowledgeable community of module developers that is 
 In the :ref:`ansible_community_guide` you can find how to:
 
 * Subscribe to the Mailing Lists - We suggest "Ansible Development List" and "Ansible Announce list"
-* ``#ansible-devel`` - We have found that IRC ``#ansible-devel`` on FreeNode's IRC network works best for developers so we can have an interactive dialogue.
-* IRC meetings - Join the various weekly IRC meetings `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
+* ``#ansible-devel`` - We have found that communicating on the ``#ansible-devel`` chat channel (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_) works best for developers so we can have an interactive dialogue.
+* Working group and other chat channel meetings - Join the various weekly meetings `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
 
 Required files
 ==============
@@ -68,7 +70,7 @@ Your collection should include the following files to be usable:
 
 When you have these files ready, review the :ref:`developing_modules_checklist` again. If you are creating a new collection, you are responsible for all procedures related to your repository, including setting rules for contributions, finding reviewers, and testing and maintaining the code in your collection.
 
-If you need help or advice, consider join the ``#ansible-devel`` IRC channel (see how in the "Where to get support").
+If you need help or advice, consider joining the ``#ansible-devel`` chat channel (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_). For more information, see :ref:`developing_in_groups_support` and :ref:`communication`.
 
 New to git or GitHub
 ====================

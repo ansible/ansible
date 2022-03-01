@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012 Dag Wieers <dag@wieers.com>
@@ -34,45 +33,67 @@ options:
     type: str
   verbosity:
     description:
-    - A number that controls when the debug is run, if you set to 3 it will only run debug when -vvv or above
+    - A number that controls when the debug is run, if you set to 3 it will only run debug when -vvv or above.
     type: int
     default: 0
     version_added: '2.1'
-notes:
-    - This module is also supported for Windows targets.
+extends_documentation_fragment:
+- action_common_attributes
+- action_common_attributes.conn
+- action_common_attributes.flow
+
+attributes:
+    action:
+        support: full
+    async:
+        support: none
+    bypass_host_loop:
+        support: none
+    become:
+        support: none
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    connection:
+        support: none
+    delegation:
+        details: Aside from C(register) and/or in combination with C(delegate_facts), it has little effect.
+        support:  partial
+    platform:
+        support: full
+        platforms: all
 seealso:
-- module: assert
-- module: fail
+- module: ansible.builtin.assert
+- module: ansible.builtin.fail
 author:
 - Dag Wieers (@dagwieers)
 - Michael DeHaan
 '''
 
 EXAMPLES = r'''
-# Example that prints the loopback address and gateway for each host
-- debug:
-    msg: System {{ inventory_hostname }} has uuid {{ ansible_product_uuid }}
-
-- debug:
+- name: Print the gateway for each host when defined
+  ansible.builtin.debug:
     msg: System {{ inventory_hostname }} has gateway {{ ansible_default_ipv4.gateway }}
   when: ansible_default_ipv4.gateway is defined
 
-# Example that prints return information from the previous task
-- shell: /usr/bin/uptime
+- name: Get uptime information
+  ansible.builtin.shell: /usr/bin/uptime
   register: result
 
-- debug:
+- name: Print return information from the previous task
+  ansible.builtin.debug:
     var: result
     verbosity: 2
 
 - name: Display all variables/facts known for a host
-  debug:
+  ansible.builtin.debug:
     var: hostvars[inventory_hostname]
     verbosity: 4
 
-# Example that prints two lines of messages, but only if there is an environment value set
-- debug:
+- name: Prints two lines of messages, but only if there is an environment value set
+  ansible.builtin.debug:
     msg:
-    - "Provisioning based on YOUR_KEY which is: {{ lookup('env', 'YOUR_KEY') }}"
+    - "Provisioning based on YOUR_KEY which is: {{ lookup('ansible.builtin.env', 'YOUR_KEY') }}"
     - "These servers were built using the password of '{{ password_used }}'. Please retain this for later use."
 '''

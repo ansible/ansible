@@ -1,0 +1,8 @@
+{
+    "intercept": true,
+    "prefixes": [
+        "changelogs/config.yaml",
+        "changelogs/fragments/"
+    ],
+    "output": "path-line-column-message"
+}

@@ -1,0 +1,34 @@
+{
+    "platform.dist": [
+        "",
+        "",
+        ""
+    ],
+    "input": {
+        "/etc/system-release": "Amazon Linux release 2",
+        "/etc/os-release": ""
+    },
+    "name": "Amazon Linux 2",
+    "result": {
+        "distribution_release": "NA",
+        "distribution": "Amazon",
+        "distribution_major_version": "2",
+        "os_family": "RedHat",
+        "distribution_version": "2"
+    },
+    "distro": {
+        "id": "amzn",
+        "version": "2",
+        "codename": "",
+        "os_release_info": {
+            "name": "Amazon Linux AMI",
+            "ansi_color": "0;33",
+            "id_like": "rhel fedora",
+            "version_id": "2",
+            "pretty_name": "Amazon Linux release 2",
+            "version": "2",
+            "home_url": "",
+            "id": "amzn"
+        }
+    }
+}

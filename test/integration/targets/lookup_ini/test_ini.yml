@@ -1,0 +1,4 @@
+- import_playbook: test_lookup_properties.yml
+- import_playbook: test_errors.yml
+- import_playbook: test_case_sensitive.yml
+- import_playbook: test_allow_no_value.yml

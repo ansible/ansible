@@ -4,7 +4,8 @@ __metaclass__ = type
 import collections
 import sys
 
-from units.compat import mock
+import mock
+
 from units.compat import unittest
 
 try:

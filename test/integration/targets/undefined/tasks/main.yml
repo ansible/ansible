@@ -1,0 +1,16 @@
+- set_fact:
+    names: '{{ things|map(attribute="name") }}'
+  vars:
+    things:
+      - name: one
+      - name: two
+      - notname: three
+      - name: four
+  ignore_errors: true
+  register: undefined_set_fact
+
+- assert:
+    that:
+      - '("%r"|format(undefined_variable)).startswith("AnsibleUndefined")'
+      - undefined_set_fact is failed
+      - undefined_set_fact.msg is contains 'undefined variable'

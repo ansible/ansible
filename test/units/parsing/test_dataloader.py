@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 
 from units.compat import unittest
-from units.compat.mock import patch, mock_open
+from mock import patch, mock_open
 from ansible.errors import AnsibleParserError, yaml_strings, AnsibleFileNotFound
 from ansible.parsing.vault import AnsibleVaultError
 from ansible.module_utils._text import to_text
@@ -138,8 +138,8 @@ class TestDataLoader(unittest.TestCase):
         self.assertTrue(self._loader.is_directory(os.path.dirname(__file__)))
 
     def test_get_file_contents_none_path(self):
-        self.assertRaisesRegexp(AnsibleParserError, 'Invalid filename',
-                                self._loader._get_file_contents, None)
+        self.assertRaisesRegex(AnsibleParserError, 'Invalid filename',
+                               self._loader._get_file_contents, None)
 
     def test_get_file_contents_non_existent_path(self):
         self.assertRaises(AnsibleFileNotFound, self._loader._get_file_contents, '/non_existent_file')
@@ -169,7 +169,7 @@ class TestPathDwimRelativeStackDataLoader(unittest.TestCase):
         self._loader = DataLoader()
 
     def test_none(self):
-        self.assertRaisesRegexp(AnsibleFileNotFound, 'on the Ansible Controller', self._loader.path_dwim_relative_stack, None, None, None)
+        self.assertRaisesRegex(AnsibleFileNotFound, 'on the Ansible Controller', self._loader.path_dwim_relative_stack, None, None, None)
 
     def test_empty_strings(self):
         self.assertEqual(self._loader.path_dwim_relative_stack('', '', ''), './')
@@ -218,7 +218,7 @@ class TestDataLoaderWithVault(unittest.TestCase):
         self.assertRaises(AnsibleVaultError, self._loader.get_real_file, self.test_vault_data_path)
 
     def test_get_real_file_not_a_path(self):
-        self.assertRaisesRegexp(AnsibleParserError, 'Invalid filename', self._loader.get_real_file, None)
+        self.assertRaisesRegex(AnsibleParserError, 'Invalid filename', self._loader.get_real_file, None)
 
     @patch.multiple(DataLoader, path_exists=lambda s, x: True, is_file=lambda s, x: True)
     def test_parse_from_vault_1_1_file(self):

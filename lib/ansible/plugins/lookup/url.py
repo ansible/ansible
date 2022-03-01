@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-lookup: url
+name: url
 author: Brian Coca (@bcoca)
 version_added: "1.9"
 short_description: return contents from URL
@@ -50,7 +50,7 @@ options:
         - name: ANSIBLE_LOOKUP_URL_FORCE
     ini:
         - section: url_lookup
-        - key: force
+          key: force
   timeout:
     description: How long to wait for the server to send data before giving up
     type: float
@@ -62,18 +62,19 @@ options:
         - name: ANSIBLE_LOOKUP_URL_TIMEOUT
     ini:
         - section: url_lookup
-        - key: timeout
+          key: timeout
   http_agent:
-    description: User-Agent to use in the request
+    description: User-Agent to use in the request. The default was changed in 2.11 to C(ansible-httpget).
     type: string
     version_added: "2.10"
+    default: ansible-httpget
     vars:
         - name: ansible_lookup_url_agent
     env:
         - name: ANSIBLE_LOOKUP_URL_AGENT
     ini:
         - section: url_lookup
-        - key: agent
+          key: agent
   force_basic_auth:
     description: Force basic authentication
     type: boolean
@@ -85,7 +86,7 @@ options:
         - name: ANSIBLE_LOOKUP_URL_AGENT
     ini:
         - section: url_lookup
-        - key: agent
+          key: agent
   follow_redirects:
     description: String of urllib2, all/yes, safe, none to determine how redirects are followed, see RedirectHandlerFactory for more information
     type: string
@@ -97,9 +98,11 @@ options:
         - name: ANSIBLE_LOOKUP_URL_FOLLOW_REDIRECTS
     ini:
         - section: url_lookup
-        - key: follow_redirects
+          key: follow_redirects
   use_gssapi:
-    description: Use GSSAPI handler of requests
+    description:
+    - Use GSSAPI handler of requests
+    - As of Ansible 2.11, GSSAPI credentials can be specified with I(username) and I(password).
     type: boolean
     version_added: "2.10"
     default: False
@@ -109,7 +112,7 @@ options:
         - name: ANSIBLE_LOOKUP_URL_USE_GSSAPI
     ini:
         - section: url_lookup
-        - key: use_gssapi
+          key: use_gssapi
   unix_socket:
     description: String of file system path to unix socket file to use when establishing connection to the provided url
     type: string
@@ -120,7 +123,7 @@ options:
         - name: ANSIBLE_LOOKUP_URL_UNIX_SOCKET
     ini:
         - section: url_lookup
-        - key: unix_socket
+          key: unix_socket
   ca_path:
     description: String of file system path to CA cert bundle to use
     type: string
@@ -131,7 +134,7 @@ options:
         - name: ANSIBLE_LOOKUP_URL_CA_PATH
     ini:
         - section: url_lookup
-        - key: ca_path
+          key: ca_path
   unredirected_headers:
     description: A list of headers to not attach on a redirected request
     type: list
@@ -142,34 +145,39 @@ options:
         - name: ANSIBLE_LOOKUP_URL_UNREDIR_HEADERS
     ini:
         - section: url_lookup
-        - key: unredirected_headers
+          key: unredirected_headers
 """
 
 EXAMPLES = """
 - name: url lookup splits lines by default
-  debug: msg="{{item}}"
-  loop: "{{ lookup('url', 'https://github.com/gremlin.keys', wantlist=True) }}"
+  ansible.builtin.debug: msg="{{item}}"
+  loop: "{{ lookup('ansible.builtin.url', 'https://github.com/gremlin.keys', wantlist=True) }}"
 
 - name: display ip ranges
-  debug: msg="{{ lookup('url', 'https://ip-ranges.amazonaws.com/ip-ranges.json', split_lines=False) }}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.url', 'https://ip-ranges.amazonaws.com/ip-ranges.json', split_lines=False) }}"
 
 - name: url lookup using authentication
-  debug: msg="{{ lookup('url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2') }}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2') }}"
 
 - name: url lookup using basic authentication
-  debug: msg="{{ lookup('url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2', force_basic_auth='True') }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2', force_basic_auth='True') }}"
 
 - name: url lookup using headers
-  debug: msg="{{ lookup('url', 'https://some.private.site.com/api/service', headers={'header1':'value1', 'header2':'value2'} ) }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.url', 'https://some.private.site.com/api/service', headers={'header1':'value1', 'header2':'value2'} ) }}"
 """
 
 RETURN = """
   _list:
     description: list of list of lines or content of url(s)
+    type: list
+    elements: str
 """
 
+from urllib.error import HTTPError, URLError
+
 from ansible.errors import AnsibleError
-from ansible.module_utils.six.moves.urllib.error import HTTPError, URLError
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
 from ansible.plugins.lookup import LookupBase

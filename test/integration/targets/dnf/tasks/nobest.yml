@@ -1,0 +1,34 @@
+- name: Install dnf-plugins-core in order to use dnf config-manager
+  dnf:
+    name: dnf-plugins-core
+    state: present
+
+- name: Add docker-ce repo (Only RedHat & CentOS)
+  shell: dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+  when: (ansible_distribution in ['RedHat', 'CentOS'])
+
+- name: Add docker-ce repo (Only Fedora)
+  shell: dnf config-manager --add-repo=https://download.docker.com/linux/fedora/docker-ce.repo
+  when: (ansible_distribution in ['Fedora'])
+
+- name: Install docker using nobest option
+  dnf:
+    name: docker-ce
+    state: present
+    nobest: true
+  register: dnf_result
+
+- name: Verify installation of docker-ce
+  assert:
+    that:
+    - not dnf_result is failed
+
+- name: Cleanup packages
+  dnf:
+    name: docker-ce, dnf-plugins-core
+    state: absent
+
+- name: Cleanup manually added repos
+  file:
+    name: "/etc/yum.repos.d/docker-ce.repo"
+    state: absent

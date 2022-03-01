@@ -1,0 +1,73 @@
+# https://github.com/ansible/ansible/issues/68775
+- name: Test setting maximum expiration
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+  block:
+    - name: create user
+      user:
+        name: ansibulluser
+        state: present
+
+    - name: add maximum expire date for password
+      user:
+        name: ansibulluser
+        password_expire_max: 10
+      register: pass_max_1_0
+
+    - name: again add maximum expire date for password
+      user:
+        name: ansibulluser
+        password_expire_max: 10
+      register: pass_max_1_1
+
+    - name: validate result for maximum expire date
+      assert:
+        that:
+          - pass_max_1_0 is changed
+          - pass_max_1_1 is not changed
+
+    - name: add minimum expire date for password
+      user:
+        name: ansibulluser
+        password_expire_min: 5
+      register: pass_min_2_0
+
+    - name: again add minimum expire date for password
+      user:
+        name: ansibulluser
+        password_expire_min: 5
+      register: pass_min_2_1
+
+    - name: validate result for minimum expire date
+      assert:
+        that:
+          - pass_min_2_0 is changed
+          - pass_min_2_1 is not changed
+
+    - name: Get shadow data for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: Ensure password expiration was set properly
+      assert:
+        that:
+          - ansible_facts.getent_shadow['ansibulluser'][2] == '5'
+          - ansible_facts.getent_shadow['ansibulluser'][3] == '10'
+
+    - name: Set min and max at the same time
+      user:
+        name: ansibulluser
+        # also checks that assigning 0 works
+        password_expire_min: 0
+        password_expire_max: 0
+
+    - name: Get shadow data for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: Ensure password expiration was set properly
+      assert:
+        that:
+          - ansible_facts.getent_shadow['ansibulluser'][2] == '0'
+          - ansible_facts.getent_shadow['ansibulluser'][3] == '0'

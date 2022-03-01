@@ -23,7 +23,7 @@ changed: [testhost] => (item=debug-1) => {
 failed: [testhost] (item=debug-2) => {
     "msg": "debug-2"
 }
-fatal: [testhost]: FAILED! => {"msg": "All items completed"}
+fatal: [testhost]: FAILED! => {"msg": "One or more items failed"}
 ...ignoring
 
 TASK [EXPECTED FAILURE Failed task to be rescued] ******************************
@@ -31,7 +31,23 @@ fatal: [testhost]: FAILED! => {"changed": false, "msg": "Failed as requested fro
 
 TASK [Rescue task] *************************************************************
 changed: [testhost]
+
+TASK [include_tasks] ***********************************************************
 included: .../test/integration/targets/callback_default/include_me.yml for testhost => (item=1)
+
+TASK [copy] ********************************************************************
+changed: [testhost]
+
+TASK [replace] *****************************************************************
+--- before: .../test_diff.txt
++++ after: .../test_diff.txt
+@@ -1 +1 @@
+-foo
+\ No newline at end of file
++bar
+\ No newline at end of file
+
+changed: [testhost]
 
 RUNNING HANDLER [Test handler 1] ***********************************************
 changed: [testhost]
@@ -47,6 +63,9 @@ changed: [testhost]
 TASK [Second free task] ********************************************************
 changed: [testhost]
 
+TASK [Include some tasks] ******************************************************
+included: .../test/integration/targets/callback_default/include_me.yml for testhost => (item=1)
+
 PLAY RECAP *********************************************************************
-testhost                   : ok=14   changed=9    unreachable=0    failed=0    skipped=1    rescued=1    ignored=2   
+testhost                   : ok=19   changed=11   unreachable=0    failed=0    skipped=1    rescued=1    ignored=2   
 

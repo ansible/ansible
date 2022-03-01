@@ -1,34 +1,18 @@
 # (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
-import crypt
 import glob
 import hashlib
-import itertools
 import json
 import ntpath
 import os.path
 import re
-import string
+import shlex
 import sys
 import time
 import uuid
@@ -38,14 +22,14 @@ import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle
 
-from jinja2.filters import environmentfilter, do_groupby as _do_groupby
+from jinja2.filters import pass_environment
 
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError
-from ansible.module_utils.six import iteritems, string_types, integer_types, reraise
-from ansible.module_utils.six.moves import reduce, shlex_quote
+from ansible.module_utils.six import string_types, integer_types, reraise, text_type
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.common.yaml import yaml_load, yaml_load_all
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import recursive_check_defined
@@ -63,18 +47,31 @@ UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 def to_yaml(a, *args, **kw):
     '''Make verbose, human readable yaml'''
     default_flow_style = kw.pop('default_flow_style', None)
-    transformed = yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, default_flow_style=default_flow_style, **kw)
+    try:
+        transformed = yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, default_flow_style=default_flow_style, **kw)
+    except Exception as e:
+        raise AnsibleFilterError("to_yaml - %s" % to_native(e), orig_exc=e)
     return to_text(transformed)
 
 
 def to_nice_yaml(a, indent=4, *args, **kw):
     '''Make verbose, human readable yaml'''
-    transformed = yaml.dump(a, Dumper=AnsibleDumper, indent=indent, allow_unicode=True, default_flow_style=False, **kw)
+    try:
+        transformed = yaml.dump(a, Dumper=AnsibleDumper, indent=indent, allow_unicode=True, default_flow_style=False, **kw)
+    except Exception as e:
+        raise AnsibleFilterError("to_nice_yaml - %s" % to_native(e), orig_exc=e)
     return to_text(transformed)
 
 
 def to_json(a, *args, **kw):
     ''' Convert the value to JSON '''
+
+    # defaults for filters
+    if 'vault_to_text' not in kw:
+        kw['vault_to_text'] = True
+    if 'preprocess_unsafe' not in kw:
+        kw['preprocess_unsafe'] = False
+
     return json.dumps(a, cls=AnsibleJSONEncoder, *args, **kw)
 
 
@@ -99,10 +96,10 @@ def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
 
 
 def strftime(string_format, second=None):
-    ''' return a date string using string. See https://docs.python.org/2/library/time.html#time.strftime for format '''
+    ''' return a date string using string. See https://docs.python.org/3/library/time.html#time.strftime for format '''
     if second is not None:
         try:
-            second = int(second)
+            second = float(second)
         except Exception:
             raise AnsibleFilterError('Invalid value for epoch value (%s)' % second)
     return time.strftime(string_format, time.localtime(second))
@@ -110,7 +107,9 @@ def strftime(string_format, second=None):
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
-    return shlex_quote(to_text(a))
+    if a is None:
+        a = u''
+    return shlex.quote(to_text(a))
 
 
 def fileglob(pathname):
@@ -209,17 +208,23 @@ def regex_escape(string, re_type='python'):
 
 def from_yaml(data):
     if isinstance(data, string_types):
-        return yaml.safe_load(data)
+        # The ``text_type`` call here strips any custom
+        # string wrapper class, so that CSafeLoader can
+        # read the data
+        return yaml_load(text_type(to_text(data, errors='surrogate_or_strict')))
     return data
 
 
 def from_yaml_all(data):
     if isinstance(data, string_types):
-        return yaml.safe_load_all(data)
+        # The ``text_type`` call here strips any custom
+        # string wrapper class, so that CSafeLoader can
+        # read the data
+        return yaml_load_all(text_type(to_text(data, errors='surrogate_or_strict')))
     return data
 
 
-@environmentfilter
+@pass_environment
 def rand(environment, end, start=None, step=None, seed=None):
     if seed is None:
         r = SystemRandom()
@@ -263,7 +268,7 @@ def get_hash(data, hashtype='sha1'):
     return h.hexdigest()
 
 
-def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=None, rounds=None):
+def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=None, rounds=None, ident=None):
     passlib_mapping = {
         'md5': 'md5_crypt',
         'blowfish': 'bcrypt',
@@ -273,7 +278,7 @@ def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=Non
 
     hashtype = passlib_mapping.get(hashtype, hashtype)
     try:
-        return passlib_or_crypt(password, hashtype, salt=salt, salt_size=salt_size, rounds=rounds)
+        return passlib_or_crypt(password, hashtype, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
     except AnsibleError as e:
         reraise(AnsibleFilterError, AnsibleFilterError(to_native(e), orig_exc=e), sys.exc_info()[2])
 
@@ -423,7 +428,7 @@ def comment(text, style='plain', **kw):
         str_end)
 
 
-@environmentfilter
+@pass_environment
 def extract(environment, item, container, morekeys=None):
     if morekeys is None:
         keys = [item]
@@ -437,26 +442,6 @@ def extract(environment, item, container, morekeys=None):
         value = environment.getitem(value, key)
 
     return value
-
-
-@environmentfilter
-def do_groupby(environment, value, attribute):
-    """Overridden groupby filter for jinja2, to address an issue with
-    jinja2>=2.9.0,<2.9.5 where a namedtuple was returned which
-    has repr that prevents ansible.template.safe_eval.safe_eval from being
-    able to parse and eval the data.
-
-    jinja2<2.9.0,>=2.9.5 is not affected, as <2.9.0 uses a tuple, and
-    >=2.9.5 uses a standard tuple repr on the namedtuple.
-
-    The adaptation here, is to run the jinja2 `do_groupby` function, and
-    cast all of the namedtuples to a regular tuple.
-
-    See https://github.com/ansible/ansible/issues/20098
-
-    We may be able to remove this in the future.
-    """
-    return [tuple(t) for t in _do_groupby(environment, value, attribute)]
 
 
 def b64encode(string, encoding='utf-8'):
@@ -573,9 +558,6 @@ class FilterModule(object):
 
     def filters(self):
         return {
-            # jinja2 overrides
-            'groupby': do_groupby,
-
             # base 64
             'b64decode': b64decode,
             'b64encode': b64encode,
@@ -660,4 +642,5 @@ class FilterModule(object):
             'dict2items': dict_to_list_of_dict_key_value_elements,
             'items2dict': list_of_dict_key_value_elements_to_dict,
             'subelements': subelements,
+            'split': partial(unicode_wrap, text_type.split),
         }

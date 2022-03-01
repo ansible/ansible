@@ -66,11 +66,11 @@ The following table shows:
     <tr>
       <td><a href="https://galaxy.ansible.com/amazon/aws">amazon.aws</a></td>
       <td><a href="https://galaxy.ansible.com/community/aws">community.aws</a></td>
-      <td><a href="https://github.com/ansible/community/tree/master/group-aws">Cloud</a></td>
+      <td><a href="https://github.com/ansible/community/tree/master/group-aws">AWS</a></td>
       <td>✓**</td>
       <td>**</td>
       <td>✓</td>
-      <td>Shippable</td>
+      <td>Zuul</td>
       <td>✓</td>
       <td><a href="https://docs.ansible.com/ansible/devel/dev_guide/platforms/aws_guidelines.html">AWS guide</a></td>
     </tr>
@@ -92,7 +92,7 @@ The following table shows:
       <td>✓</td>
       <td></td>
       <td></td>
-      <td>Shippable</td>
+      <td>Zuul</td>
       <td>✓</td>
       <td><a href="https://docs.ansible.com/ansible/latest/dev_guide/index.html">Developer guide</a></td>
     </tr>
@@ -103,7 +103,7 @@ The following table shows:
       <td>✓</td>
       <td>✓****</td>
       <td>✓</td>
-      <td>Shippable</td>
+      <td>Azure Pipelines and Zuul</td>
       <td>✓</td>
       <td><a href="https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_general_windows.html#developing-modules-general-windows">Windows guide</a></td>
     </tr>
@@ -185,6 +185,27 @@ The following table shows:
       <td><a href="https://docs.ansible.com/ansible/devel/network/dev_guide/index.html">Network guide</a></td>
     </tr>
     <tr>
+      <td><a href="https://galaxy.ansible.com/kubernetes/core">kubernetes.core</a></td>
+      <td><a href="https://galaxy.ansible.com/kubernetes/core">kubernetes.core</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/Kubernetes">Kubernetes</a></td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>GitHub Actions</td>
+      <td>✓</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><a href="https://cloud.redhat.com/ansible/automation-hub/redhat/openshift">redhat.openshift</a></td>
+      <td><a href="https://galaxy.ansible.com/community/okd">community.okd</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/Kubernetes">Kubernetes</a></td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>GitHub Actions</td>
+      <td>✓</td>
+      <td></td>
+    <tr>
       <td><a href="https://galaxy.ansible.com/openvswitch/openvswitch">openvswitch.openvswitch</a></td>
       <td><a href="https://galaxy.ansible.com/community/network">community.network</a></td>
       <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
@@ -217,6 +238,18 @@ The following table shows:
       <td>✓</td>
       <td><a href="https://docs.ansible.com/ansible/devel/network/dev_guide/index.html">Network guide</a></td>
     </tr>
+    <tr>
+      <td><a href="https://galaxy.ansible.com/vmware/vmware_rest">vmware.vmware_rest</a></td>
+      <td><a href="https://galaxy.ansible.com/vmware/vmware_rest">vmware.vmware_rest</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/VMware">VMware</a></td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>Zuul</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/devel/dev_guide/platforms/vmware_rest_guidelines.html">VMware REST guide</a></td>
+    </tr>
+
   </table>
 
 
@@ -226,7 +259,7 @@ The following table shows:
 
   \*\* Integration tests are required and unit tests are welcomed but not required for the AWS collections.  An exception to this is made in cases where integration tests are logistically not feasible due to external requirements.  An example of this is AWS Direct Connect, as this service can not be functionally tested without the establishment of network peering connections.  Unit tests are therefore required for modules that interact with AWS Direct Connect.  Exceptions to ``amazon.aws`` must be approved by Red Hat, and exceptions to ``community.aws`` must be approved by the AWS community.
 
-  \*\*\* ``ansible.netcommon`` contains all foundational components for enabling many network and security :ref:`platform <platform_options>` collections. It contains all connection and filter plugins required, and installs as a dependency when you install the the platform collection.
+  \*\*\* ``ansible.netcommon`` contains all foundational components for enabling many network and security :ref:`platform <platform_options>` collections. It contains all connection and filter plugins required, and installs as a dependency when you install the platform collection.
 
   \*\*\*\* Unit tests for Windows PowerShell modules are an exception to testing, but unit tests are valid and required for the remainder of the collection, including Ansible-side plugins.
 

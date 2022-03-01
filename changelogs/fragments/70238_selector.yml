@@ -1,2 +1,0 @@
-bugfixes:
-- basic - use PollSelector implementation when DefaultSelector fails (https://github.com/ansible/ansible/issues/70238).

@@ -110,11 +110,10 @@ This creates the collection directory structure.
 
 5. Update the collection README.md file to add links to any role README.md files.
 
-
 .. _complex_roles_in_collections:
 
-Migrating a role with plugins to a collection
-==============================================
+Migrating a role that contains plugins to a collection
+======================================================
 
 To migrate from a standalone role that has plugins to a collection role:
 
@@ -207,7 +206,7 @@ If you have a custom ``module_utils`` or import from ``__init__.py``, you must a
 Updating ``module_utils``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If any of your custom modules use a custom module utility, once you migrate to a collection you cannot address the module utility in the top level ``ansible.module_utils`` Python namespace. Ansible does not merge content from collections into the the Ansible internal Python namespace. Update any Python import statements that refer to custom module utilities when you migrate your custom content to collections. See :ref:`module_utils in collections <collection_module_utils>` for more details.
+If any of your custom modules use a custom module utility, once you migrate to a collection you cannot address the module utility in the top level ``ansible.module_utils`` Python namespace. Ansible does not merge content from collections into the Ansible internal Python namespace. Update any Python import statements that refer to custom module utilities when you migrate your custom content to collections. See :ref:`module_utils in collections <collection_module_utils>` for more details.
 
 When coding with ``module_utils`` in a collection, the Python import statement needs to take into account the :abbr:`FQCN (Fully Qualified Collection Name)` along with the ``ansible_collections`` convention. The resulting Python import looks similar to the following example:
 
@@ -226,7 +225,7 @@ In the Python example the ``module_utils`` is ``helper`` and the :abbr:`FQCN (Fu
 .. code-block:: text
 
   from ansible.module_utils.basic import AnsibleModule
-  from ansible.module_utils._text import to_text
+  from ansible.module_utils.common.text.converters import to_text
   from ansible.module_utils.six.moves.urllib.parse import urlencode
   from ansible.module_utils.six.moves.urllib.error import HTTPError
   from ansible_collections.ansible_example.community.plugins.module_utils.helper import HelperRequest
@@ -356,7 +355,7 @@ The following is an example RPM spec file that accomplishes this using this exam
   Version: 1.0.0
   Release: 1%{?dist}
   License: GPLv3+
-  Source0: amce-webserver-1.0.0.tar.gz
+  Source0: acme-webserver-1.0.0.tar.gz
 
   Url: https://github.com/acme/webserver-ansible-collection
   BuildArch: noarch
@@ -408,3 +407,10 @@ The following is an example RPM spec file that accomplishes this using this exam
   %doc %{collection_dir}/roles/*/README.md
   %license %{_pkgdocdir}/*/COPYING
   %license %{_pkgdocdir}/*/LICENSE
+
+.. _using_ansible_legacy:
+
+Using ``ansible.legacy`` to access local custom modules from collections-based roles
+=====================================================================================
+
+Some roles within a collection use :ref:`local custom modules <developing_locally>` that are not part of the collection itself. If there is a conflict between the custom module short name and the collection module name, you need to specify which module your tasks call. You can update the tasks to change ``local_module_name`` to ``ansible.legacy.local_module_name`` to ensure you are using the custom module.

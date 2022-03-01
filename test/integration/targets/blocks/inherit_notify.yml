@@ -1,0 +1,19 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: test notify inheritance in block
+    notify: hello
+    block:
+    - debug: msg='trigger it'
+      changed_when: true
+
+  handlers:
+    - name: hello
+      set_fact: hello=world
+
+  post_tasks:
+    - name: ensure handler ran
+      assert:
+        that:
+          - hello is defined
+          - "hello == 'world'"

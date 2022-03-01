@@ -4,14 +4,18 @@
 # Note: We install the yum package onto Fedora so that this will work on dnf systems
 # We want to test that for people who don't want to upgrade their systems.
 
-
 - block:
+  - name: ensure test packages are removed before starting
+    yum:
+      name:
+      - sos
+      state: absent
+
   - import_tasks: yum.yml
   always:
     - name: remove installed packages
       yum:
         name:
-          - bc
           - sos
         state: absent
 
@@ -65,3 +69,14 @@
 - import_tasks: lock.yml
   when:
     - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux']
+
+- import_tasks: multiarch.yml
+  when:
+    - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux']
+    - ansible_architecture == 'x86_64'
+    # Our output parsing expects us to be on yum, not dnf
+    - ansible_distribution_major_version is version('7', '<=')
+
+- import_tasks: cacheonly.yml
+  when:
+    - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']

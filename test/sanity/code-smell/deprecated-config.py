@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # (c) 2018, Matt Martz <matt@sivel.net>
 #
@@ -17,15 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import mmap
 import os
 import re
 import sys
 
-from distutils.version import StrictVersion
+from ansible.module_utils.compat.version import StrictVersion
 
 import yaml
 

@@ -35,8 +35,21 @@ class IterableStub:
         return IteratorStub()
 
 
+class FakeAnsibleVaultEncryptedUnicode(Sequence):
+    __ENCRYPTED__ = True
+
+    def __init__(self, data):
+        self.data = data
+
+    def __getitem__(self, index):
+        return self.data[index]
+
+    def __len__(self):
+        return len(self.data)
+
+
 TEST_STRINGS = u'he', u'Україна', u'Česká republika'
-TEST_STRINGS = TEST_STRINGS + tuple(s.encode('utf-8') for s in TEST_STRINGS)
+TEST_STRINGS = TEST_STRINGS + tuple(s.encode('utf-8') for s in TEST_STRINGS) + (FakeAnsibleVaultEncryptedUnicode(u'foo'),)
 
 TEST_ITEMS_NON_SEQUENCES = (
     {}, object(), frozenset(),

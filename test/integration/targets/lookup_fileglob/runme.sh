@@ -13,3 +13,6 @@ for seed in foo foo/bar foo/bar/baz
 do
 	ansible-playbook non_existent/play.yml -e "seed='${seed}'" "$@"
 done
+
+# test for issue 72873 fix
+ansible-playbook issue72873/test.yml "$@"

@@ -1,5 +1,5 @@
 - name: test installing one collection
-  command: 'ansible-galaxy collection install git+file://{{ galaxy_dir }}/development/ansible_test/.git#collection_2'
+  command: 'ansible-galaxy collection install git+file://{{ test_repo_path }}/.git#collection_2'
 
 - name: list installed collections
   command: 'ansible-galaxy collection list'

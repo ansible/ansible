@@ -7,13 +7,15 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     author: Ansible Core Team
-    connection: winrm
+    name: winrm
     short_description: Run tasks over Microsoft's WinRM
     description:
         - Run commands or put/fetch on a target via WinRM
         - This plugin allows extra arguments to be passed that are supported by the protocol but not explicitly defined here.
-          They should take the form of variables declared with the following pattern `ansible_winrm_<option>`.
+          They should take the form of variables declared with the following pattern C(ansible_winrm_<option>).
     version_added: "2.0"
+    extends_documentation_fragment:
+        - connection_pipelining
     requirements:
         - pywinrm (python library)
     options:
@@ -32,6 +34,8 @@ DOCUMENTATION = """
         vars:
             - name: ansible_user
             - name: ansible_winrm_user
+        keyword:
+            - name: remote_user
         type: str
       remote_password:
         description: Authentication password for the C(remote_user). Can be supplied as CLI option.
@@ -40,6 +44,8 @@ DOCUMENTATION = """
             - name: ansible_winrm_pass
             - name: ansible_winrm_password
         type: str
+        aliases:
+        - password  # Needed for --ask-pass to come through on delegation
       port:
         description:
             - port for winrm to connect on remote target
@@ -48,6 +54,8 @@ DOCUMENTATION = """
           - name: ansible_port
           - name: ansible_winrm_port
         default: 5986
+        keyword:
+            - name: port
         type: integer
       scheme:
         description:
@@ -88,6 +96,21 @@ DOCUMENTATION = """
         vars:
           - name: ansible_winrm_kinit_args
         version_added: '2.11'
+      kinit_env_vars:
+        description:
+        - A list of environment variables to pass through to C(kinit) when getting the Kerberos authentication ticket.
+        - By default no environment variables are passed through and C(kinit) is run with a blank slate.
+        - The environment variable C(KRB5CCNAME) cannot be specified here as it's used to store the temp Kerberos
+          ticket used by WinRM.
+        type: list
+        elements: str
+        default: []
+        ini:
+        - section: winrm
+          key: kinit_env_vars
+        vars:
+          - name: ansible_winrm_kinit_env_vars
+        version_added: '2.12'
       kerberos_mode:
         description:
             - kerberos usage mode.
@@ -125,6 +148,9 @@ import tempfile
 import shlex
 import subprocess
 
+from inspect import getfullargspec
+from urllib.parse import urlunsplit
+
 HAVE_KERBEROS = False
 try:
     import kerberos
@@ -137,20 +163,13 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.six import binary_type, PY3
+from ansible.module_utils.six import binary_type
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import _parse_clixml
 from ansible.utils.hashing import secure_hash
 from ansible.utils.display import Display
 
-# getargspec is deprecated in favour of getfullargspec in Python 3 but
-# getfullargspec is not available in Python 2
-if PY3:
-    from inspect import getfullargspec as getargspec
-else:
-    from inspect import getargspec
 
 try:
     import winrm
@@ -176,7 +195,7 @@ try:
     # we can only use pexpect for kerb auth if echo is a valid kwarg
     # https://github.com/ansible/ansible/issues/43462
     if hasattr(pexpect, 'spawn'):
-        argspec = getargspec(pexpect.spawn.__init__)
+        argspec = getfullargspec(pexpect.spawn.__init__)
         if 'echo' in argspec.args:
             HAS_PEXPECT = True
 except ImportError as e:
@@ -273,13 +292,13 @@ class Connection(ConnectionBase):
             self._kerb_managed = False
 
         # arg names we're going passing directly
-        internal_kwarg_mask = set(['self', 'endpoint', 'transport', 'username', 'password', 'scheme', 'path', 'kinit_mode', 'kinit_cmd'])
+        internal_kwarg_mask = {'self', 'endpoint', 'transport', 'username', 'password', 'scheme', 'path', 'kinit_mode', 'kinit_cmd'}
 
         self._winrm_kwargs = dict(username=self._winrm_user, password=self._winrm_pass)
-        argspec = getargspec(Protocol.__init__)
+        argspec = getfullargspec(Protocol.__init__)
         supported_winrm_args = set(argspec.args)
         supported_winrm_args.update(internal_kwarg_mask)
-        passed_winrm_args = set([v.replace('ansible_winrm_', '') for v in self.get_option('_extras')])
+        passed_winrm_args = {v.replace('ansible_winrm_', '') for v in self.get_option('_extras')}
         unsupported_args = passed_winrm_args.difference(supported_winrm_args)
 
         # warn for kwargs unsupported by the installed version of pywinrm
@@ -301,6 +320,12 @@ class Connection(ConnectionBase):
         krb5ccname = "FILE:%s" % self._kerb_ccache.name
         os.environ["KRB5CCNAME"] = krb5ccname
         krb5env = dict(KRB5CCNAME=krb5ccname)
+
+        # Add any explicit environment vars into the krb5env block
+        kinit_env_vars = self.get_option('kinit_env_vars')
+        for var in kinit_env_vars:
+            if var not in krb5env and var in os.environ:
+                krb5env[var] = os.environ[var]
 
         # Stores various flags to call with kinit, these could be explicit args set by 'ansible_winrm_kinit_args' OR
         # '-f' if kerberos delegation is requested (ansible_winrm_kerberos_delegation).
@@ -532,6 +557,8 @@ class Connection(ConnectionBase):
         return self
 
     def reset(self):
+        if not self._connected:
+            return
         self.protocol = None
         self.shell_id = None
         self._connect()
@@ -661,7 +688,7 @@ class Connection(ConnectionBase):
             while True:
                 try:
                     script = '''
-                        $path = "%(path)s"
+                        $path = '%(path)s'
                         If (Test-Path -Path $path -PathType Leaf)
                         {
                             $buffer_size = %(buffer_size)d

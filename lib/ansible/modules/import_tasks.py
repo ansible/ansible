@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright:  Ansible Project
@@ -21,14 +20,25 @@ options:
     description:
       - The name of the imported file is specified directly without any other option.
       - Most keywords, including loops and conditionals, only applied to the imported tasks, not to this statement itself.
-      - If you need any of those to apply, use M(include_tasks) instead.
+      - If you need any of those to apply, use M(ansible.builtin.include_tasks) instead.
+extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.conn
+    - action_common_attributes.flow
+    - action_core
+    - action_core.import
+attributes:
+    check_mode:
+      support: none
+    diff_mode:
+      support: none
 notes:
-  - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
+  - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module
 seealso:
-- module: import_playbook
-- module: import_role
-- module: include_role
-- module: include_tasks
+- module: ansible.builtin.import_playbook
+- module: ansible.builtin.import_role
+- module: ansible.builtin.include_role
+- module: ansible.builtin.include_tasks
 - ref: playbooks_reuse_includes
   description: More information related to including and importing playbooks, roles and tasks.
 '''
@@ -36,22 +46,22 @@ seealso:
 EXAMPLES = r'''
 - hosts: all
   tasks:
-    - debug:
+    - ansible.builtin.debug:
         msg: task1
 
     - name: Include task list in play
-      import_tasks: stuff.yaml
+      ansible.builtin.import_tasks: stuff.yaml
 
-    - debug:
+    - ansible.builtin.debug:
         msg: task10
 
 - hosts: all
   tasks:
-    - debug:
+    - ansible.builtin.debug:
         msg: task1
 
     - name: Apply conditional to all imported tasks
-      import_tasks: stuff.yaml
+      ansible.builtin.import_tasks: stuff.yaml
       when: hostvar is defined
 '''
 

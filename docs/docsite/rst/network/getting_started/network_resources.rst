@@ -13,6 +13,7 @@ Documents
 
 Read more about Ansible for Network Automation:
 
+- :ref:`Network Platform Options <platform_options>`
 - Network Automation on the `Ansible website <https://www.ansible.com/overview/networking>`_
 - Ansible Network `Blog posts <https://www.ansible.com/blog/topic/networks>`_
 
@@ -32,16 +33,15 @@ Ansible hosts module code, examples, demonstrations, and other content on GitHub
 
 - `Network-Automation <https://github.com/network-automation>`_ is an open community for all things network automation. Have an idea, some playbooks, or roles to share? Email ansible-network@redhat.com and we will add you as a contributor to the repository.
 
-- `Ansible <https://github.com/ansible/ansible>`_ is the main codebase, including code for network modules
-
-- `ansible-network <https://github.com/ansible-network>`_ is the main codebase for the Ansible network team roles
+- `Ansible collections <https://github.com/ansible-collections>`_ is the main repository for Ansible-maintained and community collections, including collections for network devices.
 
 
-IRC and Slack
+
+Chat channels
 =============
 
-Join us on:
+Got questions? Chat with us on:
 
-* Freenode IRC - ``#ansible-network`` Freenode channel
+* the ``#ansible-network`` channel (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_)
 
-* Slack - `<https://ansiblenetwork.slack.com>`_
+* `Ansible Network Slack <https://join.slack.com/t/ansiblenetwork/shared_invite/zt-3zeqmhhx-zuID9uJqbbpZ2KdVeTwvzw>`_ - Network & Security Automation Slack community.  Check out the #devel channel for discussions on module and plugin development.

@@ -1,6 +1,6 @@
 ---
 # same as expanduser & expandvars called on managed host
-- command: 'echo {{ output_dir }}'
+- command: 'echo {{ remote_tmp_dir }}'
   register: echo
 
 - set_fact:
@@ -8,13 +8,13 @@
 
 - name: ensure test directory doesn't exist
   file:
-    path: '{{ output_dir }}/non/existent/path'
+    path: '{{ remote_tmp_dir }}/non/existent/path'
     state: absent
 
 - name: destination doesn't exist
   uri:
     url: 'https://{{ httpbin_host }}/get'
-    dest: '{{ output_dir }}/non/existent/path'
+    dest: '{{ remote_tmp_dir }}/non/existent/path'
   ignore_errors: true
   register: ret
 

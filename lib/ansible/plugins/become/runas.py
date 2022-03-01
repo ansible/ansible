@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    become: runas
+    name: runas
     short_description: Run As user
     description:
         - This become plugins allows your remote/login user to execute commands as another user via the windows runas facility.
@@ -25,6 +25,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_USER
               - name: ANSIBLE_RUNAS_USER
+            keyword:
+              - name: become_user
             required: True
         become_flags:
             description: Options to pass to runas, a space delimited list of k=v pairs
@@ -40,6 +42,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_FLAGS
               - name: ANSIBLE_RUNAS_FLAGS
+            keyword:
+              - name: become_flags
         become_pass:
             description: password
             ini:
@@ -66,5 +70,6 @@ class BecomeModule(BecomeBase):
     name = 'runas'
 
     def build_become_command(self, cmd, shell):
-        # runas is implemented inside the winrm connection plugin
+        # this is a noop, the 'real' runas is implemented
+        # inside the windows powershell execution subsystem
         return cmd

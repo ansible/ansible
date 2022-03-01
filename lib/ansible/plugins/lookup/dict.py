@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: dict
+    name: dict
     version_added: "1.5"
     short_description: returns key/value pair items from dictionaries
     description:
@@ -30,19 +30,19 @@ vars:
 tasks:
   # with predefined vars
   - name: Print phone records
-    debug:
+    ansible.builtin.debug:
       msg: "User {{ item.key }} is {{ item.value.name }} ({{ item.value.telephone }})"
-    loop: "{{ lookup('dict', users) }}"
+    loop: "{{ lookup('ansible.builtin.dict', users) }}"
   # with inline dictionary
   - name: show dictionary
-    debug:
+    ansible.builtin.debug:
       msg: "{{item.key}}: {{item.value}}"
     with_dict: {a: 1, b: 2, c: 3}
   # Items from loop can be used in when: statements
   - name: set_fact when alice in key
-    set_fact:
+    ansible.builtin.set_fact:
       alice_exists: true
-    loop: "{{ lookup('dict', users) }}"
+    loop: "{{ lookup('ansible.builtin.dict', users) }}"
     when: "'alice' in item.key"
 """
 
@@ -62,7 +62,7 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
-        # FIXME: can remove once with_ special case is removed
+        # NOTE: can remove if with_ is removed
         if not isinstance(terms, list):
             terms = [terms]
 

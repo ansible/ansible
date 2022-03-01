@@ -1,0 +1,7 @@
+{
+    "extensions": [
+        ".py"
+    ],
+    "py2_compat": true,
+    "output": "path-message"
+}

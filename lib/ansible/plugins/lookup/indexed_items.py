@@ -5,8 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: indexed_items
-    author: Michael DeHaan <michael.dehaan@gmail.com>
+    name: indexed_items
+    author: Michael DeHaan
     version_added: "1.3"
     short_description: rewrites lists to return 'indexed items'
     description:
@@ -20,7 +20,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: indexed loop demo
-  debug:
+  ansible.builtin.debug:
     msg: "at array position {{ item.0 }} there is a value {{ item.1 }}"
   with_indexed_items:
     - "{{ some_list }}"
@@ -31,6 +31,7 @@ RETURN = """
     description:
       - list with each item.0 giving you the position and item.1 the value
     type: list
+    elements: list
 """
 
 from ansible.errors import AnsibleError

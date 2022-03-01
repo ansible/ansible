@@ -1,0 +1,6 @@
+- name: test multiple playbooks for ansible-pull
+  hosts: all
+  gather_facts: False
+  tasks:
+    - name: debug output
+      debug: msg="test multi_play_2"

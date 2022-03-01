@@ -591,7 +591,7 @@ APIC error messages
 The following error messages may occur and this section can help you understand what exactly is going on and how to fix/avoid them.
 
     APIC Error 122: unknown managed object class 'polUni'
-        In case you receive this error while you are certain your aci_rest payload and object classes are seemingly correct, the issue might be that your payload is not in fact correct JSON (e.g. the sent payload is using single quotes, rather than double quotes), and as a result the APIC is not correctly parsing your object classes from the payload. One way to avoid this is by using a YAML or an XML formatted payload, which are easier to construct correctly and modify later.
+        In case you receive this error while you are certain your aci_rest payload and object classes are seemingly correct, the issue might be that your payload is not in fact correct JSON (for example, the sent payload is using single quotes, rather than double quotes), and as a result the APIC is not correctly parsing your object classes from the payload. One way to avoid this is by using a YAML or an XML formatted payload, which are easier to construct correctly and modify later.
 
 
     APIC Error 400: invalid data at line '1'. Attributes are missing, tag 'attributes' must be specified first, before any other tag
@@ -599,7 +599,7 @@ The following error messages may occur and this section can help you understand 
 
 
     APIC Error 801: property descr of uni/tn-TENANT/ap-AP failed validation for value 'A "legacy" network'
-        Some values in the APIC have strict format-rules to comply to, and the internal APIC validation check for the provided value failed. In the above case, the ``description`` parameter (internally known as ``descr``) only accepts values conforming to `Regex: [a-zA-Z0-9\\!#$%()*,-./:;@ _{|}~?&+]+ <https://pubhub-prod.s3.amazonaws.com/media/apic-mim-ref/docs/MO-fvAp.html#descr>`_, in general it must not include quotes or square brackets.
+        Some values in the APIC have strict format-rules to comply to, and the internal APIC validation check for the provided value failed. In the above case, the ``description`` parameter (internally known as ``descr``) only accepts values conforming to Regex: ``[a-zA-Z0-9\\!#$%()*,-./:;@ _{|}~?&+]+``, in general it must not include quotes or square brackets.
 
 
 .. _aci_guide_known_issues:
@@ -619,7 +619,7 @@ All below issues either have been reported to the vendor, and most can simply be
     Specific requests may not reflect changes correctly (`#35401 <https://github.com/ansible/ansible/issues/35041>`_)
         There is a known issue where specific requests to the APIC do not properly reflect changed in the resulting output, even when we request those changes explicitly from the APIC. In one instance using the path ``api/node/mo/uni/infra.xml`` fails, where ``api/node/mo/uni/infra/.xml`` does work correctly.
 
-        **NOTE:** A workaround is to register the task return values (e.g. ``register: this``) and influence when the task should report a change by adding: ``changed_when: this.imdata != []``.
+        **NOTE:** A workaround is to register the task return values (for example, ``register: this``) and influence when the task should report a change by adding: ``changed_when: this.imdata != []``.
 
 
     Specific requests are known to not be idempotent (`#35050 <https://github.com/ansible/ansible/issues/35050>`_)
@@ -640,7 +640,7 @@ ACI Ansible community
 ---------------------
 If you have specific issues with the ACI modules, or a feature request, or you like to contribute to the ACI project by proposing changes or documentation updates, look at the Ansible Community wiki ACI page at: https://github.com/ansible/community/wiki/Network:-ACI
 
-You will find our roadmap, an overview of open ACI issues and pull-requests, and more information about who we are. If you have an interest in using ACI with Ansible, feel free to join! We occasionally meet online to track progress and prepare for new Ansible releases.
+You will find our roadmap, an overview of open ACI issues and pull-requests, and more information about who we are. If you have an interest in using ACI with Ansible, feel free to join! We occasionally meet online (on the #ansible-network chat channel, using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_) to track progress and prepare for new Ansible releases.
 
 
 .. seealso::
@@ -648,14 +648,12 @@ You will find our roadmap, an overview of open ACI issues and pull-requests, and
    `ACI collection on Ansible Galaxy <https://galaxy.ansible.com/cisco/aci>`_
        View the content tab for a complete list of supported ACI modules.
    :ref:`Developing Cisco ACI modules <aci_dev_guide>`
-       A walkthough on how to develop new Cisco ACI modules to contribute back.
+       A walkthrough on how to develop new Cisco ACI modules to contribute back.
    `ACI community <https://github.com/ansible/community/wiki/Network:-ACI>`_
        The Ansible ACI community wiki page, includes roadmap, ideas and development documentation.
    :ref:`network_guide`
        A detailed guide on how to use Ansible for automating network infrastructure.
    `Network Working Group <https://github.com/ansible/community/tree/master/group-network>`_
        The Ansible Network community page, includes contact information and meeting information.
-   `#ansible-network <https://webchat.freenode.net/?channels=ansible-network>`_
-       The #ansible-network IRC chat channel on Freenode.net.
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!

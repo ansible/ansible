@@ -1,0 +1,2 @@
+removed_features:
+  - cli - remove deprecated ability to set verbosity before the sub-command (https://github.com/ansible/ansible/issues/75823)

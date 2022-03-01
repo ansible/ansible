@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    inventory: advanced_host_list
+    name: advanced_host_list
     version_added: "2.4"
     short_description: Parses a 'host list' with ranges
     description:
@@ -53,7 +53,7 @@ class InventoryModule(BaseInventoryPlugin):
                         (hostnames, port) = self._expand_hostpattern(h)
                     except AnsibleError as e:
                         self.display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_text(e))
-                        host = [h]
+                        hostnames = [h]
                         port = None
 
                     for host in hostnames:

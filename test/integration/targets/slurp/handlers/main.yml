@@ -1,0 +1,6 @@
+- name: remove test user and their home dir
+  user:
+    name: "{{ become_test_user }}"
+    state: absent
+    remove: yes
+    force: yes

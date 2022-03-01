@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # encoding: utf-8
 
 # Copyright: (c) 2012, Matt Wright <matt@nobien.net>
@@ -17,29 +16,40 @@ module: apt_repository
 short_description: Add and remove APT repositories
 description:
     - Add or remove an APT repositories in Ubuntu and Debian.
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    platform:
+        platforms: debian
 notes:
-    - This module works on Debian, Ubuntu and their derivatives.
-    - This module supports Debian Squeeze (version 6) as well as its successors.
+    - This module supports Debian Squeeze (version 6) as well as its successors and derivatives.
 options:
     repo:
         description:
             - A source string for the repository.
+        type: str
         required: true
     state:
         description:
             - A source string state.
+        type: str
         choices: [ absent, present ]
         default: "present"
     mode:
         description:
-            - The octal mode for newly created files in sources.list.d
-        default: '0644'
+            - The octal mode for newly created files in sources.list.d.
+            - Default is what system uses (probably 0644).
+        type: raw
         version_added: "1.6"
     update_cache:
         description:
             - Run the equivalent of C(apt-get update) when a change occurs.  Cache updates are run after making changes.
         type: bool
         default: "yes"
+        aliases: [ update-cache ]
     update_cache_retries:
         description:
         - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
@@ -64,12 +74,25 @@ options:
             - Sets the name of the source list file in sources.list.d.
               Defaults to a file name based on the repository source url.
               The .list extension will be automatically added.
+        type: str
         version_added: '2.1'
     codename:
         description:
             - Override the distribution codename to use for PPA repositories.
-              Should usually only be set when working with a PPA on a non-Ubuntu target (e.g. Debian or Mint)
+              Should usually only be set when working with a PPA on
+              a non-Ubuntu target (for example, Debian or Mint).
+        type: str
         version_added: '2.3'
+    install_python_apt:
+        description:
+            - Whether to automatically try to install the Python apt library or not, if it is not already installed.
+              Without this library, the module does not work.
+            - Runs C(apt-get install python-apt) for Python 2, and C(apt-get install python3-apt) for Python 3.
+            - Only works with the system Python 2 or Python 3. If you are using a Python on the remote that is not
+               the system Python, set I(install_python_apt=false) and ensure that the Python apt library
+               for your Python version is installed some other way.
+        type: bool
+        default: true
 author:
 - Alexander Saltanov (@sashka)
 version_added: "0.7"
@@ -80,35 +103,37 @@ requirements:
 
 EXAMPLES = '''
 - name: Add specified repository into sources list
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
     state: present
 
 - name: Add specified repository into sources list using specified filename
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb http://dl.google.com/linux/chrome/deb/ stable main
     state: present
     filename: google-chrome
 
 - name: Add source repository into sources list
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb-src http://archive.canonical.com/ubuntu hardy partner
     state: present
 
 - name: Remove specified repository from sources list
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
     state: absent
 
 - name: Add nginx stable repository from PPA and install its signing key on Ubuntu target
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: ppa:nginx/stable
 
 - name: Add nginx stable repository from PPA and install its signing key on Debian target
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: 'ppa:nginx/stable'
     codename: trusty
 '''
+
+RETURN = '''#'''
 
 import glob
 import json
@@ -120,51 +145,44 @@ import copy
 import random
 import time
 
+from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.respawn import has_respawned, probe_interpreters_for_module, respawn_module
+from ansible.module_utils._text import to_native
+from ansible.module_utils.six import PY3
+from ansible.module_utils.urls import fetch_url
+
+# init module names to keep pylint happy
+apt = apt_pkg = aptsources_distro = distro = None
+
 try:
     import apt
     import apt_pkg
     import aptsources.distro as aptsources_distro
+
     distro = aptsources_distro.get_distro()
+
     HAVE_PYTHON_APT = True
 except ImportError:
-    distro = None
     HAVE_PYTHON_APT = False
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
-from ansible.module_utils.urls import fetch_url
-
-
-if sys.version_info[0] < 3:
-    PYTHON_APT = 'python-apt'
-else:
-    PYTHON_APT = 'python3-apt'
 
 DEFAULT_SOURCES_PERM = 0o0644
 
 VALID_SOURCE_TYPES = ('deb', 'deb-src')
 
 
-def install_python_apt(module):
+def install_python_apt(module, apt_pkg_name):
 
     if not module.check_mode:
         apt_get_path = module.get_bin_path('apt-get')
         if apt_get_path:
             rc, so, se = module.run_command([apt_get_path, 'update'])
             if rc != 0:
-                module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (PYTHON_APT, se.strip()))
-            rc, so, se = module.run_command([apt_get_path, 'install', PYTHON_APT, '-y', '-q'])
-            if rc == 0:
-                global apt, apt_pkg, aptsources_distro, distro, HAVE_PYTHON_APT
-                import apt
-                import apt_pkg
-                import aptsources.distro as aptsources_distro
-                distro = aptsources_distro.get_distro()
-                HAVE_PYTHON_APT = True
-            else:
-                module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (PYTHON_APT, se.strip()))
+                module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (apt_pkg_name, se.strip()))
+            rc, so, se = module.run_command([apt_get_path, 'install', apt_pkg_name, '-y', '-q'])
+            if rc != 0:
+                module.fail_json(msg="Failed to auto-install %s. Error was: '%s'" % (apt_pkg_name, se.strip()))
     else:
-        module.fail_json(msg="%s must be installed to use check mode" % PYTHON_APT)
+        module.fail_json(msg="%s must be installed to use check mode" % apt_pkg_name)
 
 
 class InvalidSource(Exception):
@@ -532,10 +550,53 @@ def main():
     sourceslist = None
 
     if not HAVE_PYTHON_APT:
+        # This interpreter can't see the apt Python library- we'll do the following to try and fix that:
+        # 1) look in common locations for system-owned interpreters that can see it; if we find one, respawn under it
+        # 2) finding none, try to install a matching python-apt package for the current interpreter version;
+        #    we limit to the current interpreter version to try and avoid installing a whole other Python just
+        #    for apt support
+        # 3) if we installed a support package, try to respawn under what we think is the right interpreter (could be
+        #    the current interpreter again, but we'll let it respawn anyway for simplicity)
+        # 4) if still not working, return an error and give up (some corner cases not covered, but this shouldn't be
+        #    made any more complex than it already is to try and cover more, eg, custom interpreters taking over
+        #    system locations)
+
+        apt_pkg_name = 'python3-apt' if PY3 else 'python-apt'
+
+        if has_respawned():
+            # this shouldn't be possible; short-circuit early if it happens...
+            module.fail_json(msg="{0} must be installed and visible from {1}.".format(apt_pkg_name, sys.executable))
+
+        interpreters = ['/usr/bin/python3', '/usr/bin/python2', '/usr/bin/python']
+
+        interpreter = probe_interpreters_for_module(interpreters, 'apt')
+
+        if interpreter:
+            # found the Python bindings; respawn this module under the interpreter where we found them
+            respawn_module(interpreter)
+            # this is the end of the line for this process, it will exit here once the respawned module has completed
+
+        # don't make changes if we're in check_mode
+        if module.check_mode:
+            module.fail_json(msg="%s must be installed to use check mode. "
+                                 "If run normally this module can auto-install it." % apt_pkg_name)
+
         if params['install_python_apt']:
-            install_python_apt(module)
+            install_python_apt(module, apt_pkg_name)
         else:
-            module.fail_json(msg='%s is not installed, and install_python_apt is False' % PYTHON_APT)
+            module.fail_json(msg='%s is not installed, and install_python_apt is False' % apt_pkg_name)
+
+        # try again to find the bindings in common places
+        interpreter = probe_interpreters_for_module(interpreters, 'apt')
+
+        if interpreter:
+            # found the Python bindings; respawn this module under the interpreter where we found them
+            # NB: respawn is somewhat wasteful if it's this interpreter, but simplifies the code
+            respawn_module(interpreter)
+            # this is the end of the line for this process, it will exit here once the respawned module has completed
+        else:
+            # we've done all we can do; just tell the user it's busted and get out
+            module.fail_json(msg="{0} must be installed and visible from {1}.".format(apt_pkg_name, sys.executable))
 
     if not repo:
         module.fail_json(msg='Please set argument \'repo\' to a non-empty value')

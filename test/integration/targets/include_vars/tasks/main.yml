@@ -57,6 +57,8 @@
   include_vars:
     dir: vars
     extensions: ['', 'yaml', 'yml', 'json']
+    ignore_files:
+      - no_auto_unsafe.yml
   register: include_every_dir
 
 - name: verify that the correct files have been loaded and overwrite based on alphabetical order
@@ -65,12 +67,12 @@
       - "testing == 456"
       - "base_dir == 'services'"
       - "webapp_containers == 10"
-      - "{{ include_every_dir.ansible_included_var_files | length }} == 6"
+      - "{{ include_every_dir.ansible_included_var_files | length }} == 7"
       - "'vars/all/all.yml' in include_every_dir.ansible_included_var_files[0]"
       - "'vars/environments/development/all.yml' in include_every_dir.ansible_included_var_files[1]"
       - "'vars/environments/development/services/webapp.yml' in include_every_dir.ansible_included_var_files[2]"
-      - "'vars/services/webapp.yml' in include_every_dir.ansible_included_var_files[4]"
-      - "'vars/webapp/file_without_extension' in include_every_dir.ansible_included_var_files[5]"
+      - "'vars/services/webapp.yml' in include_every_dir.ansible_included_var_files[5]"
+      - "'vars/webapp/file_without_extension' in include_every_dir.ansible_included_var_files[6]"
 
 - name: include every directory in vars except files matching webapp.yml
   include_vars:
@@ -78,6 +80,7 @@
     ignore_files:
       - webapp.yml
       - file_without_extension
+      - no_auto_unsafe.yml
   register: include_without_webapp
 
 - name: verify that the webapp.yml file was not included
@@ -85,7 +88,7 @@
     that:
       - "testing == 789"
       - "base_dir == 'environments/development'"
-      - "{{ include_without_webapp.ansible_included_var_files | length }} == 3"
+      - "{{ include_without_webapp.ansible_included_var_files | length }} == 4"
       - "'webapp.yml' not in '{{ include_without_webapp.ansible_included_var_files | join(' ') }}'"
       - "'file_without_extension' not in '{{ include_without_webapp.ansible_included_var_files | join(' ') }}'"
 
@@ -152,3 +155,63 @@
   assert:
     that:
       - "'Could not find file' in include_with_non_existent_file.message"
+
+- name: include var (FQCN) with raw params
+  ansible.builtin.include_vars: >
+    services/service_vars_fqcn.yml
+
+- name: Verify that FQCN of include_vars works
+  assert:
+    that:
+      - "'my_custom_service' == service_name_fqcn"
+      - "'my_custom_service' == service_name_tmpl_fqcn"
+
+- name: Include a vars file with a hash variable
+  include_vars:
+    file: vars2/hashes/hash1.yml
+
+- name: Verify the hash variable
+  assert:
+    that:
+      - "{{ config | length }} == 3"
+      - "config.key0 == 0"
+      - "config.key1 == 0"
+      - "{{ config.key2 | length }} == 1"
+      - "config.key2.a == 21"
+
+- name: Include the second file to merge the hash variable
+  include_vars:
+    file: vars2/hashes/hash2.yml
+    hash_behaviour: merge
+
+- name: Verify that the hash is merged
+  assert:
+    that:
+      - "{{ config | length }} == 4"
+      - "config.key0 == 0"
+      - "config.key1 == 1"
+      - "{{ config.key2 | length }} == 2"
+      - "config.key2.a == 21"
+      - "config.key2.b == 22"
+      - "config.key3 == 3"
+
+- name: Include the second file again without hash_behaviour option
+  include_vars:
+    file: vars2/hashes/hash2.yml
+
+- name: Verify that the properties from the first file is cleared
+  assert:
+    that:
+      - "{{ config | length }} == 3"
+      - "config.key1 == 1"
+      - "{{ config.key2 | length }} == 1"
+      - "config.key2.b == 22"
+      - "config.key3 == 3"
+
+- include_vars:
+    file: no_auto_unsafe.yml
+  register: baz
+
+- assert:
+    that:
+      - baz.ansible_facts.foo|type_debug != "AnsibleUnsafeText"

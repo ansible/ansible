@@ -1,8 +1,7 @@
 """Functions for encoding and decoding strings."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-from . import types as t
+import typing as t
 
 ENCODING = 'utf-8'
 

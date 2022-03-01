@@ -31,24 +31,32 @@ Function Test-ThrowException {
 
 if ($data -eq "normal") {
     Exit-Json -obj $result
-} elseif ($data -eq "fail") {
+}
+elseif ($data -eq "fail") {
     Fail-Json -obj $result -message "fail message"
-} elseif ($data -eq "throw") {
+}
+elseif ($data -eq "throw") {
     throw [ArgumentException]"module is thrown"
-} elseif ($data -eq "error") {
+}
+elseif ($data -eq "error") {
     Write-Error -Message $data
-} elseif ($data -eq "cmdlet_error") {
+}
+elseif ($data -eq "cmdlet_error") {
     Get-Item -Path "fake:\path"
-} elseif ($data -eq "dotnet_exception") {
+}
+elseif ($data -eq "dotnet_exception") {
     [System.IO.Path]::GetFullPath($null)
-} elseif ($data -eq "function_throw") {
+}
+elseif ($data -eq "function_throw") {
     Test-ThrowException
-} elseif ($data -eq "proc_exit_fine") {
+}
+elseif ($data -eq "proc_exit_fine") {
     # verifies that if no error was actually fired and we have an output, we
     # don't use the RC to validate if the module failed
     &cmd.exe /c exit 2
     Exit-Json -obj $result
-} elseif ($data -eq "proc_exit_fail") {
+}
+elseif ($data -eq "proc_exit_fail") {
     &cmd.exe /c exit 2
     Fail-Json -obj $result -message "proc_exit_fail"
 }

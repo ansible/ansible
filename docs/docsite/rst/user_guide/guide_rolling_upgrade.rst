@@ -198,7 +198,7 @@ Here's another example, from the same template:
 This loops over all of the hosts in the group called ``monitoring``, and adds an ACCEPT line for
 each monitoring hosts' default IPv4 address to the current machine's iptables configuration, so that Nagios can monitor those hosts.
 
-You can learn a lot more about Jinja2 and its capabilities `here <http://jinja.pocoo.org/docs/>`_, and you
+You can learn a lot more about Jinja2 and its capabilities `here <https://jinja.palletsprojects.com/>`_, and you
 can read more about Ansible variables in general in the :ref:`playbooks_variables` section.
 
 .. _lamp_rolling_upgrade:
@@ -219,7 +219,7 @@ Looking at the playbook, you can see it is made up of two plays. The first play 
    - hosts: monitoring
      tasks: []
 
-What's going on here, and why are there no tasks? You might know that Ansible gathers "facts" from the servers before operating upon them. These facts are useful for all sorts of things: networking information, OS/distribution versions, etc. In our case, we need to know something about all of the monitoring servers in our environment before we perform the update, so this simple play forces a fact-gathering step on our monitoring servers. You will see this pattern sometimes, and it's a useful trick to know.
+What's going on here, and why are there no tasks? You might know that Ansible gathers "facts" from the servers before operating upon them. These facts are useful for all sorts of things: networking information, OS/distribution versions, and so on. In our case, we need to know something about all of the monitoring servers in our environment before we perform the update, so this simple play forces a fact-gathering step on our monitoring servers. You will see this pattern sometimes, and it's a useful trick to know.
 
 The next part is the update play. The first part looks like this:
 
@@ -306,7 +306,7 @@ Now that you have an automated way to deploy updates to your application, how do
 
 Depending on your environment, you might be deploying continuously to a test environment, running an integration test battery against that environment, and then deploying automatically into production.  Or you could keep it simple and just use the rolling-update for on-demand deployment into test or production specifically.  This is all up to you.
 
-For integration with Continuous Integration systems, you can easily trigger playbook runs using the ``ansible-playbook`` command line tool, or, if you're using :ref:`ansible_tower`, the ``tower-cli`` or the built-in REST API.  (The tower-cli command 'joblaunch' will spawn a remote job over the REST API and is pretty slick).
+For integration with Continuous Integration systems, you can easily trigger playbook runs using the ``ansible-playbook`` command line tool, or, if you're using AWX, the ``tower-cli`` command or the built-in REST API.  (The tower-cli command 'joblaunch' will spawn a remote job over the REST API and is pretty slick).
 
 This should give you a good idea of how to structure a multi-tier application with Ansible, and orchestrate operations upon that app, with the eventual goal of continuous delivery to your customers. You could extend the idea of the rolling upgrade to lots of different parts of the app; maybe add front-end web servers along with application servers, for instance, or replace the SQL database with something like MongoDB or Riak. Ansible gives you the capability to easily manage complicated environments and automate common operations.
 

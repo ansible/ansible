@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: nested
+    name: nested
     version_added: "1.1"
     short_description: composes a list with nested elements of other lists
     description:
@@ -19,7 +19,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: give users access to multiple databases
-  mysql_user:
+  community.mysql.mysql_user:
     name: "{{ item[0] }}"
     priv: "{{ item[1] }}.*:ALL"
     append_privs: yes
@@ -30,7 +30,7 @@ EXAMPLES = """
 # As with the case of 'with_items' above, you can use previously defined variables.:
 
 - name: here, 'users' contains the above list of employees
-  mysql_user:
+  community.mysql.mysql_user:
     name: "{{ item[0] }}"
     priv: "{{ item[1] }}.*:ALL"
     append_privs: yes

@@ -7,9 +7,9 @@ Encrypting content with Ansible Vault
 Ansible Vault encrypts variables and files so you can protect sensitive content such as passwords or keys rather than leaving it visible as plaintext in playbooks or roles. To use Ansible Vault you need one or more passwords to encrypt and decrypt content. If you store your vault passwords in a third-party tool such as a secret manager, you need a script to access them. Use the passwords with the :ref:`ansible-vault` command-line tool to create and view encrypted variables, create encrypted files, encrypt existing files, or edit, re-key, or decrypt files. You can then place encrypted content under source control and share it more safely.
 
 .. warning::
-    * Encryption with Ansible Vault ONLY protects 'data at rest'.  Once the content is decrypted ('data in use'), play and plugin authors are responsible for avoiding any secret disclosure, see :ref:`no_log <keep_secret_data>` for details on hiding output.
+    * Encryption with Ansible Vault ONLY protects 'data at rest'.  Once the content is decrypted ('data in use'), play and plugin authors are responsible for avoiding any secret disclosure, see :ref:`no_log <keep_secret_data>` for details on hiding output and :ref:`vault_securing_editor` for security considerations on editors you use with Ansible Vault.
 
-You can use encrypted variables and files in ad-hoc commands and playbooks by supplying the passwords you used to encrypt them. You can modify your ``ansible.cfg`` file to specify the location of a password file or to always prompt for the password.
+You can use encrypted variables and files in ad hoc commands and playbooks by supplying the passwords you used to encrypt them. You can modify your ``ansible.cfg`` file to specify the location of a password file or to always prompt for the password.
 
 .. contents::
    :local:
@@ -40,9 +40,11 @@ If you use multiple vault passwords, you can differentiate one password from ano
   * Include it wherever you store the password for that vault ID (see :ref:`storing_vault_passwords`)
   * Pass it with :option:`--vault-id <ansible-playbook --vault-id>` to the :ref:`ansible-playbook` command when you run a playbook that uses content you encrypted with that vault ID
 
-When you pass a vault ID as an option to the :ref:`ansible-vault` command, you add a label (a hint or nickname) to the encrypted content. This label documents which password you used to encrypt it. The encrypted variable or file includes the vault ID label in plain text in the header. The vault ID is the last element before the encrypted content. For example::
+When you pass a vault ID as an option to the :ref:`ansible-vault` command, you add a label (a hint or nickname) to the encrypted content. This label documents which password you used to encrypt it. The encrypted variable or file includes the vault ID label in plain text in the header. The vault ID is the last element before the encrypted content. For example:
 
-    my_encrytped_var: !vault |
+ .. code-block:: yaml
+
+    my_encrypted_var: !vault |
               $ANSIBLE_VAULT;1.2;AES256;dev
               30613233633461343837653833666333643061636561303338373661313838333565653635353162
               3263363434623733343538653462613064333634333464660a663633623939393439316636633863
@@ -83,14 +85,7 @@ You can memorize your vault password, or manually copy vault passwords from any 
 Storing passwords in files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To store a vault password in a file, enter the password as a string on a single line in the file. Make sure the permissions on the file are appropriate. Do not add password files to source control. If you have multiple passwords, you can store them all in a single file, as long as they all have vault IDs. For each password, create a separate line and enter the vault ID, a space, then the password as a string. For example:
-
-.. code-block:: text
-
-   dev my_dev_pass
-   test my_test_pass
-   prod my_prod_pass
-
+To store a vault password in a file, enter the password as a string on a single line in the file. Make sure the permissions on the file are appropriate. Do not add password files to source control.
 
 .. _vault_password_client_scripts:
 
@@ -101,7 +96,7 @@ You can store your vault passwords on the system keyring, in a database, or in a
 
 To create a vault password client script:
 
-  * Create a file with a name ending in ``-client.py``
+  * Create a file with a name ending in either ``-client`` or ``-client.EXTENSION``
   * Make the file executable
   * Within the script itself:
       * Print the passwords to standard output
@@ -120,8 +115,7 @@ Ansible executes the client script with a ``--vault-id`` option so the script kn
 
     contrib/vault/vault-keyring-client.py --vault-id dev
 
-For an example of a client script that loads passwords from the system keyring, see :file:`contrib/vault/vault-keyring-client.py`.
-
+For an example of a client script that loads passwords from the system keyring, see the `vault-keyring-client script <https://github.com/ansible-community/contrib-scripts/blob/main/vault/vault-keyring-client.py>`_.
 
 Encrypting content with Ansible Vault
 =====================================
@@ -180,7 +174,9 @@ For example, to encrypt the string 'foobar' using the only password stored in 'a
 
     ansible-vault encrypt_string --vault-password-file a_password_file 'foobar' --name 'the_secret'
 
-The command above creates this content::
+The command above creates this content:
+
+ .. code-block:: yaml
 
     the_secret: !vault |
           $ANSIBLE_VAULT;1.1;AES256
@@ -196,7 +192,9 @@ To encrypt the string 'foooodev', add the vault ID label 'dev' with the 'dev' va
 
     ansible-vault encrypt_string --vault-id dev@a_password_file 'foooodev' --name 'the_dev_secret'
 
-The command above creates this content::
+The command above creates this content:
+
+ .. code-block:: yaml
 
     the_dev_secret: !vault |
               $ANSIBLE_VAULT;1.2;AES256;dev
@@ -206,19 +204,21 @@ The command above creates this content::
               6664656334373166630a363736393262666465663432613932613036303963343263623137386239
               6330
 
-To encrypt the string 'letmein' read from stdin, add the vault ID 'test' using the 'test' vault password stored in `a_password_file`, and name the variable 'test_db_password':
+To encrypt the string 'letmein' read from stdin, add the vault ID 'dev' using the 'dev' vault password stored in `a_password_file`, and name the variable 'db_password':
 
 .. code-block:: bash
 
-    echo -n 'letmein' | ansible-vault encrypt_string --vault-id test@a_password_file --stdin-name 'test_db_password'
+    echo -n 'letmein' | ansible-vault encrypt_string --vault-id dev@a_password_file --stdin-name 'db_password'
 
 .. warning::
 
    Typing secret content directly at the command line (without a prompt) leaves the secret string in your shell history. Do not do this outside of testing.
 
-The command above creates this output::
+The command above creates this output:
 
-    Reading plaintext input from stdin. (ctrl-d to end input)
+ .. code-block:: console
+
+    Reading plaintext input from stdin. (ctrl-d to end input, twice if your content does not already have a new line)
     db_password: !vault |
               $ANSIBLE_VAULT;1.2;AES256;dev
               61323931353866666336306139373937316366366138656131323863373866376666353364373761
@@ -237,7 +237,7 @@ The command above triggers this prompt:
 
 .. code-block:: text
 
-    Reading plaintext input from stdin. (ctrl-d to end input)
+    Reading plaintext input from stdin. (ctrl-d to end input, twice if your content does not already have a new line)
 
 Type the string to encrypt (for example, 'hunter2'), hit ctrl-d, and wait.
 
@@ -245,7 +245,9 @@ Type the string to encrypt (for example, 'hunter2'), hit ctrl-d, and wait.
 
    Do not press ``Enter`` after supplying the string to encrypt. That will add a newline to the encrypted value.
 
-The sequence above creates this output::
+The sequence above creates this output:
+
+ .. code-block:: yaml
 
     new_user_password: !vault |
               $ANSIBLE_VAULT;1.2;AES256;dev
@@ -264,7 +266,7 @@ You can view the original value of an encrypted variable using the debug module.
 
 .. code-block:: console
 
-   ansible localhost -m debug -a var="new_user_password" -e "@vars.yml" --vault-id dev@a_password_file
+   ansible localhost -m ansible.builtin.debug -a var="new_user_password" -e "@vars.yml" --vault-id dev@a_password_file
 
    localhost | SUCCESS => {
        "new_user_password": "hunter2"
@@ -288,6 +290,11 @@ Ansible Vault can encrypt any structured data file used by Ansible, including:
 
 The full file is encrypted in the vault.
 
+.. note::
+
+	Ansible Vault uses an editor to create or modify encrypted files. See :ref:`vault_securing_editor` for some guidance on securing the editor.
+
+
 Advantages and disadvantages of encrypting files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -304,7 +311,7 @@ To create a new encrypted data file called 'foo.yml' with the 'test' vault passw
 
    ansible-vault create --vault-id test@multi_password_file foo.yml
 
-The tool launches an editor (whatever editor you have defined with $EDITOR, default editor is vi). Add the content. When you close the the editor session, the file is saved as encrypted data. The file header reflects the vault ID used to create it:
+The tool launches an editor (whatever editor you have defined with $EDITOR, default editor is vi). Add the content. When you close the editor session, the file is saved as encrypted data. The file header reflects the vault ID used to create it:
 
 .. code-block:: text
 
@@ -396,6 +403,73 @@ If you have an encrypted file that you no longer want to keep encrypted, you can
     ansible-vault decrypt foo.yml bar.yml baz.yml
 
 
+.. _vault_securing_editor:
+
+Steps to secure your editor
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Ansible Vault relies on your configured editor, which can be a source of disclosures. Most editors have ways to prevent loss of data, but these normally rely on extra plain text files that can have a clear text copy of your secrets. Consult your editor documentation to configure the editor to avoid disclosing secure data. The following sections provide some guidance on common editors but should not be taken as a complete guide to securing your editor.
+
+
+vim
+...
+
+You can set the following ``vim`` options in command mode to avoid cases of disclosure. There may be more settings you need to modify to ensure security, especially when using plugins, so consult the ``vim`` documentation.
+
+
+1. Disable swapfiles that act like an autosave in case of crash or interruption.
+
+.. code-block:: text
+
+  set noswapfile
+
+2. Disable creation of backup files.
+
+.. code-block:: text
+
+  set nobackup
+  set nowritebackup
+
+3. Disable the viminfo file from copying data from your current session.
+
+.. code-block:: text
+
+  set viminfo=
+
+4. Disable copying to the system clipboard.
+
+.. code-block:: text
+
+  set clipboard=
+
+
+You can optionally add these settings in ``.vimrc`` for all files, or just specific paths or extensions. See the ``vim`` manual for details.
+
+
+Emacs
+......
+
+You can set the following Emacs options to avoid cases of disclosure. There may be more settings you need to modify to ensure security, especially when using plugins, so consult the Emacs documentation.
+
+1. Do not copy data to the system clipboard.
+
+.. code-block:: text
+
+  (setq x-select-enable-clipboard nil)
+
+2. Disable creation of backup files.
+
+.. code-block:: text
+
+  (setq make-backup-files nil)
+
+3. Disable autosave files.
+
+.. code-block:: text
+
+  (setq auto-save-default nil)
+
+
 .. _playbooks_vault:
 .. _providing_vault_passwords:
 
@@ -462,7 +536,7 @@ If your task or playbook requires multiple encrypted variables or files that you
 
     ansible-playbook --vault-id dev@dev-password --vault-id prod@prompt site.yml
 
-By default the vault ID labels (dev, prod etc.) are only hints. Ansible attempts to decrypt vault content with each password. The password with the same label as the encrypted data will be tried first, after that each vault secret will be tried in the order they were provided on the command line.
+By default the vault ID labels (dev, prod and so on) are only hints. Ansible attempts to decrypt vault content with each password. The password with the same label as the encrypted data will be tried first, after that each vault secret will be tried in the order they were provided on the command line.
 
 Where the encrypted data has no label, or the label does not match any of the provided labels, the passwords will be tried in the order they are specified. In the example above, the 'dev' password will be tried first, then the 'prod' password for cases where Ansible doesn't know which vault ID is used to encrypt something.
 
@@ -508,28 +582,20 @@ When are encrypted files made visible?
 
 In general, content you encrypt with Ansible Vault remains encrypted after execution. However, there is one exception. If you pass an encrypted file as the ``src`` argument to the :ref:`copy <copy_module>`, :ref:`template <template_module>`, :ref:`unarchive <unarchive_module>`, :ref:`script <script_module>` or :ref:`assemble <assemble_module>` module, the file will not be encrypted on the target host (assuming you supply the correct vault password when you run the play). This behavior is intended and useful. You can encrypt a configuration file or template to avoid sharing the details of your configuration, but when you copy that configuration to servers in your environment, you want it to be decrypted so local users and processes can access it.
 
-.. _speeding_up_vault:
-
-Speeding up Ansible Vault
-=========================
-
-If you have many encrypted files, decrypting them at startup may cause a perceptible delay. To speed this up, install the cryptography package:
-
-.. code-block:: bash
-
-    pip install cryptography
-
-
 .. _vault_format:
 
 Format of files encrypted with Ansible Vault
 ============================================
 
-Ansible Vault creates UTF-8 encoded txt files. The file format includes a newline terminated header. For example::
+Ansible Vault creates UTF-8 encoded txt files. The file format includes a newline terminated header. For example:
+
+ .. code-block:: text
 
     $ANSIBLE_VAULT;1.1;AES256
 
-or::
+or
+
+ .. code-block:: text
 
     $ANSIBLE_VAULT;1.2;AES256;vault-id-label
 

@@ -5,12 +5,12 @@
 Using collections
 *****************
 
-Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. As modules move from the core Ansible repository into collections, the module documentation will move to the `collections documentation page <https://docs.ansible.com/collections/>`_
+Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. As modules move from the core Ansible repository into collections, the module documentation will move to the :ref:`collections pages <list_of_collections>`.
 
 You can install and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_.
 
 * For details on how to *develop* collections see :ref:`developing_collections`.
-* For the current development status of Collections and FAQ see `Ansible Collections Community Guide <https://github.com/ansible-collections/general/blob/master/README.rst>`_.
+* For the current development status of Collections and FAQ see `Ansible Collections Community Guide <https://github.com/ansible-collections/overview/blob/main/README.rst>`_.
 
 .. contents::
    :local:
@@ -21,6 +21,9 @@ You can install and use collections through `Ansible Galaxy <https://galaxy.ansi
 Installing collections
 ======================
 
+.. note::
+
+  If you install a collection manually as described in this paragraph, the collection will not be upgraded automatically when you upgrade the ``ansible`` package or ``ansible-core``.
 
 Installing collections with ``ansible-galaxy``
 ----------------------------------------------
@@ -33,11 +36,6 @@ Installing an older version of a collection
 -------------------------------------------
 
 .. include:: ../shared_snippets/installing_older_collection.txt
-
-Installing a collection from a git repository
----------------------------------------------
-
-.. include:: ../shared_snippets/installing_collections_git_repo.txt
 
 .. _collection_requirements_file:
 
@@ -53,6 +51,15 @@ Downloading a collection for offline use
 
 .. include:: ../shared_snippets/download_tarball_collections.txt
 
+Installing a collection from source files
+-----------------------------------------
+
+.. include:: ../shared_snippets/installing_collections_file.rst
+
+Installing a collection from a git repository
+---------------------------------------------
+
+.. include:: ../shared_snippets/installing_collections_git_repo.txt
 
 .. _galaxy_server_config:
 
@@ -96,6 +103,30 @@ requirements file in the format documented with :ref:`collection_requirements_fi
 .. code-block:: bash
 
    ansible-galaxy collection download -r requirements.yml
+
+You can also download a source collection directory. The collection is built with the mandatory ``galaxy.yml`` file.
+
+.. code-block:: bash
+
+   ansible-galaxy collection download /path/to/collection
+
+   ansible-galaxy collection download git+file:///path/to/collection/.git
+
+You can download multiple source collections from a single namespace by providing the path to the namespace.
+
+.. code-block:: text
+
+   ns/
+   ├── collection1/
+   │   ├── galaxy.yml
+   │   └── plugins/
+   └── collection2/
+       ├── galaxy.yml
+       └── plugins/
+
+.. code-block:: bash
+
+   ansible-galaxy collection install /path/to/ns
 
 All the collections are downloaded by default to the ``./collections`` folder but you can use ``-p`` or
 ``--download-path`` to specify another path:
@@ -239,6 +270,41 @@ In addition to the ``namespace.collection_name:version`` format, you can provide
 
 Verifying against ``tar.gz`` files is not supported. If your ``requirements.yml`` contains paths to tar files or URLs for installation, you can use the ``--ignore-errors`` flag to ensure that all collections using the ``namespace.name`` format in the file are processed.
 
+Signature verification
+----------------------
+
+If a collection has been signed by the Galaxy server, the server will provide ASCII armored, detached signatures to verify the authenticity of the MANIFEST.json before using it to verify the collection's contents. You must opt into signature verification by configuring a keyring for ``ansible-galaxy`` to use and providing the path with the ``--keyring`` option.
+
+In addition to any signatures provided by the Galaxy server, signature sources can also be provided in the requirements file and on the command line. Signature sources should be URIs.
+
+Use the ``--signature`` option to verify collection name(s) provided on the CLI with an additional signature. This option can be used multiple times to provide multiple signatures.
+
+.. code-block:: bash
+
+   ansible-galaxy collection verify my_namespace.my_collection --signature https://examplehost.com/detached_signature.asc --signature file:///path/to/local/detached_signature.asc --keyring ~/.ansible/pubring.kbx
+
+Collections in a requirements file should list any additional signature sources following the collection's "signatures" key.
+
+.. code-block:: yaml
+
+   # requirements.yml
+   collections:
+     - name: ns.coll
+       version: 1.0.0
+       signatures:
+         - https://examplehost.com/detached_signature.asc
+         - file:///path/to/local/detached_signature.asc
+
+.. code-block:: bash
+
+   ansible-galaxy collection verify -r requirements.yml --keyring ~/.ansible/pubring.kbx
+
+When a collection is installed from a Galaxy server, the signatures provided by the server to verify the collection's authenticity are saved alongside the installed collections. This data is used to verify the internal consistency of the collection without querying the Galaxy server again when the ``--offline`` option is provided.
+
+.. code-block:: bash
+
+   ansible-galaxy collection verify my_namespace.my_collection --offline --keyring ~/.ansible/pubring.kbx
+
 .. _collections_using_playbook:
 
 Using collections in a Playbook
@@ -274,7 +340,7 @@ Simplifying module names with the ``collections`` keyword
 The ``collections`` keyword lets you define a list of collections that your role or playbook should search for unqualified module and action names. So you can use the ``collections`` keyword, then simply refer to modules and action plugins by their short-form names throughout that role or playbook.
 
 .. warning::
-   If your playbook uses both the ``collections`` keyword and one or more roles, the roles do not inherit the collections set by the playbook. See below for details.
+   If your playbook uses both the ``collections`` keyword and one or more roles, the roles do not inherit the collections set by the playbook. This is one of the reasons we recommend you always use FQCN. See below for roles details.
 
 Using ``collections`` in roles
 ------------------------------
@@ -308,17 +374,62 @@ In a playbook, you can control the collections Ansible searches for modules and 
              option1: value
 
          - debug:
-             msg: '{{ lookup("my_namespace.my_collection.lookup1", 'param1')| my_namespace.my_collection.filter1 }}'
+             msg: '{{ lookup("my_namespace.my_collection.lookup1", "param1")| my_namespace.my_collection.filter1 }}'
 
-The ``collections`` keyword merely creates an ordered 'search path' for non-namespaced plugin and role references. It does not install content or otherwise change Ansible's behavior around the loading of plugins or roles. Note that an FQCN is still required for non-action or module plugins (e.g., lookups, filters, tests).
+The ``collections`` keyword merely creates an ordered 'search path' for non-namespaced plugin and role references. It does not install content or otherwise change Ansible's behavior around the loading of plugins or roles. Note that an FQCN is still required for non-action or module plugins (for example, lookups, filters, tests).
+
+When using the ``collections`` keyword, it is not necessary to add in ``ansible.builtin`` as part of the search list. When left omitted, the following content is available by default:
+
+1. Standard ansible modules and plugins available through ``ansible-base``/``ansible-core``
+
+2. Support for older 3rd party plugin paths
+
+In general, it is preferable to use a module or plugin's FQCN over the ``collections`` keyword and the short name for all content in ``ansible-core``
+
+Using a playbook from a collection
+==================================
+
+.. versionadded:: 2.11
+
+You can also distribute playbooks in your collection and invoke them using the same semantics you use for plugins:
+
+.. code-block:: shell
+
+    ansible-playbook my_namespace.my_collection.playbook1 -i ./myinventory
+
+From inside a playbook:
+
+.. code-block:: yaml
+
+    - import_playbook: my_namespace.my_collection.playbookX
+
+
+A few recommendations when creating such playbooks, ``hosts:`` should be generic or at least have a variable input.
+
+.. code-block:: yaml
+
+ - hosts: all  # Use --limit or customized inventory to restrict hosts targeted
+
+ - hosts: localhost  # For things you want to restrict to the controller
+
+ - hosts: '{{target|default("webservers")}}'  # Assumes inventory provides a 'webservers' group, but can also use ``-e 'target=host1,host2'``
+
+
+This will have an implied entry in the ``collections:`` keyword of ``my_namespace.my_collection`` just as with roles.
+
+.. note::
+    Playbook names, like other collection resources, have a restricted set of valid characters.
+    Names can contain only lowercase alphanumeric characters, plus _ and must start with an alpha character. The dash ``-`` character is not valid for playbook names in collections.
+    Playbooks whose names contain invalid characters are not addressable: this is a limitation of the Python importer that is used to load collection resources.
 
 .. seealso::
 
-  :ref:`developing_collections`
-      Develop or modify a collection.
-  :ref:`collections_galaxy_meta`
+   :ref:`developing_collections`
+       Develop or modify a collection.
+   :ref:`collections_galaxy_meta`
        Understand the collections metadata structure.
-  `Mailing List <https://groups.google.com/group/ansible-devel>`_
+   `Mailing List <https://groups.google.com/group/ansible-devel>`_
        The development mailing list
-  `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels
+

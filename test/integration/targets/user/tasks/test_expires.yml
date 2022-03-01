@@ -1,0 +1,147 @@
+# Date is March 3, 2050
+- name: Set user expiration
+  user:
+    name: ansibulluser
+    state: present
+    expires: 2529881062
+  register: user_test_expires1
+  tags:
+    - timezone
+
+- name: Set user expiration again to ensure no change is made
+  user:
+    name: ansibulluser
+    state: present
+    expires: 2529881062
+  register: user_test_expires2
+  tags:
+    - timezone
+
+- name: Ensure that account with expiration was created and did not change on subsequent run
+  assert:
+    that:
+      - user_test_expires1 is changed
+      - user_test_expires2 is not changed
+
+- name: Verify expiration date for Linux
+  block:
+    - name: LINUX | Get expiration date for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        that:
+          - getent_shadow['ansibulluser'][6] == '29281'
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+
+
+- name: Verify expiration date for BSD
+  block:
+    - name: BSD | Get expiration date for ansibulluser
+      shell: 'grep ansibulluser /etc/master.passwd | cut -d: -f 7'
+      changed_when: no
+      register: bsd_account_expiration
+
+    - name: BSD | Ensure proper expiration date was set
+      assert:
+        that:
+          - bsd_account_expiration.stdout == '2529881062'
+  when: ansible_facts.os_family == 'FreeBSD'
+
+- name: Change timezone
+  timezone:
+    name: America/Denver
+  register: original_timezone
+  tags:
+    - timezone
+
+- name: Change system timezone to make sure expiration comparison works properly
+  block:
+    - name: Create user with expiration again to ensure no change is made in a new timezone
+      user:
+        name: ansibulluser
+        state: present
+        expires: 2529881062
+      register: user_test_different_tz
+      tags:
+        - timezone
+
+    - name: Ensure that no change was reported
+      assert:
+        that:
+          - user_test_different_tz is not changed
+      tags:
+        - timezone
+
+  always:
+    - name: Restore original timezone - {{ original_timezone.diff.before.name }}
+      timezone:
+        name: "{{ original_timezone.diff.before.name }}"
+      when: original_timezone.diff.before.name != "n/a"
+      tags:
+        - timezone
+
+    - name: Restore original timezone when n/a
+      file:
+        path: /etc/sysconfig/clock
+        state: absent
+      when:
+        - original_timezone.diff.before.name == "n/a"
+        - "'/etc/sysconfig/clock' in original_timezone.msg"
+      tags:
+        - timezone
+
+
+- name: Unexpire user
+  user:
+    name: ansibulluser
+    state: present
+    expires: -1
+  register: user_test_expires3
+
+- name: Verify un expiration date for Linux
+  block:
+    - name: LINUX | Get expiration date for ansibulluser
+      getent:
+        database: shadow
+        key: ansibulluser
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['ansibulluser'][6] }}"
+        that:
+          - not getent_shadow['ansibulluser'][6] or getent_shadow['ansibulluser'][6] | int < 0
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+
+- name: Verify un expiration date for Linux/BSD
+  block:
+    - name: Unexpire user again to check for change
+      user:
+        name: ansibulluser
+        state: present
+        expires: -1
+      register: user_test_expires4
+
+    - name: Ensure first expiration reported a change and second did not
+      assert:
+        msg: The second run of the expiration removal task reported a change when it should not
+        that:
+          - user_test_expires3 is changed
+          - user_test_expires4 is not changed
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse', 'FreeBSD']
+
+- name: Verify un expiration date for BSD
+  block:
+    - name: BSD | Get expiration date for ansibulluser
+      shell: 'grep ansibulluser /etc/master.passwd | cut -d: -f 7'
+      changed_when: no
+      register: bsd_account_expiration
+
+    - name: BSD | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be '0', not {{ bsd_account_expiration.stdout }}"
+        that:
+          - bsd_account_expiration.stdout == '0'
+  when: ansible_facts.os_family == 'FreeBSD'

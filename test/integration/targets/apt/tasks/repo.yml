@@ -86,6 +86,47 @@
         state: absent
         allow_unauthenticated: yes
 
+- block:
+  - name: Install foo=1.0.0
+    apt:
+      name: foo=1.0.0
+
+  - name: Run version test matrix
+    apt:
+      name: foo{{ item.0 }}
+      default_release: '{{ item.1 }}'
+      state: '{{ item.2 | ternary("latest","present") }}'
+    check_mode: true
+    register: apt_result
+    loop:
+      # [filter, release, state_latest, expected]
+      - ["", null, false, null]
+      - ["", null, true, "1.0.1"]
+      - ["=1.0.0", null, false, null]
+      - ["=1.0.0", null, true, null]
+      - ["=1.0.1", null, false, "1.0.1"]
+      #- ["=1.0.*", null, false, null] # legacy behavior. should not upgrade without state=latest
+      - ["=1.0.*", null, true, "1.0.1"]
+      - [">=1.0.0", null, false, null]
+      - [">=1.0.0", null, true, "1.0.1"]
+      - [">=1.0.1", null, false, "1.0.1"]
+      - ["", "testing", false, null]
+      - ["", "testing", true, "2.0.1"]
+      - ["=2.0.0", null, false, "2.0.0"]
+      - [">=2.0.0", "testing", false, "2.0.1"]
+
+  - name: Validate version test matrix
+    assert:
+      that:
+        - (item.item.3 is not none) == (item.stdout is defined)
+        - item.item.3 is none or "Inst foo [1.0.0] (" + item.item.3 + " localhost [all])" in item.stdout_lines
+    loop: '{{ apt_result.results }}'
+
+  always:
+    - name: Uninstall foo
+      apt:
+        name: foo
+        state: absent
 
 # https://github.com/ansible/ansible/issues/35900
 - block:
@@ -210,10 +251,16 @@
     - name: Restore ubuntu repos
       command: mv /etc/apt/sources.list.backup /etc/apt/sources.list
 
+- name: Downgrades
+  import_tasks: "downgrade.yml"
 
 - name: Upgrades
   block:
-    - include: "upgrade.yml aptitude_present={{ True | bool }} upgrade_type=dist force_apt_get={{ False | bool }}"
+    - import_tasks: "upgrade.yml"
+      vars:
+        aptitude_present: "{{ True | bool }}"
+        upgrade_type: "dist"
+        force_apt_get: "{{ False | bool }}"
 
     - name: Check if aptitude is installed
       command: dpkg-query --show --showformat='${db:Status-Abbrev}' aptitude
@@ -226,7 +273,11 @@
       when:
         - aptitude_status.stdout.find('ii') != -1
 
-    - include: "upgrade.yml aptitude_present={{ False | bool }} upgrade_type={{ item.upgrade_type }} force_apt_get={{ item.force_apt_get }}"
+    - include_tasks: "upgrade.yml"
+      vars:
+        aptitude_present: "{{ False | bool }}"
+        upgrade_type: "{{ item.upgrade_type }}"
+        force_apt_get: "{{ item.force_apt_get }}"
       with_items:
         - { upgrade_type: safe, force_apt_get: False }
         - { upgrade_type: full, force_apt_get: False }
@@ -238,7 +289,11 @@
         pkg: aptitude
         state: present
 
-    - include: "upgrade.yml aptitude_present={{ True | bool }} upgrade_type={{ item.upgrade_type }} force_apt_get={{ item.force_apt_get }}"
+    - include_tasks: "upgrade.yml"
+      vars:
+        aptitude_present: "{{ True | bool }}"
+        upgrade_type: "{{ item.upgrade_type }}"
+        force_apt_get: "{{ item.force_apt_get }}"
       with_items:
         - { upgrade_type: safe, force_apt_get: False }
         - { upgrade_type: full, force_apt_get: False }
@@ -251,3 +306,47 @@
         state: absent
       when:
         - aptitude_status.stdout.find('ii') == -1
+
+- block:
+   - name: Install the foo package with diff=yes
+     apt:
+       name: foo
+       allow_unauthenticated: yes
+     diff: yes
+     register: apt_result
+
+   - name: Check the content of diff.prepared
+     assert:
+       that:
+         - apt_result is success
+         - "'The following NEW packages will be installed:\n  foo' in apt_result.diff.prepared"
+  always:
+    - name: Clean up
+      apt:
+        name: foo
+        state: absent
+        allow_unauthenticated: yes
+
+- block:
+  - name: Install foo package version 1.0.0 with force=yes, implies allow_unauthenticated=yes
+    apt:
+      name: foo=1.0.0
+      force: yes
+    register: apt_result
+
+  - name: Check install with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+
+  - name: Check if install was successful
+    assert:
+      that:
+        - "apt_result is success"
+        - "dpkg_result is success"
+        - "'1.0.0' in dpkg_result.stdout"
+  always:
+    - name: Clean up
+      apt:
+        name: foo
+        state: absent
+        allow_unauthenticated: yes

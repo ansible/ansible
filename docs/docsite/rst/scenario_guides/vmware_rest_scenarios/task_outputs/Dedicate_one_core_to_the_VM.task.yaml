@@ -1,0 +1,5 @@
+- name: Dedicate one core to the VM
+  vmware.vmware_rest.vcenter_vm_hardware_cpu:
+    vm: '{{ test_vm1_info.id }}'
+    count: 1
+  register: _result

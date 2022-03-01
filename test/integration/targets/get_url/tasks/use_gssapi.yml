@@ -1,0 +1,45 @@
+- name: test Negotiate auth over HTTP with explicit credentials
+  get_url:
+    url: http://{{ httpbin_host }}/gssapi
+    dest: '{{ remote_tmp_dir }}/gssapi_explicit.txt'
+    use_gssapi: yes
+    url_username: '{{ krb5_username }}'
+    url_password: '{{ krb5_password }}'
+  register: http_explicit
+
+- name: get result of test Negotiate auth over HTTP with explicit credentials
+  slurp:
+    path: '{{ remote_tmp_dir }}/gssapi_explicit.txt'
+  register: http_explicit_actual
+
+- name: assert test Negotiate auth with implicit credentials
+  assert:
+    that:
+    - http_explicit.status_code == 200
+    - http_explicit_actual.content | b64decode | trim == 'Microsoft Rulz'
+
+- name: skip tests on macOS, I cannot seem to get it to read a credential from a custom ccache
+  when: ansible_facts.distribution != 'MacOSX'
+  block:
+  - name: get Kerberos ticket for implicit auth tests
+    httptester_kinit:
+      username: '{{ krb5_username }}'
+      password: '{{ krb5_password }}'
+
+  - name: test Negotiate auth over HTTPS with implicit credentials
+    get_url:
+      url: https://{{ httpbin_host }}/gssapi
+      dest: '{{ remote_tmp_dir }}/gssapi_implicit.txt'
+      use_gssapi: yes
+    register: https_implicit
+
+  - name: get result of test Negotiate auth over HTTPS with implicit credentials
+    slurp:
+      path: '{{ remote_tmp_dir }}/gssapi_implicit.txt'
+    register: https_implicit_actual
+
+  - name: assert test Negotiate auth with implicit credentials
+    assert:
+      that:
+      - https_implicit.status_code == 200
+      - https_implicit_actual.content | b64decode | trim == 'Microsoft Rulz'

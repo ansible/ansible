@@ -36,13 +36,13 @@ The simplest way to authenticate yourself is to set the Scaleway API token in an
 
 If you're not comfortable exporting your API token, you can pass it as a parameter to the modules using the ``api_token`` argument.
 
-If you want to use a new SSH keypair in this tutorial, you can generate it to ``./id_rsa`` and ``./id_rsa.pub`` as:
+If you want to use a new SSH key pair in this tutorial, you can generate it to ``./id_rsa`` and ``./id_rsa.pub`` as:
 
 .. code-block:: bash
 
     $ ssh-keygen -t rsa -f ./id_rsa
 
-If you want to use an existing keypair, just copy the private and public key over to the playbook directory.
+If you want to use an existing key pair, just copy the private and public key over to the playbook directory.
 
 .. _scaleway_add_sshkey:
 
@@ -246,7 +246,7 @@ This means that for each tag that exists on your Scaleway compute nodes, a group
 Scaleway S3 object storage
 ==========================
 
-`Object Storage <https://www.scaleway.com/object-storage>`_ allows you to store any kind of objects (documents, images, videos, etc.).
+`Object Storage <https://www.scaleway.com/object-storage>`_ allows you to store any kind of objects (documents, images, videos, and so on).
 As the Scaleway API is S3 compatible, Ansible supports it natively through the modules: :ref:`s3_bucket_module`, :ref:`aws_s3_module`.
 
 You can find many examples in the `scaleway_s3 integration tests <https://github.com/ansible/ansible-legacy-tests/tree/devel/test/legacy/roles/scaleway_s3>`_.

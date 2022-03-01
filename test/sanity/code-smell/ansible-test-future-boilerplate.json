@@ -1,0 +1,10 @@
+{
+    "extensions": [
+        ".py"
+    ],
+    "prefixes": [
+        "test/sanity/",
+        "test/lib/ansible_test/"
+    ],
+    "output": "path-message"
+}

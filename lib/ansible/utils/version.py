@@ -7,7 +7,7 @@ __metaclass__ = type
 
 import re
 
-from distutils.version import LooseVersion, Version
+from ansible.module_utils.compat.version import LooseVersion, Version
 
 from ansible.module_utils.six import text_type
 

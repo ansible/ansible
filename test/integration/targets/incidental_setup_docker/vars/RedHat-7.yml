@@ -10,3 +10,9 @@ docker_packages:
 
 docker_pip_extra_packages:
   - requests==2.6.0
+
+# We need to pin the above so pip finds the right system-installed package
+# but we never want to try to remove it, so we substract this from the set of
+# packages we remove on cleanup
+docker_pip_never_remove:
+  - requests==2.6.0

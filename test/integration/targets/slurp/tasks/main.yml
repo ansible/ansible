@@ -19,11 +19,11 @@
 - name: Create a UTF-8 file to test with
   copy:
     content: 'We are at the café'
-    dest: '{{ output_dir }}/foo.txt'
+    dest: '{{ remote_tmp_dir }}/foo.txt'
 
 - name: test slurping an existing file
   slurp:
-    src: '{{ output_dir }}/foo.txt'
+    src: '{{ remote_tmp_dir }}/foo.txt'
   register: slurp_existing
 
 - name: check slurp existing result
@@ -38,11 +38,11 @@
 - name: Create a binary file to test with
   copy:
     src: bar.bin
-    dest: '{{ output_dir }}/bar.bin'
+    dest: '{{ remote_tmp_dir }}/bar.bin'
 
 - name: test slurping a binary file
   slurp:
-    path: '{{ output_dir }}/bar.bin'
+    path: '{{ remote_tmp_dir }}/bar.bin'
   register: slurp_binary
   no_log: true
 
@@ -53,37 +53,6 @@
       - "slurp_binary.encoding == 'base64'"
       - "slurp_binary is not changed"
       - "slurp_binary is not failed"
-
-- name: test slurping a non-existent file
-  slurp:
-    src: '{{ output_dir }}/i_do_not_exist'
-  register: slurp_missing
-  ignore_errors: true
-
-- name: check slurp missing result
-  assert:
-    that:
-      - "slurp_missing is failed"
-      - "slurp_missing.msg"
-      - "slurp_missing is not changed"
-
-- name: Create a directory to test with
-  file:
-    path: '{{ output_dir }}/baz/'
-    state: directory
-
-- name: test slurping a directory
-  slurp:
-    src: '{{ output_dir }}/baz'
-  register: slurp_dir
-  ignore_errors: true
-
-- name: check slurp directory result
-  assert:
-    that:
-      - "slurp_dir is failed"
-      - "slurp_dir.msg"
-      - "slurp_dir is not changed"
 
 - name: test slurp with missing argument
   action: slurp
@@ -96,3 +65,5 @@
       - "slurp_no_args is failed"
       - "slurp_no_args.msg"
       - "slurp_no_args is not changed"
+
+- import_tasks: test_unreadable.yml

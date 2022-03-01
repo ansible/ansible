@@ -113,7 +113,7 @@ class TaskResult:
         result = TaskResult(self._host, self._task, {}, self._task_fields)
 
         # statuses are already reflected on the event type
-        if result._task and result._task.action in ['debug']:
+        if result._task and result._task.action in C._ACTION_DEBUG:
             # debug is verbose by default to display vars, no need to add invocation
             ignore = _IGNORE + ('invocation',)
         else:

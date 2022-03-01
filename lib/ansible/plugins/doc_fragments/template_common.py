@@ -69,6 +69,16 @@ options:
     type: str
     default: '}}'
     version_added: '2.4'
+  comment_start_string:
+    description:
+    - The string marking the beginning of a comment statement.
+    type: str
+    version_added: '2.12'
+  comment_end_string:
+    description:
+    - The string marking the end of a comment statement.
+    type: str
+    version_added: '2.12'
   trim_blocks:
     description:
     - Determine when newlines should be removed from blocks.
@@ -80,7 +90,6 @@ options:
     description:
     - Determine when leading spaces and tabs should be stripped.
     - When set to C(yes) leading spaces and tabs are stripped from the start of a line to a block.
-    - This functionality requires Jinja 2.7 or newer.
     type: bool
     default: no
     version_added: '2.6'
@@ -107,8 +116,6 @@ notes:
   i.e. C(#jinja2:variable_start_string:'[%', variable_end_string:'%]', trim_blocks: False)
   which changes the variable interpolation markers to C([% var %]) instead of C({{ var }}).
   This is the best way to prevent evaluation of things that look like, but should not be Jinja2.
-- Using raw/endraw in Jinja2 will not work as you expect because templates in Ansible are recursively
-  evaluated.
 - To find Byte Order Marks in files, use C(Format-Hex <file> -Count 16) on Windows, and use C(od -a -t x1 -N 16 <file>)
   on Linux.
 '''

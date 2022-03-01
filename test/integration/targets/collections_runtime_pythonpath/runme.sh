@@ -25,19 +25,19 @@ ansible \
     === Test that the module \
     gets picked up if installed \
     into site-packages ===
-python -m pip.__main__ install pep517
+python -m pip install pep517
 ( # Build a binary Python dist (a wheel) using PEP517:
   cp -r ansible-collection-python-dist-boo "${OUTPUT_DIR}/"
   cd "${OUTPUT_DIR}/ansible-collection-python-dist-boo"
   python -m pep517.build --binary --out-dir dist .
 )
 # Install a pre-built dist with pip:
-python -m pip.__main__ install \
+python -m pip install \
   --no-index \
   -f "${OUTPUT_DIR}/ansible-collection-python-dist-boo/dist/" \
   --only-binary=ansible-collections.python.dist \
   ansible-collections.python.dist
-python -m pip.__main__ show ansible-collections.python.dist
+python -m pip show ansible-collections.python.dist
 ansible \
     -m python.dist.boo \
     -a 'name=Frodo' \

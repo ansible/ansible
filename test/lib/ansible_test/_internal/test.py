@@ -1,11 +1,9 @@
 """Classes for storing and processing test results."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import datetime
 import re
-
-from . import types as t
+import typing as t
 
 from .util import (
     display,
@@ -18,17 +16,19 @@ from .util_common import (
     ResultType,
 )
 
+from .metadata import (
+    Metadata,
+)
+
 from .config import (
     TestConfig,
 )
 
+from . import junit_xml
 
-def calculate_best_confidence(choices, metadata):
-    """
-    :type choices: tuple[tuple[str, int]]
-    :type metadata: Metadata
-    :rtype: int
-    """
+
+def calculate_best_confidence(choices, metadata):  # type: (t.Tuple[t.Tuple[str, int], ...], Metadata) -> int
+    """Return the best confidence value available from the given choices and metadata."""
     best_confidence = 0
 
     for path, line in choices:
@@ -38,13 +38,8 @@ def calculate_best_confidence(choices, metadata):
     return best_confidence
 
 
-def calculate_confidence(path, line, metadata):
-    """
-    :type path: str
-    :type line: int
-    :type metadata: Metadata
-    :rtype: int
-    """
+def calculate_confidence(path, line, metadata):  # type: (str, int, Metadata) -> int
+    """Return the confidence level for a test result associated with the given file path and line number."""
     ranges = metadata.changes.get(path)
 
     # no changes were made to the file
@@ -65,12 +60,7 @@ def calculate_confidence(path, line, metadata):
 
 class TestResult:
     """Base class for test results."""
-    def __init__(self, command, test, python_version=None):
-        """
-        :type command: str
-        :type test: str
-        :type python_version: str
-        """
+    def __init__(self, command, test, python_version=None):  # type: (str, str, t.Optional[str]) -> None
         self.command = command
         self.test = test
         self.python_version = python_version
@@ -79,17 +69,8 @@ class TestResult:
         if self.python_version:
             self.name += '-python-%s' % self.python_version
 
-        try:
-            import junit_xml
-        except ImportError:
-            junit_xml = None
-
-        self.junit = junit_xml
-
-    def write(self, args):
-        """
-        :type args: TestConfig
-        """
+    def write(self, args):  # type: (TestConfig) -> None
+        """Write the test results to various locations."""
         self.write_console()
         self.write_bot(args)
 
@@ -97,32 +78,22 @@ class TestResult:
             self.write_lint()
 
         if args.junit:
-            if self.junit:
-                self.write_junit(args)
-            else:
-                display.warning('Skipping junit xml output because the `junit-xml` python package was not found.', unique=True)
+            self.write_junit(args)
 
-    def write_console(self):
+    def write_console(self):  # type: () -> None
         """Write results to console."""
 
-    def write_lint(self):
+    def write_lint(self):  # type: () -> None
         """Write lint results to stdout."""
 
-    def write_bot(self, args):
-        """
-        :type args: TestConfig
-        """
+    def write_bot(self, args):  # type: (TestConfig) -> None
+        """Write results to a file for ansibullbot to consume."""
 
-    def write_junit(self, args):
-        """
-        :type args: TestConfig
-        """
+    def write_junit(self, args):  # type: (TestConfig) -> None
+        """Write results to a junit XML file."""
 
-    def create_result_name(self, extension):
-        """
-        :type extension: str
-        :rtype: str
-        """
+    def create_result_name(self, extension):  # type: (str) -> str
+        """Return the name of the result file using the given extension."""
         name = 'ansible-test-%s' % self.command
 
         if self.test:
@@ -135,31 +106,19 @@ class TestResult:
 
         return name
 
-    def save_junit(self, args, test_case, properties=None):
-        """
-        :type args: TestConfig
-        :type test_case: junit_xml.TestCase
-        :type properties: dict[str, str] | None
-        :rtype: str | None
-        """
-        test_suites = [
-            self.junit.TestSuite(
-                name='ansible-test',
-                test_cases=[test_case],
-                timestamp=datetime.datetime.utcnow().replace(microsecond=0).isoformat(),
-                properties=properties,
-            ),
-        ]
+    def save_junit(self, args, test_case):  # type: (TestConfig, junit_xml.TestCase) -> None
+        """Save the given test case results to disk as JUnit XML."""
+        suites = junit_xml.TestSuites(
+            suites=[
+                junit_xml.TestSuite(
+                    name='ansible-test',
+                    cases=[test_case],
+                    timestamp=datetime.datetime.utcnow(),
+                ),
+            ],
+        )
 
-        # the junit_xml API is changing in version 2.0.0
-        # TestSuite.to_xml_string is being replaced with to_xml_report_string
-        # see: https://github.com/kyrus/python-junit-xml/blob/63db26da353790500642fd02cae1543eb41aab8b/junit_xml/__init__.py#L249-L261
-        try:
-            to_xml_string = self.junit.to_xml_report_string
-        except AttributeError:
-            to_xml_string = self.junit.TestSuite.to_xml_string
-
-        report = to_xml_string(test_suites=test_suites, prettyprint=True, encoding='utf-8')
+        report = suites.to_pretty_xml()
 
         if args.explain:
             return
@@ -169,18 +128,13 @@ class TestResult:
 
 class TestTimeout(TestResult):
     """Test timeout."""
-    def __init__(self, timeout_duration):
-        """
-        :type timeout_duration: int
-        """
-        super(TestTimeout, self).__init__(command='timeout', test='')
+    def __init__(self, timeout_duration):  # type: (int) -> None
+        super().__init__(command='timeout', test='')
 
         self.timeout_duration = timeout_duration
 
-    def write(self, args):
-        """
-        :type args: TestConfig
-        """
+    def write(self, args):  # type: (TestConfig) -> None
+        """Write the test results to various locations."""
         message = 'Tests were aborted after exceeding the %d minute time limit.' % self.timeout_duration
 
         # Include a leading newline to improve readability on Shippable "Tests" tab.
@@ -197,61 +151,78 @@ One or more of the following situations may be responsible:
 
         output += '\n\nConsult the console log for additional details on where the timeout occurred.'
 
-        timestamp = datetime.datetime.utcnow().replace(microsecond=0).isoformat()
+        timestamp = datetime.datetime.utcnow()
 
-        # hack to avoid requiring junit-xml, which may not be pre-installed outside our test containers
-        xml = '''
-<?xml version="1.0" encoding="utf-8"?>
-<testsuites disabled="0" errors="1" failures="0" tests="1" time="0.0">
-\t<testsuite disabled="0" errors="1" failures="0" file="None" log="None" name="ansible-test" skipped="0" tests="1" time="0" timestamp="%s" url="None">
-\t\t<testcase classname="timeout" name="timeout">
-\t\t\t<error message="%s" type="error">%s</error>
-\t\t</testcase>
-\t</testsuite>
-</testsuites>
-''' % (timestamp, message, output)
+        suites = junit_xml.TestSuites(
+            suites=[
+                junit_xml.TestSuite(
+                    name='ansible-test',
+                    timestamp=timestamp,
+                    cases=[
+                        junit_xml.TestCase(
+                            name='timeout',
+                            classname='timeout',
+                            errors=[
+                                junit_xml.TestError(
+                                    message=message,
+                                ),
+                            ],
+                        ),
+                    ],
+                )
+            ],
+        )
 
-        write_text_test_results(ResultType.JUNIT, self.create_result_name('.xml'), xml.lstrip())
+        report = suites.to_pretty_xml()
+
+        write_text_test_results(ResultType.JUNIT, self.create_result_name('.xml'), report)
 
 
 class TestSuccess(TestResult):
     """Test success."""
-    def write_junit(self, args):
-        """
-        :type args: TestConfig
-        """
-        test_case = self.junit.TestCase(classname=self.command, name=self.name)
+    def write_junit(self, args):  # type: (TestConfig) -> None
+        """Write results to a junit XML file."""
+        test_case = junit_xml.TestCase(classname=self.command, name=self.name)
 
         self.save_junit(args, test_case)
 
 
 class TestSkipped(TestResult):
     """Test skipped."""
-    def write_console(self):
-        """Write results to console."""
-        display.info('No tests applicable.', verbosity=1)
+    def __init__(self, command, test, python_version=None):  # type: (str, str, t.Optional[str]) -> None
+        super().__init__(command, test, python_version)
 
-    def write_junit(self, args):
-        """
-        :type args: TestConfig
-        """
-        test_case = self.junit.TestCase(classname=self.command, name=self.name)
-        test_case.add_skipped_info('No tests applicable.')
+        self.reason = None  # type: t.Optional[str]
+
+    def write_console(self):  # type: () -> None
+        """Write results to console."""
+        if self.reason:
+            display.warning(self.reason)
+        else:
+            display.info('No tests applicable.', verbosity=1)
+
+    def write_junit(self, args):  # type: (TestConfig) -> None
+        """Write results to a junit XML file."""
+        test_case = junit_xml.TestCase(
+            classname=self.command,
+            name=self.name,
+            skipped=self.reason or 'No tests applicable.',
+        )
 
         self.save_junit(args, test_case)
 
 
 class TestFailure(TestResult):
     """Test failure."""
-    def __init__(self, command, test, python_version=None, messages=None, summary=None):
-        """
-        :type command: str
-        :type test: str
-        :type python_version: str | None
-        :type messages: list[TestMessage] | None
-        :type summary: unicode | None
-        """
-        super(TestFailure, self).__init__(command, test, python_version)
+    def __init__(
+            self,
+            command,  # type: str
+            test,  # type: str
+            python_version=None,  # type: t.Optional[str]
+            messages=None,  # type: t.Optional[t.Sequence[TestMessage]]
+            summary=None,  # type: t.Optional[str]
+    ):
+        super().__init__(command, test, python_version)
 
         if messages:
             messages = sorted(messages)
@@ -261,16 +232,14 @@ class TestFailure(TestResult):
         self.messages = messages
         self.summary = summary
 
-    def write(self, args):
-        """
-        :type args: TestConfig
-        """
+    def write(self, args):  # type: (TestConfig) -> None
+        """Write the test results to various locations."""
         if args.metadata.changes:
             self.populate_confidence(args.metadata)
 
-        super(TestFailure, self).write(args)
+        super().write(args)
 
-    def write_console(self):
+    def write_console(self):  # type: () -> None
         """Write results to console."""
         if self.summary:
             display.error(self.summary)
@@ -289,7 +258,7 @@ class TestFailure(TestResult):
             if doc_url:
                 display.info('See documentation for help: %s' % doc_url)
 
-    def write_lint(self):
+    def write_lint(self):  # type: () -> None
         """Write lint results to stdout."""
         if self.summary:
             command = self.format_command()
@@ -301,25 +270,26 @@ class TestFailure(TestResult):
             for message in self.messages:
                 print(message)
 
-    def write_junit(self, args):
-        """
-        :type args: TestConfig
-        """
+    def write_junit(self, args):  # type: (TestConfig) -> None
+        """Write results to a junit XML file."""
         title = self.format_title()
         output = self.format_block()
 
-        test_case = self.junit.TestCase(classname=self.command, name=self.name)
-
-        # Include a leading newline to improve readability on Shippable "Tests" tab.
-        # Without this, the first line becomes indented.
-        test_case.add_failure_info(message=title, output='\n%s' % output)
+        test_case = junit_xml.TestCase(
+            classname=self.command,
+            name=self.name,
+            failures=[
+                junit_xml.TestFailure(
+                    message=title,
+                    output=output,
+                ),
+            ],
+        )
 
         self.save_junit(args, test_case)
 
-    def write_bot(self, args):
-        """
-        :type args: TestConfig
-        """
+    def write_bot(self, args):  # type: (TestConfig) -> None
+        """Write results to a file for ansibullbot to consume."""
         docs = self.find_docs()
         message = self.format_title(help_link=docs)
         output = self.format_block()
@@ -345,18 +315,14 @@ class TestFailure(TestResult):
 
         write_json_test_results(ResultType.BOT, self.create_result_name('.json'), bot_data)
 
-    def populate_confidence(self, metadata):
-        """
-        :type metadata: Metadata
-        """
+    def populate_confidence(self, metadata):  # type: (Metadata) -> None
+        """Populate test result confidence using the provided metadata."""
         for message in self.messages:
             if message.confidence is None:
                 message.confidence = calculate_confidence(message.path, message.line, metadata)
 
-    def format_command(self):
-        """
-        :rtype: str
-        """
+    def format_command(self):  # type: () -> str
+        """Return a string representing the CLI command associated with the test failure."""
         command = 'ansible-test %s' % self.command
 
         if self.test:
@@ -381,7 +347,7 @@ class TestFailure(TestResult):
         if re.search(r'^[0-9.]+$', ansible_version):
             url_version = '.'.join(ansible_version.split('.')[:2])
 
-        testing_docs_url = 'https://docs.ansible.com/ansible/%s/dev_guide/testing' % url_version
+        testing_docs_url = 'https://docs.ansible.com/ansible-core/%s/dev_guide/testing' % url_version
 
         url = '%s/%s/' % (testing_docs_url, self.command)
 
@@ -390,11 +356,8 @@ class TestFailure(TestResult):
 
         return url
 
-    def format_title(self, help_link=None):
-        """
-        :type help_link: str | None
-        :rtype: str
-        """
+    def format_title(self, help_link=None):  # type: (t.Optional[str]) -> str
+        """Return a string containing a title/heading for this test failure, including an optional help link to explain the test."""
         command = self.format_command()
 
         if self.summary:
@@ -411,10 +374,8 @@ class TestFailure(TestResult):
 
         return title
 
-    def format_block(self):
-        """
-        :rtype: str
-        """
+    def format_block(self):  # type: () -> str
+        """Format the test summary or messages as a block of text and return the result."""
         if self.summary:
             block = self.summary
         else:
@@ -430,16 +391,16 @@ class TestFailure(TestResult):
 
 class TestMessage:
     """Single test message for one file."""
-    def __init__(self, message, path, line=0, column=0, level='error', code=None, confidence=None):
-        """
-        :type message: str
-        :type path: str
-        :type line: int
-        :type column: int
-        :type level: str
-        :type code: str | None
-        :type confidence: int | None
-        """
+    def __init__(
+            self,
+            message,  # type: str
+            path,  # type: str
+            line=0,  # type: int
+            column=0,  # type: int
+            level='error',  # type: str
+            code=None,  # type: t.Optional[str]
+            confidence=None,  # type: t.Optional[int]
+    ):
         self.__path = path
         self.__line = line
         self.__column = column
@@ -508,11 +469,8 @@ class TestMessage:
     def __str__(self):
         return self.format()
 
-    def format(self, show_confidence=False):
-        """
-        :type show_confidence: bool
-        :rtype: str
-        """
+    def format(self, show_confidence=False):  # type: (bool) -> str
+        """Return a string representation of this message, optionally including the confidence level."""
         if self.__code:
             msg = '%s: %s' % (self.__code, self.__message)
         else:

@@ -202,3 +202,16 @@
       - should_not_omit_1 is defined
       - should_not_omit_2 is defined
       - should_not_omit_3 == "__omit_place_holder__afb6b9bc3d20bfeaa00a1b23a5930f89"
+
+- name: Ensure module names are stripped of extra spaces (local_action)
+  local_action: set_fact     b="b"
+  register: la_set_fact_b
+
+- name: Ensure module names are stripped of extra spaces (action)
+  action: set_fact     c="c"
+  register: la_set_fact_c
+
+- assert:
+    that:
+      - b == "b"
+      - c == "c"

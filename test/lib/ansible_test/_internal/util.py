@@ -1,11 +1,11 @@
 """Miscellaneous utility functions and classes."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
-import contextlib
 import errno
 import fcntl
+import importlib.util
 import inspect
+import keyword
 import os
 import pkgutil
 import random
@@ -16,34 +16,18 @@ import stat
 import string
 import subprocess
 import sys
-import tempfile
 import time
-import zipfile
+import functools
+import shlex
+import typing as t
 
 from struct import unpack, pack
 from termios import TIOCGWINSZ
 
 try:
-    from abc import ABC
+    from typing_extensions import TypeGuard  # TypeGuard was added in Python 3.9
 except ImportError:
-    from abc import ABCMeta
-    ABC = ABCMeta('ABC', (), {})
-
-try:
-    # noinspection PyCompatibility
-    from configparser import ConfigParser
-except ImportError:
-    # noinspection PyCompatibility,PyUnresolvedReferences
-    from ConfigParser import SafeConfigParser as ConfigParser
-
-try:
-    # noinspection PyProtectedMember
-    from shlex import quote as cmd_quote
-except ImportError:
-    # noinspection PyProtectedMember
-    from pipes import quote as cmd_quote
-
-from . import types as t
+    TypeGuard = None
 
 from .encoding import (
     to_bytes,
@@ -56,19 +40,20 @@ from .io import (
     read_text_file,
 )
 
-try:
-    C = t.TypeVar('C')
-except AttributeError:
-    C = None
+from .thread import (
+    mutex,
+)
 
+from .constants import (
+    SUPPORTED_PYTHON_VERSIONS,
+)
+
+C = t.TypeVar('C')
+TType = t.TypeVar('TType')
+TKey = t.TypeVar('TKey')
+TValue = t.TypeVar('TValue')
 
 PYTHON_PATHS = {}  # type: t.Dict[str, str]
-
-try:
-    # noinspection PyUnresolvedReferences
-    MAXFD = subprocess.MAXFD
-except AttributeError:
-    MAXFD = -1
 
 COVERAGE_CONFIG_NAME = 'coveragerc'
 
@@ -88,7 +73,14 @@ if not os.path.exists(ANSIBLE_LIB_ROOT):
     ANSIBLE_SOURCE_ROOT = ANSIBLE_ROOT
 
 ANSIBLE_TEST_DATA_ROOT = os.path.join(ANSIBLE_TEST_ROOT, '_data')
+ANSIBLE_TEST_UTIL_ROOT = os.path.join(ANSIBLE_TEST_ROOT, '_util')
 ANSIBLE_TEST_CONFIG_ROOT = os.path.join(ANSIBLE_TEST_ROOT, 'config')
+
+ANSIBLE_TEST_CONTROLLER_ROOT = os.path.join(ANSIBLE_TEST_UTIL_ROOT, 'controller')
+ANSIBLE_TEST_TARGET_ROOT = os.path.join(ANSIBLE_TEST_UTIL_ROOT, 'target')
+
+ANSIBLE_TEST_TOOLS_ROOT = os.path.join(ANSIBLE_TEST_CONTROLLER_ROOT, 'tools')
+ANSIBLE_TEST_TARGET_TOOLS_ROOT = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'tools')
 
 # Modes are set to allow all users the same level of access.
 # This permits files to be used in tests that change users.
@@ -104,27 +96,52 @@ MODE_FILE_WRITE = MODE_FILE | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
 MODE_DIRECTORY = MODE_READ | stat.S_IWUSR | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 MODE_DIRECTORY_WRITE = MODE_DIRECTORY | stat.S_IWGRP | stat.S_IWOTH
 
-REMOTE_ONLY_PYTHON_VERSIONS = (
-    '2.6',
-)
 
-SUPPORTED_PYTHON_VERSIONS = (
-    '2.6',
-    '2.7',
-    '3.5',
-    '3.6',
-    '3.7',
-    '3.8',
-    '3.9',
-)
+def is_valid_identifier(value: str) -> bool:
+    """Return True if the given value is a valid non-keyword Python identifier, otherwise return False."""
+    return value.isidentifier() and not keyword.iskeyword(value)
 
 
-def remove_file(path):
-    """
-    :type path: str
-    """
-    if os.path.isfile(path):
-        os.remove(path)
+def cache(func):  # type: (t.Callable[[], TValue]) -> t.Callable[[], TValue]
+    """Enforce exclusive access on a decorated function and cache the result."""
+    storage = {}  # type: t.Dict[None, TValue]
+    sentinel = object()
+
+    @functools.wraps(func)
+    def cache_func():
+        """Cache the return value from func."""
+        if (value := storage.get(None, sentinel)) is sentinel:
+            value = storage[None] = func()
+
+        return value
+
+    wrapper = mutex(cache_func)
+
+    return wrapper
+
+
+def filter_args(args, filters):  # type: (t.List[str], t.Dict[str, int]) -> t.List[str]
+    """Return a filtered version of the given command line arguments."""
+    remaining = 0
+    result = []
+
+    for arg in args:
+        if not arg.startswith('-') and remaining:
+            remaining -= 1
+            continue
+
+        remaining = 0
+
+        parts = arg.split('=', 1)
+        key = parts[0]
+
+        if key in filters:
+            remaining = filters[key] - len(parts) + 1
+            continue
+
+        result.append(arg)
+
+    return result
 
 
 def read_lines_without_comments(path, remove_blank_lines=False, optional=False):  # type: (str, bool, bool) -> t.List[str]
@@ -146,13 +163,16 @@ def read_lines_without_comments(path, remove_blank_lines=False, optional=False):
     return lines
 
 
-def find_executable(executable, cwd=None, path=None, required=True):
+def exclude_none_values(data):  # type: (t.Dict[TKey, t.Optional[TValue]]) -> t.Dict[TKey, TValue]
+    """Return the provided dictionary with any None values excluded."""
+    return dict((key, value) for key, value in data.items() if value is not None)
+
+
+def find_executable(executable, cwd=None, path=None, required=True):  # type: (str, t.Optional[str], t.Optional[str], t.Union[bool, str]) -> t.Optional[str]
     """
-    :type executable: str
-    :type cwd: str
-    :type path: str
-    :type required: bool | str
-    :rtype: str | None
+    Find the specified executable and return the full path, or None if it could not be found.
+    If required is True an exception will be raised if the executable is not found.
+    If required is set to 'warning' then a warning will be shown if the executable is not found.
     """
     match = None
     real_cwd = os.getcwd()
@@ -198,14 +218,13 @@ def find_executable(executable, cwd=None, path=None, required=True):
     return match
 
 
-def find_python(version, path=None, required=True):
+def find_python(version, path=None, required=True):  # type: (str, t.Optional[str], bool) -> t.Optional[str]
     """
-    :type version: str
-    :type path: str | None
-    :type required: bool
-    :rtype: str
+    Find and return the full path to the specified Python version.
+    If required, an exception will be raised not found.
+    If not required, None will be returned if not found.
     """
-    version_info = tuple(int(n) for n in version.split('.'))
+    version_info = str_to_version(version)
 
     if not path and version_info == sys.version_info[:len(version_info)]:
         python_bin = sys.executable
@@ -215,13 +234,9 @@ def find_python(version, path=None, required=True):
     return python_bin
 
 
+@cache
 def get_ansible_version():  # type: () -> str
     """Return the Ansible version."""
-    try:
-        return get_ansible_version.version
-    except AttributeError:
-        pass
-
     # ansible may not be in our sys.path
     # avoids a symlink to release.py since ansible placement relative to ansible-test may change during delegation
     load_module(os.path.join(ANSIBLE_LIB_ROOT, 'release.py'), 'ansible_release')
@@ -229,47 +244,29 @@ def get_ansible_version():  # type: () -> str
     # noinspection PyUnresolvedReferences
     from ansible_release import __version__ as ansible_version  # pylint: disable=import-error
 
-    get_ansible_version.version = ansible_version
-
     return ansible_version
 
 
-def get_available_python_versions(versions):  # type: (t.List[str]) -> t.Dict[str, str]
-    """Return a dictionary indicating which of the requested Python versions are available."""
-    try:
-        return get_available_python_versions.result
-    except AttributeError:
-        pass
-
-    get_available_python_versions.result = dict((version, path) for version, path in
-                                                ((version, find_python(version, required=False)) for version in versions) if path)
-
-    return get_available_python_versions.result
+@cache
+def get_available_python_versions():  # type: () -> t.Dict[str, str]
+    """Return a dictionary indicating which supported Python versions are available."""
+    return dict((version, path) for version, path in ((version, find_python(version, required=False)) for version in SUPPORTED_PYTHON_VERSIONS) if path)
 
 
-def generate_pip_command(python):
-    """
-    :type python: str
-    :rtype: list[str]
-    """
-    return [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'quiet_pip.py')]
-
-
-def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False, stdin=None, stdout=None,
-                cmd_verbosity=1, str_errors='strict'):
-    """
-    :type cmd: collections.Iterable[str]
-    :type capture: bool
-    :type env: dict[str, str] | None
-    :type data: str | None
-    :type cwd: str | None
-    :type explain: bool
-    :type stdin: file | None
-    :type stdout: file | None
-    :type cmd_verbosity: int
-    :type str_errors: str
-    :rtype: str | None, str | None
-    """
+def raw_command(
+        cmd,  # type: t.Iterable[str]
+        capture=False,  # type: bool
+        env=None,  # type: t.Optional[t.Dict[str, str]]
+        data=None,  # type: t.Optional[str]
+        cwd=None,  # type: t.Optional[str]
+        explain=False,  # type: bool
+        stdin=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
+        stdout=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
+        cmd_verbosity=1,  # type: int
+        str_errors='strict',  # type: str
+        error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
+):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+    """Run the specified command and return stdout and stderr as a tuple."""
     if not cwd:
         cwd = os.getcwd()
 
@@ -278,7 +275,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
 
     cmd = list(cmd)
 
-    escaped_cmd = ' '.join(cmd_quote(c) for c in cmd)
+    escaped_cmd = ' '.join(shlex.quote(c) for c in cmd)
 
     display.info('Run command: %s' % escaped_cmd, verbosity=cmd_verbosity, truncate=True)
     display.info('Working directory: %s' % cwd, verbosity=2)
@@ -320,7 +317,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
         try:
             cmd_bytes = [to_bytes(c) for c in cmd]
             env_bytes = dict((to_bytes(k), to_bytes(v)) for k, v in env.items())
-            process = subprocess.Popen(cmd_bytes, env=env_bytes, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)
+            process = subprocess.Popen(cmd_bytes, env=env_bytes, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd)  # pylint: disable=consider-using-with
         except OSError as ex:
             if ex.errno == errno.ENOENT:
                 raise ApplicationError('Required program "%s" not found.' % cmd[0])
@@ -348,7 +345,7 @@ def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False
     if status == 0:
         return stdout_text, stderr_text
 
-    raise SubprocessError(cmd, status, stdout_text, stderr_text, runtime)
+    raise SubprocessError(cmd, status, stdout_text, stderr_text, runtime, error_callback)
 
 
 def common_environment():
@@ -363,7 +360,6 @@ def common_environment():
     )
 
     optional = (
-        'HTTPTESTER',
         'LD_LIBRARY_PATH',
         'SSH_AUTH_SOCK',
         # MacOS High Sierra Compatibility
@@ -378,24 +374,25 @@ def common_environment():
         # Example configuration for brew on macOS:
         # export LDFLAGS="-L$(brew --prefix openssl)/lib/     -L$(brew --prefix libyaml)/lib/"
         # export  CFLAGS="-I$(brew --prefix openssl)/include/ -I$(brew --prefix libyaml)/include/"
-        # However, this is not adequate for PyYAML 3.13, which is the latest version supported on Python 2.6.
-        # For that version the standard location must be used, or `pip install` must be invoked with additional options:
-        # --global-option=build_ext --global-option=-L{path_to_lib_dir}
         'LDFLAGS',
         'CFLAGS',
     )
+
+    # FreeBSD Compatibility
+    # This is required to include libyaml support in PyYAML.
+    # The header /usr/local/include/yaml.h isn't in the default include path for the compiler.
+    # It is included here so that tests can take advantage of it, rather than only ansible-test during managed pip installs.
+    # If CFLAGS has been set in the environment that value will take precedence due to being an optional var when calling pass_vars.
+    if os.path.exists('/etc/freebsd-update.conf'):
+        env.update(CFLAGS='-I/usr/local/include/')
 
     env.update(pass_vars(required=required, optional=optional))
 
     return env
 
 
-def pass_vars(required, optional):
-    """
-    :type required: collections.Iterable[str]
-    :type optional: collections.Iterable[str]
-    :rtype: dict[str, str]
-    """
+def pass_vars(required, optional):  # type: (t.Collection[str], t.Collection[str]) -> t.Dict[str, str]
+    """Return a filtered dictionary of environment variables based on the current environment."""
     env = {}
 
     for name in required:
@@ -411,31 +408,8 @@ def pass_vars(required, optional):
     return env
 
 
-def deepest_path(path_a, path_b):
-    """Return the deepest of two paths, or None if the paths are unrelated.
-    :type path_a: str
-    :type path_b: str
-    :rtype: str | None
-    """
-    if path_a == '.':
-        path_a = ''
-
-    if path_b == '.':
-        path_b = ''
-
-    if path_a.startswith(path_b):
-        return path_a or '.'
-
-    if path_b.startswith(path_a):
-        return path_b or '.'
-
-    return None
-
-
-def remove_tree(path):
-    """
-    :type path: str
-    """
+def remove_tree(path):  # type: (str) -> None
+    """Remove the specified directory, siliently continuing if the directory does not exist."""
     try:
         shutil.rmtree(to_bytes(path))
     except OSError as ex:
@@ -443,12 +417,9 @@ def remove_tree(path):
             raise
 
 
-def is_binary_file(path):
-    """
-    :type path: str
-    :rtype: bool
-    """
-    assume_text = set([
+def is_binary_file(path):  # type: (str) -> bool
+    """Return True if the specified file is a binary file, otherwise return False."""
+    assume_text = {
         '.cfg',
         '.conf',
         '.crt',
@@ -470,9 +441,9 @@ def is_binary_file(path):
         '.xml',
         '.yaml',
         '.yml',
-    ])
+    }
 
-    assume_binary = set([
+    assume_binary = {
         '.bin',
         '.eot',
         '.gz',
@@ -488,7 +459,7 @@ def is_binary_file(path):
         '.woff',
         '.woff2',
         '.zip',
-    ])
+    }
 
     ext = os.path.splitext(path)[1]
 
@@ -499,14 +470,16 @@ def is_binary_file(path):
         return True
 
     with open_binary_file(path) as path_fd:
-        # noinspection PyTypeChecker
-        return b'\0' in path_fd.read(1024)
+        return b'\0' in path_fd.read(4096)
 
 
-def generate_password():
-    """Generate a random password.
-    :rtype: str
-    """
+def generate_name(length=8):  # type: (int) -> str
+    """Generate and return a random name."""
+    return ''.join(random.choice(string.ascii_letters + string.digits) for _idx in range(length))
+
+
+def generate_password():  # type: () -> str
+    """Generate and return random password."""
     chars = [
         string.ascii_letters,
         string.digits,
@@ -554,13 +527,11 @@ class Display:
         if os.isatty(0):
             self.rows, self.columns = unpack('HHHH', fcntl.ioctl(0, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[:2]
 
-    def __warning(self, message):
-        """
-        :type message: str
-        """
+    def __warning(self, message):  # type: (str) -> None
+        """Internal implementation for displaying a warning message."""
         self.print_message('WARNING: %s' % message, color=self.purple, fd=sys.stderr)
 
-    def review_warnings(self):
+    def review_warnings(self):  # type: () -> None
         """Review all warnings which previously occurred."""
         if not self.warnings:
             return
@@ -570,12 +541,8 @@ class Display:
         for warning in self.warnings:
             self.__warning(warning)
 
-    def warning(self, message, unique=False, verbosity=0):
-        """
-        :type message: str
-        :type unique: bool
-        :type verbosity: int
-        """
+    def warning(self, message, unique=False, verbosity=0):  # type: (str, bool, int) -> None
+        """Display a warning level message."""
         if verbosity > self.verbosity:
             return
 
@@ -588,35 +555,28 @@ class Display:
         self.__warning(message)
         self.warnings.append(message)
 
-    def notice(self, message):
-        """
-        :type message: str
-        """
+    def notice(self, message):  # type: (str) -> None
+        """Display a notice level message."""
         self.print_message('NOTICE: %s' % message, color=self.purple, fd=sys.stderr)
 
-    def error(self, message):
-        """
-        :type message: str
-        """
+    def error(self, message):  # type: (str) -> None
+        """Display an error level message."""
         self.print_message('ERROR: %s' % message, color=self.red, fd=sys.stderr)
 
-    def info(self, message, verbosity=0, truncate=False):
-        """
-        :type message: str
-        :type verbosity: int
-        :type truncate: bool
-        """
+    def info(self, message, verbosity=0, truncate=False):  # type: (str, int, bool) -> None
+        """Display an info level message."""
         if self.verbosity >= verbosity:
             color = self.verbosity_colors.get(verbosity, self.yellow)
             self.print_message(message, color=color, fd=sys.stderr if self.info_stderr else sys.stdout, truncate=truncate)
 
-    def print_message(self, message, color=None, fd=sys.stdout, truncate=False):  # pylint: disable=locally-disabled, invalid-name
-        """
-        :type message: str
-        :type color: str | None
-        :type fd: file
-        :type truncate: bool
-        """
+    def print_message(  # pylint: disable=locally-disabled, invalid-name
+            self,
+            message,  # type: str
+            color=None,  # type: t.Optional[str]
+            fd=sys.stdout,  # type: t.IO[str]
+            truncate=False,  # type: bool
+    ):  # type: (...) -> None
+        """Display a message."""
         if self.redact and self.sensitive:
             for item in self.sensitive:
                 if not item:
@@ -633,9 +593,6 @@ class Display:
             message = message.replace(self.clear, color)
             message = '%s%s%s' % (color, message, self.clear)
 
-        if sys.version_info[0] == 2:
-            message = to_bytes(message)
-
         print(message, file=fd)
         fd.flush()
 
@@ -650,15 +607,16 @@ class ApplicationWarning(Exception):
 
 class SubprocessError(ApplicationError):
     """Error resulting from failed subprocess execution."""
-    def __init__(self, cmd, status=0, stdout=None, stderr=None, runtime=None):
-        """
-        :type cmd: list[str]
-        :type status: int
-        :type stdout: str | None
-        :type stderr: str | None
-        :type runtime: float | None
-        """
-        message = 'Command "%s" returned exit status %s.\n' % (' '.join(cmd_quote(c) for c in cmd), status)
+    def __init__(
+            self,
+            cmd,  # type: t.List[str]
+            status=0,  # type: int
+            stdout=None,  # type: t.Optional[str]
+            stderr=None,  # type: t.Optional[str]
+            runtime=None,  # type: t.Optional[float]
+            error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
+    ):  # type: (...) -> None
+        message = 'Command "%s" returned exit status %s.\n' % (' '.join(shlex.quote(c) for c in cmd), status)
 
         if stderr:
             message += '>>> Standard Error\n'
@@ -668,10 +626,6 @@ class SubprocessError(ApplicationError):
             message += '>>> Standard Output\n'
             message += '%s%s\n' % (stdout.strip(), Display.clear)
 
-        message = message.strip()
-
-        super(SubprocessError, self).__init__(message)
-
         self.cmd = cmd
         self.message = message
         self.status = status
@@ -679,24 +633,35 @@ class SubprocessError(ApplicationError):
         self.stderr = stderr
         self.runtime = runtime
 
+        if error_callback:
+            error_callback(self)
+
+        self.message = self.message.strip()
+
+        super().__init__(self.message)
+
 
 class MissingEnvironmentVariable(ApplicationError):
     """Error caused by missing environment variable."""
-    def __init__(self, name):
-        """
-        :type name: str
-        """
-        super(MissingEnvironmentVariable, self).__init__('Missing environment variable: %s' % name)
+    def __init__(self, name):  # type: (str) -> None
+        super().__init__('Missing environment variable: %s' % name)
 
         self.name = name
 
 
-def parse_to_list_of_dict(pattern, value):
-    """
-    :type pattern: str
-    :type value: str
-    :return: list[dict[str, str]]
-    """
+def retry(func, ex_type=SubprocessError, sleep=10, attempts=10):
+    """Retry the specified function on failure."""
+    for dummy in range(1, attempts):
+        try:
+            return func()
+        except ex_type:
+            time.sleep(sleep)
+
+    return func()
+
+
+def parse_to_list_of_dict(pattern, value):  # type: (str, str) -> t.List[t.Dict[str, str]]
+    """Parse lines from the given value using the specified pattern and return the extracted list of key/value pair dictionaries."""
     matched = []
     unmatched = []
 
@@ -714,20 +679,8 @@ def parse_to_list_of_dict(pattern, value):
     return matched
 
 
-def get_available_port():
-    """
-    :rtype: int
-    """
-    # this relies on the kernel not reusing previously assigned ports immediately
-    socket_fd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    with contextlib.closing(socket_fd):
-        socket_fd.bind(('', 0))
-        return socket_fd.getsockname()[1]
-
-
-def get_subclasses(class_type):  # type: (t.Type[C]) -> t.Set[t.Type[C]]
-    """Returns the set of types that are concrete subclasses of the given type."""
+def get_subclasses(class_type):  # type: (t.Type[C]) -> t.List[t.Type[C]]
+    """Returns a list of types that are concrete subclasses of the given type."""
     subclasses = set()  # type: t.Set[t.Type[C]]
     queue = [class_type]  # type: t.List[t.Type[C]]
 
@@ -740,7 +693,7 @@ def get_subclasses(class_type):  # type: (t.Type[C]) -> t.Set[t.Type[C]]
                     subclasses.add(child)
                 queue.append(child)
 
-    return subclasses
+    return sorted(subclasses, key=lambda sc: sc.__name__)
 
 
 def is_subdir(candidate_path, path):  # type: (str, str) -> bool
@@ -770,14 +723,19 @@ def paths_to_dirs(paths):  # type: (t.List[str]) -> t.List[str]
     return sorted(dir_names)
 
 
-def str_to_version(version):  # type: (str) -> t.Tuple[int]
+def str_to_version(version):  # type: (str) -> t.Tuple[int, ...]
     """Return a version tuple from a version string."""
     return tuple(int(n) for n in version.split('.'))
 
 
-def version_to_str(version):  # type: (t.Tuple[int]) -> str
+def version_to_str(version):  # type: (t.Tuple[int, ...]) -> str
     """Return a version string from a version tuple."""
     return '.'.join(str(n) for n in version)
+
+
+def sorted_versions(versions):  # type: (t.List[str]) -> t.List[str]
+    """Return a sorted copy of the given list of versions."""
+    return [version_to_str(version) for version in sorted(str_to_version(version) for version in versions)]
 
 
 def import_plugins(directory, root=None):  # type: (str, t.Optional[str]) -> None
@@ -813,41 +771,75 @@ def load_module(path, name):  # type: (str, str) -> None
     if name in sys.modules:
         return
 
-    if sys.version_info >= (3, 4):
-        # noinspection PyUnresolvedReferences
-        import importlib.util
-
-        # noinspection PyUnresolvedReferences
-        spec = importlib.util.spec_from_file_location(name, path)
-        # noinspection PyUnresolvedReferences
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-
-        sys.modules[name] = module
-    else:
-        # noinspection PyDeprecation
-        import imp
-
-        # load_source (and thus load_module) require a file opened with `open` in text mode
-        with open(to_bytes(path)) as module_file:
-            # noinspection PyDeprecation
-            imp.load_module(name, module_file, path, ('.py', 'r', imp.PY_SOURCE))
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
 
 
-@contextlib.contextmanager
-def tempdir():  # type: () -> str
-    """Creates a temporary directory that is deleted outside the context scope."""
-    temp_path = tempfile.mkdtemp()
-    yield temp_path
-    shutil.rmtree(temp_path)
+def sanitize_host_name(name):
+    """Return a sanitized version of the given name, suitable for use as a hostname."""
+    return re.sub('[^A-Za-z0-9]+', '-', name)[:63].strip('-')
 
 
-@contextlib.contextmanager
-def open_zipfile(path, mode='r'):
-    """Opens a zip file and closes the file automatically."""
-    zib_obj = zipfile.ZipFile(path, mode=mode)
-    yield zib_obj
-    zib_obj.close()
+@cache
+def get_host_ip():
+    """Return the host's IP address."""
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        sock.connect(('10.255.255.255', 22))
+        host_ip = get_host_ip.ip = sock.getsockname()[0]
+
+    display.info('Detected host IP: %s' % host_ip, verbosity=1)
+
+    return host_ip
+
+
+def get_generic_type(base_type, generic_base_type):  # type: (t.Type, t.Type[TType]) -> t.Optional[t.Type[TType]]
+    """Return the generic type arg derived from the generic_base_type type that is associated with the base_type type, if any, otherwise return None."""
+    # noinspection PyUnresolvedReferences
+    type_arg = t.get_args(base_type.__orig_bases__[0])[0]
+    return None if isinstance(type_arg, generic_base_type) else type_arg
+
+
+def get_type_associations(base_type, generic_base_type):  # type: (t.Type[TType], t.Type[TValue]) -> t.List[t.Tuple[t.Type[TValue], t.Type[TType]]]
+    """Create and return a list of tuples associating generic_base_type derived types with a corresponding base_type derived type."""
+    return [item for item in [(get_generic_type(sc_type, generic_base_type), sc_type) for sc_type in get_subclasses(base_type)] if item[1]]
+
+
+def get_type_map(base_type, generic_base_type):  # type: (t.Type[TType], t.Type[TValue]) -> t.Dict[t.Type[TValue], t.Type[TType]]
+    """Create and return a mapping of generic_base_type derived types to base_type derived types."""
+    return {item[0]: item[1] for item in get_type_associations(base_type, generic_base_type)}
+
+
+def verify_sys_executable(path):  # type: (str) -> t.Optional[str]
+    """Verify that the given path references the current Python interpreter. If not, return the expected path, otherwise return None."""
+    if path == sys.executable:
+        return None
+
+    if os.path.realpath(path) == os.path.realpath(sys.executable):
+        return None
+
+    expected_executable = raw_command([path, '-c', 'import sys; print(sys.executable)'], capture=True)[0]
+
+    if expected_executable == sys.executable:
+        return None
+
+    return expected_executable
+
+
+def type_guard(sequence: t.Sequence[t.Any], guard_type: t.Type[C]) -> TypeGuard[t.Sequence[C]]:
+    """
+    Raises an exception if any item in the given sequence does not match the specified guard type.
+    Use with assert so that type checkers are aware of the type guard.
+    """
+    invalid_types = set(type(item) for item in sequence if not isinstance(item, guard_type))
+
+    if not invalid_types:
+        return True
+
+    invalid_type_names = sorted(str(item) for item in invalid_types)
+
+    raise Exception(f'Sequence required to contain only {guard_type} includes: {", ".join(invalid_type_names)}')
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

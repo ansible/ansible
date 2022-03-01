@@ -12,11 +12,11 @@ Developing network resource modules
 Understanding network and security resource modules
 ===================================================
 
-Network and security devices separate configuration into sections (such as interfaces, VLANs, and so on) that apply to a network or security service. Ansible resource modules take advantage of this to allow users to configure subsections or resources within the device configuration. Resource modules provide a consistent experience across different network and security devices. For example, a network resource module may only update the configuration for a specific portion of the network interfaces, VLANs, ACLs, and so on, for a network device. The resource module:
+Network and security devices separate configuration into sections (such as interfaces, VLANs, and so on) that apply to a network or security service. Ansible resource modules take advantage of this to allow users to configure subsections or resources within the device configuration. Resource modules provide a consistent experience across different network and security devices. For example, a network resource module may only update the configuration for a specific portion of the network interfaces, VLANs, ACLs, and so on for a network device. The resource module:
 
 #. Fetches a piece of the configuration (fact gathering), for example, the interfaces configuration.
 #. Converts the returned configuration into key-value pairs.
-#. Places those key-value pairs into an internal agnostic structured data format.
+#. Places those key-value pairs into an internal independent structured data format.
 
 Now that the configuration data is normalized, the user can update and modify the data and then use the resource module to send the configuration data back to the device. This results in a full round-trip configuration update without the need for manual parsing, data manipulation, and data model management.
 
@@ -66,7 +66,7 @@ Modules in Ansible-maintained collections must support these state values. If yo
 Developing network and security resource modules
 =================================================
 
-The Ansible Engineering team ensures the module design and code pattern  within Ansible-maintained collections is uniform across resources and across platforms to give a vendor-agnostic feel and deliver good quality code. We recommend you use the `resource module builder <https://github.com/ansible-network/resource_module_builder>`_ to  develop a resource module.
+The Ansible Engineering team ensures the module design and code pattern  within Ansible-maintained collections is uniform across resources and across platforms to give a vendor-independent feel and deliver good quality code. We recommend you use the `resource module builder <https://github.com/ansible-network/resource_module_builder>`_ to  develop a resource module.
 
 
 The highlevel process for developing a resource module is:
@@ -167,7 +167,7 @@ For example, the resource model builder includes the ``myos_interfaces.yml`` sam
             description:
             - The some_int.
             type: int
-            version_added: '1.1'
+            version_added: '1.1.0'
           some_dict:
             type: dict
             description:
@@ -484,7 +484,7 @@ We use Zuul as the CI to run the integration test.
 
 * To view the report, click :guilabel:`Details` on the CI comment in the PR
 * To view a failure report,  click :guilabel:`ansible/check` and select the failed test.
-* To view logs while the test is running, check for your PR number in the `Zull status board <https://dashboard.zuul.ansible.com/t/ansible/status>`_.
+* To view logs while the test is running, check for your PR number in the `Zuul status board <https://dashboard.zuul.ansible.com/t/ansible/status>`_.
 * To fix static test failure locally, run the  :command:`tox -e black` **inside the root folder of collection**.
 
 To view The Ansible run logs and debug test failures:
@@ -518,7 +518,7 @@ The following example walks through the integration tests for the ``vyos.vyos.vy
 .. code-block:: yaml
 
    ---
-   - include: cli.yaml
+   - import_tasks: cli.yaml
      tags:
        - cli
 
@@ -538,13 +538,20 @@ The following example walks through the integration tests for the ``vyos.vyos.vy
      set_fact: test_items="{{ test_cases.files | map(attribute='path') | list }}"
 
    - name: run test cases (connection=network_cli)
-     include: "{{ test_case_to_run }} ansible_connection=network_cli"
+     include_tasks:
+        file: "{{ test_case_to_run }}"
+     vars:
+        ansible_connection: network_cli
      with_items: "{{ test_items }}"
      loop_control:
        loop_var: test_case_to_run
 
    - name: run test case (connection=local)
-     include: "{{ test_case_to_run }} ansible_connection=local ansible_become=no"
+     include_tasks:
+        file: "{{ test_case_to_run }}"
+     vars:
+        ansible_connection: local
+        ansible_become: no
      with_first_found: "{{ test_items }}"
      loop_control:
        loop_var: test_case_to_run
@@ -558,11 +565,11 @@ The following example walks through the integration tests for the ``vyos.vyos.vy
    msg: START vyos_l3_interfaces merged integration tests on connection={{ ansible_connection
      }}
 
-  - include_tasks: _remove_config.yaml
+  - import_tasks: _remove_config.yaml
 
   - block:
 
-   - include_tasks: _populate.yaml
+   - import_tasks: _populate.yaml
 
    - name: Overrides all device configuration with provided configuration
      register: result
@@ -613,7 +620,7 @@ The following example walks through the integration tests for the ``vyos.vyos.vy
            \ == 0 }}"
   always:
 
-   - include_tasks: _remove_config.yaml
+   - import_tasks: _remove_config.yaml
 
 
 Detecting test resources at runtime
@@ -711,7 +718,7 @@ For more options:
 
   ansible-test network-integration --help
 
-If you need additional help or feedback, reach out in ``#ansible-network`` on Freenode.
+If you need additional help or feedback, reach out in the ``#ansible-network`` chat channel (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_).
 
 Unit test requirements
 -----------------------

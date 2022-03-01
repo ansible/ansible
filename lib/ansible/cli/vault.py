@@ -1,16 +1,20 @@
+#!/usr/bin/env python
 # (c) 2014, James Tanner <tanner.jc@gmail.com>
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# PYTHON_ARGCOMPLETE_OK
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+# ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
+from ansible.cli import CLI
 
 import os
 import sys
 
 from ansible import constants as C
 from ansible import context
-from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils._text import to_text, to_bytes
@@ -31,6 +35,8 @@ class VaultCLI(CLI):
     Because Ansible tasks, handlers, and other objects are data, these can also be encrypted with vault.
     If you'd like to not expose what variables you are using, you can keep an individual task file entirely encrypted.
     '''
+
+    name = 'ansible-vault'
 
     FROM_STDIN = "stdin"
     FROM_ARGS = "the command line args"
@@ -71,7 +77,7 @@ class VaultCLI(CLI):
         vault_id = opt_help.argparse.ArgumentParser(add_help=False)
         vault_id.add_argument('--encrypt-vault-id', default=[], dest='encrypt_vault_id',
                               action='store', type=str,
-                              help='the vault id used to encrypt (required if more than vault-id is provided)')
+                              help='the vault id used to encrypt (required if more than one vault-id is provided)')
 
         create_parser = subparsers.add_parser('create', help='Create new vault encrypted file', parents=[vault_id, common])
         create_parser.set_defaults(func=self.execute_create)
@@ -99,6 +105,8 @@ class VaultCLI(CLI):
         enc_str_parser.add_argument('-p', '--prompt', dest='encrypt_string_prompt',
                                     action='store_true',
                                     help="Prompt for the string to encrypt")
+        enc_str_parser.add_argument('--show-input', dest='show_string_input', default=False, action='store_true',
+                                    help='Do not hide input when prompted for the string to encrypt')
         enc_str_parser.add_argument('-n', '--name', dest='encrypt_string_names',
                                     action='append',
                                     help="Specify the variable name")
@@ -300,8 +308,13 @@ class VaultCLI(CLI):
 
             # TODO: could prompt for which vault_id to use for each plaintext string
             #       currently, it will just be the default
-            # could use private=True for shadowed input if useful
-            prompt_response = display.prompt(msg)
+            hide_input = not context.CLIARGS['show_string_input']
+            if hide_input:
+                msg = "String to encrypt (hidden): "
+            else:
+                msg = "String to encrypt:"
+
+            prompt_response = display.prompt(msg, private=hide_input)
 
             if prompt_response == '':
                 raise AnsibleOptionsError('The plaintext provided from the prompt was empty, not encrypting')
@@ -312,7 +325,7 @@ class VaultCLI(CLI):
         # read from stdin
         if self.encrypt_string_read_stdin:
             if sys.stdout.isatty():
-                display.display("Reading plaintext input from stdin. (ctrl-d to end input)", stderr=True)
+                display.display("Reading plaintext input from stdin. (ctrl-d to end input, twice if your content does not already have a newline)", stderr=True)
 
             stdin_text = sys.stdin.read()
             if stdin_text == '':
@@ -363,12 +376,15 @@ class VaultCLI(CLI):
         # Format the encrypted strings and any corresponding stderr output
         outputs = self._format_output_vault_strings(b_plaintext_list, vault_id=self.encrypt_vault_id)
 
+        b_outs = []
         for output in outputs:
             err = output.get('err', None)
             out = output.get('out', '')
             if err:
                 sys.stderr.write(err)
-            print(out)
+            b_outs.append(to_bytes(out))
+
+        self.editor.write_data(b'\n'.join(b_outs), context.CLIARGS['output_file'] or '-')
 
         if sys.stdout.isatty():
             display.display("Encryption successful", stderr=True)
@@ -455,3 +471,11 @@ class VaultCLI(CLI):
                                    self.new_encrypt_vault_id)
 
         display.display("Rekey successful", stderr=True)
+
+
+def main(args=None):
+    VaultCLI.cli_executor(args)
+
+
+if __name__ == '__main__':
+    main()

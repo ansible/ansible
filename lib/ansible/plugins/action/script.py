@@ -87,39 +87,47 @@ class ActionModule(ActionBase):
             except AnsibleError as e:
                 raise AnsibleActionFail(to_native(e))
 
+            if self._task.check_mode:
+                # check mode is supported if 'creates' or 'removes' are provided
+                # the task has already been skipped if a change would not occur
+                if self._task.args.get('creates') or self._task.args.get('removes'):
+                    result['changed'] = True
+                    raise _AnsibleActionDone(result=result)
+                # If the script doesn't return changed in the result, it defaults to True,
+                # but since the script may override 'changed', just skip instead of guessing.
+                else:
+                    result['changed'] = False
+                    raise AnsibleActionSkip('Check mode is not supported for this task.', result=result)
+
             # now we execute script, always assume changed.
             result['changed'] = True
 
-            if not self._play_context.check_mode:
-                # transfer the file to a remote tmp location
-                tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir,
-                                                            os.path.basename(source))
+            # transfer the file to a remote tmp location
+            tmp_src = self._connection._shell.join_path(self._connection._shell.tmpdir,
+                                                        os.path.basename(source))
 
-                # Convert raw_params to text for the purpose of replacing the script since
-                # parts and tmp_src are both unicode strings and raw_params will be different
-                # depending on Python version.
-                #
-                # Once everything is encoded consistently, replace the script path on the remote
-                # system with the remainder of the raw_params. This preserves quoting in parameters
-                # that would have been removed by shlex.split().
-                target_command = to_text(raw_params).strip().replace(parts[0], tmp_src)
+            # Convert raw_params to text for the purpose of replacing the script since
+            # parts and tmp_src are both unicode strings and raw_params will be different
+            # depending on Python version.
+            #
+            # Once everything is encoded consistently, replace the script path on the remote
+            # system with the remainder of the raw_params. This preserves quoting in parameters
+            # that would have been removed by shlex.split().
+            target_command = to_text(raw_params).strip().replace(parts[0], tmp_src)
 
-                self._transfer_file(source, tmp_src)
+            self._transfer_file(source, tmp_src)
 
-                # set file permissions, more permissive when the copy is done as a different user
-                self._fixup_perms2((self._connection._shell.tmpdir, tmp_src), execute=True)
+            # set file permissions, more permissive when the copy is done as a different user
+            self._fixup_perms2((self._connection._shell.tmpdir, tmp_src), execute=True)
 
-                # add preparation steps to one ssh roundtrip executing the script
-                env_dict = dict()
-                env_string = self._compute_environment_string(env_dict)
+            # add preparation steps to one ssh roundtrip executing the script
+            env_dict = dict()
+            env_string = self._compute_environment_string(env_dict)
 
-                if executable:
-                    script_cmd = ' '.join([env_string, executable, target_command])
-                else:
-                    script_cmd = ' '.join([env_string, target_command])
-
-            if self._play_context.check_mode:
-                raise _AnsibleActionDone()
+            if executable:
+                script_cmd = ' '.join([env_string, executable, target_command])
+            else:
+                script_cmd = ' '.join([env_string, target_command])
 
             script_cmd = self._connection._shell.wrap_for_exec(script_cmd)
 

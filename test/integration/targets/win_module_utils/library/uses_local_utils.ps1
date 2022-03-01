@@ -6,4 +6,4 @@
 
 $o = CustomFunction
 
-Exit-Json @{data=$o}
+Exit-Json @{data = $o }

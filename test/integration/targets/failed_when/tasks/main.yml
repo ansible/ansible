@@ -66,3 +66,15 @@
     that:
       - "'failed' in result and not result.failed"
       - "'failed_when_result' in result and not result.failed_when_result"
+
+- name: invalid conditional
+  command: echo foo
+  failed_when: boomboomboom
+  register: invalid_conditional
+  ignore_errors: true
+
+- assert:
+    that:
+      - invalid_conditional is failed
+      - invalid_conditional.stdout is defined
+      - invalid_conditional.failed_when_result is contains('boomboomboom')

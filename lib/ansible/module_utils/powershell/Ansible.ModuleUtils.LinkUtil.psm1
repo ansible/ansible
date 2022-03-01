@@ -3,7 +3,10 @@
 
 #Requires -Module Ansible.ModuleUtils.PrivilegeUtil
 
-Function Load-LinkUtils() {
+Function Load-LinkUtils {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseSingularNouns", "", Justification = "Cannot change the name now")]
+    param ()
+
     $link_util = @'
 using Microsoft.Win32.SafeHandles;
 using System;
@@ -314,8 +317,12 @@ namespace Ansible
                 throw new Exception(errorMessage);
             }
 
-            string printName = new string(buffer.PathBuffer, (int)(buffer.PrintNameOffset / SIZE_OF_WCHAR) + pathOffset, (int)(buffer.PrintNameLength / SIZE_OF_WCHAR));
-            string substituteName = new string(buffer.PathBuffer, (int)(buffer.SubstituteNameOffset / SIZE_OF_WCHAR) + pathOffset, (int)(buffer.SubstituteNameLength / SIZE_OF_WCHAR));
+            string printName = new string(buffer.PathBuffer,
+                (int)(buffer.PrintNameOffset / SIZE_OF_WCHAR) + pathOffset,
+                (int)(buffer.PrintNameLength / SIZE_OF_WCHAR));
+            string substituteName = new string(buffer.PathBuffer,
+                (int)(buffer.SubstituteNameOffset / SIZE_OF_WCHAR) + pathOffset,
+                (int)(buffer.SubstituteNameLength / SIZE_OF_WCHAR));
 
             // TODO: should we check for \?\UNC\server for convert it to the NT style \\server path
             // Remove the leading Windows object directory \?\ from the path if present
@@ -394,6 +401,7 @@ namespace Ansible
 
     # FUTURE: find a better way to get the _ansible_remote_tmp variable
     $original_tmp = $env:TMP
+    $original_lib = $env:LIB
 
     $remote_tmp = $original_tmp
     $module_params = Get-Variable -Name complex_args -ErrorAction SilentlyContinue
@@ -405,8 +413,10 @@ namespace Ansible
     }
 
     $env:TMP = $remote_tmp
+    $env:LIB = $null
     Add-Type -TypeDefinition $link_util
     $env:TMP = $original_tmp
+    $env:LIB = $original_lib
 
     # enable the SeBackupPrivilege if it is disabled
     $state = Get-AnsiblePrivilege -Name SeBackupPrivilege
@@ -429,7 +439,7 @@ Function New-Link($link_path, $link_target, $link_type) {
         throw "link_target '$link_target' does not exist, cannot create link"
     }
 
-    switch($link_type) {
+    switch ($link_type) {
         "link" {
             $type = [Ansible.LinkType]::SymbolicLink
         }

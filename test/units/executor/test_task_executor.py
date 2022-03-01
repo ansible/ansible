@@ -22,7 +22,7 @@ __metaclass__ = type
 import mock
 
 from units.compat import unittest
-from units.compat.mock import patch, MagicMock
+from mock import patch, MagicMock
 from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor, remove_omit
 from ansible.plugins.loader import action_loader, lookup_loader
@@ -246,7 +246,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_connection = MagicMock()
         mock_templar = MagicMock()
         action = 'namespace.netconf_suffix'
-        module_prefix = action.split('_')[0]
+        module_prefix = action.split('_', 1)[0]
         te._task.action = action
 
         handler = te._get_action_handler(mock_connection, mock_templar)
@@ -281,7 +281,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_connection = MagicMock()
         mock_templar = MagicMock()
         action = 'namespace.prefix_suffix'
-        module_prefix = action.split('_')[0]
+        module_prefix = action.split('_', 1)[0]
         te._task.action = action
         handler = te._get_action_handler(mock_connection, mock_templar)
 
@@ -291,7 +291,7 @@ class TestTaskExecutor(unittest.TestCase):
                                                    mock.call(module_prefix, collection_list=te._task.collections)])
 
         action_loader.get.assert_called_once_with(
-            'normal', task=te._task, connection=mock_connection,
+            'ansible.legacy.normal', task=te._task, connection=mock_connection,
             play_context=te._play_context, loader=te._loader,
             templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
             collection_list=None)

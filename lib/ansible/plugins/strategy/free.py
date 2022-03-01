@@ -19,7 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    strategy: free
+    name: free
     short_description: Executes tasks without waiting for all hosts
     description:
         - Task execution is as fast as possible per batch as defined by C(serial) (default all).
@@ -34,7 +34,7 @@ DOCUMENTATION = '''
 import time
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.included_file import IncludedFile
 from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
@@ -92,6 +92,9 @@ class StrategyModule(StrategyBase):
 
         self._set_hosts_cache(iterator._play)
 
+        if iterator._play.max_fail_percentage is not None:
+            display.warning("Using max_fail_percentage with the free strategy is not supported, as tasks are executed independently on each host")
+
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
 
@@ -117,17 +120,19 @@ class StrategyModule(StrategyBase):
                 (state, task) = iterator.get_next_task_for_host(host, peek=True)
                 display.debug("free host state: %s" % state, host=host_name)
                 display.debug("free host task: %s" % task, host=host_name)
-                if host_name not in self._tqm._unreachable_hosts and task:
 
+                # check if there is work to do, either there is a task or the host is still blocked which could
+                # mean that it is processing an include task and after its result is processed there might be
+                # more tasks to run
+                if (task or self._blocked_hosts.get(host_name, False)) and not self._tqm._unreachable_hosts.get(host_name, False):
+                    display.debug("this host has work to do", host=host_name)
                     # set the flag so the outer loop knows we've still found
                     # some work which needs to be done
                     work_to_do = True
 
-                    display.debug("this host has work to do", host=host_name)
-
+                if not self._tqm._unreachable_hosts.get(host_name, False) and task:
                     # check to see if this host is blocked (still executing a previous task)
-                    if (host_name not in self._blocked_hosts or not self._blocked_hosts[host_name]):
-
+                    if not self._blocked_hosts.get(host_name, False):
                         display.debug("getting variables", host=host_name)
                         task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task,
                                                                     _hosts=self._hosts_cache,
@@ -151,12 +156,12 @@ class StrategyModule(StrategyBase):
                             if same_tasks >= throttle:
                                 break
 
-                        # pop the task, mark the host blocked, and queue it
+                        # advance the host, mark the host blocked, and queue it
                         self._blocked_hosts[host_name] = True
-                        (state, task) = iterator.get_next_task_for_host(host)
+                        iterator.set_state_for_host(host.name, state)
 
                         try:
-                            action = action_loader.get(task.action, class_only=True)
+                            action = action_loader.get(task.action, class_only=True, collection_list=task.collections)
                         except KeyError:
                             # we don't care here, because the action may simply not have a
                             # corresponding action plugin
@@ -189,7 +194,7 @@ class StrategyModule(StrategyBase):
                                 del self._blocked_hosts[host_name]
                                 continue
 
-                        if task.action == 'meta':
+                        if task.action in C._ACTION_META:
                             self._execute_meta(task, play_context, iterator, target_host=host)
                             self._blocked_hosts[host_name] = False
                         else:
@@ -252,14 +257,19 @@ class StrategyModule(StrategyBase):
                             )
                         else:
                             new_blocks = self._load_included_file(included_file, iterator=iterator)
+                    except AnsibleParserError:
+                        raise
                     except AnsibleError as e:
+                        for r in included_file._results:
+                            r._result['failed'] = True
+
                         for host in included_file._hosts:
                             iterator.mark_host_failed(host)
                         display.warning(to_text(e))
                         continue
 
                     for new_block in new_blocks:
-                        task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block._parent,
+                        task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block.get_first_parent_include(),
                                                                     _hosts=self._hosts_cache,
                                                                     _hosts_all=self._hosts_cache_all)
                         final_block = new_block.filter_tagged_tasks(task_vars)

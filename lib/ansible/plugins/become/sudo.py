@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    become: sudo
+    name: sudo
     short_description: Substitute User DO
     description:
         - This become plugins allows your remote/login user to execute commands as another user via the sudo utility.
@@ -26,6 +26,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_USER
               - name: ANSIBLE_SUDO_USER
+            keyword:
+              - name: become_user
         become_exe:
             description: Sudo executable
             default: sudo
@@ -40,6 +42,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_EXE
               - name: ANSIBLE_SUDO_EXE
+            keyword:
+              - name: become_exe
         become_flags:
             description: Options to pass to sudo
             default: -H -S -n
@@ -54,6 +58,8 @@ DOCUMENTATION = """
             env:
               - name: ANSIBLE_BECOME_FLAGS
               - name: ANSIBLE_SUDO_FLAGS
+            keyword:
+              - name: become_flags
         become_pass:
             description: Password to pass to sudo
             required: False
@@ -69,6 +75,8 @@ DOCUMENTATION = """
                 key: password
 """
 
+import re
+import shlex
 
 from ansible.plugins.become import BecomeBase
 
@@ -94,7 +102,16 @@ class BecomeModule(BecomeBase):
         if self.get_option('become_pass'):
             self.prompt = '[sudo via ansible, key=%s] password:' % self._id
             if flags:  # this could be simplified, but kept as is for now for backwards string matching
-                flags = flags.replace('-n', '')
+                reflag = []
+                for flag in shlex.split(flags):
+                    if flag in ('-n', '--non-interactive'):
+                        continue
+                    elif not flag.startswith('--'):
+                        # handle -XnxxX flags only
+                        flag = re.sub(r'^(-\w*)n(\w*.*)', r'\1\2', flag)
+                    reflag.append(flag)
+                flags = shlex.join(reflag)
+
             prompt = '-p "%s"' % (self.prompt)
 
         user = self.get_option('become_user') or ''

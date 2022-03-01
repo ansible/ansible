@@ -1489,13 +1489,13 @@
 # src is a file, dest is a non-existent directory (2 levels of directories):
 # using remote_src
 # checks that dest is created
-- include: dest_in_non_existent_directories_remote_src.yml
+- include_tasks: file=dest_in_non_existent_directories_remote_src.yml
   with_items:
     - { src: 'foo.txt', dest: 'new_sub_dir1/sub_dir2/', check: 'new_sub_dir1/sub_dir2/foo.txt' }
 
 # src is a file, dest is file in a non-existent directory: checks that a failure occurs
 # using remote_src
-- include: src_file_dest_file_in_non_existent_dir_remote_src.yml
+- include_tasks: file=src_file_dest_file_in_non_existent_dir_remote_src.yml
   with_items:
     - 'new_sub_dir1/sub_dir2/foo.txt'
     - 'new_sub_dir1/foo.txt'
@@ -1504,7 +1504,7 @@
 
 # src is a file, dest is a non-existent directory (2 levels of directories):
 # checks that dest is created
-- include: dest_in_non_existent_directories.yml
+- include_tasks: file=dest_in_non_existent_directories.yml
   with_items:
     - { src: 'foo.txt', dest: 'new_sub_dir1/sub_dir2/', check: 'new_sub_dir1/sub_dir2/foo.txt' }
     - { src: 'subdir', dest: 'new_sub_dir1/sub_dir2/', check: 'new_sub_dir1/sub_dir2/subdir/bar.txt' }
@@ -1513,7 +1513,7 @@
     - { src: 'subdir/', dest: 'new_sub_dir1/sub_dir2', check: 'new_sub_dir1/sub_dir2/bar.txt' }
 
 # src is a file, dest is file in a non-existent directory: checks that a failure occurs
-- include: src_file_dest_file_in_non_existent_dir.yml
+- include_tasks: file=src_file_dest_file_in_non_existent_dir.yml
   with_items:
     - 'new_sub_dir1/sub_dir2/foo.txt'
     - 'new_sub_dir1/foo.txt'
@@ -2259,3 +2259,29 @@
          - "dest_dir_readwrite_stat.stat.mode == '0644'"
          - "dest_dir_executable_stat.stat.mode == '0755'"
          - "dest_dir_readonly_stat.stat.mode == '0444'"
+
+- name: fail to copy an encrypted file without the password set
+  copy:
+    src: '{{role_path}}/files-different/vault/vault-file'
+    dest: '{{remote_tmp_dir}}/copy/file'
+  register: fail_copy_encrypted_file
+  ignore_errors: yes # weird failed_when doesn't work in this case
+
+- name: assert failure message when copying an encrypted file without the password set
+  assert:
+    that:
+    - fail_copy_encrypted_file is failed
+    - fail_copy_encrypted_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-different/vault/vault-file'
+
+- name: fail to copy a directory with an encrypted file without the password
+  copy:
+    src: '{{role_path}}/files-different/vault'
+    dest: '{{remote_tmp_dir}}/copy'
+  register: fail_copy_directory_with_enc_file
+  ignore_errors: yes
+
+- name: assert failure message when copying a directory that contains an encrypted file without the password set
+  assert:
+    that:
+    - fail_copy_directory_with_enc_file is failed
+    - fail_copy_directory_with_enc_file.msg == 'A vault password or secret must be specified to decrypt {{role_path}}/files-different/vault/vault-file'

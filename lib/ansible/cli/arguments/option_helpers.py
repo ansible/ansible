@@ -11,11 +11,13 @@ import os
 import os.path
 import sys
 import time
-import yaml
+
+from jinja2 import __version__ as j2_version
 
 import ansible
 from ansible import constants as C
 from ansible.module_utils._text import to_native
+from ansible.module_utils.common.yaml import HAS_LIBYAML, yaml_load
 from ansible.release import __version__
 from ansible.utils.path import unfrackpath
 
@@ -98,6 +100,15 @@ def unfrack_path(pathsep=False):
     return inner
 
 
+def maybe_unfrack_path(beacon):
+
+    def inner(value):
+        if value.startswith(beacon):
+            return beacon + unfrackpath(value[1:])
+        return value
+    return inner
+
+
 def _git_repo_info(repo_path):
     """ returns a string containing git branch, commit id and commit date """
     result = None
@@ -105,7 +116,8 @@ def _git_repo_info(repo_path):
         # Check if the .git is a file. If it is a file, it means that we are in a submodule structure.
         if os.path.isfile(repo_path):
             try:
-                gitdir = yaml.safe_load(open(repo_path)).get('gitdir')
+                with open(repo_path) as f:
+                    gitdir = yaml_load(f).get('gitdir')
                 # There is a possibility the .git file to have an absolute path.
                 if os.path.isabs(gitdir):
                     repo_path = gitdir
@@ -141,47 +153,34 @@ def _git_repo_info(repo_path):
 
 
 def _gitinfo():
-    basedir = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+    basedir = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
     repo_path = os.path.join(basedir, '.git')
-    result = _git_repo_info(repo_path)
-    submodules = os.path.join(basedir, '.gitmodules')
-
-    if not os.path.exists(submodules):
-        return result
-
-    with open(submodules) as f:
-        for line in f:
-            tokens = line.strip().split(' ')
-            if tokens[0] == 'path':
-                submodule_path = tokens[2]
-                submodule_info = _git_repo_info(os.path.join(basedir, submodule_path, '.git'))
-                if not submodule_info:
-                    submodule_info = ' not found - use git submodule update --init ' + submodule_path
-                result += "\n  {0}: {1}".format(submodule_path, submodule_info)
-    return result
+    return _git_repo_info(repo_path)
 
 
 def version(prog=None):
     """ return ansible version """
     if prog:
-        result = " ".join((prog, __version__))
+        result = ["{0} [core {1}]".format(prog, __version__)]
     else:
-        result = __version__
+        result = [__version__]
 
     gitinfo = _gitinfo()
     if gitinfo:
-        result = result + " {0}".format(gitinfo)
-    result += "\n  config file = %s" % C.CONFIG_FILE
+        result[0] = "{0} {1}".format(result[0], gitinfo)
+    result.append("  config file = %s" % C.CONFIG_FILE)
     if C.DEFAULT_MODULE_PATH is None:
         cpath = "Default w/o overrides"
     else:
         cpath = C.DEFAULT_MODULE_PATH
-    result = result + "\n  configured module search path = %s" % cpath
-    result = result + "\n  ansible python module location = %s" % ':'.join(ansible.__path__)
-    result = result + "\n  ansible collection location = %s" % ':'.join(C.COLLECTIONS_PATHS)
-    result = result + "\n  executable location = %s" % sys.argv[0]
-    result = result + "\n  python version = %s" % ''.join(sys.version.splitlines())
-    return result
+    result.append("  configured module search path = %s" % cpath)
+    result.append("  ansible python module location = %s" % ':'.join(ansible.__path__))
+    result.append("  ansible collection location = %s" % ':'.join(C.COLLECTIONS_PATHS))
+    result.append("  executable location = %s" % sys.argv[0])
+    result.append("  python version = %s" % ''.join(sys.version.splitlines()))
+    result.append("  jinja version = %s" % j2_version)
+    result.append("  libyaml = %s" % HAS_LIBYAML)
+    return "\n".join(result)
 
 
 #
@@ -211,7 +210,9 @@ def create_base_parser(prog, usage="", desc=None, epilog=None):
 def add_verbosity_options(parser):
     """Add options for verbosity"""
     parser.add_argument('-v', '--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
-                        help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
+                        help="Causes Ansible to print more debug messages. Adding multiple -v will increase the verbosity, "
+                             "the builtin plugins currently evaluate up to -vvvvvv. A reasonable level to start is -vvv, "
+                             "connection debugging might require -vvvv.")
 
 
 def add_async_options(parser):
@@ -225,8 +226,9 @@ def add_async_options(parser):
 def add_basedir_options(parser):
     """Add options for commands which can set a playbook basedir"""
     parser.add_argument('--playbook-dir', default=C.config.get_config_value('PLAYBOOK_DIR'), dest='basedir', action='store',
-                        help="Since this tool does not use playbooks, use this as a substitute playbook directory."
-                             "This sets the relative path for many features including roles/ group_vars/ etc.")
+                        help="Since this tool does not use playbooks, use this as a substitute playbook directory. "
+                             "This sets the relative path for many features including roles/ group_vars/ etc.",
+                        type=unfrack_path())
 
 
 def add_check_options(parser):
@@ -244,8 +246,6 @@ def add_connect_options(parser):
     """Add options for commands which need to connection to other hosts"""
     connect_group = parser.add_argument_group("Connection Options", "control as whom and how to connect to hosts")
 
-    connect_group.add_argument('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
-                               help='ask for connection password')
     connect_group.add_argument('--private-key', '--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
                                help='use this file to authenticate the connection', type=unfrack_path())
     connect_group.add_argument('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
@@ -254,16 +254,26 @@ def add_connect_options(parser):
                                help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
     connect_group.add_argument('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type=int, dest='timeout',
                                help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
-    connect_group.add_argument('--ssh-common-args', default='', dest='ssh_common_args',
+
+    # ssh only
+    connect_group.add_argument('--ssh-common-args', default=None, dest='ssh_common_args',
                                help="specify common arguments to pass to sftp/scp/ssh (e.g. ProxyCommand)")
-    connect_group.add_argument('--sftp-extra-args', default='', dest='sftp_extra_args',
+    connect_group.add_argument('--sftp-extra-args', default=None, dest='sftp_extra_args',
                                help="specify extra arguments to pass to sftp only (e.g. -f, -l)")
-    connect_group.add_argument('--scp-extra-args', default='', dest='scp_extra_args',
+    connect_group.add_argument('--scp-extra-args', default=None, dest='scp_extra_args',
                                help="specify extra arguments to pass to scp only (e.g. -l)")
-    connect_group.add_argument('--ssh-extra-args', default='', dest='ssh_extra_args',
+    connect_group.add_argument('--ssh-extra-args', default=None, dest='ssh_extra_args',
                                help="specify extra arguments to pass to ssh only (e.g. -R)")
 
     parser.add_argument_group(connect_group)
+
+    connect_password_group = parser.add_mutually_exclusive_group()
+    connect_password_group.add_argument('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
+                                        help='ask for connection password')
+    connect_password_group.add_argument('--connection-password-file', '--conn-pass-file', default=C.CONNECTION_PASSWORD_FILE, dest='connection_password_file',
+                                        help="Connection password file", type=unfrack_path(), action='store')
+
+    parser.add_argument_group(connect_password_group)
 
 
 def add_fork_options(parser):
@@ -324,7 +334,9 @@ def add_runas_options(parser):
     runas_group.add_argument('--become-user', default=None, dest='become_user', type=str,
                              help='run operations as this user (default=%s)' % C.DEFAULT_BECOME_USER)
 
-    add_runas_prompt_options(parser, runas_group=runas_group)
+    parser.add_argument_group(runas_group)
+
+    add_runas_prompt_options(parser)
 
 
 def add_runas_prompt_options(parser, runas_group=None):
@@ -334,21 +346,30 @@ def add_runas_prompt_options(parser, runas_group=None):
     Note that add_runas_options() includes these options already.  Only one of the two functions
     should be used.
     """
-    if runas_group is None:
-        runas_group = parser.add_argument_group("Privilege Escalation Options",
-                                                "control how and which user you become as on target hosts")
+    if runas_group is not None:
+        parser.add_argument_group(runas_group)
 
-    runas_group.add_argument('-K', '--ask-become-pass', dest='become_ask_pass', action='store_true',
-                             default=C.DEFAULT_BECOME_ASK_PASS,
-                             help='ask for privilege escalation password')
+    runas_pass_group = parser.add_mutually_exclusive_group()
 
-    parser.add_argument_group(runas_group)
+    runas_pass_group.add_argument('-K', '--ask-become-pass', dest='become_ask_pass', action='store_true',
+                                  default=C.DEFAULT_BECOME_ASK_PASS,
+                                  help='ask for privilege escalation password')
+    runas_pass_group.add_argument('--become-password-file', '--become-pass-file', default=C.BECOME_PASSWORD_FILE, dest='become_password_file',
+                                  help="Become password file", type=unfrack_path(), action='store')
+
+    parser.add_argument_group(runas_pass_group)
 
 
 def add_runtask_options(parser):
     """Add options for commands that run a task"""
-    parser.add_argument('-e', '--extra-vars', dest="extra_vars", action="append",
+    parser.add_argument('-e', '--extra-vars', dest="extra_vars", action="append", type=maybe_unfrack_path('@'),
                         help="set additional variables as key=value or YAML/JSON, if filename prepend with @", default=[])
+
+
+def add_tasknoplay_options(parser):
+    """Add options for commands that run a task w/o a defined play"""
+    parser.add_argument('--task-timeout', type=int, dest="task_timeout", action="store", default=C.TASK_TIMEOUT,
+                        help="set task timeout limit in seconds, must be positive integer.")
 
 
 def add_subset_options(parser):

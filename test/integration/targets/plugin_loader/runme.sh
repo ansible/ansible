@@ -2,6 +2,15 @@
 
 set -ux
 
+cleanup() {
+    unlink normal/library/_symlink.py
+}
+
+pushd normal/library
+ln -s _underscore.py _symlink.py
+popd
+
+trap 'cleanup' EXIT
 
 # check normal execution
 for myplay in normal/*.yml

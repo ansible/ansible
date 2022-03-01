@@ -4,14 +4,11 @@
 Ansible and Python 3
 ********************
 
-.. contents:: Topics
-   :local:
+The ``ansible-core`` code runs on both Python 2 and Python 3 because we want Ansible to be able to manage a wide
+variety of machines. Contributors to ansible-core and to Ansible Collections should be aware of the tips in this document so that they can write code that will run on the same versions of Python as the rest of Ansible.
 
-Ansible maintains a single code base that runs on both
-Python 2 and Python 3 because we want Ansible to be able to manage a wide
-variety of machines.  Contributors to Ansible should be aware of the tips in
-this document so that they can write code that will run on the same versions
-of Python as the rest of Ansible.
+.. contents::
+   :local:
 
 To ensure that your code runs on Python 3 as well as on Python 2, learn the tips and tricks and idioms
 described here. Most of these considerations apply to all three types of Ansible code:
@@ -20,8 +17,7 @@ described here. Most of these considerations apply to all three types of Ansible
 2. modules - the code which Ansible transmits to and invokes on the managed machine.
 3. shared ``module_utils`` code - the common code that's used by modules to perform tasks and sometimes used by controller-side code as well
 
-However, the three types of code do not use the same string strategy. If you're developing a module or some ``module_utils`` code, be sure
-to read the section on string strategy carefully.
+However, the three types of code do not use the same string strategy. If you're developing a module or some ``module_utils`` code, be sure to read the section on string strategy carefully.
 
 Minimum version of Python 3.x and Python 2.x
 ============================================
@@ -120,7 +116,7 @@ to yield text but instead do the conversion explicitly ourselves. For example:
 
 .. code-block:: python
 
-    from ansible.module_utils._text import to_text
+    from ansible.module_utils.common.text.converters import to_text
 
     with open('filename-with-utf8-data.txt', 'rb') as my_file:
         b_data = my_file.read()
@@ -140,7 +136,7 @@ Writing to files is the opposite process:
 
 .. code-block:: python
 
-    from ansible.module_utils._text import to_bytes
+    from ansible.module_utils.common.text.converters import to_bytes
 
     with open('filename.txt', 'wb') as my_file:
         my_file.write(to_bytes(some_text_string))
@@ -164,7 +160,7 @@ works on both versions:
 
     import os.path
 
-    from ansible.module_utils._text import to_bytes
+    from ansible.module_utils.common.text.converters import to_bytes
 
     filename = u'/var/tmp/くらとみ.txt'
     f = open(to_bytes(filename), 'wb')
@@ -250,9 +246,9 @@ In ``module_utils`` code:
 * Functions that return strings **must** document whether they return strings of the same type as they were given or native strings.
 
 Module-utils functions are therefore often very defensive in nature.
-They convert their string parameters into text (using ``ansible.module_utils._text.to_text``)
+They convert their string parameters into text (using ``ansible.module_utils.common.text.converters.to_text``)
 at the beginning of the function, do their work, and then convert
-the return values into the native string type (using ``ansible.module_utils._text.to_native``)
+the return values into the native string type (using ``ansible.module_utils.common.text.converters.to_native``)
 or back to the string type that their parameters received.
 
 Tips, tricks, and idioms for Python 2/Python 3 compatibility
@@ -377,7 +373,10 @@ Python 2.6.  Always remember to put numbers into the placeholders so the code
 is compatible with Python 2.6.
 
 .. seealso::
-    Python documentation on `format strings <https://docs.python.org/2/library/string.html#formatstrings>`_
+    Python documentation on format strings:
+    
+    - `format strings in 2.6 <https://docs.python.org/2.6/library/string.html#formatstrings>`_
+    - `format strings in 3.x <https://docs.python.org/3/library/string.html#formatstrings>`_
 
 Use percent format with byte strings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -398,15 +397,11 @@ does have support for the older, percent-formatting.
     Upgrade to Python 3.5 to test.
 
 .. seealso::
-    Python documentation on `percent formatting <https://docs.python.org/2/library/stdtypes.html#string-formatting>`_
+    Python documentation on `percent formatting <https://docs.python.org/3/library/stdtypes.html#string-formatting>`_
 
 .. _testing_modules_python_3:
 
 Testing modules on Python 3
 ===================================
 
-Ansible modules are slightly harder to code to support Python 3 than normal code from other
-projects. A lot of mocking has to go into unit testing an Ansible module, so
-it's harder to test that your changes have fixed everything or to to make sure
-that later commits haven't regressed the Python 3 support. Review our :ref:`testing <developing_testing>` pages
-for more information.
+Ansible modules are slightly harder to code to support Python 3 than normal code from other projects. A lot of mocking has to go into unit testing an Ansible module, so it's harder to test that your changes have fixed everything or to to make sure that later commits haven't regressed the Python 3 support. Review our :ref:`testing <developing_testing>` pages for more information.

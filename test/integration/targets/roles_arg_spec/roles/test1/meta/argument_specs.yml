@@ -1,0 +1,112 @@
+---
+argument_specs:
+  main:
+    short_description: "EXPECTED FAILURE Validate the argument spec for the 'test1' role"
+    options:
+     test1_choices:
+       required: false
+       # required: true
+       choices:
+         - "this paddle game"
+         - "the astray"
+         - "this remote control"
+         - "the chair"
+       type: "str"
+       default: "this paddle game"
+     tidy_expected:
+       # required: false
+       # default: none
+       type: "list"
+     test1_var1:
+       # required: true
+       default: "THIS IS THE DEFAULT SURVEY ANSWER FOR test1_survey_test1_var1"
+       type: "str"
+     test1_var2:
+       required: false
+       default: "This IS THE DEFAULT fake band name / test1_var2 answer from survey_spec.yml"
+       type: "str"
+     bust_some_stuff:
+       # required: false
+       type: "int"
+     some_choices:
+       choices:
+         - "choice1"
+         - "choice2"
+       required: false
+       type: "str"
+     some_str:
+       type: "str"
+     some_list:
+       type: "list"
+       elements: "float"
+     some_dict:
+       type: "dict"
+     some_bool:
+       type: "bool"
+     some_int:
+       type: "int"
+     some_float:
+       type: "float"
+     some_path:
+       type: "path"
+     some_raw:
+       type: "raw"
+     some_jsonarg:
+       type: "jsonarg"
+       required: true
+     some_json:
+       type: "json"
+       required: true
+     some_bytes:
+       type: "bytes"
+     some_bits:
+       type: "bits"
+     some_str_aliases:
+       type: "str"
+       aliases:
+         - "some_str_nicknames"
+         - "some_str_akas"
+         - "some_str_formerly_known_as"
+     some_dict_options:
+       type: "dict"
+       options:
+         some_second_level:
+           type: "bool"
+           default: true
+     some_more_dict_options:
+       type: "dict"
+       options:
+         some_second_level:
+           type: "str"
+     some_str_removed_in:
+       type: "str"
+       removed_in: 2.10
+     some_tmp_path:
+       type: "path"
+     multi_level_option:
+       type: "dict"
+       options:
+         second_level:
+           type: "dict"
+           options:
+             third_level:
+               type: "int"
+               required: true
+
+  other:
+    short_description: "test1_simple_preset_arg_spec_other"
+    description: "A simpler set of required args for other tasks"
+    options:
+      test1_var1:
+        default: "This the default value for the other set of arg specs for  test1 test1_var1"
+        type: "str"
+
+  test1_other:
+    description: "test1_other for role_that_includes_role"
+    options:
+     some_test1_other_arg:
+       default: "The some_test1_other_arg default value"
+       type: str
+     some_required_str:
+       type: str
+       required: true

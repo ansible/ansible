@@ -68,14 +68,14 @@ A system can be in multiple groups.  See :ref:`intro_inventory` and :ref:`intro_
 Separate production and staging inventory
 -----------------------------------------
 
-You can keep your production environment separate from development, test, and staging environments by using separate inventory files or directories for each environment. This way you pick with -i what you are targeting. Keeping all your environments in one file can lead to surprises!
+You can keep your production environment separate from development, test, and staging environments by using separate inventory files or directories for each environment. This way you pick with -i what you are targeting. Keeping all your environments in one file can lead to surprises! For example, all vault passwords used in an inventory need to be available when using that inventory. If an inventory contains both production and development environments, developers using that inventory would be able to access production secrets.
 
 .. _tip_for_variables_and_vaults:
 
 Keep vaulted variables safely visible
 -------------------------------------
 
-You should encrypt sensitive or secret variables with Ansible Vault. However, encrypting the variable names as well as the variable values makes it hard to find the source of the values. You can keep the names of your variables accessible (by ``grep``, for example) without exposing any secrets by adding a layer of indirection:
+You should encrypt sensitive or secret variables with Ansible Vault. However, encrypting the variable names as well as the variable values makes it hard to find the source of the values. To circumvent this, you can encrypt the variables individually using ``ansible-vault encrypt_string``, or add the following layer of indirection to keep the names of your variables accessible (by ``grep``, for example) without exposing any secrets:
 
 #. Create a ``group_vars/`` subdirectory named after the group.
 #. Inside this subdirectory, create two files named ``vars`` and ``vault``.
@@ -86,6 +86,8 @@ You should encrypt sensitive or secret variables with Ansible Vault. However, en
 #. Use the variable name from the ``vars`` file in your playbooks.
 
 When running a playbook, Ansible finds the variables in the unencrypted file, which pulls the sensitive variable values from the encrypted file. There is no limit to the number of variable and vault files or their names.
+
+Note that using this strategy in your inventory still requires *all vault passwords to be available* (for example for ``ansible-playbook`` or `AWX/Ansible Tower <https://github.com/ansible/awx/issues/223#issuecomment-768386089>`_) when run with that inventory. 
 
 Execution tricks
 ================
@@ -107,7 +109,9 @@ Use the 'serial' keyword to control how many machines you update at once in the 
 Handling OS and distro differences
 ----------------------------------
 
-Group variables files and the ``group_by`` module work together to help Ansible execute across a range of operating systems and distributions that require different settings, packages, and tools. The ``group_by`` module creates a dynamic group of hosts matching certain criteria. This group does not need to be defined in the inventory file. This approach lets you execute different tasks on different operating systems or distributions. For example::
+Group variables files and the ``group_by`` module work together to help Ansible execute across a range of operating systems and distributions that require different settings, packages, and tools. The ``group_by`` module creates a dynamic group of hosts matching certain criteria. This group does not need to be defined in the inventory file. This approach lets you execute different tasks on different operating systems or distributions. For example:
+
+.. code-block:: yaml
 
    ---
 
@@ -125,7 +129,9 @@ Group variables files and the ``group_by`` module work together to help Ansible 
       tasks:
         - # tasks that only happen on CentOS go in this play
 
-The first play categorizes all systems into dynamic groups based on the operating system name. Later plays can use these groups as patterns on the ``hosts`` line. You can also add group-specific settings in group vars files. All three names must match: the name created by the ``group_by`` task, the name of the pattern in subsequent plays, and the name of the group vars file. For example::
+The first play categorizes all systems into dynamic groups based on the operating system name. Later plays can use these groups as patterns on the ``hosts`` line. You can also add group-specific settings in group vars files. All three names must match: the name created by the ``group_by`` task, the name of the pattern in subsequent plays, and the name of the group vars file. For example:
+
+.. code-block:: yaml
 
     ---
     # file: group_vars/all
@@ -138,7 +144,9 @@ The first play categorizes all systems into dynamic groups based on the operatin
 In this example, CentOS machines get the value of '42' for asdf, but other machines get '10'.
 This can be used not only to set variables, but also to apply certain roles to only certain systems.
 
-You can use the same setup with ``include_vars`` when you only need OS-specific variables, not tasks::
+You can use the same setup with ``include_vars`` when you only need OS-specific variables, not tasks:
+
+.. code-block:: yaml
 
     - hosts: all
       tasks:
@@ -155,8 +163,8 @@ This pulls in variables from the group_vars/os_CentOS.yml file.
        Learn about YAML syntax
    :ref:`working_with_playbooks`
        Review the basic playbook features
-   :ref:`all_modules`
-       Learn about available modules
+   :ref:`list_of_collections`
+       Browse existing collections, modules, and plugins
    :ref:`developing_modules`
        Learn how to extend Ansible by writing your own modules
    :ref:`intro_patterns`

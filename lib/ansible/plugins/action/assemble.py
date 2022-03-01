@@ -104,7 +104,8 @@ class ActionModule(ActionBase):
                 raise AnsibleActionFail("src and dest are required")
 
             if boolean(remote_src, strict=False):
-                result.update(self._execute_module(module_name='assemble', task_vars=task_vars))
+                # call assemble via ansible.legacy to allow library/ overrides of the module without collection search
+                result.update(self._execute_module(module_name='ansible.legacy.assemble', task_vars=task_vars))
                 raise _AnsibleActionDone()
             else:
                 try:
@@ -150,12 +151,12 @@ class ActionModule(ActionBase):
 
                 new_module_args.update(dict(src=xfered,))
 
-                res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
+                res = self._execute_module(module_name='ansible.legacy.copy', module_args=new_module_args, task_vars=task_vars)
                 if diff:
                     res['diff'] = diff
                 result.update(res)
             else:
-                result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars))
+                result.update(self._execute_module(module_name='ansible.legacy.file', module_args=new_module_args, task_vars=task_vars))
 
         except AnsibleAction as e:
             result.update(e.result)

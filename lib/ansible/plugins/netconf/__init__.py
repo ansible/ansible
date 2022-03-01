@@ -32,7 +32,10 @@ try:
     from ncclient.xml_ import to_xml, to_ele, NCElement
     HAS_NCCLIENT = True
     NCCLIENT_IMP_ERR = None
-except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
+# paramiko and gssapi are incompatible and raise AttributeError not ImportError
+# When running in FIPS mode, cryptography raises InternalError
+# https://bugzilla.redhat.com/show_bug.cgi?id=1778939
+except Exception as err:
     HAS_NCCLIENT = False
     NCCLIENT_IMP_ERR = err
 
@@ -81,7 +84,7 @@ class NetconfBase(AnsiblePlugin):
             :execute_rpc: RPC to be execute on remote device
             :load_configuration: Loads given configuration on device
 
-        Note: rpc support depends on the capabilites of remote device.
+        Note: rpc support depends on the capabilities of remote device.
 
         :returns: Returns output received from remote device as byte string
         Note: the 'result' or 'error' from response should to be converted to object
@@ -353,7 +356,7 @@ class NetconfBase(AnsiblePlugin):
         operations['supports_startup'] = ':startup' in capabilities
         operations['supports_xpath'] = ':xpath' in capabilities
         operations['supports_writable_running'] = ':writable-running' in capabilities
-        operations['supports_validate'] = ':writable-validate' in capabilities
+        operations['supports_validate'] = ':validate' in capabilities
 
         operations['lock_datastore'] = []
         if operations['supports_writable_running']:

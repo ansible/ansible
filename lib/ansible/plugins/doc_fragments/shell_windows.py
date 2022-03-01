@@ -38,12 +38,13 @@ options:
     - Windows only supports C(no) as an option.
     type: bool
     default: 'no'
-    choices:
-    - 'no'
+    choices: ['no', False]
   environment:
     description:
-    - Dictionary of environment variables and their values to use when
+    - List of dictionaries of environment variables and their values to use when
       executing commands.
-    type: dict
-    default: {}
+    keyword:
+      - name: environment
+    type: list
+    default: [{}]
 """

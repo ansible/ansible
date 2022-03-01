@@ -39,6 +39,21 @@ DATA = (
     ),
 )
 
+NO_VERSION_DATA = (
+    (
+        '--------------e---- /usr/lib32',
+        {'attr_flags': 'e', 'attributes': ['extents']}
+    ),
+    (
+        '-----------I--e---- /usr/lib',
+        {'attr_flags': 'Ie', 'attributes': ['indexed', 'extents']}
+    ),
+    (
+        '-------A------e---- /tmp/test',
+        {'attr_flags': 'Ae', 'attributes': ['noatime', 'extents']}
+    ),
+)
+
 
 @pytest.mark.parametrize('stdin, data', product(({},), DATA), indirect=['stdin'])
 def test_get_file_attributes(am, stdin, mocker, data):
@@ -46,5 +61,15 @@ def test_get_file_attributes(am, stdin, mocker, data):
     mocker.patch.object(AnsibleModule, 'get_bin_path', return_value=(0, '/usr/bin/lsattr', ''))
     mocker.patch.object(AnsibleModule, 'run_command', return_value=(0, data[0], ''))
     result = am.get_file_attributes('/path/to/file')
+    for key, value in data[1].items():
+        assert key in result and result[key] == value
+
+
+@pytest.mark.parametrize('stdin, data', product(({},), NO_VERSION_DATA), indirect=['stdin'])
+def test_get_file_attributes_no_version(am, stdin, mocker, data):
+    # Test #18731
+    mocker.patch.object(AnsibleModule, 'get_bin_path', return_value=(0, '/usr/bin/lsattr', ''))
+    mocker.patch.object(AnsibleModule, 'run_command', return_value=(0, data[0], ''))
+    result = am.get_file_attributes('/path/to/file', include_version=False)
     for key, value in data[1].items():
         assert key in result and result[key] == value

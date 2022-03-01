@@ -4,12 +4,14 @@
 from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
-__requires__ = ['ansible_base']
 
 
+import argparse
 import fcntl
 import hashlib
+import io
 import os
+import pickle
 import signal
 import socket
 import sys
@@ -21,9 +23,8 @@ import json
 from contextlib import contextmanager
 
 from ansible import constants as C
+from ansible.cli.arguments.option_helpers import AnsibleVersion
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.six import PY3
-from ansible.module_utils.six.moves import cPickle, StringIO
 from ansible.module_utils.connection import Connection, ConnectionError, send_data, recv_data
 from ansible.module_utils.service import fork_process
 from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
@@ -32,6 +33,8 @@ from ansible.plugins.loader import connection_loader
 from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.utils.display import Display
 from ansible.utils.jsonrpc import JsonRpcServer
+
+display = Display()
 
 
 def read_stream(byte_stream):
@@ -100,7 +103,11 @@ class ConnectionProcess(object):
                 self.play_context.private_key_file = os.path.join(self.original_path, self.play_context.private_key_file)
             self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null',
                                                     task_uuid=self._task_uuid, ansible_playbook_pid=self._ansible_playbook_pid)
-            self.connection.set_options(var_options=variables)
+            try:
+                self.connection.set_options(var_options=variables)
+            except ConnectionError as exc:
+                messages.append(('debug', to_text(exc)))
+                raise ConnectionError('Unable to decode JSON from response set_options. See the debug log for more information.')
 
             self.connection._socket_path = self.socket_path
             self.srv.register(self.connection)
@@ -121,6 +128,7 @@ class ConnectionProcess(object):
 
     def run(self):
         try:
+            log_messages = self.connection.get_option('persistent_log_messages')
             while not self.connection._conn_closed:
                 signal.signal(signal.SIGALRM, self.connect_timeout)
                 signal.signal(signal.SIGTERM, self.handler)
@@ -134,7 +142,6 @@ class ConnectionProcess(object):
                     data = recv_data(s)
                     if not data:
                         break
-                    log_messages = self.connection.get_option('persistent_log_messages')
 
                     if log_messages:
                         display.display("jsonrpc request: %s" % data, log_only=True)
@@ -214,35 +221,34 @@ class ConnectionProcess(object):
         display.display('shutdown complete', log_only=True)
 
 
-def main():
+def main(args=None):
     """ Called to initiate the connect to the remote device
     """
+    parser = argparse.ArgumentParser(prog='ansible-connection', add_help=False)
+    parser.add_argument('--version', action=AnsibleVersion, nargs=0)
+    parser.add_argument('playbook_pid')
+    parser.add_argument('task_uuid')
+    args = parser.parse_args(args[1:] if args is not None else args)
+
     rc = 0
     result = {}
     messages = list()
     socket_path = None
 
     # Need stdin as a byte stream
-    if PY3:
-        stdin = sys.stdin.buffer
-    else:
-        stdin = sys.stdin
+    stdin = sys.stdin.buffer
 
     # Note: update the below log capture code after Display.display() is refactored.
     saved_stdout = sys.stdout
-    sys.stdout = StringIO()
+    sys.stdout = io.StringIO()
 
     try:
         # read the play context data via stdin, which means depickling it
         vars_data = read_stream(stdin)
         init_data = read_stream(stdin)
 
-        if PY3:
-            pc_data = cPickle.loads(init_data, encoding='bytes')
-            variables = cPickle.loads(vars_data, encoding='bytes')
-        else:
-            pc_data = cPickle.loads(init_data)
-            variables = cPickle.loads(vars_data)
+        pc_data = pickle.loads(init_data, encoding='bytes')
+        variables = pickle.loads(vars_data, encoding='bytes')
 
         play_context = PlayContext()
         play_context.deserialize(pc_data)
@@ -257,8 +263,8 @@ def main():
 
     if rc == 0:
         ssh = connection_loader.get('ssh', class_only=True)
-        ansible_playbook_pid = sys.argv[1]
-        task_uuid = sys.argv[2]
+        ansible_playbook_pid = args.playbook_pid
+        task_uuid = args.task_uuid
         cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user, play_context.connection, ansible_playbook_pid)
         # create the persistent connection dir if need be and create the paths
         # which we will be using later
@@ -302,7 +308,11 @@ def main():
             else:
                 messages.append(('vvvv', 'found existing local domain socket, using it!'))
                 conn = Connection(socket_path)
-                conn.set_options(var_options=variables)
+                try:
+                    conn.set_options(var_options=variables)
+                except ConnectionError as exc:
+                    messages.append(('debug', to_text(exc)))
+                    raise ConnectionError('Unable to decode JSON from response set_options. See the debug log for more information.')
                 pc_data = to_text(init_data)
                 try:
                     conn.update_play_context(pc_data)
@@ -338,5 +348,4 @@ def main():
 
 
 if __name__ == '__main__':
-    display = Display()
     main()

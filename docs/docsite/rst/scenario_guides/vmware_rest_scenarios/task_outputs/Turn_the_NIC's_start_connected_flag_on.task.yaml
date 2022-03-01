@@ -1,0 +1,5 @@
+- name: Turn the NIC's start_connected flag on
+  vmware.vmware_rest.vcenter_vm_hardware_ethernet:
+    nic: '{{ vm_hardware_ethernet_1.id }}'
+    start_connected: true
+    vm: '{{ test_vm1_info.id }}'

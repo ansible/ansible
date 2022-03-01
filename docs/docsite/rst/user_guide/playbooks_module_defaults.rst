@@ -3,39 +3,52 @@
 Module defaults
 ===============
 
-If you frequently call the same module with the same arguments, it can be useful to define default arguments for that particular module using the ``module_defaults`` attribute.
+If you frequently call the same module with the same arguments, it can be useful to define default arguments for that particular module using the ``module_defaults`` keyword.
 
-Here is a basic example::
+Here is a basic example:
+
+.. code-block:: YAML
 
     - hosts: localhost
       module_defaults:
-        file:
+        ansible.builtin.file:
           owner: root
           group: root
           mode: 0755
       tasks:
-        - file:
+        - name: Create file1
+          ansible.builtin.file:
             state: touch
             path: /tmp/file1
-        - file:
+
+        - name: Create file2
+          ansible.builtin.file:
             state: touch
             path: /tmp/file2
-        - file:
+
+        - name: Create file3
+          ansible.builtin.file:
             state: touch
             path: /tmp/file3
 
-The ``module_defaults`` attribute can be used at the play, block, and task level. Any module arguments explicitly specified in a task will override any established default for that module argument::
+The ``module_defaults`` keyword can be used at the play, block, and task level. Any module arguments explicitly specified in a task will override any established default for that module argument.
+
+.. code-block:: YAML
 
     - block:
-        - debug:
-            msg: "a different message"
+        - name: Print a message
+          ansible.builtin.debug:
+            msg: "Different message"
       module_defaults:
-        debug:
-          msg: "a default message"
+        ansible.builtin.debug:
+          msg: "Default message"
 
-You can remove any previously established defaults for a module by specifying an empty dict::
+You can remove any previously established defaults for a module by specifying an empty dict.
 
-    - file:
+.. code-block:: YAML
+
+    - name: Create file1
+      ansible.builtin.file:
         state: touch
         path: /tmp/file1
       module_defaults:
@@ -46,33 +59,42 @@ You can remove any previously established defaults for a module by specifying an
 
 Here are some more realistic use cases for this feature.
 
-Interacting with an API that requires auth::
+Interacting with an API that requires auth.
+
+.. code-block:: YAML
 
     - hosts: localhost
       module_defaults:
-        uri:
+        ansible.builtin.uri:
           force_basic_auth: true
           user: some_user
           password: some_password
       tasks:
-        - uri:
+        - name: Interact with a web service
+          ansible.builtin.uri:
             url: http://some.api.host/v1/whatever1
-        - uri:
+
+        - name: Interact with a web service
+          ansible.builtin.uri:
             url: http://some.api.host/v1/whatever2
-        - uri:
+
+        - name: Interact with a web service
+          ansible.builtin.uri:
             url: http://some.api.host/v1/whatever3
 
-Setting a default AWS region for specific EC2-related modules::
+Setting a default AWS region for specific EC2-related modules.
+
+.. code-block:: YAML
 
     - hosts: localhost
       vars:
         my_region: us-west-2
       module_defaults:
-        ec2:
+        amazon.aws.ec2:
           region: '{{ my_region }}'
-        ec2_instance_info:
+        community.aws.ec2_instance_info:
           region: '{{ my_region }}'
-        ec2_vpc_net_info:
+        amazon.aws.ec2_vpc_net_info:
           region: '{{ my_region }}'
 
 .. _module_defaults_groups:
@@ -108,7 +130,7 @@ Ansible 2.7 adds a preview-status feature to group together modules that share c
 
 * The `docker_stack <docker_stack_module>`_ module is not included in the ``docker`` defaults group.
 
-Use the groups with ``module_defaults`` by prefixing the group name with ``group/`` - e.g. ``group/aws``.
+Use the groups with ``module_defaults`` by prefixing the group name with ``group/`` - for example ``group/aws``.
 
 In a playbook, you can set module defaults for whole groups of modules, such as setting a common AWS region.
 
@@ -120,8 +142,34 @@ In a playbook, you can set module defaults for whole groups of modules, such as 
         group/aws:
           region: us-west-2
       tasks:
-      - aws_s3_bucket_info:
+      - name: Get info
+        aws_s3_bucket_info:
+
       # now the region is shared between both info modules
-      - ec2_ami_info:
+
+      - name: Get info
+        ec2_ami_info:
           filters:
             name: 'RHEL*7.5*'
+
+In ansible-core 2.12, collections can define their own groups in the ``meta/runtime.yml`` file. ``module_defaults`` does not take the ``collections`` keyword into account, so the fully qualified group name must be used for new groups in ``module_defaults``.
+
+Here is an example ``runtime.yml`` file for a collection and a sample playbook using the group.
+
+.. code-block:: YAML
+
+   # collections/ansible_collections/ns/coll/meta/runtime.yml
+   action_groups:
+     groupname:
+       - module
+       - another.collection.module
+
+.. code-block:: YAML
+
+   - hosts: localhost
+     module_defaults:
+       group/ns.coll.groupname:
+         option_name: option_value
+     tasks:
+       - ns.coll.module:
+       - another.collection.module

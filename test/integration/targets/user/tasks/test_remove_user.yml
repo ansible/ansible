@@ -1,0 +1,19 @@
+- name: try to delete the user
+  user:
+    name: ansibulluser
+    state: absent
+    force: true
+  register: user_test2
+
+- name: make a new list of users
+  script: userlist.sh {{ ansible_facts.distribution }}
+  register: user_names2
+
+- debug:
+    var: user_names2
+    verbosity: 2
+
+- name: validate results for testcase 2
+  assert:
+    that:
+      - '"ansibulluser" not in user_names2.stdout_lines'

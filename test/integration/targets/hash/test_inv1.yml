@@ -1,0 +1,10 @@
+all:
+  hosts:
+    host1:
+      test_inventory_host_hash:
+        host_var1: "inventory 1"
+        host_var2: "inventory 1"
+  vars:
+    test_inventory_group_hash:
+      group_var1: "inventory 1"
+      group_var2: "inventory 1"

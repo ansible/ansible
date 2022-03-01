@@ -5,24 +5,21 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import pytest
-
-from ansible import constants as C
-from ansible.errors import AnsibleUndefinedVariable
-
-# need to mock DEFAULT_JINJA2_NATIVE here so native modules are imported
-# correctly within the template module
-C.DEFAULT_JINJA2_NATIVE = True
+from ansible.playbook.conditional import Conditional
 from ansible.template import Templar
 
 from units.mock.loader import DictDataLoader
 
 
-# https://github.com/ansible/ansible/issues/52158
-def test_undefined_variable():
+def test_cond_eval():
     fake_loader = DictDataLoader({})
-    variables = {}
+    # True must be stored in a variable to trigger templating. Using True
+    # directly would be caught by optimization for bools to short-circuit
+    # templating.
+    variables = {"foo": True}
     templar = Templar(loader=fake_loader, variables=variables)
+    cond = Conditional(loader=fake_loader)
+    cond.when = ["foo"]
 
-    with pytest.raises(AnsibleUndefinedVariable):
-        templar.template("{{ missing }}")
+    with templar.set_temporary_context(jinja2_native=True):
+        assert cond.evaluate_conditional(templar, variables)

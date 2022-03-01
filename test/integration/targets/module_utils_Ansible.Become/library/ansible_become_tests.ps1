@@ -5,37 +5,40 @@
 
 $module = [Ansible.Basic.AnsibleModule]::Create($args, @{})
 
-Function Assert-Equals {
+Function Assert-Equal {
     param(
-        [Parameter(Mandatory=$true, ValueFromPipeline=$true)][AllowNull()]$Actual,
-        [Parameter(Mandatory=$true, Position=0)][AllowNull()]$Expected
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true)][AllowNull()]$Actual,
+        [Parameter(Mandatory = $true, Position = 0)][AllowNull()]$Expected
     )
 
-    $matched = $false
-    if ($Actual -is [System.Collections.ArrayList] -or $Actual -is [Array]) {
-        $Actual.Count | Assert-Equals -Expected $Expected.Count
-        for ($i = 0; $i -lt $Actual.Count; $i++) {
-            $actual_value = $Actual[$i]
-            $expected_value = $Expected[$i]
-            Assert-Equals -Actual $actual_value -Expected $expected_value
+    process {
+        $matched = $false
+        if ($Actual -is [System.Collections.ArrayList] -or $Actual -is [Array]) {
+            $Actual.Count | Assert-Equal -Expected $Expected.Count
+            for ($i = 0; $i -lt $Actual.Count; $i++) {
+                $actual_value = $Actual[$i]
+                $expected_value = $Expected[$i]
+                Assert-Equal -Actual $actual_value -Expected $expected_value
+            }
+            $matched = $true
         }
-        $matched = $true
-    } else {
-        $matched = $Actual -ceq $Expected
-    }
-
-    if (-not $matched) {
-        if ($Actual -is [PSObject]) {
-            $Actual = $Actual.ToString()
+        else {
+            $matched = $Actual -ceq $Expected
         }
 
-        $call_stack = (Get-PSCallStack)[1]
-        $module.Result.test = $test
-        $module.Result.actual = $Actual
-        $module.Result.expected = $Expected
-        $module.Result.line = $call_stack.ScriptLineNumber
-        $module.Result.method = $call_stack.Position.Text
-        $module.FailJson("AssertionError: actual != expected")
+        if (-not $matched) {
+            if ($Actual -is [PSObject]) {
+                $Actual = $Actual.ToString()
+            }
+
+            $call_stack = (Get-PSCallStack)[1]
+            $module.Result.test = $test
+            $module.Result.actual = $Actual
+            $module.Result.expected = $Expected
+            $module.Result.line = $call_stack.ScriptLineNumber
+            $module.Result.method = $call_stack.Position.Text
+            $module.FailJson("AssertionError: actual != expected")
+        }
     }
 }
 
@@ -437,101 +440,101 @@ $tests = @{
     "Runas standard user" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass,
             "powershell.exe -NoProfile -ExecutionPolicy ByPass -File $tmp_script")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "Interactive"
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.UserSid.Value | Assert-Equals -Expected $standard_user_sid
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $medium_integrity_sid
+        $stdout.LogonType | Assert-Equal -Expected "Interactive"
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        $stdout.UserSid.Value | Assert-Equal -Expected $standard_user_sid
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $medium_integrity_sid
     }
 
     "Runas admin user" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass,
             "powershell.exe -NoProfile -ExecutionPolicy ByPass -File $tmp_script")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "Interactive"
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.UserSid.Value | Assert-Equals -Expected $admin_user_sid
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $high_integrity_sid
+        $stdout.LogonType | Assert-Equal -Expected "Interactive"
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        $stdout.UserSid.Value | Assert-Equal -Expected $admin_user_sid
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $high_integrity_sid
     }
 
     "Runas SYSTEM" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("SYSTEM", $null,
             "powershell.exe -NoProfile -ExecutionPolicy ByPass -File $tmp_script")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "System"
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.UserSid.Value | Assert-Equals -Expected "S-1-5-18"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $system_integrity_sid
+        $stdout.LogonType | Assert-Equal -Expected "System"
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        $stdout.UserSid.Value | Assert-Equal -Expected "S-1-5-18"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $system_integrity_sid
 
         $with_domain = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("NT AUTHORITY\System", $null, "whoami.exe")
-        $with_domain.StandardOut | Assert-Equals -Expected "nt authority\system`r`n"
+        $with_domain.StandardOut | Assert-Equal -Expected "nt authority\system`r`n"
     }
 
     "Runas LocalService" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("LocalService", $null,
             "powershell.exe -NoProfile -ExecutionPolicy ByPass -File $tmp_script")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "Service"
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.UserSid.Value | Assert-Equals -Expected "S-1-5-19"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $system_integrity_sid
+        $stdout.LogonType | Assert-Equal -Expected "Service"
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        $stdout.UserSid.Value | Assert-Equal -Expected "S-1-5-19"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $system_integrity_sid
 
         $with_domain = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("NT AUTHORITY\LocalService", $null, "whoami.exe")
-        $with_domain.StandardOut | Assert-Equals -Expected "nt authority\local service`r`n"
+        $with_domain.StandardOut | Assert-Equal -Expected "nt authority\local service`r`n"
     }
 
     "Runas NetworkService" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("NetworkService", $null,
             "powershell.exe -NoProfile -ExecutionPolicy ByPass -File $tmp_script")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "Service"
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.UserSid.Value | Assert-Equals -Expected "S-1-5-20"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $system_integrity_sid
+        $stdout.LogonType | Assert-Equal -Expected "Service"
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        $stdout.UserSid.Value | Assert-Equal -Expected "S-1-5-20"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $system_integrity_sid
 
         $with_domain = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("NT AUTHORITY\NetworkService", $null, "whoami.exe")
-        $with_domain.StandardOut | Assert-Equals -Expected "nt authority\network service`r`n"
+        $with_domain.StandardOut | Assert-Equal -Expected "nt authority\network service`r`n"
     }
 
     "Runas without working dir set" = {
         $expected = "$env:SystemRoot\system32`r`n"
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, 0, "Interactive", $null,
             'powershell.exe $pwd.Path', $null, $null, "")
-        $actual.StandardOut | Assert-Equals -Expected $expected
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardOut | Assert-Equal -Expected $expected
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
     }
 
     "Runas with working dir set" = {
         $expected = "$env:SystemRoot`r`n"
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, 0, "Interactive", $null,
             'powershell.exe $pwd.Path', $env:SystemRoot, $null, "")
-        $actual.StandardOut | Assert-Equals -Expected $expected
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardOut | Assert-Equal -Expected $expected
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
     }
 
     "Runas without environment set" = {
         $expected = "Windows_NT`r`n"
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, 0, "Interactive", $null,
             'powershell.exe $env:TEST; $env:OS', $null, $null, "")
-        $actual.StandardOut | Assert-Equals -Expected $expected
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardOut | Assert-Equal -Expected $expected
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
     }
 
     "Runas with environment set" = {
@@ -541,52 +544,53 @@ $tests = @{
         }
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, 0, "Interactive", $null,
             'cmd.exe /c set', $null, $env_vars, "")
-        ("TEST=tesTing" -cin $actual.StandardOut.Split("`r`n")) | Assert-Equals -Expected $true
-        ("TEST2=Testing 2" -cin $actual.StandardOut.Split("`r`n")) | Assert-Equals -Expected $true
-        ("OS=Windows_NT" -cnotin $actual.StandardOut.Split("`r`n")) | Assert-Equals -Expected $true
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        ("TEST=tesTing" -cin $actual.StandardOut.Split("`r`n")) | Assert-Equal -Expected $true
+        ("TEST2=Testing 2" -cin $actual.StandardOut.Split("`r`n")) | Assert-Equal -Expected $true
+        ("OS=Windows_NT" -cnotin $actual.StandardOut.Split("`r`n")) | Assert-Equal -Expected $true
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
     }
 
     "Runas with string stdin" = {
         $expected = "input value`r`n`r`n"
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, 0, "Interactive", $null,
             'powershell.exe [System.Console]::In.ReadToEnd()', $null, $null, "input value")
-        $actual.StandardOut | Assert-Equals -Expected $expected
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardOut | Assert-Equal -Expected $expected
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
     }
 
     "Runas with string stdin and newline" = {
         $expected = "input value`r`n`r`n"
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, 0, "Interactive", $null,
             'powershell.exe [System.Console]::In.ReadToEnd()', $null, $null, "input value`r`n")
-        $actual.StandardOut | Assert-Equals -Expected $expected
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardOut | Assert-Equal -Expected $expected
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
     }
 
     "Runas with byte stdin" = {
         $expected = "input value`r`n"
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, 0, "Interactive", $null,
             'powershell.exe [System.Console]::In.ReadToEnd()', $null, $null, [System.Text.Encoding]::UTF8.GetBytes("input value"))
-        $actual.StandardOut | Assert-Equals -Expected $expected
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardOut | Assert-Equal -Expected $expected
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
     }
 
     "Missing executable" = {
         $failed = $false
         try {
             [Ansible.Become.BecomeUtil]::CreateProcessAsUser("SYSTEM", $null, "fake.exe")
-        } catch {
+        }
+        catch {
             $failed = $true
-            $_.Exception.InnerException.GetType().FullName | Assert-Equals -Expected "Ansible.Process.Win32Exception"
+            $_.Exception.InnerException.GetType().FullName | Assert-Equal -Expected "Ansible.Process.Win32Exception"
             $expected = 'Exception calling "CreateProcessAsUser" with "3" argument(s): "CreateProcessWithTokenW() failed '
             $expected += '(The system cannot find the file specified, Win32ErrorCode 2)"'
-            $_.Exception.Message | Assert-Equals -Expected $expected
+            $_.Exception.Message | Assert-Equal -Expected $expected
         }
-        $failed | Assert-Equals -Expected $true
+        $failed | Assert-Equal -Expected $true
     }
 
     "CreateProcessAsUser with lpApplicationName" = {
@@ -594,112 +598,114 @@ $tests = @{
         $full_path = "$($env:SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe"
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("SYSTEM", $null, 0, "Interactive", $full_path,
             "Write-Output 'abc'", $null, $null, "")
-        $actual.StandardOut | Assert-Equals -Expected $expected
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardOut | Assert-Equal -Expected $expected
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("SYSTEM", $null, 0, "Interactive", $full_path,
             "powershell.exe Write-Output 'abc'", $null, $null, "")
-        $actual.StandardOut | Assert-Equals -Expected $expected
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardOut | Assert-Equal -Expected $expected
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
     }
 
     "CreateProcessAsUser with stderr" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("SYSTEM", $null, 0, "Interactive", $null,
             "powershell.exe [System.Console]::Error.WriteLine('hi')", $null, $null, "")
-        $actual.StandardOut | Assert-Equals -Expected ""
-        $actual.StandardError | Assert-Equals -Expected "hi`r`n"
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardOut | Assert-Equal -Expected ""
+        $actual.StandardError | Assert-Equal -Expected "hi`r`n"
+        $actual.ExitCode | Assert-Equal -Expected 0
     }
 
     "CreateProcessAsUser with exit code" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("SYSTEM", $null, 0, "Interactive", $null,
             "powershell.exe exit 10", $null, $null, "")
-        $actual.StandardOut | Assert-Equals -Expected ""
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 10
+        $actual.StandardOut | Assert-Equal -Expected ""
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 10
     }
 
     "Local account with computer name" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("$env:COMPUTERNAME\$standard_user", $become_pass,
             "powershell.exe -NoProfile -ExecutionPolicy ByPass -File $tmp_script")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "Interactive"
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.UserSid.Value | Assert-Equals -Expected $standard_user_sid
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $medium_integrity_sid
+        $stdout.LogonType | Assert-Equal -Expected "Interactive"
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        $stdout.UserSid.Value | Assert-Equal -Expected $standard_user_sid
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $medium_integrity_sid
     }
 
     "Local account with computer as period" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser(".\$standard_user", $become_pass,
             "powershell.exe -NoProfile -ExecutionPolicy ByPass -File $tmp_script")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "Interactive"
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.UserSid.Value | Assert-Equals -Expected $standard_user_sid
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $medium_integrity_sid
+        $stdout.LogonType | Assert-Equal -Expected "Interactive"
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        $stdout.UserSid.Value | Assert-Equal -Expected $standard_user_sid
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $medium_integrity_sid
     }
 
     "Local account with invalid password" = {
         $failed = $false
         try {
             [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, "incorrect", "powershell.exe Write-Output abc")
-        } catch {
-            $failed = $true
-            $_.Exception.InnerException.GetType().FullName | Assert-Equals -Expected "Ansible.AccessToken.Win32Exception"
-            # Server 2008 has a slightly different error msg, just assert we get the error 1326
-            ($_.Exception.Message.Contains("Win32ErrorCode 1326")) | Assert-Equals -Expected $true
         }
-        $failed | Assert-Equals -Expected $true
+        catch {
+            $failed = $true
+            $_.Exception.InnerException.GetType().FullName | Assert-Equal -Expected "Ansible.AccessToken.Win32Exception"
+            # Server 2008 has a slightly different error msg, just assert we get the error 1326
+            ($_.Exception.Message.Contains("Win32ErrorCode 1326")) | Assert-Equal -Expected $true
+        }
+        $failed | Assert-Equal -Expected $true
     }
 
     "Invalid account" = {
         $failed = $false
         try {
             [Ansible.Become.BecomeUtil]::CreateProcessAsUser("incorrect", "incorrect", "powershell.exe Write-Output abc")
-        } catch {
+        }
+        catch {
             $failed = $true
-            $_.Exception.InnerException.GetType().FullName | Assert-Equals -Expected "System.Security.Principal.IdentityNotMappedException"
+            $_.Exception.InnerException.GetType().FullName | Assert-Equal -Expected "System.Security.Principal.IdentityNotMappedException"
             $expected = 'Exception calling "CreateProcessAsUser" with "3" argument(s): "Some or all '
             $expected += 'identity references could not be translated."'
-            $_.Exception.Message | Assert-Equals -Expected $expected
+            $_.Exception.Message | Assert-Equal -Expected $expected
         }
-        $failed | Assert-Equals -Expected $true
+        $failed | Assert-Equal -Expected $true
     }
 
     "Interactive logon with standard" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, "WithProfile",
             "Interactive", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "Interactive"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $medium_integrity_sid
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.SourceName | Assert-Equals -Expected "Advapi"
-        $stdout.UserSid.Value | Assert-Equals -Expected $standard_user_sid
+        $stdout.LogonType | Assert-Equal -Expected "Interactive"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $medium_integrity_sid
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        $stdout.SourceName | Assert-Equal -Expected "Advapi"
+        $stdout.UserSid.Value | Assert-Equal -Expected $standard_user_sid
     }
 
     "Batch logon with standard" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, "WithProfile",
             "Batch", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "Batch"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $medium_integrity_sid
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.SourceName | Assert-Equals -Expected "Advapi"
-        $stdout.UserSid.Value | Assert-Equals -Expected $standard_user_sid
+        $stdout.LogonType | Assert-Equal -Expected "Batch"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $medium_integrity_sid
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        $stdout.SourceName | Assert-Equal -Expected "Advapi"
+        $stdout.UserSid.Value | Assert-Equal -Expected $standard_user_sid
     }
 
     "Network logon with standard" = {
@@ -709,15 +715,15 @@ $tests = @{
         }
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, "WithProfile",
             "Network", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "Network"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $medium_integrity_sid
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.SourceName | Assert-Equals -Expected "Advapi"
-        $stdout.UserSid.Value | Assert-Equals -Expected $standard_user_sid
+        $stdout.LogonType | Assert-Equal -Expected "Network"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $medium_integrity_sid
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        $stdout.SourceName | Assert-Equal -Expected "Advapi"
+        $stdout.UserSid.Value | Assert-Equal -Expected $standard_user_sid
     }
 
     "Network with cleartext logon with standard" = {
@@ -727,31 +733,31 @@ $tests = @{
         }
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, $become_pass, "WithProfile",
             "NetworkCleartext", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "NetworkCleartext"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $medium_integrity_sid
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.SourceName | Assert-Equals -Expected "Advapi"
-        $stdout.UserSid.Value | Assert-Equals -Expected $standard_user_sid
+        $stdout.LogonType | Assert-Equal -Expected "NetworkCleartext"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $medium_integrity_sid
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        $stdout.SourceName | Assert-Equal -Expected "Advapi"
+        $stdout.UserSid.Value | Assert-Equal -Expected $standard_user_sid
     }
 
     "Logon without password with standard" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, [NullString]::Value, "WithProfile",
             "Interactive", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         # Too unstable, there might be another process still lingering which causes become to steal instead of using
         # S4U. Just don't check the type and source to verify we can become without a password
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        # $stdout.LogonType | Assert-Equals -Expected "Batch"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $medium_integrity_sid
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        # $stdout.SourceName | Assert-Equals -Expected "ansible"
-        $stdout.UserSid.Value | Assert-Equals -Expected $standard_user_sid
+        # $stdout.LogonType | Assert-Equal -Expected "Batch"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $medium_integrity_sid
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        # $stdout.SourceName | Assert-Equal -Expected "ansible"
+        $stdout.UserSid.Value | Assert-Equal -Expected $standard_user_sid
     }
 
     "Logon without password and network type with standard" = {
@@ -761,45 +767,45 @@ $tests = @{
         }
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($standard_user, [NullString]::Value, "WithProfile",
             "Network", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         # Too unstable, there might be another process still lingering which causes become to steal instead of using
         # S4U. Just don't check the type and source to verify we can become without a password
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        # $stdout.LogonType | Assert-Equals -Expected "Network"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $medium_integrity_sid
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        # $stdout.SourceName | Assert-Equals -Expected "ansible"
-        $stdout.UserSid.Value | Assert-Equals -Expected $standard_user_sid
+        # $stdout.LogonType | Assert-Equal -Expected "Network"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $medium_integrity_sid
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        # $stdout.SourceName | Assert-Equal -Expected "ansible"
+        $stdout.UserSid.Value | Assert-Equal -Expected $standard_user_sid
     }
 
     "Interactive logon with admin" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, "WithProfile",
             "Interactive", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "Interactive"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $high_integrity_sid
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.SourceName | Assert-Equals -Expected "Advapi"
-        $stdout.UserSid.Value | Assert-Equals -Expected $admin_user_sid
+        $stdout.LogonType | Assert-Equal -Expected "Interactive"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $high_integrity_sid
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        $stdout.SourceName | Assert-Equal -Expected "Advapi"
+        $stdout.UserSid.Value | Assert-Equal -Expected $admin_user_sid
     }
 
     "Batch logon with admin" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, "WithProfile",
             "Batch", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "Batch"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $high_integrity_sid
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.SourceName | Assert-Equals -Expected "Advapi"
-        $stdout.UserSid.Value | Assert-Equals -Expected $admin_user_sid
+        $stdout.LogonType | Assert-Equal -Expected "Batch"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $high_integrity_sid
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        $stdout.SourceName | Assert-Equal -Expected "Advapi"
+        $stdout.UserSid.Value | Assert-Equal -Expected $admin_user_sid
     }
 
     "Network logon with admin" = {
@@ -809,15 +815,15 @@ $tests = @{
         }
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, "WithProfile",
             "Network", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "Network"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $high_integrity_sid
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.SourceName | Assert-Equals -Expected "Advapi"
-        $stdout.UserSid.Value | Assert-Equals -Expected $admin_user_sid
+        $stdout.LogonType | Assert-Equal -Expected "Network"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $high_integrity_sid
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        $stdout.SourceName | Assert-Equal -Expected "Advapi"
+        $stdout.UserSid.Value | Assert-Equal -Expected $admin_user_sid
     }
 
     "Network with cleartext logon with admin" = {
@@ -827,15 +833,15 @@ $tests = @{
         }
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, "WithProfile",
             "NetworkCleartext", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "NetworkCleartext"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $high_integrity_sid
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        $stdout.SourceName | Assert-Equals -Expected "Advapi"
-        $stdout.UserSid.Value | Assert-Equals -Expected $admin_user_sid
+        $stdout.LogonType | Assert-Equal -Expected "NetworkCleartext"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $high_integrity_sid
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        $stdout.SourceName | Assert-Equal -Expected "Advapi"
+        $stdout.UserSid.Value | Assert-Equal -Expected $admin_user_sid
     }
 
     "Fail to logon with null or empty password" = {
@@ -846,30 +852,31 @@ $tests = @{
             # use [NullString]::Value instead if we want that behaviour. This just tests to see that an empty
             # string won't go the S4U route.
             [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $null, "WithProfile",
-                    "Interactive", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
-        } catch {
-            $failed = $true
-            $_.Exception.InnerException.GetType().FullName | Assert-Equals -Expected "Ansible.AccessToken.Win32Exception"
-            # Server 2008 has a slightly different error msg, just assert we get the error 1326
-            ($_.Exception.Message.Contains("Win32ErrorCode 1326")) | Assert-Equals -Expected $true
+                "Interactive", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
         }
-        $failed | Assert-Equals -Expected $true
+        catch {
+            $failed = $true
+            $_.Exception.InnerException.GetType().FullName | Assert-Equal -Expected "Ansible.AccessToken.Win32Exception"
+            # Server 2008 has a slightly different error msg, just assert we get the error 1326
+            ($_.Exception.Message.Contains("Win32ErrorCode 1326")) | Assert-Equal -Expected $true
+        }
+        $failed | Assert-Equal -Expected $true
     }
 
     "Logon without password with admin" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, [NullString]::Value, "WithProfile",
             "Interactive", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         # Too unstable, there might be another process still lingering which causes become to steal instead of using
         # S4U. Just don't check the type and source to verify we can become without a password
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        # $stdout.LogonType | Assert-Equals -Expected "Batch"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $high_integrity_sid
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        # $stdout.SourceName | Assert-Equals -Expected "ansible"
-        $stdout.UserSid.Value | Assert-Equals -Expected $admin_user_sid
+        # $stdout.LogonType | Assert-Equal -Expected "Batch"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $high_integrity_sid
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        # $stdout.SourceName | Assert-Equal -Expected "ansible"
+        $stdout.UserSid.Value | Assert-Equal -Expected $admin_user_sid
     }
 
     "Logon without password and network type with admin" = {
@@ -879,17 +886,17 @@ $tests = @{
         }
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, [NullString]::Value, "WithProfile",
             "Network", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         # Too unstable, there might be another process still lingering which causes become to steal instead of using
         # S4U. Just don't check the type and source to verify we can become without a password
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        # $stdout.LogonType | Assert-Equals -Expected "Network"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $high_integrity_sid
-        $stdout.ProfileLoaded | Assert-Equals -Expected $true
-        # $stdout.SourceName | Assert-Equals -Expected "ansible"
-        $stdout.UserSid.Value | Assert-Equals -Expected $admin_user_sid
+        # $stdout.LogonType | Assert-Equal -Expected "Network"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $high_integrity_sid
+        $stdout.ProfileLoaded | Assert-Equal -Expected $true
+        # $stdout.SourceName | Assert-Equal -Expected "ansible"
+        $stdout.UserSid.Value | Assert-Equal -Expected $admin_user_sid
     }
 
     "Logon without profile with admin" = {
@@ -900,45 +907,45 @@ $tests = @{
 
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser($admin_user, $become_pass, 0,
             "Interactive", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "Interactive"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $high_integrity_sid
-        $stdout.ProfileLoaded | Assert-Equals -Expected $false
-        $stdout.SourceName | Assert-Equals -Expected "Advapi"
-        $stdout.UserSid.Value | Assert-Equals -Expected $admin_user_sid
+        $stdout.LogonType | Assert-Equal -Expected "Interactive"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $high_integrity_sid
+        $stdout.ProfileLoaded | Assert-Equal -Expected $false
+        $stdout.SourceName | Assert-Equal -Expected "Advapi"
+        $stdout.UserSid.Value | Assert-Equal -Expected $admin_user_sid
     }
 
     "Logon with network credentials and no profile" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("fakeuser", "fakepassword", "NetcredentialsOnly",
             "NewCredentials", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "NewCredentials"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $current_user.MandatoryLabelSid.Value
+        $stdout.LogonType | Assert-Equal -Expected "NewCredentials"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $current_user.MandatoryLabelSid.Value
 
         # while we didn't set WithProfile, the new process is based on the current process
-        $stdout.ProfileLoaded | Assert-Equals -Expected $current_user.ProfileLoaded
-        $stdout.SourceName | Assert-Equals -Expected "Advapi"
-        $stdout.UserSid.Value | Assert-Equals -Expected $current_user.UserSid.Value
+        $stdout.ProfileLoaded | Assert-Equal -Expected $current_user.ProfileLoaded
+        $stdout.SourceName | Assert-Equal -Expected "Advapi"
+        $stdout.UserSid.Value | Assert-Equal -Expected $current_user.UserSid.Value
     }
 
     "Logon with network credentials and with profile" = {
         $actual = [Ansible.Become.BecomeUtil]::CreateProcessAsUser("fakeuser", "fakepassword", "NetcredentialsOnly, WithProfile",
             "NewCredentials", $null, "powershell.exe -NoProfile -", $tmp_dir, $null, $test_whoami + "`r`n")
-        $actual.StandardError | Assert-Equals -Expected ""
-        $actual.ExitCode | Assert-Equals -Expected 0
+        $actual.StandardError | Assert-Equal -Expected ""
+        $actual.ExitCode | Assert-Equal -Expected 0
 
         $stdout = ConvertFrom-Json -InputObject $actual.StandardOut
-        $stdout.LogonType | Assert-Equals -Expected "NewCredentials"
-        $stdout.MandatoryLabelSid.Value | Assert-Equals -Expected $current_user.MandatoryLabelSid.Value
-        $stdout.ProfileLoaded | Assert-Equals -Expected $current_user.ProfileLoaded
-        $stdout.SourceName | Assert-Equals -Expected "Advapi"
-        $stdout.UserSid.Value | Assert-Equals -Expected $current_user.UserSid.Value
+        $stdout.LogonType | Assert-Equal -Expected "NewCredentials"
+        $stdout.MandatoryLabelSid.Value | Assert-Equal -Expected $current_user.MandatoryLabelSid.Value
+        $stdout.ProfileLoaded | Assert-Equal -Expected $current_user.ProfileLoaded
+        $stdout.SourceName | Assert-Equal -Expected "Advapi"
+        $stdout.UserSid.Value | Assert-Equal -Expected $current_user.UserSid.Value
     }
 }
 
@@ -965,7 +972,8 @@ try {
             $user_obj = $adsi.Create("User", $user)
             $user_obj.SetPassword($become_pass)
             $user_obj.SetInfo()
-        } else {
+        }
+        else {
             $user_obj.SetPassword($become_pass)
         }
         $user_obj.RefreshCache()
@@ -973,13 +981,17 @@ try {
         if ($user -eq $standard_user) {
             $standard_user_sid = (New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList @($user_obj.ObjectSid.Value, 0)).Value
             $group = [System.Security.Principal.WellKnownSidType]::BuiltinUsersSid
-        } else {
+        }
+        else {
             $admin_user_sid = (New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList @($user_obj.ObjectSid.Value, 0)).Value
             $group = [System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid
         }
         $group = (New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList $group, $null).Value
         [string[]]$current_groups = $user_obj.Groups() | ForEach-Object {
-            New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList @($_.GetType().InvokeMember("objectSID", "GetProperty", $null, $_, $null), 0)
+            New-Object -TypeName System.Security.Principal.SecurityIdentifier -ArgumentList @(
+                $_.GetType().InvokeMember("objectSID", "GetProperty", $null, $_, $null),
+                0
+            )
         }
         if ($current_groups -notcontains $group) {
             $group_obj = $adsi.Children | Where-Object {
@@ -995,7 +1007,8 @@ try {
         $test = $test_impl.Key
         &$test_impl.Value
     }
-} finally {
+}
+finally {
     Remove-Item -LiteralPath $tmp_dir -Force -Recurse
     foreach ($user in $standard_user, $admin_user) {
         $user_obj = $adsi.Children | Where-Object { $_.SchemaClassName -eq "User" -and $_.Name -eq $user }

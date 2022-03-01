@@ -29,13 +29,13 @@
           key: root
           service: files
       register: getent_test0
-      when: ansible_system != 'FreeBSD'
+      when: ansible_system != 'FreeBSD' and ansible_distribution != 'Alpine'
     - name: run getent w/o specified service (FreeBSD)
       getent:
           database: passwd
           key: root
       register: getent_test0
-      when: ansible_system == 'FreeBSD'
+      when: ansible_system == 'FreeBSD' or ansible_distribution == 'Alpine'
     - debug: var=getent_test0
     - name: validate results
       assert:

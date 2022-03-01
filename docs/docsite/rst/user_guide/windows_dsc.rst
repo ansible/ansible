@@ -9,7 +9,7 @@ What is Desired State Configuration?
 Desired State Configuration, or DSC, is a tool built into PowerShell that can
 be used to define a Windows host setup through code. The overall purpose of DSC
 is the same as Ansible, it is just executed in a different manner. Since
-Ansible 2.4, the ``win_dsc`` module has been added and can be used to leverage
+Ansible 2.4, the ``win_dsc`` module has been added and can be used to take advantage of
 existing DSC resources when interacting with a Windows host.
 
 More details on DSC can be viewed at `DSC Overview <https://docs.microsoft.com/en-us/powershell/scripting/dsc/overview/overview>`_.
@@ -17,8 +17,7 @@ More details on DSC can be viewed at `DSC Overview <https://docs.microsoft.com/e
 Host Requirements
 `````````````````
 To use the ``win_dsc`` module, a Windows host must have PowerShell v5.0 or
-newer installed. All supported hosts, except for Windows Server 2008 (non R2) can be
-upgraded to PowerShell v5.
+newer installed. All supported hosts can be upgraded to PowerShell v5.
 
 Once the PowerShell requirements have been met, using DSC is as simple as
 creating a task with the ``win_dsc`` module.
@@ -366,7 +365,9 @@ The first two methods above only work when the host has access to the internet.
 When a host does not have internet access, the module must first be installed
 using the methods above on another host with internet access and then copied
 across. To save a module to a local filepath, the following PowerShell cmdlet
-can be run::
+can be run:
+
+.. code-block:: powershell
 
     Save-Module -Name xWebAdministration -Path C:\temp
 
@@ -501,5 +502,5 @@ Setup IIS Website
        Windows specific module list, all implemented in PowerShell
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

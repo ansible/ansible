@@ -14,8 +14,8 @@ Windows host must meet these requirements:
 
 * Ansible can generally manage Windows versions under current
   and extended support from Microsoft. Ansible can manage desktop OSs including
-  Windows 7, 8.1, and 10, and server OSs including Windows Server 2008,
-  2008 R2, 2012, 2012 R2, 2016, and 2019.
+  Windows 8.1, and 10, and server OSs including Windows Server 2012, 2012 R2,
+  2016, 2019, and 2022.
 
 * Ansible requires PowerShell 3.0 or newer and at least .NET 4.0 to be
   installed on the Windows host.
@@ -37,6 +37,7 @@ This is an example of how to run this script from PowerShell:
 
 .. code-block:: powershell
 
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     $url = "https://raw.githubusercontent.com/jborean93/ansible-windows/master/scripts/Upgrade-PowerShell.ps1"
     $file = "$env:temp\Upgrade-PowerShell.ps1"
     $username = "Administrator"
@@ -49,13 +50,13 @@ This is an example of how to run this script from PowerShell:
     &$file -Version 5.1 -Username $username -Password $password -Verbose
 
 Once completed, you will need to remove auto logon
-and set the execution policy back to the default of ``Restricted``. You can
+and set the execution policy back to the default (``Restricted `` for Windows clients, or ``RemoteSigned`` for Windows servers). You can
 do this with the following PowerShell commands:
 
 .. code-block:: powershell
 
     # This isn't needed but is a good security practice to complete
-    Set-ExecutionPolicy -ExecutionPolicy Restricted -Force
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force
 
     $reg_winlogon_path = "HKLM:\Software\Microsoft\Windows NT\CurrentVersion\Winlogon"
     Set-ItemProperty -Path $reg_winlogon_path -Name AutoAdminLogon -Value 0
@@ -95,6 +96,7 @@ The following PowerShell command will install the hotfix:
 
 .. code-block:: powershell
 
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     $url = "https://raw.githubusercontent.com/jborean93/ansible-windows/master/scripts/Install-WMF3Hotfix.ps1"
     $file = "$env:temp\Install-WMF3Hotfix.ps1"
 
@@ -120,6 +122,7 @@ To use this script, run the following in PowerShell:
 
 .. code-block:: powershell
 
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     $url = "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"
     $file = "$env:temp\ConfigureRemotingForAnsible.ps1"
 
@@ -148,7 +151,9 @@ following command:
 
     winrm enumerate winrm/config/Listener
 
-This will output something like::
+This will output something like:
+
+.. code-block:: powershell
 
     Listener
         Address = *
@@ -191,7 +196,9 @@ the key options that are useful to understand are:
 * ``CertificateThumbprint``: If running over an HTTPS listener, this is the
   thumbprint of the certificate in the Windows Certificate Store that is used
   in the connection. To get the details of the certificate itself, run this
-  command with the relevant certificate thumbprint in PowerShell::
+  command with the relevant certificate thumbprint in PowerShell:
+
+.. code-block:: powershell
 
     $thumbprint = "E6CDAA82EEAF2ECE8546E05DB7F3E01AA47D76CE"
     Get-ChildItem -Path cert:\LocalMachine\My -Recurse | Where-Object { $_.Thumbprint -eq $thumbprint } | Select-Object *
@@ -235,7 +242,9 @@ There are three ways to set up a WinRM listener:
 
 Delete WinRM Listener
 +++++++++++++++++++++
-To remove a WinRM listener::
+To remove a WinRM listener:
+
+.. code-block:: powershell
 
     # Remove all listeners
     Remove-Item -Path WSMan:\localhost\Listener\* -Recurse -Force
@@ -260,7 +269,9 @@ following command:
     winrm get winrm/config/Service
     winrm get winrm/config/Winrs
 
-This will output something like::
+This will output something like:
+
+.. code-block:: powershell
 
     Service
         RootSDDL = O:NSG:BAD:P(A;;GA;;;BA)(A;;GR;;;IU)S:P(AU;FA;GA;;;WD)(AU;SA;GXGW;;;WD)
@@ -326,7 +337,9 @@ options are:
 * ``Winrs\MaxMemoryPerShellMB``: This is the maximum amount of memory allocated
   per shell, including the shell's child processes.
 
-To modify a setting under the ``Service`` key in PowerShell::
+To modify a setting under the ``Service`` key in PowerShell:
+
+.. code-block:: powershell
 
     # substitute {path} with the path to the option after winrm/config/Service
     Set-Item -Path WSMan:\localhost\Service\{path} -Value "value here"
@@ -334,7 +347,9 @@ To modify a setting under the ``Service`` key in PowerShell::
     # for example, to change Service\Auth\CbtHardeningLevel run
     Set-Item -Path WSMan:\localhost\Service\Auth\CbtHardeningLevel -Value Strict
 
-To modify a setting under the ``Winrs`` key in PowerShell::
+To modify a setting under the ``Winrs`` key in PowerShell:
+
+.. code-block:: powershell
 
     # Substitute {path} with the path to the option after winrm/config/Winrs
     Set-Item -Path WSMan:\localhost\Shell\{path} -Value "value here"
@@ -354,7 +369,9 @@ could in fact be issues with the host setup instead.
 
 One easy way to determine whether a problem is a host issue is to
 run the following command from another Windows host to connect to the
-target Windows host::
+target Windows host:
+
+.. code-block:: powershell
 
     # Test out HTTP
     winrs -r:http://server:5985/wsman -u:Username -p:Password ipconfig
@@ -460,22 +477,33 @@ Ansible 2.8 has added an experimental SSH connection for Windows managed nodes.
     backwards incompatible changes in feature releases. The server side
     components can be unreliable depending on the version that is installed.
 
+Installing OpenSSH using Windows Settings
+-----------------------------------------
+OpenSSH can be used to connect Window 10 clients to Windows Server 2019.
+OpenSSH Client is available to install on Windows 10 build 1809 and later, while OpenSSH Server is available to install on Windows Server 2019 and later.
+
+Please refer `this guide <https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse>`_.
+
 Installing Win32-OpenSSH
 ------------------------
 The first step to using SSH with Windows is to install the `Win32-OpenSSH <https://github.com/PowerShell/Win32-OpenSSH>`_
 service on the Windows host. Microsoft offers a way to install ``Win32-OpenSSH`` through a Windows
 capability but currently the version that is installed through this process is
 too old to work with Ansible. To install ``Win32-OpenSSH`` for use with
-Ansible, select one of these three installation options:
+Ansible, select one of these installation options:
 
 * Manually install the service, following the `install instructions <https://github.com/PowerShell/Win32-OpenSSH/wiki/Install-Win32-OpenSSH>`_
   from Microsoft.
 
-* Install the `openssh <https://chocolatey.org/packages/openssh>`_ package using Chocolatey::
+* Install the `openssh <https://chocolatey.org/packages/openssh>`_ package using Chocolatey:
+
+.. code-block:: powershell
 
     choco install --package-parameters=/SSHServerFeature openssh
 
-* Use ``win_chocolatey`` to install the service::
+* Use ``win_chocolatey`` to install the service
+
+.. code-block:: yaml
 
     - name: install the Win32-OpenSSH service
       win_chocolatey:
@@ -483,10 +511,14 @@ Ansible, select one of these three installation options:
         package_params: /SSHServerFeature
         state: present
 
-* Use an existing Ansible Galaxy role like `jborean93.win_openssh <https://galaxy.ansible.com/jborean93/win_openssh>`_::
+* Use an existing Ansible Galaxy role like `jborean93.win_openssh <https://galaxy.ansible.com/jborean93/win_openssh>`_:
+
+.. code-block:: powershell
 
     # Make sure the role has been downloaded first
     ansible-galaxy install jborean93.win_openssh
+
+.. code-block:: yaml
 
     # main.yml
     - name: install Win32-OpenSSH service
@@ -505,7 +537,9 @@ Configuring the Win32-OpenSSH shell
 -----------------------------------
 
 By default ``Win32-OpenSSH`` will use ``cmd.exe`` as a shell. To configure a
-different shell, use an Ansible task to define the registry setting::
+different shell, use an Ansible task to define the registry setting:
+
+.. code-block:: yaml
 
     - name: set the default shell to PowerShell
       win_regedit:
@@ -558,16 +592,15 @@ Here are the known ones:
 * Win32-OpenSSH versions older than ``v7.9.0.0p1-Beta`` do not work when ``powershell`` is the shell type
 * While SCP should work, SFTP is the recommended SSH file transfer mechanism to use when copying or fetching a file
 
-
 .. seealso::
 
-   :ref:`about_playbooks`
+    :ref:`about_playbooks`
        An introduction to playbooks
-   :ref:`playbooks_best_practices`
+    :ref:`playbooks_best_practices`
        Tips and tricks for playbooks
-   :ref:`List of Windows Modules <windows_modules>`
+    :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell
-   `User Mailing List <https://groups.google.com/group/ansible-project>`_
+    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+    :ref:`communication_irc`
+       How to join Ansible chat channels

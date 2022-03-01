@@ -1,0 +1,79 @@
+---
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: test simple data with defaults
+      set_stats:
+          data:
+              my_int: 42
+              my_string: "foo"
+      register: result
+
+    - name: assert simple data return
+      assert:
+          that:
+              - result is succeeded
+              - not result.changed
+              - '"ansible_stats" in result'
+              - '"data" in result.ansible_stats'
+              - result.ansible_stats.data.my_int == 42
+              - result.ansible_stats.data.my_string == "foo"
+              - '"per_host" in result.ansible_stats'
+              - not result.ansible_stats.per_host
+              - '"aggregate" in result.ansible_stats'
+              - result.ansible_stats.aggregate
+
+    - name: test per_host and aggregate settings
+      set_stats:
+          data:
+              my_int: 42
+          per_host: yes
+          aggregate: no
+      register: result
+
+    - name: assert per_host and aggregate changes
+      assert:
+          that:
+              - result is succeeded
+              - not result.changed
+              - '"ansible_stats" in result'
+              - '"per_host" in result.ansible_stats'
+              - result.ansible_stats.per_host
+              - '"aggregate" in result.ansible_stats'
+              - not result.ansible_stats.aggregate
+
+    - name: Test bad call
+      block:
+        - name: "EXPECTED FAILURE - test invalid data type"
+          set_stats:
+              data:
+                  - 1
+                  - 2
+
+        - fail:
+            msg: "should not get here"
+      rescue:
+          - assert:
+              that:
+                  - ansible_failed_task.name == "EXPECTED FAILURE - test invalid data type"
+                  - ansible_failed_result.msg == "The 'data' option needs to be a dictionary/hash"
+
+    - name: Test options from template
+      set_stats:
+          data:
+              my_string: "foo"
+          aggregate: "x"
+
+    - name: Test bad data
+      block:
+          - name: "EXPECTED FAILURE - bad data"
+            set_stats:
+                data:
+                    .bad: 1
+          - fail:
+              msg: "should not get here"
+      rescue:
+          - assert:
+              that:
+                  - ansible_failed_task.name == "EXPECTED FAILURE - bad data"
+                  - ansible_failed_result.msg == "The variable name '.bad' is not valid. Variables must start with a letter or underscore character, and contain only letters, numbers and underscores."

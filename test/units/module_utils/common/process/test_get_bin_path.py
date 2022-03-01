@@ -35,5 +35,5 @@ def test_get_path_path_raise_valueerror(mocker):
     mocker.patch('os.path.isdir', return_value=False)
     mocker.patch('ansible.module_utils.common.process.is_executable', return_value=True)
 
-    with pytest.raises(ValueError, match='Failed to find required executable notacommand'):
+    with pytest.raises(ValueError, match='Failed to find required executable "notacommand"'):
         get_bin_path('notacommand')

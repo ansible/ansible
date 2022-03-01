@@ -1,19 +1,20 @@
 """Context information for the current invocation of ansible-test."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
+import dataclasses
 import os
-
-from . import types as t
+import typing as t
 
 from .util import (
     ApplicationError,
     import_plugins,
     is_subdir,
+    is_valid_identifier,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_ROOT,
     ANSIBLE_SOURCE_ROOT,
     display,
+    cache,
 )
 
 from .provider import (
@@ -34,9 +35,17 @@ from .provider.source.installed import (
     InstalledSource,
 )
 
+from .provider.source.unsupported import (
+    UnsupportedSource,
+)
+
 from .provider.layout import (
     ContentLayout,
     LayoutProvider,
+)
+
+from .provider.layout.unsupported import (
+    UnsupportedLayout,
 )
 
 
@@ -53,7 +62,7 @@ class DataContext:
         self.__source_providers = source_providers
         self.__ansible_source = None  # type: t.Optional[t.Tuple[t.Tuple[str, str], ...]]
 
-        self.payload_callbacks = []  # type: t.List[t.Callable[t.List[t.Tuple[str, str]], None]]
+        self.payload_callbacks = []  # type: t.List[t.Callable[[t.List[t.Tuple[str, str]]], None]]
 
         if content_path:
             content = self.__create_content_layout(layout_providers, source_providers, content_path, False)
@@ -109,14 +118,20 @@ class DataContext:
                                 walk,  # type: bool
                                 ):  # type: (...) -> ContentLayout
         """Create a content layout using the given providers and root path."""
-        layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk)
+        try:
+            layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk)
+        except ProviderNotFoundForPath:
+            layout_provider = UnsupportedLayout(root)
 
         try:
             # Begin the search for the source provider at the layout provider root.
             # This intentionally ignores version control within subdirectories of the layout root, a condition which was previously an error.
             # Doing so allows support for older git versions for which it is difficult to distinguish between a super project and a sub project.
             # It also provides a better user experience, since the solution for the user would effectively be the same -- to remove the nested version control.
-            source_provider = find_path_provider(SourceProvider, source_providers, layout_provider.root, walk)
+            if isinstance(layout_provider, UnsupportedLayout):
+                source_provider = UnsupportedSource(layout_provider.root)  # type: SourceProvider
+            else:
+                source_provider = find_path_provider(SourceProvider, source_providers, layout_provider.root, walk)
         except ProviderNotFoundForPath:
             source_provider = UnversionedSource(layout_provider.root)
 
@@ -157,12 +172,55 @@ class DataContext:
 
         return self.__ansible_source
 
-    def register_payload_callback(self, callback):  # type: (t.Callable[t.List[t.Tuple[str, str]], None]) -> None
+    def register_payload_callback(self, callback):  # type: (t.Callable[[t.List[t.Tuple[str, str]]], None]) -> None
         """Register the given payload callback."""
         self.payload_callbacks.append(callback)
 
+    def check_layout(self) -> None:
+        """Report an error if the layout is unsupported."""
+        if self.content.unsupported:
+            raise ApplicationError(self.explain_working_directory())
 
-def data_init():  # type: () -> DataContext
+    def explain_working_directory(self) -> str:
+        """Return a message explaining the working directory requirements."""
+        blocks = [
+            'The current working directory must be within the source tree being tested.',
+            '',
+        ]
+
+        if ANSIBLE_SOURCE_ROOT:
+            blocks.append(f'Testing Ansible: {ANSIBLE_SOURCE_ROOT}/')
+            blocks.append('')
+
+        cwd = os.getcwd()
+
+        blocks.append('Testing an Ansible collection: {...}/ansible_collections/{namespace}/{collection}/')
+        blocks.append('Example #1: community.general -> ~/code/ansible_collections/community/general/')
+        blocks.append('Example #2: ansible.util -> ~/.ansible/collections/ansible_collections/ansible/util/')
+        blocks.append('')
+        blocks.append(f'Current working directory: {cwd}/')
+
+        if os.path.basename(os.path.dirname(cwd)) == 'ansible_collections':
+            blocks.append(f'Expected parent directory: {os.path.dirname(cwd)}/{{namespace}}/{{collection}}/')
+        elif os.path.basename(cwd) == 'ansible_collections':
+            blocks.append(f'Expected parent directory: {cwd}/{{namespace}}/{{collection}}/')
+        elif 'ansible_collections' not in cwd.split(os.path.sep):
+            blocks.append('No "ansible_collections" parent directory was found.')
+
+        if self.content.collection:
+            if not is_valid_identifier(self.content.collection.namespace):
+                blocks.append(f'The namespace "{self.content.collection.namespace}" is an invalid identifier or a reserved keyword.')
+
+            if not is_valid_identifier(self.content.collection.name):
+                blocks.append(f'The name "{self.content.collection.name}" is an invalid identifier or a reserved keyword.')
+
+        message = '\n'.join(blocks)
+
+        return message
+
+
+@cache
+def data_context():  # type: () -> DataContext
     """Initialize provider plugins."""
     provider_types = (
         'layout',
@@ -172,29 +230,56 @@ def data_init():  # type: () -> DataContext
     for provider_type in provider_types:
         import_plugins('provider/%s' % provider_type)
 
-    try:
-        context = DataContext()
-    except ProviderNotFoundForPath:
-        options = [
-            ' - an Ansible collection: {...}/ansible_collections/{namespace}/{collection}/',
-        ]
-
-        if ANSIBLE_SOURCE_ROOT:
-            options.insert(0, ' - the Ansible source: %s/' % ANSIBLE_SOURCE_ROOT)
-
-        raise ApplicationError('''The current working directory must be at or below:
-
-%s
-
-Current working directory: %s''' % ('\n'.join(options), os.getcwd()))
+    context = DataContext()
 
     return context
 
 
-def data_context():  # type: () -> DataContext
-    """Return the current data context."""
-    try:
-        return data_context.instance
-    except AttributeError:
-        data_context.instance = data_init()
-        return data_context.instance
+@dataclasses.dataclass(frozen=True)
+class PluginInfo:
+    """Information about an Ansible plugin."""
+    plugin_type: str
+    name: str
+    paths: t.List[str]
+
+
+@cache
+def content_plugins():
+    """
+    Analyze content.
+    The primary purpose of this analysis is to facilitiate mapping of integration tests to the plugin(s) they are intended to test.
+    """
+    plugins = {}  # type: t.Dict[str, t.Dict[str, PluginInfo]]
+
+    for plugin_type, plugin_directory in data_context().content.plugin_paths.items():
+        plugin_paths = sorted(data_context().content.walk_files(plugin_directory))
+        plugin_directory_offset = len(plugin_directory.split(os.path.sep))
+
+        plugin_files = {}
+
+        for plugin_path in plugin_paths:
+            plugin_filename = os.path.basename(plugin_path)
+            plugin_parts = plugin_path.split(os.path.sep)[plugin_directory_offset:-1]
+
+            if plugin_filename == '__init__.py':
+                if plugin_type != 'module_utils':
+                    continue
+            else:
+                plugin_name = os.path.splitext(plugin_filename)[0]
+
+                if data_context().content.is_ansible and plugin_type == 'modules':
+                    plugin_name = plugin_name.lstrip('_')
+
+                plugin_parts.append(plugin_name)
+
+            plugin_name = '.'.join(plugin_parts)
+
+            plugin_files.setdefault(plugin_name, []).append(plugin_filename)
+
+        plugins[plugin_type] = {plugin_name: PluginInfo(
+            plugin_type=plugin_type,
+            name=plugin_name,
+            paths=paths,
+        ) for plugin_name, paths in plugin_files.items()}
+
+    return plugins

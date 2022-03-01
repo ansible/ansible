@@ -1,0 +1,2 @@
+- hosts: localhost
+  roles: 123

@@ -1,7 +1,0 @@
-- name: Create Content Library
-  vmware_content_library_manager:
-    library_name: test-content-lib
-    library_description: 'Library created by the prepare_vmware_tests role'
-    library_type: local
-    datastore_name: '{{ rw_datastore }}'
-    state: present

@@ -1,0 +1,5 @@
+- name: ensure data was correctly defind
+  assert:
+    that:
+      - defined_var is defined
+      - defined_var == 1

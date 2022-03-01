@@ -18,7 +18,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import isidentifier
@@ -59,7 +59,7 @@ class ActionModule(ActionBase):
                     else:
                         stats[opt] = val
 
-            for (k, v) in iteritems(data):
+            for (k, v) in data.items():
 
                 k = self._templar.template(k)
 

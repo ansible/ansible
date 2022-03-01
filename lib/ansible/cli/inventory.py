@@ -1,9 +1,14 @@
+#!/usr/bin/env python
 # Copyright: (c) 2017, Brian Coca <bcoca@ansible.com>
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# PYTHON_ARGCOMPLETE_OK
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+# ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
+from ansible.cli import CLI
 
 import sys
 
@@ -12,10 +17,9 @@ from operator import attrgetter
 
 from ansible import constants as C
 from ansible import context
-from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils.vars import combine_vars
 from ansible.utils.display import Display
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
@@ -46,6 +50,8 @@ INTERNAL_VARS = frozenset(['ansible_diff_mode',
 class InventoryCLI(CLI):
     ''' used to display or dump the configured inventory as Ansible sees it '''
 
+    name = 'ansible-inventory'
+
     ARGUMENTS = {'host': 'The name of a host to match in the inventory, relevant when using --list',
                  'group': 'The name of a group in the inventory, relevant when using --graph', }
 
@@ -64,6 +70,7 @@ class InventoryCLI(CLI):
         opt_help.add_inventory_options(self.parser)
         opt_help.add_vault_options(self.parser)
         opt_help.add_basedir_options(self.parser)
+        opt_help.add_runtask_options(self.parser)
 
         # remove unused default options
         self.parser.add_argument('-l', '--limit', help=argparse.SUPPRESS, action=opt_help.UnrecognizedArgument, nargs='?')
@@ -157,8 +164,8 @@ class InventoryCLI(CLI):
                 display.display(results)
             else:
                 try:
-                    with open(to_bytes(outfile), 'wt') as f:
-                        f.write(results)
+                    with open(to_bytes(outfile), 'wb') as f:
+                        f.write(to_bytes(results))
                 except (OSError, IOError) as e:
                     raise AnsibleError('Unable to write to destination file (%s): %s' % (to_native(outfile), to_native(e)))
             sys.exit(0)
@@ -171,18 +178,30 @@ class InventoryCLI(CLI):
         if context.CLIARGS['yaml']:
             import yaml
             from ansible.parsing.yaml.dumper import AnsibleDumper
-            results = yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False)
+            results = to_text(yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False, allow_unicode=True))
         elif context.CLIARGS['toml']:
             from ansible.plugins.inventory.toml import toml_dumps, HAS_TOML
             if not HAS_TOML:
                 raise AnsibleError(
                     'The python "toml" library is required when using the TOML output format'
                 )
-            results = toml_dumps(stuff)
+            try:
+                results = toml_dumps(stuff)
+            except KeyError as e:
+                raise AnsibleError(
+                    'The source inventory contains a non-string key (%s) which cannot be represented in TOML. '
+                    'The specified key will need to be converted to a string. Be aware that if your playbooks '
+                    'expect this key to be non-string, your playbooks will need to be modified to support this '
+                    'change.' % e.args[0]
+                )
         else:
             import json
             from ansible.parsing.ajson import AnsibleJSONEncoder
-            results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=True, indent=4, preprocess_unsafe=True)
+            try:
+                results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=True, indent=4, preprocess_unsafe=True, ensure_ascii=False)
+            except TypeError as e:
+                results = json.dumps(stuff, cls=AnsibleJSONEncoder, sort_keys=False, indent=4, preprocess_unsafe=True, ensure_ascii=False)
+                display.warning("Could not sort JSON output due to issues while sorting keys: %s" % to_native(e))
 
         return results
 
@@ -389,3 +408,11 @@ class InventoryCLI(CLI):
         results = format_group(top)
 
         return results
+
+
+def main(args=None):
+    InventoryCLI.cli_executor(args)
+
+
+if __name__ == '__main__':
+    main()

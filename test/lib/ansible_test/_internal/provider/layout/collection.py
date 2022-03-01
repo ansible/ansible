@@ -1,10 +1,8 @@
 """Layout provider for Ansible collections."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
-
-from ... import types as t
+import typing as t
 
 from . import (
     ContentLayout,
@@ -13,12 +11,13 @@ from . import (
     LayoutMessages,
 )
 
+from ...util import (
+    is_valid_identifier,
+)
+
 
 class CollectionLayout(LayoutProvider):
     """Layout provider for Ansible collections."""
-    __module_path = 'plugins/modules'
-    __unit_path = 'test/unit'
-
     @staticmethod
     def is_content_root(path):  # type: (str) -> bool
         """Return True if the given path is a content root for this provider."""
@@ -33,6 +32,10 @@ class CollectionLayout(LayoutProvider):
 
         collection_root = os.path.dirname(os.path.dirname(root))
         collection_dir = os.path.relpath(root, collection_root)
+
+        collection_namespace: str
+        collection_name: str
+
         collection_namespace, collection_name = collection_dir.split(os.path.sep)
 
         collection_root = os.path.dirname(collection_root)
@@ -70,6 +73,7 @@ class CollectionLayout(LayoutProvider):
                              unit_module_path='tests/unit/plugins/modules',
                              unit_module_utils_path='tests/unit/plugins/module_utils',
                              unit_messages=unit_messages,
+                             unsupported=not(is_valid_identifier(collection_namespace) and is_valid_identifier(collection_name)),
                              )
 
     @staticmethod

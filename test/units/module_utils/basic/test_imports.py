@@ -12,7 +12,7 @@ import sys
 from units.mock.procenv import ModuleTestCase
 
 from units.compat import unittest
-from units.compat.mock import patch
+from mock import patch
 from ansible.module_utils.six.moves import builtins
 
 realimport = builtins.__import__
@@ -43,20 +43,20 @@ class TestImports(ModuleTestCase):
 
     @patch.object(builtins, '__import__')
     def test_module_utils_basic_import_selinux(self, mock_import):
-        def _mock_import(name, *args, **kwargs):
-            if name == 'selinux':
+        def _mock_import(name, globals=None, locals=None, fromlist=tuple(), level=0, **kwargs):
+            if name == 'ansible.module_utils.compat' and fromlist == ('selinux',):
                 raise ImportError
-            return realimport(name, *args, **kwargs)
+            return realimport(name, globals=globals, locals=locals, fromlist=fromlist, level=level, **kwargs)
 
         try:
-            self.clear_modules(['selinux', 'ansible.module_utils.basic'])
+            self.clear_modules(['ansible.module_utils.compat.selinux', 'ansible.module_utils.basic'])
             mod = builtins.__import__('ansible.module_utils.basic')
             self.assertTrue(mod.module_utils.basic.HAVE_SELINUX)
         except ImportError:
             # no selinux on test system, so skip
             pass
 
-        self.clear_modules(['selinux', 'ansible.module_utils.basic'])
+        self.clear_modules(['ansible.module_utils.compat.selinux', 'ansible.module_utils.basic'])
         mock_import.side_effect = _mock_import
         mod = builtins.__import__('ansible.module_utils.basic')
         self.assertFalse(mod.module_utils.basic.HAVE_SELINUX)

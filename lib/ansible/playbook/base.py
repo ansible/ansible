@@ -7,6 +7,7 @@ __metaclass__ = type
 
 import itertools
 import operator
+import os
 
 from copy import copy as shallowcopy
 from functools import partial
@@ -15,12 +16,14 @@ from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
 from ansible import context
-from ansible.module_utils.six import iteritems, string_types, with_metaclass
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
+from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils._text import to_text, to_native
-from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
+from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.plugins.loader import module_loader, action_loader
+from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
@@ -32,7 +35,7 @@ def _generic_g(prop_name, self):
     try:
         value = self._attributes[prop_name]
     except KeyError:
-        raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+        raise AttributeError("'%s' does not have the keyword '%s'" % (self.__class__.__name__, prop_name))
 
     if value is Sentinel:
         value = self._attr_defaults[prop_name]
@@ -47,7 +50,7 @@ def _generic_g_method(prop_name, self):
         method = "_get_attr_%s" % prop_name
         return getattr(self, method)()
     except KeyError:
-        raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+        raise AttributeError("'%s' does not support the keyword '%s'" % (self.__class__.__name__, prop_name))
 
 
 def _generic_g_parent(prop_name, self):
@@ -60,7 +63,7 @@ def _generic_g_parent(prop_name, self):
             except AttributeError:
                 value = self._attributes[prop_name]
     except KeyError:
-        raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+        raise AttributeError("'%s' nor it's parents support the keyword '%s'" % (self.__class__.__name__, prop_name))
 
     if value is Sentinel:
         value = self._attr_defaults[prop_name]
@@ -74,6 +77,45 @@ def _generic_s(prop_name, self, value):
 
 def _generic_d(prop_name, self):
     del self._attributes[prop_name]
+
+
+def _validate_action_group_metadata(action, found_group_metadata, fq_group_name):
+    valid_metadata = {
+        'extend_group': {
+            'types': (list, string_types,),
+            'errortype': 'list',
+        },
+    }
+
+    metadata_warnings = []
+
+    validate = C.VALIDATE_ACTION_GROUP_METADATA
+    metadata_only = isinstance(action, dict) and 'metadata' in action and len(action) == 1
+
+    if validate and not metadata_only:
+        found_keys = ', '.join(sorted(list(action)))
+        metadata_warnings.append("The only expected key is metadata, but got keys: {keys}".format(keys=found_keys))
+    elif validate:
+        if found_group_metadata:
+            metadata_warnings.append("The group contains multiple metadata entries.")
+        if not isinstance(action['metadata'], dict):
+            metadata_warnings.append("The metadata is not a dictionary. Got {metadata}".format(metadata=action['metadata']))
+        else:
+            unexpected_keys = set(action['metadata'].keys()) - set(valid_metadata.keys())
+            if unexpected_keys:
+                metadata_warnings.append("The metadata contains unexpected keys: {0}".format(', '.join(unexpected_keys)))
+            unexpected_types = []
+            for field, requirement in valid_metadata.items():
+                if field not in action['metadata']:
+                    continue
+                value = action['metadata'][field]
+                if not isinstance(value, requirement['types']):
+                    unexpected_types.append("%s is %s (expected type %s)" % (field, value, requirement['errortype']))
+            if unexpected_types:
+                metadata_warnings.append("The metadata contains unexpected key types: {0}".format(', '.join(unexpected_types)))
+    if metadata_warnings:
+        metadata_warnings.insert(0, "Invalid metadata was found for action_group {0} while loading module_defaults.".format(fq_group_name))
+        display.warning(" ".join(metadata_warnings))
 
 
 class BaseMeta(type):
@@ -103,12 +145,15 @@ class BaseMeta(type):
                     # method, or if the attribute is marked as not inheriting
                     # its value from a parent object
                     method = "_get_attr_%s" % attr_name
-                    if method in src_dict or method in dst_dict:
-                        getter = partial(_generic_g_method, attr_name)
-                    elif ('_get_parent_attribute' in dst_dict or '_get_parent_attribute' in src_dict) and value.inherit:
-                        getter = partial(_generic_g_parent, attr_name)
-                    else:
-                        getter = partial(_generic_g, attr_name)
+                    try:
+                        if method in src_dict or method in dst_dict:
+                            getter = partial(_generic_g_method, attr_name)
+                        elif ('_get_parent_attribute' in dst_dict or '_get_parent_attribute' in src_dict) and value.inherit:
+                            getter = partial(_generic_g_parent, attr_name)
+                        else:
+                            getter = partial(_generic_g, attr_name)
+                    except AttributeError as e:
+                        raise AnsibleParserError("Invalid playbook definition: %s" % to_native(e), orig_exc=e)
 
                     setter = partial(_generic_s, attr_name)
                     deleter = partial(_generic_d, attr_name)
@@ -149,7 +194,7 @@ class BaseMeta(type):
         return super(BaseMeta, cls).__new__(cls, name, parents, dct)
 
 
-class FieldAttributeBase(with_metaclass(BaseMeta, object)):
+class FieldAttributeBase(metaclass=BaseMeta):
 
     def __init__(self):
 
@@ -178,6 +223,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         # and init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()
+
+    @property
+    def finalized(self):
+        return self._finalized
 
     def dump_me(self, depth=0):
         ''' this is never called from production code, it is here to be used when debugging as a 'complex print' '''
@@ -224,7 +273,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         # Walk all attributes in the class. We sort them based on their priority
         # so that certain fields can be loaded before others, if they are dependent.
-        for name, attr in sorted(iteritems(self._valid_attrs), key=operator.itemgetter(1)):
+        for name, attr in sorted(self._valid_attrs.items(), key=operator.itemgetter(1)):
             # copy the value over unless a _load_field method is defined
             target_name = name
             if name in self._alias_attrs:
@@ -278,7 +327,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         if not self._validated:
             # walk all fields in the object
-            for (name, attribute) in iteritems(self._valid_attrs):
+            for (name, attribute) in self._valid_attrs.items():
 
                 if name in self._alias_attrs:
                     name = self._alias_attrs[name]
@@ -299,6 +348,175 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         self._validated = True
 
+    def _load_module_defaults(self, name, value):
+        if value is None:
+            return
+
+        if not isinstance(value, list):
+            value = [value]
+
+        validated_module_defaults = []
+        for defaults_dict in value:
+            if not isinstance(defaults_dict, dict):
+                raise AnsibleParserError(
+                    "The field 'module_defaults' is supposed to be a dictionary or list of dictionaries, "
+                    "the keys of which must be static action, module, or group names. Only the values may contain "
+                    "templates. For example: {'ping': \"{{ ping_defaults }}\"}"
+                )
+
+            validated_defaults_dict = {}
+            for defaults_entry, defaults in defaults_dict.items():
+                # module_defaults do not use the 'collections' keyword, so actions and
+                # action_groups that are not fully qualified are part of the 'ansible.legacy'
+                # collection. Update those entries here, so module_defaults contains
+                # fully qualified entries.
+                if defaults_entry.startswith('group/'):
+                    group_name = defaults_entry.split('group/')[-1]
+
+                    # The resolved action_groups cache is associated saved on the current Play
+                    if self.play is not None:
+                        group_name, dummy = self._resolve_group(group_name)
+
+                    defaults_entry = 'group/' + group_name
+                    validated_defaults_dict[defaults_entry] = defaults
+
+                else:
+                    if len(defaults_entry.split('.')) < 3:
+                        defaults_entry = 'ansible.legacy.' + defaults_entry
+
+                    resolved_action = self._resolve_action(defaults_entry)
+                    if resolved_action:
+                        validated_defaults_dict[resolved_action] = defaults
+
+                    # If the defaults_entry is an ansible.legacy plugin, these defaults
+                    # are inheritable by the 'ansible.builtin' subset, but are not
+                    # required to exist.
+                    if defaults_entry.startswith('ansible.legacy.'):
+                        resolved_action = self._resolve_action(
+                            defaults_entry.replace('ansible.legacy.', 'ansible.builtin.'),
+                            mandatory=False
+                        )
+                        if resolved_action:
+                            validated_defaults_dict[resolved_action] = defaults
+
+            validated_module_defaults.append(validated_defaults_dict)
+
+        return validated_module_defaults
+
+    @property
+    def play(self):
+        if hasattr(self, '_play'):
+            play = self._play
+        elif hasattr(self, '_parent') and hasattr(self._parent, '_play'):
+            play = self._parent._play
+        else:
+            play = self
+
+        if play.__class__.__name__ != 'Play':
+            # Should never happen, but handle gracefully by returning None, just in case
+            return None
+
+        return play
+
+    def _resolve_group(self, fq_group_name, mandatory=True):
+        if not AnsibleCollectionRef.is_valid_fqcr(fq_group_name):
+            collection_name = 'ansible.builtin'
+            fq_group_name = collection_name + '.' + fq_group_name
+        else:
+            collection_name = '.'.join(fq_group_name.split('.')[0:2])
+
+        # Check if the group has already been resolved and cached
+        if fq_group_name in self.play._group_actions:
+            return fq_group_name, self.play._group_actions[fq_group_name]
+
+        try:
+            action_groups = _get_collection_metadata(collection_name).get('action_groups', {})
+        except ValueError:
+            if not mandatory:
+                display.vvvvv("Error loading module_defaults: could not resolve the module_defaults group %s" % fq_group_name)
+                return fq_group_name, []
+
+            raise AnsibleParserError("Error loading module_defaults: could not resolve the module_defaults group %s" % fq_group_name)
+
+        # The collection may or may not use the fully qualified name
+        # Don't fail if the group doesn't exist in the collection
+        resource_name = fq_group_name.split(collection_name + '.')[-1]
+        action_group = action_groups.get(
+            fq_group_name,
+            action_groups.get(resource_name)
+        )
+        if action_group is None:
+            if not mandatory:
+                display.vvvvv("Error loading module_defaults: could not resolve the module_defaults group %s" % fq_group_name)
+                return fq_group_name, []
+            raise AnsibleParserError("Error loading module_defaults: could not resolve the module_defaults group %s" % fq_group_name)
+
+        resolved_actions = []
+        include_groups = []
+
+        found_group_metadata = False
+        for action in action_group:
+            # Everything should be a string except the metadata entry
+            if not isinstance(action, string_types):
+                _validate_action_group_metadata(action, found_group_metadata, fq_group_name)
+
+                if isinstance(action['metadata'], dict):
+                    found_group_metadata = True
+
+                    include_groups = action['metadata'].get('extend_group', [])
+                    if isinstance(include_groups, string_types):
+                        include_groups = [include_groups]
+                    if not isinstance(include_groups, list):
+                        # Bad entries may be a warning above, but prevent tracebacks by setting it back to the acceptable type.
+                        include_groups = []
+                continue
+
+            # The collection may or may not use the fully qualified name.
+            # If not, it's part of the current collection.
+            if not AnsibleCollectionRef.is_valid_fqcr(action):
+                action = collection_name + '.' + action
+            resolved_action = self._resolve_action(action, mandatory=False)
+            if resolved_action:
+                resolved_actions.append(resolved_action)
+
+        for action in resolved_actions:
+            if action not in self.play._action_groups:
+                self.play._action_groups[action] = []
+            self.play._action_groups[action].append(fq_group_name)
+
+        self.play._group_actions[fq_group_name] = resolved_actions
+
+        # Resolve extended groups last, after caching the group in case they recursively refer to each other
+        for include_group in include_groups:
+            if not AnsibleCollectionRef.is_valid_fqcr(include_group):
+                include_group_collection = collection_name
+                include_group = collection_name + '.' + include_group
+            else:
+                include_group_collection = '.'.join(include_group.split('.')[0:2])
+
+            dummy, group_actions = self._resolve_group(include_group, mandatory=False)
+
+            for action in group_actions:
+                if action not in self.play._action_groups:
+                    self.play._action_groups[action] = []
+                self.play._action_groups[action].append(fq_group_name)
+
+            self.play._group_actions[fq_group_name].extend(group_actions)
+            resolved_actions.extend(group_actions)
+
+        return fq_group_name, resolved_actions
+
+    def _resolve_action(self, action_name, mandatory=True):
+        context = action_loader.find_plugin_with_context(action_name)
+        if not context.resolved:
+            context = module_loader.find_plugin_with_context(action_name)
+
+        if context.resolved:
+            return context.resolved_fqcn
+        if mandatory:
+            raise AnsibleParserError("Could not resolve action %s in module_defaults" % action_name)
+        display.vvvvv("Could not resolve action %s in module_defaults" % action_name)
+
     def squash(self):
         '''
         Evaluates all attributes and sets them to the evaluated version,
@@ -315,7 +533,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         Create a copy of this object and return it.
         '''
 
-        new_me = self.__class__()
+        try:
+            new_me = self.__class__()
+        except RuntimeError as e:
+            raise AnsibleError("Exceeded maximum object depth. This may have been caused by excessive role recursion", orig_exc=e)
 
         for name in self._valid_attrs.keys():
             if name in self._alias_attrs:
@@ -396,7 +617,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         # save the omit value for later checking
         omit_value = templar.available_variables.get('omit')
 
-        for (name, attribute) in iteritems(self._valid_attrs):
+        for (name, attribute) in self._valid_attrs.items():
 
             if attribute.static:
                 value = getattr(self, name)
@@ -523,7 +744,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         Dumps all attributes to a dictionary
         '''
         attrs = {}
-        for (name, attribute) in iteritems(self._valid_attrs):
+        for (name, attribute) in self._valid_attrs.items():
             attr = getattr(self, name)
             if attribute.isa == 'class' and hasattr(attr, 'serialize'):
                 attrs[name] = attr.serialize()
@@ -535,7 +756,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         '''
         Loads attributes from a dictionary
         '''
-        for (attr, value) in iteritems(attrs):
+        for (attr, value) in attrs.items():
             if attr in self._valid_attrs:
                 attribute = self._valid_attrs[attr]
                 if attribute.isa == 'class' and isinstance(value, dict):
@@ -544,6 +765,13 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                     setattr(self, attr, obj)
                 else:
                     setattr(self, attr, value)
+
+        # from_attrs is only used to create a finalized task
+        # from attrs from the Worker/TaskExecutor
+        # Those attrs are finalized and squashed in the TE
+        # and controller side use needs to reflect that
+        self._finalized = True
+        self._squashed = True
 
     def serialize(self):
         '''
@@ -574,7 +802,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         if not isinstance(data, dict):
             raise AnsibleAssertionError('data (%s) should be a dict but is a %s' % (data, type(data)))
 
-        for (name, attribute) in iteritems(self._valid_attrs):
+        for (name, attribute) in self._valid_attrs.items():
             if name in data:
                 setattr(self, name, data[name])
             else:
@@ -628,3 +856,42 @@ class Base(FieldAttributeBase):
 
     # used to hold sudo/su stuff
     DEPRECATED_ATTRIBUTES = []
+
+    def get_path(self):
+        ''' return the absolute path of the playbook object and its line number '''
+
+        path = ""
+        try:
+            path = "%s:%s" % (self._ds._data_source, self._ds._line_number)
+        except AttributeError:
+            try:
+                path = "%s:%s" % (self._parent._play._ds._data_source, self._parent._play._ds._line_number)
+            except AttributeError:
+                pass
+        return path
+
+    def get_dep_chain(self):
+
+        if hasattr(self, '_parent') and self._parent:
+            return self._parent.get_dep_chain()
+        else:
+            return None
+
+    def get_search_path(self):
+        '''
+        Return the list of paths you should search for files, in order.
+        This follows role/playbook dependency chain.
+        '''
+        path_stack = []
+
+        dep_chain = self.get_dep_chain()
+        # inside role: add the dependency chain from current to dependent
+        if dep_chain:
+            path_stack.extend(reversed([x._role_path for x in dep_chain if hasattr(x, '_role_path')]))
+
+        # add path of task itself, unless it is already in the list
+        task_dir = os.path.dirname(self.get_path())
+        if task_dir not in path_stack:
+            path_stack.append(task_dir)
+
+        return path_stack

@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2015, Linus Unnebäck <linus@folkdatorn.se>
@@ -24,8 +23,16 @@ description:
     only manipulates the current rules that are present in memory. This is the
     same as the behaviour of the C(iptables) and C(ip6tables) command which
     this module uses internally.
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: linux
 notes:
-  - This module just deals with individual rules.If you need advanced
+  - This module just deals with individual rules. If you need advanced
     chaining of rules the recommended way is to template the iptables restore
     file.
 options:
@@ -72,8 +79,8 @@ options:
   protocol:
     description:
       - The protocol of the rule or of the packet to check.
-      - The specified protocol can be one of C(tcp), C(udp), C(udplite), C(icmp), C(esp),
-        C(ah), C(sctp) or the special keyword C(all), or it can be a numeric value,
+      - The specified protocol can be one of C(tcp), C(udp), C(udplite), C(icmp), C(ipv6-icmp) or C(icmpv6),
+        C(esp), C(ah), C(sctp) or the special keyword C(all), or it can be a numeric value,
         representing one of these protocols or a different one.
       - A protocol name from I(/etc/protocols) is also allowed.
       - A C(!) argument before the protocol inverts the test.
@@ -118,10 +125,12 @@ options:
             description:
                 - List of flags you want to examine.
             type: list
+            elements: str
         flags_set:
             description:
                 - Flags to be set.
             type: list
+            elements: str
   match:
     description:
       - Specifies a match to use, that is, an extension module that tests for
@@ -130,6 +139,7 @@ options:
       - Matches are evaluated first to last if specified as an array and work in short-circuit
         fashion, i.e. if one extension yields false, evaluation will stop.
     type: list
+    elements: str
     default: []
   jump:
     description:
@@ -217,6 +227,13 @@ options:
         This is only valid if the rule also specifies one of the following
         protocols: tcp, udp, dccp or sctp."
     type: str
+  destination_ports:
+    description:
+      - This specifies multiple destination port numbers or port ranges to match in the multiport module.
+      - It can only be used in conjunction with the protocols tcp, udp, udplite, dccp and sctp.
+    type: list
+    elements: str
+    version_added: "2.11"
   to_ports:
     description:
       - This specifies a destination port or range of ports to use, without
@@ -265,9 +282,10 @@ options:
     type: str
   ctstate:
     description:
-      - C(ctstate) is a list of the connection states to match in the conntrack module.
-      - Possible states are C(INVALID), C(NEW), C(ESTABLISHED), C(RELATED), C(UNTRACKED), C(SNAT), C(DNAT)
+      - A list of the connection states to match in the conntrack module.
+      - Possible values are C(INVALID), C(NEW), C(ESTABLISHED), C(RELATED), C(UNTRACKED), C(SNAT), C(DNAT).
     type: list
+    elements: str
     default: []
   src_range:
     description:
@@ -279,12 +297,28 @@ options:
       - Specifies the destination IP range to match in the iprange module.
     type: str
     version_added: "2.8"
+  match_set:
+    description:
+      - Specifies a set name which can be defined by ipset.
+      - Must be used together with the match_set_flags parameter.
+      - When the C(!) argument is prepended then it inverts the rule.
+      - Uses the iptables set extension.
+    type: str
+    version_added: "2.11"
+  match_set_flags:
+    description:
+      - Specifies the necessary flags for the match_set parameter.
+      - Must be used together with the match_set parameter.
+      - Uses the iptables set extension.
+    type: str
+    choices: [ "src", "dst", "src,dst", "dst,src" ]
+    version_added: "2.11"
   limit:
     description:
       - Specifies the maximum average number of matches to allow per second.
-      - The number can specify units explicitly, using `/second', `/minute',
-        `/hour' or `/day', or parts of them (so `5/second' is the same as
-        `5/s').
+      - The number can specify units explicitly, using C(/second), C(/minute),
+        C(/hour) or C(/day), or parts of them (so C(5/second) is the same as
+        C(5/s)).
     type: str
   limit_burst:
     description:
@@ -306,7 +340,7 @@ options:
   reject_with:
     description:
       - 'Specifies the error packet type to return while rejecting. It implies
-        "jump: REJECT"'
+        "jump: REJECT".'
     type: str
     version_added: "2.1"
   icmp_type:
@@ -322,13 +356,16 @@ options:
       - If no chain is specified then the entire table is purged.
       - Ignores all other parameters.
     type: bool
+    default: false
     version_added: "2.2"
   policy:
     description:
       - Set the policy for the chain to the given target.
       - Only built-in chains can have policies.
       - This parameter requires the C(chain) parameter.
-      - Ignores all other parameters.
+      - If you specify this parameter, all other parameters will be ignored.
+      - This parameter is used to set default policy for the given C(chain).
+        Do not confuse this with C(jump) parameter.
     type: str
     choices: [ ACCEPT, DROP, QUEUE, RETURN ]
     version_added: "2.2"
@@ -338,18 +375,26 @@ options:
         the program from running concurrently.
     type: str
     version_added: "2.10"
+  chain_management:
+    description:
+      - If C(true) and C(state) is C(present), the chain will be created if needed.
+      - If C(true) and C(state) is C(absent), the chain will be deleted if the only
+        other parameter passed are C(chain) and optionally C(table).
+    type: bool
+    default: false
+    version_added: "2.13"
 '''
 
 EXAMPLES = r'''
 - name: Block specific IP
-  iptables:
+  ansible.builtin.iptables:
     chain: INPUT
     source: 8.8.8.8
     jump: DROP
   become: yes
 
 - name: Forward port 80 to 8600
-  iptables:
+  ansible.builtin.iptables:
     table: nat
     chain: PREROUTING
     in_interface: eth0
@@ -362,14 +407,14 @@ EXAMPLES = r'''
   become: yes
 
 - name: Allow related and established connections
-  iptables:
+  ansible.builtin.iptables:
     chain: INPUT
     ctstate: ESTABLISHED,RELATED
     jump: ACCEPT
   become: yes
 
 - name: Allow new incoming SYN packets on TCP port 22 (SSH)
-  iptables:
+  ansible.builtin.iptables:
     chain: INPUT
     protocol: tcp
     destination_port: 22
@@ -379,14 +424,22 @@ EXAMPLES = r'''
     comment: Accept new SSH connections.
 
 - name: Match on IP ranges
-  iptables:
+  ansible.builtin.iptables:
     chain: FORWARD
     src_range: 192.168.1.100-192.168.1.199
     dst_range: 10.0.0.1-10.0.0.50
     jump: ACCEPT
 
+- name: Allow source IPs defined in ipset "admin_hosts" on port 22
+  ansible.builtin.iptables:
+    chain: INPUT
+    match_set: admin_hosts
+    match_set_flags: src
+    destination_port: 22
+    jump: ALLOW
+
 - name: Tag all outbound tcp packets with DSCP mark 8
-  iptables:
+  ansible.builtin.iptables:
     chain: OUTPUT
     jump: DSCP
     table: mangle
@@ -394,15 +447,26 @@ EXAMPLES = r'''
     protocol: tcp
 
 - name: Tag all outbound tcp packets with DSCP DiffServ class CS1
-  iptables:
+  ansible.builtin.iptables:
     chain: OUTPUT
     jump: DSCP
     table: mangle
     set_dscp_mark_class: CS1
     protocol: tcp
 
+# Create the user-defined chain ALLOWLIST
+- iptables:
+    chain: ALLOWLIST
+    chain_management: true
+
+# Delete the user-defined chain ALLOWLIST
+- iptables:
+    chain: ALLOWLIST
+    chain_management: true
+    state: absent
+
 - name: Insert a rule on line 5
-  iptables:
+  ansible.builtin.iptables:
     chain: INPUT
     protocol: tcp
     destination_port: 8080
@@ -410,20 +474,21 @@ EXAMPLES = r'''
     action: insert
     rule_num: 5
 
+# Think twice before running following task as this may lock target system
 - name: Set the policy for the INPUT chain to DROP
-  iptables:
+  ansible.builtin.iptables:
     chain: INPUT
     policy: DROP
 
 - name: Reject tcp with tcp-reset
-  iptables:
+  ansible.builtin.iptables:
     chain: INPUT
     protocol: tcp
     reject_with: tcp-reset
     ip_version: ipv4
 
 - name: Set tcp flags
-  iptables:
+  ansible.builtin.iptables:
     chain: OUTPUT
     jump: DROP
     protocol: tcp
@@ -436,20 +501,20 @@ EXAMPLES = r'''
         - FIN
 
 - name: Iptables flush filter
-  iptables:
+  ansible.builtin.iptables:
     chain: "{{ item }}"
     flush: yes
   with_items:  [ 'INPUT', 'FORWARD', 'OUTPUT' ]
 
 - name: Iptables flush nat
-  iptables:
+  ansible.builtin.iptables:
     table: nat
     chain: '{{ item }}'
     flush: yes
   with_items: [ 'INPUT', 'OUTPUT', 'PREROUTING', 'POSTROUTING' ]
 
 - name: Log packets arriving into an user-defined chain
-  iptables:
+  ansible.builtin.iptables:
     chain: LOGGING
     action: append
     state: present
@@ -457,11 +522,21 @@ EXAMPLES = r'''
     limit_burst: 20
     log_prefix: "IPTABLES:INFO: "
     log_level: info
+
+- name: Allow connections on multiple ports
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_ports:
+      - "80"
+      - "443"
+      - "8081:8083"
+    jump: ACCEPT
 '''
 
 import re
 
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -540,6 +615,8 @@ def construct_rule(params):
     append_param(rule, params['log_prefix'], '--log-prefix', False)
     append_param(rule, params['log_level'], '--log-level', False)
     append_param(rule, params['to_destination'], '--to-destination', False)
+    append_match(rule, params['destination_ports'], 'multiport')
+    append_csv(rule, params['destination_ports'], '--dports')
     append_param(rule, params['to_source'], '--to-source', False)
     append_param(rule, params['goto'], '-g', False)
     append_param(rule, params['in_interface'], '-i', False)
@@ -556,8 +633,6 @@ def construct_rule(params):
         '--set-dscp-class',
         False)
     append_match_flag(rule, params['syn'], '--syn', True)
-    append_match(rule, params['comment'], 'comment')
-    append_param(rule, params['comment'], '--comment', False)
     if 'conntrack' in params['match']:
         append_csv(rule, params['ctstate'], '--ctstate')
     elif 'state' in params['match']:
@@ -572,6 +647,13 @@ def construct_rule(params):
         append_match(rule, params['src_range'] or params['dst_range'], 'iprange')
         append_param(rule, params['src_range'], '--src-range', False)
         append_param(rule, params['dst_range'], '--dst-range', False)
+    if 'set' in params['match']:
+        append_param(rule, params['match_set'], '--match-set', False)
+        append_match_flag(rule, 'match', params['match_set_flags'], False)
+    elif params['match_set']:
+        append_match(rule, params['match_set'], 'set')
+        append_param(rule, params['match_set'], '--match-set', False)
+        append_match_flag(rule, 'match', params['match_set_flags'], False)
     append_match(rule, params['limit'] or params['limit_burst'], 'limit')
     append_param(rule, params['limit'], '--limit', False)
     append_param(rule, params['limit_burst'], '--limit-burst', False)
@@ -589,6 +671,8 @@ def construct_rule(params):
         params['icmp_type'],
         ICMP_TYPE_OPTIONS[params['ip_version']],
         False)
+    append_match(rule, params['comment'], 'comment')
+    append_param(rule, params['comment'], '--comment', False)
     return rule
 
 
@@ -603,7 +687,7 @@ def push_arguments(iptables_path, action, params, make_rule=True):
     return cmd
 
 
-def check_present(iptables_path, module, params):
+def check_rule_present(iptables_path, module, params):
     cmd = push_arguments(iptables_path, '-C', params)
     rc, _, __ = module.run_command(cmd, check_rc=False)
     return (rc == 0)
@@ -636,7 +720,7 @@ def set_chain_policy(iptables_path, module, params):
 
 
 def get_chain_policy(iptables_path, module, params):
-    cmd = push_arguments(iptables_path, '-L', params)
+    cmd = push_arguments(iptables_path, '-L', params, make_rule=False)
     rc, out, _ = module.run_command(cmd, check_rc=True)
     chain_header = out.split("\n")[0]
     result = re.search(r'\(policy ([A-Z]+)\)', chain_header)
@@ -649,6 +733,22 @@ def get_iptables_version(iptables_path, module):
     cmd = [iptables_path, '--version']
     rc, out, _ = module.run_command(cmd, check_rc=True)
     return out.split('v')[1].rstrip('\n')
+
+
+def create_chain(iptables_path, module, params):
+    cmd = push_arguments(iptables_path, '-N', params, make_rule=False)
+    module.run_command(cmd, check_rc=True)
+
+
+def check_chain_present(iptables_path, module, params):
+    cmd = push_arguments(iptables_path, '-L', params, make_rule=False)
+    rc, _, __ = module.run_command(cmd, check_rc=False)
+    return (rc == 0)
+
+
+def delete_chain(iptables_path, module, params):
+    cmd = push_arguments(iptables_path, '-X', params, make_rule=False)
+    module.run_command(cmd, check_rc=True)
 
 
 def main():
@@ -667,11 +767,11 @@ def main():
             to_source=dict(type='str'),
             destination=dict(type='str'),
             to_destination=dict(type='str'),
-            match=dict(type='list', default=[]),
+            match=dict(type='list', elements='str', default=[]),
             tcp_flags=dict(type='dict',
                            options=dict(
-                                flags=dict(type='list'),
-                                flags_set=dict(type='list'))
+                                flags=dict(type='list', elements='str'),
+                                flags_set=dict(type='list', elements='str'))
                            ),
             jump=dict(type='str'),
             gateway=dict(type='str'),
@@ -689,13 +789,16 @@ def main():
             set_counters=dict(type='str'),
             source_port=dict(type='str'),
             destination_port=dict(type='str'),
+            destination_ports=dict(type='list', elements='str', default=[]),
             to_ports=dict(type='str'),
             set_dscp_mark=dict(type='str'),
             set_dscp_mark_class=dict(type='str'),
             comment=dict(type='str'),
-            ctstate=dict(type='list', default=[]),
+            ctstate=dict(type='list', elements='str', default=[]),
             src_range=dict(type='str'),
             dst_range=dict(type='str'),
+            match_set=dict(type='str'),
+            match_set_flags=dict(type='str', choices=['src', 'dst', 'src,dst', 'dst,src']),
             limit=dict(type='str'),
             limit_burst=dict(type='str'),
             uid_owner=dict(type='str'),
@@ -705,6 +808,7 @@ def main():
             syn=dict(type='str', default='ignore', choices=['ignore', 'match', 'negate']),
             flush=dict(type='bool', default=False),
             policy=dict(type='str', choices=['ACCEPT', 'DROP', 'QUEUE', 'RETURN']),
+            chain_management=dict(type='bool', default=False),
         ),
         mutually_exclusive=(
             ['set_dscp_mark', 'set_dscp_mark_class'],
@@ -724,6 +828,7 @@ def main():
         flush=module.params['flush'],
         rule=' '.join(construct_rule(module.params)),
         state=module.params['state'],
+        chain_management=module.params['chain_management'],
     )
 
     ip_version = module.params['ip_version']
@@ -765,9 +870,24 @@ def main():
         if changed and not module.check_mode:
             set_chain_policy(iptables_path, module, module.params)
 
+    # Delete the chain if there is no rule in the arguments
+    elif (args['state'] == 'absent') and not args['rule']:
+        chain_is_present = check_chain_present(
+            iptables_path, module, module.params
+        )
+        args['changed'] = chain_is_present
+
+        if (chain_is_present and args['chain_management'] and not module.check_mode):
+            delete_chain(iptables_path, module, module.params)
+
     else:
         insert = (module.params['action'] == 'insert')
-        rule_is_present = check_present(iptables_path, module, module.params)
+        rule_is_present = check_rule_present(
+            iptables_path, module, module.params
+        )
+        chain_is_present = rule_is_present or check_chain_present(
+            iptables_path, module, module.params
+        )
         should_be_present = (args['state'] == 'present')
 
         # Check if target is up to date
@@ -779,6 +899,9 @@ def main():
         # Check only; don't modify
         if not module.check_mode:
             if should_be_present:
+                if not chain_is_present and args['chain_management']:
+                    create_chain(iptables_path, module, module.params)
+
                 if insert:
                     insert_rule(iptables_path, module, module.params)
                 else:

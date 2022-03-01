@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
@@ -17,24 +16,24 @@ description:
 version_added: "0.7"
 author:
 - Dane Summers (@dsummersl) <njharman@gmail.com>
-notes:
-   - Requires I(svn) to be installed on the client.
-   - This module does not handle externals.
 options:
   repo:
     description:
       - The subversion URL to the repository.
+    type: str
     required: true
     aliases: [ name, repository ]
   dest:
     description:
       - Absolute path where the repository should be deployed.
-    required: true
+      - The destination directory must be specified unless I(checkout=no), I(update=no), and I(export=no).
+    type: path
   revision:
     description:
       - Specific revision to checkout.
+    type: str
     default: HEAD
-    aliases: [ version ]
+    aliases: [ rev, version ]
   force:
     description:
       - If C(yes), modified files will be discarded. If C(no), module will fail if it encounters modified files.
@@ -44,22 +43,25 @@ options:
   in_place:
     description:
       - If the directory exists, then the working copy will be checked-out over-the-top using
-        svn checkout --force; if force is specified then existing files with different content are reverted
+        svn checkout --force; if force is specified then existing files with different content are reverted.
     type: bool
     default: "no"
     version_added: "2.6"
   username:
     description:
       - C(--username) parameter passed to svn.
+    type: str
   password:
     description:
       - C(--password) parameter passed to svn when svn is less than version 1.10.0. This is not secure and
         the password will be leaked to argv.
       - C(--password-from-stdin) parameter when svn is greater or equal to version 1.10.0.
+    type: str
   executable:
     description:
       - Path to svn executable to use. If not supplied,
         the normal mechanism for resolving binary paths will be used.
+    type: path
     version_added: "1.4"
   checkout:
     description:
@@ -85,6 +87,23 @@ options:
     default: "yes"
     version_added: "2.0"
     type: bool
+  validate_certs:
+    description:
+      - If C(no), passes the C(--trust-server-cert) flag to svn.
+      - If C(yes), does not pass the flag.
+    default: "no"
+    version_added: "2.11"
+    type: bool
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
+notes:
+   - This module does not handle externals.
 
 requirements:
     - subversion (the command line tool with C(svn) entrypoint)
@@ -92,34 +111,43 @@ requirements:
 
 EXAMPLES = '''
 - name: Checkout subversion repository to specified folder
-  subversion:
+  ansible.builtin.subversion:
     repo: svn+ssh://an.example.org/path/to/repo
     dest: /src/checkout
 
 - name: Export subversion directory to folder
-  subversion:
+  ansible.builtin.subversion:
     repo: svn+ssh://an.example.org/path/to/repo
     dest: /src/export
     export: yes
 
 - name: Get information about the repository whether or not it has already been cloned locally
-- subversion:
+  ansible.builtin.subversion:
     repo: svn+ssh://an.example.org/path/to/repo
     dest: /src/checkout
     checkout: no
     update: no
 '''
 
+RETURN = r'''#'''
+
 import os
 import re
 
-from distutils.version import LooseVersion
-
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.locale import get_best_parsable_locale
+from ansible.module_utils.compat.version import LooseVersion
 
 
 class Subversion(object):
-    def __init__(self, module, dest, repo, revision, username, password, svn_path):
+
+    # Example text matched by the regexp:
+    #  Révision : 1889134
+    #  版本: 1889134
+    #  Revision: 1889134
+    REVISION_RE = r'^\w+\s?:\s+\d+$'
+
+    def __init__(self, module, dest, repo, revision, username, password, svn_path, validate_certs):
         self.module = module
         self.dest = dest
         self.repo = repo
@@ -127,6 +155,7 @@ class Subversion(object):
         self.username = username
         self.password = password
         self.svn_path = svn_path
+        self.validate_certs = validate_certs
 
     def has_option_password_from_stdin(self):
         rc, version, err = self.module.run_command([self.svn_path, '--version', '--quiet'], check_rc=True)
@@ -137,9 +166,10 @@ class Subversion(object):
         bits = [
             self.svn_path,
             '--non-interactive',
-            '--trust-server-cert',
             '--no-auth-cache',
         ]
+        if not self.validate_certs:
+            bits.append('--trust-server-cert')
         stdin_data = None
         if self.username:
             bits.extend(["--username", self.username])
@@ -211,14 +241,28 @@ class Subversion(object):
     def get_revision(self):
         '''Revision and URL of subversion working directory.'''
         text = '\n'.join(self._exec(["info", self.dest]))
-        rev = re.search(r'^Revision:.*$', text, re.MULTILINE).group(0)
-        url = re.search(r'^URL:.*$', text, re.MULTILINE).group(0)
+        rev = re.search(self.REVISION_RE, text, re.MULTILINE)
+        if rev:
+            rev = rev.group(0)
+        else:
+            rev = 'Unable to get revision'
+
+        url = re.search(r'^URL\s?:.*$', text, re.MULTILINE)
+        if url:
+            url = url.group(0)
+        else:
+            url = 'Unable to get URL'
+
         return rev, url
 
     def get_remote_revision(self):
         '''Revision and URL of subversion working directory.'''
         text = '\n'.join(self._exec(["info", self.repo]))
-        rev = re.search(r'^Revision:.*$', text, re.MULTILINE).group(0)
+        rev = re.search(self.REVISION_RE, text, re.MULTILINE)
+        if rev:
+            rev = rev.group(0)
+        else:
+            rev = 'Unable to get remote revision'
         return rev
 
     def has_local_mods(self):
@@ -233,7 +277,11 @@ class Subversion(object):
     def needs_update(self):
         curr, url = self.get_revision()
         out2 = '\n'.join(self._exec(["info", "-r", self.revision, self.dest]))
-        head = re.search(r'^Revision:.*$', out2, re.MULTILINE).group(0)
+        head = re.search(self.REVISION_RE, out2, re.MULTILINE)
+        if head:
+            head = head.group(0)
+        else:
+            head = 'Unable to get revision'
         rev1 = int(curr.split(':')[1].strip())
         rev2 = int(head.split(':')[1].strip())
         change = False
@@ -257,6 +305,7 @@ def main():
             update=dict(type='bool', default=True),
             switch=dict(type='bool', default=True),
             in_place=dict(type='bool', default=False),
+            validate_certs=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
     )
@@ -273,15 +322,17 @@ def main():
     checkout = module.params['checkout']
     update = module.params['update']
     in_place = module.params['in_place']
+    validate_certs = module.params['validate_certs']
 
     # We screenscrape a huge amount of svn commands so use C locale anytime we
     # call run_command()
-    module.run_command_environ_update = dict(LANG='C', LC_MESSAGES='C')
+    locale = get_best_parsable_locale(module)
+    module.run_command_environ_update = dict(LANG=locale, LC_MESSAGES=locale)
 
     if not dest and (checkout or update or export):
         module.fail_json(msg="the destination directory must be specified unless checkout=no, update=no, and export=no")
 
-    svn = Subversion(module, dest, repo, revision, username, password, svn_path)
+    svn = Subversion(module, dest, repo, revision, username, password, svn_path, validate_certs)
 
     if not export and not update and not checkout:
         module.exit_json(changed=False, after=svn.get_remote_revision())

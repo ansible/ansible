@@ -25,9 +25,11 @@ The magic of 'local' paths
 
 Lookups and action plugins both use a special 'search magic' to find things, taking the current play into account, it uses from most specific to most general playbook dir in which a task is contained (this includes roles and includes).
 
-Using this magic, relative paths get attempted first with a 'files|templates|vars' appended (if not already present), depending on action being taken, 'files' is the default. (i.e include_vars will use vars/).  The paths will be searched from most specific to most general (i.e role before play).
-dependent roles WILL be traversed (i.e task is in role2, role2 is a dependency of role1, role2 will be looked at first, then role1, then play).
-i.e ::
+Using this magic, relative paths get attempted first with a 'files|templates|vars' appended (if not already present), depending on action being taken, 'files' is the default. (in other words, include_vars will use vars/).  The paths will be searched from most specific to most general (in other words, role before play).
+dependent roles WILL be traversed (in other words, task is in role2, role2 is a dependency of role1, role2 will be looked at first, then role1, then play).
+i.e :
+
+.. code-block:: text
 
     role search path is rolename/{files|vars|templates}/, rolename/tasks/.
     play search path is playdir/{files|vars|templates}/, playdir/.
@@ -39,4 +41,4 @@ As for includes, they try the path of the included file first and fall back to t
 
 
 
-.. note:  The current working directory might vary depending on the connection plugin and if the action is local or remote. For the remote it is normally the directory on which the login shell puts the user. For local it is either the directory you executed ansible from or in some cases the playbook directory.
+.. note::  The current working directory might vary depending on the connection plugin and if the action is local or remote. For the remote it is normally the directory on which the login shell puts the user. For local it is either the directory you executed ansible from or in some cases the playbook directory.

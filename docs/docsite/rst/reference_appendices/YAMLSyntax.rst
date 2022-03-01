@@ -66,7 +66,7 @@ Dictionaries and lists can also be represented in an abbreviated form if you rea
 
     ---
     martin: {name: Martin D'vloper, job: Developer, skill: Elite}
-    ['Apple', 'Orange', 'Strawberry', 'Mango']
+    fruits: ['Apple', 'Orange', 'Strawberry', 'Mango']
 
 These are called "Flow collections".
 
@@ -107,7 +107,10 @@ While in the above ``>`` example all newlines are folded into spaces, there are 
         d
           e
         f
-    same_as: "a b\nc d\n  e\nf\n"
+
+Alternatively, it can be enforced by including newline ``\n`` characters::
+
+    fold_same_newlines: "a b\nc d\n  e\nf\n"
 
 Let's combine what we learned so far in an arbitrary YAML example.
 This really has nothing to do with Ansible, but will give you a feel for the format::
@@ -233,8 +236,8 @@ value::
        A good guide to YAML syntax
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel and #yaml for YAML specific questions
+   :ref:`communication_irc`
+       How to join Ansible chat channels (join #yaml for yaml-specific questions)
    `YAML 1.1 Specification <https://yaml.org/spec/1.1/>`_
        The Specification for YAML 1.1, which PyYAML and libyaml are currently
        implementing

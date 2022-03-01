@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2013, Evan Kaufman <evan@digitalflophouse.com
@@ -14,8 +13,21 @@ DOCUMENTATION = r'''
 module: replace
 author: Evan Kaufman (@EvanK)
 extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.files
     - files
     - validate
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    platform:
+        platforms: posix
+    safe_file_operations:
+        support: full
+    vault:
+        support: none
 short_description: Replace all instances of a particular string in a
                    file using a back-referenced regular expression
 description:
@@ -35,7 +47,7 @@ options:
     description:
       - The regular expression to look for in the contents of the file.
       - Uses Python regular expressions; see
-        U(http://docs.python.org/2/library/re.html).
+        U(https://docs.python.org/3/library/re.html).
       - Uses MULTILINE mode, which means C(^) and C($) match the beginning
         and end of the file, as well as the beginning and end respectively
         of I(each line) of the file.
@@ -60,7 +72,7 @@ options:
       - If specified, only content after this match will be replaced/removed.
       - Can be used in combination with C(before).
       - Uses Python regular expressions; see
-        U(http://docs.python.org/2/library/re.html).
+        U(https://docs.python.org/3/library/re.html).
       - Uses DOTALL, which means the C(.) special character I(can match newlines).
     type: str
     version_added: "2.4"
@@ -69,7 +81,7 @@ options:
       - If specified, only content before this match will be replaced/removed.
       - Can be used in combination with C(after).
       - Uses Python regular expressions; see
-        U(http://docs.python.org/2/library/re.html).
+        U(https://docs.python.org/3/library/re.html).
       - Uses DOTALL, which means the C(.) special character I(can match newlines).
     type: str
     version_added: "2.4"
@@ -81,7 +93,7 @@ options:
     default: no
   others:
     description:
-      - All arguments accepted by the M(file) module also work here.
+      - All arguments accepted by the M(ansible.builtin.file) module also work here.
     type: str
   encoding:
     description:
@@ -99,20 +111,20 @@ notes:
 
 EXAMPLES = r'''
 - name: Before Ansible 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
-  replace:
+  ansible.builtin.replace:
     path: /etc/hosts
     regexp: '(\s+)old\.host\.name(\s+.*)?$'
     replace: '\1new.host.name\2'
 
 - name: Replace after the expression till the end of the file (requires Ansible >= 2.4)
-  replace:
+  ansible.builtin.replace:
     path: /etc/apache2/sites-available/default.conf
     after: 'NameVirtualHost [*]'
     regexp: '^(.+)$'
     replace: '# \1'
 
 - name: Replace before the expression till the begin of the file (requires Ansible >= 2.4)
-  replace:
+  ansible.builtin.replace:
     path: /etc/apache2/sites-available/default.conf
     before: '# live site config'
     regexp: '^(.+)$'
@@ -121,7 +133,7 @@ EXAMPLES = r'''
 # Prior to Ansible 2.7.10, using before and after in combination did the opposite of what was intended.
 # see https://github.com/ansible/ansible/issues/31354 for details.
 - name: Replace between the expressions (requires Ansible >= 2.4)
-  replace:
+  ansible.builtin.replace:
     path: /etc/hosts
     after: '<VirtualHost [*]>'
     before: '</VirtualHost>'
@@ -129,7 +141,7 @@ EXAMPLES = r'''
     replace: '# \1'
 
 - name: Supports common file attributes
-  replace:
+  ansible.builtin.replace:
     path: /home/jdoe/.ssh/known_hosts
     regexp: '^old\.host\.name[^\n]*\n'
     owner: jdoe
@@ -137,37 +149,40 @@ EXAMPLES = r'''
     mode: '0644'
 
 - name: Supports a validate command
-  replace:
+  ansible.builtin.replace:
     path: /etc/apache/ports
     regexp: '^(NameVirtualHost|Listen)\s+80\s*$'
     replace: '\1 127.0.0.1:8080'
     validate: '/usr/sbin/apache2ctl -f %s -t'
 
 - name: Short form task (in ansible 2+) necessitates backslash-escaped sequences
-  replace: path=/etc/hosts regexp='\\b(localhost)(\\d*)\\b' replace='\\1\\2.localdomain\\2 \\1\\2'
+  ansible.builtin.replace: path=/etc/hosts regexp='\\b(localhost)(\\d*)\\b' replace='\\1\\2.localdomain\\2 \\1\\2'
 
 - name: Long form task does not
-  replace:
+  ansible.builtin.replace:
     path: /etc/hosts
     regexp: '\b(localhost)(\d*)\b'
     replace: '\1\2.localdomain\2 \1\2'
 
 - name: Explicitly specifying positional matched groups in replacement
-  replace:
+  ansible.builtin.replace:
     path: /etc/ssh/sshd_config
     regexp: '^(ListenAddress[ ]+)[^\n]+$'
     replace: '\g<1>0.0.0.0'
 
 - name: Explicitly specifying named matched groups
-  replace:
+  ansible.builtin.replace:
     path: /etc/ssh/sshd_config
     regexp: '^(?P<dctv>ListenAddress[ ]+)(?P<host>[^\n]+)$'
     replace: '#\g<dctv>\g<host>\n\g<dctv>0.0.0.0'
 '''
 
+RETURN = r'''#'''
+
 import os
 import re
 import tempfile
+from traceback import format_exc
 
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.module_utils.basic import AnsibleModule
@@ -226,7 +241,7 @@ def main():
     params = module.params
     path = params['path']
     encoding = params['encoding']
-    res_args = dict()
+    res_args = dict(rc=0)
 
     params['after'] = to_text(params['after'], errors='surrogate_or_strict', nonstring='passthru')
     params['before'] = to_text(params['before'], errors='surrogate_or_strict', nonstring='passthru')
@@ -239,9 +254,12 @@ def main():
     if not os.path.exists(path):
         module.fail_json(rc=257, msg='Path %s does not exist !' % path)
     else:
-        f = open(path, 'rb')
-        contents = to_text(f.read(), errors='surrogate_or_strict', encoding=encoding)
-        f.close()
+        try:
+            with open(path, 'rb') as f:
+                contents = to_text(f.read(), errors='surrogate_or_strict', encoding=encoding)
+        except (OSError, IOError) as e:
+            module.fail_json(msg='Unable to read the contents of %s: %s' % (path, to_text(e)),
+                             exception=format_exc())
 
     pattern = u''
     if params['after'] and params['before']:

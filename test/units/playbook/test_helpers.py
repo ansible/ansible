@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 
 from units.compat import unittest
-from units.compat.mock import MagicMock
+from mock import MagicMock
 from units.mock.loader import DictDataLoader
 
 from ansible import errors
@@ -107,30 +107,30 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
 
     def test_empty_task(self):
         ds = [{}]
-        self.assertRaisesRegexp(errors.AnsibleParserError,
-                                "no module/action detected in task",
-                                helpers.load_list_of_tasks,
-                                ds, play=self.mock_play,
-                                variable_manager=self.mock_variable_manager, loader=self.fake_loader)
+        self.assertRaisesRegex(errors.AnsibleParserError,
+                               "no module/action detected in task",
+                               helpers.load_list_of_tasks,
+                               ds, play=self.mock_play,
+                               variable_manager=self.mock_variable_manager, loader=self.fake_loader)
 
     def test_empty_task_use_handlers(self):
         ds = [{}]
-        self.assertRaisesRegexp(errors.AnsibleParserError,
-                                "no module/action detected in task.",
-                                helpers.load_list_of_tasks,
-                                ds,
-                                use_handlers=True,
-                                play=self.mock_play,
-                                variable_manager=self.mock_variable_manager,
-                                loader=self.fake_loader)
+        self.assertRaisesRegex(errors.AnsibleParserError,
+                               "no module/action detected in task.",
+                               helpers.load_list_of_tasks,
+                               ds,
+                               use_handlers=True,
+                               play=self.mock_play,
+                               variable_manager=self.mock_variable_manager,
+                               loader=self.fake_loader)
 
     def test_one_bogus_block(self):
         ds = [{'block': None}]
-        self.assertRaisesRegexp(errors.AnsibleParserError,
-                                "A malformed block was encountered",
-                                helpers.load_list_of_tasks,
-                                ds, play=self.mock_play,
-                                variable_manager=self.mock_variable_manager, loader=self.fake_loader)
+        self.assertRaisesRegex(errors.AnsibleParserError,
+                               "A malformed block was encountered",
+                               helpers.load_list_of_tasks,
+                               ds, play=self.mock_play,
+                               variable_manager=self.mock_variable_manager, loader=self.fake_loader)
 
     def test_unknown_action(self):
         action_name = 'foo_test_unknown_action'
@@ -172,11 +172,11 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
 
     def test_one_bogus_block_use_handlers(self):
         ds = [{'block': True}]
-        self.assertRaisesRegexp(errors.AnsibleParserError,
-                                "A malformed block was encountered",
-                                helpers.load_list_of_tasks,
-                                ds, play=self.mock_play, use_handlers=True,
-                                variable_manager=self.mock_variable_manager, loader=self.fake_loader)
+        self.assertRaisesRegex(errors.AnsibleParserError,
+                               "A malformed block was encountered",
+                               helpers.load_list_of_tasks,
+                               ds, play=self.mock_play, use_handlers=True,
+                               variable_manager=self.mock_variable_manager, loader=self.fake_loader)
 
     def test_one_bogus_include(self):
         ds = [{'include': 'somefile.yml'}]
@@ -193,8 +193,7 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         self.assertEqual(len(res), 0)
 
     def test_one_bogus_include_static(self):
-        ds = [{'include': 'somefile.yml',
-               'static': 'true'}]
+        ds = [{'import_tasks': 'somefile.yml'}]
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
                                          variable_manager=self.mock_variable_manager, loader=self.fake_loader)
         self.assertIsInstance(res, list)
@@ -241,28 +240,6 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
         self.assertIn('test_one_parent_include_tags_tag1', res[0].tags)
         self.assertIn('and_another_tag2', res[0].tags)
 
-    # It would be useful to be able to tell what kind of deprecation we encountered and where we encountered it.
-    def test_one_include_tags_deprecated_mixed(self):
-        ds = [{'include': "/dev/null/includes/other_test_include.yml",
-               'vars': {'tags': "['tag_on_include1', 'tag_on_include2']"},
-               'tags': 'mixed_tag1, mixed_tag2'
-               }]
-        self.assertRaisesRegexp(errors.AnsibleParserError, 'Mixing styles',
-                                helpers.load_list_of_tasks,
-                                ds, play=self.mock_play,
-                                variable_manager=self.mock_variable_manager, loader=self.fake_include_loader)
-
-    def test_one_include_tags_deprecated_include(self):
-        ds = [{'include': '/dev/null/includes/other_test_include.yml',
-               'vars': {'tags': ['include_tag1_deprecated', 'and_another_tagB_deprecated']}
-               }]
-        res = helpers.load_list_of_tasks(ds, play=self.mock_play,
-                                         variable_manager=self.mock_variable_manager, loader=self.fake_include_loader)
-        self._assert_is_task_list_or_blocks(res)
-        self.assertIsInstance(res[0], Block)
-        self.assertIn('include_tag1_deprecated', res[0].tags)
-        self.assertIn('and_another_tagB_deprecated', res[0].tags)
-
     def test_one_include_use_handlers(self):
         ds = [{'include': '/dev/null/includes/other_test_include.yml'}]
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
@@ -286,11 +263,10 @@ class TestLoadListOfTasks(unittest.TestCase, MixinForMocks):
     #  figure out how to get the non-static errors to be raised, this seems to just ignore everything
     def test_one_include_not_static(self):
         ds = [{
-            'include': '/dev/null/includes/static_test_include.yml',
-            'static': False
+            'include_tasks': '/dev/null/includes/static_test_include.yml',
         }]
         # a_block = Block()
-        ti_ds = {'include': '/dev/null/includes/ssdftatic_test_include.yml'}
+        ti_ds = {'include_tasks': '/dev/null/includes/ssdftatic_test_include.yml'}
         a_task_include = TaskInclude()
         ti = a_task_include.load(ti_ds)
         res = helpers.load_list_of_tasks(ds, play=self.mock_play,
@@ -344,11 +320,11 @@ class TestLoadListOfRoles(unittest.TestCase, MixinForMocks):
 
     def test_empty_role(self):
         ds = [{}]
-        self.assertRaisesRegexp(errors.AnsibleError,
-                                "role definitions must contain a role name",
-                                helpers.load_list_of_roles,
-                                ds, self.mock_play,
-                                variable_manager=self.mock_variable_manager, loader=self.fake_role_loader)
+        self.assertRaisesRegex(errors.AnsibleError,
+                               "role definitions must contain a role name",
+                               helpers.load_list_of_roles,
+                               ds, self.mock_play,
+                               variable_manager=self.mock_variable_manager, loader=self.fake_role_loader)
 
     def test_empty_role_just_name(self):
         ds = [{'name': 'bogus_role'}]
@@ -383,16 +359,16 @@ class TestLoadListOfBlocks(unittest.TestCase, MixinForMocks):
     def test_empty_block(self):
         ds = [{}]
         mock_play = MagicMock(name='MockPlay')
-        self.assertRaisesRegexp(errors.AnsibleParserError,
-                                "no module/action detected in task",
-                                helpers.load_list_of_blocks,
-                                ds, mock_play,
-                                parent_block=None,
-                                role=None,
-                                task_include=None,
-                                use_handlers=False,
-                                variable_manager=None,
-                                loader=None)
+        self.assertRaisesRegex(errors.AnsibleParserError,
+                               "no module/action detected in task",
+                               helpers.load_list_of_blocks,
+                               ds, mock_play,
+                               parent_block=None,
+                               role=None,
+                               task_include=None,
+                               use_handlers=False,
+                               variable_manager=None,
+                               loader=None)
 
     def test_block_unknown_action(self):
         ds = [{'action': 'foo', 'collections': []}]

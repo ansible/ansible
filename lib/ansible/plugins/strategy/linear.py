@@ -19,7 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    strategy: linear
+    name: linear
     short_description: Executes tasks in a linear fashion
     description:
         - Task execution is in lockstep per host batch as defined by C(serial) (default all).
@@ -31,9 +31,9 @@ DOCUMENTATION = '''
     author: Ansible Core Team
 '''
 
-from ansible.errors import AnsibleError, AnsibleAssertionError
-from ansible.executor.play_iterator import PlayIterator
-from ansible.module_utils.six import iteritems
+from ansible import constants as C
+from ansible.errors import AnsibleError, AnsibleAssertionError, AnsibleParserError
+from ansible.executor.play_iterator import IteratingStates, FailedStates
 from ansible.module_utils._text import to_text
 from ansible.playbook.block import Block
 from ansible.playbook.included_file import IncludedFile
@@ -74,6 +74,7 @@ class StrategyModule(StrategyBase):
         self.noop_task = Task()
         self.noop_task.action = 'meta'
         self.noop_task.args['_raw_params'] = 'noop'
+        self.noop_task.implicit = True
         self.noop_task.set_loader(iterator._play._loader)
 
         return self._create_noop_block_from(original_block, parent)
@@ -88,6 +89,7 @@ class StrategyModule(StrategyBase):
         noop_task = Task()
         noop_task.action = 'meta'
         noop_task.args['_raw_params'] = 'noop'
+        noop_task.implicit = True
         noop_task.set_loader(iterator._play._loader)
 
         host_tasks = {}
@@ -103,14 +105,14 @@ class StrategyModule(StrategyBase):
 
         display.debug("counting tasks in each state of execution")
         host_tasks_to_run = [(host, state_task)
-                             for host, state_task in iteritems(host_tasks)
+                             for host, state_task in host_tasks.items()
                              if state_task and state_task[1]]
 
         if host_tasks_to_run:
             try:
                 lowest_cur_block = min(
                     (iterator.get_active_state(s).cur_block for h, (s, t) in host_tasks_to_run
-                     if s.run_state != PlayIterator.ITERATING_COMPLETE))
+                     if s.run_state != IteratingStates.COMPLETE))
             except ValueError:
                 lowest_cur_block = None
         else:
@@ -126,13 +128,13 @@ class StrategyModule(StrategyBase):
                 # Not the current block, ignore it
                 continue
 
-            if s.run_state == PlayIterator.ITERATING_SETUP:
+            if s.run_state == IteratingStates.SETUP:
                 num_setups += 1
-            elif s.run_state == PlayIterator.ITERATING_TASKS:
+            elif s.run_state == IteratingStates.TASKS:
                 num_tasks += 1
-            elif s.run_state == PlayIterator.ITERATING_RESCUE:
+            elif s.run_state == IteratingStates.RESCUE:
                 num_rescue += 1
-            elif s.run_state == PlayIterator.ITERATING_ALWAYS:
+            elif s.run_state == IteratingStates.ALWAYS:
                 num_always += 1
         display.debug("done counting tasks in each state of execution:\n\tnum_setups: %s\n\tnum_tasks: %s\n\tnum_rescue: %s\n\tnum_always: %s" % (num_setups,
                                                                                                                                                   num_tasks,
@@ -154,43 +156,43 @@ class StrategyModule(StrategyBase):
                 host_state_task = host_tasks.get(host.name)
                 if host_state_task is None:
                     continue
-                (s, t) = host_state_task
-                s = iterator.get_active_state(s)
-                if t is None:
+                (state, task) = host_state_task
+                s = iterator.get_active_state(state)
+                if task is None:
                     continue
                 if s.run_state == cur_state and s.cur_block == cur_block:
-                    new_t = iterator.get_next_task_for_host(host)
-                    rvals.append((host, t))
+                    iterator.set_state_for_host(host.name, state)
+                    rvals.append((host, task))
                 else:
                     rvals.append((host, noop_task))
             display.debug("done advancing hosts to next task")
             return rvals
 
-        # if any hosts are in ITERATING_SETUP, return the setup task
+        # if any hosts are in SETUP, return the setup task
         # while all other hosts get a noop
         if num_setups:
-            display.debug("advancing hosts in ITERATING_SETUP")
-            return _advance_selected_hosts(hosts, lowest_cur_block, PlayIterator.ITERATING_SETUP)
+            display.debug("advancing hosts in SETUP")
+            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.SETUP)
 
-        # if any hosts are in ITERATING_TASKS, return the next normal
+        # if any hosts are in TASKS, return the next normal
         # task for these hosts, while all other hosts get a noop
         if num_tasks:
-            display.debug("advancing hosts in ITERATING_TASKS")
-            return _advance_selected_hosts(hosts, lowest_cur_block, PlayIterator.ITERATING_TASKS)
+            display.debug("advancing hosts in TASKS")
+            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.TASKS)
 
-        # if any hosts are in ITERATING_RESCUE, return the next rescue
+        # if any hosts are in RESCUE, return the next rescue
         # task for these hosts, while all other hosts get a noop
         if num_rescue:
-            display.debug("advancing hosts in ITERATING_RESCUE")
-            return _advance_selected_hosts(hosts, lowest_cur_block, PlayIterator.ITERATING_RESCUE)
+            display.debug("advancing hosts in RESCUE")
+            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.RESCUE)
 
-        # if any hosts are in ITERATING_ALWAYS, return the next always
+        # if any hosts are in ALWAYS, return the next always
         # task for these hosts, while all other hosts get a noop
         if num_always:
-            display.debug("advancing hosts in ITERATING_ALWAYS")
-            return _advance_selected_hosts(hosts, lowest_cur_block, PlayIterator.ITERATING_ALWAYS)
+            display.debug("advancing hosts in ALWAYS")
+            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.ALWAYS)
 
-        # at this point, everything must be ITERATING_COMPLETE, so we
+        # at this point, everything must be COMPLETE, so we
         # return None for all hosts in the list
         display.debug("all hosts are done, so returning None's for all hosts")
         return [(host, None) for host in hosts]
@@ -260,20 +262,20 @@ class StrategyModule(StrategyBase):
                     # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
                     # will only send this task to the first host in the list.
 
-                    task.action = templar.template(task.action)
+                    task_action = templar.template(task.action)
 
                     try:
-                        action = action_loader.get(task.action, class_only=True)
+                        action = action_loader.get(task_action, class_only=True, collection_list=task.collections)
                     except KeyError:
                         # we don't care here, because the action may simply not have a
                         # corresponding action plugin
                         action = None
 
-                    if task.action == 'meta':
+                    if task_action in C._ACTION_META:
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
                         results.extend(self._execute_meta(task, play_context, iterator, host))
-                        if task.args.get('_raw_params', None) not in ('noop', 'reset_connection', 'end_host'):
+                        if task.args.get('_raw_params', None) not in ('noop', 'reset_connection', 'end_host', 'role_complete'):
                             run_once = True
                         if (task.any_errors_fatal or run_once) and not task.ignore_errors:
                             any_errors_fatal = True
@@ -337,7 +339,6 @@ class StrategyModule(StrategyBase):
                     variable_manager=self._variable_manager
                 )
 
-                include_failure = False
                 if len(included_files) > 0:
                     display.debug("we have included files to process")
 
@@ -364,7 +365,7 @@ class StrategyModule(StrategyBase):
                             for new_block in new_blocks:
                                 task_vars = self._variable_manager.get_vars(
                                     play=iterator._play,
-                                    task=new_block._parent,
+                                    task=new_block.get_first_parent_include(),
                                     _hosts=self._hosts_cache,
                                     _hosts_all=self._hosts_cache_all,
                                 )
@@ -380,13 +381,16 @@ class StrategyModule(StrategyBase):
                                     else:
                                         all_blocks[host].append(noop_block)
                             display.debug("done iterating over new_blocks loaded from include file")
-
+                        except AnsibleParserError:
+                            raise
                         except AnsibleError as e:
+                            for r in included_file._results:
+                                r._result['failed'] = True
+
                             for host in included_file._hosts:
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
                             display.error(to_text(e), wrap_text=False)
-                            include_failure = True
                             continue
 
                     # finally go through all of the hosts and append the
@@ -407,21 +411,21 @@ class StrategyModule(StrategyBase):
                 for res in results:
                     # execute_meta() does not set 'failed' in the TaskResult
                     # so we skip checking it with the meta tasks and look just at the iterator
-                    if (res.is_failed() or res._task.action == 'meta') and iterator.is_failed(res._host):
+                    if (res.is_failed() or res._task.action in C._ACTION_META) and iterator.is_failed(res._host):
                         failed_hosts.append(res._host.name)
                     elif res.is_unreachable():
                         unreachable_hosts.append(res._host.name)
 
                 # if any_errors_fatal and we had an error, mark all hosts as failed
                 if any_errors_fatal and (len(failed_hosts) > 0 or len(unreachable_hosts) > 0):
-                    dont_fail_states = frozenset([iterator.ITERATING_RESCUE, iterator.ITERATING_ALWAYS])
+                    dont_fail_states = frozenset([IteratingStates.RESCUE, IteratingStates.ALWAYS])
                     for host in hosts_left:
                         (s, _) = iterator.get_next_task_for_host(host, peek=True)
                         # the state may actually be in a child state, use the get_active_state()
                         # method in the iterator to figure out the true active state
                         s = iterator.get_active_state(s)
                         if s.run_state not in dont_fail_states or \
-                           s.run_state == iterator.ITERATING_RESCUE and s.fail_state & iterator.FAILED_RESCUE != 0:
+                           s.run_state == IteratingStates.RESCUE and s.fail_state & FailedStates.RESCUE != 0:
                             self._tqm._failed_hosts[host.name] = True
                             result |= self._tqm.RUN_FAILED_BREAK_PLAY
                 display.debug("done checking for any_errors_fatal")

@@ -1,4 +1,3 @@
-#!/usr/bin/python
 
 # Copyright: (c) 2014, Matthew Vernon <mcv21@cam.ac.uk>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -14,8 +13,8 @@ short_description: Add or remove a host from the C(known_hosts) file
 description:
    - The C(known_hosts) module lets you add or remove a host keys from the C(known_hosts) file.
    - Starting at Ansible 2.2, multiple entries per host are allowed, but only one for each key type supported by ssh.
-     This is useful if you're going to want to use the M(git) module over ssh, for example.
-   - If you have a very large number of host keys to manage, you will find the M(template) module more useful.
+     This is useful if you're going to want to use the M(ansible.builtin.git) module over ssh, for example.
+   - If you have a very large number of host keys to manage, you will find the M(ansible.builtin.template) module more useful.
 version_added: "1.9"
 options:
   name:
@@ -24,8 +23,8 @@ options:
       - The host to add or remove (must match a host specified in key). It will be converted to lowercase so that ssh-keygen can find it.
       - Must match with <hostname> or <ip> present in key attribute.
       - For custom SSH port, C(name) needs to specify port as well. See example section.
-    required: true
     type: str
+    required: true
   key:
     description:
       - The SSH public host key, as a string.
@@ -34,12 +33,13 @@ options:
       - Specifically, the key should not match the format that is found in an SSH pubkey file, but should rather have the hostname prepended to a
         line that includes the pubkey, the same way that it would appear in the known_hosts file. The value prepended to the line must also match
         the value of the name parameter.
-      - Should be of format `<hostname[,IP]> ssh-rsa <pubkey>`.
+      - Should be of format C(<hostname[,IP]> ssh-rsa <pubkey>).
       - For custom SSH port, C(key) needs to specify port as well. See example section.
     type: str
   path:
     description:
       - The known_hosts file to edit.
+      - The known_hosts file will be created if needed. The rest of the path must exist prior to running the module.
     default: "~/.ssh/known_hosts"
     type: path
   hash_host:
@@ -55,26 +55,35 @@ options:
     choices: [ "absent", "present" ]
     default: "present"
     type: str
+attributes:
+  check_mode:
+    support: full
+  diff_mode:
+    support: full
+  platform:
+    platforms: posix
+extends_documentation_fragment:
+  - action_common_attributes
 author:
 - Matthew Vernon (@mcv21)
 '''
 
 EXAMPLES = r'''
 - name: Tell the host about our servers it might want to ssh to
-  known_hosts:
+  ansible.builtin.known_hosts:
     path: /etc/ssh/ssh_known_hosts
     name: foo.com.invalid
-    key: "{{ lookup('file', 'pubkeys/foo.com.invalid') }}"
+    key: "{{ lookup('ansible.builtin.file', 'pubkeys/foo.com.invalid') }}"
 
 - name: Another way to call known_hosts
-  known_hosts:
+  ansible.builtin.known_hosts:
     name: host1.example.com   # or 10.9.8.77
     key: host1.example.com,10.9.8.77 ssh-rsa ASDeararAIUHI324324  # some key gibberish
     path: /etc/ssh/ssh_known_hosts
     state: present
 
 - name: Add host with custom SSH port
-  known_hosts:
+  ansible.builtin.known_hosts:
     name: '[host1.example.com]:2222'
     key: '[host1.example.com]:2222 ssh-rsa ASDeararAIUHI324324' # some key gibberish
     path: /etc/ssh/ssh_known_hosts
@@ -102,7 +111,6 @@ import re
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.file import FileLock
 from ansible.module_utils._text import to_bytes, to_native
 
 
@@ -335,7 +343,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=True, type='str', aliases=['host']),
-            key=dict(required=False, type='str'),
+            key=dict(required=False, type='str', no_log=False),
             path=dict(default="~/.ssh/known_hosts", type='path'),
             hash_host=dict(required=False, type='bool', default=False),
             state=dict(default='present', choices=['absent', 'present']),

@@ -25,9 +25,9 @@ import re
 
 from ansible import constants as C
 from units.compat import unittest
-from units.compat.mock import patch, MagicMock, mock_open
+from mock import patch, MagicMock, mock_open
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAuthenticationFailure
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import shlex_quote, builtins
 from ansible.module_utils._text import to_bytes
@@ -159,7 +159,8 @@ class TestActionBase(unittest.TestCase):
                 mock_task.args = dict(a=1, foo='fö〩')
                 mock_connection.module_implementation_preferences = ('',)
                 (style, shebang, data, path) = action_base._configure_module(mock_task.action, mock_task.args,
-                                                                             task_vars=dict(ansible_python_interpreter='/usr/bin/python'))
+                                                                             task_vars=dict(ansible_python_interpreter='/usr/bin/python',
+                                                                                            ansible_playbook_python='/usr/bin/python'))
                 self.assertEqual(style, "new")
                 self.assertEqual(shebang, u"#!/usr/bin/python")
 
@@ -332,6 +333,9 @@ class TestActionBase(unittest.TestCase):
         remote_paths = ['/tmp/foo/bar.txt', '/tmp/baz.txt']
         remote_user = 'remoteuser1'
 
+        # Used for skipping down to common group dir.
+        CHMOD_ACL_FLAGS = ('+a', 'A+user:remoteuser2:r:allow')
+
         def runWithNoExpectation(execute=False):
             return action_base._fixup_perms2(
                 remote_paths,
@@ -342,7 +346,7 @@ class TestActionBase(unittest.TestCase):
             self.assertEqual(runWithNoExpectation(execute), remote_paths)
 
         def assertThrowRegex(regex, execute=False):
-            self.assertRaisesRegexp(
+            self.assertRaisesRegex(
                 AnsibleError,
                 regex,
                 action_base._fixup_perms2,
@@ -357,6 +361,9 @@ class TestActionBase(unittest.TestCase):
             def _helper(option, *args, **kwargs):
                 return args_kv.get(option, default)
             return _helper
+
+        action_base.get_become_option = MagicMock()
+        action_base.get_become_option.return_value = 'remoteuser2'
 
         # Step 1: On windows, we just return remote_paths
         action_base._connection._shell._IS_WINDOWS = True
@@ -413,12 +420,6 @@ class TestActionBase(unittest.TestCase):
             'stderr': '',
         }
         action_base._remote_chmod.return_value = {
-            'rc': 0,
-            'stdout': 'some stuff here',
-            'stderr': '',
-        }
-        assertSuccess(execute=True)
-        action_base._remote_chmod.return_value = {
             'rc': 1,
             'stdout': 'some stuff here',
             'stderr': '',
@@ -426,6 +427,12 @@ class TestActionBase(unittest.TestCase):
         assertThrowRegex(
             'Failed to set file mode on remote temporary file',
             execute=True)
+        action_base._remote_chmod.return_value = {
+            'rc': 0,
+            'stdout': 'some stuff here',
+            'stderr': '',
+        }
+        assertSuccess(execute=True)
 
         # Step 3c: chown
         action_base._remote_chown = MagicMock()
@@ -446,7 +453,41 @@ class TestActionBase(unittest.TestCase):
         assertThrowRegex('user would be unable to read the file.')
         remote_user = 'remoteuser1'
 
-        # Step 3d: Common group
+        # Step 3d: chmod +a on osx
+        assertSuccess()
+        action_base._remote_chmod.assert_called_with(
+            ['remoteuser2 allow read'] + remote_paths,
+            '+a')
+
+        # This case can cause Solaris chmod to return 5 which the ssh plugin
+        # treats as failure. To prevent a regression and ensure we still try the
+        # rest of the cases below, we mock the thrown exception here.
+        # This function ensures that only the macOS case (+a) throws this.
+        def raise_if_plus_a(definitely_not_underscore, mode):
+            if mode == '+a':
+                raise AnsibleAuthenticationFailure()
+            return {'rc': 0, 'stdout': '', 'stderr': ''}
+
+        action_base._remote_chmod.side_effect = raise_if_plus_a
+        assertSuccess()
+
+        # Step 3e: chmod A+ on Solaris
+        # We threw AnsibleAuthenticationFailure above, try Solaris fallback.
+        # Based on our lambda above, it should be successful.
+        action_base._remote_chmod.assert_called_with(
+            remote_paths,
+            'A+user:remoteuser2:r:allow')
+        assertSuccess()
+
+        # Step 3f: Common group
+        def rc_1_if_chmod_acl(definitely_not_underscore, mode):
+            rc = 0
+            if mode in CHMOD_ACL_FLAGS:
+                rc = 1
+            return {'rc': rc, 'stdout': '', 'stderr': ''}
+
+        action_base._remote_chmod = MagicMock()
+        action_base._remote_chmod.side_effect = rc_1_if_chmod_acl
 
         get_shell_option = action_base.get_shell_option
         action_base.get_shell_option = MagicMock()
@@ -463,11 +504,6 @@ class TestActionBase(unittest.TestCase):
         }
         # TODO: Add test to assert warning is shown if
         # ALLOW_WORLD_READABLE_TMPFILES is set in this case.
-        action_base._remote_chmod.return_value = {
-            'rc': 0,
-            'stdout': '',
-            'stderr': '',
-        }
         assertSuccess()
         action_base._remote_chgrp.assert_called_once_with(
             remote_paths,
@@ -486,6 +522,7 @@ class TestActionBase(unittest.TestCase):
             'stderr': '',
         }
         assertSuccess()
+        action_base._remote_chmod = MagicMock()
         action_base._remote_chmod.return_value = {
             'rc': 1,
             'stdout': 'some stuff here',

@@ -74,6 +74,13 @@ Modules
 * The ``win_get_url`` and ``win_uri`` module now sends requests with a default ``User-Agent`` of ``ansible-httpget``. This can be changed by using the ``http_agent`` key.
 * The ``apt`` module now honors ``update_cache=false`` while installing its own dependency and skips the cache update. Explicitly setting ``update_cache=true`` or omitting the param ``update_cache`` will result in a cache update while installing its own dependency.
 
+* Version 2.9.12 of Ansible changed the default mode of file-based tasks to ``0o600 & ~umask`` when the user did not specify a ``mode`` parameter on file-based tasks. This was in response to a CVE report which we have reconsidered. As a result, the mode change has been reverted in 2.9.13, and mode will now default to ``0o666 & ~umask`` as in previous versions of Ansible.
+* If you changed any tasks to specify less restrictive permissions while using 2.9.12, those changes will be unnecessary (but will do no harm) in 2.9.13.
+* To avoid the issue raised in CVE-2020-1736, specify a ``mode`` parameter in all file-based tasks that accept it.
+
+* ``dnf`` and ``yum`` - As of version 2.9.13, the ``dnf`` module (and ``yum`` action when it uses ``dnf``) now correctly validates GPG signatures of packages (CVE-2020-14365). If you see an error such as ``Failed to validate GPG signature for [package name]``, please ensure that you have imported the correct GPG key for the DNF repository and/or package you are using. One way to do this is with the ``rpm_key`` module. Although we discourage it, in some cases it may be necessary to disable the GPG check. This can be done by explicitly adding ``disable_gpg_check: yes`` in your ``dnf`` or ``yum`` task.
+
+
 Renaming from ``_facts`` to ``_info``
 --------------------------------------
 
@@ -699,7 +706,7 @@ Noteworthy module changes
 * The deprecated ``force`` option in ``win_firewall_rule`` has been removed.
 * :ref:`openssl_certificate <openssl_certificate_module>`'s ``ownca`` provider creates authority key identifiers if not explicitly disabled with ``ownca_create_authority_key_identifier: no``. This is only the case for the ``cryptography`` backend, which is selected by default if the ``cryptography`` library is available.
 * :ref:`openssl_certificate <openssl_certificate_module>`'s ``ownca`` and ``selfsigned`` providers create subject key identifiers if not explicitly disabled with ``ownca_create_subject_key_identifier: never_create`` resp. ``selfsigned_create_subject_key_identifier: never_create``. If a subject key identifier is provided by the CSR, it is taken; if not, it is created from the public key. This is only the case for the ``cryptography`` backend, which is selected by default if the ``cryptography`` library is available.
-* :ref:`openssh_keypair <openssh_keypair_module>` now applies the same file permissions and ownership to both public and private keys (both get the same ``mode``, ``owner``, ``group``, etc.). If you need to change permissions / ownership on one key, use the :ref:`file <file_module>` to modify it after it is created.
+* :ref:`openssh_keypair <openssh_keypair_module>` now applies the same file permissions and ownership to both public and private keys (both get the same ``mode``, ``owner``, ``group``, and so on). If you need to change permissions / ownership on one key, use the :ref:`file <file_module>` to modify it after it is created.
 
 
 Plugins

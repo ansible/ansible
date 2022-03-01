@@ -19,12 +19,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import jinja2
+from jinja2.nativetypes import NativeTemplate
 
 __all__ = ['AnsibleJ2Template']
 
 
-class AnsibleJ2Template(jinja2.environment.Template):
+class AnsibleJ2Template(NativeTemplate):
     '''
     A helper class, which prevents Jinja2 from running AnsibleJ2Vars through dict().
     Without this, {% include %} and similar will create new contexts unlike the special
@@ -33,11 +33,13 @@ class AnsibleJ2Template(jinja2.environment.Template):
     '''
 
     def new_context(self, vars=None, shared=False, locals=None):
-        if vars is not None:
-            if isinstance(vars, dict):
-                vars = vars.copy()
-                if locals is not None:
-                    vars.update(locals)
-            else:
-                vars = vars.add_locals(locals)
+        if vars is None:
+            vars = dict(self.globals or ())
+
+        if isinstance(vars, dict):
+            vars = vars.copy()
+            if locals is not None:
+                vars.update(locals)
+        else:
+            vars = vars.add_locals(locals)
         return self.environment.context_class(self.environment, vars, self.name, self.blocks)

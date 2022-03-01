@@ -21,18 +21,20 @@ All tasks in a block inherit directives applied at the block level. Most of what
   tasks:
     - name: Install, configure, and start Apache
       block:
-        - name: install httpd and memcached
-          yum:
+        - name: Install httpd and memcached
+          ansible.builtin.yum:
             name:
             - httpd
             - memcached
             state: present
-        - name: apply the foo config template
-          template:
+
+        - name: Apply the foo config template
+          ansible.builtin.template:
             src: templates/src.j2
             dest: /etc/foo.conf
-        - name: start service bar and enable it
-          service:
+
+        - name: Start service bar and enable it
+          ansible.builtin.service:
             name: bar
             state: started
             enabled: True
@@ -56,90 +58,112 @@ Rescue blocks specify tasks to run when an earlier task in a block fails. This a
 
 .. _block_rescue:
 .. code-block:: YAML
- :emphasize-lines: 3,10
+ :emphasize-lines: 3,14
  :caption: Block error handling example
 
   tasks:
   - name: Handle the error
     block:
-      - debug:
+      - name: Print a message
+        ansible.builtin.debug:
           msg: 'I execute normally'
-      - name: i force a failure
-        command: /bin/false
-      - debug:
+
+      - name: Force a failure
+        ansible.builtin.command: /bin/false
+
+      - name: Never print this
+        ansible.builtin.debug:
           msg: 'I never execute, due to the above task failing, :-('
     rescue:
-      - debug:
+      - name: Print when errors
+        ansible.builtin.debug:
           msg: 'I caught an error, can do stuff here to fix it, :-)'
 
 You can also add an ``always`` section to a block. Tasks in the ``always`` section run no matter what the task status of the previous block is.
 
 .. _block_always:
 .. code-block:: YAML
- :emphasize-lines: 2,9
+ :emphasize-lines: 2,13
  :caption: Block with always section
 
   - name: Always do X
     block:
-      - debug:
+      - name: Print a message
+        ansible.builtin.debug:
           msg: 'I execute normally'
-      - name: i force a failure
-        command: /bin/false
-      - debug:
+
+      - name: Force a failure
+        ansible.builtin.command: /bin/false
+
+      - name: Never print this
+        ansible.builtin.debug:
           msg: 'I never execute :-('
     always:
-      - debug:
+      - name: Always do this
+        ansible.builtin.debug:
           msg: "This always executes, :-)"
 
 Together, these elements offer complex error handling.
 
 .. code-block:: YAML
- :emphasize-lines: 2,9,16
+ :emphasize-lines: 2,13,24
  :caption: Block with all sections
 
  - name: Attempt and graceful roll back demo
    block:
-     - debug:
+     - name: Print a message
+       ansible.builtin.debug:
          msg: 'I execute normally'
-     - name: i force a failure
-       command: /bin/false
-     - debug:
+
+     - name: Force a failure
+       ansible.builtin.command: /bin/false
+
+     - name: Never print this
+       ansible.builtin.debug:
          msg: 'I never execute, due to the above task failing, :-('
    rescue:
-     - debug:
+     - name: Print when errors
+       ansible.builtin.debug:
          msg: 'I caught an error'
-     - name: i force a failure in middle of recovery! >:-)
-       command: /bin/false
-     - debug:
+
+     - name: Force a failure in middle of recovery! >:-)
+       ansible.builtin.command: /bin/false
+
+     - name: Never print this
+       ansible.builtin.debug:
          msg: 'I also never execute :-('
    always:
-     - debug:
+     - name: Always do this
+       ansible.builtin.debug:
          msg: "This always executes"
 
 The tasks in the ``block`` execute normally. If any tasks in the block return ``failed``, the ``rescue`` section executes tasks to recover from the error. The ``always`` section runs regardless of the results of the ``block`` and ``rescue`` sections.
 
-If an error occurs in the block and the rescue task succeeds, Ansible reverts the failed status of the original task for the run and continues to run the play as if the original task had succeeded. The rescued task is considered successful, and does not not trigger ``max_fail_percentage`` or ``any_errors_fatal`` configurations. However, Ansible still reports a failure in the playbook statistics.
+If an error occurs in the block and the rescue task succeeds, Ansible reverts the failed status of the original task for the run and continues to run the play as if the original task had succeeded. The rescued task is considered successful, and does not trigger ``max_fail_percentage`` or ``any_errors_fatal`` configurations. However, Ansible still reports a failure in the playbook statistics.
 
 You can use blocks with ``flush_handlers`` in a rescue task to ensure that all handlers run even if an error occurs:
 
 .. code-block:: YAML
- :emphasize-lines: 6,10
+ :emphasize-lines: 3,12
  :caption: Block run handlers in error handling
 
   tasks:
     - name: Attempt and graceful roll back demo
       block:
-        - debug:
+        - name: Print a message
+          ansible.builtin.debug:
             msg: 'I execute normally'
           changed_when: yes
           notify: run me even after an error
-        - command: /bin/false
+
+        - name: Force a failure
+          ansible.builtin.command: /bin/false
       rescue:
-        - name: make sure all handlers run
+        - name: Make sure all handlers run
           meta: flush_handlers
   handlers:
-     - name: run me even after an error
-       debug:
+     - name: Run me even after an error
+       ansible.builtin.debug:
          msg: 'This handler runs even on error'
 
 
@@ -161,5 +185,5 @@ ansible_failed_result
        Playbook organization by roles
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

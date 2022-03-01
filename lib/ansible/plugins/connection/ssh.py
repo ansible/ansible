@@ -8,24 +8,33 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    connection: ssh
-    short_description: connect via ssh client binary
+    name: ssh
+    short_description: connect via SSH client binary
     description:
-        - This connection plugin allows ansible to communicate to the target machines via normal ssh command line.
-        - Ansible does not expose a channel to allow communication between the user and the ssh process to accept
-          a password manually to decrypt an ssh key when using this connection plugin (which is the default). The
-          use of ``ssh-agent`` is highly recommended.
+        - This connection plugin allows Ansible to communicate to the target machines through normal SSH command line.
+        - Ansible does not expose a channel to allow communication between the user and the SSH process to accept
+          a password manually to decrypt an SSH key when using this connection plugin (which is the default). The
+          use of C(ssh-agent) is highly recommended.
     author: ansible (@core)
+    extends_documentation_fragment:
+        - connection_pipelining
     version_added: historical
+    notes:
+        - Many options default to C(None) here but that only means we do not override the SSH tool's defaults and/or configuration.
+          For example, if you specify the port in this plugin it will override any C(Port) entry in your C(.ssh/config).
     options:
       host:
-          description: Hostname/ip to connect to.
+          description: Hostname/IP to connect to.
           default: inventory_hostname
           vars:
+               - name: inventory_hostname
                - name: ansible_host
                - name: ansible_ssh_host
+               - name: delegated_vars['ansible_host']
+               - name: delegated_vars['ansible_ssh_host']
       host_key_checking:
-          description: Determines if ssh should check host keys
+          description: Determines if SSH should check host keys.
+          default: True
           type: boolean
           ini:
               - section: defaults
@@ -49,7 +58,9 @@ DOCUMENTATION = '''
               - name: ansible_ssh_pass
               - name: ansible_ssh_password
       sshpass_prompt:
-          description: Password prompt that sshpass should search for. Supported by sshpass 1.06 and up.
+          description:
+              - Password prompt that sshpass should search for. Supported by sshpass 1.06 and up.
+              - Defaults to C(Enter PIN for) when pkcs11_provider is set.
           default: ''
           ini:
               - section: 'ssh_connection'
@@ -60,7 +71,7 @@ DOCUMENTATION = '''
               - name: ansible_sshpass_prompt
           version_added: '2.10'
       ssh_args:
-          description: Arguments to pass to all ssh cli tools
+          description: Arguments to pass to all SSH CLI tools.
           default: '-C -o ControlMaster=auto -o ControlPersist=60s'
           ini:
               - section: 'ssh_connection'
@@ -71,7 +82,7 @@ DOCUMENTATION = '''
               - name: ansible_ssh_args
                 version_added: '2.7'
       ssh_common_args:
-          description: Common extra args for all ssh CLI tools
+          description: Common extra args for all SSH CLI tools.
           ini:
               - section: 'ssh_connection'
                 key: 'ssh_common_args'
@@ -81,12 +92,15 @@ DOCUMENTATION = '''
                 version_added: '2.7'
           vars:
               - name: ansible_ssh_common_args
+          cli:
+              - name: ssh_common_args
+          default: ''
       ssh_executable:
           default: ssh
           description:
-            - This defines the location of the ssh binary. It defaults to ``ssh`` which will use the first ssh binary available in $PATH.
-            - This option is usually not required, it might be useful when access to system ssh is restricted,
-              or when using ssh wrappers to connect to remote hosts.
+            - This defines the location of the SSH binary. It defaults to C(ssh) which will use the first SSH binary available in $PATH.
+            - This option is usually not required, it might be useful when access to system SSH is restricted,
+              or when using SSH wrappers to connect to remote hosts.
           env: [{name: ANSIBLE_SSH_EXECUTABLE}]
           ini:
           - {key: ssh_executable, section: ssh_connection}
@@ -98,7 +112,7 @@ DOCUMENTATION = '''
       sftp_executable:
           default: sftp
           description:
-            - This defines the location of the sftp binary. It defaults to ``sftp`` which will use the first binary available in $PATH.
+            - This defines the location of the sftp binary. It defaults to C(sftp) which will use the first binary available in $PATH.
           env: [{name: ANSIBLE_SFTP_EXECUTABLE}]
           ini:
           - {key: sftp_executable, section: ssh_connection}
@@ -109,7 +123,7 @@ DOCUMENTATION = '''
       scp_executable:
           default: scp
           description:
-            - This defines the location of the scp binary. It defaults to `scp` which will use the first binary available in $PATH.
+            - This defines the location of the scp binary. It defaults to C(scp) which will use the first binary available in $PATH.
           env: [{name: ANSIBLE_SCP_EXECUTABLE}]
           ini:
           - {key: scp_executable, section: ssh_connection}
@@ -118,7 +132,7 @@ DOCUMENTATION = '''
               - name: ansible_scp_executable
                 version_added: '2.7'
       scp_extra_args:
-          description: Extra exclusive to the ``scp`` CLI
+          description: Extra exclusive to the C(scp) CLI
           vars:
               - name: ansible_scp_extra_args
           env:
@@ -128,8 +142,11 @@ DOCUMENTATION = '''
             - key: scp_extra_args
               section: ssh_connection
               version_added: '2.7'
+          cli:
+            - name: scp_extra_args
+          default: ''
       sftp_extra_args:
-          description: Extra exclusive to the ``sftp`` CLI
+          description: Extra exclusive to the C(sftp) CLI
           vars:
               - name: ansible_sftp_extra_args
           env:
@@ -139,8 +156,11 @@ DOCUMENTATION = '''
             - key: sftp_extra_args
               section: ssh_connection
               version_added: '2.7'
+          cli:
+            - name: sftp_extra_args
+          default: ''
       ssh_extra_args:
-          description: Extra exclusive to the 'ssh' CLI
+          description: Extra exclusive to the SSH CLI.
           vars:
               - name: ansible_ssh_extra_args
           env:
@@ -150,10 +170,12 @@ DOCUMENTATION = '''
             - key: ssh_extra_args
               section: ssh_connection
               version_added: '2.7'
-      retries:
-          # constant: ANSIBLE_SSH_RETRIES
+          cli:
+            - name: ssh_extra_args
+          default: ''
+      reconnection_retries:
           description: Number of attempts to connect.
-          default: 3
+          default: 0
           type: integer
           env:
             - name: ANSIBLE_SSH_RETRIES
@@ -168,7 +190,6 @@ DOCUMENTATION = '''
       port:
           description: Remote port to connect to.
           type: int
-          default: 22
           ini:
             - section: defaults
               key: remote_port
@@ -177,10 +198,12 @@ DOCUMENTATION = '''
           vars:
             - name: ansible_port
             - name: ansible_ssh_port
+          keyword:
+            - name: port
       remote_user:
           description:
               - User name with which to login to the remote server, normally set by the remote_user keyword.
-              - If no user is supplied, Ansible will let the ssh client binary choose the user as it normally
+              - If no user is supplied, Ansible will let the SSH client binary choose the user as it normally.
           ini:
             - section: defaults
               key: remote_user
@@ -189,30 +212,28 @@ DOCUMENTATION = '''
           vars:
             - name: ansible_user
             - name: ansible_ssh_user
+          cli:
+            - name: user
+          keyword:
+            - name: remote_user
       pipelining:
-          default: ANSIBLE_PIPELINING
-          description:
-            - Pipelining reduces the number of SSH operations required to execute a module on the remote server,
-              by executing many Ansible modules without actual file transfer.
-            - This can result in a very significant performance improvement when enabled.
-            - However this conflicts with privilege escalation (become).
-              For example, when using sudo operations you must first disable 'requiretty' in the sudoers file for the target hosts,
-              which is why this feature is disabled by default.
           env:
             - name: ANSIBLE_PIPELINING
             - name: ANSIBLE_SSH_PIPELINING
           ini:
             - section: defaults
               key: pipelining
+            - section: connection
+              key: pipelining
             - section: ssh_connection
               key: pipelining
-          type: boolean
           vars:
             - name: ansible_pipelining
             - name: ansible_ssh_pipelining
+
       private_key_file:
           description:
-              - Path to private key file to use for authentication
+              - Path to private key file to use for authentication.
           ini:
             - section: defaults
               key: private_key_file
@@ -221,11 +242,16 @@ DOCUMENTATION = '''
           vars:
             - name: ansible_private_key_file
             - name: ansible_ssh_private_key_file
+          cli:
+            - name: private_key_file
+              option: '--private-key'
 
       control_path:
         description:
-          - This is the location to save ssh's ControlPath sockets, it uses ssh's variable substitution.
-          - Since 2.3, if null, ansible will generate a unique hash. Use `%(directory)s` to indicate where to use the control dir path setting.
+          - This is the location to save SSH's ControlPath sockets, it uses SSH's variable substitution.
+          - Since 2.3, if null (default), ansible will generate a unique hash. Use ``%(directory)s`` to indicate where to use the control dir path setting.
+          - Before 2.3 it defaulted to ``control_path=%(directory)s/ansible-ssh-%%h-%%p-%%r``.
+          - Be aware that this setting is ignored if C(-o ControlPath) is set in ssh args.
         env:
           - name: ANSIBLE_SSH_CONTROL_PATH
         ini:
@@ -238,7 +264,7 @@ DOCUMENTATION = '''
         default: ~/.ansible/cp
         description:
           - This sets the directory to use for ssh control path if the control path setting is null.
-          - Also, provides the `%(directory)s` variable for the control path setting.
+          - Also, provides the ``%(directory)s`` variable for the control path setting.
         env:
           - name: ANSIBLE_SSH_CONTROL_PATH_DIR
         ini:
@@ -257,12 +283,29 @@ DOCUMENTATION = '''
         vars:
           - name: ansible_sftp_batch_mode
             version_added: '2.7'
+      ssh_transfer_method:
+        description:
+            - "Preferred method to use when transferring files over ssh"
+            - Setting to 'smart' (default) will try them in order, until one succeeds or they all fail
+            - Using 'piped' creates an ssh pipe with C(dd) on either side to copy the data
+        choices: ['sftp', 'scp', 'piped', 'smart']
+        env: [{name: ANSIBLE_SSH_TRANSFER_METHOD}]
+        ini:
+            - {key: transfer_method, section: ssh_connection}
+        vars:
+            - name: ansible_ssh_transfer_method
+              version_added: '2.12'
       scp_if_ssh:
+        deprecated:
+              why: In favor of the "ssh_transfer_method" option.
+              version: "2.17"
+              alternatives: ssh_transfer_method
         default: smart
         description:
-          - "Preferred method to use when transfering files over ssh"
-          - When set to smart, Ansible will try them until one succeeds or they all fail
-          - If set to True, it will force 'scp', if False it will use 'sftp'
+          - "Preferred method to use when transferring files over SSH."
+          - When set to I(smart), Ansible will try them until one succeeds or they all fail.
+          - If set to I(True), it will force 'scp', if I(False) it will use 'sftp'.
+          - This setting will overridden by ssh_transfer_method if set.
         env: [{name: ANSIBLE_SCP_IF_SSH}]
         ini:
         - {key: scp_if_ssh, section: ssh_connection}
@@ -272,7 +315,7 @@ DOCUMENTATION = '''
       use_tty:
         version_added: '2.5'
         default: 'yes'
-        description: add -tt to ssh commands to force tty allocation
+        description: add -tt to ssh commands to force tty allocation.
         env: [{name: ANSIBLE_SSH_USETTY}]
         ini:
         - {key: usetty, section: ssh_connection}
@@ -280,6 +323,38 @@ DOCUMENTATION = '''
         vars:
           - name: ansible_ssh_use_tty
             version_added: '2.7'
+      timeout:
+        default: 10
+        description:
+            - This is the default amount of time we will wait while establishing an SSH connection.
+            - It also controls how long we can wait to access reading the connection once established (select on the socket).
+        env:
+            - name: ANSIBLE_TIMEOUT
+            - name: ANSIBLE_SSH_TIMEOUT
+              version_added: '2.11'
+        ini:
+            - key: timeout
+              section: defaults
+            - key: timeout
+              section: ssh_connection
+              version_added: '2.11'
+        vars:
+          - name: ansible_ssh_timeout
+            version_added: '2.11'
+        cli:
+          - name: timeout
+        type: integer
+      pkcs11_provider:
+        version_added: '2.12'
+        default: ""
+        description:
+          - "PKCS11 SmartCard provider such as opensc, example: /usr/local/lib/opensc-pkcs11.so"
+          - Requires sshpass version 1.06+, sshpass must support the -P option.
+        env: [{name: ANSIBLE_PKCS11_PROVIDER}]
+        ini:
+          - {key: pkcs11_provider, section: ssh_connection}
+        vars:
+          - name: ansible_ssh_pkcs11_provider
 '''
 
 import errno
@@ -288,11 +363,11 @@ import hashlib
 import os
 import pty
 import re
+import shlex
 import subprocess
 import time
 
 from functools import wraps
-from ansible import constants as C
 from ansible.errors import (
     AnsibleAuthenticationFailure,
     AnsibleConnectionFailure,
@@ -302,7 +377,6 @@ from ansible.errors import (
 from ansible.errors import AnsibleOptionsError
 from ansible.module_utils.compat import selectors
 from ansible.module_utils.six import PY3, text_type, binary_type
-from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, boolean
 from ansible.plugins.connection import ConnectionBase, BUFSIZE
@@ -319,6 +393,7 @@ b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when th
                     )
 
 SSHPASS_AVAILABLE = None
+SSH_DEBUG = re.compile(r'^debug\d+: .*')
 
 
 class AnsibleControlPersistBrokenPipeError(AnsibleError):
@@ -395,7 +470,7 @@ def _ssh_retry(func):
     """
     @wraps(func)
     def wrapped(self, *args, **kwargs):
-        remaining_tries = int(C.ANSIBLE_SSH_RETRIES) + 1
+        remaining_tries = int(self.get_option('reconnection_retries')) + 1
         cmd_summary = u"%s..." % to_text(args[0])
         conn_password = self.get_option('password') or self._play_context.password
         for attempt in range(remaining_tries):
@@ -408,6 +483,7 @@ def _ssh_retry(func):
             try:
                 try:
                     return_tuple = func(self, *args, **kwargs)
+                    # TODO: this should come from task
                     if self._play_context.no_log:
                         display.vvv(u'rc=%s, stdout and stderr censored due to no log' % return_tuple[0], host=self.host)
                     else:
@@ -468,11 +544,12 @@ class Connection(ConnectionBase):
     def __init__(self, *args, **kwargs):
         super(Connection, self).__init__(*args, **kwargs)
 
+        # TODO: all should come from get_option(), but not might be set at this point yet
         self.host = self._play_context.remote_addr
         self.port = self._play_context.port
         self.user = self._play_context.remote_user
-        self.control_path = C.ANSIBLE_SSH_CONTROL_PATH
-        self.control_path_dir = C.ANSIBLE_SSH_CONTROL_PATH_DIR
+        self.control_path = None
+        self.control_path_dir = None
 
         # Windows operates differently from a POSIX connection/shell plugin,
         # we need to set various properties to ensure SSH on Windows continues
@@ -555,13 +632,18 @@ class Connection(ConnectionBase):
             were added.  It will be displayed with a high enough verbosity.
         .. note:: This function does its work via side-effect.  The b_command list has the new arguments appended.
         """
-        display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self._play_context.remote_addr)
+        display.vvvvv(u'SSH: %s: (%s)' % (explanation, ')('.join(to_text(a) for a in b_args)), host=self.host)
         b_command += b_args
 
-    def _build_command(self, binary, *other_args):
+    def _build_command(self, binary, subsystem, *other_args):
         '''
-        Takes a binary (ssh, scp, sftp) and optional extra arguments and returns
-        a command line as an array that can be passed to subprocess.Popen.
+        Takes a executable (ssh, scp, sftp or wrapper) and optional extra arguments and returns the remote command
+        wrapped in local ssh shell commands and ready for execution.
+
+        :arg binary: actual executable to use to execute command.
+        :arg subsystem: type of executable provided, ssh/sftp/scp, needed because wrappers for ssh might have diff names.
+        :arg other_args: dict of, value pairs passed as arguments to the ssh binary
+
         '''
 
         b_command = []
@@ -573,32 +655,44 @@ class Connection(ConnectionBase):
 
         # If we want to use password authentication, we have to set up a pipe to
         # write the password to sshpass.
-
-        if conn_password:
+        pkcs11_provider = self.get_option("pkcs11_provider")
+        if conn_password or pkcs11_provider:
             if not self._sshpass_available():
-                raise AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
+                raise AnsibleError("to use the 'ssh' connection type with passwords or pkcs11_provider, you must install the sshpass program")
+            if not conn_password and pkcs11_provider:
+                raise AnsibleError("to use pkcs11_provider you must specify a password/pin")
 
             self.sshpass_pipe = os.pipe()
             b_command += [b'sshpass', b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')]
 
             password_prompt = self.get_option('sshpass_prompt')
+            if not password_prompt and pkcs11_provider:
+                # Set default password prompt for pkcs11_provider to make it clear its a PIN
+                password_prompt = 'Enter PIN for '
+
             if password_prompt:
                 b_command += [b'-P', to_bytes(password_prompt, errors='surrogate_or_strict')]
 
-        if binary == 'ssh':
-            b_command += [to_bytes(self._play_context.ssh_executable, errors='surrogate_or_strict')]
-        else:
-            b_command += [to_bytes(binary, errors='surrogate_or_strict')]
+        b_command += [to_bytes(binary, errors='surrogate_or_strict')]
 
         #
         # Next, additional arguments based on the configuration.
         #
 
+        # pkcs11 mode allows the use of Smartcards or Yubikey devices
+        if conn_password and pkcs11_provider:
+            self._add_args(b_command,
+                           (b"-o", b"KbdInteractiveAuthentication=no",
+                            b"-o", b"PreferredAuthentications=publickey",
+                            b"-o", b"PasswordAuthentication=no",
+                            b'-o', to_bytes(u'PKCS11Provider=%s' % pkcs11_provider)),
+                           u'Enable pkcs11')
+
         # sftp batch mode allows us to correctly catch failed transfers, but can
         # be disabled if the client side doesn't support the option. However,
         # sftp batch mode does not prompt for passwords so it must be disabled
         # if not using controlpersist and using sshpass
-        if binary == 'sftp' and C.DEFAULT_SFTP_BATCH_MODE:
+        if subsystem == 'sftp' and self.get_option('sftp_batch_mode'):
             if conn_password:
                 b_args = [b'-o', b'BatchMode=no']
                 self._add_args(b_command, b_args, u'disable batch mode for sshpass')
@@ -607,29 +701,24 @@ class Connection(ConnectionBase):
         if self._play_context.verbosity > 3:
             b_command.append(b'-vvv')
 
-        #
-        # Next, we add [ssh_connection]ssh_args from ansible.cfg.
-        #
-
+        # Next, we add ssh_args
         ssh_args = self.get_option('ssh_args')
         if ssh_args:
             b_args = [to_bytes(a, errors='surrogate_or_strict') for a in
                       self._split_ssh_args(ssh_args)]
             self._add_args(b_command, b_args, u"ansible.cfg set ssh_args")
 
-        # Now we add various arguments controlled by configuration file settings
-        # (e.g. host_key_checking) or inventory variables (ansible_ssh_port) or
-        # a combination thereof.
-
-        if not C.HOST_KEY_CHECKING:
+        # Now we add various arguments that have their own specific settings defined in docs above.
+        if self.get_option('host_key_checking') is False:
             b_args = (b"-o", b"StrictHostKeyChecking=no")
             self._add_args(b_command, b_args, u"ANSIBLE_HOST_KEY_CHECKING/host_key_checking disabled")
 
-        if self._play_context.port is not None:
-            b_args = (b"-o", b"Port=" + to_bytes(self._play_context.port, nonstring='simplerepr', errors='surrogate_or_strict'))
+        self.port = self.get_option('port')
+        if self.port is not None:
+            b_args = (b"-o", b"Port=" + to_bytes(self.port, nonstring='simplerepr', errors='surrogate_or_strict'))
             self._add_args(b_command, b_args, u"ANSIBLE_REMOTE_PORT/remote_port/ansible_port set")
 
-        key = self._play_context.private_key_file
+        key = self.get_option('private_key_file')
         if key:
             b_args = (b"-o", b'IdentityFile="' + to_bytes(os.path.expanduser(key), errors='surrogate_or_strict') + b'"')
             self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set")
@@ -644,28 +733,29 @@ class Connection(ConnectionBase):
                 u"ansible_password/ansible_ssh_password not set"
             )
 
-        user = self._play_context.remote_user
-        if user:
+        self.user = self.get_option('remote_user')
+        if self.user:
             self._add_args(
                 b_command,
-                (b"-o", b'User="%s"' % to_bytes(self._play_context.remote_user, errors='surrogate_or_strict')),
+                (b"-o", b'User="%s"' % to_bytes(self.user, errors='surrogate_or_strict')),
                 u"ANSIBLE_REMOTE_USER/remote_user/ansible_user/user/-u set"
             )
 
+        timeout = self.get_option('timeout')
         self._add_args(
             b_command,
-            (b"-o", b"ConnectTimeout=" + to_bytes(self._play_context.timeout, errors='surrogate_or_strict', nonstring='simplerepr')),
+            (b"-o", b"ConnectTimeout=" + to_bytes(timeout, errors='surrogate_or_strict', nonstring='simplerepr')),
             u"ANSIBLE_TIMEOUT/timeout set"
         )
 
         # Add in any common or binary-specific arguments from the PlayContext
         # (i.e. inventory or task settings or overrides on the command line).
 
-        for opt in (u'ssh_common_args', u'{0}_extra_args'.format(binary)):
-            attr = getattr(self._play_context, opt, None)
+        for opt in (u'ssh_common_args', u'{0}_extra_args'.format(subsystem)):
+            attr = self.get_option(opt)
             if attr is not None:
                 b_args = [to_bytes(a, errors='surrogate_or_strict') for a in self._split_ssh_args(attr)]
-                self._add_args(b_command, b_args, u"PlayContext set %s" % opt)
+                self._add_args(b_command, b_args, u"Set %s" % opt)
 
         # Check if ControlPersist is enabled and add a ControlPath if one hasn't
         # already been set.
@@ -676,6 +766,7 @@ class Connection(ConnectionBase):
             self._persistent = True
 
             if not controlpath:
+                self.control_path_dir = self.get_option('control_path_dir')
                 cpdir = unfrackpath(self.control_path_dir)
                 b_cpdir = to_bytes(cpdir, errors='surrogate_or_strict')
 
@@ -684,13 +775,14 @@ class Connection(ConnectionBase):
                 if not os.access(b_cpdir, os.W_OK):
                     raise AnsibleError("Cannot write to ControlPath %s" % to_native(cpdir))
 
+                self.control_path = self.get_option('control_path')
                 if not self.control_path:
                     self.control_path = self._create_control_path(
                         self.host,
                         self.port,
                         self.user
                     )
-                b_args = (b"-o", b"ControlPath=" + to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict'))
+                b_args = (b"-o", b'ControlPath="%s"' % to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict'))
                 self._add_args(b_command, b_args, u"found only ControlPersist; added ControlPath")
 
         # Finally, we add any caller-supplied extras.
@@ -751,7 +843,10 @@ class Connection(ConnectionBase):
             suppress_output = False
 
             # display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, display_line))
-            if self.become.expect_prompt() and self.become.check_password_prompt(b_line):
+            if SSH_DEBUG.match(display_line):
+                # skip lines from ssh debug output to avoid false matches
+                pass
+            elif self.become.expect_prompt() and self.become.check_password_prompt(b_line):
                 display.debug(u"become_prompt: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_prompt'] = True
                 suppress_output = True
@@ -787,7 +882,7 @@ class Connection(ConnectionBase):
         '''
 
         # We don't use _shell.quote as this is run on the controller and independent from the shell plugin chosen
-        display_cmd = u' '.join(shlex_quote(to_text(c)) for c in cmd)
+        display_cmd = u' '.join(shlex.quote(to_text(c)) for c in cmd)
         display.vvv(u'SSH: EXEC {0}'.format(display_cmd), host=self.host)
 
         # Start the given command. If we don't need to pipeline data, we can try
@@ -891,13 +986,12 @@ class Connection(ConnectionBase):
         # select timeout should be longer than the connect timeout, otherwise
         # they will race each other when we can't connect, and the connect
         # timeout usually fails
-        timeout = 2 + self._play_context.timeout
+        timeout = 2 + self.get_option('timeout')
         for fd in (p.stdout, p.stderr):
             fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
         # TODO: bcoca would like to use SelectSelector() when open
-        # filehandles is low, then switch to more efficient ones when higher.
-        # select is faster when filehandles is low.
+        # select is faster when filehandles is low and we only ever handle 1.
         selector = selectors.DefaultSelector()
         selector.register(p.stdout, selectors.EVENT_READ)
         selector.register(p.stderr, selectors.EVENT_READ)
@@ -1052,7 +1146,7 @@ class Connection(ConnectionBase):
             p.stdout.close()
             p.stderr.close()
 
-        if C.HOST_KEY_CHECKING:
+        if self.get_option('host_key_checking'):
             if cmd[0] == b"sshpass" and p.returncode == 6:
                 raise AnsibleError('Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support '
                                    'this.  Please add this host\'s fingerprint to your known_hosts file to manage this host.')
@@ -1099,17 +1193,18 @@ class Connection(ConnectionBase):
         methods = []
 
         # Use the transfer_method option if set, otherwise use scp_if_ssh
-        ssh_transfer_method = self._play_context.ssh_transfer_method
+        ssh_transfer_method = self.get_option('ssh_transfer_method')
+        scp_if_ssh = self.get_option('scp_if_ssh')
+        if ssh_transfer_method is None and scp_if_ssh == 'smart':
+            ssh_transfer_method = 'smart'
+
         if ssh_transfer_method is not None:
-            if not (ssh_transfer_method in ('smart', 'sftp', 'scp', 'piped')):
-                raise AnsibleOptionsError('transfer_method needs to be one of [smart|sftp|scp|piped]')
             if ssh_transfer_method == 'smart':
                 methods = smart_methods
             else:
                 methods = [ssh_transfer_method]
         else:
             # since this can be a non-bool now, we need to handle it correctly
-            scp_if_ssh = C.DEFAULT_SCP_IF_SSH
             if not isinstance(scp_if_ssh, bool):
                 scp_if_ssh = scp_if_ssh.lower()
                 if scp_if_ssh in BOOLEANS:
@@ -1126,17 +1221,17 @@ class Connection(ConnectionBase):
         for method in methods:
             returncode = stdout = stderr = None
             if method == 'sftp':
-                cmd = self._build_command(self.get_option('sftp_executable'), to_bytes(host))
-                in_data = u"{0} {1} {2}\n".format(sftp_action, shlex_quote(in_path), shlex_quote(out_path))
+                cmd = self._build_command(self.get_option('sftp_executable'), 'sftp', to_bytes(host))
+                in_data = u"{0} {1} {2}\n".format(sftp_action, shlex.quote(in_path), shlex.quote(out_path))
                 in_data = to_bytes(in_data, nonstring='passthru')
                 (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
             elif method == 'scp':
                 scp = self.get_option('scp_executable')
 
                 if sftp_action == 'get':
-                    cmd = self._build_command(scp, u'{0}:{1}'.format(host, self._shell.quote(in_path)), out_path)
+                    cmd = self._build_command(scp, 'scp', u'{0}:{1}'.format(host, self._shell.quote(in_path)), out_path)
                 else:
-                    cmd = self._build_command(scp, in_path, u'{0}:{1}'.format(host, self._shell.quote(out_path)))
+                    cmd = self._build_command(scp, 'scp', in_path, u'{0}:{1}'.format(host, self._shell.quote(out_path)))
                 in_data = None
                 (returncode, stdout, stderr) = self._bare_run(cmd, in_data, checkrc=False)
             elif method == 'piped':
@@ -1189,7 +1284,9 @@ class Connection(ConnectionBase):
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
+        self.host = self.get_option('host') or self._play_context.remote_addr
+
+        display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self.user), host=self.host)
 
         if getattr(self._shell, "_IS_WINDOWS", False):
             # Become method 'runas' is done in the wrapper that is executed,
@@ -1208,18 +1305,18 @@ class Connection(ConnectionBase):
         # python interactive-mode but the modules are not compatible with the
         # interactive-mode ("unexpected indent" mainly because of empty lines)
 
-        ssh_executable = self._play_context.ssh_executable
+        ssh_executable = self.get_option('ssh_executable')
 
         # -tt can cause various issues in some environments so allow the user
         # to disable it as a troubleshooting method.
         use_tty = self.get_option('use_tty')
 
         if not in_data and sudoable and use_tty:
-            args = (ssh_executable, '-tt', self.host, cmd)
+            args = ('-tt', self.host, cmd)
         else:
-            args = (ssh_executable, self.host, cmd)
+            args = (self.host, cmd)
 
-        cmd = self._build_command(*args)
+        cmd = self._build_command(ssh_executable, 'ssh', *args)
         (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
 
         # When running on Windows, stderr may contain CLIXML encoded output
@@ -1232,6 +1329,8 @@ class Connection(ConnectionBase):
         ''' transfer a file from local to remote '''
 
         super(Connection, self).put_file(in_path, out_path)
+
+        self.host = self.get_option('host') or self._play_context.remote_addr
 
         display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self.host)
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
@@ -1247,6 +1346,8 @@ class Connection(ConnectionBase):
 
         super(Connection, self).fetch_file(in_path, out_path)
 
+        self.host = self.get_option('host') or self._play_context.remote_addr
+
         display.vvv(u"FETCH {0} TO {1}".format(in_path, out_path), host=self.host)
 
         # need to add / if path is rooted
@@ -1256,23 +1357,26 @@ class Connection(ConnectionBase):
         return self._file_transport_command(in_path, out_path, 'get')
 
     def reset(self):
-        # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
-        cmd = self._build_command(self._play_context.ssh_executable, '-O', 'stop', self.host)
-        controlpersist, controlpath = self._persistence_controls(cmd)
-        cp_arg = [a for a in cmd if a.startswith(b"ControlPath=")]
 
-        # only run the reset if the ControlPath already exists or if it isn't
-        # configured and ControlPersist is set
         run_reset = False
-        if controlpersist and len(cp_arg) > 0:
-            cp_path = cp_arg[0].split(b"=", 1)[-1]
-            if os.path.exists(cp_path):
-                run_reset = True
-        elif controlpersist:
+        self.host = self.get_option('host') or self._play_context.remote_addr
+
+        # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
+        # only run the reset if the ControlPath already exists or if it isn't configured and ControlPersist is set
+        # 'check' will determine this.
+        cmd = self._build_command(self.get_option('ssh_executable'), 'ssh', '-O', 'check', self.host)
+        display.vvv(u'sending connection check: %s' % to_text(cmd))
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
+        status_code = p.wait()
+        if status_code != 0:
+            display.vvv(u"No connection to reset: %s" % to_text(stderr))
+        else:
             run_reset = True
 
         if run_reset:
-            display.vvv(u'sending stop: %s' % to_text(cmd))
+            cmd = self._build_command(self.get_option('ssh_executable'), 'ssh', '-O', 'stop', self.host)
+            display.vvv(u'sending connection stop: %s' % to_text(cmd))
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
             status_code = p.wait()

@@ -41,7 +41,7 @@ def to_bytes(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         a byte string.  Defaults to using 'utf-8'.
     :kwarg errors: The error handler to use if the text string is not
         encodable using the specified encoding.  Any valid `codecs error
-        handler <https://docs.python.org/2/library/codecs.html#codec-base-classes>`_
+        handler <https://docs.python.org/3/library/codecs.html#codec-base-classes>`_
         may be specified. There are three additional error strategies
         specifically aimed at helping people to port code.  The first two are:
 
@@ -158,7 +158,7 @@ def to_text(obj, encoding='utf-8', errors=None, nonstring='simplerepr'):
         a text string.  Defaults to using 'utf-8'.
     :kwarg errors: The error handler to use if the byte string is not
         decodable using the specified encoding.  Any valid `codecs error
-        handler <https://docs.python.org/2/library/codecs.html#codec-base-classes>`_
+        handler <https://docs.python.org/3/library/codecs.html#codec-base-classes>`_
         may be specified.   We support three additional error strategies
         specifically aimed at helping people to port code:
 

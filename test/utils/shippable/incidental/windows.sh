@@ -12,21 +12,14 @@ target="shippable/windows/incidental/"
 stage="${S:-prod}"
 provider="${P:-default}"
 
-# python versions to test in order
-# python 2.7 runs full tests while other versions run minimal tests
-python_versions=(
-    3.5
-    3.6
-    3.7
-    3.8
-    2.7
-)
+# python version to run full tests on while other versions run minimal tests
+python_default="$(PYTHONPATH="${PWD}/test/lib" python -c 'from ansible_test._internal import constants; print(constants.CONTROLLER_MIN_PYTHON_VERSION)')"
 
 # version to test when only testing a single version
 single_version=2012-R2
 
 # shellcheck disable=SC2086
-ansible-test windows-integration --explain ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} > /tmp/explain.txt 2>&1 || { cat /tmp/explain.txt && false; }
+ansible-test windows-integration --list-targets -v ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} > /tmp/explain.txt 2>&1 || { cat /tmp/explain.txt && false; }
 { grep ' windows-integration: .* (targeted)$' /tmp/explain.txt || true; } > /tmp/windows.txt
 
 if [ -s /tmp/windows.txt ] || [ "${CHANGED:+$CHANGED}" == "" ]; then
@@ -52,25 +45,8 @@ else
     )
 fi
 
-for version in "${python_versions[@]}"; do
-    if [ "${version}" == "2.7" ]; then
-        # full tests for python 2.7
-        ci="${target}"
-    else
-        # minimal tests for other python versions
-        ci="incidental_win_ping"
-    fi
-
-    # terminate remote instances on the final python version tested
-    if [ "${version}" = "${python_versions[-1]}" ]; then
-        terminate="always"
-    else
-        terminate="never"
-    fi
-
-    # shellcheck disable=SC2086
-    ansible-test windows-integration --color -v --retry-on-error "${ci}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
-        "${platforms[@]}" \
-        --docker default --python "${version}" \
-        --remote-terminate "${terminate}" --remote-stage "${stage}" --remote-provider "${provider}"
-done
+# shellcheck disable=SC2086
+ansible-test windows-integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
+    "${platforms[@]}" \
+    --docker default --python "${python_default}" \
+    --remote-terminate always --remote-stage "${stage}" --remote-provider "${provider}"

@@ -29,11 +29,12 @@ from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
 from ansible.module_utils._text import to_text
-from ansible.module_utils.six import iteritems
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.text.formatters import bytes_to_human
 from ansible.module_utils.facts.hardware.base import Hardware, HardwareCollector
 from ansible.module_utils.facts.utils import get_file_content, get_file_lines, get_mount_size
+from ansible.module_utils.six import iteritems
 
 # import this as a module to ensure we get the same module instance
 from ansible.module_utils.facts import timeout
@@ -85,7 +86,8 @@ class LinuxHardware(Hardware):
 
     def populate(self, collected_facts=None):
         hardware_facts = {}
-        self.module.run_command_environ_update = {'LANG': 'C', 'LC_ALL': 'C', 'LC_NUMERIC': 'C'}
+        locale = get_best_parsable_locale(self.module)
+        self.module.run_command_environ_update = {'LANG': locale, 'LC_ALL': locale, 'LC_NUMERIC': locale}
 
         cpu_facts = self.get_cpu_facts(collected_facts=collected_facts)
         memory_facts = self.get_memory_facts()
@@ -98,7 +100,7 @@ class LinuxHardware(Hardware):
         try:
             mount_facts = self.get_mount_facts()
         except timeout.TimeoutError:
-            pass
+            self.module.warn("No mount facts were gathered due to timeout.")
 
         hardware_facts.update(cpu_facts)
         hardware_facts.update(memory_facts)
@@ -163,7 +165,7 @@ class LinuxHardware(Hardware):
         i = 0
         vendor_id_occurrence = 0
         model_name_occurrence = 0
-        processor_occurence = 0
+        processor_occurrence = 0
         physid = 0
         coreid = 0
         sockets = {}
@@ -217,7 +219,7 @@ class LinuxHardware(Hardware):
                 if key == 'model name':
                     model_name_occurrence += 1
                 if key == 'processor':
-                    processor_occurence += 1
+                    processor_occurrence += 1
                 i += 1
             elif key == 'physical id':
                 physid = val
@@ -246,7 +248,7 @@ class LinuxHardware(Hardware):
         # The fields for Power CPUs include 'processor' and 'cpu'.
         # Always use 'processor' count for ARM and Power systems
         if collected_facts.get('ansible_architecture', '').startswith(('armv', 'aarch', 'ppc')):
-            i = processor_occurence
+            i = processor_occurrence
 
         # FIXME
         if collected_facts.get('ansible_architecture') != 's390x':
@@ -279,7 +281,7 @@ class LinuxHardware(Hardware):
                 # if the number of processors available to the module's
                 # thread cannot be determined, the processor count
                 # reported by /proc will be the default:
-                cpu_facts['processor_nproc'] = processor_occurence
+                cpu_facts['processor_nproc'] = processor_occurrence
 
                 try:
                     cpu_facts['processor_nproc'] = len(
@@ -564,31 +566,39 @@ class LinuxHardware(Hardware):
 
         # wait for workers and get results
         while results:
-            for mount in results:
+            for mount in list(results):
+                done = False
                 res = results[mount]['extra']
-                if res.ready():
-                    if res.successful():
-                        mount_size, uuid = res.get()
-                        if mount_size:
-                            results[mount]['info'].update(mount_size)
-                        results[mount]['info']['uuid'] = uuid or 'N/A'
-                    else:
-                        # give incomplete data
-                        errmsg = to_text(res.get())
-                        self.module.warn("Error prevented getting extra info for mount %s: %s." % (mount, errmsg))
-                        results[mount]['info']['note'] = 'Could not get extra information: %s.' % (errmsg)
+                try:
+                    if res.ready():
+                        done = True
+                        if res.successful():
+                            mount_size, uuid = res.get()
+                            if mount_size:
+                                results[mount]['info'].update(mount_size)
+                            results[mount]['info']['uuid'] = uuid or 'N/A'
+                        else:
+                            # failed, try to find out why, if 'res.successful' we know there are no exceptions
+                            results[mount]['info']['note'] = 'Could not get extra information: %s.' % (to_text(res.get()))
 
+                    elif time.time() > results[mount]['timelimit']:
+                        done = True
+                        self.module.warn("Timeout exceeded when getting mount info for %s" % mount)
+                        results[mount]['info']['note'] = 'Could not get extra information due to timeout'
+                except Exception as e:
+                    import traceback
+                    done = True
+                    results[mount]['info'] = 'N/A'
+                    self.module.warn("Error prevented getting extra info for mount %s: [%s] %s." % (mount, type(e), to_text(e)))
+                    self.module.debug(traceback.format_exc())
+
+                if done:
+                    # move results outside and make loop only handle pending
                     mounts.append(results[mount]['info'])
                     del results[mount]
-                    break
-                elif time.time() > results[mount]['timelimit']:
-                    results[mount]['info']['note'] = 'Timed out while attempting to get extra information.'
-                    mounts.append(results[mount]['info'])
-                    del results[mount]
-                    break
-            else:
-                # avoid cpu churn
-                time.sleep(0.1)
+
+            # avoid cpu churn, sleep between retrying for loop with remaining mounts
+            time.sleep(0.1)
 
         return {'mounts': mounts}
 
@@ -638,6 +648,14 @@ class LinuxHardware(Hardware):
                     block_dev_dict['holders'].append(name)
                 else:
                     block_dev_dict['holders'].append(folder)
+
+    def _get_sg_inq_serial(self, sg_inq, block):
+        device = "/dev/%s" % (block)
+        rc, drivedata, err = self.module.run_command([sg_inq, device])
+        if rc == 0:
+            serial = re.search(r"(?:Unit serial|Serial) number:\s+(\w+)", drivedata)
+            if serial:
+                return serial.group(1)
 
     def get_device_facts(self):
         device_facts = {}
@@ -700,13 +718,17 @@ class LinuxHardware(Hardware):
 
             sg_inq = self.module.get_bin_path('sg_inq')
 
+            # we can get NVMe device's serial number from /sys/block/<name>/device/serial
+            serial_path = "/sys/block/%s/device/serial" % (block)
+
             if sg_inq:
-                device = "/dev/%s" % (block)
-                rc, drivedata, err = self.module.run_command([sg_inq, device])
-                if rc == 0:
-                    serial = re.search(r"Unit serial number:\s+(\w+)", drivedata)
-                    if serial:
-                        d['serial'] = serial.group(1)
+                serial = self._get_sg_inq_serial(sg_inq, block)
+                if serial:
+                    d['serial'] = serial
+            else:
+                serial = get_file_content(serial_path)
+                if serial:
+                    d['serial'] = serial
 
             for key, test in [('removable', '/removable'),
                               ('support_discard', '/queue/discard_granularity'),

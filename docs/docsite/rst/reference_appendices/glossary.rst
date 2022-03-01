@@ -23,6 +23,18 @@ when a term comes up on the mailing list.
         writing a :term:`playbook <playbooks>` and playbooks can also glue
         lots of other operations together.
 
+    Ansible (the package)
+        A software package (Python, deb, rpm, and so on) that contains ansible-core and a select group of collections. Playbooks that worked with Ansible 2.9 should still work with the Ansible 2.10 package. See the :file:`ansible-<version>.build` file in the release-specific directory at  `ansible-build-data <https://github.com/ansible-community/ansible-build-data>`_ for a list of collections included in Ansible, as well as the included ``ansible-core`` version.
+
+    ansible-base
+        Used only for 2.10. The installable package (RPM/Python/Deb package) generated from the `ansible/ansible repository <https://github.com/ansible/ansible>`_. See ``ansible-core``.
+
+    ansible-core
+        Name used starting with 2.11. The installable package (RPM/Python/Deb package) generated from the `ansible/ansible repository <https://github.com/ansible/ansible>`_. Contains the command-line tools and the code for basic features and functions, such as copying module code to managed nodes. The ``ansible-core`` package includes a few modules and plugins and allows you to add others by installing collections.
+
+    Ansible Galaxy
+        An `online resource <galaxy.ansible.com>`_ for finding and sharing Ansible community content. Also, the command-line utility that lets users install individual Ansible Collections, for example`` ansible-galaxy install community.crypto``.
+
     Async
         Refers to a task that is configured to run in the background rather
         than waiting for completion.  If you have a long process that would
@@ -48,6 +60,18 @@ when a term comes up on the mailing list.
         command failures or cascade effects (which is true of similar modes in
         other systems).  Use this to get an idea of what might happen, but do
         not substitute it for a good staging environment.
+
+    Collection
+        A packaging format for bundling and distributing Ansible content, including plugins, roles, modules, and more. Collections release independent of other collections or ``ansible-core`` so features can be available sooner to users. Some collections are packaged with Ansible (version 2.10 or later). You can install other collections (or other versions of collections) with ``ansible-galaxy collection install <namespace.collection>``.
+
+    Collection name
+        The second part of a Fully Qualified Collection Name. The collection name divides the collection namespace and usually reflects the function of the collection content. For example, the ``cisco`` namespace might contain ``cisco.ios``, ``cisco.aci``, and ``cisco.nxos``, with content for managing the different network devices maintained by Cisco.
+
+    community.general (collection)
+        A special collection managed by the Ansible Community Team containing all the modules and plugins which shipped in Ansible 2.9 that do not have their own dedicated Collection. See `community.general <https://galaxy.ansible.com/community/general>`_` on Galaxy.
+
+    community.network (collection)
+        Similar to ``community.general``, focusing on network content. `community.network <https://galaxy.ansible.com/community/network>`_` on Galaxy.
 
     Connection Plugin
         By default, Ansible talks to remote machines through pluggable
@@ -121,6 +145,9 @@ when a term comes up on the mailing list.
         forks, though if you have a lot of RAM, you can easily set this to
         a value like 50 for increased parallelism.
 
+    Fully Qualified Collection Name (FQCN)
+        The full definition of a module, plugin, or role hosted within a collection, in the form <namespace.collection.content_name>. Allows a Playbook to refer to a specific module or plugin from a specific source in an unambiguous manner, for example, ``community.grafana.grafana_dashboard``. The FQCN is required when you want to specify the exact source of a plugin. For example, if multiple collections contain a module plugin called ``user``, the FQCN specifies which one to use for a given task. When you have multiple collections installed, the FQCN is always the explicit and authoritative indicator of which collection to search for the correct plugin for each task.
+
     Gather Facts (Boolean)
         :term:`Facts` are mentioned above.  Sometimes when running a multi-play
         :term:`playbook <playbooks>`, it is desirable to have some plays that
@@ -154,7 +181,7 @@ when a term comes up on the mailing list.
     Handlers
         Handlers are just like regular tasks in an Ansible
         :term:`playbook <playbooks>` (see :term:`Tasks`) but are only run if
-        the Task contains a ``notify`` directive and also indicates that it
+        the Task contains a ``notify`` keyword and also indicates that it
         changed something.  For example, if a config file is changed, then the
         task referencing the config file templating operation may notify
         a service restart handler.  This means services can be bounced only if
@@ -172,7 +199,7 @@ when a term comes up on the mailing list.
         Each :term:`Play <plays>` in Ansible maps a series of :term:`tasks` (which define the role,
         purpose, or orders of a system) to a set of systems.
 
-        This ``hosts:`` directive in each play is often called the hosts specifier.
+        This ``hosts:`` keyword in each play is often called the hosts specifier.
 
         It may select one system, many systems, one or more groups, or even
         some hosts that are in one group and explicitly not in another.
@@ -223,6 +250,11 @@ when a term comes up on the mailing list.
         Ansible uses JSON for return data from remote modules.  This allows
         modules to be written in any language, not just Python.
 
+    Keyword
+        The main expressions that make up Ansible, which apply to playbook objects
+        (Play, Block, Role and Task). For example 'vars:' is a keyword that lets
+        you define variables in the scope of the playbook object it is applied to.
+
     Lazy Evaluation
         In general, Ansible evaluates any variables in
         :term:`playbook <playbooks>` content at the last possible second,
@@ -243,20 +275,20 @@ when a term comes up on the mailing list.
         servers to one particular server.
 
     Local Action
-        A local_action directive in a :term:`playbook <playbooks>` targeting
-        remote machines means that the given step will actually occur on the
-        local machine, but that the variable ``{{ ansible_hostname }}`` can be
-        passed in to reference the remote hostname being referred to in that
-        step.  This can be used to trigger, for example, an rsync operation.
+        This keyword is an alias for ``delegate_to: localhost``.
+        Used when you want to redirect an action from the remote to
+        execute on the controller itself.
 
     Local Connection
         By using ``connection: local`` in a :term:`playbook <playbooks>`, or
         passing ``-c local`` to :command:`/usr/bin/ansible`, this indicates
-        that we are managing the local host and not a remote machine.
+        that we are executing a local fork instead of executing on the remote machine.
+        You probably want ``local_action`` or ``delegate_to: localhost`` instead
+        as this ONLY changes the connection and no other context for execution.
 
     Lookup Plugin
         A lookup plugin is a way to get data into Ansible from the outside world.
-        Lookup plugins are an extension of Jinja2 and can be accessed in templates, e.g.,
+        Lookup plugins are an extension of Jinja2 and can be accessed in templates, for example,
         ``{{ lookup('file','/path/to/file') }}``.
         These are how such things as ``with_items``, are implemented.
         There are also lookup plugins like ``file`` which loads data from
@@ -278,7 +310,7 @@ when a term comes up on the mailing list.
         :command:`/usr/bin/ansible` or :command:`/usr/bin/ansible-playbook`
         (where multiple tasks use lots of different modules in conjunction).
         Modules can be implemented in any language, including Perl, Bash, or
-        Ruby -- but can leverage some useful communal library code if written
+        Ruby -- but can take advantage of some useful communal library code if written
         in Python.  Modules just have to return :term:`JSON`.  Once modules are
         executed on remote machines, they are removed, so no long running
         daemons are used.  Ansible refers to the collection of available
@@ -294,6 +326,9 @@ when a term comes up on the mailing list.
         models entire IT topologies and workflows rather than looking at
         configuration from a "one system at a time" perspective.
 
+    Namespace
+        The first part of a fully qualified collection name, the namespace usually reflects a functional content category. Example: in ``cisco.ios.ios_config``, ``cisco`` is the namespace. Namespaces are reserved and distributed by Red Hat at Red Hat's discretion. Many, but not all, namespaces will correspond with vendor names. See `Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_ on the Galaxy docsite for namespace requirements.
+
     Notify
         The act of a :term:`task <tasks>` registering a change event and
         informing a :term:`handler <handlers>` task that another
@@ -307,7 +342,7 @@ when a term comes up on the mailing list.
         things.  Ansible uses it as a conductor would conduct an orchestra.
         A datacenter or cloud architecture is full of many systems, playing
         many parts -- web servers, database servers, maybe load balancers,
-        monitoring systems, continuous integration systems, etc.  In
+        monitoring systems, continuous integration systems, and so on.  In
         performing any process, it is necessary to touch systems in particular
         orders, often to simulate rolling updates or to deploy software
         correctly.  Some system may perform some steps, then others, then
@@ -381,7 +416,7 @@ when a term comes up on the mailing list.
     Roles
         Roles are units of organization in Ansible.  Assigning a role to
         a group of :term:`hosts <Host>` (or a set of :term:`groups <group>`,
-        or :term:`host patterns <Globbing>`, etc.) implies that they should
+        or :term:`host patterns <Globbing>`, and so on) implies that they should
         implement a specific behavior.  A role may include applying certain
         variable values, certain :term:`tasks`, and certain :term:`handlers`
         -- or just one or more of these things.  Because of the file structure
@@ -417,9 +452,9 @@ when a term comes up on the mailing list.
 
     SSH (Native)
         Native OpenSSH as an Ansible transport is specified with ``-c ssh``
-        (or a config file, or a directive in the :term:`playbook <playbooks>`)
+        (or a config file, or a keyword in the :term:`playbook <playbooks>`)
         and can be useful if wanting to login via Kerberized SSH or using SSH
-        jump hosts, etc.  In 1.2.1, ``ssh`` will be used by default if the
+        jump hosts, and so on.  In 1.2.1, ``ssh`` will be used by default if the
         OpenSSH binary on the control machine is sufficiently new.
         Previously, Ansible selected ``paramiko`` as a default.  Using
         a client that supports ``ControlMaster`` and ``ControlPersist`` is
@@ -439,7 +474,7 @@ when a term comes up on the mailing list.
     Task
         :term:`Playbooks` exist to run tasks.  Tasks combine an :term:`action`
         (a module and its arguments) with a name and optionally some other
-        keywords (like :term:`looping directives <loops>`).   :term:`Handlers`
+        keywords (like :term:`looping keywords <loops>`).   :term:`Handlers`
         are also tasks, but they are a special kind of task that do not run
         unless they are notified by name when a task reports an underlying
         change on a remote system.
@@ -485,7 +520,7 @@ when a term comes up on the mailing list.
         usage of YAML stemmed from Michael DeHaan's first use of it inside of
         Cobbler around 2006.  YAML is fairly popular in the dynamic language
         community and the format has libraries available for serialization in
-        many languages (Python, Perl, Ruby, etc.).
+        many languages (Python, Perl, Ruby, and so on).
 
 .. seealso::
 
@@ -497,5 +532,5 @@ when a term comes up on the mailing list.
        Tips and tricks for playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

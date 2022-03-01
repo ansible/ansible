@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Matt Wright <matt@nobien.net>
@@ -22,6 +21,7 @@ options:
       - The name of a Python library to install or the url(bzr+,hg+,git+,svn+) of the remote package.
       - This can be a list (since 2.2) and contain version specifiers (since 2.7).
     type: list
+    elements: str
   version:
     description:
       - The version number to install of the Python library specified in the I(name) parameter.
@@ -111,6 +111,15 @@ options:
         to specify desired umask mode as an octal string, (e.g., "0022").
     type: str
     version_added: "2.1"
+extends_documentation_fragment:
+  -  action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 notes:
    - The virtualenv (U(http://www.virtualenv.org/)) must be
      installed on the remote host if the virtualenv parameter is specified and
@@ -119,7 +128,7 @@ notes:
      run the actual pip command, so it can use any pip version you specify with I(executable).
      By default, it uses the pip version for the Ansible Python interpreter. For example, pip3 on python 3, and pip2 or pip on python 2.
    - The interpreter used by Ansible
-     (see :ref:`ansible_python_interpreter<ansible_python_interpreter>`)
+     (see R(ansible_python_interpreter, ansible_python_interpreter))
      requires the setuptools package, regardless of the version of pip set with
      the I(executable) option.
 requirements:
@@ -132,26 +141,26 @@ author:
 
 EXAMPLES = '''
 - name: Install bottle python package
-  pip:
+  ansible.builtin.pip:
     name: bottle
 
 - name: Install bottle python package on version 0.11
-  pip:
+  ansible.builtin.pip:
     name: bottle==0.11
 
 - name: Install bottle python package with version specifiers
-  pip:
+  ansible.builtin.pip:
     name: bottle>0.10,<0.20,!=0.11
 
 - name: Install multi python packages with version specifiers
-  pip:
+  ansible.builtin.pip:
     name:
       - django>1.11.0,<1.12.0
       - bottle>0.10,<0.20,!=0.11
 
 - name: Install python package using a proxy
   # Pip doesn't use the standard environment variables, please use the CAPITALIZED ones below
-  pip:
+  ansible.builtin.pip:
     name: six
   environment:
     HTTP_PROXY: '127.0.0.1:8080'
@@ -159,70 +168,70 @@ EXAMPLES = '''
 
 # You do not have to supply '-e' option in extra_args
 - name: Install MyApp using one of the remote protocols (bzr+,hg+,git+,svn+)
-  pip:
+  ansible.builtin.pip:
     name: svn+http://myrepo/svn/MyApp#egg=MyApp
 
 - name: Install MyApp using one of the remote protocols (bzr+,hg+,git+)
-  pip:
+  ansible.builtin.pip:
     name: git+http://myrepo/app/MyApp
 
 - name: Install MyApp from local tarball
-  pip:
+  ansible.builtin.pip:
     name: file:///path/to/MyApp.tar.gz
 
 - name: Install bottle into the specified (virtualenv), inheriting none of the globally installed modules
-  pip:
+  ansible.builtin.pip:
     name: bottle
     virtualenv: /my_app/venv
 
 - name: Install bottle into the specified (virtualenv), inheriting globally installed modules
-  pip:
+  ansible.builtin.pip:
     name: bottle
     virtualenv: /my_app/venv
     virtualenv_site_packages: yes
 
 - name: Install bottle into the specified (virtualenv), using Python 2.7
-  pip:
+  ansible.builtin.pip:
     name: bottle
     virtualenv: /my_app/venv
     virtualenv_command: virtualenv-2.7
 
 - name: Install bottle within a user home directory
-  pip:
+  ansible.builtin.pip:
     name: bottle
     extra_args: --user
 
 - name: Install specified python requirements
-  pip:
+  ansible.builtin.pip:
     requirements: /my_app/requirements.txt
 
 - name: Install specified python requirements in indicated (virtualenv)
-  pip:
+  ansible.builtin.pip:
     requirements: /my_app/requirements.txt
     virtualenv: /my_app/venv
 
 - name: Install specified python requirements and custom Index URL
-  pip:
+  ansible.builtin.pip:
     requirements: /my_app/requirements.txt
     extra_args: -i https://example.com/pypi/simple
 
 - name: Install specified python requirements offline from a local directory with downloaded packages
-  pip:
+  ansible.builtin.pip:
     requirements: /my_app/requirements.txt
     extra_args: "--no-index --find-links=file:///my_downloaded_packages_dir"
 
 - name: Install bottle for Python 3.3 specifically, using the 'pip3.3' executable
-  pip:
+  ansible.builtin.pip:
     name: bottle
     executable: pip3.3
 
 - name: Install bottle, forcing reinstallation if it's already installed
-  pip:
+  ansible.builtin.pip:
     name: bottle
     state: forcereinstall
 
 - name: Install bottle while ensuring the umask is 0022 (to ensure other users can use it)
-  pip:
+  ansible.builtin.pip:
     name: bottle
     umask: "0022"
   become: True
@@ -263,7 +272,7 @@ import tempfile
 import operator
 import shlex
 import traceback
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 
 SETUPTOOLS_IMP_ERR = None
 try:
@@ -274,8 +283,9 @@ except ImportError:
     HAS_SETUPTOOLS = False
     SETUPTOOLS_IMP_ERR = traceback.format_exc()
 
-from ansible.module_utils.basic import AnsibleModule, is_executable, missing_required_lib
 from ansible.module_utils._text import to_native
+from ansible.module_utils.basic import AnsibleModule, is_executable, missing_required_lib
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.six import PY3
 
 
@@ -352,18 +362,19 @@ def _get_cmd_options(module, cmd):
 def _get_packages(module, pip, chdir):
     '''Return results of pip command to get packages.'''
     # Try 'pip list' command first.
-    command = '%s list --format=freeze' % pip
-    lang_env = {'LANG': 'C', 'LC_ALL': 'C', 'LC_MESSAGES': 'C'}
+    command = pip + ['list', '--format=freeze']
+    locale = get_best_parsable_locale(module)
+    lang_env = {'LANG': locale, 'LC_ALL': locale, 'LC_MESSAGES': locale}
     rc, out, err = module.run_command(command, cwd=chdir, environ_update=lang_env)
 
     # If there was an error (pip version too old) then use 'pip freeze'.
     if rc != 0:
-        command = '%s freeze' % pip
+        command = pip + ['freeze']
         rc, out, err = module.run_command(command, cwd=chdir)
         if rc != 0:
             _fail(module, command, out, err)
 
-    return command, out, err
+    return ' '.join(command), out, err
 
 
 def _is_present(module, req, installed_pkgs, pkg_command):
@@ -399,6 +410,11 @@ def _get_pip(module, env=None, executable=None):
             # If you define your own executable that executable should be the only candidate.
             # As noted in the docs, executable doesn't work with virtualenvs.
             candidate_pip_basenames = (executable,)
+    elif executable is None and env is None and _have_pip_module():
+        # If no executable or virtualenv were specified, use the pip module for the current Python interpreter if available.
+        # Use of `__main__` is required to support Python 2.6 since support for executing packages with `runpy` was added in Python 2.7.
+        # Without it Python 2.6 gives the following error: pip is a package and cannot be directly executed
+        pip = [sys.executable, '-m', 'pip.__main__']
 
     if pip is None:
         if env is None:
@@ -429,7 +445,40 @@ def _get_pip(module, env=None, executable=None):
                                      'under any of these names: %s. ' % (', '.join(candidate_pip_basenames)) +
                                      'Make sure pip is present in the virtualenv.')
 
+    if not isinstance(pip, list):
+        pip = [pip]
+
     return pip
+
+
+def _have_pip_module():  # type: () -> bool
+    """Return True if the `pip` module can be found using the current Python interpreter, otherwise return False."""
+    try:
+        import importlib
+    except ImportError:
+        importlib = None
+
+    if importlib:
+        # noinspection PyBroadException
+        try:
+            # noinspection PyUnresolvedReferences
+            found = bool(importlib.util.find_spec('pip'))
+        except Exception:
+            found = False
+    else:
+        # noinspection PyDeprecation
+        import imp
+
+        # noinspection PyBroadException
+        try:
+            # noinspection PyDeprecation
+            imp.find_module('pip')
+        except Exception:
+            found = False
+        else:
+            found = True
+
+    return found
 
 
 def _fail(module, cmd, out, err):
@@ -655,7 +704,7 @@ def main():
 
         pip = _get_pip(module, env, module.params['executable'])
 
-        cmd = [pip] + state_map[state]
+        cmd = pip + state_map[state]
 
         # If there's a virtualenv we want things we install to be able to use other
         # installations that exist as binaries within this virtualenv. Example: we
@@ -665,7 +714,7 @@ def main():
         # in run_command by setting path_prefix here.
         path_prefix = None
         if env:
-            path_prefix = "/".join(pip.split('/')[:-1])
+            path_prefix = os.path.join(env, 'bin')
 
         # Automatically apply -e option to extra_args when source is a VCS url. VCS
         # includes those beginning with svn+, git+, hg+ or bzr+

@@ -25,7 +25,7 @@ import platform
 import re
 import sys
 from datetime import timedelta
-from distutils.version import LooseVersion
+from ansible.module_utils.compat.version import LooseVersion
 
 
 from ansible.module_utils.basic import AnsibleModule, env_fallback, missing_required_lib

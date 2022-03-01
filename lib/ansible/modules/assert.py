@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Dag Wieers <dag@wieers.com>
@@ -40,27 +39,49 @@ options:
     type: bool
     default: no
     version_added: "2.8"
-notes:
-     - This module is also supported for Windows targets.
+extends_documentation_fragment:
+  - action_common_attributes
+  - action_common_attributes.conn
+  - action_common_attributes.flow
+attributes:
+    action:
+        support: full
+    async:
+        support: none
+    become:
+        support: none
+    bypass_host_loop:
+        support: none
+    connection:
+        support: none
+    check_mode:
+        support: full
+    delegation:
+        support: none
+        details: Aside from C(register) and/or in combination with C(delegate_facts), it has little effect.
+    diff_mode:
+        support: none
+    platform:
+        platforms: all
 seealso:
-- module: debug
-- module: fail
-- module: meta
+- module: ansible.builtin.debug
+- module: ansible.builtin.fail
+- module: ansible.builtin.meta
 author:
     - Ansible Core Team
     - Michael DeHaan
 '''
 
 EXAMPLES = r'''
-- assert: { that: "ansible_os_family != 'RedHat'" }
+- ansible.builtin.assert: { that: "ansible_os_family != 'RedHat'" }
 
-- assert:
+- ansible.builtin.assert:
     that:
       - "'foo' in some_command_result.stdout"
       - number_of_the_counting == 3
 
 - name: After version 2.7 both 'msg' and 'fail_msg' can customize failing assertion message
-  assert:
+  ansible.builtin.assert:
     that:
       - my_param <= 100
       - my_param >= 0
@@ -68,14 +89,14 @@ EXAMPLES = r'''
     success_msg: "'my_param' is between 0 and 100"
 
 - name: Please use 'msg' when ansible version is smaller than 2.7
-  assert:
+  ansible.builtin.assert:
     that:
       - my_param <= 100
       - my_param >= 0
     msg: "'my_param' must be between 0 and 100"
 
 - name: Use quiet to avoid verbose output
-  assert:
+  ansible.builtin.assert:
     that:
       - my_param <= 100
       - my_param >= 0

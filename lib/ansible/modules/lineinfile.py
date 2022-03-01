@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
@@ -18,9 +17,9 @@ description:
   - This module ensures a particular line is in a file, or replace an
     existing line using a back-referenced regular expression.
   - This is primarily useful when you want to change a single line in a file only.
-  - See the M(replace) module if you want to change multiple, similar lines
-    or check M(blockinfile) if you want to insert/update/remove a block of lines in a file.
-    For other cases, see the M(copy) or M(template) modules.
+  - See the M(ansible.builtin.replace) module if you want to change multiple, similar lines
+    or check M(ansible.builtin.blockinfile) if you want to insert/update/remove a block of lines in a file.
+    For other cases, see the M(ansible.builtin.copy) or M(ansible.builtin.template) modules.
 version_added: "0.7"
 options:
   path:
@@ -40,10 +39,21 @@ options:
         settings.
       - When modifying a line the regexp should typically match both the initial state of
         the line as well as its state after replacement by C(line) to ensure idempotence.
-      - Uses Python regular expressions. See U(http://docs.python.org/2/library/re.html).
+      - Uses Python regular expressions. See U(https://docs.python.org/3/library/re.html).
     type: str
     aliases: [ regex ]
     version_added: '1.7'
+  search_string:
+    description:
+      - The literal string to look for in every line of the file. This does not have to match the entire line.
+      - For C(state=present), the line to replace if the string is found in the file. Only the last line found will be replaced.
+      - For C(state=absent), the line(s) to remove if the string is in the line.
+      - If the literal expression is not matched, the line will be
+        added to the file in keeping with C(insertbefore) or C(insertafter)
+        settings.
+      - Mutually exclusive with C(backrefs) and C(regexp).
+    type: str
+    version_added: '2.11'
   state:
     description:
       - Whether the line should be there or not.
@@ -68,6 +78,7 @@ options:
         does not match anywhere in the file, the file will be left unchanged.
       - If the C(regexp) does match, the last matching line will be replaced by
         the expanded line parameter.
+      - Mutually exclusive with C(search_string).
     type: bool
     default: no
     version_added: "1.1"
@@ -118,41 +129,55 @@ options:
     version_added: "2.5"
   others:
     description:
-      - All arguments accepted by the M(file) module also work here.
+      - All arguments accepted by the M(ansible.builtin.file) module also work here.
     type: str
 extends_documentation_fragment:
+    - action_common_attributes
+    - action_common_attributes.files
     - files
     - validate
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    platform:
+        platforms: posix
+    safe_file_operations:
+        support: full
+    vault:
+        support: none
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
 seealso:
-- module: blockinfile
-- module: copy
-- module: file
-- module: replace
-- module: template
-- module: win_lineinfile
+- module: ansible.builtin.blockinfile
+- module: ansible.builtin.copy
+- module: ansible.builtin.file
+- module: ansible.builtin.replace
+- module: ansible.builtin.template
+- module: community.windows.win_lineinfile
 author:
     - Daniel Hokka Zakrissoni (@dhozac)
     - Ahti Kitsik (@ahtik)
+    - Jose Angel Munoz (@imjoseangel)
 '''
 
 EXAMPLES = r'''
 # NOTE: Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
 - name: Ensure SELinux is set to enforcing mode
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/selinux/config
     regexp: '^SELINUX='
     line: SELINUX=enforcing
 
 - name: Make sure group wheel is not in the sudoers configuration
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/sudoers
     state: absent
     regexp: '^%wheel'
 
 - name: Replace a localhost entry with our own
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/hosts
     regexp: '^127\.0\.0\.1'
     line: 127.0.0.1 localhost
@@ -160,29 +185,45 @@ EXAMPLES = r'''
     group: root
     mode: '0644'
 
+- name: Replace a localhost entry searching for a literal string to avoid escaping
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    search_string: '127.0.0.1'
+    line: 127.0.0.1 localhost
+    owner: root
+    group: root
+    mode: '0644'
+
 - name: Ensure the default Apache port is 8080
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/httpd/conf/httpd.conf
     regexp: '^Listen '
     insertafter: '^#Listen '
     line: Listen 8080
 
+- name: Ensure php extension matches new pattern
+  ansible.builtin.lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    search_string: '<FilesMatch ".php[45]?$">'
+    insertafter: '^\t<Location \/>\n'
+    line: '        <FilesMatch ".php[34]?$">'
+
 - name: Ensure we have our own comment added to /etc/services
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/services
     regexp: '^# port for http'
     insertbefore: '^www.*80/tcp'
     line: '# port for http by default'
 
 - name: Add a line to a file if the file does not exist, without passing regexp
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /tmp/testfile
     line: 192.168.1.99 foo.lab.net foo
     create: yes
 
 # NOTE: Yaml requires escaping backslashes in double quotes but not in single quotes
 - name: Ensure the JBoss memory settings are exactly as needed
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /opt/jboss-as/bin/standalone.conf
     regexp: '^(.*)Xms(\d+)m(.*)$'
     line: '\1Xms${xms}m\3'
@@ -190,7 +231,7 @@ EXAMPLES = r'''
 
 # NOTE: Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
 - name: Validate the sudoers file before saving
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/sudoers
     state: present
     regexp: '^%ADMIN ALL='
@@ -199,12 +240,14 @@ EXAMPLES = r'''
 
 # See https://docs.python.org/3/library/re.html for further details on syntax
 - name: Use backrefs with alternative group syntax to avoid conflicts with variable values
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /tmp/config
     regexp: ^(host=).*
     line: \g<1>{{ hostname }}
     backrefs: yes
 '''
+
+RETURN = r'''#'''
 
 import os
 import re
@@ -212,7 +255,7 @@ import tempfile
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 
 
 def write_changes(module, b_lines, dest):
@@ -250,7 +293,7 @@ def check_file_attrs(module, changed, message, diff):
     return message, changed
 
 
-def present(module, dest, regexp, line, insertafter, insertbefore, create,
+def present(module, dest, regexp, search_string, line, insertafter, insertbefore, create,
             backup, backrefs, firstmatch):
 
     diff = {'before': '',
@@ -267,7 +310,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             try:
                 os.makedirs(b_destpath)
             except Exception as e:
-                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (b_destpath, e[0], e[1]))
+                module.fail_json(msg='Error creating %s (%s)' % (to_text(b_destpath), to_text(e)))
 
         b_lines = []
     else:
@@ -298,8 +341,8 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     # "If regular expressions are passed to both regexp and
     # insertafter, insertafter is only honored if no match for regexp is found."
     # Therefore:
-    # 1. regexp was found -> ignore insertafter, replace the founded line
-    # 2. regexp was not found -> insert the line after 'insertafter' or 'insertbefore' line
+    # 1. regexp or search_string was found -> ignore insertafter, replace the founded line
+    # 2. regexp or search_string was not found -> insert the line after 'insertafter' or 'insertbefore' line
 
     # Given the above:
     # 1. First check that there is no match for regexp:
@@ -312,7 +355,17 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
                 if firstmatch:
                     break
 
-    # 2. When no match found on the previous step,
+    # 2. Second check that there is no match for search_string:
+    if search_string is not None:
+        for lineno, b_cur_line in enumerate(b_lines):
+            match_found = to_bytes(search_string, errors='surrogate_or_strict') in b_cur_line
+            if match_found:
+                index[0] = lineno
+                match = match_found
+                if firstmatch:
+                    break
+
+    # 3. When no match found on the previous step,
     # parse for searching insertafter/insertbefore:
     if not match:
         for lineno, b_cur_line in enumerate(b_lines):
@@ -347,9 +400,9 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         if not b_new_line.endswith(b_linesep):
             b_new_line += b_linesep
 
-        # If no regexp was given and no line match is found anywhere in the file,
+        # If no regexp or search_string was given and no line match is found anywhere in the file,
         # insert the line appropriately if using insertbefore or insertafter
-        if regexp is None and match is None and not exact_line_match:
+        if (regexp, search_string, match) == (None, None, None) and not exact_line_match:
 
             # Insert lines
             if insertafter and insertafter != 'EOF':
@@ -425,7 +478,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             msg = 'line added'
             changed = True
 
-    # insert matched, but not the regexp
+    # insert matched, but not the regexp or search_string
     else:
         b_lines.insert(index[1], b_line + b_linesep)
         msg = 'line added'
@@ -453,7 +506,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     module.exit_json(changed=changed, msg=msg, backup=backupdest, diff=difflist)
 
 
-def absent(module, dest, regexp, line, backup):
+def absent(module, dest, regexp, search_string, line, backup):
 
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     if not os.path.exists(b_dest):
@@ -480,6 +533,8 @@ def absent(module, dest, regexp, line, backup):
     def matcher(b_cur_line):
         if regexp is not None:
             match_found = bre_c.search(b_cur_line)
+        elif search_string is not None:
+            match_found = to_bytes(search_string, errors='surrogate_or_strict') in b_cur_line
         else:
             match_found = b_line == b_cur_line.rstrip(b'\r\n')
         if match_found:
@@ -518,6 +573,7 @@ def main():
             path=dict(type='path', required=True, aliases=['dest', 'destfile', 'name']),
             state=dict(type='str', default='present', choices=['absent', 'present']),
             regexp=dict(type='str', aliases=['regex']),
+            search_string=dict(type='str'),
             line=dict(type='str', aliases=['value']),
             insertafter=dict(type='str'),
             insertbefore=dict(type='str'),
@@ -527,7 +583,8 @@ def main():
             firstmatch=dict(type='bool', default=False),
             validate=dict(type='str'),
         ),
-        mutually_exclusive=[['insertbefore', 'insertafter']],
+        mutually_exclusive=[
+            ['insertbefore', 'insertafter'], ['regexp', 'search_string'], ['backrefs', 'search_string']],
         add_file_common_args=True,
         supports_check_mode=True,
     )
@@ -539,13 +596,17 @@ def main():
     path = params['path']
     firstmatch = params['firstmatch']
     regexp = params['regexp']
+    search_string = params['search_string']
     line = params['line']
 
-    if regexp == '':
-        module.warn(
-            "The regular expression is an empty string, which will match every line in the file. "
-            "This may have unintended consequences, such as replacing the last line in the file rather than appending. "
-            "If this is desired, use '^' to match every line in the file and avoid this warning.")
+    if '' in [regexp, search_string]:
+        msg = ("The %s is an empty string, which will match every line in the file. "
+               "This may have unintended consequences, such as replacing the last line in the file rather than appending.")
+        param_name = 'search string'
+        if regexp == '':
+            param_name = 'regular expression'
+            msg += " If this is desired, use '^' to match every line in the file and avoid this warning."
+        module.warn(msg % param_name)
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
     if os.path.isdir(b_path):
@@ -564,13 +625,13 @@ def main():
         if ins_bef is None and ins_aft is None:
             ins_aft = 'EOF'
 
-        present(module, path, regexp, line,
+        present(module, path, regexp, search_string, line,
                 ins_aft, ins_bef, create, backup, backrefs, firstmatch)
     else:
-        if regexp is None and line is None:
-            module.fail_json(msg='one of line or regexp is required with state=absent')
+        if (regexp, search_string, line) == (None, None, None):
+            module.fail_json(msg='one of line, search_string, or regexp is required with state=absent')
 
-        absent(module, path, regexp, line, backup)
+        absent(module, path, regexp, search_string, line, backup)
 
 
 if __name__ == '__main__':

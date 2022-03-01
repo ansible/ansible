@@ -1,0 +1,14 @@
+---
+- hosts: testhost
+  gather_facts: no
+  tasks:
+      - name: test success async output
+        command: sleep 1
+        async: 10
+        poll: 1
+
+      - name: test failure async output
+        command: sleep 10
+        async: 1
+        poll: 1
+        ignore_errors: yes

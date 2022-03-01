@@ -1,10 +1,8 @@
 """Fallback source provider when no other provider matches the content root."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import os
-
-from ... import types as t
+import typing as t
 
 from ...constants import (
     TIMEOUT_PATH,
@@ -38,6 +36,7 @@ class UnversionedSource(SourceProvider):
             '__pycache__',
             'ansible.egg-info',
             'ansible_base.egg-info',
+            'ansible_core.egg-info',
         )
 
         kill_sub_dir = {

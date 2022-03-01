@@ -24,7 +24,7 @@ import os
 import pytest
 
 from units.compat import unittest
-from units.compat.mock import patch, MagicMock
+from mock import patch, MagicMock
 from units.mock.vault_helper import TextVaultSecret
 
 from ansible import context, errors
@@ -70,18 +70,18 @@ class TestVaultCli(unittest.TestCase):
         mock_setup_vault_secrets.return_value = []
         cli = VaultCLI(args=['ansible-vault', 'view', '/dev/null/foo'])
         cli.parse()
-        self.assertRaisesRegexp(errors.AnsibleOptionsError,
-                                "A vault password is required to use Ansible's Vault",
-                                cli.run)
+        self.assertRaisesRegex(errors.AnsibleOptionsError,
+                               "A vault password is required to use Ansible's Vault",
+                               cli.run)
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     def test_encrypt_missing_file_no_secret(self, mock_setup_vault_secrets):
         mock_setup_vault_secrets.return_value = []
         cli = VaultCLI(args=['ansible-vault', 'encrypt', '/dev/null/foo'])
         cli.parse()
-        self.assertRaisesRegexp(errors.AnsibleOptionsError,
-                                "A vault password is required to use Ansible's Vault",
-                                cli.run)
+        self.assertRaisesRegex(errors.AnsibleOptionsError,
+                               "A vault password is required to use Ansible's Vault",
+                               cli.run)
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')
@@ -108,9 +108,26 @@ class TestVaultCli(unittest.TestCase):
         cli = VaultCLI(args=['ansible-vault',
                              'encrypt_string',
                              '--prompt',
+                             '--show-input',
                              'some string to encrypt'])
         cli.parse()
         cli.run()
+        args, kwargs = mock_display.call_args
+        assert kwargs["private"] is False
+
+    @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
+    @patch('ansible.cli.vault.VaultEditor')
+    @patch('ansible.cli.vault.display.prompt', return_value='a_prompt')
+    def test_shadowed_encrypt_string_prompt(self, mock_display, mock_vault_editor, mock_setup_vault_secrets):
+        mock_setup_vault_secrets.return_value = [('default', TextVaultSecret('password'))]
+        cli = VaultCLI(args=['ansible-vault',
+                             'encrypt_string',
+                             '--prompt',
+                             'some string to encrypt'])
+        cli.parse()
+        cli.run()
+        args, kwargs = mock_display.call_args
+        assert kwargs["private"]
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')
@@ -192,11 +209,7 @@ class TestVaultCli(unittest.TestCase):
 @pytest.mark.parametrize('cli_args, expected', [
     (['ansible-vault', 'view', 'vault.txt'], 0),
     (['ansible-vault', 'view', 'vault.txt', '-vvv'], 3),
-    (['ansible-vault', '-vv', 'view', 'vault.txt'], 2),
-    # Due to our manual parsing we want to verify that -v set in the sub parser takes precedence. This behaviour is
-    # deprecated and tests should be removed when the code that handles it is removed
-    (['ansible-vault', '-vv', 'view', 'vault.txt', '-v'], 1),
-    (['ansible-vault', '-vv', 'view', 'vault.txt', '-vvvv'], 4),
+    (['ansible-vault', 'view', 'vault.txt', '-vv'], 2),
 ])
 def test_verbosity_arguments(cli_args, expected, tmp_path_factory, monkeypatch):
     # Add a password file so we don't get a prompt in the test

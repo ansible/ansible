@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Stephen Fromm <sfromm@gmail.com>
@@ -59,7 +58,7 @@ options:
     - Assemble files only if C(regex) matches the filename.
     - If not set, all files are assembled.
     - Every "\" (backslash) must be escaped as "\\" to comply to YAML syntax.
-    - Uses L(Python regular expressions,http://docs.python.org/2/library/re.html).
+    - Uses L(Python regular expressions,https://docs.python.org/3/library/re.html).
     type: str
   ignore_hidden:
     description:
@@ -74,35 +73,58 @@ options:
     - The command is passed securely so shell features like expansion and pipes won't work.
     type: str
     version_added: '2.0'
+attributes:
+    action:
+      support: full
+    async:
+      support: none
+    bypass_host_loop:
+      support: none
+    check_mode:
+      support: none
+    diff_mode:
+      support: full
+    platform:
+      platforms: posix
+    safe_file_operations:
+      support: full
+    vault:
+      support: full
+      version_added: '2.2'
 seealso:
-- module: copy
-- module: template
-- module: win_copy
+- module: ansible.builtin.copy
+- module: ansible.builtin.template
+- module: ansible.windows.win_copy
 author:
 - Stephen Fromm (@sfromm)
 extends_documentation_fragment:
-- decrypt
-- files
+    - action_common_attributes
+    - action_common_attributes.flow
+    - action_common_attributes.files
+    - decrypt
+    - files
 '''
 
 EXAMPLES = r'''
 - name: Assemble from fragments from a directory
-  assemble:
+  ansible.builtin.assemble:
     src: /etc/someapp/fragments
     dest: /etc/someapp/someapp.conf
 
-- name: Inserted provided delimiter in between each fragment
-  assemble:
+- name: Insert the provided delimiter between fragments
+  ansible.builtin.assemble:
     src: /etc/someapp/fragments
     dest: /etc/someapp/someapp.conf
     delimiter: '### START FRAGMENT ###'
 
 - name: Assemble a new "sshd_config" file into place, after passing validation with sshd
-  assemble:
+  ansible.builtin.assemble:
     src: /etc/ssh/conf.d/
     dest: /etc/ssh/sshd_config
     validate: /usr/sbin/sshd -t -f %s
 '''
+
+RETURN = r'''#'''
 
 import codecs
 import os

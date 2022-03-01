@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Ansible module to import third party repo keys to your rpm db
@@ -24,10 +23,12 @@ options:
       description:
         - Key that will be modified. Can be a url, a file on the managed node, or a keyid if the key
           already exists in the database.
+      type: str
       required: true
     state:
       description:
         - If the key will be imported or removed from the rpm db.
+      type: str
       default: present
       choices: [ absent, present ]
     validate_certs:
@@ -42,29 +43,41 @@ options:
         - This will be used to verify the specified key.
       type: str
       version_added: 2.9
+extends_documentation_fragment:
+    - action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: rhel
 '''
 
 EXAMPLES = '''
 - name: Import a key from a url
-  rpm_key:
+  ansible.builtin.rpm_key:
     state: present
     key: http://apt.sw.be/RPM-GPG-KEY.dag.txt
 
 - name: Import a key from a file
-  rpm_key:
+  ansible.builtin.rpm_key:
     state: present
     key: /path/to/key.gpg
 
 - name: Ensure a key is not present in the db
-  rpm_key:
+  ansible.builtin.rpm_key:
     state: absent
     key: DEADB33F
 
 - name: Verify the key, using a fingerprint, before import
-  rpm_key:
+  ansible.builtin.rpm_key:
     key: /path/to/RPM-GPG-KEY.dag.txt
     fingerprint: EBC6 E12C 62B1 C734 026B  2122 A20E 5214 6B8D 79E6
 '''
+
+RETURN = r'''#'''
+
 import re
 import os.path
 import tempfile
@@ -226,7 +239,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['absent', 'present']),
-            key=dict(type='str', required=True),
+            key=dict(type='str', required=True, no_log=False),
             fingerprint=dict(type='str'),
             validate_certs=dict(type='bool', default=True),
         ),

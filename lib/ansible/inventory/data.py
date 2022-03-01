@@ -25,7 +25,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
-from ansible.module_utils.six import iteritems, string_types
+from ansible.module_utils.six import string_types
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 from ansible.utils.path import basedir
@@ -51,6 +51,7 @@ class InventoryData(object):
         self.localhost = None
 
         self.current_source = None
+        self.processed_sources = []
 
         # Always create the 'all' and 'ungrouped' groups,
         for group in ('all', 'ungrouped'):
@@ -64,6 +65,7 @@ class InventoryData(object):
             'hosts': self.hosts,
             'local': self.localhost,
             'source': self.current_source,
+            'processed_sources': self.processed_sources
         }
         return data
 
@@ -73,6 +75,7 @@ class InventoryData(object):
         self.groups = data.get('groups')
         self.localhost = data.get('local')
         self.current_source = data.get('source')
+        self.processed_sources = data.get('processed_sources')
 
     def _create_implicit_localhost(self, pattern):
 
@@ -274,7 +277,7 @@ class InventoryData(object):
         We merge a 'magic' var 'groups' with group name keys and hostname list values into every host variable set. Cache for speed.
         """
         if not self._groups_dict_cache:
-            for (group_name, group) in iteritems(self.groups):
+            for (group_name, group) in self.groups.items():
                 self._groups_dict_cache[group_name] = [h.name for h in group.get_hosts()]
 
         return self._groups_dict_cache

@@ -1,12 +1,10 @@
 """Code for finding content."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import abc
 import collections
 import os
-
-from ... import types as t
+import typing as t
 
 from ...util import (
     ANSIBLE_SOURCE_ROOT,
@@ -93,8 +91,9 @@ class ContentLayout(Layout):
                  unit_module_path,  # type: str
                  unit_module_utils_path,  # type: str
                  unit_messages,  # type: t.Optional[LayoutMessages]
+                 unsupported=False,  # type: bool
                  ):  # type: (...) -> None
-        super(ContentLayout, self).__init__(root, paths)
+        super().__init__(root, paths)
 
         self.plugin_paths = plugin_paths
         self.collection = collection
@@ -110,6 +109,7 @@ class ContentLayout(Layout):
         self.unit_module_path = unit_module_path
         self.unit_module_utils_path = unit_module_utils_path
         self.unit_messages = unit_messages
+        self.unsupported = unsupported
 
         self.is_ansible = root == ANSIBLE_SOURCE_ROOT
 
@@ -193,6 +193,10 @@ class LayoutProvider(PathProvider):
         'terminal',
         'test',
         'vars',
+        # The following are plugin directories not directly supported by ansible-core, but used in collections
+        # (https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#modules--plugins)
+        'plugin_utils',
+        'sub_plugins',
     )
 
     @abc.abstractmethod
@@ -200,9 +204,9 @@ class LayoutProvider(PathProvider):
         """Create a layout using the given root and paths."""
 
 
-def paths_to_tree(paths):  # type: (t.List[str]) -> t.Tuple(t.Dict[str, t.Any], t.List[str])
+def paths_to_tree(paths):  # type: (t.List[str]) -> t.Tuple[t.Dict[str, t.Any], t.List[str]]
     """Return a filesystem tree from the given list of paths."""
-    tree = {}, []
+    tree = {}, []  # type: t.Tuple[t.Dict[str, t.Any], t.List[str]]
 
     for path in paths:
         parts = path.split(os.path.sep)
@@ -219,7 +223,7 @@ def paths_to_tree(paths):  # type: (t.List[str]) -> t.Tuple(t.Dict[str, t.Any], 
     return tree
 
 
-def get_tree_item(tree, parts):  # type: (t.Tuple(t.Dict[str, t.Any], t.List[str]), t.List[str]) -> t.Optional[t.Tuple(t.Dict[str, t.Any], t.List[str])]
+def get_tree_item(tree, parts):  # type: (t.Tuple[t.Dict[str, t.Any], t.List[str]], t.List[str]) -> t.Optional[t.Tuple[t.Dict[str, t.Any], t.List[str]]]
     """Return the portion of the tree found under the path given by parts, or None if it does not exist."""
     root = tree
 

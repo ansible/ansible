@@ -72,24 +72,24 @@ import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
 
 from ansible.module_utils.common.collections import Mapping
-from ansible.module_utils.six import PY3, string_types
+from ansible.module_utils.six import PY2, PY3, string_types
 from ansible.module_utils.six.moves import cStringIO
-from ansible.module_utils.basic import get_distribution
+from ansible.module_utils.basic import get_distribution, missing_required_lib
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
 try:
     # python3
     import urllib.request as urllib_request
-    from urllib.request import AbstractHTTPHandler
+    from urllib.request import AbstractHTTPHandler, BaseHandler
 except ImportError:
     # python2
     import urllib2 as urllib_request
-    from urllib2 import AbstractHTTPHandler
+    from urllib2 import AbstractHTTPHandler, BaseHandler
 
 urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307
 
 try:
-    from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse
+    from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse, unquote
     HAS_URLPARSE = True
 except Exception:
     HAS_URLPARSE = False
@@ -171,12 +171,104 @@ except ImportError:
     except ImportError:
         HAS_MATCH_HOSTNAME = False
 
+HAS_CRYPTOGRAPHY = True
+try:
+    from cryptography import x509
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.exceptions import UnsupportedAlgorithm
+except ImportError:
+    HAS_CRYPTOGRAPHY = False
 
+# Old import for GSSAPI authentication, this is not used in urls.py but kept for backwards compatibility.
 try:
     import urllib_gssapi
     HAS_GSSAPI = True
 except ImportError:
     HAS_GSSAPI = False
+
+GSSAPI_IMP_ERR = None
+try:
+    import gssapi
+
+    class HTTPGSSAPIAuthHandler(BaseHandler):
+        """ Handles Negotiate/Kerberos support through the gssapi library. """
+
+        AUTH_HEADER_PATTERN = re.compile(r'(?:.*)\s*(Negotiate|Kerberos)\s*([^,]*),?', re.I)
+        handler_order = 480  # Handle before Digest authentication
+
+        def __init__(self, username=None, password=None):
+            self.username = username
+            self.password = password
+            self._context = None
+
+        def get_auth_value(self, headers):
+            auth_match = self.AUTH_HEADER_PATTERN.search(headers.get('www-authenticate', ''))
+            if auth_match:
+                return auth_match.group(1), base64.b64decode(auth_match.group(2))
+
+        def http_error_401(self, req, fp, code, msg, headers):
+            # If we've already attempted the auth and we've reached this again then there was a failure.
+            if self._context:
+                return
+
+            parsed = generic_urlparse(urlparse(req.get_full_url()))
+
+            auth_header = self.get_auth_value(headers)
+            if not auth_header:
+                return
+            auth_protocol, in_token = auth_header
+
+            username = None
+            if self.username:
+                username = gssapi.Name(self.username, name_type=gssapi.NameType.user)
+
+            if username and self.password:
+                if not hasattr(gssapi.raw, 'acquire_cred_with_password'):
+                    raise NotImplementedError("Platform GSSAPI library does not support "
+                                              "gss_acquire_cred_with_password, cannot acquire GSSAPI credential with "
+                                              "explicit username and password.")
+
+                b_password = to_bytes(self.password, errors='surrogate_or_strict')
+                cred = gssapi.raw.acquire_cred_with_password(username, b_password, usage='initiate').creds
+
+            else:
+                cred = gssapi.Credentials(name=username, usage='initiate')
+
+            # Get the peer certificate for the channel binding token if possible (HTTPS). A bug on macOS causes the
+            # authentication to fail when the CBT is present. Just skip that platform.
+            cbt = None
+            cert = getpeercert(fp, True)
+            if cert and platform.system() != 'Darwin':
+                cert_hash = get_channel_binding_cert_hash(cert)
+                if cert_hash:
+                    cbt = gssapi.raw.ChannelBindings(application_data=b"tls-server-end-point:" + cert_hash)
+
+            # TODO: We could add another option that is set to include the port in the SPN if desired in the future.
+            target = gssapi.Name("HTTP@%s" % parsed['hostname'], gssapi.NameType.hostbased_service)
+            self._context = gssapi.SecurityContext(usage="initiate", name=target, creds=cred, channel_bindings=cbt)
+
+            resp = None
+            while not self._context.complete:
+                out_token = self._context.step(in_token)
+                if not out_token:
+                    break
+
+                auth_header = '%s %s' % (auth_protocol, to_native(base64.b64encode(out_token)))
+                req.add_unredirected_header('Authorization', auth_header)
+                resp = self.parent.open(req)
+
+                # The response could contain a token that the client uses to validate the server
+                auth_header = self.get_auth_value(resp.headers)
+                if not auth_header:
+                    break
+                in_token = auth_header[1]
+
+            return resp
+
+except ImportError:
+    GSSAPI_IMP_ERR = traceback.format_exc()
+    HTTPGSSAPIAuthHandler = None
 
 if not HAS_MATCH_HOSTNAME:
     # The following block of code is under the terms and conditions of the
@@ -383,6 +475,11 @@ zKPZsZ2miVGclicJHzm5q080b1p/sZtuKIEZk6vZqEg=
 -----END CERTIFICATE-----
 """
 
+b_PEM_CERT_RE = re.compile(
+    br'^-----BEGIN CERTIFICATE-----\n.+?-----END CERTIFICATE-----$',
+    flags=re.M | re.S
+)
+
 #
 # Exceptions
 #
@@ -406,6 +503,13 @@ class SSLValidationError(ConnectionError):
 class NoSSLError(SSLValidationError):
     """Needed to connect to an HTTPS url but no ssl library available to verify the certificate"""
     pass
+
+
+class MissingModuleError(Exception):
+    """Failed to import 3rd party module required by the caller"""
+    def __init__(self, message, import_traceback):
+        super(MissingModuleError, self).__init__(message)
+        self.import_traceback = import_traceback
 
 
 # Some environments (Google Compute Engine's CoreOS deploys) do not compile
@@ -646,6 +750,35 @@ def generic_urlparse(parts):
     return generic_parts
 
 
+def extract_pem_certs(b_data):
+    for match in b_PEM_CERT_RE.finditer(b_data):
+        yield match.group(0)
+
+
+def get_response_filename(response):
+    url = response.geturl()
+    path = urlparse(url)[2]
+    filename = os.path.basename(path.rstrip('/')) or None
+    if filename:
+        filename = unquote(filename)
+
+    return response.headers.get_param('filename', header='content-disposition') or filename
+
+
+def parse_content_type(response):
+    if PY2:
+        get_type = response.headers.gettype
+        get_param = response.headers.getparam
+    else:
+        get_type = response.headers.get_content_type
+        get_param = response.headers.get_param
+
+    content_type = (get_type() or 'application/octet-stream').split(',')[0]
+    main_type, sub_type = content_type.split('/')
+    charset = (get_param('charset') or 'utf-8').split(',')[0]
+    return content_type, main_type, sub_type, charset
+
+
 class RequestWithMethod(urllib_request.Request):
     '''
     Workaround for using DELETE/PUT/etc with urllib2
@@ -717,7 +850,7 @@ def RedirectHandlerFactory(follow_redirects=None, validate_certs=True, ca_path=N
             # Be conciliant with URIs containing a space
             newurl = newurl.replace(' ', '%20')
 
-            # Suport redirect with payload and original headers
+            # Support redirect with payload and original headers
             if code in (307, 308):
                 # Preserve payload and headers
                 headers = req.headers
@@ -819,14 +952,13 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             paths_checked = [self.ca_path]
             with open(to_bytes(self.ca_path, errors='surrogate_or_strict'), 'rb') as f:
                 if HAS_SSLCONTEXT:
-                    cadata.extend(
-                        ssl.PEM_cert_to_DER_cert(
-                            to_native(f.read(), errors='surrogate_or_strict')
+                    for b_pem in extract_pem_certs(f.read()):
+                        cadata.extend(
+                            ssl.PEM_cert_to_DER_cert(
+                                to_native(b_pem, errors='surrogate_or_strict')
+                            )
                         )
-                    )
-                else:
-                    ca_certs.append(f.read())
-            return ca_certs, cadata, paths_checked
+            return self.ca_path, cadata, paths_checked
 
         if not HAS_SSLCONTEXT:
             paths_checked.append('/etc/ssl/certs')
@@ -846,6 +978,9 @@ class SSLValidationHandler(urllib_request.BaseHandler):
             ca_certs.append('/etc/openssl/certs')
         elif system == u'SunOS':
             paths_checked.append('/opt/local/etc/openssl/certs')
+        elif system == u'AIX':
+            paths_checked.append('/var/ssl/certs')
+            paths_checked.append('/opt/freeware/etc/ssl/certs')
 
         # fall back to a user-deployed cert in a standard
         # location if the OS platform one is not available
@@ -884,11 +1019,12 @@ class SSLValidationHandler(urllib_request.BaseHandler):
                                     b_cert = cert_file.read()
                                 if HAS_SSLCONTEXT:
                                     try:
-                                        cadata.extend(
-                                            ssl.PEM_cert_to_DER_cert(
-                                                to_native(b_cert, errors='surrogate_or_strict')
+                                        for b_pem in extract_pem_certs(b_cert):
+                                            cadata.extend(
+                                                ssl.PEM_cert_to_DER_cert(
+                                                    to_native(b_pem, errors='surrogate_or_strict')
+                                                )
                                             )
-                                        )
                                     except Exception:
                                         continue
                                 else:
@@ -900,6 +1036,8 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         if HAS_SSLCONTEXT:
             default_verify_paths = ssl.get_default_verify_paths()
             paths_checked[:0] = [default_verify_paths.capath]
+        else:
+            os.close(tmp_fd)
 
         return (tmp_path, cadata, paths_checked)
 
@@ -1028,6 +1166,43 @@ def maybe_add_ssl_handler(url, validate_certs, ca_path=None):
         # create the SSL validation handler and
         # add it to the list of handlers
         return SSLValidationHandler(parsed.hostname, parsed.port or 443, ca_path=ca_path)
+
+
+def getpeercert(response, binary_form=False):
+    """ Attempt to get the peer certificate of the response from urlopen. """
+    # The response from urllib2.open() is different across Python 2 and 3
+    if PY3:
+        socket = response.fp.raw._sock
+    else:
+        socket = response.fp._sock.fp._sock
+
+    try:
+        return socket.getpeercert(binary_form)
+    except AttributeError:
+        pass  # Not HTTPS
+
+
+def get_channel_binding_cert_hash(certificate_der):
+    """ Gets the channel binding app data for a TLS connection using the peer cert. """
+    if not HAS_CRYPTOGRAPHY:
+        return
+
+    # Logic documented in RFC 5929 section 4 https://tools.ietf.org/html/rfc5929#section-4
+    cert = x509.load_der_x509_certificate(certificate_der, default_backend())
+
+    hash_algorithm = None
+    try:
+        hash_algorithm = cert.signature_hash_algorithm
+    except UnsupportedAlgorithm:
+        pass
+
+    # If the signature hash algorithm is unknown/unsupported or md5/sha1 we must use SHA256.
+    if not hash_algorithm or hash_algorithm.name in ['md5', 'sha1']:
+        hash_algorithm = hashes.SHA256()
+
+    digest = hashes.Hash(hash_algorithm, default_backend())
+    digest.update(certificate_der)
+    return digest.finalize()
 
 
 def rfc2822_date_string(timetuple, zone='-0000'):
@@ -1174,15 +1349,13 @@ class Request:
         ssl_handler = maybe_add_ssl_handler(url, validate_certs, ca_path=ca_path)
         if ssl_handler and not HAS_SSLCONTEXT:
             handlers.append(ssl_handler)
-        if HAS_GSSAPI and use_gssapi:
-            handlers.append(urllib_gssapi.HTTPSPNEGOAuthHandler())
 
         parsed = generic_urlparse(urlparse(url))
         if parsed.scheme != 'ftp':
             username = url_username
+            password = url_password
 
             if username:
-                password = url_password
                 netloc = parsed.netloc
             elif '@' in parsed.netloc:
                 credentials, netloc = parsed.netloc.split('@', 1)
@@ -1198,7 +1371,15 @@ class Request:
                 # reconstruct url without credentials
                 url = urlunparse(parsed_list)
 
-            if username and not force_basic_auth:
+            if use_gssapi:
+                if HTTPGSSAPIAuthHandler:
+                    handlers.append(HTTPGSSAPIAuthHandler(username, password))
+                else:
+                    imp_err_msg = missing_required_lib('gssapi', reason='for use_gssapi=True',
+                                                       url='https://pypi.org/project/gssapi/')
+                    raise MissingModuleError(imp_err_msg, import_traceback=GSSAPI_IMP_ERR)
+
+            elif username and not force_basic_auth:
                 passman = urllib_request.HTTPPasswordMgrWithDefaultRealm()
 
                 # this creates a password manager
@@ -1294,9 +1475,9 @@ class Request:
             request.add_header('If-Modified-Since', tstamp)
 
         # user defined headers now, which may override things we've set above
-        unredirected_headers = unredirected_headers or []
+        unredirected_headers = [h.lower() for h in (unredirected_headers or [])]
         for header in headers:
-            if header in unredirected_headers:
+            if header.lower() in unredirected_headers:
                 request.add_unredirected_header(header, headers[header])
             else:
                 request.add_header(header, headers[header])
@@ -1531,8 +1712,7 @@ def url_argument_spec():
     '''
     return dict(
         url=dict(type='str'),
-        force=dict(type='bool', default=False, aliases=['thirsty'],
-                   deprecated_aliases=[dict(name='thirsty', version='2.13', collection_name='ansible.builtin')]),
+        force=dict(type='bool', default=False),
         http_agent=dict(type='str', default='ansible-httpget'),
         use_proxy=dict(type='bool', default=True),
         validate_certs=dict(type='bool', default=True),
@@ -1541,12 +1721,13 @@ def url_argument_spec():
         force_basic_auth=dict(type='bool', default=False),
         client_cert=dict(type='path'),
         client_key=dict(type='path'),
+        use_gssapi=dict(type='bool', default=False),
     )
 
 
 def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=True, force=False, last_mod_time=None, timeout=10,
-              use_gssapi=False, unix_socket=None, ca_path=None, cookies=None):
+              use_gssapi=False, unix_socket=None, ca_path=None, cookies=None, unredirected_headers=None):
     """Sends a request via HTTP(S) or FTP (needs the module as parameter)
 
     :arg module: The AnsibleModule (used to get username, password etc. (s.b.).
@@ -1563,6 +1744,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     :kwarg unix_socket: (optional) String of file system path to unix socket file to use when establishing
         connection to the provided url
     :kwarg ca_path: (optional) String of file system path to CA cert bundle to use
+    :kwarg cookies: (optional) CookieJar object to send with the request
+    :kwarg unredirected_headers: (optional) A list of headers to not attach on a redirected request
 
     :returns: A tuple of (**response**, **info**). Use ``response.read()`` to read the data.
         The **info** contains the 'status' and other meta data. When a HttpError (status >= 400)
@@ -1601,6 +1784,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
     client_cert = module.params.get('client_cert')
     client_key = module.params.get('client_key')
+    use_gssapi = module.params.get('use_gssapi', use_gssapi)
 
     if not isinstance(cookies, cookiejar.CookieJar):
         cookies = cookiejar.LWPCookieJar()
@@ -1614,7 +1798,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects, client_cert=client_cert,
                      client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
-                     unix_socket=unix_socket, ca_path=ca_path)
+                     unix_socket=unix_socket, ca_path=ca_path, unredirected_headers=unredirected_headers)
         # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
         info.update(dict((k.lower(), v) for k, v in r.info().items()))
 
@@ -1653,11 +1837,21 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             module.fail_json(msg='%s' % to_native(e), **info)
     except (ConnectionError, ValueError) as e:
         module.fail_json(msg=to_native(e), **info)
+    except MissingModuleError as e:
+        module.fail_json(msg=to_text(e), exception=e.import_traceback)
     except urllib_error.HTTPError as e:
+        r = e
         try:
+            if e.fp is None:
+                # Certain HTTPError objects may not have the ability to call ``.read()`` on Python 3
+                # This is not handled gracefully in Python 3, and instead an exception is raised from
+                # tempfile, due to ``urllib.response.addinfourl`` not being initialized
+                raise AttributeError
             body = e.read()
         except AttributeError:
             body = ''
+        else:
+            e.close()
 
         # Try to add exception info to the output but don't fail if we can't
         try:
@@ -1685,7 +1879,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
 
 def fetch_file(module, url, data=None, headers=None, method=None,
-               use_proxy=True, force=False, last_mod_time=None, timeout=10):
+               use_proxy=True, force=False, last_mod_time=None, timeout=10,
+               unredirected_headers=None):
     '''Download and save a file via HTTP(S) or FTP (needs the module as parameter).
     This is basically a wrapper around fetch_url().
 
@@ -1699,6 +1894,7 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     :kwarg boolean force: If True: Do not get a cached copy (Default: False)
     :kwarg last_mod_time: Default: None
     :kwarg int timeout:   Default: 10
+    :kwarg unredirected_headers: (optional) A list of headers to not attach on a redirected request
 
     :returns: A string, the path to the downloaded file.
     '''
@@ -1708,7 +1904,8 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     fetch_temp_file = tempfile.NamedTemporaryFile(dir=module.tmpdir, prefix=file_name, suffix=file_ext, delete=False)
     module.add_cleanup_file(fetch_temp_file.name)
     try:
-        rsp, info = fetch_url(module, url, data, headers, method, use_proxy, force, last_mod_time, timeout)
+        rsp, info = fetch_url(module, url, data, headers, method, use_proxy, force, last_mod_time, timeout,
+                              unredirected_headers=unredirected_headers)
         if not rsp:
             module.fail_json(msg="Failure downloading %s, %s" % (url, info['msg']))
         data = rsp.read(bufsize)

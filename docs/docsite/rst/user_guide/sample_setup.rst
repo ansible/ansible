@@ -14,7 +14,9 @@ The sample setup organizes playbooks, roles, inventory, and variables files by f
 Sample directory layout
 -----------------------
 
-This layout organizes most tasks in roles, with a single inventory file for each environment and a few playbooks in the top-level directory::
+This layout organizes most tasks in roles, with a single inventory file for each environment and a few playbooks in the top-level directory:
+
+  .. code-block:: console
 
     production                # inventory file for production servers
     staging                   # inventory file for staging environment
@@ -30,7 +32,7 @@ This layout organizes most tasks in roles, with a single inventory file for each
     module_utils/             # if any custom module_utils to support modules, put them here (optional)
     filter_plugins/           # if any custom filter plugins, put them here (optional)
 
-    site.yml                  # master playbook
+    site.yml                  # main playbook
     webservers.yml            # playbook for webserver tier
     dbservers.yml             # playbook for dbserver tier
     tasks/                    # task files included from playbooks
@@ -61,12 +63,14 @@ This layout organizes most tasks in roles, with a single inventory file for each
         monitoring/           # ""
         fooapp/               # ""
 
-.. note: By default, Ansible assumes your playbooks are stored in one directory with roles stored in a sub-directory called ``roles/``. As you use Ansible to automate more tasks, you may want to move your playbooks into a sub-directory called ``playbooks/``. If you do this, you must configure the path to your ``roles/`` directory using the ``roles_path`` setting in ansible.cfg.
+.. note:: By default, Ansible assumes your playbooks are stored in one directory with roles stored in a sub-directory called ``roles/``. As you use Ansible to automate more tasks, you may want to move your playbooks into a sub-directory called ``playbooks/``. If you do this, you must configure the path to your ``roles/`` directory using the ``roles_path`` setting in ansible.cfg.
 
 Alternative directory layout
 ----------------------------
 
-Alternatively you can put each inventory file with its ``group_vars``/``host_vars`` in a separate directory. This is particularly useful if your ``group_vars``/``host_vars`` don't have that much in common in different environments. The layout could look something like this::
+Alternatively you can put each inventory file with its ``group_vars``/``host_vars`` in a separate directory. This is particularly useful if your ``group_vars``/``host_vars`` don't have that much in common in different environments. The layout could look something like this:
+
+  .. code-block:: console
 
     inventories/
        production/
@@ -108,28 +112,36 @@ This layout gives you more flexibility for larger environments, as well as a tot
 Sample group and host variables
 -------------------------------
 
-These sample group and host variables files record the variable values that apply to each machine or group of machines. For instance, the data center in Atlanta has its own NTP servers, so when setting up ntp.conf, we should use them::
+These sample group and host variables files record the variable values that apply to each machine or group of machines. For instance, the data center in Atlanta has its own NTP servers, so when setting up ntp.conf, we should use them:
+
+  .. code-block:: yaml
 
     ---
     # file: group_vars/atlanta
     ntp: ntp-atlanta.example.com
     backup: backup-atlanta.example.com
 
-Similarly, the webservers have some configuration that does not apply to the database servers::
+Similarly, the webservers have some configuration that does not apply to the database servers:
+
+  .. code-block:: yaml
 
     ---
     # file: group_vars/webservers
     apacheMaxRequestsPerChild: 3000
     apacheMaxClients: 900
 
-Default values, or values that are universally true, belong in a file called group_vars/all::
+Default values, or values that are universally true, belong in a file called group_vars/all:
+
+  .. code-block:: yaml
 
     ---
     # file: group_vars/all
     ntp: ntp-boston.example.com
     backup: backup-boston.example.com
 
-If necessary, you can define specific hardware variance in systems in a host_vars file::
+If necessary, you can define specific hardware variance in systems in a host_vars file:
+
+  .. code-block:: yaml
 
     ---
     # file: host_vars/db-bos-1.example.com
@@ -143,14 +155,18 @@ Again, if you are using :ref:`dynamic inventory <dynamic_inventory>`, Ansible cr
 Sample playbooks organized by function
 --------------------------------------
 
-With this setup, a single playbook can define all the infrastructure. The site.yml playbook imports two other playbooks, one for the webservers and one for the database servers::
+With this setup, a single playbook can define all the infrastructure. The site.yml playbook imports two other playbooks, one for the webservers and one for the database servers:
+
+  .. code-block:: yaml
 
     ---
     # file: site.yml
     - import_playbook: webservers.yml
     - import_playbook: dbservers.yml
 
-The webservers.yml file, also at the top level, maps the configuration of the webservers group to the roles related to the webservers group::
+The webservers.yml file, also at the top level, maps the configuration of the webservers group to the roles related to the webservers group:
+
+  .. code-block:: yaml
 
     ---
     # file: webservers.yml
@@ -159,7 +175,9 @@ The webservers.yml file, also at the top level, maps the configuration of the we
         - common
         - webtier
 
-With this setup, you can configure your whole infrastructure by "running" site.yml, or run a subset by running webservers.yml.  This is analogous to the Ansible "--limit" parameter but a little more explicit::
+With this setup, you can configure your whole infrastructure by "running" site.yml, or run a subset by running webservers.yml.  This is analogous to the Ansible "--limit" parameter but a little more explicit:
+
+  .. code-block:: shell
 
    ansible-playbook site.yml --limit webservers
    ansible-playbook webservers.yml
@@ -169,7 +187,9 @@ With this setup, you can configure your whole infrastructure by "running" site.y
 Sample task and handler files in a function-based role
 ------------------------------------------------------
 
-Ansible loads any file called ``main.yml`` in a role sub-directory. This sample ``tasks/main.yml`` file is simple - it sets up NTP, but it could do more if we wanted::
+Ansible loads any file called ``main.yml`` in a role sub-directory. This sample ``tasks/main.yml`` file is simple - it sets up NTP, but it could do more if we wanted:
+
+  .. code-block:: yaml
 
     ---
     # file: roles/common/tasks/main.yml
@@ -196,7 +216,9 @@ Ansible loads any file called ``main.yml`` in a role sub-directory. This sample 
       tags: ntp
 
 Here is an example handlers file.  As a review, handlers are only fired when certain tasks report changes, and are run at the end
-of each play::
+of each play:
+
+  .. code-block:: yaml
 
     ---
     # file: roles/common/handlers/main.yml
@@ -213,33 +235,47 @@ See :ref:`playbooks_reuse_roles` for more information.
 What the sample setup enables
 -----------------------------
 
-The basic organizational structure described above enables a lot of different automation options. To reconfigure your entire infrastructure::
+The basic organizational structure described above enables a lot of different automation options. To reconfigure your entire infrastructure:
+
+  .. code-block:: shell
 
     ansible-playbook -i production site.yml
 
-To reconfigure NTP on everything::
+To reconfigure NTP on everything:
+
+  .. code-block:: shell
 
     ansible-playbook -i production site.yml --tags ntp
 
-To reconfigure only the webservers::
+To reconfigure only the webservers:
+
+  .. code-block:: shell
 
     ansible-playbook -i production webservers.yml
 
-To reconfigure only the webservers in Boston::
+To reconfigure only the webservers in Boston:
+
+  .. code-block:: shell
 
     ansible-playbook -i production webservers.yml --limit boston
 
-To reconfigure only the first 10 webservers in Boston, and then the next 10::
+To reconfigure only the first 10 webservers in Boston, and then the next 10:
+
+  .. code-block:: shell
 
     ansible-playbook -i production webservers.yml --limit boston[0:9]
     ansible-playbook -i production webservers.yml --limit boston[10:19]
 
-The sample setup also supports basic ad-hoc commands::
+The sample setup also supports basic ad hoc commands:
+
+  .. code-block:: shell
 
     ansible boston -i production -m ping
     ansible boston -i production -m command -a '/sbin/reboot'
 
-To discover what tasks would run or what hostnames would be affected by a particular Ansible command::
+To discover what tasks would run or what hostnames would be affected by a particular Ansible command:
+
+  .. code-block:: shell
 
     # confirm what task names would be run if I ran this command and said "just ntp tasks"
     ansible-playbook -i production webservers.yml --tags ntp --list-tasks
@@ -273,8 +309,8 @@ in the directory structure example at the start of this section.
        Learn about YAML syntax
    :ref:`working_with_playbooks`
        Review the basic playbook features
-   :ref:`all_modules`
-       Learn about available modules
+   :ref:`list_of_collections`
+       Browse existing collections, modules, and plugins
    :ref:`developing_modules`
        Learn how to extend Ansible by writing your own modules
    :ref:`intro_patterns`

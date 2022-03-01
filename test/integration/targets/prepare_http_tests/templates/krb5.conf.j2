@@ -1,0 +1,25 @@
+[libdefaults]
+  default_realm = {{ krb5_realm | upper }}
+  dns_lookup_realm = false
+  dns_lookup_kdc = false
+  rdns = false
+
+[realms]
+  {{ krb5_realm | upper }} = {
+{% if krb5_provider == 'Heimdal' %}
+{# Heimdal seems to only use UDP unless TCP is explicitly set and we must use TCP as the SSH tunnel only supports TCP. #}
+{# The hostname doesn't seem to work when using the alias, just use localhost as that works. #}
+    kdc = tcp/127.0.0.1
+    admin_server = tcp/127.0.0.1
+{% else %}
+    kdc = {{ httpbin_host }}
+    admin_server = {{ httpbin_host }}
+{% endif %}
+  }
+
+[domain_realm]
+  .{{ krb5_realm | lower }} = {{ krb5_realm | upper }}
+  {{ krb5_realm | lower }} = {{ krb5_realm | upper }}
+
+[logging]
+  krb5 = FILE:/dev/stdout

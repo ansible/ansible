@@ -21,16 +21,16 @@
 ##
 
 - set_fact:
-    output_dir_test: "{{ output_dir }}/test_script"
+    remote_tmp_dir_test: "{{ remote_tmp_dir }}/test_script"
 
 - name: make sure our testing sub-directory does not exist
   file:
-    path: "{{ output_dir_test }}"
+    path: "{{ remote_tmp_dir_test }}"
     state: absent
 
 - name: create our testing sub-directory
   file:
-    path: "{{ output_dir_test }}"
+    path: "{{ remote_tmp_dir_test }}"
     state: directory
 
 ##
@@ -76,24 +76,24 @@
 # creates
 - name: verify that afile.txt is absent
   file:
-    path: "{{ output_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/afile.txt"
     state: absent
 
 - name: create afile.txt with create_afile.sh via command
-  script: create_afile.sh {{ output_dir_test | expanduser }}/afile.txt
+  script: create_afile.sh {{ remote_tmp_dir_test | expanduser }}/afile.txt
   args:
-    creates: "{{ output_dir_test | expanduser }}/afile.txt"
+    creates: "{{ remote_tmp_dir_test | expanduser }}/afile.txt"
   register: _create_test1
 
 - name: Check state of created file
   stat:
-    path: "{{ output_dir_test | expanduser }}/afile.txt"
+    path: "{{ remote_tmp_dir_test | expanduser }}/afile.txt"
   register: _create_stat1
 
 - name: Run create_afile.sh again to ensure it is skipped
-  script: create_afile.sh {{ output_dir_test | expanduser }}/afile.txt
+  script: create_afile.sh {{ remote_tmp_dir_test | expanduser }}/afile.txt
   args:
-    creates: "{{ output_dir_test | expanduser }}/afile.txt"
+    creates: "{{ remote_tmp_dir_test | expanduser }}/afile.txt"
   register: _create_test2
 
 - name: Assert that script report a change, file was created, second run was skipped
@@ -107,24 +107,24 @@
 # removes
 - name: verify that afile.txt is present
   file:
-    path: "{{ output_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/afile.txt"
     state: file
 
 - name: remove afile.txt with remote_afile.sh via command
-  script: remove_afile.sh {{ output_dir_test | expanduser }}/afile.txt
+  script: remove_afile.sh {{ remote_tmp_dir_test | expanduser }}/afile.txt
   args:
-    removes: "{{ output_dir_test | expanduser }}/afile.txt"
+    removes: "{{ remote_tmp_dir_test | expanduser }}/afile.txt"
   register: _remove_test1
 
 - name: Check state of removed file
   stat:
-    path: "{{ output_dir_test | expanduser }}/afile.txt"
+    path: "{{ remote_tmp_dir_test | expanduser }}/afile.txt"
   register: _remove_stat1
 
 - name: Run remote_afile.sh again to enure it is skipped
-  script: remove_afile.sh {{ output_dir_test | expanduser }}/afile.txt
+  script: remove_afile.sh {{ remote_tmp_dir_test | expanduser }}/afile.txt
   args:
-    removes: "{{ output_dir_test | expanduser }}/afile.txt"
+    removes: "{{ remote_tmp_dir_test | expanduser }}/afile.txt"
   register: _remove_test2
 
 - name: Assert that script report a change, file was removed, second run was skipped
@@ -138,7 +138,7 @@
 # async
 - name: verify that afile.txt is absent
   file:
-    path: "{{ output_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/afile.txt"
     state: absent
 
 - name: test task failure with async param
@@ -156,7 +156,7 @@
 
 # check mode
 - name: Run script to create a file in check mode
-  script: create_afile.sh {{ output_dir_test | expanduser }}/afile2.txt
+  script: create_afile.sh {{ remote_tmp_dir_test | expanduser }}/afile2.txt
   check_mode: yes
   register: _check_mode_test
 
@@ -166,7 +166,7 @@
 
 - name: Get state of file created by script
   stat:
-    path: "{{ output_dir_test | expanduser }}/afile2.txt"
+    path: "{{ remote_tmp_dir_test | expanduser }}/afile2.txt"
   register: _afile_stat
 
 - debug:
@@ -176,16 +176,17 @@
 - name: Assert that a change was reported but the script did not make changes
   assert:
     that:
-      - _check_mode_test is changed
+      - _check_mode_test is not changed
+      - _check_mode_test is skipped
       - not _afile_stat.stat.exists
 
 - name: Run script to create a file
-  script: create_afile.sh {{ output_dir_test | expanduser }}/afile2.txt
+  script: create_afile.sh {{ remote_tmp_dir_test | expanduser }}/afile2.txt
 
 - name: Run script to create a file in check mode with 'creates' argument
-  script: create_afile.sh {{ output_dir_test | expanduser }}/afile2.txt
+  script: create_afile.sh {{ remote_tmp_dir_test | expanduser }}/afile2.txt
   args:
-    creates: "{{ output_dir_test | expanduser }}/afile2.txt"
+    creates: "{{ remote_tmp_dir_test | expanduser }}/afile2.txt"
   register: _check_mode_test2
   check_mode: yes
 
@@ -197,17 +198,17 @@
   assert:
     that:
       - _check_mode_test2 is skipped
-      - '_check_mode_test2.msg == "{{ output_dir_test | expanduser }}/afile2.txt exists, matching creates option"'
+      - '_check_mode_test2.msg == "{{ remote_tmp_dir_test | expanduser }}/afile2.txt exists, matching creates option"'
 
 - name: Remove afile2.txt
   file:
-    path: "{{ output_dir_test | expanduser }}/afile2.txt"
+    path: "{{ remote_tmp_dir_test | expanduser }}/afile2.txt"
     state: absent
 
 - name: Run script to remove a file in check mode with 'removes' argument
-  script: remove_afile.sh {{ output_dir_test | expanduser }}/afile2.txt
+  script: remove_afile.sh {{ remote_tmp_dir_test | expanduser }}/afile2.txt
   args:
-    removes: "{{ output_dir_test | expanduser }}/afile2.txt"
+    removes: "{{ remote_tmp_dir_test | expanduser }}/afile2.txt"
   register: _check_mode_test3
   check_mode: yes
 
@@ -219,7 +220,7 @@
   assert:
     that:
       - _check_mode_test3 is skipped
-      - '_check_mode_test3.msg == "{{ output_dir_test | expanduser }}/afile2.txt does not exist, matching removes option"'
+      - '_check_mode_test3.msg == "{{ remote_tmp_dir_test | expanduser }}/afile2.txt does not exist, matching removes option"'
 
 # executable
 

@@ -25,6 +25,7 @@ from ansible.module_utils._text import to_text
 filelist = [
     '/etc/oracle-release',
     '/etc/slackware-version',
+    '/etc/centos-release',
     '/etc/redhat-release',
     '/etc/vmware-release',
     '/etc/openwrt_release',
@@ -53,7 +54,7 @@ for f in filelist:
             with open(f) as fh:
                 fcont[f] = fh.read()
 
-dist = distro.linux_distribution(full_distribution_name=False)
+dist = (distro.id(), distro.version(), distro.codename())
 
 facts = ['distribution', 'distribution_version', 'distribution_release', 'distribution_major_version', 'os_family']
 

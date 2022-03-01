@@ -1,0 +1,26 @@
+- name: Tests for chmod +a ACL functionality on macOS
+  hosts: ssh
+  gather_facts: yes
+  remote_user: unpriv1
+  become: yes
+  become_user: unpriv2
+
+  tasks:
+    - name: Get AnsiballZ temp directory
+      action: tmpdir
+      register: tmpdir
+      become_user: unpriv2
+      become: yes
+
+    - name: run whoami
+      command: whoami
+      register: whoami
+
+    - name: Ensure we used the right fallback
+      shell: ls -le /var/tmp/ansible*/*_command.py
+      register: ls
+
+    - assert:
+        that:
+          - whoami.stdout == "unpriv2"
+          - "'user:unpriv2 allow read' in ls.stdout"

@@ -39,6 +39,6 @@ def get_bin_path(arg, opt_dirs=None, required=None):
             bin_path = path
             break
     if bin_path is None:
-        raise ValueError('Failed to find required executable %s in paths: %s' % (arg, os.pathsep.join(paths)))
+        raise ValueError('Failed to find required executable "%s" in paths: %s' % (arg, os.pathsep.join(paths)))
 
     return bin_path

@@ -81,26 +81,34 @@
     - included_handler
     - verify_handler
 
-- include: branch_toplevel.yml canary=value1 nested_include_static=no
-  static: no
+- include_tasks: branch_toplevel.yml
+  vars:
+    canary: value1
+    nested_include_static: 'no'
 - assert:
     that:
       - 'canary_fact == "value1"'
 
-- include: branch_toplevel.yml canary=value2 nested_include_static=yes
-  static: no
+- include_tasks: branch_toplevel.yml
+  vars:
+    canary: value2
+    nested_include_static: 'yes'
 - assert:
     that:
       - 'canary_fact == "value2"'
 
-- include: branch_toplevel.yml canary=value3 nested_include_static=no
-  static: yes
+- import_tasks: branch_toplevel.yml
+  vars:
+    canary: value3
+    nested_include_static: 'no'
 - assert:
     that:
       - 'canary_fact == "value3"'
 
-- include: branch_toplevel.yml canary=value4 nested_include_static=yes
-  static: yes
+- import_tasks: branch_toplevel.yml
+  vars:
+    canary: value4
+    nested_include_static: 'yes'
 - assert:
     that:
       - 'canary_fact == "value4"'

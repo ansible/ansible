@@ -324,6 +324,19 @@ pushd "${role_testdir}"
 popd # ${role_testdir}
 rm -rf "${role_testdir}"
 
+f_ansible_galaxy_status \
+    "Test if git hidden directories are skipped while using role skeleton (#71977)"
+
+role_testdir=$(mktemp -d)
+pushd "${role_testdir}"
+
+    ansible-galaxy role init sample-role-skeleton
+    git init ./sample-role-skeleton
+    ansible-galaxy role init --role-skeleton=sample-role-skeleton example
+
+popd # ${role_testdir}
+rm -rf "${role_testdir}"
+
 #################################
 # ansible-galaxy collection tests
 #################################
@@ -421,6 +434,17 @@ f_ansible_galaxy_status \
     rmdir emptydir
 
 unset ANSIBLE_COLLECTIONS_PATH
+
+f_ansible_galaxy_status \
+    "collection list with collections installed from python package"
+
+    mkdir -p test-site-packages
+    ln -s "${galaxy_testdir}/local/ansible_collections" test-site-packages/ansible_collections
+    ansible-galaxy collection list
+    PYTHONPATH="./test-site-packages/:$PYTHONPATH" ansible-galaxy collection list | tee out.txt
+
+    grep ".ansible/collections/ansible_collections" out.txt
+    grep "test-site-packages/ansible_collections" out.txt
 
 ## end ansible-galaxy collection list
 

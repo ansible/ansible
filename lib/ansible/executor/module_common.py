@@ -34,7 +34,7 @@ from io import BytesIO
 
 from ansible.release import __version__, __author__
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsiblePluginRemovedError
+from ansible.errors import AnsibleError
 from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.json import AnsibleJSONEncoder
@@ -66,7 +66,7 @@ except NameError:
 
 display = Display()
 
-ModuleUtilsProcessEntry = namedtuple('ModuleUtilsInfo', ['name_parts', 'is_ambiguous', 'has_redirected_child'])
+ModuleUtilsProcessEntry = namedtuple('ModuleUtilsInfo', ['name_parts', 'is_ambiguous', 'has_redirected_child', 'is_optional'])
 
 REPLACER = b"#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_VERSION = b"\"<<ANSIBLE_VERSION>>\""
@@ -116,9 +116,21 @@ _ANSIBALLZ_WRAPPER = True # For test-module.py script to tell this is a ANSIBALL
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 def _ansiballz_main():
-%(rlimit)s
     import os
     import os.path
+
+    # Access to the working directory is required by Python when using pipelining, as well as for the coverage module.
+    # Some platforms, such as macOS, may not allow querying the working directory when using become to drop privileges.
+    try:
+        os.getcwd()
+    except OSError:
+        try:
+            os.chdir(os.path.expanduser('~'))
+        except OSError:
+            os.chdir('/')
+
+%(rlimit)s
+
     import sys
     import __main__
 
@@ -194,7 +206,8 @@ def _ansiballz_main():
         basic._ANSIBLE_ARGS = json_params
 %(coverage)s
         # Run the module!  By importing it as '__main__', it thinks it is executing as a script
-        runpy.run_module(mod_name='%(module_fqn)s', init_globals=None, run_name='__main__', alter_sys=True)
+        runpy.run_module(mod_name='%(module_fqn)s', init_globals=dict(_module_fqn='%(module_fqn)s', _modlib_path=modlib_path),
+                         run_name='__main__', alter_sys=True)
 
         # Ansible modules must exit themselves
         print('{"msg": "New-style module did not handle its own exit", "failed": true}')
@@ -236,10 +249,6 @@ def _ansiballz_main():
         # Okay to use __file__ here because we're running from a kept file
         basedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'debug_dir')
         args_path = os.path.join(basedir, 'args')
-
-        if command == 'excommunicate':
-            print('The excommunicate debug command is deprecated and will be removed in 2.11.  Use execute instead.')
-            command = 'execute'
 
         if command == 'explode':
             # transform the ZIPDATA into an exploded directory of code and then
@@ -316,6 +325,7 @@ def _ansiballz_main():
         temp_path = tempfile.mkdtemp(prefix='ansible_%(ansible_module)s_payload_')
 
         zipped_mod = os.path.join(temp_path, 'ansible_%(ansible_module)s_payload.zip')
+
         with open(zipped_mod, 'wb') as modlib:
             modlib.write(base64.b64decode(ZIPDATA))
 
@@ -337,14 +347,7 @@ if __name__ == '__main__':
 '''
 
 ANSIBALLZ_COVERAGE_TEMPLATE = '''
-        # Access to the working directory is required by coverage.
-        # Some platforms, such as macOS, may not allow querying the working directory when using become to drop privileges.
-        try:
-            os.getcwd()
-        except OSError:
-            os.chdir('/')
-
-        os.environ['COVERAGE_FILE'] = '%(coverage_output)s'
+        os.environ['COVERAGE_FILE'] = '%(coverage_output)s=python-%%s=coverage' %% '.'.join(str(v) for v in sys.version_info[:2])
 
         import atexit
 
@@ -419,7 +422,7 @@ else:
 # Do this instead of getting site-packages from distutils.sysconfig so we work when we
 # haven't been installed
 site_packages = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-CORE_LIBRARY_PATH_RE = re.compile(r'%s/(?P<path>ansible/modules/.*)\.(py|ps1)$' % site_packages)
+CORE_LIBRARY_PATH_RE = re.compile(r'%s/(?P<path>ansible/modules/.*)\.(py|ps1)$' % re.escape(site_packages))
 COLLECTION_PATH_RE = re.compile(r'/(?P<path>ansible_collections/[^/]+/[^/]+/plugins/modules/.*)\.(py|ps1)$')
 
 # Detect new-style Python modules by looking for required imports:
@@ -443,7 +446,7 @@ NEW_STYLE_PYTHON_MODULE_RE = re.compile(
 
 
 class ModuleDepFinder(ast.NodeVisitor):
-    def __init__(self, module_fqn, is_pkg_init=False, *args, **kwargs):
+    def __init__(self, module_fqn, tree, is_pkg_init=False, *args, **kwargs):
         """
         Walk the ast tree for the python module.
         :arg module_fqn: The fully qualified name to reach this module in dotted notation.
@@ -467,7 +470,9 @@ class ModuleDepFinder(ast.NodeVisitor):
         .. seealso:: :python3:class:`ast.NodeVisitor`
         """
         super(ModuleDepFinder, self).__init__(*args, **kwargs)
+        self._tree = tree  # squirrel this away so we can compare node parents to it
         self.submodules = set()
+        self.optional_imports = set()
         self.module_fqn = module_fqn
         self.is_pkg_init = is_pkg_init
 
@@ -476,17 +481,20 @@ class ModuleDepFinder(ast.NodeVisitor):
             ImportFrom: self.visit_ImportFrom,
         }
 
+        self.visit(tree)
+
     def generic_visit(self, node):
         """Overridden ``generic_visit`` that makes some assumptions about our
         use case, and improves performance by calling visitors directly instead
         of calling ``visit`` to offload calling visitors.
         """
-        visit_map = self._visit_map
         generic_visit = self.generic_visit
+        visit_map = self._visit_map
         for field, value in ast.iter_fields(node):
             if isinstance(value, list):
                 for item in value:
                     if isinstance(item, (Import, ImportFrom)):
+                        item.parent = node
                         visit_map[item.__class__](item)
                     elif isinstance(item, AST):
                         generic_visit(item)
@@ -505,6 +513,9 @@ class ModuleDepFinder(ast.NodeVisitor):
                     alias.name.startswith('ansible_collections.')):
                 py_mod = tuple(alias.name.split('.'))
                 self.submodules.add(py_mod)
+                # if the import's parent is the root document, it's a required import, otherwise it's optional
+                if node.parent != self._tree:
+                    self.optional_imports.add(py_mod)
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node):
@@ -566,6 +577,9 @@ class ModuleDepFinder(ast.NodeVisitor):
         if py_mod:
             for alias in node.names:
                 self.submodules.add(py_mod + (alias.name,))
+                # if the import's parent is the root document, it's a required import, otherwise it's optional
+                if node.parent != self._tree:
+                    self.optional_imports.add(py_mod + (alias.name,))
 
         self.generic_visit(node)
 
@@ -578,50 +592,57 @@ def _slurp(path):
     return data
 
 
-def _get_shebang(interpreter, task_vars, templar, args=tuple()):
+def _get_shebang(interpreter, task_vars, templar, args=tuple(), remote_is_local=False):
     """
-    Note not stellar API:
-       Returns None instead of always returning a shebang line.  Doing it this
-       way allows the caller to decide to use the shebang it read from the
-       file rather than trust that we reformatted what they already have
-       correctly.
+      Handles the different ways ansible allows overriding the shebang target for a module.
     """
-    interpreter_name = os.path.basename(interpreter).strip()
-
     # FUTURE: add logical equivalence for python3 in the case of py3-only modules
 
-    # check for first-class interpreter config
+    interpreter_name = os.path.basename(interpreter).strip()
+
+    # name for interpreter var
+    interpreter_config = u'ansible_%s_interpreter' % interpreter_name
+    # key for config
     interpreter_config_key = "INTERPRETER_%s" % interpreter_name.upper()
 
-    if C.config.get_configuration_definitions().get(interpreter_config_key):
+    interpreter_out = None
+
+    # looking for python, rest rely on matching vars
+    if interpreter_name == 'python':
+        # skip detection for network os execution, use playbook supplied one if possible
+        if remote_is_local:
+            interpreter_out = task_vars['ansible_playbook_python']
+
         # a config def exists for this interpreter type; consult config for the value
-        interpreter_out = C.config.get_config_value(interpreter_config_key, variables=task_vars)
-        discovered_interpreter_config = u'discovered_interpreter_%s' % interpreter_name
+        elif C.config.get_configuration_definition(interpreter_config_key):
 
-        interpreter_out = templar.template(interpreter_out.strip())
+            interpreter_from_config = C.config.get_config_value(interpreter_config_key, variables=task_vars)
+            interpreter_out = templar.template(interpreter_from_config.strip())
 
-        facts_from_task_vars = task_vars.get('ansible_facts', {})
+            # handle interpreter discovery if requested or empty interpreter was provided
+            if not interpreter_out or interpreter_out in ['auto', 'auto_legacy', 'auto_silent', 'auto_legacy_silent']:
 
-        # handle interpreter discovery if requested
-        if interpreter_out in ['auto', 'auto_legacy', 'auto_silent', 'auto_legacy_silent']:
-            if discovered_interpreter_config not in facts_from_task_vars:
-                # interpreter discovery is desired, but has not been run for this host
-                raise InterpreterDiscoveryRequiredError("interpreter discovery needed",
-                                                        interpreter_name=interpreter_name,
-                                                        discovery_mode=interpreter_out)
-            else:
-                interpreter_out = facts_from_task_vars[discovered_interpreter_config]
-    else:
-        # a config def does not exist for this interpreter type; consult vars for a possible direct override
-        interpreter_config = u'ansible_%s_interpreter' % interpreter_name
+                discovered_interpreter_config = u'discovered_interpreter_%s' % interpreter_name
+                facts_from_task_vars = task_vars.get('ansible_facts', {})
 
-        if interpreter_config not in task_vars:
-            return None, interpreter
+                if discovered_interpreter_config not in facts_from_task_vars:
+                    # interpreter discovery is desired, but has not been run for this host
+                    raise InterpreterDiscoveryRequiredError("interpreter discovery needed", interpreter_name=interpreter_name, discovery_mode=interpreter_out)
+                else:
+                    interpreter_out = facts_from_task_vars[discovered_interpreter_config]
+        else:
+            raise InterpreterDiscoveryRequiredError("interpreter discovery required", interpreter_name=interpreter_name, discovery_mode='auto_legacy')
 
-        interpreter_out = templar.template(task_vars[interpreter_config].strip())
+    elif interpreter_config in task_vars:
+        # for non python we consult vars for a possible direct override
+        interpreter_out = templar.template(task_vars.get(interpreter_config).strip())
 
-    shebang = u'#!' + interpreter_out
+    if not interpreter_out:
+        # nothing matched(None) or in case someone configures empty string or empty intepreter
+        interpreter_out = interpreter
 
+    # set shebang
+    shebang = u'#!{0}'.format(interpreter_out)
     if args:
         shebang = shebang + u' ' + u' '.join(args)
 
@@ -629,12 +650,13 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple()):
 
 
 class ModuleUtilLocatorBase:
-    def __init__(self, fq_name_parts, is_ambiguous=False, child_is_redirected=False):
+    def __init__(self, fq_name_parts, is_ambiguous=False, child_is_redirected=False, is_optional=False):
         self._is_ambiguous = is_ambiguous
         # a child package redirection could cause intermediate package levels to be missing, eg
         # from ansible.module_utils.x.y.z import foo; if x.y.z.foo is redirected, we may not have packages on disk for
         # the intermediate packages x.y.z, so we'll need to supply empty packages for those
         self._child_is_redirected = child_is_redirected
+        self._is_optional = is_optional
         self.found = False
         self.redirected = False
         self.fq_name_parts = fq_name_parts
@@ -663,6 +685,8 @@ class ModuleUtilLocatorBase:
         try:
             collection_metadata = _get_collection_metadata(self._collection_name)
         except ValueError as ve:  # collection not found or some other error related to collection load
+            if self._is_optional:
+                return False
             raise AnsibleError('error processing module_util {0} loading redirected collection {1}: {2}'
                                .format('.'.join(name_parts), self._collection_name, to_native(ve)))
 
@@ -821,8 +845,8 @@ class LegacyModuleUtilLocator(ModuleUtilLocatorBase):
 
 
 class CollectionModuleUtilLocator(ModuleUtilLocatorBase):
-    def __init__(self, fq_name_parts, is_ambiguous=False, child_is_redirected=False):
-        super(CollectionModuleUtilLocator, self).__init__(fq_name_parts, is_ambiguous, child_is_redirected)
+    def __init__(self, fq_name_parts, is_ambiguous=False, child_is_redirected=False, is_optional=False):
+        super(CollectionModuleUtilLocator, self).__init__(fq_name_parts, is_ambiguous, child_is_redirected, is_optional)
 
         if fq_name_parts[0] != 'ansible_collections':
             raise Exception('CollectionModuleUtilLocator can only locate from ansible_collections, got {0}'.format(fq_name_parts))
@@ -914,20 +938,19 @@ def recursive_finder(name, module_fqn, module_data, zf):
     except (SyntaxError, IndentationError) as e:
         raise AnsibleError("Unable to import %s due to %s" % (name, e.msg))
 
-    finder = ModuleDepFinder(module_fqn)
-    finder.visit(tree)
+    finder = ModuleDepFinder(module_fqn, tree)
 
     # the format of this set is a tuple of the module name and whether or not the import is ambiguous as a module name
     # or an attribute of a module (eg from x.y import z <-- is z a module or an attribute of x.y?)
-    modules_to_process = [ModuleUtilsProcessEntry(m, True, False) for m in finder.submodules]
+    modules_to_process = [ModuleUtilsProcessEntry(m, True, False, is_optional=m in finder.optional_imports) for m in finder.submodules]
 
     # HACK: basic is currently always required since module global init is currently tied up with AnsiballZ arg input
-    modules_to_process.append(ModuleUtilsProcessEntry(('ansible', 'module_utils', 'basic'), False, False))
+    modules_to_process.append(ModuleUtilsProcessEntry(('ansible', 'module_utils', 'basic'), False, False, is_optional=False))
 
     # we'll be adding new modules inline as we discover them, so just keep going til we've processed them all
     while modules_to_process:
         modules_to_process.sort()  # not strictly necessary, but nice to process things in predictable and repeatable order
-        py_module_name, is_ambiguous, child_is_redirected = modules_to_process.pop(0)
+        py_module_name, is_ambiguous, child_is_redirected, is_optional = modules_to_process.pop(0)
 
         if py_module_name in py_module_cache:
             # this is normal; we'll often see the same module imported many times, but we only need to process it once
@@ -937,7 +960,8 @@ def recursive_finder(name, module_fqn, module_data, zf):
             module_info = LegacyModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous,
                                                   mu_paths=module_utils_paths, child_is_redirected=child_is_redirected)
         elif py_module_name[0] == 'ansible_collections':
-            module_info = CollectionModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous, child_is_redirected=child_is_redirected)
+            module_info = CollectionModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous,
+                                                      child_is_redirected=child_is_redirected, is_optional=is_optional)
         else:
             # FIXME: dot-joined result
             display.warning('ModuleDepFinder improperly found a non-module_utils import %s'
@@ -946,6 +970,9 @@ def recursive_finder(name, module_fqn, module_data, zf):
 
         # Could not find the module.  Construct a helpful error message.
         if not module_info.found:
+            if is_optional:
+                # this was a best-effort optional import that we couldn't find, oh well, move along...
+                continue
             # FIXME: use dot-joined candidate names
             msg = 'Could not find imported module support code for {0}.  Looked for ({1})'.format(module_fqn, module_info.candidate_names_joined)
             raise AnsibleError(msg)
@@ -961,9 +988,9 @@ def recursive_finder(name, module_fqn, module_data, zf):
         except (SyntaxError, IndentationError) as e:
             raise AnsibleError("Unable to import %s due to %s" % (module_info.fq_name_parts, e.msg))
 
-        finder = ModuleDepFinder('.'.join(module_info.fq_name_parts), module_info.is_package)
-        finder.visit(tree)
-        modules_to_process.extend(ModuleUtilsProcessEntry(m, True, False) for m in finder.submodules if m not in py_module_cache)
+        finder = ModuleDepFinder('.'.join(module_info.fq_name_parts), tree, module_info.is_package)
+        modules_to_process.extend(ModuleUtilsProcessEntry(m, True, False, is_optional=m in finder.optional_imports)
+                                  for m in finder.submodules if m not in py_module_cache)
 
         # we've processed this item, add it to the output list
         py_module_cache[module_info.fq_name_parts] = (module_info.source_code, module_info.output_path)
@@ -974,7 +1001,7 @@ def recursive_finder(name, module_fqn, module_data, zf):
             accumulated_pkg_name.append(pkg)  # we're accumulating this across iterations
             normalized_name = tuple(accumulated_pkg_name)  # extra machinations to get a hashable type (list is not)
             if normalized_name not in py_module_cache:
-                modules_to_process.append((normalized_name, False, module_info.redirected))
+                modules_to_process.append(ModuleUtilsProcessEntry(normalized_name, False, module_info.redirected, is_optional=is_optional))
 
     for py_module_name in py_module_cache:
         py_module_file_name = py_module_cache[py_module_name][1]
@@ -1052,7 +1079,7 @@ def _add_module_to_zip(zf, remote_module_fqn, b_module_data):
 
 
 def _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression, async_timeout, become,
-                       become_method, become_user, become_password, become_flags, environment):
+                       become_method, become_user, become_password, become_flags, environment, remote_is_local=False):
     """
     Given the source of the module, convert it to a Jinja2 template to insert
     module code and return whether it's a new or old style module.
@@ -1100,7 +1127,6 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         return b_module_data, module_style, shebang
 
     output = BytesIO()
-    py_module_names = set()
 
     try:
         remote_module_fqn = _get_ansible_module_fqn(module_path)
@@ -1127,7 +1153,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
             compression_method = zipfile.ZIP_STORED
 
         lookup_path = os.path.join(C.DEFAULT_LOCAL_TMP, 'ansiballz_cache')
-        cached_module_filename = os.path.join(lookup_path, "%s-%s" % (module_name, module_compression))
+        cached_module_filename = os.path.join(lookup_path, "%s-%s" % (remote_module_fqn, module_compression))
 
         zipdata = None
         # Optimization -- don't lock if the module has already been cached
@@ -1170,10 +1196,19 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                     # Write the assembled module to a temp file (write to temp
                     # so that no one looking for the file reads a partially
                     # written file)
+                    #
+                    # FIXME: Once split controller/remote is merged, this can be simplified to
+                    #        os.makedirs(lookup_path, exist_ok=True)
                     if not os.path.exists(lookup_path):
-                        # Note -- if we have a global function to setup, that would
-                        # be a better place to run this
-                        os.makedirs(lookup_path)
+                        try:
+                            # Note -- if we have a global function to setup, that would
+                            # be a better place to run this
+                            os.makedirs(lookup_path)
+                        except OSError:
+                            # Multiple processes tried to create the directory. If it still does not
+                            # exist, raise the original exception.
+                            if not os.path.exists(lookup_path):
+                                raise
                     display.debug('ANSIBALLZ: Writing module')
                     with open(cached_module_filename + '-part', 'wb') as f:
                         f.write(zipdata)
@@ -1198,9 +1233,11 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
                                        'Look at traceback for that process for debugging information.')
         zipdata = to_text(zipdata, errors='surrogate_or_strict')
 
-        shebang, interpreter = _get_shebang(u'/usr/bin/python', task_vars, templar)
-        if shebang is None:
-            shebang = u'#!/usr/bin/python'
+        o_interpreter, o_args = _extract_interpreter(b_module_data)
+        if o_interpreter is None:
+            o_interpreter = u'/usr/bin/python'
+
+        shebang, interpreter = _get_shebang(o_interpreter, task_vars, templar, o_args, remote_is_local=remote_is_local)
 
         # FUTURE: the module cache entry should be invalidated if we got this value from a host-dependent source
         rlimit_nofile = C.config.get_config_value('PYTHON_MODULE_RLIMIT_NOFILE', variables=task_vars)
@@ -1289,8 +1326,31 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     return (b_module_data, module_style, shebang)
 
 
+def _extract_interpreter(b_module_data):
+    """
+    Used to extract shebang expression from binary module data and return a text
+    string with the shebang, or None if no shebang is detected.
+    """
+
+    interpreter = None
+    args = []
+    b_lines = b_module_data.split(b"\n", 1)
+    if b_lines[0].startswith(b"#!"):
+        b_shebang = b_lines[0].strip()
+
+        # shlex.split on python-2.6 needs bytes.  On python-3.x it needs text
+        cli_split = shlex.split(to_native(b_shebang[2:], errors='surrogate_or_strict'))
+
+        # convert args to text
+        cli_split = [to_text(a, errors='surrogate_or_strict') for a in cli_split]
+        interpreter = cli_split[0]
+        args = cli_split[1:]
+
+    return interpreter, args
+
+
 def modify_module(module_name, module_path, module_args, templar, task_vars=None, module_compression='ZIP_STORED', async_timeout=0, become=False,
-                  become_method=None, become_user=None, become_password=None, become_flags=None, environment=None):
+                  become_method=None, become_user=None, become_password=None, become_flags=None, environment=None, remote_is_local=False):
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -1322,56 +1382,56 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
     (b_module_data, module_style, shebang) = _find_module_utils(module_name, b_module_data, module_path, module_args, task_vars, templar, module_compression,
                                                                 async_timeout=async_timeout, become=become, become_method=become_method,
                                                                 become_user=become_user, become_password=become_password, become_flags=become_flags,
-                                                                environment=environment)
+                                                                environment=environment, remote_is_local=remote_is_local)
 
     if module_style == 'binary':
         return (b_module_data, module_style, to_text(shebang, nonstring='passthru'))
     elif shebang is None:
-        b_lines = b_module_data.split(b"\n", 1)
-        if b_lines[0].startswith(b"#!"):
-            b_shebang = b_lines[0].strip()
-            # shlex.split on python-2.6 needs bytes.  On python-3.x it needs text
-            args = shlex.split(to_native(b_shebang[2:], errors='surrogate_or_strict'))
+        interpreter, args = _extract_interpreter(b_module_data)
+        # No interpreter/shebang, assume a binary module?
+        if interpreter is not None:
 
-            # _get_shebang() takes text strings
-            args = [to_text(a, errors='surrogate_or_strict') for a in args]
-            interpreter = args[0]
-            b_new_shebang = to_bytes(_get_shebang(interpreter, task_vars, templar, args[1:])[0],
-                                     errors='surrogate_or_strict', nonstring='passthru')
+            shebang, new_interpreter = _get_shebang(interpreter, task_vars, templar, args, remote_is_local=remote_is_local)
 
-            if b_new_shebang:
-                b_lines[0] = b_shebang = b_new_shebang
+            # update shebang
+            b_lines = b_module_data.split(b"\n", 1)
+
+            if interpreter != new_interpreter:
+                b_lines[0] = to_bytes(shebang, errors='surrogate_or_strict', nonstring='passthru')
 
             if os.path.basename(interpreter).startswith(u'python'):
                 b_lines.insert(1, b_ENCODING_STRING)
 
-            shebang = to_text(b_shebang, nonstring='passthru', errors='surrogate_or_strict')
-        else:
-            # No shebang, assume a binary module?
-            pass
-
-        b_module_data = b"\n".join(b_lines)
+            b_module_data = b"\n".join(b_lines)
 
     return (b_module_data, module_style, shebang)
 
 
-def get_action_args_with_defaults(action, args, defaults, templar, redirected_names=None):
-    group_collection_map = {
-        'acme': ['community.crypto'],
-        'aws': ['amazon.aws', 'community.aws'],
-        'azure': ['azure.azcollection'],
-        'cpm': ['wti.remote'],
-        'docker': ['community.general'],
-        'gcp': ['google.cloud'],
-        'k8s': ['community.kubernetes', 'community.general'],
-        'os': ['openstack.cloud'],
-        'ovirt': ['ovirt.ovirt', 'community.general'],
-        'vmware': ['community.vmware'],
-        'testgroup': ['testns.testcoll', 'testns.othercoll', 'testns.boguscoll']
-    }
+def get_action_args_with_defaults(action, args, defaults, templar, redirected_names=None, action_groups=None):
+    if redirected_names:
+        resolved_action_name = redirected_names[-1]
+    else:
+        resolved_action_name = action
 
-    if not redirected_names:
-        redirected_names = [action]
+    if redirected_names is not None:
+        msg = (
+            "Finding module_defaults for the action %s. "
+            "The caller passed a list of redirected action names, which is deprecated. "
+            "The task's resolved action should be provided as the first argument instead."
+        )
+        display.deprecated(msg % resolved_action_name, version='2.16')
+
+    # Get the list of groups that contain this action
+    if action_groups is None:
+        msg = (
+            "Finding module_defaults for action %s. "
+            "The caller has not passed the action_groups, so any "
+            "that may include this action will be ignored."
+        )
+        display.warning(msg=msg)
+        group_names = []
+    else:
+        group_names = action_groups.get(resolved_action_name, [])
 
     tmp_args = {}
     module_defaults = {}
@@ -1381,31 +1441,16 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
         for default in defaults:
             module_defaults.update(default)
 
-    # if I actually have defaults, template and merge
-    if module_defaults:
-        module_defaults = templar.template(module_defaults)
-
-        # deal with configured group defaults first
-        for default in module_defaults:
-            if not default.startswith('group/'):
-                continue
-
+    # module_defaults keys are static, but the values may be templated
+    module_defaults = templar.template(module_defaults)
+    for default in module_defaults:
+        if default.startswith('group/'):
             group_name = default.split('group/')[-1]
+            if group_name in group_names:
+                tmp_args.update((module_defaults.get('group/%s' % group_name) or {}).copy())
 
-            for collection_name in group_collection_map.get(group_name, []):
-                try:
-                    action_group = _get_collection_metadata(collection_name).get('action_groups', {})
-                except ValueError:
-                    # The collection may not be installed
-                    continue
-
-                if any(name for name in redirected_names if name in action_group):
-                    tmp_args.update((module_defaults.get('group/%s' % group_name) or {}).copy())
-
-        # handle specific action defaults
-        for action in redirected_names:
-            if action in module_defaults:
-                tmp_args.update(module_defaults[action].copy())
+    # handle specific action defaults
+    tmp_args.update(module_defaults.get(resolved_action_name, {}).copy())
 
     # direct args override all
     tmp_args.update(args)

@@ -74,3 +74,36 @@ cat rc_test.out
 [ "$(grep -c 'Failure in always' rc_test.out )" -eq 1 ]
 [ "$(grep -c 'DID NOT RUN' rc_test.out )" -eq 0 ]
 rm -f rc_test.out
+
+# https://github.com/ansible/ansible/issues/29047
+ansible-playbook -vv issue29047.yml -i ../../inventory
+
+# https://github.com/ansible/ansible/issues/61253
+ansible-playbook -vv block_in_rescue.yml -i ../../inventory > rc_test.out
+cat rc_test.out
+[ "$(grep -c 'rescued=3' rc_test.out)" -eq 1 ]
+[ "$(grep -c 'failed=0' rc_test.out)" -eq 1 ]
+rm -f rc_test.out
+
+# https://github.com/ansible/ansible/issues/71306
+set +e
+exit_code=0
+ansible-playbook -i host1,host2 -vv issue71306.yml > rc_test.out || exit_code=$?
+set -e
+cat rc_test.out
+[ $exit_code -eq 0 ]
+rm -f rc_test_out
+
+# https://github.com/ansible/ansible/issues/69848
+ansible-playbook -i host1,host2 --tags foo -vv 69848.yml > role_complete_test.out
+cat role_complete_test.out
+[ "$(grep -c 'Tagged task' role_complete_test.out)" -eq 2 ]
+[ "$(grep -c 'Not tagged task' role_complete_test.out)" -eq 0 ]
+rm -f role_complete_test.out
+
+# test notify inheritance
+ansible-playbook inherit_notify.yml "$@"
+
+ansible-playbook unsafe_failed_task.yml "$@"
+
+ansible-playbook finalized_task.yml "$@"

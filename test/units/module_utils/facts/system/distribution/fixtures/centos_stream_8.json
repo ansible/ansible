@@ -1,0 +1,46 @@
+{
+    "name": "CentOS 8",
+    "distro": {
+        "codename": "",
+        "id": "centos",
+        "name": "CentOS Stream",
+        "version": "8",
+        "version_best": "8",
+        "lsb_release_info": {},
+        "os_release_info": {
+            "name": "CentOS Stream",
+            "version": "8",
+            "id": "centos",
+            "id_like": "rhel fedora",
+            "version_id": "8",
+            "platform_id": "platform:el8",
+            "pretty_name": "CentOS Stream 8",
+            "ansi_color": "0;31",
+            "cpe_name": "cpe:/o:centos:centos:8",
+            "home_url": "https://centos.org/",
+            "bug_report_url": "https://bugzilla.redhat.com/",
+            "redhat_support_product": "Red Hat Enterprise Linux 8",
+            "redhat_support_product_version": "CentOS Stream"
+        }
+    },
+    "input": {
+        "/etc/centos-release": "CentOS Stream release 8\n",
+        "/etc/redhat-release": "CentOS Stream release 8\n",
+        "/etc/system-release": "CentOS Stream release 8\n",
+        "/etc/os-release": "NAME=\"CentOS Stream\"\nVERSION=\"8\"\nID=\"centos\"\nID_LIKE=\"rhel fedora\"\nVERSION_ID=\"8\"\nPLATFORM_ID=\"platform:el8\"\nPRETTY_NAME=\"CentOS Stream 8\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:centos:centos:8\"\nHOME_URL=\"https://centos.org/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_SUPPORT_PRODUCT=\"Red Hat Enterprise Linux 8\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"CentOS Stream\"\n",
+        "/usr/lib/os-release": "NAME=\"CentOS Stream\"\nVERSION=\"8\"\nID=\"centos\"\nID_LIKE=\"rhel fedora\"\nVERSION_ID=\"8\"\nPLATFORM_ID=\"platform:el8\"\nPRETTY_NAME=\"CentOS Stream 8\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:centos:centos:8\"\nHOME_URL=\"https://centos.org/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_SUPPORT_PRODUCT=\"Red Hat Enterprise Linux 8\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"CentOS Stream\"\n"
+    },
+    "platform.dist": [
+        "centos",
+        "8",
+        ""
+    ],
+    "result": {
+        "distribution": "CentOS",
+        "distribution_version": "8",
+        "distribution_release": "Stream",
+        "distribution_major_version": "8",
+        "os_family": "RedHat"
+    },
+    "platform.release": "4.18.0-257.el8.x86_64"
+}

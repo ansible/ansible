@@ -52,7 +52,7 @@ In Ansible 2.7 and older::
 
     {{ ((foo | default({})).bar | default({})).baz | default('DEFAULT') }}
 
-    or
+or::
 
     {{ foo.bar.baz if (foo is defined and foo.bar is defined and foo.bar.baz is defined) else 'DEFAULT' }}
 
@@ -246,7 +246,7 @@ best solution is to explicitly set ``ansible_python_interpreter`` to the path
 of the correct interpreter for those target systems.
 
 You can still set ``ansible_python_interpreter`` to a specific path at any
-variable level (as a host variable, in vars files, in playbooks, etc.).
+variable level (as a host variable, in vars files, in playbooks, and so on).
 If you prefer to use the Python interpreter discovery behavior, use
 one of the four new values for ``ansible_python_interpreter`` introduced in
 Ansible 2.8:
@@ -286,7 +286,7 @@ use the discovered Python, regardless of whether :command:`/usr/bin/python` exis
 :literal:`auto_legacy` setting provides compatibility with previous versions of Ansible that always
 defaulted to :command:`/usr/bin/python`.
 
-If you installed Python and dependencies (``boto``, etc.) to
+If you installed Python and dependencies (``boto``, and so on) to
 :command:`/usr/bin/python` as a workaround on distros with a different default Python
 interpreter (for example, Ubuntu 16.04+, RHEL8, Fedora 23+), you have two
 options:
@@ -314,7 +314,7 @@ By default in Ansible 2.8::
     ansible-playbook --become --ask-become-pass site.yml
     BECOME password:
 
-If you want the prompt to display the specific ``become_method`` you're using, instead of the agnostic value ``BECOME``, set :ref:`AGNOSTIC_BECOME_PROMPT` to ``False`` in your Ansible configuration.
+If you want the prompt to display the specific ``become_method`` you're using, instead of the general value ``BECOME``, set :ref:`AGNOSTIC_BECOME_PROMPT` to ``False`` in your Ansible configuration.
 
 By default in Ansible 2.7, or with ``AGNOSTIC_BECOME_PROMPT=False`` in Ansible 2.8::
 
@@ -371,6 +371,13 @@ add ``$ErrorActionPreference = "Continue"`` to the top of the module. This chang
 of the EAP that was accidentally removed in a previous release and ensure that modules are more resilient to errors
 that may occur in execution.
 
+* Version 2.8.14 of Ansible changed the default mode of file-based tasks to ``0o600 & ~umask`` when the user did not specify a ``mode`` parameter on file-based tasks. This was in response to a CVE report which we have reconsidered. As a result, the ``mode`` change has been reverted in 2.8.15, and ``mode`` will now default to ``0o666 & ~umask`` as in previous versions of Ansible.
+* If you changed any tasks to specify less restrictive permissions while using 2.8.14, those changes will be unnecessary (but will do no harm) in 2.8.15.
+* To avoid the issue raised in CVE-2020-1736, specify a ``mode`` parameter in all file-based tasks that accept it.
+
+* ``dnf`` and ``yum`` - As of version 2.8.15, the ``dnf`` module (and ``yum`` action when it uses ``dnf``) now correctly validates GPG signatures of packages (CVE-2020-14365). If you see an error such as ``Failed to validate GPG signature for [package name]``, please ensure that you have imported the correct GPG key for the DNF repository and/or package you are using. One way to do this is with the ``rpm_key`` module. Although we discourage it, in some cases it may be necessary to disable the GPG check. This can be done by explicitly adding ``disable_gpg_check: yes`` in your ``dnf`` or ``yum`` task.
+
+
 Modules removed
 ---------------
 
@@ -409,7 +416,7 @@ Noteworthy module changes
 * The ``foreman`` and ``katello`` modules have been deprecated in favor of a set of modules that are broken out per entity with better idempotency in mind.
 * The ``foreman`` and ``katello`` modules replacement is officially part of the Foreman Community and supported there.
 * The ``tower_credential`` module originally required the ``ssh_key_data`` to be the path to a ssh_key_file.
-  In order to work like Tower/AWX, ``ssh_key_data`` now contains the content of the file.
+  In order to work like AWX/Tower/RHAAP, ``ssh_key_data`` now contains the content of the file.
   The previous behavior can be achieved with ``lookup('file', '/path/to/file')``.
 * The ``win_scheduled_task`` module deprecated support for specifying a trigger repetition as a list and this format
   will be removed in Ansible 2.12. Instead specify the repetition as a dictionary value.

@@ -19,6 +19,7 @@ import sys
 from contextlib import contextmanager
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import b, binary_type
+from ansible.module_utils.common.warnings import deprecate
 
 try:
     import selinux
@@ -59,14 +60,14 @@ PERMS_RE = re.compile(r'[^rwxXstugo]')
 
 _PERM_BITS = 0o7777          # file mode permission bits
 _EXEC_PERM_BITS = 0o0111     # execute permission bits
-_DEFAULT_PERM = 0o0600       # default file permission bits
+_DEFAULT_PERM = 0o0666       # default file permission bits
 
 
 def is_executable(path):
     # This function's signature needs to be repeated
     # as the first line of its docstring.
     # This method is reused by the basic module,
-    # the repetion helps the basic module's html documentation come out right.
+    # the repetition helps the basic module's html documentation come out right.
     # http://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_docstring_signature
     '''is_executable(path)
 
@@ -122,6 +123,8 @@ class FileLock:
     unwanted and/or unexpected behaviour
     '''
     def __init__(self):
+        deprecate("FileLock is not reliable and has never been used in core for that reason. There is no current alternative that works across POSIX targets",
+                  version='2.16')
         self.lockfd = None
 
     @contextmanager

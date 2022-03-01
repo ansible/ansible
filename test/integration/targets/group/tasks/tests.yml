@@ -138,11 +138,19 @@
         state: present
       register: create_group_gid_non_unique
 
+    - name: validate gid required with non_unique
+      group:
+        name: foo
+        non_unique: true
+      register: missing_gid
+      ignore_errors: true
+
     - name: assert create group with a non unique gid
       assert:
-          that:
+        that:
           - create_group_gid_non_unique is changed
           - create_group_gid_non_unique.gid | int == gid.stdout_lines[0] | int
+          - missing_gid is failed
   when: ansible_facts.distribution not in ['MacOSX', 'Alpine']
 
 ##
@@ -198,7 +206,13 @@
   args:
     name: libuser
     state: present
-  when: ansible_facts.system in ['Linux']
+  when: ansible_facts.system in ['Linux'] and ansible_distribution != 'Alpine'
+  tags:
+    - user_test_local_mode
+
+- name: Ensure lgroupadd is present - Alpine
+  command: apk add -U libuser --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
+  when: ansible_distribution == 'Alpine'
   tags:
     - user_test_local_mode
 

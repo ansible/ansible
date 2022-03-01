@@ -1,17 +1,6 @@
 - name: Run tests
   when: ansible_facts.distribution in ['CentOS', 'Fedora']
   block:
-    - name: Include distribution specific variables
-      include_vars: "{{ lookup('first_found', params) }}"
-      vars:
-        params:
-          files:
-            - "{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml"
-            - "{{ ansible_facts.distribution }}.yml"
-            - default.yml
-          paths:
-            - vars
-
     - name: ensure {{ yum_repository_test_package }} is uninstalled to begin with
       action: "{{ ansible_facts.pkg_mgr }}"
       args:
@@ -117,6 +106,11 @@
         module_hotfixes: no
       register: test_repo_add1
 
+    - name: Get repo file contents
+      slurp:
+        path: "{{ '/etc/yum.repos.d/' ~ yum_repository_test_repo.name ~ '2.repo' }}"
+      register: slurp
+
     - name: check that options are correctly getting written to the repo file
       assert:
         that:
@@ -127,8 +121,7 @@
           - "'keepalive = 0' in repo_file_contents"
           - "'module_hotfixes = 0' in repo_file_contents"
       vars:
-        repo_file: "{{ '/etc/yum.repos.d/' ~ yum_repository_test_repo.name ~ '2.repo' }}"
-        repo_file_contents: "{{ lookup('file', repo_file) }}"
+        repo_file_contents: "{{ slurp.content | b64decode }}"
 
     - name: check new config doesn't change (Idempotant)
       yum_repository:
@@ -174,7 +167,7 @@
         description: Testing list feature
         baseurl:
           - "{{ yum_repository_test_repo.baseurl }}"
-          - "{{ yum_repository_test_repo.baseurl | replace('download[0-9]?\\.', 'download2\\.', 1) }}"
+          - "{{ yum_repository_test_repo.baseurl ~ 'another_baseurl' }}"
         gpgkey:
           - gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-{{ ansible_facts.distribution_major_version }}
           - gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG2-KEY-EPEL-{{ ansible_facts.distribution_major_version }}
@@ -184,38 +177,22 @@
         includepkgs:
           - ccc
           - ddd
+      notify: remove listtest repo
+
+    - name: Get repo file
+      slurp:
+        path: /etc/yum.repos.d/listtest.repo
+      register: slurp
 
     - name: Assert that lists were properly inserted
       assert:
         that:
-          - url_hostname in repofile
-          - url_hostname2 in repofile
+          - yum_repository_test_repo.baseurl in repofile
+          - another_baseurl in repofile
           - "'RPM-GPG-KEY-EPEL' in repofile"
           - "'RPM-GPG2-KEY-EPEL' in repofile"
           - "'aaa bbb' in repofile"
           - "'ccc ddd' in repofile"
       vars:
-        repofile: "{{ lookup('file', '/etc/yum.repos.d/listtest.repo') }}"
-        url_hostname: "{{ yum_repository_test_repo.baseurl | urlsplit('hostname') }}"
-        url_hostname2: "{{ url_hostname | replace('download[0-9]?\\.', 'download2\\.', 1) }}"
-
-    - name: CLEANUP | Remove list test repo
-      yum_repository:
-        name: listtest
-        state: absent
-
-    - name: CLEANUP | Remove {{ yum_repository_test_repo.name }}
-      yum_repository:
-        name: "{{ yum_repository_test_repo.name }}"
-        state: absent
-
-    - name: CLEANUP | Enable EPEL
-      yum_repository:
-        name: epel
-        state: present
-        description: "{{ yum_repository_epel.description | default(omit) }}"
-        metalink: "{{ yum_repository_epel.metalink | default(omit) }}"
-        mirrorlist: "{{ yum_repository_epel.mirrorlist | default(omit) }}"
-        gpgkey: "{{ yum_repository_epel.gpgkey }}"
-        gpgcheck: yes
-      when: ansible_facts.distribution == 'CentOS'
+        repofile: "{{ slurp.content | b64decode }}"
+        another_baseurl: "{{ yum_repository_test_repo.baseurl ~ 'another_baseurl' }}"

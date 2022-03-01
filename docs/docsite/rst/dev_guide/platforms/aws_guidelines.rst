@@ -4,15 +4,51 @@
 Guidelines for Ansible Amazon AWS module development
 ****************************************************
 
-The Ansible AWS modules and these guidelines are maintained by the Ansible AWS Working Group.  For
-further information see
-the `AWS working group community page <https://github.com/ansible/community/wiki/aws>`_.
-If you are planning to contribute AWS modules to Ansible then getting in touch with the working
-group will be a good way to start, especially because a similar module may already be under
-development.
+The Ansible AWS collection (on `Galaxy <https://galaxy.ansible.com/community/aws>`_, source code `repository <https://github.com/ansible-collections/community.aws>`_) is maintained by the Ansible AWS Working Group.  For further information see the `AWS working group community page <https://github.com/ansible/community/wiki/aws>`_. If you are planning to contribute AWS modules to Ansible then getting in touch with the working group is a good way to start, especially because a similar module may already be under development.
 
 .. contents::
    :local:
+
+Requirements
+============
+
+Python Compatibility
+--------------------
+
+AWS content in Ansible 2.9 and 1.x collection releases supported Python 2.7 and newer.
+
+Starting with the 2.0 releases of both collections, Python 2.7 support will be ended in accordance with AWS' `end of Python 2.7 support <https://aws.amazon.com/blogs/developer/announcing-end-of-support-for-python-2-7-in-aws-sdk-for-python-and-aws-cli-v1/>`_.  Contributions to both collections that target the 2.0 or later collection releases can be written to support Python 3.6+ syntax.
+
+SDK Version Support
+-------------------
+
+Starting with the 2.0 releases of both collections, it is generally the policy to support the versions of botocore and boto3 that were released 12 months prior to the most recent major collection release, following semantic versioning (for example, 2.0.0, 3.0.0).
+
+Features and functionality that require newer versions of the SDK can be contributed provided they are noted in the module documentation:
+
+.. code-block:: yaml
+
+  DOCUMENTATION = '''
+  ---
+  module: ec2_vol
+  options:
+    throughput:
+      description:
+        - Volume throughput in MB/s.
+        - This parameter is only valid for gp3 volumes.
+        - Valid range is from 125 to 1000.
+        - Requires at least botocore version 1.19.27.
+      type: int
+      version_added: 1.4.0
+
+And handled using the ``botocore_at_least`` helper method:
+
+.. code-block:: python
+
+    if module.params.get('throughput'):
+        if not module.botocore_at_least("1.19.27"):
+            module.fail_json(msg="botocore >= 1.19.27 is required to set the throughput for a volume")
+
 
 Maintaining existing modules
 ============================
@@ -31,7 +67,7 @@ want to implement some functionality that uses a new feature of boto3, it should
 feature actually needs to be run, with a message stating the missing feature and minimum required
 version of boto3.
 
-Use feature testing (e.g. ``hasattr('boto3.module', 'shiny_new_method')``) to check whether boto3
+Use feature testing (for example, ``hasattr('boto3.module', 'shiny_new_method')``) to check whether boto3
 supports a feature rather than version checking. For example, from the ``ec2`` module:
 
 .. code-block:: python
@@ -63,7 +99,7 @@ to:
 
 .. code-block:: python
 
-   from ansible.module_utils.aws.core import AnsibleAWSModule
+   from ansible_collections.amazon.aws.plugins.module_utils.core import AnsibleAWSModule
    ...
    module = AnsibleAWSModule(...)
 
@@ -123,7 +159,8 @@ Unless the name of your service is quite unique, please consider using ``aws_`` 
 Importing botocore and boto3
 ----------------------------
 
-The ``ansible.module_utils.ec2`` module and ``ansible.module_utils.core.aws`` modules both
+The ``ansible_collections.amazon.aws.plugins.module_utils.ec2`` module and
+``ansible_collections.amazon.aws.plugins.module_utils.core`` modules both
 automatically import boto3 and botocore.  If boto3 is missing from the system then the variable
 ``HAS_BOTO3`` will be set to false.  Normally, this means that modules don't need to import
 boto3 directly. There is no need to check ``HAS_BOTO3`` when using AnsibleAWSModule
@@ -131,7 +168,7 @@ as the module does that check:
 
 .. code-block:: python
 
-   from ansible.module_utils.aws.core import AnsibleAWSModule
+   from ansible_collections.amazon.aws.plugins.module_utils.core import AnsibleAWSModule
    try:
        import botocore
    except ImportError:
@@ -142,7 +179,7 @@ or:
 .. code-block:: python
 
    from ansible.module_utils.basic import AnsibleModule
-   from ansible.module_utils.ec2 import HAS_BOTO3
+   from ansible_collections.amazon.aws.plugins.module_utils.ec2 import HAS_BOTO3
    try:
        import botocore
    except ImportError:
@@ -156,9 +193,9 @@ or:
 Supporting Module Defaults
 --------------------------
 
-The existing AWS modules support using :ref:`module_defaults <module_defaults>` for common 
+The existing AWS modules support using :ref:`module_defaults <module_defaults>` for common
 authentication parameters.  To do the same for your new module, add an entry for it in
-``lib/ansible/config/module_defaults.yml``.  These entries take the form of:
+``meta/runtime.yml``.  These entries take the form of:
 
 .. code-block:: yaml
 
@@ -225,8 +262,8 @@ and that the more esoteric connection options are documented. For example:
    # some lines omitted here
    requirements: [ 'botocore', 'boto3' ]
    extends_documentation_fragment:
-       - aws
-       - ec2
+       - amazon.aws.aws
+       - amazon.aws.ec2
    '''
 
 Handling exceptions
@@ -239,7 +276,7 @@ are a number of possibilities for handling it.
     ``is_boto3_error_code``.
 * Use ``aws_module.fail_json_aws()`` to report the module failure in a standard way
 * Retry using AWSRetry
-* Use ``fail_json()`` to report the failure without using ``ansible.module_utils.aws.core``
+* Use ``fail_json()`` to report the failure without using ``ansible_collections.amazon.aws.plugins.module_utils.core``
 * Do something custom in the case where you know how to handle the exception
 
 For more information on botocore exception handling see the `botocore error documentation <https://botocore.readthedocs.io/en/latest/client_upgrades.html#error-handling>`_.
@@ -247,7 +284,7 @@ For more information on botocore exception handling see the `botocore error docu
 Using is_boto3_error_code
 -------------------------
 
-To use ``ansible.module_utils.aws.core.is_boto3_error_code`` to catch a single
+To use ``ansible_collections.amazon.aws.plugins.module_utils.core.is_boto3_error_code`` to catch a single
 AWS error code, call it in place of ``ClientError`` in your except clauses. In
 this case, *only* the ``InvalidGroup.NotFound`` error code will be caught here,
 and any other error will be raised for handling elsewhere in the program.
@@ -273,7 +310,7 @@ amounts of exception handling to existing modules, we recommend migrating the mo
 
 .. code-block:: python
 
-   from ansible.module_utils.aws.core import AnsibleAWSModule
+   from ansible_collections.amazon.aws.plugins.module_utils.core import AnsibleAWSModule
 
    # Set up module parameters
    # module params code here
@@ -291,7 +328,8 @@ amounts of exception handling to existing modules, we recommend migrating the mo
 Note that it should normally be acceptable to catch all normal exceptions here, however if you
 expect anything other than botocore exceptions you should test everything works as expected.
 
-If you need to perform an action based on the error boto3 returned, use the error code.
+If you need to perform an action based on the error boto3 returned, use the error code and the
+``is_boto3_error_code()`` helper.
 
 .. code-block:: python
 
@@ -299,16 +337,13 @@ If you need to perform an action based on the error boto3 returned, use the erro
    name = module.params.get['name']
    try:
        result = connection.describe_frooble(FroobleName=name)
-   except botocore.exceptions.ClientError as e:
-       if e.response['Error']['Code'] == 'FroobleNotFound':
-           workaround_failure()  # This is an error that we can work around
-       else:
-           module.fail_json_aws(e, msg="Couldn't obtain frooble %s" % name)
-   except botocore.exceptions.BotoCoreError as e:
+   except is_boto3_error_code('FroobleNotFound'):
+       workaround_failure()  # This is an error that we can work around
+   except (botocore.exceptions.BotoCoreError, botocore.exceptions.ClientError) as e:  # pylint: disable=duplicate-except
        module.fail_json_aws(e, msg="Couldn't obtain frooble %s" % name)
 
-using fail_json() and avoiding ansible.module_utils.aws.core
-------------------------------------------------------------
+using fail_json() and avoiding ansible_collections.amazon.aws.plugins.module_utils.core
+---------------------------------------------------------------------------------------
 
 Boto3 provides lots of useful information when an exception is thrown so pass this to the user
 along with the message.
@@ -392,27 +427,18 @@ The combination of these two approaches is then:
            module.fail_json_aws(e, msg="Could not describe some resource")
 
 
-If the underlying ``describe_some_resources`` API call throws a ``ResourceNotFound``
-exception, ``AWSRetry`` takes this as a cue to retry until it's not thrown (this
-is so that when creating a resource, we can just retry until it exists).
-
-To handle authorization failures or parameter validation errors in
-``describe_some_resource_with_backoff``, where we just want to return ``None`` if
-the resource doesn't exist and not retry, we need:
+Prior to Ansible 2.10 if the underlying ``describe_some_resources`` API call threw
+a ``ResourceNotFound`` exception, ``AWSRetry`` would take this as a cue to retry until
+it is not thrown (this is so that when creating a resource, we can just retry until it
+exists).  This default was changed and it is now necessary to explicitly request
+this behaviour.  This can be done by using the ``catch_extra_error_codes``
+argument on the decorator.
 
 .. code-block:: python
 
-   @AWSRetry.exponential_backoff(retries=5, delay=5)
-   def describe_some_resource_with_backoff(client, **kwargs):
-        try:
-            return client.describe_some_resource(ResourceName=kwargs['name'])['Resources']
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] == 'ResourceNotFound':
-                return None
-            else:
-                raise
-        except BotoCoreError as e:
-            raise
+   @AWSRetry.exponential_backoff(retries=5, delay=5, catch_extra_error_codes=['ResourceNotFound'])
+   def describe_some_resource_retry_missing(client, **kwargs):
+        return client.describe_some_resource(ResourceName=kwargs['name'])['Resources']
 
    def describe_some_resource(client, module):
        name = module.params.get['name']
@@ -499,7 +525,7 @@ and returns True if they are different.
 
 .. code-block:: python
 
-   from ansible.module_utils.ec2 import compare_policies
+   from ansible_collections.amazon.aws.plugins.module_utils.ec2 import compare_policies
 
    import json
 
@@ -580,7 +606,7 @@ boto3_tag_list_to_ansible_dict
 Converts a boto3 tag list to an Ansible dict. Boto3 returns tags as a list of dicts containing keys
 called 'Key' and 'Value' by default.  This key names can be overridden when calling the function.
 For example, if you have already camel_cased your list of tags you may want to pass lowercase key
-names instead i.e. 'key' and 'value'.
+names instead, in other words, 'key' and 'value'.
 
 This function converts the list in to a single dict where the dict key is the tag key and the dict
 value is the tag value.
@@ -616,7 +642,7 @@ is True by default.  If purge is False then any existing tags will not be modifi
 
 This function is useful when using boto3 'add_tags' and 'remove_tags' functions. Be sure to use the
 other helper function `boto3_tag_list_to_ansible_dict` to get an appropriate tag dict before
-calling this function. Since the AWS APIs are not uniform (e.g. EC2 versus Lambda) this will work
+calling this function. Since the AWS APIs are not uniform (for example, EC2 is different from Lambda) this will work
 without modification for some (Lambda) and others may need modification before using these values
 (such as EC2, with requires the tags to unset to be in the form `[{'Key': key1}, {'Key': key2}]`).
 
@@ -735,7 +761,7 @@ Troubleshooting IAM policies
 - Re-read the AWS documentation, especially the list of `Actions, Resources and Condition Keys <https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_actions-resources-contextkeys.html>`_ for the various AWS services.
 - Look at the `cloudonaut <https://iam.cloudonaut.io>`_ documentation as a troubleshooting cross-reference.
 - Use a search engine.
-- Ask in the Ansible IRC channel #ansible-aws (on freenode IRC).
+- Ask in the #ansible-aws chat channel (using Matrix at ansible.im or using IRC at `irc.libera.chat <https://libera.chat/>`_).
 
 Unsupported Integration tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -748,7 +774,7 @@ Some cases where tests should be marked as unsupported:
 1) The tests take longer than 10 or 15 minutes to complete
 2) The tests create expensive resources
 3) The tests create inline policies
-4) The tests require the existance of external resources
+4) The tests require the existence of external resources
 5) The tests manage Account level security policies such as the password policy or AWS Organizations.
 
 Where one of these reasons apply you should open a pull request proposing the minimum required policy to the

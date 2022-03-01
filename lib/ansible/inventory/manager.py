@@ -140,7 +140,7 @@ def split_host_pattern(pattern):
 class InventoryManager(object):
     ''' Creates and manages inventory '''
 
-    def __init__(self, loader, sources=None):
+    def __init__(self, loader, sources=None, parse=True):
 
         # base objects
         self._loader = loader
@@ -163,7 +163,8 @@ class InventoryManager(object):
             self._sources = sources
 
         # get to work!
-        self.parse_sources(cache=True)
+        if parse:
+            self.parse_sources(cache=True)
 
     @property
     def localhost(self):
@@ -207,7 +208,7 @@ class InventoryManager(object):
                 display.warning('Failed to load inventory plugin, skipping %s' % name)
 
         if not plugins:
-            raise AnsibleError("No inventory plugins available to generate inventory, make sure you have at least one whitelisted.")
+            raise AnsibleError("No inventory plugins available to generate inventory, make sure you have at least one enabled.")
 
         return plugins
 
@@ -243,6 +244,7 @@ class InventoryManager(object):
         ''' Generate or update inventory for the source provided '''
 
         parsed = False
+        failures = []
         display.debug(u'Examining possible inventory source: %s' % source)
 
         # use binary for path functions
@@ -271,7 +273,6 @@ class InventoryManager(object):
             self._inventory.current_source = source
 
             # try source with each plugin
-            failures = []
             for plugin in self._fetch_inventory_plugins():
 
                 plugin_name = to_text(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
@@ -305,19 +306,26 @@ class InventoryManager(object):
                         failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e), 'tb': tb})
                 else:
                     display.vvv("%s declined parsing %s as it did not pass its verify_file() method" % (plugin_name, source))
-            else:
-                if not parsed and failures:
+
+        if parsed:
+            self._inventory.processed_sources.append(self._inventory.current_source)
+        else:
+            # only warn/error if NOT using the default or using it and the file is present
+            # TODO: handle 'non file' inventory and detect vs hardcode default
+            if source != '/etc/ansible/hosts' or os.path.exists(source):
+
+                if failures:
                     # only if no plugin processed files should we show errors.
                     for fail in failures:
                         display.warning(u'\n* Failed to parse %s with %s plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
                         if 'tb' in fail:
                             display.vvv(to_text(fail['tb']))
-                    if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
-                        raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
-        if not parsed:
-            if source != '/etc/ansible/hosts' or os.path.exists(source):
-                # only warn if NOT using the default and if using it, only if the file is present
-                display.warning("Unable to parse %s as an inventory source" % source)
+
+                # final error/warning on inventory source failure
+                if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
+                    raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
+                else:
+                    display.warning("Unable to parse %s as an inventory source" % source)
 
         # clear up, jic
         self._inventory.current_source = None
@@ -627,6 +635,8 @@ class InventoryManager(object):
                     b_limit_file = to_bytes(x[1:])
                     if not os.path.exists(b_limit_file):
                         raise AnsibleError(u'Unable to find limit file %s' % b_limit_file)
+                    if not os.path.isfile(b_limit_file):
+                        raise AnsibleError(u'Limit starting with "@" must be a file, not a directory: %s' % b_limit_file)
                     with open(b_limit_file) as fd:
                         results.extend([to_text(l.strip()) for l in fd.read().split("\n")])
                 else:

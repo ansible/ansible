@@ -1,2 +1,0 @@
-bugfixes:
-- stat - handle colons in filename while parsing the mimetype output (https://github.com/ansible/ansible/issues/70256).

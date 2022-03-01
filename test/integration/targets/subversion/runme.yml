@@ -1,5 +1,5 @@
 ---
-- hosts: localhost
+- hosts: testhost
   tasks:
     - name: load OS specific vars
       include_vars: '{{ item }}'

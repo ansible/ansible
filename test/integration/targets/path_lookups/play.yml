@@ -10,31 +10,31 @@
     - copy: dest={{playbook_dir}}/files/testfile content='in files'
     - copy: dest={{playbook_dir}}/testfile content='in local'
 
-- include: testplay.yml
+- import_playbook: testplay.yml
   vars:
     remove: nothing
     role_out: in role files
     play_out: in files
 
-- include: testplay.yml
+- import_playbook: testplay.yml
   vars:
     remove: roles/showfile/files/testfile
     role_out: in role
     play_out: in files
 
-- include: testplay.yml
+- import_playbook: testplay.yml
   vars:
     remove: roles/showfile/testfile
     role_out: in role tasks
     play_out: in files
 
-- include: testplay.yml
+- import_playbook: testplay.yml
   vars:
     remove: roles/showfile/tasks/testfile
     role_out: in files
     play_out: in files
 
-- include: testplay.yml
+- import_playbook: testplay.yml
   vars:
     remove: files/testfile
     role_out: in local

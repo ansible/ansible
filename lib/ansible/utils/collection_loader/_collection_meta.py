@@ -1,19 +1,18 @@
 # (c) 2019 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+# CAUTION: This implementation of the collection loader is used by ansible-test.
+#          Because of this, it must be compatible with all Python versions supported on the controller or remote.
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-
-from yaml import load
-try:
-    from yaml import CSafeLoader as SafeLoader
-except ImportError:
-    from yaml import SafeLoader
 
 try:
     from collections.abc import Mapping   # pylint: disable=ansible-bad-import-from
 except ImportError:
     from collections import Mapping  # pylint: disable=ansible-bad-import-from
+
+from ansible.module_utils.common.yaml import yaml_load
 
 
 def _meta_yml_to_dict(yaml_string_data, content_id):
@@ -25,7 +24,7 @@ def _meta_yml_to_dict(yaml_string_data, content_id):
     :return: a Python dictionary representing the YAML dictionary content
     """
     # NB: content_id is passed in, but not used by this implementation
-    routing_dict = load(yaml_string_data, Loader=SafeLoader)
+    routing_dict = yaml_load(yaml_string_data)
     if not routing_dict:
         routing_dict = {}
     if not isinstance(routing_dict, Mapping):

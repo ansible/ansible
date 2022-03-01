@@ -1,0 +1,39 @@
+{
+    "platform.dist": [
+        "amzn",
+        "2",
+        ""
+    ],
+    "input": {
+        "/etc/os-release": "NAME=\"Amazon Linux\"\nVERSION=\"2\"\nID=\"amzn\"\nID_LIKE=\"centos rhel fedora\"\nVERSION_ID=\"2\"\nPRETTY_NAME=\"Amazon Linux 2\"\nANSI_COLOR=\"0;33\"\nCPE_NAME=\"cpe:2.3:o:amazon:amazon_linux:2\"\nHOME_URL=\"https://amazonlinux.com/\"\n",
+        "/etc/system-release": "Amazon Linux release 2 (Karoo)\n"
+    },
+    "name": "Amazon 2",
+    "result": {
+        "distribution_release": "NA",
+        "distribution": "Amazon",
+        "distribution_major_version": "2",
+        "os_family": "RedHat",
+        "distribution_version": "2"
+    },
+    "distro": {
+        "id": "amzn",
+        "name": "Amazon Linux",
+        "version": "2",
+        "codename": "",
+        "version_best": "2",
+        "lsb_release_info": {},
+        "os_release_info": {
+            "ansi_color": "0;33",
+            "id_like": "centos rhel fedora",
+            "version_id": "2",
+            "pretty_name": "Amazon Linux 2",
+            "name": "Amazon Linux",
+            "version": "2",
+            "home_url": "https://amazonlinux.com/",
+            "id": "amzn",
+            "cpe_name": "cpe:2.3:o:amazon:amazon_linux:2"
+        }
+    },
+    "platform.release": "4.14.181-142.260.amzn2.x86_64"
+}

@@ -19,17 +19,17 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    vars: host_group_vars
+    name: host_group_vars
     version_added: "2.4"
     short_description: In charge of loading group_vars and host_vars
     requirements:
-        - whitelist in configuration
+        - Enabled in configuration
     description:
         - Loads YAML vars into corresponding groups/hosts in group_vars/ and host_vars/ directories.
         - Files are restricted by extension to one of .yaml, .json, .yml or no extension.
         - Hidden (starting with '.') and backup (ending with '~') files and directories are ignored.
         - Only applies to inventory sources that are existing paths.
-        - Starting in 2.10, this plugin requires whitelisting and is whitelisted by default.
+        - Starting in 2.10, this plugin requires enabling and is enabled by default.
     options:
       stage:
         ini:
@@ -45,8 +45,8 @@ DOCUMENTATION = '''
         env:
           - name: ANSIBLE_YAML_FILENAME_EXT
         ini:
-          - section: yaml_valid_extensions
-            key: defaults
+          - key: yaml_valid_extensions
+            section: defaults
         type: list
     extends_documentation_fragment:
       - vars_plugin_staging

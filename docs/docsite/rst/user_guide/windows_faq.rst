@@ -41,6 +41,8 @@ Ansible does not currently work with Windows Nano Server, since it does
 not have access to the full .NET Framework that is used by the majority of the
 modules and internal components.
 
+.. _windows_faq_ansible:
+
 Can Ansible run on Windows?
 ```````````````````````````
 No, Ansible can only manage Windows hosts. Ansible cannot run on a Windows host
@@ -69,6 +71,21 @@ installed version and then clone the git repo.
 
     # To enable Ansible on login, run the following
     echo ". ~/ansible/hacking/env-setup -q' >> ~/.bashrc
+
+If you encounter timeout errors when running Ansible on the WSL, this may be due to an issue
+with ``sleep`` not returning correctly. The following workaround may resolve the issue:
+
+.. code-block:: shell
+
+    mv /usr/bin/sleep /usr/bin/sleep.orig
+    ln -s /bin/true /usr/bin/sleep
+
+Another option is to use WSL 2 if running Windows 10 later than build 2004.
+
+.. code-block:: shell
+
+    wsl --set-default-version 2
+
 
 Can I use SSH keys to authenticate to Windows hosts?
 ````````````````````````````````````````````````````
@@ -182,7 +199,9 @@ of ``Win32-OpenSSH`` from the GitHub Releases page when using it with Ansible
 on Windows hosts.
 
 To use SSH as the connection to a Windows host, set the following variables in
-the inventory::
+the inventory:
+
+.. code-block:: shell
 
     ansible_connection=ssh
 
@@ -232,5 +251,5 @@ host.
        Tips and tricks for playbooks
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel
+   :ref:`communication_irc`
+       How to join Ansible chat channels

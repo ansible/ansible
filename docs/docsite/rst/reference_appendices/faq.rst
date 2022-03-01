@@ -5,6 +5,23 @@ Frequently Asked Questions
 
 Here are some commonly asked questions and their answers.
 
+.. _collections_transition:
+
+Where did all the modules go?
++++++++++++++++++++++++++++++
+
+In July, 2019, we announced that collections would be the `future of Ansible content delivery <https://www.ansible.com/blog/the-future-of-ansible-content-delivery>`_. A collection is a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. In Ansible 2.9 we added support for collections. In Ansible 2.10 we `extracted most modules from the main ansible/ansible repository <https://access.redhat.com/solutions/5295121>`_ and placed them in :ref:`collections <list_of_collections>`. Collections may be maintained by the Ansible team, by the Ansible community, or by Ansible partners. The `ansible/ansible repository <https://github.com/ansible/ansible>`_ now contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-core`` (it was briefly called ``ansible-base`` for version 2.10).
+
+* To learn more about using collections, see :ref:`collections`.
+* To learn more about developing collections, see :ref:`developing_collections`.
+* To learn more about contributing to existing collections, see the individual collection repository for guidelines, or see :ref:`contributing_maintained_collections` to contribute to one of the Ansible-maintained collections.
+
+.. _find_my_module:
+
+Where did this specific module go?
+++++++++++++++++++++++++++++++++++
+
+IF you are searching for a specific module, you can check the `runtime.yml <https://github.com/ansible/ansible/blob/devel/lib/ansible/config/ansible_builtin_runtime.yml>`_ file, which lists the first destination for each module that we extracted from the main ansible/ansible repository. Some modules have moved again since then. You can also search on `Ansible Galaxy <https://galaxy.ansible.com/>`_ or ask on one of our :ref:`chat channels <communication_irc>`.
 
 .. _set_environment:
 
@@ -150,7 +167,7 @@ requires Python 2, you can also report a bug on our `bug tracker
 
 Do not replace the shebang lines of your python modules. Ansible will do this for you automatically at deploy time.
 
-Also, this works for ANY interpreter, i.e ruby: ``ansible_ruby_interpreter``, perl: ``ansible_perl_interpreter``, etc,
+Also, this works for ANY interpreter, for example ruby: ``ansible_ruby_interpreter``, perl: ``ansible_perl_interpreter``, and so on,
 so you can use this for custom modules written in any scripting language and control the interpreter location.
 
 Keep in mind that if you put ``env`` in your module shebang line (``#!/usr/bin/env <other>``),
@@ -283,6 +300,20 @@ There are a few common errors that one might run into when trying to execute Ans
     zos1 ansible_shell_executable=/usr/lpp/bash/bin/bash
 
 
+Running under fakeroot
+----------------------
+
+Some issues arise as ``fakeroot`` does not create a full nor POSIX compliant system by default.
+It is known that it will not correctly expand the default tmp directory Ansible uses (:file:`~/.ansible/tmp`).
+If you see module failures, this is likely the problem.
+The simple workaround is to set ``remote_tmp`` to a path that will expand correctly (see documentation of the shell plugin you are using for specifics).
+
+For example, in the ansible config file (or via environment variable) you can set::
+
+    remote_tmp=$HOME/.ansible/tmp
+
+
+
 .. _use_roles:
 
 What is the best way to make content reusable/redistributable?
@@ -321,7 +352,7 @@ How do I see a list of all of the ansible\_ variables?
 
 Ansible by default gathers "facts" about the machines under management, and these facts can be accessed in playbooks
 and in templates. To see a list of all of the facts that are available about a machine, you can run the ``setup`` module
-as an ad-hoc action:
+as an ad hoc action:
 
 .. code-block:: shell-session
 
@@ -393,11 +424,11 @@ How do I access a variable name programmatically?
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
 An example may come up where we need to get the ipv4 address of an arbitrary interface, where the interface to be used may be supplied
-via a role parameter or other input. Variable names can be built by adding strings together, like so:
+via a role parameter or other input. Variable names can be built by adding strings together using "~", like so:
 
 .. code-block:: jinja
 
-    {{ hostvars[inventory_hostname]['ansible_' + which_interface]['ipv4']['address'] }}
+    {{ hostvars[inventory_hostname]['ansible_' ~ which_interface]['ipv4']['address'] }}
 
 The trick about going through hostvars is necessary because it's a dictionary of the entire namespace of variables. ``inventory_hostname``
 is a magic variable that indicates the current host you are looping over in the host loop.
@@ -406,7 +437,7 @@ In the example above, if your interface names have dashes, you must replace them
 
 .. code-block:: jinja
 
-    {{ hostvars[inventory_hostname]['ansible_' + which_interface | replace('_', '-') ]['ipv4']['address'] }}
+    {{ hostvars[inventory_hostname]['ansible_' ~ which_interface | replace('_', '-') ]['ipv4']['address'] }}
 
 Also see dynamic_variables_.
 
@@ -429,7 +460,7 @@ How do I access a variable of the first host in a group?
 
 What happens if we want the ip address of the first webserver in the webservers group?  Well, we can do that too. Note that if we
 are using dynamic inventory, which host is the 'first' may not be consistent, so you wouldn't want to do this unless your inventory
-is static and predictable. (If you are using :ref:`ansible_tower`, it will use database order, so this isn't a problem even if you are using cloud
+is static and predictable. (If you are using AWX or the :ref:`Red Hat Ansible Automation Platform <ansible_platform>`, it will use database order, so this isn't a problem even if you are using cloud
 based inventory scripts).
 
 Anyway, here's the trick:
@@ -488,7 +519,7 @@ and distribution and local configuration.
 How do I generate encrypted passwords for the user module?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Ansible ad-hoc command is the easiest option:
+Ansible ad hoc command is the easiest option:
 
 .. code-block:: shell-session
 
@@ -501,7 +532,7 @@ The ``mkpasswd`` utility that is available on most Linux systems is also a great
     mkpasswd --method=sha-512
 
 
-If this utility is not installed on your system (e.g. you are using macOS) then you can still easily
+If this utility is not installed on your system (for example, you are using macOS) then you can still easily
 generate these passwords using Python. First, ensure that the `Passlib <https://foss.heptapod.net/python-libs/passlib/-/wikis/home>`_
 password hashing library is installed:
 
@@ -594,10 +625,10 @@ We also offer free web-based training classes on a regular basis. See our
 
 .. _web_interface:
 
-Is there a web interface / REST API / etc?
-++++++++++++++++++++++++++++++++++++++++++
+Is there a web interface / REST API / GUI?
+++++++++++++++++++++++++++++++++++++++++++++
 
-Yes! Ansible, Inc makes a great product that makes Ansible even more powerful and easy to use. See :ref:`ansible_tower`.
+Yes! The open-source web interface is Ansible AWX. The supported Red Hat product that makes Ansible even more powerful and easy to use is :ref:`Red Hat Ansible Automation Platform <ansible_platform>`.
 
 
 .. _keep_secret_data:
@@ -650,14 +681,17 @@ The above DOES NOT WORK as you expect, if you need to use a dynamic variable use
 
 .. code-block:: jinja
 
-    {{ hostvars[inventory_hostname]['somevar_' + other_var] }}
+    {{ hostvars[inventory_hostname]['somevar_' ~ other_var] }}
 
 For 'non host vars' you can use the :ref:`vars lookup<vars_lookup>` plugin:
 
 .. code-block:: jinja
 
-     {{ lookup('vars', 'somevar_' + other_var) }}
+     {{ lookup('vars', 'somevar_' ~ other_var) }}
 
+To determine if a keyword requires ``{{ }}`` or even supports templating, use ``ansible-doc -t keyword <name>``,
+this will return documentation on the keyword including a ``template`` field with the values ``explicit`` (requires ``{{ }}``),
+``implicit`` (assumes ``{{ }}``, so no needed) or ``static`` (no templating supported, all characters will be interpreted literally)
 
 .. _why_no_wheel:
 
@@ -678,7 +712,7 @@ but you can still access the original via ``hostvars``::
 
    original_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
 
-This works for all overridden connection variables, like ``ansible_user``, ``ansible_port``, etc.
+This works for all overridden connection variables, like ``ansible_user``, ``ansible_port``, and so on.
 
 
 .. _scp_protocol_error_filename:
@@ -708,6 +742,60 @@ fails if the remote filename requires quotes to escape spaces or non-ascii chara
 
 .. note:: If you see an ``invalid argument`` error when using ``-T``, then your SCP client is not performing filename validation and will not trigger this error.
 
+.. _mfa_support:
+
+Does Ansible support multiple factor authentication 2FA/MFA/biometrics/finterprint/usbkey/OTP/...
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+No, Ansible is designed to execute multiple tasks against multiple targets, minimizing user interaction.
+As with most automation tools, it is not compatible with interactive security systems designed to handle human interaction.
+Most of these systems require a secondary prompt per target, which prevents scaling to thousands of targets.  They also
+tend to have very short expiration periods so it requires frequent reauthorization, also an issue with many hosts and/or
+a long set of tasks.
+
+In such environments we recommend securing around Ansible's execution but still allowing it to use an 'automation user' that does not require such measures.
+With AWX or the :ref:`Red Hat Ansible Automation Platform <ansible_platform>`, administrators can set up RBAC access to inventory, along with managing credentials and job execution.
+
+
+.. _complex_configuration_validation:
+
+The 'validate' option is not enough for my needs, what do I do?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Many Ansible modules that create or update files have a ``validate`` option that allows you to abort the update if the validation command fails.
+This uses the temporary file Ansible creates before doing the final update. In many cases this does not work since the validation tools
+for the specific application require either specific names, multiple files or some other factor that is not present in this simple feature.
+
+For these cases you have to handle the validation and restoration yourself. The following is a simple example of how to do this with block/rescue
+and backups, which most file based modules also support:
+
+.. code-block:: yaml
+
+    - name: update config and backout if validation fails
+      block:
+         - name: do the actual update, works with copy, lineinfile and any action that allows for `backup`.
+           template: src=template.j2 dest=/x/y/z backup=yes moreoptions=stuff
+           register: updated
+
+        - name: run validation, this will change a lot as needed. We assume it returns an error when not passing, use `failed_when` if otherwise.
+          shell: run_validation_commmand
+          become: yes
+          become_user: requiredbyapp
+          environment:
+            WEIRD_REQUIREMENT: 1
+     rescue:
+        - name: restore backup file to original, in the hope the previous configuration was working.
+          copy:
+             remote_src: yes
+             dest: /x/y/z
+             src: "{{ updated['backup_file'] }}"
+     always:
+        - name: We choose to always delete backup, but could copy or move, or only delete in rescue.
+          file:
+             path: "{{ updated['backup_file'] }}"
+             state: absent
+
+
 .. _docs_contributions:
 
 How do I submit a change to the documentation?
@@ -721,7 +809,7 @@ for contributing can be found in the docs README `viewable on GitHub <https://gi
 I don't see my question here
 ++++++++++++++++++++++++++++
 
-Please see the section below for a link to IRC and the Google Group, where you can ask your question there.
+If you have not found an answer to your questions, you can ask on one of our mailing lists or chat channels. For instructions on subscribing to a list or joining a chat channel, see :ref:`communication`.
 
 .. seealso::
 
@@ -731,5 +819,3 @@ Please see the section below for a link to IRC and the Google Group, where you c
        Tips and tricks for playbooks
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
-   `irc.freenode.net <http://irc.freenode.net>`_
-       #ansible IRC chat channel

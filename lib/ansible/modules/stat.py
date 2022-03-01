@@ -1,4 +1,3 @@
-#!/usr/bin/python
 
 # Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -14,7 +13,7 @@ version_added: "1.3"
 short_description: Retrieve file or file system status
 description:
      - Retrieves facts for a file similar to the Linux/Unix 'stat' command.
-     - For Windows targets, use the M(win_stat) module instead.
+     - For Windows targets, use the M(ansible.windows.win_stat) module instead.
 options:
   path:
     description:
@@ -48,8 +47,8 @@ options:
     description:
       - Use file magic and return data about the nature of the file. this uses
         the 'file' utility found on most Linux/Unix systems.
-      - This will add both `mime_type` and 'charset' fields to the return, if possible.
-      - In Ansible 2.3 this option changed from 'mime' to 'get_mime' and the default changed to 'Yes'.
+      - This will add both C(mime_type) and C(charset) fields to the return, if possible.
+      - In Ansible 2.3 this option changed from I(mime) to I(get_mime) and the default changed to C(yes).
     type: bool
     default: yes
     aliases: [ mime, mime_type, mime-type ]
@@ -61,9 +60,18 @@ options:
     default: yes
     aliases: [ attr, attributes ]
     version_added: "2.3"
+extends_documentation_fragment:
+  -  action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 seealso:
-- module: file
-- module: win_stat
+- module: ansible.builtin.file
+- module: ansible.windows.win_stat
 author: Bruce Pennypacker (@bpennypacker)
 '''
 
@@ -71,10 +79,11 @@ EXAMPLES = r'''
 # Obtain the stats of /etc/foo.conf, and check that the file still belongs
 # to 'root'. Fail otherwise.
 - name: Get stats of a file
-  stat:
+  ansible.builtin.stat:
     path: /etc/foo.conf
   register: st
-- fail:
+- name: Fail if the file does not belong to 'root'
+  ansible.builtin.fail:
     msg: "Whoops! file ownership has changed"
   when: st.stat.pw_name != 'root'
 
@@ -84,23 +93,27 @@ EXAMPLES = r'''
 # Run this to understand the structure, the skipped ones do not pass the
 # check performed by 'when'
 - name: Get stats of the FS object
-  stat:
+  ansible.builtin.stat:
     path: /path/to/something
   register: sym
 
-- debug:
+- name: Print a debug message
+  ansible.builtin.debug:
     msg: "islnk isn't defined (path doesn't exist)"
   when: sym.stat.islnk is not defined
 
-- debug:
+- name: Print a debug message
+  ansible.builtin.debug:
     msg: "islnk is defined (path must exist)"
   when: sym.stat.islnk is defined
 
-- debug:
+- name: Print a debug message
+  ansible.builtin.debug:
     msg: "Path exists and is a symlink"
   when: sym.stat.islnk is defined and sym.stat.islnk
 
-- debug:
+- name: Print a debug message
+  ansible.builtin.debug:
     msg: "Path exists and isn't a symlink"
   when: sym.stat.islnk is defined and sym.stat.islnk == False
 
@@ -108,27 +121,28 @@ EXAMPLES = r'''
 # Determine if a path exists and is a directory.  Note that we need to test
 # both that p.stat.isdir actually exists, and also that it's set to true.
 - name: Get stats of the FS object
-  stat:
+  ansible.builtin.stat:
     path: /path/to/something
   register: p
-- debug:
+- name: Print a debug message
+  ansible.builtin.debug:
     msg: "Path exists and is a directory"
   when: p.stat.isdir is defined and p.stat.isdir
 
-- name: Don't do checksum
-  stat:
+- name: Don not do checksum
+  ansible.builtin.stat:
     path: /path/to/myhugefile
     get_checksum: no
 
 - name: Use sha256 to calculate checksum
-  stat:
+  ansible.builtin.stat:
     path: /path/to/something
     checksum_algorithm: sha256
 '''
 
 RETURN = r'''
 stat:
-    description: dictionary containing all the stat data, some platforms might add additional fields
+    description: Dictionary containing all the stat data, some platforms might add additional fields.
     returned: success
     type: complex
     contains:
@@ -294,14 +308,14 @@ stat:
             sample: ../foobar/21102015-1445431274-908472971
             version_added: 2.4
         md5:
-            description: md5 hash of the path; this will be removed in Ansible 2.9 in
+            description: md5 hash of the file; this will be removed in Ansible 2.9 in
                 favor of the checksum return value
             returned: success, path exists and user can read stats and path
                 supports hashing and md5 is supported
             type: str
             sample: f88fa92d8cf2eeecf4c0a50ccc96d0c0
         checksum:
-            description: hash of the path
+            description: hash of the file
             returned: success, path exists, user can read stats, path supports
                 hashing and supplied checksum algorithm is available
             type: str
@@ -319,15 +333,15 @@ stat:
         mimetype:
             description: file magic data or mime-type
             returned: success, path exists and user can read stats and
-                installed python supports it and the `mime` option was true, will
-                return 'unknown' on error.
+                installed python supports it and the I(mime) option was true, will
+                return C(unknown) on error.
             type: str
             sample: application/pdf; charset=binary
         charset:
             description: file character set or encoding
             returned: success, path exists and user can read stats and
-                installed python supports it and the `mime` option was true, will
-                return 'unknown' on error.
+                installed python supports it and the I(mime) option was true, will
+                return C(unknown) on error.
             type: str
             sample: us-ascii
         readable:
@@ -353,6 +367,12 @@ stat:
             returned: success, path exists and user can execute the path
             type: list
             sample: [ immutable, extent ]
+            version_added: 2.3
+        version:
+            description: The version/generation attribute of a file according to the filesystem
+            returned: success, path exists, user can execute the path, lsattr is available and filesystem supports
+            type: str
+            sample: "381700746"
             version_added: 2.3
 '''
 

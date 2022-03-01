@@ -1,24 +1,29 @@
+#!/usr/bin/env python
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# PYTHON_ARGCOMPLETE_OK
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+# ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
+from ansible.cli import CLI
+
 import os
 import stat
 
+from ansible import constants as C
 from ansible import context
-from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.block import Block
-from ansible.utils.display import Display
-from ansible.utils.collection_loader import AnsibleCollectionConfig
-from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.plugins.loader import add_all_plugin_dirs
+from ansible.utils.collection_loader import AnsibleCollectionConfig
+from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_playbook_path
+from ansible.utils.display import Display
 
 
 display = Display()
@@ -27,6 +32,8 @@ display = Display()
 class PlaybookCLI(CLI):
     ''' the tool to run *Ansible playbooks*, which are a configuration and multinode deployment system.
         See the project home page (https://docs.ansible.com) for more information. '''
+
+    name = 'ansible-playbook'
 
     def init_parser(self):
 
@@ -77,27 +84,35 @@ class PlaybookCLI(CLI):
 
         # initial error check, to make sure all specified playbooks are accessible
         # before we start running anything through the playbook executor
-
+        # also prep plugin paths
         b_playbook_dirs = []
         for playbook in context.CLIARGS['args']:
-            if not os.path.exists(playbook):
-                raise AnsibleError("the playbook: %s could not be found" % playbook)
-            if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
-                raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
-            b_playbook_dir = os.path.dirname(os.path.abspath(to_bytes(playbook, errors='surrogate_or_strict')))
-            # load plugins from all playbooks in case they add callbacks/inventory/etc
-            add_all_plugin_dirs(b_playbook_dir)
+            # resolve if it is collection playbook with FQCN notation, if not, leaves unchanged
+            resource = _get_collection_playbook_path(playbook)
+            if resource is not None:
+                playbook_collection = resource[2]
+            else:
+                # not an FQCN so must be a file
+                if not os.path.exists(playbook):
+                    raise AnsibleError("the playbook: %s could not be found" % playbook)
+                if not (os.path.isfile(playbook) or stat.S_ISFIFO(os.stat(playbook).st_mode)):
+                    raise AnsibleError("the playbook: %s does not appear to be a file" % playbook)
 
-            b_playbook_dirs.append(b_playbook_dir)
+                # check if playbook is from collection (path can be passed directly)
+                playbook_collection = _get_collection_name_from_path(playbook)
 
-        AnsibleCollectionConfig.playbook_paths = b_playbook_dirs
+            # don't add collection playbooks to adjacency search path
+            if not playbook_collection:
+                # setup dirs to enable loading plugins from all playbooks in case they add callbacks/inventory/etc
+                b_playbook_dir = os.path.dirname(os.path.abspath(to_bytes(playbook, errors='surrogate_or_strict')))
+                add_all_plugin_dirs(b_playbook_dir)
+                b_playbook_dirs.append(b_playbook_dir)
 
-        playbook_collection = _get_collection_name_from_path(b_playbook_dirs[0])
-
-        if playbook_collection:
-            display.warning("running playbook inside collection {0}".format(playbook_collection))
-            AnsibleCollectionConfig.default_collection = playbook_collection
+        if b_playbook_dirs:
+            # allow collections adjacent to these playbooks
+            # we use list copy to avoid opening up 'adjacency' in the previous loop
+            AnsibleCollectionConfig.playbook_paths = b_playbook_dirs
 
         # don't deal with privilege escalation or passwords when we don't need to
         if not (context.CLIARGS['listhosts'] or context.CLIARGS['listtasks'] or
@@ -138,7 +153,13 @@ class PlaybookCLI(CLI):
                         pb_dir = os.path.realpath(os.path.dirname(p['playbook']))
                         loader.set_basedir(pb_dir)
 
-                    msg = "\n  play #%d (%s): %s" % (idx + 1, ','.join(play.hosts), play.name)
+                    # show host list if we were able to template into a list
+                    try:
+                        host_list = ','.join(play.hosts)
+                    except TypeError:
+                        host_list = ''
+
+                    msg = "\n  play #%d (%s): %s" % (idx + 1, host_list, play.name)
                     mytags = set(play.tags)
                     msg += '\tTAGS: [%s]' % (','.join(mytags))
 
@@ -162,7 +183,7 @@ class PlaybookCLI(CLI):
                                 if isinstance(task, Block):
                                     taskmsg += _process_block(task)
                                 else:
-                                    if task.action == 'meta':
+                                    if task.action in C._ACTION_META and task.implicit:
                                         continue
 
                                     all_tags.update(task.tags)
@@ -200,3 +221,11 @@ class PlaybookCLI(CLI):
         for host in inventory.list_hosts():
             hostname = host.get_name()
             variable_manager.clear_facts(hostname)
+
+
+def main(args=None):
+    PlaybookCLI.cli_executor(args)
+
+
+if __name__ == '__main__':
+    main()

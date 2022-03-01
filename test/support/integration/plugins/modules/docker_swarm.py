@@ -447,11 +447,6 @@ class SwarmManager(DockerBaseClass):
             "inspect": self.inspect_swarm
         }
 
-        if self.state == 'inspect':
-            self.client.module.deprecate(
-                "The 'inspect' state is deprecated, please use 'docker_swarm_info' to inspect swarm cluster",
-                version='2.12', collection_name='ansible.builtin')
-
         choice_map.get(self.state)()
 
         if self.client.module._diff or self.parameters.debug:

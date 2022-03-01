@@ -1,0 +1,53 @@
+{
+    "name": "AlmaLinux 8.3",
+    "distro": {
+        "codename": "Purple Manul",
+        "id": "almalinux",
+        "name": "AlmaLinux",
+        "version": "8.3",
+        "version_best": "8.3",
+        "lsb_release_info": {
+            "lsb_version": ":core-4.1-amd64:core-4.1-noarch",
+            "distributor_id": "AlmaLinux",
+            "description": "AlmaLinux release 8.3 Beta (Purple Manul)",
+            "release": "8.3",
+            "codename": "PurpleManul"
+        },
+        "os_release_info": {
+            "name": "AlmaLinux",
+            "version": "8.3 (Purple Manul)",
+            "id": "almalinux",
+            "id_like": "rhel centos fedora",
+            "version_id": "8.3",
+            "platform_id": "platform:el8",
+            "pretty_name": "AlmaLinux 8.3 Beta (Purple Manul)",
+            "ansi_color": "0;34",
+            "cpe_name": "cpe:/o:almalinux:almalinux:8.3:beta",
+            "home_url": "https://almalinux.org/",
+            "bug_report_url": "https://bugs.almalinux.org/",
+            "almalinux_mantisbt_project": "AlmaLinux-8",
+            "almalinux_mantisbt_project_version": "8",
+            "codename": "Purple Manul"
+        }
+    },
+    "input": {
+        "/etc/centos-release": "AlmaLinux release 8.3 Beta (Purple Manul)\n",
+        "/etc/redhat-release": "AlmaLinux release 8.3 Beta (Purple Manul)\n",
+        "/etc/system-release": "AlmaLinux release 8.3 Beta (Purple Manul)\n",
+        "/etc/os-release": "NAME=\"AlmaLinux\"\nVERSION=\"8.3 (Purple Manul)\"\nID=\"almalinux\"\nID_LIKE=\"rhel centos fedora\"\nVERSION_ID=\"8.3\"\nPLATFORM_ID=\"platform:el8\"\nPRETTY_NAME=\"AlmaLinux 8.3 Beta (Purple Manul)\"\nANSI_COLOR=\"0;34\"\nCPE_NAME=\"cpe:/o:almalinux:almalinux:8.3:beta\"\nHOME_URL=\"https://almalinux.org/\"\nBUG_REPORT_URL=\"https://bugs.almalinux.org/\"\n\nALMALINUX_MANTISBT_PROJECT=\"AlmaLinux-8\"                        \nALMALINUX_MANTISBT_PROJECT_VERSION=\"8\"                       \n\n",
+        "/usr/lib/os-release": "NAME=\"AlmaLinux\"\nVERSION=\"8.3 (Purple Manul)\"\nID=\"almalinux\"\nID_LIKE=\"rhel centos fedora\"\nVERSION_ID=\"8.3\"\nPLATFORM_ID=\"platform:el8\"\nPRETTY_NAME=\"AlmaLinux 8.3 Beta (Purple Manul)\"\nANSI_COLOR=\"0;34\"\nCPE_NAME=\"cpe:/o:almalinux:almalinux:8.3:beta\"\nHOME_URL=\"https://almalinux.org/\"\nBUG_REPORT_URL=\"https://bugs.almalinux.org/\"\n\nALMALINUX_MANTISBT_PROJECT=\"AlmaLinux-8\"                        \nALMALINUX_MANTISBT_PROJECT_VERSION=\"8\"                       \n\n"
+    },
+    "platform.dist": [
+        "almalinux",
+        "8.3",
+        "Purple Manul"
+    ],
+    "result": {
+        "distribution": "AlmaLinux",
+        "distribution_version": "8.3",
+        "distribution_release": "Purple Manul",
+        "distribution_major_version": "8",
+        "os_family": "RedHat"
+    },
+    "platform.release": "4.18.0-240.el8.x86_64"
+}

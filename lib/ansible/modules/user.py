@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Stephen Fromm <sfromm@gmail.com>
@@ -14,7 +13,7 @@ version_added: "0.2"
 short_description: Manage user accounts
 description:
     - Manage user accounts and user attributes.
-    - For Windows targets, use the M(win_user) module instead.
+    - For Windows targets, use the M(ansible.windows.win_user) module instead.
 options:
     name:
         description:
@@ -53,10 +52,13 @@ options:
         type: str
     groups:
         description:
-            - List of groups user will be added to. When set to an empty string C(''),
+            - List of groups user will be added to.
+            - By default, the user is removed from all other groups. Configure C(append) to modify this.
+            - When set to an empty string C(''),
               the user is removed from all groups except the primary group.
             - Before Ansible 2.3, the only input format allowed was a comma separated string.
         type: list
+        elements: str
     append:
         description:
             - If C(yes), add the user to the groups specified in C(groups).
@@ -69,8 +71,8 @@ options:
             - Optionally set the user's shell.
             - On macOS, before Ansible 2.5, the default shell for non-system users was C(/usr/bin/false).
               Since Ansible 2.5, the default shell for non-system users on macOS is C(/bin/bash).
-            - On other operating systems, the default shell is determined by the underlying tool being
-              used. See Notes for details.
+            - See notes for details on how other operating systems determine the default shell by
+              the underlying tool.
         type: str
     home:
         description:
@@ -86,9 +88,9 @@ options:
         description:
             - Optionally set the user's password to this crypted value.
             - On macOS systems, this value has to be cleartext. Beware of security issues.
-            - To create a disabled account on Linux systems, set this to C('!') or C('*').
-            - To create a disabled account on OpenBSD, set this to C('*************').
-            - See U(https://docs.ansible.com/ansible/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module)
+            - To create a an account with a locked/disabled password on Linux systems, set this to C('!') or C('*').
+            - To create a an account with a locked/disabled password on OpenBSD, set this to C('*************').
+            - See L(FAQ entry,https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module)
               for details on various ways to generate these password values.
         type: str
     state:
@@ -192,9 +194,10 @@ options:
         version_added: "1.9"
     password_lock:
         description:
-            - Lock the password (usermod -L, pw lock, usermod -C).
-            - BUT implementation differs on different platforms, this option does not always mean the user cannot login via other methods.
-            - This option does not disable the user, only lock the password. Do not change the password in the same task.
+            - Lock the password (C(usermod -L), C(usermod -U), C(pw lock)).
+            - Implementation differs by platform. This option does not always mean the user cannot login using other methods.
+            - This option does not disable the user, only lock the password.
+            - This must be set to C(False) in order to unlock a currently locked password. The absence of this parameter will not unlock a password.
             - Currently supported on Linux, FreeBSD, DragonFlyBSD, NetBSD, OpenBSD.
         type: bool
         version_added: "2.6"
@@ -202,7 +205,7 @@ options:
         description:
             - Forces the use of "local" command alternatives on platforms that implement it.
             - This is useful in environments that use centralized authentication when you want to manipulate the local users
-              (i.e. it uses C(luseradd) instead of C(useradd)).
+              (in other words, it uses C(luseradd) instead of C(useradd)).
             - This will check C(/etc/passwd) for an existing account before invoking commands. If the local account database
               exists somewhere other than C(/etc/passwd), this setting will not work properly.
             - This requires that the above commands as well as C(/etc/passwd) must exist on the target host, otherwise it will be a fatal error.
@@ -236,6 +239,34 @@ options:
             - Currently supported on Illumos/Solaris.
         type: str
         version_added: "2.8"
+    password_expire_max:
+        description:
+            - Maximum number of days between password change.
+            - Supported on Linux only.
+        type: int
+        version_added: "2.11"
+    password_expire_min:
+        description:
+            - Minimum number of days between password change.
+            - Supported on Linux only.
+        type: int
+        version_added: "2.11"
+    umask:
+        description:
+            - Sets the umask of the user.
+            - Does nothing when used with other platforms.
+            - Currently supported on Linux.
+            - Requires C(local) is omitted or False.
+        type: str
+        version_added: "2.12"
+extends_documentation_fragment: action_common_attributes
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: none
+    platform:
+        platforms: posix
 notes:
   - There are specific requirements per platform on user management utilities. However
     they generally come pre-installed with the system and Ansible will require they
@@ -250,73 +281,83 @@ notes:
   - On all other platforms, this module uses C(useradd) to create, C(usermod) to modify, and
     C(userdel) to remove accounts.
 seealso:
-- module: authorized_key
-- module: group
-- module: win_user
+- module: ansible.posix.authorized_key
+- module: ansible.builtin.group
+- module: ansible.windows.win_user
 author:
 - Stephen Fromm (@sfromm)
 '''
 
 EXAMPLES = r'''
 - name: Add the user 'johnd' with a specific uid and a primary group of 'admin'
-  user:
+  ansible.builtin.user:
     name: johnd
     comment: John Doe
     uid: 1040
     group: admin
 
 - name: Add the user 'james' with a bash shell, appending the group 'admins' and 'developers' to the user's groups
-  user:
+  ansible.builtin.user:
     name: james
     shell: /bin/bash
     groups: admins,developers
     append: yes
 
 - name: Remove the user 'johnd'
-  user:
+  ansible.builtin.user:
     name: johnd
     state: absent
     remove: yes
 
 - name: Create a 2048-bit SSH key for user jsmith in ~jsmith/.ssh/id_rsa
-  user:
+  ansible.builtin.user:
     name: jsmith
     generate_ssh_key: yes
     ssh_key_bits: 2048
     ssh_key_file: .ssh/id_rsa
 
 - name: Added a consultant whose account you want to expire
-  user:
+  ansible.builtin.user:
     name: james18
     shell: /bin/zsh
     groups: developers
     expires: 1422403387
 
 - name: Starting at Ansible 2.6, modify user, remove expiry time
-  user:
+  ansible.builtin.user:
     name: james18
     expires: -1
+
+- name: Set maximum expiration date for password
+  ansible.builtin.user:
+    name: ram19
+    password_expire_max: 10
+
+- name: Set minimum expiration date for password
+  ansible.builtin.user:
+    name: pushkar15
+    password_expire_min: 5
 '''
 
 RETURN = r'''
 append:
-  description: Whether or not to append the user to groups
-  returned: When state is 'present' and the user exists
+  description: Whether or not to append the user to groups.
+  returned: When state is C(present) and the user exists
   type: bool
   sample: True
 comment:
-  description: Comment section from passwd file, usually the user name
+  description: Comment section from passwd file, usually the user name.
   returned: When user exists
   type: str
   sample: Agent Smith
 create_home:
-  description: Whether or not to create the home directory
+  description: Whether or not to create the home directory.
   returned: When user does not exist and not check mode
   type: bool
   sample: True
 force:
-  description: Whether or not a user account was forcibly deleted
-  returned: When state is 'absent' and user exists
+  description: Whether or not a user account was forcibly deleted.
+  returned: When I(state) is C(absent) and user exists
   type: bool
   sample: False
 group:
@@ -325,78 +366,88 @@ group:
   type: int
   sample: 1001
 groups:
-  description: List of groups of which the user is a member
-  returned: When C(groups) is not empty and C(state) is 'present'
+  description: List of groups of which the user is a member.
+  returned: When I(groups) is not empty and I(state) is C(present)
   type: str
   sample: 'chrony,apache'
 home:
-  description: "Path to user's home directory"
-  returned: When C(state) is 'present'
+  description: "Path to user's home directory."
+  returned: When I(state) is C(present)
   type: str
   sample: '/home/asmith'
 move_home:
-  description: Whether or not to move an existing home directory
-  returned: When C(state) is 'present' and user exists
+  description: Whether or not to move an existing home directory.
+  returned: When I(state) is C(present) and user exists
   type: bool
   sample: False
 name:
-  description: User account name
+  description: User account name.
   returned: always
   type: str
   sample: asmith
 password:
-  description: Masked value of the password
-  returned: When C(state) is 'present' and C(password) is not empty
+  description: Masked value of the password.
+  returned: When I(state) is C(present) and I(password) is not empty
   type: str
   sample: 'NOT_LOGGING_PASSWORD'
 remove:
-  description: Whether or not to remove the user account
-  returned: When C(state) is 'absent' and user exists
+  description: Whether or not to remove the user account.
+  returned: When I(state) is C(absent) and user exists
   type: bool
   sample: True
 shell:
-  description: User login shell
-  returned: When C(state) is 'present'
+  description: User login shell.
+  returned: When I(state) is C(present)
   type: str
   sample: '/bin/bash'
 ssh_fingerprint:
-  description: Fingerprint of generated SSH key
-  returned: When C(generate_ssh_key) is C(True)
+  description: Fingerprint of generated SSH key.
+  returned: When I(generate_ssh_key) is C(True)
   type: str
   sample: '2048 SHA256:aYNHYcyVm87Igh0IMEDMbvW0QDlRQfE0aJugp684ko8 ansible-generated on host (RSA)'
 ssh_key_file:
-  description: Path to generated SSH private key file
-  returned: When C(generate_ssh_key) is C(True)
+  description: Path to generated SSH private key file.
+  returned: When I(generate_ssh_key) is C(True)
   type: str
   sample: /home/asmith/.ssh/id_rsa
 ssh_public_key:
-  description: Generated SSH public key file
-  returned: When C(generate_ssh_key) is C(True)
+  description: Generated SSH public key file.
+  returned: When I(generate_ssh_key) is C(True)
   type: str
   sample: >
     'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC95opt4SPEC06tOYsJQJIuN23BbLMGmYo8ysVZQc4h2DZE9ugbjWWGS1/pweUGjVstgzMkBEeBCByaEf/RJKNecKRPeGd2Bw9DCj/bn5Z6rGfNENKBmo
     618mUJBvdlEgea96QGjOwSB7/gmonduC7gsWDMNcOdSE3wJMTim4lddiBx4RgC9yXsJ6Tkz9BHD73MXPpT5ETnse+A3fw3IGVSjaueVnlUyUmOBf7fzmZbhlFVXf2Zi2rFTXqvbdGHKkzpw1U8eB8xFPP7y
     d5u1u0e6Acju/8aZ/l17IDFiLke5IzlqIMRTEbDwLNeO84YQKWTm9fODHzhYe0yvxqLiK07 ansible-generated on host'
 stderr:
-  description: Standard error from running commands
+  description: Standard error from running commands.
   returned: When stderr is returned by a command that is run
   type: str
   sample: Group wheels does not exist
 stdout:
-  description: Standard output from running commands
+  description: Standard output from running commands.
   returned: When standard output is returned by the command that is run
   type: str
   sample:
 system:
-  description: Whether or not the account is a system account
-  returned: When C(system) is passed to the module and the account does not exist
+  description: Whether or not the account is a system account.
+  returned: When I(system) is passed to the module and the account does not exist
   type: bool
   sample: True
 uid:
-  description: User ID of the user account
-  returned: When C(UID) is passed to the module
+  description: User ID of the user account.
+  returned: When I(uid) is passed to the module
   type: int
   sample: 1044
+password_expire_max:
+  description: Maximum number of days during which a password is valid.
+  returned: When user exists
+  type: int
+  sample: 20
+password_expire_min:
+  description: Minimum number of days between password change
+  returned: When user exists
+  type: int
+  sample: 20
 '''
 
 
@@ -412,10 +463,12 @@ import shutil
 import socket
 import subprocess
 import time
+import math
 
 from ansible.module_utils import distro
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.sys_info import get_platform_subclass
 
 try:
@@ -490,6 +543,12 @@ class User(object):
         self.profile = module.params['profile']
         self.authorization = module.params['authorization']
         self.role = module.params['role']
+        self.password_expire_max = module.params['password_expire_max']
+        self.password_expire_min = module.params['password_expire_min']
+        self.umask = module.params['umask']
+
+        if self.umask is not None and self.local:
+            module.fail_json(msg="'umask' can not be used with 'local'")
 
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
@@ -580,6 +639,7 @@ class User(object):
         if self.local:
             command_name = 'luseradd'
             lgroupmod_cmd = self.module.get_bin_path('lgroupmod', True)
+            lchage_cmd = self.module.get_bin_path('lchage', True)
         else:
             command_name = 'useradd'
 
@@ -606,8 +666,8 @@ class User(object):
             # errors from useradd trying to create a group when
             # USERGROUPS_ENAB is set in /etc/login.defs.
             if os.path.exists('/etc/redhat-release'):
-                dist = distro.linux_distribution(full_distribution_name=False)
-                major_release = int(dist[1].split('.')[0])
+                dist = distro.version()
+                major_release = int(dist.split('.')[0])
                 if major_release <= 5 or self.local:
                     cmd.append('-n')
                 else:
@@ -615,8 +675,8 @@ class User(object):
             elif os.path.exists('/etc/SuSE-release'):
                 # -N did not exist in useradd before SLE 11 and did not
                 # automatically create a group
-                dist = distro.linux_distribution(full_distribution_name=False)
-                major_release = int(dist[1].split('.')[0])
+                dist = distro.version()
+                major_release = int(dist.split('.')[0])
                 if major_release >= 12:
                     cmd.append('-N')
             else:
@@ -647,7 +707,7 @@ class User(object):
             cmd.append('-s')
             cmd.append(self.shell)
 
-        if self.expires is not None:
+        if self.expires is not None and not self.local:
             cmd.append('-e')
             if self.expires < time.gmtime(0):
                 cmd.append('')
@@ -656,7 +716,10 @@ class User(object):
 
         if self.password is not None:
             cmd.append('-p')
-            cmd.append(self.password)
+            if self.password_lock:
+                cmd.append('!%s' % self.password)
+            else:
+                cmd.append(self.password)
 
         if self.create_home:
             if not self.local:
@@ -665,6 +728,10 @@ class User(object):
             if self.skeleton is not None:
                 cmd.append('-k')
                 cmd.append(self.skeleton)
+
+            if self.umask is not None:
+                cmd.append('-K')
+                cmd.append('UMASK=' + self.umask)
         else:
             cmd.append('-M')
 
@@ -672,12 +739,27 @@ class User(object):
             cmd.append('-r')
 
         cmd.append(self.name)
-        (rc, err, out) = self.execute_command(cmd)
-        if not self.local or rc != 0 or self.groups is None or len(self.groups) == 0:
-            return (rc, err, out)
+        (rc, out, err) = self.execute_command(cmd)
+        if not self.local or rc != 0:
+            return (rc, out, err)
+
+        if self.expires is not None:
+            if self.expires < time.gmtime(0):
+                lexpires = -1
+            else:
+                # Convert seconds since Epoch to days since Epoch
+                lexpires = int(math.floor(self.module.params['expires'])) // 86400
+            (rc, _out, _err) = self.execute_command([lchage_cmd, '-E', to_native(lexpires), self.name])
+            out += _out
+            err += _err
+            if rc != 0:
+                return (rc, out, err)
+
+        if self.groups is None or len(self.groups) == 0:
+            return (rc, out, err)
 
         for add_group in groups:
-            (rc, _err, _out) = self.execute_command([lgroupmod_cmd, '-M', self.name, add_group])
+            (rc, _out, _err) = self.execute_command([lgroupmod_cmd, '-M', self.name, add_group])
             out += _out
             err += _err
             if rc != 0:
@@ -718,6 +800,8 @@ class User(object):
             lgroupmod_cmd = self.module.get_bin_path('lgroupmod', True)
             lgroupmod_add = set()
             lgroupmod_del = set()
+            lchage_cmd = self.module.get_bin_path('lchage', True)
+            lexpires = None
         else:
             command_name = 'usermod'
 
@@ -800,16 +884,23 @@ class User(object):
 
             if self.expires < time.gmtime(0):
                 if current_expires >= 0:
-                    cmd.append('-e')
-                    cmd.append('')
+                    if self.local:
+                        lexpires = -1
+                    else:
+                        cmd.append('-e')
+                        cmd.append('')
             else:
                 # Convert days since Epoch to seconds since Epoch as struct_time
                 current_expire_date = time.gmtime(current_expires * 86400)
 
                 # Current expires is negative or we compare year, month, and day only
                 if current_expires < 0 or current_expire_date[:3] != self.expires[:3]:
-                    cmd.append('-e')
-                    cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+                    if self.local:
+                        # Convert seconds since Epoch to days since Epoch
+                        lexpires = int(math.floor(self.module.params['expires'])) // 86400
+                    else:
+                        cmd.append('-e')
+                        cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         # Lock if no password or unlocked, unlock only if locked
         if self.password_lock and not info[1].startswith('!'):
@@ -818,29 +909,45 @@ class User(object):
             # usermod will refuse to unlock a user with no password, module shows 'changed' regardless
             cmd.append('-U')
 
-        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+        if self.update_password == 'always' and self.password is not None and info[1].lstrip('!') != self.password.lstrip('!'):
+            # Remove options that are mutually exclusive with -p
+            cmd = [c for c in cmd if c not in ['-U', '-L']]
             cmd.append('-p')
-            cmd.append(self.password)
+            if self.password_lock:
+                # Lock the account and set the hash in a single command
+                cmd.append('!%s' % self.password)
+            else:
+                cmd.append(self.password)
 
-        (rc, err, out) = (None, '', '')
+        (rc, out, err) = (None, '', '')
 
         # skip if no usermod changes to be made
         if len(cmd) > 1:
             cmd.append(self.name)
-            (rc, err, out) = self.execute_command(cmd)
+            (rc, out, err) = self.execute_command(cmd)
 
-        if not self.local or not (rc is None or rc == 0) or (len(lgroupmod_add) == 0 and len(lgroupmod_del) == 0):
-            return (rc, err, out)
+        if not self.local or not (rc is None or rc == 0):
+            return (rc, out, err)
+
+        if lexpires is not None:
+            (rc, _out, _err) = self.execute_command([lchage_cmd, '-E', to_native(lexpires), self.name])
+            out += _out
+            err += _err
+            if rc != 0:
+                return (rc, out, err)
+
+        if len(lgroupmod_add) == 0 and len(lgroupmod_del) == 0:
+            return (rc, out, err)
 
         for add_group in lgroupmod_add:
-            (rc, _err, _out) = self.execute_command([lgroupmod_cmd, '-M', self.name, add_group])
+            (rc, _out, _err) = self.execute_command([lgroupmod_cmd, '-M', self.name, add_group])
             out += _out
             err += _err
             if rc != 0:
                 return (rc, out, err)
 
         for del_group in lgroupmod_del:
-            (rc, _err, _out) = self.execute_command([lgroupmod_cmd, '-m', self.name, del_group])
+            (rc, _out, _err) = self.execute_command([lgroupmod_cmd, '-m', self.name, del_group])
             out += _out
             err += _err
             if rc != 0:
@@ -941,6 +1048,28 @@ class User(object):
             info[1] = self.user_password()[0]
         return info
 
+    def set_password_expire(self):
+        min_needs_change = self.password_expire_min is not None
+        max_needs_change = self.password_expire_max is not None
+
+        if HAVE_SPWD:
+            shadow_info = spwd.getspnam(self.name)
+            min_needs_change &= self.password_expire_min != shadow_info.sp_min
+            max_needs_change &= self.password_expire_max != shadow_info.sp_max
+
+        if not (min_needs_change or max_needs_change):
+            return (None, '', '')  # target state already reached
+
+        command_name = 'chage'
+        cmd = [self.module.get_bin_path(command_name, True)]
+        if min_needs_change:
+            cmd.extend(["-m", self.password_expire_min])
+        if max_needs_change:
+            cmd.extend(["-M", self.password_expire_max])
+        cmd.append(self.name)
+
+        return self.execute_command(cmd)
+
     def user_password(self):
         passwd = ''
         expires = ''
@@ -1028,7 +1157,7 @@ class User(object):
             master_out_fd, slave_out_fd = pty.openpty()
             master_err_fd, slave_err_fd = pty.openpty()
             env = os.environ.copy()
-            env['LC_ALL'] = 'C'
+            env['LC_ALL'] = get_best_parsable_locale(self.module)
             try:
                 p = subprocess.Popen([to_bytes(c) for c in cmd],
                                      stdin=slave_in_fd,
@@ -1172,6 +1301,31 @@ class FreeBsdUser(User):
     SHADOWFILE_EXPIRE_INDEX = 6
     DATE_FORMAT = '%d-%b-%Y'
 
+    def _handle_lock(self):
+        info = self.user_info()
+        if self.password_lock and not info[1].startswith('*LOCKED*'):
+            cmd = [
+                self.module.get_bin_path('pw', True),
+                'lock',
+                self.name
+            ]
+            if self.uid is not None and info[2] != int(self.uid):
+                cmd.append('-u')
+                cmd.append(self.uid)
+            return self.execute_command(cmd)
+        elif self.password_lock is False and info[1].startswith('*LOCKED*'):
+            cmd = [
+                self.module.get_bin_path('pw', True),
+                'unlock',
+                self.name
+            ]
+            if self.uid is not None and info[2] != int(self.uid):
+                cmd.append('-u')
+                cmd.append(self.uid)
+            return self.execute_command(cmd)
+
+        return (None, '', '')
+
     def remove_user(self):
         cmd = [
             self.module.get_bin_path('pw', True),
@@ -1225,6 +1379,10 @@ class FreeBsdUser(User):
                 cmd.append('-k')
                 cmd.append(self.skeleton)
 
+            if self.umask is not None:
+                cmd.append('-K')
+                cmd.append('UMASK=' + self.umask)
+
         if self.shell is not None:
             cmd.append('-s')
             cmd.append(self.shell)
@@ -1243,6 +1401,7 @@ class FreeBsdUser(User):
         # system cannot be handled currently - should we error if its requested?
         # create the user
         (rc, out, err) = self.execute_command(cmd)
+
         if rc is not None and rc != 0:
             self.module.fail_json(name=self.name, msg=err, rc=rc)
 
@@ -1254,7 +1413,18 @@ class FreeBsdUser(User):
                 self.password,
                 self.name
             ]
-            return self.execute_command(cmd)
+            _rc, _out, _err = self.execute_command(cmd)
+            if rc is None:
+                rc = _rc
+            out += _out
+            err += _err
+
+        # we have to lock/unlock the password in a distinct command
+        _rc, _out, _err = self._handle_lock()
+        if rc is None:
+            rc = _rc
+        out += _out
+        err += _err
 
         return (rc, out, err)
 
@@ -1289,6 +1459,10 @@ class FreeBsdUser(User):
             if self.skeleton is not None:
                 cmd.append('-k')
                 cmd.append(self.skeleton)
+
+            if self.umask is not None:
+                cmd.append('-K')
+                cmd.append('UMASK=' + self.umask)
 
         if self.group is not None:
             if not self.group_exists(self.group):
@@ -1358,45 +1532,38 @@ class FreeBsdUser(User):
                     cmd.append('-e')
                     cmd.append(str(calendar.timegm(self.expires)))
 
+        (rc, out, err) = (None, '', '')
+
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
-            (rc, out, err) = self.execute_command(cmd)
+            (rc, _out, _err) = self.execute_command(cmd)
+            out += _out
+            err += _err
+
             if rc is not None and rc != 0:
                 self.module.fail_json(name=self.name, msg=err, rc=rc)
-        else:
-            (rc, out, err) = (None, '', '')
 
         # we have to set the password in a second command
-        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+        if self.update_password == 'always' and self.password is not None and info[1].lstrip('*LOCKED*') != self.password.lstrip('*LOCKED*'):
             cmd = [
                 self.module.get_bin_path('chpass', True),
                 '-p',
                 self.password,
                 self.name
             ]
-            return self.execute_command(cmd)
+            _rc, _out, _err = self.execute_command(cmd)
+            if rc is None:
+                rc = _rc
+            out += _out
+            err += _err
 
         # we have to lock/unlock the password in a distinct command
-        if self.password_lock and not info[1].startswith('*LOCKED*'):
-            cmd = [
-                self.module.get_bin_path('pw', True),
-                'lock',
-                self.name
-            ]
-            if self.uid is not None and info[2] != int(self.uid):
-                cmd.append('-u')
-                cmd.append(self.uid)
-            return self.execute_command(cmd)
-        elif self.password_lock is False and info[1].startswith('*LOCKED*'):
-            cmd = [
-                self.module.get_bin_path('pw', True),
-                'unlock',
-                self.name
-            ]
-            if self.uid is not None and info[2] != int(self.uid):
-                cmd.append('-u')
-                cmd.append(self.uid)
-            return self.execute_command(cmd)
+        _rc, _out, _err = self._handle_lock()
+        if rc is None:
+            rc = _rc
+        out += _out
+        err += _err
+
         return (rc, out, err)
 
 
@@ -1475,6 +1642,10 @@ class OpenBSDUser(User):
             if self.skeleton is not None:
                 cmd.append('-k')
                 cmd.append(self.skeleton)
+
+            if self.umask is not None:
+                cmd.append('-K')
+                cmd.append('UMASK=' + self.umask)
 
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -1648,6 +1819,10 @@ class NetBSDUser(User):
             if self.skeleton is not None:
                 cmd.append('-k')
                 cmd.append(self.skeleton)
+
+            if self.umask is not None:
+                cmd.append('-K')
+                cmd.append('UMASK=' + self.umask)
 
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -1833,6 +2008,10 @@ class SunOS(User):
             if self.skeleton is not None:
                 cmd.append('-k')
                 cmd.append(self.skeleton)
+
+            if self.umask is not None:
+                cmd.append('-K')
+                cmd.append('UMASK=' + self.umask)
 
         if self.profile is not None:
             cmd.append('-P')
@@ -2101,14 +2280,11 @@ class DarwinUser(User):
         # sys.stderr.write('*** |%s| %s -> %s\n' %  (property, out, lines))
         if len(lines) == 1:
             return lines[0].split(': ')[1]
-        else:
-            if len(lines) > 2:
-                return '\n'.join([lines[1].strip()] + lines[2:])
-            else:
-                if len(lines) == 2:
-                    return lines[1].strip()
-                else:
-                    return None
+        if len(lines) > 2:
+            return '\n'.join([lines[1].strip()] + lines[2:])
+        if len(lines) == 2:
+            return lines[1].strip()
+        return None
 
     def _get_next_uid(self, system=None):
         '''
@@ -2203,20 +2379,20 @@ class DarwinUser(User):
 
         if self.append is False:
             for remove in current - target:
-                (_rc, _err, _out) = self.__modify_group(remove, 'delete')
+                (_rc, _out, _err) = self.__modify_group(remove, 'delete')
                 rc += rc
                 out += _out
                 err += _err
                 changed = True
 
         for add in target - current:
-            (_rc, _err, _out) = self.__modify_group(add, 'add')
+            (_rc, _out, _err) = self.__modify_group(add, 'add')
             rc += _rc
             out += _out
             err += _err
             changed = True
 
-        return (rc, err, out, changed)
+        return (rc, out, err, changed)
 
     def _update_system_user(self):
         '''Hide or show user on login window according SELF.SYSTEM.
@@ -2262,7 +2438,7 @@ class DarwinUser(User):
     def user_exists(self):
         '''Check is SELF.NAME is a known user on the system.'''
         cmd = self._get_dscl()
-        cmd += ['-list', '/Users/%s' % self.name]
+        cmd += ['-read', '/Users/%s' % self.name, 'UniqueID']
         (rc, out, err) = self.execute_command(cmd, obey_checkmode=False)
         return rc == 0
 
@@ -2287,7 +2463,7 @@ class DarwinUser(User):
     def create_user(self, command_name='dscl'):
         cmd = self._get_dscl()
         cmd += ['-create', '/Users/%s' % self.name]
-        (rc, err, out) = self.execute_command(cmd)
+        (rc, out, err) = self.execute_command(cmd)
         if rc != 0:
             self.module.fail_json(msg='Cannot create user "%s".' % self.name, err=err, out=out, rc=rc)
 
@@ -2314,16 +2490,16 @@ class DarwinUser(User):
 
                 cmd = self._get_dscl()
                 cmd += ['-create', '/Users/%s' % self.name, field[1], self.__dict__[field[0]]]
-                (rc, _err, _out) = self.execute_command(cmd)
+                (rc, _out, _err) = self.execute_command(cmd)
                 if rc != 0:
                     self.module.fail_json(msg='Cannot add property "%s" to user "%s".' % (field[0], self.name), err=err, out=out, rc=rc)
 
                 out += _out
                 err += _err
                 if rc != 0:
-                    return (rc, _err, _out)
+                    return (rc, _out, _err)
 
-        (rc, _err, _out) = self._change_user_password()
+        (rc, _out, _err) = self._change_user_password()
         out += _out
         err += _err
 
@@ -2334,7 +2510,7 @@ class DarwinUser(User):
             (rc, _out, _err, changed) = self._modify_group()
             out += _out
             err += _err
-        return (rc, err, out)
+        return (rc, out, err)
 
     def modify_user(self):
         changed = None
@@ -2350,7 +2526,7 @@ class DarwinUser(User):
                 if current is None or current != to_text(self.__dict__[field[0]]):
                     cmd = self._get_dscl()
                     cmd += ['-create', '/Users/%s' % self.name, field[1], self.__dict__[field[0]]]
-                    (rc, _err, _out) = self.execute_command(cmd)
+                    (rc, _out, _err) = self.execute_command(cmd)
                     if rc != 0:
                         self.module.fail_json(
                             msg='Cannot update property "%s" for user "%s".'
@@ -2359,7 +2535,7 @@ class DarwinUser(User):
                     out += _out
                     err += _err
         if self.update_password == 'always' and self.password is not None:
-            (rc, _err, _out) = self._change_user_password()
+            (rc, _out, _err) = self._change_user_password()
             out += _out
             err += _err
             changed = rc
@@ -2438,6 +2614,10 @@ class AIX(User):
             if self.skeleton is not None:
                 cmd.append('-k')
                 cmd.append(self.skeleton)
+
+            if self.umask is not None:
+                cmd.append('-K')
+                cmd.append('UMASK=' + self.umask)
 
         cmd.append(self.name)
         (rc, out, err) = self.execute_command(cmd)
@@ -2764,6 +2944,10 @@ class BusyBox(User):
             cmd.append('-k')
             cmd.append(self.skeleton)
 
+        if self.umask is not None:
+            cmd.append('-K')
+            cmd.append('UMASK=' + self.umask)
+
         if self.system:
             cmd.append('-S')
 
@@ -2873,12 +3057,14 @@ def main():
             uid=dict(type='int'),
             non_unique=dict(type='bool', default=False),
             group=dict(type='str'),
-            groups=dict(type='list'),
+            groups=dict(type='list', elements='str'),
             comment=dict(type='str'),
             home=dict(type='path'),
             shell=dict(type='str'),
             password=dict(type='str', no_log=True),
             login_class=dict(type='str'),
+            password_expire_max=dict(type='int', no_log=False),
+            password_expire_min=dict(type='int', no_log=False),
             # following options are specific to macOS
             hidden=dict(type='bool'),
             # following options are specific to selinux
@@ -2907,6 +3093,7 @@ def main():
             profile=dict(type='str'),
             authorization=dict(type='str'),
             role=dict(type='str'),
+            umask=dict(type='str'),
         ),
         supports_check_mode=True,
     )
@@ -3017,6 +3204,15 @@ def main():
                 result['ssh_fingerprint'] = err.strip()
             result['ssh_key_file'] = user.get_ssh_key_path()
             result['ssh_public_key'] = user.get_ssh_public_key()
+
+        (rc, out, err) = user.set_password_expire()
+        if rc is None:
+            pass  # target state reached, nothing to do
+        else:
+            if rc != 0:
+                module.fail_json(name=user.name, msg=err, rc=rc)
+            else:
+                result['changed'] = True
 
     module.exit_json(**result)
 

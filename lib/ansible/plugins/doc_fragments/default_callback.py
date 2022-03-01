@@ -18,9 +18,9 @@ class ModuleDocFragment(object):
         env:
           - name: DISPLAY_SKIPPED_HOSTS
             deprecated:
-              why: environment variables without "ANSIBLE_" prefix are deprecated
+              why: environment variables without C(ANSIBLE_) prefix are deprecated
               version: "2.12"
-              alternatives: the "ANSIBLE_DISPLAY_SKIPPED_HOSTS" environment variable
+              alternatives: the C(ANSIBLE_DISPLAY_SKIPPED_HOSTS) environment variable
           - name: ANSIBLE_DISPLAY_SKIPPED_HOSTS
         ini:
           - key: display_skipped_hosts
@@ -72,7 +72,7 @@ class ModuleDocFragment(object):
         name: Show markers when running in check mode
         description:
         - Toggle to control displaying markers when running in check mode.
-        - "The markers are C(DRY RUN) at the beggining and ending of playbook execution (when calling C(ansible-playbook --check))
+        - "The markers are C(DRY RUN) at the beginning and ending of playbook execution (when calling C(ansible-playbook --check))
         and C(CHECK MODE) as a suffix at every play and task that is run in check mode."
         type: bool
         default: no
@@ -82,4 +82,17 @@ class ModuleDocFragment(object):
         ini:
           - key: check_mode_markers
             section: defaults
+      show_task_path_on_failure:
+        name: Show file path on failed tasks
+        description:
+          When a task fails, display the path to the file containing the failed task and the line number.
+          This information is displayed automatically for every task when running with C(-vv) or greater verbosity.
+        type: bool
+        default: no
+        env:
+          - name: ANSIBLE_SHOW_TASK_PATH_ON_FAILURE
+        ini:
+          - key: show_task_path_on_failure
+            section: defaults
+        version_added: '2.11'
 '''

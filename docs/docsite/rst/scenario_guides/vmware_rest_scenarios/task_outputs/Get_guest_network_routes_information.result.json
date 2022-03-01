@@ -1,0 +1,31 @@
+{
+    "value": [
+        {
+            "gateway_address": "192.168.122.1",
+            "interface_index": 0,
+            "prefix_length": 0,
+            "network": "0.0.0.0"
+        },
+        {
+            "interface_index": 0,
+            "prefix_length": 24,
+            "network": "192.168.122.0"
+        },
+        {
+            "interface_index": 0,
+            "prefix_length": 64,
+            "network": "fe80::"
+        },
+        {
+            "interface_index": 0,
+            "prefix_length": 128,
+            "network": "fe80::b8d0:511b:897f:65a2"
+        },
+        {
+            "interface_index": 0,
+            "prefix_length": 8,
+            "network": "ff00::"
+        }
+    ],
+    "changed": false
+}

@@ -26,11 +26,10 @@ import os
 import json
 from stat import S_IRUSR, S_IWUSR
 
-import yaml
-
 from ansible import constants as C
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils.urls import open_url
 from ansible.utils.display import Display
 
@@ -51,14 +50,18 @@ class KeycloakToken(object):
 
     token_type = 'Bearer'
 
-    def __init__(self, access_token=None, auth_url=None, validate_certs=True):
+    def __init__(self, access_token=None, auth_url=None, validate_certs=True, client_id=None):
         self.access_token = access_token
         self.auth_url = auth_url
         self._token = None
         self.validate_certs = validate_certs
+        self.client_id = client_id
+        if self.client_id is None:
+            self.client_id = 'cloud-services'
 
     def _form_payload(self):
-        return 'grant_type=refresh_token&client_id=cloud-services&refresh_token=%s' % self.access_token
+        return 'grant_type=refresh_token&client_id=%s&refresh_token=%s' % (self.client_id,
+                                                                           self.access_token)
 
     def get(self):
         if self._token:
@@ -120,15 +123,19 @@ class GalaxyToken(object):
     def _read(self):
         action = 'Opened'
         if not os.path.isfile(self.b_file):
-            # token file not found, create and chomd u+rw
+            # token file not found, create and chmod u+rw
             open(self.b_file, 'w').close()
             os.chmod(self.b_file, S_IRUSR | S_IWUSR)  # owner has +rw
             action = 'Created'
 
         with open(self.b_file, 'r') as f:
-            config = yaml.safe_load(f)
+            config = yaml_load(f)
 
         display.vvv('%s %s' % (action, to_text(self.b_file)))
+
+        if config and not isinstance(config, dict):
+            display.vvv('Galaxy token file %s malformed, unable to read it' % to_text(self.b_file))
+            return {}
 
         return config or {}
 
@@ -141,7 +148,7 @@ class GalaxyToken(object):
 
     def save(self):
         with open(self.b_file, 'w') as f:
-            yaml.safe_dump(self.config, f, default_flow_style=False)
+            yaml_dump(self.config, f, default_flow_style=False)
 
     def headers(self):
         headers = {}

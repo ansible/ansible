@@ -1,0 +1,4 @@
+- name: Get VM storage policy
+  vmware.vmware_rest.vcenter_vm_storage_policy_info:
+    vm: '{{ test_vm1_info.id }}'
+  register: _result

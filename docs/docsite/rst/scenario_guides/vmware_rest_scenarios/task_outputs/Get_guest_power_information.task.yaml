@@ -1,0 +1,4 @@
+- name: Get guest power information
+  vmware.vmware_rest.vcenter_vm_power_info:
+    vm: '{{ test_vm1_info.id }}'
+  register: _result

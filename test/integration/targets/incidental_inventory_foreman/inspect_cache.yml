@@ -6,6 +6,10 @@
     foreman_stub_api_path: /api/v2
     cached_hosts_key: "http://{{ foreman_stub_host }}:{{ foreman_stub_port }}{{ foreman_stub_api_path }}/hosts"
   tasks:
+    - name: make sure jmespath is installed
+      pip:
+        name: jmespath
+
     - name: verify a cache file was created
       find:
         path:

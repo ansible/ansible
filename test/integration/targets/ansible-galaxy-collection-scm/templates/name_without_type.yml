@@ -1,0 +1,3 @@
+collections:
+  # should not work: git prefix or type is required
+  - name: file://{{ scm_path }}/amazon.aws/.git

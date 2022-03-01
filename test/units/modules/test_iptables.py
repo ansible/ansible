@@ -1,7 +1,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from units.compat.mock import patch
+from mock import patch
 from ansible.module_utils import basic
 from ansible.modules import iptables
 from units.modules.utils import AnsibleExitJson, AnsibleFailJson, ModuleTestCase, set_module_args
@@ -87,8 +87,6 @@ class TestIptables(ModuleTestCase):
                 self.assertTrue(result.exception.args[0]['changed'])
 
         self.assertEqual(run_command.call_count, 2)
-        # import pdb
-        # pdb.set_trace()
         self.assertEqual(run_command.call_args_list[0][0][0], [
             '/sbin/iptables',
             '-t',
@@ -123,8 +121,6 @@ class TestIptables(ModuleTestCase):
                 self.assertFalse(result.exception.args[0]['changed'])
 
         self.assertEqual(run_command.call_count, 1)
-        # import pdb
-        # pdb.set_trace()
         self.assertEqual(run_command.call_args_list[0][0][0], [
             '/sbin/iptables',
             '-t',
@@ -151,8 +147,6 @@ class TestIptables(ModuleTestCase):
                 self.assertTrue(result.exception.args[0]['changed'])
 
         self.assertEqual(run_command.call_count, 1)
-        # import pdb
-        # pdb.set_trace()
         self.assertEqual(run_command.call_args_list[0][0][0], [
             '/sbin/iptables',
             '-t',
@@ -177,8 +171,8 @@ class TestIptables(ModuleTestCase):
         })
 
         commands_results = [
-            (1, '', ''),
-            (0, '', '')
+            (1, '', ''),  # check_rule_present
+            (0, '', ''),  # check_chain_present
         ]
 
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
@@ -187,9 +181,7 @@ class TestIptables(ModuleTestCase):
                 iptables.main()
                 self.assertTrue(result.exception.args[0]['changed'])
 
-        self.assertEqual(run_command.call_count, 1)
-        # import pdb
-        # pdb.set_trace()
+        self.assertEqual(run_command.call_count, 2)
         self.assertEqual(run_command.call_args_list[0][0][0], [
             '/sbin/iptables',
             '-t',
@@ -215,8 +207,9 @@ class TestIptables(ModuleTestCase):
         })
 
         commands_results = [
-            (1, '', ''),
-            (0, '', '')
+            (1, '', ''),  # check_rule_present
+            (0, '', ''),  # check_chain_present
+            (0, '', ''),
         ]
 
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
@@ -225,9 +218,7 @@ class TestIptables(ModuleTestCase):
                 iptables.main()
                 self.assertTrue(result.exception.args[0]['changed'])
 
-        self.assertEqual(run_command.call_count, 2)
-        # import pdb
-        # pdb.set_trace()
+        self.assertEqual(run_command.call_count, 3)
         self.assertEqual(run_command.call_args_list[0][0][0], [
             '/sbin/iptables',
             '-t',
@@ -241,7 +232,7 @@ class TestIptables(ModuleTestCase):
             '-j',
             'ACCEPT'
         ])
-        self.assertEqual(run_command.call_args_list[1][0][0], [
+        self.assertEqual(run_command.call_args_list[2][0][0], [
             '/sbin/iptables',
             '-t',
             'filter',
@@ -271,7 +262,8 @@ class TestIptables(ModuleTestCase):
         })
 
         commands_results = [
-            (1, '', ''),
+            (1, '', ''),  # check_rule_present
+            (0, '', ''),  # check_chain_present
         ]
 
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
@@ -280,7 +272,7 @@ class TestIptables(ModuleTestCase):
                 iptables.main()
                 self.assertTrue(result.exception.args[0]['changed'])
 
-        self.assertEqual(run_command.call_count, 1)
+        self.assertEqual(run_command.call_count, 2)
         self.assertEqual(run_command.call_args_list[0][0][0], [
             '/sbin/iptables',
             '-t',
@@ -318,8 +310,9 @@ class TestIptables(ModuleTestCase):
         })
 
         commands_results = [
-            (1, '', ''),
-            (0, '', '')
+            (1, '', ''),  # check_rule_present
+            (0, '', ''),  # check_chain_present
+            (0, '', ''),
         ]
 
         with patch.object(basic.AnsibleModule, 'run_command') as run_command:
@@ -328,7 +321,7 @@ class TestIptables(ModuleTestCase):
                 iptables.main()
                 self.assertTrue(result.exception.args[0]['changed'])
 
-        self.assertEqual(run_command.call_count, 2)
+        self.assertEqual(run_command.call_count, 3)
         self.assertEqual(run_command.call_args_list[0][0][0], [
             '/sbin/iptables',
             '-t',
@@ -350,7 +343,7 @@ class TestIptables(ModuleTestCase):
             '--to-ports',
             '8600'
         ])
-        self.assertEqual(run_command.call_args_list[1][0][0], [
+        self.assertEqual(run_command.call_args_list[2][0][0], [
             '/sbin/iptables',
             '-t',
             'nat',
@@ -876,3 +869,324 @@ class TestIptables(ModuleTestCase):
             '-j',
             'ACCEPT'
         ])
+
+    def test_comment_position_at_end(self):
+        """Test comment position to make sure it is at the end of command"""
+        set_module_args({
+            'chain': 'INPUT',
+            'jump': 'ACCEPT',
+            'action': 'insert',
+            'ctstate': ['NEW'],
+            'comment': 'this is a comment',
+            '_ansible_check_mode': True,
+        })
+
+        commands_results = [
+            (0, '', ''),
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 1)
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/sbin/iptables',
+            '-t',
+            'filter',
+            '-C',
+            'INPUT',
+            '-j',
+            'ACCEPT',
+            '-m',
+            'conntrack',
+            '--ctstate',
+            'NEW',
+            '-m',
+            'comment',
+            '--comment',
+            'this is a comment'
+        ])
+        self.assertEqual(run_command.call_args[0][0][14], 'this is a comment')
+
+    def test_destination_ports(self):
+        """ Test multiport module usage with multiple ports """
+        set_module_args({
+            'chain': 'INPUT',
+            'protocol': 'tcp',
+            'in_interface': 'eth0',
+            'source': '192.168.0.1/32',
+            'destination_ports': ['80', '443', '8081:8085'],
+            'jump': 'ACCEPT',
+            'comment': 'this is a comment',
+        })
+        commands_results = [
+            (0, '', ''),
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 1)
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/sbin/iptables',
+            '-t', 'filter',
+            '-C', 'INPUT',
+            '-p', 'tcp',
+            '-s', '192.168.0.1/32',
+            '-j', 'ACCEPT',
+            '-m', 'multiport',
+            '--dports', '80,443,8081:8085',
+            '-i', 'eth0',
+            '-m', 'comment',
+            '--comment', 'this is a comment'
+        ])
+
+    def test_match_set(self):
+        """ Test match_set together with match_set_flags """
+        set_module_args({
+            'chain': 'INPUT',
+            'protocol': 'tcp',
+            'match_set': 'admin_hosts',
+            'match_set_flags': 'src',
+            'destination_port': '22',
+            'jump': 'ACCEPT',
+            'comment': 'this is a comment',
+        })
+        commands_results = [
+            (0, '', ''),
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 1)
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/sbin/iptables',
+            '-t', 'filter',
+            '-C', 'INPUT',
+            '-p', 'tcp',
+            '-j', 'ACCEPT',
+            '--destination-port', '22',
+            '-m', 'set',
+            '--match-set', 'admin_hosts', 'src',
+            '-m', 'comment',
+            '--comment', 'this is a comment'
+        ])
+
+        set_module_args({
+            'chain': 'INPUT',
+            'protocol': 'udp',
+            'match_set': 'banned_hosts',
+            'match_set_flags': 'src,dst',
+            'jump': 'REJECT',
+        })
+        commands_results = [
+            (0, '', ''),
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 1)
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/sbin/iptables',
+            '-t', 'filter',
+            '-C', 'INPUT',
+            '-p', 'udp',
+            '-j', 'REJECT',
+            '-m', 'set',
+            '--match-set', 'banned_hosts', 'src,dst'
+        ])
+
+    def test_chain_creation(self):
+        """Test chain creation when absent"""
+        set_module_args({
+            'chain': 'FOOBAR',
+            'state': 'present',
+            'chain_management': True,
+        })
+
+        commands_results = [
+            (1, '', ''),  # check_rule_present
+            (1, '', ''),  # check_chain_present
+            (0, '', ''),  # create_chain
+            (0, '', ''),  # append_rule
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 4)
+
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/sbin/iptables',
+            '-t', 'filter',
+            '-C', 'FOOBAR',
+        ])
+
+        self.assertEqual(run_command.call_args_list[1][0][0], [
+            '/sbin/iptables',
+            '-t', 'filter',
+            '-L', 'FOOBAR',
+        ])
+
+        self.assertEqual(run_command.call_args_list[2][0][0], [
+            '/sbin/iptables',
+            '-t', 'filter',
+            '-N', 'FOOBAR',
+        ])
+
+        self.assertEqual(run_command.call_args_list[3][0][0], [
+            '/sbin/iptables',
+            '-t', 'filter',
+            '-A', 'FOOBAR',
+        ])
+
+        commands_results = [
+            (0, '', ''),  # check_rule_present
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertFalse(result.exception.args[0]['changed'])
+
+    def test_chain_creation_check_mode(self):
+        """Test chain creation when absent"""
+        set_module_args({
+            'chain': 'FOOBAR',
+            'state': 'present',
+            'chain_management': True,
+            '_ansible_check_mode': True,
+        })
+
+        commands_results = [
+            (1, '', ''),  # check_rule_present
+            (1, '', ''),  # check_chain_present
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 2)
+
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/sbin/iptables',
+            '-t', 'filter',
+            '-C', 'FOOBAR',
+        ])
+
+        self.assertEqual(run_command.call_args_list[1][0][0], [
+            '/sbin/iptables',
+            '-t', 'filter',
+            '-L', 'FOOBAR',
+        ])
+
+        commands_results = [
+            (0, '', ''),  # check_rule_present
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertFalse(result.exception.args[0]['changed'])
+
+    def test_chain_deletion(self):
+        """Test chain deletion when present"""
+        set_module_args({
+            'chain': 'FOOBAR',
+            'state': 'absent',
+            'chain_management': True,
+        })
+
+        commands_results = [
+            (0, '', ''),  # check_chain_present
+            (0, '', ''),  # delete_chain
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 2)
+
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/sbin/iptables',
+            '-t', 'filter',
+            '-L', 'FOOBAR',
+        ])
+
+        self.assertEqual(run_command.call_args_list[1][0][0], [
+            '/sbin/iptables',
+            '-t', 'filter',
+            '-X', 'FOOBAR',
+        ])
+
+        commands_results = [
+            (1, '', ''),  # check_rule_present
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertFalse(result.exception.args[0]['changed'])
+
+    def test_chain_deletion_check_mode(self):
+        """Test chain deletion when present"""
+        set_module_args({
+            'chain': 'FOOBAR',
+            'state': 'absent',
+            'chain_management': True,
+            '_ansible_check_mode': True,
+        })
+
+        commands_results = [
+            (0, '', ''),  # check_chain_present
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 1)
+
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/sbin/iptables',
+            '-t', 'filter',
+            '-L', 'FOOBAR',
+        ])
+
+        commands_results = [
+            (1, '', ''),  # check_rule_present
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertFalse(result.exception.args[0]['changed'])

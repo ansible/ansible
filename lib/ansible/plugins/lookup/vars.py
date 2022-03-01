@@ -4,8 +4,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: vars
-    author: Ansible Core
+    name: vars
+    author: Ansible Core Team
     version_added: "2.5"
     short_description: Lookup templated value of variables
     description:
@@ -22,29 +22,29 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: Show value of 'variablename'
-  debug: msg="{{ lookup('vars', 'variabl' + myvar) }}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.vars', 'variabl' + myvar) }}"
   vars:
     variablename: hello
     myvar: ename
 
 - name: Show default empty since i dont have 'variablnotename'
-  debug: msg="{{ lookup('vars', 'variabl' + myvar, default='')}}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.vars', 'variabl' + myvar, default='')}}"
   vars:
     variablename: hello
     myvar: notename
 
 - name: Produce an error since i dont have 'variablnotename'
-  debug: msg="{{ lookup('vars', 'variabl' + myvar)}}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.vars', 'variabl' + myvar)}}"
   ignore_errors: True
   vars:
     variablename: hello
     myvar: notename
 
 - name: find several related variables
-  debug: msg="{{ lookup('vars', 'ansible_play_hosts', 'ansible_play_batch', 'ansible_play_hosts_all') }}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.vars', 'ansible_play_hosts', 'ansible_play_batch', 'ansible_play_hosts_all') }}"
 
 - name: Access nested variables
-  debug: msg="{{ lookup('vars', 'variabl' + myvar).sub_var }}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.vars', 'variabl' + myvar).sub_var }}"
   ignore_errors: True
   vars:
     variablename:
@@ -52,7 +52,7 @@ EXAMPLES = """
     myvar: ename
 
 - name: alternate way to find some 'prefixed vars' in loop
-  debug: msg="{{ lookup('vars', 'ansible_play_' + item) }}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.vars', 'ansible_play_' + item) }}"
   loop:
     - hosts
     - batch
@@ -63,6 +63,8 @@ RETURN = """
 _value:
   description:
     - value of the variables requested.
+  type: list
+  elements: raw
 """
 
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
@@ -77,7 +79,7 @@ class LookupModule(LookupBase):
             self._templar.available_variables = variables
         myvars = getattr(self._templar, '_available_variables', {})
 
-        self.set_options(direct=kwargs)
+        self.set_options(var_options=variables, direct=kwargs)
         default = self.get_option('default')
 
         ret = []

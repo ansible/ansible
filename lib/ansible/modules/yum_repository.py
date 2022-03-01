@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # encoding: utf-8
 
 # (c) 2015-2016, Jiri Tyr <jiri.tyr@gmail.com>
@@ -17,7 +16,7 @@ version_added: '2.1'
 short_description: Add or remove YUM repositories
 description:
   - Add or remove YUM repositories in RPM-based Linux distributions.
-  - If you wish to update an existing repository definition use M(ini_file) instead.
+  - If you wish to update an existing repository definition use M(community.general.ini_file) instead.
 
 options:
   async:
@@ -34,6 +33,7 @@ options:
         throttling will be disabled. If I(throttle) is expressed as a data rate
         (bytes/sec) then this option is ignored. Default is C(0) (no bandwidth
         throttling).
+    type: str
     default: 0
   baseurl:
     description:
@@ -42,10 +42,13 @@ options:
       - It can also be a list of multiple URLs.
       - This, the I(metalink) or I(mirrorlist) parameters are required if I(state) is set to
         C(present).
+    type: list
+    elements: str
   cost:
     description:
       - Relative cost of accessing this repository. Useful for weighing one
         repo's packages as greater/less than any other.
+    type: str
     default: 1000
   deltarpm_metadata_percentage:
     description:
@@ -54,34 +57,39 @@ options:
         can give values over C(100), so C(200) means that the metadata is
         required to be half the size of the packages. Use C(0) to turn off
         this check, and always download metadata.
+    type: str
     default: 100
   deltarpm_percentage:
     description:
       - When the relative size of delta vs pkg is larger than this, delta is
         not used. Use C(0) to turn off delta rpm processing. Local repositories
         (with file:// I(baseurl)) have delta rpms turned off by default.
+    type: str
     default: 75
   description:
     description:
       - A human readable string describing the repository. This option corresponds to the "name" property in the repo file.
       - This parameter is only required if I(state) is set to C(present).
+    type: str
   enabled:
     description:
       - This tells yum whether or not use this repository.
+      - Yum default value is C(true).
     type: bool
-    default: 'yes'
   enablegroups:
     description:
       - Determines whether yum will allow the use of package groups for this
         repository.
+      - Yum default value is C(true).
     type: bool
-    default: 'yes'
   exclude:
     description:
       - List of packages to exclude from updates or installs. This should be a
         space separated list. Shell globs using wildcards (eg. C(*) and C(?))
         are allowed.
       - The list can also be a regular YAML array.
+    type: list
+    elements: str
   failovermethod:
     choices: [roundrobin, priority]
     default: roundrobin
@@ -91,13 +99,16 @@ options:
         contacting the host.
       - C(priority) starts from the first I(baseurl) listed and reads through
         them sequentially.
+    type: str
   file:
     description:
       - File name without the C(.repo) extension to save the repo in. Defaults
         to the value of I(name).
+    type: str
   gpgcakey:
     description:
       - A URL pointing to the ASCII-armored CA key file for the repository.
+    type: str
   gpgcheck:
     description:
       - Tells yum whether or not it should perform a GPG signature check on
@@ -109,6 +120,8 @@ options:
     description:
       - A URL pointing to the ASCII-armored GPG key file for the repository.
       - It can also be a list of multiple URLs.
+    type: list
+    elements: str
   module_hotfixes:
     description:
       - Disable module RPM filtering and make all RPMs from the repository
@@ -124,6 +137,7 @@ options:
          not repository metadata downloads).
       - C(none) means that no HTTP downloads should be cached.
     choices: [all, packages, none]
+    type: str
     default: all
   include:
     description:
@@ -131,6 +145,7 @@ options:
         supported. Configuration file will be inserted at the position of the
         I(include=) line. Included files may contain further include lines.
         Yum will abort with an error if an inclusion loop is detected.
+    type: str
   includepkgs:
     description:
       - List of packages you want to only use from a repository. This should be
@@ -138,12 +153,15 @@ options:
         are allowed. Substitution variables (e.g. C($releasever)) are honored
         here.
       - The list can also be a regular YAML array.
+    type: list
+    elements: str
   ip_resolve:
     description:
       - Determines how yum resolves host names.
       - C(4) or C(IPv4) - resolve to IPv4 addresses only.
       - C(6) or C(IPv6) - resolve to IPv6 addresses only.
     choices: [4, 6, IPv4, IPv6, whatever]
+    type: str
     default: whatever
   keepalive:
     description:
@@ -157,11 +175,13 @@ options:
       - Either C(1) or C(0). Determines whether or not yum keeps the cache of
         headers and packages after successful installation.
     choices: ['0', '1']
+    type: str
     default: '1'
   metadata_expire:
     description:
       - Time (in seconds) after which the metadata will expire.
       - Default value is 6 hours.
+    type: str
     default: 21600
   metadata_expire_filter:
     description:
@@ -182,6 +202,7 @@ options:
         I(yum check-update).
       - Note that this option does not override "yum clean expire-cache".
     choices: [never, 'read-only:past', 'read-only:present', 'read-only:future']
+    type: str
     default: 'read-only:present'
   metalink:
     description:
@@ -190,31 +211,37 @@ options:
         mirrors for the repomd.xml file to a I(baseurl).
       - This, the I(baseurl) or I(mirrorlist) parameters are required if I(state) is set to
         C(present).
+    type: str
   mirrorlist:
     description:
       - Specifies a URL to a file containing a list of baseurls.
       - This, the I(baseurl) or I(metalink) parameters are required if I(state) is set to
         C(present).
+    type: str
   mirrorlist_expire:
     description:
       - Time (in seconds) after which the mirrorlist locally cached will
         expire.
       - Default value is 6 hours.
+    type: str
     default: 21600
   name:
     description:
       - Unique repository ID. This option builds the section name of the repository in the repo file.
       - This parameter is only required if I(state) is set to C(present) or
         C(absent).
+    type: str
     required: true
   password:
     description:
       - Password to use with the username for basic authentication.
+    type: str
   priority:
     description:
       - Enforce ordered protection of repositories. The value is an integer
         from 1 to 99.
       - This option only works if the YUM Priorities plugin is installed.
+    type: str
     default: 99
   protect:
     description:
@@ -225,12 +252,15 @@ options:
     description:
       - URL to the proxy server that yum should use. Set to C(_none_) to
         disable the global proxy setting.
+    type: str
   proxy_password:
     description:
       - Password for this proxy.
+    type: str
   proxy_username:
     description:
       - Username to use for proxy.
+    type: str
   repo_gpgcheck:
     description:
       - This tells yum whether or not it should perform a GPG signature check
@@ -240,11 +270,13 @@ options:
   reposdir:
     description:
       - Directory where the C(.repo) files will be stored.
+    type: path
     default: /etc/yum.repos.d
   retries:
     description:
       - Set the number of times any attempt to retrieve a file should retry
         before returning an error. Setting this to C(0) makes yum try forever.
+    type: str
     default: 10
   s3_enabled:
     description:
@@ -273,16 +305,19 @@ options:
     description:
       - Path to the directory containing the databases of the certificate
         authorities yum should use to verify SSL certificates.
+    type: str
     aliases: [ ca_cert ]
   sslclientcert:
     description:
       - Path to the SSL client certificate yum should use to connect to
         repos/remote sites.
+    type: str
     aliases: [ client_cert ]
   sslclientkey:
     description:
       - Path to the SSL client key yum should use to connect to repos/remote
         sites.
+    type: str
     aliases: [ client_key ]
   sslverify:
     description:
@@ -294,29 +329,41 @@ options:
     description:
       - State of the repo file.
     choices: [absent, present]
+    type: str
     default: present
   throttle:
     description:
       - Enable bandwidth throttling for downloads.
       - This option can be expressed as a absolute data rate in bytes/sec. An
         SI prefix (k, M or G) may be appended to the bandwidth value.
+    type: str
   timeout:
     description:
       - Number of seconds to wait for a connection before timing out.
+    type: str
     default: 30
   ui_repoid_vars:
     description:
       - When a repository id is displayed, append these yum variables to the
         string if they are used in the I(baseurl)/etc. Variables are appended
         in the order listed (and found).
+    type: str
     default: releasever basearch
   username:
     description:
       - Username to use for basic authentication to a repo or really any url.
+    type: str
 
 extends_documentation_fragment:
-  - files
-
+    - action_common_attributes
+    - files
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        support: full
+    platform:
+        platforms: rhel
 notes:
   - All comments will be removed if modifying an existing repo file.
   - Section order is preserved in an existing repo file.
@@ -331,13 +378,13 @@ notes:
 
 EXAMPLES = '''
 - name: Add repository
-  yum_repository:
+  ansible.builtin.yum_repository:
     name: epel
     description: EPEL YUM repo
     baseurl: https://download.fedoraproject.org/pub/epel/$releasever/$basearch/
 
 - name: Add multiple repositories into the same file (1/2)
-  yum_repository:
+  ansible.builtin.yum_repository:
     name: epel
     description: EPEL YUM repo
     file: external_repos
@@ -345,7 +392,7 @@ EXAMPLES = '''
     gpgcheck: no
 
 - name: Add multiple repositories into the same file (2/2)
-  yum_repository:
+  ansible.builtin.yum_repository:
     name: rpmforge
     description: RPMforge YUM repo
     file: external_repos
@@ -355,19 +402,19 @@ EXAMPLES = '''
 
 # Handler showing how to clean yum metadata cache
 - name: yum-clean-metadata
-  command: yum clean metadata
+  ansible.builtin.command: yum clean metadata
   args:
     warn: no
 
 # Example removing a repository and cleaning up metadata cache
 - name: Remove repository (and clean up left-over metadata)
-  yum_repository:
+  ansible.builtin.yum_repository:
     name: epel
     state: absent
   notify: yum-clean-metadata
 
 - name: Remove repository from a specific repo file
-  yum_repository:
+  ansible.builtin.yum_repository:
     name: epel
     file: external_repos
     state: absent
@@ -548,23 +595,23 @@ def main():
     # Module settings
     argument_spec = dict(
         bandwidth=dict(),
-        baseurl=dict(type='list'),
+        baseurl=dict(type='list', elements='str'),
         cost=dict(),
         deltarpm_metadata_percentage=dict(),
         deltarpm_percentage=dict(),
         description=dict(),
         enabled=dict(type='bool'),
         enablegroups=dict(type='bool'),
-        exclude=dict(type='list'),
+        exclude=dict(type='list', elements='str'),
         failovermethod=dict(choices=['roundrobin', 'priority']),
         file=dict(),
-        gpgcakey=dict(),
+        gpgcakey=dict(no_log=False),
         gpgcheck=dict(type='bool'),
-        gpgkey=dict(type='list'),
+        gpgkey=dict(type='list', elements='str', no_log=False),
         module_hotfixes=dict(type='bool'),
         http_caching=dict(choices=['all', 'packages', 'none']),
         include=dict(),
-        includepkgs=dict(type='list'),
+        includepkgs=dict(type='list', elements='str'),
         ip_resolve=dict(choices=['4', '6', 'IPv4', 'IPv6', 'whatever']),
         keepalive=dict(type='bool'),
         keepcache=dict(choices=['0', '1']),
@@ -594,7 +641,7 @@ def main():
         sslcacert=dict(aliases=['ca_cert']),
         ssl_check_cert_permissions=dict(type='bool'),
         sslclientcert=dict(aliases=['client_cert']),
-        sslclientkey=dict(aliases=['client_key']),
+        sslclientkey=dict(aliases=['client_key'], no_log=False),
         sslverify=dict(type='bool', aliases=['validate_certs']),
         state=dict(choices=['present', 'absent'], default='present'),
         throttle=dict(),
@@ -603,7 +650,7 @@ def main():
         username=dict(),
     )
 
-    argument_spec['async'] = dict(type='bool')
+    argument_spec['async'] = dict(type='bool', default=True)
 
     module = AnsibleModule(
         argument_spec=argument_spec,

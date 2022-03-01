@@ -1,0 +1,5 @@
+- hosts: host1,host2
+  gather_facts: no
+  roles:
+    - role-69848-1
+    - role-69848-2

@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Provisioning of RHEL instances now includes installation of pinned versions of ``packaging`` and ``pyparsing`` to match the downstream vendored versions.

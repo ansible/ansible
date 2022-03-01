@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
@@ -16,7 +15,15 @@ short_description:  Manage services
 description:
     - Controls services on remote hosts. Supported init systems include BSD init,
       OpenRC, SysV, Solaris SMF, systemd, upstart.
-    - For Windows targets, use the M(win_service) module instead.
+    - This module acts as a proxy to the underlying service manager module. While all arguments will be passed to the
+      underlying module, not all modules support the same arguments. This documentation only covers the minimum intersection
+      of module arguments that all service manager modules support.
+    - This module is a proxy for multiple more specific service manager modules
+      (such as M(ansible.builtin.systemd) and M(ansible.builtin.sysvinit)).
+      This allows management of a heterogeneous environment of machines without creating a specific task for
+      each service manager. The module to be executed is determined by the I(use) option, which defaults to the
+      service manager discovered by M(ansible.builtin.setup).  If C(setup) was not yet run, this module may run it.
+    - For Windows targets, use the M(ansible.windows.win_service) module instead.
 options:
     name:
         description:
@@ -49,6 +56,7 @@ options:
           substring to look for as would be found in the output of the I(ps)
           command as a stand-in for a status result.
         - If the string is found, the service will be assumed to be started.
+        - While using remote hosts with systemd this setting will be ignored.
         type: str
         version_added: "0.7"
     enabled:
@@ -60,11 +68,13 @@ options:
         description:
         - For OpenRC init scripts (e.g. Gentoo) only.
         - The runlevel that this service belongs to.
+        - While using remote hosts with systemd this setting will be ignored.
         type: str
         default: default
     arguments:
         description:
         - Additional arguments provided on the command line.
+        - While using remote hosts with systemd this setting will be ignored.
         type: str
         aliases: [ args ]
     use:
@@ -74,10 +84,29 @@ options:
         type: str
         default: auto
         version_added: 2.2
+extends_documentation_fragment:
+  -  action_common_attributes
+  -  action_common_attributes.flow
+attributes:
+    action:
+        support: full
+    async:
+        support: full
+    bypass_host_loop:
+        support: none
+    check_mode:
+        details: support depends on the underlying plugin invoked
+        support: N/A
+    diff_mode:
+        details: support depends on the underlying plugin invoked
+        support: N/A
+    platform:
+        details: The support depends on the availability for the specific plugin for each platform and if fact gathering is able to detect it
+        platforms: all
 notes:
     - For AIX, group subsystem names can be used.
 seealso:
-- module: win_service
+    - module: ansible.windows.win_service
 author:
     - Ansible Core Team
     - Michael DeHaan
@@ -85,42 +114,44 @@ author:
 
 EXAMPLES = r'''
 - name: Start service httpd, if not started
-  service:
+  ansible.builtin.service:
     name: httpd
     state: started
 
 - name: Stop service httpd, if started
-  service:
+  ansible.builtin.service:
     name: httpd
     state: stopped
 
 - name: Restart service httpd, in all cases
-  service:
+  ansible.builtin.service:
     name: httpd
     state: restarted
 
 - name: Reload service httpd, in all cases
-  service:
+  ansible.builtin.service:
     name: httpd
     state: reloaded
 
 - name: Enable service httpd, and not touch the state
-  service:
+  ansible.builtin.service:
     name: httpd
     enabled: yes
 
 - name: Start service foo, based on running process /usr/bin/foo
-  service:
+  ansible.builtin.service:
     name: foo
     pattern: /usr/bin/foo
     state: started
 
 - name: Restart network service for interface eth0
-  service:
+  ansible.builtin.service:
     name: network
     state: restarted
     args: eth0
 '''
+
+RETURN = r'''#'''
 
 import glob
 import json
@@ -129,7 +160,6 @@ import platform
 import re
 import select
 import shlex
-import string
 import subprocess
 import tempfile
 import time
@@ -139,10 +169,11 @@ import time
 # that don't belong on production boxes.  Since our Solaris code doesn't
 # depend on LooseVersion, do not import it on Solaris.
 if platform.system() != 'SunOS':
-    from distutils.version import LooseVersion
+    from ansible.module_utils.compat.version import LooseVersion
 
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.sys_info import get_platform_subclass
 from ansible.module_utils.service import fail_if_missing
 from ansible.module_utils.six import PY2, b
@@ -211,11 +242,13 @@ class Service(object):
 
     def execute_command(self, cmd, daemonize=False):
 
+        locale = get_best_parsable_locale(self.module)
+        lang_env = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
+
         # Most things don't need to be daemonized
         if not daemonize:
             # chkconfig localizes messages and we're screen scraping so make
             # sure we use the C locale
-            lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
             return self.module.run_command(cmd, environ_update=lang_env)
 
         # This is complex because daemonization is hard for people.
@@ -260,7 +293,6 @@ class Service(object):
 
             # chkconfig localizes messages and we're screen scraping so make
             # sure we use the C locale
-            lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
             p = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=lang_env, preexec_fn=lambda: os.close(pipe[1]))
             stdout = b("")
             stderr = b("")
@@ -370,30 +402,27 @@ class Service(object):
 
         self.changed = None
         entry = '%s="%s"\n' % (self.rcconf_key, self.rcconf_value)
-        RCFILE = open(self.rcconf_file, "r")
-        new_rc_conf = []
+        with open(self.rcconf_file, "r") as RCFILE:
+            new_rc_conf = []
 
-        # Build a list containing the possibly modified file.
-        for rcline in RCFILE:
-            # Parse line removing whitespaces, quotes, etc.
-            rcarray = shlex.split(rcline, comments=True)
-            if len(rcarray) >= 1 and '=' in rcarray[0]:
-                (key, value) = rcarray[0].split("=", 1)
-                if key == self.rcconf_key:
-                    if value.upper() == self.rcconf_value:
-                        # Since the proper entry already exists we can stop iterating.
-                        self.changed = False
-                        break
-                    else:
-                        # We found the key but the value is wrong, replace with new entry.
-                        rcline = entry
-                        self.changed = True
+            # Build a list containing the possibly modified file.
+            for rcline in RCFILE:
+                # Parse line removing whitespaces, quotes, etc.
+                rcarray = shlex.split(rcline, comments=True)
+                if len(rcarray) >= 1 and '=' in rcarray[0]:
+                    (key, value) = rcarray[0].split("=", 1)
+                    if key == self.rcconf_key:
+                        if value.upper() == self.rcconf_value:
+                            # Since the proper entry already exists we can stop iterating.
+                            self.changed = False
+                            break
+                        else:
+                            # We found the key but the value is wrong, replace with new entry.
+                            rcline = entry
+                            self.changed = True
 
-            # Add line to the list.
-            new_rc_conf.append(rcline.strip() + '\n')
-
-        # We are done with reading the current rc.conf, close it.
-        RCFILE.close()
+                # Add line to the list.
+                new_rc_conf.append(rcline.strip() + '\n')
 
         # If we did not see any trace of our entry we need to add it.
         if self.changed is None:
@@ -413,7 +442,7 @@ class Service(object):
 
             # Write out the contents of the list into our temporary file.
             for rcline in new_rc_conf:
-                os.write(TMP_RCCONF, rcline)
+                os.write(TMP_RCCONF, rcline.encode())
 
             # Close temporary file.
             os.close(TMP_RCCONF)
@@ -1110,7 +1139,7 @@ class DragonFlyBsdService(FreeBsdService):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        self.rcconf_key = "%s" % string.replace(self.name, "-", "_")
+        self.rcconf_key = "%s" % self.name.replace("-", "_")
 
         return self.service_enable_rcconf()
 
@@ -1268,7 +1297,7 @@ class NetBsdService(Service):
     """
     This is the NetBSD Service manipulation class - it uses the /etc/rc.conf
     file for controlling services started at boot, check status and perform
-    direct service manipulation. Init scripts in /etc/rcd are used for
+    direct service manipulation. Init scripts in /etc/rc.d are used for
     controlling services (start/stop) as well as for controlling the current
     state.
     """
@@ -1298,7 +1327,7 @@ class NetBsdService(Service):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        self.rcconf_key = "%s" % string.replace(self.name, "-", "_")
+        self.rcconf_key = "%s" % self.name.replace("-", "_")
 
         return self.service_enable_rcconf()
 
@@ -1350,8 +1379,8 @@ class SunOSService(Service):
         # Support for synchronous restart/refresh is only supported on
         # Oracle Solaris >= 11.2
         for line in open('/etc/release', 'r').readlines():
-            m = re.match(r'\s+Oracle Solaris (\d+\.\d+).*', line.rstrip())
-            if m and m.groups()[0] >= 11.2:
+            m = re.match(r'\s+Oracle Solaris (\d+)\.(\d+).*', line.rstrip())
+            if m and m.groups() >= ('11', '2'):
                 return True
 
     def get_service_status(self):
@@ -1562,9 +1591,11 @@ class AIX(Service):
             srccmd = self.refresh_cmd
         elif self.action == 'restart':
             self.execute_command("%s %s %s" % (self.stopsrc_cmd, srccmd_parameter, self.name))
+            if self.sleep:
+                time.sleep(self.sleep)
             srccmd = self.startsrc_cmd
 
-        if self.arguments and self.action == 'start':
+        if self.arguments and self.action in ('start', 'restart'):
             return self.execute_command("%s -a \"%s\" %s %s" % (srccmd, self.arguments, srccmd_parameter, self.name))
         else:
             return self.execute_command("%s %s %s" % (srccmd, srccmd_parameter, self.name))

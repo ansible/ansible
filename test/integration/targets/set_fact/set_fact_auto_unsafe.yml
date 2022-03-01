@@ -1,0 +1,10 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - set_fact:
+        foo: bar
+      register: baz
+
+    - assert:
+        that:
+          - baz.ansible_facts.foo|type_debug != "AnsibleUnsafeText"

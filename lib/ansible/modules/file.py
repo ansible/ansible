@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
@@ -14,12 +13,13 @@ DOCUMENTATION = r'''
 module: file
 version_added: historical
 short_description: Manage files and file properties
-extends_documentation_fragment: files
+extends_documentation_fragment: [files, action_common_attributes]
 description:
 - Set attributes of files, symlinks or directories.
 - Alternatively, remove files, symlinks or directories.
-- Many other modules support the same options as the C(file) module - including M(copy), M(template), and M(assemble).
-- For Windows targets, use the M(win_file) module instead.
+- Many other modules support the same options as the C(file) module - including M(ansible.builtin.copy),
+  M(ansible.builtin.template), and M(ansible.builtin.assemble).
+- For Windows targets, use the M(ansible.windows.win_file) module instead.
 options:
   path:
     description:
@@ -35,12 +35,12 @@ options:
       not exist as the state did not change.
     - If C(directory), all intermediate subdirectories will be created if they
       do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
-    - If C(file), without any other options this works mostly as a 'stat' and will return the current state of C(path).
-      Even with other options (i.e C(mode)), the file will be modified but will NOT be created if it does not exist;
-      see the C(touch) value or the M(copy) or M(template) module if you want that behavior.
+    - If C(file), with no other options, returns the current state of C(path).
+    - If C(file), even with other options (such as C(mode)), the file will be modified if it exists but will NOT be created if it does not exist.
+      Set to C(touch) or use the M(ansible.builtin.copy) or M(ansible.builtin.template) module if you want to create the file if it does not exist.
     - If C(hard), the hard link will be created or changed.
     - If C(link), the symbolic link will be created or changed.
-    - If C(touch) (new in 1.4), an empty file will be created if the C(path) does not
+    - If C(touch) (new in 1.4), an empty file will be created if the file does not
       exist, while an existing file or directory will receive updated file access and
       modification times (similar to the way C(touch) works from the command line).
     type: str
@@ -105,11 +105,19 @@ options:
     default: "%Y%m%d%H%M.%S"
     version_added: '2.7'
 seealso:
-- module: assemble
-- module: copy
-- module: stat
-- module: template
-- module: win_file
+- module: ansible.builtin.assemble
+- module: ansible.builtin.copy
+- module: ansible.builtin.stat
+- module: ansible.builtin.template
+- module: ansible.windows.win_file
+attributes:
+    check_mode:
+        support: full
+    diff_mode:
+        details: permissions and ownership will be shown but file contents on absent/touch will not.
+        support: partial
+    platform:
+        platforms: posix
 author:
 - Ansible Core Team
 - Michael DeHaan
@@ -117,21 +125,21 @@ author:
 
 EXAMPLES = r'''
 - name: Change file ownership, group and permissions
-  file:
+  ansible.builtin.file:
     path: /etc/foo.conf
     owner: foo
     group: foo
     mode: '0644'
 
 - name: Give insecure permissions to an existing file
-  file:
+  ansible.builtin.file:
     path: /work
     owner: root
     group: root
     mode: '1777'
 
 - name: Create a symbolic link
-  file:
+  ansible.builtin.file:
     src: /file/to/link/to
     dest: /path/to/symlink
     owner: foo
@@ -139,7 +147,7 @@ EXAMPLES = r'''
     state: link
 
 - name: Create two hard links
-  file:
+  ansible.builtin.file:
     src: '/tmp/{{ item.src }}'
     dest: '{{ item.dest }}'
     state: hard
@@ -148,19 +156,19 @@ EXAMPLES = r'''
     - { src: z, dest: k }
 
 - name: Touch a file, using symbolic modes to set the permissions (equivalent to 0644)
-  file:
+  ansible.builtin.file:
     path: /etc/foo.conf
     state: touch
     mode: u=rw,g=r,o=r
 
 - name: Touch the same file, but add/remove some permissions
-  file:
+  ansible.builtin.file:
     path: /etc/foo.conf
     state: touch
     mode: u+rw,g-wx,o-rwx
 
-- name: Touch again the same file, but dont change times this makes the task idempotent
-  file:
+- name: Touch again the same file, but do not change times this makes the task idempotent
+  ansible.builtin.file:
     path: /etc/foo.conf
     state: touch
     mode: u+rw,g-wx,o-rwx
@@ -168,26 +176,26 @@ EXAMPLES = r'''
     access_time: preserve
 
 - name: Create a directory if it does not exist
-  file:
+  ansible.builtin.file:
     path: /etc/some_directory
     state: directory
     mode: '0755'
 
 - name: Update modification and access time of given file
-  file:
+  ansible.builtin.file:
     path: /etc/some_file
     state: file
     modification_time: now
     access_time: now
 
 - name: Set access time based on seconds from epoch value
-  file:
+  ansible.builtin.file:
     path: /etc/another_file
     state: file
     access_time: '{{ "%Y%m%d%H%M.%S" | strftime(stat_var.stat.atime) }}'
 
 - name: Recursively change ownership of a directory
-  file:
+  ansible.builtin.file:
     path: /etc/foo
     state: directory
     recurse: yes
@@ -195,24 +203,24 @@ EXAMPLES = r'''
     group: foo
 
 - name: Remove file (delete file)
-  file:
+  ansible.builtin.file:
     path: /etc/foo.txt
     state: absent
 
 - name: Recursively remove directory
-  file:
+  ansible.builtin.file:
     path: /etc/foo
     state: absent
 
 '''
 RETURN = r'''
 dest:
-    description: Destination file/path, equal to the value passed to I(path)
+    description: Destination file/path, equal to the value passed to I(path).
     returned: state=touch, state=hard, state=link
     type: str
     sample: /path/to/file.txt
 path:
-    description: Destination file/path, equal to the value passed to I(path)
+    description: Destination file/path, equal to the value passed to I(path).
     returned: state=absent, state=directory, state=file
     type: str
     sample: /path/to/file.txt
@@ -223,6 +231,9 @@ import os
 import shutil
 import sys
 import time
+
+from pwd import getpwnam, getpwuid
+from grp import getgrnam, getgrgid
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
@@ -458,7 +469,8 @@ def update_timestamp_for_file(path, mtime, atime, diff=None):
 
             set_time = (atime, mtime)
 
-        os.utime(b_path, set_time)
+        if not module.check_mode:
+            os.utime(b_path, set_time)
 
         if diff is not None:
             if 'before' not in diff:
@@ -679,7 +691,7 @@ def ensure_symlink(path, src, follow, force, timestamps):
     if src is None:
         if follow:
             # use the current target of the link as the source
-            src = to_native(os.path.realpath(b_path), errors='strict')
+            src = to_native(os.readlink(b_path), errors='strict')
             b_src = to_bytes(src, errors='surrogate_or_strict')
 
     if not os.path.islink(b_path) and os.path.isdir(b_path):
@@ -859,6 +871,34 @@ def ensure_hardlink(path, src, follow, force, timestamps):
     return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
 
+def check_owner_exists(module, owner):
+    try:
+        uid = int(owner)
+        try:
+            getpwuid(uid).pw_name
+        except KeyError:
+            module.warn('failed to look up user with uid %s. Create user up to this point in real play' % uid)
+    except ValueError:
+        try:
+            getpwnam(owner).pw_uid
+        except KeyError:
+            module.warn('failed to look up user %s. Create user up to this point in real play' % owner)
+
+
+def check_group_exists(module, group):
+    try:
+        gid = int(group)
+        try:
+            getgrgid(gid).gr_name
+        except KeyError:
+            module.warn('failed to look up group with gid %s. Create group up to this point in real play' % gid)
+    except ValueError:
+        try:
+            getgrnam(group).gr_gid
+        except KeyError:
+            module.warn('failed to look up group %s. Create group up to this point in real play' % group)
+
+
 def main():
 
     global module
@@ -893,6 +933,13 @@ def main():
     follow = params['follow']
     path = params['path']
     src = params['src']
+
+    if module.check_mode and state != 'absent':
+        file_args = module.load_file_common_arguments(module.params)
+        if file_args['owner']:
+            check_owner_exists(module, file_args['owner'])
+        if file_args['group']:
+            check_group_exists(module, file_args['group'])
 
     timestamps = {}
     timestamps['modification_time'] = keep_backward_compatibility_on_timestamps(params['modification_time'], state)
