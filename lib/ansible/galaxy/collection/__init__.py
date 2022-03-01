@@ -1285,7 +1285,7 @@ def write_source_metadata(collection, b_collection_path, artifacts_manager):
 
 
 def verify_artifact_manifest(manifest_file, signatures, keyring):
-    # type: (str, str, List[str]) -> None
+    # type: (str, str, str) -> None
     failed_verify = False
     coll_path_parts = to_text(manifest_file, errors='surrogate_or_strict').split(os.path.sep)
     collection_name = '%s.%s' % (coll_path_parts[-3], coll_path_parts[-2])  # get 'ns' and 'coll' from /path/to/ns/coll/MANIFEST.json
