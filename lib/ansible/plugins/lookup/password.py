@@ -139,7 +139,7 @@ from ansible.utils.path import makedirs_safe
 
 
 DEFAULT_LENGTH = 20
-VALID_PARAMS = frozenset(('length', 'encrypt', 'chars', 'ident', 'seed'))
+VALID_PARAMS = frozenset(('length', 'encrypt', 'chars', 'ident', 'seed', 'vault'))
 
 
 def _parse_parameters(term, kwargs=None):
@@ -182,6 +182,7 @@ def _parse_parameters(term, kwargs=None):
     params['encrypt'] = params.get('encrypt', kwargs.get('encrypt', None))
     params['ident'] = params.get('ident', kwargs.get('ident', None))
     params['seed'] = params.get('seed', kwargs.get('seed', None))
+    params['vault'] = params.get('vault', kwargs.get('vault', None))
 
     params['chars'] = params.get('chars', kwargs.get('chars', None))
     if params['chars']:
@@ -286,7 +287,7 @@ def _write_password_file(b_path, content, vault):
     b_content = to_bytes(content, errors='surrogate_or_strict') + b'\n'
 
     if vault:
-        veditor = VaultEditor(VaultLib(vault))
+        veditor = VaultEditor(VaultLib())
         veditor.create_file(b_path, b_content)
     else:
         with open(b_path, 'wb') as f:
@@ -375,7 +376,7 @@ class LookupModule(LookupBase):
 
             if changed and b_path != to_bytes('/dev/null'):
                 content = _format_content(plaintext_password, salt, encrypt=encrypt, ident=ident)
-                _write_password_file(b_path, content, self.get_option('vault'))
+                _write_password_file(b_path, content, params['vault'])
 
             if first_process:
                 # let other processes continue

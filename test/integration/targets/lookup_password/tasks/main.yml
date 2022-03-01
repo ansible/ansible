@@ -147,3 +147,30 @@
         - kv[0]['msg'] == kv[1]['msg']
         - kv[0]['msg'] == kv[2]['msg']
         - kv[0]['msg'] == inl[0]['msg']
+
+- name: create a vaulted password file
+  set_fact:
+    pass_vault: "{{ lookup('password', output_dir + '/lookup/password_vault_encrypted vault=True') }}"
+
+- name: read encrypted password
+  shell: cat {{output_dir}}/lookup/password_vault_encrypted
+  register: cat_pass_vault
+
+- debug: var=cat_pass_vault.stdout
+
+- name: verify password is encrypted
+  assert:
+    that:
+        - "cat_pass_vault.stdout != pass_vault"
+        - "cat_pass_vault.stdout.startswith('$ANSIBLE_VAULT')"
+
+- name: lookup vaulted password file (again)
+  set_fact:
+    pass_vault2: "{{ lookup('password', output_dir + '/lookup/password_vault_encrypted') }}"
+
+- debug: var=pass_vault2
+
+- name: verify password (again)
+  assert:
+    that:
+        - "pass_vault == pass_vault2"
