@@ -4,3 +4,4 @@ skip/aix
 skip/osx
 skip/macos
 skip/freebsd
+skip/rhel7.9  # conflicts with OS provided pexpect, fails when run in a venv
