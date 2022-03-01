@@ -102,6 +102,7 @@ exclude_patterns = [
     'community/reporting_collections.rst',
     'community/contributing_maintained_collections.rst',
     'community/collection_development_process.rst',
+    'community/collection_test_pr_locally.rst',
     'community/maintainers.rst',
     'community/maintainers_guidelines.rst',
     'community/maintainers_workflow.rst',

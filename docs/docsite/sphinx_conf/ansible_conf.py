@@ -98,6 +98,7 @@ exclude_patterns = [
     'porting_guides/porting_guide_base_2.10.rst',
     'porting_guides/porting_guide_core_*',
     'roadmap/index.rst',
+    'community/other_tools_and_programs.rst',
 ]
 
 # The reST default role (used for this markup: `text`) to use for all
