@@ -151,9 +151,6 @@ from ansible.module_utils._text import to_native
 from ansible.module_utils.six import PY3
 from ansible.module_utils.urls import fetch_url
 
-# init module names to keep pylint happy
-apt = apt_pkg = aptsources_distro = distro = None
-
 try:
     import apt
     import apt_pkg
@@ -163,6 +160,8 @@ try:
 
     HAVE_PYTHON_APT = True
 except ImportError:
+    apt = apt_pkg = aptsources_distro = distro = None
+
     HAVE_PYTHON_APT = False
 
 DEFAULT_SOURCES_PERM = 0o0644
