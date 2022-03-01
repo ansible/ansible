@@ -57,7 +57,7 @@ options:
       - 'Correspond to --allow-releaseinfo-change'
     type: bool
     default: 'no'
-    version_added: "2.11"
+    version_added: '2.13'
   cache_valid_time:
     description:
       - Update the apt cache if it is older than the I(cache_valid_time). This option is set in seconds.
