@@ -24,7 +24,7 @@ For your control node (the machine that runs Ansible), you can use nearly any UN
 Selecting an Ansible package and version to install
 ====================================================
 
-Ansible's community packages are distributed in two ways: a minimalist language and runtime package called ``ansible-core``, and a much larger "batteries included" package called ``ansible``, which adds a community-curated selection of :ref:`Ansible Collections <_collections>` for automating a wide variety of devices. Choose the package that fits your needs; the following instructions will refer to ``ansible``, but ``ansible-core`` can be substituted if you prefer to start with a more minimal package and install only the Ansible Collections you require.
+Ansible's community packages are distributed in two ways: a minimalist language and runtime package called ``ansible-core``, and a much larger "batteries included" package called ``ansible``, which adds a community-curated selection of :ref:`Ansible Collections <collections>` for automating a wide variety of devices. Choose the package that fits your needs; the following instructions will refer to ``ansible``, but ``ansible-core`` can be substituted if you prefer to start with a more minimal package and install only the Ansible Collections you require.
 
 
 Installing and upgrading Ansible
@@ -51,7 +51,7 @@ If all is well, you should see something like the following:
     $ python3 -m pip -V
     pip 21.0.1 from /usr/lib/python3.9/site-packages/pip (python 3.9)
 
-If so, ``pip`` is available, and you can move on to the :ref:`next step <_pip_install>`.
+If so, ``pip`` is available, and you can move on to the :ref:`next step <pip_install>`.
 
 If you see an error like ``No module named pip``, you'll need to install ``pip`` under your chosen Python interpreter before proceeding. This may mean installing an additional OS package (for example, ``python3-pip``), or installing the latest ``pip`` directly from the Python Packaging Authority by running the following:
 
