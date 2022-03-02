@@ -1,0 +1,2 @@
+bugfixes:
+  - first_found - fix to allow for spaces in file names (https://github.com/ansible/ansible/issues/77136)
