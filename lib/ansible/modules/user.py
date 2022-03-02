@@ -499,7 +499,7 @@ class User(object):
     platform = 'Generic'
     distribution = None  # type: str | None
     PASSWORDFILE = '/etc/passwd'
-    SHADOWFILE = '/etc/shadow'
+    SHADOWFILE = '/etc/shadow'  # type: str | None
     SHADOWFILE_EXPIRE_INDEX = 7
     LOGIN_DEFS = '/etc/login.defs'
     DATE_FORMAT = '%Y-%m-%d'
