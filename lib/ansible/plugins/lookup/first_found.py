@@ -134,6 +134,7 @@ RETURN = """
     elements: path
 """
 import os
+import re
 
 from jinja2.exceptions import UndefinedError
 
@@ -144,18 +145,13 @@ from ansible.plugins.lookup import LookupBase
 
 
 def _split_on(terms, spliters=','):
-
-    # TODO: fix as it does not allow spaces in names
     termlist = []
     if isinstance(terms, string_types):
-        for spliter in spliters:
-            terms = terms.replace(spliter, ' ')
-        termlist = terms.split(' ')
+        termlist = re.split(r'[%s]' % ''.join(map(re.escape, spliters)), terms)
     else:
         # added since options will already listify
         for t in terms:
             termlist.extend(_split_on(t, spliters))
-
     return termlist
 
 

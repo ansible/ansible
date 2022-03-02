@@ -84,3 +84,13 @@
   assert:
     that:
       - "hatethisformat == '/etc/hosts'"
+
+- name: test spaces in names
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+      - "{{ role_path + '/files/vars file spaces.yml' }}"
+
+- assert:
+    that:
+      - foo is defined
