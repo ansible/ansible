@@ -603,7 +603,7 @@ def main():
                         matched = False
                         while datetime.datetime.utcnow() < end:
                             max_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
-                            (readable, w, e) = select.select([s], [], [], max_timeout)
+                            readable = select.select([s], [], [], max_timeout)[0]
                             if not readable:
                                 # No new data.  Probably means our timeout
                                 # expired
