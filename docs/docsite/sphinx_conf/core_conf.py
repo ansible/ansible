@@ -265,7 +265,7 @@ htmlhelp_basename = 'Poseidodoc'
 # then no maintenance is needed when we branch a new stable_x.x
 #notfound_default_version = "latest"
 # makes default setting explicit:
-notfound__urls_prefix = "/ansible-core/devel/"
+notfound_urls_prefix = "/ansible-core/devel/"
 
 # Options for LaTeX output
 # ------------------------
