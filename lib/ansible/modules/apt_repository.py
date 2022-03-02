@@ -311,9 +311,9 @@ class SourcesList(object):
                 d, fn = os.path.split(filename)
                 try:
                     os.makedirs(d)
-                except OSError as err:
+                except OSError as ex:
                     if not os.path.isdir(d):
-                        self.module.fail_json("Failed to create directory %s: %s" % (d, to_native(err)))
+                        self.module.fail_json("Failed to create directory %s: %s" % (d, to_native(ex)))
                 fd, tmp_path = tempfile.mkstemp(prefix=".%s-" % fn, dir=d)
 
                 f = os.fdopen(fd, 'w')
@@ -330,8 +330,8 @@ class SourcesList(object):
 
                     try:
                         f.write(line)
-                    except IOError as err:
-                        self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, to_native(err)))
+                    except IOError as ex:
+                        self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, to_native(ex)))
                 self.module.atomic_move(tmp_path, filename)
 
                 # allow the user to override the default mode
@@ -613,8 +613,8 @@ def main():
             sourceslist.add_source(repo)
         elif state == 'absent':
             sourceslist.remove_source(repo)
-    except InvalidSource as err:
-        module.fail_json(msg='Invalid repository string: %s' % to_native(err))
+    except InvalidSource as ex:
+        module.fail_json(msg='Invalid repository string: %s' % to_native(ex))
 
     sources_after = sourceslist.dump()
     changed = sources_before != sources_after
@@ -655,9 +655,9 @@ def main():
                     revert_sources_list(sources_before, sources_after, sourceslist_before)
                     module.fail_json(msg='Failed to update apt cache: %s' % (err if err else 'unknown reason'))
 
-        except (OSError, IOError) as err:
+        except (OSError, IOError) as ex:
             revert_sources_list(sources_before, sources_after, sourceslist_before)
-            module.fail_json(msg=to_native(err))
+            module.fail_json(msg=to_native(ex))
 
     module.exit_json(changed=changed, repo=repo, state=state, diff=diff)
 
