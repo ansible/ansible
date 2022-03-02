@@ -105,90 +105,6 @@ STRATS = {
 }
 
 
-class UnimplementedStrategy(object):
-    def __init__(self, module):
-        self.module = module
-
-    def update_current_and_permanent_hostname(self):
-        self.unimplemented_error()
-
-    def update_current_hostname(self):
-        self.unimplemented_error()
-
-    def update_permanent_hostname(self):
-        self.unimplemented_error()
-
-    def get_current_hostname(self):
-        self.unimplemented_error()
-
-    def set_current_hostname(self, name):
-        self.unimplemented_error()
-
-    def get_permanent_hostname(self):
-        self.unimplemented_error()
-
-    def set_permanent_hostname(self, name):
-        self.unimplemented_error()
-
-    def unimplemented_error(self):
-        system = platform.system()
-        distribution = get_distribution()
-        if distribution is not None:
-            msg_platform = '%s (%s)' % (system, distribution)
-        else:
-            msg_platform = system
-        self.module.fail_json(
-            msg='hostname module cannot be used on platform %s' % msg_platform)
-
-
-class Hostname(object):
-    """
-    This is a generic Hostname manipulation class that is subclassed
-    based on platform.
-
-    A subclass may wish to set different strategy instance to self.strategy.
-
-    All subclasses MUST define platform and distribution (which may be None).
-    """
-
-    platform = 'Generic'
-    distribution = None  # type: str | None
-    strategy_class = UnimplementedStrategy  # type: t.Type[BaseStrategy]
-
-    def __new__(cls, *args, **kwargs):
-        new_cls = get_platform_subclass(Hostname)
-        return super(cls, new_cls).__new__(new_cls)
-
-    def __init__(self, module):
-        self.module = module
-        self.name = module.params['name']
-        self.use = module.params['use']
-
-        if self.use is not None:
-            strat = globals()['%sStrategy' % STRATS[self.use]]
-            self.strategy = strat(module)
-        elif platform.system() == 'Linux' and ServiceMgrFactCollector.is_systemd_managed(module):
-            # This is Linux and systemd is active
-            self.strategy = SystemdStrategy(module)
-        else:
-            self.strategy = self.strategy_class(module)
-
-    def update_current_and_permanent_hostname(self):
-        return self.strategy.update_current_and_permanent_hostname()
-
-    def get_current_hostname(self):
-        return self.strategy.get_current_hostname()
-
-    def set_current_hostname(self, name):
-        self.strategy.set_current_hostname(name)
-
-    def get_permanent_hostname(self):
-        return self.strategy.get_permanent_hostname()
-
-    def set_permanent_hostname(self, name):
-        self.strategy.set_permanent_hostname(name)
-
-
 class BaseStrategy(object):
     def __init__(self, module):
         self.module = module
@@ -226,6 +142,39 @@ class BaseStrategy(object):
 
     def set_permanent_hostname(self, name):
         raise NotImplementedError
+
+
+class UnimplementedStrategy(BaseStrategy):
+    def update_current_and_permanent_hostname(self):
+        self.unimplemented_error()
+
+    def update_current_hostname(self):
+        self.unimplemented_error()
+
+    def update_permanent_hostname(self):
+        self.unimplemented_error()
+
+    def get_current_hostname(self):
+        self.unimplemented_error()
+
+    def set_current_hostname(self, name):
+        self.unimplemented_error()
+
+    def get_permanent_hostname(self):
+        self.unimplemented_error()
+
+    def set_permanent_hostname(self, name):
+        self.unimplemented_error()
+
+    def unimplemented_error(self):
+        system = platform.system()
+        distribution = get_distribution()
+        if distribution is not None:
+            msg_platform = '%s (%s)' % (system, distribution)
+        else:
+            msg_platform = system
+        self.module.fail_json(
+            msg='hostname module cannot be used on platform %s' % msg_platform)
 
 
 class CommandStrategy(BaseStrategy):
@@ -649,6 +598,54 @@ class DarwinStrategy(BaseStrategy):
             if not self.module.check_mode:
                 self.set_permanent_hostname(name)
             self.changed = True
+
+
+class Hostname(object):
+    """
+    This is a generic Hostname manipulation class that is subclassed
+    based on platform.
+
+    A subclass may wish to set different strategy instance to self.strategy.
+
+    All subclasses MUST define platform and distribution (which may be None).
+    """
+
+    platform = 'Generic'
+    distribution = None  # type: str | None
+    strategy_class = UnimplementedStrategy  # type: t.Type[BaseStrategy]
+
+    def __new__(cls, *args, **kwargs):
+        new_cls = get_platform_subclass(Hostname)
+        return super(cls, new_cls).__new__(new_cls)
+
+    def __init__(self, module):
+        self.module = module
+        self.name = module.params['name']
+        self.use = module.params['use']
+
+        if self.use is not None:
+            strat = globals()['%sStrategy' % STRATS[self.use]]
+            self.strategy = strat(module)
+        elif platform.system() == 'Linux' and ServiceMgrFactCollector.is_systemd_managed(module):
+            # This is Linux and systemd is active
+            self.strategy = SystemdStrategy(module)
+        else:
+            self.strategy = self.strategy_class(module)
+
+    def update_current_and_permanent_hostname(self):
+        return self.strategy.update_current_and_permanent_hostname()
+
+    def get_current_hostname(self):
+        return self.strategy.get_current_hostname()
+
+    def set_current_hostname(self, name):
+        self.strategy.set_current_hostname(name)
+
+    def get_permanent_hostname(self):
+        return self.strategy.get_permanent_hostname()
+
+    def set_permanent_hostname(self, name):
+        self.strategy.set_permanent_hostname(name)
 
 
 class SLESHostname(Hostname):
