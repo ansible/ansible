@@ -20,6 +20,8 @@ __metaclass__ = type
 
 from os.path import basename
 
+import typing as t
+
 import ansible.constants as C
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
@@ -43,9 +45,9 @@ class IncludeRole(TaskInclude):
     circumstances related to the `- include_role: ...`
     """
 
-    BASE = ('name', 'role')  # directly assigned
-    FROM_ARGS = ('tasks_from', 'vars_from', 'defaults_from', 'handlers_from')  # used to populate from dict in role
-    OTHER_ARGS = ('apply', 'public', 'allow_duplicates', 'rolespec_validate')  # assigned to matching property
+    BASE = ('name', 'role')  # type: t.Tuple[str, ...]  # directly assigned
+    FROM_ARGS = ('tasks_from', 'vars_from', 'defaults_from', 'handlers_from')  # type: t.Tuple[str, ...]  # used to populate from dict in role
+    OTHER_ARGS = ('apply', 'public', 'allow_duplicates', 'rolespec_validate')  # type: t.Tuple[str, ...]  # assigned to matching property
     VALID_ARGS = tuple(frozenset(BASE + FROM_ARGS + OTHER_ARGS))  # all valid args
 
     # =================================================================================

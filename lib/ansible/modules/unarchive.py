@@ -259,7 +259,7 @@ from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.urls import fetch_file
 
 try:  # python 3.3+
-    from shlex import quote
+    from shlex import quote  # type: ignore[attr-defined]
 except ImportError:  # older python
     from pipes import quote
 

@@ -23,7 +23,7 @@ def _gen_id(length=32):
 
 class BecomeBase(AnsiblePlugin):
 
-    name = None
+    name = None  # type: str | None
 
     # messages for detecting prompted password issues
     fail = tuple()

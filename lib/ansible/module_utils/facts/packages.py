@@ -52,7 +52,7 @@ class PkgMgr(with_metaclass(ABCMeta, object)):
 
 class LibMgr(PkgMgr):
 
-    LIB = None
+    LIB = None  # type: str | None
 
     def __init__(self):
 
@@ -71,7 +71,7 @@ class LibMgr(PkgMgr):
 
 class CLIMgr(PkgMgr):
 
-    CLI = None
+    CLI = None  # type: str | None
 
     def __init__(self):
 

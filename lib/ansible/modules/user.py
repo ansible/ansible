@@ -496,9 +496,8 @@ class User(object):
 
     All subclasses MUST define platform and distribution (which may be None).
     """
-
     platform = 'Generic'
-    distribution = None
+    distribution = None  # type: str | None
     PASSWORDFILE = '/etc/passwd'
     SHADOWFILE = '/etc/shadow'
     SHADOWFILE_EXPIRE_INDEX = 7

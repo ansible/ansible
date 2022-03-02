@@ -66,7 +66,7 @@ except NameError:
 
 display = Display()
 
-ModuleUtilsProcessEntry = namedtuple('ModuleUtilsInfo', ['name_parts', 'is_ambiguous', 'has_redirected_child', 'is_optional'])
+ModuleUtilsProcessEntry = namedtuple('ModuleUtilsProcessEntry', ['name_parts', 'is_ambiguous', 'has_redirected_child', 'is_optional'])
 
 REPLACER = b"#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_VERSION = b"\"<<ANSIBLE_VERSION>>\""

@@ -36,7 +36,7 @@ __all__ = ['WorkerProcess']
 display = Display()
 
 
-class WorkerProcess(multiprocessing_context.Process):
+class WorkerProcess(multiprocessing_context.Process):  # type: ignore[name-defined]
     '''
     The worker thread class, which uses TaskExecutor to run tasks
     read from a job queue and pushes results into a results queue
