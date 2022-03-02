@@ -41,7 +41,7 @@ else:
         def __init__(self, stream, file_name=None, vault_secrets=None):
             Reader.__init__(self, stream)
             Scanner.__init__(self)
-            Parser.__init__(self)  # pylint: disable=non-parent-init-called
+            Parser.__init__(self)  # type: ignore[call-arg]  # pylint: disable=non-parent-init-called
             Composer.__init__(self)
             AnsibleConstructor.__init__(self, file_name=file_name, vault_secrets=vault_secrets)
             Resolver.__init__(self)

@@ -167,7 +167,7 @@ class TestSuite:
     @property
     def time(self) -> decimal.Decimal:
         """The total time from all test cases."""
-        return sum(case.time for case in self.cases if case.time)
+        return t.cast(decimal.Decimal, sum(case.time for case in self.cases if case.time))
 
     def get_attributes(self) -> t.Dict[str, str]:
         """Return a dictionary of attributes for this instance."""
@@ -233,7 +233,7 @@ class TestSuites:
     @property
     def time(self) -> decimal.Decimal:
         """The total time from all test cases."""
-        return sum(suite.time for suite in self.suites)
+        return t.cast(decimal.Decimal, sum(suite.time for suite in self.suites))
 
     def get_attributes(self) -> t.Dict[str, str]:
         """Return a dictionary of attributes for this instance."""

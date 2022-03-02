@@ -71,6 +71,11 @@ import platform
 import socket
 import traceback
 
+try:
+    import typing as t
+except ImportError:
+    t = None
+
 from ansible.module_utils.basic import (
     AnsibleModule,
     get_distribution,
@@ -146,8 +151,8 @@ class Hostname(object):
     """
 
     platform = 'Generic'
-    distribution = None
-    strategy_class = UnimplementedStrategy
+    distribution = None  # type: str | None
+    strategy_class = UnimplementedStrategy  # type: t.Type[BaseStrategy]
 
     def __new__(cls, *args, **kwargs):
         new_cls = get_platform_subclass(Hostname)
