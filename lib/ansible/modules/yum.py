@@ -759,12 +759,12 @@ class YumModule(YumDnf):
                     else:
                         raise
                 if not pkgs:
-                    e, m, _ = self.yum_base.pkgSack.matchPackageNames([req_spec])
-                    pkgs.extend(e)
-                    pkgs.extend(m)
-                    e, m, _ = self.yum_base.rpmdb.matchPackageNames([req_spec])
-                    pkgs.extend(e)
-                    pkgs.extend(m)
+                    exact_matches, glob_matches = self.yum_base.pkgSack.matchPackageNames([req_spec])[0:2]
+                    pkgs.extend(exact_matches)
+                    pkgs.extend(glob_matches)
+                    exact_matches, glob_matches = self.yum_base.rpmdb.matchPackageNames([req_spec])[0:2]
+                    pkgs.extend(exact_matches)
+                    pkgs.extend(glob_matches)
             except Exception as e:
                 self.module.fail_json(msg="Failure talking to yum: %s" % to_native(e))
 
