@@ -246,7 +246,7 @@ htmlhelp_basename = 'Poseidodoc'
 # also go into the prior branch and change latest to the branch version.
 #notfound_default_version = "devel"
 # makes default setting explicit:
-notfound_urls_prefix = "/ansible/devel/"
+notfound_urls_prefix = "/grr/devel/"
 
 # Options for LaTeX output
 # ------------------------
