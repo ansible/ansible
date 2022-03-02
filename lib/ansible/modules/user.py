@@ -499,7 +499,7 @@ class User(object):
     platform = 'Generic'
     distribution = None  # type: str | None
     PASSWORDFILE = '/etc/passwd'
-    SHADOWFILE = '/etc/shadow'
+    SHADOWFILE = '/etc/shadow'  # type: str | None
     SHADOWFILE_EXPIRE_INDEX = 7
     LOGIN_DEFS = '/etc/login.defs'
     DATE_FORMAT = '%Y-%m-%d'
@@ -1167,11 +1167,11 @@ class User(object):
                 out_buffer = b''
                 err_buffer = b''
                 while p.poll() is None:
-                    r, w, e = select.select([master_out_fd, master_err_fd], [], [], 1)
+                    r_list = select.select([master_out_fd, master_err_fd], [], [], 1)[0]
                     first_prompt = b'Enter passphrase (empty for no passphrase):'
                     second_prompt = b'Enter same passphrase again'
                     prompt = first_prompt
-                    for fd in r:
+                    for fd in r_list:
                         if fd == master_out_fd:
                             chunk = os.read(master_out_fd, 10240)
                             out_buffer += chunk
