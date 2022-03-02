@@ -272,6 +272,8 @@ import tempfile
 import operator
 import shlex
 import traceback
+import types
+
 from ansible.module_utils.compat.version import LooseVersion
 
 SETUPTOOLS_IMP_ERR = None
@@ -456,7 +458,7 @@ def _have_pip_module():  # type: () -> bool
     try:
         import importlib
     except ImportError:
-        importlib = None
+        importlib = None  # type: types.ModuleType | None
 
     if importlib:
         # noinspection PyBroadException
