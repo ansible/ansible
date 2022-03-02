@@ -70,11 +70,12 @@ import os
 import platform
 import socket
 import traceback
+import types
 
 try:
     import typing as t
 except ImportError:
-    t = None
+    t = None  # type: types.ModuleType | None
 
 from ansible.module_utils.basic import (
     AnsibleModule,
@@ -657,7 +658,7 @@ class SLESHostname(Hostname):
         distribution_version = get_distribution_version()
         # cast to float may raise ValueError on non SLES, we use float for a little more safety over int
         if distribution_version and 10 <= float(distribution_version) <= 12:
-            strategy_class = SLESStrategy
+            strategy_class = SLESStrategy  # type: t.Type[BaseStrategy]
         else:
             raise ValueError()
     except ValueError:
