@@ -129,7 +129,7 @@ class Group(object):
     """
 
     platform = 'Generic'
-    distribution = None
+    distribution = None  # type: str | None
     GROUPFILE = '/etc/group'
 
     def __new__(cls, *args, **kwargs):

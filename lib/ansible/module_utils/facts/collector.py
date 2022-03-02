@@ -59,7 +59,7 @@ class BaseFactCollector:
     _fact_ids = set()
 
     _platform = 'Generic'
-    name = None
+    name = None  # type: str | None
     required_facts = set()
 
     def __init__(self, collectors=None, namespace=None):

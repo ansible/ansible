@@ -203,14 +203,14 @@ imap = map
 
 try:
     # Python 2
-    unicode
+    unicode  # type: ignore[has-type]
 except NameError:
     # Python 3
     unicode = text_type
 
 try:
     # Python 2
-    basestring
+    basestring  # type: ignore[has-type]
 except NameError:
     # Python 3
     basestring = string_types

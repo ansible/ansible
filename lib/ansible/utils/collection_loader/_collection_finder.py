@@ -36,7 +36,7 @@ try:
     from importlib import reload as reload_module
 except ImportError:
     # 2.7 has a global reload function instead...
-    reload_module = reload  # pylint:disable=undefined-variable
+    reload_module = reload  # type: ignore[name-defined]  # pylint:disable=undefined-variable
 
 try:
     from importlib.util import spec_from_loader

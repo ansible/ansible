@@ -376,7 +376,6 @@ CLEAN_OP_CHANGED_STR = dict(
     autoclean='Del ',
 )
 
-apt = apt_pkg = None  # keep pylint happy by declaring unconditionally
 
 HAS_PYTHON_APT = False
 try:
@@ -385,7 +384,7 @@ try:
     import apt_pkg
     HAS_PYTHON_APT = True
 except ImportError:
-    pass
+    apt = apt_pkg = None
 
 
 class PolicyRcD(object):
