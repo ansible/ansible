@@ -92,8 +92,6 @@ To upgrade an existing Ansible installation in this Python environment to the la
 
     $ python3 -m pip install --upgrade --user ansible
 
-.. _from_pip_devel:
-
 Confirming your installation
 ----------------------------
 
@@ -105,6 +103,8 @@ You can test that Ansible is installed correctly by checking the version:
 
 The version displayed by this command is for the associated ``ansible-core`` package that has been installed.
 
+.. _development_install:
+
 Installation for development
 ============================
 
@@ -115,6 +115,8 @@ If you are testing new features, fixing bugs, or otherwise working with the deve
     You should only install and run the ``devel`` branch if you are modifying ``ansible-core`` or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
 
 For more information on getting involved in the Ansible project, see the :ref:`ansible_community_guide`. For more information on creating Ansible modules and Collections, see the :ref:`developer_guide`.
+
+.. _from_pip_devel:
 
 Installing ``devel`` from GitHub with ``pip``
 ---------------------------------------------
