@@ -28,6 +28,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import types
+
+try:
+    import typing as t
+except ImportError:
+    t = None  # type: types.ModuleType | None
+
+from ansible.module_utils.facts.collector import BaseFactCollector
 
 from ansible.module_utils.facts.other.facter import FacterFactCollector
 from ansible.module_utils.facts.other.ohai import OhaiFactCollector
@@ -93,7 +101,7 @@ _base = [
     PlatformFactCollector,
     DistributionFactCollector,
     LSBFactCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 # These restrict what is possible in others
 _restrictive = [
@@ -101,7 +109,7 @@ _restrictive = [
     ApparmorFactCollector,
     ChrootFactCollector,
     FipsFactCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 # general info, not required but probably useful for other facts
 _general = [
@@ -115,7 +123,7 @@ _general = [
     EnvFactCollector,
     SshPubKeyFactCollector,
     UserFactCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 # virtual, this might also limit hardware/networking
 _virtual = [
@@ -127,7 +135,7 @@ _virtual = [
     NetBSDVirtualCollector,
     SunOSVirtualCollector,
     HPUXVirtualCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 _hardware = [
     HardwareCollector,
@@ -141,7 +149,7 @@ _hardware = [
     NetBSDHardwareCollector,
     OpenBSDHardwareCollector,
     SunOSHardwareCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 _network = [
     DnsFactCollector,
@@ -159,14 +167,14 @@ _network = [
     NetBSDNetworkCollector,
     OpenBSDNetworkCollector,
     SunOSNetworkCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 # other fact sources
 _extra_facts = [
     LocalFactCollector,
     FacterFactCollector,
     OhaiFactCollector
-]
+]  # type: t.List[t.Type[BaseFactCollector]]
 
 # TODO: make config driven
 collectors = _base + _restrictive + _general + _virtual + _hardware + _network + _extra_facts

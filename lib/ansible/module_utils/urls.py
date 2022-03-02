@@ -52,6 +52,7 @@ import socket
 import sys
 import tempfile
 import traceback
+import types
 
 from contextlib import contextmanager
 
@@ -167,7 +168,7 @@ try:
     from ssl import match_hostname, CertificateError
 except ImportError:
     try:
-        from backports.ssl_match_hostname import match_hostname, CertificateError
+        from backports.ssl_match_hostname import match_hostname, CertificateError  # type: ignore[misc]
     except ImportError:
         HAS_MATCH_HOSTNAME = False
 
@@ -268,7 +269,7 @@ try:
 
 except ImportError:
     GSSAPI_IMP_ERR = traceback.format_exc()
-    HTTPGSSAPIAuthHandler = None
+    HTTPGSSAPIAuthHandler = None  # type: types.ModuleType | None
 
 if not HAS_MATCH_HOSTNAME:
     # The following block of code is under the terms and conditions of the
@@ -279,7 +280,7 @@ if not HAS_MATCH_HOSTNAME:
     try:
         # Divergence: Python-3.7+'s _ssl has this exception type but older Pythons do not
         from _ssl import SSLCertVerificationError
-        CertificateError = SSLCertVerificationError
+        CertificateError = SSLCertVerificationError  # type: ignore[misc]
     except ImportError:
         class CertificateError(ValueError):
             pass
@@ -390,7 +391,7 @@ if not HAS_MATCH_HOSTNAME:
         ip = _inet_paton(ipname.rstrip())
         return ip == host_ip
 
-    def match_hostname(cert, hostname):
+    def match_hostname(cert, hostname):  # type: ignore[misc]
         """Verify that *cert* (in decoded format as returned by
         SSLSocket.getpeercert()) matches the *hostname*.  RFC 2818 and RFC 6125
         rules are followed.
