@@ -239,11 +239,12 @@ htmlhelp_basename = 'Poseidodoc'
 #
 # default is `en` - using this for the sub-site:
 notfound_default_language = "ansible"
-# default is `latest`:
-# setting explicitly - docsite serves up /ansible/latest/404.html
-# so keep this set to `latest` even on the `devel` branch
-# then no maintenance is needed when we branch a new stable_x.x
-notfound_default_version = "latest"
+# default_version needs to be set to the branch version.`:
+# setting latest - docsite serves up /ansible/latest/404.html
+# so keep this set to `latest`, `devel` or the older branch version
+# When devel becomes latest, change to latest in that branch, and
+# also go into the prior branch and change latest to the branch version.
+notfound_default_version = "devel"
 # makes default setting explicit:
 notfound_no_urls_prefix = False
 
