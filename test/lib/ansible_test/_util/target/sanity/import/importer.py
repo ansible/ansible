@@ -58,9 +58,9 @@ def main():
         from importlib.util import spec_from_loader, module_from_spec
         from importlib.machinery import SourceFileLoader
     except ImportError:
-        HAS_PY3_LOADER = False
+        has_py3_loader = False
     else:
-        HAS_PY3_LOADER = True
+        has_py3_loader = True
 
     if collection_full_name:
         # allow importing code from collections when testing a collection
@@ -152,24 +152,31 @@ def main():
     class RestrictedModuleLoader:
         """Python module loader that restricts inappropriate imports."""
         def __init__(self, path, name, restrict_to_module_paths):
+            if path and not isinstance(path, list):
+                path = [path]
             self.path = path
             self.name = name
             self.loaded_modules = set()
             self.restrict_to_module_paths = restrict_to_module_paths
 
-        def find_spec(self, fullname, path=None, target=None):
+        def find_spec(self, fullname, path=None, target=None):  # pylint: disable=unused-argument
+            """Return the spec from the loader or None
+            :param fullname: str
+            :param path: List[str]
+            :param target: str
+            :return: ModuleSpec | None
+            """
             loader = self._get_loader(fullname, path=path)
-            if loader is not None and HAS_PY3_LOADER:
-                return spec_from_loader(fullname, loader)
-            elif loader:
+            if loader is not None:
+                if has_py3_loader:
+                    return spec_from_loader(fullname, loader)
                 raise ImportError("Failed to import '%s' due to a bug in ansible-test. Check importlib imports for typos." % fullname)
-            else:
-                return None
+            return None
 
         def find_module(self, fullname, path=None):
             """Return self if the given fullname is restricted, otherwise return None.
             :param fullname: str
-            :param path: str
+            :param path: List[str]
             :return: RestrictedModuleLoader | None
             """
             return self._get_loader(fullname, path=path)
@@ -177,7 +184,7 @@ def main():
         def _get_loader(self, fullname, path=None):
             """Return self if the given fullname is restricted, otherwise return None.
             :param fullname: str
-            :param path: str
+            :param path: List[str]
             :return: RestrictedModuleLoader | None
             """
             if fullname in self.loaded_modules:
@@ -188,19 +195,25 @@ def main():
                     return None  # for non-modules, everything in the ansible namespace is allowed
 
                 if fullname in ('ansible.module_utils.basic',):
-                    return self  # intercept loading so we can modify the result
+                    loader = RestrictedModuleLoader(path, fullname, self.restrict_to_module_paths)
+                    loader.loaded_modules = self.loaded_modules
+                    return loader  # intercept loading so we can modify the result
 
                 if is_name_in_namepace(fullname, ['ansible.module_utils', self.name]):
                     return None  # module_utils and module under test are always allowed
 
                 if any(os.path.exists(candidate_path) for candidate_path in convert_ansible_name_to_absolute_paths(fullname)):
-                    return self  # restrict access to ansible files that exist
+                    loader = RestrictedModuleLoader(path, fullname, self.restrict_to_module_paths)
+                    loader.loaded_modules = self.loaded_modules
+                    return loader  # restrict access to ansible files that exist
 
                 return None  # ansible file does not exist, do not restrict access
 
             if is_name_in_namepace(fullname, ['ansible_collections']):
                 if not collection_loader:
-                    return self  # restrict access to collections when we are not testing a collection
+                    loader = RestrictedModuleLoader(path, fullname, self.restrict_to_module_paths)
+                    loader.loaded_modules = self.loaded_modules
+                    return loader  # restrict access to collections when we are not testing a collection
 
                 if not self.restrict_to_module_paths:
                     return None  # for non-modules, everything in the ansible namespace is allowed
@@ -209,21 +222,30 @@ def main():
                     return None  # module_utils and module under test are always allowed
 
                 if collection_loader.find_module(fullname, path):
-                    return self  # restrict access to collection files that exist
+                    loader = RestrictedModuleLoader(path, fullname, self.restrict_to_module_paths)
+                    loader.loaded_modules = self.loaded_modules
+                    return loader  # restrict access to collection files that exist
 
                 return None  # collection file does not exist, do not restrict access
 
             # not a namespace we care about
             return None
 
-        def create_module(self, spec):
+        def create_module(self, spec):  # pylint: disable=unused-argument
+            """Return None to use default module creation.
+            :param spec: ModuleSpec
+            """
             return None
 
         def exec_module(self, module):
+            """Execute the module if the name is restricted and otherwise raise an ImportError
+            :param module: module
+            """
             fullname = module.__spec__.name
             if fullname == 'ansible.module_utils.basic':
                 self.loaded_modules.add(fullname)
-                loader = SourceFileLoader(fullname, 'lib/ansible/module_utils/basic.py')
+                file_path = os.path.join(self.path[0], 'basic.py')
+                loader = SourceFileLoader(fullname, file_path)
                 spec = spec_from_loader(fullname, loader)
                 real_module = module_from_spec(spec)
                 loader.exec_module(real_module)
@@ -234,8 +256,9 @@ def main():
             raise ImportError('import of "%s" is not allowed in this context' % fullname)
 
         def load_module(self, fullname):
-            """Raise an ImportError.
+            """Return the module if the name is restricted and otherwise raise an ImportError.
             :type fullname: str
+            :rtype: module
             """
             if fullname == 'ansible.module_utils.basic':
                 module = self.__load_module(fullname)
