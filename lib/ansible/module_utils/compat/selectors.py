@@ -37,6 +37,7 @@ _BUNDLED_METADATA = {"pypi_name": "selectors2", "version": "1.1.1", "version_con
 
 import os.path
 import sys
+import types
 
 try:
     # Python 3.4+
@@ -46,7 +47,7 @@ except ImportError:
         # backport package installed in the system
         import selectors2 as _system_selectors
     except ImportError:
-        _system_selectors = None
+        _system_selectors = None  # type: types.ModuleType | None
 
 if _system_selectors:
     selectors = _system_selectors
