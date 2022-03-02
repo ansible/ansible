@@ -152,8 +152,6 @@ def main():
     class RestrictedModuleLoader:
         """Python module loader that restricts inappropriate imports."""
         def __init__(self, path, name, restrict_to_module_paths):
-            if path and not isinstance(path, list):
-                path = [path]
             self.path = path
             self.name = name
             self.loaded_modules = set()
@@ -195,25 +193,19 @@ def main():
                     return None  # for non-modules, everything in the ansible namespace is allowed
 
                 if fullname in ('ansible.module_utils.basic',):
-                    loader = RestrictedModuleLoader(path, fullname, self.restrict_to_module_paths)
-                    loader.loaded_modules = self.loaded_modules
-                    return loader  # intercept loading so we can modify the result
+                    return self  # intercept loading so we can modify the result
 
                 if is_name_in_namepace(fullname, ['ansible.module_utils', self.name]):
                     return None  # module_utils and module under test are always allowed
 
                 if any(os.path.exists(candidate_path) for candidate_path in convert_ansible_name_to_absolute_paths(fullname)):
-                    loader = RestrictedModuleLoader(path, fullname, self.restrict_to_module_paths)
-                    loader.loaded_modules = self.loaded_modules
-                    return loader  # restrict access to ansible files that exist
+                    return self  # restrict access to ansible files that exist
 
                 return None  # ansible file does not exist, do not restrict access
 
             if is_name_in_namepace(fullname, ['ansible_collections']):
                 if not collection_loader:
-                    loader = RestrictedModuleLoader(path, fullname, self.restrict_to_module_paths)
-                    loader.loaded_modules = self.loaded_modules
-                    return loader  # restrict access to collections when we are not testing a collection
+                    return self  # restrict access to collections when we are not testing a collection
 
                 if not self.restrict_to_module_paths:
                     return None  # for non-modules, everything in the ansible namespace is allowed
@@ -222,9 +214,7 @@ def main():
                     return None  # module_utils and module under test are always allowed
 
                 if collection_loader.find_module(fullname, path):
-                    loader = RestrictedModuleLoader(path, fullname, self.restrict_to_module_paths)
-                    loader.loaded_modules = self.loaded_modules
-                    return loader  # restrict access to collection files that exist
+                    return self  # restrict access to collection files that exist
 
                 return None  # collection file does not exist, do not restrict access
 
@@ -244,15 +234,17 @@ def main():
             fullname = module.__spec__.name
             if fullname == 'ansible.module_utils.basic':
                 self.loaded_modules.add(fullname)
-                file_path = os.path.join(self.path[0], 'basic.py')
-                loader = SourceFileLoader(fullname, file_path)
-                spec = spec_from_loader(fullname, loader)
-                real_module = module_from_spec(spec)
-                loader.exec_module(real_module)
-                real_module.AnsibleModule = ImporterAnsibleModule
-                real_module._load_params = lambda *args, **kwargs: {}  # pylint: disable=protected-access
-                sys.modules[fullname] = real_module
-                return
+                for path in convert_ansible_name_to_absolute_paths(fullname):
+                    if not os.path.exists(path):
+                        continue
+                    loader = SourceFileLoader(fullname, path)
+                    spec = spec_from_loader(fullname, loader)
+                    real_module = module_from_spec(spec)
+                    loader.exec_module(real_module)
+                    real_module.AnsibleModule = ImporterAnsibleModule
+                    real_module._load_params = lambda *args, **kwargs: {}  # pylint: disable=protected-access
+                    sys.modules[fullname] = real_module
+                    return
             raise ImportError('import of "%s" is not allowed in this context' % fullname)
 
         def load_module(self, fullname):
