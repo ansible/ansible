@@ -58,7 +58,7 @@ except ImportError:
     from compiler import ast, parse
     from ansible.module_utils.six import binary_type, integer_types, string_types, text_type
 
-    def literal_eval(node_or_string):
+    def literal_eval(node_or_string):  # type: ignore[misc]
         """
         Safely evaluate an expression node or a string containing a Python
         expression.  The string or node provided may only consist of the  following
