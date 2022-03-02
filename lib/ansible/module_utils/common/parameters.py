@@ -360,7 +360,7 @@ def _return_datastructure_name(obj):
         for element in obj:
             for subelement in _return_datastructure_name(element):
                 yield subelement
-    elif isinstance(obj, (bool, NoneType)):
+    elif obj is None or isinstance(obj, bool):
         # This must come before int because bools are also ints
         return
     elif isinstance(obj, tuple(list(integer_types) + [float])):

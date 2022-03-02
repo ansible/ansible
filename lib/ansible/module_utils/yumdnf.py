@@ -59,7 +59,7 @@ yumdnf_argument_spec = dict(
 )
 
 
-class YumDnf(with_metaclass(ABCMeta, object)):
+class YumDnf(with_metaclass(ABCMeta, object)):  # type: ignore[misc]
     """
     Abstract class that handles the population of instance variables that should
     be identical between both YUM and DNF modules because of the feature parity
