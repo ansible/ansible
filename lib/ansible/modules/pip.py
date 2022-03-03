@@ -458,7 +458,7 @@ def _have_pip_module():  # type: () -> bool
     try:
         import importlib
     except ImportError:
-        importlib = None  # type: types.ModuleType | None
+        importlib = None  # type: types.ModuleType | None  # type: ignore[no-redef]
 
     if importlib:
         # noinspection PyBroadException

@@ -16,7 +16,7 @@ from functools import partial as _partial
 try:
     import typing as t
 except ImportError:
-    t = None  # type: types.ModuleType | None
+    t = None  # type: types.ModuleType | None  # type: ignore[no-redef]
 
 HAS_LIBYAML = False
 try:
@@ -38,9 +38,9 @@ else:
         Parser = _yaml.cyaml.CParser
         HAS_LIBYAML = True
     except AttributeError:
-        SafeLoader = _yaml.SafeLoader  # type: t.Type[_yaml.CSafeLoader] | t.Type[_yaml.SafeLoader]
-        SafeDumper = _yaml.SafeDumper  # type: t.Type[_yaml.CSafeDumper] | t.Type[_yaml.SafeDumper]
-        Parser = _yaml.parser.Parser  # type: t.Type[_yaml.cyaml.CParser] | t.Type[_yaml.parser.Parser]
+        SafeLoader = _yaml.SafeLoader  # type: t.Type[_yaml.CSafeLoader] | t.Type[_yaml.SafeLoader]  # type: ignore[no-redef]
+        SafeDumper = _yaml.SafeDumper  # type: t.Type[_yaml.CSafeDumper] | t.Type[_yaml.SafeDumper]  # type: ignore[no-redef]
+        Parser = _yaml.parser.Parser  # type: t.Type[_yaml.cyaml.CParser] | t.Type[_yaml.parser.Parser]  # type: ignore[no-redef]
 
     yaml_load = _partial(_yaml.load, Loader=SafeLoader)
     yaml_load_all = _partial(_yaml.load_all, Loader=SafeLoader)
