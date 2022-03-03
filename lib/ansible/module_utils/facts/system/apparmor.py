@@ -20,12 +20,14 @@ __metaclass__ = type
 
 import os
 
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 
 class ApparmorFactCollector(BaseFactCollector):
     name = 'apparmor'
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         facts_dict = {}

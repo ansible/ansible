@@ -16,6 +16,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ansible.module_utils.compat.typing as t
 
 from ansible.module_utils.facts.utils import get_file_content
 
@@ -24,7 +25,7 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 
 class DnsFactCollector(BaseFactCollector):
     name = 'dns'
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         dns_facts = {}

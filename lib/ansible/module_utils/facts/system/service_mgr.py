@@ -22,6 +22,8 @@ import os
 import platform
 import re
 
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils._text import to_native
 
 from ansible.module_utils.facts.utils import get_file_content
@@ -37,7 +39,7 @@ if platform.system() != 'SunOS':
 
 class ServiceMgrFactCollector(BaseFactCollector):
     name = 'service_mgr'
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
     required_facts = set(['platform', 'distribution'])
 
     @staticmethod

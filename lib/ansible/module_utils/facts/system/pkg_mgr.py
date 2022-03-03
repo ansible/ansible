@@ -8,6 +8,8 @@ __metaclass__ = type
 import os
 import subprocess
 
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 # A list of dicts.  If there is a platform with more than one
@@ -44,7 +46,7 @@ PKG_MGRS = [{'path': '/usr/bin/rpm-ostree', 'name': 'atomic_container'},
 
 class OpenBSDPkgMgrFactCollector(BaseFactCollector):
     name = 'pkg_mgr'
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
     _platform = 'OpenBSD'
 
     def collect(self, module=None, collected_facts=None):
@@ -57,7 +59,7 @@ class OpenBSDPkgMgrFactCollector(BaseFactCollector):
 # the fact ends up being 'pkg_mgr' so stick with that naming/spelling
 class PkgMgrFactCollector(BaseFactCollector):
     name = 'pkg_mgr'
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
     _platform = 'Generic'
     required_facts = set(['distribution'])
 

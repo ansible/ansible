@@ -21,6 +21,8 @@ import json
 import os
 import stat
 
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils._text import to_text
 from ansible.module_utils.facts.utils import get_file_content
 from ansible.module_utils.facts.collector import BaseFactCollector
@@ -29,7 +31,7 @@ from ansible.module_utils.six.moves import configparser, StringIO
 
 class LocalFactCollector(BaseFactCollector):
     name = 'local'
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         local_facts = {}

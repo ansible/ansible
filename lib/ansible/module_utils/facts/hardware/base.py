@@ -29,6 +29,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 
@@ -50,7 +52,7 @@ class HardwareCollector(BaseFactCollector):
                      'processor_count',
                      # TODO: mounts isnt exactly hardware
                      'mounts',
-                     'devices'])
+                     'devices'])  # type: t.Set[str]
     _fact_class = Hardware
 
     def collect(self, module=None, collected_facts=None):
