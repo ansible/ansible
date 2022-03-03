@@ -21,11 +21,10 @@ from . import (
     write_report,
 )
 
-if t.TYPE_CHECKING:
-    from . import (
-        NamedPoints,
-        TargetIndexes,
-    )
+from . import (
+    NamedPoints,
+    TargetIndexes,
+)
 
 
 class CoverageAnalyzeTargetsFilterConfig(CoverageAnalyzeTargetsConfig):
