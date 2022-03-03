@@ -1,0 +1,3 @@
+bugfixes:
+- ipaddr - Add valid redirection for non-namespaced usage of ipaddr filter.
+  (https://github.com/ansible/ansible/issues/77192)
