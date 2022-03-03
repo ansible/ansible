@@ -18,6 +18,8 @@ __metaclass__ = type
 
 import sys
 
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 try:
@@ -32,7 +34,7 @@ except ImportError:
 
 class PythonFactCollector(BaseFactCollector):
     name = 'python'
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         python_facts = {}

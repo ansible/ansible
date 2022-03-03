@@ -18,6 +18,8 @@ __metaclass__ = type
 
 import os
 
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils.six import iteritems
 
 from ansible.module_utils.facts.collector import BaseFactCollector
@@ -25,7 +27,7 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 
 class EnvFactCollector(BaseFactCollector):
     name = 'env'
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         env_facts = {}

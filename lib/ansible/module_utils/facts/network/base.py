@@ -16,6 +16,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 
@@ -48,7 +50,7 @@ class NetworkCollector(BaseFactCollector):
                      'default_ipv4',
                      'default_ipv6',
                      'all_ipv4_addresses',
-                     'all_ipv6_addresses'])
+                     'all_ipv6_addresses'])  # type: t.Set[str]
 
     IPV6_SCOPE = {'0': 'global',
                   '10': 'host',

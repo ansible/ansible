@@ -31,7 +31,7 @@ __metaclass__ = type
 import re
 
 try:
-    RE_FLAGS = re.VERBOSE | re.ASCII
+    RE_FLAGS = re.VERBOSE | re.ASCII  # type: ignore[attr-defined]
 except AttributeError:
     RE_FLAGS = re.VERBOSE
 

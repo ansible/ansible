@@ -20,13 +20,15 @@ __metaclass__ = type
 
 import os
 
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils.facts.utils import get_file_lines
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 
 class LSBFactCollector(BaseFactCollector):
     name = 'lsb'
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
     STRIP_QUOTES = r'\'\"\\'
 
     def _lsb_release_bin(self, lsb_path, module):
