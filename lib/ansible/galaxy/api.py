@@ -15,7 +15,6 @@ import stat
 import tarfile
 import time
 import threading
-import typing as t
 
 from urllib.error import HTTPError
 from urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljoin
@@ -299,7 +298,7 @@ class GalaxyAPI:
         return to_native(self.name)
 
     def __unicode__(self):
-        # type: (GalaxyAPI) -> t.Text
+        # type: (GalaxyAPI) -> str
         """Render GalaxyAPI as a unicode/text string representation."""
         return to_text(self.name)
 
@@ -315,7 +314,7 @@ class GalaxyAPI:
         )
 
     def __lt__(self, other_galaxy_api):
-        # type: (GalaxyAPI, GalaxyAPI) -> t.Union[bool, 'NotImplemented']
+        # type: (GalaxyAPI, GalaxyAPI) -> bool | NotImplemented
         """Return whether the instance priority is higher than other."""
         if not isinstance(other_galaxy_api, self.__class__):
             return NotImplemented
