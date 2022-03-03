@@ -31,12 +31,6 @@ from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash_s
 from ansible.utils.path import makedirs_safe
 
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    # Python 2
-    from urlparse import urlparse
-
 display = Display()
 _CACHE_LOCK = threading.Lock()
 COLLECTION_PAGE_SIZE = 100
