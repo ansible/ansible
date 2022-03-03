@@ -137,7 +137,7 @@ All the collections are downloaded by default to the ``./collections`` folder bu
 
 Once you have downloaded the collections, the folder contains the collections specified, their dependencies, and a
 ``requirements.yml`` file. You can use this folder as is with ``ansible-galaxy collection install`` to install the
-collections on a host without access to a Galaxy or Automation Hub server.
+collections on a host without access to a Galaxy server.
 
 .. code-block:: bash
 
@@ -432,4 +432,5 @@ This will have an implied entry in the ``collections:`` keyword of ``my_namespac
        The development mailing list
    :ref:`communication_irc`
        How to join Ansible chat channels
-
+   `Automation Hub <https://access.redhat.com/documentation/en-us/red_hat_ansible_automation_platform/>`_
+      Learn how to use collections with Red Hat Automation Hub
