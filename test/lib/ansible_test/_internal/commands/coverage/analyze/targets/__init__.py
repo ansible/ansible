@@ -18,14 +18,13 @@ from .. import (
     CoverageAnalyzeConfig,
 )
 
-if t.TYPE_CHECKING:
-    TargetKey = t.TypeVar('TargetKey', int, t.Tuple[int, int])
-    NamedPoints = t.Dict[str, t.Dict[TargetKey, t.Set[str]]]
-    IndexedPoints = t.Dict[str, t.Dict[TargetKey, t.Set[int]]]
-    Arcs = t.Dict[str, t.Dict[t.Tuple[int, int], t.Set[int]]]
-    Lines = t.Dict[str, t.Dict[int, t.Set[int]]]
-    TargetIndexes = t.Dict[str, int]
-    TargetSetIndexes = t.Dict[t.FrozenSet[int], int]
+TargetKey = t.TypeVar('TargetKey', int, t.Tuple[int, int])
+NamedPoints = t.Dict[str, t.Dict[TargetKey, t.Set[str]]]
+IndexedPoints = t.Dict[str, t.Dict[TargetKey, t.Set[int]]]
+Arcs = t.Dict[str, t.Dict[t.Tuple[int, int], t.Set[int]]]
+Lines = t.Dict[str, t.Dict[int, t.Set[int]]]
+TargetIndexes = t.Dict[str, int]
+TargetSetIndexes = t.Dict[t.FrozenSet[int], int]
 
 
 class CoverageAnalyzeTargetsConfig(CoverageAnalyzeConfig):

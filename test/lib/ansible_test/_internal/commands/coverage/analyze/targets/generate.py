@@ -43,12 +43,11 @@ from . import (
     write_report,
 )
 
-if t.TYPE_CHECKING:
-    from . import (
-        Arcs,
-        Lines,
-        TargetIndexes,
-    )
+from . import (
+    Arcs,
+    Lines,
+    TargetIndexes,
+)
 
 
 class CoverageAnalyzeTargetsGenerateConfig(CoverageAnalyzeTargetsConfig):
