@@ -15,10 +15,11 @@ import stat
 import tarfile
 import time
 import threading
-import typing as t
 
 from urllib.error import HTTPError
 from urllib.parse import quote as urlquote, urlencode, urlparse, parse_qs, urljoin
+
+import ansible.module_utils.compat.typing as t
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
