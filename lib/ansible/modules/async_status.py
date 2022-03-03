@@ -34,7 +34,7 @@ options:
       - A symbolic signal name or non-negative decimal integer, specifying the signal to be sent instead of the default TERM
     type: raw
     default: TERM
-  version_addded: "2.13"
+    version_added: "2.13"
 extends_documentation_fragment:
 - action_common_attributes
 - action_common_attributes.flow
