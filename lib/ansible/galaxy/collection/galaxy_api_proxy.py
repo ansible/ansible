@@ -6,15 +6,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
+import typing as t
 
-try:
-    from typing import TYPE_CHECKING
-except ImportError:
-    TYPE_CHECKING = False
-
-if TYPE_CHECKING:
-    from typing import Dict, Iterable, Iterator, Tuple, List
+if t.TYPE_CHECKING:
     from ansible.galaxy.api import CollectionVersionMetadata
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
@@ -35,13 +29,13 @@ class MultiGalaxyAPIProxy:
     """A proxy that abstracts talking to multiple Galaxy instances."""
 
     def __init__(self, apis, concrete_artifacts_manager):
-        # type: (Iterable[GalaxyAPI], ConcreteArtifactsManager) -> None
+        # type: (t.Iterable[GalaxyAPI], ConcreteArtifactsManager) -> None
         """Initialize the target APIs list."""
         self._apis = apis
         self._concrete_art_mgr = concrete_artifacts_manager
 
     def _get_collection_versions(self, requirement):
-        # type: (Requirement) -> Iterator[Tuple[GalaxyAPI, str]]
+        # type: (Requirement) -> t.Iterator[tuple[GalaxyAPI, str]]
         """Helper for get_collection_versions.
 
         Yield api, version pairs for all APIs,
@@ -82,7 +76,7 @@ class MultiGalaxyAPIProxy:
             raise last_error
 
     def get_collection_versions(self, requirement):
-        # type: (Requirement) -> Iterable[Tuple[str, GalaxyAPI]]
+        # type: (Requirement) -> t.Iterable[tuple[str, GalaxyAPI]]
         """Get a set of unique versions for FQCN on Galaxy servers."""
         if requirement.is_concrete_artifact:
             return {
@@ -152,7 +146,7 @@ class MultiGalaxyAPIProxy:
         raise last_err
 
     def get_collection_dependencies(self, collection_candidate):
-        # type: (Candidate) -> Dict[str, str]
+        # type: (Candidate) -> dict[str, str]
         # FIXME: return Requirement instances instead?
         """Retrieve collection dependencies of a given candidate."""
         if collection_candidate.is_concrete_artifact:
@@ -169,7 +163,7 @@ class MultiGalaxyAPIProxy:
         )
 
     def get_signatures(self, collection_candidate):
-        # type: (Candidate) -> List[Dict[str, str]]
+        # type: (Candidate) -> list[dict[str, str]]
         namespace = collection_candidate.namespace
         name = collection_candidate.name
         version = collection_candidate.ver

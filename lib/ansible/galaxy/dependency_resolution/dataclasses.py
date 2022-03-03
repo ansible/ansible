@@ -8,23 +8,19 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import typing as t
+
 from collections import namedtuple
 from collections.abc import MutableSequence
 from glob import iglob
 from urllib.parse import urlparse
 from yaml import safe_load
 
-try:
-    from typing import TYPE_CHECKING
-except ImportError:
-    TYPE_CHECKING = False
-
-if TYPE_CHECKING:
-    from typing import Type, TypeVar
+if t.TYPE_CHECKING:
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
     )
-    Collection = TypeVar(
+    Collection = t.TypeVar(
         'Collection',
         'Candidate', 'Requirement',
         '_ComputedReqKindsMixin',
@@ -187,7 +183,7 @@ class _ComputedReqKindsMixin:
 
     @classmethod
     def from_dir_path_as_unknown(  # type: ignore[misc]
-            cls,  # type: Type[Collection]
+            cls,  # type: t.Type[Collection]
             dir_path,  # type: bytes
             art_mgr,  # type: ConcreteArtifactsManager
     ):  # type: (...)  -> Collection
@@ -239,7 +235,7 @@ class _ComputedReqKindsMixin:
 
     @classmethod
     def from_dir_path_implicit(  # type: ignore[misc]
-            cls,  # type: Type[Collection]
+            cls,  # type: t.Type[Collection]
             dir_path,  # type: bytes
     ):  # type: (...)  -> Collection
         """Construct a collection instance based on an arbitrary dir.
