@@ -9,14 +9,9 @@ preferring the YAML compiled C extensions to reduce duplicated code.
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import types
-
 from functools import partial as _partial
 
-try:
-    import typing as t
-except ImportError:
-    t = None  # type: types.ModuleType | None  # type: ignore[no-redef]
+import ansible.module_utils.compat.typing as t
 
 HAS_LIBYAML = False
 try:
