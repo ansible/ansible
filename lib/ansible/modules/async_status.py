@@ -181,7 +181,7 @@ def main():
         else:
             os.unlink(log_path)
             data['terminated'] = True
-    else:
+    elif mode == 'terminate':
         data['terminated'] = False
 
     # Fix error: TypeError: exit_json() keywords must be strings
