@@ -20,7 +20,7 @@ __metaclass__ = type
 
 from os.path import basename
 
-import ansible.module_utils.compat.typing as t
+import typing as t
 
 import ansible.constants as C
 from ansible.errors import AnsibleParserError
