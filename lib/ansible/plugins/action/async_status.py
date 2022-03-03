@@ -11,7 +11,7 @@ from ansible.utils.vars import merge_hash
 
 class ActionModule(ActionBase):
 
-    _VALID_ARGS = frozenset(('jid', 'mode'))
+    _VALID_ARGS = frozenset(('jid', 'mode', 'signal'))
 
     def _get_async_dir(self):
 

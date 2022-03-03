@@ -29,6 +29,12 @@ options:
     type: str
     choices: [ cleanup, status, terminate ]
     default: status
+  signal:
+    description:
+      - A symbolic signal name or non-negative decimal integer, specifying the signal to be sent instead of the default TERM
+    type: raw
+    default: TERM
+  version_addded: "2.13"
 extends_documentation_fragment:
 - action_common_attributes
 - action_common_attributes.flow
@@ -120,6 +126,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 
+SIGSTR_MAP = {k[3:]: v for k, v in signal.__dict__.items() if k[:3] == 'SIG' or '_' not in k}
+SIGINTS = list(SIGSTR_MAP.values())
+
 
 def main():
 
@@ -128,11 +137,18 @@ def main():
         mode=dict(type='str', default='status', choices=['cleanup', 'status', 'terminate']),
         # passed in from the async_status action plugin
         _async_dir=dict(type='path', required=True),
+        signal=dict(type='raw', default='TERM'),
     ))
 
     mode = module.params['mode']
     jid = module.params['jid']
     async_dir = module.params['_async_dir']
+    sig = module.params['signal']
+
+    if sig not in SIGSTR_MAP and sig not in SIGINTS:
+        module.fail_json(msg='Invalid signal: %s' % sig)
+
+    sig = SIGSTR_MAP.get(sig, sig)
 
     # setup logging directory
     logdir = os.path.expanduser(async_dir)
@@ -169,7 +185,7 @@ def main():
 
     if not data['finished'] and mode == 'terminate':
         try:
-            os.killpg(data['pid'], signal.SIGKILL)
+            os.killpg(data['pid'], sig)
         except KeyError:
             module.fail_json(
                 ansible_job_id=jid,
