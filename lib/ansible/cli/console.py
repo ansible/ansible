@@ -205,6 +205,13 @@ class ConsoleCLI(CLI, cmd.Cmd):
             module = 'shell'
             module_args = arg
 
+        if self.callback:
+            cb = self.callback
+        elif C.DEFAULT_LOAD_CALLBACK_PLUGINS and C.DEFAULT_STDOUT_CALLBACK != 'default':
+            cb = C.DEFAULT_STDOUT_CALLBACK
+        else:
+            cb = 'minimal'
+
         result = None
         try:
             check_raw = module in C._ACTION_ALLOWS_RAW_ARGS
@@ -227,7 +234,6 @@ class ConsoleCLI(CLI, cmd.Cmd):
             return False
 
         try:
-            cb = 'minimal'  # FIXME: make callbacks configurable
             # now create a task queue manager to execute the play
             self._tqm = None
             try:
