@@ -24,11 +24,10 @@ from . import (
     write_report,
 )
 
-if t.TYPE_CHECKING:
-    from . import (
-        TargetIndexes,
-        IndexedPoints,
-    )
+from . import (
+    TargetIndexes,
+    IndexedPoints,
+)
 
 
 class CoverageAnalyzeTargetsMissingConfig(CoverageAnalyzeTargetsConfig):
