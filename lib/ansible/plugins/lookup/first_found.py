@@ -67,10 +67,10 @@ EXAMPLES = """
   ansible.builtin.include_tasks:
     file: "{{ item }}"
   with_first_found:
-    files:
-     - path/tasks.yaml
-     - path/other_tasks.yaml
-    skip: True
+    - files:
+      - path/tasks.yaml
+      - path/other_tasks.yaml
+      skip: True
 
 - name: Include tasks only if one of the files exists, otherwise skip
   ansible.builtin.include_tasks: '{{ tasks_file }}'
