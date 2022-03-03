@@ -55,6 +55,8 @@ To run only a specific unit test:
 
 You can specify Python requirements in the ``tests/unit/requirements.txt`` file. See :ref:`testing_units` for more information, especially on fixture files.
 
+.. _collections_adding_integration_test:
+
 Adding integration tests
 ------------------------
 

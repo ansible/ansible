@@ -12,6 +12,7 @@ Ansible Collections Contributor Guide
    create_pr_quick_start
    collection_test_pr_locally
    collection_unit_tests
+   collection_integration_tests
    documentation_contributions
    maintainers
    contributing_maintained_collections

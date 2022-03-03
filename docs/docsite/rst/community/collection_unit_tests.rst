@@ -15,11 +15,6 @@ See :ref:`testing_units_modules` for more details.
 Understanding the purpose of unit tests
 ========================================
 
-
-.. note::
-
-  If there are any difficulties with writing / running unit tests or you are not sure if the case can be covered, feel free to submit your pull request without the tests. Other contributors can help you with them later if needed.
-
 Unit tests ensure that a section of code (known as a ``unit``) meets its design requirements and behaves as intended. Some collections do not have unit tests but it does not mean they are not needed.
 
 
@@ -156,9 +151,9 @@ Use the following tips to organize your code and test coverage:
   `https://docs.pytest.org/en/latest/`_
      Pytest framework documentation
   :ref:`developing_testing`
-    Ansible Testing Guide
-  `Quick-start integration testing guide <https://github.com/ansible/community-docs/blob/main/integration_tests_quick_start_guide.rst>`_.
-    Integration testing for collections
+     Ansible Testing Guide
+  :ref:`collection_integration_tests`
+     Integration testing for collections
   :ref:`testing_integration`
      Integration tests guide
   :ref:`testing_collections`
