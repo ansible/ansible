@@ -75,7 +75,7 @@ import types
 try:
     import typing as t
 except ImportError:
-    t = None  # type: types.ModuleType | None
+    t = None  # type: types.ModuleType | None  # type: ignore[no-redef]
 
 from ansible.module_utils.basic import (
     AnsibleModule,
