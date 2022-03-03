@@ -105,8 +105,8 @@ The version displayed by this command is for the associated ``ansible-core`` pac
 
 .. _development_install:
 
-Installation for development
-============================
+Installing for development
+==========================
 
 If you are testing new features, fixing bugs, or otherwise working with the development team on changes to the core code, you can install and run the source from GitHub.
 
@@ -136,46 +136,48 @@ Running the ``devel`` branch from a clone
 
 ``ansible-core`` is easy to run from source. You do not need ``root`` permissions to use it and there is no software to actually install. No daemons or database setup are required.
 
-Once you have installed the ``ansible-core`` repository by cloning:
 
-.. code-block:: console
+#. Clone the ``ansible-core`` repository
 
-    $ git clone https://github.com/ansible/ansible.git
-    $ cd ./ansible
+   .. code-block:: console
 
-Proceed to setup the Ansible environment:
+      $ git clone https://github.com/ansible/ansible.git
+      $ cd ./ansible
 
-Using Bash:
+#. Setup the Ansible environment
 
-.. code-block:: console
+   * Using Bash
 
-    $ source ./hacking/env-setup
+     .. code-block:: console
 
-Using Fish:
+        $ source ./hacking/env-setup
 
-.. code-block:: console
+   * Using Fish
 
-    $ source ./hacking/env-setup.fish
+     .. code-block:: console
 
-If you want to suppress spurious warnings/errors, use:
+        $ source ./hacking/env-setup.fish
 
-.. code-block:: bash
+   * To suppress spurious warnings/errors, use ``-q``
 
-    $ source ./hacking/env-setup -q
+     .. code-block:: bash
 
-Ansible also uses additional Python modules that need to be installed:
+        $ source ./hacking/env-setup -q
 
-.. code-block:: bash
+#. Install Python dependencies
 
-    $ python3 -m pip install --user -r ./requirements.txt
+   .. code-block:: bash
 
-To update the ``devel`` branch of ``ansible-core`` on your local machine, use pull-with-rebase so any local changes are replayed.
+      $ python3 -m pip install --user -r ./requirements.txt
 
-.. code-block:: bash
+#. Update the ``devel`` branch of ``ansible-core`` on your local machine
 
-    $ git pull --rebase
+   Use pull-with-rebase so any local changes are replayed.
 
-After you run the the env-setup script, you will be running from the source code.
+   .. code-block:: bash
+
+      $ git pull --rebase
+
 
 .. _shell_completion:
 
