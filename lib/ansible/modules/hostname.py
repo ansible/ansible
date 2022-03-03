@@ -70,12 +70,8 @@ import os
 import platform
 import socket
 import traceback
-import types
 
-try:
-    import typing as t
-except ImportError:
-    t = None  # type: types.ModuleType | None  # type: ignore[no-redef]
+import ansible.module_utils.compat.typing as t
 
 from ansible.module_utils.basic import (
     AnsibleModule,

@@ -28,12 +28,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import types
-
-try:
-    import typing as t
-except ImportError:
-    t = None  # type: types.ModuleType | None  # type: ignore[no-redef]
+import ansible.module_utils.compat.typing as t
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
