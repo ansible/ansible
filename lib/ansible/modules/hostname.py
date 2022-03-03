@@ -718,6 +718,12 @@ class AmazonLinuxHostname(Hostname):
     strategy_class = RedHatStrategy
 
 
+class RockyLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Rocky'
+    strategy_class = RedHatStrategy
+
+
 class DebianHostname(Hostname):
     platform = 'Linux'
     distribution = 'Debian'
