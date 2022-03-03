@@ -151,7 +151,7 @@ def jwrite(info):
 
 def _run_module(wrapped_cmd, jid):
 
-    jwrite({"started": 1, "finished": 0, "ansible_job_id": jid})
+    jwrite({"started": 1, "finished": 0, "ansible_job_id": jid, "pid": os.getpid()})
 
     result = {}
 
@@ -201,9 +201,10 @@ def _run_module(wrapped_cmd, jid):
             "cmd": wrapped_cmd,
             "msg": to_text(e),
             "outdata": outdata,  # temporary notice only
-            "stderr": stderr
+            "stderr": stderr,
+            "ansible_job_id": jid,
+            "pid": os.getpid(),
         }
-        result['ansible_job_id'] = jid
         jwrite(result)
 
     except (ValueError, Exception):
@@ -212,9 +213,10 @@ def _run_module(wrapped_cmd, jid):
             "cmd": wrapped_cmd,
             "data": outdata,  # temporary notice only
             "stderr": stderr,
-            "msg": traceback.format_exc()
+            "msg": traceback.format_exc(),
+            "ansible_job_id": jid,
+            "pid": os.getpid(),
         }
-        result['ansible_job_id'] = jid
         jwrite(result)
 
 

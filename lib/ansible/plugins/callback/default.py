@@ -411,8 +411,9 @@ class CallbackModule(CallbackBase):
         jid = result._result.get('ansible_job_id')
         started = result._result.get('started')
         finished = result._result.get('finished')
+        kv = ' '.join(f'{k}={v!r}' for k, v in result._result.items())
         self._display.display(
-            'ASYNC POLL on %s: jid=%s started=%s finished=%s' % (host, jid, started, finished),
+            'ASYNC POLL on %s: %s' % (host, kv),
             color=C.COLOR_DEBUG
         )
 

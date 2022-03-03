@@ -25,8 +25,9 @@ options:
     description:
     - If C(status), obtain the status.
     - If C(cleanup), clean up the async job cache (by default in C(~/.ansible_async/)) for the specified job I(jid).
+    - If C(terminate), terminate the async job for the specified job I(jid). This option also implies C(cleanup). Added in 2.13.
     type: str
-    choices: [ cleanup, status ]
+    choices: [ cleanup, status, terminate ]
     default: status
 extends_documentation_fragment:
 - action_common_attributes
@@ -70,6 +71,11 @@ EXAMPLES = r'''
   until: job_result.finished
   retries: 100
   delay: 10
+
+- name: Terminate job
+  ansible.builtin.async_status:
+    jid: '{{ yum_sleeper.ansible_job_id }}'
+    mode: terminate
 '''
 
 RETURN = r'''
@@ -100,10 +106,15 @@ erased:
   description: Path to erased job file
   returned: when file is erased
   type: str
+terminated:
+  description: Whether process was sent SIGKILL
+  returned: when mode=terminate
+  type: bool
 '''
 
 import json
 import os
+import signal
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import iteritems
@@ -114,7 +125,7 @@ def main():
 
     module = AnsibleModule(argument_spec=dict(
         jid=dict(type='str', required=True),
-        mode=dict(type='str', default='status', choices=['cleanup', 'status']),
+        mode=dict(type='str', default='status', choices=['cleanup', 'status', 'terminate']),
         # passed in from the async_status action plugin
         _async_dir=dict(type='path', required=True),
     ))
@@ -155,6 +166,23 @@ def main():
         data['ansible_job_id'] = jid
     elif 'finished' not in data:
         data['finished'] = 0
+
+    if not data['finished'] and mode == 'terminate':
+        try:
+            os.killpg(data['pid'], signal.SIGKILL)
+        except KeyError:
+            module.fail_json(
+                ansible_job_id=jid,
+                results_file=log_path,
+                started=1,
+                finished=data['finished'],
+                msg="Missing pid, cannot terminate"
+            )
+        else:
+            os.unlink(log_path)
+            data['terminated'] = True
+    else:
+        data['terminated'] = False
 
     # Fix error: TypeError: exit_json() keywords must be strings
     data = {to_native(k): v for k, v in iteritems(data)}
