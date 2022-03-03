@@ -7,14 +7,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import functools
+import typing as t
 
-try:
-    from typing import TYPE_CHECKING
-except ImportError:
-    TYPE_CHECKING = False
-
-if TYPE_CHECKING:
-    from typing import Iterable, List, NamedTuple, Optional, Union
+if t.TYPE_CHECKING:
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
     )
@@ -71,8 +66,8 @@ class CollectionDependencyProvider(AbstractProvider):
             self,  # type: CollectionDependencyProvider
             apis,  # type: MultiGalaxyAPIProxy
             concrete_artifacts_manager=None,  # type: ConcreteArtifactsManager
-            user_requirements=None,  # type: Iterable[Requirement]
-            preferred_candidates=None,  # type: Iterable[Candidate]
+            user_requirements=None,  # type: t.Iterable[Requirement]
+            preferred_candidates=None,  # type: t.Iterable[Candidate]
             with_deps=True,  # type: bool
             with_pre_releases=False,  # type: bool
             upgrade=False,  # type: bool
@@ -160,7 +155,7 @@ class CollectionDependencyProvider(AbstractProvider):
         return False
 
     def identify(self, requirement_or_candidate):
-        # type: (Union[Candidate, Requirement]) -> str
+        # type: (Candidate | Requirement) -> str
         """Given requirement or candidate, return an identifier for it.
 
         This is used to identify a requirement or candidate, e.g.
@@ -173,10 +168,10 @@ class CollectionDependencyProvider(AbstractProvider):
 
     def get_preference(
             self,  # type: CollectionDependencyProvider
-            resolution,  # type: Optional[Candidate]
-            candidates,  # type: List[Candidate]
-            information,  # type: List[NamedTuple]
-    ):  # type: (...) -> Union[float, int]
+            resolution,  # type: Candidate | None
+            candidates,  # type: list[Candidate]
+            information,  # type: list[t.NamedTuple]
+    ):  # type: (...) -> float | int
         """Return sort key function return value for given requirement.
 
         This result should be based on preference that is defined as
@@ -230,7 +225,7 @@ class CollectionDependencyProvider(AbstractProvider):
         return len(candidates)
 
     def find_matches(self, requirements):
-        # type: (List[Requirement]) -> List[Candidate]
+        # type: (list[Requirement]) -> list[Candidate]
         r"""Find all possible candidates satisfying given requirements.
 
         This tries to get candidates based on the requirements' types.
@@ -398,7 +393,7 @@ class CollectionDependencyProvider(AbstractProvider):
         )
 
     def get_dependencies(self, candidate):
-        # type: (Candidate) -> List[Candidate]
+        # type: (Candidate) -> list[Candidate]
         r"""Get direct dependencies of a candidate.
 
         :returns: A collection of requirements that `candidate` \

@@ -6,13 +6,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-try:
-    from typing import TYPE_CHECKING
-except ImportError:
-    TYPE_CHECKING = False
+import typing as t
 
-if TYPE_CHECKING:
-    from typing import Iterable
+if t.TYPE_CHECKING:
     from ansible.galaxy.api import GalaxyAPI
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
@@ -29,10 +25,10 @@ from ansible.galaxy.dependency_resolution.resolvers import CollectionDependencyR
 
 
 def build_collection_dependency_resolver(
-        galaxy_apis,  # type: Iterable[GalaxyAPI]
+        galaxy_apis,  # type: t.Iterable[GalaxyAPI]
         concrete_artifacts_manager,  # type: ConcreteArtifactsManager
-        user_requirements,  # type: Iterable[Requirement]
-        preferred_candidates=None,  # type: Iterable[Candidate]
+        user_requirements,  # type: t.Iterable[Requirement]
+        preferred_candidates=None,  # type: t.Iterable[Candidate]
         with_deps=True,  # type: bool
         with_pre_releases=False,  # type: bool
         upgrade=False,  # type: bool

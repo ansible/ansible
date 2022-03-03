@@ -11,30 +11,21 @@ import contextlib
 import os
 import subprocess
 import sys
+import typing as t
 
 from dataclasses import dataclass, fields as dc_fields
 from functools import partial
 from urllib.error import HTTPError, URLError
 
-try:
-    # NOTE: It's in Python 3 stdlib and can be installed on Python 2
-    # NOTE: via `pip install typing`. Unnecessary in runtime.
-    # NOTE: `TYPE_CHECKING` is True during mypy-typecheck-time.
-    from typing import TYPE_CHECKING
-except ImportError:
-    TYPE_CHECKING = False
-
-if TYPE_CHECKING:
+if t.TYPE_CHECKING:
     from ansible.utils.display import Display
-    from typing import Tuple, Iterator, Optional
-
 
 IS_PY310_PLUS = sys.version_info[:2] >= (3, 10)
 
 frozen_dataclass = partial(dataclass, frozen=True, **({'slots': True} if IS_PY310_PLUS else {}))
 
 
-def get_signature_from_source(source, display=None):  # type: (str, Optional[Display]) -> str
+def get_signature_from_source(source, display=None):  # type: (str, Display | None) -> str
     if display is not None:
         display.vvvv(f"Using signature at {source}")
     try:
@@ -58,7 +49,7 @@ def run_gpg_verify(
     signature,  # type: str
     keyring,  # type: str
     display,  # type: Display
-):  # type: (...) -> Tuple[str, int]
+):  # type: (...) -> tuple[str, int]
     status_fd_read, status_fd_write = os.pipe()
 
     # running the gpg command will create the keyring if it does not exist
@@ -108,7 +99,7 @@ def run_gpg_verify(
         return stdout, p.returncode
 
 
-def parse_gpg_errors(status_out):  # type: (str) -> Iterator[GpgBaseError]
+def parse_gpg_errors(status_out):  # type: (str) -> t.Iterator[GpgBaseError]
     for line in status_out.splitlines():
         if not line:
             continue
