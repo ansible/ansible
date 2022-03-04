@@ -123,6 +123,11 @@ COMMAND = 'sanity'
 SANITY_ROOT = os.path.join(ANSIBLE_TEST_CONTROLLER_ROOT, 'sanity')
 TARGET_SANITY_ROOT = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'sanity')
 
+# NOTE: must match ansible.constants.DOCUMENTABLE_PLUGINS, but with 'module' replaced by 'modules'!
+DOCUMENTABLE_PLUGINS = (
+    'become', 'cache', 'callback', 'cliconf', 'connection', 'httpapi', 'inventory', 'lookup', 'netconf', 'modules', 'shell', 'strategy', 'vars'
+)
+
 created_venvs = []  # type: t.List[str]
 
 
