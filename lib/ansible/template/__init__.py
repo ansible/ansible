@@ -471,8 +471,16 @@ class JinjaPluginIntercept(MutableMapping):
                     return func
 
             key, leaf_key = get_fqcr_and_name(key)
+            seen = set()
 
-            for dummy in range(30):
+            while True:
+                if key in seen:
+                    raise TemplateSyntaxError(
+                        'recursive collection redirect found for %r' % original_key,
+                        0
+                    )
+                seen.add(key)
+
                 acr = AnsibleCollectionRef.try_parse_fqcr(key, self._dirname)
 
                 if not acr:
@@ -520,11 +528,6 @@ class JinjaPluginIntercept(MutableMapping):
                     key = next_key
                 else:
                     break
-            else:
-                raise TemplateSyntaxError(
-                    'recursive collection redirect found, or more than 30 redirects for %r' % original_key,
-                    0
-                )
 
             func = self._collection_jinja_func_cache.get(key)
 

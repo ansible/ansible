@@ -38,7 +38,7 @@
   - assert:
       that:
         - redirect_failure is failed
-        - '"recursive collection redirect found, or more than 30 redirects for ''testns.testredirect.recursive_redirect''" in redirect_failure.msg'
+        - '"recursive collection redirect found for ''testns.testredirect.recursive_redirect''" in redirect_failure.msg'
   # legacy filter should mask redirected
   - assert:
       that: ('' | formerly_core_masked_filter) == 'hello from overridden formerly_core_masked_filter'
