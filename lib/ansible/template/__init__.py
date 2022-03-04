@@ -492,9 +492,6 @@ class JinjaPluginIntercept(MutableMapping):
 
                 routing_entry = ts.get('plugin_routing', {}).get(self._dirname, {}).get(leaf_key, {})
 
-                if not routing_entry:
-                    break
-
                 deprecation_entry = routing_entry.get('deprecation')
                 if deprecation_entry:
                     warning_text = deprecation_entry.get('warning_text')
