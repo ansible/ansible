@@ -2,3 +2,20 @@ plugin_routing:
   modules:
     ping:
       redirect: testns.testcoll.ping
+  filter:
+    multi_redirect_filter:
+      redirect: testns.testredirect.mid_redirect_filter
+      deprecation:
+        warning_text: deprecation1
+    mid_redirect_filter:
+      redirect: final_redirect_filter
+      deprecation:
+        warning_text: deprecation2
+    final_redirect_filter:
+      redirect: testns.testcoll.testfilter
+      deprecation:
+        warning_text: deprecation3
+    dead_end:
+      redirect: bad.redirect
+    recursive_redirect:
+      redirect: recursive_redirect
