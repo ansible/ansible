@@ -7,6 +7,7 @@ import re
 import typing as t
 
 from . import (
+    DOCUMENTABLE_PLUGINS,
     SanitySingleVersion,
     SanityFailure,
     SanitySuccess,
@@ -50,22 +51,7 @@ class AnsibleDocTest(SanitySingleVersion):
     """Sanity test for ansible-doc."""
     def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test."""
-        # This should use documentable plugins from constants instead
-        unsupported_plugin_types = {
-            # not supported by ansible-doc
-            'action',
-            'doc_fragments',
-            'filter',
-            'module_utils',
-            'terminal',
-            'test',
-            # The following are plugin directories not directly supported by ansible-core (and thus also not by ansible-doc)
-            # (https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#modules--plugins)
-            'plugin_utils',
-            'sub_plugins',
-        }
-
-        plugin_paths = [plugin_path for plugin_type, plugin_path in data_context().content.plugin_paths.items() if plugin_type not in unsupported_plugin_types]
+        plugin_paths = [plugin_path for plugin_type, plugin_path in data_context().content.plugin_paths.items() if plugin_type in DOCUMENTABLE_PLUGINS]
 
         return [target for target in targets
                 if os.path.splitext(target.path)[1] == '.py'

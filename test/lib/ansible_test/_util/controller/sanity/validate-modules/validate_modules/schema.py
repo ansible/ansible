@@ -11,7 +11,7 @@ from ansible.module_utils.compat.version import StrictVersion
 from functools import partial
 from urllib.parse import urlparse
 
-from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid
+from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid, Exclusive
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.collections import is_iterable
 from ansible.utils.version import SemanticVersion
@@ -384,47 +384,129 @@ def version_added(v, error_code='version-added-invalid', accept_historical=False
     return v
 
 
-def list_dict_option_schema(for_collection):
-    suboption_schema = Schema(
-        {
-            Required('description'): doc_string_or_strings,
-            'required': bool,
-            'choices': list,
-            'aliases': Any(list_string_types),
-            'version_added': version(for_collection),
-            'version_added_collection': collection_name,
-            'default': json_value,
-            # Note: Types are strings, not literal bools, such as True or False
-            'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-            # in case of type='list' elements define type of individual item in list
-            'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-            # Recursive suboptions
-            'suboptions': Any(None, *list({str_type: Self} for str_type in string_types)),
-        },
-        extra=PREVENT_EXTRA
-    )
+def list_dict_option_schema(for_collection, plugin_type):
+    if plugin_type == 'module':
+        option_types = Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str')
+        element_types = option_types
+    else:
+        option_types = Any(None, 'boolean', 'bool', 'integer', 'int', 'float', 'list', 'dict', 'dictionary', 'none',
+                           'path', 'tmp', 'temppath', 'tmppath', 'pathspec', 'pathlist', 'str', 'string', 'raw')
+        element_types = Any(None, 'boolean', 'bool', 'integer', 'int', 'float', 'list', 'dict', 'dictionary', 'path', 'str', 'string', 'raw')
+
+    basic_option_schema = {
+        Required('description'): doc_string_or_strings,
+        'required': bool,
+        'choices': list,
+        'aliases': Any(list_string_types),
+        'version_added': version(for_collection),
+        'version_added_collection': collection_name,
+        'default': json_value,
+        # Note: Types are strings, not literal bools, such as True or False
+        'type': option_types,
+        # in case of type='list' elements define type of individual item in list
+        'elements': element_types,
+    }
+    if plugin_type != 'module':
+        basic_option_schema['name'] = Any(*string_types)
+        deprecated_schema = All(
+            Schema(
+                All(
+                    {
+                        # This definition makes sure everything has the correct types/values
+                        'why': doc_string,
+                        'alternatives': doc_string,
+                        # vod stands for 'version or date'; this is the name of the exclusive group
+                        Exclusive('removed_at_date', 'vod'): date(),
+                        Exclusive('version', 'vod'): version(for_collection),
+                        'collection_name': collection_name,
+                    },
+                    {
+                        # This definition makes sure that everything we require is there
+                        Required('why'): Any(*string_types),
+                        'alternatives': Any(*string_types),
+                        Required(Any('removed_at_date', 'version')): Any(*string_types),
+                        Required('collection_name'): Any(*string_types),
+                    },
+                ),
+                extra=PREVENT_EXTRA
+            ),
+            partial(check_removal_version,
+                    version_field='version',
+                    collection_name_field='collection_name',
+                    error_code='invalid-removal-version')
+        )
+        env_schema = All(
+            Schema({
+                Required('name'): Any(*string_types),
+                'deprecated': deprecated_schema,
+                'version_added': version(for_collection),
+                'version_added_collection': collection_name,
+            }, extra=PREVENT_EXTRA),
+            partial(version_added, error_code='option-invalid-version-added')
+        )
+        ini_schema = All(
+            Schema({
+                Required('key'): Any(*string_types),
+                Required('section'): Any(*string_types),
+                'deprecated': deprecated_schema,
+                'version_added': version(for_collection),
+                'version_added_collection': collection_name,
+            }, extra=PREVENT_EXTRA),
+            partial(version_added, error_code='option-invalid-version-added')
+        )
+        vars_schema = All(
+            Schema({
+                Required('name'): Any(*string_types),
+                'deprecated': deprecated_schema,
+                'version_added': version(for_collection),
+                'version_added_collection': collection_name,
+            }, extra=PREVENT_EXTRA),
+            partial(version_added, error_code='option-invalid-version-added')
+        )
+        cli_schema = All(
+            Schema({
+                Required('name'): Any(*string_types),
+                'option': Any(*string_types),
+                'deprecated': deprecated_schema,
+                'version_added': version(for_collection),
+                'version_added_collection': collection_name,
+            }, extra=PREVENT_EXTRA),
+            partial(version_added, error_code='option-invalid-version-added')
+        )
+        keyword_schema = All(
+            Schema({
+                Required('name'): Any(*string_types),
+                'deprecated': deprecated_schema,
+                'version_added': version(for_collection),
+                'version_added_collection': collection_name,
+            }, extra=PREVENT_EXTRA),
+            partial(version_added, error_code='option-invalid-version-added')
+        )
+        basic_option_schema.update({
+            'env': [env_schema],
+            'ini': [ini_schema],
+            'vars': [vars_schema],
+            'cli': [cli_schema],
+            'keyword': [keyword_schema],
+            'deprecated': deprecated_schema,
+        })
+
+    suboption_schema = dict(basic_option_schema)
+    suboption_schema.update({
+        # Recursive suboptions
+        'suboptions': Any(None, *list({str_type: Self} for str_type in string_types)),
+    })
+    suboption_schema = Schema(suboption_schema, extra=PREVENT_EXTRA)
 
     # This generates list of dicts with keys from string_types and suboption_schema value
     # for example in Python 3: {str: suboption_schema}
     list_dict_suboption_schema = [{str_type: suboption_schema} for str_type in string_types]
 
-    option_schema = Schema(
-        {
-            Required('description'): doc_string_or_strings,
-            'required': bool,
-            'choices': list,
-            'aliases': Any(list_string_types),
-            'version_added': version(for_collection),
-            'version_added_collection': collection_name,
-            'default': json_value,
-            'suboptions': Any(None, *list_dict_suboption_schema),
-            # Note: Types are strings, not literal bools, such as True or False
-            'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-            # in case of type='list' elements define type of individual item in list
-            'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-        },
-        extra=PREVENT_EXTRA
-    )
+    option_schema = dict(basic_option_schema)
+    option_schema.update({
+        'suboptions': Any(None, *list_dict_suboption_schema),
+    })
+    option_schema = Schema(option_schema, extra=PREVENT_EXTRA)
 
     option_version_added = Schema(
         All({
@@ -450,24 +532,38 @@ def return_contains(v):
     return v
 
 
-def return_schema(for_collection):
+def return_schema(for_collection, plugin_type='module'):
+    if plugin_type == 'module':
+        return_types = Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str')
+        element_types = Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str')
+    else:
+        return_types = Any(None, 'boolean', 'bool', 'integer', 'int', 'float', 'list', 'dict', 'dictionary', 'path', 'str', 'string', 'raw')
+        element_types = return_types
+
+    basic_return_option_schema = {
+        Required('description'): doc_string_or_strings,
+        'returned': doc_string,
+        'version_added': version(for_collection),
+        'version_added_collection': collection_name,
+        'sample': json_value,
+        'example': json_value,
+        # in case of type='list' elements define type of individual item in list
+        'elements': element_types,
+        'choices': Any([object], (object,)),
+    }
+    if plugin_type == 'module':
+        # type is only required for modules right now
+        basic_return_option_schema[Required('type')] = return_types
+    else:
+        basic_return_option_schema['type'] = return_types
+
+    inner_return_option_schema = dict(basic_return_option_schema)
+    inner_return_option_schema.update({
+        'contains': Any(None, *list({str_type: Self} for str_type in string_types)),
+    })
     return_contains_schema = Any(
         All(
-            Schema(
-                {
-                    Required('description'): doc_string_or_strings,
-                    'returned': doc_string,  # only returned on top level
-                    Required('type'): Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str'),
-                    'version_added': version(for_collection),
-                    'version_added_collection': collection_name,
-                    'choices': Any([object], (object,)),
-                    'sample': json_value,
-                    'example': json_value,
-                    'contains': Any(None, *list({str_type: Self} for str_type in string_types)),
-                    # in case of type='list' elements define type of individual item in list
-                    'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-                }
-            ),
+            Schema(inner_return_option_schema),
             Schema(return_contains),
             Schema(partial(version_added, error_code='option-invalid-version-added')),
         ),
@@ -478,23 +574,19 @@ def return_schema(for_collection):
     # for example in Python 3: {str: return_contains_schema}
     list_dict_return_contains_schema = [{str_type: return_contains_schema} for str_type in string_types]
 
+    return_option_schema = dict(basic_return_option_schema)
+    return_option_schema.update({
+        'contains': Any(None, *list_dict_return_contains_schema),
+    })
+    if plugin_type == 'module':
+        # 'returned' is required on top-level
+        del return_option_schema['returned']
+        return_option_schema[Required('returned')] = Any(*string_types)
     return Any(
         All(
             Schema(
                 {
-                    any_string_types: {
-                        Required('description'): doc_string_or_strings,
-                        Required('returned'): doc_string,
-                        Required('type'): Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str'),
-                        'version_added': version(for_collection),
-                        'version_added_collection': collection_name,
-                        'choices': Any([object], (object,)),
-                        'sample': json_value,
-                        'example': json_value,
-                        'contains': Any(None, *list_dict_return_contains_schema),
-                        # in case of type='list' elements define type of individual item in list
-                        'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-                    }
+                    any_string_types: return_option_schema
                 }
             ),
             Schema({any_string_types: return_contains}),
@@ -560,24 +652,35 @@ def author(value):
     return value
 
 
-def doc_schema(module_name, for_collection=False, deprecated_module=False):
+def doc_schema(module_name, for_collection=False, deprecated_module=False, plugin_type='module'):
 
     if module_name.startswith('_'):
         module_name = module_name[1:]
         deprecated_module = True
+    if for_collection is False and plugin_type == 'connection' and module_name == 'paramiko_ssh':
+        # The plugin loader has a hard-coded exception: when the builtin connection 'paramiko' is
+        # referenced, it loads 'paramiko_ssh' instead. That's why in this plugin, the name must be
+        # 'paramiko' and not 'paramiko_ssh'.
+        module_name = 'paramiko'
     doc_schema_dict = {
-        Required('module'): module_name,
+        Required('module' if plugin_type == 'module' else 'name'): module_name,
         Required('short_description'): doc_string,
         Required('description'): doc_string_or_strings,
-        Required('author'): All(Any(None, list_string_types, *string_types), author),
         'notes': Any(None, [doc_string]),
         'seealso': Any(None, seealso_schema),
         'requirements': [doc_string],
         'todo': Any(None, doc_string_or_strings),
-        'options': Any(None, *list_dict_option_schema(for_collection)),
+        'options': Any(None, *list_dict_option_schema(for_collection, plugin_type)),
         'extends_documentation_fragment': Any(list_string_types, *string_types),
         'version_added_collection': collection_name,
     }
+    if plugin_type == 'module':
+        doc_schema_dict[Required('author')] = All(Any(None, list_string_types, *string_types), author)
+    else:
+        # author is optional for plugins (for now)
+        doc_schema_dict['author'] = All(Any(None, list_string_types, *string_types), author)
+    if plugin_type == 'callback':
+        doc_schema_dict[Required('type')] = Any('aggregate', 'notification', 'stdout')
 
     if for_collection:
         # Optional
