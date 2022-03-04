@@ -9434,37 +9434,37 @@ plugin_routing:
     k8s_config_resource_name:
       redirect: kubernetes.core.k8s_config_resource_name
     cidr_merge:
-      redirect: ansible.utils.cidr_merge
+      redirect: ansible.netcommon.cidr_merge
     ipaddr:
-      redirect: ansible.utils.ipaddr
+      redirect: ansible.netcommon.ipaddr
     ipmath:
-      redirect: ansible.utils.ipmath
+      redirect: ansible.netcommon.ipmath
     ipwrap:
-      redirect: ansible.utils.ipwrap
+      redirect: ansible.netcommon.ipwrap
     ip4_hex:
-      redirect: ansible.utils.ip4_hex
+      redirect: ansible.netcommon.ip4_hex
     ipv4:
-      redirect: ansible.utils.ipv4
+      redirect: ansible.netcommon.ipv4
     ipv6:
-      redirect: ansible.utils.ipv6
+      redirect: ansible.netcommon.ipv6
     ipsubnet:
-      redirect: ansible.utils.ipsubnet
+      redirect: ansible.netcommon.ipsubnet
     next_nth_usable:
-      redirect: ansible.utils.next_nth_usable
+      redirect: ansible.netcommon.next_nth_usable
     network_in_network:
-      redirect: ansible.utils.network_in_network
+      redirect: ansible.netcommon.network_in_network
     network_in_usable:
-      redirect: ansible.utils.network_in_usable
+      redirect: ansible.netcommon.network_in_usable
     reduce_on_network:
-      redirect: ansible.utils.reduce_on_network
+      redirect: ansible.netcommon.reduce_on_network
     nthhost:
-      redirect: ansible.utils.nthhost
+      redirect: ansible.netcommon.nthhost
     previous_nth_usable:
-      redirect: ansible.utils.previous_nth_usable
+      redirect: ansible.netcommon.previous_nth_usable
     slaac:
-      redirect: ansible.utils.slaac
+      redirect: ansible.netcommon.slaac
     hwaddr:
-      redirect: ansible.utils.hwaddr
+      redirect: ansible.netcommon.hwaddr
     parse_cli:
       redirect: ansible.netcommon.parse_cli
     parse_cli_textfsm:
