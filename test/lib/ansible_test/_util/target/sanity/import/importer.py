@@ -228,7 +228,7 @@ def main():
             return None
 
         def exec_module(self, module):
-            """Execute the module if the name is restricted and otherwise raise an ImportError
+            """Execute the module if the name is ansible.module_utils.basic and otherwise raise an ImportError
             :param module: module
             """
             fullname = module.__spec__.name
@@ -248,7 +248,7 @@ def main():
             raise ImportError('import of "%s" is not allowed in this context' % fullname)
 
         def load_module(self, fullname):
-            """Return the module if the name is restricted and otherwise raise an ImportError.
+            """Return the module if the name is ansible.module_utils.basic and otherwise raise an ImportError.
             :type fullname: str
             :rtype: module
             """
