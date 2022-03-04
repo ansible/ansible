@@ -1491,8 +1491,8 @@ GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES:
   - KEYREVOKED
   - NO_SECKEY
 GALAXY_REQUIRED_VALID_SIGNATURE_COUNT:
-  type: int
-  default: 1
+  type: str
+  default: 1  # should this be strict (+1) by default?
   env:
   - name: ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT
   ini:
@@ -1500,7 +1500,8 @@ GALAXY_REQUIRED_VALID_SIGNATURE_COUNT:
     key: required_valid_signature_count
   description:
   - The number of signatures that must be successful during GPG signature verification while installing or verifying collections.
-  - This should be a positive integer or the special value of -1 to indicate all signatures must successfully validate the collection.
+  - This should be a positive integer or all to indicate all signatures must successfully validate the collection.
+  - Prepend + to the value to fail if no valid signatures are found for the collection.
 HOST_KEY_CHECKING:
   # note: constant not in use by ssh plugin anymore
   # TODO: check non ssh connection plugins for use/migration

@@ -80,7 +80,7 @@ Use the ``--signature`` option to verify the collection's ``MANIFEST.json`` with
 
 GnuPG verification only occurs for collections installed from a Galaxy server. User-provided signatures are not used to verify collections installed from git repositories, source directories, or URLs/paths to tar.gz files.
 
-By default, verification is considered successful if a minimum of 1 signature successfully verifies the collection. The number of required signatures can be configured with ``--required-valid-signature-count`` or :ref:`GALAXY_REQUIRED_VALID_SIGNATURE_COUNT`. All signatures can be required by setting the option to -1.
+By default, verification is considered successful if a minimum of 1 signature successfully verifies the collection. The number of required signatures can be configured with ``--required-valid-signature-count`` or :ref:`GALAXY_REQUIRED_VALID_SIGNATURE_COUNT`. All signatures can be required by setting the option to ``all``. To fail signature verification if no valid signatures are found, prepend the value with ``+``, such as ``+all`` or ``+1``.
 
 .. code-block:: bash
 
@@ -95,7 +95,7 @@ This example requires any signatures provided by the Galaxy server to verify the
 .. code-block:: bash
 
    export ANSIBLE_GALAXY_GPG_KEYRING=~/.ansible/pubring.kbx
-   export ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT=-1
+   export ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT=all
    ansible-galaxy collection install my_namespace.my_collection --ignore-signature-status-code NO_PUBKEY
 
 If verification fails for the example above, only errors other than NO_PUBKEY will be displayed.

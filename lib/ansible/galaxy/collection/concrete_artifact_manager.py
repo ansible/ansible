@@ -57,7 +57,7 @@ class ConcreteArtifactsManager:
         * retrieving the metadata out of the downloaded artifacts
     """
     def __init__(self, b_working_directory, validate_certs=True, keyring=None, timeout=60, required_signature_count=None, ignore_signature_errors=None):
-        # type: (bytes, bool, str, int, int, list[str]) -> None
+        # type: (bytes, bool, str, int, str, list[str]) -> None
         """Initialize ConcreteArtifactsManager caches and costraints."""
         self._validate_certs = validate_certs  # type: bool
         self._artifact_cache = {}  # type: dict[bytes, bytes]
@@ -69,7 +69,7 @@ class ConcreteArtifactsManager:
         self._supplemental_signature_cache = {}  # type: dict[str, str]
         self._keyring = keyring  # type: str
         self.timeout = timeout  # type: int
-        self._required_signature_count = required_signature_count  # type: int
+        self._required_signature_count = required_signature_count  # type: str
         self._ignore_signature_errors = ignore_signature_errors  # type: list[str]
 
     @property

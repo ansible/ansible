@@ -495,7 +495,7 @@
     keyring: "{{ gpg_homedir }}/pubring.kbx"
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
-    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: -1
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
 
 - name: assert invalid signature is fatal with ansible-galaxy install - {{ test_name }}
   assert:
@@ -518,7 +518,7 @@
     keyring: "{{ gpg_homedir }}/pubring.kbx"
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
-    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: -1
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
 
 - name: get result of install collections with ansible-galaxy install - {{ test_name }}
   slurp:
@@ -616,7 +616,7 @@
     keyring: "{{ gpg_homedir }}/pubring.kbx"
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
-    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: -1
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
     ANSIBLE_GALAXY_IGNORE_SIGNATURE_STATUS_CODES: BADSIG  # cli option is appended and both status codes are ignored
 
 - name: get result of install collections with ansible-galaxy install - {{ test_name }}

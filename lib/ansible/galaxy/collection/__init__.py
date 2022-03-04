@@ -329,9 +329,15 @@ def verify_local_collection(
 
 
 def verify_file_signatures(fqcn, manifest_file, detached_signatures, keyring, required_successful_count, ignore_signature_errors):
-    # type: (str, str, List[str], str, int, List[str]) -> bool
+    # type: (str, str, List[str], str, str, List[str]) -> bool
     successful = 0
     error_messages = []
+
+    strict = required_successful_count.startswith('+')
+    if strict:
+        required_successful_count = required_successful_count[1:]
+    if required_successful_count != 'all':
+        required_successful_count = int(required_successful_count)
 
     for signature in detached_signatures:
         signature = to_text(signature, errors='surrogate_or_strict')
@@ -339,6 +345,7 @@ def verify_file_signatures(fqcn, manifest_file, detached_signatures, keyring, re
             verify_file_signature(manifest_file, signature, keyring, ignore_signature_errors)
         except CollectionSignatureError as error:
             if error.ignore:
+                # Do not include ignored errors in either the failed or successful count
                 continue
             error_messages.append(error.report(fqcn))
         else:
@@ -346,24 +353,22 @@ def verify_file_signatures(fqcn, manifest_file, detached_signatures, keyring, re
             if successful == required_successful_count:
                 break
 
-    # If a signature fails verification but all the gpg errors are ignored, it is not part of the failed or successful count.
-    if required_successful_count == -1:
+    if strict and not successful:
+        verified = False
+        display.display(f"Signature verification failed for '{fqcn}': no successful signatures")
+    elif required_successful_count == 'all':
         verified = not error_messages
         if not verified:
-            display.display(f"Signature verification failed for '{fqcn}': failed signatures or no successful signatures")
-        # elif not successful and detached_signatures:
-        #     warn because no signatures were successful but the status codes were ignored?
-        # elif not detached_signatures:
-        #     warn because no signatures were found but requested 'all'? none == all?
+            display.display(f"Signature verification failed for '{fqcn}': some signatures failed")
     else:
-        verified = required_successful_count == successful
-        # if not detached_signatures:
-        #    warn instead of error if no signatures are found?
+        verified = not detached_signatures or required_successful_count == successful
         if not verified:
             display.display(f"Signature verification failed for '{fqcn}': fewer successful signatures than required")
+
     if not verified:
         for msg in error_messages:
             display.vvvv(msg)
+
     return verified
 
 
