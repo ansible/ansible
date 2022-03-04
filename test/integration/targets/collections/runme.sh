@@ -70,7 +70,7 @@ echo "testing redirect and deprecation display"
 ANSIBLE_DEPRECATION_WARNINGS=yes ansible localhost -m debug -a msg='{{ "data" | testns.testredirect.multi_redirect_filter }}' -vvvvv 2>&1 | tee out.txt
 cat out.txt
 
-test "$(grep out.txt -e 'deprecation1' -e 'deprecation2' -e 'deprecation3' | wc -l)" == 3
+test "$(grep out.txt -ce 'deprecation1' -ce 'deprecation2' -ce 'deprecation3')" == 3
 grep out.txt -e 'redirecting (type: filter) testns.testredirect.multi_redirect_filter to testns.testredirect.mid_redirect_filter'
 grep out.txt -e 'redirecting (type: filter) testns.testredirect.mid_redirect_filter to testns.testredirect.final_redirect_filter'
 grep out.txt -e 'redirecting (type: filter) testns.testredirect.final_redirect_filter to testns.testcoll.testfilter'
