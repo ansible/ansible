@@ -80,20 +80,15 @@ function gen_egg_info
         rm -rf $PREFIX_PYTHONPATH/ansible*.egg-info
     end
 
-    if [ $QUIET ]
-        set options '-q'
-    end
-
-    eval $PYTHON_BIN setup.py $options egg_info
-
+    eval $PYTHON_BIN setup.py egg_info
 end
 
 
 pushd $ANSIBLE_HOME
 
 if [ $QUIET ]
-    gen_egg_info ^ /dev/null
-    find . -type f -name "*.pyc" -exec rm -f '{}' ';' ^ /dev/null
+    gen_egg_info &> /dev/null
+    find . -type f -name "*.pyc" -exec rm -f '{}' ';' &> /dev/null
 else
     gen_egg_info
     find . -type f -name "*.pyc" -exec rm -f '{}' ';'
