@@ -42,7 +42,7 @@ class MultiGalaxyAPIProxy:
         and reraise the last error if no valid API was found.
         """
         found_api = False
-        last_error = None
+        last_error = None  # type: Exception | None
 
         api_lookup_order = (
             (requirement.src, )
@@ -163,11 +163,11 @@ class MultiGalaxyAPIProxy:
         )
 
     def get_signatures(self, collection_candidate):
-        # type: (Candidate) -> list[dict[str, str]]
+        # type: (Candidate) -> list[str]
         namespace = collection_candidate.namespace
         name = collection_candidate.name
         version = collection_candidate.ver
-        last_err = None
+        last_err = None  # type: Exception | None
 
         api_lookup_order = (
             (collection_candidate.src, )

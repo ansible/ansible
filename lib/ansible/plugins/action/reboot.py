@@ -48,7 +48,7 @@ class ActionModule(ActionBase):
     DEFAULT_SHUTDOWN_COMMAND_ARGS = '-r {delay_min} "{message}"'
     DEFAULT_SUDOABLE = True
 
-    DEPRECATED_ARGS = {}
+    DEPRECATED_ARGS = {}  # type: dict[str, str]
 
     BOOT_TIME_COMMANDS = {
         'freebsd': '/sbin/sysctl kern.boottime',

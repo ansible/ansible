@@ -855,7 +855,7 @@ class Base(FieldAttributeBase):
     _become_exe = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_exe'))
 
     # used to hold sudo/su stuff
-    DEPRECATED_ATTRIBUTES = []
+    DEPRECATED_ATTRIBUTES = []  # type: list[str]
 
     def get_path(self):
         ''' return the absolute path of the playbook object and its line number '''

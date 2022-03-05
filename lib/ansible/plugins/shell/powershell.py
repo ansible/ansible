@@ -62,7 +62,7 @@ class ShellModule(ShellBase):
     # Common shell filenames that this plugin handles
     # Powershell is handled differently.  It's selected when winrm is the
     # connection
-    COMPATIBLE_SHELLS = frozenset()
+    COMPATIBLE_SHELLS = frozenset()  # type: frozenset[str]
     # Family of shells this has.  Must match the filename without extension
     SHELL_FAMILY = 'powershell'
 

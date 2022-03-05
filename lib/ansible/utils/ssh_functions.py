@@ -27,7 +27,7 @@ from ansible.module_utils._text import to_bytes
 from ansible.module_utils.compat.paramiko import paramiko
 
 
-_HAS_CONTROLPERSIST = {}
+_HAS_CONTROLPERSIST = {}  # type: dict[str, bool]
 
 
 def check_for_controlpersist(ssh_executable):

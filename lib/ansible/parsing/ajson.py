@@ -17,7 +17,7 @@ from ansible.utils.unsafe_proxy import wrap_var
 
 class AnsibleJSONDecoder(json.JSONDecoder):
 
-    _vaults = {}
+    _vaults = {}  # type: dict[str, VaultLib]
 
     def __init__(self, *args, **kwargs):
         kwargs['object_hook'] = self.object_hook
