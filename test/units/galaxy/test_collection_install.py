@@ -987,21 +987,24 @@ def test_install_collection_with_circular_dependency(collection_artifact, monkey
 @pytest.mark.parametrize(
     "signatures,required_successful_count,ignore_errors,expected_success",
     [
-        ([], -1, [], True),
-        (["good_signature"], -1, [], True),
-        (["good_signature", collection.gpg.GpgBadArmor(status='failed')], -1, [], False),
-        ([collection.gpg.GpgBadArmor(status='failed')], -1, [], False),
+        ([], 'all', [], True),
+        (["good_signature"], 'all', [], True),
+        (["good_signature", collection.gpg.GpgBadArmor(status='failed')], 'all', [], False),
+        ([collection.gpg.GpgBadArmor(status='failed')], 'all', [], False),
         # This is expected to succeed because ignored does not increment failed signatures.
-        # "all" signatures (-1) is not a specific number, so all == no (non-ignored) signatures in this case.
-        ([collection.gpg.GpgBadArmor(status='failed')], -1, ["BADARMOR"], True),
-        ([collection.gpg.GpgBadArmor(status='failed'), "good_signature"], -1, ["BADARMOR"], True),
-        ([], 1, [], False),
-        (["good_signature"], 2, [], False),
-        (["good_signature", collection.gpg.GpgBadArmor(status='failed')], 2, [], False),
+        # "all" signatures is not a specific number, so all == no (non-ignored) signatures in this case.
+        ([collection.gpg.GpgBadArmor(status='failed')], 'all', ["BADARMOR"], True),
+        ([collection.gpg.GpgBadArmor(status='failed'), "good_signature"], 'all', ["BADARMOR"], True),
+        ([], '+all', [], False),
+        ([collection.gpg.GpgBadArmor(status='failed')], '+all', ["BADARMOR"], False),
+        ([], '1', [], True),
+        ([], '+1', [], False),
+        (["good_signature"], '2', [], False),
+        (["good_signature", collection.gpg.GpgBadArmor(status='failed')], '2', [], False),
         # This is expected to fail because ignored does not increment successful signatures.
         # 2 signatures are required, but only 1 is successful.
-        (["good_signature", collection.gpg.GpgBadArmor(status='failed')], 2, ["BADARMOR"], False),
-        (["good_signature", "good_signature"], 2, [], True),
+        (["good_signature", collection.gpg.GpgBadArmor(status='failed')], '2', ["BADARMOR"], False),
+        (["good_signature", "good_signature"], '2', [], True),
     ]
 )
 def test_verify_file_signatures(signatures, required_successful_count, ignore_errors, expected_success):
