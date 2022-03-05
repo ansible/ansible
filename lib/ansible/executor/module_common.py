@@ -50,13 +50,8 @@ from ansible.executor import action_write_locks
 from ansible.utils.display import Display
 from collections import namedtuple
 
-
-try:
-    import importlib.util
-    import importlib.machinery
-    imp = None
-except ImportError:
-    import imp
+import importlib.util
+import importlib.machinery
 
 # if we're on a Python that doesn't have FNFError, redefine it as IOError (since that's what we'll see)
 try:
@@ -812,34 +807,14 @@ class LegacyModuleUtilLocator(ModuleUtilLocatorBase):
             paths = [os.path.join(p, *rel_name_parts[:-1]) for p in
                      self._mu_paths]  # extend the MU paths with the relative bit
 
-        if imp is None:  # python3 find module
-            # find_spec needs the full module name
-            self._info = info = importlib.machinery.PathFinder.find_spec('.'.join(name_parts), paths)
-            if info is not None and os.path.splitext(info.origin)[1] in importlib.machinery.SOURCE_SUFFIXES:
-                self.is_package = info.origin.endswith('/__init__.py')
-                path = info.origin
-            else:
-                return False
-            self.source_code = _slurp(path)
-        else:  # python2 find module
-            try:
-                # imp just wants the leaf module/package name being searched for
-                info = imp.find_module(name_parts[-1], paths)
-            except ImportError:
-                return False
-
-            if info[2][2] == imp.PY_SOURCE:
-                fd = info[0]
-            elif info[2][2] == imp.PKG_DIRECTORY:
-                self.is_package = True
-                fd = open(os.path.join(info[1], '__init__.py'))
-            else:
-                return False
-
-            try:
-                self.source_code = fd.read()
-            finally:
-                fd.close()
+        # find_spec needs the full module name
+        self._info = info = importlib.machinery.PathFinder.find_spec('.'.join(name_parts), paths)
+        if info is not None and os.path.splitext(info.origin)[1] in importlib.machinery.SOURCE_SUFFIXES:
+            self.is_package = info.origin.endswith('/__init__.py')
+            path = info.origin
+        else:
+            return False
+        self.source_code = _slurp(path)
 
         return True
 

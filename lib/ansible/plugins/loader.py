@@ -38,11 +38,7 @@ except ImportError:
     SpecifierSet = None
     Version = None
 
-try:
-    import importlib.util
-    imp = None
-except ImportError:
-    import imp
+import importlib.util
 
 display = Display()
 
@@ -788,15 +784,10 @@ class PluginLoader:
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
-            if imp is None:
-                spec = importlib.util.spec_from_file_location(to_native(full_name), to_native(path))
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-                sys.modules[full_name] = module
-            else:
-                with open(to_bytes(path), 'rb') as module_file:
-                    # to_native is used here because imp.load_source's path is for tracebacks and python's traceback formatting uses native strings
-                    module = imp.load_source(to_native(full_name), to_native(path), module_file)
+            spec = importlib.util.spec_from_file_location(to_native(full_name), to_native(path))
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            sys.modules[full_name] = module
         return module
 
     def _update_object(self, obj, name, path, redirected_names=None):
