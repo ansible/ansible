@@ -275,8 +275,8 @@ def _add_base_defs_deprecations(base_defs):
 
 class ConfigManager(object):
 
-    DEPRECATED = []
-    WARNINGS = set()
+    DEPRECATED = []  # type: list[tuple[str, dict[str, str]]]
+    WARNINGS = set()  # type: set[str]
 
     def __init__(self, conf_file=None, defs_file=None):
 

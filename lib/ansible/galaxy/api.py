@@ -308,7 +308,7 @@ class GalaxyAPI:
         )
 
     def __lt__(self, other_galaxy_api):
-        # type: (GalaxyAPI, GalaxyAPI) -> bool | NotImplemented
+        # type: (GalaxyAPI, GalaxyAPI) -> bool
         """Return whether the instance priority is higher than other."""
         if not isinstance(other_galaxy_api, self.__class__):
             return NotImplemented
@@ -318,7 +318,7 @@ class GalaxyAPI:
             self.name < self.name
         )
 
-    @property
+    @property  # type: ignore[misc]  # https://github.com/python/mypy/issues/1362
     @g_connect(['v1', 'v2', 'v3'])
     def available_api_versions(self):
         # Calling g_connect will populate self._available_api_versions
