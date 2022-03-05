@@ -40,10 +40,10 @@ class TerminalBase(ABC):
     '''
 
     #: compiled bytes regular expressions as stdout
-    terminal_stdout_re = []
+    terminal_stdout_re = []  # type: list[re.Pattern]
 
     #: compiled bytes regular expressions as stderr
-    terminal_stderr_re = []
+    terminal_stderr_re = []  # type: list[re.Pattern]
 
     #: compiled bytes regular expressions to remove ANSI codes
     ansi_re = [

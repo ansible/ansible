@@ -8,9 +8,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 try:
-    from collections.abc import Mapping   # pylint: disable=ansible-bad-import-from
+    from collections.abc import Mapping
 except ImportError:
-    from collections import Mapping  # pylint: disable=ansible-bad-import-from
+    from collections import Mapping  # type: ignore[no-redef,attr-defined]  # pylint: disable=ansible-bad-import-from
 
 from ansible.module_utils.common.yaml import yaml_load
 

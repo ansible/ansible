@@ -18,7 +18,7 @@ display = Display()
 
 class JsonRpcServer(object):
 
-    _objects = set()
+    _objects = set()  # type: set[object]
 
     def handle_request(self, request):
         request = json.loads(to_text(request, errors='surrogate_then_replace'))

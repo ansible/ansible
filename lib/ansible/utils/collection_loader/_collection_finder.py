@@ -660,7 +660,7 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
 # loads everything under a collection, including handling redirections defined by the collection
 class _AnsibleCollectionLoader(_AnsibleCollectionPkgLoaderBase):
     # HACK: stash this in a better place
-    _redirected_package_map = {}
+    _redirected_package_map = {}  # type: dict[str, str]
     _allows_package_code = True
 
     def _validate_args(self):

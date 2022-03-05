@@ -61,7 +61,7 @@ from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.utils.vars import combine_vars
 
-FOUND = {}
+FOUND = {}  # type: dict[str, list[str]]
 
 
 class VarsModule(BaseVarsPlugin):

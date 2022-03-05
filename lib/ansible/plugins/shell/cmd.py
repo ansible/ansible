@@ -24,7 +24,7 @@ _find_unsafe = re.compile(r'[\s\(\)\%\!^\"\<\>\&\|]').search
 class ShellModule(PSShellModule):
 
     # Common shell filenames that this plugin handles
-    COMPATIBLE_SHELLS = frozenset()
+    COMPATIBLE_SHELLS = frozenset()  # type: frozenset[str]
     # Family of shells this has.  Must match the filename without extension
     SHELL_FAMILY = 'cmd'
 

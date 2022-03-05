@@ -299,7 +299,7 @@ class CollectionDependencyProvider(AbstractProvider):
 
         latest_matches = []
         signatures = []
-        extra_signature_sources = []
+        extra_signature_sources = []  # type: list[str]
         for version, src_server in coll_versions:
             tmp_candidate = Candidate(fqcn, version, src_server, 'galaxy', None)
 
