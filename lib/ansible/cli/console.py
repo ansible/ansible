@@ -61,7 +61,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
     '''
 
     name = 'ansible-console'
-    modules = []
+    modules = []  # type: list[str] | None
     ARGUMENTS = {'host-pattern': 'A name of a group in the inventory, a shell-like glob '
                                  'selecting hosts in inventory or any combination of the two separated by commas.'}
 

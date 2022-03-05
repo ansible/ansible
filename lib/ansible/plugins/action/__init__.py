@@ -46,7 +46,7 @@ class ActionBase(ABC):
     '''
 
     # A set of valid arguments
-    _VALID_ARGS = frozenset([])
+    _VALID_ARGS = frozenset([])  # type: frozenset[str]
 
     def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
         self._task = task
