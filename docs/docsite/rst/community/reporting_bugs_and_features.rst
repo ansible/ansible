@@ -25,9 +25,9 @@ Before reporting a bug, use the bug/issue search to check for already reported i
 
 Do not open issues for "how do I do this" type questions. These are great topics for community chat channels or a mailing list, where things are likely to be more of a discussion.
 
-If you are unsure whether a bug is in ansible-core or in a collection, report the behavior on the :ref:`mailing list or community chat channel first <communication>`.
+If you are unsure whether a bug is in ``ansible-core`` or in a collection, report the behavior on the :ref:`mailing list or community chat channel first <communication>`.
 
-You need a free GitHub account to report a bug to `github.com/ansible/ansible/issues <https://github.com/ansible/ansible/issues>`_ for bugs
+You need a free GitHub account to report issues to `github.com/ansible/ansible/issues <https://github.com/ansible/ansible/issues>`_ for bugs
 - affecting multiple plugins
 - a plugin that remained in the ansible/ansible repo
 - the overall functioning of Ansible
@@ -42,9 +42,9 @@ If you find a bug, open an issue using the `issue template <https://github.com/a
   * the exact commands or tasks you are running
   * the expected behavior
   * the steps to reproduce the bug
-    * Use minimal reproducible examples, not your entire production playbook. Use comments to describe your case.
-    * When sharing YAML in playbooks, preserve formatting using `code blocks  <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_.
-  * the current behavior you got
+    * Use a minimal reproducible example and comments describing examples
+    * Preserve formatting using `code blocks  <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_ when sharing YAML in playbooks.
+  * the behavior you currently see
   * output where possible
 
 For multiple-file content, use gist.github.com, which is more durable than pastebin content.
@@ -57,4 +57,4 @@ Requesting a feature
 Before you request a feature, check what is :ref:`planned for future Ansible Releases <roadmaps>`.
 To get your feature into Ansible, to :ref:`submit a pull request <community_pull_requests>`, either against ansible-core or against a collection. See also :ref:`ansible_collection_merge_requirements`.
 
-You can also open an issue in the `ansible/ansible <https://github.com/ansible/ansible/issues>`_ for ``ansible-core`` or in a corresponding collection repository (refer to the :ref:`Bugs in collections<reporting_bugs_in_collections>` section to learn how to find a proper issue tracker).
+For ``ansible-core``, you can also open an issue in `ansible/ansible <https://github.com/ansible/ansible/issues>`_  or in a corresponding collection repository (to learn how to find a proper issue tracker, refer to :ref:`Bugs in collections<reporting_bugs_in_collections>` section ).
