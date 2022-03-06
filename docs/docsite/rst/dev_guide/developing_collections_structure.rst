@@ -92,7 +92,9 @@ plugins directory
 
 Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by most plugins by using their FQCN. This is a way to distribute modules, lookups, filters, and so on without having to import a role in every play.
 
-Vars plugins are unsupported in collections. Cache plugins may be used in collections for fact caching, but are not supported for inventory plugins.
+Vars plugins were initially unsupported in collections, but starting in Ansible 2.10 they are supported as long as they are explicitly enabled using their fully qualified collection name. See `vars plugins documentation`_ for details. Cache plugins may be used in collections for fact caching, but are not supported for inventory plugins.
+
+.. _vars plugins documentation: https://docs.ansible.com/ansible/latest/plugins/vars.html#enabling-vars-plugins
 
 .. _collection_module_utils:
 
