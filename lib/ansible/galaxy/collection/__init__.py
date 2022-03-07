@@ -1529,14 +1529,14 @@ def _resolve_depenency_map(
             )
             for req_inf in dep_exc.causes
         )
-        error_msg_lines = chain(
+        error_msg_lines = list(chain(
             (
                 'Failed to resolve the requested '
                 'dependencies map. Could not satisfy the following '
                 'requirements:',
             ),
             conflict_causes,
-        )
+        ))
         raise raise_from(  # NOTE: Leading "raise" is a hack for mypy bug #9717
             AnsibleError('\n'.join(error_msg_lines)),
             dep_exc,

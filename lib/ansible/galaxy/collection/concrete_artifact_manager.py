@@ -80,7 +80,7 @@ class ConcreteArtifactsManager:
         server = collection.src.api_server
 
         try:
-            download_url, _dummy, _dummy = self._galaxy_collection_cache[collection]
+            download_url = self._galaxy_collection_cache[collection][0]
             signatures_url, signatures = self._galaxy_collection_origin_cache[collection]
         except KeyError as key_err:
             raise RuntimeError(
