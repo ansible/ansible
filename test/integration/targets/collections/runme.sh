@@ -65,6 +65,16 @@ else
   ansible-playbook -i "${INVENTORY_PATH}" collection_root_user/ansible_collections/testns/testcoll/playbooks/default_collection_playbook.yml "$@"
 fi
 
+# test redirects and warnings for filter redirects
+echo "testing redirect and deprecation display"
+ANSIBLE_DEPRECATION_WARNINGS=yes ansible localhost -m debug -a msg='{{ "data" | testns.testredirect.multi_redirect_filter }}' -vvvvv 2>&1 | tee out.txt
+cat out.txt
+
+test "$(grep out.txt -ce 'deprecation1' -ce 'deprecation2' -ce 'deprecation3')" == 3
+grep out.txt -e 'redirecting (type: filter) testns.testredirect.multi_redirect_filter to testns.testredirect.redirect_filter1'
+grep out.txt -e 'redirecting (type: filter) testns.testredirect.redirect_filter1 to testns.testredirect.redirect_filter2'
+grep out.txt -e 'redirecting (type: filter) testns.testredirect.redirect_filter2 to testns.testcoll.testfilter'
+
 echo "--- validating collections support in playbooks/roles"
 # run test playbooks
 ansible-playbook -i "${INVENTORY_PATH}" -v "${TEST_PLAYBOOK}" "$@"
