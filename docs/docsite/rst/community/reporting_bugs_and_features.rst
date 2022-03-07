@@ -55,6 +55,6 @@ Requesting a feature
 ====================
 
 Before you request a feature, check what is :ref:`planned for future Ansible Releases <roadmaps>`.
-To get your feature into Ansible, to :ref:`submit a pull request <community_pull_requests>`, either against ansible-core or against a collection. See also :ref:`ansible_collection_merge_requirements`.
+To get your feature into Ansible,  :ref:`submit a pull request <community_pull_requests>`, either against ansible-core or against a collection. See also :ref:`ansible_collection_merge_requirements`. To check already submitted pull requests, refer to :ref: `existing pull requests tagged with feature <https://github.com/ansible/ansible/issues?q=is%3Aissue+is%3Aopen+label%3Afeature>`.
 
 For ``ansible-core``, you can also open an issue in `ansible/ansible <https://github.com/ansible/ansible/issues>`_  or in a corresponding collection repository (to learn how to find a proper issue tracker, refer to :ref:`Bugs in collections<reporting_bugs_in_collections>` section ).
