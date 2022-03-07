@@ -71,10 +71,10 @@ try:  # NOTE: py3/py2 compat
     # py2 mypy can't deal with try/excepts
     is_python_identifier = str.isidentifier  # type: ignore[attr-defined]
 except AttributeError:  # Python 2
-    def is_python_identifier(tested_str):  # type: (str) -> bool
+    def is_python_identifier(self):  # type: (str) -> bool
         """Determine whether the given string is a Python identifier."""
         # Ref: https://stackoverflow.com/a/55802320/595220
-        return bool(re.match(_VALID_IDENTIFIER_STRING_REGEX, tested_str))
+        return bool(re.match(_VALID_IDENTIFIER_STRING_REGEX, self))
 
 
 PB_EXTENSIONS = ('.yml', '.yaml')
