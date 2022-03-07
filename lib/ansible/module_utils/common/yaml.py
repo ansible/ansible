@@ -11,34 +11,38 @@ __metaclass__ = type
 
 from functools import partial as _partial
 
-import ansible.module_utils.compat.typing as t
-
 HAS_LIBYAML = False
+
 try:
     import yaml as _yaml
 except ImportError:
     HAS_YAML = False
-    SafeLoader = None
-    SafeDumper = None
-    Parser = None
-    yaml_load = None
-    yaml_load_all = None
-    yaml_dump = None
-    yaml_dump_all = None
 else:
     HAS_YAML = True
+
+if HAS_YAML:
     try:
-        SafeLoader = _yaml.CSafeLoader
-        SafeDumper = _yaml.CSafeDumper
-        Parser = _yaml.cyaml.CParser
+        from yaml import CSafeLoader as SafeLoader
+        from yaml import CSafeDumper as SafeDumper
+        from yaml.cyaml import CParser as Parser
+
         HAS_LIBYAML = True
     except AttributeError:
-        SafeLoader = _yaml.SafeLoader  # type: t.Type[_yaml.CSafeLoader] | t.Type[_yaml.SafeLoader]  # type: ignore[no-redef]
-        SafeDumper = _yaml.SafeDumper  # type: t.Type[_yaml.CSafeDumper] | t.Type[_yaml.SafeDumper]  # type: ignore[no-redef]
-        Parser = _yaml.parser.Parser  # type: t.Type[_yaml.cyaml.CParser] | t.Type[_yaml.parser.Parser]  # type: ignore[no-redef]
+        from yaml import SafeLoader  # type: ignore[misc]
+        from yaml import SafeDumper  # type: ignore[misc]
+        from yaml.parser import Parser  # type: ignore[misc]
 
     yaml_load = _partial(_yaml.load, Loader=SafeLoader)
     yaml_load_all = _partial(_yaml.load_all, Loader=SafeLoader)
 
     yaml_dump = _partial(_yaml.dump, Dumper=SafeDumper)
     yaml_dump_all = _partial(_yaml.dump_all, Dumper=SafeDumper)
+else:
+    SafeLoader = object  # type: ignore[assignment,misc]
+    SafeDumper = object  # type: ignore[assignment,misc]
+    Parser = object  # type: ignore[assignment,misc]
+
+    yaml_load = None  # type: ignore[assignment]
+    yaml_load_all = None  # type: ignore[assignment]
+    yaml_dump = None  # type: ignore[assignment]
+    yaml_dump_all = None  # type: ignore[assignment]
