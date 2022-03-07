@@ -47,7 +47,7 @@ class ActionModule(ActionBase):
             results['results_file'] = log_path
             results['started'] = 1
 
-        module_args = dict(jid=jid, mode=mode, _async_dir=async_dir)
-        results = merge_hash(results, self._execute_module(module_name='ansible.legacy.async_status', task_vars=task_vars, module_args=module_args))
+        new_module_args['_async_dir'] = async_dir
+        results = merge_hash(results, self._execute_module(module_name='ansible.legacy.async_status', task_vars=task_vars, module_args=new_module_args))
 
         return results
