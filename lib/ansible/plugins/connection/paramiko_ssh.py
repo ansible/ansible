@@ -223,8 +223,8 @@ class MyAddPolicy(object):
 
 # keep connection objects on a per host basis to avoid repeated attempts to reconnect
 
-SSH_CONNECTION_CACHE = {}
-SFTP_CONNECTION_CACHE = {}
+SSH_CONNECTION_CACHE = {}  # type: dict[str, paramiko.client.SSHClient]
+SFTP_CONNECTION_CACHE = {}  # type: dict[str, paramiko.sftp_client.SFTPClient]
 
 
 class Connection(ConnectionBase):

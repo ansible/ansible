@@ -108,6 +108,9 @@ class MultiGalaxyAPIProxy:
             if isinstance(collection_candidate.src, GalaxyAPI)
             else self._apis
         )
+
+        last_err: t.Optional[Exception]
+
         for api in api_lookup_order:
             try:
                 version_metadata = api.get_collection_version_metadata(
