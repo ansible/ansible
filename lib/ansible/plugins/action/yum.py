@@ -18,7 +18,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors import AnsibleActionFail
-from ansible.module_utils.yumdnf import yumdnf_argument_spec
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
@@ -48,12 +47,11 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
-        yumdnf_argument_spec.pop('supports_check_mode', None)
-        yumdnf_argument_spec['argument_spec']['use_backend'] = dict(default='auto', choices=['auto', 'yum', 'yum4', 'dnf'], aliases=['use'])
+        # Carry-over concept from the package action plugin
+        if 'use' in self._task.args and 'use_backend' in self._task.args:
+            raise AnsibleActionFail("parameters are mutually exclusive: ('use', 'use_backend')")
 
-        validation_result, new_module_args = self.validate_argument_spec(**yumdnf_argument_spec)
-
-        module = new_module_args.get('use_backend', 'auto')
+        module = self._task.args.get('use', self._task.args.get('use_backend', 'auto'))
 
         if module == 'auto':
             try:
@@ -93,7 +91,11 @@ class ActionModule(ActionBase):
                 result.update({'failed': True, 'msg': "Could not find a yum module backend for %s." % module})
             else:
                 # run either the yum (yum3) or dnf (yum4) backend module
-                new_module_args.pop('use', None)
+                new_module_args = self._task.args.copy()
+                if 'use_backend' in new_module_args:
+                    del new_module_args['use_backend']
+                if 'use' in new_module_args:
+                    del new_module_args['use']
 
                 display.vvvv("Running %s as the backend for the yum action plugin" % module)
                 result.update(self._execute_module(

@@ -1807,8 +1807,7 @@ def main():
     yumdnf_argument_spec['argument_spec']['use_backend'] = dict(default='auto', choices=['auto', 'yum', 'yum4', 'dnf'])
 
     module = AnsibleModule(
-        yumdnf_argument_spec['argument_spec'],
-        supports_check_mode=True
+        **yumdnf_argument_spec
     )
 
     module_implementation = YumModule(module)
