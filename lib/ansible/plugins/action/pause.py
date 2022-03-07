@@ -131,7 +131,6 @@ class ActionModule(ActionBase):
             echo_prompt = ' (output is hidden)'
 
         if new_module_args['prompt']:
-        # Is 'prompt' a key in 'args'?
             prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), new_module_args['prompt'], echo_prompt)
         else:
             # If no custom prompt is specified, set a default prompt
