@@ -44,6 +44,7 @@ If you find a bug, open an issue using the `issue template <https://github.com/a
     * Preserve formatting using `code blocks  <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_ when sharing YAML in playbooks.
   * the behavior you currently see
   * output where possible
+  * ``ansible -vvvv`` (debugging) output
 
 For multiple-file content, use gist.github.com, which is more durable than pastebin content.
 
