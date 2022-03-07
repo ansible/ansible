@@ -177,7 +177,7 @@ In addition, the following Ansible Core modules/action-plugins work with Windows
 * template (also: win_template)
 * wait_for_connection
 
-Note that as Ansible moves towards Collections more Windows modules have been added and they have migrated into several collections namespaces: `ansible.windows <https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html>`_, `community.windows <https://docs.ansible.com/ansible/latest/collections/community/windows/index.html>`_ and `chocolatey <https://docs.ansible.com/ansible/latest/collections/chocolatey/chocolatey/index.html#plugins-in-chocolatey-chocolatey>`_.
+Note that as Ansible moves towards Collections more Windows modules have been added and they have migrated into several collections namespaces: `ansible.windows <https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html>`_, `community.windows <https://docs.ansible.com/ansible/latest/collections/community/windows/index.html>`_, and `chocolatey <https://docs.ansible.com/ansible/latest/collections/chocolatey/chocolatey/index.html#plugins-in-chocolatey-chocolatey>`_.
 
 Can I run Python modules on Windows hosts?
 ``````````````````````````````````````````
