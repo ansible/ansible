@@ -177,6 +177,8 @@ In addition, the following Ansible Core modules/action-plugins work with Windows
 * template (also: win_template)
 * wait_for_connection
 
+Note that as Ansible moves towards Collections the Windows modules have been split between the `ansible.windows <https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html>`_ and `community.windows <https://docs.ansible.com/ansible/latest/collections/community/windows/index.html>`_ collection namespaces.
+
 Can I run Python modules on Windows hosts?
 ``````````````````````````````````````````
 No, the WinRM connection protocol is set to use PowerShell modules, so Python
