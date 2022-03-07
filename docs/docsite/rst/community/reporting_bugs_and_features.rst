@@ -23,9 +23,7 @@ Bugs in ansible-core
 
 Before reporting a bug, use the bug/issue search to check for :ref:`already reported issues <https://github.com/ansible/ansible/issues>`. Unsure if you found a bug? Report the behavior on the :ref:`mailing list or community chat first <communication>`.
 
-Do not open issues for "how do I do this" type questions. These are great topics for community chat channels or a mailing list, where things are likely to be more of a discussion.
-
-If you are unsure whether a bug is in ``ansible-core`` or in a collection, report the behavior on the :ref:`mailing list or community chat channel first <communication>`.
+Also, use the mailing list or chat if you are unsure whether a bug is in ``ansible-core`` or in a collection, and for "how do I do this" type questions to discuss.
 
 You need a free GitHub account to report issues to `github.com/ansible/ansible/issues <https://github.com/ansible/ansible/issues>`_ for bugs
 - affecting multiple plugins
