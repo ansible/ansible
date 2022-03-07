@@ -121,7 +121,7 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     def _parse_group(self, group, group_data):
 
-        if isinstance(group_data, (MutableMapping, NoneType)):
+        if isinstance(group_data, (MutableMapping, NoneType)):  # type: ignore[misc]
 
             try:
                 group = self.inventory.add_group(group)
@@ -136,17 +136,17 @@ class InventoryModule(BaseFileInventoryPlugin):
                         if isinstance(group_data[section], string_types):
                             group_data[section] = {group_data[section]: None}
 
-                        if not isinstance(group_data[section], (MutableMapping, NoneType)):
+                        if not isinstance(group_data[section], (MutableMapping, NoneType)):  # type: ignore[misc]
                             raise AnsibleParserError('Invalid "%s" entry for "%s" group, requires a dictionary, found "%s" instead.' %
                                                      (section, group, type(group_data[section])))
 
                 for key in group_data:
 
-                    if not isinstance(group_data[key], (MutableMapping, NoneType)):
+                    if not isinstance(group_data[key], (MutableMapping, NoneType)):  # type: ignore[misc]
                         self.display.warning('Skipping key (%s) in group (%s) as it is not a mapping, it is a %s' % (key, group, type(group_data[key])))
                         continue
 
-                    if isinstance(group_data[key], NoneType):
+                    if isinstance(group_data[key], NoneType):  # type: ignore[misc]
                         self.display.vvv('Skipping empty key (%s) in group (%s)' % (key, group))
                     elif key == 'vars':
                         for var in group_data[key]:
