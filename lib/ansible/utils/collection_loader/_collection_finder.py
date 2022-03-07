@@ -28,7 +28,7 @@ from types import ModuleType
 try:
     from importlib import import_module
 except ImportError:
-    def import_module(name):
+    def import_module(name):  # type: ignore[misc]
         __import__(name)
         return sys.modules[name]
 
