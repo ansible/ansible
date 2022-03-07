@@ -35,8 +35,8 @@ try:
     from packaging.specifiers import SpecifierSet
     from packaging.version import Version
 except ImportError:
-    SpecifierSet = None
-    Version = None
+    SpecifierSet = None  # type: ignore[misc]
+    Version = None  # type: ignore[misc]
 
 import importlib.util
 
