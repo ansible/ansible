@@ -445,6 +445,7 @@ class JinjaPluginIntercept(MutableMapping):
     # FUTURE: we can cache FQ filter/test calls for the entire duration of a run, since a given collection's impl's
     # aren't supposed to change during a run
     def __getitem__(self, key):
+        original_key = key
         self._load_ansible_plugins()
 
         try:
@@ -459,56 +460,61 @@ class JinjaPluginIntercept(MutableMapping):
                 if func:
                     return func
 
-                # didn't find it in the pre-built Jinja env, assume it's a former builtin and follow the normal routing path
-                leaf_key = key
-                key = 'ansible.builtin.' + key
-            else:
-                leaf_key = key.split('.')[-1]
+            key, leaf_key = get_fqcr_and_name(key)
+            seen = set()
 
-            acr = AnsibleCollectionRef.try_parse_fqcr(key, self._dirname)
+            while True:
+                if key in seen:
+                    raise TemplateSyntaxError(
+                        'recursive collection redirect found for %r' % original_key,
+                        0
+                    )
+                seen.add(key)
 
-            if not acr:
-                raise KeyError('invalid plugin name: {0}'.format(key))
+                acr = AnsibleCollectionRef.try_parse_fqcr(key, self._dirname)
 
-            ts = _get_collection_metadata(acr.collection)
+                if not acr:
+                    raise KeyError('invalid plugin name: {0}'.format(key))
 
-            # TODO: implement support for collection-backed redirect (currently only builtin)
-            # TODO: implement cycle detection (unified across collection redir as well)
+                ts = _get_collection_metadata(acr.collection)
 
-            routing_entry = ts.get('plugin_routing', {}).get(self._dirname, {}).get(leaf_key, {})
+                # TODO: implement cycle detection (unified across collection redir as well)
 
-            deprecation_entry = routing_entry.get('deprecation')
-            if deprecation_entry:
-                warning_text = deprecation_entry.get('warning_text')
-                removal_date = deprecation_entry.get('removal_date')
-                removal_version = deprecation_entry.get('removal_version')
+                routing_entry = ts.get('plugin_routing', {}).get(self._dirname, {}).get(leaf_key, {})
 
-                if not warning_text:
-                    warning_text = '{0} "{1}" is deprecated'.format(self._dirname, key)
+                deprecation_entry = routing_entry.get('deprecation')
+                if deprecation_entry:
+                    warning_text = deprecation_entry.get('warning_text')
+                    removal_date = deprecation_entry.get('removal_date')
+                    removal_version = deprecation_entry.get('removal_version')
 
-                display.deprecated(warning_text, version=removal_version, date=removal_date, collection_name=acr.collection)
+                    if not warning_text:
+                        warning_text = '{0} "{1}" is deprecated'.format(self._dirname, key)
 
-            tombstone_entry = routing_entry.get('tombstone')
+                    display.deprecated(warning_text, version=removal_version, date=removal_date, collection_name=acr.collection)
 
-            if tombstone_entry:
-                warning_text = tombstone_entry.get('warning_text')
-                removal_date = tombstone_entry.get('removal_date')
-                removal_version = tombstone_entry.get('removal_version')
+                tombstone_entry = routing_entry.get('tombstone')
 
-                if not warning_text:
-                    warning_text = '{0} "{1}" has been removed'.format(self._dirname, key)
+                if tombstone_entry:
+                    warning_text = tombstone_entry.get('warning_text')
+                    removal_date = tombstone_entry.get('removal_date')
+                    removal_version = tombstone_entry.get('removal_version')
 
-                exc_msg = display.get_deprecation_message(warning_text, version=removal_version, date=removal_date,
-                                                          collection_name=acr.collection, removed=True)
+                    if not warning_text:
+                        warning_text = '{0} "{1}" has been removed'.format(self._dirname, key)
 
-                raise AnsiblePluginRemovedError(exc_msg)
+                    exc_msg = display.get_deprecation_message(warning_text, version=removal_version, date=removal_date,
+                                                              collection_name=acr.collection, removed=True)
 
-            redirect_fqcr = routing_entry.get('redirect', None)
-            if redirect_fqcr:
-                acr = AnsibleCollectionRef.from_fqcr(ref=redirect_fqcr, ref_type=self._dirname)
-                display.vvv('redirecting {0} {1} to {2}.{3}'.format(self._dirname, key, acr.collection, acr.resource))
-                key = redirect_fqcr
-            # TODO: handle recursive forwarding (not necessary for builtin, but definitely for further collection redirs)
+                    raise AnsiblePluginRemovedError(exc_msg)
+
+                redirect = routing_entry.get('redirect', None)
+                if redirect:
+                    next_key, leaf_key = get_fqcr_and_name(redirect, collection=acr.collection)
+                    display.vvv('redirecting (type: {0}) {1}.{2} to {3}'.format(self._dirname, acr.collection, acr.resource, next_key))
+                    key = next_key
+                else:
+                    break
 
             func = self._collection_jinja_func_cache.get(key)
 
@@ -574,6 +580,17 @@ class JinjaPluginIntercept(MutableMapping):
     def __len__(self):
         # not strictly accurate since we're not counting dynamically-loaded values
         return len(self._delegatee)
+
+
+def get_fqcr_and_name(resource, collection='ansible.builtin'):
+    if '.' not in resource:
+        name = resource
+        fqcr = collection + '.' + resource
+    else:
+        name = resource.split('.')[-1]
+        fqcr = resource
+
+    return fqcr, name
 
 
 class AnsibleEnvironment(Environment):
