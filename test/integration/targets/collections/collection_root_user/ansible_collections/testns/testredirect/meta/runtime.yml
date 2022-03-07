@@ -4,18 +4,18 @@ plugin_routing:
       redirect: testns.testcoll.ping
   filter:
     multi_redirect_filter:
-      redirect: testns.testredirect.mid_redirect_filter
+      redirect: testns.testredirect.redirect_filter1
       deprecation:
         warning_text: deprecation1
-    mid_redirect_filter:
-      redirect: final_redirect_filter
+    redirect_filter1:
+      redirect: redirect_filter2
       deprecation:
         warning_text: deprecation2
-    final_redirect_filter:
+    redirect_filter2:
       redirect: testns.testcoll.testfilter
       deprecation:
         warning_text: deprecation3
     dead_end:
-      redirect: bad.redirect
+      redirect: bad_redirect
     recursive_redirect:
       redirect: recursive_redirect
