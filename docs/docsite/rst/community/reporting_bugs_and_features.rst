@@ -25,7 +25,7 @@ Before reporting a bug, use the bug/issue search to check for :ref:`already repo
 
 Also, use the mailing list or chat if you are unsure whether a bug is in ``ansible-core`` or in a collection, and for "how do I do this" type questions to discuss.
 
-You need a free GitHub account to report bugs to :ref:`github.com/ansible/ansible/issues <https://github.com/ansible/ansible/issues>`_ that affects
+You need a free GitHub account to `report bugs <https://github.com/ansible/ansible/issues>`_ that affects
 - multiple plugins
 - a plugin that remained in the ansible/ansible repo
 - the overall functioning of Ansible
