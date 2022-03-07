@@ -23,6 +23,9 @@ __metaclass__ = type
 
 from abc import ABC
 
+import types
+import typing as t
+
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native
@@ -31,10 +34,13 @@ from ansible.utils.display import Display
 
 display = Display()
 
+if t.TYPE_CHECKING:
+    from .loader import PluginPathContext
+
 # Global so that all instances of a PluginLoader will share the caches
-MODULE_CACHE = {}
-PATH_CACHE = {}
-PLUGIN_PATH_CACHE = {}
+MODULE_CACHE = {}  # type: dict[str, dict[str, types.ModuleType]]
+PATH_CACHE = {}  # type: dict[str, list[PluginPathContext] | None]
+PLUGIN_PATH_CACHE = {}  # type: dict[str, dict[str, dict[str, PluginPathContext]]]
 
 
 def get_plugin_class(obj):

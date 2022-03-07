@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import multiprocessing.synchronize
+
 from multiprocessing import Lock
 
 from ansible.module_utils.facts.system.pkg_mgr import PKG_MGRS
@@ -27,7 +29,7 @@ if 'action_write_locks' not in globals():
     # Do not initialize this more than once because it seems to bash
     # the existing one.  multiprocessing must be reloading the module
     # when it forks?
-    action_write_locks = dict()
+    action_write_locks = dict()  # type: dict[str | None, multiprocessing.synchronize.Lock]
 
     # Below is a Lock for use when we weren't expecting a named module.  It gets used when an action
     # plugin invokes a module whose name does not match with the action's name.  Slightly less

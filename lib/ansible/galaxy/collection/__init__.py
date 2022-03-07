@@ -56,10 +56,10 @@ if t.TYPE_CHECKING:
         # files meta:
         FileMetaKeysType,
     ]
-    ManifestValueType = dict[CollectionInfoKeysType, 'int | str | list[str] | dict[str, str] | None']
-    CollectionManifestType = dict[ManifestKeysType, ManifestValueType]
-    FileManifestEntryType = dict[FileMetaKeysType, 'str | int | None']
-    FilesManifestType = dict[t.Literal['files', 'format'], 'list[FileManifestEntryType] | int']
+    ManifestValueType = t.Dict[CollectionInfoKeysType, t.Union[int, str, t.List[str], t.Dict[str, str], None]]
+    CollectionManifestType = t.Dict[ManifestKeysType, ManifestValueType]
+    FileManifestEntryType = t.Dict[FileMetaKeysType, t.Union[str, int, None]]
+    FilesManifestType = t.Dict[t.Literal['files', 'format'], t.Union[t.List[FileManifestEntryType], int]]
 
 import ansible.constants as C
 from ansible.errors import AnsibleError
