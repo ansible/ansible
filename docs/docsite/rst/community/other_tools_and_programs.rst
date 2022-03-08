@@ -53,13 +53,12 @@ A closed-source, subscription GUI text editor. You can customize the GUI with th
 * `Yamllint <https://packagecontrol.io/packages/SublimeLinter-contrib-yamllint>`_ - a Sublime wrapper around yamllint.
 
 
-Visual studio code
+Visual Studio Code
 ==================
 
 An open-source, free GUI text editor created and maintained by Microsoft. Useful Visual Studio Code plugins include:
 
-
-* `YAML Support by Red Hat <https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml>`_ - provides YAML support through yaml-language-server with built-in Kubernetes and Kedge syntax support.
+* _`Ansible Extension by Red Hat <https://marketplace.visualstudio.com/items?itemName=redhat.ansible>`_ - provides Ansible auto-completion and integrates quality assurance tools like ansible-lint, ansible-navigator, ansible-test and molecule.
 
 vim
 ===
