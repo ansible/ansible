@@ -20,8 +20,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections.abc import Mapping
+
 from ansible.errors import AnsibleActionFail
-from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.parsing.utils.addresses import parse_address

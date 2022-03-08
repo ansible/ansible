@@ -69,12 +69,13 @@ RETURN = """
 import codecs
 import csv
 
+from collections.abc import MutableSequence
+
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.common._collections_compat import MutableSequence
 
 
 class CSVRecoder:

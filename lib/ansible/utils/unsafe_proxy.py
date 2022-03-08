@@ -53,8 +53,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections.abc import Mapping, Set
+
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.common._collections_compat import Mapping, Set
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import string_types, binary_type, text_type
 from ansible.utils.native_jinja import NativeJinjaText

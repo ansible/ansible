@@ -82,10 +82,10 @@ import re
 
 from io import StringIO
 from collections import defaultdict
+from collections.abc import MutableSequence
 
 from ansible.errors import AnsibleLookupError, AnsibleOptionsError
 from ansible.module_utils._text import to_text, to_native
-from ansible.module_utils.common._collections_compat import MutableSequence
 from ansible.plugins.lookup import LookupBase
 
 

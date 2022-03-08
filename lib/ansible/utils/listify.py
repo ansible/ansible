@@ -19,8 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections.abc import Iterable
+
 from ansible.module_utils.six import string_types
-from ansible.module_utils.common._collections_compat import Iterable
 
 
 __all__ = ['listify_lookup_plugin_terms']

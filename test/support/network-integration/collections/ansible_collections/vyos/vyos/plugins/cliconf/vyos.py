@@ -34,9 +34,10 @@ version_added: "2.4"
 import re
 import json
 
+from collections.abc import Mapping
+
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
-from ansible.module_utils.common._collections_compat import Mapping
 from ansible_collections.ansible.netcommon.plugins.module_utils.network.common.config import (
     NetworkConfig,
 )

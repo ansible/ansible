@@ -89,11 +89,11 @@ host4 = {}
 import os
 import typing as t
 
+from collections.abc import MutableMapping, MutableSequence
 from functools import partial
 
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
 from ansible.module_utils.six import string_types, text_type
 from ansible.parsing.yaml.objects import AnsibleSequence, AnsibleUnicode
 from ansible.plugins.inventory import BaseFileInventoryPlugin

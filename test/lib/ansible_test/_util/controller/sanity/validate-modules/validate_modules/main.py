@@ -32,6 +32,7 @@ import traceback
 import warnings
 
 from collections import OrderedDict
+from collections.abc import Mapping
 from contextlib import contextmanager
 from fnmatch import fnmatch
 
@@ -65,7 +66,6 @@ setup_collection_loader()
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS, NEW_STYLE_PYTHON_MODULE_RE
-from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.common.parameters import DEFAULT_TYPE_VALIDATORS
 from ansible.module_utils.compat.version import StrictVersion, LooseVersion
 from ansible.module_utils.basic import to_bytes
