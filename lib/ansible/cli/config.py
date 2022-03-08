@@ -22,7 +22,8 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.config.manager import ConfigManager, Setting
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text, to_bytes
-from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.common._collections_compat import Mapping, Sequence
+from ansible.module_utils.common.text.converters import jsonify
 from ansible.module_utils.six import string_types
 from ansible.parsing.quoting import is_quoted
 from ansible.parsing.yaml.dumper import AnsibleDumper
@@ -78,6 +79,12 @@ class ConfigCLI(CLI):
                                  help='Output format for init')
         init_parser.add_argument('--disabled', dest='commented', action='store_true', default=False,
                                  help='Prefixes all entries with a comment character to disable them')
+
+        get_parser = subparsers.add_parser('get', help='Get a specific configuration value', parents=[common])
+        get_parser.add_argument('--setting', dest='setting', action='store', help='Name of the setting to fetch', default=None)
+        get_parser.add_argument('--format', '-f', dest='format', action='store', choices=['yaml', 'json', 'ini'], default='ini',
+                                help='Output format for get')
+        get_parser.set_defaults(func=self.execute_get)
 
         # search_parser = subparsers.add_parser('find', help='Search configuration')
         # search_parser.set_defaults(func=self.execute_search)
@@ -486,9 +493,64 @@ class ConfigCLI(CLI):
         self.pager(to_text('\n'.join(text), errors='surrogate_or_strict'))
 
 
+    def execute_get(self):
+
+        # init/validation
+        plugin = None
+        setting = context.CLIARGS['setting']
+        if not setting:
+            raise AnsibleOptionsError("No setting provided, but a specific setting is needed to return a value for")
+
+        ptype = context.CLIARGS['type']
+
+        if ptype in ["all", "base"]:
+            ptype = None
+            if plugin:
+                raise AnsibleOptionsError("Incompatible plugin type provided (none, all or base) , plugin name not supported")
+
+        # process for base config settings
+        if ptype is not None:
+
+            if not context.CLIARGS['args']:
+                raise AnsibleOptionsError("No plugin name provided, plugin type specified, a setting requires both or none")
+
+            plugin = context.CLIARGS['args'][0]
+            if len(context.CLIARGS['args']) > 1:
+                display.warning("More than one plugin name supplied, ignore all but first (%s)" % plugin)
+
+            # force plugin load to get settings primed
+            loader = getattr(plugin_loader, '%s_loader' % ptype)
+            p = loader.get(plugin, class_only=True)
+            if p is None:
+                raise AnsibleOptionsError("Unable to load plugin (%s) of %s type" % (plugin, ptype))
+
+        # get actual value
+        res = self.config.get_config_value(setting, plugin_type=ptype, plugin_name=plugin)
+
+        # format it for the world to see
+        f = context.CLIARGS['format']
+        if f == 'ini':
+
+            if isinstance(res, Sequence):
+                res = ', '.join(res)
+            else:
+                res = to_text(res, errors='surrogate_or_strict')
+
+            if not isinstance(res, string_types):
+                raise AnsibleError("Cannot format and display this setting due to it being of type %s" % type(res))
+
+        elif f == 'json':
+            res = jsonify(res)
+        elif f == 'yaml':
+            res = yaml.dump(res, Dumper=AnsibleDumper)
+
+        # show it
+        display.display(to_text(res, errors='surrogate_or_strict'))
+
 def main(args=None):
     ConfigCLI.cli_executor(args)
 
 
 if __name__ == '__main__':
     main()
+
