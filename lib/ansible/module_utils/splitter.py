@@ -29,6 +29,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+
 
 def _get_quote_state(token, quote_char):
     '''
@@ -217,3 +219,13 @@ def unquote(data):
     if is_quoted(data):
         return data[1:-1]
     return data
+
+
+def stem(path):
+    """Return the last element in a path minus its last suffix"""
+    name = os.path.basename(path)
+    i = name.rfind('.')
+    if 0 < i < len(name) - 1:
+        return name[:i]
+    else:
+        return name

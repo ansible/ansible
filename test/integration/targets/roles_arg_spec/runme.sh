@@ -30,3 +30,12 @@ set -e
 # The task is tagged with 'foo' but we use 'bar' in the call below and expect
 # the validation task to run anyway since it is tagged 'always'.
 ansible-playbook test_tags.yml -i ../../inventory "$@" --tags bar | grep "a : Validating arguments against arg spec 'main' - Main entry point for role A."
+
+# Test validation with various values for "tasks_from"
+ansible-playbook test_path_extension.yml -i ../../inventory "$@" 2>&1 | tee out.txt
+count="$(grep -c 'TASK.*Validating arguments against arg spec' out.txt)"
+expected_count="$(grep -c import_role test_path_extension.yml)"
+if [ "$count" -ne "$expected_count" ]; then
+    echo "Failed to find the expected number of argument spec validation tasks"
+    exit 1
+fi
