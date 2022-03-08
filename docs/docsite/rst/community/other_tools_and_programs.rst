@@ -33,7 +33,7 @@ A free, open-source text editor and IDE that supports auto-indentation, syntax h
 * `yaml-mode <https://github.com/yoshiki/yaml-mode>`_ - YAML highlighting and syntax checking.
 * `jinja2-mode <https://github.com/paradoxxxzero/jinja2-mode>`_ - Jinja2 highlighting and syntax checking.
 * `magit-mode <https://github.com/magit/magit>`_ -  Git porcelain within Emacs.
-* `lsp-mode <https://emacs-lsp.github.io/lsp-mode/page/lsp-ansible/>`_ - Ansible syntax highlighting, auto-completion. diagnostics.
+* `lsp-mode <https://emacs-lsp.github.io/lsp-mode/page/lsp-ansible/>`_ - Ansible syntax highlighting, auto-completion and diagnostics.
 
 
 PyCharm
