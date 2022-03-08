@@ -15,7 +15,8 @@ running the ansible command line tools.
 These APIs are still in flux so do not use them unless you are willing to update them with every Ansible release
 """
 
-from ansible.module_utils.common._collections_compat import Mapping, Set
+from collections.abc import Mapping, Set
+
 from ansible.module_utils.common.collections import is_sequence
 from ansible.utils.context_objects import CLIArgs, GlobalCLIArgs
 

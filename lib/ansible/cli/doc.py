@@ -17,6 +17,9 @@ import os.path
 import re
 import textwrap
 import traceback
+
+from collections.abc import Sequence
+
 import yaml
 
 import ansible.plugins.loader as plugin_loader
@@ -27,7 +30,6 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.common.yaml import yaml_dump
 from ansible.module_utils.compat import importlib

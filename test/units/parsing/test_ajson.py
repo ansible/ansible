@@ -10,10 +10,10 @@ import json
 
 import pytest
 
+from collections.abc import Mapping
 from datetime import date, datetime
 from pytz import timezone as tz
 
-from ansible.module_utils.common._collections_compat import Mapping
 from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText

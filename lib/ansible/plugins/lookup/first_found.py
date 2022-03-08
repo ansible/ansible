@@ -136,10 +136,11 @@ RETURN = """
 import os
 import re
 
+from collections.abc import Mapping, Sequence
+
 from jinja2.exceptions import UndefinedError
 
 from ansible.errors import AnsibleLookupError, AnsibleUndefinedVariable
-from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
 

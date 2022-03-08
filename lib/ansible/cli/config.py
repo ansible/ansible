@@ -12,6 +12,9 @@ from ansible.cli import CLI
 import os
 import shlex
 import subprocess
+
+from collections.abc import Mapping
+
 import yaml
 
 from ansible import context
@@ -22,7 +25,6 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.config.manager import ConfigManager, Setting
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text, to_bytes
-from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.six import string_types
 from ansible.parsing.quoting import is_quoted
 from ansible.parsing.yaml.dumper import AnsibleDumper

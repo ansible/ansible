@@ -53,9 +53,10 @@ RETURN = """
     type: list
 """
 
+from collections.abc import Mapping
+
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.module_utils.common._collections_compat import Mapping
 
 
 class LookupModule(LookupBase):

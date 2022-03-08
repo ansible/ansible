@@ -19,11 +19,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections.abc import Mapping
+
 from jinja2.utils import missing
 
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils._text import to_native
-from ansible.module_utils.common._collections_compat import Mapping
 
 
 __all__ = ['AnsibleJ2Vars']

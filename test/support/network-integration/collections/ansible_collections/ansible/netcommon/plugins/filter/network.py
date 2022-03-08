@@ -26,6 +26,7 @@ import os
 import traceback
 import string
 
+from collections.abc import Mapping
 from xml.etree.ElementTree import fromstring
 
 from ansible.module_utils._text import to_native, to_text
@@ -33,7 +34,6 @@ from ansible_collections.ansible.netcommon.plugins.module_utils.network.common.u
     Template,
 )
 from ansible.module_utils.six import iteritems, string_types
-from ansible.module_utils.common._collections_compat import Mapping
 from ansible.errors import AnsibleError, AnsibleFilterError
 from ansible.utils.display import Display
 from ansible.utils.encrypt import passlib_or_crypt, random_password
