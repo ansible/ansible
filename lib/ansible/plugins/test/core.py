@@ -21,11 +21,13 @@ __metaclass__ = type
 
 import re
 import operator as py_operator
+
+from collections.abc import MutableMapping, MutableSequence
+
 from ansible.module_utils.compat.version import LooseVersion, StrictVersion
 
 from ansible import errors
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.display import Display
 from ansible.utils.version import SemanticVersion
