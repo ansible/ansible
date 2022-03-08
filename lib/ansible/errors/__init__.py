@@ -22,6 +22,8 @@ __metaclass__ = type
 import re
 import traceback
 
+from collections.abc import Sequence
+
 from ansible.errors.yaml_strings import (
     YAML_COMMON_DICT_ERROR,
     YAML_COMMON_LEADING_TAB_ERROR,
@@ -33,7 +35,6 @@ from ansible.errors.yaml_strings import (
     YAML_AND_SHORTHAND_ERROR,
 )
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import Sequence
 
 
 class AnsibleError(Exception):
