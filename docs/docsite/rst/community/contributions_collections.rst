@@ -1,4 +1,4 @@
-.. _colllections_contributions:
+.. _collections_contributions:
 
 *************************************
 Ansible Collections Contributor Guide
@@ -10,9 +10,7 @@ Ansible Collections Contributor Guide
    collection_development_process
    reporting_collections
    create_pr_quick_start
-   collection_test_pr_locally
-   collection_unit_tests
-   collection_integration_tests
+   collection_contributors/test_index
    documentation_contributions
    maintainers
    contributing_maintained_collections

@@ -26,12 +26,12 @@ Ansible uses `pytest <https://docs.pytest.org/en/latest/>`_ as a testing framewo
 
 See :ref:`testing_units_modules` for complete details.
 
-Inclusion in the Ansible package `requires integration and/or unit tests <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#requirements-for-collections-to-be-included-in-the-ansible-package>`_  You should have tests for your collection as well as for individual modules and plugins to make your code more reliable To learn how to get started with integration tests, see the `Quick-start integration testing guide <integration_tests_quick_start_guide.rst>`_.
+Inclusion in the Ansible package `requires integration and/or unit tests <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#requirements-for-collections-to-be-included-in-the-ansible-package>`_  You should have tests for your collection as well as for individual modules and plugins to make your code more reliable To learn how to get started with integration tests, see :ref:`collection_integration_tests`.
 
 
 See :ref:`collection_prepare_local` to prepare your environment.
 
-.. _Determine-if-unit-tests-exists:
+.. _collection_unit_test_required:
 
 Determine if unit tests exist
 =============================
@@ -133,7 +133,7 @@ To write these unit tests in collection is called ``community.mycollection``:
     ansible-test units tests/unit/plugins/modules/test_my_module.py --docker
 
 
-.. _Recommendations-on-coverage:
+.. _collection_recommendation_unit:
 
 Recommendations on coverage
 ===========================
@@ -148,8 +148,6 @@ Use the following tips to organize your code and test coverage:
 
   :ref:`testing_units_modules`
      Unit testing Ansible modules
-  `https://docs.pytest.org/en/latest/`_
-     Pytest framework documentation
   :ref:`developing_testing`
      Ansible Testing Guide
   :ref:`collection_integration_tests`

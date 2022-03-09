@@ -9,6 +9,7 @@ Reviewers and issue authors can verify a PR fixes the reported bug by testing th
 .. contents::
    :local:
 
+.. _collection_prepare_environment:
 
 Prepare your environment
 ========================
