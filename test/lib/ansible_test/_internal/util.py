@@ -782,18 +782,6 @@ def sanitize_host_name(name):
     return re.sub('[^A-Za-z0-9]+', '-', name)[:63].strip('-')
 
 
-@cache
-def get_host_ip():
-    """Return the host's IP address."""
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        sock.connect(('10.255.255.255', 22))
-        host_ip = get_host_ip.ip = sock.getsockname()[0]
-
-    display.info('Detected host IP: %s' % host_ip, verbosity=1)
-
-    return host_ip
-
-
 def get_generic_type(base_type, generic_base_type):  # type: (t.Type, t.Type[TType]) -> t.Optional[t.Type[TType]]
     """Return the generic type arg derived from the generic_base_type type that is associated with the base_type type, if any, otherwise return None."""
     # noinspection PyUnresolvedReferences
