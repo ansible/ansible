@@ -58,7 +58,7 @@ Visual Studio Code
 
 An open-source, free GUI text editor created and maintained by Microsoft. Useful Visual Studio Code plugins include:
 
-* _`Ansible Extension by Red Hat <https://marketplace.visualstudio.com/items?itemName=redhat.ansible>`_ - provides Ansible auto-completion and integrates quality assurance tools like ansible-lint, ansible-navigator, ansible-test and molecule.
+* `Ansible Extension by Red Hat <https://marketplace.visualstudio.com/items?itemName=redhat.ansible>`_ - provides Ansible auto-completion and integrates quality assurance tools like ansible-lint, ansible-navigator, ansible-test and molecule.
 
 vim
 ===
