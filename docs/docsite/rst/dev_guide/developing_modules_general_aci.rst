@@ -26,6 +26,7 @@ If you need specific functionality, you have 2 options:
 - Write your own dedicated modules, which is actually quite easy
 
 .. seealso::
+
    `Ansible ACI collection <https://github.com/CiscoDevNet/ansible-aci>`_
        Github repository of the ansible ACI collection
    :ref:`hacking_collections`
@@ -400,8 +401,8 @@ For legacy versions of ansible, you can run from your fork something like:
 
     $ ansible-test sanity --python 2.7 lib/ansible/modules/network/aci/aci_tenant.py
 
-Meanwhile, the ACI modules have moved into a collection. Please refer to the links below that provide detailed guidance
-how to setup you environment and test the collection.
+Meanwhile, the ACI modules have moved into a collection. Please refer to the links below, which provide detailed guidance
+how to setup your environment and test the collection.
 
 .. seealso::
 
