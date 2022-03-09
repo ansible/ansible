@@ -145,6 +145,7 @@ def get_podman_default_hostname():  # type: () -> str
     connections = json.loads(stdout)
 
     for connection in connections:
+        # A trailing indicates the default
         if connection['Name'][-1] == '*':
             hostname = connection['URI']
             break
