@@ -26,7 +26,10 @@ If you need specific functionality, you have 2 options:
 - Write your own dedicated modules, which is actually quite easy
 
 .. seealso::
-
+   `Ansible ACI collection <https://github.com/CiscoDevNet/ansible-aci>`_
+       Github repository of the ansible ACI collection
+   :ref:`hacking_collections`
+       Information on how to contribute to collections.
    `ACI Fundamentals: ACI Policy Model <https://www.cisco.com/c/en/us/td/docs/switches/datacenter/aci/apic/sw/1-x/aci-fundamentals/b_ACI-Fundamentals/b_ACI-Fundamentals_chapter_010001.html>`_
        A good introduction to the ACI object model.
    `APIC Management Information Model reference <https://developer.cisco.com/docs/apic-mim-ref/>`_
@@ -391,28 +394,23 @@ This will result in:
 
 Testing for sanity checks
 -------------------------
-You can run from your fork something like:
+For legacy versions of ansible, you can run from your fork something like:
 
 .. code-block:: bash
 
     $ ansible-test sanity --python 2.7 lib/ansible/modules/network/aci/aci_tenant.py
-    
-For collections you need to build & install first and then run the sanity inside the installed directory:
- 
-.. code-block:: bash
 
-    (your-dev-dir)$ ansible-galaxy collection build --force
-    (your-dev-dir)$ ansible-galaxy collection install <your-collection.tar.gz> --force
-    ...
-    Installing '<your-collection>' to '~/.ansible/collections/ansible_collections/<namespace>/<collection>'
-    <your-collection> was installed successfully
-    (your-dev-dir)$ cd '~/.ansible/collections/ansible_collections/<namespace>/<collection>'
-    $ ansible-test sanity 
+Meanwhile, the ACI modules have moved into a collection. Please refer to the links below that provide detailed guidance
+how to setup you environment and test the collection.
 
 .. seealso::
 
+   :ref:`hacking_collections`
+        Information how to setup your environment to contribute to collections
    :ref:`testing_sanity`
         Information on how to build sanity tests.
+   `Ansible ACI collection <https://github.com/CiscoDevNet/ansible-aci>`_
+       Github repository of the ansible ACI collection
 
 
 Testing ACI integration tests
