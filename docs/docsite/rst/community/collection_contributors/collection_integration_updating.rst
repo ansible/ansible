@@ -1,7 +1,7 @@
 .. _collection_updating_integration_tests:
 
-Adding your tests to existing ones
-==================================
+Adding to an existing integration test
+=======================================
 
 The test tasks are stored in the ``tests/integration/targets/<target_name>/tasks`` directory.
 

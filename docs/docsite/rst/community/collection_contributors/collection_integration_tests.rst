@@ -19,7 +19,7 @@ This section describes the steps to add integration tests to a collection and ho
 
   :ref:`testing_units_modules`
      Unit testing Ansible modules
-  `pytest <https://docs.pytest.org/en/latest/>`_`
+  `pytest <https://docs.pytest.org/en/latest/>`_
      Pytest framework documentation
   :ref:`developing_testing`
      Ansible Testing Guide
