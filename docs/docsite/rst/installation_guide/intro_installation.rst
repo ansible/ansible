@@ -24,7 +24,7 @@ For your control node (the machine that runs Ansible), you can use nearly any UN
 Selecting an Ansible package and version to install
 ====================================================
 
-Ansible's community packages are distributed in two ways: a minimalist language and runtime package called ``ansible-core``, and a much larger "batteries included" package called ``ansible``, which adds a community-curated selection of :ref:`Ansible Collections <collections>` for automating a wide variety of devices. Choose the package that fits your needs; the following instructions will refer to ``ansible``, but ``ansible-core`` can be substituted if you prefer to start with a more minimal package and install only the Ansible Collections you require.
+Ansible's community packages are distributed in two ways: a minimalist language and runtime package called ``ansible-core``, and a much larger "batteries included" package called ``ansible``, which adds a community-curated selection of :ref:`Ansible Collections <collections>` for automating a wide variety of devices. Choose the package that fits your needs; The following instructions  use ``ansible``, but  you can substitute ``ansible-core``  if you prefer to start with a more minimal package and separately install only the Ansible Collections you require.
 
 
 Installing and upgrading Ansible
