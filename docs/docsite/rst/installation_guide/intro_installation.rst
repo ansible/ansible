@@ -33,7 +33,7 @@ Installing and upgrading Ansible
 Locating Python
 ---------------
 
-Locate and remember the path to the Python interpreter you wish to use to run Ansible. We'll refer to this Python in the following instructions as ``python3``. For example, if you've determined that you want the Python at ``/usr/bin/python3.9`` to be the one that you'll install Ansible under, specify that instead of ``python3``.
+Locate and remember the path to the Python interpreter you wish to use to run Ansible. The following instructions refer to this Python  as ``python3``. For example, if you've determined that you want the Python at ``/usr/bin/python3.9`` to be the one that you'll install Ansible under, specify that instead of ``python3``.
 
 Ensuring ``pip`` is available
 -----------------------------
