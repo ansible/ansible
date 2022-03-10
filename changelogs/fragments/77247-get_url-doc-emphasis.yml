@@ -1,2 +1,2 @@
-bugfixes:
+trivial:
   - get_url - fix word emphasis formatting in documentation block (https://github.com/ansible/ansible/issues/77241).
