@@ -5,7 +5,7 @@
 Installing Ansible
 ******************
 
-Ansible is an agentless automation tool that you install on a single host (referred to as the control node). From the control node, Ansible can manage an entire fleet of machines and other devices (referred to as managed nodes) remotely via SSH, Powershell remoting, and numerous other transports, all from a simple command-line interface with no databases or daemons required!
+Ansible is an agentless automation tool that you install on a single host (referred to as the control node). From the control node, Ansible can manage an entire fleet of machines and other devices (referred to as managed nodes) remotely with SSH, Powershell remoting, and numerous other transports, all from a simple command-line interface with no databases or daemons required.
 
 .. contents::
   :local:
