@@ -1,3 +1,32 @@
+plugin_routing:
+  action:
+    # Use module-redirected-as-action to ensure module not using prefix
+    # magic uses platform-specific action plugin
+    # Ensure eos always prefers module_defaults for the module name (eosfacts) not eos
+    eosfacts:
+      redirect: testns.testcoll.eos
+    eos:
+      prefer_module_args: true
+
+    # Ensure vyosfacts/vyos_facts use action plugin vyos (via symlink)
+    # and that only vyosfacts/vyos_facts module_defaults are applied (not vyos module_defaults)
+    vyosfacts:
+      redirect: testns.testcoll.vyos_facts  # symlink of testns.testcoll.vyos
+    vyos_facts:
+      prefer_module_args: true
+
+    # Ensure module that uses action plugin from prefix does not need
+    # module-as-redirected-action (resolved module is used by TE to find handler using prefix)
+    # and that action plugin does not need to opt into preferring module-specific args. Implicitly:
+    # ios:
+    #   prefer_module_args: true
+
+  modules:
+    # No action redirect necessary if resolved module name is used by TE to find handler using prefix
+    # iosfacts/ios_facts tasks should get iosfacts/ios_facts module defaults (not ios module_defaults)
+    iosfacts:
+      redirect: testns.testcoll.ios_facts
+
 action_groups:
   testgroup:
     # Test metadata 'extend_group' feature does not get stuck in a recursive loop

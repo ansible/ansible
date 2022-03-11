@@ -179,6 +179,9 @@ test/integration/targets/incidental_win_reboot/templates/post_reboot.ps1 pslint!
 test/integration/targets/json_cleanup/library/bad_json shebang
 test/integration/targets/lookup_csvfile/files/crlf.csv line-endings
 test/integration/targets/lookup_ini/lookup-8859-15.ini no-smart-quotes
+test/integration/targets/module_defaults/collections/ansible_collections/testns/testcoll/plugins/action/eos.py pylint:relative-beyond-top-level
+test/integration/targets/module_defaults/collections/ansible_collections/testns/testcoll/plugins/action/ios.py pylint:relative-beyond-top-level
+test/integration/targets/module_defaults/collections/ansible_collections/testns/testcoll/plugins/action/vyos.py pylint:relative-beyond-top-level
 test/integration/targets/module_precedence/lib_with_extension/a.ini shebang
 test/integration/targets/module_precedence/lib_with_extension/ping.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/a.ini shebang
