@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Fix an integration test traceback that occurs when some tests use cloud plugins, but all tests for at least one cloud plugin are skipped. (https://github.com/ansible/ansible/issues/75711)
