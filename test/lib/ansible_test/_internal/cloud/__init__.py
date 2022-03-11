@@ -190,6 +190,9 @@ class CloudBase(ABC):
 
         def config_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
             """Add the config file to the payload file list."""
+            if self.platform not in self.args.metadata.cloud_config:
+                return  # callback registered, but plugin not initialized due to relevant tests being skipped
+
             if self._get_cloud_config(self._CONFIG_PATH, ''):
                 if data_context().content.collection:
                     working_path = data_context().content.collection.directory
