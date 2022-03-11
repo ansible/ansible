@@ -28,6 +28,7 @@ options:
     description:
     - The groups to add the hostname to.
     type: list
+    elements: str
     aliases: [ group, groupname ]
 extends_documentation_fragment:
   - action_common_attributes

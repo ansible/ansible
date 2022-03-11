@@ -21,6 +21,7 @@ DOCUMENTATION = '''
       yaml_extensions:
         description: list of 'valid' extensions for files containing YAML
         type: list
+        elements: string
         default: ['.yaml', '.yml', '.json']
         env:
           - name: ANSIBLE_YAML_FILENAME_EXT

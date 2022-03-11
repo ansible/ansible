@@ -52,7 +52,7 @@ options:
     description:
       - Size of the volatile memory buffer that is used for extracting files from the archive in bytes.
     type: int
-    default: 64 KiB
+    default: 65536
     version_added: "2.12"
   list_files:
     description:

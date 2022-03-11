@@ -81,6 +81,7 @@ DOCUMENTATION = """
                   if you add another one in your string, your prompt will fail with a "Timeout" error.
             default: []
             type: list
+            elements: string
             ini:
               - section: su_become_plugin
                 key: localized_prompts
