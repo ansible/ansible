@@ -92,7 +92,7 @@ plugins directory
 
 Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by most plugins by using their FQCN. This is a way to distribute modules, lookups, filters, and so on without having to import a role in every play.
 
-Vars plugins are unsupported in collections. Cache plugins may be used in collections for fact caching, but are not supported for inventory plugins.
+Vars plugins are supported in collections as long as they require being explicitly enabled (using ``REQUIRES_ENABLED``) and they are included using their fully qualified collection name. See :ref:`enable_vars` and :ref:`developing_vars_plugins` for details. Cache plugins may be used in collections for fact caching, but are not supported for inventory plugins.
 
 .. _collection_module_utils:
 
