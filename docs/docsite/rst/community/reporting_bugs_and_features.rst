@@ -21,9 +21,9 @@ Ansible practices responsible disclosure - for security-related bugs, email `sec
 Bugs in ansible-core
 --------------------
 
-Before reporting a bug, use the issue search to check for `already reported issues <https://github.com/ansible/ansible/issues>`. Unsure if you found a bug? Report the behavior on the :ref:`mailing list or community chat first <communication>`.
+Before reporting a bug, use the GitHub issue search to check `already reported issues <https://github.com/ansible/ansible/issues>`. Unsure if you found a bug? Report the behavior on the :ref:`mailing list or community chat first <communication>`.
 
-Also, use the mailing list or chat to discuss if a bug is in ``ansible-core`` or a collection, and for "how do I do this" type questions.
+Also, use the mailing list or chat to discuss whether the problem is in ``ansible-core`` or a collection, and for "how do I do this" type questions.
 
 You need a free GitHub account to `report bugs <https://github.com/ansible/ansible/issues>`_ that affects:
 
@@ -57,4 +57,4 @@ Requesting a feature
 
 Before you request a feature, check what is :ref:`planned for future Ansible Releases <roadmaps>`. Check :ref: `existing pull requests tagged with feature <https://github.com/ansible/ansible/issues?q=is%3Aissue+is%3Aopen+label%3Afeature>`.
 
-To get your feature into Ansible, :ref:`submit a pull request <community_pull_requests>`, either against ansible-core or against a collection. See also :ref:`ansible_collection_merge_requirements`. For ``ansible-core``, you can also open an issue in `ansible/ansible <https://github.com/ansible/ansible/issues>`_  or in a corresponding collection repository (To find the correct issue tracker, refer to :ref:`Bugs in collections<reporting_bugs_in_collections>` section ).
+To get your feature into Ansible, :ref:`submit a pull request <community_pull_requests>`, either against ansible-core or a collection. See also :ref:`ansible_collection_merge_requirements`. For ``ansible-core``, you can also open an issue in `ansible/ansible <https://github.com/ansible/ansible/issues>`_  or in a corresponding collection repository (To find the correct issue tracker, refer to :ref:`Bugs in collections<reporting_bugs_in_collections>` ).
