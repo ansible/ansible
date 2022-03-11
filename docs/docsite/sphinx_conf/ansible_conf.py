@@ -308,7 +308,7 @@ intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../pytho
 
 # Redirects handled by sphinx-Redirects
 redirects = {
-    "scenario_guides/guide_docker": "../collections/community/docker/docsite/scenario_guide.html"
+    "user_guide/playbooks_filters_ipaddr": "../collections/ansible/utils/docsite/filters_ipaddr.html"
 }
 
 # linckchecker settings

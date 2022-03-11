@@ -13,5 +13,6 @@ sphinx
 sphinx-notfound-page >= 0.6
 sphinx-intl
 sphinx-ansible-theme >= 0.9.1
+sphinx-reredirects
 resolvelib
 straight.plugin # Needed for hacking/build-ansible.py which is the backend build script
