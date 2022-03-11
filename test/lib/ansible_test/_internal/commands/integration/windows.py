@@ -34,6 +34,7 @@ from ...host_configs import (
 from . import (
     command_integration_filter,
     command_integration_filtered,
+    get_inventory_absolute_path,
     get_inventory_relative_path,
     check_inventory,
     delegate_inventory,
@@ -52,8 +53,11 @@ def command_windows_integration(args):  # type: (WindowsIntegrationConfig) -> No
     template_path = os.path.join(ANSIBLE_TEST_CONFIG_ROOT, os.path.basename(inventory_relative_path)) + '.template'
 
     if issubclass(args.target_type, WindowsInventoryConfig):
-        inventory_path = os.path.join(data_context().content.root, data_context().content.integration_path,
-                                      args.only_target(WindowsInventoryConfig).path or os.path.basename(inventory_relative_path))
+        target = args.only_target(WindowsInventoryConfig)
+        inventory_path = get_inventory_absolute_path(args, target)
+
+        if args.delegate or not target.path:
+            target.path = inventory_relative_path
     else:
         inventory_path = os.path.join(data_context().content.root, inventory_relative_path)
 

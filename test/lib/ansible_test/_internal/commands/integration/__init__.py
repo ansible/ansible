@@ -92,6 +92,7 @@ from ...data import (
 )
 
 from ...host_configs import (
+    InventoryConfig,
     OriginConfig,
 )
 
@@ -181,6 +182,18 @@ def check_inventory(args, inventory_path):  # type: (IntegrationConfig, str) -> 
 
             if 'ansible_ssh_private_key_file' in inventory:
                 display.warning('Use of "ansible_ssh_private_key_file" in inventory with the --docker or --remote option is unsupported and will likely fail.')
+
+
+def get_inventory_absolute_path(args: IntegrationConfig, target: InventoryConfig) -> str:
+    """Return the absolute inventory path used for the given integration configuration or target inventory config (if provided)."""
+    path = target.path or os.path.basename(get_inventory_relative_path(args))
+
+    if args.host_path:
+        path = os.path.join(data_context().content.root, path)  # post-delegation, path is relative to the content root
+    else:
+        path = os.path.join(data_context().content.root, data_context().content.integration_path, path)
+
+    return path
 
 
 def get_inventory_relative_path(args):  # type: (IntegrationConfig) -> str
