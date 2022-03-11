@@ -238,13 +238,13 @@ htmlhelp_basename = 'Poseidodoc'
 # the extension builds 404.rst into a location-agnostic 404 page
 #
 # default is `en` - using this for the sub-site:
-#notfound_default_language = "ansible"
+# notfound_default_language = "ansible"
 # default_version needs to be set to the branch version.`:
 # setting latest - docsite serves up /ansible/latest/404.html
 # so keep this set to `latest`, `devel` or the older branch version
 # When devel becomes latest, change to latest in that branch, and
 # also go into the prior branch and change latest to the branch version.
-#notfound_default_version = "devel"
+# notfound_default_version = "devel"
 # makes default setting explicit:
 notfound_urls_prefix = "/ansible/devel/"
 
