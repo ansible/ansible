@@ -445,7 +445,7 @@ def get_type_checker(v):
 
     if v_type in ('pathspec', 'pathlist'):
         def path_list_checker(value):
-            if not isinstance(value, string_types) and not is_sequence(value):
+            if not isinstance(value, string_types) and not is_iterable(value):
                 raise ValueError('Value must be string or list of strings')
 
         return path_list_checker, v_type
