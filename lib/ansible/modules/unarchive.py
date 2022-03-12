@@ -977,6 +977,12 @@ def main():
             extra_opts=dict(type='list', elements='str', default=[]),
             validate_certs=dict(type='bool', default=True),
             io_buffer_size=dict(type='int', default=64 * 1024),
+
+            # Options that are for the action plugin, but ignored by the module itself.
+            # We have them here so that the sanity tests pass without ignores, which
+            # reduces the likelihood of further bugs added.
+            copy=dict(type='bool', default=True),
+            decrypt=dict(type='bool', default=True),
         ),
         add_file_common_args=True,
         # check-mode only works for zip files, we cover that later
