@@ -726,8 +726,7 @@ class Connection(ConnectionBase):
         if not conn_password:
             self._add_args(
                 b_command, (
-                    b"-o", b"KbdInteractiveAuthentication=no",
-                    b"-o", b"PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
+                    b"-o", b"PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey,keyboard-interactive",
                     b"-o", b"PasswordAuthentication=no"
                 ),
                 u"ansible_password/ansible_ssh_password not set"
