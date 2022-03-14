@@ -162,7 +162,7 @@ contain only values that you are querying for.
 Types of queries include:
 
 - query by name: ``ansible.netcommon.ipaddr('address')``, ``ansible.netcommon.ipv4('network')``;
-- query by CIDR range: ``ansible.netcommon.ipaddr('192.168.0.0/24')``, ``ansible.netcommon.ipv6('2001:db8::/32')``;
+- query by CIDR range: ``ansible.netcommon.ipaddr('192.168.0.0/16')``, ``ansible.netcommon.ipv6('2001:db8::/32')``;
 - query by index number: ``ansible.netcommon.ipaddr('1')``, ``ansible.netcommon.ipaddr('-1')``;
 
 If a query type is not recognized, Ansible will raise an error.
