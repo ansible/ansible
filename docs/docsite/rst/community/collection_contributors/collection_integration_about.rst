@@ -49,9 +49,7 @@ The basic entity of an Ansible integration test is a ``target``. The target is a
 
 The names of targets contain the module or plugin name that they test. Target names that start with ``setup_`` are usually executed as dependencies before module and plugin targets start execution. See :ref:`collection_creating_integration_tests` for details.
 
-To run integration tests, we will use the ``ansible-test`` utility that is included in the ``ansible-core`` and ``ansible`` packages. See :ref:`collection_run_integration_tests` for details.
-
-After you finish your integration tests, see to :ref:`collection_quickstart` to learn how to submit a pull request.
+To run integration tests, we will use the ``ansible-test`` utility that is included in the ``ansible-core`` and ``ansible`` packages. See :ref:`collection_run_integration_tests` for details. After you finish your integration tests, see to :ref:`collection_quickstart` to learn how to submit a pull request.
 
 .. _collection_integration_prepare:
 
@@ -75,14 +73,9 @@ If you use ``bash`` and the ``argcomplete`` package is installed with ``pip`` on
 
 .. code-block:: shell
 
-  ``ansible-test integration <tab><tab>``
+  ansible-test integration <tab><tab>
 
-Alternatively, you can check if the ``tests/integration/targets`` directory contains a corresponding directory with the same name as the module.
-
-For example, the tests for the ``postgresql_user`` module of the ``community.postgresql`` collection are stored in the ``tests/integration/targets/postgresql_user`` directory of the collection repository.
-
-If there is no corresponding target there, then that module does not have integration tests. In this case, consider adding integration tests for the module. See :ref:`collection_creating_integration_tests` for details.
-
+Alternatively, you can check if the ``tests/integration/targets`` directory contains a corresponding directory with the same name as the module. For example, the tests for the ``postgresql_user`` module of the ``community.postgresql`` collection are stored in the ``tests/integration/targets/postgresql_user`` directory of the collection repository. If there is no corresponding target there, then that module does not have integration tests. In this case, consider adding integration tests for the module. See :ref:`collection_creating_integration_tests` for details.
 
 
 .. _collection_integration_recommendations:
@@ -95,9 +88,7 @@ Bugfixes
 
 Before fixing code, create a test case in an :ref:`appropriate test target<collection_integration_prepare>` that reproduces the bug provided by the issue reporter and described in the ``Steps to Reproduce`` issue section. :ref:`Run <collection_run_integration_tests>` the tests.
 
-If you failed to reproduce the bug, ask the reporter to provide additional information. The issue may be related to environment settings.
-
-Sometimes specific environment issues cannot be reproduced in integration tests, in that case, manual testing by issue reporter or other interested users is required.
+If you failed to reproduce the bug, ask the reporter to provide additional information. The issue may be related to environment settings. Sometimes specific environment issues cannot be reproduced in integration tests, in that case, manual testing by issue reporter or other interested users is required.
 
 Refactoring code
 ----------------
@@ -126,13 +117,14 @@ Each test action has to be tested at least six times:
 
 To check a task:
 
-- Register the outcome of the task as a variable, for example, ``register: result``. Using the :ref:`assert <ansible_collections.ansible.builtin.assert_module>` module, check:
+1. Register the outcome of the task as a variable, for example, ``register: result``. Using the :ref:`assert <ansible_collections.ansible.builtin.assert_module>` module, check:
 
-  + If ``- result is changed`` or not.
-  + Expected return values.
-- If the module changes the system state, check the actual system state using at least one other module. For example, if the module changes a file, we can check that the file has been changed by checking its checksum with the :ref:`stat <ansible_collections.ansible.builtin.stat_module>` module before and after the test tasks.
-- Run the same task with ``check_mode: yes`` (if check-mode is supported by the module). Check with other modules that the actual system state has not been changed.
-- Cover cases when the module must fail. Use the ``ignore_errors: yes`` option and check the returned message with the ``assert`` module.
+  #. If ``- result is changed`` or not.
+  #. Expected return values.
+
+2. If the module changes the system state, check the actual system state using at least one other module. For example, if the module changes a file, we can check that the file has been changed by checking its checksum with the :ref:`stat <ansible_collections.ansible.builtin.stat_module>` module before and after the test tasks.
+3. Run the same task with ``check_mode: yes`` (if check-mode is supported by the module). Check with other modules that the actual system state has not been changed.
+4. Cover cases when the module must fail. Use the ``ignore_errors: yes`` option and check the returned message with the ``assert`` module.
 
 Example:
 
@@ -163,9 +155,7 @@ Here is a summary:
 Running integration tests
 ============================
 
-In the following examples, we will use ``Docker`` to run integration tests locally.
-
-Be sure that you have :ref:`collection_prepare_environment` first.
+In the following examples, we will use ``Docker`` to run integration tests locally. Ensure you have :ref:`collection_prepare_environment` first.
 
 We assume that you are in the ``~/ansible_collections/NAMESPACE/COLLECTION`` directory.
 
