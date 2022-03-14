@@ -34,7 +34,7 @@ You need a free GitHub account to `report bugs <https://github.com/ansible/ansib
 How to write a good bug report
 ------------------------------
 
-If you find a bug, open an issue using the `issue template <https://github.com/ansible/ansible/issues/new?assignees=&labels=&template=bug_report.yml>`. 
+If you find a bug, open an issue using the `issue template <https://github.com/ansible/ansible/issues/new?assignees=&labels=&template=bug_report.yml>`_. 
 
 Fill out the issue template as completely and as accurately as possible, include:
 
@@ -55,6 +55,6 @@ For multiple-file content, use gist.github.com, which is more durable than paste
 Requesting a feature
 ====================
 
-Before you request a feature, check what is :ref:`planned for future Ansible Releases <roadmaps>`. Check :ref: `existing pull requests tagged with feature <https://github.com/ansible/ansible/issues?q=is%3Aissue+is%3Aopen+label%3Afeature>`.
+Before you request a feature, check what is :ref:`planned for future Ansible Releases <roadmaps>`. Check `existing pull requests tagged with feature <https://github.com/ansible/ansible/issues?q=is%3Aissue+is%3Aopen+label%3Afeature>`_.
 
 To get your feature into Ansible, :ref:`submit a pull request <community_pull_requests>`, either against ansible-core or a collection. See also :ref:`ansible_collection_merge_requirements`. For ``ansible-core``, you can also open an issue in `ansible/ansible <https://github.com/ansible/ansible/issues>`_  or in a corresponding collection repository (To find the correct issue tracker, refer to :ref:`Bugs in collections<reporting_bugs_in_collections>` ).
