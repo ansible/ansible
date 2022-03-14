@@ -21,7 +21,7 @@ Ansible practices responsible disclosure - for security-related bugs, email `sec
 Bugs in ansible-core
 --------------------
 
-Before reporting a bug, use the GitHub issue search to check `already reported issues <https://github.com/ansible/ansible/issues>`. Unsure if you found a bug? Report the behavior on the :ref:`mailing list or community chat first <communication>`.
+Before reporting a bug, use the GitHub issue search to check `already reported issues <https://github.com/ansible/ansible/issues>`_. Unsure if you found a bug? Report the behavior on the :ref:`mailing list or community chat first <communication>`.
 
 Also, use the mailing list or chat to discuss whether the problem is in ``ansible-core`` or a collection, and for "how do I do this" type questions.
 
