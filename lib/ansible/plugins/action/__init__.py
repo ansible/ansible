@@ -15,13 +15,14 @@ import re
 import shlex
 import stat
 import tempfile
+
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
 from ansible.executor.module_common import modify_module
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
-from ansible.module_utils.common._collections_compat import Sequence
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -46,7 +47,7 @@ class ActionBase(ABC):
     '''
 
     # A set of valid arguments
-    _VALID_ARGS = frozenset([])
+    _VALID_ARGS = frozenset([])  # type: frozenset[str]
 
     def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
         self._task = task

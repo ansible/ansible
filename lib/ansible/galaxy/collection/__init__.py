@@ -11,6 +11,7 @@ import fnmatch
 import functools
 import json
 import os
+import queue
 import shutil
 import stat
 import sys
@@ -19,52 +20,30 @@ import tempfile
 import textwrap
 import threading
 import time
-import yaml
+import typing as t
 
 from collections import namedtuple
 from contextlib import contextmanager
-from ansible.module_utils.compat.version import LooseVersion
 from hashlib import sha256
 from io import BytesIO
 from itertools import chain
-from yaml.error import YAMLError
 
-# NOTE: Adding type ignores is a hack for mypy to shut up wrt bug #1153
-try:
-    import queue  # type: ignore[import]
-except ImportError:  # Python 2
-    import Queue as queue  # type: ignore[import,no-redef]
-
-try:
-    # NOTE: It's in Python 3 stdlib and can be installed on Python 2
-    # NOTE: via `pip install typing`. Unnecessary in runtime.
-    # NOTE: `TYPE_CHECKING` is True during mypy-typecheck-time.
-    from typing import TYPE_CHECKING
-except ImportError:
-    TYPE_CHECKING = False
-
-if TYPE_CHECKING:
-    from typing import Dict, Iterable, List, Optional, Text, Union
-    if sys.version_info[:2] >= (3, 8):
-        from typing import Literal
-    else:  # Python 2 + Python 3.4-3.7
-        from typing_extensions import Literal
-
+if t.TYPE_CHECKING:
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
     )
 
-    ManifestKeysType = Literal[
+    ManifestKeysType = t.Literal[
         'collection_info', 'file_manifest_file', 'format',
     ]
-    FileMetaKeysType = Literal[
+    FileMetaKeysType = t.Literal[
         'name',
         'ftype',
         'chksum_type',
         'chksum_sha256',
         'format',
     ]
-    CollectionInfoKeysType = Literal[
+    CollectionInfoKeysType = t.Literal[
         # collection meta:
         'namespace', 'name', 'version',
         'authors', 'readme',
@@ -77,26 +56,13 @@ if TYPE_CHECKING:
         # files meta:
         FileMetaKeysType,
     ]
-    ManifestValueType = Dict[
-        CollectionInfoKeysType,
-        Optional[
-            Union[
-                int, str,  # scalars, like name/ns, schema version
-                List[str],  # lists of scalars, like tags
-                Dict[str, str],  # deps map
-            ],
-        ],
-    ]
-    CollectionManifestType = Dict[ManifestKeysType, ManifestValueType]
-    FileManifestEntryType = Dict[FileMetaKeysType, Optional[Union[str, int]]]
-    FilesManifestType = Dict[
-        Literal['files', 'format'],
-        Union[List[FileManifestEntryType], int],
-    ]
+    ManifestValueType = t.Dict[CollectionInfoKeysType, t.Union[int, str, t.List[str], t.Dict[str, str], None]]
+    CollectionManifestType = t.Dict[ManifestKeysType, ManifestValueType]
+    FileManifestEntryType = t.Dict[FileMetaKeysType, t.Union[str, int, None]]
+    FilesManifestType = t.Dict[t.Literal['files', 'format'], t.Union[t.List[FileManifestEntryType], int]]
 
 import ansible.constants as C
 from ansible.errors import AnsibleError
-from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection.concrete_artifact_manager import (
     _consume_file,
@@ -128,7 +94,6 @@ from ansible.module_utils.common.yaml import yaml_dump
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
-from ansible.utils.version import SemanticVersion
 
 
 display = Display()
@@ -188,7 +153,7 @@ class CollectionVerifyResult:
 def verify_local_collection(
         local_collection, remote_collection,
         artifacts_manager,
-):  # type: (Candidate, Optional[Candidate], ConcreteArtifactsManager) -> CollectionVerifyResult
+):  # type: (Candidate, Candidate | None, ConcreteArtifactsManager) -> CollectionVerifyResult
     """Verify integrity of the locally installed collection.
 
     :param local_collection: Collection being checked.
@@ -208,7 +173,7 @@ def verify_local_collection(
         format(path=to_text(local_collection.src)),
     )
 
-    modified_content = []  # type: List[ModifiedContent]
+    modified_content = []  # type: list[ModifiedContent]
 
     verify_local_only = remote_collection is None
 
@@ -298,11 +263,46 @@ def verify_local_collection(
     _verify_file_hash(b_collection_path, file_manifest_filename, expected_hash, modified_content)
     file_manifest = get_json_from_validation_source(file_manifest_filename)
 
+    collection_dirs = set()
+    collection_files = {
+        os.path.join(b_collection_path, b'MANIFEST.json'),
+        os.path.join(b_collection_path, b'FILES.json'),
+    }
+
     # Use the file manifest to verify individual file checksums
     for manifest_data in file_manifest['files']:
+        name = manifest_data['name']
+
         if manifest_data['ftype'] == 'file':
+            collection_files.add(
+                os.path.join(b_collection_path, to_bytes(name, errors='surrogate_or_strict'))
+            )
             expected_hash = manifest_data['chksum_%s' % manifest_data['chksum_type']]
-            _verify_file_hash(b_collection_path, manifest_data['name'], expected_hash, modified_content)
+            _verify_file_hash(b_collection_path, name, expected_hash, modified_content)
+
+        if manifest_data['ftype'] == 'dir':
+            collection_dirs.add(
+                os.path.join(b_collection_path, to_bytes(name, errors='surrogate_or_strict'))
+            )
+
+    # Find any paths not in the FILES.json
+    for root, dirs, files in os.walk(b_collection_path):
+        for name in files:
+            full_path = os.path.join(root, name)
+            path = to_text(full_path[len(b_collection_path) + 1::], errors='surrogate_or_strict')
+
+            if full_path not in collection_files:
+                modified_content.append(
+                    ModifiedContent(filename=path, expected='the file does not exist', installed='the file exists')
+                )
+        for name in dirs:
+            full_path = os.path.join(root, name)
+            path = to_text(full_path[len(b_collection_path) + 1::], errors='surrogate_or_strict')
+
+            if full_path not in collection_dirs:
+                modified_content.append(
+                    ModifiedContent(filename=path, expected='the directory does not exist', installed='the directory exists')
+                )
 
     if modified_content:
         result.success = False
@@ -346,7 +346,7 @@ def verify_file_signature(manifest_file, detached_signature, keyring):
 
 
 def build_collection(u_collection_path, u_output_path, force):
-    # type: (Text, Text, bool) -> Text
+    # type: (str, str, bool) -> str
     """Creates the Ansible collection artifact in a .tar.gz file.
 
     :param u_collection_path: The path to the collection to build. This should be the directory that contains the
@@ -392,9 +392,9 @@ def build_collection(u_collection_path, u_output_path, force):
 
 
 def download_collections(
-        collections,  # type: Iterable[Requirement]
+        collections,  # type: t.Iterable[Requirement]
         output_path,  # type: str
-        apis,  # type: Iterable[GalaxyAPI]
+        apis,  # type: t.Iterable[GalaxyAPI]
         no_deps,  # type: bool
         allow_pre_release,  # type: bool
         artifacts_manager,  # type: ConcreteArtifactsManager
@@ -534,9 +534,9 @@ def publish_collection(collection_path, api, wait, timeout):
 
 
 def install_collections(
-        collections,  # type: Iterable[Requirement]
+        collections,  # type: t.Iterable[Requirement]
         output_path,  # type: str
-        apis,  # type: Iterable[GalaxyAPI]
+        apis,  # type: t.Iterable[GalaxyAPI]
         ignore_errors,  # type: bool
         no_deps,  # type: bool
         force,  # type: bool
@@ -700,13 +700,13 @@ def validate_collection_path(collection_path):  # type: (str) -> str
 
 
 def verify_collections(
-        collections,  # type: Iterable[Requirement]
-        search_paths,  # type: Iterable[str]
-        apis,  # type: Iterable[GalaxyAPI]
+        collections,  # type: t.Iterable[Requirement]
+        search_paths,  # type: t.Iterable[str]
+        apis,  # type: t.Iterable[GalaxyAPI]
         ignore_errors,  # type: bool
         local_verify_only,  # type: bool
         artifacts_manager,  # type: ConcreteArtifactsManager
-):  # type: (...) -> List[CollectionVerifyResult]
+):  # type: (...) -> list[CollectionVerifyResult]
     r"""Verify the integrity of locally installed collections.
 
     :param collections: The collections to check.
@@ -717,7 +717,7 @@ def verify_collections(
     :param artifacts_manager: Artifacts manager.
     :return: list of CollectionVerifyResult objects describing the results of each collection verification
     """
-    results = []  # type: List[CollectionVerifyResult]
+    results = []  # type: list[CollectionVerifyResult]
 
     api_proxy = MultiGalaxyAPIProxy(apis, artifacts_manager)
 
@@ -914,7 +914,7 @@ def _verify_file_hash(b_path, filename, expected_hash, error_queue):
 
 
 def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns):
-    # type: (bytes, str, str, List[str]) -> FilesManifestType
+    # type: (bytes, str, str, list[str]) -> FilesManifestType
     # We always ignore .pyc and .retry files as well as some well known version control directories. The ignore
     # patterns can be extended by the build_ignore key in galaxy.yml
     b_ignore_patterns = [
@@ -1038,7 +1038,7 @@ def _build_collection_tar(
         b_tar_path,  # type: bytes
         collection_manifest,  # type: CollectionManifestType
         file_manifest,  # type: FilesManifestType
-):  # type: (...) -> Text
+):  # type: (...) -> str
     """Build a tar.gz collection artifact from the manifest data."""
     files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True), errors='surrogate_or_strict')
     collection_manifest['file_manifest_file']['chksum_sha256'] = secure_hash_s(files_manifest_json, hash_func=sha256)
@@ -1250,7 +1250,7 @@ def write_source_metadata(collection, b_collection_path, artifacts_manager):
 
 
 def verify_artifact_manifest(manifest_file, signatures, keyring):
-    # type: (str, str, List[str]) -> None
+    # type: (str, str, str) -> None
     failed_verify = False
     coll_path_parts = to_text(manifest_file, errors='surrogate_or_strict').split(os.path.sep)
     collection_name = '%s.%s' % (coll_path_parts[-3], coll_path_parts[-2])  # get 'ns' and 'coll' from /path/to/ns/coll/MANIFEST.json
@@ -1493,15 +1493,15 @@ def _is_child_path(path, parent_path, link_name=None):
 
 
 def _resolve_depenency_map(
-        requested_requirements,  # type: Iterable[Requirement]
-        galaxy_apis,  # type: Iterable[GalaxyAPI]
+        requested_requirements,  # type: t.Iterable[Requirement]
+        galaxy_apis,  # type: t.Iterable[GalaxyAPI]
         concrete_artifacts_manager,  # type: ConcreteArtifactsManager
-        preferred_candidates,  # type: Optional[Iterable[Candidate]]
+        preferred_candidates,  # type: t.Iterable[Candidate] | None
         no_deps,  # type: bool
         allow_pre_release,  # type: bool
         upgrade,  # type: bool
         include_signatures,  # type: bool
-):  # type: (...) -> Dict[str, Candidate]
+):  # type: (...) -> dict[str, Candidate]
     """Return the resolved dependency map."""
     collection_dep_resolver = build_collection_dependency_resolver(
         galaxy_apis=galaxy_apis,
@@ -1529,14 +1529,14 @@ def _resolve_depenency_map(
             )
             for req_inf in dep_exc.causes
         )
-        error_msg_lines = chain(
+        error_msg_lines = list(chain(
             (
                 'Failed to resolve the requested '
                 'dependencies map. Could not satisfy the following '
                 'requirements:',
             ),
             conflict_causes,
-        )
+        ))
         raise raise_from(  # NOTE: Leading "raise" is a hack for mypy bug #9717
             AnsibleError('\n'.join(error_msg_lines)),
             dep_exc,

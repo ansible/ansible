@@ -67,10 +67,10 @@ EXAMPLES = """
   ansible.builtin.include_tasks:
     file: "{{ item }}"
   with_first_found:
-    files:
-     - path/tasks.yaml
-     - path/other_tasks.yaml
-    skip: True
+    - files:
+      - path/tasks.yaml
+      - path/other_tasks.yaml
+      skip: True
 
 - name: Include tasks only if one of the files exists, otherwise skip
   ansible.builtin.include_tasks: '{{ tasks_file }}'
@@ -134,28 +134,25 @@ RETURN = """
     elements: path
 """
 import os
+import re
+
+from collections.abc import Mapping, Sequence
 
 from jinja2.exceptions import UndefinedError
 
 from ansible.errors import AnsibleLookupError, AnsibleUndefinedVariable
-from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
 
 
 def _split_on(terms, spliters=','):
-
-    # TODO: fix as it does not allow spaces in names
     termlist = []
     if isinstance(terms, string_types):
-        for spliter in spliters:
-            terms = terms.replace(spliter, ' ')
-        termlist = terms.split(' ')
+        termlist = re.split(r'[%s]' % ''.join(map(re.escape, spliters)), terms)
     else:
         # added since options will already listify
         for t in terms:
             termlist.extend(_split_on(t, spliters))
-
     return termlist
 
 

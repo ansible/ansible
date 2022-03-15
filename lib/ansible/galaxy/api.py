@@ -31,12 +31,6 @@ from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash_s
 from ansible.utils.path import makedirs_safe
 
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    # Python 2
-    from urlparse import urlparse
-
 display = Display()
 _CACHE_LOCK = threading.Lock()
 COLLECTION_PAGE_SIZE = 100
@@ -298,7 +292,7 @@ class GalaxyAPI:
         return to_native(self.name)
 
     def __unicode__(self):
-        # type: (GalaxyAPI) -> unicode
+        # type: (GalaxyAPI) -> str
         """Render GalaxyAPI as a unicode/text string representation."""
         return to_text(self.name)
 
@@ -314,7 +308,7 @@ class GalaxyAPI:
         )
 
     def __lt__(self, other_galaxy_api):
-        # type: (GalaxyAPI, GalaxyAPI) -> Union[bool, 'NotImplemented']
+        # type: (GalaxyAPI, GalaxyAPI) -> bool
         """Return whether the instance priority is higher than other."""
         if not isinstance(other_galaxy_api, self.__class__):
             return NotImplemented
@@ -324,7 +318,7 @@ class GalaxyAPI:
             self.name < self.name
         )
 
-    @property
+    @property  # type: ignore[misc]  # https://github.com/python/mypy/issues/1362
     @g_connect(['v1', 'v2', 'v3'])
     def available_api_versions(self):
         # Calling g_connect will populate self._available_api_versions

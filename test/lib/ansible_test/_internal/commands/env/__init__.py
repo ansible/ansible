@@ -166,7 +166,7 @@ def show_dict(data, verbose, root_verbosity=0, path=None):  # type: (t.Dict[str,
             display.info(indent + '%s: %s' % (key, value), verbosity=verbosity)
 
 
-def get_docker_details(args):  # type: (EnvConfig) -> t.Dict[str, str]
+def get_docker_details(args):  # type: (EnvConfig) -> t.Dict[str, t.Any]
     """Return details about docker."""
     docker = get_docker_command()
 

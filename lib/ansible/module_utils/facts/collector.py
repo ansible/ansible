@@ -33,6 +33,8 @@ from collections import defaultdict
 
 import platform
 
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils.facts import timeout
 
 
@@ -56,11 +58,11 @@ class CollectorNotFoundError(KeyError):
 
 
 class BaseFactCollector:
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
 
     _platform = 'Generic'
-    name = None
-    required_facts = set()
+    name = None  # type: str | None
+    required_facts = set()  # type: t.Set[str]
 
     def __init__(self, collectors=None, namespace=None):
         '''Base class for things that collect facts.

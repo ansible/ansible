@@ -10,6 +10,8 @@ import os
 import platform
 import re
 
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils.common.sys_info import get_distribution, get_distribution_version, \
     get_distribution_codename
 from ansible.module_utils.facts.utils import get_file_content
@@ -684,7 +686,7 @@ class DistributionFactCollector(BaseFactCollector):
     _fact_ids = set(['distribution_version',
                      'distribution_release',
                      'distribution_major_version',
-                     'os_family'])
+                     'os_family'])  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         collected_facts = collected_facts or {}

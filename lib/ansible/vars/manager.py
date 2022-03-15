@@ -23,6 +23,7 @@ import os
 import sys
 
 from collections import defaultdict
+from collections.abc import Mapping, MutableMapping, Sequence
 from hashlib import sha1
 
 from jinja2.exceptions import UndefinedError
@@ -32,7 +33,6 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
 from ansible.module_utils._text import to_text
-from ansible.module_utils.common._collections_compat import Mapping, MutableMapping, Sequence
 from ansible.module_utils.six import text_type, string_types
 from ansible.plugins.loader import lookup_loader
 from ansible.vars.fact_cache import FactCache

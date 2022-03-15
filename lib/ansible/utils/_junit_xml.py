@@ -8,19 +8,18 @@ import abc
 import dataclasses
 import datetime
 import decimal
-import typing as t
 
 from xml.dom import minidom
 # noinspection PyPep8Naming
 from xml.etree import ElementTree as ET
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass  # type: ignore[misc]  # https://github.com/python/mypy/issues/5374
 class TestResult(metaclass=abc.ABCMeta):
     """Base class for the result of a test case."""
-    output: t.Optional[str] = None
-    message: t.Optional[str] = None
-    type: t.Optional[str] = None
+    output: str | None = None
+    message: str | None = None
+    type: str | None = None
 
     def __post_init__(self):
         if self.type is None:
@@ -31,7 +30,7 @@ class TestResult(metaclass=abc.ABCMeta):
     def tag(self) -> str:
         """Tag name for the XML element created by this result type."""
 
-    def get_attributes(self) -> t.Dict[str, str]:
+    def get_attributes(self) -> dict[str, str]:
         """Return a dictionary of attributes for this instance."""
         return _attributes(
             message=self.message,
@@ -68,16 +67,16 @@ class TestError(TestResult):
 class TestCase:
     """An individual test case."""
     name: str
-    assertions: t.Optional[int] = None
-    classname: t.Optional[str] = None
-    status: t.Optional[str] = None
-    time: t.Optional[decimal.Decimal] = None
+    assertions: int | None = None
+    classname: str | None = None
+    status: str | None = None
+    time: decimal.Decimal | None = None
 
-    errors: t.List[TestError] = dataclasses.field(default_factory=list)
-    failures: t.List[TestFailure] = dataclasses.field(default_factory=list)
-    skipped: t.Optional[str] = None
-    system_out: t.Optional[str] = None
-    system_err: t.Optional[str] = None
+    errors: list[TestError] = dataclasses.field(default_factory=list)
+    failures: list[TestFailure] = dataclasses.field(default_factory=list)
+    skipped: str | None = None
+    system_out: str | None = None
+    system_err: str | None = None
 
     is_disabled: bool = False
 
@@ -96,7 +95,7 @@ class TestCase:
         """True if the test case was skipped."""
         return bool(self.skipped)
 
-    def get_attributes(self) -> t.Dict[str, str]:
+    def get_attributes(self) -> dict[str, str]:
         """Return a dictionary of attributes for this instance."""
         return _attributes(
             assertions=self.assertions,
@@ -129,15 +128,15 @@ class TestCase:
 class TestSuite:
     """A collection of test cases."""
     name: str
-    hostname: t.Optional[str] = None
-    id: t.Optional[str] = None
-    package: t.Optional[str] = None
-    timestamp: t.Optional[datetime.datetime] = None
+    hostname: str | None = None
+    id: str | None = None
+    package: str | None = None
+    timestamp: datetime.datetime | None = None
 
-    properties: t.Dict[str, str] = dataclasses.field(default_factory=dict)
-    cases: t.List[TestCase] = dataclasses.field(default_factory=list)
-    system_out: t.Optional[str] = None
-    system_err: t.Optional[str] = None
+    properties: dict[str, str] = dataclasses.field(default_factory=dict)
+    cases: list[TestCase] = dataclasses.field(default_factory=list)
+    system_out: str | None = None
+    system_err: str | None = None
 
     @property
     def disabled(self) -> int:
@@ -167,9 +166,9 @@ class TestSuite:
     @property
     def time(self) -> decimal.Decimal:
         """The total time from all test cases."""
-        return sum(case.time for case in self.cases if case.time)
+        return decimal.Decimal(sum(case.time for case in self.cases if case.time))
 
-    def get_attributes(self) -> t.Dict[str, str]:
+    def get_attributes(self) -> dict[str, str]:
         """Return a dictionary of attributes for this instance."""
         return _attributes(
             disabled=self.disabled,
@@ -206,9 +205,9 @@ class TestSuite:
 @dataclasses.dataclass
 class TestSuites:
     """A collection of test suites."""
-    name: t.Optional[str] = None
+    name: str | None = None
 
-    suites: t.List[TestSuite] = dataclasses.field(default_factory=list)
+    suites: list[TestSuite] = dataclasses.field(default_factory=list)
 
     @property
     def disabled(self) -> int:
@@ -233,9 +232,9 @@ class TestSuites:
     @property
     def time(self) -> decimal.Decimal:
         """The total time from all test cases."""
-        return sum(suite.time for suite in self.suites)
+        return decimal.Decimal(sum(suite.time for suite in self.suites))
 
-    def get_attributes(self) -> t.Dict[str, str]:
+    def get_attributes(self) -> dict[str, str]:
         """Return a dictionary of attributes for this instance."""
         return _attributes(
             disabled=self.disabled,
@@ -258,7 +257,7 @@ class TestSuites:
         return _pretty_xml(self.get_xml_element())
 
 
-def _attributes(**kwargs) -> t.Dict[str, str]:
+def _attributes(**kwargs) -> dict[str, str]:
     """Return the given kwargs as a dictionary with values converted to strings. Items with a value of None will be omitted."""
     return {key: str(value) for key, value in kwargs.items() if value is not None}
 

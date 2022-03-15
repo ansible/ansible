@@ -52,6 +52,7 @@ import socket
 import sys
 import tempfile
 import traceback
+import types
 
 from contextlib import contextmanager
 
@@ -65,10 +66,10 @@ try:
     import httplib
 except ImportError:
     # Python 3
-    import http.client as httplib
+    import http.client as httplib  # type: ignore[no-redef]
 
+import ansible.module_utils.compat.typing as t
 import ansible.module_utils.six.moves.http_cookiejar as cookiejar
-import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
 
 from ansible.module_utils.common.collections import Mapping
@@ -83,10 +84,10 @@ try:
     from urllib.request import AbstractHTTPHandler, BaseHandler
 except ImportError:
     # python2
-    import urllib2 as urllib_request
-    from urllib2 import AbstractHTTPHandler, BaseHandler
+    import urllib2 as urllib_request  # type: ignore[no-redef]
+    from urllib2 import AbstractHTTPHandler, BaseHandler  # type: ignore[no-redef]
 
-urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307
+urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307  # type: ignore[attr-defined]
 
 try:
     from ansible.module_utils.six.moves.urllib.parse import urlparse, urlunparse, unquote
@@ -160,14 +161,14 @@ if not HAS_SSLCONTEXT and HAS_SSL:
 # The bundled backports.ssl_match_hostname should really be moved into its own file for processing
 _BUNDLED_METADATA = {"pypi_name": "backports.ssl_match_hostname", "version": "3.7.0.1"}
 
-LOADED_VERIFY_LOCATIONS = set()
+LOADED_VERIFY_LOCATIONS = set()  # type: t.Set[str]
 
 HAS_MATCH_HOSTNAME = True
 try:
     from ssl import match_hostname, CertificateError
 except ImportError:
     try:
-        from backports.ssl_match_hostname import match_hostname, CertificateError
+        from backports.ssl_match_hostname import match_hostname, CertificateError  # type: ignore[misc]
     except ImportError:
         HAS_MATCH_HOSTNAME = False
 
@@ -268,7 +269,7 @@ try:
 
 except ImportError:
     GSSAPI_IMP_ERR = traceback.format_exc()
-    HTTPGSSAPIAuthHandler = None
+    HTTPGSSAPIAuthHandler = None  # type: types.ModuleType | None  # type: ignore[no-redef]
 
 if not HAS_MATCH_HOSTNAME:
     # The following block of code is under the terms and conditions of the
@@ -279,9 +280,9 @@ if not HAS_MATCH_HOSTNAME:
     try:
         # Divergence: Python-3.7+'s _ssl has this exception type but older Pythons do not
         from _ssl import SSLCertVerificationError
-        CertificateError = SSLCertVerificationError
+        CertificateError = SSLCertVerificationError  # type: ignore[misc]
     except ImportError:
-        class CertificateError(ValueError):
+        class CertificateError(ValueError):  # type: ignore[no-redef]
             pass
 
     def _dnsname_match(dn, hostname):
@@ -390,7 +391,7 @@ if not HAS_MATCH_HOSTNAME:
         ip = _inet_paton(ipname.rstrip())
         return ip == host_ip
 
-    def match_hostname(cert, hostname):
+    def match_hostname(cert, hostname):  # type: ignore[misc]
         """Verify that *cert* (in decoded format as returned by
         SSLSocket.getpeercert()) matches the *hostname*.  RFC 2818 and RFC 6125
         rules are followed.
@@ -519,7 +520,7 @@ CustomHTTPSHandler = None
 HTTPSClientAuthHandler = None
 UnixHTTPSConnection = None
 if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler'):
-    class CustomHTTPSConnection(httplib.HTTPSConnection):
+    class CustomHTTPSConnection(httplib.HTTPSConnection):  # type: ignore[no-redef]
         def __init__(self, *args, **kwargs):
             httplib.HTTPSConnection.__init__(self, *args, **kwargs)
             self.context = None
@@ -554,7 +555,7 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
             else:
                 self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=PROTOCOL)
 
-    class CustomHTTPSHandler(urllib_request.HTTPSHandler):
+    class CustomHTTPSHandler(urllib_request.HTTPSHandler):  # type: ignore[no-redef]
 
         def https_open(self, req):
             kwargs = {}
@@ -570,7 +571,7 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
 
         https_request = AbstractHTTPHandler.do_request_
 
-    class HTTPSClientAuthHandler(urllib_request.HTTPSHandler):
+    class HTTPSClientAuthHandler(urllib_request.HTTPSHandler):  # type: ignore[no-redef]
         '''Handles client authentication via cert/key
 
         This is a fairly lightweight extension on HTTPSHandler, and can be used
@@ -610,7 +611,7 @@ if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib_request, 'HTTPSHandler
         yield
         httplib.HTTPConnection.connect = _connect
 
-    class UnixHTTPSConnection(httplib.HTTPSConnection):
+    class UnixHTTPSConnection(httplib.HTTPSConnection):  # type: ignore[no-redef]
         def __init__(self, unix_socket):
             self._unix_socket = unix_socket
 

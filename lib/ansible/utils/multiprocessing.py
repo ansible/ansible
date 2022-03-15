@@ -14,8 +14,4 @@ import multiprocessing
 #
 # This exists in utils to allow it to be easily imported into various places
 # without causing circular import or dependency problems
-try:
-    context = multiprocessing.get_context('fork')
-except AttributeError:
-    # Py2 has no context functionality, and only supports fork
-    context = multiprocessing
+context = multiprocessing.get_context('fork')

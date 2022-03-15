@@ -18,6 +18,8 @@ __metaclass__ = type
 
 import shlex
 
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils.facts.utils import get_file_content
 
 from ansible.module_utils.facts.collector import BaseFactCollector
@@ -25,7 +27,7 @@ from ansible.module_utils.facts.collector import BaseFactCollector
 
 class CmdLineFactCollector(BaseFactCollector):
     name = 'cmdline'
-    _fact_ids = set()
+    _fact_ids = set()  # type: t.Set[str]
 
     def _get_proc_cmdline(self):
         return get_file_content('/proc/cmdline')

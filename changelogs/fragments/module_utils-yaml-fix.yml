@@ -1,0 +1,3 @@
+bugfixes:
+  - module_utils.common.yaml - The ``SafeLoader``, ``SafeDumper`` and ``Parser`` classes now fallback to ``object`` when ``yaml`` is not available.
+                               This fixes tracebacks when inheriting from these classes without requiring a ``HAS_YAML`` guard around class definitions.

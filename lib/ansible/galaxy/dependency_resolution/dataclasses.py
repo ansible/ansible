@@ -8,23 +8,19 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import typing as t
+
 from collections import namedtuple
-from collections.abc import MutableSequence
+from collections.abc import MutableSequence, MutableMapping
 from glob import iglob
 from urllib.parse import urlparse
 from yaml import safe_load
 
-try:
-    from typing import TYPE_CHECKING
-except ImportError:
-    TYPE_CHECKING = False
-
-if TYPE_CHECKING:
-    from typing import Type, TypeVar
+if t.TYPE_CHECKING:
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
     )
-    Collection = TypeVar(
+    Collection = t.TypeVar(
         'Collection',
         'Candidate', 'Requirement',
         '_ComputedReqKindsMixin',
@@ -34,7 +30,6 @@ if TYPE_CHECKING:
 from ansible.errors import AnsibleError
 from ansible.galaxy.api import GalaxyAPI
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
@@ -176,13 +171,7 @@ class _ComputedReqKindsMixin:
         if not self.may_have_offline_galaxy_info:
             self._source_info = None
         else:
-            # Store Galaxy metadata adjacent to the namespace of the collection
-            # Chop off the last two parts of the path (/ns/coll) to get the dir containing the ns
-            b_src = to_bytes(self.src, errors='surrogate_or_strict')
-            b_path_parts = b_src.split(to_bytes(os.path.sep))[0:-2]
-            b_path = to_bytes(os.path.sep).join(b_path_parts)
-
-            info_path = self.construct_galaxy_info_path(b_path)
+            info_path = self.construct_galaxy_info_path(to_bytes(self.src, errors='surrogate_or_strict'))
 
             self._source_info = get_validated_source_info(
                 info_path,
@@ -193,7 +182,7 @@ class _ComputedReqKindsMixin:
 
     @classmethod
     def from_dir_path_as_unknown(  # type: ignore[misc]
-            cls,  # type: Type[Collection]
+            cls,  # type: t.Type[Collection]
             dir_path,  # type: bytes
             art_mgr,  # type: ConcreteArtifactsManager
     ):  # type: (...)  -> Collection
@@ -245,7 +234,7 @@ class _ComputedReqKindsMixin:
 
     @classmethod
     def from_dir_path_implicit(  # type: ignore[misc]
-            cls,  # type: Type[Collection]
+            cls,  # type: t.Type[Collection]
             dir_path,  # type: bytes
     ):  # type: (...)  -> Collection
         """Construct a collection instance based on an arbitrary dir.
@@ -447,9 +436,15 @@ class _ComputedReqKindsMixin:
             return False
         return True
 
-    def construct_galaxy_info_path(self, b_metadata_dir):
+    def construct_galaxy_info_path(self, b_collection_path):
         if not self.may_have_offline_galaxy_info and not self.type == 'galaxy':
             raise TypeError('Only installed collections from a Galaxy server have offline Galaxy info')
+
+        # Store Galaxy metadata adjacent to the namespace of the collection
+        # Chop off the last two parts of the path (/ns/coll) to get the dir containing the ns
+        b_src = to_bytes(b_collection_path, errors='surrogate_or_strict')
+        b_path_parts = b_src.split(to_bytes(os.path.sep))[0:-2]
+        b_metadata_dir = to_bytes(os.path.sep).join(b_path_parts)
 
         # ns.coll-1.0.0.info
         b_dir_name = to_bytes(f"{self.namespace}.{self.name}-{self.ver}.info", errors="surrogate_or_strict")
@@ -528,10 +523,10 @@ class _ComputedReqKindsMixin:
         return self._source_info
 
 
-RequirementNamedTuple = namedtuple('Requirement', ('fqcn', 'ver', 'src', 'type', 'signature_sources'))
+RequirementNamedTuple = namedtuple('Requirement', ('fqcn', 'ver', 'src', 'type', 'signature_sources'))  # type: ignore[name-match]
 
 
-CandidateNamedTuple = namedtuple('Candidate', ('fqcn', 'ver', 'src', 'type', 'signatures'))
+CandidateNamedTuple = namedtuple('Candidate', ('fqcn', 'ver', 'src', 'type', 'signatures'))  # type: ignore[name-match]
 
 
 class Requirement(

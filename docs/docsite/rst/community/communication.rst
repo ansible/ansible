@@ -121,6 +121,7 @@ Many of our community `Working Groups <https://github.com/ansible/community/wiki
 - `Testing Working Group <https://github.com/ansible/community/wiki/Testing>`_  - Matrix: `#devel:ansible.im <https://matrix.to:/#/#devel:ansible.im>`_ | IRC: ``#ansible-devel``
 - `VMware Working Group <https://github.com/ansible/community/wiki/VMware>`_ - Matrix: `#vmware:ansible.im <https://matrix.to:/#/#vmware:ansible.im>`_ | IRC: ``#ansible-vmware``
 - `Windows Working Group <https://github.com/ansible/community/wiki/Windows>`_ - Matrix: `#windows:ansible.im <https://matrix.to:/#/#windows:ansible.im>`_ | IRC: ``#ansible-windows``
+- `Ansible developer tools Group <https://github.com/ansible/community/wiki/Ansible-developer-tools>`_ - Matrix: `devtools:ansible.im <https://matrix.to/#/#devtools:ansible.im>`_ | IRC: ``#ansible-devtools``
 
 Want to `form a new Working Group <https://github.com/ansible/community/blob/master/WORKING-GROUPS.md>`_?
 

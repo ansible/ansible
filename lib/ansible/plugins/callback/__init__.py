@@ -24,11 +24,12 @@ import json
 import re
 import sys
 import textwrap
+
 from collections import OrderedDict
+from collections.abc import MutableMapping
 from copy import deepcopy
 
 from ansible import constants as C
-from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.six import text_type
 from ansible.parsing.ajson import AnsibleJSONEncoder
@@ -383,13 +384,6 @@ class CallbackBase(AnsiblePlugin):
                                               tofiledate=u'',
                                               n=C.DIFF_CONTEXT)
                 difflines = list(differ)
-                if len(difflines) >= 3 and sys.version_info[:2] == (2, 6):
-                    # difflib in Python 2.6 adds trailing spaces after
-                    # filenames in the -- before/++ after headers.
-                    difflines[0] = difflines[0].replace(u' \n', u'\n')
-                    difflines[1] = difflines[1].replace(u' \n', u'\n')
-                    # it also treats empty files differently
-                    difflines[2] = difflines[2].replace(u'-1,0', u'-0,0').replace(u'+1,0', u'+0,0')
                 has_diff = False
                 for line in difflines:
                     has_diff = True

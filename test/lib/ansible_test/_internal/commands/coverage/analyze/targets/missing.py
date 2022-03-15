@@ -24,11 +24,10 @@ from . import (
     write_report,
 )
 
-if t.TYPE_CHECKING:
-    from . import (
-        TargetIndexes,
-        IndexedPoints,
-    )
+from . import (
+    TargetIndexes,
+    IndexedPoints,
+)
 
 
 class CoverageAnalyzeTargetsMissingConfig(CoverageAnalyzeTargetsConfig):
@@ -53,7 +52,7 @@ def command_coverage_analyze_targets_missing(args):  # type: (CoverageAnalyzeTar
 
     from_targets, from_path_arcs, from_path_lines = read_report(args.from_file)
     to_targets, to_path_arcs, to_path_lines = read_report(args.to_file)
-    target_indexes = {}
+    target_indexes = {}  # type: TargetIndexes
 
     if args.only_gaps:
         arcs = find_gaps(from_path_arcs, from_targets, to_path_arcs, target_indexes, args.only_exists)
@@ -74,7 +73,7 @@ def find_gaps(
         only_exists,  # type: bool
 ):  # type: (...) -> IndexedPoints
     """Find gaps in coverage between the from and to data sets."""
-    target_data = {}
+    target_data = {}  # type: IndexedPoints
 
     for from_path, from_points in from_data.items():
         if only_exists and not os.path.isfile(to_bytes(from_path)):
@@ -100,7 +99,7 @@ def find_missing(
         only_exists,  # type: bool
 ):  # type: (...) -> IndexedPoints
     """Find coverage in from_data not present in to_data (arcs or lines)."""
-    target_data = {}
+    target_data = {}  # type: IndexedPoints
 
     for from_path, from_points in from_data.items():
         if only_exists and not os.path.isfile(to_bytes(from_path)):

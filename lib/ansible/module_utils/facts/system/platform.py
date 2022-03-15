@@ -20,6 +20,8 @@ import re
 import socket
 import platform
 
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils.facts.utils import get_file_content
 
 from ansible.module_utils.facts.collector import BaseFactCollector
@@ -37,7 +39,7 @@ class PlatformFactCollector(BaseFactCollector):
                      'machine',
                      'python_version',
                      'architecture',
-                     'machine_id'])
+                     'machine_id'])  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         platform_facts = {}

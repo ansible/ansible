@@ -48,7 +48,7 @@ class ConnectionBase(AnsiblePlugin):
     # When running over this connection type, prefer modules written in a certain language
     # as discovered by the specified file extension.  An empty string as the
     # language means any language.
-    module_implementation_preferences = ('',)
+    module_implementation_preferences = ('',)  # type: tuple[str, ...]
     allow_executable = True
 
     # the following control whether or not the connection supports the
