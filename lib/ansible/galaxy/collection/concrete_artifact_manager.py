@@ -65,8 +65,8 @@ class ConcreteArtifactsManager:
         * retrieving the metadata out of the downloaded artifacts
     """
 
-    def __init__(self, b_working_directory, validate_certs=True):
-        # type: (bytes, bool) -> None
+    def __init__(self, b_working_directory, validate_certs=True, timeout=60):
+        # type: (bytes, bool, int) -> None
         """Initialize ConcreteArtifactsManager caches and costraints."""
         self._validate_certs = validate_certs  # type: bool
         self._artifact_cache = {}  # type: Dict[bytes, bytes]
@@ -74,6 +74,7 @@ class ConcreteArtifactsManager:
         self._artifact_meta_cache = {}  # type: Dict[bytes, Dict[str, Optional[Union[str, List[str], Dict[str, str]]]]]
         self._galaxy_collection_cache = {}  # type: Dict[Union[Candidate, Requirement], Tuple[str, str, GalaxyToken]]
         self._b_working_directory = b_working_directory  # type: bytes
+        self.timeout = timeout  # type: int
 
     def get_galaxy_artifact_path(self, collection):
         # type: (Union[Candidate, Requirement]) -> bytes
@@ -168,6 +169,7 @@ class ConcreteArtifactsManager:
                     self._b_working_directory,
                     expected_hash=None,  # NOTE: URLs don't support checksums
                     validate_certs=self._validate_certs,
+                    timeout=self.timeout
                 )
             except URLError as err:
                 raise_from(
@@ -382,8 +384,8 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
 
 
 # FIXME: use random subdirs while preserving the file names
-def _download_file(url, b_path, expected_hash, validate_certs, token=None):
-    # type: (str, bytes, Optional[str], bool, GalaxyToken) -> bytes
+def _download_file(url, b_path, expected_hash, validate_certs, token=None, timeout=60):
+    # type: (str, bytes, Optional[str], bool, GalaxyToken, int) -> bytes
     # ^ NOTE: used in download and verify_collections ^
     b_tarball_name = to_bytes(
         url.rsplit('/', 1)[1], errors='surrogate_or_strict',
@@ -405,6 +407,7 @@ def _download_file(url, b_path, expected_hash, validate_certs, token=None):
         validate_certs=validate_certs,
         headers=None if token is None else token.headers(),
         unredirected_headers=['Authorization'], http_agent=user_agent(),
+        timeout=timeout
     )
 
     with open(b_file_path, 'wb') as download_file:  # type: BinaryIO
