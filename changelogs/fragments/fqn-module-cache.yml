@@ -1,0 +1,5 @@
+bugfixes:
+- AnsiballZ - Ensure we use the full python package in the module cache filename
+  to avoid a case where ``collections:`` is used to execute a module via short name,
+  where the short name duplicates another module from ``ansible.builtin`` or another
+  collection that was executed previously.
