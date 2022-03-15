@@ -14,19 +14,19 @@ When fixing a bug
 
 When fixing a bug:
 
-1. :ref:`Determine if integration tests for the module exist<Determine-if-integration-tests-exist>`. If they do not, refer to the :ref:`Writing tests from scratch <Writing-tests-from-scratch>` section.
+1. :ref:`Determine if integration tests for the module exist<collection_integration_prepare>`. If they do not, see :ref:`collection_creating_integration_tests` section.
 2. Add a task which reproduces the bug to an appropriate file within the ``tests/integration/targets/<target_name>/tasks`` directory.
-3. :ref:`Run the tests<Run-integration-tests>`, the newly added task should fail.
+3. :ref:`Run the tests<collection_run_integration_tests>`. The newly added task should fail.
 4. If they do not fail, re-check if your environment / test task satisfies the conditions described in the ``Steps to Reproduce`` section of the issue.
 5. If you reproduce the bug and tests fail, change the code.
-6. :ref:`Run the tests<Run-integration-tests>` again.
+6. :ref:`Run the tests<collection_run_integration_tests>` again.
 7. If they fail, repeat steps 5-6 until the tests pass.
 
 Here is an example.
 
 Let's say someone reported an issue in the ``community.postgresql`` collection that when users pass a name containing underscores to the ``postgresql_user`` module, the module fails.
 
-We cloned the collection repository to the ``~/ansible_collections/community/postgresql`` directory and :ref:`prepared our environment <Prepare-local-environment>`. From the collection's root directory, we run ``ansible-test integration --list-targets`` and it shows a target called ``postgresql_user``. It means that we already have tests for the module.
+We cloned the collection repository to the ``~/ansible_collections/community/postgresql`` directory and :ref:`prepared our environment <collection_prepare_environment>`. From the collection's root directory, we run ``ansible-test integration --list-targets`` and it shows a target called ``postgresql_user``. It means that we already have tests for the module.
 
 We start with reproducing the bug.
 
@@ -63,7 +63,7 @@ We will add the following code to the file.
       that:
         - result.query_result.rowcount == 1
 
-When we :ref:`run the tests<Run-integration-tests>` with ``postgresql_user`` as a test target, this task must fail.
+When we :ref:`run the tests<collection_run_integration_tests>` with ``postgresql_user`` as a test target, this task must fail.
 
 Now that we have our failing test; we will fix the bug and run the same tests again. Once the tests pass, we will consider the bug fixed and will submit a pull request.
 
@@ -74,16 +74,14 @@ When adding a new feature
 
   The process described in this section also applies when you want to add integration tests to a feature that already exists, but is missing integration tests.
 
-.. note::
-
-  If you have not already implemented the new feature, you can start with writing the integration tests for it. Of course they will not work as the code does not yet exist, but it can help you improve your implementation design before you start writing any code.
+If you have not already implemented the new feature, you can start with writing the integration tests for it. Of course they will not work as the code does not yet exist, but it can help you improve your implementation design before you start writing any code.
 
 When adding new features, the process of adding tests consists of the following steps:
 
-1. :ref:`Determine if integration tests for the module exists<Determine-if-integration-tests-exist>`. If they do not, refer to the :ref:`Writing tests from scratch<Writing-tests-from-scratch>` section.
+1. :ref:`Determine if integration tests for the module exists<collection_integration_prepare>`. If they do not, see :ref:`collection_creating_integration_tests`.
 2. Find an appropriate file for your tests within the ``tests/integration/targets/<target_name>/tasks`` directory.
-3. Cover your feature with tests. Refer to the :ref:`Recommendations on coverage<Recommendations-on-coverage>` section for details.
-4. :ref:`Run the tests<Run-integration-tests>`.
+3. Cover your feature with tests. Refer to the :ref:`Recommendations on coverage<collection_integration_recommendations>` section for details.
+4. :ref:`Run the tests<collection_run_integration_tests>`.
 5. If they fail, see the test output for details. Fix your code or tests and run the tests again.
 6. Repeat steps 4-5 until the tests pass.
 
@@ -93,7 +91,7 @@ Let's say we decided to add a new option called ``add_attribute`` to the ``postg
 
 The option is boolean. If set to ``yes``, it adds an additional attribute to a database user.
 
-We cloned the collection repository to the ``~/ansible_collections/community/postgresql`` directory and :ref:`prepared our environment<Prepare-local-environment>`. From the collection's root directory, we run ``ansible-test integration --list-targets`` and it shows a target called ``postgresql_user``. Therefore, we already have some tests for the module.
+We cloned the collection repository to the ``~/ansible_collections/community/postgresql`` directory and :ref:`prepared our environment<collection_integration_prepare>`. From the collection's root directory, we run ``ansible-test integration --list-targets`` and it shows a target called ``postgresql_user``. Therefore, we already have some tests for the module.
 
 First, we look at the ``tests/integration/targets/<target_name>/tasks/main.yml`` file. In this particular case, the file imports other files from the ``tasks`` directory. The ``postgresql_user_general.yml`` file looks like an appropriate one to add our tests.
 
@@ -151,9 +149,9 @@ We will add the following code to the file.
       that:
         - result.query_result.rowcount == 1
 
-Then we :ref:`run the tests<Run-integration-tests>` with ``postgresql_user`` passed as a test target.
+Then we :ref:`run the tests<collection_run_integration_tests>` with ``postgresql_user`` passed as a test target.
 
-In reality, we would alternate the tasks above with the same tasks run with the ``check_mode: yes`` option to be sure our option works as expected in check-mode as well. Refer to the :ref:`Recommendations on coverage<Recommendations-on-coverage>` section for details.
+In reality, we would alternate the tasks above with the same tasks run with the ``check_mode: yes`` option to be sure our option works as expected in check-mode as well. See :ref:`Recommendations on coverage<collection_integration_recommendations>` for details.
 
 If we expect a task to fail, we use the ``ignore_errors: yes`` option and check that the task actually failed and returned the message we expect:
 
@@ -171,3 +169,37 @@ If we expect a task to fail, we use the ``ignore_errors: yes`` option and check 
       that:
         - result is failed
         - result.msg == 'The message we expect'
+
+
+.. _collection_run_integration_tests:
+
+Running integration tests
+============================
+
+In the following examples, we will use ``Docker`` to run integration tests locally. Ensure you have :ref:`collection_prepare_environment` first.
+
+We assume that you are in the ``~/ansible_collections/NAMESPACE/COLLECTION`` directory.
+
+After you change the tests, you can run them with the following command:
+
+.. code-block:: text
+
+  ansible-test integration <target_name> --docker <distro>
+
+The ``target_name`` is a test role directory containing the tests. For example, if the test files you changed are stored in the ``tests/integration/targets/postgresql_info/`` directory and you want to use the ``fedora34`` container image, then the command will be:
+
+.. code-block:: bash
+
+  ansible-test integration postgresql_info --docker fedora34
+
+You can use the ``-vv`` or ``-vvv`` argument if you need more detailed output.
+
+In the examples above, the ``fedora34`` test image will be automatically downloaded and used to create and run a test container.
+
+See the :ref:`list of supported container images <test_container_images>`.
+
+In some cases, for example, for platform independent tests, the ``default`` test image is required. Use the ``--docker default`` or just ``--docker`` option without specifying a distribution in this case.
+
+.. note::
+
+  If you have any difficulties with writing or running integration tests or you are not sure if the case can be covered, submit your pull request without the tests. Other contributors can help you with them later if needed.

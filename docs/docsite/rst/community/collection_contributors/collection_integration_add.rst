@@ -11,30 +11,30 @@ This section covers the following cases:
 
 In other words, there are currently no tests for a module regardless of whether the module exists or not.
 
-If the module already has tests, refer to the :ref:`Adding test to existing ones<Adding-tests-to-existing-ones>` section.
+If the module already has tests, see :ref:`collection_updating_integration_tests`.
 
-Abstract example
-----------------
+Simplified example
+--------------------
 
 Here is a simplified abstract example.
 
 Let's say we are going to add integration tests to a new module in the ``community.abstract`` collection which interacts with some service.
 
-We :ref:`checked<Determine-if-integration-tests-exist>` and determined that there are no integration tests at all.
+We :ref:`checked<collection_integration_prepare>` and determined that there are no integration tests at all.
 
 We should basically do the following:
 
 1. Install and run the service with a ``setup`` target.
 2. Create a test target.
-3. :ref:`Add integration tests for the module<Recommendations-on-coverage>`.
-4. :ref:`Run the tests<Run-integration-tests>`.
-5. Fix the code / tests if needed, run the tests again, and repeat the cycle until they pass.
+3. Add integration tests for the module.
+4. :ref:`Run the tests<collection_run_integration_tests>`.
+5. Fix the code and tests as needed, run the tests again, and repeat the cycle until they pass.
 
 .. note::
 
   You can reuse the ``setup`` target when implementing other targets that also use the same service.
 
-1. Clone the collection to the ``~/ansble_collections/community.abstract`` directory on your local machine.
+1. Clone the collection to the ``~/ansible_collections/community.abstract`` directory on your local machine.
 
 2. From the ``~/ansble_collections/community.abstract`` directory, create directories for the ``setup`` target:
 
@@ -100,16 +100,16 @@ Add the following to ``tests/integration/targets/abstract_service_info/tasks/mai
       that:
         - result.version == '1.0.0'  # Check version field contains what we expect
 
-7. :ref:`Run the tests<Run-integration-tests>` with the ``-vvv`` argument.
+7. :ref:`Run the tests<collection_run_integration_tests>` with the ``-vvv`` argument.
 
 If there are any issues with connectivity (for example, the service is not listening / accepting connections) or with the code, the play will fail.
 
 Examine the output to see at which step the failure occurred. Investigate the reason, fix, and run again. Repeat the cycle until the test passes.
 
-8. If the test succeeds, write more tests. Refer to the :ref:`Recommendations on coverage<Recommendations-on-coverage>` section for details.
+8. If the test succeeds, write more tests. Refer to the :ref:`Recommendations on coverage<collection_integration_recommendations>` section for details.
 
-Real example
-------------
+``community.postregesql`` example
+----------------------------------
 
 Here is a real example of writing integration tests from scratch for the ``community.postgresql.postgresql_info`` module.
 
@@ -117,7 +117,7 @@ For the sake of simplicity, we will create very basic tests which we will run us
 
 We use ``Linux`` as a work environment and have ``git`` and ``docker`` installed and running.
 
-We also `installed <https://docs.ansible.com/ansible/devel/installation_guide/intro_installation.html>`_ ``ansible-core``.
+We also installed ``ansible-core``.
 
 1. Create the following directories in your home directory:
 
@@ -247,4 +247,4 @@ The tests should pass. If we look at the output, we should see something like th
     "msg": "All assertions passed"
   }
 
-If your tests fail when you are working on your project, examine the output to see at which step the failure occurred. Investigate the reason, fix, and run again. Repeat the cycle until the test passes. If the test succeeds, write more tests. Refer to the :ref:`Recommendations on coverage<Recommendations-on-coverage>` section for details.
+If your tests fail when you are working on your project, examine the output to see at which step the failure occurred. Investigate the reason, fix, and run again. Repeat the cycle until the test passes. If the test succeeds, write more tests. Refer to the :ref:`Recommendations on coverage<collection_integration_recommendations>` section for details.
