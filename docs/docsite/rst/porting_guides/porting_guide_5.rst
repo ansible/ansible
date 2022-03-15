@@ -127,6 +127,36 @@ Networking
 
 No notable changes
 
+Porting Guide for v5.5.0
+========================
+
+Known Issues
+------------
+
+cisco.ios
+~~~~~~~~~
+
+- `ios_bgp_global` - Added capability of configure network options.
+- `ios_bgp_global` - Added community and local_preference for route_reflector_client.
+- `ios_bgp_global` - Added update_source for neighbors.
+- `ios_bgp_global` - Correct misspelled attributes with alternates/alias.
+- `ios_bgp_global` - Facts and config code optimized for using rm_templates.
+- `ios_bgp_global` - Parsers added for non-implemented attributes.
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- pacman - ``update_cache`` cannot differentiate between up to date and outdated package lists and will report ``changed`` in both situations (https://github.com/ansible-collections/community.general/pull/4318).
+- pacman - binaries specified in the ``executable`` parameter must support ``--print-format`` in order to be used by this module. In particular, AUR helper ``yay`` is known not to currently support it (https://github.com/ansible-collections/community.general/pull/4312).
+
+Deprecated Features
+-------------------
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- pacman - from community.general 5.0.0 on, the ``changed`` status of ``update_cache`` will no longer be ignored if ``name`` or ``upgrade`` is specified. To keep the old behavior, add something like ``register: result`` and ``changed_when: result.packages | length > 0`` to your task (https://github.com/ansible-collections/community.general/pull/4329).
+
 Porting Guide for v5.4.0
 ========================
 
