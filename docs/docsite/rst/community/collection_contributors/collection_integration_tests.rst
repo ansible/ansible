@@ -12,6 +12,7 @@ This section describes the steps to add integration tests to a collection and ho
 
    collection_integration_about
    collection_integration_updating
+   collection_integration_running
    collection_integration_add
 
 
