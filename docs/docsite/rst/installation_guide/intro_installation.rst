@@ -85,6 +85,7 @@ Ansible also distributes a minimalist object called ``ansible-core`` (or ``ansib
 You can choose any of the following ways to install ``ansible-core``:
 
 * Install ``ansible-core`` (version 2.11 and greater) or ``ansible-base`` (version 2.10) with ``pip``.
+* Install ``ansible-core`` (version 2.11 and greater) RPM package with ``dnf``.
 * Install ``ansible-core`` from source from the ansible/ansible GitHub repository to access the development (``devel``) version to develop or test the latest features.
 
 .. note::
@@ -254,10 +255,6 @@ To enable the Ansible Engine repository for RHEL 7, run the following command:
     $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.9-rpms
 
 RPMs for currently supported versions of RHEL and CentOS are also available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_.
-
-.. note::
-
-	Since Ansible 2.10 for RHEL is not available at this time,  continue to use Ansible 2.9.
 
 Ansible can manage older operating systems that contain Python 2.6 or higher.
 
