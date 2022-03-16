@@ -1346,6 +1346,10 @@ class StrategyBase:
                     if r._host not in self._active_connections:
                         self._active_connections[r._host] = socket_path
 
+    def preserve_task_name(self):
+        ''' hint to callback plugin whether last task name should be cached '''
+        return True
+
 
 class NextAction(object):
     """ The next action after an interpreter's exit. """

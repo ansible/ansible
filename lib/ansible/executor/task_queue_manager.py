@@ -278,8 +278,6 @@ class TaskQueueManager:
             if hasattr(callback_plugin, 'set_play_context'):
                 callback_plugin.set_play_context(play_context)
 
-        self.send_callback('v2_playbook_on_play_start', new_play)
-
         # build the iterator
         iterator = PlayIterator(
             inventory=self._inventory,
@@ -297,6 +295,9 @@ class TaskQueueManager:
         strategy = strategy_loader.get(new_play.strategy, self)
         if strategy is None:
             raise AnsibleError("Invalid play strategy specified: %s" % new_play.strategy, obj=play._ds)
+
+        new_play.preserve_task_name = strategy.preserve_task_name()
+        self.send_callback('v2_playbook_on_play_start', new_play)
 
         # Because the TQM may survive multiple play runs, we start by marking
         # any hosts as failed in the iterator here which may have been marked

@@ -292,3 +292,7 @@ class StrategyModule(StrategyBase):
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered
         return super(StrategyModule, self).run(iterator, play_context, result)
+
+    def preserve_task_name(self):
+        ''' hint to callback plugin not to cache last task names for the free strategy '''
+        return False

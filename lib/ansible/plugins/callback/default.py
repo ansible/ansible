@@ -178,7 +178,7 @@ class CallbackModule(CallbackBase):
 
         # Preserve task name, as all vars may not be available for templating
         # when we need it later
-        if self._play.strategy in add_internal_fqcns(('free', 'host_pinned')):
+        if self._play.preserve_task_name is False:
             # Explicitly set to None for strategy free/host_pinned to account for any cached
             # task title from a previous non-free play
             self._last_task_name = None
