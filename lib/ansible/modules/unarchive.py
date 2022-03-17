@@ -52,7 +52,7 @@ options:
     description:
       - Size of the volatile memory buffer that is used for extracting files from the archive in bytes.
     type: int
-    default: 64 KiB
+    default: 65536
     version_added: "2.12"
   list_files:
     description:
@@ -304,7 +304,7 @@ class ZipArchive(object):
         self.file_args = file_args
         self.opts = module.params['extra_opts']
         self.module = module
-        self.io_buffer_size = module.params.get("io_buffer_size", 64 * 1024)
+        self.io_buffer_size = module.params["io_buffer_size"]
         self.excludes = module.params['exclude']
         self.includes = []
         self.include_files = self.module.params['include']
@@ -976,6 +976,13 @@ def main():
             include=dict(type='list', elements='str', default=[]),
             extra_opts=dict(type='list', elements='str', default=[]),
             validate_certs=dict(type='bool', default=True),
+            io_buffer_size=dict(type='int', default=64 * 1024),
+
+            # Options that are for the action plugin, but ignored by the module itself.
+            # We have them here so that the sanity tests pass without ignores, which
+            # reduces the likelihood of further bugs added.
+            copy=dict(type='bool', default=True),
+            decrypt=dict(type='bool', default=True),
         ),
         add_file_common_args=True,
         # check-mode only works for zip files, we cover that later
