@@ -33,7 +33,7 @@ except ImportError:
         return sys.modules[name]
 
 try:
-    from importlib import reload as reload_module
+    from importlib import reload as reload_module  # type: ignore[attr-defined]  # not defined for 2.7
 except ImportError:
     # 2.7 has a global reload function instead...
     reload_module = reload  # type: ignore[name-defined]  # pylint:disable=undefined-variable
