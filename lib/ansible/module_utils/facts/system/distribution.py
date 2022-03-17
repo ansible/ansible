@@ -375,6 +375,24 @@ class DistributionFiles:
             if version:
                 debian_facts['distribution_version'] = version.group(1)
                 debian_facts['distribution_major_version'] = version.group(1).split('.')[0]
+        elif 'UOS' in data or 'Uos' in data or 'uos' in data:
+            debian_facts['distribution'] = 'Uos'
+            release = re.search(r"VERSION_CODENAME=\"?([^\"]+)\"?", data)
+            if release:
+                debian_facts['distribution_release'] = release.groups()[0]
+            version = re.search(r"VERSION_ID=\"(.*)\"", data)
+            if version:
+                debian_facts['distribution_version'] = version.group(1)
+                debian_facts['distribution_major_version'] = version.group(1).split('.')[0]
+        elif 'Deepin' in data or 'deepin' in data:
+            debian_facts['distribution'] = 'Deepin'
+            release = re.search(r"VERSION_CODENAME=\"?([^\"]+)\"?", data)
+            if release:
+                debian_facts['distribution_release'] = release.groups()[0]
+            version = re.search(r"VERSION_ID=\"(.*)\"", data)
+            if version:
+                debian_facts['distribution_version'] = version.group(1)
+                debian_facts['distribution_major_version'] = version.group(1).split('.')[0]
         else:
             return False, debian_facts
 
@@ -490,7 +508,7 @@ class Distribution(object):
                                 'EuroLinux'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
                                 'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux',
-                                'Pop!_OS', 'Parrot', 'Pardus GNU/Linux'],
+                                'Pop!_OS', 'Parrot', 'Pardus GNU/Linux', 'Uos', 'Deepin'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],
