@@ -220,7 +220,7 @@ def main():
         def exec_module(self, module):
             # type: (RestrictedModuleLoader, types.ModuleType) -> None | ImportError
             """Execute the module if the name is ansible.module_utils.basic and otherwise raise an ImportError"""
-            fullname = module.__spec__.name  # type: ignore[attr-defined]  # Run mypy test only for controller python versions? Ignored for remote-only.
+            fullname = module.__spec__.name
             if fullname == 'ansible.module_utils.basic':
                 self.loaded_modules.add(fullname)
                 for path in convert_ansible_name_to_absolute_paths(fullname):

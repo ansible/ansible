@@ -92,7 +92,6 @@ class MypyTest(SanityMultipleVersion):
 
         contexts = (
             MyPyContext('ansible-test', ['test/lib/ansible_test/_util/target/sanity/import/'], CONTROLLER_PYTHON_VERSIONS),
-            MyPyContext('ansible-test', ['test/lib/ansible_test/_util/target/sanity/import/'], REMOTE_ONLY_PYTHON_VERSIONS),
             MyPyContext('ansible-test', ['test/lib/ansible_test/_internal/'], CONTROLLER_PYTHON_VERSIONS),
             MyPyContext('ansible-core', ['lib/ansible/'], CONTROLLER_PYTHON_VERSIONS),
             MyPyContext('modules', ['lib/ansible/modules/', 'lib/ansible/module_utils/'], REMOTE_ONLY_PYTHON_VERSIONS),
