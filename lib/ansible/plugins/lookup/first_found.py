@@ -24,10 +24,12 @@ DOCUMENTATION = """
       files:
         description: A list of file names.
         type: list
+        elements: string
         default: []
       paths:
         description: A list of paths in which to look for the files.
         type: list
+        elements: string
         default: []
       skip:
         type: boolean

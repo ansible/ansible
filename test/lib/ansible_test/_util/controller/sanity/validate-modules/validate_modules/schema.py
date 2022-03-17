@@ -14,6 +14,8 @@ from urllib.parse import urlparse
 from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid, Exclusive
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.collections import is_iterable
+from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.parsing.quoting import unquote
 from ansible.utils.version import SemanticVersion
 from ansible.release import __version__
 
@@ -384,6 +386,134 @@ def version_added(v, error_code='version-added-invalid', accept_historical=False
     return v
 
 
+def check_option_elements(v):
+    # Check whether elements is there iff type == 'list'
+    v_type = v.get('type')
+    v_elements = v.get('elements')
+    if v_type == 'list' and v_elements is None:
+        raise _add_ansible_error_code(
+            Invalid('Argument defines type as list but elements is not defined'),
+            error_code='parameter-list-no-elements')  # FIXME: adjust error code?
+    if v_type != 'list' and v_elements is not None:
+        raise _add_ansible_error_code(
+            Invalid('Argument defines parameter elements as %s but it is valid only when value of parameter type is list' % (v_elements, )),
+            error_code='doc-elements-invalid')
+    return v
+
+
+def get_type_checker(v):
+    v_type = v.get('type')
+    if v_type == 'list':
+        elt_checker, elt_name = get_type_checker({'type': v.get('elements')})
+
+        def list_checker(value):
+            if isinstance(value, string_types):
+                value = [unquote(x.strip()) for x in value.split(',')]
+            if not isinstance(value, list):
+                raise ValueError('Value must be a list')
+            if elt_checker:
+                for elt in value:
+                    try:
+                        elt_checker(elt)
+                    except Exception as exc:
+                        raise ValueError('Entry %r is not of type %s: %s' % (elt, elt_name, exc))
+
+        return list_checker, ('list of %s' % elt_name) if elt_checker else 'list'
+
+    if v_type in ('boolean', 'bool'):
+        return partial(boolean, strict=False), v_type
+
+    if v_type in ('integer', 'int'):
+        return int, v_type
+
+    if v_type == 'float':
+        return float, v_type
+
+    if v_type == 'none':
+        def none_checker(value):
+            if value not in ('None', None):
+                raise ValueError('Value must be "None" or none')
+
+        return none_checker, v_type
+
+    if v_type in ('str', 'string', 'path', 'tmp', 'temppath', 'tmppath'):
+        def str_checker(value):
+            if not isinstance(value, string_types):
+                raise ValueError('Value must be string')
+
+        return str_checker, v_type
+
+    if v_type in ('pathspec', 'pathlist'):
+        def path_list_checker(value):
+            if not isinstance(value, string_types) and not is_iterable(value):
+                raise ValueError('Value must be string or list of strings')
+
+        return path_list_checker, v_type
+
+    if v_type in ('dict', 'dictionary'):
+        def dict_checker(value):
+            if not isinstance(value, dict):
+                raise ValueError('Value must be dictionary')
+
+        return dict_checker, v_type
+
+    return None, 'unknown'
+
+
+def check_option_choices(v):
+    # Check whether choices have the correct type
+    v_choices = v.get('choices')
+    if not is_iterable(v_choices):
+        return v
+
+    if v.get('type') == 'list':
+        # choices for a list type means that every list element must be one of these choices
+        type_checker, type_name = get_type_checker({'type': v.get('elements')})
+    else:
+        type_checker, type_name = get_type_checker(v)
+    if type_checker is None:
+        return v
+
+    for value in v_choices:
+        try:
+            type_checker(value)
+        except Exception as exc:
+            raise _add_ansible_error_code(
+                Invalid(
+                    'Argument defines choices as (%r) but this is incompatible with argument type %s: %s' % (value, type_name, exc)),
+                error_code='doc-choices-incompatible-type')
+
+    return v
+
+
+def check_option_default(v):
+    # Check whether default is only present if required=False, and whether default has correct type
+    v_default = v.get('default')
+    if v.get('required') and v_default is not None:
+        raise _add_ansible_error_code(
+            Invalid(
+                'Argument is marked as required but specifies a default.'
+                ' Arguments with a default should not be marked as required'),
+            error_code='no-default-for-required-parameter')  # FIXME: adjust error code?
+
+    if v_default is None:
+        return v
+
+    type_checker, type_name = get_type_checker(v)
+    if type_checker is None:
+        return v
+
+    try:
+        type_checker(v_default)
+    except Exception as exc:
+        raise _add_ansible_error_code(
+            Invalid(
+                'Argument defines default as (%r) but this is incompatible with parameter type %s: %s' % (v_default, type_name, exc)),
+            error_code='incompatible-default-type')
+
+    return v
+
+
 def list_dict_option_schema(for_collection, plugin_type):
     if plugin_type == 'module':
         option_types = Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str')
@@ -433,7 +563,7 @@ def list_dict_option_schema(for_collection, plugin_type):
             partial(check_removal_version,
                     version_field='version',
                     collection_name_field='collection_name',
-                    error_code='invalid-removal-version')
+                    error_code='invalid-removal-version'),
         )
         env_schema = All(
             Schema({
@@ -496,7 +626,12 @@ def list_dict_option_schema(for_collection, plugin_type):
         # Recursive suboptions
         'suboptions': Any(None, *list({str_type: Self} for str_type in string_types)),
     })
-    suboption_schema = Schema(suboption_schema, extra=PREVENT_EXTRA)
+    suboption_schema = Schema(All(
+        suboption_schema,
+        check_option_elements,
+        check_option_choices,
+        check_option_default,
+    ), extra=PREVENT_EXTRA)
 
     # This generates list of dicts with keys from string_types and suboption_schema value
     # for example in Python 3: {str: suboption_schema}
@@ -506,7 +641,12 @@ def list_dict_option_schema(for_collection, plugin_type):
     option_schema.update({
         'suboptions': Any(None, *list_dict_suboption_schema),
     })
-    option_schema = Schema(option_schema, extra=PREVENT_EXTRA)
+    option_schema = Schema(All(
+        option_schema,
+        check_option_elements,
+        check_option_choices,
+        check_option_default,
+    ), extra=PREVENT_EXTRA)
 
     option_version_added = Schema(
         All({
