@@ -43,7 +43,7 @@ Fill out the issue template as completely and as accurately as possible, include
   * the current behavior and why you think it is a bug
   * what you've tried including the exact commands you were using or tasks you are running
   * any relevant configurations and the components you used
-  * ``ansible -vvvv`` (debugging) output
+  * any relevant output plus ``ansible -vvvv`` (debugging) output
   * the steps to reproduce the bug  
     * Use a minimal reproducible example and comments describing examples
     * Preserve formatting using `code blocks  <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_ when sharing YAML in playbooks.
