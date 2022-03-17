@@ -21,11 +21,11 @@ Ansible practices responsible disclosure - for security-related bugs, email `sec
 Bugs in ansible-core
 --------------------
 
-Before reporting a bug, use the GitHub issue search to check `already reported issues <https://github.com/ansible/ansible/issues>`_. Unsure if you found a bug? Report the behavior on the :ref:`mailing list or community chat first <communication>`.
+Before reporting a bug, search in GitHub for `already reported issues <https://github.com/ansible/ansible/issues>`_ and `open pull requests <https://github.com/ansible/ansible/pulls>`_ to see if someone has already addressed your issue.  Unsure if you found a bug? Report the behavior on the :ref:`mailing list or community chat first <communication>`.
 
 Also, use the mailing list or chat to discuss whether the problem is in ``ansible-core`` or a collection, and for "how do I do this" type questions.
 
-You need a free GitHub account to `report bugs <https://github.com/ansible/ansible/issues>`_ that affects:
+You need a free GitHub account to `report bugs <https://github.com/ansible/ansible/issues>`_ that affect:
 
 - multiple plugins  
 - a plugin that remained in the ansible/ansible repo  
@@ -36,7 +36,7 @@ How to write a good bug report
 
 If you find a bug, open an issue using the `issue template <https://github.com/ansible/ansible/issues/new?assignees=&labels=&template=bug_report.yml>`_. 
 
-Fill out the issue template as completely and as accurately as possible, include:
+Fill out the issue template as completely and as accurately as possible. Include:
 
   * your Ansible version
   * the expected behavior
