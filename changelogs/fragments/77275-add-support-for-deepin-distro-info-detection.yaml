@@ -1,0 +1,2 @@
+bugfixes:
+  - facts - add support for deepin distro information detection (https://github.com/ansible/ansible/issues/77286).
