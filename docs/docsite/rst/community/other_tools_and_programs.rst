@@ -59,7 +59,7 @@ Visual studio code
 
 An open-source, free GUI text editor created and maintained by Microsoft. Useful Visual Studio Code plugins include:
 
-* `Ansible support by Red Hat <https://marketplace.visualstudio.com/items?itemName=redhat.ansible>`_ - provides autocompletion, syntax highlighting, hover, diagnostics, goto support and command to run ansible-playbook and ansible-navigator tool for both local and execution-environment setups.
+* `Ansible support by Red Hat <https://marketplace.visualstudio.com/items?itemName=redhat.ansible>`_ - provides autocompletion, syntax highlighting, hover, diagnostics, goto support, and command to run ansible-playbook and ansible-navigator tool for both local and execution-environment setups.
 * `YAML Support by Red Hat <https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml>`_ - provides YAML support through yaml-language-server with built-in Kubernetes and Kedge syntax support.
 
 vim
@@ -68,7 +68,7 @@ vim
 An open-source, free command-line text editor. Useful vim plugins include:
 
 * `Ansible vim <https://github.com/pearofducks/ansible-vim>`_  - vim syntax plugin for Ansible 2.x, it supports YAML playbooks, Jinja2 templates, and Ansible's hosts files.
-* `Ansible vim and neovim plugin <https://www.npmjs.com/package/@yaegassy/coc-ansible>`_  - vim plugin (lsp client) for Ansible, it supports autocompletion, syntax highlighting, hover, diagnostics and goto support.
+* `Ansible vim and neovim plugin <https://www.npmjs.com/package/@yaegassy/coc-ansible>`_  - vim plugin (lsp client) for Ansible, it supports autocompletion, syntax highlighting, hover, diagnostics, and goto support.
 
 JetBrains
 =========
