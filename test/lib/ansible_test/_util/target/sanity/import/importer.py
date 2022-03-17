@@ -56,7 +56,7 @@ def main():
 
     try:
         from importlib.util import spec_from_loader, module_from_spec
-        from importlib.machinery import SourceFileLoader, ModuleSpec
+        from importlib.machinery import SourceFileLoader, ModuleSpec  # pylint: disable=unused-import
     except ImportError:
         has_py3_loader = False
     else:
@@ -220,7 +220,7 @@ def main():
         def exec_module(self, module):
             # type: (RestrictedModuleLoader, types.ModuleType) -> None | ImportError
             """Execute the module if the name is ansible.module_utils.basic and otherwise raise an ImportError"""
-            fullname = module.__spec__.name
+            fullname = module.__spec__.name  # type: ignore[attr-defined]  # Run mypy test only for controller python versions? Ignored for remote-only.
             if fullname == 'ansible.module_utils.basic':
                 self.loaded_modules.add(fullname)
                 for path in convert_ansible_name_to_absolute_paths(fullname):
@@ -234,6 +234,7 @@ def main():
                     real_module._load_params = lambda *args, **kwargs: {}  # type: ignore[attr-defined] # pylint: disable=protected-access
                     sys.modules[fullname] = real_module
                     return None
+                raise ImportError('could not find "%s"' % fullname)
             raise ImportError('import of "%s" is not allowed in this context' % fullname)
 
         def load_module(self, fullname):
