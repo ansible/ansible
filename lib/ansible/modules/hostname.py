@@ -778,6 +778,18 @@ class RaspbianHostname(Hostname):
     strategy_class = FileStrategy
 
 
+class UosHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Uos'
+    strategy_class = FileStrategy
+
+
+class DeepinHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Deepin'
+    strategy_class = FileStrategy
+
+
 class GentooHostname(Hostname):
     platform = 'Linux'
     distribution = 'Gentoo'

@@ -1,0 +1,29 @@
+{
+    "name": "Deepin 20.4",
+    "distro": {
+        "codename": "apricot",
+        "id": "Deepin",
+        "name": "Deepin",
+        "version": "20.4",
+        "version_best": "20.4",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/os-release": "PRETTY_NAME=\"Deepin 20.4\"\nNAME=\"Deepin\"\nVERSION_ID=\"20.4\"\nVERSION=\"20.4\"\nVERSION_CODENAME=\"apricot\"\nID=Deepin\nHOME_URL=\"https://www.deepin.org/\"\nBUG_REPORT_URL=\"https://bbs.deepin.org/\"\n",
+        "/etc/lsb-release": "DISTRIB_ID=Deepin\nDISTRIB_RELEASE=20.4\nDISTRIB_DESCRIPTION=\"Deepin 20.4\"\nDISTRIB_CODENAME=apricot\n",
+        "/usr/lib/os-release": "PRETTY_NAME=\"Deepin 20.4\"\nNAME=\"Deepin\"\nVERSION_ID=\"20.4\"\nVERSION=\"20.4\"\nVERSION_CODENAME=\"apricot\"\nID=Deepin\nHOME_URL=\"https://www.deepin.org/\"\nBUG_REPORT_URL=\"https://bbs.deepin.org/\"\n"
+    },
+    "platform.dist": [
+        "Deepin",
+        "20.4",
+        "apricot"
+    ],
+    "result": {
+        "distribution": "Deepin",
+        "distribution_version": "20.4",
+        "distribution_release": "apricot",
+        "distribution_major_version": "20",
+        "os_family": "Debian"
+    }
+}
