@@ -138,6 +138,7 @@ options:
   unredirected_headers:
     description: A list of headers to not attach on a redirected request
     type: list
+    elements: string
     version_added: "2.10"
     vars:
         - name: ansible_lookup_url_unredir_headers

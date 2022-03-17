@@ -1,0 +1,2 @@
+minor_changes:
+  - "ansible-test validate-modules sanity test - add more schema checks to improve quality of plugin documentation (https://github.com/ansible/ansible/pull/77268)."

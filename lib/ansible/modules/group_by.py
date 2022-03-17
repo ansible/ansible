@@ -31,6 +31,7 @@ options:
     description:
     - The list of the parent groups.
     type: list
+    elements: str
     default: all
     version_added: "2.4"
 attributes:

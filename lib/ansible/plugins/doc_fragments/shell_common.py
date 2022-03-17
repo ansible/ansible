@@ -43,6 +43,7 @@ options:
          the first one from the list will be used instead.
     default: [ /var/tmp, /tmp ]
     type: list
+    elements: string
     env: [{name: ANSIBLE_SYSTEM_TMPDIRS}]
     ini:
       - section: defaults
@@ -61,6 +62,7 @@ options:
       - name: ansible_async_dir
   environment:
     type: list
+    elements: dictionary
     default: [{}]
     description:
       - List of dictionaries of environment variables and their values to use when executing commands.
@@ -68,6 +70,7 @@ options:
       - name: environment
   admin_users:
     type: list
+    elements: string
     default: ['root', 'toor']
     description:
       - list of users to be expected to have admin privileges. This is used by the controller to

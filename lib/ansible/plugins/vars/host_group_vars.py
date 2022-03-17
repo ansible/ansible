@@ -48,6 +48,7 @@ DOCUMENTATION = '''
           - key: yaml_valid_extensions
             section: defaults
         type: list
+        elements: string
     extends_documentation_fragment:
       - vars_plugin_staging
 '''

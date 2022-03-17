@@ -78,6 +78,7 @@ DOCUMENTATION = """
            - If None (the default) the plugin will try to automatically guess the correct list
            - The choices available depend on your version of pywinrm
         type: list
+        elements: string
         vars:
           - name: ansible_winrm_transport
       kerberos_command:

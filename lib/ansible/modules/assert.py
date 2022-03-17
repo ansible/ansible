@@ -20,6 +20,7 @@ options:
     description:
       - A list of string expressions of the same form that can be passed to the 'when' statement.
     type: list
+    elements: str
     required: true
   fail_msg:
     description:

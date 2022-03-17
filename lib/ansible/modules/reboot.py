@@ -59,6 +59,7 @@ options:
       - Paths to search on the remote machine for the C(shutdown) command.
       - I(Only) these paths will be searched for the C(shutdown) command. C(PATH) is ignored in the remote node when searching for the C(shutdown) command.
     type: list
+    elements: str
     default: ['/sbin', '/bin', '/usr/sbin', '/usr/bin', '/usr/local/sbin']
     version_added: '2.8'
 
