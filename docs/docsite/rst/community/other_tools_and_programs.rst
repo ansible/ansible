@@ -33,6 +33,7 @@ A free, open-source text editor and IDE that supports auto-indentation, syntax h
 * `yaml-mode <https://github.com/yoshiki/yaml-mode>`_ - YAML highlighting and syntax checking.
 * `jinja2-mode <https://github.com/paradoxxxzero/jinja2-mode>`_ - Jinja2 highlighting and syntax checking.
 * `magit-mode <https://github.com/magit/magit>`_ -  Git porcelain within Emacs.
+* `lsp-mode <https://emacs-lsp.github.io/lsp-mode/page/lsp-ansible/>`_ - Ansible syntax highlighting, auto-completion and diagnostics.
 
 
 PyCharm
@@ -58,10 +59,8 @@ Visual studio code
 
 An open-source, free GUI text editor created and maintained by Microsoft. Useful Visual Studio Code plugins include:
 
-
+* `Ansible extension by Red Hat <https://marketplace.visualstudio.com/items?itemName=redhat.ansible>`_ - provides autocompletion, syntax highlighting, hover, diagnostics, goto support, and command to run ansible-playbook and ansible-navigator tool for both local and execution-environment setups.
 * `YAML Support by Red Hat <https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml>`_ - provides YAML support through yaml-language-server with built-in Kubernetes and Kedge syntax support.
-* `Ansible Syntax Highlighting Extension <https://marketplace.visualstudio.com/items?itemName=haaaad.ansible>`_ - YAML & Jinja2 support.
-* `Visual Studio Code extension for Ansible <https://marketplace.visualstudio.com/items?itemName=vscoss.vscode-ansible>`_ - provides autocompletion, syntax highlighting.
 
 vim
 ===
@@ -69,6 +68,7 @@ vim
 An open-source, free command-line text editor. Useful vim plugins include:
 
 * `Ansible vim <https://github.com/pearofducks/ansible-vim>`_  - vim syntax plugin for Ansible 2.x, it supports YAML playbooks, Jinja2 templates, and Ansible's hosts files.
+* `Ansible vim and neovim plugin <https://www.npmjs.com/package/@yaegassy/coc-ansible>`_  - vim plugin (lsp client) for Ansible, it supports autocompletion, syntax highlighting, hover, diagnostics, and goto support.
 
 JetBrains
 =========
@@ -109,6 +109,7 @@ Other tools
 
 - `Ansible cmdb <https://github.com/fboender/ansible-cmdb>`_ - takes the output of Ansible's fact gathering and converts it into a static HTML overview page containing system configuration information.
 - `Ansible Inventory Grapher <https://github.com/willthames/ansible-inventory-grapher>`_ - visually displays inventory inheritance hierarchies and at what level a variable is defined in inventory.
+- `Ansible Language Server <https://www.npmjs.com/package/@ansible/ansible-language-server>`_ - a server that implements `language server protocol <https://microsoft.github.io/language-server-protocol/>`_ for Ansible.
 - `Ansible Playbook Grapher <https://github.com/haidaraM/ansible-playbook-grapher>`_ - a command line tool to create a graph representing your Ansible playbook tasks and roles.
 - `Ansible Shell <https://github.com/dominis/ansible-shell>`_ - an interactive shell for Ansible with built-in tab completion for all the modules.
 - `Ansible Silo <https://github.com/groupon/ansible-silo>`_ - a self-contained Ansible environment by Docker.
