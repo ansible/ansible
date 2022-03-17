@@ -1,0 +1,2 @@
+bugfixes:
+  - inventory manager now respects --flush-cache

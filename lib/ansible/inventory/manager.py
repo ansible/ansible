@@ -140,7 +140,7 @@ def split_host_pattern(pattern):
 class InventoryManager(object):
     ''' Creates and manages inventory '''
 
-    def __init__(self, loader, sources=None, parse=True):
+    def __init__(self, loader, sources=None, parse=True, cache=True):
 
         # base objects
         self._loader = loader
@@ -164,7 +164,7 @@ class InventoryManager(object):
 
         # get to work!
         if parse:
-            self.parse_sources(cache=True)
+            self.parse_sources(cache=cache)
 
     @property
     def localhost(self):
@@ -336,7 +336,6 @@ class InventoryManager(object):
         ''' clear all caches '''
         self._hosts_patterns_cache = {}
         self._pattern_cache = {}
-        # FIXME: flush inventory cache
 
     def refresh_inventory(self):
         ''' recalculate inventory '''
