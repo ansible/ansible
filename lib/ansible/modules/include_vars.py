@@ -54,11 +54,13 @@ options:
     description:
       - List of file names to ignore.
     type: list
+    elements: str
     version_added: "2.2"
   extensions:
     description:
       - List of file extensions to read when using C(dir).
     type: list
+    elements: str
     default: [ json, yaml, yml ]
     version_added: "2.3"
   ignore_unknown_extensions:

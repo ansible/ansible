@@ -146,8 +146,8 @@ options:
     ssh_key_bits:
         description:
             - Optionally specify number of bits in SSH key to create.
+            - The default value depends on ssh-keygen.
         type: int
-        default: default set by ssh-keygen
         version_added: "0.9"
     ssh_key_type:
         description:

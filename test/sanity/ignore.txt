@@ -96,7 +96,6 @@ lib/ansible/modules/systemd.py validate-modules:return-syntax-error
 lib/ansible/modules/sysvinit.py validate-modules:return-syntax-error
 lib/ansible/modules/uri.py validate-modules:doc-required-mismatch
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/user.py validate-modules:doc-default-incompatible-type
 lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
 lib/ansible/modules/yum.py pylint:disallowed-name
 lib/ansible/modules/yum.py validate-modules:parameter-invalid

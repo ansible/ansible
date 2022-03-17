@@ -46,5 +46,6 @@ options:
     keyword:
       - name: environment
     type: list
+    elements: dictionary
     default: [{}]
 """
