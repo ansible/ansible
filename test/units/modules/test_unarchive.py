@@ -52,6 +52,7 @@ class TestCaseZipArchive:
             "extra_opts": "",
             "exclude": "",
             "include": "",
+            "io_buffer_size": 65536,
         }
 
         z = ZipArchive(
@@ -74,6 +75,7 @@ class TestCaseTgzArchive:
             "extra_opts": "",
             "exclude": "",
             "include": "",
+            "io_buffer_size": 65536,
         }
         fake_ansible_module.check_mode = False
 
