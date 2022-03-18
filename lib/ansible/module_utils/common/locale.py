@@ -50,8 +50,12 @@ def get_best_parsable_locale(module, preferences=None, raise_on_locale=False):
                     found = pref
                     break
 
-    except RuntimeWarning:
+    except RuntimeWarning as e:
         if raise_on_locale:
             raise
+        else:
+            module.debug('Failed to get locale information: %s' % to_native(e)
+
+    module.debug('Matched prefered locale to: %s' % found)
 
     return found
