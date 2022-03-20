@@ -1145,7 +1145,7 @@ def _configure_collection_loader():
         warnings.warn('AnsibleCollectionFinder has already been configured')
         return
 
-    finder = _AnsibleCollectionFinder(C.config.get_config_value('COLLECTIONS_PATHS'), C.config.get_config_value('COLLECTIONS_SCAN_SYS_PATH'))
+    finder = _AnsibleCollectionFinder(C.COLLECTIONS_PATHS, C.COLLECTIONS_SCAN_SYS_PATH)
     finder._install()
 
     # this should succeed now
