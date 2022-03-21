@@ -9,6 +9,7 @@
     <display_order>1024</display_order>
     <packagelist>
       <packagereq type="mandatory">dinginessentail</packagereq>
+      <packagereq type="optional">landsidescalping</packagereq>
     </packagelist>
   </group>
 
@@ -21,6 +22,7 @@
     <display_order>1024</display_order>
     <packagelist>
       <packagereq type="mandatory">landsidescalping</packagereq>
+      <packagereq type="optional">dinginessentail-olive</packagereq>
     </packagelist>
   </group>
 

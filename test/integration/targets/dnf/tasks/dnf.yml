@@ -386,6 +386,51 @@
   dnf:
     name: landsidescalping
     state: absent
+  register: optional_package
+  failed_when: optional_package.changed
+
+- name: install Custom Group group with optional packages
+  dnf:
+    name: "@Custom Group"
+    state: present
+    with_optional: True
+  register: dnf_result
+
+- name: check dinginessentail with rpm
+  command: rpm -q dinginessentail
+  failed_when: False
+  register: dinginessentail_result
+
+- name: check landsidescalping with rpm
+  command: rpm -q landsidescalping
+  failed_when: False
+  register: landsidescalping_result
+
+- name: verify installation of the group
+  assert:
+    that:
+    - not dnf_result is failed
+    - dnf_result is changed
+    - "'results' in dnf_result"
+    - dinginessentail_result.rc == 0
+    - landsidescalping_result.rc == 0
+
+- name: install Custom Group group with optional packages
+  dnf:
+    name: "@Custom Group"
+    state: present
+    with_optional: True
+  register: dnf_result
+
+- name: verify nothing changed
+  assert:
+    that:
+      - not dnf_result.changed
+
+- name: uninstall landsidescalping for the next test
+  dnf:
+    name: landsidescalping
+    state: absent
 
 - name: install the group again but also with a package that is not yet installed
   dnf:
@@ -425,9 +470,20 @@
     name: landsidescalping
     state: absent
 
-# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- shell: 'dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"'
-  register: shell_dnf_result
+- name: remove packages on Fedora 28
+  dnf:
+    name: "{{ item }}"
+    state: absent
+  when: ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28
+  loop:
+    - dinginessentail
+    - landsidescalping
+
+- name: remove Custom Group
+  dnf:
+    name: "@Custom Group"
+    state: absent
+  when: not (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28)
 
 # GROUP UPGRADE - this will go to the same method as group install
 # but through group_update - it is its invocation we're testing here
@@ -436,17 +492,50 @@
   dnf:
     name: "@Custom Group"
     state: latest
+    with_optional: True
   register: dnf_result
 
-- name: verify installation of the group
+- name: check dinginessentail with rpm
+  command: rpm -q dinginessentail
+  failed_when: False
+  register: dinginessentail_result
+
+- name: check landsidescalping with rpm
+  command: rpm -q landsidescalping
+  failed_when: False
+  register: landsidescalping_result
+
+- name: verify landsidescalping is installed
   assert:
     that:
     - not dnf_result is failed
     - dnf_result is changed
     - "'results' in dnf_result"
+    - dinginessentail_result.rc == 0
+    - landsidescalping_result.rc == 0
 
-# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
-- shell: dnf -y group install "Custom Group" && dnf -y group remove "Custom Group"
+# Fedora 28 (DNF 2) does not support this, just remove the package itself
+- name: remove packages on Fedora 28
+  dnf:
+    name: "{{ item }}"
+    state: absent
+  when: ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28
+  loop:
+    - dinginessentail
+    - landsidescalping
+
+- name: remove Custom Group
+  dnf:
+    name: "@Custom Group"
+    state: absent
+  when: not (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28)
+
+- name: verify landsidescalping was removed as part of the group
+  dnf:
+    name: landsidescalping
+    state: absent
+  register: dnf_result
+  failed_when: dnf_result.changed
 
 - name: try to install non existing group
   dnf:
@@ -525,16 +614,107 @@
     - "'results' in dnf_result"
     - landsidescalping_result.rc == 0
 
-# Fedora 28 (DNF 2) does not support this, just remove the package itself
-- name: remove landsidescalping package on Fedora 28
+- name: verify that dinginessentail-olive is not installed
   dnf:
-    name: landsidescalping
+    name: dinginessentail-olive
+    state: absent
+  register: optional_package
+  failed_when: optional_package.changed
+
+- name: install Custom Environment Group again
+  dnf:
+    name: "@Custom Environment Group"
+    state: latest
+  register: dnf_result
+  failed_when: dnf_result.changed
+
+- name: install Custom Environment Group with optional packages
+  dnf:
+    name: "@Custom Environment Group"
+    state: present
+    with_optional: True
+  register: dnf_result
+
+- name: check landsidescalping with rpm
+  command: rpm -q landsidescalping
+  register: landsidescalping_result
+
+- name: check dinginessentail-olive with rpm
+  command: rpm -q dinginessentail-olive
+  register: dinginessentail_olive_result
+
+- name: verify installation of the environment
+  assert:
+    that:
+    - not dnf_result is failed
+    - dnf_result is changed
+    - "'results' in dnf_result"
+    - landsidescalping_result.rc == 0
+    - dinginessentail_olive_result.rc == 0
+
+- name: install Custom Environment Group with optional packages again
+  dnf:
+    name: "@Custom Environment Group"
+    state: present
+    with_optional: True
+  register: dnf_result
+  failed_when: dnf_result.changed
+
+# Fedora 28 (DNF 2) does not support this, just remove the package itself
+- name: remove packages on Fedora 28
+  dnf:
+    name: "{{ item }}"
     state: absent
   when: ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28
+  loop:
+    - landsidescalping
+    - dinginessentail-olive
 
-# cleanup until https://github.com/ansible/ansible/issues/27377 is resolved
 - name: remove Custom Environment Group
-  shell: dnf -y group install "Custom Environment Group" && dnf -y group remove "Custom Environment Group"
+  dnf:
+    name: "@Custom Environment Group"
+    state: absent
+  when: not (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28)
+
+# test installing mandatory and optional packages together
+- name: install Custom Environment Group with optional packages
+  dnf:
+    name: "@Custom Environment Group"
+    state: present
+    with_optional: True
+  register: dnf_result
+
+- name: check landsidescalping with rpm
+  command: rpm -q landsidescalping
+  register: landsidescalping_result
+
+- name: check dinginessentail-olive with rpm
+  command: rpm -q dinginessentail-olive
+  register: dinginessentail_olive_result
+
+- name: verify installation of the environment
+  assert:
+    that:
+    - not dnf_result is failed
+    - dnf_result is changed
+    - "'results' in dnf_result"
+    - landsidescalping_result.rc == 0
+    - dinginessentail_olive_result.rc == 0
+
+# Fedora 28 (DNF 2) does not support this, just remove the package itself
+- name: remove packages on Fedora 28
+  dnf:
+    name: "{{ item }}"
+    state: absent
+  when: ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28
+  loop:
+    - landsidescalping
+    - dinginessentail-olive
+
+- name: remove Custom Environment Group
+  dnf:
+    name: "@Custom Environment Group"
+    state: absent
   when: not (ansible_distribution == 'Fedora' and ansible_distribution_major_version|int <= 28)
 
 # https://github.com/ansible/ansible/issues/39704
