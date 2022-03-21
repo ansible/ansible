@@ -5,6 +5,29 @@ ansible-core 2.12 "Dazed and Confused" Release Notes
 .. contents:: Topics
 
 
+v2.12.4rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2022-03-21
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Add a YAML representer for ``NativeJinjaText``
+- Add a YAML representer for ``NativeJinjaUnsafeText``
+- AnsiballZ - Ensure we use the full python package in the module cache filename to avoid a case where ``collections:`` is used to execute a module via short name, where the short name duplicates another module from ``ansible.builtin`` or another collection that was executed previously.
+- Fix collection filter/test plugin redirects (https://github.com/ansible/ansible/issues/77192).
+- ansible-galaxy collection verify - display files/directories not included in the FILES.json as modified content.
+- ansible-test - Fix ``windows-integration`` and ``network-integration`` when used with the ``--docker`` option and user-provided inventory.
+- extend timeout for ansible-galaxy when communicating with the galaxy server api, and apply it to all interactions with the api
+- first_found - fix to allow for spaces in file names (https://github.com/ansible/ansible/issues/77136)
+- unarchive - the ``io_buffer_size`` option added in 2.12 was not accepted by the module (https://github.com/ansible/ansible/pull/77271).
+
 v2.12.3
 =======
 
