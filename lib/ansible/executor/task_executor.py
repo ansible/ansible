@@ -597,7 +597,8 @@ class TaskExecutor:
         module_defaults_fqcn = self._task.resolved_action
         common_action = self._get_common_action_handler()
 
-        if handler_context._prefer_module_args or (handler_context._prefer_module_args is None and common_action):
+        if handler_context.action_plugin or common_action:
+            # If a common action handler is used, get module-specific defaults
             context = module_loader.find_plugin_with_context(self._task.action, collection_list=self._task.collections)
             if context.resolved:
                 module_defaults_fqcn = context.resolved_fqcn
@@ -1103,6 +1104,8 @@ class TaskExecutor:
             context = self._shared_loader_obj.module_loader.find_plugin_with_context(
                 self._task.action, collection_list=self._task.collections
             )
+            if context.action_plugin:
+                return context.action_plugin
             action_name = context.resolved_fqcn
         else:
             action_name = self._task.action

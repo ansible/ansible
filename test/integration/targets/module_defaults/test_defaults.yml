@@ -139,12 +139,6 @@
       testns.testcoll.vyos:
         fail: true
 
-  - name: ensure vyosfacts does not use vyos_facts action plugin default either
-    testns.testcoll.vyosfacts:
-    module_defaults:
-      testns.testcoll.vyos_facts:
-        fail: true
-
   - name: vyosfacts does use vyosfacts defaults
     testns.testcoll.vyosfacts:
     module_defaults:
@@ -174,3 +168,39 @@
       that:
         - result.ios_facts
         - result.action_plugin == 'ios'
+
+  - name: ensure redirected action gets redirected action defaults
+    testns.testcoll.module_uses_action_defaults:
+    module_defaults:
+      testns.testcoll.module_uses_action_defaults:
+        action_option: true
+    register: result
+
+  - assert:
+      that:
+        - result.action_option
+        - result.action_plugin == 'eos'
+
+  - name: ensure redirected action gets resolved action defaults
+    testns.testcoll.module_uses_action_defaults:
+    module_defaults:
+      testns.testcoll.eos:
+        action_option: true
+    register: result
+
+  - assert:
+      that:
+        - result.action_option
+        - result.action_plugin == 'eos'
+
+  - name: ensure redirected action does not use module-specific defaults
+    testns.testcoll.module_uses_action_defaults:
+    module_defaults:
+      testns.testcoll.module:
+        fail: true
+    register: result
+
+  - assert:
+      that:
+        - not result.action_option
+        - result.action_plugin == 'eos'

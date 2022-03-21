@@ -1,30 +1,36 @@
 plugin_routing:
   action:
-    # Use module-redirected-as-action to ensure module not using prefix
-    # magic uses platform-specific action plugin
-    # Ensure eos always prefers module_defaults for the module name (eosfacts) not eos
-    eosfacts:
+    # Test for action plugin redirects for module_defaults.
+    # Each module_defaults entry is first resolved as an action plugin, and if it does not exist, it is resolved as a module.
+    # If multiple modules use the same action plugin redirect, module defaults for any of the modules as redirected actions will apply.
+    # Since they will all resolve to the same thing, last defined wins.
+    module_uses_action_defaults:
       redirect: testns.testcoll.eos
-    eos:
-      prefer_module_args: true
-
-    # Ensure vyosfacts/vyos_facts use action plugin vyos (via symlink)
-    # and that only vyosfacts/vyos_facts module_defaults are applied (not vyos module_defaults)
-    vyosfacts:
-      redirect: testns.testcoll.vyos_facts  # symlink of testns.testcoll.vyos
-    vyos_facts:
-      prefer_module_args: true
-
-    # Ensure module that uses action plugin from prefix does not need
-    # module-as-redirected-action (resolved module is used by TE to find handler using prefix)
-    # and that action plugin does not need to opt into preferring module-specific args. Implicitly:
-    # ios:
-    #   prefer_module_args: true
-
   modules:
-    # No action redirect necessary if resolved module name is used by TE to find handler using prefix
-    # iosfacts/ios_facts tasks should get iosfacts/ios_facts module defaults (not ios module_defaults)
+    # Any module_defaults for testns.testcoll.module will not apply to a module_uses_action_defaults task:
+    #
+    # module_defaults:
+    #   testns.testcoll.module:
+    #     option: value
+    #
+    # But defaults for testns.testcoll.module_uses_action_defaults or testns.testcoll.eos will:
+    #
+    # module_defaults:
+    #   testns.testcoll.module_uses_action_defaults:
+    #     option: value
+    #   testns.testcoll.eos:
+    #     option: defined_last_i_win
+    module_uses_action_defaults:
+      redirect: testns.testcoll.module
+
+    # Not "eos_facts" to ensure TE is not finding handler via prefix
+    # eosfacts tasks should not get eos module_defaults (or defaults for other modules that use eos action plugin)
+    eosfacts:
+      action_plugin: testns.testcoll.eos
+
+    # iosfacts/ios_facts tasks should get iosfacts/ios_facts module_defaults (not ios defaults)
     iosfacts:
+      # No "action_plugin: ios" here to test the resolved module name is used by TE to find handler using prefix
       redirect: testns.testcoll.ios_facts
 
 action_groups:

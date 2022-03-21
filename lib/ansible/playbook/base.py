@@ -521,8 +521,8 @@ class FieldAttributeBase(metaclass=BaseMeta):
 
         context = action_loader.find_plugin_with_context(action_name)
 
-        # Allow collections to override common_action by setting prefer_module_args to True or False
-        prefer_module = bool(context._prefer_module_args or (context._prefer_module_args is None and common_action))
+        # Allow collections to override common_action by setting action_plugin
+        prefer_module = bool(context.action_plugin or common_action)
 
         if prefer_module:
             prefer = module_loader.find_plugin_with_context(action_name)
