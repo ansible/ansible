@@ -332,14 +332,17 @@ class SystemdStrategy(BaseStrategy):
     def set_permanent_hostname(self, name):
         if len(name) > 64:
             self.module.fail_json(msg="name cannot be longer than 64 characters on systemd servers, try a shorter name")
-        cmd = [self.hostnamectl_cmd, '--pretty', 'set-hostname', name]
+        cmd = [self.hostnamectl_cmd, '--pretty', '--static', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
-        cmd = [self.hostnamectl_cmd, '--static', 'set-hostname', name]
-        rc, out, err = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
+
+    def update_current_and_permanent_hostname(self):
+        # Must set the permanent hostname prior to current to avoid NetworkManager complaints
+        # about setting the hostname outside of NetworkManager
+        self.update_permanent_hostname()
+        self.update_current_hostname()
+        return self.changed
 
 
 class OpenRCStrategy(BaseStrategy):

@@ -1,0 +1,3 @@
+bugfixes:
+- hostname - Update the systemd strategy in the ``hostname`` module to not interfere with
+  NetworkManager (https://github.com/ansible/ansible/issues/76958)
