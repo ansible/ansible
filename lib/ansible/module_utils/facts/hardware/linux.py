@@ -515,6 +515,7 @@ class LinuxHardware(Hardware):
     def _replace_octal_escapes(self, value):
         return self.OCTAL_ESCAPE_RE.sub(self._replace_octal_escapes_helper, value)
 
+    @timeout.timeout(15)
     def get_mount_info(self, mount, device, uuids):
 
         mount_size = get_mount_size(mount)
