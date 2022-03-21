@@ -5,6 +5,25 @@ ansible-core 2.11 "Hey Hey, What Can I Do" Release Notes
 .. contents:: Topics
 
 
+v2.11.10rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2022-03-21
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- AnsiballZ - Ensure we use the full python package in the module cache filename to avoid a case where ``collections:`` is used to execute a module via short name, where the short name duplicates another module from ``ansible.builtin`` or another collection that was executed previously.
+- Fix collection filter/test plugin redirects (https://github.com/ansible/ansible/issues/77192).
+- ansible-galaxy collection verify - display files/directories not included in the FILES.json as modified content.
+- ansible-test - Fix an integration test traceback that occurs when some tests use cloud plugins, but all tests for at least one cloud plugin are skipped. (https://github.com/ansible/ansible/issues/75711)
+- extend timeout for ansible-galaxy when communicating with the galaxy server api, and apply it to all interactions with the api
+
 v2.11.9
 =======
 
