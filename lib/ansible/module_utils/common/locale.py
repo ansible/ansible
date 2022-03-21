@@ -32,7 +32,7 @@ def get_best_parsable_locale(module, preferences=None, raise_on_locale=False):
         if preferences is None:
             # new POSIX standard or English cause those are messages core team expects
             # yes, the last 2 are the same but some systems are weird
-            preferences = ['C.utf8', 'en_US.utf8', 'C', 'POSIX']
+            preferences = ['C.utf8', 'C.UTF-8', 'en_US.utf8', 'en_US.UTF-8', 'C', 'POSIX']
 
         rc, out, err = module.run_command([locale, '-a'])
 
