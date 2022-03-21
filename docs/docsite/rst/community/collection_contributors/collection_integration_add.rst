@@ -79,7 +79,7 @@ Add all of the needed subdirectories. For example, if you are going to use defau
   dependencies:
     - setup_abstract_service
 
-6. Start with writing a single standalone task to check that your module can interact with the service.
+6. Start with writing a single stand-alone task to check that your module can interact with the service.
 
 We assume that the ``abstract_service_info`` module fetches some information from the ``abstract_service`` and that it has two connection parameters.
 
@@ -102,7 +102,7 @@ Add the following to ``tests/integration/targets/abstract_service_info/tasks/mai
 
 7. :ref:`Run the tests<collection_run_integration_tests>` with the ``-vvv`` argument.
 
-If there are any issues with connectivity (for example, the service is not listening / accepting connections) or with the code, the play will fail.
+If there are any issues with connectivity (for example, the service is not accepting connections) or with the code, the play will fail.
 
 Examine the output to see at which step the failure occurred. Investigate the reason, fix, and run again. Repeat the cycle until the test passes.
 
