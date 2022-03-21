@@ -595,7 +595,7 @@ class TaskExecutor:
 
         # Apply default params for action/module, if present
         module_defaults_fqcn = self._task.resolved_action
-        common_action = self._get_handler_common_action()
+        common_action = self._get_common_action_handler()
 
         if handler_context._prefer_module_args or (handler_context._prefer_module_args is None and common_action):
             context = module_loader.find_plugin_with_context(self._task.action, collection_list=self._task.collections)
@@ -1098,7 +1098,7 @@ class TaskExecutor:
 
         return varnames
 
-    def _get_handler_common_action(self):
+    def _get_common_action_handler(self):
         if self._shared_loader_obj.module_loader.has_plugin(self._task.action, collection_list=self._task.collections):
             context = self._shared_loader_obj.module_loader.find_plugin_with_context(
                 self._task.action, collection_list=self._task.collections
@@ -1132,7 +1132,7 @@ class TaskExecutor:
         # let action plugin override module, fallback to 'normal' action plugin otherwise
         if self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
             handler_name = self._task.action
-        elif (network_action := self._get_handler_common_action()):
+        elif (network_action := self._get_common_action_handler()):
             handler_name = network_action
             display.vvvv("Using network group action {handler} for {action}".format(handler=handler_name,
                                                                                     action=self._task.action),
