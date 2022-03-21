@@ -137,20 +137,22 @@ def get_podman_default_hostname():  # type: () -> str
 
     --format was added in podman 3.3.0, this functionality depends on it's availability
     """
+    hostname = None
     try:
         stdout = raw_command(['podman', 'system', 'connection', 'list', '--format=json'], capture=True)[0]
     except SubprocessError:
         stdout = '[]'
 
-    connections = json.loads(stdout)
+    try:
+        connections = json.loads(stdout)
+    except json.decoder.JSONDecodeError:
+        return hostname
 
     for connection in connections:
         # A trailing indicates the default
         if connection['Name'][-1] == '*':
             hostname = connection['URI']
             break
-    else:
-        hostname = None
 
     return hostname
 
