@@ -17,12 +17,12 @@ There are :ref:`two kinds of integration tests <collections_adding_integration_t
 
 This section focuses on integration tests that use Ansible roles.
 
-Integration tests check modules with playbooks that invoke those modules. The tests pass standalone parameters and their combinations; check what the module or plugin reports with the :ref:`assert <ansible_collections.ansible.builtin.assert_module>` module, and the actual state of the system after each task.
+Integration tests check modules with playbooks that invoke those modules. The tests pass standalone parameters and their combinations, check what the module or plugin reports with the :ref:`assert <ansible_collections.ansible.builtin.assert_module>` module, and the actual state of the system after each task.
 
 Integration test example
 -------------------------
 
-Let's say we want to test the ``postgresql_user`` module invoked with the ``name`` parameter. We expect that the module will create a user based on the provided value of the ``name`` parameter and report that the system state has changed. We cannot rely on only what the module reports. To be sure that the user has been created, we query our database with another module to see if the user exists.
+Let's say we want to test the ``postgresql_user`` module invoked with the ``name`` parameter. We expect that the module will both create a user based on the provided value of the ``name`` parameter and will report that the system state has changed. We cannot rely on only what the module reports. To be sure that the user has been created, we query our database with another module to see if the user exists.
 
 .. code-block:: yaml
 
@@ -52,14 +52,14 @@ Details about integration tests
 
 The basic entity of an Ansible integration test is a ``target``. The target is an :ref:`Ansible role <playbooks_reuse_roles>` stored in the ``tests/integration/targets`` directory of the collection repository. The target role contains everything that is needed to test a module.
 
-The target names contain the module or plugin name that they test. Target names that start with ``setup_`` are usually executed as dependencies before module and plugin targets start execution. See :ref:`collection_creating_integration_tests` for details.
+The names of targets contain the module or plugin name that they test. Target names that start with ``setup_`` are usually executed as dependencies before module and plugin targets start execution. See :ref:`collection_creating_integration_tests` for details.
 
-To run integration tests, we use the ``ansible-test`` utility included in the ``ansible-core`` and ``ansible`` packages. See :ref:`collection_run_integration_tests` for details. After you finish your integration tests, see to :ref:`collection_quickstart` to learn how to submit a pull request.
+To run integration tests, we use the ``ansible-test`` utility that is included in the ``ansible-core`` and ``ansible`` packages. See :ref:`collection_run_integration_tests` for details. After you finish your integration tests, see to :ref:`collection_quickstart` to learn how to submit a pull request.
 
 .. _collection_integration_prepare:
 
-Preparing for integration tests
-================================
+Preparing for integration tests for collections
+=================================================
 
 To prepare for developing integration tests:
 
@@ -69,10 +69,10 @@ To prepare for developing integration tests:
 
   .. code-block:: bash
 
-      ansible-test integration --list-targets
+    ansible-test integration --list-targets
 
 
-If a collection already has integration tests, you can find them stored in the collection repository's ``tests/integration/targets/*`` subdirectories.
+If a collection already has integration tests, they are stored in ``tests/integration/targets/*`` subdirectories of the collection repository.
 
 If you use ``bash`` and the ``argcomplete`` package is installed with ``pip`` on your system, you can also get a full target list.
 
