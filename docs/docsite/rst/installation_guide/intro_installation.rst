@@ -24,8 +24,7 @@ For your control node (the machine that runs Ansible), you can use nearly any UN
 Selecting an Ansible package and version to install
 ====================================================
 
-Ansible's community packages are distributed in two ways: a minimalist language and runtime package called ``ansible-core``, and a much larger "batteries included" package called ``ansible``, which adds a community-curated selection of :ref:`Ansible Collections <collections>` for automating a wide variety of devices. Choose the package that fits your needs; The following instructions  use ``ansible``, but  you can substitute ``ansible-core``  if you prefer to start with a more minimal package and separately install only the Ansible Collections you require.
-
+Ansible's community packages are distributed in two ways: a minimalist language and runtime package called ``ansible-core``, and a much larger "batteries included" package called ``ansible``, which adds a community-curated selection of :ref:`Ansible Collections <collections>` for automating a wide variety of devices. Choose the package that fits your needs; The following instructions  use ``ansible``, but  you can substitute ``ansible-core``  if you prefer to start with a more minimal package and separately install only the Ansible Collections you require. The ``ansible`` or ``ansible-core`` packages may be available in your operating systems package manager, and you are free to install these packages via your preferred method. These installation instructions only cover the officially supported means of installing the python package via ``pip``.
 
 Installing and upgrading Ansible
 ================================
@@ -136,7 +135,6 @@ Running the ``devel`` branch from a clone
 
 ``ansible-core`` is easy to run from source. You do not need ``root`` permissions to use it and there is no software to actually install. No daemons or database setup are required.
 
-
 #. Clone the ``ansible-core`` repository
 
    .. code-block:: console
@@ -177,7 +175,6 @@ Running the ``devel`` branch from a clone
    .. code-block:: bash
 
       $ git pull --rebase
-
 
 .. _shell_completion:
 
