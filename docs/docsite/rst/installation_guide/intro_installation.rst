@@ -96,11 +96,17 @@ Confirming your installation
 
 You can test that Ansible is installed correctly by checking the version:
 
-.. code-block:: bash
+.. code-block:: console
 
     $ ansible --version
 
 The version displayed by this command is for the associated ``ansible-core`` package that has been installed.
+
+To check the version of the ``ansible`` package that has been installed:
+
+.. code-block:: console
+
+    $ python3 -m pip show ansible
 
 .. _development_install:
 
@@ -158,13 +164,13 @@ Running the ``devel`` branch from a clone
 
    * To suppress spurious warnings/errors, use ``-q``
 
-     .. code-block:: bash
+     .. code-block:: console
 
         $ source ./hacking/env-setup -q
 
 #. Install Python dependencies
 
-   .. code-block:: bash
+   .. code-block:: console
 
       $ python3 -m pip install --user -r ./requirements.txt
 
@@ -172,7 +178,7 @@ Running the ``devel`` branch from a clone
 
    Use pull-with-rebase so any local changes are replayed.
 
-   .. code-block:: bash
+   .. code-block:: console
 
       $ git pull --rebase
 
@@ -188,7 +194,7 @@ For more information about installation and configuration, see the `argcomplete 
 Installing ``argcomplete``
 --------------------------
 
-.. code-block:: bash
+.. code-block:: console
 
     $ python3 -m pip install --user argcomplete
 
@@ -202,7 +208,7 @@ Global configuration
 
 Global completion requires bash 4.2.
 
-.. code-block:: bash
+.. code-block:: console
 
     $ activate-global-python-argcomplete
 
@@ -213,7 +219,7 @@ Per command configuration
 
 If you do not have bash 4.2, you must register each script independently.
 
-.. code-block:: bash
+.. code-block:: console
 
     $ eval $(register-python-argcomplete ansible)
     $ eval $(register-python-argcomplete ansible-config)
