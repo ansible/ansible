@@ -109,17 +109,8 @@ class ConnectionBase(AnsiblePlugin):
         list ['-o', 'Foo=1', '-o', 'Bar=foo bar'] that can be added to
         the argument list. The list will not contain any empty elements.
         """
-        try:
-            # Python 2.6.x shlex doesn't handle unicode type so we have to
-            # convert args to byte string for that case.  More efficient to
-            # try without conversion first but python2.6 doesn't throw an
-            # exception, it merely mangles the output:
-            # >>> shlex.split(u't e')
-            # ['t\x00\x00\x00', '\x00\x00\x00e\x00\x00\x00']
-            return [to_text(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
-        except AttributeError:
-            # In Python3, shlex.split doesn't work on a byte string.
-            return [to_text(x.strip()) for x in shlex.split(argstring) if x.strip()]
+        # In Python3, shlex.split doesn't work on a byte string.
+        return [to_text(x.strip()) for x in shlex.split(argstring) if x.strip()]
 
     @property
     @abstractmethod

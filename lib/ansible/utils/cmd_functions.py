@@ -30,8 +30,7 @@ from ansible.module_utils._text import to_bytes
 def run_cmd(cmd, live=False, readsize=10):
     cmdargs = shlex.split(cmd)
 
-    # subprocess should be passed byte strings.  (on python2.6 it must be
-    # passed byte strtings)
+    # subprocess should be passed byte strings.
     cmdargs = [to_bytes(a, errors='surrogate_or_strict') for a in cmdargs]
 
     p = subprocess.Popen(cmdargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
