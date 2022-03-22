@@ -1314,8 +1314,8 @@ def _extract_interpreter(b_module_data):
     if b_lines[0].startswith(b"#!"):
         b_shebang = b_lines[0].strip()
 
-        # shlex.split on python-2.6 needs bytes.  On python-3.x it needs text
-        cli_split = shlex.split(to_native(b_shebang[2:], errors='surrogate_or_strict'))
+        # shlex.split needs text on Python 3
+        cli_split = shlex.split(to_text(b_shebang[2:], errors='surrogate_or_strict'))
 
         # convert args to text
         cli_split = [to_text(a, errors='surrogate_or_strict') for a in cli_split]
