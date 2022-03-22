@@ -332,7 +332,7 @@ class ConcreteArtifactsManager:
             temp_dir_base,  # type: str
             validate_certs=True,  # type: bool
             keyring=None,  # type: str
-            required_signature_count=None,  # type: int
+            required_signature_count=None,  # type: str
             ignore_signature_errors=None,  # type: list[str]
     ):  # type: (...) -> t.Iterator[ConcreteArtifactsManager]
         """Custom ConcreteArtifactsManager constructor with temp dir.

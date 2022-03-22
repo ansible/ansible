@@ -329,7 +329,7 @@ def verify_local_collection(
 
 
 def verify_file_signatures(fqcn, manifest_file, detached_signatures, keyring, required_successful_count, ignore_signature_errors):
-    # type: (str, str, List[str], str, str, List[str]) -> bool
+    # type: (str, str, list[str], str, str, list[str]) -> bool
     successful = 0
     error_messages = []
 
@@ -337,7 +337,7 @@ def verify_file_signatures(fqcn, manifest_file, detached_signatures, keyring, re
     if strict:
         required_successful_count = required_successful_count[1:]
     if required_successful_count != 'all':
-        required_successful_count = int(required_successful_count)
+        required_successful_count = int(required_successful_count)  # type: int # type: ignore[no-redef]
 
     for signature in detached_signatures:
         signature = to_text(signature, errors='surrogate_or_strict')
@@ -373,7 +373,7 @@ def verify_file_signatures(fqcn, manifest_file, detached_signatures, keyring, re
 
 
 def verify_file_signature(manifest_file, detached_signature, keyring, ignore_signature_errors):
-    # type: (str, str, str, int, List[str]) -> None
+    # type: (str, str, str, list[str]) -> None
     """Run the gpg command and parse any errors. Raises CollectionSignatureError on failure."""
     gpg_result, gpg_verification_rc = run_gpg_verify(manifest_file, detached_signature, keyring, display)
 
@@ -1323,7 +1323,7 @@ def write_source_metadata(collection, b_collection_path, artifacts_manager):
 
 
 def verify_artifact_manifest(manifest_file, signatures, keyring, required_signature_count, ignore_signature_errors):
-    # type: (str, list[str], str, int, list[str]) -> None
+    # type: (str, list[str], str, str, list[str]) -> None
     failed_verify = False
     coll_path_parts = to_text(manifest_file, errors='surrogate_or_strict').split(os.path.sep)
     collection_name = '%s.%s' % (coll_path_parts[-3], coll_path_parts[-2])  # get 'ns' and 'coll' from /path/to/ns/coll/MANIFEST.json
