@@ -450,9 +450,27 @@ class UbuntuSourcesList(SourcesList):
         return line, ppa_owner, ppa_name
 
     def _key_already_exists(self, key_fingerprint):
-        rc, out, err = self.module.run_command('apt-key export %s' % key_fingerprint, check_rc=True)
-        return len(err) == 0
 
+        found = False
+        for key_file in os.listdir('/usr/share/keyrings'):
+
+            if key_file.startswith('.') or not key_file.is_file():
+                # skip hidden and non files (dir refs already skipped)
+                continue
+
+            try:
+                rc, out, err = self.module.run_command('gpg --list-packets %s' % key_file)
+            except (IOError, OSError) as e:
+                self.debug("Could check key against file %s: %s" % (key_file, to_native(e)))
+                continue
+
+            if key_fingerprint in out:
+                found = True
+                break
+
+        return found
+
+    # https://www.linuxuprising.com/2021/01/apt-key-is-deprecated-how-to-add.html
     def add_source(self, line, comment='', file=None):
         if line.startswith('ppa:'):
             source, ppa_owner, ppa_name = self._expand_ppa(line)
@@ -464,13 +482,16 @@ class UbuntuSourcesList(SourcesList):
             if self.add_ppa_signing_keys_callback is not None:
                 info = self._get_ppa_info(ppa_owner, ppa_name)
                 if not self._key_already_exists(info['signing_key_fingerprint']):
-                    command = ['apt-key', 'adv', '--recv-keys', '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', info['signing_key_fingerprint']]
+                    keyfile = '/usr/share/keyrings/%s-%s-%s.gpg' % (source, ppa_owner, ppa_name)
+                    command = ['gpg', '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', '--recv-keys', '--export',
+                               '--output', keyfile, info['signing_key_fingerprint']]
                     self.add_ppa_signing_keys_callback(command)
 
             file = file or self._suggest_filename('%s_%s' % (line, self.codename))
         else:
             source = self._parse(line, raise_if_invalid_or_disabled=True)[2]
             file = file or self._suggest_filename(source)
+
         self._add_valid_source(source, comment, file)
 
     def remove_source(self, line):
