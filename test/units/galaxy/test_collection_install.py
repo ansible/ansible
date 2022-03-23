@@ -17,7 +17,7 @@ import tarfile
 import yaml
 
 from io import BytesIO, StringIO
-from mock import MagicMock
+from mock import MagicMock, patch
 
 import ansible.module_utils.six.moves.urllib.error as urllib_error
 
@@ -982,3 +982,50 @@ def test_install_collection_with_circular_dependency(collection_artifact, monkey
     assert display_msgs[1] == "Starting collection install process"
     assert display_msgs[2] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" % to_text(collection_path)
     assert display_msgs[3] == "ansible_namespace.collection:0.1.0 was installed successfully"
+
+
+@pytest.mark.parametrize(
+    "signatures,required_successful_count,ignore_errors,expected_success",
+    [
+        ([], 'all', [], True),
+        (["good_signature"], 'all', [], True),
+        (["good_signature", collection.gpg.GpgBadArmor(status='failed')], 'all', [], False),
+        ([collection.gpg.GpgBadArmor(status='failed')], 'all', [], False),
+        # This is expected to succeed because ignored does not increment failed signatures.
+        # "all" signatures is not a specific number, so all == no (non-ignored) signatures in this case.
+        ([collection.gpg.GpgBadArmor(status='failed')], 'all', ["BADARMOR"], True),
+        ([collection.gpg.GpgBadArmor(status='failed'), "good_signature"], 'all', ["BADARMOR"], True),
+        ([], '+all', [], False),
+        ([collection.gpg.GpgBadArmor(status='failed')], '+all', ["BADARMOR"], False),
+        ([], '1', [], True),
+        ([], '+1', [], False),
+        (["good_signature"], '2', [], False),
+        (["good_signature", collection.gpg.GpgBadArmor(status='failed')], '2', [], False),
+        # This is expected to fail because ignored does not increment successful signatures.
+        # 2 signatures are required, but only 1 is successful.
+        (["good_signature", collection.gpg.GpgBadArmor(status='failed')], '2', ["BADARMOR"], False),
+        (["good_signature", "good_signature"], '2', [], True),
+    ]
+)
+def test_verify_file_signatures(signatures, required_successful_count, ignore_errors, expected_success):
+    # type: (List[bool], int, bool, bool) -> None
+
+    def gpg_error_generator(results):
+        for result in results:
+            if isinstance(result, collection.gpg.GpgBaseError):
+                yield result
+
+    fqcn = 'ns.coll'
+    manifest_file = 'MANIFEST.json'
+    keyring = '~/.ansible/pubring.kbx'
+
+    with patch.object(collection, 'run_gpg_verify', MagicMock(return_value=("somestdout", 0,))):
+        with patch.object(collection, 'parse_gpg_errors', MagicMock(return_value=gpg_error_generator(signatures))):
+            assert collection.verify_file_signatures(
+                fqcn,
+                manifest_file,
+                signatures,
+                keyring,
+                required_successful_count,
+                ignore_errors
+            ) == expected_success
