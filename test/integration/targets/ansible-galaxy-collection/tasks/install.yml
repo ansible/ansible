@@ -932,6 +932,33 @@
       - ignore_invalid_signature is success
       - '"Installing ''namespace1.name1:1.0.9'' to" in ignore_invalid_signature.stdout'
 
+- name: use lenient signature verification (default) without providing signatures
+  command: ansible-galaxy collection install namespace1.name1:1.0.0 -vvvv --keyring {{ gpg_homedir }}/pubring.kbx --force
+  environment:
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "all"
+  register: missing_signature
+
+- assert:
+    that:
+      - missing_signature is success
+      - missing_signature.rc == 0
+      - '"namespace1.name1:1.0.0 was installed successfully" in missing_signature.stdout'
+      - '"Signature verification failed for ''namespace1.name1'': no successful signatures" not in missing_signature.stdout'
+
+- name: use strict signature verification without providing signatures
+  command: ansible-galaxy collection install namespace1.name1:1.0.0 -vvvv --keyring {{ gpg_homedir }}/pubring.kbx --force
+  environment:
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "+1"
+  ignore_errors: yes
+  register: missing_signature
+
+- assert:
+    that:
+      - missing_signature is failed
+      - missing_signature.rc == 1
+      - '"Signature verification failed for ''namespace1.name1'': no successful signatures" in missing_signature.stdout'
+      - '"Not installing namespace1.name1 because GnuPG signature verification failed" in missing_signature.stderr'
+
 - name: Remove the collection
   file:
     path: '{{ galaxy_dir }}/ansible_collections/namespace1'

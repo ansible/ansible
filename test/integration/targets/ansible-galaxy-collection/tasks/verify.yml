@@ -435,6 +435,39 @@
     reset_color: '\x1b\[0m'
     color: '\x1b\[[0-9];[0-9]{2}m'
 
+- name: use lenient signature verification (default) without providing signatures
+  command: ansible-galaxy collection verify namespace1.name1:1.0.0 -vvvv --keyring {{ gpg_homedir }}/pubring.kbx
+  environment:
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "1"
+  register: verify
+  ignore_errors: yes
+
+- assert:
+    that:
+      - verify is success
+      - verify.rc == 0
+      - error_message not in verify.stdout
+      - success_messages[0] in verify.stdout
+      - success_messages[1] in verify.stdout
+  vars:
+    error_message: "Signature verification failed for 'namespace1.name1': fewer successful signatures than required"
+    success_messages:
+      - "GnuPG signature verification succeeded, verifying contents of namespace1.name1:1.0.0"
+      - "Successfully verified that checksums for 'namespace1.name1:1.0.0' match the remote collection."
+
+- name: use strict signature verification without providing signatures
+  command: ansible-galaxy collection verify namespace1.name1:1.0.0 -vvvv --keyring {{ gpg_homedir }}/pubring.kbx
+  environment:
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "+1"
+  register: verify
+  ignore_errors: yes
+
+- assert:
+    that:
+      - verify is failed
+      - verify.rc == 1
+      - '"Signature verification failed for ''namespace1.name1'': no successful signatures" in verify.stdout'
+
 - name: empty installed collections
   file:
     path: "{{ galaxy_dir }}/ansible_collections"
