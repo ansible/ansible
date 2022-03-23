@@ -34,11 +34,13 @@ from ansible.galaxy.collection import (
     publish_collection,
     validate_collection_name,
     validate_collection_path,
-    verify_collections
+    verify_collections,
+    SIGNATURE_COUNT_RE,
 )
 from ansible.galaxy.collection.concrete_artifact_manager import (
     ConcreteArtifactsManager,
 )
+from ansible.galaxy.collection.gpg import GPG_ERROR_MAP
 from ansible.galaxy.dependency_resolution.dataclasses import Requirement
 
 from ansible.galaxy.role import GalaxyRole
@@ -82,14 +84,19 @@ def with_collection_artifacts_manager(wrapped_method):
         if 'artifacts_manager' in kwargs:
             return wrapped_method(*args, **kwargs)
 
+        artifacts_manager_kwargs = {'validate_certs': not context.CLIARGS['ignore_certs']}
+
         keyring = context.CLIARGS.get('keyring', None)
         if keyring is not None:
-            keyring = GalaxyCLI._resolve_path(keyring)
+            artifacts_manager_kwargs.update({
+                'keyring': GalaxyCLI._resolve_path(keyring),
+                'required_signature_count': context.CLIARGS.get('required_valid_signature_count', None),
+                'ignore_signature_errors': context.CLIARGS.get('ignore_gpg_errors', None),
+            })
 
         with ConcreteArtifactsManager.under_tmpdir(
                 C.DEFAULT_LOCAL_TMP,
-                validate_certs=not context.CLIARGS['ignore_certs'],
-                keyring=keyring,
+                **artifacts_manager_kwargs
         ) as concrete_artifact_cm:
             kwargs['artifacts_manager'] = concrete_artifact_cm
             return wrapped_method(*args, **kwargs)
@@ -138,6 +145,15 @@ def _get_collection_widths(collections):
     version_length = len(max(version_set, key=len))
 
     return fqcn_length, version_length
+
+
+def validate_signature_count(value):
+    match = re.match(SIGNATURE_COUNT_RE, value)
+
+    if match is None:
+        raise ValueError("{value} is not a valid signature count value")
+
+    return value
 
 
 class GalaxyCLI(CLI):
@@ -396,6 +412,17 @@ class GalaxyCLI(CLI):
                                    help='An additional signature source to verify the authenticity of the MANIFEST.json before using '
                                         'it to verify the rest of the contents of a collection from a Galaxy server. Use in '
                                         'conjunction with a positional collection name (mutually exclusive with --requirements-file).')
+        valid_signature_count_help = 'The number of signatures that must successfully verify the collection. This should be a positive integer ' \
+                                     'or all to signify that all signatures must be used to verify the collection. ' \
+                                     'Prepend the value with + to fail if no valid signatures are found for the collection (e.g. +all).'
+        ignore_gpg_status_help = 'A status code to ignore during signature verification (for example, NO_PUBKEY). ' \
+                                 'Provide this option multiple times to ignore a list of status codes. ' \
+                                 'Descriptions for the choices can be seen at L(https://github.com/gpg/gnupg/blob/master/doc/DETAILS#general-status-codes).'
+        verify_parser.add_argument('--required-valid-signature-count', dest='required_valid_signature_count', type=validate_signature_count,
+                                   help=valid_signature_count_help, default=C.GALAXY_REQUIRED_VALID_SIGNATURE_COUNT)
+        verify_parser.add_argument('--ignore-signature-status-code', dest='ignore_gpg_errors', type=str, action='append',
+                                   help=ignore_gpg_status_help, default=C.GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES,
+                                   choices=list(GPG_ERROR_MAP.keys()))
 
     def add_install_options(self, parser, parents=None):
         galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
@@ -426,6 +453,13 @@ class GalaxyCLI(CLI):
                                        help="Force overwriting an existing {0} and its "
                                             "dependencies.".format(galaxy_type))
 
+        valid_signature_count_help = 'The number of signatures that must successfully verify the collection. This should be a positive integer ' \
+                                     'or -1 to signify that all signatures must be used to verify the collection. ' \
+                                     'Prepend the value with + to fail if no valid signatures are found for the collection (e.g. +all).'
+        ignore_gpg_status_help = 'A status code to ignore during signature verification (for example, NO_PUBKEY). ' \
+                                 'Provide this option multiple times to ignore a list of status codes. ' \
+                                 'Descriptions for the choices can be seen at L(https://github.com/gpg/gnupg/blob/master/doc/DETAILS#general-status-codes).'
+
         if galaxy_type == 'collection':
             install_parser.add_argument('-p', '--collections-path', dest='collections_path',
                                         default=self._get_default_collection_path(),
@@ -445,6 +479,11 @@ class GalaxyCLI(CLI):
                                         help='An additional signature source to verify the authenticity of the MANIFEST.json before '
                                              'installing the collection from a Galaxy server. Use in conjunction with a positional '
                                              'collection name (mutually exclusive with --requirements-file).')
+            install_parser.add_argument('--required-valid-signature-count', dest='required_valid_signature_count', type=validate_signature_count,
+                                        help=valid_signature_count_help, default=C.GALAXY_REQUIRED_VALID_SIGNATURE_COUNT)
+            install_parser.add_argument('--ignore-signature-status-code', dest='ignore_gpg_errors', type=str, action='append',
+                                        help=ignore_gpg_status_help, default=C.GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES,
+                                        choices=list(GPG_ERROR_MAP.keys()))
         else:
             install_parser.add_argument('-r', '--role-file', dest='requirements',
                                         help='A file containing a list of roles to be installed.')
@@ -455,6 +494,11 @@ class GalaxyCLI(CLI):
                 install_parser.add_argument('--disable-gpg-verify', dest='disable_gpg_verify', action='store_true',
                                             default=C.GALAXY_DISABLE_GPG_VERIFY,
                                             help='Disable GPG signature verification when installing collections from a Galaxy server')
+                install_parser.add_argument('--required-valid-signature-count', dest='required_valid_signature_count', type=validate_signature_count,
+                                            help=valid_signature_count_help, default=C.GALAXY_REQUIRED_VALID_SIGNATURE_COUNT)
+                install_parser.add_argument('--ignore-signature-status-code', dest='ignore_gpg_errors', type=str, action='append',
+                                            help=ignore_gpg_status_help, default=C.GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES,
+                                            choices=list(GPG_ERROR_MAP.keys()))
 
             install_parser.add_argument('-g', '--keep-scm-meta', dest='keep_scm_meta', action='store_true',
                                         default=False,
