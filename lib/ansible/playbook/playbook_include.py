@@ -42,7 +42,7 @@ display = Display()
 class PlaybookInclude(Base, Conditional, Taggable):
 
     import_playbook = FieldAttribute(isa='string')
-    vars = FieldAttribute(isa='dict', default=dict)
+    vars_val = FieldAttribute(isa='dict', default=dict, alias='vars')
 
     @staticmethod
     def load(data, basedir, variable_manager=None, loader=None):
