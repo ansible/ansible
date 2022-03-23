@@ -34,7 +34,8 @@ from ansible.galaxy.collection import (
     publish_collection,
     validate_collection_name,
     validate_collection_path,
-    verify_collections
+    verify_collections,
+    SIGNATURE_COUNT_RE,
 )
 from ansible.galaxy.collection.concrete_artifact_manager import (
     ConcreteArtifactsManager,
@@ -147,18 +148,10 @@ def _get_collection_widths(collections):
 
 
 def validate_signature_count(value):
-    value = str(value)
+    match = re.match(SIGNATURE_COUNT_RE, value)
 
-    if value.startswith('+'):
-        count = value[1:]
-    else:
-        count = value
-
-    if count != 'all':
-        count = int(count)
-
-        if count <= 0:
-            raise ValueError("The required valid signature count must be a positive integer")
+    if match is None:
+        raise ValueError("{value} is not a valid signature count value")
 
     return value
 

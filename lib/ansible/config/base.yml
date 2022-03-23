@@ -1492,7 +1492,7 @@ GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES:
   - NO_SECKEY
 GALAXY_REQUIRED_VALID_SIGNATURE_COUNT:
   type: str
-  default: 1  # should this be strict (+1) by default?
+  default: 1
   env:
   - name: ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT
   ini:

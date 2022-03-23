@@ -12,6 +12,7 @@ import functools
 import json
 import os
 import queue
+import re
 import shutil
 import stat
 import sys
@@ -103,6 +104,8 @@ MANIFEST_FORMAT = 1
 MANIFEST_FILENAME = 'MANIFEST.json'
 
 ModifiedContent = namedtuple('ModifiedContent', ['filename', 'expected', 'installed'])
+
+SIGNATURE_COUNT_RE = r"^(?P<strict>\+)?(?:(?P<count>\d+)|(?P<all>all))$"
 
 
 class CollectionSignatureError(Exception):
@@ -226,8 +229,7 @@ def verify_local_collection(
         ):
             result.success = False
             return result
-        elif signatures:
-            display.vvvv(f"GnuPG signature verification succeeded, verifying contents of {local_collection}")
+        display.vvvv(f"GnuPG signature verification succeeded, verifying contents of {local_collection}")
 
     if verify_local_only:
         # since we're not downloading this, just seed it with the value from disk
@@ -333,11 +335,13 @@ def verify_file_signatures(fqcn, manifest_file, detached_signatures, keyring, re
     successful = 0
     error_messages = []
 
-    strict = required_successful_count.startswith('+')
-    if strict:
-        required_successful_count = required_successful_count[1:]
-    if required_successful_count != 'all':
-        required_successful_count = int(required_successful_count)  # type: int # type: ignore[no-redef]
+    signature_count_requirements = re.match(SIGNATURE_COUNT_RE, required_successful_count).groupdict()
+
+    strict = signature_count_requirements['strict'] or False
+    require_all = signature_count_requirements['all']
+    require_count = signature_count_requirements['count']
+    if require_count is not None:
+        require_count = int(require_count)
 
     for signature in detached_signatures:
         signature = to_text(signature, errors='surrogate_or_strict')
@@ -350,18 +354,22 @@ def verify_file_signatures(fqcn, manifest_file, detached_signatures, keyring, re
             error_messages.append(error.report(fqcn))
         else:
             successful += 1
-            if successful == required_successful_count:
+
+            if require_all:
+                continue
+
+            if successful == require_count:
                 break
 
     if strict and not successful:
         verified = False
         display.display(f"Signature verification failed for '{fqcn}': no successful signatures")
-    elif required_successful_count == 'all':
+    elif require_all:
         verified = not error_messages
         if not verified:
             display.display(f"Signature verification failed for '{fqcn}': some signatures failed")
     else:
-        verified = not detached_signatures or required_successful_count == successful
+        verified = not detached_signatures or require_count == successful
         if not verified:
             display.display(f"Signature verification failed for '{fqcn}': fewer successful signatures than required")
 
@@ -1348,7 +1356,7 @@ def install_artifact(b_coll_targz_path, b_collection_path, b_temp_path, signatur
             # Verify the signature on the MANIFEST.json before extracting anything else
             _extract_tar_file(collection_tar, MANIFEST_FILENAME, b_collection_path, b_temp_path)
 
-            if signatures and keyring is not None:
+            if keyring is not None:
                 manifest_file = os.path.join(to_text(b_collection_path, errors='surrogate_or_strict'), MANIFEST_FILENAME)
                 verify_artifact_manifest(manifest_file, signatures, keyring, required_signature_count, ignore_signature_errors)
 
