@@ -452,7 +452,8 @@ class UbuntuSourcesList(SourcesList):
     def _key_already_exists(self, key_fingerprint):
 
         found = False
-        for key_file in os.listdir('/usr/share/keyrings'):
+        keyfiles = ['/etc/apt/trusted.gpg', os.listdir('/etc/apt/trusted.gpg.d/'), os.listdir('/usr/share/keyrings')]
+        for key_file in keyfiles:
 
             if key_file.startswith('.') or not key_file.is_file():
                 # skip hidden and non files (dir refs already skipped)
@@ -481,6 +482,8 @@ class UbuntuSourcesList(SourcesList):
 
             if self.add_ppa_signing_keys_callback is not None:
                 info = self._get_ppa_info(ppa_owner, ppa_name)
+
+                # add gpg sig if needed
                 if not self._key_already_exists(info['signing_key_fingerprint']):
                     keyfile = '/usr/share/keyrings/%s-%s-%s.gpg' % (source, ppa_owner, ppa_name)
                     command = ['gpg', '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', '--recv-keys', '--export',
