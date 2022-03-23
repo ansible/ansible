@@ -192,7 +192,9 @@ class LinuxNetwork(Network):
                             interfaces[iface]['ipv4'] = {'address': address,
                                                          'broadcast': broadcast,
                                                          'netmask': netmask,
-                                                         'network': network}
+                                                         'network': network,
+                                                         'prefix': netmask_length,
+                                                         }
                         else:
                             if "ipv4_secondaries" not in interfaces[iface]:
                                 interfaces[iface]["ipv4_secondaries"] = []
@@ -201,6 +203,7 @@ class LinuxNetwork(Network):
                                 'broadcast': broadcast,
                                 'netmask': netmask,
                                 'network': network,
+                                'prefix': netmask_length,
                             })
 
                         # add this secondary IP to the main device
@@ -213,6 +216,7 @@ class LinuxNetwork(Network):
                                     'broadcast': broadcast,
                                     'netmask': netmask,
                                     'network': network,
+                                    'prefix': netmask_length,
                                 })
 
                         # NOTE: default_ipv4 is ref to outside scope
@@ -221,6 +225,7 @@ class LinuxNetwork(Network):
                             default_ipv4['broadcast'] = broadcast
                             default_ipv4['netmask'] = netmask
                             default_ipv4['network'] = network
+                            default_ipv4['prefix'] = netmask_length
                             # NOTE: macaddress is ref from outside scope
                             default_ipv4['macaddress'] = macaddress
                             default_ipv4['mtu'] = interfaces[device]['mtu']
