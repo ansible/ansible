@@ -63,7 +63,8 @@ class MypyTest(SanityMultipleVersion):
     def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' and (
-                target.path.startswith('lib/ansible/') or target.path.startswith('test/lib/ansible_test/_internal/'))]
+                target.path.startswith('lib/ansible/') or target.path.startswith('test/lib/ansible_test/_internal/')
+                or target.path.startswith('test/lib/ansible_test/_util/target/sanity/import/'))]
 
     @property
     def error_code(self):  # type: () -> t.Optional[str]
@@ -90,6 +91,7 @@ class MypyTest(SanityMultipleVersion):
             return SanitySkipped(self.name, python.version)
 
         contexts = (
+            MyPyContext('ansible-test', ['test/lib/ansible_test/_util/target/sanity/import/'], CONTROLLER_PYTHON_VERSIONS),
             MyPyContext('ansible-test', ['test/lib/ansible_test/_internal/'], CONTROLLER_PYTHON_VERSIONS),
             MyPyContext('ansible-core', ['lib/ansible/'], CONTROLLER_PYTHON_VERSIONS),
             MyPyContext('modules', ['lib/ansible/modules/', 'lib/ansible/module_utils/'], REMOTE_ONLY_PYTHON_VERSIONS),
@@ -171,6 +173,7 @@ class MypyTest(SanityMultipleVersion):
         display.info(f'Checking context "{context.name}"', verbosity=1)
 
         env = ansible_environment(args, color=False)
+        env['MYPYPATH'] = env['PYTHONPATH']
 
         # The --no-site-packages option should not be used, as it will prevent loading of type stubs from the sanity test virtual environment.
 

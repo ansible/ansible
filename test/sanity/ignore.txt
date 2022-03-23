@@ -303,8 +303,11 @@ lib/ansible/module_utils/six/__init__.py mypy-3.6:attr-defined  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.7:var-annotated  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.7:attr-defined  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.8:var-annotated  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.8:attr-defined  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.9:var-annotated  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.9:attr-defined  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.10:var-annotated  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.10:attr-defined  # vendored code
 lib/ansible/module_utils/distro/_distro.py mypy-2.7:arg-type  # vendored code
 lib/ansible/module_utils/distro/_distro.py mypy-3.5:valid-type  # vendored code
 lib/ansible/module_utils/distro/_distro.py mypy-3.6:valid-type  # vendored code
