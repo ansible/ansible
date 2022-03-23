@@ -217,6 +217,42 @@ def server_config(monkeypatch):
     return server1, server2, server3
 
 
+@pytest.mark.parametrize(
+    'required_signature_count,valid',
+    [
+        ("1", True),
+        ("+1", True),
+        ("all", True),
+        ("+all", True),
+        ("-1", False),
+        ("invalid", False),
+        ("1.5", False),
+        ("+", False),
+    ]
+)
+def test_cli_options(required_signature_count, valid, monkeypatch):
+    cli_args = [
+        'ansible-galaxy',
+        'collection',
+        'install',
+        'namespace.collection:1.0.0',
+        '--keyring',
+        '~/.ansible/pubring.kbx',
+        '--required-valid-signature-count',
+        required_signature_count
+    ]
+
+    galaxy_cli = GalaxyCLI(args=cli_args)
+    mock_execute_install = MagicMock()
+    monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
+
+    if valid:
+        galaxy_cli.run()
+    else:
+        with pytest.raises(SystemExit, match='2') as error:
+            galaxy_cli.run()
+
+
 @pytest.mark.parametrize('global_ignore_certs', [True, False])
 def test_validate_certs(global_ignore_certs, monkeypatch):
     cli_args = [

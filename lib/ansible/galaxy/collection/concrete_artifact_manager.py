@@ -56,9 +56,8 @@ class ConcreteArtifactsManager:
         * caching all of above
         * retrieving the metadata out of the downloaded artifacts
     """
-
-    def __init__(self, b_working_directory, validate_certs=True, keyring=None, timeout=60):
-        # type: (bytes, bool, str, int) -> None
+    def __init__(self, b_working_directory, validate_certs=True, keyring=None, timeout=60, required_signature_count=None, ignore_signature_errors=None):
+        # type: (bytes, bool, str, int, str, list[str]) -> None
         """Initialize ConcreteArtifactsManager caches and costraints."""
         self._validate_certs = validate_certs  # type: bool
         self._artifact_cache = {}  # type: dict[bytes, bytes]
@@ -70,10 +69,22 @@ class ConcreteArtifactsManager:
         self._supplemental_signature_cache = {}  # type: dict[str, str]
         self._keyring = keyring  # type: str
         self.timeout = timeout  # type: int
+        self._required_signature_count = required_signature_count  # type: str
+        self._ignore_signature_errors = ignore_signature_errors  # type: list[str]
 
     @property
     def keyring(self):
         return self._keyring
+
+    @property
+    def required_successful_signature_count(self):
+        return self._required_signature_count
+
+    @property
+    def ignore_signature_errors(self):
+        if self._ignore_signature_errors is None:
+            return []
+        return self._ignore_signature_errors
 
     def get_galaxy_artifact_source_info(self, collection):
         # type: (Candidate) -> dict[str, str | list[dict[str, str]]]
@@ -321,6 +332,8 @@ class ConcreteArtifactsManager:
             temp_dir_base,  # type: str
             validate_certs=True,  # type: bool
             keyring=None,  # type: str
+            required_signature_count=None,  # type: str
+            ignore_signature_errors=None,  # type: list[str]
     ):  # type: (...) -> t.Iterator[ConcreteArtifactsManager]
         """Custom ConcreteArtifactsManager constructor with temp dir.
 
@@ -335,7 +348,13 @@ class ConcreteArtifactsManager:
         )
         b_temp_path = to_bytes(temp_path, errors='surrogate_or_strict')
         try:
-            yield cls(b_temp_path, validate_certs, keyring=keyring)
+            yield cls(
+                b_temp_path,
+                validate_certs,
+                keyring=keyring,
+                required_signature_count=required_signature_count,
+                ignore_signature_errors=ignore_signature_errors
+            )
         finally:
             rmtree(b_temp_path)
 

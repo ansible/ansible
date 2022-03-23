@@ -1469,6 +1469,47 @@ GALAXY_GPG_KEYRING:
   description:
   - Configure the keyring used for GPG signature verification during collection installation and verification.
   version_added: '2.13'
+GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES:
+  type: list
+  env:
+  - name: ANSIBLE_GALAXY_IGNORE_SIGNATURE_STATUS_CODES
+  ini:
+  - section: galaxy
+    key: ignore_signature_status_codes
+  description:
+  - A list of GPG status codes to ignore during GPG signature verfication.
+    See L(https://github.com/gpg/gnupg/blob/master/doc/DETAILS#general-status-codes) for status code descriptions.
+  - If fewer signatures successfully verify the collection than `GALAXY_REQUIRED_VALID_SIGNATURE_COUNT`,
+    signature verification will fail even if all error codes are ignored.
+  choices:
+  - EXPSIG
+  - EXPKEYSIG
+  - REVKEYSIG
+  - BADSIG
+  - ERRSIG
+  - NO_PUBKEY
+  - MISSING_PASSPHRASE
+  - BAD_PASSPHRASE
+  - NODATA
+  - UNEXPECTED
+  - ERROR
+  - FAILURE
+  - BADARMOR
+  - KEYEXPIRED
+  - KEYREVOKED
+  - NO_SECKEY
+GALAXY_REQUIRED_VALID_SIGNATURE_COUNT:
+  type: str
+  default: 1
+  env:
+  - name: ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT
+  ini:
+  - section: galaxy
+    key: required_valid_signature_count
+  description:
+  - The number of signatures that must be successful during GPG signature verification while installing or verifying collections.
+  - This should be a positive integer or all to indicate all signatures must successfully validate the collection.
+  - Prepend + to the value to fail if no valid signatures are found for the collection.
 HOST_KEY_CHECKING:
   # note: constant not in use by ssh plugin anymore
   # TODO: check non ssh connection plugins for use/migration

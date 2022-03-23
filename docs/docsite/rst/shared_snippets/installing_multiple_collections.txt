@@ -23,7 +23,9 @@ You can specify the following keys for each collection entry:
 
 The ``version`` key uses the same range identifier format documented in :ref:`collections_older_version`. 
 
-The ``signatures`` key accepts a list of signature sources that are used to supplement those found on the Galaxy server during collection installation and ``ansible-galaxy collection verify``. Signature sources should be URIs that contain the detached signature. These are only used for collections on Galaxy servers. The ``--keyring`` CLI option must be provided if signatures are specified.
+The ``signatures`` key accepts a list of signature sources that are used to supplement those found on the Galaxy server during collection installation and ``ansible-galaxy collection verify``. Signature sources should be URIs that contain the detached signature. The ``--keyring`` CLI option must be provided if signatures are specified.
+
+Signatures are only used to verify collections on Galaxy servers. User-provided signatures are not used to verify collections installed from git repositories, source directories, or URLs/paths to tar.gz files.
 
 .. code-block:: yaml
 
