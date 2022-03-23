@@ -6,6 +6,7 @@ Creating your first collection pull request
 
 This section describes all steps needed to create your first patch and submit a pull request on a collection.
 
+.. _collection_prepare_local:
 
 Prepare your environment
 ========================
