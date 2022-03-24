@@ -42,12 +42,12 @@ do later).
 Check Mode As A Drift Test
 ``````````````````````````
 
-In the above setup, `--check` mode in Ansible can be used as a layer of testing as well.  If running a deployment playbook against an
-existing system, using the `--check` flag to the `ansible` command will report if Ansible thinks it would have had to have made any changes to
+In the above setup, ``--check`` mode in Ansible can be used as a layer of testing as well.  If running a deployment playbook against an
+existing system, using the ``--check`` flag to the `ansible` command will report if Ansible thinks it would have had to have made any changes to
 bring the system into a desired state.
 
 This can let you know up front if there is any need to deploy onto the given system.  Ordinarily, scripts and commands don't run in check mode, so if you
-want certain steps to execute in normal mode even when the `--check` flag is used, such as calls to the script module, disable check mode for those tasks::
+want certain steps to execute in normal mode even when the ``--check`` flag is used, such as calls to the script module, disable check mode for those tasks::
 
 
    roles:
