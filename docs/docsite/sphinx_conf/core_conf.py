@@ -115,7 +115,7 @@ exclude_patterns = [
     'community/maintainers_workflow.rst',
     'community/steering/community_steering_committee.rst',
     'community/steering/steering_committee_membership.rst',
-    'community/steering/steering_commitee_past_members.rst',
+    'community/steering/steering_committee_past_members.rst',
     'community/steering/steering_index.rst',
     'porting_guides/porting_guides.rst',
     'porting_guides/porting_guide_[1-9]*',
