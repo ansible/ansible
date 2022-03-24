@@ -298,3 +298,7 @@
 - assert:
     that:
       - '"ASYNC POLL on localhost" in callback_output.stdout'
+
+- include_tasks: terminate.yml
+  # busybox ps makes it difficult to do the verification in these tasks
+  when: ansible_distribution != 'Alpine'

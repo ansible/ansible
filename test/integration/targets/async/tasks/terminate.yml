@@ -1,0 +1,72 @@
+- set_fact:
+    start: '{{ now(fmt="%s") }}'
+
+- name: Start async task
+  command: sleep 30
+  async: 30
+  poll: 0
+  register: result
+
+- name: Get status of async task
+  async_status:
+    jid: '{{ result.ansible_job_id }}'
+  register: status_result
+
+- name: Get pid of async_wrapper
+  command: ps -o ppid= -p {{ status_result.pid }}
+  register: ppid
+
+- name: Ensure async_wrapper is running
+  command: ps -p {{ ppid.stdout|trim }}
+
+- name: Terminate sleep command
+  async_status:
+    jid: '{{ result.ansible_job_id }}'
+    mode: terminate
+    signal: TERM
+
+- name: Check for async job file
+  async_status:
+    jid: '{{ result.ansible_job_id }}'
+  register: fail_result
+  ignore_errors: true
+
+- name: Assert async job file is missing
+  assert:
+    that:
+      - fail_result is failed
+
+- block:
+    - name: Wait for sleep command to exit
+      command: ps -p {{ status_result.pid }}
+      register: child_result
+      failed_when: child_result.rc == 0
+      until: child_result.rc != 0
+      retries: 10
+      delay: 1
+  rescue:
+    - fail:
+        msg: command did not exit
+
+- block:
+    - name: Wait for async_wrapper to terminate
+      command: ps -p {{ ppid.stdout|trim }}
+      register: parent_result
+      failed_when: parent_result.rc == 0
+      until: parent_result.rc != 0
+      retries: 10
+      delay: 1
+  rescue:
+    - fail:
+        msg: async_wrapper did not exit
+
+- set_fact:
+    end: '{{ now(fmt="%s") }}'
+
+- debug:
+    msg: '{{ end|int - start|int }} seconds elapsed'
+
+- name: Assert that we made it here faster than the 30s async timeout
+  assert:
+    that:
+      - end|int - start|int < 30

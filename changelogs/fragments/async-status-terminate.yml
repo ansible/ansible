@@ -1,0 +1,2 @@
+minor_changes:
+- async_status - Add ability to terminate a running async command
