@@ -1,0 +1,2 @@
+minor_changes:
+  - get_parsable_locale now logs result when in debug mode.
