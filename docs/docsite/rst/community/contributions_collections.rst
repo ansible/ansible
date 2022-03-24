@@ -14,6 +14,9 @@ Ansible Collections Contributor Guide
    documentation_contributions
    maintainers
    contributing_maintained_collections
+   steering/steering_index
+   other_tools_and_programs
+
 
 
 If you have a specific Ansible interest or expertise (for example, VMware, Linode, and so on, consider joining a :ref:`working group <working_group_list>`.
