@@ -280,7 +280,7 @@ To avoid such behavior and generate long lines, use the ``width`` option. You mu
     {{ some_variable | to_yaml(indent=8, width=1337) }}
     {{ some_variable | to_nice_yaml(indent=8, width=1337) }}
 
-The filter does support passing through other YAML parameters. For a full list, see the `PyYAML documentation`_.
+The filter does support passing through other YAML parameters. For a full list, see the `PyYAML documentation`_ for ``dump()``.
 
 If you are reading in some already formatted data:
 
