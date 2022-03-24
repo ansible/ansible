@@ -2,6 +2,20 @@
 
 set -eux -o pipefail
 
+galaxy_testdir="${OUTPUT_DIR}/galaxy-test-dir"
+role_testdir="${OUTPUT_DIR}/role-test-dir"
+# Prep the local git repos with role and make a tar archive so we can test
+# different things
+galaxy_local_test_role="test-role"
+galaxy_local_test_role_dir="${OUTPUT_DIR}/galaxy-role-test-root"
+galaxy_local_test_role_git_repo="${galaxy_local_test_role_dir}/${galaxy_local_test_role}"
+galaxy_local_test_role_tar="${galaxy_local_test_role_dir}/${galaxy_local_test_role}.tar"
+galaxy_webserver_root="${OUTPUT_DIR}/ansible-galaxy-webserver"
+
+mkdir -p "${galaxy_local_test_role_dir}"
+mkdir -p "${role_testdir}"
+mkdir -p "${galaxy_webserver_root}"
+
 ansible-playbook setup.yml "$@"
 
 trap 'ansible-playbook ${ANSIBLE_PLAYBOOK_DIR}/cleanup.yml' EXIT
@@ -51,22 +65,26 @@ f_ansible_galaxy_create_role_repo_post()
                 --format=tar \
                 --prefix="${repo_name}/" \
                 master > "${repo_tar}"
+            # Configure basic (insecure) HTTPS-accessible repository
+            galaxy_local_test_role_http_repo="${galaxy_webserver_root}/${galaxy_local_test_role}.git"
+            if [[ ! -d "${galaxy_local_test_role_http_repo}" ]]; then
+                git clone --bare "${galaxy_local_test_role_git_repo}" "${galaxy_local_test_role_http_repo}"
+                pushd "${galaxy_local_test_role_http_repo}"
+                    touch "git-daemon-export-ok"
+                    git --bare update-server-info
+                    mv "hooks/post-update.sample" "hooks/post-update"
+                popd # ${galaxy_local_test_role_http_repo}
+            fi
         popd # "${repo_name}"
     popd # "${repo_dir}"
 }
-
-# Prep the local git repos with role and make a tar archive so we can test
-# different things
-galaxy_local_test_role="test-role"
-galaxy_local_test_role_dir=$(mktemp -d)
-galaxy_local_test_role_git_repo="${galaxy_local_test_role_dir}/${galaxy_local_test_role}"
-galaxy_local_test_role_tar="${galaxy_local_test_role_dir}/${galaxy_local_test_role}.tar"
 
 f_ansible_galaxy_create_role_repo_pre "${galaxy_local_test_role}" "${galaxy_local_test_role_dir}"
 f_ansible_galaxy_create_role_repo_post "${galaxy_local_test_role}" "${galaxy_local_test_role_tar}"
 
 galaxy_local_parent_role="parent-role"
-galaxy_local_parent_role_dir=$(mktemp -d)
+galaxy_local_parent_role_dir="${OUTPUT_DIR}/parent-role"
+mkdir -p "${galaxy_local_parent_role_dir}"
 galaxy_local_parent_role_git_repo="${galaxy_local_parent_role_dir}/${galaxy_local_parent_role}"
 galaxy_local_parent_role_tar="${galaxy_local_parent_role_dir}/${galaxy_local_parent_role}.tar"
 
@@ -82,7 +100,7 @@ f_ansible_galaxy_create_role_repo_post "${galaxy_local_parent_role}" "${galaxy_l
 #
 # Install local git repo
 f_ansible_galaxy_status "install of local git repo"
-galaxy_testdir=$(mktemp -d)
+mkdir -p "${galaxy_testdir}"
 pushd "${galaxy_testdir}"
 
     ansible-galaxy install git+file:///"${galaxy_local_test_role_git_repo}" "$@"
@@ -97,7 +115,7 @@ rm -fr "${HOME}/.ansible/roles/${galaxy_local_test_role}"
 #
 # Install local git repo and ensure that if a role_path is passed, it is in fact used
 f_ansible_galaxy_status "install of local git repo with -p \$role_path"
-galaxy_testdir=$(mktemp -d)
+mkdir -p "${galaxy_testdir}"
 pushd "${galaxy_testdir}"
     mkdir -p "${galaxy_relative_rolespath}"
 
@@ -108,11 +126,40 @@ pushd "${galaxy_testdir}"
 popd # ${galaxy_testdir}
 rm -fr "${galaxy_testdir}"
 
+# Galaxy install test case - skipping cert verification
+#
+# Install from remote git repo and ensure that cert validation is skipped
+#
+# Protect against regression (GitHub Issue #41077)
+#   https://github.com/ansible/ansible/issues/41077
+f_ansible_galaxy_status "install of role from untrusted repository"
+mkdir -p "${galaxy_testdir}"
+pushd "${galaxy_testdir}"
+    mkdir -p "${galaxy_relative_rolespath}"
+
+    # Without --ignore-certs, installing a role from an untrusted repository should fail
+    set +e
+    ansible-galaxy install --verbose git+https://localhost:4443/"${galaxy_local_test_role}.git" -p "${galaxy_relative_rolespath}" "$@" 2>&1 | tee out.txt
+    ansible_exit_code="$?"
+    set -e
+    cat out.txt
+
+    if [[ "$ansible_exit_code" -ne 1 ]]; then echo "Exit code ($ansible_exit_code) is expected to be 1" && exit "$ansible_exit_code"; fi
+    [[ $(grep -c 'ERROR' out.txt) -eq 1 ]]
+    [[ ! -d "${galaxy_relative_rolespath}/${galaxy_local_test_role}" ]]
+
+    ansible-galaxy install --verbose --ignore-certs git+https://localhost:4443/"${galaxy_local_test_role}.git" -p "${galaxy_relative_rolespath}" "$@"
+
+    # Test that the role was installed to the expected directory
+    [[ -d "${galaxy_relative_rolespath}/${galaxy_local_test_role}" ]]
+popd # ${galaxy_testdir}
+rm -fr "${galaxy_testdir}"
+
 # Galaxy install test case
 #
 # Install local git repo with a meta/requirements.yml
 f_ansible_galaxy_status "install of local git repo with meta/requirements.yml"
-galaxy_testdir=$(mktemp -d)
+mkdir -p "${galaxy_testdir}"
 pushd "${galaxy_testdir}"
 
     ansible-galaxy install git+file:///"${galaxy_local_parent_role_git_repo}" "$@"
@@ -132,7 +179,7 @@ rm -fr "${HOME}/.ansible/roles/${galaxy_local_test_role}"
 #
 # Install local git repo with a meta/requirements.yml + --no-deps argument
 f_ansible_galaxy_status "install of local git repo with meta/requirements.yml + --no-deps argument"
-galaxy_testdir=$(mktemp -d)
+mkdir -p "${galaxy_testdir}"
 pushd "${galaxy_testdir}"
 
     ansible-galaxy install git+file:///"${galaxy_local_parent_role_git_repo}" --no-deps "$@"
@@ -158,7 +205,7 @@ rm -fr "${HOME}/.ansible/roles/${galaxy_local_test_role}"
 f_ansible_galaxy_status \
     "install of local git repo and local tarball with -p \$role_path and -r \$role_file" \
     "Protect against regression (Issue #35217)"
-galaxy_testdir=$(mktemp -d)
+mkdir -p "${galaxy_testdir}"
 pushd "${galaxy_testdir}"
 
     git clone "${galaxy_local_test_role_git_repo}" "${galaxy_local_test_role}"
@@ -189,7 +236,7 @@ rm -fr "${galaxy_testdir}"
 # Basic tests to ensure listing roles works
 
 f_ansible_galaxy_status "role list"
-galaxy_testdir=$(mktemp -d)
+mkdir -p "${galaxy_testdir}"
 pushd "${galaxy_testdir}"
     ansible-galaxy install git+file:///"${galaxy_local_test_role_git_repo}" "$@"
 
@@ -207,7 +254,7 @@ popd # ${galaxy_testdir}
 f_ansible_galaxy_status \
     "list specific role not in the first path in ANSIBLE_ROLES_PATH"
 
-role_testdir=$(mktemp -d)
+mkdir -p "${role_testdir}"
 pushd "${role_testdir}"
 
     mkdir testroles
@@ -229,7 +276,7 @@ rm -fr "${role_testdir}"
 # Get info about role that is not installed
 
 f_ansible_galaxy_status "role info"
-galaxy_testdir=$(mktemp -d)
+mkdir -p "${galaxy_testdir}"
 pushd "${galaxy_testdir}"
     ansible-galaxy role info samdoran.fish | tee out.txt
 
@@ -241,7 +288,7 @@ popd # ${galaxy_testdir}
 f_ansible_galaxy_status \
     "role info non-existant role"
 
-role_testdir=$(mktemp -d)
+mkdir -p "${role_testdir}"
 pushd "${role_testdir}"
 
     ansible-galaxy role info notaroll | tee out.txt
@@ -293,7 +340,7 @@ rm -fr "${role_testdir}"
 f_ansible_galaxy_status \
     "list roles where the role name is the same or a subset of the role path (#67365)"
 
-role_testdir=$(mktemp -d)
+mkdir -p "${role_testdir}"
 pushd "${role_testdir}"
 
     mkdir parrot
@@ -312,7 +359,7 @@ rm -rf "${role_testdir}"
 f_ansible_galaxy_status \
     "Test role with non-ascii characters"
 
-role_testdir=$(mktemp -d)
+mkdir -p "${role_testdir}"
 pushd "${role_testdir}"
 
     mkdir nonascii
@@ -342,7 +389,7 @@ rm -rf "${role_testdir}"
 #################################
 # TODO: Move these to ansible-galaxy-collection
 
-galaxy_testdir=$(mktemp -d)
+mkdir -p "${galaxy_testdir}"
 pushd "${galaxy_testdir}"
 
 ## ansible-galaxy collection list tests
