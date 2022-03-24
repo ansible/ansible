@@ -1,5 +1,6 @@
 
-
+.. _steering_responsibilties:
+ 
 Steering Committee mission and responsibilities
 ===============================================
 
