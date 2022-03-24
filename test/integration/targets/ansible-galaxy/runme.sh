@@ -137,6 +137,17 @@ mkdir -p "${galaxy_testdir}"
 pushd "${galaxy_testdir}"
     mkdir -p "${galaxy_relative_rolespath}"
 
+    # Without --ignore-certs, installing a role from an untrusted repository should fail
+    set +e
+    ansible-galaxy install --verbose git+https://localhost:4443/"${galaxy_local_test_role}.git" -p "${galaxy_relative_rolespath}" "$@" 2>&1 | tee out.txt
+    ansible_exit_code="$?"
+    set -e
+    cat out.txt
+
+    if [[ "$ansible_exit_code" -ne 1 ]]; then echo "Exit code ($ansible_exit_code) is expected to be 1" && exit "$ansible_exit_code"; fi
+    [[ $(grep -c 'ERROR' out.txt) -eq 1 ]]
+    [[ ! -d "${galaxy_relative_rolespath}/${galaxy_local_test_role}" ]]
+
     ansible-galaxy install --verbose --ignore-certs git+https://localhost:4443/"${galaxy_local_test_role}.git" -p "${galaxy_relative_rolespath}" "$@"
 
     # Test that the role was installed to the expected directory
