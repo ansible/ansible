@@ -1,0 +1,2 @@
+minor_changes:
+- Action Plugins - Add helper method for argument spec validation, and extend to pause and async_wrapper
