@@ -673,9 +673,7 @@ def _validate_argument_values(argument_spec, parameters, options_context=None, e
                         if len(overlap) == 1:
                             (parameters[param],) = overlap
 
-                    # Error if param isn't in choices, and it's not the default value
-                    # default may be None and None may not be in choices
-                    if parameters[param] not in choices and parameters[param] != spec.get('default', object()):
+                    if parameters[param] not in choices:
                         choices_str = ", ".join([to_native(c) for c in choices])
                         msg = "value of %s must be one of: %s, got: %s" % (param, choices_str, parameters[param])
                         if options_context:
