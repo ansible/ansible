@@ -25,6 +25,12 @@ Use version control
 
 Keep your playbooks, roles, inventory, and variables files in git or another version control system and make commits to the repository when you make changes. Version control gives you an audit trail describing when and why you changed the rules that automate your infrastructure.
 
+Customize the CLI output
+-------------------------
+
+You can change the output from Ansible CLI commands using :ref:`callback_plugins`.
+
+
 Playbook tips
 =============
 
@@ -87,7 +93,7 @@ You should encrypt sensitive or secret variables with Ansible Vault. However, en
 
 When running a playbook, Ansible finds the variables in the unencrypted file, which pulls the sensitive variable values from the encrypted file. There is no limit to the number of variable and vault files or their names.
 
-Note that using this strategy in your inventory still requires *all vault passwords to be available* (for example for ``ansible-playbook`` or `AWX/Ansible Tower <https://github.com/ansible/awx/issues/223#issuecomment-768386089>`_) when run with that inventory. 
+Note that using this strategy in your inventory still requires *all vault passwords to be available* (for example for ``ansible-playbook`` or `AWX/Ansible Tower <https://github.com/ansible/awx/issues/223#issuecomment-768386089>`_) when run with that inventory.
 
 Execution tricks
 ================
