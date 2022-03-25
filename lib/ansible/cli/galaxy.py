@@ -96,6 +96,12 @@ def with_collection_artifacts_manager(wrapped_method):
     return method_wrapper
 
 
+def display_ignored_type_wrapper(display_func, msg):
+    def display(unexpected_type):
+        return display_func(msg.format(unexpected_type))
+    return display
+
+
 def _display_header(path, h1, h2, w1=10, w2=7):
     display.display('\n# {0}\n{1:{cwidth}} {2:{vwidth}}\n{3} {4}\n'.format(
         path,
@@ -623,7 +629,7 @@ class GalaxyCLI(CLI):
     def _get_default_collection_path(self):
         return C.COLLECTIONS_PATHS[0]
 
-    def _parse_requirements_file(self, requirements_file, allow_old_format=True, artifacts_manager=None, role_only_options=False):
+    def _parse_requirements_file(self, requirements_file, allow_old_format=True, artifacts_manager=None, display_ignored_type=None):
         """
         Parses an Ansible requirement.yml file and returns all the roles and/or collections defined in it. There are 2
         requirements file format:
@@ -652,10 +658,6 @@ class GalaxyCLI(CLI):
         :param artifacts_manager: Artifacts manager.
         :return: a dict containing roles and collections to found in the requirements file.
         """
-        two_type_warning = "The requirements file '%s' contains {0}s which will be ignored. To install these {0}s " \
-            "run 'ansible-galaxy {0} install -r' or to install both at the same time run " \
-            "'ansible-galaxy install -r' without a custom install path." % to_text(requirements_file)
-
         requirements = {
             'roles': [],
             'collections': [],
@@ -714,24 +716,25 @@ class GalaxyCLI(CLI):
                 raise AnsibleError("Expecting only 'roles' and/or 'collections' as base keys in the requirements "
                                    "file. Found: %s" % (to_native(", ".join(extra_keys))))
 
-            for role_req in file_requirements.get('roles') or []:
-                requirements['roles'] += parse_role_req(role_req)
+            parse_roles = context.CLIARGS['type'] == 'role'
 
             if context.CLIARGS['type'] == 'collection':
                 parse_collections = True
-                if requirements['roles']:
-                    display.vvv(two_type_warning.format('role'))
+                if file_requirements.get('roles') and display_ignored_type is not None:
+                    display_ignored_type('role')
             elif self._implicit_role:
+                role_only_options = '-p' in self._raw_args or '--roles-path' in self._raw_args
                 parse_collections = not role_only_options
-                if role_only_options and file_requirements.get('collections'):
-                    # We only want to display a warning if 'ansible-galaxy install -r ... -p ...'. Other cases the user
-                    # was explicit about the type and shouldn't care that collections were skipped.
-                    display.warning(two_type_warning.format('collection'))
+                if role_only_options and file_requirements.get('collections') and display_ignored_type is not None:
+                    display_ignored_type('collection')
             else:
                 parse_collections = False
-                if file_requirements.get('collections'):
-                    display.vvv(two_type_warning.format('collection'))
+                if file_requirements.get('collections') and display_ignored_type is not None:
+                    display_ignored_type('collection')
 
+            if parse_roles:
+                for role_req in file_requirements.get('roles') or []:
+                    requirements['roles'] += parse_role_req(role_req)
             if parse_collections:
                 requirements['collections'] = [
                     Requirement.from_requirement_dict(
@@ -866,6 +869,7 @@ class GalaxyCLI(CLI):
             self, collections, requirements_file,
             signatures=None,
             artifacts_manager=None,
+            display_ignored_type=None,
     ):
         if collections and requirements_file:
             raise AnsibleError("The positional collection_name arg and --requirements-file are mutually exclusive.")
@@ -883,6 +887,7 @@ class GalaxyCLI(CLI):
                 requirements_file,
                 allow_old_format=False,
                 artifacts_manager=artifacts_manager,
+                display_ignored_type=display_ignored_type,
             )
         else:
             requirements = {
@@ -1206,6 +1211,10 @@ class GalaxyCLI(CLI):
         if requirements_file:
             requirements_file = GalaxyCLI._resolve_path(requirements_file)
 
+        two_type_warning = "The requirements file '%s' contains {0}s which will be ignored. To install these {0}s " \
+                           "run 'ansible-galaxy {0} install -r' or to install both at the same time run " \
+                           "'ansible-galaxy install -r' without a custom install path." % to_text(requirements_file)
+
         # TODO: Would be nice to share the same behaviour with args and -r in collections and roles.
         collection_requirements = []
         role_requirements = []
@@ -1215,6 +1224,7 @@ class GalaxyCLI(CLI):
                 install_items, requirements_file,
                 signatures=signatures,
                 artifacts_manager=artifacts_manager,
+                display_ignored_type=display_ignored_type_wrapper(display.vvv, two_type_warning)
             )
 
             collection_requirements = requirements['collections']
@@ -1235,10 +1245,17 @@ class GalaxyCLI(CLI):
                     or '--roles-path' in galaxy_args
                 )
 
+                if self._implicit_role:
+                    # We only want to display a warning if 'ansible-galaxy install -r ... -p ...'. Other cases the user
+                    # was explicit about the type and shouldn't care that collections were skipped.
+                    two_type_handler = display_ignored_type_wrapper(display.warning, two_type_warning)
+                else:
+                    two_type_handler = display_ignored_type_wrapper(display.vvv, two_type_warning)
+
                 requirements = self._parse_requirements_file(
                     requirements_file,
                     artifacts_manager=artifacts_manager,
-                    role_only_options=role_only_supported,
+                    display_ignored_type=two_type_handler,
                 )
                 role_requirements = requirements['roles']
 
