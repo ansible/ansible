@@ -654,7 +654,7 @@ class GalaxyCLI(CLI):
         """
         two_type_warning = "The requirements file '%s' contains {0}s which will be ignored. To install these {0}s " \
             "run 'ansible-galaxy {0} install -r' or to install both at the same time run " \
-           "'ansible-galaxy install -r' without a custom install path." % to_text(requirements_file)
+            "'ansible-galaxy install -r' without a custom install path." % to_text(requirements_file)
 
         requirements = {
             'roles': [],
