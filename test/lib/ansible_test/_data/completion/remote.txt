@@ -5,5 +5,4 @@ macos/11.1 python=3.9 python_dir=/usr/local/bin provider=parallels
 macos python_dir=/usr/local/bin provider=parallels
 rhel/7.9 python=2.7 provider=aws
 rhel/8.4 python=3.6,3.8 provider=aws
-rhel/9.0b python=3.9 provider=aws
 rhel provider=aws
