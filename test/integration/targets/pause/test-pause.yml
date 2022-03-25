@@ -13,7 +13,7 @@
     - assert:
         that:
           - result is failed
-          - "'non-integer' in result.msg"
+          - "'unable to convert to int' in result.msg"
 
     - name: non-boolean for echo (EXPECTED FAILURE)
       pause:
@@ -26,7 +26,8 @@
           - result is failed
           - "'not a valid boolean' in result.msg"
 
-    - pause:
+    - name: Less than 1
+      pause:
         seconds: 0.1
       register: results
 
@@ -34,7 +35,8 @@
         that:
           - results.stdout is search('Paused for \d+\.\d+ seconds')
 
-    - pause:
+    - name: 1 second
+      pause:
         seconds: 1
       register: results
 
@@ -42,10 +44,29 @@
         that:
           - results.stdout is search('Paused for \d+\.\d+ seconds')
 
-    - pause:
+    - name: 1 minute
+      pause:
         minutes: 1
       register: results
 
     - assert:
         that:
           - results.stdout is search('Paused for \d+\.\d+ minutes')
+
+    - name: minutes and seconds
+      pause:
+        minutes: 1
+        seconds: 1
+      register: exclusive
+      ignore_errors: yes
+
+    - name: invalid arg
+      pause:
+        foo: bar
+      register: invalid
+      ignore_errors: yes
+
+    - assert:
+        that:
+          - '"parameters are mutually exclusive: minutes|seconds" in exclusive.msg'
+          - '"Unsupported parameters for (pause) module: foo." in invalid.msg'
