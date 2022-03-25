@@ -453,6 +453,33 @@
     not_mine: "file://{{ gpg_homedir }}/namespace1-name1-1.0.0-MANIFEST.json.asc"
     also_not_mine: "file://{{ gpg_homedir }}/namespace1-name1-1.0.9-MANIFEST.json.asc"
 
+- name: installing only roles does not fail if keyring for collections is not provided
+  command: ansible-galaxy role install -r {{ galaxy_dir }}/ansible_collections/requirements.yaml
+  register: roles_only
+
+- assert:
+    that:
+      - roles_only is success
+
+- name: installing only roles implicitly does not fail if keyring for collections is not provided
+  # if -p/--roles-path are specified, only roles are installed
+  command: ansible-galaxy install -r {{ galaxy_dir }}/ansible_collections/requirements.yaml }} -p {{ galaxy_dir }}
+  register: roles_only
+
+- assert:
+    that:
+      - roles_only is success
+
+- name: installing roles and collections requires keyring if collections have signatures
+  command: ansible-galaxy install -r {{ galaxy_dir }}/ansible_collections/requirements.yaml }}
+  ignore_errors: yes
+  register: collections_and_roles
+
+- assert:
+    that:
+      - collections_and_roles is failed
+      - "'no keyring was configured' in collections_and_roles.stderr"
+
 - name: install collection with mutually exclusive options
   command: ansible-galaxy collection install -r {{ req_file }} -s {{ test_name }} {{ cli_signature }}
   vars:
