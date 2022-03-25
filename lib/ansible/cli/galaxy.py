@@ -96,12 +96,6 @@ def with_collection_artifacts_manager(wrapped_method):
     return method_wrapper
 
 
-def display_ignored_type_wrapper(display_func, msg):
-    def display(unexpected_type):
-        return display_func(msg.format(unexpected_type))
-    return display
-
-
 def _display_header(path, h1, h2, w1=10, w2=7):
     display.display('\n# {0}\n{1:{cwidth}} {2:{vwidth}}\n{3} {4}\n'.format(
         path,
@@ -629,7 +623,7 @@ class GalaxyCLI(CLI):
     def _get_default_collection_path(self):
         return C.COLLECTIONS_PATHS[0]
 
-    def _parse_requirements_file(self, requirements_file, allow_old_format=True, artifacts_manager=None, display_ignored_type=None):
+    def _parse_requirements_file(self, requirements_file, allow_old_format=True, artifacts_manager=None, validate_signature_options=True):
         """
         Parses an Ansible requirement.yml file and returns all the roles and/or collections defined in it. There are 2
         requirements file format:
@@ -716,33 +710,17 @@ class GalaxyCLI(CLI):
                 raise AnsibleError("Expecting only 'roles' and/or 'collections' as base keys in the requirements "
                                    "file. Found: %s" % (to_native(", ".join(extra_keys))))
 
-            parse_roles = context.CLIARGS['type'] == 'role'
+            for role_req in file_requirements.get('roles') or []:
+                requirements['roles'] += parse_role_req(role_req)
 
-            if context.CLIARGS['type'] == 'collection':
-                parse_collections = True
-                if file_requirements.get('roles') and display_ignored_type is not None:
-                    display_ignored_type('role')
-            elif self._implicit_role:
-                role_only_options = '-p' in self._raw_args or '--roles-path' in self._raw_args
-                parse_collections = not role_only_options
-                if role_only_options and file_requirements.get('collections') and display_ignored_type is not None:
-                    display_ignored_type('collection')
-            else:
-                parse_collections = False
-                if file_requirements.get('collections') and display_ignored_type is not None:
-                    display_ignored_type('collection')
-
-            if parse_roles:
-                for role_req in file_requirements.get('roles') or []:
-                    requirements['roles'] += parse_role_req(role_req)
-            if parse_collections:
-                requirements['collections'] = [
-                    Requirement.from_requirement_dict(
-                        self._init_coll_req_dict(collection_req),
-                        artifacts_manager,
-                    )
-                    for collection_req in file_requirements.get('collections') or []
-                ]
+            requirements['collections'] = [
+                Requirement.from_requirement_dict(
+                    self._init_coll_req_dict(collection_req),
+                    artifacts_manager,
+                    validate_signature_options,
+                )
+                for collection_req in file_requirements.get('collections') or []
+            ]
 
         return requirements
 
@@ -869,7 +847,6 @@ class GalaxyCLI(CLI):
             self, collections, requirements_file,
             signatures=None,
             artifacts_manager=None,
-            display_ignored_type=None,
     ):
         if collections and requirements_file:
             raise AnsibleError("The positional collection_name arg and --requirements-file are mutually exclusive.")
@@ -887,7 +864,6 @@ class GalaxyCLI(CLI):
                 requirements_file,
                 allow_old_format=False,
                 artifacts_manager=artifacts_manager,
-                display_ignored_type=display_ignored_type,
             )
         else:
             requirements = {
@@ -1224,10 +1200,11 @@ class GalaxyCLI(CLI):
                 install_items, requirements_file,
                 signatures=signatures,
                 artifacts_manager=artifacts_manager,
-                display_ignored_type=display_ignored_type_wrapper(display.vvv, two_type_warning)
             )
 
             collection_requirements = requirements['collections']
+            if requirements['roles']:
+                display.vvv(two_type_warning.format('role'))
         else:
             if not install_items and requirements_file is None:
                 raise AnsibleOptionsError("- you must specify a user/role name or a roles file")
@@ -1236,30 +1213,26 @@ class GalaxyCLI(CLI):
                 if not (requirements_file.endswith('.yaml') or requirements_file.endswith('.yml')):
                     raise AnsibleError("Invalid role requirements file, it must end with a .yml or .yaml extension")
 
-                # We can install any collections with `ansible-galaxy install` (self._implicit_role == True) if an install path
-                # is not specified (since '-p' would be used by both roles and collections).
                 galaxy_args = self._raw_args
-                role_only_supported = (
-                    not self._implicit_role
-                    or '-p' in galaxy_args
-                    or '--roles-path' in galaxy_args
-                )
-
-                if self._implicit_role:
-                    # We only want to display a warning if 'ansible-galaxy install -r ... -p ...'. Other cases the user
-                    # was explicit about the type and shouldn't care that collections were skipped.
-                    two_type_handler = display_ignored_type_wrapper(display.warning, two_type_warning)
-                else:
-                    two_type_handler = display_ignored_type_wrapper(display.vvv, two_type_warning)
+                will_install_collections = self._implicit_role and '-p' not in galaxy_args and '--roles-path' not in galaxy_args
 
                 requirements = self._parse_requirements_file(
                     requirements_file,
                     artifacts_manager=artifacts_manager,
-                    display_ignored_type=two_type_handler,
+                    validate_signature_options=will_install_collections,
                 )
                 role_requirements = requirements['roles']
 
-                if not role_only_supported:
+                # We can only install collections and roles at the same time if the type wasn't specified and the -p
+                # argument was not used. If collections are present in the requirements then at least display a msg.
+                if requirements['collections'] and (not self._implicit_role or '-p' in galaxy_args or
+                                                    '--roles-path' in galaxy_args):
+
+                    # We only want to display a warning if 'ansible-galaxy install -r ... -p ...'. Other cases the user
+                    # was explicit about the type and shouldn't care that collections were skipped.
+                    display_func = display.warning if self._implicit_role else display.vvv
+                    display_func(two_type_warning.format('collection'))
+                else:
                     collection_path = self._get_default_collection_path()
                     collection_requirements = requirements['collections']
             else:
