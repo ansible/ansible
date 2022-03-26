@@ -1,0 +1,2 @@
+minor_changes:
+  - "ansible-doc metadata dump - add option ``--no-fail-on-errors`` which allows to not fail the ansible-doc invocation when errors happen during docs parsing or processing. Instead they are reported in the JSON result in an ``error`` key for the affected plugins (https://github.com/ansible/ansible/pull/77035)."
