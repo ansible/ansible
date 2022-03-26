@@ -742,9 +742,6 @@ class DocCLI(CLI, RoleMixin):
 
         super(DocCLI, self).run()
 
-        if context.CLIARGS['no_fail_on_errors'] and not context.CLIARGS['dump']:
-            raise AnsibleOptionsError("--no-fail-on-errors can only be used with --metadata-dump.")
-
         basedir = context.CLIARGS['basedir']
         plugin_type = context.CLIARGS['type'].lower()
         do_json = context.CLIARGS['json_format'] or context.CLIARGS['dump']
