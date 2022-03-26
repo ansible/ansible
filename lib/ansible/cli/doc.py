@@ -255,7 +255,7 @@ class RoleMixin(object):
 
         return (fqcn, doc)
 
-    def _create_role_list(self):
+    def _create_role_list(self, fail_on_errors=True):
         """Return a dict describing the listing of all roles with arg specs.
 
         :param role_paths: A tuple of one or more role paths.
@@ -296,22 +296,37 @@ class RoleMixin(object):
         result = {}
 
         for role, role_path in roles:
-            argspec = self._load_argspec(role, role_path=role_path)
-            fqcn, summary = self._build_summary(role, '', argspec)
-            result[fqcn] = summary
+            try:
+                argspec = self._load_argspec(role, role_path=role_path)
+                fqcn, summary = self._build_summary(role, '', argspec)
+                result[fqcn] = summary
+            except Exception as e:
+                if fail_on_errors:
+                    raise
+                result[role] = {
+                    'error': 'Error while loading role argument spec: %s' % to_native(e),
+                }
 
         for role, collection, collection_path in collroles:
-            argspec = self._load_argspec(role, collection_path=collection_path)
-            fqcn, summary = self._build_summary(role, collection, argspec)
-            result[fqcn] = summary
+            try:
+                argspec = self._load_argspec(role, collection_path=collection_path)
+                fqcn, summary = self._build_summary(role, collection, argspec)
+                result[fqcn] = summary
+            except Exception as e:
+                if fail_on_errors:
+                    raise
+                result['%s.%s' % (collection, role)] = {
+                    'error': 'Error while loading role argument spec: %s' % to_native(e),
+                }
 
         return result
 
-    def _create_role_doc(self, role_names, entry_point=None):
+    def _create_role_doc(self, role_names, entry_point=None, fail_on_errors=True):
         """
         :param role_names: A tuple of one or more role names.
         :param role_paths: A tuple of one or more role paths.
         :param entry_point: A role entry point name for filtering.
+        :param fail_on_errors: When set to False, include errors in the JSON output instead of raising errors
 
         :returns: A dict indexed by role name, with 'collection', 'entry_points', and 'path' keys per role.
         """
@@ -322,16 +337,26 @@ class RoleMixin(object):
         result = {}
 
         for role, role_path in roles:
-            argspec = self._load_argspec(role, role_path=role_path)
-            fqcn, doc = self._build_doc(role, role_path, '', argspec, entry_point)
-            if doc:
-                result[fqcn] = doc
+            try:
+                argspec = self._load_argspec(role, role_path=role_path)
+                fqcn, doc = self._build_doc(role, role_path, '', argspec, entry_point)
+                if doc:
+                    result[fqcn] = doc
+            except Exception as e:  # pylint:disable=broad-except
+                result[role] = {
+                    'error': 'Error while processing role: %s' % to_native(e),
+                }
 
         for role, collection, collection_path in collroles:
-            argspec = self._load_argspec(role, collection_path=collection_path)
-            fqcn, doc = self._build_doc(role, collection_path, collection, argspec, entry_point)
-            if doc:
-                result[fqcn] = doc
+            try:
+                argspec = self._load_argspec(role, collection_path=collection_path)
+                fqcn, doc = self._build_doc(role, collection_path, collection, argspec, entry_point)
+                if doc:
+                    result[fqcn] = doc
+            except Exception as e:  # pylint:disable=broad-except
+                result['%s.%s' % (collection, role)] = {
+                    'error': 'Error while processing role: %s' % to_native(e),
+                }
 
         return result
 
@@ -437,6 +462,10 @@ class DocCLI(CLI, RoleMixin):
                                help='List available plugins. %s' % coll_filter)
         exclusive.add_argument("--metadata-dump", action="store_true", default=False, dest='dump',
                                help='**For internal use only** Dump json metadata for all entries, ignores other options.')
+
+        self.parser.add_argument("--no-fail-on-errors", action="store_true", default=False, dest='no_fail_on_errors',
+                                 help='**For internal use only** Only used for --metadata-dump. '
+                                      'Do not fail on errors. Report the error message in the JSON instead.')
 
     def post_process_args(self, options):
         options = super(DocCLI, self).post_process_args(options)
@@ -626,7 +655,7 @@ class DocCLI(CLI, RoleMixin):
             self.plugin_list = set()  # reset for next iteration
         return results
 
-    def _get_plugins_docs(self, plugin_type, names):
+    def _get_plugins_docs(self, plugin_type, names, fail_on_errors=True):
 
         loader = DocCLI._prep_loader(plugin_type)
         search_paths = DocCLI.print_paths(loader)
@@ -640,6 +669,11 @@ class DocCLI(CLI, RoleMixin):
                 display.warning("%s %s not found in:\n%s\n" % (plugin_type, plugin, search_paths))
                 continue
             except Exception as e:
+                if not fail_on_errors:
+                    plugin_docs[plugin] = {
+                        'error': 'Missing documentation or could not parse documentation: %s' % to_native(e),
+                    }
+                    continue
                 display.vvv(traceback.format_exc())
                 raise AnsibleError("%s %s missing documentation (or could not parse"
                                    " documentation): %s\n" %
@@ -647,9 +681,24 @@ class DocCLI(CLI, RoleMixin):
 
             if not doc:
                 # The doc section existed but was empty
+                if not fail_on_errors:
+                    plugin_docs[plugin] = {
+                        'error': 'No valid documentation found',
+                    }
                 continue
 
-            plugin_docs[plugin] = DocCLI._combine_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata)
+            docs = DocCLI._combine_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata)
+            if not fail_on_errors:
+                # Check whether JSON serialization would break
+                try:
+                    json.dumps(docs, cls=AnsibleJSONEncoder)
+                except Exception as e:  # pylint:disable=broad-except
+                    plugin_docs[plugin] = {
+                        'error': 'Cannot serialize documentation as JSON: %s' % to_native(e),
+                    }
+                    continue
+
+            plugin_docs[plugin] = docs
 
         return plugin_docs
 
@@ -719,14 +768,16 @@ class DocCLI(CLI, RoleMixin):
             docs['all'] = {}
             for ptype in ptypes:
                 if ptype == 'role':
-                    roles = self._create_role_list()
-                    docs['all'][ptype] = self._create_role_doc(roles.keys(), context.CLIARGS['entry_point'])
+                    roles = self._create_role_list(fail_on_errors=not context.CLIARGS['no_fail_on_errors'])
+                    docs['all'][ptype] = self._create_role_doc(
+                        roles.keys(), context.CLIARGS['entry_point'], fail_on_errors=not context.CLIARGS['no_fail_on_errors'])
                 elif ptype == 'keyword':
                     names = DocCLI._list_keywords()
                     docs['all'][ptype] = DocCLI._get_keywords_docs(names.keys())
                 else:
                     plugin_names = self._list_plugins(ptype, None)
-                    docs['all'][ptype] = self._get_plugins_docs(ptype, plugin_names)
+                    docs['all'][ptype] = self._get_plugins_docs(
+                        ptype, plugin_names, fail_on_errors=not context.CLIARGS['no_fail_on_errors'])
                     # reset list after each type to avoid polution
         elif listing:
             if plugin_type == 'keyword':
