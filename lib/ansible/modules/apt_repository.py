@@ -502,7 +502,7 @@ class UbuntuSourcesList(SourcesList):
                         with open(keyfile, 'bw+') as f:
                             f.write(stdout)
                     except (TypeError) as e:
-                        pass # checkmode, we got None
+                        pass    # checkmode, we got None
                     except (OSError, IOError) as e:
                         self.module.fail_json(rc=rc, stderr=stderr, error=to_native(e))
 
