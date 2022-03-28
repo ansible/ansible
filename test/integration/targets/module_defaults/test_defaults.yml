@@ -151,23 +151,66 @@
         - result.vyosfacts
         - result.action_plugin == 'vyos'
 
-  - name: ensure ios_facts does not use action plugin default
-    testns.testcoll.ios_facts:
+  - name: iosfacts/ios_facts does not use action plugin default (module action_plugin field has precedence over module-as-action-redirect)
+    collections:
+      - testns.testcoll
     module_defaults:
       testns.testcoll.ios:
         fail: true
+    block:
+      - ios_facts:
+        register: result
+      - assert:
+          that:
+            - result.action_plugin == 'ios'
 
-  - name: ensure ios_facts does use ios_facts defaults
-    testns.testcoll.ios_facts:
+      - iosfacts:
+        register: result
+      - assert:
+          that:
+            - result.action_plugin == 'ios'
+
+  - name: ensure iosfacts/ios_facts uses ios_facts defaults
+    collections:
+      - testns.testcoll
     module_defaults:
       testns.testcoll.ios_facts:
         ios_facts: true
-    register: result
+    block:
+      - ios_facts:
+        register: result
+      - assert:
+          that:
+            - result.ios_facts
+            - result.action_plugin == 'ios'
 
-  - assert:
-      that:
-        - result.ios_facts
-        - result.action_plugin == 'ios'
+      - iosfacts:
+        register: result
+      - assert:
+          that:
+            - result.ios_facts
+            - result.action_plugin == 'ios'
+
+  - name: ensure iosfacts/ios_facts uses iosfacts defaults
+    collections:
+      - testns.testcoll
+    module_defaults:
+      testns.testcoll.iosfacts:
+        ios_facts: true
+    block:
+      - ios_facts:
+        register: result
+      - assert:
+          that:
+            - result.ios_facts
+            - result.action_plugin == 'ios'
+
+      - iosfacts:
+        register: result
+      - assert:
+          that:
+            - result.ios_facts
+            - result.action_plugin == 'ios'
 
   - name: ensure redirected action gets redirected action defaults
     testns.testcoll.module_uses_action_defaults:

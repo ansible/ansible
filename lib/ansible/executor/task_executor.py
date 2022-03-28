@@ -25,9 +25,8 @@ from ansible.module_utils.connection import write_to_file_descriptor
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
-from ansible.plugins.loader import module_loader
 from ansible.template import Templar
-from ansible.utils.collection_loader import AnsibleCollectionConfig
+from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import to_unsafe_text, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
@@ -591,18 +590,14 @@ class TaskExecutor:
             cvars['ansible_python_interpreter'] = sys.executable
 
         # get handler
-        self._handler, handler_context = self._get_action_handler_with_context(connection=self._connection, templar=templar)
+        self._handler, module_context = self._get_action_handler_with_module_context(connection=self._connection, templar=templar)
+
+        if module_context is not None and module_context.action_plugin:
+            module_defaults_fqcn = module_context.resolved_fqcn
+        else:
+            module_defaults_fqcn = self._task.resolved_action
 
         # Apply default params for action/module, if present
-        module_defaults_fqcn = self._task.resolved_action
-        common_action = self._get_common_action_handler()
-
-        if handler_context.action_plugin or common_action:
-            # If a common action handler is used, get module-specific defaults
-            context = module_loader.find_plugin_with_context(self._task.action, collection_list=self._task.collections)
-            if context.resolved:
-                module_defaults_fqcn = context.resolved_fqcn
-
         self._task.args = get_action_args_with_defaults(
             module_defaults_fqcn, self._task.args, self._task.module_defaults, templar,
             action_groups=self._task._parent._play._action_groups
@@ -1099,18 +1094,16 @@ class TaskExecutor:
 
         return varnames
 
-    def _get_common_action_handler(self):
-        if self._shared_loader_obj.module_loader.has_plugin(self._task.action, collection_list=self._task.collections):
-            context = self._shared_loader_obj.module_loader.find_plugin_with_context(
-                self._task.action, collection_list=self._task.collections
-            )
-            if context.action_plugin:
-                return context.action_plugin
-            action_name = context.resolved_fqcn
-        else:
-            action_name = self._task.action
+    def _get_action_handler(self, connection, templar):
+        '''
+        Returns the correct action plugin to handle the requestion task action
+        '''
+        return self._get_action_handler_with_module_context(connection, templar)[0]
 
-        module_collection, separator, module_name = action_name.rpartition(".")
+    def _get_action_handler_with_module_context(self, connection, templar):
+        collections = self._task.collections
+
+        module_collection, separator, module_name = self._task.action.rpartition(".")
         module_prefix = module_name.split('_')[0]
         if module_collection:
             # For network modules, which look for one action plugin per platform, look for the
@@ -1120,22 +1113,18 @@ class TaskExecutor:
         else:
             network_action = module_prefix
 
-        collections = self._task.collections
-
-        if (
-            not self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections)
-            and all((module_prefix in C.NETWORK_GROUP_MODULES, self._shared_loader_obj.action_loader.has_plugin(network_action, collection_list=collections)))
-        ):
-            return network_action
-        return None
-
-    def _get_action_handler_with_context(self, connection, templar):
-        collections = self._task.collections
-
+        # Check if the module has specified to action handler
+        module = None
+        if self._shared_loader_obj.module_loader.has_plugin(self._task.action, collection_list=collections):
+            module = self._shared_loader_obj.module_loader.find_plugin_with_context(
+                self._task.action, collection_list=self._task.collections
+            )
+        if module is not None and module.resolved and module.action_plugin:
+            handler_name = module.action_plugin
         # let action plugin override module, fallback to 'normal' action plugin otherwise
-        if self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
+        elif self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):
             handler_name = self._task.action
-        elif (network_action := self._get_common_action_handler()):
+        elif all((module_prefix in C.NETWORK_GROUP_MODULES, self._shared_loader_obj.action_loader.has_plugin(network_action, collection_list=collections))):
             handler_name = network_action
             display.vvvv("Using network group action {handler} for {action}".format(handler=handler_name,
                                                                                     action=self._task.action),
@@ -1145,7 +1134,7 @@ class TaskExecutor:
             handler_name = 'ansible.legacy.normal'
             collections = None  # until then, we don't want the task's collection list to be consulted; use the builtin
 
-        plugin = self._shared_loader_obj.action_loader.get_with_context(
+        handler = self._shared_loader_obj.action_loader.get(
             handler_name,
             task=self._task,
             connection=connection,
@@ -1156,19 +1145,10 @@ class TaskExecutor:
             collection_list=collections
         )
 
-        handler = plugin.object
-        context = plugin.plugin_load_context
-
         if not handler:
             raise AnsibleError("the handler '%s' was not found" % handler_name)
 
-        return handler, context
-
-    def _get_action_handler(self, connection, templar):
-        '''
-        Returns the correct action plugin to handle the requestion task action
-        '''
-        return self._get_action_handler_with_context(connection, templar)[0]
+        return handler, module
 
 
 def start_connection(play_context, variables, task_uuid):

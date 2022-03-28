@@ -208,10 +208,11 @@ class TestTaskExecutor(unittest.TestCase):
             final_q=MagicMock(),
         )
 
+        te._shared_loader_obj.module_loader.has_plugin.return_value = False
         action_loader = te._shared_loader_obj.action_loader
         action_loader.has_plugin.return_value = True
 
-        action_loader.get_with_context.return_value = get_with_context_result(mock.sentinel.handler, mock.sentinel.context)
+        action_loader.get.return_value = mock.sentinel.handler
 
         mock_connection = MagicMock()
         mock_templar = MagicMock()
@@ -225,7 +226,7 @@ class TestTaskExecutor(unittest.TestCase):
         action_loader.has_plugin.assert_called_once_with(
             action, collection_list=te._task.collections)
 
-        action_loader.get_with_context.assert_called_once_with(
+        action_loader.get.assert_called_once_with(
             te._task.action, task=te._task, connection=mock_connection,
             play_context=te._play_context, loader=te._loader,
             templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
@@ -245,8 +246,8 @@ class TestTaskExecutor(unittest.TestCase):
 
         te._shared_loader_obj.module_loader.has_plugin = MagicMock(return_value=False)
         action_loader = te._shared_loader_obj.action_loader
-        action_loader.has_plugin.side_effect = [False, False, True]
-        action_loader.get_with_context.return_value = get_with_context_result(mock.sentinel.handler, mock.sentinel.context)
+        action_loader.has_plugin.side_effect = [False, True]
+        action_loader.get.return_value = mock.sentinel.handler
         action_loader.__contains__.return_value = True
 
         mock_connection = MagicMock()
@@ -261,7 +262,7 @@ class TestTaskExecutor(unittest.TestCase):
         action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections),  # called twice
                                                    mock.call(module_prefix, collection_list=te._task.collections)])
 
-        action_loader.get_with_context.assert_called_once_with(
+        action_loader.get.assert_called_once_with(
             module_prefix, task=te._task, connection=mock_connection,
             play_context=te._play_context, loader=te._loader,
             templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
@@ -281,7 +282,7 @@ class TestTaskExecutor(unittest.TestCase):
 
         action_loader = te._shared_loader_obj.action_loader
         action_loader.has_plugin.return_value = False
-        action_loader.get_with_context.return_value = get_with_context_result(mock.sentinel.handler, mock.sentinel.context)
+        action_loader.get.return_value = mock.sentinel.handler
         action_loader.__contains__.return_value = False
         module_loader = te._shared_loader_obj.module_loader
         module_loader.has_plugin.return_value = False  # True/False doesn't matter, but need to set more mock objects if True
@@ -298,7 +299,7 @@ class TestTaskExecutor(unittest.TestCase):
         action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections),
                                                    mock.call(module_prefix, collection_list=te._task.collections)])
 
-        action_loader.get_with_context.assert_called_once_with(
+        action_loader.get.assert_called_once_with(
             'ansible.legacy.normal', task=te._task, connection=mock_connection,
             play_context=te._play_context, loader=te._loader,
             templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
@@ -356,7 +357,6 @@ class TestTaskExecutor(unittest.TestCase):
 
         te._get_connection = MagicMock(return_value=mock_connection)
         context = MagicMock()
-        context._prefer_module_args = None
         te._get_action_handler_with_context = MagicMock(return_value=get_with_context_result(mock_action, context))
 
         mock_action.run.return_value = dict(ansible_facts=dict())

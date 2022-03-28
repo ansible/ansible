@@ -1,11 +1,20 @@
 plugin_routing:
   action:
-    # Test for action plugin redirects for module_defaults.
-    # Each module_defaults entry is first resolved as an action plugin, and if it does not exist, it is resolved as a module.
-    # If multiple modules use the same action plugin redirect, module defaults for any of the modules as redirected actions will apply.
-    # Since they will all resolve to the same thing, last defined wins.
+    # Backwards compat for modules-redirected-as-actions:
+    # By default, each module_defaults entry is resolved as an action plugin,
+    # and if it does not exist, it is resolved a a module.
+    # All modules that redirect to the same action will resolve to the same action.
     module_uses_action_defaults:
       redirect: testns.testcoll.eos
+
+    # module-redirected-as-action overridden by action_plugin
+    iosfacts:
+      redirect: testns.testcoll.nope
+    ios_facts:
+      redirect: testns.testcoll.nope
+
+    redirected_action:
+      redirect: testns.testcoll.ios
   modules:
     # Any module_defaults for testns.testcoll.module will not apply to a module_uses_action_defaults task:
     #
@@ -28,10 +37,12 @@ plugin_routing:
     eosfacts:
       action_plugin: testns.testcoll.eos
 
-    # iosfacts/ios_facts tasks should get iosfacts/ios_facts module_defaults (not ios defaults)
+    # Test that `action_plugin` has higher precedence than module-redirected-as-action  - reverse this?
+    # Current behavior is iosfacts/ios_facts do not get ios defaults.
     iosfacts:
-      # No "action_plugin: ios" here to test the resolved module name is used by TE to find handler using prefix
       redirect: testns.testcoll.ios_facts
+    ios_facts:
+      action_plugin: testns.testcoll.redirected_action
 
 action_groups:
   testgroup:

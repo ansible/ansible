@@ -508,28 +508,14 @@ class FieldAttributeBase(metaclass=BaseMeta):
 
     def _resolve_action(self, action_name, mandatory=True):
 
-        # Network modules look for one action plugin per platform so we should preserve module_defaults
-        # with the module name instead. Otherwise all modules for a platform would get the same defaults.
-        module_collection, separator, module_name = action_name.rpartition(".")
-        module_prefix = module_name.split('_')[0]
-        network_action = "{0}.{1}".format(module_collection, module_prefix)
+        context = module_loader.find_plugin_with_context(action_name)
 
-        common_action = bool(
-            not action_loader.has_plugin(action_name) and
-            all((module_prefix in C.NETWORK_GROUP_MODULES, action_loader.has_plugin(network_action)))
-        )
-
-        context = action_loader.find_plugin_with_context(action_name)
-
-        # Allow collections to override common_action by setting action_plugin
-        prefer_module = bool(context.action_plugin or common_action)
-
-        if prefer_module:
-            prefer = module_loader.find_plugin_with_context(action_name)
+        if context.resolved and not context.action_plugin:
+            prefer = action_loader.find_plugin_with_context(action_name)
             if prefer.resolved:
                 context = prefer
         elif not context.resolved:
-            context = module_loader.find_plugin_with_context(action_name)
+            context = action_loader.find_plugin_with_context(action_name)
 
         if context.resolved:
             return context.resolved_fqcn
