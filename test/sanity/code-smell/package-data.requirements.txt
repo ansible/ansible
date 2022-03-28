@@ -1,5 +1,5 @@
 # edit "package-data.requirements.in" and generate with: hacking/update-sanity-requirements.py --test package-data
-antsibull-changelog==0.12.0
+antsibull-changelog==0.14.0
 docutils==0.17.1
 Jinja2==3.0.3
 MarkupSafe==2.0.1
