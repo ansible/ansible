@@ -111,6 +111,7 @@ exclude_patterns = [
     'community/reporting_collections.rst',
     'community/contributing_maintained_collections.rst',
     'community/collection_development_process.rst',
+    'community/collection_releasing.rst',
     'community/maintainers_guidelines.rst',
     'community/maintainers_workflow.rst',
     'community/steering/community_steering_committee.rst',
