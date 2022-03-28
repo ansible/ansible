@@ -90,7 +90,7 @@ attributes:
     bypass_host_loop:
         support: none
     check_mode:
-        support: none
+        support: full
     diff_mode:
         support: none
     platform:
@@ -104,19 +104,19 @@ author:
 
 EXAMPLES = r'''
 - name: Unconditionally reboot the machine with all defaults
-  reboot:
+  ansible.builtin.reboot:
 
 - name: Reboot a slow machine that might have lots of updates to apply
-  reboot:
+  ansible.builtin.reboot:
     reboot_timeout: 3600
 
 - name: Reboot a machine with shutdown command in unusual place
-  reboot:
+  ansible.builtin.reboot:
     search_paths:
      - '/lib/molly-guard'
 
 - name: Reboot machine using a custom reboot command
-  reboot:
+  ansible.builtin.reboot:
     reboot_command: launchctl reboot userspace
     boot_time_command: uptime | cut -d ' ' -f 5
 

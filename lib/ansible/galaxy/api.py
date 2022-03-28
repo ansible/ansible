@@ -715,9 +715,9 @@ class GalaxyAPI:
 
         for message in data.get('messages', []):
             level = message['level']
-            if level == 'error':
+            if level.lower() == 'error':
                 display.error("Galaxy import error message: %s" % message['message'])
-            elif level == 'warning':
+            elif level.lower() == 'warning':
                 display.warning("Galaxy import warning message: %s" % message['message'])
             else:
                 display.vvv("Galaxy import message: %s - %s" % (level, message['message']))

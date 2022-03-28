@@ -344,6 +344,8 @@ ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" 
 # write to file
 ansible-vault encrypt_string "$@" --vault-password-file "${NEW_VAULT_PASSWORD}" --name "blippy" "a test string names blippy" --output "${MYTMPDIR}/enc_string_test_file"
 
+[ -f "${MYTMPDIR}/enc_string_test_file" ];
+
 # test ansible-vault edit with a faux editor
 ansible-vault encrypt "$@" --vault-password-file vault-password "${TEST_FILE_EDIT}"
 

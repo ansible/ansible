@@ -462,6 +462,12 @@ class ConfigManager(object):
                     origin = 'var: %s' % origin
 
                 # use playbook keywords if you have em
+                if value is None and defs[config].get('keyword') and keys:
+                    value, origin = self._loop_entries(keys, defs[config]['keyword'])
+                    origin = 'keyword: %s' % origin
+
+                # automap to keywords
+                # TODO: deprecate these in favor of explicit keyword above
                 if value is None and keys:
                     if config in keys:
                         value = keys[config]
@@ -547,8 +553,18 @@ class ConfigManager(object):
                     invalid_choices = value not in defs[config]['choices']
 
                 if invalid_choices:
+
+                    if isinstance(defs[config]['choices'], Mapping):
+                        valid = ', '.join([to_text(k) for k in defs[config]['choices'].keys()])
+                    elif isinstance(defs[config]['choices'], string_types):
+                        valid = defs[config]['choices']
+                    elif isinstance(defs[config]['choices'], Sequence):
+                        valid = ', '.join([to_text(c) for c in defs[config]['choices']])
+                    else:
+                        valid = defs[config]['choices']
+
                     raise AnsibleOptionsError('Invalid value "%s" for configuration option "%s", valid values are: %s' %
-                                              (value, to_native(_get_entry(plugin_type, plugin_name, config)), defs[config]['choices']))
+                                              (value, to_native(_get_entry(plugin_type, plugin_name, config)), valid))
 
             # deal with deprecation of the setting
             if 'deprecated' in defs[config] and origin != 'default':

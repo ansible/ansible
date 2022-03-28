@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Removed support for Sherlock from the Azure provisioning plugin.

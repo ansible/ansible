@@ -27,6 +27,7 @@ If you want to follow the conversation about what features will be added to ``an
 
 .. _community_pull_requests:
 
+
 Micro development: the lifecycle of a PR
 ========================================
 

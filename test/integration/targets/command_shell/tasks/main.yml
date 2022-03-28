@@ -60,34 +60,34 @@
       - argv_and_string_command.rc == 256
 
 - set_fact:
-    output_dir_test: "{{ output_dir }}/test_command_shell"
+    remote_tmp_dir_test: "{{ remote_tmp_dir }}/test_command_shell"
 
 - name: make sure our testing sub-directory does not exist
   file:
-    path: "{{ output_dir_test }}"
+    path: "{{ remote_tmp_dir_test }}"
     state: absent
 
 - name: create our testing sub-directory
   file:
-    path: "{{ output_dir_test }}"
+    path: "{{ remote_tmp_dir_test }}"
     state: directory
 
 - name: prep our test script
   copy:
     src: test.sh
-    dest: "{{ output_dir_test }}"
+    dest: "{{ remote_tmp_dir_test }}"
     mode: '0755'
 
 - name: prep our test script
   copy:
     src: create_afile.sh
-    dest: "{{ output_dir_test }}"
+    dest: "{{ remote_tmp_dir_test }}"
     mode: '0755'
 
 - name: prep our test script
   copy:
     src: remove_afile.sh
-    dest: "{{ output_dir_test }}"
+    dest: "{{ remote_tmp_dir_test }}"
     mode: '0755'
 
 - name: locate bash
@@ -99,7 +99,7 @@
 ##
 
 - name: execute the test.sh script via command
-  command: "{{ output_dir_test }}/test.sh"
+  command: "{{ remote_tmp_dir_test }}/test.sh"
   register: command_result0
 
 - name: assert that the script executed correctly
@@ -114,7 +114,7 @@
 # FIXME doesn't have the expected stdout.
 
 #- name: execute the test.sh script with executable via command
-#  command: "{{output_dir_test }}/test.sh executable={{ bash.stdout }}"
+#  command: "{{remote_tmp_dir_test }}/test.sh executable={{ bash.stdout }}"
 #  register: command_result1
 #
 #- name: assert that the script executed correctly with command
@@ -129,13 +129,13 @@
 - name: execute the test.sh script with chdir via command
   command: ./test.sh
   args:
-    chdir: "{{ output_dir_test }}"
+    chdir: "{{ remote_tmp_dir_test }}"
   register: command_result2
 
 - name: Check invalid chdir
   command: echo
   args:
-    chdir: "{{ output_dir }}/nope"
+    chdir: "{{ remote_tmp_dir }}/nope"
   ignore_errors: yes
   register: chdir_invalid
 
@@ -152,23 +152,53 @@
 
 - name: verify that afile.txt is absent
   file:
-    path: "{{ output_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/afile.txt"
     state: absent
 
-- name: create afile.txt with create_afile.sh via command
-  command: "{{ output_dir_test }}/create_afile.sh {{output_dir_test }}/afile.txt"
+- name: create afile.txt with create_afile.sh via command (check mode)
+  command: "{{ remote_tmp_dir_test }}/create_afile.sh {{remote_tmp_dir_test }}/afile.txt"
   args:
-    creates: "{{ output_dir_test }}/afile.txt"
+    creates: "{{ remote_tmp_dir_test }}/afile.txt"
+  register: check_mode_result
+  check_mode: yes
+
+- assert:
+    that:
+      - check_mode_result.changed
+      - "'skipped' not in check_mode_result"
+
+- name: verify that afile.txt still does not exist
+  stat:
+    path: "{{remote_tmp_dir_test}}/afile.txt"
+  register: stat_result
+  failed_when: stat_result.stat.exists
+
+- name: create afile.txt with create_afile.sh via command
+  command: "{{ remote_tmp_dir_test }}/create_afile.sh {{remote_tmp_dir_test }}/afile.txt"
+  args:
+    creates: "{{ remote_tmp_dir_test }}/afile.txt"
 
 - name: verify that afile.txt is present
   file:
-    path: "{{ output_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/afile.txt"
     state: file
 
-- name: re-run previous command using creates with globbing
-  command: "{{ output_dir_test }}/create_afile.sh {{ output_dir_test }}/afile.txt"
+- name: re-run previous command using creates with globbing (check mode)
+  command: "{{ remote_tmp_dir_test }}/create_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
   args:
-    creates: "{{ output_dir_test }}/afile.*"
+    creates: "{{ remote_tmp_dir_test }}/afile.*"
+  register: check_mode_result
+  check_mode: yes
+
+- assert:
+    that:
+      - not check_mode_result.changed
+      - "'skipped' not in check_mode_result"
+
+- name: re-run previous command using creates with globbing
+  command: "{{ remote_tmp_dir_test }}/create_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
+  args:
+    creates: "{{ remote_tmp_dir_test }}/afile.*"
   register: command_result3
 
 - name: assert that creates with globbing is working
@@ -178,18 +208,48 @@
 
 # removes
 
-- name: remove afile.txt with remote_afile.sh via command
-  command: "{{ output_dir_test }}/remove_afile.sh {{ output_dir_test }}/afile.txt"
+- name: remove afile.txt with remote_afile.sh via command (check mode)
+  command: "{{ remote_tmp_dir_test }}/remove_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
   args:
-    removes: "{{ output_dir_test }}/afile.txt"
+    removes: "{{ remote_tmp_dir_test }}/afile.txt"
+  register: check_mode_result
+  check_mode: yes
+
+- assert:
+    that:
+      - check_mode_result.changed
+      - "'skipped' not in check_mode_result"
+
+- name: verify that afile.txt still exists
+  stat:
+    path: "{{remote_tmp_dir_test}}/afile.txt"
+  register: stat_result
+  failed_when: not stat_result.stat.exists
+
+- name: remove afile.txt with remote_afile.sh via command
+  command: "{{ remote_tmp_dir_test }}/remove_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
+  args:
+    removes: "{{ remote_tmp_dir_test }}/afile.txt"
 
 - name: verify that afile.txt is absent
-  file: path={{output_dir_test}}/afile.txt state=absent
+  file: path={{remote_tmp_dir_test}}/afile.txt state=absent
+
+- name: re-run previous command using removes with globbing (check mode)
+  command: "{{ remote_tmp_dir_test }}/remove_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
+  args:
+    removes: "{{ remote_tmp_dir_test }}/afile.*"
+  register: check_mode_result
+  check_mode: yes
+
+- assert:
+    that:
+      - not check_mode_result.changed
+      - "'skipped' not in check_mode_result"
 
 - name: re-run previous command using removes with globbing
-  command: "{{ output_dir_test }}/remove_afile.sh {{ output_dir_test }}/afile.txt"
+  command: "{{ remote_tmp_dir_test }}/remove_afile.sh {{ remote_tmp_dir_test }}/afile.txt"
   args:
-    removes: "{{ output_dir_test }}/afile.*"
+    removes: "{{ remote_tmp_dir_test }}/afile.*"
   register: command_result4
 
 - name: assert that removes with globbing is working
@@ -229,14 +289,14 @@
 ##
 
 - name: Execute the test.sh script
-  shell: "{{ output_dir_test }}/test.sh"
+  shell: "{{ remote_tmp_dir_test }}/test.sh"
   register: shell_result0
 
 - name: Assert that the script executed correctly
   assert:
     that:
     - shell_result0 is changed
-    - shell_result0.cmd == '{{ output_dir_test }}/test.sh'
+    - shell_result0.cmd == '{{ remote_tmp_dir_test }}/test.sh'
     - shell_result0.rc == 0
     - shell_result0.stderr == ''
     - shell_result0.stdout == 'win'
@@ -246,7 +306,7 @@
 # FIXME doesn't pass the expected stdout
 
 #- name: execute the test.sh script
-#  shell: "{{output_dir_test }}/test.sh executable={{ bash.stdout }}"
+#  shell: "{{remote_tmp_dir_test }}/test.sh executable={{ bash.stdout }}"
 #  register: shell_result1
 #
 #- name: assert that the shell executed correctly
@@ -261,7 +321,7 @@
 - name: Execute the test.sh script with chdir
   shell: ./test.sh
   args:
-    chdir: "{{ output_dir_test }}"
+    chdir: "{{ remote_tmp_dir_test }}"
   register: shell_result2
 
 - name: Assert that the shell executed correctly with chdir
@@ -277,25 +337,25 @@
 
 - name: Verify that afile.txt is absent
   file:
-    path: "{{ output_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/afile.txt"
     state: absent
 
 - name: Execute the test.sh script with chdir
-  shell: "{{ output_dir_test }}/test.sh > {{ output_dir_test }}/afile.txt"
+  shell: "{{ remote_tmp_dir_test }}/test.sh > {{ remote_tmp_dir_test }}/afile.txt"
   args:
-    chdir: "{{ output_dir_test }}"
-    creates: "{{ output_dir_test }}/afile.txt"
+    chdir: "{{ remote_tmp_dir_test }}"
+    creates: "{{ remote_tmp_dir_test }}/afile.txt"
 
 - name: Verify that afile.txt is present
   file:
-    path: "{{ output_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/afile.txt"
     state: file
 
 # multiline
 
 - name: Remove test file previously created
   file:
-    path: "{{ output_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/afile.txt"
     state: absent
 
 - name: Execute a shell command using a literal multiline block
@@ -321,7 +381,7 @@
 - name: Execute a shell command using a literal multiline block with arguments in it
   shell: |
     executable="{{ bash.stdout }}"
-    creates={{ output_dir_test }}/afile.txt
+    creates={{ remote_tmp_dir_test }}/afile.txt
     echo "test"
   register: shell_result6
 
@@ -351,14 +411,14 @@
     - shell_result7.stdout == 'One\n  Two\n    Three'
 
 - name: execute a shell command with no trailing newline to stdin
-  shell: cat > {{output_dir_test }}/afile.txt
+  shell: cat > {{remote_tmp_dir_test }}/afile.txt
   args:
     stdin: test
     stdin_add_newline: no
 
 - name: make sure content matches expected
   copy:
-    dest: "{{output_dir_test }}/afile.txt"
+    dest: "{{remote_tmp_dir_test }}/afile.txt"
     content: test
   register: shell_result7
   failed_when:
@@ -366,14 +426,14 @@
       shell_result7 is changed
 
 - name: execute a shell command with trailing newline to stdin
-  shell: cat > {{output_dir_test }}/afile.txt
+  shell: cat > {{remote_tmp_dir_test }}/afile.txt
   args:
     stdin: test
     stdin_add_newline: yes
 
 - name: make sure content matches expected
   copy:
-    dest: "{{output_dir_test }}/afile.txt"
+    dest: "{{remote_tmp_dir_test }}/afile.txt"
     content: |
         test
   register: shell_result8
@@ -382,13 +442,13 @@
       shell_result8 is changed
 
 - name: execute a shell command with trailing newline to stdin, default
-  shell: cat > {{output_dir_test }}/afile.txt
+  shell: cat > {{remote_tmp_dir_test }}/afile.txt
   args:
     stdin: test
 
 - name: make sure content matches expected
   copy:
-    dest: "{{output_dir_test }}/afile.txt"
+    dest: "{{remote_tmp_dir_test }}/afile.txt"
     content: |
         test
   register: shell_result9
@@ -398,7 +458,7 @@
 
 - name: remove the previously created file
   file:
-    path: "{{ output_dir_test }}/afile.txt"
+    path: "{{ remote_tmp_dir_test }}/afile.txt"
     state: absent
 
 - name: test warning with command
@@ -450,6 +510,8 @@
   assert:
     that:
       - "'Command would have run if not in check mode' in result.msg"
+      - result.skipped
+      - not result.changed
 
 - name: test check mode creates/removes message
   command:
@@ -462,36 +524,39 @@
   assert:
     that:
       - "'Command would have run if not in check mode' in result.msg"
+      - "'skipped' not in result"
+      - result.changed
 
 - name: command symlink handling
   block:
   - name: Create target folders
     file:
-      path: '{{output_dir}}/www_root/site'
+      path: '{{remote_tmp_dir}}/www_root/site'
       state: directory
 
   - name: Create symlink
     file:
-      path: '{{output_dir}}/www'
+      path: '{{remote_tmp_dir}}/www'
       state: link
-      src: '{{output_dir}}/www_root'
+      src: '{{remote_tmp_dir}}/www_root'
 
   - name: check parent using chdir
     shell: dirname "$PWD"
     args:
-      chdir: '{{output_dir}}/www/site'
+      chdir: '{{remote_tmp_dir}}/www/site'
     register: parent_dir_chdir
 
   - name: check parent using cd
-    shell: cd "{{output_dir}}/www/site" && dirname "$PWD"
+    shell: cd "{{remote_tmp_dir}}/www/site" && dirname "$PWD"
     register: parent_dir_cd
 
   - name: check expected outputs
     assert:
       that:
         - parent_dir_chdir.stdout != parent_dir_cd.stdout
-        - 'parent_dir_cd.stdout == "{{output_dir}}/www"'
-        - 'parent_dir_chdir.stdout == "{{output_dir}}/www_root"'
+        # These tests use endswith, to get around /private/tmp on macos
+        - 'parent_dir_cd.stdout.endswith(remote_tmp_dir ~ "/www")'
+        - 'parent_dir_chdir.stdout.endswith(remote_tmp_dir ~ "/www_root")'
 
 - name: Set print error command for Python 2
   set_fact:

@@ -206,19 +206,19 @@ author:
 
 EXAMPLES = r'''
 - name: Download foo.conf
-  get_url:
+  ansible.builtin.get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
     mode: '0440'
 
 - name: Download file and force basic auth
-  get_url:
+  ansible.builtin.get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
     force_basic_auth: yes
 
 - name: Download file with custom HTTP headers
-  get_url:
+  ansible.builtin.get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
     headers:
@@ -226,31 +226,31 @@ EXAMPLES = r'''
       key2: two
 
 - name: Download file with check (sha256)
-  get_url:
+  ansible.builtin.get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
     checksum: sha256:b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c
 
 - name: Download file with check (md5)
-  get_url:
+  ansible.builtin.get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
     checksum: md5:66dffb5228a211e61d6d7ef4a86f5758
 
 - name: Download file with checksum url (sha256)
-  get_url:
+  ansible.builtin.get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
     checksum: sha256:http://example.com/path/sha256sum.txt
 
 - name: Download file from a file path
-  get_url:
+  ansible.builtin.get_url:
     url: file:///tmp/afile.txt
     dest: /tmp/afilecopy.txt
 
 - name: < Fetch file that requires authentication.
         username/password only available since 2.8, in older versions you need to use url_username/url_password
-  get_url:
+  ansible.builtin.get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
     username: bar

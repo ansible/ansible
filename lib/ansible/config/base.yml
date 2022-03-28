@@ -35,7 +35,7 @@ ANSIBLE_COW_SELECTION:
 ANSIBLE_COW_ACCEPTLIST:
   name: Cowsay filter acceptance list
   default: ['bud-frogs', 'bunny', 'cheese', 'daemon', 'default', 'dragon', 'elephant-in-snake', 'elephant', 'eyes', 'hellokitty', 'kitty', 'luke-koala', 'meow', 'milk', 'moofasa', 'moose', 'ren', 'sheep', 'small', 'stegosaurus', 'stimpy', 'supermilker', 'three-eyes', 'turkey', 'turtle', 'tux', 'udder', 'vader-koala', 'vader', 'www']
-  description: White list of cowsay templates that are 'safe' to use, set to empty list if you want to enable all installed templates.
+  description: Accept list of cowsay templates that are 'safe' to use, set to empty list if you want to enable all installed templates.
   env:
   - name: ANSIBLE_COW_WHITELIST
     deprecated:
@@ -99,13 +99,13 @@ ANSIBLE_PIPELINING:
   name: Connection pipelining
   default: False
   description:
+    - This is a global option, each connection plugin can override either by having more specific options or not supporting pipelining at all.
     - Pipelining, if supported by the connection plugin, reduces the number of network operations required to execute a module on the remote server,
       by executing many Ansible modules without actual file transfer.
-    - This can result in a very significant performance improvement when enabled.
+    - It can result in a very significant performance improvement when enabled.
     - "However this conflicts with privilege escalation (become). For example, when using 'sudo:' operations you must first
       disable 'requiretty' in /etc/sudoers on all managed hosts, which is why it is disabled by default."
-    - This option is disabled if ``ANSIBLE_KEEP_REMOTE_FILES`` is enabled.
-    - This is a global option, each connection plugin can override either by having more specific options or not supporting pipelining at all.
+    - This setting will be disabled if ``ANSIBLE_KEEP_REMOTE_FILES`` is enabled.
   env:
     - name: ANSIBLE_PIPELINING
   ini:
@@ -223,12 +223,13 @@ COLLECTIONS_PATHS:
 COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH:
   name: Defines behavior when loading a collection that does not support the current Ansible version
   description:
-  - When a collection is loaded that does not support the running Ansible version (via the collection metadata key
-    `requires_ansible`), the default behavior is to issue a warning and continue anyway. Setting this value to `ignore`
-    skips the warning entirely, while setting it to `fatal` will immediately halt Ansible execution.
+  - When a collection is loaded that does not support the running Ansible version (with the collection metadata key `requires_ansible`).
   env: [{name: ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH}]
   ini: [{key: collections_on_ansible_version_mismatch, section: defaults}]
-  choices: [error, warning, ignore]
+  choices: &basic_error
+    error: issue a 'fatal' error and stop the play
+    warning: issue a warning but continue
+    ignore: just continue silently
   default: warning
 _COLOR_DEFAULTS: &color
   name: placeholder for color settings' defaults
@@ -609,16 +610,23 @@ DEFAULT_EXECUTABLE:
   - {key: executable, section: defaults}
 DEFAULT_FACT_PATH:
   name: local fact path
-  default: ~
   description:
     - "This option allows you to globally configure a custom path for 'local_facts' for the implied M(ansible.builtin.setup) task when using fact gathering."
     - "If not set, it will fallback to the default from the M(ansible.builtin.setup) module: ``/etc/ansible/facts.d``."
     - "This does **not** affect  user defined tasks that use the M(ansible.builtin.setup) module."
+    - The real action being created by the implicit task is currently M(ansible.legacy.gather_facts), which then calls the configured fact modules,
+      by default this will be M(ansible.builtin.setup) for POSIX systems but other platforms might have different defaults.
   env: [{name: ANSIBLE_FACT_PATH}]
   ini:
   - {key: fact_path, section: defaults}
   type: string
-  yaml: {key: facts.gathering.fact_path}
+  # TODO: deprecate in 2.14
+  #deprecated:
+  #    # TODO: when removing set playbook/play.py to default=None
+  #    why: the module_defaults keyword is a more generic version and can apply to all calls to the
+  #         M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
+  #    version: "2.18"
+  #    alternatives: module_defaults
 DEFAULT_FILTER_PLUGIN_PATH:
   name: Jinja2 Filter Plugins Path
   default: ~/.ansible/plugins/filter:/usr/share/ansible/plugins/filter
@@ -652,20 +660,18 @@ DEFAULT_GATHERING:
   default: 'implicit'
   description:
     - This setting controls the default policy of fact gathering (facts discovered about remote systems).
-    - "When 'implicit' (the default), the cache plugin will be ignored and facts will be gathered per play unless 'gather_facts: False' is set."
-    - "When 'explicit' the inverse is true, facts will not be gathered unless directly requested in the play."
-    - "The 'smart' value means each new host that has no facts discovered will be scanned,
-      but if the same host is addressed in multiple plays it will not be contacted again in the playbook run."
     - "This option can be useful for those wishing to save fact gathering time. Both 'smart' and 'explicit' will use the cache plugin."
   env: [{name: ANSIBLE_GATHERING}]
   ini:
     - key: gathering
       section: defaults
   version_added: "1.6"
-  choices: ['smart', 'explicit', 'implicit']
+  choices:
+    implicit: "the cache plugin will be ignored and facts will be gathered per play unless 'gather_facts: False' is set."
+    explicit: facts will not be gathered unless directly requested in the play.
+    smart: each new host that has no facts discovered will be scanned, but if the same host is addressed in multiple plays it will not be contacted again in the run.
 DEFAULT_GATHER_SUBSET:
   name: Gather facts subset
-  default: ['all']
   description:
       - Set the `gather_subset` option for the M(ansible.builtin.setup) task in the implicit fact gathering.
         See the module documentation for specifics.
@@ -676,17 +682,29 @@ DEFAULT_GATHER_SUBSET:
       section: defaults
   version_added: "2.1"
   type: list
+  # TODO: deprecate in 2.14
+  #deprecated:
+  #    # TODO: when removing set playbook/play.py to default=None
+  #    why: the module_defaults keyword is a more generic version and can apply to all calls to the
+  #         M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
+  #    version: "2.18"
+  #    alternatives: module_defaults
 DEFAULT_GATHER_TIMEOUT:
   name: Gather facts timeout
-  default: 10
   description:
-    - Set the timeout in seconds for the implicit fact gathering.
+    - Set the timeout in seconds for the implicit fact gathering, see the module documentation for specifics.
     - "It does **not** apply to user defined M(ansible.builtin.setup) tasks."
   env: [{name: ANSIBLE_GATHER_TIMEOUT}]
   ini:
   - {key: gather_timeout, section: defaults}
   type: integer
-  yaml: {key: defaults.gather_timeout}
+  # TODO: deprecate in 2.14
+  #deprecated:
+  #    # TODO: when removing set playbook/play.py to default=None
+  #    why: the module_defaults keyword is a more generic version and can apply to all calls to the
+  #         M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
+  #    version: "2.18"
+  #    alternatives: module_defaults
 DEFAULT_HASH_BEHAVIOUR:
   name: Hash merge behaviour
   default: replace
@@ -1267,7 +1285,10 @@ DUPLICATE_YAML_DICT_KEY:
   ini:
   - {key: duplicate_dict_key, section: defaults}
   type: string
-  choices: ['warn', 'error', 'ignore']
+  choices: &basic_error2
+    error: issue a 'fatal' error and stop the play
+    warn: issue a warning but continue
+    ignore: just continue silently
   version_added: "2.9"
 ERROR_ON_MISSING_HANDLER:
   name: Missing handler error
@@ -1436,7 +1457,8 @@ HOST_PATTERN_MISMATCH:
   env: [{name: ANSIBLE_HOST_PATTERN_MISMATCH}]
   ini:
   - {key: host_pattern_mismatch, section: inventory}
-  choices: ['warning', 'error', 'ignore']
+  choices:
+    <<: *basic_error
   version_added: "2.8"
 INTERPRETER_PYTHON:
   name: Python interpreter path (or automatic discovery behavior) used for module execution
@@ -1459,7 +1481,7 @@ INTERPRETER_PYTHON:
 INTERPRETER_PYTHON_DISTRO_MAP:
   name: Mapping of known included platform pythons for various Linux distros
   default:
-    centos: &rhelish
+    redhat:
       '6': /usr/bin/python
       '8': /usr/libexec/platform-python
       '9': /usr/bin/python3
@@ -1468,9 +1490,6 @@ INTERPRETER_PYTHON_DISTRO_MAP:
       '10': /usr/bin/python3
     fedora:
       '23': /usr/bin/python3
-    oracle: *rhelish
-    redhat: *rhelish
-    rhel: *rhelish
     ubuntu:
       '14': /usr/bin/python
       '16': /usr/bin/python3
@@ -1501,15 +1520,15 @@ TRANSFORM_INVALID_GROUP_CHARS:
   default: 'never'
   description:
     - Make ansible transform invalid characters in group names supplied by inventory sources.
-    - If 'never' it will allow for the group name but warn about the issue.
-    - When 'ignore', it does the same as 'never', without issuing a warning.
-    - When 'always' it will replace any invalid characters with '_' (underscore) and warn the user
-    - When 'silently', it does the same as 'always', without issuing a warning.
   env: [{name: ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS}]
   ini:
   - {key: force_valid_group_names, section: defaults}
   type: string
-  choices: ['always', 'never', 'ignore', 'silently']
+  choices:
+    always: it will replace any invalid characters with '_' (underscore) and warn the user
+    never: it will allow for the group name but warn about the issue
+    ignore: it does the same as 'never', without issuing a warning
+    silently: it does the same as 'always', without issuing a warning
   version_added: '2.8'
 INVALID_TASK_ATTRIBUTE_FAILED:
   name: Controls whether invalid attributes for a task result in errors instead of warnings
@@ -1759,13 +1778,13 @@ PLAYBOOK_VARS_ROOT:
   version_added: "2.4.1"
   description:
     - This sets which playbook dirs will be used as a root to process vars plugins, which includes finding host_vars/group_vars
-    - The ``top`` option follows the traditional behaviour of using the top playbook in the chain to find the root directory.
-    - The ``bottom`` option follows the 2.4.0 behaviour of using the current playbook to find the root directory.
-    - The ``all`` option examines from the first parent to the current playbook.
   env: [{name: ANSIBLE_PLAYBOOK_VARS_ROOT}]
   ini:
   - {key: playbook_vars_root, section: defaults}
-  choices: [ top, bottom, all ]
+  choices:
+    top: follows the traditional behavior of using the top playbook in the chain to find the root directory.
+    bottom: follows the 2.4.0 behavior of using the current playbook to find the root directory.
+    all: examines from the first parent to the current playbook.
 PLUGIN_FILTERS_CFG:
   name: Config file for limiting valid plugins
   default: null
@@ -1821,13 +1840,13 @@ RUN_VARS_PLUGINS:
   default: demand
   description:
     - This setting can be used to optimize vars_plugin usage depending on user's inventory size and play selection.
-    - Setting to C(demand) will run vars_plugins relative to inventory sources anytime vars are 'demanded' by tasks.
-    - Setting to C(start) will run vars_plugins relative to inventory sources after importing that inventory source.
   env: [{name: ANSIBLE_RUN_VARS_PLUGINS}]
   ini:
   - {key: run_vars_plugins, section: defaults}
   type: str
-  choices: ['demand', 'start']
+  choices:
+    demand: will run vars_plugins relative to inventory sources anytime vars are 'demanded' by tasks.
+    start: will run vars_plugins relative to inventory sources after importing that inventory source.
   version_added: "2.10"
 SHOW_CUSTOM_STATS:
   name: Display custom stats
@@ -1916,7 +1935,7 @@ USE_PERSISTENT_CONNECTIONS:
 VARIABLE_PLUGINS_ENABLED:
   name: Vars plugin enabled list
   default: ['host_group_vars']
-  description: Whitelist for variable plugins that require it.
+  description: Accept list for variable plugins that require it.
   env: [{name: ANSIBLE_VARS_ENABLED}]
   ini:
   - {key: vars_plugins_enabled, section: defaults}
