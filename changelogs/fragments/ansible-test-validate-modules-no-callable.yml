@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Fix traceback in the ``validate-modules`` sanity test when testing an Ansible module without any callables.

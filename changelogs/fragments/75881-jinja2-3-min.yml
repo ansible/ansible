@@ -1,3 +1,0 @@
-major_changes:
-- Jinja2 Controller Requirement - Jinja2 3.0.0 or newer is required for the control node (the machine that runs Ansible)
-  (https://github.com/ansible/ansible/pull/75881)

@@ -1,2 +1,0 @@
-removed_features:
-  - Remove deprecated ``Templar.set_available_variables()`` method (https://github.com/ansible/ansible/issues/75828)

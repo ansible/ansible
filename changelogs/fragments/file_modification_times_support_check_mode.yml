@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible.builtin.file modification_time supports check_mode

@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Update ``pip`` used to bootstrap remote FreeBSD instances from version 20.3.4 to 21.3.1.

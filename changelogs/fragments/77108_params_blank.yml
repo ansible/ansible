@@ -1,3 +1,0 @@
----
-bugfixes:
-- parameters - handle blank values when argument is a list (https://github.com/ansible/ansible/issues/77108).

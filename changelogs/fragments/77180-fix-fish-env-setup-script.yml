@@ -1,3 +1,0 @@
-bugfixes:
-  - hacking - fix incorrect usage of deprecated fish-shell redirection operators
-    that failed to honor ``--quiet`` flag when sourced (https://github.com/ansible/ansible/pull/77180).

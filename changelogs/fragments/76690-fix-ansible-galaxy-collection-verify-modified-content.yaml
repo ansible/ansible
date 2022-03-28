@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-galaxy collection verify - display files/directories not included in the FILES.json as modified content.

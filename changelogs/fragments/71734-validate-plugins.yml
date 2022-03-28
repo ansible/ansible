@@ -1,2 +1,0 @@
-minor_changes:
-  - "ansible-test sanity validate-modules - the validate-modules sanity test now also checks the documentation of documentable plugin types (https://github.com/ansible/ansible/pull/71734)."

@@ -1,3 +1,0 @@
-minor_changes:
-- uri - Eliminate multiple requests to determine the final URL for file naming with ``dest``
-- uri - Avoid reading the response body when not needed

@@ -1,3 +1,0 @@
----
-minor_changes:
-- ansible-test - handle JSON decode error gracefully in podman environment.

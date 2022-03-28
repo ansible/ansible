@@ -1,2 +1,0 @@
-bugfixes:
-- Fix module logging issue when using custom module on WSL2 (https://github.com/ansible/ansible/issues/76320)

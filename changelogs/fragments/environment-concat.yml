@@ -1,2 +1,0 @@
-minor_changes:
-  - "Attach concat function to an environment class (https://github.com/ansible/ansible/pull/76282)"

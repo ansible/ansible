@@ -1,2 +1,0 @@
-bugfixes:
-  - Fix collection filter/test plugin redirects (https://github.com/ansible/ansible/issues/77192).

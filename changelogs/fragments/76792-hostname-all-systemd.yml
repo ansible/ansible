@@ -1,3 +1,0 @@
-bugfixes:
-- hostname - Do not require SystemdStrategy subclasses for every distro
-  (https://github.com/ansible/ansible/issues/76792)

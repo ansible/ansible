@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Change the maximum number of open files in a test container from the default to ``10240``.

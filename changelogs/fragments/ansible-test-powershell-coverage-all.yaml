@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Fix traceback when using the ``--all`` option with PowerShell code coverage.

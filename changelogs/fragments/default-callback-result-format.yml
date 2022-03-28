@@ -1,3 +1,0 @@
-minor_changes:
-- callbacks - Add result serialization format options to ``_dump_results`` allowing plugins such
-  as the ``default`` callback to emit ``YAML`` serialized task results in addition to ``JSON``

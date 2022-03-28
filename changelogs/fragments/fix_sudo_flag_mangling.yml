@@ -1,2 +1,0 @@
-bugfixes:
-  - sudo become plugin, fix handling of non interactive flags, previous substitution was too naive

@@ -1,3 +1,0 @@
-bugfixes:
-- _run_loop - Add the task name to the warning
-  (https://github.com/ansible/ansible/issues/76011)

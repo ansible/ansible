@@ -1,2 +1,0 @@
-bugfixes:
-  - "unarchive - the ``io_buffer_size`` option added in 2.12 was not accepted by the module (https://github.com/ansible/ansible/pull/77271)."

@@ -1,3 +1,0 @@
-bugfixes:
-- service - Fixed service restarts with arguments on AIX.
-  (https://github.com/ansible/ansible/issues/76840)
