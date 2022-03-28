@@ -452,10 +452,12 @@ class UbuntuSourcesList(SourcesList):
     def _key_already_exists(self, key_fingerprint):
 
         found = False
-        keyfiles = ['/etc/apt/trusted.gpg',] +  os.listdir('/etc/apt/trusted.gpg.d/') + os.listdir('/usr/share/keyrings')
-        for key_file in keyfiles:
+        keyfiles = ['/etc/apt/trusted.gpg']
+        for other_dir in ('/etc/apt/trusted.gpg.d/','/usr/share/keyrings'):
+            keyfiles.extend([ other_dir + x for x in os.listdir(other_dir)])
 
-            if key_file.startswith('.') or not os.path.exists(key_file):
+        for key_file in keyfiles:
+            if os.path.basename(key_file).startswith('.') or not os.path.exists(key_file):
                 # skip hidden and non files (dir refs already skipped)
                 continue
 
