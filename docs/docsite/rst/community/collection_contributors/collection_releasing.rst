@@ -57,6 +57,8 @@ Collection release guidelines
 
 There are several approaches on how to release a collection. If you are not aware of which approach to use, ask in the ``#ansible-community`` IRC channel or the ``community`` Matrix channel.
 
+This section assumes that publishing the collection is done with `Zuul <https://github.com/ansible/project-config>`_ and that `antsibull-changelog <https://github.com/ansible-community/antsibull-changelog>`_ is used for the changelog.
+
 Releasing without release branches
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -65,7 +67,7 @@ Use releasing without release branches when:
 * there have not been major releases of the collection before.
 * there have not been breaking changes introduced since the ``1.0.0`` release of the collection.
 
-To perform a release this way, refer to the `Releasing without release branches <releasing_collections_without_release_branches.rst>`_ manual.
+See :ref:`collection_release_without_branches` for details.
 
 When there is a need to introduce breaking changes, you can switch to the next approach.
 
@@ -79,7 +81,10 @@ Releasing with release branches
 
 Use releasing with release branches when breaking changes have been introduced. This approach is usually only used by the large community collections, ``community.general`` and ``community.network``.
 
-To perform a release this way, refer to the `Releasing with release branches <releasing_collections_with_release_branches.rst>`_ manual.
+:ref:`collection_release_with_branches` for details.
 
 .. toctree::
    :maxdepth: 2
+
+   collection_release_without_branches
+   collection_release_with_branches
