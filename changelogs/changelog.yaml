@@ -1674,6 +1674,17 @@ releases:
     fragments:
     - v2.11.1_summary.yaml
     release_date: '2021-05-24'
+  2.11.10:
+    changes:
+      release_summary: '| Release Date: 2022-03-28
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - v2.11.10_summary.yaml
+    release_date: '2022-03-28'
   2.11.10rc1:
     changes:
       bugfixes:
