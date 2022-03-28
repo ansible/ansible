@@ -452,24 +452,24 @@ class UbuntuSourcesList(SourcesList):
     def _key_already_exists(self, key_fingerprint):
 
         found = False
-        keyfiles = ['/etc/apt/trusted.gpg']
-        for other_dir in ('/etc/apt/trusted.gpg.d/','/usr/share/keyrings'):
-            keyfiles.extend([ other_dir + x for x in os.listdir(other_dir)])
+
+        keyfiles = ['/etc/apt/trusted.gpg']  # main gpg repo for apt
+        for other_dir in ('/etc/apt/trusted.gpg.d','/usr/share/keyrings'):
+            # add other known sources of gpg sigs for apt, skip hidden files
+            keyfiles.extend([os.path.join([other_dir, x]) for x in os.listdir(other_dir) if not x.startswith('.')])
 
         for key_file in keyfiles:
-            if os.path.basename(key_file).startswith('.') or not os.path.exists(key_file):
-                # skip hidden and non files (dir refs already skipped)
-                continue
 
-            try:
-                rc, out, err = self.module.run_command('gpg --list-packets %s' % key_file)
-            except (IOError, OSError) as e:
-                self.debug("Could check key against file %s: %s" % (key_file, to_native(e)))
-                continue
+            if os.path.exists(key_file):
+                try:
+                    rc, out, err = self.module.run_command('gpg --list-packets %s' % key_file)
+                except (IOError, OSError) as e:
+                    self.debug("Could check key against file %s: %s" % (key_file, to_native(e)))
+                    continue
 
-            if key_fingerprint in out:
-                found = True
-                break
+                if key_fingerprint in out:
+                    found = True
+                    break
 
         return found
 
