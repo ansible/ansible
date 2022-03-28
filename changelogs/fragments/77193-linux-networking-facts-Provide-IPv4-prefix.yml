@@ -1,3 +1,0 @@
----
-minor_changes:
-  - facts - report prefix length for IPv4 addresses in Linux network facts.

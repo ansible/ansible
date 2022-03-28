@@ -1,4 +1,0 @@
-bugfixes:
-- default callback - Ensure we compare FQCN also in lockstep logic, to ensure
-  using the FQCN of a strategy plugin triggers the correct behavior in the
-  default callback plugin. (https://github.com/ansible/ansible/issues/76782)

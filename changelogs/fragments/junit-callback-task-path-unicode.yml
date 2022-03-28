@@ -1,2 +1,0 @@
-bugfixes:
-  - junit callback - Fix unicode error when handling non-ASCII task paths.

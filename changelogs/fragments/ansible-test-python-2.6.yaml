@@ -1,2 +1,0 @@
-deprecated_features:
-  - ansible-test - Remove support for Python 2.6.

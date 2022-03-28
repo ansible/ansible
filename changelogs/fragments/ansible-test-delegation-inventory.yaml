@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Fix ``windows-integration`` and ``network-integration`` when used with the ``--docker`` option and user-provided inventory.

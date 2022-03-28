@@ -1,3 +1,0 @@
-bugfixes:
-- urls - Allow ``ca_path`` to point to a bundle containing multiple PEM certs
-  (https://github.com/ansible/ansible/issues/75015)

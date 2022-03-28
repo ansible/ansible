@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Add default entry for Windows remotes to be used with unknown versions.

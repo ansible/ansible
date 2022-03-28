@@ -1,5 +1,0 @@
-bugfixes:
-  - ansible-test - The ``import`` sanity test no longer reports errors about ``packaging`` being missing when testing collections.
-minor_changes:
-  - The collection loader now reports a Python warning if an attempt is made to install the Ansible collection loader a second time.
-    Previously this condition was reported using an Ansible warning.

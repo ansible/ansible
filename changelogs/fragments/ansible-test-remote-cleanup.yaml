@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - Remove support for FreeBSD 12.2 remote provisioning.
-  - ansible-test - Remove support for macOS 11.1 remote provisioning.

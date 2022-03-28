@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-pull handle case where hostname and nodename are empty
