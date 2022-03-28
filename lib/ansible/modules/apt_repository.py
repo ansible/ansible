@@ -492,6 +492,7 @@ class UbuntuSourcesList(SourcesList):
                     keyfile = '/usr/share/keyrings/%s-%s-%s.gpg' % (os.path.basename(source).replace(' ', '-'), ppa_owner, ppa_name)
                     command = [gpg_bin, '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', '--export',
                                info['signing_key_fingerprint'], '> %s' % keyfile]
+                    self.module.log('Adding repo key "%s" for apt to file "%s"' % (info['signing_key_fingerprint'], keyfile))
                     self.add_ppa_signing_keys_callback(command)
 
             file = file or self._suggest_filename('%s_%s' % (line, self.codename))
