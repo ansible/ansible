@@ -23,10 +23,12 @@ minor_changes:
 
   .. code: yaml
 
-     - ns.coll.facts:
+     - hosts: all
        module_defaults:
          ns.coll.eos_facts: {'valid_for_eos_facts': 'value'}
          ns.coll.eos_command: {'not_valid_for_eos_facts': 'value'}
+       tasks:
+         - ns.coll.facts:
 
   will end up with defaults for eos_facts and eos_command
   since both modules redirect to the same action.
