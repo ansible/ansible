@@ -1101,8 +1101,9 @@ class TaskExecutor:
         return self._get_action_handler_with_module_context(connection, templar)[0]
 
     def _get_action_handler_with_module_context(self, connection, templar):
-        collections = self._task.collections
-
+        '''
+        Returns the correct action plugin to handle the requestion task action and the module context
+        '''
         module_collection, separator, module_name = self._task.action.rpartition(".")
         module_prefix = module_name.split('_')[0]
         if module_collection:
@@ -1112,6 +1113,8 @@ class TaskExecutor:
             network_action = "{0}.{1}".format(module_collection, module_prefix)
         else:
             network_action = module_prefix
+
+        collections = self._task.collections
 
         # Check if the module has specified to action handler
         module = None
