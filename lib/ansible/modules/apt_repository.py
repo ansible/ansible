@@ -455,7 +455,7 @@ class UbuntuSourcesList(SourcesList):
         keyfiles = ['/etc/apt/trusted.gpg', os.listdir('/etc/apt/trusted.gpg.d/'), os.listdir('/usr/share/keyrings')]
         for key_file in keyfiles:
 
-            if key_file.startswith('.') or not key_file.is_file():
+            if key_file.startswith('.') or not os.path.exists(key_file):
                 # skip hidden and non files (dir refs already skipped)
                 continue
 
