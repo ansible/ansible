@@ -1,2 +1,0 @@
-minor_changes:
-  - module_utils.distro - Add missing ``typing`` import from original code.

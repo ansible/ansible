@@ -1,2 +1,0 @@
-bugfixes:
-- replace - Always return ``rc`` to ensure return values are consistent - https://github.com/ansible/ansible/pull/71963

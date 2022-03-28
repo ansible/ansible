@@ -1,2 +1,0 @@
-minor_changes:
-  - package_facts - add pkg_info support for OpenBSD and NetBSD (https://github.com/ansible/ansible/pull/76580)

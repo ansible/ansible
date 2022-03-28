@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Use the correct variable to reference the client's SSH key when generating inventory.

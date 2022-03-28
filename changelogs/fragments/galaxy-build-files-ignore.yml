@@ -1,4 +1,0 @@
-bugfixes:
-- >-
-  ansible-galaxy collection build - Ignore any existing ``MANIFEST.json`` and ``FILES.json`` in the root directory
-  when building a collection.

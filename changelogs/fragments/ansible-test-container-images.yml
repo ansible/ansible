@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - Update the ``galaxy`` test plugin to get its container from a copy on quay.io.
-  - ansible-test - Update the ``openshift`` test plugin to get its container from a copy on quay.io.

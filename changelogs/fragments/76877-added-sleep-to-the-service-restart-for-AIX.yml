@@ -1,3 +1,0 @@
-bugfixes:
-- service - Fixed handling of sleep arguments during service restarts on AIX.
-  (https://github.com/ansible/ansible/issues/76877)

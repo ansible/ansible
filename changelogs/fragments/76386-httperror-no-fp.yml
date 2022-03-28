@@ -1,4 +1,0 @@
-bugfixes:
-- urls/uri - Address case where ``HTTPError`` isn't fully initialized due to
-  the error, and is missing certain methods and attributes
-  (https://github.com/ansible/ansible/issues/76386)

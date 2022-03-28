@@ -1,2 +1,0 @@
-bugfixes:
-  - unarchive - apply ``owner`` and ``group`` permissions to top folder (https://github.com/ansible/ansible/issues/35426)

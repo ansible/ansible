@@ -1,2 +1,0 @@
-minor_changes:
-  - setting DEFAULT_FACT_PATH is being deprecated in favor of the generic module_defaults keyword

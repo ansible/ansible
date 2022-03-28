@@ -1,2 +1,0 @@
-bugfixes:
-  - Make include_role/include_tasks work with any_errors_fatal (https://github.com/ansible/ansible/issues/50897)

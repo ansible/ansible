@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Show an error message instead of a traceback when running outside of a supported directory.
