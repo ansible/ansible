@@ -1,3 +1,0 @@
----
-minor_changes:
-  - yum, dnf - add sslverify option to temporarily disable certificate validation for a repository

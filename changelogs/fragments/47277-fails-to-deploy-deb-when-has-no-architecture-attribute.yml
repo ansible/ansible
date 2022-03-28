@@ -1,2 +1,0 @@
-bugfixes:
-  - apt - fails to deploy deb file to old debian systems using python-apt < 0.8.9 (https://github.com/ansible/ansible/issues/47277)

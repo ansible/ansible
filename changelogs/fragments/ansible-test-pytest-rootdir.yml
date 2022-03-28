@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Set the ``pytest`` option ``--rootdir`` instead of letting it be auto-detected.

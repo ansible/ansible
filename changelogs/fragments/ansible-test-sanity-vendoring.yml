@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Fix the ``import`` sanity test to work properly when Ansible's built-in vendoring support is in use.

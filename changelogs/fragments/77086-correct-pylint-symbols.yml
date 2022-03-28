@@ -1,3 +1,0 @@
-bugfixes:
-- ansible-test - Pylint Deprecated Plugin - Use correct message symbols when date or version is not a float or str
-  (https://github.com/ansible/ansible/issues/77085)

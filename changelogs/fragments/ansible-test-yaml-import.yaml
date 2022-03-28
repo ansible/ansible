@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Import ``yaml.cyaml.CParser`` instead of ``_yaml.CParser`` in the ``yamllint`` sanity test.

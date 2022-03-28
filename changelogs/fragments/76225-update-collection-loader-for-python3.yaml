@@ -1,4 +1,0 @@
-bugfixes:
-- >-
-  collection_loader - Implement 'find_spec' and 'exec_module' to override deprecated importlib methods
-  'find_module' and 'load_module' when applicable (https://github.com/ansible/ansible/issues/74660).

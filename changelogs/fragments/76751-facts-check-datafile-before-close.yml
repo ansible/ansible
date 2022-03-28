@@ -1,2 +1,0 @@
-bugfixes:
-  - gather_facts - Fact gathering now continues even if it fails to read a file

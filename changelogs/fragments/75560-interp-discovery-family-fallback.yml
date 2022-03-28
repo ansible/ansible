@@ -1,4 +1,0 @@
-bugfixes:
-- Interpreter Discovery - Fallback to OS family if the distro is not found in
-  ``INTERPRETER_PYTHON_DISTRO_MAP``
-  (https://github.com/ansible/ansible/issues/75560)

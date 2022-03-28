@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Update unit tests to use the ``--forked`` option instead of the deprecated ``--boxed`` option.

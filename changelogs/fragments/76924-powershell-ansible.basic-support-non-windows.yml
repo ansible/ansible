@@ -1,3 +1,0 @@
----
-minor_changes:
-  - Ansible.Basic - small changes to allow use in PowerShell modules running on non-Windows platforms (https://github.com/ansible/ansible/pull/76924).

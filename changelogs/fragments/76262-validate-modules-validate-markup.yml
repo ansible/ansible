@@ -1,2 +1,0 @@
-minor_changes:
-  - "validate-modules - do some basic validation on the ``M(...)``, ``U(...)``, ``L(..., ...)`` and ``R(..., ...)`` documentation markups (https://github.com/ansible/ansible/pull/76262)."

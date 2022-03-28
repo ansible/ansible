@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-test pslint - Fix error when encountering validation results that are highly nested - https://github.com/ansible/ansible/issues/74151

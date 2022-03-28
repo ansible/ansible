@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Importing ``distutils`` now results in an error.

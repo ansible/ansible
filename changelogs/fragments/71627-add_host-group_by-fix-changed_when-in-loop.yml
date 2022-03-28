@@ -1,2 +1,0 @@
-bugfixes:
-  - "add_host/group_by: fix using changed_when in a loop (https://github.com/ansible/ansible/issues/71627)"

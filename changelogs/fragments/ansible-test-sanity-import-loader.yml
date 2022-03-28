@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Use the legacy collection loader for ``import`` sanity tests on target-only Python versions.

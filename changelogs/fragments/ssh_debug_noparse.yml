@@ -1,2 +1,0 @@
-bugfixes:
-  - ssh connection avoid parsing ssh cli debug lines as they can match expected output at high verbosities.

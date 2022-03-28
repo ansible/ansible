@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Fix path to inventory file for ``windows-integration`` and ``network-integration`` commands for collections.

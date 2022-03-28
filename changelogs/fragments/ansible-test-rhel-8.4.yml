@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - Remove RHEL 8.4 remote (``rhel/8.4``) support.

@@ -1,2 +1,0 @@
-bugfixes:
-  - "ansible-vault encrypt_string - fix ``--output`` option to correctly write encrypted string into given file (https://github.com/ansible/ansible/issues/75101)"

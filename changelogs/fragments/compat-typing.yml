@@ -1,2 +1,0 @@
-minor_changes:
-  - Added ``module_utils.compat.typing`` to facilitate type-hinting on all supported Python versions.

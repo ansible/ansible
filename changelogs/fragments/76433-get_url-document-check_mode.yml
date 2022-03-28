@@ -1,2 +1,0 @@
-known_issues:
-- get_url - document ``check_mode`` correctly with unreliable changed status (https://github.com/ansible/ansible/issues/65687).

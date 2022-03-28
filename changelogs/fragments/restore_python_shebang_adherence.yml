@@ -1,2 +1,0 @@
-bugfixes:
- - python modules (new type) will now again prefer the specific python stated in the module's shebang instead of hardcoding to /usr/bin/python.

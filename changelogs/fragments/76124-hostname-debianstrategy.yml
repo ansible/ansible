@@ -1,3 +1,0 @@
-bugfixes:
-  - hostname - Fix Debian strategy KeyError, use `SystemdStrategy`
-    (https://github.com/ansible/ansible/issues/76124)

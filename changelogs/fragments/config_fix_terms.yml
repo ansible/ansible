@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-config avoid showing _terms and _input when --only-changed.

@@ -1,2 +1,0 @@
-minor_changes:
-  - jinja2_native - keep same behavior on Python 3.10.

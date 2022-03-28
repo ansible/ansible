@@ -1,3 +1,0 @@
-minor_changes:
-- Installation - modernize our python installation, to reduce dynamic code in setup.py, and migrate
-  what is feasible to setup.cfg. This will enable shipping wheels in the future.

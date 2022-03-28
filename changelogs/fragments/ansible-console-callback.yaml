@@ -1,2 +1,0 @@
-minor_changes: 
-  - ansible-console - Provide a  way to customize the stdout callback

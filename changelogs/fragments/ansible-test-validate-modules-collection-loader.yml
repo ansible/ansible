@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test - Fix the ``validate-modules`` sanity test to avoid double-loading the collection loader and possibly failing on import of the ``packaging`` module.

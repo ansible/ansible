@@ -1,2 +1,0 @@
-bugfixes:
-   - Add a YAML representer for ``NativeJinjaText``

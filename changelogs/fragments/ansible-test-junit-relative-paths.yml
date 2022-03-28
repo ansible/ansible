@@ -1,6 +1,0 @@
-bugfixes:
-  - ansible-test - Use relative paths in JUnit files generated during integration test runs.
-  - ansible-test - Replace the directory portion of out-of-tree paths in JUnit files from integration tests with the ``out-of-tree:`` prefix.
-  - junit callback - Fix traceback during automatic fact gathering when using relative paths.
-minor_changes:
-  - junit callback - Add support for replacing the directory portion of out-of-tree relative task paths with a placeholder.

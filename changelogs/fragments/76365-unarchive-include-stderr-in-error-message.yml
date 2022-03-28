@@ -1,2 +1,0 @@
-bugfixes:
-  - unarchive - include the original error when a handler cannot manage the archive (https://github.com/ansible/ansible/issues/28977).
