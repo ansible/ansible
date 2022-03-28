@@ -11,6 +11,7 @@
   set_fact:
     distro: '{{ ansible_distribution | default("unknown") | lower }}'
     distro_version: '{{ ansible_distribution_version | default("unknown") }}'
+    distro_major_version: '{{ ansible_distribution_major_version | default("unknown") }}'
     os_family: '{{ ansible_os_family | default("unknown") }}'
 
 - name: test that python discovery is working and that fact persistence makes it only run once
@@ -156,11 +157,11 @@
     assert:
       that:
       # rhel 6/7
-      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python' and distro_version is version('8','<')) or distro_version is version('8','>=')
+      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python' and distro_major_version is version('8','<')) or distro_major_version is version('8','>=')
       # rhel 8
-      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/libexec/platform-python' and distro_version is version('8','==')) or distro_version is version('8','!=')
+      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/libexec/platform-python' and distro_major_version is version('8','==')) or distro_major_version is version('8','!=')
       # rhel 9
-      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python3' and distro_version is version('9','==')) or distro_version is version('9','!=')
+      - (auto_out.ansible_facts.discovered_interpreter_python == '/usr/bin/python3' and distro_major_version is version('9','==')) or distro_major_version is version('9','!=')
     when: distro == 'redhat'
 
   - name: ubuntu assertions
