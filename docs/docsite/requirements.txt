@@ -3,7 +3,7 @@
 # if you want known good versions of these dependencies
 # use known_good_reqs.txt instead
 
-antsibull >= 0.41.0
+antsibull >= 0.42.0
 docutils
 jinja2
 pygments >= 2.10.0
