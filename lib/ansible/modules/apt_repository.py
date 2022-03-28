@@ -489,11 +489,20 @@ class UbuntuSourcesList(SourcesList):
 
                 # add gpg sig if needed
                 if not self._key_already_exists(info['signing_key_fingerprint'], gpg_bin):
+
                     keyfile = '/usr/share/keyrings/%s-%s-%s.gpg' % (os.path.basename(source).replace(' ', '-'), ppa_owner, ppa_name)
                     command = [gpg_bin, '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', '--export',
-                               info['signing_key_fingerprint'], '> %s' % keyfile]
-                    self.module.log('Adding repo key "%s" for apt to file "%s"' % (info['signing_key_fingerprint'], keyfile))
-                    self.add_ppa_signing_keys_callback(command)
+                               info['signing_key_fingerprint']]
+                    try:
+                        rc, stdout, stderr = self.add_ppa_signing_keys_callback(command)
+                        with open(keyfile, 'bw+') as f:
+                            f.write(stdout)
+                    except (TypeError) as e:
+                        pass # checkmode, we got None
+                    except (OSError, IOError) as e:
+                        self.module.fail_json(rc=rc, stderr=stderr, error=to_native(e))
+
+                    self.module.log('Added repo key "%s" for apt to file "%s"' % (info['signing_key_fingerprint'], keyfile))
 
             file = file or self._suggest_filename('%s_%s' % (line, self.codename))
         else:
