@@ -67,7 +67,7 @@ Creating the release branch
 
 #. Verify that the ``CHANGELOG.rst`` looks as expected.
 
-#.. Commit and push changes to the ``CHANGELOG.rst`` and ``changelogs/changelog.yaml``, and potentially deleted/archived fragments to the ``origin`` repository's ``release_branch``.
+#. Commit and push changes to the ``CHANGELOG.rst`` and ``changelogs/changelog.yaml``, and potentially deleted/archived fragments to the ``origin`` repository's ``release_branch``.
 
   .. code:: bash
 

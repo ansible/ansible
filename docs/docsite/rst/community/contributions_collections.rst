@@ -13,7 +13,7 @@ Ansible Collections Contributor Guide
    collection_contributors/test_index
    documentation_contributions
    maintainers
-   collection_releasing
+   collection_contributors/collection_releasing
    contributing_maintained_collections
    steering/steering_index
    other_tools_and_programs

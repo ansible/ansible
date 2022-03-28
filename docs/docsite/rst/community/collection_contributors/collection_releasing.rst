@@ -11,12 +11,13 @@ The collections have:
 
 * Publicly available policy of releasing, versioning, and deprecation (for example, written in its README or in a dedicated pinned issue).
 * A pinned issue when its release managers inform the community about planned or completed releases (can be combined with the release policy issue mentioned above).
-* A :ref:`collection_changelog`.
+* A :ref:`collection_changelogs`.
 * Releases of the collection tagged in the collection's repository.
 * CI pipelines up and running (can be implemented by using GitHub Actions, Azure Pipelines, Zuul).
 * All CI tests running against a commit that releases the collection. If they do not pass, the collection will NOT be released.
 
-.. contents:: Topics
+.. contents::
+  :local:
 
 .. _collection_versioning_and_deprecation:
 
