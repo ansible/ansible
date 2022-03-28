@@ -135,13 +135,13 @@ EXAMPLES = '''
 
 RETURN = '''#'''
 
+import copy
 import glob
 import json
 import os
 import re
 import sys
 import tempfile
-import copy
 import random
 import time
 
@@ -449,20 +449,20 @@ class UbuntuSourcesList(SourcesList):
         line = 'deb http://ppa.launchpad.net/%s/%s/ubuntu %s main' % (ppa_owner, ppa_name, self.codename)
         return line, ppa_owner, ppa_name
 
-    def _key_already_exists(self, key_fingerprint):
+    def _key_already_exists(self, key_fingerprint, gpg_bin):
 
         found = False
 
         keyfiles = ['/etc/apt/trusted.gpg']  # main gpg repo for apt
-        for other_dir in ('/etc/apt/trusted.gpg.d','/usr/share/keyrings'):
+        for other_dir in ('/etc/apt/trusted.gpg.d', '/usr/share/keyrings'):
             # add other known sources of gpg sigs for apt, skip hidden files
-            keyfiles.extend([os.path.join([other_dir, x]) for x in os.listdir(other_dir) if not x.startswith('.')])
+            keyfiles.extend([os.path.join(other_dir, x) for x in os.listdir(other_dir) if not x.startswith('.')])
 
         for key_file in keyfiles:
 
             if os.path.exists(key_file):
                 try:
-                    rc, out, err = self.module.run_command('gpg --list-packets %s' % key_file)
+                    rc, out, err = self.module.run_command('%s --list-packets %s' % (gpg_bin, key_file))
                 except (IOError, OSError) as e:
                     self.debug("Could check key against file %s: %s" % (key_file, to_native(e)))
                     continue
@@ -485,11 +485,13 @@ class UbuntuSourcesList(SourcesList):
             if self.add_ppa_signing_keys_callback is not None:
                 info = self._get_ppa_info(ppa_owner, ppa_name)
 
+                gpg_bin = self.module.get_bin_path('gpg', required=True)
+
                 # add gpg sig if needed
-                if not self._key_already_exists(info['signing_key_fingerprint']):
-                    keyfile = '/usr/share/keyrings/%s-%s-%s.gpg' % (source, ppa_owner, ppa_name)
-                    command = ['gpg', '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', '--recv-keys', '--export',
-                               '--output', keyfile, info['signing_key_fingerprint']]
+                if not self._key_already_exists(info['signing_key_fingerprint'], gpg_bin):
+                    keyfile = '/usr/share/keyrings/%s-%s-%s.gpg' % (os.path.basename(source).replace(' ', '-'), ppa_owner, ppa_name)
+                    command = [gpg_bin, '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', '--export',
+                               info['signing_key_fingerprint'], '> %s' % keyfile]
                     self.add_ppa_signing_keys_callback(command)
 
             file = file or self._suggest_filename('%s_%s' % (line, self.codename))
