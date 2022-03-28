@@ -314,7 +314,11 @@ class SourcesList(object):
                 except OSError as ex:
                     if not os.path.isdir(d):
                         self.module.fail_json("Failed to create directory %s: %s" % (d, to_native(ex)))
-                fd, tmp_path = tempfile.mkstemp(prefix=".%s-" % fn, dir=d)
+
+                try:
+                    fd, tmp_path = tempfile.mkstemp(prefix=".%s-" % fn, dir=d)
+                except (OSError, IOError) as e:
+                    self.module.fail_json(msg='Unable to create temp file at "%s" for apt source: %s' % (d, to_native(e)))
 
                 f = os.fdopen(fd, 'w')
                 for n, valid, enabled, source, comment in sources:
