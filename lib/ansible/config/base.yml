@@ -611,11 +611,11 @@ DEFAULT_EXECUTABLE:
 DEFAULT_FACT_PATH:
   name: local fact path
   description:
-    - "This option allows you to globally configure a custom path for 'local_facts' for the implied M(ansible.builtin.setup) task when using fact gathering."
-    - "If not set, it will fallback to the default from the M(ansible.builtin.setup) module: ``/etc/ansible/facts.d``."
-    - "This does **not** affect  user defined tasks that use the M(ansible.builtin.setup) module."
-    - The real action being created by the implicit task is currently M(ansible.legacy.gather_facts), which then calls the configured fact modules,
-      by default this will be M(ansible.builtin.setup) for POSIX systems but other platforms might have different defaults.
+    - "This option allows you to globally configure a custom path for 'local_facts' for the implied :ref:`ansible_collections.ansible.builtin.setup_module` task when using fact gathering."
+    - "If not set, it will fallback to the default from the ``ansible.builtin.setup`` module: ``/etc/ansible/facts.d``."
+    - "This does **not** affect  user defined tasks that use the ``ansible.builtin.setup`` module."
+    - The real action being created by the implicit task is currently    ``ansible.legacy.gather_facts`` module, which then calls the configured fact modules,
+      by default this will be ``ansible.builtin.setup`` for POSIX systems but other platforms might have different defaults.
   env: [{name: ANSIBLE_FACT_PATH}]
   ini:
   - {key: fact_path, section: defaults}
@@ -673,9 +673,9 @@ DEFAULT_GATHERING:
 DEFAULT_GATHER_SUBSET:
   name: Gather facts subset
   description:
-      - Set the `gather_subset` option for the M(ansible.builtin.setup) task in the implicit fact gathering.
+      - Set the `gather_subset` option for the :ref:`ansible_collections.ansible.builtin.setup_module` task in the implicit fact gathering.
         See the module documentation for specifics.
-      - "It does **not** apply to user defined M(ansible.builtin.setup) tasks."
+      - "It does **not** apply to user defined ``ansible.builtin.setup`` tasks."
   env: [{name: ANSIBLE_GATHER_SUBSET}]
   ini:
     - key: gather_subset
@@ -693,7 +693,7 @@ DEFAULT_GATHER_TIMEOUT:
   name: Gather facts timeout
   description:
     - Set the timeout in seconds for the implicit fact gathering, see the module documentation for specifics.
-    - "It does **not** apply to user defined M(ansible.builtin.setup) tasks."
+    - "It does **not** apply to user defined :ref:`ansible_collections.ansible.builtin.setup_module` tasks."
   env: [{name: ANSIBLE_GATHER_TIMEOUT}]
   ini:
   - {key: gather_timeout, section: defaults}
@@ -869,7 +869,7 @@ DEFAULT_LOOKUP_PLUGIN_PATH:
 DEFAULT_MANAGED_STR:
   name: Ansible managed
   default: 'Ansible managed'
-  description: Sets the macro for the 'ansible_managed' variable available for M(ansible.builtin.template) and M(ansible.windows.win_template) modules.  This is only relevant for those two modules.
+  description: Sets the macro for the 'ansible_managed' variable available for :ref:`ansible_collections.ansible.builtin.template_module` and :ref:`ansible_collections.ansible.windows.win_template_module`.  This is only relevant for those two modules.
   env: []
   ini:
   - {key: ansible_managed, section: defaults}
@@ -1030,8 +1030,9 @@ DEFAULT_STDOUT_CALLBACK:
   name: Main display callback plugin
   default: default
   description:
-    - "Set the main callback used to display Ansible output, you can only have one at a time."
+    - "Set the main callback used to display Ansible output. You can only have one at a time."
     - You can have many other callbacks, but just one can be in charge of stdout.
+    - See :ref:`callback_plugins` for a list of available options.
   env: [{name: ANSIBLE_STDOUT_CALLBACK}]
   ini:
   - {key: stdout_callback, section: defaults}
