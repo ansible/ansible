@@ -227,8 +227,24 @@ class _ComputedReqKindsMixin:
             )
 
         tmp_inst_req = cls(None, None, dir_path, 'dir', None)
-        req_name = art_mgr.get_direct_collection_fqcn(tmp_inst_req)
         req_version = art_mgr.get_direct_collection_version(tmp_inst_req)
+        try:
+            req_name = art_mgr.get_direct_collection_fqcn(tmp_inst_req)
+        except TypeError as err:
+            # Looks like installed/source dir but isn't: doesn't have valid metadata.
+            display.warning(
+                u"Collection at '{path!s}' has a {manifest_json!s} "
+                u"or {galaxy_yml!s} file but it contains invalid metadata.".
+                format(
+                    galaxy_yml=to_text(_GALAXY_YAML),
+                    manifest_json=to_text(_MANIFEST_JSON),
+                    path=to_text(dir_path, errors='surrogate_or_strict'),
+                ),
+            )
+            raise ValueError(
+                "Collection at '{path!s}' has invalid metadata".
+                format(path=to_text(dir_path, errors='surrogate_or_strict'))
+            ) from err
 
         return cls(req_name, req_version, dir_path, 'dir', None)
 
