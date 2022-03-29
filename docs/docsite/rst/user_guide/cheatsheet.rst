@@ -17,7 +17,7 @@ ansible-playbook
    ansible-playbook -i /path/to/my_inventory_file -u my_connection_user -k /path/to/my_ssh_key -f 3 -T 30 -t my_tag -m /path/to/my_modules -b -K my_playbook.yml
 
 Loads ``my_playbook.yml`` from the current working directory and:
-  - uses ``my_inventory_file`` in the path provided for inventory
+  - ``-i`` - uses ``my_inventory_file`` in the path provided for inventory.
   - connects over SSH as ``my_connection_user`` using ``my_ssh_key`` in the path provided
   - allocates 3 forks
   - sets a 30-second timeout
