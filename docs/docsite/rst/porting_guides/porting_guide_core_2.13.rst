@@ -35,20 +35,6 @@ Playbook
 
 * The ``finalize`` method is no longer exposed in the globals for use in templating. To convert ``None`` to an empty string the following expression can be used: ``{{ value if value is not none }}``.
 
-* Variables are now evaluated lazily; only when they are actually used. For example, in ansible-core 2.13 an expression ``{{ defined_variable or undefined_variable }}`` does not fail on ``undefined_variable`` if the first part of ``or`` is evaluated to ``True`` as it is not needed to evaluate the second part. One particular case of a change in behavior to note is the task below which uses the ``undefined`` test. Prior to version 2.13 this would result in a fatal error trying to access the undefined value in the dictionary. In 2.13 the assertion passes as the dictionary is evaluated as undefined through one of its undefined values:
-
- .. code-block:: yaml
-
-     - assert:
-         that:
-           - some_defined_dict_with_undefined_values is undefined
-       vars:
-         dict_value: 1
-         some_defined_dict_with_undefined_values:
-           key1: value1
-           key2: '{{ dict_value }}'
-           key3: '{{ undefined_dict_value }}'
-
 
 Command Line
 ============
