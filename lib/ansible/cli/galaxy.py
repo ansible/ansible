@@ -667,7 +667,7 @@ class GalaxyCLI(CLI):
     def _get_default_collection_path(self):
         return C.COLLECTIONS_PATHS[0]
 
-    def _parse_requirements_file(self, requirements_file, allow_old_format=True, artifacts_manager=None):
+    def _parse_requirements_file(self, requirements_file, allow_old_format=True, artifacts_manager=None, validate_signature_options=True):
         """
         Parses an Ansible requirement.yml file and returns all the roles and/or collections defined in it. There are 2
         requirements file format:
@@ -761,6 +761,7 @@ class GalaxyCLI(CLI):
                 Requirement.from_requirement_dict(
                     self._init_coll_req_dict(collection_req),
                     artifacts_manager,
+                    validate_signature_options,
                 )
                 for collection_req in file_requirements.get('collections') or []
             ]
@@ -1256,15 +1257,18 @@ class GalaxyCLI(CLI):
                 if not (requirements_file.endswith('.yaml') or requirements_file.endswith('.yml')):
                     raise AnsibleError("Invalid role requirements file, it must end with a .yml or .yaml extension")
 
+                galaxy_args = self._raw_args
+                will_install_collections = self._implicit_role and '-p' not in galaxy_args and '--roles-path' not in galaxy_args
+
                 requirements = self._parse_requirements_file(
                     requirements_file,
                     artifacts_manager=artifacts_manager,
+                    validate_signature_options=will_install_collections,
                 )
                 role_requirements = requirements['roles']
 
                 # We can only install collections and roles at the same time if the type wasn't specified and the -p
                 # argument was not used. If collections are present in the requirements then at least display a msg.
-                galaxy_args = self._raw_args
                 if requirements['collections'] and (not self._implicit_role or '-p' in galaxy_args or
                                                     '--roles-path' in galaxy_args):
 
