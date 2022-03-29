@@ -1,20 +1,5 @@
 .. _maintainers_workflow:
 
-.. _Releasing:
-
-Releasing collections
-======================
-
-Collection maintainers release all supported stable versions of the collections regularly,
-provided that there have been enough changes merged to release.
-
-Generally, releasing in the collections consists of:
-
-1. Planning and announcement.
-2. Generating a changelog.
-3. Creating a release git tag and pushing it.
-4. Automatic publishing the release tarball on `Ansible Galaxy <https://galaxy.ansible.com/>`_ by `Zuul <https://dashboard.zuul.ansible.com/t/ansible/builds?pipeline=release>`_.
-5. Final announcement.
 
 Backporting and Ansible inclusion
 ==================================
