@@ -74,7 +74,7 @@ Tasks can instruct one or more handlers to be executed using the ``notify`` keyw
           name: apache
           state: restarted
 
-In the above example the handlers are executed on task change in the following order: 1. ``Restart memcached``, 2. ``Restart apache`` - handlers are executed in the order they are defined in the ``handlers`` section, not in the order listed in the ``notify`` statement. Notifying same handler multiple times will only result in executing the handler once regardless of how many tasks notify it. For example, if multiple tasks update a configuration file and notify a handler to restart Apache, Ansible only bounces Apache once to avoid unnecessary restarts.
+In the above example the handlers are executed on task change in the following order: ``Restart memcached``, ``Restart apache``. Handlers are executed in the order they are defined in the ``handlers`` section, not in the order listed in the ``notify`` statement. Notifying same handler multiple times will result in executing the handler only once regardless of how many tasks notify it. For example, if multiple tasks update a configuration file and notify a handler to restart Apache, Ansible only bounces Apache once to avoid unnecessary restarts.
 
 
 Naming handlers
@@ -90,12 +90,14 @@ Alternatively handlers can utilize the ``listen`` keyword. Using this handler ke
       - name: Restart everything
         command: echo "this task will restart the web services"
         notify: "restart web services"
+
     handlers:
       - name: Restart memcached
         service:
           name: memcached
           state: restarted
         listen: "restart web services"
+
       - name: Restart apache
         service:
           name: apache
@@ -104,7 +106,7 @@ Alternatively handlers can utilize the ``listen`` keyword. Using this handler ke
 
 Notifying ``restart web services`` topic will result in executing all handlers listening to that topic regardless of how those handlers are named.
 
-This use makes it much easier to trigger multiple handlers. It also decouples handlers from their names, making it easier to share handlers among playbooks and roles (especially when using 3rd party roles from a shared source like Galaxy).
+This use makes it much easier to trigger multiple handlers. It also decouples handlers from their names, making it easier to share handlers among playbooks and roles (especially when using third-party roles from a shared source like Ansible Galaxy).
 
 Each handler should have a globally unique name. If multiple handlers with the same name are defined only the last one defined can be notified via ``notify``, effectively shadowing all of the previous handlers with the same name. Alternatively handlers sharing the same name can all be notified and executed if they listen on the same topic by notifying that topic.
 
@@ -114,9 +116,9 @@ There is only one global scope for handlers (handler names and listen topics) re
 Controlling when handlers run
 -----------------------------
 
-By default, handlers run after all the tasks in a particular play have been completed. Notified handlers are executed automatically after each of the following sections: ``pre_tasks``, ``tasks`` and ``post_tasks``. This approach is efficient, because the handler only runs once, regardless of how many tasks notify it. For example, if multiple tasks update a configuration file and notify a handler to restart Apache, Ansible only bounces Apache once to avoid unnecessary restarts.
+By default, handlers run after all the tasks in a particular play have been completed. Notified handlers are executed automatically after each of the following sections, in the following order: ``pre_tasks``, ``roles``/``tasks`` and ``post_tasks``. This approach is efficient, because the handler only runs once, regardless of how many tasks notify it. For example, if multiple tasks update a configuration file and notify a handler to restart Apache, Ansible only bounces Apache once to avoid unnecessary restarts.
 
-If you need handlers to run before the end of the play, add a task to flush them using the :ref:`meta module <meta_module>`, which executes Ansible actions.
+If you need handlers to run before the end of the play, add a task to flush them using the :ref:`meta module <meta_module>`, which executes Ansible actions:
 
 .. code-block:: yaml
 
@@ -168,7 +170,7 @@ While handler names can contain a template, ``listen`` topics cannot.
 Handlers in roles
 -----------------
 
-Handlers from roles are not just contained in their roles but rather inserted into global scope with all other handlers from a play. As such they can be used outside of the role they are defined in. To ensure that a handler from a role is notified as opposed to one from outside the role with the same name, notify the handler by using its name in the following form: ``role_name : handler_name``.
+Handlers from roles are not just contained in their roles but rather inserted into global scope with all other handlers from a play. As such they can be used outside of the role they are defined in. It also means that their name can conflict with handlers from outside the role. To ensure that a handler from a role is notified as opposed to one from outside the role with the same name, notify the handler by using its name in the following form: ``role_name : handler_name``.
 
 Handlers notified within ``roles`` section are automatically flushed at the end of ``tasks`` section, but before any ``tasks`` handlers.
 
@@ -177,7 +179,7 @@ Includes and imports in handlers
 --------------------------------
 Notifying a dynamic include like ``include_task`` as a handler will result in executing all tasks from within the include. It is not possible to notify a handler defined inside a dynamic include.
 
-Having a static include like ``import_task`` as a handler will result in that handler being effectively rewritten by handlers from within that import. A static include itself cannot be notified, the tasks from withing that include, on the other hand, can be notified.
+Having a static include like ``import_task`` as a handler will result in that handler being effectively rewritten by handlers from within that import before the play execution. A static include itself cannot be notified, the tasks from withing that include, on the other hand, can be notified individually.
 
 
 Limitations
