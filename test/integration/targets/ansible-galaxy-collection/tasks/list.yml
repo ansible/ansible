@@ -4,6 +4,7 @@
     - 'dev.collection1'
     - 'dev.collection2'
     - 'dev.collection3'
+    - 'dev.collection4'
 
 - name: replace the default version of the collections
   lineinfile:
@@ -18,6 +19,19 @@
     - name: "collection3"
       version: "version: ''"
 
+- name: set the namespace, name, and version keys to None
+  lineinfile:
+    path: "{{ galaxy_dir }}/dev/ansible_collections/dev/collection4/galaxy.yml"
+    line: "{{ item.after }}"
+    regexp: "{{ item.before }}"
+  loop:
+  - before: "^namespace: dev"
+    after: "namespace:"
+  - before: "^name: collection4"
+    after: "name:"
+  - before: "^version: 1.0.0"
+    after: "version:"
+
 - name: list collections in development without semver versions
   command: ansible-galaxy collection list {{ galaxy_verbosity }}
   register: list_result
@@ -30,6 +44,7 @@
       # Note the version displayed is the 'placeholder' string rather than "*" since it is not falsey
       - "'dev.collection2 placeholder' in list_result.stdout"
       - "'dev.collection3 *' in list_result.stdout"
+      - "'dev.collection4 *' in list_result.stdout"
 
 - name: list collections in human format
   command: ansible-galaxy collection list --format human
@@ -52,7 +67,7 @@
 
 - assert:
     that:
-      - "item.value | length == 3"
+      - "item.value | length == 4"
       - "item.value['dev.collection1'].version == '*'"
       - "item.value['dev.collection2'].version == 'placeholder'"
       - "item.value['dev.collection3'].version == '*'"
@@ -66,7 +81,7 @@
 
 - assert:
     that:
-      - "item.value | length == 3"
+      - "item.value | length == 4"
       - "item.value['dev.collection1'].version == '*'"
       - "item.value['dev.collection2'].version == 'placeholder'"
       - "item.value['dev.collection3'].version == '*'"
