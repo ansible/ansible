@@ -18,13 +18,14 @@ ansible-playbook
 
 Loads ``my_playbook.yml`` from the current working directory and:
   - ``-i`` - uses ``my_inventory_file`` in the path provided for inventory.
-  - connects over SSH as ``my_connection_user`` using ``my_ssh_key`` in the path provided
-  - allocates 3 forks
-  - sets a 30-second timeout
-  - runs only tasks marked with ``my_tag``
-  - loads local modules from ``/path/to/my/modules``
-  - executes with elevated privileges (become)
-  - prompts the user for the become password
+  - ``-u`` - connects over SSH as ``my_connection_user``.
+  - ``-k`` - uses ``my_ssh_key`` in the path provided for authentication.
+  - ``-f`` - allocates 3 forks.
+  - ``-T`` - sets a 30-second timeout.
+  - ``-t`` - runs only tasks marked with ``my_tag``.
+  - ``-m`` - loads local modules from ``/path/to/my/modules``.
+  - ``-b`` - executes with elevated privileges (uses become).
+  - ``-K`` - prompts the user for the become password.
 
 See :ref:`ansible-playbook` for detailed documentation.
 
