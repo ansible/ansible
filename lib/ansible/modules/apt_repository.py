@@ -381,6 +381,7 @@ class SourcesList(object):
     def _add_valid_source(self, source_new, comment_new, file):
         # We'll try to reuse disabled source if we have it.
         # If we have more than one entry, we will enable them all - no advanced logic, remember.
+        self.module.log('ading source file: %s | %s | %s' % (source_new, comment_new, file))
         found = False
         for filename, n, enabled, source, comment in self:
             if source == source_new:
@@ -421,17 +422,13 @@ class UbuntuSourcesList(SourcesList):
 
     LP_API = 'https://launchpad.net/api/1.0/~%s/+archive/%s'
 
-    def __init__(self, module, add_ppa_signing_keys_callback=None):
+    def __init__(self, module):
         self.module = module
-        self.add_ppa_signing_keys_callback = add_ppa_signing_keys_callback
         self.codename = module.params['codename'] or distro.codename
         super(UbuntuSourcesList, self).__init__(module)
 
     def __deepcopy__(self, memo=None):
-        return UbuntuSourcesList(
-            self.module,
-            add_ppa_signing_keys_callback=self.add_ppa_signing_keys_callback
-        )
+        return UbuntuSourcesList(self.module)
 
     def _get_ppa_info(self, owner_name, ppa_name):
         lp_api = self.LP_API % (owner_name, ppa_name)
@@ -486,27 +483,26 @@ class UbuntuSourcesList(SourcesList):
                 # repository already exists
                 return
 
-            if self.add_ppa_signing_keys_callback is not None:
-                info = self._get_ppa_info(ppa_owner, ppa_name)
+            info = self._get_ppa_info(ppa_owner, ppa_name)
+            gpg_bin = self.module.get_bin_path('gpg', required=True)
 
-                gpg_bin = self.module.get_bin_path('gpg', required=True)
+            # add gpg sig if needed
+            if not self._key_already_exists(info['signing_key_fingerprint'], gpg_bin):
 
-                # add gpg sig if needed
-                if not self._key_already_exists(info['signing_key_fingerprint'], gpg_bin):
+                # TODO: report file that would have been added if not check_mode
+                keyfile = '/usr/share/keyrings/%s-%s-%s.gpg' % (os.path.basename(source).replace(' ', '-'), ppa_owner, ppa_name)
+                if not self.module.check_mode:
+                    command = [gpg_bin, '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', '--export', info['signing_key_fingerprint']]
 
-                    keyfile = '/usr/share/keyrings/%s-%s-%s.gpg' % (os.path.basename(source).replace(' ', '-'), ppa_owner, ppa_name)
-                    command = [gpg_bin, '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', '--export',
-                               info['signing_key_fingerprint']]
+                    rc, stdout, stderr = self.module.run_command(command, check_rc=True, encoding=None)
+                    if len(stdout) == 0:
+                        self.module.fail_json(msg='Unable to get required signging key', rc=rc, stderr=stderr, command=command)
                     try:
-                        rc, stdout, stderr = self.add_ppa_signing_keys_callback(command)
-                        with open(keyfile, 'bw+') as f:
+                        with open(keyfile, 'wb') as f:
                             f.write(stdout)
-                    except (TypeError) as e:
-                        pass    # checkmode, we got None
+                        self.module.log('Added repo key "%s" for apt to file "%s"' % (info['signing_key_fingerprint'], keyfile))
                     except (OSError, IOError) as e:
-                        self.module.fail_json(rc=rc, stderr=stderr, error=to_native(e))
-
-                    self.module.log('Added repo key "%s" for apt to file "%s"' % (info['signing_key_fingerprint'], keyfile))
+                        self.module.fail_json(msg='Unable to add required singing key for%s ', rc=rc, stderr=stderr, error=to_native(e))
 
             file = file or self._suggest_filename('%s_%s' % (line, self.codename))
         else:
@@ -541,16 +537,6 @@ class UbuntuSourcesList(SourcesList):
                     _repositories.append(source_line)
 
         return _repositories
-
-
-def get_add_ppa_signing_key_callback(module):
-    def _run_command(command):
-        module.run_command(command, check_rc=True)
-
-    if module.check_mode:
-        return None
-    else:
-        return _run_command
 
 
 def revert_sources_list(sources_before, sources_after, sourceslist_before):
@@ -643,7 +629,7 @@ def main():
         module.fail_json(msg='Please set argument \'repo\' to a non-empty value')
 
     if isinstance(distro, aptsources_distro.Distribution):
-        sourceslist = UbuntuSourcesList(module, add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
+        sourceslist = UbuntuSourcesList(module)
     else:
         module.fail_json(msg='Module apt_repository is not supported on target.')
 
