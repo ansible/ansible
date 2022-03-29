@@ -625,7 +625,7 @@ def _get_meta_from_src_dir(
                 yaml_err,
             )
 
-    if not isinstance(manifest, MutableMapping):
+    if not isinstance(manifest, dict):
         if require_build_metadata:
             raise AnsibleError(f"The collection galaxy.yml at '{to_native(galaxy_yml)}' is incorrectly formatted.")
         # Valid build metadata is not required by ansible-galaxy list. Raise ValueError to fall back to implicit metadata.
