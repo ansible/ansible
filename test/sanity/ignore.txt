@@ -48,7 +48,6 @@ lib/ansible/executor/powershell/async_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/exec_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/task_queue_manager.py pylint:disallowed-name
 lib/ansible/keyword_desc.yml no-unwanted-files
-lib/ansible/modules/apt_key.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
 lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid
 lib/ansible/modules/assemble.py validate-modules:nonexistent-parameter-documented
@@ -332,7 +331,6 @@ lib/ansible/module_utils/compat/_selectors2.py mypy-3.8:assignment  # vendored c
 lib/ansible/module_utils/compat/_selectors2.py mypy-3.9:assignment  # vendored code
 lib/ansible/module_utils/compat/_selectors2.py mypy-3.10:assignment  # vendored code
 lib/ansible/module_utils/compat/_selectors2.py mypy-2.7:attr-defined  # vendored code
-lib/ansible/modules/apt_key.py validate-modules:ansible-deprecated-version
 lib/ansible/plugins/cache/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/callback/default.py pylint:ansible-deprecated-version
 test/support/integration/plugins/modules/ec2.py pylint:ansible-deprecated-version
