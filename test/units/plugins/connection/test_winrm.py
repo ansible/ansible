@@ -6,6 +6,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+
 import pytest
 
 from io import StringIO
@@ -255,8 +257,9 @@ class TestWinRMKerbAuth(object):
         assert len(mock_calls) == 1
         assert mock_calls[0][1] == expected
         actual_env = mock_calls[0][2]['env']
-        assert list(actual_env.keys()) == ['KRB5CCNAME']
+        assert sorted(list(actual_env.keys())) == ['KRB5CCNAME', 'PATH']
         assert actual_env['KRB5CCNAME'].startswith("FILE:/")
+        assert actual_env['PATH'] == os.environ['PATH']
 
     @pytest.mark.parametrize('options, expected', [
         [{"_extras": {}},
@@ -287,8 +290,9 @@ class TestWinRMKerbAuth(object):
         mock_calls = mock_pexpect.mock_calls
         assert mock_calls[0][1] == expected
         actual_env = mock_calls[0][2]['env']
-        assert list(actual_env.keys()) == ['KRB5CCNAME']
+        assert sorted(list(actual_env.keys())) == ['KRB5CCNAME', 'PATH']
         assert actual_env['KRB5CCNAME'].startswith("FILE:/")
+        assert actual_env['PATH'] == os.environ['PATH']
         assert mock_calls[0][2]['echo'] is False
         assert mock_calls[1][0] == "().expect"
         assert mock_calls[1][1] == (".*:",)
