@@ -333,7 +333,6 @@ lib/ansible/module_utils/compat/_selectors2.py mypy-3.9:assignment  # vendored c
 lib/ansible/module_utils/compat/_selectors2.py mypy-3.10:assignment  # vendored code
 lib/ansible/module_utils/compat/_selectors2.py mypy-2.7:attr-defined  # vendored code
 lib/ansible/modules/apt_key.py validate-modules:ansible-deprecated-version
-lib/ansible/modules/command.py validate-modules:ansible-deprecated-version
 lib/ansible/modules/get_url.py pylint:ansible-deprecated-version
 lib/ansible/plugins/cache/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/callback/default.py pylint:ansible-deprecated-version
