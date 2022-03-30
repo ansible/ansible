@@ -221,7 +221,7 @@ class NetworkInventoryTargetFilter(TargetFilter[NetworkInventoryConfig]):
     """Target filter for network inventory."""
 
 
-class OriginTargetFilter(TargetFilter[OriginConfig]):
+class OriginTargetFilter(PosixTargetFilter[OriginConfig]):
     """Target filter for localhost."""
 
 
