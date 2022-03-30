@@ -10,7 +10,7 @@
       - "'http://admin:secret@example.com' is url"
       - "'ftps://admin:secret@example.com' is url"
       - "'admin:secret@example.com' is not url"
-
+      - "'http://admin:secret@example.com/myfile?parm=1&param=2' is url"
 - name: Assert uri tests
   assert:
     that:
@@ -23,3 +23,4 @@
       - "'http://admin:secret@example.com' is uri"
       - "'ftps://admin:secret@example.com' is uri"
       - "'admin:secret@example.com' is not uri"
+      - "'http://admin:secret@example.com/myfile?parm=1&param=2' is uri"
