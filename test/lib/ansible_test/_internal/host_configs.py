@@ -419,7 +419,7 @@ class OriginConfig(ControllerHostConfig, PosixConfig):
     @property
     def have_root(self):  # type: () -> bool
         """True if root is available, otherwise False."""
-        return os.getuid() != 0
+        return os.getuid() == 0
 
 
 @dataclasses.dataclass
