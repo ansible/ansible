@@ -32,8 +32,6 @@
 
     - name: Find libfaketime path
       shell: '{{ list_pkg_files }} {{ faketime_pkg }} | grep -F libfaketime.so.1'
-      args:
-        warn: false
       register: libfaketime_path
       when: list_pkg_files is defined
 

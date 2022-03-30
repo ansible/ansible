@@ -59,8 +59,6 @@
 
 - name: list the created tar contents
   command: tar -tf {{ galaxy_dir }}/scratch/ansible_test/ignore/ansible_test-ignore-1.0.0.tar.gz
-  args:
-    warn: false
   register: tar_output
 
 - name: assert ignored files are not present in the archive

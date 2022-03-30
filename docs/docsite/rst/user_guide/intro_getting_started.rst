@@ -134,8 +134,6 @@ and may see output like this:
    fatal: [192.0.2.50]: UNREACHABLE! => {"changed": false, "msg": "Failed to connect to the host via ssh: ssh: connect to host 192.0.2.50 port 22: No route to host", "unreachable": true}
    
    TASK [Leaving a mark] *******************************************************************************************************************
-   [WARNING]: Consider using the file module with state=touch rather than running 'touch'.  If you need to use command because file is
-   insufficient you can add 'warn: false' to this command task or set 'command_warnings=False' in ansible.cfg to get rid of this message.
    changed: [aserver.example.org]
    changed: [bserver.example.org]
    
