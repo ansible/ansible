@@ -722,7 +722,7 @@ class ActionBase(ABC):
         # create an extra round trip.
         #
         # Also note that due to the above, this can prevent the
-        # ALLOW_WORLD_READABLE_TMPFILES logic below from ever getting called. We
+        # world_readable_temp logic below from ever getting called. We
         # leave this up to the user to rectify if they have both of these
         # features enabled.
         group = self.get_shell_option('common_remote_group')
