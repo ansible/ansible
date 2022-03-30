@@ -503,7 +503,7 @@ class TestActionBase(unittest.TestCase):
             'stderr': '',
         }
         # TODO: Add test to assert warning is shown if
-        # ALLOW_WORLD_READABLE_TMPFILES is set in this case.
+        # world_readable_temp is set in this case.
         assertSuccess()
         action_base._remote_chgrp.assert_called_once_with(
             remote_paths,
