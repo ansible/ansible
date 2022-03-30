@@ -7,6 +7,9 @@
       - "'file://etc/hosts' is not url"   # uris not urls
       - "'mailto://me@nowhere.com' is not url"
       - "'asldkfjhalsidfthjo' is not url" # junk
+      - "'http://admin:secret@example.com' is url"
+      - "'ftps://admin:secret@example.com' is url"
+      - "'admin:secret@example.com' is not url"
 
 - name: Assert uri tests
   assert:
@@ -17,3 +20,6 @@
       - "'mailto://me@nowhere.com' is uri"
       - "'sftp://me@nowhere.com' is uri"
       - "'asldkfjhalsidfthjo' is not uri" # junk
+      - "'http://admin:secret@example.com' is uri"
+      - "'ftps://admin:secret@example.com' is uri"
+      - "'admin:secret@example.com' is not uri"
