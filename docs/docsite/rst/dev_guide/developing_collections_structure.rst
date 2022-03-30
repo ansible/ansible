@@ -70,7 +70,9 @@ For community collections included in the Ansible PyPI package, docs.ansible.com
      toctree:
        - scenario_guide
 
-The index page of the documentation for your collection displays the title you define in ``docs/docsite/extra-docs.yml`` with a link to your extra documentation. For an example, see the `community.docker collection repo <https://github.com/ansible-collections/community.docker/tree/main/docs/docsite>`_ and the `community.docker collection documentation <https://docs.ansible.com/ansible/latest/collections/community/docker/index.html>`_. 
+The index page of the documentation for your collection displays the title you define in ``docs/docsite/extra-docs.yml`` with a link to your extra documentation. For an example, see the `community.docker collection repo <https://github.com/ansible-collections/community.docker/tree/main/docs/docsite>`_ and the `community.docker collection documentation <https://docs.ansible.com/ansible/latest/collections/community/docker/index.html>`_.
+
+You can add extra links to your collection index page and plugin pages with the ``docs/docsite/links.yml`` file. This populates the links under `Description and Communications <https://docs.ansible.com/ansible/devel/collections/community/dns/index.html#plugins-in-community-dns>`_ headings as well as links at the end of the individual plugin pages. See the `collection_template links.yml file <https://github.com/ansible-collections/collection_template/blob/main/docs/docsite/links.yml>`_ for a complete description of the structure and use of this file to create links.
 
 Plugin and module documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
