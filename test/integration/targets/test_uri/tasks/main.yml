@@ -1,0 +1,19 @@
+- name: Assert url tests
+  assert:
+    that:
+      - "'http://google.com' is url"      # simple case
+      - "'htp://google.com' is not url"   # bad schema
+      - "'ftp://google.com' is url"       # other schema
+      - "'file://etc/hosts' is not url"   # uris not urls
+      - "'mailto://me@nowhere.com' is not url"
+      - "'asldkfjhalsidfthjo' is not url" # junk
+
+- name: Assert uri tests
+  assert:
+    that:
+      - "'http://google.com' is uri"      # simple case, urls are uris but not all uris are urls
+      - "'ftp://google.com' is uri"       # other schema
+      - "'file://etc/hosts' is uri "      # uris that are not urls
+      - "'mailto://me@nowhere.com' is uri"
+      - "'sftp://me@nowhere.com' is uri"
+      - "'asldkfjhalsidfthjo' is not uri" # junk

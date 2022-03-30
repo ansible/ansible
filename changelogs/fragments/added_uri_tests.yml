@@ -1,0 +1,2 @@
+minor_changes:
+  - new tests url and uri will verify a string matches the standard, but they don't check existance of the resource
