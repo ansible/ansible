@@ -10,8 +10,6 @@
 
 - name: Update cache
   command: dnf makecache
-  args:
-    warn: no
 
 - name: Install docker
   dnf:

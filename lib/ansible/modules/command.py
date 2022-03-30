@@ -72,14 +72,6 @@ options:
     description:
       - Change into this directory before running the command.
     version_added: "0.6"
-  warn:
-    description:
-      - (deprecated) Enable or disable task warnings.
-      - This feature is deprecated and will be removed in 2.14.
-      - As of version 2.11, this option is now disabled by default.
-    type: bool
-    default: no
-    version_added: "1.8"
   stdin:
     description:
       - Set the stdin of the command directly to the specified value.
@@ -229,42 +221,6 @@ from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.common.collections import is_iterable
 
 
-def check_command(module, commandline):
-    arguments = {'chown': 'owner', 'chmod': 'mode', 'chgrp': 'group',
-                 'ln': 'state=link', 'mkdir': 'state=directory',
-                 'rmdir': 'state=absent', 'rm': 'state=absent', 'touch': 'state=touch'}
-    commands = {'curl': 'get_url or uri', 'wget': 'get_url or uri',
-                'svn': 'subversion', 'service': 'service',
-                'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
-                'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'replace, lineinfile or template',
-                'dnf': 'dnf', 'zypper': 'zypper'}
-    become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun', 'machinectl']
-    if isinstance(commandline, list):
-        command = commandline[0]
-    else:
-        command = commandline.split()[0]
-    command = os.path.basename(command)
-
-    disable_suffix = "If you need to use '{cmd}' because the {mod} module is insufficient you can add" \
-                     " 'warn: false' to this command task or set 'command_warnings=False' in" \
-                     " the defaults section of ansible.cfg to get rid of this message."
-    substitutions = {'mod': None, 'cmd': command}
-
-    if command in arguments:
-        msg = "Consider using the {mod} module with {subcmd} rather than running '{cmd}'.  " + disable_suffix
-        substitutions['mod'] = 'file'
-        substitutions['subcmd'] = arguments[command]
-        module.warn(msg.format(**substitutions))
-
-    if command in commands:
-        msg = "Consider using the {mod} module rather than running '{cmd}'.  " + disable_suffix
-        substitutions['mod'] = commands[command]
-        module.warn(msg.format(**substitutions))
-
-    if command in become:
-        module.warn("Consider using 'become', 'become_method', and 'become_user' rather than running %s" % (command,))
-
-
 def main():
 
     # the command module is the one ansible module that does not take key=value args
@@ -280,7 +236,6 @@ def main():
             creates=dict(type='path'),
             removes=dict(type='path'),
             # The default for this really comes from the action plugin
-            warn=dict(type='bool', default=False, removed_in_version='2.14', removed_from_collection='ansible.builtin'),
             stdin=dict(required=False),
             stdin_add_newline=dict(type='bool', default=True),
             strip_empty_ends=dict(type='bool', default=True),
@@ -294,7 +249,6 @@ def main():
     argv = module.params['argv']
     creates = module.params['creates']
     removes = module.params['removes']
-    warn = module.params['warn']
     stdin = module.params['stdin']
     stdin_add_newline = module.params['stdin_add_newline']
     strip = module.params['strip_empty_ends']
@@ -325,9 +279,6 @@ def main():
         args = [to_native(arg, errors='surrogate_or_strict', nonstring='simplerepr') for arg in args]
 
     r['cmd'] = args
-    if warn:
-        # nany telling you to use module instead!
-        check_command(module, args)
 
     if chdir:
         chdir = to_bytes(chdir, errors='surrogate_or_strict')

@@ -26,7 +26,6 @@
       command: "ln -s '{{ item.value }}' '{{ item.key }}'"
       args:
         chdir: '{{role_path}}/files/subdir/subdir1'
-        warn: no
       with_dict: "{{ symlinks }}"
       delegate_to: localhost
 

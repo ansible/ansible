@@ -403,8 +403,6 @@ EXAMPLES = '''
 # Handler showing how to clean yum metadata cache
 - name: yum-clean-metadata
   ansible.builtin.command: yum clean metadata
-  args:
-    warn: no
 
 # Example removing a repository and cleaning up metadata cache
 - name: Remove repository (and clean up left-over metadata)
