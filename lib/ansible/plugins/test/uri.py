@@ -21,6 +21,7 @@ def is_url(value):
     ''' Will verify that the string passed is a valid 'url' according to spec '''
     return is_uri(value, ['http', 'ftp', 'https', 'ftps'])
 
+
 class TestModule(object):
     ''' Ansible uri jinja2 tests '''
 
