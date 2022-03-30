@@ -1,0 +1,30 @@
+DOCUMENTATION:
+  name: uri
+  author: Ansible Core
+  version_added: "2.14"
+  short_description: check if string is a valid URI
+  description:
+    - Validates that the input string conforms to the URI standard, optionally that is also is in the list of schemas provided.
+  options:
+    _input:
+      description: possible URI
+      type: string
+      required: True
+    schemas:
+      description: subset of URI schemas to validate against, otherwise ANY schema is considered valid
+      type: list
+      elements: string
+      required: False
+EXAMPLES: |
+  # urls are uris
+  {{ 'http://example.com' is uri }}
+  # but not all uris are urls
+  {{ 'mailto://nowone@example.com' is uri }}
+  # looking only for file transfers uris
+  {{ 'mailto://nowone@example.com' is not uri(schemas=['ftp', 'ftps', 'sftp', 'file']) }}
+  # make sure uri is also url
+  {{ 'http://nobody:secret@example.com' is uri(schemas=['ftp', 'ftps', 'http', 'https']) }}
+RETURN:
+  _value:
+    description: Returns C(False) if the string is not a URI or the schema extracted does not match the supplied list
+    type: boolean

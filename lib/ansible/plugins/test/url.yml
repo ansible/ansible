@@ -1,0 +1,24 @@
+DOCUMENTATION:
+  name: url
+  author: Ansible Core
+  version_added: "2.14"
+  short_description: check if string is a valid URL
+  description:
+    - Validates a string to conform to the URL standard
+    - This is the same as calling the C(uri) test with ``schema=['ftp', 'ftp', 'http', 'https']``
+  options:
+    _input:
+      description: possible URL
+      type: string
+      required: True
+EXAMPLES: |
+  # simple url
+  {{ 'http://example.com' is url }}
+  # but not all uris are urls
+  {{ 'mailto://nowone@example.com' is not url }}
+  # more complex url
+  {{ 'ftp://admin:secret@example.com/path/to/myfile.yml' is url }}
+RETURN:
+  _value:
+    description: Returns C(False) if the string is not a URL, C(True) otherwise.
+    type: boolean
