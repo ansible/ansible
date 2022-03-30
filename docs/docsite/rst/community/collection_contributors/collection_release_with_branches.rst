@@ -12,7 +12,7 @@ Collections MUST follow the `semantic versioning <https://semver.org/>`_ rules. 
 Release planning and announcement
 ----------------------------------
 
-#. Announce your intention to release the collection in a corresponding pinned release issue / community pinboard of the collection and in the ``#ansible-community`` `Matrix/IRC channel <https://docs.ansible.com/ansible/devel/community/communication.html#real-time-chat>`_ (and in other dedicated channels if exist) in advance.
+#. Announce your intention to release the collection in a corresponding pinned release issue/community pinboard of the collection and in the ``#ansible-community`` `Matrix/IRC channel <https://docs.ansible.com/ansible/devel/community/communication.html#real-time-chat>`_ (and other dedicated channels if they exist).
 
 #. Ensure all the other repository maintainers are informed about the time of the following release.
 
@@ -199,11 +199,11 @@ Publishing the collection
 
   #. If the next version will be a new major version, create a pull request where you update the version in ``galaxy.yml`` to ``(X+1).0.0``. Note that the sanity tests will most likely fail since there will be deprecations with removal scheduled for ``(X+1).0.0``, which are flagged by the tests.
 
-  For every such deprecation, decide whether to remove them now (makes sense if complete ``modules/plugins`` are removed,
-  or redirects are removed), or whether to add ignore entries to the corresponding ``tests/sanity/ignore-*.txt`` file and
+  For every such deprecation, decide whether to remove them now (it makes sense if you remove the complete ``modules/plugins``,
+  or you remove redirects). Or whether to add ignore entries to the corresponding ``tests/sanity/ignore-*.txt`` file and
   create issues (makes sense for removed features in ``modules/plugins``).
   Once CI passes, merge the pull request. Make sure that this pull request is merged not too much later after the release
-  for ``verison_added`` sanity tests not to expect the wrong version for new feature pull request.
+  for ``verison_added`` sanity tests not to expect the wrong version for the new feature pull request.
 
 .. note::
 
