@@ -66,8 +66,6 @@
       register: repolist
       until: repolist.rc == 0
       retries: 5
-      args:
-        warn: no
 
     - name: ensure {{ yum_repository_test_repo.name }} was added
       assert:
