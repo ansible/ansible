@@ -304,7 +304,7 @@ class Connection(ConnectionBase):
         display.vvvvv("creating Kerberos CC at %s" % self._kerb_ccache.name)
         krb5ccname = "FILE:%s" % self._kerb_ccache.name
         os.environ["KRB5CCNAME"] = krb5ccname
-        krb5env = dict(KRB5CCNAME=krb5ccname)
+        krb5env = dict(PATH=os.environ["PATH"], KRB5CCNAME=krb5ccname)
 
         # Stores various flags to call with kinit, these could be explicit args set by 'ansible_winrm_kinit_args' OR
         # '-f' if kerberos delegation is requested (ansible_winrm_kerberos_delegation).
