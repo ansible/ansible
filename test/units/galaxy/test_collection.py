@@ -254,7 +254,8 @@ def test_cli_options(required_signature_count, valid, monkeypatch):
             galaxy_cli.run()
 
 
-@pytest.mark.parametrize('config,server',
+@pytest.mark.parametrize(
+    "config,server",
     [
         (
             # Options to create ini config
@@ -280,7 +281,7 @@ def test_cli_options(required_signature_count, valid, monkeypatch):
                 '_available_api_versions': {'v3': '/v3'},
             },
         ),
-    ]
+    ],
 )
 def test_bool_type_server_config_options(config, server, monkeypatch):
     cli_args = [
