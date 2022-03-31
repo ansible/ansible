@@ -62,14 +62,14 @@ display = Display()
 urlparse = six.moves.urllib.parse.urlparse
 
 SERVER_DEF = [
-    ('url', True),
-    ('username', False),
-    ('password', False),
-    ('token', False),
-    ('auth_url', False),
-    ('v3', False),
-    ('validate_certs', False),
-    ('client_id', False),
+    ('url', True, 'str'),
+    ('username', False, 'str'),
+    ('password', False, 'str'),
+    ('token', False, 'str'),
+    ('auth_url', False, 'str'),
+    ('v3', False, 'bool'),
+    ('validate_certs', False, 'bool'),
+    ('client_id', False, 'str'),
 ]
 
 
@@ -541,7 +541,7 @@ class GalaxyCLI(CLI):
 
         self.galaxy = Galaxy()
 
-        def server_config_def(section, key, required):
+        def server_config_def(section, key, required, option_type):
             return {
                 'description': 'The %s of the %s Galaxy server' % (key, section),
                 'ini': [
@@ -554,6 +554,7 @@ class GalaxyCLI(CLI):
                     {'name': 'ANSIBLE_GALAXY_SERVER_%s_%s' % (section.upper(), key.upper())},
                 ],
                 'required': required,
+                'type': option_type,
             }
 
         validate_certs_fallback = not context.CLIARGS['ignore_certs']
@@ -569,7 +570,7 @@ class GalaxyCLI(CLI):
         for server_priority, server_key in enumerate(server_list, start=1):
             # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
             # section [galaxy_server.<server>] for the values url, username, password, and token.
-            config_dict = dict((k, server_config_def(server_key, k, req)) for k, req in SERVER_DEF)
+            config_dict = dict((k, server_config_def(server_key, k, req, ensure_type)) for k, req, ensure_type in SERVER_DEF)
             defs = AnsibleLoader(yaml_dump(config_dict)).get_single_data()
             C.config.initialize_plugin_configuration_definitions('galaxy_server', server_key, defs)
 
