@@ -1712,11 +1712,6 @@ NETWORK_GROUP_MODULES:
   default: [eos, nxos, ios, iosxr, junos, enos, ce, vyos, sros, dellos9, dellos10, dellos6, asa, aruba, aireos, bigip, ironware, onyx, netconf, exos, voss, slxos]
   description: 'TODO: write it'
   env:
-  - name: NETWORK_GROUP_MODULES
-    deprecated:
-      why: environment variables without ``ANSIBLE_`` prefix are deprecated
-      version: "2.12"
-      alternatives: the ``ANSIBLE_NETWORK_GROUP_MODULES`` environment variable
   - name: ANSIBLE_NETWORK_GROUP_MODULES
   ini:
   - {key: network_group_modules, section: defaults}

@@ -1,0 +1,2 @@
+removed_features:
+  - Remove deprecated ``NETWORK_GROUP_MODULES`` environment variable (https://github.com/ansible/ansible/issues/77397)
