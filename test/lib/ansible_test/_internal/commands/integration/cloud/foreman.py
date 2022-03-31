@@ -23,7 +23,7 @@ class ForemanProvider(CloudProvider):
     """Foreman plugin. Sets up Foreman stub server for tests."""
     DOCKER_SIMULATOR_NAME = 'foreman-stub'
 
-    # Default image to run Foreperson stub from.
+    # Default image to run Foreman stub from.
     #
     # The simulator must be pinned to a specific version
     # to guarantee CI passes with the version used.
