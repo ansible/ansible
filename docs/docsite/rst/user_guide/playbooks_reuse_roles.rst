@@ -406,7 +406,7 @@ Passing different parameters
 
 If you pass different parameters in each role definition, Ansible runs the role more than once. Providing different variable values is not the same as passing different role parameters. You must use the ``roles`` keyword for this behavior, since ``import_role`` and ``include_role`` do not accept role parameters.
 
-This playbook runs the ``foo`` role twice:
+This play runs the ``foo`` role twice:
 
 .. code-block:: yaml
 
