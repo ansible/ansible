@@ -784,11 +784,6 @@ DEFAULT_LIBVIRT_LXC_NOSECLABEL:
     - "This setting causes libvirt to connect to lxc containers by passing --noseclabel to virsh.
       This is necessary when running on systems which do not have SELinux."
   env:
-  - name: LIBVIRT_LXC_NOSECLABEL
-    deprecated:
-      why: environment variables without ``ANSIBLE_`` prefix are deprecated
-      version: "2.12"
-      alternatives: the ``ANSIBLE_LIBVIRT_LXC_NOSECLABEL`` environment variable
   - name: ANSIBLE_LIBVIRT_LXC_NOSECLABEL
   ini:
   - {key: libvirt_lxc_noseclabel, section: selinux}
