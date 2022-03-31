@@ -11,6 +11,7 @@ import os
 import pytest
 import re
 import tarfile
+import tempfile
 import uuid
 
 from hashlib import sha256
@@ -203,7 +204,7 @@ def manifest(manifest_info):
 def server_config(monkeypatch):
     monkeypatch.setattr(C, 'GALAXY_SERVER_LIST', ['server1', 'server2', 'server3'])
 
-    default_options = dict((k, None) for k, v in SERVER_DEF)
+    default_options = dict((k, None) for k, v, t in SERVER_DEF)
 
     server1 = dict(default_options)
     server1.update({'url': 'https://galaxy.ansible.com/api/', 'validate_certs': False})
@@ -251,6 +252,71 @@ def test_cli_options(required_signature_count, valid, monkeypatch):
     else:
         with pytest.raises(SystemExit, match='2') as error:
             galaxy_cli.run()
+
+
+@pytest.mark.parametrize(
+    "config,server",
+    [
+        (
+            # Options to create ini config
+            {
+                'url': 'https://galaxy.ansible.com',
+                'validate_certs': 'False',
+                'v3': 'False',
+            },
+            # Expected server attributes
+            {
+                'validate_certs': False,
+                '_available_api_versions': {},
+            },
+        ),
+        (
+            {
+                'url': 'https://galaxy.ansible.com',
+                'validate_certs': 'True',
+                'v3': 'True',
+            },
+            {
+                'validate_certs': True,
+                '_available_api_versions': {'v3': '/v3'},
+            },
+        ),
+    ],
+)
+def test_bool_type_server_config_options(config, server, monkeypatch):
+    cli_args = [
+        'ansible-galaxy',
+        'collection',
+        'install',
+        'namespace.collection:1.0.0',
+    ]
+
+    config_lines = [
+        "[galaxy]",
+        "server_list=server1\n",
+        "[galaxy_server.server1]",
+        "url=%s" % config['url'],
+        "v3=%s" % config['v3'],
+        "validate_certs=%s\n" % config['validate_certs'],
+    ]
+
+    with tempfile.NamedTemporaryFile(suffix='.cfg') as tmp_file:
+        tmp_file.write(
+            to_bytes('\n'.join(config_lines))
+        )
+        tmp_file.flush()
+
+        with patch.object(C, 'GALAXY_SERVER_LIST', ['server1']):
+            with patch.object(C.config, '_config_file', tmp_file.name):
+                C.config._parse_config_file()
+                galaxy_cli = GalaxyCLI(args=cli_args)
+                mock_execute_install = MagicMock()
+                monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
+                galaxy_cli.run()
+
+    assert galaxy_cli.api_servers[0].name == 'server1'
+    assert galaxy_cli.api_servers[0].validate_certs == server['validate_certs']
+    assert galaxy_cli.api_servers[0]._available_api_versions == server['_available_api_versions']
 
 
 @pytest.mark.parametrize('global_ignore_certs', [True, False])
