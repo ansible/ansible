@@ -276,7 +276,7 @@ You can even combine these simple examples with other filters and lookups to cre
         xyz_stuff: 1234
         xyz_morestuff: 567
         myvarnames: "{{ q('varnames', '^xyz_') }}"
-        mydict: "{{ dict(myvarnames | zip(q('vars', *myvarnames))) }}"
+        mydict: "{{ dict(myvarnames|map('regex_replace', '^xyz_', '')|list | zip(q('vars', *myvarnames))) }}"
 
 A quick explanation, since there is a lot to unpack from these two lines:
 
