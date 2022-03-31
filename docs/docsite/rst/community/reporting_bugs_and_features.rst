@@ -38,17 +38,15 @@ If you find a bug, open an issue using the `issue template <https://github.com/a
 
 Fill out the issue template as completely and as accurately as possible. Include:
 
-  * your Ansible version
-  * the expected behavior
-  * the current behavior and why you think it is a bug
-  * what you've tried including the exact commands you were using or tasks you are running
-  * any relevant configurations and the components you used
-  * any relevant output plus ``ansible -vvvv`` (debugging) output
-  * the steps to reproduce the bug  
-    * Use a minimal reproducible example and comments describing examples
-    * Preserve formatting using `code blocks  <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_ when sharing YAML in playbooks.
+* your Ansible version
+* the expected behavior and what you've tried (including the exact commands you were using or tasks you are running)
+* the current behavior and why you think it is a bug
+* the steps to reproduce the bug 
+* a minimal reproducible example and comments describing examples
+* any relevant configurations and the components you used
+* any relevant output plus ``ansible -vvvv`` (debugging) output
 
-For multiple-file content, use gist.github.com, which is more durable than pastebin content.
+Make sure to preserve formatting using `code blocks  <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_ when sharing YAML in playbooks. For multiple-file content, use gist.github.com, which is more durable than pastebin content.
 
 .. _request_features:
 
