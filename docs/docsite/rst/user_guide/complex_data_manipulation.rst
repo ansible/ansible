@@ -273,7 +273,9 @@ You can even combine these simple examples with other filters and lookups to cre
  :caption: Using 'vars' to define dictionary from a set of lists without needing a task
 
     vars:
-        myvarnames: "{{ q('varnames', '^my') }}"
+        xyz_stuff: 1234
+        xyz_morestuff: 567
+        myvarnames: "{{ q('varnames', '^xyz_') }}"
         mydict: "{{ dict(myvarnames | zip(q('vars', *myvarnames))) }}"
 
 A quick explanation, since there is a lot to unpack from these two lines:
