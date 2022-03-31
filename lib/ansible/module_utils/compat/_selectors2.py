@@ -1,6 +1,6 @@
 # This file is from the selectors2.py package.  It backports the PSF Licensed
 # selectors module from the Python-3.5 stdlib to older versions of Python.
-# The author, Seth Michael Larson, dual licenses his modifications under the
+# The author, Seth Michael Larson, dual licenses their modifications under the
 # PSF License and MIT License:
 # https://github.com/SethMichaelLarson/selectors2#license
 #

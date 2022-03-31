@@ -73,7 +73,7 @@ DOCUMENTATION = '''
 '''
 
 EXAMPLES = '''
-# my.foreman.yml
+# my.foreperson.yml
 plugin: foreman
 url: http://localhost:2222
 user: ansible-tester
