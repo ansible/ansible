@@ -1,0 +1,2 @@
+removed_features:
+  - Remove deprecated ``LIBVIRT_LXC_NOSECLABEL`` environment variable (https://github.com/ansible/ansible/issues/77395)
