@@ -266,7 +266,7 @@ def test_cli_options(required_signature_count, valid, monkeypatch):
             # Expected server attributes
             {
                 'validate_certs': False,
-                'available_api_versions': {'v1': 'v1/', 'v2': 'v2/'},
+                '_available_api_versions': {},
             },
         ),
         (
@@ -277,7 +277,7 @@ def test_cli_options(required_signature_count, valid, monkeypatch):
             },
             {
                 'validate_certs': True,
-                'available_api_versions': {'v3': '/v3'},
+                '_available_api_versions': {'v3': '/v3'},
             },
         ),
     ]
@@ -315,7 +315,7 @@ def test_bool_type_server_config_options(config, server, monkeypatch):
 
     assert galaxy_cli.api_servers[0].name == 'server1'
     assert galaxy_cli.api_servers[0].validate_certs == server['validate_certs']
-    assert galaxy_cli.api_servers[0].available_api_versions == server['available_api_versions']
+    assert galaxy_cli.api_servers[0]._available_api_versions == server['_available_api_versions']
 
 
 @pytest.mark.parametrize('global_ignore_certs', [True, False])
