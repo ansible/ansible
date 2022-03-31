@@ -158,7 +158,6 @@ class PlaybookInclude(Base, Conditional, Taggable):
         '''
         Splits the playbook import line up into filename and parameters
         '''
-
         if v is None:
             raise AnsibleParserError("playbook import parameter is missing", obj=ds)
         elif not isinstance(v, string_types):
@@ -169,16 +168,5 @@ class PlaybookInclude(Base, Conditional, Taggable):
         items = split_args(v)
         if len(items) == 0:
             raise AnsibleParserError("import_playbook statements must specify the file name to import", obj=ds)
-        else:
-            new_ds['import_playbook'] = items[0].strip()
-            if len(items) > 1:
-                display.deprecated("Additional parameters in import_playbook statements are deprecated. "
-                                   "Use 'vars' instead. See 'import_playbook' documentation for examples.", version='2.14')
-                # rejoin the parameter portion of the arguments and
-                # then use parse_kv() to get a dict of params back
-                params = parse_kv(" ".join(items[1:]))
-                if 'tags' in params:
-                    new_ds['tags'] = params.pop('tags')
-                if 'vars' in new_ds:
-                    raise AnsibleParserError("import_playbook parameters cannot be mixed with 'vars' entries for import statements", obj=ds)
-                new_ds['vars'] = params
+
+        new_ds['import_playbook'] = items[0].strip()
