@@ -12,7 +12,7 @@ ANSIBLE_HOME:
   - key: home
     section: defaults
   type: path
-  version_added: '2.12'
+  version_added: '2.14'
 ANSIBLE_CONNECTION_PATH:
   name: Path of ansible-connection script
   default: null
