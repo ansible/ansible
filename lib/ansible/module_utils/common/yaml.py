@@ -27,7 +27,7 @@ if HAS_YAML:
         from yaml.cyaml import CParser as Parser
 
         HAS_LIBYAML = True
-    except AttributeError:
+    except (ImportError, AttributeError):
         from yaml import SafeLoader  # type: ignore[misc]
         from yaml import SafeDumper  # type: ignore[misc]
         from yaml.parser import Parser  # type: ignore[misc]
