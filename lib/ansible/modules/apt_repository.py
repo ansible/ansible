@@ -496,7 +496,7 @@ class UbuntuSourcesList(SourcesList):
 
                     rc, stdout, stderr = self.module.run_command(command, check_rc=True, encoding=None)
                     if len(stdout) == 0:
-                        self.module.fail_json(msg='Unable to get required signging key', rc=rc, stderr=stderr, command=command)
+                        self.module.fail_json(msg='Unable to get required signing key', rc=rc, stderr=stderr, command=command)
                     try:
                         with open(keyfile, 'wb') as f:
                             f.write(stdout)
