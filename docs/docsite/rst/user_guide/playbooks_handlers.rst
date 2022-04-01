@@ -47,6 +47,8 @@ This playbook, ``verify-apache.yml``, contains a single play with a handler.
             state: restarted
 
 In this example playbook, the Apache server is restarted by the handler after all tasks complete in the play.
+
+
 Notifying handlers
 ------------------
 
