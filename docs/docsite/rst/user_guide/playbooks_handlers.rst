@@ -106,7 +106,7 @@ Alternatively handlers can utilize the ``listen`` keyword. Using this handler ke
 
 Notifying ``restart web services`` topic will result in executing all handlers listening to that topic regardless of how those handlers are named.
 
-This use makes it much easier to trigger multiple handlers. It also decouples handlers from their names, making it easier to share handlers among playbooks and roles (especially when using third-party roles from a shared source like Ansible Galaxy).
+This use makes it much easier to trigger multiple handlers. It also decouples handlers from their names, making it easier to share handlers among playbooks and roles (especially when using third-party roles from a shared source such as Ansible Galaxy).
 
 Each handler should have a globally unique name. If multiple handlers with the same name are defined only the last one defined can be notified via ``notify``, effectively shadowing all of the previous handlers with the same name. Alternatively handlers sharing the same name can all be notified and executed if they listen on the same topic by notifying that topic.
 
