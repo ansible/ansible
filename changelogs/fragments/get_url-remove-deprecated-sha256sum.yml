@@ -1,0 +1,2 @@
+removed_features:
+  - get_url - remove deprecated ``sha256sum`` module param
