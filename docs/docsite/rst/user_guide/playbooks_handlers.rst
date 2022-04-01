@@ -104,7 +104,7 @@ Alternately, handlers can utilize the ``listen`` keyword. Using this handler key
           state: restarted
         listen: "restart web services"
 
-Notifying ``restart web services`` topic will result in executing all handlers listening to that topic regardless of how those handlers are named.
+Notifying the ``restart web services`` topic  results in executing all handlers listening to that topic regardless of how those handlers are named.
 
 This use makes it much easier to trigger multiple handlers. It also decouples handlers from their names, making it easier to share handlers among playbooks and roles (especially when using third-party roles from a shared source such as Ansible Galaxy).
 
