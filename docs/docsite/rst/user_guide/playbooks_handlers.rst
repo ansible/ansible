@@ -108,7 +108,7 @@ Notifying ``restart web services`` topic will result in executing all handlers l
 
 This use makes it much easier to trigger multiple handlers. It also decouples handlers from their names, making it easier to share handlers among playbooks and roles (especially when using third-party roles from a shared source such as Ansible Galaxy).
 
-Each handler should have a globally unique name. If multiple handlers with the same name are defined only the last one defined can be notified via ``notify``, effectively shadowing all of the previous handlers with the same name. Alternatively handlers sharing the same name can all be notified and executed if they listen on the same topic by notifying that topic.
+Each handler should have a globally unique name. If multiple handlers are defined with the same name, only the last one defined is notified with ``notify``, effectively shadowing all of the previous handlers with the same name. Alternately handlers sharing the same name can all be notified and executed if they listen on the same topic by notifying that topic.
 
 There is only one global scope for handlers (handler names and listen topics) regardless of where the handlers are defined. This also includes handlers defined in roles.
 
