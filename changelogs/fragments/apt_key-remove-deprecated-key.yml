@@ -1,0 +1,2 @@
+removed_features:
+  - apt_key - remove deprecated ``key`` module param
