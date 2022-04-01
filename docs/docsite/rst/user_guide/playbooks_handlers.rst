@@ -74,7 +74,7 @@ Tasks can instruct one or more handlers to be executed using the ``notify`` keyw
           name: apache
           state: restarted
 
-In the above example the handlers are executed on task change in the following order: ``Restart memcached``, ``Restart apache``. Handlers are executed in the order they are defined in the ``handlers`` section, not in the order listed in the ``notify`` statement. Notifying same handler multiple times will result in executing the handler only once regardless of how many tasks notify it. For example, if multiple tasks update a configuration file and notify a handler to restart Apache, Ansible only bounces Apache once to avoid unnecessary restarts.
+In the above example the handlers are executed on task change in the following order: ``Restart memcached``, ``Restart apache``. Handlers are executed in the order they are defined in the ``handlers`` section, not in the order listed in the ``notify`` statement. Notifying the same handler multiple times will result in executing the handler only once regardless of how many tasks notify it. For example, if multiple tasks update a configuration file and notify a handler to restart Apache, Ansible only bounces Apache once to avoid unnecessary restarts.
 
 
 Naming handlers
