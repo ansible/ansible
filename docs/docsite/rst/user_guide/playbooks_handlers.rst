@@ -172,7 +172,7 @@ Handlers in roles
 
 Handlers from roles are not just contained in their roles but rather inserted into global scope with all other handlers from a play. As such they can be used outside of the role they are defined in. It also means that their name can conflict with handlers from outside the role. To ensure that a handler from a role is notified as opposed to one from outside the role with the same name, notify the handler by using its name in the following form: ``role_name : handler_name``.
 
-Handlers notified within ``roles`` section are automatically flushed at the end of ``tasks`` section, but before any ``tasks`` handlers.
+Handlers notified within  the ``roles`` section are automatically flushed at the end of  the ``tasks`` section, but before any ``tasks`` handlers.
 
 
 Includes and imports in handlers
