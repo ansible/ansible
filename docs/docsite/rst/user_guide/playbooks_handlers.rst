@@ -179,7 +179,7 @@ Includes and imports in handlers
 --------------------------------
 Notifying a dynamic include like ``include_task`` as a handler will result in executing all tasks from within the include. It is not possible to notify a handler defined inside a dynamic include.
 
-Having a static include like ``import_task`` as a handler will result in that handler being effectively rewritten by handlers from within that import before the play execution. A static include itself cannot be notified, the tasks from withing that include, on the other hand, can be notified individually.
+Having a static include such as ``import_task`` as a handler results in that handler being effectively rewritten by handlers from within that import before the play execution. A static include itself cannot be notified, the tasks from withing that include, on the other hand, can be notified individually.
 
 
 Limitations
