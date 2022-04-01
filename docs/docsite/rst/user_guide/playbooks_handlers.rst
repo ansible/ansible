@@ -82,7 +82,7 @@ Naming handlers
 
 Handlers must be named in order for tasks to be able to notify them using the ``notify`` keyword.
 
-Alternatively handlers can utilize the ``listen`` keyword. Using this handler keyword handlers can listen on topics that can group multiple handlers as follows:
+Alternately, handlers can utilize the ``listen`` keyword. Using this handler keyword, handlers can listen on topics that can group multiple handlers as follows:
 
 .. code-block:: yaml
 
