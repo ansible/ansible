@@ -50,7 +50,7 @@ This playbook, ``verify-apache.yml``, contains a single play with a handler.
 Notifying handlers
 ------------------
 
-Tasks can instruct one or more handlers to  execute using the ``notify`` keyword. The ``notify`` keyword can be applied to a task and accepts a list of handler names that  are notified on a task change. Alternately, a string containing a single handler name can be supplied as well. The following example demonstrates how multiple handlers can be notified by a single task:
+Tasks can instruct one or more handlers to execute using the ``notify`` keyword. The ``notify`` keyword can be applied to a task and accepts a list of handler names that  are notified on a task change. Alternately, a string containing a single handler name can be supplied as well. The following example demonstrates how multiple handlers can be notified by a single task:
 
 .. code-block:: yaml
 
@@ -104,7 +104,7 @@ Alternately, handlers can utilize the ``listen`` keyword. Using this handler key
           state: restarted
         listen: "restart web services"
 
-Notifying the ``restart web services`` topic  results in executing all handlers listening to that topic regardless of how those handlers are named.
+Notifying the ``restart web services`` topic results in executing all handlers listening to that topic regardless of how those handlers are named.
 
 This use makes it much easier to trigger multiple handlers. It also decouples handlers from their names, making it easier to share handlers among playbooks and roles (especially when using third-party roles from a shared source such as Ansible Galaxy).
 
@@ -134,7 +134,7 @@ If you need handlers to run before the end of the play, add a task to flush them
 
 The ``meta: flush_handlers`` task triggers any handlers that have been notified at that point in the play.
 
-Once handlers are executed, either automatically after each mentioned section or manually by  the ``flush_handlers`` meta task, they can be notified and run again in later sections of the play.
+Once handlers are executed, either automatically after each mentioned section or manually by the ``flush_handlers`` meta task, they can be notified and run again in later sections of the play.
 
 
 Using variables with handlers
@@ -172,7 +172,7 @@ Handlers in roles
 
 Handlers from roles are not just contained in their roles but rather inserted into global scope with all other handlers from a play. As such they can be used outside of the role they are defined in. It also means that their name can conflict with handlers from outside the role. To ensure that a handler from a role is notified as opposed to one from outside the role with the same name, notify the handler by using its name in the following form: ``role_name : handler_name``.
 
-Handlers notified within  the ``roles`` section are automatically flushed at the end of  the ``tasks`` section, but before any ``tasks`` handlers.
+Handlers notified within the ``roles`` section are automatically flushed at the end of the ``tasks`` section, but before any ``tasks`` handlers.
 
 
 Includes and imports in handlers
