@@ -125,52 +125,7 @@ class HostState:
         return new_state
 
 
-def _redirect_to_enum(name):
-    if name.startswith('ITERATING_'):
-        rv = getattr(IteratingStates, name.replace('ITERATING_', ''))
-        display.deprecated(
-            f"PlayIterator.{name} is deprecated, use ansible.play_iterator.IteratingStates.{name} instead.",
-            version=2.14
-        )
-        return rv
-    elif name.startswith('FAILED_'):
-        rv = getattr(FailedStates, name.replace('FAILED_', ''))
-        display.deprecated(
-            f"PlayIterator.{name} is deprecated, use ansible.play_iterator.FailedStates.{name} instead.",
-            version=2.14
-        )
-        return rv
-
-    raise AttributeError(name)
-
-
-class MetaPlayIterator(type):
-    """Meta class to intercept calls to old *class* attributes
-    like PlayIterator.ITERATING_TASKS and use new enums instead.
-    This is for backwards compatibility as 3rd party strategies might
-    use those attributes. Deprecation warning is printed when old attr
-    is redirected to new enum.
-    """
-    def __getattribute__(cls, name):
-        try:
-            rv = _redirect_to_enum(name)
-        except AttributeError:
-            return super().__getattribute__(name)
-
-        return rv
-
-
-class PlayIterator(metaclass=MetaPlayIterator):
-
-    def __getattr__(self, name):
-        """Same as MetaPlayIterator.__getattribute__ but for instance attributes,
-        because our code used iterator_object.ITERATING_TASKS so it's safe to assume
-        that 3rd party code could use that too.
-
-        __getattr__ is called when the default attribute access fails so this
-        should not impact existing attributes lookup.
-        """
-        return _redirect_to_enum(name)
+class PlayIterator:
 
     def __init__(self, inventory, play, play_context, variable_manager, all_vars, start_at_done=False):
         self._play = play
