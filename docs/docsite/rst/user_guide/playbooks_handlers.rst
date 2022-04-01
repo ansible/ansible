@@ -134,7 +134,7 @@ If you need handlers to run before the end of the play, add a task to flush them
 
 The ``meta: flush_handlers`` task triggers any handlers that have been notified at that point in the play.
 
-Once handlers are executed, either automatically after each mentioned section or manually by ``flush_handlers`` meta task, they can be notified and run again in later sections of the play.
+Once handlers are executed, either automatically after each mentioned section or manually by  the ``flush_handlers`` meta task, they can be notified and run again in later sections of the play.
 
 
 Using variables with handlers
