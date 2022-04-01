@@ -50,7 +50,7 @@ This playbook, ``verify-apache.yml``, contains a single play with a handler.
 Notifying handlers
 ------------------
 
-Tasks can instruct one or more handlers to be executed using the ``notify`` keyword. The ``notify`` keyword can be applied to a task and accepts a list of handler names that would be notified on task change. Alternatively a string containing a single handler name can be supplied as well. The following example demonstrates how multiple handlers can be notified by a single task:
+Tasks can instruct one or more handlers to  execute using the ``notify`` keyword. The ``notify`` keyword can be applied to a task and accepts a list of handler names that  are notified on a task change. Alternately, a string containing a single handler name can be supplied as well. The following example demonstrates how multiple handlers can be notified by a single task:
 
 .. code-block:: yaml
 
