@@ -10,7 +10,6 @@ __metaclass__ = type
 # ansible.cli needs to be imported first, to ensure the source bin/* scripts run that code first
 from ansible.cli import CLI
 
-import json
 import pkgutil
 import os
 import os.path
@@ -29,7 +28,7 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common.json import AnsibleJSONEncoder
+from ansible.module_utils.common.json import json_dump
 from ansible.module_utils.common.yaml import yaml_dump
 from ansible.module_utils.compat import importlib
 from ansible.module_utils.six import string_types
@@ -62,7 +61,7 @@ def add_collection_plugins(plugin_list, plugin_type, coll_filter=None):
 
 def jdump(text):
     try:
-        display.display(json.dumps(text, cls=AnsibleJSONEncoder, sort_keys=True, indent=4))
+        display.display(json_dump(text))
     except TypeError as e:
         display.vvv(traceback.format_exc())
         raise AnsibleError('We could not convert all the documentation into JSON as there was a conversion issue: %s' % to_native(e))
@@ -700,7 +699,7 @@ class DocCLI(CLI, RoleMixin):
             if not fail_on_errors:
                 # Check whether JSON serialization would break
                 try:
-                    json.dumps(docs, cls=AnsibleJSONEncoder)
+                    json_dump(docs)
                 except Exception as e:  # pylint:disable=broad-except
                     plugin_docs[plugin] = {
                         'error': 'Cannot serialize documentation as JSON: %s' % to_native(e),
