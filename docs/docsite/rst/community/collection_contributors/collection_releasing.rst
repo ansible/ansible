@@ -22,6 +22,7 @@ Generally, releasing in the collections consists of:
 #. Creating a release git tag and pushing it.
 #. Automaticly publishing the release tarball on `Ansible Galaxy <https://galaxy.ansible.com/>`_ through the `Zuul dashboard <https://dashboard.zuul.ansible.com/t/ansible/builds?pipeline=release>`_.
 #. Final announcement.
+#. Optionally, `file a request to include a new collection into the Ansible package <https://github.com/ansible-collections/ansible-inclusion>`_.
 
 The collections under the `ansible-collections organization <https://github.com/ansible-collections>`_ follow  `semantic versioning <https://semver.org/>`_ when releasing. See  :ref:`collection_versioning_and_deprecation` for details.
 
