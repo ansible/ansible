@@ -1319,8 +1319,8 @@ class GalaxyCLI(CLI):
         collections_path = C.COLLECTIONS_PATHS
         if len([p for p in collections_path if p.startswith(path)]) == 0:
             display.warning("The specified collections path '%s' is not part of the configured Ansible "
-                            "collections paths '%s'. The installed collection won't be picked up in an Ansible "
-                            "run." % (to_text(path), to_text(":".join(collections_path))))
+                            "collections paths '%s'. The installed collection will not be picked up in an Ansible "
+                            "run, unless within a playbook-adjacent collections directory." % (to_text(path), to_text(":".join(collections_path))))
 
         output_path = validate_collection_path(path)
         b_output_path = to_bytes(output_path, errors='surrogate_or_strict')
