@@ -119,6 +119,8 @@ In case of the `Ansible Community Code of Conduct <https://docs.ansible.com/ansi
 
 In case of starting the removal process, the topic's description in the reason's part changes correspondingly.
 
+.. _chairperson:
+
 Chairperson
 ------------
 
