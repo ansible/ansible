@@ -1,0 +1,2 @@
+removed_features:
+  - Remove deprecated powershell functions ``Load-CommandUtils`` and ``Import-PrivilegeUtil``
