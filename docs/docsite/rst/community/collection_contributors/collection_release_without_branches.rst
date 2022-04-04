@@ -21,7 +21,7 @@ Release planning and announcement
 Creating the release branch
 ----------------------------
 
-1. Ensure you are in a default branch in your local fork (we use ``main`` in the following examples):
+1. Ensure you are in a default branch in your local fork. We use ``main`` in the following examples.
 
   .. code:: bash
 
@@ -54,7 +54,7 @@ Generating the changelog
 
    release_summary: |-
      Write some text here that should appear as the release summary for this version.
-     The format is reStructuredText (but not a list as for regular changelog fragments).
+     The format is reStructuredText, but not a list as for regular changelog fragments.
      This text will be inserted into the changelog.
 
   For example:
@@ -67,9 +67,9 @@ Generating the changelog
       that have been made after the previous release.
 
 
-2. If the content was recently moved from another collection, be sure you have all related changelog fragments in the ``changelogs/fragments`` directory. If not, copy them previously.
+2. If the content was recently moved from another collection (for example, migrating a module from one collection to another), ensure you have all related changelog fragments in the ``changelogs/fragments`` directory. If not, copy them previously.
 
-3. Run ``antsibull-changelog release --reload-plugins`` (should previously be installed with ``pip install antsibull-changelog``).
+3. Run ``antsibull-changelog release --reload-plugins`` . This package should previously be installed with ``pip install antsibull-changelog``.
 
 4. Verify that the ``CHANGELOG.rst`` looks as expected.
 
@@ -104,7 +104,7 @@ Publish the collection
 
 
 
-2. Wait until the new version is published on the collection's `Ansible Galaxy <https://galaxy.ansible.com/>`_ page (it will appear in a list of tarballs available to download).
+2. Wait until the new version is published on the collection's `Ansible Galaxy <https://galaxy.ansible.com/>`_ page. It will appear in a list of tarballs available to download.
 
 3. Update the version in the ``galaxy.yml`` file to the next **expected** version. Add, commit, and push to the ``upstream``'s default branch.
 

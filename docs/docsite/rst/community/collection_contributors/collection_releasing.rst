@@ -27,11 +27,11 @@ The collections under the `ansible-collections organization <https://github.com/
 
 To prepare for a release, a collection must have:
 
-* A publicly available policy of releasing, versioning, and deprecation (for example, written in its README or in a dedicated pinned issue).
-* A pinned issue when its release managers inform the community about planned or completed releases (can be combined with the release policy issue mentioned above).
+* A publicly available policy of releasing, versioning, and deprecation. This can be, for example, written in its README or in a dedicated pinned issue.
+* A pinned issue when its release managers inform the community about planned or completed releases. This can be combined with the release policy issue mentioned above.
 * A :ref:`changelog <collection_changelogs>`.
 * Releases of the collection tagged in the collection's repository.
-* CI pipelines up and running (can be implemented by using GitHub Actions, Azure Pipelines, Zuul).
+* CI pipelines up and running. This can be implemented by using GitHub Actions, Azure Pipelines, Zuul.
 * All CI tests running against a commit that releases the collection. If they do not pass, the collection MUST NOT be released.
 
 
@@ -47,7 +47,7 @@ Collection versioning and deprecation
 To preserve backward compatibility for users, every Ansible minor version series (5.1.x, 5.2.x, and so on) will keep the major version of a collection constant. For example, if  Ansible 5.0.0 includes ``community.general`` 4.0.2, then each Ansible 5.X.x release will include the latest ``community.general`` 4.y.z release available at build time. Ansible 5.x.x will **never** include a ``community.general`` 5.y.x release, even if it is available. Major collection version changes will be included in the next Ansible major release (6.0.0 in this case).
 Ensure that the current major release of your collection included in 6.0.0 receives at least bugfixes as long as new Ansible 6.X.X releases are produced.
 
-Since new minor releases are included, you can include new features, modules and plugins. You must make sure that you do not break backwards compatibility! (See `semantic versioning <https://semver.org/>`_.) This means in particular:
+Since new minor releases are included, you can include new features, modules and plugins. You must make sure that you do not break backwards compatibility. See `semantic versioning <https://semver.org/>`_. for more details. This means in particular:
 
 * You can fix bugs in **patch** releases but not add new features or deprecate things.
 * You can add new features and deprecate things in **minor** releases, but not remove things or change behavior of existing features.
@@ -65,8 +65,8 @@ Collections MUST include a changelog. To give a consistent feel for changelogs a
 
 Before releasing, verify the following for your changelogs:
 
-* All merged pull requests since the last release (except ones related to documentation and new modules/plugins), have :ref:`changelog fragments <collection_changelog_fragments>`.
-* New module and plugin (except jinja2 test and filter plugins) pull requests do **not** need a changelog fragment, they are auto-detected by the changelog generator by their ``version_added`` value.
+* All merged pull requests since the last release, except ones related to documentation and new modules/plugins, have :ref:`changelog fragments <collection_changelog_fragments>`.
+* New module and plugin pull requests, except jinja2 test and filter plugins, do **not** need a changelog fragment, they are auto-detected by the changelog generator by their ``version_added`` value.
 * All the fragments follow the :ref:`changelog entry format <collection_changelogs_how_to_format>`.
 
 Options for releasing a collection
