@@ -180,13 +180,17 @@ class InventoryCLI(CLI):
             from ansible.parsing.yaml.dumper import AnsibleDumper
             results = to_text(yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False, allow_unicode=True))
         elif context.CLIARGS['toml']:
-            from ansible.plugins.inventory.toml import toml_dumps, HAS_TOML
-            if not HAS_TOML:
+            from ansible.plugins.inventory.toml import toml_dumps, HAS_TOML, HAS_TOMLIW
+            if not HAS_TOML and not HAS_TOMLIW:
                 raise AnsibleError(
-                    'The python "toml" library is required when using the TOML output format'
+                    'The python "toml" or "tomli-w" library is required when using the TOML output format'
                 )
             try:
                 results = toml_dumps(stuff)
+            except TypeError as e:
+                raise AnsibleError(
+                    'The source inventory contains a value that cannot be represented in TOML: %s' % e
+                )
             except KeyError as e:
                 raise AnsibleError(
                     'The source inventory contains a non-string key (%s) which cannot be represented in TOML. '
