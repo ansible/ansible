@@ -24,6 +24,10 @@ def main():
         else:
             continue
 
+        # In some situations offset can be None. This can happen for syntax errors on Python 2.6
+        # (__future__ import following after a regular import).
+        offset = offset or 0
+
         result = "%s:%d:%d: %s: %s" % (path, lineno, offset, extype.__name__, safe_message(message))
 
         if sys.version_info <= (3,):
