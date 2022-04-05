@@ -11,6 +11,7 @@ Thank you for being a community collection maintainer. This guide offers an over
 
    maintainers_guidelines
    maintainers_workflow
+   collection_contributors/collection_releasing
 
 In addition to the information here, module maintainers should be familiar with:
 
