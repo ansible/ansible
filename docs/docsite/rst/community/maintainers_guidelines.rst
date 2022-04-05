@@ -66,7 +66,7 @@ The quarterly Ansible Contributor Summit is a global event that provides our con
 Weekly community Matrix/IRC meetings
 ------------------------------------
 
-The Community and the Steering Committee come together at weekly meetings in the ``#ansible-community`` :ref:`Matrix/Libera.Chat <https://docs.ansible.com/ansible/devel/community/communication.html#real-time-chat>` channel to discuss important project-scale questions. See the `schedule <https://github.com/ansible/community/blob/main/meetings/README.md#schedule>`_ and join.
+The Community and the Steering Committee come together at weekly meetings in the ``#ansible-community`` :ref:`Matrix/Libera.Chat <communication_irc>` channel to discuss important project-scale questions. See the `schedule <https://github.com/ansible/community/blob/main/meetings/README.md#schedule>`_ and join.
 
 Expanding the collection community
 ===================================

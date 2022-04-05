@@ -66,6 +66,8 @@ More precisely:
 
 We build short summary changelogs for minor releases as well as for major releases. If you backport a bugfix, include a changelog fragment with the backport PR.
 
+.. _collection_changelogs_how_to_format:
+
 Creating a changelog fragment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
