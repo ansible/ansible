@@ -49,7 +49,7 @@ Maintaining a separate file for each Ansible release allows a collection to pass
 Ansible
 ^^^^^^^
 
-When testing Ansible, all ignores are placed in the ``test/sanity/ignore.txt`` file.
+When testing Ansible, all ignores are placed in the ``tests/sanity/ignore.txt`` file.
 
 Only a single file is needed because ``ansible-test`` is developed and released as a part of Ansible itself.
 
