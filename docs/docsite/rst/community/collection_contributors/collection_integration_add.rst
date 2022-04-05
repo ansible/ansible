@@ -229,7 +229,7 @@ That is enough for our very basic example.
 
 In the first task, we run the ``postgresql_info`` module to fetch information from the database we installed and launched with the ``setup_postgresql_db`` target. We are saving the values returned by the module into the ``result`` variable.
 
-In the second task, we check the ``result`` variable (what the first task returned) with the ``assert`` module. We expect that, among other things, the result has the version and reports that the system state has not been changed.
+In the second task, we check the ``result`` variable, which is what the first task returned, with the ``assert`` module. We expect that, among other things, the result has the version and reports that the system state has not been changed.
 
 13. Run the tests in the Ubuntu 20.04 docker container:
 

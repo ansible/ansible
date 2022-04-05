@@ -11,10 +11,10 @@ Ansible Collections Contributor Guide
    reporting_collections
    create_pr_quick_start
    collection_contributors/test_index
-   documentation_contributions
    maintainers
    contributing_maintained_collections
    steering/steering_index
+   documentation_contributions
    other_tools_and_programs
 
 
