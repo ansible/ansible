@@ -84,25 +84,6 @@ class NativeJinjaUnsafeText(NativeJinjaText, AnsibleUnsafeText):
     pass
 
 
-class UnsafeProxy(object):
-    def __new__(cls, obj, *args, **kwargs):
-        from ansible.utils.display import Display
-        Display().deprecated(
-            'UnsafeProxy is being deprecated. Use wrap_var or AnsibleUnsafeBytes/AnsibleUnsafeText directly instead',
-            version='2.13', collection_name='ansible.builtin'
-        )
-        # In our usage we should only receive unicode strings.
-        # This conditional and conversion exists to sanity check the values
-        # we're given but we may want to take it out for testing and sanitize
-        # our input instead.
-        if isinstance(obj, AnsibleUnsafe):
-            return obj
-
-        if isinstance(obj, string_types):
-            obj = AnsibleUnsafeText(to_text(obj, errors='surrogate_or_strict'))
-        return obj
-
-
 def _wrap_dict(v):
     return dict((wrap_var(k), wrap_var(item)) for k, item in v.items())
 
