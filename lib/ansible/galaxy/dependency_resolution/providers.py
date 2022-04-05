@@ -316,16 +316,31 @@ class CollectionDependencyProviderBase(AbstractProvider):
         # The fqcn is guaranteed to be the same
         version_req = "A SemVer-compliant version or '*' is required. See https://semver.org to learn how to compose it correctly. "
         version_req += "This is an issue with the collection."
-        try:
-            coll_versions = self._api_proxy.get_collection_versions(first_req)
-        except TypeError as exc:
-            if first_req.is_concrete_artifact:
-                # Non hashable versions will cause a TypeError
-                raise ValueError(
-                    f"Invalid version found for the collection '{first_req}'. {version_req}"
-                ) from exc
-            # Unexpected error from a Galaxy server
-            raise
+
+        # If we're upgrading collections, we can't calculate preinstalled_candidates until the latest matches are found.
+        # Otherwise, we can potentially avoid a Galaxy API call by doing this first.
+        preinstalled_candidates = coll_versions = None
+        if not self._upgrade and first_req.type == 'galaxy':
+            preinstalled_candidates = {
+                candidate for candidate in self._preferred_candidates
+                if candidate.fqcn == fqcn and
+                all(self.is_satisfied_by(requirement, candidate) for requirement in requirements)
+            }
+            if preinstalled_candidates:
+                # Since we're not upgrading and a sufficient match was found, don't look for more recent versions
+                coll_versions = []
+
+        if coll_versions is None:
+            try:
+                coll_versions = self._api_proxy.get_collection_versions(first_req)
+            except TypeError as exc:
+                if first_req.is_concrete_artifact:
+                    # Non hashable versions will cause a TypeError
+                    raise ValueError(
+                        f"Invalid version found for the collection '{first_req}'. {version_req}"
+                    ) from exc
+                # Unexpected error from a Galaxy server
+                raise
 
         if first_req.is_concrete_artifact:
             # FIXME: do we assume that all the following artifacts are also concrete?
@@ -395,19 +410,20 @@ class CollectionDependencyProviderBase(AbstractProvider):
             reverse=True,  # prefer newer versions over older ones
         )
 
-        preinstalled_candidates = {
-            candidate for candidate in self._preferred_candidates
-            if candidate.fqcn == fqcn and
-            (
-                # check if an upgrade is necessary
-                all(self.is_satisfied_by(requirement, candidate) for requirement in requirements) and
+        if preinstalled_candidates is None:
+            preinstalled_candidates = {
+                candidate for candidate in self._preferred_candidates
+                if candidate.fqcn == fqcn and
                 (
-                    not self._upgrade or
-                    # check if an upgrade is preferred
-                    all(SemanticVersion(latest.ver) <= SemanticVersion(candidate.ver) for latest in latest_matches)
+                    # check if an upgrade is necessary
+                    all(self.is_satisfied_by(requirement, candidate) for requirement in requirements) and
+                    (
+                        not self._upgrade or
+                        # check if an upgrade is preferred
+                        all(SemanticVersion(latest.ver) <= SemanticVersion(candidate.ver) for latest in latest_matches)
+                    )
                 )
-            )
-        }
+            }
 
         return list(preinstalled_candidates) + latest_matches
 
