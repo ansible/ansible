@@ -86,10 +86,10 @@ General channels
 
 The clickable links will take you directly to the relevant Matrix room in your browser; room/channel information is also given for use in other clients:
 
-- `Community social room and posting news for the Bullhorn newsletter <https://matrix.to:/#/#social:ansible.im>`_ - ``Matrix: #social:ansible.im | IRC: #ansible-social``
-- `General usage and support questions <https://matrix.to:/#/#users:ansible.im>`_ - ``Matrix: #users:ansible.im | IRC: #ansible``
-- `Discussions on developer topics and code related to features or bugs <https://matrix.to/#/#devel:ansible.im>`_ - ``Matrix: #devel:ansible.im | IRC: #ansible-devel``
-- `Discussions on community and collections related topics <https://matrix.to:/#/#community:ansible.im>`_ - ``Matrix: #community:ansible.im | IRC: #ansible-community``
+- `Community social room and posting news for the Bullhorn newsletter <https://matrix.to:/#/#social:ansible.com>`_ - ``Matrix: #social:ansible.com | IRC: #ansible-social``
+- `General usage and support questions <https://matrix.to:/#/#users:ansible.com>`_ - ``Matrix: #users:ansible.com | IRC: #ansible``
+- `Discussions on developer topics and code related to features or bugs <https://matrix.to/#/#devel:ansible.com>`_ - ``Matrix: #devel:ansible.com | IRC: #ansible-devel``
+- `Discussions on community and collections related topics <https://matrix.to:/#/#community:ansible.com>`_ - ``Matrix: #community:ansible.com | IRC: #ansible-community``
 - `For public community meetings <https://matrix.to/#/#meeting:ansible.im>`_ - ``Matrix: #meeting:ansible.im | IRC: #ansible-meeting``
    - We will generally announce these on one or more of the above mailing lists. See the `meeting schedule and agenda page <https://github.com/ansible/community/blob/master/meetings/README.md>`_
 
@@ -100,28 +100,28 @@ Working groups
 
 Many of our community `Working Groups <https://github.com/ansible/community/wiki#working-groups>`_ meet in chat. If you want to get involved in a working group, join the Matrix room or IRC channel where it meets or comment on the agenda.
 
-- `Amazon (AWS) Working Group <https://github.com/ansible/community/wiki/AWS>`_ - Matrix: `#aws:ansible.im <https://matrix.to:/#/#aws:ansible.im>`_ | IRC: ``#ansible-aws``
-- `Ansible Lockdown Working Group <https://github.com/ansible/community/wiki/Lockdown>`_ (`Security playbooks/roles <https://github.com/ansible/ansible-lockdown>`_) - Matrix: `#lockdown:ansible.im <https://matrix.to:/#/#lockdown:ansible.im>`_ | IRC: ``#ansible-lockdown``
-- `AWX Working Group <https://github.com/ansible/awx>`_ - Matrix: `#awx:ansible.im <https://matrix.to:/#/#awx:ansible.im>`_ | IRC: ``#ansible-awx``
-- `Azure Working Group <https://github.com/ansible/community/wiki/Azure>`_ - Matrix: `#azure:ansible.im <https://matrix.to:/#/#azure:ansible.im>`_ | IRC: ``#ansible-azure``
-- `Community Working Group <https://github.com/ansible/community/wiki/Community>`_ (including Meetups) - Matrix: `#community:ansible.im <https://matrix.to:/#/#community:ansible.im>`_ | IRC: ``#ansible-community``
-- `Container Working Group <https://github.com/ansible/community/wiki/Container>`_ - Matrix: `#container:ansible.im <https://matrix.to:/#/#container:ansible.im>`_ | IRC: ``#ansible-container``
-- `Contributor Experience Working Group <https://github.com/ansible/community/wiki/Contributor-Experience>`_ - Matrix: `#community:ansible.im <https://matrix.to:/#/#community:ansible.im>`_ | IRC: ``#ansible-community``
+- `Amazon (AWS) Working Group <https://github.com/ansible/community/wiki/AWS>`_ - Matrix: `#aws:ansible.com <https://matrix.to:/#/#aws:ansible.com>`_ | IRC: ``#ansible-aws``
+- `Ansible Lockdown Working Group <https://github.com/ansible/community/wiki/Lockdown>`_ (`Security playbooks/roles <https://github.com/ansible/ansible-lockdown>`_) - Matrix: `#lockdown:ansible.com <https://matrix.to:/#/#lockdown:ansible.com>`_ | IRC: ``#ansible-lockdown``
+- `AWX Working Group <https://github.com/ansible/awx>`_ - Matrix: `#awx:ansible.com <https://matrix.to:/#/#awx:ansible.com>`_ | IRC: ``#ansible-awx``
+- `Azure Working Group <https://github.com/ansible/community/wiki/Azure>`_ - Matrix: `#azure:ansible.com <https://matrix.to:/#/#azure:ansible.com>`_ | IRC: ``#ansible-azure``
+- `Community Working Group <https://github.com/ansible/community/wiki/Community>`_ (including Meetups) - Matrix: `#community:ansible.com <https://matrix.to:/#/#community:ansible.com>`_ | IRC: ``#ansible-community``
+- `Container Working Group <https://github.com/ansible/community/wiki/Container>`_ - Matrix: `#container:ansible.com <https://matrix.to:/#/#container:ansible.com>`_ | IRC: ``#ansible-container``
+- `Contributor Experience Working Group <https://github.com/ansible/community/wiki/Contributor-Experience>`_ - Matrix: `#community:ansible.com <https://matrix.to:/#/#community:ansible.com>`_ | IRC: ``#ansible-community``
 - `DigitalOcean Working Group <https://github.com/ansible/community/wiki/Digital-Ocean>`_ - Matrix: `#digitalocean:ansible.im <https://matrix.to:/#/#digitalocean:ansible.im>`_ | IRC: ``#ansible-digitalocean``
-- `Diversity Working Group <https://github.com/ansible/community/wiki/Diversity>`_ - Matrix: `#diversity:ansible.im <https://matrix.to:/#/#diversity:ansible.im>`_ | IRC: ``#ansible-diversity``
-- `Docker Working Group <https://github.com/ansible/community/wiki/Docker>`_ - Matrix: `#devel:ansible.im <https://matrix.to:/#/#devel:ansible.im>`_ | IRC: ``#ansible-devel``
-- `Documentation Working Group <https://github.com/ansible/community/wiki/Docs>`_ - Matrix: `#docs:ansible.im <https://matrix.to:/#/#docs:ansible.im>`_ | IRC: ``#ansible-docs``
-- `Galaxy Working Group <https://github.com/ansible/community/wiki/Galaxy>`_ - Matrix: `#galaxy:ansible.im <https://matrix.to:/#/#galaxy:ansible.im>`_ | IRC: ``#ansible-galaxy``
-- `JBoss Working Group <https://github.com/ansible/community/wiki/JBoss>`_ - Matrix: `#jboss:ansible.im <https://matrix.to:/#/#jboss:ansible.im>`_ | IRC: ``#ansible-jboss``
-- `Kubernetes Working Group <https://github.com/ansible/community/wiki/Kubernetes>`_ - Matrix: `#kubernetes:ansible.im <https://matrix.to:/#/#kubernetes:ansible.im>`_ | IRC: ``#ansible-kubernetes``
-- `Linode Working Group <https://github.com/ansible/community/wiki/Linode>`_ - Matrix: `#linode:ansible.im <https://matrix.to:/#/#linode:ansible.im>`_ | IRC: ``#ansible-linode``
+- `Diversity Working Group <https://github.com/ansible/community/wiki/Diversity>`_ - Matrix: `#diversity:ansible.com <https://matrix.to:/#/#diversity:ansible.com>`_ | IRC: ``#ansible-diversity``
+- `Docker Working Group <https://github.com/ansible/community/wiki/Docker>`_ - Matrix: `#devel:ansible.com <https://matrix.to:/#/#devel:ansible.com>`_ | IRC: ``#ansible-devel``
+- `Documentation Working Group <https://github.com/ansible/community/wiki/Docs>`_ - Matrix: `#docs:ansible.com <https://matrix.to:/#/#docs:ansible.com>`_ | IRC: ``#ansible-docs``
+- `Galaxy Working Group <https://github.com/ansible/community/wiki/Galaxy>`_ - Matrix: `#galaxy:ansible.com <https://matrix.to:/#/#galaxy:ansible.com>`_ | IRC: ``#ansible-galaxy``
+- `JBoss Working Group <https://github.com/ansible/community/wiki/JBoss>`_ - Matrix: `#jboss:ansible.com <https://matrix.to:/#/#jboss:ansible.com>`_ | IRC: ``#ansible-jboss``
+- `Kubernetes Working Group <https://github.com/ansible/community/wiki/Kubernetes>`_ - Matrix: `#kubernetes:ansible.com <https://matrix.to:/#/#kubernetes:ansible.com>`_ | IRC: ``#ansible-kubernetes``
+- `Linode Working Group <https://github.com/ansible/community/wiki/Linode>`_ - Matrix: `#linode:ansible.com <https://matrix.to:/#/#linode:ansible.com>`_ | IRC: ``#ansible-linode``
 - `Molecule Working Group <https://github.com/ansible/community/wiki/Molecule>`_ (`testing platform for Ansible playbooks and roles <https://molecule.readthedocs.io>`_) - Matrix: `#molecule:ansible.im <https://matrix.to:/#/#molecule:ansible.im>`_ | IRC: ``#ansible-molecule``
-- `Network Working Group <https://github.com/ansible/community/wiki/Network>`_ - Matrix: `#network:ansible.im <https://matrix.to:/#/#network:ansible.im>`_ | IRC: ``#ansible-network``
-- `Remote Management Working Group <https://github.com/ansible/community/issues/409>`_ - Matrix: `#devel:ansible.im <https://matrix.to:/#/#devel:ansible.im>`_ | IRC: ``#ansible-devel``
-- `Testing Working Group <https://github.com/ansible/community/wiki/Testing>`_  - Matrix: `#devel:ansible.im <https://matrix.to:/#/#devel:ansible.im>`_ | IRC: ``#ansible-devel``
-- `VMware Working Group <https://github.com/ansible/community/wiki/VMware>`_ - Matrix: `#vmware:ansible.im <https://matrix.to:/#/#vmware:ansible.im>`_ | IRC: ``#ansible-vmware``
-- `Windows Working Group <https://github.com/ansible/community/wiki/Windows>`_ - Matrix: `#windows:ansible.im <https://matrix.to:/#/#windows:ansible.im>`_ | IRC: ``#ansible-windows``
-- `Ansible developer tools Group <https://github.com/ansible/community/wiki/Ansible-developer-tools>`_ - Matrix: `devtools:ansible.im <https://matrix.to/#/#devtools:ansible.im>`_ | IRC: ``#ansible-devtools``
+- `Network Working Group <https://github.com/ansible/community/wiki/Network>`_ - Matrix: `#network:ansible.com <https://matrix.to:/#/#network:ansible.com>`_ | IRC: ``#ansible-network``
+- `Remote Management Working Group <https://github.com/ansible/community/issues/409>`_ - Matrix: `#devel:ansible.com <https://matrix.to:/#/#devel:ansible.com>`_ | IRC: ``#ansible-devel``
+- `Testing Working Group <https://github.com/ansible/community/wiki/Testing>`_  - Matrix: `#devel:ansible.com <https://matrix.to:/#/#devel:ansible.com>`_ | IRC: ``#ansible-devel``
+- `VMware Working Group <https://github.com/ansible/community/wiki/VMware>`_ - Matrix: `#vmware:ansible.com <https://matrix.to:/#/#vmware:ansible.com>`_ | IRC: ``#ansible-vmware``
+- `Windows Working Group <https://github.com/ansible/community/wiki/Windows>`_ - Matrix: `#windows:ansible.com <https://matrix.to:/#/#windows:ansible.com>`_ | IRC: ``#ansible-windows``
+- `Ansible developer tools Group <https://github.com/ansible/community/wiki/Ansible-developer-tools>`_ - Matrix: `#devtools:ansible.com <https://matrix.to/#/#devtools:ansible.com>`_ | IRC: ``#ansible-devtools``
 
 Want to `form a new Working Group <https://github.com/ansible/community/blob/master/WORKING-GROUPS.md>`_?
 
