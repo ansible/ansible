@@ -3,25 +3,6 @@
 
 #AnsibleRequires -CSharpUtil Ansible.Privilege
 
-Function Import-PrivilegeUtil {
-    <#
-    .SYNOPSIS
-    No-op, as the C# types are automatically loaded.
-    #>
-    [CmdletBinding()]
-    Param()
-    $msg = "Import-PrivilegeUtil is deprecated and no longer needed, this cmdlet will be removed in a future version"
-    if ((Get-Command -Name Add-DeprecationWarning -ErrorAction SilentlyContinue) -and (Get-Variable -Name result -ErrorAction SilentlyContinue)) {
-        Add-DeprecationWarning -obj $result.Value -message $msg -version 2.12
-    }
-    else {
-        $module = Get-Variable -Name module -ErrorAction SilentlyContinue
-        if ($null -ne $module -and $module.Value.GetType().FullName -eq "Ansible.Basic.AnsibleModule") {
-            $module.Value.Deprecate($msg, "2.12")
-        }
-    }
-}
-
 Function Get-AnsiblePrivilege {
     <#
     .SYNOPSIS
@@ -98,5 +79,5 @@ Function Set-AnsiblePrivilege {
     }
 }
 
-Export-ModuleMember -Function Import-PrivilegeUtil, Get-AnsiblePrivilege, Set-AnsiblePrivilege
+Export-ModuleMember -Function Get-AnsiblePrivilege, Set-AnsiblePrivilege
 

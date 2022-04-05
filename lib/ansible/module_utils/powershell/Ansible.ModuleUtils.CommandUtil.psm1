@@ -3,25 +3,6 @@
 
 #AnsibleRequires -CSharpUtil Ansible.Process
 
-Function Load-CommandUtils {
-    <#
-    .SYNOPSIS
-    No-op, as the C# types are automatically loaded.
-    #>
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseSingularNouns", "", Justification = "Cannot change the name now")]
-    Param()
-    $msg = "Load-CommandUtils is deprecated and no longer needed, this cmdlet will be removed in a future version"
-    if ((Get-Command -Name Add-DeprecationWarning -ErrorAction SilentlyContinue) -and (Get-Variable -Name result -ErrorAction SilentlyContinue)) {
-        Add-DeprecationWarning -obj $result.Value -message $msg -version 2.12
-    }
-    else {
-        $module = Get-Variable -Name module -ErrorAction SilentlyContinue
-        if ($null -ne $module -and $module.Value.GetType().FullName -eq "Ansible.Basic.AnsibleModule") {
-            $module.Value.Deprecate($msg, "2.12")
-        }
-    }
-}
-
 Function Get-ExecutablePath {
     <#
     .SYNOPSIS
@@ -123,4 +104,4 @@ Function Run-Command {
 }
 
 # this line must stay at the bottom to ensure all defined module parts are exported
-Export-ModuleMember -Function Get-ExecutablePath, Load-CommandUtils, Run-Command
+Export-ModuleMember -Function Get-ExecutablePath, Run-Command
