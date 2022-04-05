@@ -12,17 +12,9 @@ provided that there have been enough changes merged to release.
 .. contents::
   :local:
 
-High-level steps to releasing a collection
+Preparing to release a collection
 --------------------------------------------
 
-Generally, releasing in the collections consists of:
-
-#. Planning and announcement.
-#. Generating a changelog.
-#. Creating a release git tag and pushing it.
-#. Automaticly publishing the release tarball on `Ansible Galaxy <https://galaxy.ansible.com/>`_ through the `Zuul dashboard <https://dashboard.zuul.ansible.com/t/ansible/builds?pipeline=release>`_.
-#. Final announcement.
-#. Optionally, `file a request to include a new collection into the Ansible package <https://github.com/ansible-collections/ansible-inclusion>`_.
 
 The collections under the `ansible-collections organization <https://github.com/ansible-collections>`_ follow  `semantic versioning <https://semver.org/>`_ when releasing. See  :ref:`collection_versioning_and_deprecation` for details.
 
@@ -34,6 +26,12 @@ To prepare for a release, a collection must have:
 * Releases of the collection tagged in the collection's repository.
 * CI pipelines up and running. This can be implemented by using GitHub Actions, Azure Pipelines, Zuul.
 * All CI tests running against a commit that releases the collection. If they do not pass, the collection MUST NOT be released.
+
+See :ref:`including_collection_ansible` if you plan on adding a new collection to the Ansible package.
+
+.. note:: 
+  
+  Your collection must pass ``ansible-test sanity`` tests. See :ref:`testing_collections` for details.
 
 
 .. _collection_versioning_and_deprecation:
