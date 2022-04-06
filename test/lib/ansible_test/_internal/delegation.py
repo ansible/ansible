@@ -171,7 +171,14 @@ def delegate_command(args, host_state, exclude, require):  # type: (EnvironmentC
 
             if networks is not None:
                 for network in networks:
-                    con.disconnect_network(network)
+                    try:
+                        con.disconnect_network(network)
+                    except SubprocessError:
+                        display.warning(
+                            'Unable to disconnect network "%s" (this is normal under podman). '
+                            'Tests will not be isolated from the network. Network-related tests may '
+                            'misbehave.' % (network,)
+                        )
             else:
                 display.warning('Network disconnection is not supported (this is normal under podman). '
                                 'Tests will not be isolated from the network. Network-related tests may misbehave.')
