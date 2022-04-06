@@ -1519,6 +1519,8 @@ INTERPRETER_PYTHON_DISTRO_MAP:
     ubuntu:
       '14': /usr/bin/python
       '16': /usr/bin/python3
+    solaris:
+      '11': /usr/bin/python
   version_added: "2.8"
   # FUTURE: add inventory override once we're sure it can't be abused by a rogue target
   # FUTURE: add a platform layer to the map so we could use for, eg, freebsd/macos/etc?

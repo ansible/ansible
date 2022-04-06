@@ -91,7 +91,7 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
             # this is lame, but returning None or throwing an exception is uglier
             return u'/usr/bin/python'
 
-        if platform_type != 'linux':
+        if platform_type != 'linux' and platform_type != 'sunos':
             raise NotImplementedError('unsupported platform for extended discovery: {0}'.format(to_native(platform_type)))
 
         platform_script = pkgutil.get_data('ansible.executor.discovery', 'python_target.py')
