@@ -403,7 +403,7 @@ INVENTORY_UNPARSED_WARNING:
     - These warnings can be silenced by adjusting this setting to False.
   env: [{name: ANSIBLE_INVENTORY_UNPARSED_WARNING}]
   ini:
-  - {key: inventory_unparsed_warning, section: defaults}
+  - {key: inventory_unparsed_warning, section: inventory}
   type: boolean
   version_added: "2.14"
 DOC_FRAGMENT_PLUGIN_PATH:
