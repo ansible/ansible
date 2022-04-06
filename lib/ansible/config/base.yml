@@ -412,7 +412,7 @@ INVENTORY_UNPARSED_WARNING:
   ini:
   - {key: inventory_unparsed_warning, section: defaults}
   type: boolean
-  version_added: "2.10"
+  version_added: "2.14"
 DOC_FRAGMENT_PLUGIN_PATH:
   name: documentation fragment plugins path
   default: ~/.ansible/plugins/doc_fragments:/usr/share/ansible/plugins/doc_fragments
