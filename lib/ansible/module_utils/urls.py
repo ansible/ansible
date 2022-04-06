@@ -1727,7 +1727,7 @@ def url_argument_spec():
 
 
 def fetch_url(module, url, data=None, headers=None, method=None,
-              use_proxy=True, force=False, last_mod_time=None, timeout=10,
+              use_proxy=None, force=False, last_mod_time=None, timeout=10,
               use_gssapi=False, unix_socket=None, ca_path=None, cookies=None, unredirected_headers=None):
     """Sends a request via HTTP(S) or FTP (needs the module as parameter)
 
@@ -1737,7 +1737,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     :kwarg data:          The data to be sent (in case of POST/PUT).
     :kwarg headers:       A dict with the request headers.
     :kwarg method:        "POST", "PUT", etc.
-    :kwarg boolean use_proxy:     Default: True
+    :kwarg use_proxy:     (optional) whether or not to use proxy (Default: True)
     :kwarg boolean force: If True: Do not get a cached copy (Default: False)
     :kwarg last_mod_time: Default: None
     :kwarg int timeout:   Default: 10
@@ -1775,6 +1775,9 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
     # Get validate_certs from the module params
     validate_certs = module.params.get('validate_certs', True)
+
+    if use_proxy is None:
+        use_proxy = module.params.get('use_proxy', True)
 
     username = module.params.get('url_username', '')
     password = module.params.get('url_password', '')
