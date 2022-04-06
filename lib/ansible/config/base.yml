@@ -394,6 +394,18 @@ LOCALHOST_WARNING:
   - {key: localhost_warning, section: defaults}
   type: boolean
   version_added: "2.6"
+INVENTORY_UNPARSED_WARNING:
+  name: Warning when no inventory files can be parsed, resulting in an implicit inventory with only localhost
+  default: True
+  description:
+    - By default Ansible will issue a warning when no inventory was loaded and notes that
+      it will use an implicit localhost-only inventory.
+    - These warnings can be silenced by adjusting this setting to False.
+  env: [{name: ANSIBLE_INVENTORY_UNPARSED_WARNING}]
+  ini:
+  - {key: inventory_unparsed_warning, section: defaults}
+  type: boolean
+  version_added: "2.14"
 DOC_FRAGMENT_PLUGIN_PATH:
   name: documentation fragment plugins path
   default: ~/.ansible/plugins/doc_fragments:/usr/share/ansible/plugins/doc_fragments
