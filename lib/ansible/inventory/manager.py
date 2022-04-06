@@ -232,7 +232,7 @@ class InventoryManager(object):
         else:
             if C.INVENTORY_UNPARSED_IS_FAILED:
                 raise AnsibleError("No inventory was parsed, please check your configuration and options.")
-            else:
+            elif C.INVENTORY_UNPARSED_WARNING:
                 display.warning("No inventory was parsed, only implicit localhost is available")
 
         for group in self.groups.values():
