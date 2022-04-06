@@ -592,6 +592,7 @@ def uri(module, url, dest, body, body_format, method, headers, socket_timeout, c
     resp, info = fetch_url(module, url, data=data, headers=headers,
                            method=method, timeout=socket_timeout, unix_socket=module.params['unix_socket'],
                            ca_path=ca_path, unredirected_headers=unredirected_headers,
+                           use_proxy=module.params['use_proxy'],
                            **kwargs)
 
     if src:
