@@ -1,0 +1,2 @@
+bugfixes:
+  - Ensure the correct ``environment_class`` is set on ``AnsibleJ2Template``
