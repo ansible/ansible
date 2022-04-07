@@ -674,6 +674,7 @@ class Templar:
             extensions=self._get_extensions(),
             loader=FileSystemLoader(loader.get_basedir() if loader else '.'),
         )
+        self.environment.template_class.environment_class = environment_class
 
         # jinja2 global is inconsistent across versions, this normalizes them
         self.environment.globals['dict'] = dict
