@@ -14,6 +14,7 @@ if t.TYPE_CHECKING:
         ConcreteArtifactsManager,
     )
     from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
+    from ansible.galaxy.api import GalaxyAPI
 
 from ansible.galaxy.collection.gpg import get_signature_from_source
 from ansible.galaxy.dependency_resolution.dataclasses import (
@@ -319,18 +320,17 @@ class CollectionDependencyProviderBase(AbstractProvider):
 
         # If we're upgrading collections, we can't calculate preinstalled_candidates until the latest matches are found.
         # Otherwise, we can potentially avoid a Galaxy API call by doing this first.
-        preinstalled_candidates = coll_versions = None
+        preinstalled_candidates = None
         if not self._upgrade and first_req.type == 'galaxy':
             preinstalled_candidates = {
                 candidate for candidate in self._preferred_candidates
                 if candidate.fqcn == fqcn and
                 all(self.is_satisfied_by(requirement, candidate) for requirement in requirements)
             }
-            if preinstalled_candidates:
-                # Since we're not upgrading and a sufficient match was found, don't look for more recent versions
-                coll_versions = []
-
-        if coll_versions is None:
+        if preinstalled_candidates:
+            # Since we're not upgrading and a sufficient match was found, don't look for more recent versions
+            coll_versions = []  # type: t.Iterable[t.Tuple[str, GalaxyAPI]]
+        else:
             try:
                 coll_versions = self._api_proxy.get_collection_versions(first_req)
             except TypeError as exc:
@@ -410,7 +410,7 @@ class CollectionDependencyProviderBase(AbstractProvider):
             reverse=True,  # prefer newer versions over older ones
         )
 
-        if preinstalled_candidates is None:
+        if not preinstalled_candidates:
             preinstalled_candidates = {
                 candidate for candidate in self._preferred_candidates
                 if candidate.fqcn == fqcn and
