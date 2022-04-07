@@ -280,7 +280,7 @@ You can even combine these simple examples with other filters and lookups to cre
 
 A quick explanation, since there is a lot to unpack from these two lines:
 
- - The ``varnames`` lookup returns a list of variables that match "begin with ``my``".
+ - The ``varnames`` lookup returns a list of variables that match "begin with ``xyz_``".
  - Then feeding the list from the previous step into the ``vars`` lookup to get the list of values.
    The ``*`` is used to 'dereference the list' (a pythonism that works in Jinja), otherwise it would take the list as a single argument.
  - Both lists get passed to the ``zip`` filter to pair them off into a unified list (key, value, key2, value2, ...).
