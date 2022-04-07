@@ -153,7 +153,8 @@ A single changelog fragment may contain multiple sections but most will only con
 
 Each changelog entry must contain a link to its issue between parentheses at the end. If there is no corresponding issue, the entry must contain a link to the PR itself.
 
-Most changelog entries are ``bugfixes`` or ``minor_changes``.
+Most changelog entries are ``bugfixes`` or ``minor_changes``. You can also use ``trivial``  for any collection that requires a changelog fragment for each pull request. ``trivial`` changelog fragments are excluded from the changelog output.
+
 
 Changelog fragment entry format
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
