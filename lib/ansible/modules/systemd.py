@@ -542,11 +542,16 @@ def main():
                 elif module.params['state'] == 'stopped':
                     if is_running_service(result['status']) or is_deactivating_service(result['status']):
                         action = 'stop'
-                else:
+                elif module.params['state'] == 'restarted':
+                    # Always explicitly restart, even if the service isn't running, to propagate that action to dependent services.
+                    # https://github.com/ansible/ansible/issues/77337
+                    action = 'restart'
+                    result['state'] = 'started'
+                else:  # 'reloaded'
                     if not is_running_service(result['status']):
                         action = 'start'
                     else:
-                        action = module.params['state'][:-2]  # remove 'ed' from restarted/reloaded
+                        action = 'reload'
                     result['state'] = 'started'
 
                 if action:
