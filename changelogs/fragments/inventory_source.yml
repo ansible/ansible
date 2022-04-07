@@ -1,0 +1,3 @@
+---
+minor_changes:
+- inventory - make sure that inventory source read is a dictionary.

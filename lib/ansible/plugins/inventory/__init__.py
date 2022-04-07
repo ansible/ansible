@@ -230,12 +230,12 @@ class BaseInventoryPlugin(AnsiblePlugin):
         if not config:
             # no data
             raise AnsibleParserError("%s is empty" % (to_native(path)))
+        elif not isinstance(config, Mapping):
+            # configs are dictionaries
+            raise AnsibleParserError('inventory source has an invalid structure, it should be a dictionary, got: %s' % type(config))
         elif config.get('plugin') not in valid_names:
             # this is not my config file
             raise AnsibleParserError("Incorrect plugin name in file: %s" % config.get('plugin', 'none found'))
-        elif not isinstance(config, Mapping):
-            # configs are dictionaries
-            raise AnsibleParserError('inventory source has invalid structure, it should be a dictionary, got: %s' % type(config))
 
         self.set_options(direct=config, var_options=self._vars)
         if 'cache' in self._options and self.get_option('cache'):
