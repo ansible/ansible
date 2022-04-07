@@ -59,7 +59,7 @@ If the bug you found already exists in an issue, you can help by verifying the b
 Review and submit pull requests
 ===============================
 
-As you become more familiar with how Ansible works, you may be able to fix issues or develop new features yourself. If you think you have a fix for a bug in Ansible, or if you have a new feature that you would like to share with millions of Ansible users, read all about the :ref:`ansible-core development process <community_development_process>` and and :ref:`collections development process <collection_development_process>` to learn how to get your code accepted into Ansible. See :ref:`collection_quickstart` for details.
+As you become more familiar with how Ansible works, you may be able to fix issues or develop new features yourself. If you think you have a fix for a bug in Ansible, or if you have a new feature that you would like to share with millions of Ansible users, read all about the :ref:`development process <community_development_process>` to learn how to get your code accepted into Ansible.
 
 Another good way to help is to review pull requests that other Ansible users have submitted. Ansible core keeps a full list of `open pull requests by file <https://ansible.sivel.net/pr/byfile.html>`_, so if a particular module or plugin interests you, you can easily keep track of all the relevant new pull requests and provide testing or feedback. Alternately, you can review the pull requests for any collections that interest you. Click :guilabel:`Issue tracker` on the collection documentation page to find the issues and PRs for that collection.
 
