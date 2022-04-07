@@ -69,7 +69,7 @@ class LinuxVirtual(Virtual):
                         found_virt = True
 
         # the lxd communication sockets are good indicators for lxc guest/host
-        # https://lxd.readthedocs.io/en/latest/dev-lxd/
+        # https://linuxcontainers.org/lxd/docs/master/
         if os.path.exists('/dev/lxd/sock'):
             guest_tech.add('lxc')
             if not found_virt:
