@@ -16,7 +16,7 @@ Ansible can also install a collection collected with ``ansible-galaxy collection
 .. code-block:: yaml
 
     collections:
-      - source: /tmp/my_namespace-my_collection-1.0.0.tar.gz
+      - name: /tmp/my_namespace-my_collection-1.0.0.tar.gz
         type: file
 
 .. note::
