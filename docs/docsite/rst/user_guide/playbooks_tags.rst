@@ -320,7 +320,7 @@ For example:
      - name: Run the rarely-used debug task
        ansible.builtin.debug:
         msg: '{{ showmevar }}'
-       tags: [ never, debug ]
+       tags: [never, debug]
 
 The rarely-used debug task in the example above only runs when you specifically request the ``debug`` or ``never`` tags.
 
