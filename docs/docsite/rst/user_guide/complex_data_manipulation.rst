@@ -273,12 +273,14 @@ You can even combine these simple examples with other filters and lookups to cre
  :caption: Using 'vars' to define dictionary from a set of lists without needing a task
 
     vars:
-        myvarnames: "{{ q('varnames', '^my') }}"
-        mydict: "{{ dict(myvarnames | zip(q('vars', *myvarnames))) }}"
+        xyz_stuff: 1234
+        xyz_morestuff: 567
+        myvarnames: "{{ q('varnames', '^xyz_') }}"
+        mydict: "{{ dict(myvarnames|map('regex_replace', '^xyz_', '')|list | zip(q('vars', *myvarnames))) }}"
 
 A quick explanation, since there is a lot to unpack from these two lines:
 
- - The ``varnames`` lookup returns a list of variables that match "begin with ``my``".
+ - The ``varnames`` lookup returns a list of variables that match "begin with ``xyz_``".
  - Then feeding the list from the previous step into the ``vars`` lookup to get the list of values.
    The ``*`` is used to 'dereference the list' (a pythonism that works in Jinja), otherwise it would take the list as a single argument.
  - Both lists get passed to the ``zip`` filter to pair them off into a unified list (key, value, key2, value2, ...).
