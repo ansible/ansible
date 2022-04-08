@@ -13,10 +13,9 @@ import stat
 import tempfile
 import traceback
 
-from ast import literal_eval
 from collections import namedtuple
 from collections.abc import Mapping, Sequence
-from jinja2 import Template
+from jinja2.nativetypes import NativeEnvironment
 
 from ansible.config.data import ConfigData
 from ansible.errors import AnsibleOptionsError, AnsibleError
@@ -546,12 +545,8 @@ class ConfigManager(object):
                         # template default values if possible
                         # NOTE: cannot use is_template due to circular dep
                         try:
-                            t = Template(value)
+                            t = NativeEnvironment().from_string(value)
                             value = t.render(variables)
-                            try:
-                                value = literal_eval(value)
-                            except ValueError:
-                                pass  # not a python data structure
                         except Exception:
                             pass  # not templatable
 
