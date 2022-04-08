@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix traceback when installing a collection from a git repository and git is not installed (https://github.com/ansible/ansible/issues/77479).
