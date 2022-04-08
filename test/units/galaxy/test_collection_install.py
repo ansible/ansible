@@ -18,6 +18,7 @@ import yaml
 
 from io import BytesIO, StringIO
 from mock import MagicMock, patch
+from unittest import mock
 
 import ansible.module_utils.six.moves.urllib.error as urllib_error
 
@@ -27,6 +28,7 @@ from ansible.errors import AnsibleError
 from ansible.galaxy import collection, api, dependency_resolution
 from ansible.galaxy.dependency_resolution.dataclasses import Candidate, Requirement
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.process import get_bin_path
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
 
@@ -172,6 +174,22 @@ def galaxy_server():
     return galaxy_api
 
 
+def test_concrete_artifact_manager_scm_no_executable(monkeypatch):
+    url = 'https://github.com/org/repo'
+    version = 'commitish'
+    mock_subprocess_check_call = MagicMock()
+    monkeypatch.setattr(collection.concrete_artifact_manager.subprocess, 'check_call', mock_subprocess_check_call)
+    mock_mkdtemp = MagicMock(return_value='')
+    monkeypatch.setattr(collection.concrete_artifact_manager, 'mkdtemp', mock_mkdtemp)
+
+    error = re.escape(
+        "Could not find git executable to extract the collection from the Git repository `https://github.com/org/repo`"
+    )
+    with mock.patch.dict(os.environ, {"PATH": ""}):
+        with pytest.raises(AnsibleError, match=error):
+            collection.concrete_artifact_manager._extract_collection_from_git(url, version, b'path')
+
+
 @pytest.mark.parametrize(
     'url,version,trailing_slash',
     [
@@ -194,10 +212,12 @@ def test_concrete_artifact_manager_scm_cmd(url, version, trailing_slash, monkeyp
     repo = 'https://github.com/org/repo'
     if trailing_slash:
         repo += '/'
-    clone_cmd = ('git', 'clone', repo, '')
+
+    git_executable = get_bin_path('git')
+    clone_cmd = (git_executable, 'clone', repo, '')
 
     assert mock_subprocess_check_call.call_args_list[0].args[0] == clone_cmd
-    assert mock_subprocess_check_call.call_args_list[1].args[0] == ('git', 'checkout', 'commitish')
+    assert mock_subprocess_check_call.call_args_list[1].args[0] == (git_executable, 'checkout', 'commitish')
 
 
 @pytest.mark.parametrize(
@@ -223,10 +243,11 @@ def test_concrete_artifact_manager_scm_cmd_shallow(url, version, trailing_slash,
     repo = 'https://github.com/org/repo'
     if trailing_slash:
         repo += '/'
-    shallow_clone_cmd = ('git', 'clone', '--depth=1', repo, '')
+    git_executable = get_bin_path('git')
+    shallow_clone_cmd = (git_executable, 'clone', '--depth=1', repo, '')
 
     assert mock_subprocess_check_call.call_args_list[0].args[0] == shallow_clone_cmd
-    assert mock_subprocess_check_call.call_args_list[1].args[0] == ('git', 'checkout', 'HEAD')
+    assert mock_subprocess_check_call.call_args_list[1].args[0] == (git_executable, 'checkout', 'HEAD')
 
 
 def test_build_requirement_from_path(collection_artifact):
