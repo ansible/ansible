@@ -59,6 +59,7 @@ The following table lists the current Steering Committee members. See :ref:`stee
   +------------------+---------------+-------------+
 
 
+John Barker (`gundalow <https://github.com/gundalow>`_) has been elected by the Committee as its :ref:`chairperson`.
 
 Committee members are selected based on their active contribution to the Ansible Project and its community. See :ref:`community_steering_guidelines` to learn details.
 

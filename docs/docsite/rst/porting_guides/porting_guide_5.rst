@@ -127,21 +127,27 @@ Networking
 
 No notable changes
 
+Porting Guide for v5.6.0
+========================
+
+Added Collections
+-----------------
+
+- community.sap (version 1.0.0)
+
+Deprecated Features
+-------------------
+
+cisco.ios
+~~~~~~~~~
+
+- Deprecates lldp module.
+
 Porting Guide for v5.5.0
 ========================
 
 Known Issues
 ------------
-
-cisco.ios
-~~~~~~~~~
-
-- `ios_bgp_global` - Added capability of configure network options.
-- `ios_bgp_global` - Added community and local_preference for route_reflector_client.
-- `ios_bgp_global` - Added update_source for neighbors.
-- `ios_bgp_global` - Correct misspelled attributes with alternates/alias.
-- `ios_bgp_global` - Facts and config code optimized for using rm_templates.
-- `ios_bgp_global` - Parsers added for non-implemented attributes.
 
 community.general
 ~~~~~~~~~~~~~~~~~
