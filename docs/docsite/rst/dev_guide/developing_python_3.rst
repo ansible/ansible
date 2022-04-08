@@ -13,7 +13,7 @@ that will run on the same versions of Python as the rest of Ansible.
 
 We do have some considerations depending on the types of Ansible code:
 
-1. controller-side code - code that runs on the machine where you invoke :command:`/usr/bin/ansible`, only needs to support the controller's Python versions
+1. controller-side code - code that runs on the machine where you invoke :command:`/usr/bin/ansible`, only needs to support the controller's Python versions.
 2. modules - the code which Ansible transmits to and invokes on the managed machine. Modules need to support the 'managed node' Python versions, with some exceptions.
 3. shared ``module_utils`` code - the common code that is  used by modules to perform tasks and sometimes used by controller-side code as well. Shared ``module_utils`` code needs to support the same range of Python as the modules.
 
