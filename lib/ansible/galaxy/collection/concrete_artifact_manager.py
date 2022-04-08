@@ -30,6 +30,7 @@ from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.galaxy.dependency_resolution.dataclasses import _GALAXY_YAML
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.process import get_bin_path
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.six import raise_from
 from ansible.module_utils.urls import open_url
@@ -393,11 +394,19 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
         prefix=to_bytes(name, errors='surrogate_or_strict'),
     )  # type: bytes
 
+    try:
+        git_executable = get_bin_path('git')
+    except ValueError as err:
+        raise AnsibleError(
+            "Could not find git executable to extract the collection from the Git repository `{repo_url!s}`.".
+            format(repo_url=to_native(git_url))
+        ) from err
+
     # Perform a shallow clone if simply cloning HEAD
     if version == 'HEAD':
-        git_clone_cmd = 'git', 'clone', '--depth=1', git_url, to_text(b_checkout_path)
+        git_clone_cmd = git_executable, 'clone', '--depth=1', git_url, to_text(b_checkout_path)
     else:
-        git_clone_cmd = 'git', 'clone', git_url, to_text(b_checkout_path)
+        git_clone_cmd = git_executable, 'clone', git_url, to_text(b_checkout_path)
     # FIXME: '--branch', version
 
     try:
@@ -411,7 +420,7 @@ def _extract_collection_from_git(repo_url, coll_ver, b_path):
             proc_err,
         )
 
-    git_switch_cmd = 'git', 'checkout', to_text(version)
+    git_switch_cmd = git_executable, 'checkout', to_text(version)
     try:
         subprocess.check_call(git_switch_cmd, cwd=b_checkout_path)
     except subprocess.CalledProcessError as proc_err:
