@@ -86,7 +86,7 @@ For compatibility reasons you will see a bunch of custom fucntions we developed 
 and while Python 2 is not a concern anymore we will continue to use them as they apply for other cases that make
 dealing with unicode problematic.
 
-While we will not be using it anymore, the documentation is still useful for those developing modules
+While we will not be using it most of it anymore, the documentation below is still useful for those developing modules
 that still need to support both Python 2 and 3 simultaneouslly.
 
 Unicode Sandwich common borders: places to convert bytes to text in controller code
