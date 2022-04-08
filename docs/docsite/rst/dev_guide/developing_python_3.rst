@@ -74,7 +74,7 @@ Ansible uses different strategies for working with strings in controller-side co
 Controller string strategy: the Unicode Sandwich
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Until recently the core supported Python 2.x and followed this strategy, known as the Unicode Sandwich (named
+Until recently ``ansible-core`` supported Python 2.x and followed this strategy, known as the Unicode Sandwich (named
 after Python 2's :func:`unicode  <python:unicode>` text type).  For Unicode Sandwich we know that
 at the border of our code and the outside world (for example, file and network IO,
 environment variables, and some library calls) we are going to receive bytes.
