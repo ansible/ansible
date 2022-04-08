@@ -5,7 +5,7 @@ Ansible and Python 3
 ********************
 
 The ``ansible-core`` code runs Python 3 (for specific versions check `Control Node Requirements <:ref:control-node-requirements>`_.
-Contributors to ansible-core and to Ansible Collections should be aware of the tips in this document so that they can write code
+Contributors to ``ansible-core`` and to Ansible Collections should be aware of the tips in this document so that they can write code
 that will run on the same versions of Python as the rest of Ansible.
 
 .. contents::
