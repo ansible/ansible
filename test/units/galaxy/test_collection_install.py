@@ -18,6 +18,7 @@ import yaml
 
 from io import BytesIO, StringIO
 from mock import MagicMock, patch
+from unittest import mock
 
 import ansible.module_utils.six.moves.urllib.error as urllib_error
 
@@ -171,6 +172,22 @@ def galaxy_server():
     galaxy_api = api.GalaxyAPI(None, 'test_server', 'https://galaxy.ansible.com')
     galaxy_api.get_collection_signatures = MagicMock(return_value=[])
     return galaxy_api
+
+
+def test_concrete_artifact_manager_scm_no_executable(monkeypatch):
+    url = 'https://github.com/org/repo'
+    version = 'commitish'
+    mock_subprocess_check_call = MagicMock()
+    monkeypatch.setattr(collection.concrete_artifact_manager.subprocess, 'check_call', mock_subprocess_check_call)
+    mock_mkdtemp = MagicMock(return_value='')
+    monkeypatch.setattr(collection.concrete_artifact_manager, 'mkdtemp', mock_mkdtemp)
+
+    error = re.escape(
+        "Could not find git executable to extract the collection from the Git repository `https://github.com/org/repo`"
+    )
+    with mock.patch.dict(os.environ, {"PATH": ""}):
+        with pytest.raises(AnsibleError, match=error):
+            collection.concrete_artifact_manager._extract_collection_from_git(url, version, b'path')
 
 
 @pytest.mark.parametrize(
