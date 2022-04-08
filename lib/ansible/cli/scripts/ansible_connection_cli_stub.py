@@ -252,7 +252,7 @@ def main(args=None):
 
         play_context = PlayContext()
         play_context.deserialize(pc_data)
-        display.verbosity = play_context.verbosit
+        display.verbosity = play_context.verbosity
 
     except Exception as e:
         rc = 1
