@@ -4,7 +4,9 @@
 Ansible and Python 3
 ********************
 
-The ``ansible-core`` code runs Python 3 (for specific versions check ( ../../installation_guide/intro_installation.html#control-node-requirements). Contributors to ansible-core and to Ansible Collections should be aware of the tips in this document so that they can write code that will run on the same versions of Python as the rest of Ansible.
+The ``ansible-core`` code runs Python 3 (for specific versions check `Control Node Requirements <intro_installation#control-node-requirements>`_.
+Contributors to ansible-core and to Ansible Collections should be aware of the tips in this document so that they can write code
+that will run on the same versions of Python as the rest of Ansible.
 
 .. contents::
    :local:
@@ -23,7 +25,7 @@ However, the three types of code do not use the same string strategy. If you're 
 Minimum version of Python 3.x and Python 2.x
 ============================================
 
-See  ../../installation_guide/intro_installation.html#control-node-requirements and  ../../installation_guide/intro_installation.html#control-node-requirements for the
+See `Control Node Requirements <intro_installation#control-node-requirements>`_ and `Managed Node Requirements <intro_installation#managed-node-requirements>`_ for the
 specific versions supported.
 
 Your custom modules can support any version of Python (or other languages) you want, but the above are the requirements for the code contributed to the Ansible project.
