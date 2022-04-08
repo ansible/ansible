@@ -1076,7 +1076,7 @@ class DnfModule(YumDnf):
             if self.with_optional:
                 package_types = list(dnf.const.GROUP_PACKAGE_TYPES) + ['optional']
             else:
-                package_types = dnf.const.GROUP_PACKAGE_TYPES
+                package_types = list(dnf.const.GROUP_PACKAGE_TYPES)
 
             if self.state in ['installed', 'present']:
                 # Install files.
