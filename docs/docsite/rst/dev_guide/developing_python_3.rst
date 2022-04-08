@@ -20,7 +20,7 @@ We do have some considerations depending on the types of Ansible code:
 However, the three types of code do not use the same string strategy. If you're developing a module or some ``module_utils`` code, be sure to read the section on string strategy carefully.
 
 .. note:
-    - While modules can be written in any language, the above applies to code contributed to the core project, which only supports specific Python versions (and Powershell for Windows)
+    - While modules can be written in any language, the above applies to code contributed to the core project, which only supports specific Python versions and Powershell for Windows.
 
 Minimum version of Python 3.x and Python 2.x
 ============================================
