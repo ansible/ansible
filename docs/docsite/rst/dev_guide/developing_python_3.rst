@@ -82,9 +82,9 @@ the outside world we first convert the text back into bytes.
 To visualize this, imagine a 'sandwich' consisting of a top and bottom layer
 of bytes, a layer of conversion between, and all text type in the center.
 
-Eventually we will remove most of this from core (as Python 3 does this internally already,
-but it is not a priority and you should see a lot of the custom compatiblity functions (``to_text``/``to_bytes``/``to_native``)
-in the code for the forseable future.
+For compatibility reasons you will see a bunch of custom fucntions we developed (``to_text``/``to_bytes``/``to_native``)
+and while Python 2 is not a concern anymore we will continue to use them as they apply for other cases that make
+dealing with unicode problematic.
 
 While we will not be using it anymore, the documentation is still useful for those developing modules
 that still need to support both Python 2 and 3 simultaneouslly.
