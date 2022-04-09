@@ -1054,6 +1054,9 @@ class Templar:
                 line = data[len(JINJA2_OVERRIDE):eol]
                 data = data[eol + 1:]
                 for pair in line.split(','):
+                    if ':' not in pair:
+                        raise AnsibleError("failed to parse jinja2 override '%s'."
+                                           " Did you use something different from colon as key-value separator?" % pair.strip())
                     (key, val) = pair.split(':')
                     key = key.strip()
                     setattr(myenv, key, ast.literal_eval(val.strip()))

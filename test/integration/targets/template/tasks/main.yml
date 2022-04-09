@@ -761,3 +761,16 @@
       - test
   vars:
     test: "{{ lookup('file', '{{ output_dir }}/empty_template.templated')|length == 0 }}"
+
+- name: test jinja2 override without colon throws proper error
+  block:
+  - template:
+      src: override_separator.j2
+      dest: "{{ output_dir }}/override_separator.templated"
+  - assert:
+      that:
+        - False
+  rescue:
+  - assert:
+      that:
+        - "'failed to parse jinja2 override' in ansible_failed_result.msg"

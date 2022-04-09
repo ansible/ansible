@@ -1,0 +1,2 @@
+bugfixes:
+  - More gracefully handle separator errors in jinja2 template overrides (https://github.com/ansible/ansible/pull/77495).
