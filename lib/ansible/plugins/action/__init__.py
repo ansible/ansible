@@ -268,16 +268,12 @@ class ActionBase(ABC):
         final_environment = dict()
         self._compute_environment_string(final_environment)
 
-        become_kwargs = {}
-        if self._connection.become:
-            become_kwargs['become'] = True
-            become_kwargs['become_method'] = self._connection.become.name
-            become_kwargs['become_user'] = self._connection.become.get_option('become_user',
-                                                                              playcontext=self._play_context)
-            become_kwargs['become_password'] = self._connection.become.get_option('become_pass',
-                                                                                  playcontext=self._play_context)
-            become_kwargs['become_flags'] = self._connection.become.get_option('become_flags',
-                                                                               playcontext=self._play_context)
+        (module_name, module_path, module_args, use_vars, final_environment, become_kwargs) = self.filter_become_before_modify(
+            module_name,
+            module_path,
+            module_args,
+            use_vars,
+            final_environment)
 
         # modify_module will exit early if interpreter discovery is required; re-run after if necessary
         for dummy in (1, 2):
@@ -349,6 +345,19 @@ class ActionBase(ABC):
             raw_environment_out.update(final_environment)
 
         return self._connection._shell.env_prefix(**final_environment)
+
+    def filter_become_before_modify(self, module_name, module_path, module_args, use_vars, final_environment):
+        become_kwargs = {}
+        if self._connection.become:
+            become_kwargs['become'] = True
+            become_kwargs['become_method'] = self._connection.become.name
+            become_kwargs['become_user'] = self._connection.become.get_option('become_user',
+                                                                              playcontext=self._play_context)
+            become_kwargs['become_password'] = self._connection.become.get_option('become_pass',
+                                                                                  playcontext=self._play_context)
+            become_kwargs['become_flags'] = self._connection.become.get_option('become_flags',
+                                                                               playcontext=self._play_context)
+        return (module_name, module_path, module_args, use_vars, final_environment, become_kwargs)
 
     def _early_needs_tmp_path(self):
         '''
