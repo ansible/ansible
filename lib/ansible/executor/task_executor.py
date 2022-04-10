@@ -13,6 +13,7 @@ import subprocess
 import sys
 import termios
 import traceback
+from typing import List, Tuple, Union
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
@@ -810,11 +811,11 @@ class TaskExecutor:
         return result
 
     @staticmethod
-    def _retries_requested(_task):  # type: (Task) -> boolean
+    def _retries_requested(_task):  # type: (Task) -> bool
         return (_task.retries is not None) or bool(_task.until)
 
     @staticmethod
-    def process_retry_parameters(retries_requested, _task):  # type: (bool, Task) -> Tuple[int, int, Union[str, List]]
+    def process_retry_parameters(retries_requested, _task):  # type: (bool, Task) -> Tuple[int, int]
         '''
         Extract the parameters used in retrying the task
         '''
