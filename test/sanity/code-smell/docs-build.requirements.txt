@@ -4,8 +4,8 @@ aiohttp==3.8.0
 aiosignal==1.2.0
 alabaster==0.7.12
 ansible-pygments==0.1.0
-antsibull==0.42.0
-antsibull-changelog==0.14.0
+antsibull-core==1.0.0
+antsibull-docs==1.0.0
 async-timeout==4.0.1
 asyncio-pool==0.5.2
 attrs==21.2.0
