@@ -45,7 +45,6 @@ from ansible.galaxy.dependency_resolution.dataclasses import Candidate, Requirem
 from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoTokenSentinel
 from ansible.module_utils.ansible_release import __version__ as ansible_version
-from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils import six
@@ -157,47 +156,6 @@ def validate_signature_count(value):
         raise ValueError(f"{value} is not a valid signature count value")
 
     return value
-
-
-def _dump_collections_as_requirements(gathered_collections):
-    """
-    Dump the collections in the format required by requirements.txt for installation.
-
-    : param gathered_collections: Dict[str, List[Requirement]]
-    """
-    collections = sum(gathered_collections.values(), [])
-    marshalled = [{'name': collection.fqcn, 'version': collection.ver} for collection in collections]
-
-    requirements_file = {
-        "collections": marshalled
-    }
-    return yaml_dump(requirements_file)
-
-
-def _dump_collections_as_yaml(gathered_collections):
-    """
-    Dump the collections in the YAML format
-
-    : param gathered_collections: Dict[str, List[Requirement]]
-    """
-    marshalled = {
-        path: {collection.fqcn: {'version': collection.ver} for collection in collections}
-        for path, collections in gathered_collections.items()
-    }
-    return yaml_dump(marshalled)
-
-
-def _dump_collections_as_json(gathered_collections):
-    """
-    Dump the collections in the JSON format
-
-    : param gathered_collections: Dict[str, List[Requirement]]
-    """
-    marshalled = {
-        path: {collection.fqcn: {'version': collection.ver} for collection in collections}
-        for path, collections in gathered_collections.items()
-    }
-    return json.dumps(marshalled)
 
 
 def _dump_collections_as_human(gathered_collections):
