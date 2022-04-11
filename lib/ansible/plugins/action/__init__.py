@@ -395,6 +395,19 @@ class ActionBase(ABC):
 
         return self.get_shell_option('admin_users', ['root'])
 
+    def _get_remote_addr(self, tvars):
+        ''' consistently get the 'remote_address' for the action plugin '''
+        remote_addr = tvars.get('inventory_hostname', None)
+        for variation in ('remote_addr', 'host'):
+            try:
+                remote_addr = self._connection.get_option(variation)
+            except KeyError:
+                continue
+        else:
+            # plugin does not have, fallback to play_context
+            remote_addr = self._play_context.remote_addr
+        return remote_addr
+
     def _get_remote_user(self):
         ''' consistently get the 'remote_user' for the action plugin '''
         # TODO: use 'current user running ansible' as fallback when moving away from play_context
@@ -929,7 +942,7 @@ class ActionBase(ABC):
             expanded = initial_fragment
 
         if '..' in os.path.dirname(expanded).split('/'):
-            raise AnsibleError("'%s' returned an invalid relative home directory path containing '..'" % self._play_context.remote_addr)
+            raise AnsibleError("'%s' returned an invalid relative home directory path containing '..'" % self._get_remote_addr({}))
 
         return expanded
 
