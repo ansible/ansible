@@ -198,8 +198,8 @@ When reading the :ref:`developing_testing` documentation, there will be content 
 
 .. _meta_runtime_yml:
 
-meta directory
---------------
+meta directory and runtime.yml
+------------------------------
 
 A collection can store some additional metadata in a ``runtime.yml`` file in the collection's ``meta`` directory. The ``runtime.yml`` file supports the top level keys:
 
