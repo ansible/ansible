@@ -397,7 +397,7 @@ class ActionBase(ABC):
 
     def _get_remote_addr(self, tvars):
         ''' consistently get the 'remote_address' for the action plugin '''
-        remote_addr = tvars.get('inventory_hostname', None)
+        remote_addr = tvars.get('delegated_vars', {}).get('ansible_host', tvars.get('ansible_host', tvars.get('inventory_hostname', None)))
         for variation in ('remote_addr', 'host'):
             try:
                 remote_addr = self._connection.get_option(variation)
