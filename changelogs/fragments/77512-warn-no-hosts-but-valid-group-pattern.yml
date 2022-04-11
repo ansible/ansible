@@ -1,0 +1,2 @@
+bugfixes:
+  - Warn instead of error if --limit matches only empty groups.
