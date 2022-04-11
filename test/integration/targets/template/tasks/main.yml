@@ -761,3 +761,35 @@
       - test
   vars:
     test: "{{ lookup('file', '{{ output_dir }}/empty_template.templated')|length == 0 }}"
+
+- name: test jinja2 override without colon throws proper error
+  block:
+  - template:
+      src: override_separator.j2
+      dest: "{{ output_dir }}/override_separator.templated"
+  - assert:
+      that:
+        - False
+  rescue:
+  - assert:
+      that:
+        - "'failed to parse jinja2 override' in ansible_failed_result.msg"
+
+- name: test jinja2 override with colon in value
+  template:
+    src: override_colon_value.j2
+    dest: "{{ output_dir }}/override_colon_value.templated"
+  ignore_errors: yes
+  register: override_colon_value_task
+
+- copy:
+    src: override_colon_value.expected
+    dest: "{{output_dir}}/override_colon_value.expected"
+
+- command: "diff {{ output_dir }}/override_colon_value.templated {{ output_dir}}/override_colon_value.expected"
+  register: override_colon_value_diff
+
+- assert:
+    that:
+      - override_colon_value_task is success
+      - override_colon_value_diff.rc == 0
