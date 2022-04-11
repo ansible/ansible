@@ -1,0 +1,6 @@
+all:
+  children:
+    empty_group: {}
+    populated_group:
+      hosts:
+        host1: {}

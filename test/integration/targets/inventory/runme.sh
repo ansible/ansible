@@ -23,6 +23,10 @@ if ansible-playbook -i ../../inventory --limit foo playbook.yml; then
     exit 1
 fi
 
+# https://github.com/ansible/ansible/issues/77510
+# Ensure that matching limit of an empty group causes a warning with rc 0
+ansible-playbook test_limit_empty_group.yml "$@"
+
 # Ensure that non-existing limit file causes failure with rc 1
 if ansible-playbook -i ../../inventory --limit @foo playbook.yml; then
     echo "Non-existing limit file should cause failure"
