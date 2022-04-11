@@ -525,7 +525,11 @@ class CLI(ABC):
 
         hosts = inventory.list_hosts(pattern)
         if not hosts and no_hosts is False:
-            raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
+            if inventory.is_group_pattern(pattern):
+                # Valid pattern, just empty
+                display.warning("Specified hosts and/or --limit does not match any hosts, only empty group(s)")
+            else:
+                raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
 
         return hosts
 
