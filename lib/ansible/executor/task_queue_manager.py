@@ -270,7 +270,7 @@ class TaskQueueManager:
         all_vars = self._variable_manager.get_vars(play=play)
         templar = Templar(loader=self._loader, variables=all_vars)
         try:
-            validate_variable_names(list(all_vars.keys()) + list(templar.environment.globals.keys()))
+            validate_variable_names(all_vars.keys())
         except TypeError as e:
             raise AnsibleError("Invalid variable name specified: '%s'" % to_native(e))
 
