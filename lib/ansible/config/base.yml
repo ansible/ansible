@@ -205,9 +205,9 @@ COLLECTIONS_PATHS:
   description: >
     Colon separated paths in which Ansible will search for collections content.
     Collections must be in nested *subdirectories*, not directly in these directories.
-    For example, if ``COLLECTIONS_PATHS`` includes ``${ANSIBLE_HOME}/collections``,
+    For example, if ``COLLECTIONS_PATHS`` includes ``'{{ ANSIBLE_HOME ~ "/collections" }}'``,
     and you want to add ``my.collection`` to that directory, it must be saved as
-    ``${ANSIBLE_HOME}/collections/ansible_collections/my/collection``.
+    ``'{{ ANSIBLE_HOME} ~ "/collections/ansible_collections/my/collection" }}'``.
   default: '{{ ANSIBLE_HOME ~ "/collections:/usr/share/ansible/collections" }}'
   type: pathspec
   env:
