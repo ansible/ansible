@@ -1,2 +1,2 @@
 minor_changes:
-  - ansbile-connection now supports verbosity directly on cli
+  - ansible-connection now supports verbosity directly on cli
