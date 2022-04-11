@@ -58,7 +58,7 @@ def collection_artifact(tmp_path_factory):
 @pytest.fixture()
 def cache_dir(tmp_path_factory, monkeypatch):
     cache_dir = to_text(tmp_path_factory.mktemp('Test ÅÑŚÌβŁÈ Galaxy Cache'))
-    monkeypatch.setitem(C.config._base_defs, 'GALAXY_CACHE_DIR', {'default': cache_dir})
+    monkeypatch.setattr(C, 'GALAXY_CACHE_DIR', cache_dir)
 
     yield cache_dir
 
