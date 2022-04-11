@@ -54,6 +54,7 @@ Planned work
 * Move handler processing into new PlayIterator phase to use the configured strategy
 * Convert FieldAttribute to data descriptors to avoid complex meta classes
 * Drop Python 3.8 support for controller
+* Enforce running controller code with the Python locale and filesystem encoding set to UTF-8
 
 Delayed work
 ============
