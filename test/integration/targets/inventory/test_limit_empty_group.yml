@@ -5,8 +5,10 @@
     - command: ansible-playbook -i inv_with_empty_group.yml --limit empty_group playbook.yml
       register: result
       environment:
+        # Override hard-coded ansible-test config
         ANSIBLE_NOCOLOR: True
         ANSIBLE_FORCE_COLOR: False
+        ANSIBLE_HOST_PATTERN_MISMATCH: warning
 
     - assert:
         that:
@@ -15,4 +17,4 @@
           - expected_warning in sanitized_error
       vars:
         sanitized_error: "{{ result.stderr | regex_replace('\n', ' ') }}"
-        expected_warning: "[WARNING]: Specified hosts and/or --limit does not match any hosts, only empty group(s)"
+        expected_warning: "[WARNING]: Specified hosts and/or --limit does not match any hosts"

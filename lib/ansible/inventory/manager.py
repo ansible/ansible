@@ -153,7 +153,6 @@ class InventoryManager(object):
         # caches
         self._hosts_patterns_cache = {}  # resolved full patterns
         self._pattern_cache = {}  # resolved individual patterns
-        self._group_pattern_cache = {}
 
         # the inventory dirs, files, script paths or lists of hosts
         if sources is None:
@@ -419,22 +418,6 @@ class InventoryManager(object):
 
         return hosts
 
-    def is_group_pattern(self, patterns):
-        """
-        Call after host patterns are evaluated.
-        Takes a list of patterns and returns True if any groups match.
-        """
-        # Check if pattern already computed
-        if isinstance(patterns, list):
-            patterns = patterns[:]
-        else:
-            patterns = [patterns]
-
-        for p in patterns:
-            if p in self._group_pattern_cache and self._group_pattern_cache[p]:
-                return True
-        return False
-
     def _evaluate_patterns(self, patterns):
         """
         Takes a list of patterns and returns a list of matching host names,
@@ -574,7 +557,6 @@ class InventoryManager(object):
         # check if pattern matches group
         matching_groups = self._match_list(self._inventory.groups, pattern)
         if matching_groups:
-            self._group_pattern_cache[pattern] = self._group_pattern_cache.get(pattern, []) + matching_groups
             for groupname in matching_groups:
                 results.extend(self._inventory.groups[groupname].get_hosts())
 
@@ -666,4 +648,3 @@ class InventoryManager(object):
 
     def clear_pattern_cache(self):
         self._pattern_cache = {}
-        self._group_pattern_cache = {}
