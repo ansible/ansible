@@ -45,10 +45,6 @@ class ActionModule(ActionBase):
         if self._task.args:
             for (k, v) in self._task.args.items():
                 k = self._templar.template(k)
-                try:
-                    validate_variable_names([k])
-                except TypeError as e:
-                    raise AnsibleActionFail(to_native(e))
 
                 # NOTE: this should really use BOOLEANS from convert_bool, but only in the k=v case,
                 # right now it converts matching explicit YAML strings also when 'jinja2_native' is disabled.
