@@ -45,12 +45,12 @@ fi
 # The below is an alternative to readlink -fn which doesn't exist on macOS
 # Source: http://stackoverflow.com/a/1678636
 FULL_PATH=$("$PYTHON_BIN" -c "import os; print(os.path.realpath('$HACKING_DIR'))")
-export ANSIBLE_HOME="$(dirname "$FULL_PATH")"
+export ANSIBLE_DEV_HOME="$(dirname "$FULL_PATH")"
 
-PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
-ANSIBLE_TEST_PREFIX_PYTHONPATH="$ANSIBLE_HOME/test/lib"
-PREFIX_PATH="$ANSIBLE_HOME/bin"
-PREFIX_MANPATH="$ANSIBLE_HOME/docs/man"
+PREFIX_PYTHONPATH="$ANSIBLE_DEV_HOME/lib"
+ANSIBLE_TEST_PREFIX_PYTHONPATH="$ANSIBLE_DEV_HOME/test/lib"
+PREFIX_PATH="$ANSIBLE_DEV_HOME/bin"
+PREFIX_MANPATH="$ANSIBLE_DEV_HOME/docs/man"
 
 expr "$PYTHONPATH" : "${PREFIX_PYTHONPATH}.*" > /dev/null || prepend_path PYTHONPATH "$PREFIX_PYTHONPATH"
 expr "$PYTHONPATH" : "${ANSIBLE_TEST_PREFIX_PYTHONPATH}.*" > /dev/null || prepend_path PYTHONPATH "$ANSIBLE_TEST_PREFIX_PYTHONPATH"
@@ -73,13 +73,13 @@ gen_egg_info()
     "$PYTHON_BIN" setup.py egg_info
 }
 
-if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
+if [ "$ANSIBLE_DEV_HOME" != "$PWD" ] ; then
     current_dir="$PWD"
 else
-    current_dir="$ANSIBLE_HOME"
+    current_dir="$ANSIBLE_DEV_HOME"
 fi
 (
-	cd "$ANSIBLE_HOME"
+	cd "$ANSIBLE_DEV_HOME"
 	if [ "$verbosity" = silent ] ; then
 	    gen_egg_info > /dev/null 2>&1 &
             find . -type f -name "*.pyc" -exec rm -f {} \; > /dev/null 2>&1
