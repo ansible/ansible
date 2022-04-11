@@ -84,7 +84,7 @@ the outside world we first convert the text back into bytes.
 To visualize this, imagine a 'sandwich' consisting of a top and bottom layer
 of bytes, a layer of conversion between, and all text type in the center.
 
-For compatibility reasons you will see a bunch of custom fucntions we developed (``to_text``/``to_bytes``/``to_native``)
+For compatibility reasons you will see a bunch of custom functions we developed (``to_text``/``to_bytes``/``to_native``)
 and while Python 2 is not a concern anymore we will continue to use them as they apply for other cases that make
 dealing with unicode problematic.
 
