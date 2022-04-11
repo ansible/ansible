@@ -270,7 +270,7 @@ class GalaxyAPI:
         self._available_api_versions = available_api_versions or {}
         self._priority = priority
 
-        b_cache_dir = to_bytes(C.config.get_config_value('GALAXY_CACHE_DIR'), errors='surrogate_or_strict')
+        b_cache_dir = to_bytes(C.GALAXY_CACHE_DIR, errors='surrogate_or_strict')
         makedirs_safe(b_cache_dir, mode=0o700)
         self._b_cache_path = os.path.join(b_cache_dir, b'api.json')
 

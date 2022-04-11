@@ -579,7 +579,7 @@ class CLI(ABC):
         try:
             display.debug("starting run")
 
-            ansible_dir = Path("~/.ansible").expanduser()
+            ansible_dir = Path(C.ANSIBLE_HOME).expanduser()
             try:
                 ansible_dir.mkdir(mode=0o700)
             except OSError as exc:
