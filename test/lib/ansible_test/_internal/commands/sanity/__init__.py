@@ -847,6 +847,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
             self.text = self.config.get('text')  # type: t.Optional[bool]
             self.ignore_self = self.config.get('ignore_self')  # type: bool
             self.minimum_python_version = self.config.get('minimum_python_version')  # type: t.Optional[str]
+            self.maximum_python_version = self.config.get('maximum_python_version')  # type: t.Optional[str]
 
             self.__all_targets = self.config.get('all_targets')  # type: bool
             self.__no_targets = self.config.get('no_targets')  # type: bool
@@ -861,6 +862,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
             self.text = None  # type: t.Optional[bool]
             self.ignore_self = False
             self.minimum_python_version = None  # type: t.Optional[str]
+            self.maximum_python_version = None  # type: t.Optional[str]
 
             self.__all_targets = False
             self.__no_targets = True
@@ -917,6 +919,9 @@ class SanityCodeSmellTest(SanitySingleVersion):
 
         if self.minimum_python_version:
             versions = tuple(version for version in versions if str_to_version(version) >= str_to_version(self.minimum_python_version))
+
+        if self.maximum_python_version:
+            versions = tuple(version for version in versions if str_to_version(version) <= str_to_version(self.maximum_python_version))
 
         return versions
 

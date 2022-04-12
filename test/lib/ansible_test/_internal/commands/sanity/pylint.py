@@ -17,6 +17,10 @@ from . import (
     SANITY_ROOT,
 )
 
+from ...constants import (
+    CONTROLLER_PYTHON_VERSIONS,
+)
+
 from ...test import (
     TestResult,
 )
@@ -29,6 +33,7 @@ from ...util import (
     SubprocessError,
     display,
     is_subdir,
+    str_to_version,
 )
 
 from ...util_common import (
@@ -63,6 +68,11 @@ class PylintTest(SanitySingleVersion):
             'ansible-deprecated-date',
             'too-complex',
         ])
+
+    @property
+    def supported_python_versions(self):  # type: () -> t.Optional[t.Tuple[str, ...]]
+        """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
+        return tuple(version for version in CONTROLLER_PYTHON_VERSIONS if str_to_version(version) < (3, 11))
 
     @property
     def error_code(self):  # type: () -> t.Optional[str]
