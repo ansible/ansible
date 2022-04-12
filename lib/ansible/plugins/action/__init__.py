@@ -403,6 +403,7 @@ class ActionBase(ABC):
                 remote_addr = self._connection.get_option(variation)
             except KeyError:
                 continue
+            break
         else:
             # plugin does not have, fallback to play_context
             remote_addr = self._play_context.remote_addr
