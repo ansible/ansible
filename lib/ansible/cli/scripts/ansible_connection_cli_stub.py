@@ -225,7 +225,7 @@ def main(args=None):
     """ Called to initiate the connect to the remote device
     """
 
-    parser = opt_help.argparse.ArgumentParser(prog='ansible-connection', add_help=False)
+    parser = opt_help.create_base_parser(prog='ansible-connection')
     opt_help.add_verbosity_options(parser)
     parser.add_argument('playbook_pid')
     parser.add_argument('task_uuid')
