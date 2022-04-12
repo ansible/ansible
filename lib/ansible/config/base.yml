@@ -1554,6 +1554,7 @@ INTERPRETER_PYTHON_DISTRO_MAP:
 INTERPRETER_PYTHON_FALLBACK:
   name: Ordered list of Python interpreters to check for in discovery
   default:
+  - python3.11
   - python3.10
   - python3.9
   - python3.8
