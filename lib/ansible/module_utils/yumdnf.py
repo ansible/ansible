@@ -52,6 +52,7 @@ yumdnf_argument_spec = dict(
         validate_certs=dict(type='bool', default=True),
         sslverify=dict(type='bool', default=True),
         lock_timeout=dict(type='int', default=30),
+        with_optional=dict(default=False, type='bool'),
     ),
     required_one_of=[['name', 'list', 'update_cache']],
     mutually_exclusive=[['name', 'list']],
@@ -98,6 +99,7 @@ class YumDnf(with_metaclass(ABCMeta, object)):  # type: ignore[misc]
         self.validate_certs = self.module.params['validate_certs']
         self.sslverify = self.module.params['sslverify']
         self.lock_timeout = self.module.params['lock_timeout']
+        self.with_optional = self.module.params['with_optional']
 
         # It's possible someone passed a comma separated string since it used
         # to be a string type, so we should handle that

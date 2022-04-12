@@ -248,6 +248,12 @@ options:
     default: "no"
     type: bool
     version_added: "2.12"
+  with_optional:
+    description:
+      - Include optional packages when installing package groups.
+    type: bool
+    default: "no"
+    version_added: "2.14"
 extends_documentation_fragment:
 - action_common_attributes
 - action_common_attributes.flow
@@ -968,8 +974,13 @@ class YumModule(YumDnf):
 
         # setting sslverify using --setopt is required as conf.sslverify only
         # affects the metadata retrieval.
+        setopt_options = []
         if not self.sslverify:
-            cmd.extend(['--setopt', 'sslverify=0'])
+            setopt_options.append('sslverify=0')
+        if self.with_optional:
+            setopt_options.append('group_package_types=mandatory,default,optional')
+        for opt in setopt_options:
+            cmd.extend(['--setopt', opt])
 
         if self.module.check_mode:
             self.module.exit_json(changed=True, results=res['results'], changes=dict(installed=pkgs))

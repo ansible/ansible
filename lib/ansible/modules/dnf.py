@@ -412,7 +412,6 @@ class DnfModule(YumDnf):
         # DNF specific args that are not part of YumDnf
         self.allowerasing = self.module.params['allowerasing']
         self.nobest = self.module.params['nobest']
-        self.with_optional = self.module.params['with_optional']
 
     def is_lockfile_pid_valid(self):
         # FIXME? it looks like DNF takes care of invalid lock files itself?
@@ -1441,7 +1440,6 @@ def main():
     # backported to yum because yum is now in "maintenance mode" upstream
     yumdnf_argument_spec['argument_spec']['allowerasing'] = dict(default=False, type='bool')
     yumdnf_argument_spec['argument_spec']['nobest'] = dict(default=False, type='bool')
-    yumdnf_argument_spec['argument_spec']['with_optional'] = dict(default=False, type='bool')
 
     module = AnsibleModule(
         **yumdnf_argument_spec
