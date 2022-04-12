@@ -67,6 +67,7 @@ stages:
             - test: 3.8
             - test: 3.9
             - test: '3.10'
+            - test: 3.11
   - stage: Windows
     dependsOn: []
     jobs:
@@ -142,6 +143,7 @@ stages:
             - test: 3.8
             - test: 3.9
             - test: '3.10'
+            - test: 3.11
   - stage: Generic
     dependsOn: []
     jobs:
@@ -153,6 +155,7 @@ stages:
             - test: 3.8
             - test: 3.9
             - test: '3.10'
+            - test: 3.11
   - stage: Incidental_Remote
     displayName: Incidental Remote
     dependsOn: []

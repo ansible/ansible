@@ -40,6 +40,18 @@ lib/ansible/galaxy/dependency_resolution/providers.py import-3.10  # circular im
 lib/ansible/galaxy/dependency_resolution/reporters.py import-3.10  # circular imports
 lib/ansible/galaxy/dependency_resolution/resolvers.py import-3.10  # circular imports
 lib/ansible/galaxy/dependency_resolution/versioning.py import-3.10  # circular imports
+lib/ansible/cli/galaxy.py import-3.11  # unguarded indirect resolvelib import
+lib/ansible/galaxy/collection/__init__.py import-3.11  # unguarded resolvelib import
+lib/ansible/galaxy/collection/concrete_artifact_manager.py import-3.11  # unguarded resolvelib import
+lib/ansible/galaxy/collection/galaxy_api_proxy.py import-3.11  # unguarded resolvelib imports
+lib/ansible/galaxy/collection/gpg.py import-3.11  # unguarded resolvelib imports
+lib/ansible/galaxy/dependency_resolution/__init__.py import-3.11  # circular imports
+lib/ansible/galaxy/dependency_resolution/dataclasses.py import-3.11  # circular imports
+lib/ansible/galaxy/dependency_resolution/errors.py import-3.11  # circular imports
+lib/ansible/galaxy/dependency_resolution/providers.py import-3.11  # circular imports
+lib/ansible/galaxy/dependency_resolution/reporters.py import-3.11  # circular imports
+lib/ansible/galaxy/dependency_resolution/resolvers.py import-3.11  # circular imports
+lib/ansible/galaxy/dependency_resolution/versioning.py import-3.11  # circular imports
 lib/ansible/cli/scripts/ansible_connection_cli_stub.py shebang
 lib/ansible/config/base.yml no-unwanted-files
 lib/ansible/executor/playbook_executor.py pylint:disallowed-name
@@ -96,6 +108,7 @@ lib/ansible/modules/sysvinit.py validate-modules:return-syntax-error
 lib/ansible/modules/uri.py validate-modules:doc-required-mismatch
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
+lib/ansible/modules/user.py import-3.11 # spwd is deprecated and will be removed in Python 3.13
 lib/ansible/modules/yum.py pylint:disallowed-name
 lib/ansible/modules/yum.py validate-modules:parameter-invalid
 lib/ansible/modules/yum_repository.py validate-modules:doc-default-does-not-match-spec
@@ -275,6 +288,7 @@ lib/ansible/module_utils/six/__init__.py mypy-3.7:has-type  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.8:has-type  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.9:has-type  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.10:has-type  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.11:has-type  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-2.7:name-defined  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.5:name-defined  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.6:name-defined  # vendored code
@@ -282,6 +296,7 @@ lib/ansible/module_utils/six/__init__.py mypy-3.7:name-defined  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.8:name-defined  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.9:name-defined  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.10:name-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.11:name-defined  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-2.7:assignment  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.5:assignment  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.6:assignment  # vendored code
@@ -294,6 +309,7 @@ lib/ansible/module_utils/six/__init__.py mypy-3.7:misc  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.8:misc  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.9:misc  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.10:misc  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.11:misc  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-2.7:var-annotated  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-2.7:attr-defined  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.5:var-annotated  # vendored code
@@ -308,6 +324,8 @@ lib/ansible/module_utils/six/__init__.py mypy-3.9:var-annotated  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.9:attr-defined  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.10:var-annotated  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.10:attr-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.11:var-annotated  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.11:attr-defined  # vendored code
 lib/ansible/module_utils/distro/_distro.py mypy-2.7:arg-type  # vendored code
 lib/ansible/module_utils/distro/_distro.py mypy-3.5:valid-type  # vendored code
 lib/ansible/module_utils/distro/_distro.py mypy-3.6:valid-type  # vendored code
@@ -324,6 +342,7 @@ lib/ansible/module_utils/compat/_selectors2.py mypy-3.7:misc  # vendored code
 lib/ansible/module_utils/compat/_selectors2.py mypy-3.8:misc  # vendored code
 lib/ansible/module_utils/compat/_selectors2.py mypy-3.9:misc  # vendored code
 lib/ansible/module_utils/compat/_selectors2.py mypy-3.10:misc  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.11:misc  # vendored code
 lib/ansible/module_utils/compat/_selectors2.py mypy-2.7:assignment  # vendored code
 lib/ansible/module_utils/compat/_selectors2.py mypy-3.5:assignment  # vendored code
 lib/ansible/module_utils/compat/_selectors2.py mypy-3.6:assignment  # vendored code
@@ -331,5 +350,6 @@ lib/ansible/module_utils/compat/_selectors2.py mypy-3.7:assignment  # vendored c
 lib/ansible/module_utils/compat/_selectors2.py mypy-3.8:assignment  # vendored code
 lib/ansible/module_utils/compat/_selectors2.py mypy-3.9:assignment  # vendored code
 lib/ansible/module_utils/compat/_selectors2.py mypy-3.10:assignment  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.11:assignment  # vendored code
 lib/ansible/module_utils/compat/_selectors2.py mypy-2.7:attr-defined  # vendored code
 test/support/integration/plugins/modules/ec2.py pylint:ansible-deprecated-version
