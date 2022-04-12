@@ -30,7 +30,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
-_INTERNAL_HARDCODED = ('local_action', 'lookup', 'query', 'q')
+_INTERNAL_HARDCODED = ('local_action', 'lookup', 'query', 'q') + ('lipsum',)
 
 # FIXME: remove these exceptions if we can
 _RESERVE_EXCEPTIONS = frozenset(('environment', 'gather_subset', 'vars'))
