@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -eux
+export ANSIBLE_FORCE_COLOR=0
 
 ansible-playbook block_vars.yml "$@" 2>&1 | grep "The variable name 'True' is not valid."
 ansible-playbook import_tasks.yml "$@" 2>&1 | grep "The variable name 'True' is not valid."
