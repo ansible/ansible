@@ -78,7 +78,7 @@ from ansible.module_utils.basic import (
 )
 from ansible.module_utils.common.sys_info import get_platform_subclass
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
-from ansible.module_utils.facts.utils import get_file_lines
+from ansible.module_utils.facts.utils import get_file_lines, get_file_content
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.six import PY3, text_type
 
@@ -257,7 +257,7 @@ class FileStrategy(BaseStrategy):
             return ''
 
         try:
-            return get_file_lines(self.FILE)
+            return get_file_content(self.FILE, default='', strip=True)
         except Exception as e:
             self.module.fail_json(
                 msg="failed to read hostname: %s" % to_native(e),
