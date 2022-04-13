@@ -53,6 +53,8 @@ The following table lists the current Steering Committee members. See :ref:`stee
   +------------------+---------------+-------------+
   | John Barker      | gundalow      | 2021        |
   +------------------+---------------+-------------+
+  | Mario Lenz       | mariolenz     | 2022        |
+  +------------------+---------------+-------------+
   | Markus Bergholz  | markuman      | 2022        |
   +------------------+---------------+-------------+
   | Sorin Sbarnea    | ssbarnea      | 2021        |
