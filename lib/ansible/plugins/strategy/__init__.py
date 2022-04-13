@@ -1036,7 +1036,12 @@ class StrategyBase:
             #        but this may take some work in the iterator and gets tricky when
             #        we consider the ability of meta tasks to flush handlers
             for handler in handler_block.block:
+
+                if handler is None:
+                    continue
+
                 # if we match name, we remove from list as they are unique
+                # 2 methods used as role handlers can have 2 diffish names
                 notified_hosts = notified.pop(handler.get_name(), [])
                 notified_hosts.extend(notified.pop(handler.name, []))
                 if handler.listen:
