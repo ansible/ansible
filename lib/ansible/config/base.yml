@@ -1571,7 +1571,6 @@ INTERPRETER_PYTHON_FALLBACK:
   - /usr/bin/python3
   - /usr/libexec/platform-python
   - python2.7
-  - python2.6
   - /usr/bin/python
   - python
   vars:
