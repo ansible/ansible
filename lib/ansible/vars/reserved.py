@@ -31,7 +31,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
-_INTERNAL_HARDCODED =  tuple(Templar(None).environment.globals.keys()) + ('local_action',)
+_INTERNAL_HARDCODED = tuple(Templar(None).environment.globals.keys()) + ('local_action',)
 
 # FIXME: remove these exceptions if we can
 _RESERVE_EXCEPTIONS = frozenset(('environment', 'gather_subset', 'vars'))
