@@ -16,7 +16,7 @@ Reporting a bug
 Security bugs
 -------------
 
-Ansible practices responsible disclosure - for security-related bugs, email `security@ansible.com <mailto:security@ansible.com>`_ to receive a prompt response. Do not submit a  ticket or post to any public groups.
+Ansible practices responsible disclosure. To report security-related bugs, send an email to  `security@ansible.com <mailto:security@ansible.com>`_ for an immediate response. Do not submit a  ticket or post to any public groups.
 
 Bugs in ansible-core
 --------------------
@@ -39,14 +39,15 @@ If you find a bug, open an issue using the `issue template <https://github.com/a
 Fill out the issue template as completely and as accurately as possible. Include:
 
 * your Ansible version
-* the expected behavior and what you've tried (including the exact commands you were using or tasks you are running)
+* the expected behavior and what you've tried, including the exact commands you were using or tasks you are running.
 * the current behavior and why you think it is a bug
 * the steps to reproduce the bug 
 * a minimal reproducible example and comments describing examples
 * any relevant configurations and the components you used
 * any relevant output plus ``ansible -vvvv`` (debugging) output
+* add the output of ``ansible-test-env --show`` when filing bug reports involving ``ansible-test``. 
 
-Make sure to preserve formatting using `code blocks  <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_ when sharing YAML in playbooks. For multiple-file content, use gist.github.com, which is more durable than pastebin content.
+When sharing YAML in playbooks, ensure that you preserve formatting using `code blocks  <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_. For multiple-file content, use gist.github.com, more durable than Pastebin content.
 
 .. _request_features:
 
