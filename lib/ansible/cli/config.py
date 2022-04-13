@@ -38,7 +38,7 @@ display = Display()
 def get_constants():
     ''' helper method to ensure we can template based on existing constants '''
     if not hasattr(get_constants, 'cvars'):
-        get_constants.cvars = { k: getattr(C, k) for k in dir(C) if not k.startswith('__')}
+        get_constants.cvars = {k: getattr(C, k) for k in dir(C) if not k.startswith('__')}
     return get_constants.cvars
 
 
