@@ -94,6 +94,7 @@ class Play(Base, Taggable, CollectionSearch):
         self._removed_hosts = []
         self.ROLE_CACHE = {}
         self._notified = {}
+        self._named = {}
 
         self.only_tags = set(context.CLIARGS.get('tags', [])) or frozenset(('all',))
         self.skip_tags = set(context.CLIARGS.get('skip_tags', []))
@@ -376,16 +377,14 @@ class Play(Base, Taggable, CollectionSearch):
         new_me._group_actions = self._group_actions
         return new_me
 
-    def notify_handler(self, handler_name, host):
-
+    def notify_handler(self, term, host)
+        ''' cache handler notifications by name/or term '''
         notified = False
-        if handler_name not in self._notified:
-            self._notified[handler_name] = [host]
+        if name not in self._notified:
+            self._notified[term] = [host]
             notified = True
-        elif host not in self._notified[handler_name]:
-            self._notified[handler_name].append(host)
+        elif host not in self._notified[term]:
+            self._notified[term].append(host)
             notified = True
         return notified
 
-    def is_handler_host_notified(self, handler_name, host):
-        return handler_name in self._notified and host in self._notified[handler_name]
