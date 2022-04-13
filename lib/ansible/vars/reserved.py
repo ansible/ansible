@@ -26,11 +26,12 @@ from ansible.playbook import Play
 from ansible.playbook.block import Block
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
+from ansible.template import Templar
 from ansible.utils.display import Display
 
 display = Display()
 
-_INTERNAL_HARDCODED = ('local_action', 'lookup', 'query', 'q') + ('lipsum',)
+_INTERNAL_HARDCODED =  tuple(Templar(None).environment.globals.keys()) + ('local_action',)
 
 # FIXME: remove these exceptions if we can
 _RESERVE_EXCEPTIONS = frozenset(('environment', 'gather_subset', 'vars'))
