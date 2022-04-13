@@ -119,7 +119,9 @@ class ActionModule(ActionBase):
                     script_cmd = ' '.join([env_string, target_command])
 
             if self._play_context.check_mode:
-                raise _AnsibleActionDone()
+                # If the script doesn't return changed in the result, it defaults to True,
+                # but since the script may override 'changed', just skip instead of guessing.
+                raise AnsibleActionSkip('Check mode is not supported for this task.')
 
             script_cmd = self._connection._shell.wrap_for_exec(script_cmd)
 
