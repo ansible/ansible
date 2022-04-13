@@ -43,7 +43,7 @@ from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.executor.task_queue_manager import CallbackSend
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.handler import Handler
@@ -665,7 +665,7 @@ class StrategyBase:
                                 target_handler = search_handler_blocks_by_name(handler_name, iterator._play.handlers)
                                 if target_handler is not None:
                                     found = True
-                                    if target_handler.notify_host(original_host):
+                                    if iterator._play.notify_handler(target_handler.get_name(), original_host):
                                         self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
 
                                 for listening_handler_block in iterator._play.handlers:
@@ -1032,6 +1032,7 @@ class StrategyBase:
         '''
 
         result = self._tqm.RUN_OK
+        notified = iterator._play._notified
 
         for handler_block in iterator._play.handlers:
             # FIXME: handlers need to support the rescue/always portions of blocks too,
@@ -1039,8 +1040,9 @@ class StrategyBase:
             #        we consider the ability of meta tasks to flush handlers
             for handler in handler_block.block:
                 try:
-                    if handler.notified_hosts:
-                        result = self._do_handler_run(handler, handler.get_name(), iterator=iterator, play_context=play_context)
+                    name = handler.get_name()
+                    if handler.notified_hosts or name in notified:
+                        result = self._do_handler_run(handler, name, iterator=iterator, play_context=play_context, notified_hosts=notified.pop(name))
                         if not result:
                             break
                 except AttributeError as e:
