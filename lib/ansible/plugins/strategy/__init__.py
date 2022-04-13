@@ -683,8 +683,8 @@ class StrategyBase:
 
                                     # and if none were found, then we raise an error
                                     if not found:
-                                        raise AnsibleError("The requested handler '%s' was not found in either the main handlers list nor in the listening "
-                                               "handlers list" % handler_name)
+                                        raise AnsibleError("The requested notification '%s' was not found as a handler name "
+                                                           "nor in any listen keyword" % handler_name)
 
                                 # if warnings only, we notify, also if found
                                 if iterator._play.notify_handler(target_handler.get_name(), original_host):
@@ -1037,9 +1037,12 @@ class StrategyBase:
             #        we consider the ability of meta tasks to flush handlers
             for handler in handler_block.block:
                 # if we match name, we remove from list as they are unique
-                notified_hosts = notified.pop(handler.get_name(),[])
-                notified_hosts.extend(notified.pop(handler.name. [])
+                notified_hosts = notified.pop(handler.get_name(), [])
+                notified_hosts.extend(notified.pop(handler.name, []))
                 if handler.listen:
+                    # listeners non unique, but we track for warnings
+                    # if we had set as error, we would not get to this point
+                    # as it is handled on issuing notification
                     for term in handler.listen:
                         common = set(handler.listen).intersection(notified.keys())
                         for matched in common:
@@ -1054,9 +1057,9 @@ class StrategyBase:
                     raise AnsibleParserError("Invalid handler definition for '%s'" % (handler.get_name()), orig_exc=e)
         if notified:
             for unmatched in notified.keys():
-                if umatched in seen:
+                if unmatched in seen:
                     continue
-                display.warning("The requested handler '%s' was not found in either the main handlers list nor in the listening handlers list" % matched)
+                display.warning("The requested notification '%s' was not found as a handler name nor as a part of any handler's listen keyword" % matched)
         return result
 
     def _do_handler_run(self, handler, iterator, play_context, notified_hosts=None):

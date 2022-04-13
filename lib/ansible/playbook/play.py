@@ -377,10 +377,10 @@ class Play(Base, Taggable, CollectionSearch):
         new_me._group_actions = self._group_actions
         return new_me
 
-    def notify_handler(self, term, host)
+    def notify_handler(self, term, host):
         ''' cache handler notifications by name/or term '''
         notified = False
-        if name not in self._notified:
+        if term not in self._notified:
             self._notified[term] = [host]
             notified = True
         elif host not in self._notified[term]:
