@@ -44,10 +44,6 @@ Function Convert-ToSID {
             $domain = $account_name_split[0]
         }
         $username = $account_name_split[1]
-    } elseif ($account_name -like "*@*") {
-        $account_name_split = $account_name -split "@"
-        $domain = $account_name_split[1]
-        $username = $account_name_split[0]
     } else {
         $domain = $null
         $username = $account_name
