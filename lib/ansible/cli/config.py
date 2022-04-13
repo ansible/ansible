@@ -403,7 +403,7 @@ class ConfigCLI(CLI):
     def _get_global_configs(self):
         config = self.config.get_configuration_definitions(ignore_private=True).copy()
         for setting in config.keys():
-            v, o = C.config.get_config_value_and_origin(setting, variables=get_constants())
+            v, o = C.config.get_config_value_and_origin(setting, cfile=self.config_file, variables=get_constants())
             config[setting] = Setting(setting, v, o, None)
 
         return self._render_settings(config)
@@ -452,7 +452,7 @@ class ConfigCLI(CLI):
             # actually get the values
             for setting in config_entries[finalname].keys():
                 try:
-                    v, o = C.config.get_config_value_and_origin(setting, plugin_type=ptype, plugin_name=name, variables=get_constants())
+                    v, o = C.config.get_config_value_and_origin(setting, cfile=self.config_file, plugin_type=ptype, plugin_name=name, variables=get_constants())
                 except AnsibleError as e:
                     if to_text(e).startswith('No setting was provided for required configuration'):
                         v = None
