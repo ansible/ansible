@@ -23,7 +23,7 @@ import json
 from contextlib import contextmanager
 
 from ansible import constants as C
-from ansible.cli.arguments.option_helpers import AnsibleVersion
+from ansible.cli.arguments import option_helpers as opt_help
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.connection import Connection, ConnectionError, send_data, recv_data
 from ansible.module_utils.service import fork_process
@@ -224,11 +224,15 @@ class ConnectionProcess(object):
 def main(args=None):
     """ Called to initiate the connect to the remote device
     """
-    parser = argparse.ArgumentParser(prog='ansible-connection', add_help=False)
-    parser.add_argument('--version', action=AnsibleVersion, nargs=0)
+
+    parser = opt_help.create_base_parser(prog='ansible-connection')
+    opt_help.add_verbosity_options(parser)
     parser.add_argument('playbook_pid')
     parser.add_argument('task_uuid')
     args = parser.parse_args(args[1:] if args is not None else args)
+
+    # initialize verbosity
+    display.verbosity = args.verbosity
 
     rc = 0
     result = {}
@@ -252,7 +256,6 @@ def main(args=None):
 
         play_context = PlayContext()
         play_context.deserialize(pc_data)
-        display.verbosity = play_context.verbosity
 
     except Exception as e:
         rc = 1
