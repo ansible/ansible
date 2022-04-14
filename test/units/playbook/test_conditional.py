@@ -121,19 +121,6 @@ class TestConditional(unittest.TestCase):
                                self._eval_con,
                                when, variables)
 
-    def test_dict_undefined_values_is_defined(self):
-        variables = {'dict_value': 1,
-                     'some_defined_dict_with_undefined_values': {'key1': 'value1',
-                                                                 'key2': '{{ dict_value }}',
-                                                                 'key3': '{{ undefined_dict_value }}'
-                                                                 }}
-
-        when = [u"some_defined_dict_with_undefined_values is defined"]
-        self.assertRaisesRegex(errors.AnsibleError,
-                               "The conditional check 'some_defined_dict_with_undefined_values is defined' failed.",
-                               self._eval_con,
-                               when, variables)
-
     def test_is_defined(self):
         variables = {'some_defined_thing': True}
         when = [u"some_defined_thing is defined"]
