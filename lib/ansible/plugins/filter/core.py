@@ -95,14 +95,18 @@ def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
     return datetime.datetime.strptime(string, format)
 
 
-def strftime(string_format, second=None):
+def strftime(string_format, second=None, utc=False):
     ''' return a date string using string. See https://docs.python.org/3/library/time.html#time.strftime for format '''
+    if utc:
+        timefn = time.gmtime
+    else:
+        timefn = time.localtime
     if second is not None:
         try:
             second = float(second)
         except Exception:
             raise AnsibleFilterError('Invalid value for epoch value (%s)' % second)
-    return time.strftime(string_format, time.localtime(second))
+    return time.strftime(string_format, timefn(second))
 
 
 def quote(a):
