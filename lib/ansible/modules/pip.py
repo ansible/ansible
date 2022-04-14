@@ -159,12 +159,11 @@ EXAMPLES = '''
       - bottle>0.10,<0.20,!=0.11
 
 - name: Install python package using a proxy
-  # Pip doesn't use the standard environment variables, please use the CAPITALIZED ones below
   ansible.builtin.pip:
     name: six
   environment:
-    HTTP_PROXY: '127.0.0.1:8080'
-    HTTPS_PROXY: '127.0.0.1:8080'
+    http_proxy: 'http://127.0.0.1:8080'
+    https_proxy: 'https://127.0.0.1:8080'
 
 # You do not have to supply '-e' option in extra_args
 - name: Install MyApp using one of the remote protocols (bzr+,hg+,git+,svn+)
