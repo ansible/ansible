@@ -387,4 +387,3 @@ class Play(Base, Taggable, CollectionSearch):
             self._notified[term].append(host)
             notified = True
         return notified
-
