@@ -1165,9 +1165,9 @@ def start_connection(play_context, variables, task_uuid):
         'ANSIBLE_NETCONF_PLUGINS': netconf_loader.print_paths(),
         'ANSIBLE_TERMINAL_PLUGINS': terminal_loader.print_paths(),
     })
-    verbosity = ''
+    verbosity = []
     if display.verbosity:
-        verbosity = '-%s' % ('v' * display.verbosity)
+        verbosity = ['-%s' % ('v' * display.verbosity)]
     python = sys.executable
     master, slave = pty.openpty()
     p = subprocess.Popen(
