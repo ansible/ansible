@@ -189,8 +189,8 @@ class TaskExecutor:
         except AnsibleError as e:
             return dict(failed=True, msg=wrap_var(to_text(e, nonstring='simplerepr')), _ansible_no_log=self._play_context.no_log)
         except Exception as e:
-            return dict(failed=True, msg='Unexpected failure during module execution.', exception=to_text(traceback.format_exc()),
-                        stdout='', _ansible_no_log=self._play_context.no_log)
+            return dict(failed=True, msg=wrap_var('Unexpected failure during module execution: %s' % (to_native(e, nonstring='simplerepr'))),
+                        exception=to_text(traceback.format_exc()), stdout='', _ansible_no_log=self._play_context.no_log)
         finally:
             try:
                 self._connection.close()
@@ -521,7 +521,7 @@ class TaskExecutor:
         # Now we do final validation on the task, which sets all fields to their final values.
         try:
             self._task.post_validate(templar=templar)
-        except AnsibleError as e:
+        except AnsibleError:
             raise
         except Exception:
             return dict(changed=False, failed=True, _ansible_no_log=no_log, exception=to_text(traceback.format_exc()))
@@ -1165,10 +1165,13 @@ def start_connection(play_context, variables, task_uuid):
         'ANSIBLE_NETCONF_PLUGINS': netconf_loader.print_paths(),
         'ANSIBLE_TERMINAL_PLUGINS': terminal_loader.print_paths(),
     })
+    verbosity = []
+    if display.verbosity:
+        verbosity.append('-%s' % ('v' * display.verbosity))
     python = sys.executable
     master, slave = pty.openpty()
     p = subprocess.Popen(
-        [python, ansible_connection, to_text(os.getppid()), to_text(task_uuid)],
+        [python, ansible_connection, *verbosity, to_text(os.getppid()), to_text(task_uuid)],
         stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
     )
     os.close(slave)
