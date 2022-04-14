@@ -4,47 +4,31 @@
 Ansible and Python 3
 ********************
 
-The ``ansible-core`` code runs on both Python 2 and Python 3 because we want Ansible to be able to manage a wide
-variety of machines. Contributors to ansible-core and to Ansible Collections should be aware of the tips in this document so that they can write code that will run on the same versions of Python as the rest of Ansible.
+The ``ansible-core`` code runs Python 3 (for specific versions check `Control Node Requirements <:ref:control-node-requirements>`_.
+Contributors to ``ansible-core`` and to Ansible Collections should be aware of the tips in this document so that they can write code
+that will run on the same versions of Python as the rest of Ansible.
 
 .. contents::
    :local:
 
-To ensure that your code runs on Python 3 as well as on Python 2, learn the tips and tricks and idioms
-described here. Most of these considerations apply to all three types of Ansible code:
+We do have some considerations depending on the types of Ansible code:
 
-1. controller-side code - code that runs on the machine where you invoke :command:`/usr/bin/ansible`
-2. modules - the code which Ansible transmits to and invokes on the managed machine.
-3. shared ``module_utils`` code - the common code that's used by modules to perform tasks and sometimes used by controller-side code as well
+1. controller-side code - code that runs on the machine where you invoke :command:`/usr/bin/ansible`, only needs to support the controller's Python versions.
+2. modules - the code which Ansible transmits to and invokes on the managed machine. Modules need to support the 'managed node' Python versions, with some exceptions.
+3. shared ``module_utils`` code - the common code that is  used by modules to perform tasks and sometimes used by controller-side code as well. Shared ``module_utils`` code needs to support the same range of Python as the modules.
 
 However, the three types of code do not use the same string strategy. If you're developing a module or some ``module_utils`` code, be sure to read the section on string strategy carefully.
+
+.. note:
+    - While modules can be written in any language, the above applies to code contributed to the core project, which only supports specific Python versions and Powershell for Windows.
 
 Minimum version of Python 3.x and Python 2.x
 ============================================
 
-On the controller we support Python 3.5 or greater and Python 2.7 or greater.  Module-side, we
-support Python 3.5 or greater and Python 2.6 or greater.
+See `Control Node Requirements <:ref:control-node-requirements>`_ and `Managed Node Requirements <:ref:managed-node-requirements>`_ for the
+specific versions supported.
 
-Python 3.5 was chosen as a minimum because it is the earliest Python 3 version adopted as the
-default Python by a Long Term Support (LTS) Linux distribution (in this case, Ubuntu-16.04).
-Previous LTS Linux distributions shipped with a Python 2 version which users can rely upon instead
-of the Python 3 version.
-
-For Python 2, the default is for modules to run on at least Python 2.6.  This allows
-users with older distributions that are stuck on Python 2.6 to manage their
-machines.  Modules are allowed to drop support for Python 2.6 when one of
-their dependent libraries requires a higher version of Python. This is not an
-invitation to add unnecessary dependent libraries in order to force your
-module to be usable only with a newer version of Python; instead it is an
-acknowledgment that some libraries (for instance, boto3 and docker-py) will
-only function with a newer version of Python.
-
-.. note:: Python 2.4 Module-side Support:
-
-    Support for Python 2.4 and Python 2.5 was dropped in Ansible-2.4.  RHEL-5
-    (and its rebuilds like CentOS-5) were supported until April of 2017.
-    Ansible-2.3 was released in April of 2017 and was the last Ansible release
-    to support Python 2.4 on the module-side.
+Your custom modules can support any version of Python (or other languages) you want, but the above are the requirements for the code contributed to the Ansible project.
 
 Developing Ansible code that supports Python 2 and Python 3
 ===========================================================
@@ -90,7 +74,7 @@ Ansible uses different strategies for working with strings in controller-side co
 Controller string strategy: the Unicode Sandwich
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In controller-side code we use a strategy known as the Unicode Sandwich (named
+Until recently ``ansible-core`` supported Python 2.x and followed this strategy, known as the Unicode Sandwich (named
 after Python 2's :func:`unicode  <python:unicode>` text type).  For Unicode Sandwich we know that
 at the border of our code and the outside world (for example, file and network IO,
 environment variables, and some library calls) we are going to receive bytes.
@@ -99,6 +83,13 @@ internal portions of our code.  When we have to send those strings back out to
 the outside world we first convert the text back into bytes.
 To visualize this, imagine a 'sandwich' consisting of a top and bottom layer
 of bytes, a layer of conversion between, and all text type in the center.
+
+For compatibility reasons you will see a bunch of custom functions we developed (``to_text``/``to_bytes``/``to_native``)
+and while Python 2 is not a concern anymore we will continue to use them as they apply for other cases that make
+dealing with unicode problematic.
+
+While we will not be using it most of it anymore, the documentation below is still useful for those developing modules
+that still need to support both Python 2 and 3 simultaneouslly.
 
 Unicode Sandwich common borders: places to convert bytes to text in controller code
 -----------------------------------------------------------------------------------
@@ -400,8 +391,3 @@ does have support for the older, percent-formatting.
     Python documentation on `percent formatting <https://docs.python.org/3/library/stdtypes.html#string-formatting>`_
 
 .. _testing_modules_python_3:
-
-Testing modules on Python 3
-===================================
-
-Ansible modules are slightly harder to code to support Python 3 than normal code from other projects. A lot of mocking has to go into unit testing an Ansible module, so it's harder to test that your changes have fixed everything or to to make sure that later commits haven't regressed the Python 3 support. Review our :ref:`testing <developing_testing>` pages for more information.
