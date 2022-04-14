@@ -103,9 +103,9 @@ class ActionBase(ABC):
 
         if self._task.async_val and not self._supports_async:
             raise AnsibleActionFail('async is not supported for this task.')
-        elif self._play_context.check_mode and not self._supports_check_mode:
+        elif self._task.check_mode and not self._supports_check_mode:
             raise AnsibleActionSkip('check mode is not supported for this task.')
-        elif self._task.async_val and self._play_context.check_mode:
+        elif self._task.async_val and self._task.check_mode:
             raise AnsibleActionFail('check mode and async cannot be used on same task.')
 
         # Error if invalid argument is passed
@@ -394,6 +394,20 @@ class ActionBase(ABC):
         '''
 
         return self.get_shell_option('admin_users', ['root'])
+
+    def _get_remote_addr(self, tvars):
+        ''' consistently get the 'remote_address' for the action plugin '''
+        remote_addr = tvars.get('delegated_vars', {}).get('ansible_host', tvars.get('ansible_host', tvars.get('inventory_hostname', None)))
+        for variation in ('remote_addr', 'host'):
+            try:
+                remote_addr = self._connection.get_option(variation)
+            except KeyError:
+                continue
+            break
+        else:
+            # plugin does not have, fallback to play_context
+            remote_addr = self._play_context.remote_addr
+        return remote_addr
 
     def _get_remote_user(self):
         ''' consistently get the 'remote_user' for the action plugin '''
@@ -929,7 +943,7 @@ class ActionBase(ABC):
             expanded = initial_fragment
 
         if '..' in os.path.dirname(expanded).split('/'):
-            raise AnsibleError("'%s' returned an invalid relative home directory path containing '..'" % self._play_context.remote_addr)
+            raise AnsibleError("'%s' returned an invalid relative home directory path containing '..'" % self._get_remote_addr({}))
 
         return expanded
 
@@ -944,7 +958,7 @@ class ActionBase(ABC):
     def _update_module_args(self, module_name, module_args, task_vars):
 
         # set check mode in the module arguments, if required
-        if self._play_context.check_mode:
+        if self._task.check_mode:
             if not self._supports_check_mode:
                 raise AnsibleError("check mode is not supported for this operation")
             module_args['_ansible_check_mode'] = True
@@ -953,13 +967,13 @@ class ActionBase(ABC):
 
         # set no log in the module arguments, if required
         no_target_syslog = C.config.get_config_value('DEFAULT_NO_TARGET_SYSLOG', variables=task_vars)
-        module_args['_ansible_no_log'] = self._play_context.no_log or no_target_syslog
+        module_args['_ansible_no_log'] = self._task.no_log or no_target_syslog
 
         # set debug in the module arguments, if required
         module_args['_ansible_debug'] = C.DEFAULT_DEBUG
 
         # let module know we are in diff mode
-        module_args['_ansible_diff'] = self._play_context.diff
+        module_args['_ansible_diff'] = self._task.diff
 
         # let module know our verbosity
         module_args['_ansible_verbosity'] = display.verbosity
@@ -1395,7 +1409,7 @@ class ActionBase(ABC):
                 diff['after_header'] = u'dynamically generated'
                 diff['after'] = source
 
-        if self._play_context.no_log:
+        if self._task.no_log:
             if 'before' in diff:
                 diff["before"] = u""
             if 'after' in diff:
