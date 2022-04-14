@@ -114,13 +114,13 @@ EXAMPLES = """
 # ansible all -m ansible.builtin.setup -a 'filter=facter_*'
 
 # Collect only facts returned by facter.
-# ansible all -m ansible.builtin.setup -a 'gather_subset=!all,!any,facter'
+# ansible all -m ansible.builtin.setup -a 'gather_subset=!all,facter'
 
 - name: Collect only facts returned by facter
   ansible.builtin.setup:
     gather_subset:
       - '!all'
-      - '!any'
+      - '!<any valid subset>'
       - facter
 
 - name: Collect only selected facts
@@ -137,7 +137,7 @@ EXAMPLES = """
 # ansible all -m ansible.builtin.setup -a 'gather_subset=network,virtual'
 
 # Collect only network and virtual (excludes default minimum facts)
-# ansible all -m ansible.builtin.setup -a 'gather_subset=!all,!any,network,virtual'
+# ansible all -m ansible.builtin.setup -a 'gather_subset=!all,network,virtual'
 
 # Do not call puppet facter or ohai even if present.
 # ansible all -m ansible.builtin.setup -a 'gather_subset=!facter,!ohai'
