@@ -1061,7 +1061,7 @@ class StrategyBase:
             for unmatched in notified.keys():
                 if unmatched in seen:
                     continue
-                display.warning("The requested notification '%s' was not found as a handler name nor as a part of any handler's listen keyword" % matched)
+                display.warning("The requested notification '%s' was not found as a handler name nor as a part of any handler's listen keyword" % unmatched)
         return result
 
     def _do_handler_run(self, handler, iterator, play_context, notified_hosts=None):
