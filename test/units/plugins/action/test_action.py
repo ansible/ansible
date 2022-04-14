@@ -308,7 +308,6 @@ class TestActionBase(unittest.TestCase):
         # ssh error
         action_base._low_level_execute_command.return_value = dict(rc=255, stdout='', stderr='')
         self.assertRaises(AnsibleError, action_base._make_tmp_path, 'root')
-        play_context.verbosity = 5
         self.assertRaises(AnsibleError, action_base._make_tmp_path, 'root')
 
         # general error

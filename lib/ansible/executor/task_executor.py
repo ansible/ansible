@@ -1212,7 +1212,7 @@ def start_connection(play_context, variables, task_uuid):
                     display.vvvv(message, host=play_context.remote_addr)
 
     if 'error' in result:
-        if play_context.verbosity > 2:
+        if display.verbosity > 2:
             if result.get('exception'):
                 msg = "The full traceback is:\n" + result['exception']
                 display.display(msg, color=C.COLOR_ERROR)
