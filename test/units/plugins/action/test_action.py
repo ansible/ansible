@@ -787,6 +787,7 @@ class TestActionBase(unittest.TestCase):
     def test__remote_expand_user_relative_pathing(self):
         action_base = _action_base()
         action_base._play_context.remote_addr = 'bar'
+        action_base._connection.get_option.return_value = 'bar'
         action_base._low_level_execute_command = MagicMock(return_value={'stdout': b'../home/user'})
         action_base._connection._shell.join_path.return_value = '../home/user/foo'
         with self.assertRaises(AnsibleError) as cm:
