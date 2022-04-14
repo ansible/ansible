@@ -698,7 +698,7 @@ class Connection(ConnectionBase):
                 self._add_args(b_command, b_args, u'disable batch mode for sshpass')
             b_command += [b'-b', b'-']
 
-        if self._play_context.verbosity > 3:
+        if display.verbosity > 3:
             b_command.append(b'-vvv')
 
         # Next, we add ssh_args
