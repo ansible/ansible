@@ -301,6 +301,9 @@
     keyring: "{{ gpg_homedir }}/pubring.kbx"
   register: verify
   ignore_errors: yes
+  environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
 
 - assert:
     that:
@@ -312,11 +315,8 @@
     expected_errors:
       - "* This is the counterpart to SUCCESS and used to indicate a program failure."
       - "* The signature with the keyid has not been verified okay."
-    stdout_no_color: "{{ verify.stdout | regex_replace(reset_color) | regex_replace(color) }}"
     # Remove formatting from the reason so it's one line
-    verify_stdout: "{{ stdout_no_color | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
-    reset_color: '\x1b\[0m'
-    color: '\x1b\[[0-9];[0-9]{2}m'
+    verify_stdout: "{{ verify.stdout | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
 
 # This command is hardcoded with -vvvv purposefully to evaluate extra verbosity messages
 - name: verify the installed collection with invalid detached signature offline
@@ -327,6 +327,9 @@
     keyring: "{{ gpg_homedir }}/pubring.kbx"
   register: verify
   ignore_errors: yes
+  environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
 
 - assert:
     that:
@@ -338,11 +341,8 @@
     expected_errors:
       - "* This is the counterpart to SUCCESS and used to indicate a program failure."
       - "* The signature with the keyid has not been verified okay."
-    stdout_no_color: "{{ verify.stdout | regex_replace(reset_color) | regex_replace(color) }}"
     # Remove formatting from the reason so it's one line
-    verify_stdout: "{{ stdout_no_color | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
-    reset_color: '\x1b\[0m'
-    color: '\x1b\[[0-9];[0-9]{2}m'
+    verify_stdout: "{{ verify.stdout | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
 
 - include_tasks: revoke_gpg_key.yml
 
@@ -355,6 +355,9 @@
     keyring: "{{ gpg_homedir }}/pubring.kbx"
   register: verify
   ignore_errors: yes
+  environment:
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
 
 - assert:
     that:
@@ -366,11 +369,8 @@
     expected_errors:
       - "* The used key has been revoked by its owner."
       - "* The signature with the keyid is good, but the signature was made by a revoked key."
-    stdout_no_color: "{{ verify.stdout | regex_replace(reset_color) | regex_replace(color) }}"
     # Remove formatting from the reason so it's one line
-    verify_stdout: "{{ stdout_no_color | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
-    reset_color: '\x1b\[0m'
-    color: '\x1b\[[0-9];[0-9]{2}m'
+    verify_stdout: "{{ verify.stdout | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
 
 # This command is hardcoded with no verbosity purposefully to evaluate overall gpg failure
 - name: verify that ignoring the signature error and no successful signatures is not successful verification
@@ -383,6 +383,8 @@
   ignore_errors: yes
   environment:
     ANSIBLE_GALAXY_IGNORE_SIGNATURE_STATUS_CODES: REVKEYSIG,KEYREVOKED
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
 
 - assert:
     that:
@@ -394,11 +396,8 @@
     ignored_errors:
       - "* The used key has been revoked by its owner."
       - "* The signature with the keyid is good, but the signature was made by a revoked key."
-    stdout_no_color: "{{ verify.stdout | regex_replace(reset_color) | regex_replace(color) }}"
     # Remove formatting from the reason so it's one line
-    verify_stdout: "{{ stdout_no_color | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
-    reset_color: '\x1b\[0m'
-    color: '\x1b\[[0-9];[0-9]{2}m'
+    verify_stdout: "{{ verify.stdout | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
 
 # This command is hardcoded with -vvvv purposefully to evaluate extra verbosity messages
 - name: verify that ignoring the signature error and no successful signatures and required signature count all is successful verification
@@ -412,6 +411,8 @@
   environment:
     ANSIBLE_GALAXY_IGNORE_SIGNATURE_STATUS_CODES: REVKEYSIG,KEYREVOKED
     ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
 
 - assert:
     that:
@@ -429,11 +430,8 @@
     ignored_errors:
       - "* The used key has been revoked by its owner."
       - "* The signature with the keyid is good, but the signature was made by a revoked key."
-    stdout_no_color: "{{ verify.stdout | regex_replace(reset_color) | regex_replace(color) }}"
     # Remove formatting from the reason so it's one line
-    verify_stdout: "{{ stdout_no_color | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
-    reset_color: '\x1b\[0m'
-    color: '\x1b\[[0-9];[0-9]{2}m'
+    verify_stdout: "{{ verify.stdout | regex_replace('\"') | regex_replace('\\n') | regex_replace('      ', ' ') }}"
 
 - name: use lenient signature verification (default) without providing signatures
   command: ansible-galaxy collection verify namespace1.name1:1.0.0 -vvvv --keyring {{ gpg_homedir }}/pubring.kbx
