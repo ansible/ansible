@@ -1045,9 +1045,16 @@ class StrategyBase:
                     # listeners non unique, but we track for warnings
                     # if we had set as error, we would not get to this point
                     # as it is handled on issuing notification
+                    remaining_keys = list(notified.keys())
+                    if isinstance(handler.listen, string_types):
+                        listening = handler.listen.split(',')
+                    else:
+                        listening = handler.listen
+                    print(handler.name, handler.get_name(), notified_hosts, listening, remaining_keys)
                     for term in handler.listen:
-                        common = set(handler.listen).intersection(notified.keys())
+                        common = set(handler.listen).intersection(remaining_keys)
                         for matched in common:
+                            print(matched)
                             notified_hosts.extend(notified[matched])
                             seen.add(matched)
                 try:
