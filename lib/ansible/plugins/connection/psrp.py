@@ -876,7 +876,7 @@ if ($bytes_read -gt 0) {
                         % (command_name, str(error), position,
                            error.message, error.fq_error)
             stacktrace = error.script_stacktrace
-            if self._play_context.verbosity >= 3 and stacktrace is not None:
+            if display.verbosity >= 3 and stacktrace is not None:
                 error_msg += "\r\nStackTrace:\r\n%s" % stacktrace
             stderr_list.append(error_msg)
 
