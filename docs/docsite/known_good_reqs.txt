@@ -1,7 +1,7 @@
 # pip packages required to build docsite
-# tested June 9 2021
+# tested April 14 2022
 
-antsibull
+antsibull==0.42.0
 # version floats free, since we control features and releases
 docutils==0.16
 # check unordered lists when testing more recent docutils versions
