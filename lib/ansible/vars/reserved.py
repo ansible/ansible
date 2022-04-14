@@ -1,19 +1,6 @@
-# (c) 2017 Ansible By Red Hat
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# coding: utf-8
+# Copyright: (c) 2017, Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
@@ -31,20 +18,20 @@ from ansible.utils.display import Display
 
 display = Display()
 
-_INTERNAL_HARDCODED = tuple(Templar(None).environment.globals.keys()) + ('local_action',)
-
+_INTERNAL_HARDCODED = frozenset(('local_action',))
+_e = Templar(None).environment
+_JINJA_RESERVED = frozenset(set(_e.globals).union(_e.filters, _e.tests))
 # FIXME: remove these exceptions if we can
 _RESERVE_EXCEPTIONS = frozenset(('environment', 'gather_subset', 'vars'))
+# FIXME: with_<lookups>
 
 
 def get_reserved_names(include_private=True):
-    ''' this function returns the list of reserved names associated with play objects and internal template functions '''
-    # FIXME: deal with Jinja tests and filters and with_<lookups>
-
-    result = set(_INTERNAL_HARDCODED)
+    """Return the list of reserved names associated with play objects and internal template functions"""
+    result = set(_INTERNAL_HARDCODED).union(_JINJA_RESERVED)
 
     # FIXME: find a way to 'not hardcode', possibly need role deps/includes
-    class_list = [Play, Role, Block, Task]
+    class_list = (Play, Role, Block, Task)
 
     for aclass in class_list:
         # build ordered list to loop over and dict with attributes
@@ -71,23 +58,8 @@ def get_reserved_names(include_private=True):
     return result
 
 
-def warn_if_reserved(myvars, additional=None):
-    ''' this function warns if any variable passed conflicts with internally reserved names '''
-
-    if additional is None:
-        reserved = _RESERVED_NAMES
-    else:
-        reserved = _RESERVED_NAMES.union(additional)
-
-    varnames = set(myvars)
-    varnames.discard('vars')  # we add this one internally, so safe to ignore
-    for varname in varnames.intersection(reserved):
-        display.warning('Found variable using reserved name: %s' % varname)
-
-
 def handle_reserved_vars(myvars):
-    ''' this function warns if any variable passed conflicts with internally reserved names '''
-
+    """Warn if any variable passed conflicts with internally reserved names"""
     if C.RESERVED_VAR_NAMES != 'ignore':
         varnames = set(myvars)
         reserved_varnames_used = varnames.intersection(_RESERVED_NAMES).difference(_RESERVE_EXCEPTIONS)
@@ -99,7 +71,22 @@ def handle_reserved_vars(myvars):
                 raise AnsibleError(msg)
 
 
+def warn_if_reserved(myvars, additional=None):
+    ''' this function warns if any variable passed conflicts with internally reserved names '''
+    # NOTE: the function is not used
+    if additional is None:
+        reserved = _RESERVED_NAMES
+    else:
+        reserved = _RESERVED_NAMES.union(additional)
+
+    varnames = set(myvars)
+    varnames.discard('vars')  # we add this one internally, so safe to ignore
+    for varname in varnames.intersection(reserved):
+        display.warning('Found variable using reserved name: %s' % varname)
+
+
 def is_reserved_name(name):
+    # NOTE: the function is not used
     return name in _RESERVED_NAMES
 
 

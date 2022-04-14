@@ -201,10 +201,7 @@ def load_extra_vars(loader):
             # Arguments as Key-value
             data = parse_kv(extra_vars_opt)
 
-        try:
-            validate_variable_names(data)
-        except TypeError as e:
-            raise AnsibleError("Invalid variable name in 'extra vars' specified: %s" % to_native(e))
+        validate_variable_names(data, 'extra vars')
 
         if isinstance(data, MutableMapping):
             extra_vars = combine_vars(extra_vars, data)

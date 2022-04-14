@@ -563,14 +563,14 @@ class FieldAttributeBase:
 
         try:
             if isinstance(ds, dict):
-                validate_variable_names(ds.keys())
+                validate_variable_names(ds.keys(), "'vars' specified for %s" % self.__class__.__name__, obj=ds)
                 return combine_vars(self.vars, ds)
             elif isinstance(ds, list):
                 all_vars = self.vars
                 for item in ds:
                     if not isinstance(item, dict):
                         raise ValueError
-                    validate_variable_names(item.keys())
+                    validate_variable_names(item.keys(), "'vars' specified for %s" % self.__class__.__name__, obj=ds)
                     all_vars = combine_vars(all_vars, item)
                 return all_vars
             elif ds is None:
@@ -580,8 +580,6 @@ class FieldAttributeBase:
         except ValueError as e:
             raise AnsibleParserError("Vars in a %s must be specified as a dictionary, or a list of dictionaries" % self.__class__.__name__,
                                      obj=ds, orig_exc=e)
-        except TypeError as e:
-            raise AnsibleParserError("Invalid variable name in 'vars' specified for %s: %s" % (self.__class__.__name__, e), obj=ds, orig_exc=e)
 
     def _extend_value(self, value, new_value, prepend=False):
         '''

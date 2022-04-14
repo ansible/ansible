@@ -19,7 +19,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.vars.validation import validate_variable_names
@@ -61,15 +60,9 @@ class ActionModule(ActionBase):
                         stats[opt] = val
 
             for (k, v) in data.items():
-
                 k = self._templar.template(k)
 
-                try:
-                    validate_variable_names([k])
-                except TypeError as e:
-                    result['failed'] = True
-                    result['msg'] = to_text(e)
-                    return result
+                validate_variable_names(k, 'set_stats')
 
                 stats['data'][k] = self._templar.template(v)
 
