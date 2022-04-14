@@ -657,6 +657,7 @@ class StrategyBase:
                             # So, per the docs, we reassign the list so the proxy picks up and
                             # notifies all other threads
                             for handler_name in result_item['_ansible_notify']:
+                                notify = handler_name
                                 if C.ERROR_ON_MISSING_HANDLER:
                                     found = False
                                     # Find the handler using the above helper.  First we look up the
@@ -665,6 +666,7 @@ class StrategyBase:
                                     # roles and use the first one that matches the notify name
                                     target_handler = search_handler_blocks_by_name(handler_name, iterator._play.handlers)
                                     if target_handler is not None:
+                                        notify = target_handler.get_name()
                                         found = True
 
                                     for listening_handler_block in iterator._play.handlers:
@@ -687,8 +689,8 @@ class StrategyBase:
                                                            "nor in any listen keyword" % handler_name)
 
                                 # if warnings only, we notify, also if found
-                                if iterator._play.notify_handler(target_handler.get_name(), original_host):
-                                    self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
+                                if iterator._play.notify_handler(notify, original_host):
+                                    self._tqm.send_callback('v2_playbook_on_notify', notify, original_host)
 
                     if 'add_host' in result_item:
                         # this task added a new host (add_host module)
@@ -1036,9 +1038,6 @@ class StrategyBase:
             #        but this may take some work in the iterator and gets tricky when
             #        we consider the ability of meta tasks to flush handlers
             for handler in handler_block.block:
-
-                if handler is None:
-                    continue
 
                 # if we match name, we remove from list as they are unique
                 # 2 methods used as role handlers can have 2 diffish names
