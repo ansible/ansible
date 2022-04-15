@@ -7,9 +7,11 @@ __metaclass__ = type
 
 import re
 
+from ast import literal_eval
+from jinja2 import Template
 from string import ascii_letters, digits
 
-from ansible.config.manager import ConfigManager
+from ansible.config.manager import ConfigManager, ensure_type
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common.collections import Sequence
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
@@ -179,8 +181,25 @@ MAGIC_VARIABLE_MAPPING = dict(
 config = ConfigManager()
 
 # Generate constants from config
-for setting in config.get_configuration_definitions():
-    set_constant(setting, config.get_config_value(setting, variables=vars()))
+for setting in config.data.get_settings():
+
+    value = setting.value
+    if setting.origin == 'default' and \
+       isinstance(setting.value, string_types) and \
+       (setting.value.startswith('{{') and setting.value.endswith('}}')):
+        try:
+            t = Template(setting.value)
+            value = t.render(vars())
+            try:
+                value = literal_eval(value)
+            except ValueError:
+                pass  # not a python data structure
+        except Exception:
+            pass  # not templatable
+
+        value = ensure_type(value, setting.type)
+
+    set_constant(setting.name, value)
 
 for warn in config.WARNINGS:
     _warning(warn)
