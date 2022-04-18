@@ -2,20 +2,17 @@
 from __future__ import annotations
 
 import errno
+import json
 import os
 import re
 import typing as t
-
-from ...constants import (
-    COVERAGE_REQUIRED_VERSION,
-)
 
 from ...encoding import (
     to_bytes,
 )
 
 from ...io import (
-    open_binary_file,
+    read_text_file,
     read_json_file,
 )
 
@@ -55,6 +52,12 @@ from ...provisioning import (
     HostState,
 )
 
+from ...coverage_util import (
+    get_coverage_file_schema_version,
+    CoverageError,
+    CONTROLLER_COVERAGE_VERSION,
+)
+
 if t.TYPE_CHECKING:
     import coverage as coverage_module
 
@@ -79,11 +82,13 @@ def initialize_coverage(args, host_state):  # type: (CoverageConfig, HostState) 
     except ImportError:
         coverage = None
 
-    if not coverage:
-        raise ApplicationError(f'Version {COVERAGE_REQUIRED_VERSION} of the Python "coverage" module must be installed to use this command.')
+    coverage_required_version = CONTROLLER_COVERAGE_VERSION.coverage_version
 
-    if coverage.__version__ != COVERAGE_REQUIRED_VERSION:
-        raise ApplicationError(f'Version {COVERAGE_REQUIRED_VERSION} of the Python "coverage" module is required. Version {coverage.__version__} was found.')
+    if not coverage:
+        raise ApplicationError(f'Version {coverage_required_version} of the Python "coverage" module must be installed to use this command.')
+
+    if coverage.__version__ != coverage_required_version:
+        raise ApplicationError(f'Version {coverage_required_version} of the Python "coverage" module is required. Version {coverage.__version__} was found.')
 
     return coverage
 
@@ -158,24 +163,13 @@ def enumerate_python_arcs(
         display.warning('Empty coverage file: %s' % path, verbosity=2)
         return
 
-    original = coverage.CoverageData()
-
     try:
-        original.read_file(path)
-    except Exception as ex:  # pylint: disable=locally-disabled, broad-except
-        with open_binary_file(path) as file_obj:
-            header = file_obj.read(6)
-
-        if header == b'SQLite':
-            display.error('File created by "coverage" 5.0+: %s' % os.path.relpath(path))
-        else:
-            display.error(u'%s' % ex)
-
+        arc_data = read_python_coverage(path, coverage)
+    except CoverageError as ex:
+        display.error(str(ex))
         return
 
-    for filename in original.measured_files():
-        arcs = original.arcs(filename)
-
+    for filename, arcs in arc_data.items():
         if not arcs:
             # This is most likely due to using an unsupported version of coverage.
             display.warning('No arcs found for "%s" in coverage file: %s' % (filename, path))
@@ -187,6 +181,51 @@ def enumerate_python_arcs(
             continue
 
         yield filename, set(arcs)
+
+
+PythonArcs = t.Dict[str, t.List[t.Tuple[int, int]]]
+"""Python coverage arcs."""
+
+
+def read_python_coverage(path: str, coverage: coverage_module) -> PythonArcs:
+    """Return coverage arcs from the specified coverage file. Raises a CoverageError exception if coverage cannot be read."""
+    try:
+        return read_python_coverage_native(path, coverage)
+    except CoverageError as ex:
+        schema_version = get_coverage_file_schema_version(path)
+
+        if schema_version == CONTROLLER_COVERAGE_VERSION.schema_version:
+            raise CoverageError(path, f'Unexpected failure reading supported schema version {schema_version}.') from ex
+
+    if schema_version == 0:
+        return read_python_coverage_legacy(path)
+
+    raise CoverageError(path, f'Unsupported schema version: {schema_version}')
+
+
+def read_python_coverage_native(path: str, coverage: coverage_module) -> PythonArcs:
+    """Return coverage arcs from the specified coverage file using the coverage API."""
+    try:
+        data = coverage.CoverageData(path)
+        data.read()
+        arcs = {filename: data.arcs(filename) for filename in data.measured_files()}
+    except Exception as ex:
+        raise CoverageError(path, f'Error reading coverage file using coverage API: {ex}') from ex
+
+    return arcs
+
+
+def read_python_coverage_legacy(path: str) -> PythonArcs:
+    """Return coverage arcs from the specified coverage file, which must be in the legacy JSON format."""
+    try:
+        contents = read_text_file(path)
+        contents = re.sub(r'''^!coverage.py: This is a private format, don't read it directly!''', '', contents)
+        data = json.loads(contents)
+        arcs: PythonArcs = {filename: [tuple(arc) for arc in arcs] for filename, arcs in data['arcs'].items()}
+    except Exception as ex:
+        raise CoverageError(path, f'Error reading JSON coverage file: {ex}') from ex
+
+    return arcs
 
 
 def enumerate_powershell_lines(

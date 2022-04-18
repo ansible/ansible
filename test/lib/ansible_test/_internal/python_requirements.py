@@ -8,10 +8,6 @@ import os
 import re
 import typing as t
 
-from .constants import (
-    COVERAGE_REQUIRED_VERSION,
-)
-
 from .encoding import (
     to_text,
     to_bytes,
@@ -57,6 +53,10 @@ from .host_configs import (
 from .connections import (
     LocalConnection,
     Connection,
+)
+
+from .coverage_util import (
+    get_coverage_version,
 )
 
 QUIET_PIP_SCRIPT_PATH = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'quiet_pip.py')
@@ -214,7 +214,7 @@ def collect_requirements(
         commands.extend(collect_package_install(packages=['virtualenv==16.7.12'], constraints=False))
 
     if coverage:
-        commands.extend(collect_package_install(packages=[f'coverage=={COVERAGE_REQUIRED_VERSION}'], constraints=False))
+        commands.extend(collect_package_install(packages=[f'coverage=={get_coverage_version(python.version).coverage_version}'], constraints=False))
 
     if cryptography:
         commands.extend(collect_package_install(packages=get_cryptography_requirements(python)))
