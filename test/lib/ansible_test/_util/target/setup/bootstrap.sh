@@ -82,17 +82,8 @@ pip_install() {
 
 bootstrap_remote_freebsd()
 {
-    if [ "${python_version}" = "2.7" ]; then
-        # on Python 2.7 our only option is to use virtualenv
-        virtualenv_pkg="py27-virtualenv"
-    else
-        # on Python 3.x we'll use the built-in venv instead
-        virtualenv_pkg=""
-    fi
-
     packages="
         python${python_package_version}
-        ${virtualenv_pkg}
         bash
         curl
         gtar
@@ -176,13 +167,6 @@ bootstrap_remote_rhel_7()
         python-devel
         python-virtualenv
         "
-
-    if [ "${controller}" ]; then
-        packages="
-            ${packages}
-            python2-cryptography
-            "
-    fi
 
     while true; do
         # shellcheck disable=SC2086
