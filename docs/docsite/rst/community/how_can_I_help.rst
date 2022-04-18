@@ -48,7 +48,10 @@ If there is no meetup near you, we are happy to help you `start one <https://www
 File and verify issues
 ======================
 
-All software has bugs, and Ansible is no exception. When you find a bug, you can help tremendously by :ref:`telling us about it <reporting_bugs_and_features>`.
+All software has bugs, and Ansible is no exception. When you find a bug, you can help tremendously by telling us about it:
+
+* Filing :ref:`issues for ansible-core <reporting_bugs_and_features>`.
+* Filing :ref:`issues for collections <reporting_bugs_in_collections>`.
 
 
 If the bug you found already exists in an issue, you can help by verifying the behavior of the reported bug with a comment in that issue, or by reporting any additional information.
@@ -56,16 +59,16 @@ If the bug you found already exists in an issue, you can help by verifying the b
 Review and submit pull requests
 ===============================
 
-As you become more familiar with how Ansible works, you may be able to fix issues or develop new features yourself. If you think you have a fix for a bug in Ansible, or if you have a new feature that you would like to share with millions of Ansible users, read all about the :ref:`Ansible development process <community_development_process>` and and :ref:`how to contribute to collections <contributing_maintained_collections>` to learn how to get your code accepted into Ansible.
+As you become more familiar with how Ansible works, you may be able to fix issues or develop new features yourself. If you think you have a fix for a bug in Ansible, or if you have a new feature that you would like to share with millions of Ansible users, read all about the :ref:`development process <community_development_process>` to learn how to get your code accepted into Ansible.
 
-Another good way to help is to review pull requests that other Ansible users have submitted. The Ansible community keeps a full list of `open pull requests by file <https://ansible.sivel.net/pr/byfile.html>`_, so if a particular module or plugin interests you, you can easily keep track of all the relevant new pull requests and provide testing or feedback.
+Another good way to help is to review pull requests that other Ansible users have submitted. Ansible core keeps a full list of `open pull requests by file <https://ansible.sivel.net/pr/byfile.html>`_, so if a particular module or plugin interests you, you can easily keep track of all the relevant new pull requests and provide testing or feedback. Alternately, you can review the pull requests for any collections that interest you. Click :guilabel:`Issue tracker` on the collection documentation page to find the issues and PRs for that collection.
 
 Become a collection maintainer
 ==============================
 
 Once you have learned about the development process and have contributed code to a collection, we encourage you to become a maintainer of that collection. There are hundreds of modules in dozens of Ansible collections, and the vast majority of them are written and maintained entirely by members of the Ansible community.
 
-To learn more about the responsibilities of being an Ansible module maintainer, please read our :ref:`collection maintainer guidelines <maintainers>`.
+ See :ref:`collection maintainer guidelines <maintainers>` to learn more about the responsibilities of being an Ansible collection maintainer.
 
 .. _community_working_groups:
 

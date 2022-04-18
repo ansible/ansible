@@ -21,3 +21,4 @@ The purpose of this guide is to teach you everything you need to know about bein
    :maxdepth: 2
 
    getting_started
+   contributor_path
