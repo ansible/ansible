@@ -161,8 +161,12 @@ def _command_coverage_combine_python(args, host_state):  # type: (CoverageCombin
 
     for group in sorted(groups):
         arc_data = groups[group]
+        output_file = coverage_file + group + suffix
 
-        updated = coverage.CoverageData()
+        if args.explain:
+            continue
+
+        updated = coverage.CoverageData(output_file)
 
         for filename in arc_data:
             if not path_checker.check_path(filename):
@@ -173,13 +177,11 @@ def _command_coverage_combine_python(args, host_state):  # type: (CoverageCombin
         if args.all:
             updated.add_arcs(dict((source[0], []) for source in sources))
 
-        if not args.explain:
-            output_file = coverage_file + group + suffix
-            updated.write_file(output_file)  # always write files to make sure stale files do not exist
+        updated.write()  # always write files to make sure stale files do not exist
 
-            if updated:
-                # only report files which are non-empty to prevent coverage from reporting errors
-                output_files.append(output_file)
+        if updated:
+            # only report files which are non-empty to prevent coverage from reporting errors
+            output_files.append(output_file)
 
     path_checker.report()
 
