@@ -108,7 +108,16 @@ Promote active contributors satisfying :ref:`requirements<maintainer_requirement
 
 If your collection found new maintainers, announce that fact in the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_ and during the next Contributor Summit congratulating and thanking them for the work done. You can mention all the people promoted since the previous summit. Remember to invite the other maintainers to the Summit in advance.
 
+Some other general guidelines to encourage contributors:
 
+* Welcome the author and thank them for the issue or pull request.
+* If there is a non-crucial easy-fix bug reported, politely ask the author to fix it themselves providing a link to :ref:`collection_quickstart`.
+* When suggesting changes, try to use questions, not statements.
+* When suggesting mandatory changes, do it as politely as possible providing documentation references.
+* If your suggestion is optional or a matter of personal preferences, please say it explicitly.
+* When asking for adding tests or for complex code refactoring, say that the author is welcome to ask for clarifications and help if they need.
+* If somebody suggests a good idea, mention it or put a thumbs up.
+* After merging, thank the author and reviewers for their time and effort.
 
 .. _maintainer_documentation:
 
