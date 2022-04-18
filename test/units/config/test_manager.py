@@ -19,16 +19,6 @@ curdir = os.path.dirname(__file__)
 cfg_file = os.path.join(curdir, 'test.cfg')
 cfg_file2 = os.path.join(curdir, 'test2.cfg')
 
-expected_ini = {'CONFIG_FILE': Setting(name='CONFIG_FILE', value=cfg_file, origin='', type='string'),
-                'config_entry': Setting(name='config_entry', value=u'fromini', origin=cfg_file, type='string'),
-                'config_entry_bool': Setting(name='config_entry_bool', value=False, origin=cfg_file, type='bool'),
-                'config_entry_list': Setting(name='config_entry_list', value=['fromini'], origin=cfg_file, type='list'),
-                'config_entry_deprecated': Setting(name='config_entry_deprecated', value=u'fromini', origin=cfg_file, type='string'),
-                'config_entry_multi': Setting(name='config_entry_multi', value=u'morefromini', origin=cfg_file, type='string'),
-                'config_entry_multi_deprecated': Setting(name='config_entry_multi_deprecated', value=u'morefromini', origin=cfg_file, type='string'),
-                'config_entry_multi_deprecated_source': Setting(name='config_entry_multi_deprecated_source', value=u'morefromini',
-                                                                origin=cfg_file, type='string')}
-
 ensure_test_data = [
     ('a,b', 'list', list),
     (['a', 'b'], 'list', list),
@@ -84,9 +74,6 @@ class TestConfigManager:
     @classmethod
     def teardown_class(cls):
         cls.manager = None
-
-    def test_initial_load(self):
-        assert self.manager.data._global_settings == expected_ini
 
     @pytest.mark.parametrize("value, expected_type, python_type", ensure_test_data)
     def test_ensure_type(self, value, expected_type, python_type):
