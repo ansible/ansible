@@ -2,9 +2,9 @@
 Contributor path
 ****************
 
-This section describes the contributor journey from the early beginning, through all the stages to becoming a leader who helps shape the future of Ansible. You can use this path as a roadmap for your long-term participation.
+This section describes the contributor journey from the beginning to becoming a leader who helps shape the future of Ansible. You can use this path as a roadmap for your long-term participation.
 
-Any contribution to the project, even a small one, is very welcome and valuable. Any contribution counts, whether it's feedback on an isssue, pull requiest, or  topic, a documentation change, or a coding contribution. When you contribute regularly, your proficiency and judgment in the related area are increasing fast and, along with this, the importance of your presence in the project.
+Any contribution to the project, even a small one, is very welcome and valuable. Any contribution counts, whether it's feedback on an issue, a pull request, a topic or documentation change, or a coding contribution. When you contribute regularly, your proficiency and judgment in the related area increase and, along with this, the importance of your presence in the project.
 
 .. contents::
     :local:
@@ -14,9 +14,9 @@ Any contribution to the project, even a small one, is very welcome and valuable.
 Determine your area of interest
 =================================
 
-First, determine areas that are interesting to you, taking into consideration your current experience and experience you'd like to gain. For example, if you use a certain collection, have a look there. See :ref:`how_can_i_help` for more ideas on how to help.
+First, determine areas that are interesting to you. Consider your current experience and what you'd like to gain. For example, if you use a specific collection, have a look there. See :ref:`how_can_i_help` for more ideas on how to help.
 
-Find the corresponding the project
+Find the corresponding project
 ====================================
 
 These are multiple community projects in the Ansible ecosystem you could contribute to:
@@ -57,7 +57,7 @@ Each Ansible project has its own set of contributor guidelines. Familarize yours
 Making your first contribution
 ==============================
 
-You can find some ideas how you can contribute in :ref:`how_can_i_help` and the `collection repository <https://github.com/ansible-collections/>`_  ``README`` and ``CONTRIBUTING`` files. To make your first experience as smooth as possible, read the repository documentation carefully, then ask the repository maintainers for guidance if you have any questions.
+You can find some ideas on how you can contribute in :ref:`how_can_i_help` and the `collection repository <https://github.com/ansible-collections/>`_  ``README`` and ``CONTRIBUTING`` files. To make your first experience as smooth as possible, read the repository documentation carefully, then ask the repository maintainers for guidance if you have any questions.
 
 You can also look for GitHub issues labeled with the ``easyfix``, ``good_first_issue``, and ``docs`` labels.  Add a comment on the GitHub issue to say you are looking at it and to ask for help if you need it.
 
