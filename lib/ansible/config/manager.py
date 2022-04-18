@@ -301,8 +301,7 @@ class ConfigManager(object):
             # initialize parser and read config
             self._parse_config_file()
 
-        # update constants
-        self.update_config_data(self._base_defs, self._config_file)
+        # ensure we always have config def entry
         self._base_defs['CONFIG_FILE'] = {'default': None, 'type': 'path'}
 
     def _read_config_yaml_file(self, yml_file):
