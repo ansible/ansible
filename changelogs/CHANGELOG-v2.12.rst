@@ -5,6 +5,30 @@ ansible-core 2.12 "Dazed and Confused" Release Notes
 .. contents:: Topics
 
 
+v2.12.5rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2022-04-18
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Ansible.ModuleUtils.SID - Use user principal name as is for lookup in the ``Convert-ToSID`` function - https://github.com/ansible/ansible/issues/77316
+- Fix traceback when installing a collection from a git repository and git is not installed (https://github.com/ansible/ansible/issues/77479).
+- ansible-test - Correctly detect when running as the ``root`` user (UID 0) on the origin host. The result of the detection was incorrectly being inverted.
+- ansible-test - Fix skipping of tests marked ``needs/python`` on the origin host.
+- ansible-test - Fix skipping of tests marked ``needs/root`` on the origin host.
+- ansible-test compile sanity test - do not crash if a column could not be determined for an error (https://github.com/ansible/ansible/pull/77465).
+- hostname - use ``file_get_content()`` to read the file containing the host name in the ``FileStrategy.get_permanent_hostname()`` method. This prevents a ``TypeError`` from being raised when the strategy is used (https://github.com/ansible/ansible/issues/77025).
+- script - skip in check mode since the plugin cannot determine if a change will occur.
+- shell/command - only skip in check mode if the options `creates` and `removes` are both None.
+- winrm - Ensure ``kinit`` is run with the same ``PATH`` env var as the Ansible process
+
 v2.12.4
 =======
 

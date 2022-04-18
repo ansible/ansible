@@ -1392,3 +1392,42 @@ releases:
     - nativejinjaunsafetext-yaml-representer.yml
     - v2.12.4rc1_summary.yaml
     release_date: '2022-03-21'
+  2.12.5rc1:
+    changes:
+      bugfixes:
+      - Ansible.ModuleUtils.SID - Use user principal name as is for lookup in the
+        ``Convert-ToSID`` function - https://github.com/ansible/ansible/issues/77316
+      - Fix traceback when installing a collection from a git repository and git is
+        not installed (https://github.com/ansible/ansible/issues/77479).
+      - ansible-test - Correctly detect when running as the ``root`` user (UID 0)
+        on the origin host. The result of the detection was incorrectly being inverted.
+      - ansible-test - Fix skipping of tests marked ``needs/python`` on the origin
+        host.
+      - ansible-test - Fix skipping of tests marked ``needs/root`` on the origin host.
+      - ansible-test compile sanity test - do not crash if a column could not be determined
+        for an error (https://github.com/ansible/ansible/pull/77465).
+      - hostname - use ``file_get_content()`` to read the file containing the host
+        name in the ``FileStrategy.get_permanent_hostname()`` method. This prevents
+        a ``TypeError`` from being raised when the strategy is used (https://github.com/ansible/ansible/issues/77025).
+      - script - skip in check mode since the plugin cannot determine if a change
+        will occur.
+      - shell/command - only skip in check mode if the options `creates` and `removes`
+        are both None.
+      - winrm - Ensure ``kinit`` is run with the same ``PATH`` env var as the Ansible
+        process
+      release_summary: '| Release Date: 2022-04-18
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Dazed and Confused
+    fragments:
+    - 76353-fix-check-mode-skipping.yaml
+    - 77074-hostname-fix-typeerror-in-filestrategy.yml
+    - 77465-ansible-test-compile-crash.yml
+    - 77493-ansible-galaxy-find-git-executable-before-using.yaml
+    - ModuleUtils.SID-long-username.yml
+    - ansible-test-target-filter.yml
+    - v2.12.5rc1_summary.yaml
+    - winrm-kinit-path.yml
+    release_date: '2022-04-18'
