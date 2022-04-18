@@ -17,7 +17,6 @@ from collections import namedtuple
 from collections.abc import Mapping, Sequence
 from jinja2.nativetypes import NativeEnvironment
 
-from ansible.config.data import ConfigData
 from ansible.errors import AnsibleOptionsError, AnsibleError
 from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.module_utils.common.yaml import yaml_load
@@ -287,7 +286,6 @@ class ConfigManager(object):
         self._parsers = {}
 
         self._config_file = conf_file
-        self.data = ConfigData()
 
         self._base_defs = self._read_config_yaml_file(defs_file or ('%s/base.yml' % os.path.dirname(__file__)))
         _add_base_defs_deprecations(self._base_defs)
@@ -599,43 +597,3 @@ class ConfigManager(object):
             self._plugins[plugin_type] = {}
 
         self._plugins[plugin_type][name] = defs
-
-    def update_config_data(self, defs=None, configfile=None):
-        ''' really: update constants '''
-
-        if defs is None:
-            defs = self._base_defs
-        if configfile is None:
-            configfile = self._config_file
-
-        if not isinstance(defs, dict):
-            raise AnsibleOptionsError("Invalid configuration definition type: %s for %s" % (type(defs), defs))
-
-        origin = None
-        # env and config defs can have several entries, ordered in list from lowest to highest precedence
-        for config in defs:
-
-            if not isinstance(defs[config], dict):
-                raise AnsibleOptionsError("Invalid configuration definition '%s': type is %s" % (to_native(config), type(defs[config])))
-
-            # get value and origin
-            try:
-                value, origin = self.get_config_value_and_origin(config, configfile)
-            except Exception as e:
-                # Printing the problem here because, in the current code:
-                # (1) we can't reach the error handler for AnsibleError before we
-                #     hit a different error due to lack of working config.
-                # (2) We don't have access to display yet because display depends on config
-                #     being properly loaded.
-                #
-                # If we start getting double errors printed from this section of code, then the
-                # above problem #1 has been fixed.  Revamp this to be more like the try: except
-                # in get_config_value() at that time.
-                sys.stderr.write("Unhandled error:\n %s\n\n" % traceback.format_exc())
-                raise AnsibleError("Invalid settings supplied for %s: %s\n" % (config, to_native(e)), orig_exc=e)
-
-            # set the constant
-            self.data.update_setting(Setting(config, value, origin, defs[config].get('type', 'string')))
-
-        # update the constant for config file
-        self.data.update_setting(Setting('CONFIG_FILE', configfile, '', 'string'))
