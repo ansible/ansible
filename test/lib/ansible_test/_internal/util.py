@@ -599,6 +599,12 @@ class Display:
         fd.flush()
 
 
+class InternalError(Exception):
+    """An unhandled internal error indicating a bug in the code."""
+    def __init__(self, message: str) -> None:
+        super().__init__(f'An internal error has occurred in ansible-test: {message}')
+
+
 class ApplicationError(Exception):
     """General application error."""
 
