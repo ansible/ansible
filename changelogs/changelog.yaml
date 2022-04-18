@@ -1714,6 +1714,24 @@ releases:
     - fqn-module-cache.yml
     - v2.11.10rc1_summary.yaml
     release_date: '2022-03-21'
+  2.11.11rc1:
+    changes:
+      bugfixes:
+      - Ansible.ModuleUtils.SID - Use user principal name as is for lookup in the
+        ``Convert-ToSID`` function - https://github.com/ansible/ansible/issues/77316
+      - winrm - Ensure ``kinit`` is run with the same ``PATH`` env var as the Ansible
+        process
+      release_summary: '| Release Date: 2022-04-18
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - ModuleUtils.SID-long-username.yml
+    - v2.11.11rc1_summary.yaml
+    - winrm-kinit-path.yml
+    release_date: '2022-04-18'
   2.11.1rc1:
     changes:
       bugfixes:
