@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
+import sys
 
 from ast import literal_eval
 from jinja2 import Template
@@ -32,6 +33,7 @@ def _warning(msg):
 
 def _deprecated(msg, version):
     ''' display is not guaranteed here, nor it being the full class, but try anyways, fallback to sys.stderr.write '''
+
     try:
         from ansible.utils.display import Display
         Display().deprecated(msg, version=version)
@@ -45,23 +47,7 @@ def set_constant(name, value, export=vars()):
     export[name] = value
 
 
-class _DeprecatedSequenceConstant(Sequence):
-    def __init__(self, value, msg, version):
-        self._value = value
-        self._msg = msg
-        self._version = version
-
-    def __len__(self):
-        _deprecated(self._msg, self._version)
-        return len(self._value)
-
-    def __getitem__(self, y):
-        _deprecated(self._msg, self._version)
-        return self._value[y]
-
-
 # CONSTANTS ### yes, actual ones
-
 # The following are hard-coded action names
 _ACTION_DEBUG = add_internal_fqcns(('debug', ))
 _ACTION_IMPORT_PLAYBOOK = add_internal_fqcns(('import_playbook', ))
@@ -177,11 +163,32 @@ MAGIC_VARIABLE_MAPPING = dict(
     become_flags=('ansible_become_flags', ),
 )
 
-# POPULATE SETTINGS FROM CONFIG ###
+_myself = sys.modules[__name__]
 config = ConfigManager()
 
-# Generate constants from config
-for setting in config.data.get_settings():
+
+def __getattr__(name):
+    ''' allows to dynamically load constants from settings '''
+
+    if name in vars():
+        value = vars.get(name)
+    else:
+        setting = config.data.get_setting(name)
+        for dep in config.DEPRECATED:
+            _deprecated(dep[0], dep[1]['version'])
+        for warn in config.WARNINGS:
+            _warning(warn)
+        if setting:
+            value = _extract_value(setting)
+            set_constant(name, value)
+        else:
+            raise AttributeError("No constant nor setting named: %s" % name)
+    # TODO: _deprecated("Using C.%s is deprecated, code should use ConfigManager's .get_value() instead" % name, '2.16')
+    return value
+
+
+def _extract_value(setting):
+    ''' handles tempating of defaults for a setting's value and ensures it's type '''
 
     value = setting.value
     if setting.origin == 'default' and \
@@ -189,7 +196,7 @@ for setting in config.data.get_settings():
        (setting.value.startswith('{{') and setting.value.endswith('}}')):
         try:
             t = Template(setting.value)
-            value = t.render(vars())
+            value = t.render(globals())
             try:
                 value = literal_eval(value)
             except ValueError:
@@ -199,7 +206,4 @@ for setting in config.data.get_settings():
 
         value = ensure_type(value, setting.type)
 
-    set_constant(setting.name, value)
-
-for warn in config.WARNINGS:
-    _warning(warn)
+    return value
