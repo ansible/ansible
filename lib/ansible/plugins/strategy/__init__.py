@@ -1068,7 +1068,7 @@ class StrategyBase:
                             notified_hosts.extend(notified.get(term, []))
                             seen.add(term)
                 try:
-                    result = self._do_handler_run(handler, iterator=iterator, play_context=play_context, notified_hosts=notified_hosts)
+                    result = self._do_handler_run(handler, iterator=iterator, play_context=play_context, notified_hosts=set(notified_hosts))
                     if not result:
                         break
                 except AttributeError as e:
