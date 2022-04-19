@@ -268,7 +268,10 @@ class ConcreteArtifactsManager:
     def get_direct_collection_dependencies(self, collection):
         # type: (Candidate | Requirement) -> dict[str, str]
         """Extract deps from the given on-disk collection artifact."""
-        return self.get_direct_collection_meta(collection)['dependencies']  # type: ignore[return-value]
+        collection_dependencies = self.get_direct_collection_meta(collection)['dependencies']
+        if collection_dependencies is None:
+            collection_dependencies = {}
+        return collection_dependencies  # type: ignore[return-value]
 
     def get_direct_collection_meta(self, collection):
         # type: (Candidate | Requirement) -> dict[str, str | dict[str, str] | list[str] | None]
