@@ -174,6 +174,10 @@ class InventoryModule(BaseFileInventoryPlugin):
         '''
         Each host key can be a pattern, try to process it and add variables as needed
         '''
-        (hostnames, port) = self._expand_hostpattern(host_pattern)
-
+        try:
+            (hostnames, port) = self._expand_hostpattern(host_pattern)
+        except TypeError:
+            raise AnsibleParserError(
+                f"Host pattern {host_pattern} must be a string. Enclose integers/floats in quotation marks."
+            )
         return hostnames, port
