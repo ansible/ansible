@@ -3,6 +3,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
 import re
 import subprocess
 import sys
@@ -19,7 +20,7 @@ def main():
 
     cmd = [
         sys.executable,
-        '-m', 'rstcheck',
+        os.path.join(os.path.dirname(__file__), 'rstcheck-cli.py'),
         '--report', 'warning',
         '--ignore-substitutions', ','.join(ignore_substitutions),
     ] + paths

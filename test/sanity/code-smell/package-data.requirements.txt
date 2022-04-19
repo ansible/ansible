@@ -1,4 +1,4 @@
-docutils
+docutils == 0.16 # required for sphinx compatibility
 jinja2
 packaging
 pyyaml  # ansible-core requirement
