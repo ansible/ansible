@@ -1067,13 +1067,18 @@ class StrategyBase:
                         if term in remaining_keys:
                             notified_hosts.extend(notified.get(term, []))
                             seen.add(term)
-                try:
-                    result = self._do_handler_run(handler, iterator=iterator, play_context=play_context, notified_hosts=list(set(notified_hosts)))
-                    if not result:
-                        break
-                except AttributeError as e:
-                    display.vvv(traceback.format_exc())
-                    raise AnsibleParserError("Invalid handler definition for '%s'" % (handler.get_name()), orig_exc=e)
+
+                if notified_hosts:
+                    # unique it
+                    notified_hosts = list(set(notified_hosts))
+                    try:
+                        # actually run handler
+                        result = self._do_handler_run(handler, iterator=iterator, play_context=play_context, notified_hosts=notified_hosts)
+                        if not result:
+                            break
+                    except AttributeError as e:
+                        display.vvv(traceback.format_exc())
+                        raise AnsibleParserError("Invalid handler definition for '%s'" % (handler.get_name()), orig_exc=e)
         if notified:
             for unmatched in notified.keys():
                 if unmatched in seen:
