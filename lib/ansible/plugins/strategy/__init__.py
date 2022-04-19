@@ -1096,6 +1096,9 @@ class StrategyBase:
         notified_hosts = self._filter_notified_hosts(notified_hosts)
         notified_hosts += failed_hosts
 
+        if handler.action in C._ACTION_META:
+            raise AnsibleError('Handlers are not allowed to use `%s` actions' % handler.action)
+
         if len(notified_hosts) > 0:
             self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
 

@@ -18,10 +18,10 @@
 # 'common_handlers : common_handlers : test_fqcn_handler`
 # 'testns.testcoll.common_handlers : common_handlers : test_fqcn_handler'
 - name: 'common_handlers : test_fqcn_handler'
-  meta: noop
+  debug: msg=noop
 
 # The following handler starts with 'fqcn : ' and should _not_ be listed as:
 # 'common_handlers : testns.testcoll.common_handlers : test_fqcn_handler`
 # 'testns.testcoll.common_handlers : testns.testcoll.common_handlers : test_fqcn_handler'
 - name: 'testns.testcoll.common_handlers : test_fqcn_handler'
-  meta: noop
+  debug: msg=noop
