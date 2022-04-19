@@ -143,16 +143,16 @@ def collection_artifact(request, tmp_path_factory):
 
     call_galaxy_cli(['init', '%s.%s' % (namespace, collection), '-c', '--init-path', test_dir,
                      '--collection-skeleton', skeleton_path])
-    dependencies = getattr(request, 'param', None)
-    if dependencies:
-        galaxy_yml = os.path.join(collection_path, 'galaxy.yml')
-        with open(galaxy_yml, 'rb+') as galaxy_obj:
-            existing_yaml = yaml.safe_load(galaxy_obj)
-            existing_yaml['dependencies'] = dependencies
+    dependencies = getattr(request, 'param', {})
 
-            galaxy_obj.seek(0)
-            galaxy_obj.write(to_bytes(yaml.safe_dump(existing_yaml)))
-            galaxy_obj.truncate()
+    galaxy_yml = os.path.join(collection_path, 'galaxy.yml')
+    with open(galaxy_yml, 'rb+') as galaxy_obj:
+        existing_yaml = yaml.safe_load(galaxy_obj)
+        existing_yaml['dependencies'] = dependencies
+
+        galaxy_obj.seek(0)
+        galaxy_obj.write(to_bytes(yaml.safe_dump(existing_yaml)))
+        galaxy_obj.truncate()
 
     # Create a file with +x in the collection so we can test the permissions
     execute_path = os.path.join(collection_path, 'runme.sh')
@@ -995,6 +995,7 @@ def test_install_collection_with_circular_dependency(collection_artifact, monkey
     assert actual_manifest['collection_info']['namespace'] == 'ansible_namespace'
     assert actual_manifest['collection_info']['name'] == 'collection'
     assert actual_manifest['collection_info']['version'] == '0.1.0'
+    assert actual_manifest['collection_info']['dependencies'] == {'ansible_namespace.collection': '>=0.0.1'}
 
     # Filter out the progress cursor display calls.
     display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
@@ -1003,6 +1004,30 @@ def test_install_collection_with_circular_dependency(collection_artifact, monkey
     assert display_msgs[1] == "Starting collection install process"
     assert display_msgs[2] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" % to_text(collection_path)
     assert display_msgs[3] == "ansible_namespace.collection:0.1.0 was installed successfully"
+
+
+@pytest.mark.parametrize('collection_artifact', [
+    None,
+    {},
+], indirect=True)
+def test_install_collection_with_no_dependency(collection_artifact, monkeypatch):
+    collection_path, collection_tar = collection_artifact
+    temp_path = os.path.split(collection_tar)[0]
+    shutil.rmtree(collection_path)
+
+    concrete_artifact_cm = collection.concrete_artifact_manager.ConcreteArtifactsManager(temp_path, validate_certs=False)
+    requirements = [Requirement('ansible_namespace.collection', '0.1.0', to_text(collection_tar), 'file', None)]
+    collection.install_collections(requirements, to_text(temp_path), [], False, False, False, False, False, False, concrete_artifact_cm, True)
+
+    assert os.path.isdir(collection_path)
+
+    with open(os.path.join(collection_path, b'MANIFEST.json'), 'rb') as manifest_obj:
+        actual_manifest = json.loads(to_text(manifest_obj.read()))
+
+    assert not actual_manifest['collection_info']['dependencies']
+    assert actual_manifest['collection_info']['namespace'] == 'ansible_namespace'
+    assert actual_manifest['collection_info']['name'] == 'collection'
+    assert actual_manifest['collection_info']['version'] == '0.1.0'
 
 
 @pytest.mark.parametrize(
