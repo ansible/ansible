@@ -280,7 +280,7 @@ To avoid such behavior and generate long lines, use the ``width`` option. You mu
     {{ some_variable | to_yaml(indent=8, width=1337) }}
     {{ some_variable | to_nice_yaml(indent=8, width=1337) }}
 
-The filter does support passing through other YAML parameters. For a full list, see the `PyYAML documentation`_.
+The filter does support passing through other YAML parameters. For a full list, see the `PyYAML documentation`_ for ``dump()``.
 
 If you are reading in some already formatted data:
 
@@ -1266,7 +1266,7 @@ address. For example, to get the IP address itself from a CIDR, you can use:
 .. code-block:: yaml+jinja
 
   {{ '192.0.2.1/24' | ansible.netcommon.ipaddr('address') }}
-  # => 192.168.0.1
+  # => 192.0.2.1
 
 More information about ``ipaddr`` filter and complete usage guide can be found
 in :ref:`playbooks_filters_ipaddr`.
@@ -2116,6 +2116,13 @@ To format a date using a string (like with the shell date command), use the "str
     # Use arbitrary epoch value
     {{ '%Y-%m-%d' | strftime(0) }}          # => 1970-01-01
     {{ '%Y-%m-%d' | strftime(1441357287) }} # => 2015-09-04
+
+.. versionadded:: 2.13
+
+strftime takes an optional utc argument, defaulting to False, meaning times are in the local timezone::
+
+    {{ '%H:%M:%S' | strftime }}           # time now in local timezone
+    {{ '%H:%M:%S' | strftime(utc=True) }} # time now in UTC
 
 .. note:: To get all string possibilities, check https://docs.python.org/3/library/time.html#time.strftime
 

@@ -16,7 +16,7 @@ def get_all_pkg_managers():
     return {obj.__name__.lower(): obj for obj in get_all_subclasses(PkgMgr) if obj not in (CLIMgr, LibMgr)}
 
 
-class PkgMgr(with_metaclass(ABCMeta, object)):
+class PkgMgr(with_metaclass(ABCMeta, object)):  # type: ignore[misc]
 
     @abstractmethod
     def is_available(self):
@@ -52,7 +52,7 @@ class PkgMgr(with_metaclass(ABCMeta, object)):
 
 class LibMgr(PkgMgr):
 
-    LIB = None
+    LIB = None  # type: str | None
 
     def __init__(self):
 
@@ -71,7 +71,7 @@ class LibMgr(PkgMgr):
 
 class CLIMgr(PkgMgr):
 
-    CLI = None
+    CLI = None  # type: str | None
 
     def __init__(self):
 

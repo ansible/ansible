@@ -53,8 +53,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections.abc import Mapping, Set
+
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.common._collections_compat import Mapping, Set
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.six import string_types, binary_type, text_type
 from ansible.utils.native_jinja import NativeJinjaText
@@ -81,25 +82,6 @@ class AnsibleUnsafeText(text_type, AnsibleUnsafe):
 
 class NativeJinjaUnsafeText(NativeJinjaText, AnsibleUnsafeText):
     pass
-
-
-class UnsafeProxy(object):
-    def __new__(cls, obj, *args, **kwargs):
-        from ansible.utils.display import Display
-        Display().deprecated(
-            'UnsafeProxy is being deprecated. Use wrap_var or AnsibleUnsafeBytes/AnsibleUnsafeText directly instead',
-            version='2.13', collection_name='ansible.builtin'
-        )
-        # In our usage we should only receive unicode strings.
-        # This conditional and conversion exists to sanity check the values
-        # we're given but we may want to take it out for testing and sanitize
-        # our input instead.
-        if isinstance(obj, AnsibleUnsafe):
-            return obj
-
-        if isinstance(obj, string_types):
-            obj = AnsibleUnsafeText(to_text(obj, errors='surrogate_or_strict'))
-        return obj
 
 
 def _wrap_dict(v):

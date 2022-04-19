@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Stephen Fromm <sfromm@gmail.com>
@@ -130,7 +129,7 @@ class Group(object):
     """
 
     platform = 'Generic'
-    distribution = None
+    distribution = None  # type: str | None
     GROUPFILE = '/etc/group'
 
     def __new__(cls, *args, **kwargs):

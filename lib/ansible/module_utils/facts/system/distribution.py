@@ -10,6 +10,8 @@ import os
 import platform
 import re
 
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils.common.sys_info import get_distribution, get_distribution_version, \
     get_distribution_codename
 from ansible.module_utils.facts.utils import get_file_content
@@ -373,6 +375,24 @@ class DistributionFiles:
             if version:
                 debian_facts['distribution_version'] = version.group(1)
                 debian_facts['distribution_major_version'] = version.group(1).split('.')[0]
+        elif 'UOS' in data or 'Uos' in data or 'uos' in data:
+            debian_facts['distribution'] = 'Uos'
+            release = re.search(r"VERSION_CODENAME=\"?([^\"]+)\"?", data)
+            if release:
+                debian_facts['distribution_release'] = release.groups()[0]
+            version = re.search(r"VERSION_ID=\"(.*)\"", data)
+            if version:
+                debian_facts['distribution_version'] = version.group(1)
+                debian_facts['distribution_major_version'] = version.group(1).split('.')[0]
+        elif 'Deepin' in data or 'deepin' in data:
+            debian_facts['distribution'] = 'Deepin'
+            release = re.search(r"VERSION_CODENAME=\"?([^\"]+)\"?", data)
+            if release:
+                debian_facts['distribution_release'] = release.groups()[0]
+            version = re.search(r"VERSION_ID=\"(.*)\"", data)
+            if version:
+                debian_facts['distribution_version'] = version.group(1)
+                debian_facts['distribution_major_version'] = version.group(1).split('.')[0]
         else:
             return False, debian_facts
 
@@ -481,13 +501,14 @@ class Distribution(object):
     """
 
     # keep keys in sync with Conditionals page of docs
-    OS_FAMILY_MAP = {'RedHat': ['RedHat', 'Fedora', 'CentOS', 'Scientific', 'SLC',
+    OS_FAMILY_MAP = {'RedHat': ['RedHat', 'RHEL', 'Fedora', 'CentOS', 'Scientific', 'SLC',
                                 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
                                 'OEL', 'Amazon', 'Virtuozzo', 'XenServer', 'Alibaba',
-                                'EulerOS', 'openEuler', 'AlmaLinux', 'Rocky', 'TencentOS'],
+                                'EulerOS', 'openEuler', 'AlmaLinux', 'Rocky', 'TencentOS',
+                                'EuroLinux'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
                                 'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux',
-                                'Pop!_OS', 'Parrot', 'Pardus GNU/Linux'],
+                                'Pop!_OS', 'Parrot', 'Pardus GNU/Linux', 'Uos', 'Deepin'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],
@@ -683,7 +704,7 @@ class DistributionFactCollector(BaseFactCollector):
     _fact_ids = set(['distribution_version',
                      'distribution_release',
                      'distribution_major_version',
-                     'os_family'])
+                     'os_family'])  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         collected_facts = collected_facts or {}

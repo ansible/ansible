@@ -31,7 +31,7 @@ Use a loop to create exponential backoff for retries/until.
 
 .. code-block:: yaml
 
-    - name: retry ping 10 times with exponential backup delay
+    - name: retry ping 10 times with exponential backoff delay
       ping:
       retries: 10
       delay: '{{item|int}}'
@@ -273,12 +273,14 @@ You can even combine these simple examples with other filters and lookups to cre
  :caption: Using 'vars' to define dictionary from a set of lists without needing a task
 
     vars:
-        myvarnames: "{{ q('varnames', '^my') }}"
-        mydict: "{{ dict(myvarnames | zip(q('vars', *myvarnames))) }}"
+        xyz_stuff: 1234
+        xyz_morestuff: 567
+        myvarnames: "{{ q('varnames', '^xyz_') }}"
+        mydict: "{{ dict(myvarnames|map('regex_replace', '^xyz_', '')|list | zip(q('vars', *myvarnames))) }}"
 
 A quick explanation, since there is a lot to unpack from these two lines:
 
- - The ``varnames`` lookup returns a list of variables that match "begin with ``my``".
+ - The ``varnames`` lookup returns a list of variables that match "begin with ``xyz_``".
  - Then feeding the list from the previous step into the ``vars`` lookup to get the list of values.
    The ``*`` is used to 'dereference the list' (a pythonism that works in Jinja), otherwise it would take the list as a single argument.
  - Both lists get passed to the ``zip`` filter to pair them off into a unified list (key, value, key2, value2, ...).
@@ -293,15 +295,13 @@ An example on how to use facts to find a host's data that meets condition X:
   vars:
     uptime_of_host_most_recently_rebooted: "{{ansible_play_hosts_all | map('extract', hostvars, 'ansible_uptime_seconds') | sort | first}}"
 
-
-Using an example from @zoradache on reddit, to show the 'uptime in days/hours/minutes' (assumes facts where gathered).
-https://www.reddit.com/r/ansible/comments/gj5a93/trying_to_get_uptime_from_seconds/fqj2qr3/
+An example to show a host uptime in days/hours/minutes/seconds (assumes facts where gathered).
 
 .. code-block:: YAML+Jinja
 
- - name: Show the uptime in a certain format
+ - name: Show the uptime in days/hours/minutes/seconds
    ansible.builtin.debug:
-    msg: Timedelta {{ now() - now().fromtimestamp(now(fmt='%s') | int - ansible_uptime_seconds) }}
+    msg: Uptime {{ now().replace(microsecond=0) - now().fromtimestamp(now(fmt='%s') | int - ansible_uptime_seconds) }}
 
 
 .. seealso::

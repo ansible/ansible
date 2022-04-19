@@ -27,11 +27,11 @@ import pwd
 import re
 import time
 
+from collections.abc import Iterator, Sequence, Mapping, MappingView, MutableMapping
 from contextlib import contextmanager
 from hashlib import sha1
 from numbers import Number
 from traceback import format_exc
-
 
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 from jinja2.loaders import FileSystemLoader
@@ -50,11 +50,10 @@ from ansible.errors import (
 )
 from ansible.module_utils.six import string_types, text_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
-from ansible.module_utils.common._collections_compat import Iterator, Sequence, Mapping, MappingView, MutableMapping
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.compat.importlib import import_module
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
-from ansible.template.native_helpers import ansible_native_concat, ansible_concat
+from ansible.template.native_helpers import ansible_native_concat, ansible_eval_concat, ansible_concat
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.collection_loader import AnsibleCollectionRef
@@ -455,6 +454,7 @@ class JinjaPluginIntercept(MutableMapping):
     # FUTURE: we can cache FQ filter/test calls for the entire duration of a run, since a given collection's impl's
     # aren't supposed to change during a run
     def __getitem__(self, key):
+        original_key = key
         self._load_ansible_plugins()
 
         try:
@@ -469,56 +469,61 @@ class JinjaPluginIntercept(MutableMapping):
                 if func:
                     return func
 
-                # didn't find it in the pre-built Jinja env, assume it's a former builtin and follow the normal routing path
-                leaf_key = key
-                key = 'ansible.builtin.' + key
-            else:
-                leaf_key = key.split('.')[-1]
+            key, leaf_key = get_fqcr_and_name(key)
+            seen = set()
 
-            acr = AnsibleCollectionRef.try_parse_fqcr(key, self._dirname)
+            while True:
+                if key in seen:
+                    raise TemplateSyntaxError(
+                        'recursive collection redirect found for %r' % original_key,
+                        0
+                    )
+                seen.add(key)
 
-            if not acr:
-                raise KeyError('invalid plugin name: {0}'.format(key))
+                acr = AnsibleCollectionRef.try_parse_fqcr(key, self._dirname)
 
-            ts = _get_collection_metadata(acr.collection)
+                if not acr:
+                    raise KeyError('invalid plugin name: {0}'.format(key))
 
-            # TODO: implement support for collection-backed redirect (currently only builtin)
-            # TODO: implement cycle detection (unified across collection redir as well)
+                ts = _get_collection_metadata(acr.collection)
 
-            routing_entry = ts.get('plugin_routing', {}).get(self._dirname, {}).get(leaf_key, {})
+                # TODO: implement cycle detection (unified across collection redir as well)
 
-            deprecation_entry = routing_entry.get('deprecation')
-            if deprecation_entry:
-                warning_text = deprecation_entry.get('warning_text')
-                removal_date = deprecation_entry.get('removal_date')
-                removal_version = deprecation_entry.get('removal_version')
+                routing_entry = ts.get('plugin_routing', {}).get(self._dirname, {}).get(leaf_key, {})
 
-                if not warning_text:
-                    warning_text = '{0} "{1}" is deprecated'.format(self._dirname, key)
+                deprecation_entry = routing_entry.get('deprecation')
+                if deprecation_entry:
+                    warning_text = deprecation_entry.get('warning_text')
+                    removal_date = deprecation_entry.get('removal_date')
+                    removal_version = deprecation_entry.get('removal_version')
 
-                display.deprecated(warning_text, version=removal_version, date=removal_date, collection_name=acr.collection)
+                    if not warning_text:
+                        warning_text = '{0} "{1}" is deprecated'.format(self._dirname, key)
 
-            tombstone_entry = routing_entry.get('tombstone')
+                    display.deprecated(warning_text, version=removal_version, date=removal_date, collection_name=acr.collection)
 
-            if tombstone_entry:
-                warning_text = tombstone_entry.get('warning_text')
-                removal_date = tombstone_entry.get('removal_date')
-                removal_version = tombstone_entry.get('removal_version')
+                tombstone_entry = routing_entry.get('tombstone')
 
-                if not warning_text:
-                    warning_text = '{0} "{1}" has been removed'.format(self._dirname, key)
+                if tombstone_entry:
+                    warning_text = tombstone_entry.get('warning_text')
+                    removal_date = tombstone_entry.get('removal_date')
+                    removal_version = tombstone_entry.get('removal_version')
 
-                exc_msg = display.get_deprecation_message(warning_text, version=removal_version, date=removal_date,
-                                                          collection_name=acr.collection, removed=True)
+                    if not warning_text:
+                        warning_text = '{0} "{1}" has been removed'.format(self._dirname, key)
 
-                raise AnsiblePluginRemovedError(exc_msg)
+                    exc_msg = display.get_deprecation_message(warning_text, version=removal_version, date=removal_date,
+                                                              collection_name=acr.collection, removed=True)
 
-            redirect_fqcr = routing_entry.get('redirect', None)
-            if redirect_fqcr:
-                acr = AnsibleCollectionRef.from_fqcr(ref=redirect_fqcr, ref_type=self._dirname)
-                display.vvv('redirecting {0} {1} to {2}.{3}'.format(self._dirname, key, acr.collection, acr.resource))
-                key = redirect_fqcr
-            # TODO: handle recursive forwarding (not necessary for builtin, but definitely for further collection redirs)
+                    raise AnsiblePluginRemovedError(exc_msg)
+
+                redirect = routing_entry.get('redirect', None)
+                if redirect:
+                    next_key, leaf_key = get_fqcr_and_name(redirect, collection=acr.collection)
+                    display.vvv('redirecting (type: {0}) {1}.{2} to {3}'.format(self._dirname, acr.collection, acr.resource, next_key))
+                    key = next_key
+                else:
+                    break
 
             func = self._collection_jinja_func_cache.get(key)
 
@@ -546,9 +551,8 @@ class JinjaPluginIntercept(MutableMapping):
                 except Exception as e:
                     raise TemplateSyntaxError(to_native(e), 0)
 
-                method_map = getattr(plugin_impl, self._method_map_name)
-
                 try:
+                    method_map = getattr(plugin_impl, self._method_map_name)
                     func_items = method_map().items()
                 except Exception as e:
                     display.warning(
@@ -594,6 +598,33 @@ class JinjaPluginIntercept(MutableMapping):
         return len(self._delegatee)
 
 
+def get_fqcr_and_name(resource, collection='ansible.builtin'):
+    if '.' not in resource:
+        name = resource
+        fqcr = collection + '.' + resource
+    else:
+        name = resource.split('.')[-1]
+        fqcr = resource
+
+    return fqcr, name
+
+
+@_unroll_iterator
+def _ansible_finalize(thing):
+    """A custom finalize function for jinja2, which prevents None from being
+    returned. This avoids a string of ``"None"`` as ``None`` has no
+    importance in YAML.
+
+    The function is decorated with ``_unroll_iterator`` so that users are not
+    required to explicitly use ``|list`` to unroll a generator. This only
+    affects the scenario where the final result of templating
+    is a generator, e.g. ``range``, ``dict.items()`` and so on. Filters
+    which can produce a generator in the middle of a template are already
+    wrapped with ``_unroll_generator`` in ``JinjaPluginIntercept``.
+    """
+    return thing if thing is not None else ''
+
+
 class AnsibleEnvironment(NativeEnvironment):
     '''
     Our custom environment, which simply allows us to override the class-level
@@ -601,21 +632,26 @@ class AnsibleEnvironment(NativeEnvironment):
     '''
     context_class = AnsibleContext
     template_class = AnsibleJ2Template
+    concat = staticmethod(ansible_eval_concat)
 
     def __init__(self, *args, **kwargs):
-        super(AnsibleEnvironment, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.filters = JinjaPluginIntercept(self.filters, filter_loader)
         self.tests = JinjaPluginIntercept(self.tests, test_loader)
 
+        self.trim_blocks = True
 
-class AnsibleNativeEnvironment(NativeEnvironment):
-    def __new__(cls):
-        raise AnsibleAssertionError(
-            'It is not allowed to create instances of AnsibleNativeEnvironment. '
-            'The class is kept for backwards compatibility of '
-            'Templar.copy_with_new_env, see the method for more information.'
-        )
+        self.undefined = AnsibleUndefined
+        self.finalize = _ansible_finalize
+
+
+class AnsibleNativeEnvironment(AnsibleEnvironment):
+    concat = staticmethod(ansible_native_concat)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.finalize = _unroll_iterator(lambda thing: thing)
 
 
 class Templar:
@@ -627,21 +663,18 @@ class Templar:
         # NOTE shared_loader_obj is deprecated, ansible.plugins.loader is used
         # directly. Keeping the arg for now in case 3rd party code "uses" it.
         self._loader = loader
-        self._filters = None
-        self._tests = None
         self._available_variables = {} if variables is None else variables
         self._cached_result = {}
-        self._basedir = loader.get_basedir() if loader else './'
 
         self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
-        self.environment = AnsibleEnvironment(
-            trim_blocks=True,
-            undefined=AnsibleUndefined,
+        environment_class = AnsibleNativeEnvironment if C.DEFAULT_JINJA2_NATIVE else AnsibleEnvironment
+
+        self.environment = environment_class(
             extensions=self._get_extensions(),
-            finalize=self._finalize,
-            loader=FileSystemLoader(self._basedir),
+            loader=FileSystemLoader(loader.get_basedir() if loader else '.'),
         )
+        self.environment.template_class.environment_class = environment_class
 
         # jinja2 global is inconsistent across versions, this normalizes them
         self.environment.globals['dict'] = dict
@@ -663,47 +696,25 @@ class Templar:
     def copy_with_new_env(self, environment_class=AnsibleEnvironment, **kwargs):
         r"""Creates a new copy of Templar with a new environment.
 
-        Since Ansible 2.13 this method is being deprecated and is kept only
-        for backwards compatibility:
-            - AnsibleEnvironment is now based on NativeEnvironment
-            - AnsibleNativeEnvironment is replaced by what is effectively a dummy class
-              for purposes of this method, see below
-            - environment_class arg no longer controls what type of environment is created,
-              AnsibleEnvironment is used regardless of the value passed in environment_class
-            - environment_class is used to determine the value of jinja2_native of the newly
-              created Templar; if AnsibleNativeEnvironment is passed in environment_class
-              new_templar.jinja2_native is set to True, any other value will result in
-              new_templar.jinja2_native being set to False unless overriden by the value
-              passed in kwargs
-
-        :kwarg environment_class: See above.
+        :kwarg environment_class: Environment class used for creating a new environment.
         :kwarg \*\*kwargs: Optional arguments for the new environment that override existing
             environment attributes.
 
         :returns: Copy of Templar with updated environment.
         """
-        display.deprecated(
-            'Templar.copy_with_new_env is no longer used within Ansible codebase and is being deprecated. '
-            'For temporarily creating a new environment with custom arguments use set_temporary_context context manager. '
-            'To control whether the Templar uses the jinja2_native functionality set/unset Templar.jinja2_native instance attribute.',
-            version='2.14', collection_name='ansible.builtin'
-        )
-
         # We need to use __new__ to skip __init__, mainly not to create a new
         # environment there only to override it below
-        new_env = object.__new__(AnsibleEnvironment)
+        new_env = object.__new__(environment_class)
         new_env.__dict__.update(self.environment.__dict__)
 
         new_templar = object.__new__(Templar)
         new_templar.__dict__.update(self.__dict__)
         new_templar.environment = new_env
-        new_templar.environment.finalize = new_templar._finalize
 
         new_templar.jinja2_native = environment_class is AnsibleNativeEnvironment
 
         mapping = {
             'available_variables': new_templar,
-            'jinja2_native': self,
             'searchpath': new_env.loader,
         }
 
@@ -762,7 +773,6 @@ class Templar:
         """
         mapping = {
             'available_variables': self,
-            'jinja2_native': self,
             'searchpath': self.environment.loader,
         }
         original = {}
@@ -916,28 +926,6 @@ class Templar:
         # so just return it as-is
         return variable
 
-    @_unroll_iterator
-    def _finalize(self, thing):
-        """A custom finalize method for jinja2, which prevents None from being
-        returned. This avoids a string of ``"None"`` as ``None`` has no
-        importance in YAML.
-
-        The method is decorated with ``_unroll_iterator`` so that users are not
-        required to explicitly use ``|list`` to unroll a generator. This only
-        affects the scenario where the final result of templating
-        is a generator, e.g. ``range``, ``dict.items()`` and so on. Filters
-        which can produce a generator in the middle of a template are already
-        wrapped with ``_unroll_generator`` in ``JinjaPluginIntercept``.
-
-        If using jinja2_native we bypass this and return the actual value always.
-        """
-        # FIXME remove this special case for jinja2_native by creating separate
-        #       _finalized methods in AnsibleEnvironment/AnsibleNativeEnvironment.
-        if self.jinja2_native:
-            return thing
-
-        return thing if thing is not None else ''
-
     def _fail_lookup(self, name, *args, **kwargs):
         raise AnsibleError("The lookup `%s` was found, however lookups were disabled from templating" % name)
 
@@ -1066,7 +1054,10 @@ class Templar:
                 line = data[len(JINJA2_OVERRIDE):eol]
                 data = data[eol + 1:]
                 for pair in line.split(','):
-                    (key, val) = pair.split(':')
+                    if ':' not in pair:
+                        raise AnsibleError("failed to parse jinja2 override '%s'."
+                                           " Did you use something different from colon as key-value separator?" % pair.strip())
+                    (key, val) = pair.split(':', 1)
                     key = key.strip()
                     setattr(myenv, key, ast.literal_eval(val.strip()))
 
@@ -1093,10 +1084,10 @@ class Templar:
             rf = t.root_render_func(new_context)
 
             try:
-                if self.jinja2_native:
-                    res = ansible_native_concat(rf)
+                if not self.jinja2_native and not convert_data:
+                    res = ansible_concat(rf)
                 else:
-                    res = ansible_concat(rf, convert_data, myenv.variable_start_string)
+                    res = self.environment.concat(rf)
 
                 unsafe = getattr(new_context, 'unsafe', False)
                 if unsafe:

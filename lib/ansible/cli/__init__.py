@@ -503,7 +503,7 @@ class CLI(ABC):
         loader.set_vault_secrets(vault_secrets)
 
         # create the inventory, and filter it based on the subset specified (if any)
-        inventory = InventoryManager(loader=loader, sources=options['inventory'])
+        inventory = InventoryManager(loader=loader, sources=options['inventory'], cache=(not options.get('flush_cache')))
 
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
@@ -525,7 +525,7 @@ class CLI(ABC):
 
         hosts = inventory.list_hosts(pattern)
         if not hosts and no_hosts is False:
-            raise AnsibleError("Specified hosts and/or --limit does not match any hosts")
+            raise AnsibleError("Specified inventory, host pattern and/or --limit leaves us with no hosts to target.")
 
         return hosts
 
@@ -579,7 +579,7 @@ class CLI(ABC):
         try:
             display.debug("starting run")
 
-            ansible_dir = Path("~/.ansible").expanduser()
+            ansible_dir = Path(C.ANSIBLE_HOME).expanduser()
             try:
                 ansible_dir.mkdir(mode=0o700)
             except OSError as exc:

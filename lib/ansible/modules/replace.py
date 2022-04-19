@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2013, Evan Kaufman <evan@digitalflophouse.com
@@ -242,7 +241,7 @@ def main():
     params = module.params
     path = params['path']
     encoding = params['encoding']
-    res_args = dict()
+    res_args = dict(rc=0)
 
     params['after'] = to_text(params['after'], errors='surrogate_or_strict', nonstring='passthru')
     params['before'] = to_text(params['before'], errors='surrogate_or_strict', nonstring='passthru')

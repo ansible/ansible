@@ -20,13 +20,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections.abc import Sequence, Set, Mapping
 from io import StringIO
 
 from units.compat import unittest
 
 from ansible import errors
 from ansible.module_utils.six import text_type, binary_type
-from ansible.module_utils.common._collections_compat import Sequence, Set, Mapping
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing import vault
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
@@ -35,12 +35,8 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 from units.mock.yaml_helper import YamlTestUtils
 from units.mock.vault_helper import TextVaultSecret
 
-try:
-    from _yaml import ParserError
-    from _yaml import ScannerError
-except ImportError:
-    from yaml.parser import ParserError
-    from yaml.scanner import ScannerError
+from yaml.parser import ParserError
+from yaml.scanner import ScannerError
 
 
 class NameStringIO(StringIO):
@@ -284,11 +280,11 @@ class TestAnsibleLoaderVault(unittest.TestCase, YamlTestUtils):
         different_vault_string = data_from_yaml['different_secret']
 
         self.assertEqual(vault_string, another_vault_string)
-        self.assertNotEquals(vault_string, different_vault_string)
+        self.assertNotEqual(vault_string, different_vault_string)
 
         # More testing of __eq__/__ne__
         self.assertTrue('some string' != vault_string)
-        self.assertNotEquals('some string', vault_string)
+        self.assertNotEqual('some string', vault_string)
 
         # Note this is a compare of the str/unicode of these, they are different types
         # so we want to test self == other, and other == self etc

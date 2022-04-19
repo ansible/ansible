@@ -4,12 +4,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections.abc import MutableMapping, MutableSet, MutableSequence
+
 from ansible import constants as C
 from ansible.release import __version__ as ansible_version
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
-from ansible.module_utils.common._collections_compat import MutableMapping, MutableSet, MutableSequence
 from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.utils.display import Display
@@ -37,7 +38,7 @@ def merge_fragment(target, source):
             elif isinstance(target[key], MutableSequence):
                 value = sorted(frozenset(value + target[key]))
             else:
-                raise Exception("Attempt to extend a documentation fragement, invalid type for %s" % key)
+                raise Exception("Attempt to extend a documentation fragment, invalid type for %s" % key)
         target[key] = value
 
 

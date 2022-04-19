@@ -22,8 +22,9 @@ __metaclass__ = type
 import string
 import textwrap
 
+import mock
+
 from ansible import constants as C
-from units.compat import mock
 from units.compat import unittest
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text

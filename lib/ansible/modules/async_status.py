@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
@@ -57,7 +56,7 @@ author:
 EXAMPLES = r'''
 ---
 - name: Asynchronous yum task
-  yum:
+  ansible.builtin.yum:
     name: docker-io
     state: present
   async: 1000
@@ -65,7 +64,7 @@ EXAMPLES = r'''
   register: yum_sleeper
 
 - name: Wait for asynchronous job to end
-  async_status:
+  ansible.builtin.async_status:
     jid: '{{ yum_sleeper.ansible_job_id }}'
   register: job_result
   until: job_result.finished

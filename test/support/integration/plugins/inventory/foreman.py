@@ -81,11 +81,12 @@ password: secure
 validate_certs: False
 '''
 
+from collections.abc import MutableMapping
+
 from ansible.module_utils.compat.version import LooseVersion
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, to_safe_group_name, Constructable
 
 # 3rd party imports

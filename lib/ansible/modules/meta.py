@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2016, Ansible, a Red Hat company
@@ -77,13 +76,13 @@ author:
 
 EXAMPLES = r'''
 # Example showing flushing handlers on demand, not at end of play
-- template:
+- ansible.builtin.template:
     src: new.j2
     dest: /etc/config.txt
   notify: myhandler
 
 - name: Force all notified handlers to run at this point, not waiting for normal sync points
-  meta: flush_handlers
+  ansible.builtin.meta: flush_handlers
 
 # Example showing how to refresh inventory during play
 - name: Reload inventory, useful with dynamic inventories when play makes changes to the existing hosts
@@ -92,32 +91,32 @@ EXAMPLES = r'''
     state: present
 
 - name: Refresh inventory to ensure new instances exist in inventory
-  meta: refresh_inventory
+  ansible.builtin.meta: refresh_inventory
 
 # Example showing how to clear all existing facts of targetted hosts
 - name: Clear gathered facts from all currently targeted hosts
-  meta: clear_facts
+  ansible.builtin.meta: clear_facts
 
 # Example showing how to continue using a failed target
 - name: Bring host back to play after failure
-  copy:
+  ansible.builtin.copy:
     src: file
     dest: /etc/file
   remote_user: imightnothavepermission
 
-- meta: clear_host_errors
+- ansible.builtin.meta: clear_host_errors
 
 # Example showing how to reset an existing connection
-- user:
+- ansible.builtin.user:
     name: '{{ ansible_user }}'
     groups: input
 
 - name: Reset ssh connection to allow user changes to affect 'current login user'
-  meta: reset_connection
+  ansible.builtin.meta: reset_connection
 
 # Example showing how to end the play for specific targets
 - name: End the play for hosts that run CentOS 6
-  meta: end_host
+  ansible.builtin.meta: end_host
   when:
   - ansible_distribution == 'CentOS'
   - ansible_distribution_major_version == '6'

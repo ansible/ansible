@@ -1,6 +1,5 @@
 """Schema validation of ansible-core's ansible_builtin_runtime.yml and collection's meta/runtime.yml"""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import datetime
 import os

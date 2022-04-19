@@ -11,14 +11,14 @@ DOCUMENTATION = '''
     version_added: "2.5"
     short_description: Loads and executes an inventory plugin specified in a YAML config
     description:
-        - By whitelisting C(auto) inventory plugin, any YAML inventory config file with a
+        - By enabling the C(auto) inventory plugin, any YAML inventory config file with a
           C(plugin) key at its root will automatically cause the named plugin to be loaded and executed with that
-          config. This effectively provides automatic whitelisting of all installed/accessible inventory plugins.
+          config. This effectively provides automatic enabling of all installed/accessible inventory plugins.
         - To disable this behavior, remove C(auto) from the C(INVENTORY_ENABLED) config element.
 '''
 
 EXAMPLES = '''
-# This plugin is not intended for direct use; it is a fallback mechanism for automatic whitelisting of
+# This plugin is not intended for direct use; it is a fallback mechanism for automatic enabling of
 # all installed inventory plugins.
 '''
 
@@ -53,8 +53,9 @@ class InventoryModule(BaseInventoryPlugin):
             raise AnsibleParserError("inventory config '{0}' specifies unknown plugin '{1}'".format(path, plugin_name))
 
         if not plugin.verify_file(path):
-            raise AnsibleParserError("inventory config '{0}' could not be verified by plugin '{1}'".format(path, plugin_name))
+            raise AnsibleParserError("inventory source '{0}' could not be verified by inventory plugin '{1}'".format(path, plugin_name))
 
+        self.display.v("Using inventory plugin '{0}' to process inventory source '{1}'".format(plugin._load_name, path))
         plugin.parse(inventory, loader, path, cache=cache)
         try:
             plugin.update_cache_if_changed()

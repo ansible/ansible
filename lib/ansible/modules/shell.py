@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2018, Ansible Project
@@ -54,12 +53,6 @@ options:
       - This expects an absolute path to the executable.
     type: path
     version_added: "0.9"
-  warn:
-    description:
-      - Whether to enable task warnings.
-    type: bool
-    default: yes
-    version_added: "1.8"
   stdin:
     description:
       - Set the stdin of the command directly to the specified value.
@@ -156,12 +149,6 @@ EXAMPLES = r'''
   args:
     executable: /usr/bin/expect
   delegate_to: localhost
-
-# Disabling warnings
-- name: Using curl to connect to a host via SOCKS proxy (unsupported in uri). Ordinarily this would throw a warning
-  ansible.builtin.shell: curl --socks5 localhost:9000 http://www.ansible.com
-  args:
-    warn: no
 '''
 
 RETURN = r'''

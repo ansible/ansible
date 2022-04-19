@@ -301,6 +301,26 @@
     that:
       - 'result.allow.split(", ")|sort == ["GET", "HEAD", "OPTIONS"]'
 
+- name: Testing support of https_proxy (with failure expected)
+  environment:
+    https_proxy: 'https://localhost:3456'
+  uri:
+    url: 'https://httpbin.org/get'
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - result is failed
+      - result.status == -1
+
+- name: Testing use_proxy=no is honored
+  environment:
+    https_proxy: 'https://localhost:3456'
+  uri:
+    url: 'https://httpbin.org/get'
+    use_proxy: no
+
 # Ubuntu12.04 doesn't have python-urllib3, this makes handling required dependencies a pain across all variations
 # We'll use this to just skip 12.04 on those tests.  We should be sufficiently covered with other OSes and versions
 - name: Set fact if running on Ubuntu 12.04

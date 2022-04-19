@@ -49,11 +49,6 @@ Function Convert-ToSID {
         }
         $username = $account_name_split[1]
     }
-    elseif ($account_name -like "*@*") {
-        $account_name_split = $account_name -split "@"
-        $domain = $account_name_split[1]
-        $username = $account_name_split[0]
-    }
     else {
         $domain = $null
         $username = $account_name
@@ -78,7 +73,7 @@ Function Convert-ToSID {
     }
     else {
         # when in a domain NTAccount(String) will favour domain lookups check
-        # if username is a local user and explictly search on the localhost for
+        # if username is a local user and explicitly search on the localhost for
         # that account
         $adsi = [ADSI]("WinNT://$env:COMPUTERNAME,computer")
         $user = $adsi.psbase.children | Where-Object { $_.schemaClassName -eq "user" -and $_.Name -eq $username }

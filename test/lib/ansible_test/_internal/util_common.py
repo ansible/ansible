@@ -31,7 +31,7 @@ from .util import (
     raw_command,
     ANSIBLE_TEST_DATA_ROOT,
     ANSIBLE_TEST_TARGET_ROOT,
-    ANSIBLE_TEST_TOOLS_ROOT,
+    ANSIBLE_TEST_TARGET_TOOLS_ROOT,
     ApplicationError,
     SubprocessError,
     generate_name,
@@ -57,7 +57,7 @@ from .host_configs import (
     VirtualPythonConfig,
 )
 
-CHECK_YAML_VERSIONS = {}
+CHECK_YAML_VERSIONS = {}  # type: t.Dict[str, t.Any]
 
 
 class ShellScriptTemplate:
@@ -65,7 +65,7 @@ class ShellScriptTemplate:
     def __init__(self, template):  # type: (t.Text) -> None
         self.template = template
 
-    def substitute(self, **kwargs):  # type: (t.Dict[str, t.Union[str, t.List[str]]]) -> str
+    def substitute(self, **kwargs: t.Union[str, t.List[str]]) -> str:
         """Return a string templated with the given arguments."""
         kvp = dict((k, self.quote(v)) for k, v in kwargs.items())
         pattern = re.compile(r'#{(?P<name>[^}]+)}')
@@ -139,7 +139,7 @@ class CommonConfig:
 
         self.session_name = generate_name()
 
-        self.cache = {}
+        self.cache = {}  # type: t.Dict[str, t.Any]
 
     def get_ansible_config(self):  # type: () -> str
         """Return the path to the Ansible config for the given config."""
@@ -194,15 +194,8 @@ def process_scoped_temporary_directory(args, prefix='ansible-test-', suffix=None
 
 
 @contextlib.contextmanager
-def named_temporary_file(args, prefix, suffix, directory, content):
-    """
-    :param args: CommonConfig
-    :param prefix: str
-    :param suffix: str
-    :param directory: str
-    :param content: str | bytes | unicode
-    :rtype: str
-    """
+def named_temporary_file(args, prefix, suffix, directory, content):  # type: (CommonConfig, str, str, t.Optional[str], str) -> t.Iterator[str]
+    """Context manager for a named temporary file."""
     if args.explain:
         yield os.path.join(directory or '/tmp', '%stemp%s' % (prefix, suffix))
     else:
@@ -217,7 +210,7 @@ def write_json_test_results(category,  # type: ResultType
                             name,  # type: str
                             content,  # type: t.Union[t.List[t.Any], t.Dict[str, t.Any]]
                             formatted=True,  # type: bool
-                            encoder=None,  # type: t.Optional[t.Callable[[t.Any], t.Any]]
+                            encoder=None,  # type: t.Optional[t.Type[json.JSONEncoder]]
                             ):  # type: (...) -> None
     """Write the given json content to the specified test results path, creating directories as needed."""
     path = os.path.join(category.path, name)
@@ -411,8 +404,8 @@ def run_command(
         data=None,  # type: t.Optional[str]
         cwd=None,  # type: t.Optional[str]
         always=False,  # type: bool
-        stdin=None,  # type: t.Optional[t.BinaryIO]
-        stdout=None,  # type: t.Optional[t.BinaryIO]
+        stdin=None,  # type: t.Optional[t.IO[bytes]]
+        stdout=None,  # type: t.Optional[t.IO[bytes]]
         cmd_verbosity=1,  # type: int
         str_errors='strict',  # type: str
         error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
@@ -425,7 +418,7 @@ def run_command(
 
 def yamlcheck(python):
     """Return True if PyYAML has libyaml support, False if it does not and None if it was not found."""
-    result = json.loads(raw_command([python.path, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'yamlcheck.py')], capture=True)[0])
+    result = json.loads(raw_command([python.path, os.path.join(ANSIBLE_TEST_TARGET_TOOLS_ROOT, 'yamlcheck.py')], capture=True)[0])
 
     if not result['yaml']:
         return None

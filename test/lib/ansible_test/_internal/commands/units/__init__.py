@@ -237,7 +237,7 @@ def command_units(args):  # type: (UnitsConfig) -> None
     for test_context, python, paths, env in test_sets:
         cmd = [
             'pytest',
-            '--boxed',
+            '--forked',
             '-r', 'a',
             '-n', str(args.num_workers) if args.num_workers else 'auto',
             '--color',
@@ -246,6 +246,7 @@ def command_units(args):  # type: (UnitsConfig) -> None
             '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest.ini'),
             '--junit-xml', os.path.join(ResultType.JUNIT.path, 'python%s-%s-units.xml' % (python.version, test_context)),
             '--strict-markers',  # added in pytest 4.5.0
+            '--rootdir', data_context().content.root,
         ]
 
         if not data_context().content.collection:
@@ -290,9 +291,9 @@ def get_units_ansible_python_path(args, test_context):  # type: (UnitsConfig, st
         return get_ansible_python_path(args)
 
     try:
-        cache = get_units_ansible_python_path.cache
+        cache = get_units_ansible_python_path.cache  # type: ignore[attr-defined]
     except AttributeError:
-        cache = get_units_ansible_python_path.cache = {}
+        cache = get_units_ansible_python_path.cache = {}  # type: ignore[attr-defined]
 
     python_path = cache.get(test_context)
 

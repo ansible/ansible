@@ -138,6 +138,7 @@ options:
   unredirected_headers:
     description: A list of headers to not attach on a redirected request
     type: list
+    elements: string
     version_added: "2.10"
     vars:
         - name: ansible_lookup_url_unredir_headers
@@ -150,20 +151,22 @@ options:
 
 EXAMPLES = """
 - name: url lookup splits lines by default
-  debug: msg="{{item}}"
-  loop: "{{ lookup('url', 'https://github.com/gremlin.keys', wantlist=True) }}"
+  ansible.builtin.debug: msg="{{item}}"
+  loop: "{{ lookup('ansible.builtin.url', 'https://github.com/gremlin.keys', wantlist=True) }}"
 
 - name: display ip ranges
-  debug: msg="{{ lookup('url', 'https://ip-ranges.amazonaws.com/ip-ranges.json', split_lines=False) }}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.url', 'https://ip-ranges.amazonaws.com/ip-ranges.json', split_lines=False) }}"
 
 - name: url lookup using authentication
-  debug: msg="{{ lookup('url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2') }}"
+  ansible.builtin.debug: msg="{{ lookup('ansible.builtin.url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2') }}"
 
 - name: url lookup using basic authentication
-  debug: msg="{{ lookup('url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2', force_basic_auth='True') }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2', force_basic_auth='True') }}"
 
 - name: url lookup using headers
-  debug: msg="{{ lookup('url', 'https://some.private.site.com/api/service', headers={'header1':'value1', 'header2':'value2'} ) }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.url', 'https://some.private.site.com/api/service', headers={'header1':'value1', 'header2':'value2'} ) }}"
 """
 
 RETURN = """

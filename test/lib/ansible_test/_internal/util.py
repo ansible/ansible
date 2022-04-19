@@ -2,16 +2,15 @@
 from __future__ import annotations
 
 import errno
-# noinspection PyCompatibility
 import fcntl
 import importlib.util
 import inspect
+import keyword
 import os
 import pkgutil
 import random
 import re
 import shutil
-import socket
 import stat
 import string
 import subprocess
@@ -22,8 +21,12 @@ import shlex
 import typing as t
 
 from struct import unpack, pack
-# noinspection PyCompatibility
 from termios import TIOCGWINSZ
+
+try:
+    from typing_extensions import TypeGuard  # TypeGuard was added in Python 3.9
+except ImportError:
+    TypeGuard = None
 
 from .encoding import (
     to_bytes,
@@ -51,12 +54,6 @@ TValue = t.TypeVar('TValue')
 
 PYTHON_PATHS = {}  # type: t.Dict[str, str]
 
-try:
-    # noinspection PyUnresolvedReferences
-    MAXFD = subprocess.MAXFD
-except AttributeError:
-    MAXFD = -1
-
 COVERAGE_CONFIG_NAME = 'coveragerc'
 
 ANSIBLE_TEST_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -82,6 +79,7 @@ ANSIBLE_TEST_CONTROLLER_ROOT = os.path.join(ANSIBLE_TEST_UTIL_ROOT, 'controller'
 ANSIBLE_TEST_TARGET_ROOT = os.path.join(ANSIBLE_TEST_UTIL_ROOT, 'target')
 
 ANSIBLE_TEST_TOOLS_ROOT = os.path.join(ANSIBLE_TEST_CONTROLLER_ROOT, 'tools')
+ANSIBLE_TEST_TARGET_TOOLS_ROOT = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'tools')
 
 # Modes are set to allow all users the same level of access.
 # This permits files to be used in tests that change users.
@@ -96,6 +94,11 @@ MODE_FILE_WRITE = MODE_FILE | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
 
 MODE_DIRECTORY = MODE_READ | stat.S_IWUSR | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 MODE_DIRECTORY_WRITE = MODE_DIRECTORY | stat.S_IWGRP | stat.S_IWOTH
+
+
+def is_valid_identifier(value: str) -> bool:
+    """Return True if the given value is a valid non-keyword Python identifier, otherwise return False."""
+    return value.isidentifier() and not keyword.iskeyword(value)
 
 
 def cache(func):  # type: (t.Callable[[], TValue]) -> t.Callable[[], TValue]
@@ -256,8 +259,8 @@ def raw_command(
         data=None,  # type: t.Optional[str]
         cwd=None,  # type: t.Optional[str]
         explain=False,  # type: bool
-        stdin=None,  # type: t.Optional[t.BinaryIO]
-        stdout=None,  # type: t.Optional[t.BinaryIO]
+        stdin=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
+        stdout=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
         cmd_verbosity=1,  # type: int
         str_errors='strict',  # type: str
         error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
@@ -466,7 +469,6 @@ def is_binary_file(path):  # type: (str) -> bool
         return True
 
     with open_binary_file(path) as path_fd:
-        # noinspection PyTypeChecker
         return b'\0' in path_fd.read(4096)
 
 
@@ -570,7 +572,7 @@ class Display:
             self,
             message,  # type: str
             color=None,  # type: t.Optional[str]
-            fd=sys.stdout,  # type: t.TextIO
+            fd=sys.stdout,  # type: t.IO[str]
             truncate=False,  # type: bool
     ):  # type: (...) -> None
         """Display a message."""
@@ -770,27 +772,13 @@ def load_module(path, name):  # type: (str, str) -> None
 
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
-    # noinspection PyUnresolvedReferences
-    spec.loader.exec_module(module)
-
     sys.modules[name] = module
+    spec.loader.exec_module(module)
 
 
 def sanitize_host_name(name):
     """Return a sanitized version of the given name, suitable for use as a hostname."""
     return re.sub('[^A-Za-z0-9]+', '-', name)[:63].strip('-')
-
-
-@cache
-def get_host_ip():
-    """Return the host's IP address."""
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        sock.connect(('10.255.255.255', 22))
-        host_ip = get_host_ip.ip = sock.getsockname()[0]
-
-    display.info('Detected host IP: %s' % host_ip, verbosity=1)
-
-    return host_ip
 
 
 def get_generic_type(base_type, generic_base_type):  # type: (t.Type, t.Type[TType]) -> t.Optional[t.Type[TType]]
@@ -824,6 +812,21 @@ def verify_sys_executable(path):  # type: (str) -> t.Optional[str]
         return None
 
     return expected_executable
+
+
+def type_guard(sequence: t.Sequence[t.Any], guard_type: t.Type[C]) -> TypeGuard[t.Sequence[C]]:
+    """
+    Raises an exception if any item in the given sequence does not match the specified guard type.
+    Use with assert so that type checkers are aware of the type guard.
+    """
+    invalid_types = set(type(item) for item in sequence if not isinstance(item, guard_type))
+
+    if not invalid_types:
+        return True
+
+    invalid_type_names = sorted(str(item) for item in invalid_types)
+
+    raise Exception(f'Sequence required to contain only {guard_type} includes: {", ".join(invalid_type_names)}')
 
 
 display = Display()  # pylint: disable=locally-disabled, invalid-name

@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -61,5 +60,5 @@ RETURN = """
 
 EXAMPLES = """
 # Display facts from all hosts and store them indexed by hostname at /tmp/facts.
-# ansible all -m gather_facts --tree /tmp/facts
+# ansible all -m ansible.builtin.gather_facts --tree /tmp/facts
 """

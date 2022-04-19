@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # (c) 2017, Brian Coca <bcoca@ansible.com>
 # (c) 2017, Adam Miller <admiller@redhat.com>
@@ -83,13 +82,13 @@ requirements:
 
 EXAMPLES = '''
 - name: Make sure apache2 is started
-  sysvinit:
+  ansible.builtin.sysvinit:
       name: apache2
       state: started
       enabled: yes
 
 - name: Make sure apache2 is started on runlevels 3 and 5
-  sysvinit:
+  ansible.builtin.sysvinit:
       name: apache2
       state: started
       enabled: yes

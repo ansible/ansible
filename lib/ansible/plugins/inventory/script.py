@@ -26,17 +26,18 @@ DOCUMENTATION = '''
           C(--host) will only be used if no C(_meta) key is present.
           This is a performance optimization as the script would be called per host otherwise.
     notes:
-        - Whitelisted in configuration by default.
+        - Enabled in configuration by default.
         - The plugin does not cache results because external inventory scripts are responsible for their own caching.
 '''
 
 import os
 import subprocess
 
+from collections.abc import Mapping
+
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.basic import json_dict_bytes_to_unicode
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import Mapping
 from ansible.plugins.inventory import BaseInventoryPlugin
 from ansible.utils.display import Display
 

@@ -15,8 +15,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import runpy
 import inspect
@@ -117,7 +116,7 @@ def get_ps_argument_spec(filename, collection):
     ps_dep_finder._add_module(name=b"Ansible.ModuleUtils.AddType", ext=".psm1", fqn=None, optional=False, wrapper=False)
 
     util_manifest = json.dumps({
-        'module_path': to_text(module_path, errors='surrogiate_or_strict'),
+        'module_path': to_text(module_path, errors='surrogate_or_strict'),
         'ansible_basic': ps_dep_finder.cs_utils_module["Ansible.Basic"]['path'],
         'ps_utils': {name: info['path'] for name, info in ps_dep_finder.ps_modules.items()}
     })

@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Jeroen Hoekx <jeroen@hoekx.be>
@@ -126,65 +125,65 @@ author:
 
 EXAMPLES = r'''
 - name: Sleep for 300 seconds and continue with play
-  wait_for:
+  ansible.builtin.wait_for:
     timeout: 300
   delegate_to: localhost
 
 - name: Wait for port 8000 to become open on the host, don't start checking for 10 seconds
-  wait_for:
+  ansible.builtin.wait_for:
     port: 8000
     delay: 10
 
 - name: Waits for port 8000 of any IP to close active connections, don't start checking for 10 seconds
-  wait_for:
+  ansible.builtin.wait_for:
     host: 0.0.0.0
     port: 8000
     delay: 10
     state: drained
 
 - name: Wait for port 8000 of any IP to close active connections, ignoring connections for specified hosts
-  wait_for:
+  ansible.builtin.wait_for:
     host: 0.0.0.0
     port: 8000
     state: drained
     exclude_hosts: 10.2.1.2,10.2.1.3
 
 - name: Wait until the file /tmp/foo is present before continuing
-  wait_for:
+  ansible.builtin.wait_for:
     path: /tmp/foo
 
 - name: Wait until the string "completed" is in the file /tmp/foo before continuing
-  wait_for:
+  ansible.builtin.wait_for:
     path: /tmp/foo
     search_regex: completed
 
 - name: Wait until regex pattern matches in the file /tmp/foo and print the matched group
-  wait_for:
+  ansible.builtin.wait_for:
     path: /tmp/foo
     search_regex: completed (?P<task>\w+)
   register: waitfor
-- debug:
+- ansible.builtin.debug:
     msg: Completed {{ waitfor['match_groupdict']['task'] }}
 
 - name: Wait until the lock file is removed
-  wait_for:
+  ansible.builtin.wait_for:
     path: /var/lock/file.lock
     state: absent
 
 - name: Wait until the process is finished and pid was destroyed
-  wait_for:
+  ansible.builtin.wait_for:
     path: /proc/3466/status
     state: absent
 
 - name: Output customized message when failed
-  wait_for:
+  ansible.builtin.wait_for:
     path: /tmp/foo
     state: present
     msg: Timeout to find file /tmp/foo
 
 # Do not assume the inventory_hostname is resolvable and delay 10 seconds at start
 - name: Wait 300 seconds for port 22 to become open and contain "OpenSSH"
-  wait_for:
+  ansible.builtin.wait_for:
     port: 22
     host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
     search_regex: OpenSSH
@@ -193,7 +192,7 @@ EXAMPLES = r'''
 
 # Same as above but you normally have ansible_connection set in inventory, which overrides 'connection'
 - name: Wait 300 seconds for port 22 to become open and contain "OpenSSH"
-  wait_for:
+  ansible.builtin.wait_for:
     port: 22
     host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
     search_regex: OpenSSH
@@ -604,7 +603,7 @@ def main():
                         matched = False
                         while datetime.datetime.utcnow() < end:
                             max_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
-                            (readable, w, e) = select.select([s], [], [], max_timeout)
+                            readable = select.select([s], [], [], max_timeout)[0]
                             if not readable:
                                 # No new data.  Probably means our timeout
                                 # expired

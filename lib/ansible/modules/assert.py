@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Dag Wieers <dag@wieers.com>
@@ -21,6 +20,7 @@ options:
     description:
       - A list of string expressions of the same form that can be passed to the 'when' statement.
     type: list
+    elements: str
     required: true
   fail_msg:
     description:
@@ -56,7 +56,7 @@ attributes:
     connection:
         support: none
     check_mode:
-        support: none
+        support: full
     delegation:
         support: none
         details: Aside from C(register) and/or in combination with C(delegate_facts), it has little effect.
@@ -74,15 +74,15 @@ author:
 '''
 
 EXAMPLES = r'''
-- assert: { that: "ansible_os_family != 'RedHat'" }
+- ansible.builtin.assert: { that: "ansible_os_family != 'RedHat'" }
 
-- assert:
+- ansible.builtin.assert:
     that:
       - "'foo' in some_command_result.stdout"
       - number_of_the_counting == 3
 
 - name: After version 2.7 both 'msg' and 'fail_msg' can customize failing assertion message
-  assert:
+  ansible.builtin.assert:
     that:
       - my_param <= 100
       - my_param >= 0
@@ -90,14 +90,14 @@ EXAMPLES = r'''
     success_msg: "'my_param' is between 0 and 100"
 
 - name: Please use 'msg' when ansible version is smaller than 2.7
-  assert:
+  ansible.builtin.assert:
     that:
       - my_param <= 100
       - my_param >= 0
     msg: "'my_param' must be between 0 and 100"
 
 - name: Use quiet to avoid verbose output
-  assert:
+  ansible.builtin.assert:
     that:
       - my_param <= 100
       - my_param >= 0

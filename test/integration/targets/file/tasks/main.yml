@@ -16,7 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- set_fact: output_file={{output_dir}}/foo.txt
+- set_fact:
+    remote_tmp_dir_test: '{{ remote_tmp_dir }}/file'
+
+- set_fact:
+    output_file: '{{remote_tmp_dir_test}}/foo.txt'
 
 # same as expanduser & expandvars called on managed host
 - command: 'echo {{ output_file }}'
@@ -48,6 +52,8 @@
 - name: Test _diff_peek
   import_tasks: diff_peek.yml
 
+- name: Test modification time
+  import_tasks: modification_time.yml
 
 # These tests need to be organized by state parameter into separate files later
 
@@ -81,7 +87,7 @@
       - "'cannot continue' in ghost_file_result.msg"
 
 - name: verify that we are checking an absent file
-  file: path={{output_dir}}/bar.txt state=absent
+  file: path={{remote_tmp_dir_test}}/bar.txt state=absent
   register: file2_result
 
 - name: verify that the file was marked as changed
@@ -92,7 +98,7 @@
 
 - name: verify we can touch a file
   file:
-    path: "{{output_dir}}/baz.txt"
+    path: "{{remote_tmp_dir_test}}/baz.txt"
     state: touch
     mode: '0644'
   register: file3_result
@@ -105,7 +111,7 @@
       - "file3_result.mode == '0644'"
 
 - name: change file mode
-  file: path={{output_dir}}/baz.txt mode=0600
+  file: path={{remote_tmp_dir_test}}/baz.txt mode=0600
   register: file4_result
 
 - name: verify that the file was marked as changed
@@ -116,7 +122,7 @@
 
 - name: define file to verify chattr/lsattr with
   set_fact:
-    attributes_file: "{{ output_dir }}/attributes.txt"
+    attributes_file: "{{ remote_tmp_dir_test }}/attributes.txt"
     attributes_supported: no
 
 - name: create file to verify chattr/lsattr with
@@ -150,13 +156,13 @@
     - "'A' not in attribute_A_unset.stdout_lines[0].split()[0]"
 
 - name: explicitly set file attribute "A"
-  file: path={{output_dir}}/baz.txt attributes=A
+  file: path={{remote_tmp_dir_test}}/baz.txt attributes=A
   register: file_attributes_result
   ignore_errors: True
   when: attributes_supported
 
 - name: add file attribute "A"
-  file: path={{output_dir}}/baz.txt attributes=+A
+  file: path={{remote_tmp_dir_test}}/baz.txt attributes=+A
   register: file_attributes_result_2
   when: file_attributes_result is changed
 
@@ -167,12 +173,12 @@
   when: file_attributes_result is changed
 
 - name: remove file attribute "A"
-  file: path={{output_dir}}/baz.txt attributes=-A
+  file: path={{remote_tmp_dir_test}}/baz.txt attributes=-A
   register: file_attributes_result_3
   ignore_errors: True
 
 - name: explicitly remove file attributes
-  file: path={{output_dir}}/baz.txt attributes=""
+  file: path={{remote_tmp_dir_test}}/baz.txt attributes=""
   register: file_attributes_result_4
   when: file_attributes_result_3 is changed
 
@@ -195,18 +201,18 @@
   notify: remove groups
 
 - name: change ownership and group
-  file: path={{output_dir}}/baz.txt owner=1234 group=1234
+  file: path={{remote_tmp_dir_test}}/baz.txt owner=1234 group=1234
 
 - name: Get stat info to check atime later
-  stat: path={{output_dir}}/baz.txt
+  stat: path={{remote_tmp_dir_test}}/baz.txt
   register: file_attributes_result_5_before
 
 - name: updates access time
-  file: path={{output_dir}}/baz.txt access_time=now
+  file: path={{remote_tmp_dir_test}}/baz.txt access_time=now
   register: file_attributes_result_5
 
 - name: Get stat info to check atime later
-  stat: path={{output_dir}}/baz.txt
+  stat: path={{remote_tmp_dir_test}}/baz.txt
   register: file_attributes_result_5_after
 
 - name: verify that the file was marked as changed and atime changed
@@ -239,7 +245,7 @@
   file: path=/tmp/worldwritable state=absent
 
 - name: create hard link to file
-  file: src={{output_file}} dest={{output_dir}}/hard.txt state=hard
+  file: src={{output_file}} dest={{remote_tmp_dir_test}}/hard.txt state=hard
   register: file6_result
 
 - name: verify that the file was marked as changed
@@ -249,7 +255,7 @@
 
 - name: touch a hard link
   file:
-    dest: '{{ output_dir }}/hard.txt'
+    dest: '{{ remote_tmp_dir_test }}/hard.txt'
     state: 'touch'
   register: file6_touch_result
 
@@ -263,7 +269,7 @@
   register: hlstat1
 
 - name: stat2
-  stat: path={{output_dir}}/hard.txt
+  stat: path={{remote_tmp_dir_test}}/hard.txt
   register: hlstat2
 
 - name: verify that hard link is still the same after timestamp updated
@@ -272,7 +278,7 @@
       - "hlstat1.stat.inode == hlstat2.stat.inode"
 
 - name: create hard link to file 2
-  file: src={{output_file}} dest={{output_dir}}/hard.txt state=hard
+  file: src={{output_file}} dest={{remote_tmp_dir_test}}/hard.txt state=hard
   register: hlink_result
 
 - name: verify that hard link creation is idempotent
@@ -281,7 +287,7 @@
       - "hlink_result.changed == False"
 
 - name: Change mode on a hard link
-  file: src={{output_file}} dest={{output_dir}}/hard.txt mode=0701
+  file: src={{output_file}} dest={{remote_tmp_dir_test}}/hard.txt mode=0701
   register: file6_mode_change
 
 - name: verify that the hard link was touched
@@ -294,7 +300,7 @@
   register: hlstat1
 
 - name: stat2
-  stat: path={{output_dir}}/hard.txt
+  stat: path={{remote_tmp_dir_test}}/hard.txt
   register: hlstat2
 
 - name: verify that hard link is still the same after timestamp updated
@@ -304,7 +310,7 @@
       - "hlstat1.stat.mode == '0701'"
 
 - name: create a directory
-  file: path={{output_dir}}/foobar state=directory
+  file: path={{remote_tmp_dir_test}}/foobar state=directory
   register: file7_result
 
 - name: verify that the file was marked as changed
@@ -324,19 +330,19 @@
   ignore_errors: true
 
 - name: remove directory foobar
-  file: path={{output_dir}}/foobar state=absent
+  file: path={{remote_tmp_dir_test}}/foobar state=absent
 
 - name: remove file foo.txt
-  file: path={{output_dir}}/foo.txt state=absent
+  file: path={{remote_tmp_dir_test}}/foo.txt state=absent
 
 - name: remove file bar.txt
-  file: path={{output_dir}}/foo.txt state=absent
+  file: path={{remote_tmp_dir_test}}/foo.txt state=absent
 
 - name: remove file baz.txt
-  file: path={{output_dir}}/foo.txt state=absent
+  file: path={{remote_tmp_dir_test}}/foo.txt state=absent
 
 - name: copy directory structure over
-  copy: src=foobar dest={{output_dir}}
+  copy: src=foobar dest={{remote_tmp_dir_test}}
 
 - name: check what would be removed if folder state was absent and diff is enabled
   file:
@@ -345,8 +351,8 @@
   check_mode: yes
   diff: yes
   with_items:
-    - "{{ output_dir }}"
-    - "{{ output_dir }}/foobar/fileA"
+    - "{{ remote_tmp_dir_test }}"
+    - "{{ remote_tmp_dir_test }}/foobar/fileA"
   register: folder_absent_result
 
 - name: 'assert that the "absent" state lists expected files and folders for only directories'
@@ -361,10 +367,10 @@
     test_file: "{{ folder_absent_result.results[0].path }}/foobar/fileA"
 
 - name: Change ownership of a directory with recurse=no(default)
-  file: path={{output_dir}}/foobar owner=1234
+  file: path={{remote_tmp_dir_test}}/foobar owner=1234
 
 - name: verify that the permission of the directory was set
-  file: path={{output_dir}}/foobar state=directory
+  file: path={{remote_tmp_dir_test}}/foobar state=directory
   register: file8_result
 
 - name: assert that the directory has changed to have owner 1234
@@ -373,7 +379,7 @@
       - "file8_result.uid == 1234"
 
 - name: verify that the permission of a file under the directory was not set
-  file: path={{output_dir}}/foobar/fileA state=file
+  file: path={{remote_tmp_dir_test}}/foobar/fileA state=file
   register: file9_result
 
 - name: assert the file owner has not changed to 1234
@@ -387,10 +393,10 @@
     uid: 1235
 
 - name: change the ownership of a directory with recurse=yes
-  file: path={{output_dir}}/foobar owner=1235 recurse=yes
+  file: path={{remote_tmp_dir_test}}/foobar owner=1235 recurse=yes
 
 - name: verify that the permission of the directory was set
-  file: path={{output_dir}}/foobar state=directory
+  file: path={{remote_tmp_dir_test}}/foobar state=directory
   register: file10_result
 
 - name: assert that the directory has changed to have owner 1235
@@ -399,7 +405,7 @@
       - "file10_result.uid == 1235"
 
 - name: verify that the permission of a file under the directory was not set
-  file: path={{output_dir}}/foobar/fileA state=file
+  file: path={{remote_tmp_dir_test}}/foobar/fileA state=file
   register: file11_result
 
 - name: assert that the file has changed to have owner 1235
@@ -408,7 +414,7 @@
       - "file11_result.uid == 1235"
 
 - name: remove directory foobar
-  file: path={{output_dir}}/foobar state=absent
+  file: path={{remote_tmp_dir_test}}/foobar state=absent
   register: file14_result
 
 - name: verify that the directory was removed
@@ -418,7 +424,7 @@
       - 'file14_result.state == "absent"'
 
 - name: create a test sub-directory
-  file: dest={{output_dir}}/sub1 state=directory
+  file: dest={{remote_tmp_dir_test}}/sub1 state=directory
   register: file15_result
 
 - name: verify that the new directory was created
@@ -428,7 +434,7 @@
       - 'file15_result.state == "directory"'
 
 - name: create test files in the sub-directory
-  file: dest={{output_dir}}/sub1/{{item}} state=touch
+  file: dest={{remote_tmp_dir_test}}/sub1/{{item}} state=touch
   with_items:
   - file1
   - file2
@@ -443,7 +449,7 @@
   with_items: "{{file16_result.results}}"
 
 - name: test file creation with symbolic mode
-  file: dest={{output_dir}}/test_symbolic state=touch mode=u=rwx,g=rwx,o=rwx
+  file: dest={{remote_tmp_dir_test}}/test_symbolic state=touch mode=u=rwx,g=rwx,o=rwx
   register: result
 
 - name: assert file mode
@@ -452,7 +458,7 @@
     - result.mode == '0777'
 
 - name: modify symbolic mode for all
-  file: dest={{output_dir}}/test_symbolic state=touch mode=a=r
+  file: dest={{remote_tmp_dir_test}}/test_symbolic state=touch mode=a=r
   register: result
 
 - name: assert file mode
@@ -461,7 +467,7 @@
     - result.mode == '0444'
 
 - name: modify symbolic mode for owner
-  file: dest={{output_dir}}/test_symbolic state=touch mode=u+w
+  file: dest={{remote_tmp_dir_test}}/test_symbolic state=touch mode=u+w
   register: result
 
 - name: assert file mode
@@ -470,7 +476,7 @@
     - result.mode == '0644'
 
 - name: modify symbolic mode for group
-  file: dest={{output_dir}}/test_symbolic state=touch mode=g+w
+  file: dest={{remote_tmp_dir_test}}/test_symbolic state=touch mode=g+w
   register: result
 
 - name: assert file mode
@@ -479,7 +485,7 @@
     - result.mode == '0664'
 
 - name: modify symbolic mode for world
-  file: dest={{output_dir}}/test_symbolic state=touch mode=o+w
+  file: dest={{remote_tmp_dir_test}}/test_symbolic state=touch mode=o+w
   register: result
 
 - name: assert file mode
@@ -488,7 +494,7 @@
     - result.mode == '0666'
 
 - name: modify symbolic mode for owner
-  file: dest={{output_dir}}/test_symbolic state=touch mode=u+x
+  file: dest={{remote_tmp_dir_test}}/test_symbolic state=touch mode=u+x
   register: result
 
 - name: assert file mode
@@ -497,7 +503,7 @@
     - result.mode == '0766'
 
 - name: modify symbolic mode for group
-  file: dest={{output_dir}}/test_symbolic state=touch mode=g+x
+  file: dest={{remote_tmp_dir_test}}/test_symbolic state=touch mode=g+x
   register: result
 
 - name: assert file mode
@@ -506,7 +512,7 @@
     - result.mode == '0776'
 
 - name: modify symbolic mode for world
-  file: dest={{output_dir}}/test_symbolic state=touch mode=o+x
+  file: dest={{remote_tmp_dir_test}}/test_symbolic state=touch mode=o+x
   register: result
 
 - name: assert file mode
@@ -515,7 +521,7 @@
     - result.mode == '0777'
 
 - name: remove symbolic mode for world
-  file: dest={{output_dir}}/test_symbolic state=touch mode=o-wx
+  file: dest={{remote_tmp_dir_test}}/test_symbolic state=touch mode=o-wx
   register: result
 
 - name: assert file mode
@@ -524,7 +530,7 @@
     - result.mode == '0774'
 
 - name: remove symbolic mode for group
-  file: dest={{output_dir}}/test_symbolic state=touch mode=g-wx
+  file: dest={{remote_tmp_dir_test}}/test_symbolic state=touch mode=g-wx
   register: result
 
 - name: assert file mode
@@ -533,7 +539,7 @@
     - result.mode == '0744'
 
 - name: remove symbolic mode for owner
-  file: dest={{output_dir}}/test_symbolic state=touch mode=u-wx
+  file: dest={{remote_tmp_dir_test}}/test_symbolic state=touch mode=u-wx
   register: result
 
 - name: assert file mode
@@ -542,7 +548,7 @@
     - result.mode == '0444'
 
 - name: set sticky bit with symbolic mode
-  file: dest={{output_dir}}/test_symbolic state=touch mode=o+t
+  file: dest={{remote_tmp_dir_test}}/test_symbolic state=touch mode=o+t
   register: result
 
 - name: assert file mode
@@ -551,7 +557,7 @@
     - result.mode == '01444'
 
 - name: remove sticky bit with symbolic mode
-  file: dest={{output_dir}}/test_symbolic state=touch mode=o-t
+  file: dest={{remote_tmp_dir_test}}/test_symbolic state=touch mode=o-t
   register: result
 
 - name: assert file mode
@@ -560,7 +566,7 @@
     - result.mode == '0444'
 
 - name: add setgid with symbolic mode
-  file: dest={{output_dir}}/test_symbolic state=touch mode=g+s
+  file: dest={{remote_tmp_dir_test}}/test_symbolic state=touch mode=g+s
   register: result
 
 - name: assert file mode
@@ -569,7 +575,7 @@
     - result.mode == '02444'
 
 - name: remove setgid with symbolic mode
-  file: dest={{output_dir}}/test_symbolic state=touch mode=g-s
+  file: dest={{remote_tmp_dir_test}}/test_symbolic state=touch mode=g-s
   register: result
 
 - name: assert file mode
@@ -578,7 +584,7 @@
     - result.mode == '0444'
 
 - name: add setuid with symbolic mode
-  file: dest={{output_dir}}/test_symbolic state=touch mode=u+s
+  file: dest={{remote_tmp_dir_test}}/test_symbolic state=touch mode=u+s
   register: result
 
 - name: assert file mode
@@ -587,7 +593,7 @@
     - result.mode == '04444'
 
 - name: remove setuid with symbolic mode
-  file: dest={{output_dir}}/test_symbolic state=touch mode=u-s
+  file: dest={{remote_tmp_dir_test}}/test_symbolic state=touch mode=u-s
   register: result
 
 - name: assert file mode
@@ -704,7 +710,7 @@
     - group_gid_exists.warnings is not defined
 
 # https://github.com/ansible/ansible/issues/50943
-# Need to use /tmp as nobody can't access output_dir at all
+# Need to use /tmp as nobody can't access remote_tmp_dir_test at all
 - name: create file as root with all write permissions
   file: dest=/tmp/write_utime state=touch mode=0666 owner={{ansible_user_id}}
 
@@ -743,39 +749,39 @@
 
 # Follow + recursive tests
 - name: create a toplevel directory
-  file: path={{output_dir}}/test_follow_rec state=directory mode=0755
+  file: path={{remote_tmp_dir_test}}/test_follow_rec state=directory mode=0755
 
 - name: create a file outside of the toplevel
-  file: path={{output_dir}}/test_follow_rec_target_file state=touch mode=0700
+  file: path={{remote_tmp_dir_test}}/test_follow_rec_target_file state=touch mode=0700
 
 - name: create a directory outside of the toplevel
-  file: path={{output_dir}}/test_follow_rec_target_dir state=directory mode=0700
+  file: path={{remote_tmp_dir_test}}/test_follow_rec_target_dir state=directory mode=0700
 
 - name: create a file inside of the link target directory
-  file: path={{output_dir}}/test_follow_rec_target_dir/foo state=touch mode=0700
+  file: path={{remote_tmp_dir_test}}/test_follow_rec_target_dir/foo state=touch mode=0700
 
 - name: create a symlink to the file
-  file: path={{output_dir}}/test_follow_rec/test_link state=link src="../test_follow_rec_target_file"
+  file: path={{remote_tmp_dir_test}}/test_follow_rec/test_link state=link src="../test_follow_rec_target_file"
 
 - name: create a symlink to the directory
-  file: path={{output_dir}}/test_follow_rec/test_link_dir state=link src="../test_follow_rec_target_dir"
+  file: path={{remote_tmp_dir_test}}/test_follow_rec/test_link_dir state=link src="../test_follow_rec_target_dir"
 
 - name: create a symlink to a nonexistent file
-  file: path={{output_dir}}/test_follow_rec/nonexistent state=link src=does_not_exist force=True
+  file: path={{remote_tmp_dir_test}}/test_follow_rec/nonexistent state=link src=does_not_exist force=True
 
 - name: try to change permissions without following symlinks
-  file: path={{output_dir}}/test_follow_rec follow=False mode="a-x" recurse=True
+  file: path={{remote_tmp_dir_test}}/test_follow_rec follow=False mode="a-x" recurse=True
 
 - name: stat the link file target
-  stat: path={{output_dir}}/test_follow_rec_target_file
+  stat: path={{remote_tmp_dir_test}}/test_follow_rec_target_file
   register: file_result
 
 - name: stat the link dir target
-  stat: path={{output_dir}}/test_follow_rec_target_dir
+  stat: path={{remote_tmp_dir_test}}/test_follow_rec_target_dir
   register: dir_result
 
 - name: stat the file inside the link dir target
-  stat: path={{output_dir}}/test_follow_rec_target_dir/foo
+  stat: path={{remote_tmp_dir_test}}/test_follow_rec_target_dir/foo
   register: file_in_dir_result
 
 - name: assert that the link targets were unmodified
@@ -786,18 +792,18 @@
     - file_in_dir_result.stat.mode == '0700'
 
 - name: try to change permissions with following symlinks
-  file: path={{output_dir}}/test_follow_rec follow=True mode="a-x" recurse=True
+  file: path={{remote_tmp_dir_test}}/test_follow_rec follow=True mode="a-x" recurse=True
 
 - name: stat the link file target
-  stat: path={{output_dir}}/test_follow_rec_target_file
+  stat: path={{remote_tmp_dir_test}}/test_follow_rec_target_file
   register: file_result
 
 - name: stat the link dir target
-  stat: path={{output_dir}}/test_follow_rec_target_dir
+  stat: path={{remote_tmp_dir_test}}/test_follow_rec_target_dir
   register: dir_result
 
 - name: stat the file inside the link dir target
-  stat: path={{output_dir}}/test_follow_rec_target_dir/foo
+  stat: path={{remote_tmp_dir_test}}/test_follow_rec_target_dir/foo
   register: file_in_dir_result
 
 - name: assert that the link targets were modified
@@ -821,7 +827,7 @@
 
 - name: Test missing src
   file:
-    dest: "{{ output_dir }}/hard.txt"
+    dest: "{{ remote_tmp_dir_test }}/hard.txt"
     state: hard
   register: file_error2
   ignore_errors: yes
@@ -834,7 +840,7 @@
 - name: Test non-existing src
   file:
     src: non-existing-file-that-does-not-exist.txt
-    dest: "{{ output_dir }}/hard.txt"
+    dest: "{{ remote_tmp_dir_test }}/hard.txt"
     state: hard
   register: file_error3
   ignore_errors: yes
@@ -843,7 +849,7 @@
     that:
       - "file_error3 is failed"
       - "file_error3.msg == 'src does not exist'"
-      - "file_error3.dest == '{{ output_dir }}/hard.txt' | expanduser"
+      - "file_error3.dest == '{{ remote_tmp_dir_test }}/hard.txt' | expanduser"
       - "file_error3.src == 'non-existing-file-that-does-not-exist.txt'"
 
 - block:

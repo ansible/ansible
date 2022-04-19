@@ -23,8 +23,7 @@ __metaclass__ = type
 import os
 
 from units.compat import unittest
-from units.compat.builtins import BUILTINS
-from units.compat.mock import patch, MagicMock
+from mock import patch, MagicMock
 from ansible.plugins.loader import PluginLoader, PluginPathContext
 
 
@@ -54,7 +53,7 @@ class TestErrors(unittest.TestCase):
         bar.bam = bam
         foo.return_value.bar = bar
         pl = PluginLoader('test', 'foo.bar.bam', 'test', 'test_plugin')
-        with patch('{0}.__import__'.format(BUILTINS), foo):
+        with patch('builtins.__import__', foo):
             self.assertEqual(pl._get_package_paths(), ['/path/to/my/foo/bar/bam'])
 
     def test_plugins__get_paths(self):

@@ -88,7 +88,6 @@ class ActionModule(ActionBase):
     ''' pauses execution for a length or time, or until input is received '''
 
     BYPASS_HOST_LOOP = True
-    _VALID_ARGS = frozenset(('echo', 'minutes', 'prompt', 'seconds'))
 
     def run(self, tmp=None, task_vars=None):
         ''' run the pause action module '''
@@ -97,6 +96,18 @@ class ActionModule(ActionBase):
 
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
+
+        validation_result, new_module_args = self.validate_argument_spec(
+            argument_spec={
+                'echo': {'type': 'bool', 'default': True},
+                'minutes': {'type': int},  # Don't break backwards compat, allow floats, by using int callable
+                'seconds': {'type': int},  # Don't break backwards compat, allow floats, by using int callable
+                'prompt': {'type': 'str'},
+            },
+            mutually_exclusive=(
+                ('minutes', 'seconds'),
+            ),
+        )
 
         duration_unit = 'minutes'
         prompt = None
@@ -114,41 +125,22 @@ class ActionModule(ActionBase):
             echo=echo
         ))
 
-        # Should keystrokes be echoed to stdout?
-        if 'echo' in self._task.args:
-            try:
-                echo = boolean(self._task.args['echo'])
-            except TypeError as e:
-                result['failed'] = True
-                result['msg'] = to_native(e)
-                return result
+        echo = new_module_args['echo']
+        # Add a note saying the output is hidden if echo is disabled
+        if not echo:
+            echo_prompt = ' (output is hidden)'
 
-            # Add a note saying the output is hidden if echo is disabled
-            if not echo:
-                echo_prompt = ' (output is hidden)'
-
-        # Is 'prompt' a key in 'args'?
-        if 'prompt' in self._task.args:
-            prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), self._task.args['prompt'], echo_prompt)
+        if new_module_args['prompt']:
+            prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), new_module_args['prompt'], echo_prompt)
         else:
             # If no custom prompt is specified, set a default prompt
             prompt = "[%s]\n%s%s:" % (self._task.get_name().strip(), 'Press enter to continue, Ctrl+C to interrupt', echo_prompt)
 
-        # Are 'minutes' or 'seconds' keys that exist in 'args'?
-        if 'minutes' in self._task.args or 'seconds' in self._task.args:
-            try:
-                if 'minutes' in self._task.args:
-                    # The time() command operates in seconds so we need to
-                    # recalculate for minutes=X values.
-                    seconds = int(self._task.args['minutes']) * 60
-                else:
-                    seconds = int(self._task.args['seconds'])
-                    duration_unit = 'seconds'
-
-            except ValueError as e:
-                result['failed'] = True
-                result['msg'] = u"non-integer value given for prompt duration:\n%s" % to_text(e)
-                return result
+        if new_module_args['minutes'] is not None:
+            seconds = new_module_args['minutes'] * 60
+        elif new_module_args['seconds'] is not None:
+            seconds = new_module_args['seconds']
+            duration_unit = 'seconds'
 
         ########################################################################
         # Begin the hard work!
@@ -173,7 +165,7 @@ class ActionModule(ActionBase):
                 display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
 
                 # show the prompt specified in the task
-                if 'prompt' in self._task.args:
+                if new_module_args['prompt']:
                     display.display(prompt)
 
             else:

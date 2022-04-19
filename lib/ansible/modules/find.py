@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2014, Ruggero Marchei <ruggero.marchei@daemonzone.net>
@@ -145,41 +144,41 @@ seealso:
 
 EXAMPLES = r'''
 - name: Recursively find /tmp files older than 2 days
-  find:
+  ansible.builtin.find:
     paths: /tmp
     age: 2d
     recurse: yes
 
 - name: Recursively find /tmp files older than 4 weeks and equal or greater than 1 megabyte
-  find:
+  ansible.builtin.find:
     paths: /tmp
     age: 4w
     size: 1m
     recurse: yes
 
 - name: Recursively find /var/tmp files with last access time greater than 3600 seconds
-  find:
+  ansible.builtin.find:
     paths: /var/tmp
     age: 3600
     age_stamp: atime
     recurse: yes
 
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz
-  find:
+  ansible.builtin.find:
     paths: /var/log
     patterns: '*.old,*.log.gz'
     size: 10m
 
 # Note that YAML double quotes require escaping backslashes but yaml single quotes do not.
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz via regex
-  find:
+  ansible.builtin.find:
     paths: /var/log
     patterns: "^.*?\\.(?:old|log\\.gz)$"
     size: 10m
     use_regex: yes
 
 - name: Find /var/log all directories, exclude nginx and mysql
-  find:
+  ansible.builtin.find:
     paths: /var/log
     recurse: no
     file_type: directory
@@ -187,14 +186,14 @@ EXAMPLES = r'''
 
 # When using patterns that contain a comma, make sure they are formatted as lists to avoid splitting the pattern
 - name: Use a single pattern that contains a comma formatted as a list
-  find:
+  ansible.builtin.find:
     paths: /var/log
     file_type: file
     use_regex: yes
     patterns: ['^_[0-9]{2,4}_.*.log$']
 
 - name: Use multiple patterns that contain a comma formatted as a YAML list
-  find:
+  ansible.builtin.find:
     paths: /var/log
     file_type: file
     use_regex: yes

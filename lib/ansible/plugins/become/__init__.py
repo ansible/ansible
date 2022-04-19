@@ -23,11 +23,11 @@ def _gen_id(length=32):
 
 class BecomeBase(AnsiblePlugin):
 
-    name = None
+    name = None  # type: str | None
 
     # messages for detecting prompted password issues
-    fail = tuple()
-    missing = tuple()
+    fail = tuple()  # type: tuple[str, ...]
+    missing = tuple()  # type: tuple[str, ...]
 
     # many connection plugins cannot provide tty, set to True if your become
     # plugin requires a tty, i.e su
@@ -67,7 +67,7 @@ class BecomeBase(AnsiblePlugin):
         try:
             cmd = shlex.quote('%s %s %s %s' % (shell.ECHO, self.success, shell.COMMAND_SEP, cmd))
         except AttributeError:
-            # TODO: This should probably become some more robust functionlity used to detect incompat
+            # TODO: This should probably become some more robust functionality used to detect incompat
             raise AnsibleError('The %s shell family is incompatible with the %s become plugin' % (shell.SHELL_FAMILY, self.name))
         exe = getattr(shell, 'executable', None)
         if exe and not noexe:

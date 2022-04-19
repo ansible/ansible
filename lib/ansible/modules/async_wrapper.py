@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>, and others
@@ -343,8 +342,7 @@ def main():
                 _run_module(cmd, jid)
                 notice("Module complete (%s)" % os.getpid())
 
-    except Exception:
-        e = sys.exc_info()[1]
+    except Exception as e:
         notice("error: %s" % e)
         end({"failed": True, "msg": "FATAL ERROR: %s" % e}, "async_wrapper exited prematurely")
 

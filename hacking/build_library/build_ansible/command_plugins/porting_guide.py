@@ -14,17 +14,17 @@ from ..commands import Command  # pylint: disable=relative-beyond-top-level
 
 
 PORTING_GUIDE_TEMPLATE = """
-.. _porting_{{ ver }}_guide:
+.. _porting_{{ ver }}_guide_core:
 
-**************************
-Ansible {{ ver }} Porting Guide
-**************************
+*******************************
+Ansible-core {{ ver }} Porting Guide
+*******************************
 
-This section discusses the behavioral changes between Ansible {{ prev_ver }} and Ansible {{ ver }}.
+This section discusses the behavioral changes between ``ansible-core`` {{ prev_ver }} and ``ansible-core`` {{ ver }}.
 
 It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
 
-We suggest you read this page along with `Ansible Changelog for {{ ver }} <https://github.com/ansible/ansible/blob/devel/changelogs/CHANGELOG-v{{ ver }}.rst>`_ to understand what updates you may need to make.
+We suggest you read this page along with `ansible-core Changelog for {{ ver }} <https://github.com/ansible/ansible/blob/stable-{{ ver }}/changelogs/CHANGELOG-v{{ ver }}.rst>`_ to understand what updates you may need to make.
 
 This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
@@ -117,7 +117,7 @@ def generate_porting_guide(version):
 
 
 def write_guide(version, guide_content):
-    filename = 'porting_guide_{0}.rst'.format(version)
+    filename = 'docs/docsite/rst/porting_guides/porting_guide_core_{0}.rst'.format(version)
     with open(filename, 'w') as out_file:
         out_file.write(guide_content)
 

@@ -5,7 +5,7 @@ import os
 import shutil
 import tempfile
 
-from units.compat.mock import patch, MagicMock, mock_open
+from mock import patch, MagicMock, mock_open
 from ansible.module_utils import basic
 from ansible.module_utils.common._utils import get_all_subclasses
 from ansible.modules import hostname
@@ -37,6 +37,19 @@ class TestHostname(ModuleTestCase):
                 self.assertFalse(
                     m.return_value.write.called,
                     msg='%s called write, should not have' % str(cls))
+
+    def test_all_named_strategies_exist(self):
+        """Loop through the STRATS and see if anything is missing."""
+        for _name, prefix in hostname.STRATS.items():
+            classname = "%sStrategy" % prefix
+            cls = getattr(hostname, classname, None)
+
+            if cls is None:
+                self.assertFalse(
+                    cls is None, "%s is None, should be a subclass" % classname
+                )
+            else:
+                self.assertTrue(issubclass(cls, hostname.BaseStrategy))
 
 
 class TestRedhatStrategy(ModuleTestCase):

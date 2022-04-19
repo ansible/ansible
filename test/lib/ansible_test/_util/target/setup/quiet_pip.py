@@ -3,6 +3,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import logging
+import os
 import re
 import runpy
 import sys
@@ -19,7 +20,7 @@ LOGGING_MESSAGE_FILTER = re.compile("^("
                                     "Requirement already satisfied.*"
                                     ")$")
 
-# [1] https://src.fedoraproject.org/rpms/python-pip/blob/master/f/emit-a-warning-when-running-with-root-privileges.patch
+# [1] https://src.fedoraproject.org/rpms/python-pip/blob/f34/f/emit-a-warning-when-running-with-root-privileges.patch
 
 WARNING_MESSAGE_FILTERS = (
     # DEPRECATION: Python 2.7 reached the end of its life on January 1st, 2020. Please upgrade your Python as Python 2.7 is no longer maintained.
@@ -52,8 +53,16 @@ def main():
         #   Python 2.7 cannot use the -W option to match warning text after a colon. This makes it impossible to match specific warning messages.
         warnings.filterwarnings('ignore', message_filter)
 
+    get_pip = os.environ.get('GET_PIP')
+
     try:
-        runpy.run_module('pip.__main__', run_name='__main__', alter_sys=True)
+        if get_pip:
+            directory, filename = os.path.split(get_pip)
+            module = os.path.splitext(filename)[0]
+            sys.path.insert(0, directory)
+            runpy.run_module(module, run_name='__main__', alter_sys=True)
+        else:
+            runpy.run_module('pip.__main__', run_name='__main__', alter_sys=True)
     except ImportError as ex:
         print('pip is unavailable: %s' % ex)
         sys.exit(1)

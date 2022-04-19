@@ -70,7 +70,9 @@ For community collections included in the Ansible PyPI package, docs.ansible.com
      toctree:
        - scenario_guide
 
-The index page of the documentation for your collection displays the title you define in ``docs/docsite/extra-docs.yml`` with a link to your extra documentation. For an example, see the `community.docker collection repo <https://github.com/ansible-collections/community.docker/tree/main/docs/docsite>`_ and the `community.docker collection documentation <https://docs.ansible.com/ansible/latest/collections/community/docker/index.html>`_. 
+The index page of the documentation for your collection displays the title you define in ``docs/docsite/extra-docs.yml`` with a link to your extra documentation. For an example, see the `community.docker collection repo <https://github.com/ansible-collections/community.docker/tree/main/docs/docsite>`_ and the `community.docker collection documentation <https://docs.ansible.com/ansible/latest/collections/community/docker/index.html>`_.
+
+You can add extra links to your collection index page and plugin pages with the ``docs/docsite/links.yml`` file. This populates the links under `Description and Communications <https://docs.ansible.com/ansible/devel/collections/community/dns/index.html#plugins-in-community-dns>`_ headings as well as links at the end of the individual plugin pages. See the `collection_template links.yml file <https://github.com/ansible-collections/collection_template/blob/main/docs/docsite/links.yml>`_ for a complete description of the structure and use of this file to create links.
 
 Plugin and module documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -92,7 +94,7 @@ plugins directory
 
 Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by most plugins by using their FQCN. This is a way to distribute modules, lookups, filters, and so on without having to import a role in every play.
 
-Vars plugins are unsupported in collections. Cache plugins may be used in collections for fact caching, but are not supported for inventory plugins.
+Vars plugins are supported in collections as long as they require being explicitly enabled (using ``REQUIRES_ENABLED``) and they are included using their fully qualified collection name. See :ref:`enable_vars` and :ref:`developing_vars_plugins` for details. Cache plugins may be used in collections for fact caching, but are not supported for inventory plugins.
 
 .. _collection_module_utils:
 
@@ -196,8 +198,8 @@ When reading the :ref:`developing_testing` documentation, there will be content 
 
 .. _meta_runtime_yml:
 
-meta directory
---------------
+meta directory and runtime.yml
+------------------------------
 
 A collection can store some additional metadata in a ``runtime.yml`` file in the collection's ``meta`` directory. The ``runtime.yml`` file supports the top level keys:
 

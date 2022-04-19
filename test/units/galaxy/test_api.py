@@ -16,7 +16,7 @@ import tempfile
 import time
 
 from io import BytesIO, StringIO
-from units.compat.mock import MagicMock
+from mock import MagicMock
 
 import ansible.constants as C
 from ansible import context
@@ -58,7 +58,7 @@ def collection_artifact(tmp_path_factory):
 @pytest.fixture()
 def cache_dir(tmp_path_factory, monkeypatch):
     cache_dir = to_text(tmp_path_factory.mktemp('Test ÅÑŚÌβŁÈ Galaxy Cache'))
-    monkeypatch.setitem(C.config._base_defs, 'GALAXY_CACHE_DIR', {'default': cache_dir})
+    monkeypatch.setattr(C, 'GALAXY_CACHE_DIR', cache_dir)
 
     yield cache_dir
 
@@ -509,15 +509,15 @@ def test_wait_import_task_with_failure(server_url, api_version, token_type, toke
             },
             'messages': [
                 {
-                    'level': 'error',
+                    'level': 'ERrOR',
                     'message': u'Somé error',
                 },
                 {
-                    'level': 'warning',
+                    'level': 'WARNiNG',
                     'message': u'Some wärning',
                 },
                 {
-                    'level': 'info',
+                    'level': 'INFO',
                     'message': u'Somé info',
                 },
             ],
@@ -549,7 +549,7 @@ def test_wait_import_task_with_failure(server_url, api_version, token_type, toke
     assert mock_display.mock_calls[0][1][0] == 'Waiting until Galaxy import task %s has completed' % full_import_uri
 
     assert mock_vvv.call_count == 1
-    assert mock_vvv.mock_calls[0][1][0] == u'Galaxy import message: info - Somé info'
+    assert mock_vvv.mock_calls[0][1][0] == u'Galaxy import message: INFO - Somé info'
 
     assert mock_warn.call_count == 1
     assert mock_warn.mock_calls[0][1][0] == u'Galaxy import warning message: Some wärning'
@@ -582,15 +582,15 @@ def test_wait_import_task_with_failure_no_error(server_url, api_version, token_t
             'error': {},
             'messages': [
                 {
-                    'level': 'error',
+                    'level': 'ERROR',
                     'message': u'Somé error',
                 },
                 {
-                    'level': 'warning',
+                    'level': 'WARNING',
                     'message': u'Some wärning',
                 },
                 {
-                    'level': 'info',
+                    'level': 'INFO',
                     'message': u'Somé info',
                 },
             ],
@@ -622,7 +622,7 @@ def test_wait_import_task_with_failure_no_error(server_url, api_version, token_t
     assert mock_display.mock_calls[0][1][0] == 'Waiting until Galaxy import task %s has completed' % full_import_uri
 
     assert mock_vvv.call_count == 1
-    assert mock_vvv.mock_calls[0][1][0] == u'Galaxy import message: info - Somé info'
+    assert mock_vvv.mock_calls[0][1][0] == u'Galaxy import message: INFO - Somé info'
 
     assert mock_warn.call_count == 1
     assert mock_warn.mock_calls[0][1][0] == u'Galaxy import warning message: Some wärning'
@@ -704,6 +704,7 @@ def test_get_collection_version_metadata_no_version(api_version, token_type, ver
     mock_open = MagicMock()
     mock_open.side_effect = [
         StringIO(to_text(json.dumps({
+            'href': 'https://galaxy.server.com/api/{api}/namespace/name/versions/{version}/'.format(api=api_version, version=version),
             'download_url': 'https://downloadme.com',
             'artifact': {
                 'sha256': 'ac47b6fac117d7c171812750dacda655b04533cf56b31080b82d1c0db3c9d80f',
@@ -731,6 +732,85 @@ def test_get_collection_version_metadata_no_version(api_version, token_type, ver
     assert actual.artifact_sha256 == u'ac47b6fac117d7c171812750dacda655b04533cf56b31080b82d1c0db3c9d80f'
     assert actual.version == version
     assert actual.dependencies == {}
+
+    assert mock_open.call_count == 1
+    assert mock_open.mock_calls[0][1][0] == '%s%s/collections/namespace/collection/versions/%s/' \
+        % (api.api_server, api_version, version)
+
+    # v2 calls dont need auth, so no authz header or token_type
+    if token_type:
+        assert mock_open.mock_calls[0][2]['headers']['Authorization'] == '%s my token' % token_type
+
+
+@pytest.mark.parametrize('api_version, token_type, token_ins, version', [
+    ('v2', None, None, '2.1.13'),
+    ('v3', 'Bearer', KeycloakToken(auth_url='https://api.test/api/automation-hub/'), '1.0.0'),
+])
+def test_get_collection_signatures_backwards_compat(api_version, token_type, token_ins, version, monkeypatch):
+    api = get_test_galaxy_api('https://galaxy.server.com/api/', api_version, token_ins=token_ins)
+
+    if token_ins:
+        mock_token_get = MagicMock()
+        mock_token_get.return_value = 'my token'
+        monkeypatch.setattr(token_ins, 'get', mock_token_get)
+
+    mock_open = MagicMock()
+    mock_open.side_effect = [
+        StringIO("{}")
+    ]
+    monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
+
+    actual = api.get_collection_signatures('namespace', 'collection', version)
+    assert actual == []
+
+    assert mock_open.call_count == 1
+    assert mock_open.mock_calls[0][1][0] == '%s%s/collections/namespace/collection/versions/%s/' \
+        % (api.api_server, api_version, version)
+
+    # v2 calls dont need auth, so no authz header or token_type
+    if token_type:
+        assert mock_open.mock_calls[0][2]['headers']['Authorization'] == '%s my token' % token_type
+
+
+@pytest.mark.parametrize('api_version, token_type, token_ins, version', [
+    ('v2', None, None, '2.1.13'),
+    ('v3', 'Bearer', KeycloakToken(auth_url='https://api.test/api/automation-hub/'), '1.0.0'),
+])
+def test_get_collection_signatures(api_version, token_type, token_ins, version, monkeypatch):
+    api = get_test_galaxy_api('https://galaxy.server.com/api/', api_version, token_ins=token_ins)
+
+    if token_ins:
+        mock_token_get = MagicMock()
+        mock_token_get.return_value = 'my token'
+        monkeypatch.setattr(token_ins, 'get', mock_token_get)
+
+    mock_open = MagicMock()
+    mock_open.side_effect = [
+        StringIO(to_text(json.dumps({
+            'signatures': [
+                {
+                    "signature": "-----BEGIN PGP SIGNATURE-----\nSIGNATURE1\n-----END PGP SIGNATURE-----\n",
+                    "pubkey_fingerprint": "FINGERPRINT",
+                    "signing_service": "ansible-default",
+                    "pulp_created": "2022-01-14T14:05:53.835605Z",
+                },
+                {
+                    "signature": "-----BEGIN PGP SIGNATURE-----\nSIGNATURE2\n-----END PGP SIGNATURE-----\n",
+                    "pubkey_fingerprint": "FINGERPRINT",
+                    "signing_service": "ansible-default",
+                    "pulp_created": "2022-01-14T14:05:53.835605Z",
+                },
+            ],
+        }))),
+    ]
+    monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
+
+    actual = api.get_collection_signatures('namespace', 'collection', version)
+
+    assert actual == [
+        "-----BEGIN PGP SIGNATURE-----\nSIGNATURE1\n-----END PGP SIGNATURE-----\n",
+        "-----BEGIN PGP SIGNATURE-----\nSIGNATURE2\n-----END PGP SIGNATURE-----\n"
+    ]
 
     assert mock_open.call_count == 1
     assert mock_open.mock_calls[0][1][0] == '%s%s/collections/namespace/collection/versions/%s/' \

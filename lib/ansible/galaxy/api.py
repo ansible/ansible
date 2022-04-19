@@ -31,12 +31,6 @@ from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash_s
 from ansible.utils.path import makedirs_safe
 
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    # Python 2
-    from urlparse import urlparse
-
 display = Display()
 _CACHE_LOCK = threading.Lock()
 COLLECTION_PAGE_SIZE = 100
@@ -229,7 +223,7 @@ CollectionMetadata = collections.namedtuple('CollectionMetadata', ['namespace', 
 
 class CollectionVersionMetadata:
 
-    def __init__(self, namespace, name, version, download_url, artifact_sha256, dependencies):
+    def __init__(self, namespace, name, version, download_url, artifact_sha256, dependencies, signatures_url, signatures):
         """
         Contains common information about a collection on a Galaxy server to smooth through API differences for
         Collection and define a standard meta info for a collection.
@@ -240,6 +234,8 @@ class CollectionVersionMetadata:
         :param download_url: The URL to download the collection.
         :param artifact_sha256: The SHA256 of the collection artifact for later verification.
         :param dependencies: A dict of dependencies of the collection.
+        :param signatures_url: The URL to the specific version of the collection.
+        :param signatures: The list of signatures found at the signatures_url.
         """
         self.namespace = namespace
         self.name = name
@@ -247,6 +243,8 @@ class CollectionVersionMetadata:
         self.download_url = download_url
         self.artifact_sha256 = artifact_sha256
         self.dependencies = dependencies
+        self.signatures_url = signatures_url
+        self.signatures = signatures
 
 
 @functools.total_ordering
@@ -259,6 +257,7 @@ class GalaxyAPI:
             available_api_versions=None,
             clear_response_cache=False, no_cache=True,
             priority=float('inf'),
+            timeout=60,
     ):
         self.galaxy = galaxy
         self.name = name
@@ -267,10 +266,11 @@ class GalaxyAPI:
         self.token = token
         self.api_server = url
         self.validate_certs = validate_certs
+        self.timeout = timeout
         self._available_api_versions = available_api_versions or {}
         self._priority = priority
 
-        b_cache_dir = to_bytes(C.config.get_config_value('GALAXY_CACHE_DIR'), errors='surrogate_or_strict')
+        b_cache_dir = to_bytes(C.GALAXY_CACHE_DIR, errors='surrogate_or_strict')
         makedirs_safe(b_cache_dir, mode=0o700)
         self._b_cache_path = os.path.join(b_cache_dir, b'api.json')
 
@@ -292,7 +292,7 @@ class GalaxyAPI:
         return to_native(self.name)
 
     def __unicode__(self):
-        # type: (GalaxyAPI) -> unicode
+        # type: (GalaxyAPI) -> str
         """Render GalaxyAPI as a unicode/text string representation."""
         return to_text(self.name)
 
@@ -308,7 +308,7 @@ class GalaxyAPI:
         )
 
     def __lt__(self, other_galaxy_api):
-        # type: (GalaxyAPI, GalaxyAPI) -> Union[bool, 'NotImplemented']
+        # type: (GalaxyAPI, GalaxyAPI) -> bool
         """Return whether the instance priority is higher than other."""
         if not isinstance(other_galaxy_api, self.__class__):
             return NotImplemented
@@ -318,7 +318,7 @@ class GalaxyAPI:
             self.name < self.name
         )
 
-    @property
+    @property  # type: ignore[misc]  # https://github.com/python/mypy/issues/1362
     @g_connect(['v1', 'v2', 'v3'])
     def available_api_versions(self):
         # Calling g_connect will populate self._available_api_versions
@@ -378,7 +378,7 @@ class GalaxyAPI:
         try:
             display.vvvv("Calling Galaxy at %s" % url)
             resp = open_url(to_native(url), data=args, validate_certs=self.validate_certs, headers=headers,
-                            method=method, timeout=20, http_agent=user_agent(), follow_redirects='safe')
+                            method=method, timeout=self.timeout, http_agent=user_agent(), follow_redirects='safe')
         except HTTPError as e:
             raise GalaxyError(e, error_context_msg)
         except Exception as e:
@@ -436,7 +436,7 @@ class GalaxyAPI:
         """
         url = _urljoin(self.api_server, self.available_api_versions['v1'], "tokens") + '/'
         args = urlencode({"github_token": github_token})
-        resp = open_url(url, data=args, validate_certs=self.validate_certs, method="POST", http_agent=user_agent())
+        resp = open_url(url, data=args, validate_certs=self.validate_certs, method="POST", http_agent=user_agent(), timeout=self.timeout)
         data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
         return data
 
@@ -715,9 +715,9 @@ class GalaxyAPI:
 
         for message in data.get('messages', []):
             level = message['level']
-            if level == 'error':
+            if level.lower() == 'error':
                 display.error("Galaxy import error message: %s" % message['message'])
-            elif level == 'warning':
+            elif level.lower() == 'warning':
                 display.warning("Galaxy import warning message: %s" % message['message'])
             else:
                 display.vvv("Galaxy import message: %s - %s" % (level, message['message']))
@@ -780,9 +780,11 @@ class GalaxyAPI:
         data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg, cache=True)
         self._set_cache()
 
+        signatures = data.get('signatures') or []
+
         return CollectionVersionMetadata(data['namespace']['name'], data['collection']['name'], data['version'],
                                          data['download_url'], data['artifact']['sha256'],
-                                         data['metadata']['dependencies'])
+                                         data['metadata']['dependencies'], data['href'], signatures)
 
     @g_connect(['v2', 'v3'])
     def get_collection_versions(self, namespace, name):
@@ -870,3 +872,31 @@ class GalaxyAPI:
         self._set_cache()
 
         return versions
+
+    @g_connect(['v2', 'v3'])
+    def get_collection_signatures(self, namespace, name, version):
+        """
+        Gets the collection signatures from the Galaxy server about a specific Collection version.
+
+        :param namespace: The collection namespace.
+        :param name: The collection name.
+        :param version: Version of the collection to get the information for.
+        :return: A list of signature strings.
+        """
+        api_path = self.available_api_versions.get('v3', self.available_api_versions.get('v2'))
+        url_paths = [self.api_server, api_path, 'collections', namespace, name, 'versions', version, '/']
+
+        n_collection_url = _urljoin(*url_paths)
+        error_context_msg = 'Error when getting collection version metadata for %s.%s:%s from %s (%s)' \
+                            % (namespace, name, version, self.name, self.api_server)
+        data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg, cache=True)
+        self._set_cache()
+
+        try:
+            signatures = data["signatures"]
+        except KeyError:
+            # Noisy since this is used by the dep resolver, so require more verbosity than Galaxy calls
+            display.vvvvvv(f"Server {self.api_server} has not signed {namespace}.{name}:{version}")
+            return []
+        else:
+            return [signature_info["signature"] for signature_info in signatures]

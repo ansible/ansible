@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Daniel Hokka Zakrisson <daniel@hozac.com>
@@ -187,7 +186,7 @@ EXAMPLES = r'''
     mode: '0644'
 
 - name: Replace a localhost entry searching for a literal string to avoid escaping
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/hosts
     search_string: '127.0.0.1'
     line: 127.0.0.1 localhost
@@ -203,7 +202,7 @@ EXAMPLES = r'''
     line: Listen 8080
 
 - name: Ensure php extension matches new pattern
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/httpd/conf/httpd.conf
     search_string: '<FilesMatch ".php[45]?$">'
     insertafter: '^\t<Location \/>\n'

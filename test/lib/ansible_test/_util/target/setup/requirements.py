@@ -38,6 +38,11 @@ except ImportError:
     # noinspection PyProtectedMember
     from pipes import quote as cmd_quote
 
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib import urlopen
+
 ENCODING = 'utf-8'
 PAYLOAD = b'{payload}'  # base-64 encoded JSON payload which will be populated before this script is executed
 
@@ -70,6 +75,38 @@ def main():  # type: () -> None
                 sys.exit(1)
 
 
+# noinspection PyUnusedLocal
+def bootstrap(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
+    """Bootstrap pip and related packages in an empty virtual environment."""
+    pip_version = options['pip_version']
+    packages = options['packages']
+
+    url = 'https://ci-files.testing.ansible.com/ansible-test/get-pip-%s.py' % pip_version
+    cache_path = os.path.expanduser('~/.ansible/test/cache/get_pip_%s.py' % pip_version.replace(".", "_"))
+    temp_path = cache_path + '.download'
+
+    if os.path.exists(cache_path):
+        log('Using cached pip %s bootstrap script: %s' % (pip_version, cache_path))
+    else:
+        log('Downloading pip %s bootstrap script: %s' % (pip_version, url))
+
+        make_dirs(os.path.dirname(cache_path))
+        download_file(url, temp_path)
+        shutil.move(temp_path, cache_path)
+
+        log('Cached pip %s bootstrap script: %s' % (pip_version, cache_path))
+
+    env = common_pip_environment()
+    env.update(GET_PIP=cache_path)
+
+    options = common_pip_options()
+    options.extend(packages)
+
+    command = [sys.executable, pip] + options
+
+    execute_command(command, env=env)
+
+
 def install(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
     """Perform a pip install."""
     requirements = options['requirements']
@@ -92,7 +129,9 @@ def install(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
 
         command = [sys.executable, pip, 'install'] + options
 
-        execute_command(command, tempdir)
+        env = common_pip_environment()
+
+        execute_command(command, env=env, cwd=tempdir)
     finally:
         remove_tree(tempdir)
 
@@ -107,8 +146,10 @@ def uninstall(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
 
     command = [sys.executable, pip, 'uninstall', '-y'] + options
 
+    env = common_pip_environment()
+
     try:
-        execute_command(command, capture=True)
+        execute_command(command, env=env, capture=True)
     except SubprocessError:
         if not ignore_errors:
             raise
@@ -123,7 +164,16 @@ def version(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
 
     command = [sys.executable, pip, '-V'] + options
 
-    execute_command(command, capture=True)
+    env = common_pip_environment()
+
+    execute_command(command, env=env, capture=True)
+
+
+def common_pip_environment():  # type: () -> t.Dict[str, str]
+    """Return common environment variables used to run pip."""
+    env = os.environ.copy()
+
+    return env
 
 
 def common_pip_options():  # type: () -> t.List[str]
@@ -141,6 +191,13 @@ def devnull():  # type: () -> t.IO[bytes]
         devnull.file = open(os.devnull, 'w+b')  # pylint: disable=consider-using-with
 
     return devnull.file
+
+
+def download_file(url, path):  # type: (str, str) -> None
+    """Download the given URL to the specified file path."""
+    with open(to_bytes(path), 'wb') as saved_file:
+        download = urlopen(url)
+        shutil.copyfileobj(download, saved_file)
 
 
 class ApplicationError(Exception):
@@ -170,7 +227,7 @@ def log(message, verbosity=0):  # type: (str, int) -> None
     CONSOLE.flush()
 
 
-def execute_command(cmd, cwd=None, capture=False):  # type: (t.List[str], t.Optional[str], bool) -> None
+def execute_command(cmd, cwd=None, capture=False, env=None):  # type: (t.List[str], t.Optional[str], bool, t.Optional[t.Dict[str, str]]) -> None
     """Execute the specified command."""
     log('Execute command: %s' % ' '.join(cmd_quote(c) for c in cmd), verbosity=1)
 
@@ -183,7 +240,8 @@ def execute_command(cmd, cwd=None, capture=False):  # type: (t.List[str], t.Opti
         stdout = None
         stderr = None
 
-    process = subprocess.Popen(cmd_bytes, cwd=to_optional_bytes(cwd), stdin=devnull(), stdout=stdout, stderr=stderr)  # pylint: disable=consider-using-with
+    cwd_bytes = to_optional_bytes(cwd)
+    process = subprocess.Popen(cmd_bytes, cwd=cwd_bytes, stdin=devnull(), stdout=stdout, stderr=stderr, env=env)  # pylint: disable=consider-using-with
     stdout_bytes, stderr_bytes = process.communicate()
     stdout_text = to_optional_text(stdout_bytes) or u''
     stderr_text = to_optional_text(stderr_bytes) or u''
@@ -219,12 +277,11 @@ def make_dirs(path):  # type: (str) -> None
             raise
 
 
-def open_binary_file(path, mode='rb'):  # type: (str, str) -> t.BinaryIO
+def open_binary_file(path, mode='rb'):  # type: (str, str) -> t.IO[bytes]
     """Open the given path for binary access."""
     if 'b' not in mode:
         raise Exception('mode must include "b" for binary files: %s' % mode)
 
-    # noinspection PyTypeChecker
     return io.open(to_bytes(path), mode)  # pylint: disable=consider-using-with
 
 

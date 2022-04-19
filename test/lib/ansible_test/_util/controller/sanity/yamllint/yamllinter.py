@@ -1,6 +1,5 @@
 """Wrapper around yamllint that supports YAML embedded in Ansible modules."""
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import ast
 import json
@@ -13,7 +12,7 @@ import yaml
 from yaml.resolver import Resolver
 from yaml.constructor import SafeConstructor
 from yaml.error import MarkedYAMLError
-from _yaml import CParser  # pylint: disable=no-name-in-module
+from yaml.cyaml import CParser
 
 from yamllint import linter
 from yamllint.config import YamlLintConfig

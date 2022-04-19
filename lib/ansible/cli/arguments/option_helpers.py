@@ -210,7 +210,9 @@ def create_base_parser(prog, usage="", desc=None, epilog=None):
 def add_verbosity_options(parser):
     """Add options for verbosity"""
     parser.add_argument('-v', '--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
-                        help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
+                        help="Causes Ansible to print more debug messages. Adding multiple -v will increase the verbosity, "
+                             "the builtin plugins currently evaluate up to -vvvvvv. A reasonable level to start is -vvv, "
+                             "connection debugging might require -vvvv.")
 
 
 def add_async_options(parser):
@@ -223,7 +225,7 @@ def add_async_options(parser):
 
 def add_basedir_options(parser):
     """Add options for commands which can set a playbook basedir"""
-    parser.add_argument('--playbook-dir', default=C.config.get_config_value('PLAYBOOK_DIR'), dest='basedir', action='store',
+    parser.add_argument('--playbook-dir', default=C.PLAYBOOK_DIR, dest='basedir', action='store',
                         help="Since this tool does not use playbooks, use this as a substitute playbook directory. "
                              "This sets the relative path for many features including roles/ group_vars/ etc.",
                         type=unfrack_path())

@@ -24,10 +24,12 @@ DOCUMENTATION = """
       files:
         description: A list of file names.
         type: list
+        elements: string
         default: []
       paths:
         description: A list of paths in which to look for the files.
         type: list
+        elements: string
         default: []
       skip:
         type: boolean
@@ -47,8 +49,8 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: Set _found_file to the first existing file, raising an error if a file is not found
-  set_fact:
-    _found_file: "{{ lookup('first_found', findme) }}"
+  ansible.builtin.set_fact:
+    _found_file: "{{ lookup('ansible.builtin.first_found', findme) }}"
   vars:
     findme:
       - /path/to/foo.txt
@@ -56,34 +58,34 @@ EXAMPLES = """
       - /path/to/biz.txt
 
 - name: Set _found_file to the first existing file, or an empty list if no files found
-  set_fact:
-    _found_file: "{{ lookup('first_found', files, paths=['/extra/path'], skip=True) }}"
+  ansible.builtin.set_fact:
+    _found_file: "{{ lookup('ansible.builtin.first_found', files, paths=['/extra/path'], skip=True) }}"
   vars:
     files:
       - /path/to/foo.txt
       - /path/to/bar.txt
 
 - name: Include tasks only if one of the files exist, otherwise skip the task
-  include_tasks:
+  ansible.builtin.include_tasks:
     file: "{{ item }}"
   with_first_found:
-    files:
-     - path/tasks.yaml
-     - path/other_tasks.yaml
-    skip: True
+    - files:
+      - path/tasks.yaml
+      - path/other_tasks.yaml
+      skip: True
 
 - name: Include tasks only if one of the files exists, otherwise skip
-  include_tasks: '{{ tasks_file }}'
+  ansible.builtin.include_tasks: '{{ tasks_file }}'
   when: tasks_file != ""
   vars:
-    tasks_file: "{{ lookup('first_found', files=['tasks.yaml', 'other_tasks.yaml'], errors='ignore') }}"
+    tasks_file: "{{ lookup('ansible.builtin.first_found', files=['tasks.yaml', 'other_tasks.yaml'], errors='ignore') }}"
 
 - name: |
         copy first existing file found to /some/file,
         looking in relative directories from where the task is defined and
         including any play objects that contain it
-  copy:
-    src: "{{ lookup('first_found', findme) }}"
+  ansible.builtin.copy:
+    src: "{{ lookup('ansible.builtin.first_found', findme) }}"
     dest: /some/file
   vars:
     findme:
@@ -92,8 +94,8 @@ EXAMPLES = """
       - bar
 
 - name: same copy but specific paths
-  copy:
-    src: "{{ lookup('first_found', params) }}"
+  ansible.builtin.copy:
+    src: "{{ lookup('ansible.builtin.first_found', params) }}"
     dest: /some/file
   vars:
     params:
@@ -106,8 +108,8 @@ EXAMPLES = """
         - /tmp/staging
 
 - name: INTERFACES | Create Ansible header for /etc/network/interfaces
-  template:
-    src: "{{ lookup('first_found', findme) }}"
+  ansible.builtin.template:
+    src: "{{ lookup('ansible.builtin.first_found', findme)}}"
     dest: "/etc/foo.conf"
   vars:
     findme:
@@ -115,7 +117,7 @@ EXAMPLES = """
       - "default_foo.conf"
 
 - name: read vars from first file found, use 'vars/' relative subdir
-  include_vars: "{{ lookup('first_found', params) }}"
+  ansible.builtin.include_vars: "{{lookup('ansible.builtin.first_found', params)}}"
   vars:
     params:
       files:
@@ -134,28 +136,25 @@ RETURN = """
     elements: path
 """
 import os
+import re
+
+from collections.abc import Mapping, Sequence
 
 from jinja2.exceptions import UndefinedError
 
 from ansible.errors import AnsibleLookupError, AnsibleUndefinedVariable
-from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.six import string_types
 from ansible.plugins.lookup import LookupBase
 
 
 def _split_on(terms, spliters=','):
-
-    # TODO: fix as it does not allow spaces in names
     termlist = []
     if isinstance(terms, string_types):
-        for spliter in spliters:
-            terms = terms.replace(spliter, ' ')
-        termlist = terms.split(' ')
+        termlist = re.split(r'[%s]' % ''.join(map(re.escape, spliters)), terms)
     else:
         # added since options will already listify
         for t in terms:
             termlist.extend(_split_on(t, spliters))
-
     return termlist
 
 

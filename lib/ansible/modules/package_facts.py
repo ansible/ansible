@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -20,8 +19,9 @@ options:
       - Since 2.8 this is a list and can support multiple package managers per system.
       - The 'portage' and 'pkg' options were added in version 2.8.
       - The 'apk' option was added in version 2.11.
+      - The 'pkg_info' option was added in version 2.13.
     default: ['auto']
-    choices: ['auto', 'rpm', 'apt', 'portage', 'pkg', 'pacman', 'apk']
+    choices: ['auto', 'rpm', 'apt', 'portage', 'pkg', 'pacman', 'apk', 'pkg_info']
     type: list
     elements: str
   strategy:
@@ -211,6 +211,25 @@ ansible_facts:
                 "source": "apt",
                 "arch": "amd64",
                 "name": "patch"
+              }
+            ],
+          }
+        }
+        # Sample pkg_info
+        {
+          "packages": {
+            "curl": [
+              {
+                  "name": "curl",
+                  "source": "pkg_info",
+                  "version": "7.79.0"
+              }
+            ],
+            "intel-firmware": [
+              {
+                  "name": "intel-firmware",
+                  "source": "pkg_info",
+                  "version": "20210608v0"
               }
             ],
           }
@@ -432,6 +451,29 @@ class APK(CLIMgr):
                 'name': nvr[0],
                 'version': nvr[1],
                 'release': nvr[2],
+            }
+        except IndexError:
+            return raw_pkg_details
+
+
+class PKG_INFO(CLIMgr):
+
+    CLI = 'pkg_info'
+
+    def list_installed(self):
+        rc, out, err = module.run_command([self._cli, '-a'])
+        if rc != 0 or err:
+            raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
+        return out.splitlines()
+
+    def get_package_details(self, package):
+        raw_pkg_details = {'name': package, 'version': ''}
+        details = package.split(maxsplit=1)[0].rsplit('-', maxsplit=1)
+
+        try:
+            return {
+                'name': details[0],
+                'version': details[1],
             }
         except IndexError:
             return raw_pkg_details

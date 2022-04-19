@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright:  Ansible Project
@@ -49,25 +48,25 @@ seealso:
 EXAMPLES = r'''
 - hosts: localhost
   tasks:
-    - debug:
+    - ansible.builtin.debug:
         msg: play1
 
 - name: Include a play after another play
-  import_playbook: otherplays.yaml
+  ansible.builtin.import_playbook: otherplays.yaml
 
 - name: Set variables on an imported playbook
-  import_playbook: otherplays.yml
+  ansible.builtin.import_playbook: otherplays.yml
   vars:
     service: httpd
 
 - name: This DOES NOT WORK
   hosts: all
   tasks:
-    - debug:
+    - ansible.builtin.debug:
         msg: task1
 
     - name: This fails because I'm inside a play already
-      import_playbook: stuff.yaml
+      ansible.builtin.import_playbook: stuff.yaml
 '''
 
 RETURN = r'''

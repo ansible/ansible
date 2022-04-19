@@ -17,12 +17,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from collections.abc import Mapping, MutableMapping
 from itertools import chain
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import Mapping, MutableMapping
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
 

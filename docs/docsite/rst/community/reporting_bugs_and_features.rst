@@ -1,3 +1,4 @@
+
 .. _reporting_bugs_and_features:
 
 **************************************
@@ -15,46 +16,44 @@ Reporting a bug
 Security bugs
 -------------
 
-Ansible practices responsible disclosure - if this is a security-related bug, email `security@ansible.com <mailto:security@ansible.com>`_ instead of filing a ticket or posting to any public groups, and you will receive a prompt response.
+Ansible practices responsible disclosure. To report security-related bugs, send an email to  `security@ansible.com <mailto:security@ansible.com>`_ for an immediate response. Do not submit a  ticket or post to any public groups.
 
 Bugs in ansible-core
 --------------------
 
-If you find a bug that affects multiple plugins, a plugin that remained in the ansible/ansible repo, or the overall functioning of Ansible, report it to `github.com/ansible/ansible/issues <https://github.com/ansible/ansible/issues>`_. You need a free GitHub account.  Before reporting a bug, use the bug/issue search to see if the issue has already been reported. If you are not sure if something is a bug yet, you can report the behavior on the :ref:`mailing list or community chat first <communication>`.
+Before reporting a bug, search in GitHub for `already reported issues <https://github.com/ansible/ansible/issues>`_ and `open pull requests <https://github.com/ansible/ansible/pulls>`_ to see if someone has already addressed your issue.  Unsure if you found a bug? Report the behavior on the :ref:`mailing list or community chat first <communication>`.
 
-Do not open issues for "how do I do this" type questions.  These are great topics for community chat channels or a mailing list, where things are likely to be more of a discussion.
+Also, use the mailing list or chat to discuss whether the problem is in ``ansible-core`` or a collection, and for "how do I do this" type questions.
 
-If you find a bug, open the issue yourself to ensure we have a record of it. Do not rely on someone else in the community to file the bug report for you. We have created an issue template, which saves time and helps us help everyone with their issues more quickly. Please fill it out as completely and as accurately as possible:
+You need a free GitHub account to `report bugs <https://github.com/ansible/ansible/issues>`_ that affect:
 
-  * Include the Ansible version
-  * Include any relevant configuration
-  * Include the exact commands or tasks you are running
-  * Describe the behavior you expected
-  * Provide steps to reproduce the bug
-    * Use minimal well-reduced and well-commented examples, not your entire production playbook
-    * When sharing YAML in playbooks, preserve the formatting by using `code blocks  <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_.
-  * Document the behavior you got
-  * Include output where possible
-  * For multiple-file content, use gist.github.com, which is more durable than pastebin content
+- multiple plugins  
+- a plugin that remained in the ansible/ansible repo  
+- the overall functioning of Ansible  
 
-.. _reporting_bugs_in_collections:
+How to write a good bug report
+------------------------------
 
-Bugs in collections
--------------------
+If you find a bug, open an issue using the `issue template <https://github.com/ansible/ansible/issues/new?assignees=&labels=&template=bug_report.yml>`_. 
 
-Many bugs only affect a single module or plugin. If you find a bug that affects a module or plugin hosted in a collection, file the bug in the repository of the :ref:`collection <collections>`:
+Fill out the issue template as completely and as accurately as possible. Include:
 
-  #. Find the collection on `Galaxy <https://galaxy.ansible.com>`_.
-  #. Click on the Issue Tracker link for that collection.
-  #. Follow the contributor guidelines or instructions in the collection repo.
+* your Ansible version
+* the expected behavior and what you've tried, including the exact commands you were using or tasks you are running.
+* the current behavior and why you think it is a bug
+* the steps to reproduce the bug 
+* a minimal reproducible example and comments describing examples
+* any relevant configurations and the components you used
+* any relevant output plus ``ansible -vvvv`` (debugging) output
+* add the output of ``ansible-test-env --show`` when filing bug reports involving ``ansible-test``. 
 
-If you are not sure whether a bug is in ansible-core or in a collection, you can report the behavior on the :ref:`mailing list or community chat channel first <communication>`.
+When sharing YAML in playbooks, ensure that you preserve formatting using `code blocks  <https://help.github.com/articles/creating-and-highlighting-code-blocks/>`_. For multiple-file content, use gist.github.com, more durable than Pastebin content.
 
 .. _request_features:
 
 Requesting a feature
 ====================
 
-The best way to get a feature into Ansible is to :ref:`submit a pull request <community_pull_requests>`, either against ansible-core or against a collection. See also :ref:`ansible_collection_merge_requirements`.
+Before you request a feature, check what is :ref:`planned for future Ansible Releases <roadmaps>`. Check `existing pull requests tagged with feature <https://github.com/ansible/ansible/issues?q=is%3Aissue+is%3Aopen+label%3Afeature>`_.
 
-You can also submit a feature request through opening an issue in the `ansible/ansible <https://github.com/ansible/ansible/issues>`_ for ``ansible-core`` or in a corresponding collection repository (refer to the :ref:`Bugs in collections<reporting_bugs_in_collections>` section to learn how to find a proper issue tracker).
+To get your feature into Ansible, :ref:`submit a pull request <community_pull_requests>`, either against ansible-core or a collection. See also :ref:`ansible_collection_merge_requirements`. For ``ansible-core``, you can also open an issue in `ansible/ansible <https://github.com/ansible/ansible/issues>`_  or in a corresponding collection repository (To find the correct issue tracker, refer to :ref:`Bugs in collections<reporting_bugs_in_collections>` ).

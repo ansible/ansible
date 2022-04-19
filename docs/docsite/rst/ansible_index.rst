@@ -16,11 +16,13 @@ We believe simplicity is relevant to all sizes of environments, so we design for
 
 You can learn more at `AnsibleFest <https://www.ansible.com/ansiblefest>`_, the annual event for all Ansible contributors, users, and customers hosted by Red Hat. AnsibleFest is the place to connect with others, learn new skills, and find a new friend to automate with.
 
-Ansible manages machines in an agent-less manner. There is never a question of how to upgrade remote daemons or the problem of not being able to manage systems because daemons are uninstalled.  Because OpenSSH is one of the most peer-reviewed open source components, security exposure is greatly reduced. Ansible is decentralized--it relies on your existing OS credentials to control access to remote machines. If needed, Ansible can easily connect with Kerberos, LDAP, and other centralized authentication management systems.
+Ansible manages machines in an agent-less manner. There is never a question of how to upgrade remote daemons or the problem of not being able to manage systems because daemons are uninstalled. Also, security exposure is greatly reduced because Ansible uses OpenSSH — the open source connectivity tool for remote login with the SSH (Secure Shell) protocol. 
 
-This documentation covers the version of Ansible noted in the upper left corner of this page. We maintain multiple versions of Ansible and of the documentation, so please be sure you are using the version of the documentation that covers the version of Ansible you're using. For recent features, we note the version of Ansible where the feature was added.
+Ansible is decentralized--it relies on your existing OS credentials to control access to remote machines. And if needed, Ansible can easily connect with Kerberos, LDAP, and other centralized authentication management systems.
 
-Ansible releases a new major release approximately twice a year. The core application evolves somewhat conservatively, valuing simplicity in language design and setup. Contributors develop and change modules and plugins, hosted in collections since version 2.10, much more quickly.
+This documentation covers the version of Ansible noted in the upper left corner of this page. We maintain multiple versions of Ansible and the Ansible documentation, so please be sure you are using the documentation version that covers the version of Ansible you are using. For recent features, we note the version of Ansible where the feature was added.
+
+Ansible releases a new major release approximately twice a year. The core application evolves somewhat conservatively, valuing simplicity in language design and setup. Contributors develop and change modules and plugins hosted in collections since version 2.10 much more quickly.
 
 .. toctree::
    :maxdepth: 2
@@ -40,6 +42,10 @@ Ansible releases a new major release approximately twice a year. The core applic
    :caption: Contributing to Ansible
 
    community/index
+   community/contributions_collections
+   community/contributions
+   community/advanced_index
+   dev_guide/style_guide/index
 
 .. toctree::
    :maxdepth: 2
@@ -102,3 +108,4 @@ Ansible releases a new major release approximately twice a year. The core applic
    :caption: Roadmaps
 
    roadmap/ansible_roadmap_index.rst
+   roadmap/ansible_core_roadmap_index.rst

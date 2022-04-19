@@ -125,62 +125,12 @@ class HostState:
         return new_state
 
 
-def _redirect_to_enum(name):
-    if name.startswith('ITERATING_'):
-        rv = getattr(IteratingStates, name.replace('ITERATING_', ''))
-        display.deprecated(
-            f"PlayIterator.{name} is deprecated, use ansible.play_iterator.IteratingStates.{name} instead.",
-            version=2.14
-        )
-        return rv
-    elif name.startswith('FAILED_'):
-        rv = getattr(FailedStates, name.replace('FAILED_', ''))
-        display.deprecated(
-            f"PlayIterator.{name} is deprecated, use ansible.play_iterator.FailedStates.{name} instead.",
-            version=2.14
-        )
-        return rv
-
-    raise AttributeError(name)
-
-
-class MetaPlayIterator(type):
-    """Meta class to intercept calls to old *class* attributes
-    like PlayIterator.ITERATING_TASKS and use new enums instead.
-    This is for backwards compatibility as 3rd party strategies might
-    use those attributes. Deprecation warning is printed when old attr
-    is redirected to new enum.
-    """
-    def __getattribute__(cls, name):
-        try:
-            rv = _redirect_to_enum(name)
-        except AttributeError:
-            return super().__getattribute__(name)
-
-        return rv
-
-
-class PlayIterator(metaclass=MetaPlayIterator):
-
-    def __getattr__(self, name):
-        """Same as MetaPlayIterator.__getattribute__ but for instance attributes,
-        because our code used iterator_object.ITERATING_TASKS so it's safe to assume
-        that 3rd party code could use that too.
-
-        __getattr__ is called when the default attribute access fails so this
-        should not impact existing attributes lookup.
-        """
-        return _redirect_to_enum(name)
+class PlayIterator:
 
     def __init__(self, inventory, play, play_context, variable_manager, all_vars, start_at_done=False):
         self._play = play
         self._blocks = []
         self._variable_manager = variable_manager
-
-        # Default options to gather
-        gather_subset = self._play.gather_subset
-        gather_timeout = self._play.gather_timeout
-        fact_path = self._play.fact_path
 
         setup_block = Block(play=self._play)
         # Gathering facts with run_once would copy the facts from one host to
@@ -188,19 +138,22 @@ class PlayIterator(metaclass=MetaPlayIterator):
         setup_block.run_once = False
         setup_task = Task(block=setup_block)
         setup_task.action = 'gather_facts'
+        # TODO: hardcoded resolution here, but should use actual resolution code in the end,
+        #       in case of 'legacy' mismatch
+        setup_task.resolved_action = 'ansible.builtin.gather_facts'
         setup_task.name = 'Gathering Facts'
-        setup_task.args = {
-            'gather_subset': gather_subset,
-        }
+        setup_task.args = {}
 
         # Unless play is specifically tagged, gathering should 'always' run
         if not self._play.tags:
             setup_task.tags = ['always']
 
-        if gather_timeout:
-            setup_task.args['gather_timeout'] = gather_timeout
-        if fact_path:
-            setup_task.args['fact_path'] = fact_path
+        # Default options to gather
+        for option in ('gather_subset', 'gather_timeout', 'fact_path'):
+            value = getattr(self._play, option, None)
+            if value is not None:
+                setup_task.args[option] = value
+
         setup_task.set_loader(self._play._loader)
         # short circuit fact gathering if the entire playbook is conditional
         if self._play._included_conditional is not None:

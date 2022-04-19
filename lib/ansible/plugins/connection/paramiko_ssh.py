@@ -23,6 +23,7 @@ DOCUMENTATION = """
             - Address of the remote target
         default: inventory_hostname
         vars:
+            - name: inventory_hostname
             - name: ansible_host
             - name: ansible_ssh_host
             - name: ansible_paramiko_host
@@ -44,6 +45,8 @@ DOCUMENTATION = """
             - section: paramiko_connection
               key: remote_user
               version_added: '2.5'
+        keyword:
+            - name: remote_user
       password:
         description:
           - Secret used to either login the ssh server or as a passphrase for ssh keys that require it
@@ -220,8 +223,8 @@ class MyAddPolicy(object):
 
 # keep connection objects on a per host basis to avoid repeated attempts to reconnect
 
-SSH_CONNECTION_CACHE = {}
-SFTP_CONNECTION_CACHE = {}
+SSH_CONNECTION_CACHE = {}  # type: dict[str, paramiko.client.SSHClient]
+SFTP_CONNECTION_CACHE = {}  # type: dict[str, paramiko.sftp_client.SFTPClient]
 
 
 class Connection(ConnectionBase):

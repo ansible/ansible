@@ -2,8 +2,7 @@
 # (c) 2018, Matt Martz <matt@sivel.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 # -*- coding: utf-8 -*-
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import datetime
 import re
@@ -159,7 +158,7 @@ class AnsibleDeprecatedChecker(BaseChecker):
 
     def _check_date(self, node, date):
         if not isinstance(date, str):
-            self.add_message('invalid-date', node=node, args=(date,))
+            self.add_message('ansible-invalid-deprecated-date', node=node, args=(date,))
             return
 
         try:
@@ -173,7 +172,11 @@ class AnsibleDeprecatedChecker(BaseChecker):
 
     def _check_version(self, node, version, collection_name):
         if not isinstance(version, (str, float)):
-            self.add_message('invalid-version', node=node, args=(version,))
+            if collection_name == 'ansible.builtin':
+                symbol = 'ansible-invalid-deprecated-version'
+            else:
+                symbol = 'collection-invalid-deprecated-version'
+            self.add_message(symbol, node=node, args=(version,))
             return
 
         version_no = str(version)

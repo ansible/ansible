@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2014, Brian Coca <brian.coca+dev@gmail.com>
@@ -64,39 +63,39 @@ author:
 
 EXAMPLES = '''
 - name: Get root user info
-  getent:
+  ansible.builtin.getent:
     database: passwd
     key: root
-- debug:
+- ansible.builtin.debug:
     var: ansible_facts.getent_passwd
 
 - name: Get all groups
-  getent:
+  ansible.builtin.getent:
     database: group
     split: ':'
-- debug:
+- ansible.builtin.debug:
     var: ansible_facts.getent_group
 
 - name: Get all hosts, split by tab
-  getent:
+  ansible.builtin.getent:
     database: hosts
-- debug:
+- ansible.builtin.debug:
     var: ansible_facts.getent_hosts
 
 - name: Get http service info, no error if missing
-  getent:
+  ansible.builtin.getent:
     database: services
     key: http
     fail_key: False
-- debug:
+- ansible.builtin.debug:
     var: ansible_facts.getent_services
 
 - name: Get user password hash (requires sudo/root)
-  getent:
+  ansible.builtin.getent:
     database: shadow
     key: www-data
     split: ':'
-- debug:
+- ansible.builtin.debug:
     var: ansible_facts.getent_shadow
 
 '''

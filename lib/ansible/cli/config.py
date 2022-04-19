@@ -12,6 +12,9 @@ from ansible.cli import CLI
 import os
 import shlex
 import subprocess
+
+from collections.abc import Mapping
+
 import yaml
 
 from ansible import context
@@ -22,7 +25,6 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.config.manager import ConfigManager, Setting
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text, to_bytes
-from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.six import string_types
 from ansible.parsing.quoting import is_quoted
 from ansible.parsing.yaml.dumper import AnsibleDumper
@@ -31,6 +33,13 @@ from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
 
 display = Display()
+
+
+def get_constants():
+    ''' helper method to ensure we can template based on existing constants '''
+    if not hasattr(get_constants, 'cvars'):
+        get_constants.cvars = {k: getattr(C, k) for k in dir(C) if not k.startswith('__')}
+    return get_constants.cvars
 
 
 class ConfigCLI(CLI):
@@ -370,27 +379,32 @@ class ConfigCLI(CLI):
 
         text = []
         for setting in sorted(config):
+            changed = False
             if isinstance(config[setting], Setting):
+                # proceed normally
                 if config[setting].origin == 'default':
                     color = 'green'
                 elif config[setting].origin == 'REQUIRED':
+                    # should include '_terms', '_input', etc
                     color = 'red'
                 else:
                     color = 'yellow'
+                    changed = True
                 msg = "%s(%s) = %s" % (setting, config[setting].origin, config[setting].value)
             else:
                 color = 'green'
                 msg = "%s(%s) = %s" % (setting, 'default', config[setting].get('default'))
-            if not context.CLIARGS['only_changed'] or color == 'yellow':
+
+            if not context.CLIARGS['only_changed'] or changed:
                 text.append(stringc(msg, color))
 
         return text
 
     def _get_global_configs(self):
         config = self.config.get_configuration_definitions(ignore_private=True).copy()
-        for setting in self.config.data.get_settings():
-            if setting.name in config:
-                config[setting.name] = setting
+        for setting in config.keys():
+            v, o = C.config.get_config_value_and_origin(setting, cfile=self.config_file, variables=get_constants())
+            config[setting] = Setting(setting, v, o, None)
 
         return self._render_settings(config)
 
@@ -438,13 +452,18 @@ class ConfigCLI(CLI):
             # actually get the values
             for setting in config_entries[finalname].keys():
                 try:
-                    v, o = C.config.get_config_value_and_origin(setting, plugin_type=ptype, plugin_name=name)
+                    v, o = C.config.get_config_value_and_origin(setting, cfile=self.config_file, plugin_type=ptype, plugin_name=name, variables=get_constants())
                 except AnsibleError as e:
                     if to_text(e).startswith('No setting was provided for required configuration'):
                         v = None
                         o = 'REQUIRED'
                     else:
                         raise e
+
+                if v is None and o is None:
+                    # not all cases will be error
+                    o = 'REQUIRED'
+
                 config_entries[finalname][setting] = Setting(setting, v, o, None)
 
             # pretty please!

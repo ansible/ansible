@@ -122,6 +122,77 @@ def get_docker_hostname():  # type: () -> str
 
 
 @cache
+def get_podman_host_ip():  # type: () -> str
+    """Return the IP of the Podman host."""
+    podman_host_ip = socket.gethostbyname(get_podman_hostname())
+
+    display.info('Detected Podman host IP: %s' % podman_host_ip, verbosity=1)
+
+    return podman_host_ip
+
+
+@cache
+def get_podman_default_hostname():  # type: () -> str
+    """Return the default hostname of the Podman service.
+
+    --format was added in podman 3.3.0, this functionality depends on it's availability
+    """
+    hostname = None
+    try:
+        stdout = raw_command(['podman', 'system', 'connection', 'list', '--format=json'], capture=True)[0]
+    except SubprocessError:
+        stdout = '[]'
+
+    try:
+        connections = json.loads(stdout)
+    except json.decoder.JSONDecodeError:
+        return hostname
+
+    for connection in connections:
+        # A trailing indicates the default
+        if connection['Name'][-1] == '*':
+            hostname = connection['URI']
+            break
+
+    return hostname
+
+
+@cache
+def _get_podman_remote():  # type: () -> t.Optional[str]
+    # URL value resolution precedence:
+    # - command line value
+    # - environment variable CONTAINER_HOST
+    # - containers.conf
+    # - unix://run/podman/podman.sock
+    hostname = None
+
+    podman_host = os.environ.get('CONTAINER_HOST')
+    if not podman_host:
+        podman_host = get_podman_default_hostname()
+
+    if podman_host and podman_host.startswith('ssh://'):
+        try:
+            hostname = urllib.parse.urlparse(podman_host).hostname
+        except ValueError:
+            display.warning('Could not parse podman URI "%s"' % podman_host)
+        else:
+            display.info('Detected Podman remote: %s' % hostname, verbosity=1)
+    return hostname
+
+
+@cache
+def get_podman_hostname():  # type: () -> str
+    """Return the hostname of the Podman service."""
+    hostname = _get_podman_remote()
+
+    if not hostname:
+        hostname = 'localhost'
+        display.info('Assuming Podman is available on localhost.', verbosity=1)
+
+    return hostname
+
+
+@cache
 def get_docker_container_id():  # type: () -> t.Optional[str]
     """Return the current container ID if running in a container, otherwise return None."""
     path = '/proc/self/cpuset'
@@ -154,7 +225,7 @@ def get_docker_preferred_network_name(args):  # type: (EnvironmentConfig) -> str
     - the default docker network (returns None)
     """
     try:
-        return get_docker_preferred_network_name.network
+        return get_docker_preferred_network_name.network  # type: ignore[attr-defined]
     except AttributeError:
         pass
 
@@ -171,14 +242,14 @@ def get_docker_preferred_network_name(args):  # type: (EnvironmentConfig) -> str
             container = docker_inspect(args, current_container_id, always=True)
             network = container.get_network_name()
 
-    get_docker_preferred_network_name.network = network
+    get_docker_preferred_network_name.network = network  # type: ignore[attr-defined]
 
     return network
 
 
 def is_docker_user_defined_network(network):  # type: (str) -> bool
     """Return True if the network being used is a user-defined network."""
-    return network and network != 'bridge'
+    return bool(network) and network != 'bridge'
 
 
 def docker_pull(args, image):  # type: (EnvironmentConfig, str) -> None
@@ -247,14 +318,14 @@ def docker_run(
 
             return stdout.strip()
         except SubprocessError as ex:
-            display.error(ex)
+            display.error(ex.message)
             display.warning('Failed to run docker image "%s". Waiting a few seconds before trying again.' % image)
             time.sleep(3)
 
     raise ApplicationError('Failed to run docker image "%s".' % image)
 
 
-def docker_start(args, container_id, options=None):  # type: (EnvironmentConfig, str, t.Optional[t.List[str]]) -> (t.Optional[str], t.Optional[str])
+def docker_start(args, container_id, options=None):  # type: (EnvironmentConfig, str, t.Optional[t.List[str]]) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """
     Start a docker container by name or ID
     """
@@ -265,7 +336,7 @@ def docker_start(args, container_id, options=None):  # type: (EnvironmentConfig,
         try:
             return docker_command(args, ['start'] + options + [container_id], capture=True)
         except SubprocessError as ex:
-            display.error(ex)
+            display.error(ex.message)
             display.warning('Failed to start docker container "%s". Waiting a few seconds before trying again.' % container_id)
             time.sleep(3)
 
@@ -441,8 +512,8 @@ def docker_exec(
         cmd,  # type: t.List[str]
         options=None,  # type: t.Optional[t.List[str]]
         capture=False,  # type: bool
-        stdin=None,  # type: t.Optional[t.BinaryIO]
-        stdout=None,  # type: t.Optional[t.BinaryIO]
+        stdin=None,  # type: t.Optional[t.IO[bytes]]
+        stdout=None,  # type: t.Optional[t.IO[bytes]]
         data=None,  # type: t.Optional[str]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Execute the given command in the specified container."""
@@ -471,19 +542,21 @@ def docker_command(
         args,  # type: CommonConfig
         cmd,  # type: t.List[str]
         capture=False,  # type: bool
-        stdin=None,  # type: t.Optional[t.BinaryIO]
-        stdout=None,  # type: t.Optional[t.BinaryIO]
+        stdin=None,  # type: t.Optional[t.IO[bytes]]
+        stdout=None,  # type: t.Optional[t.IO[bytes]]
         always=False,  # type: bool
         data=None,  # type: t.Optional[str]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Run the specified docker command."""
     env = docker_environment()
-    command = require_docker().command
-    return run_command(args, [command] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always, data=data)
+    command = [require_docker().command]
+    if command[0] == 'podman' and _get_podman_remote():
+        command.append('--remote')
+    return run_command(args, command + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always, data=data)
 
 
 def docker_environment():  # type: () -> t.Dict[str, str]
     """Return a dictionary of docker related environment variables found in the current environment."""
     env = common_environment()
-    env.update(dict((key, os.environ[key]) for key in os.environ if key.startswith('DOCKER_')))
+    env.update(dict((key, os.environ[key]) for key in os.environ if key.startswith('DOCKER_') or key.startswith('CONTAINER_')))
     return env

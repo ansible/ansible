@@ -17,7 +17,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: unlike with_items you will get 3 items from this loop, the 2nd one being a list
-  debug: var=item
+  ansible.builtin.debug: var=item
   with_list:
     - 1
     - [2,3]
@@ -31,7 +31,8 @@ RETURN = """
     elements: raw
 """
 
-from ansible.module_utils.common._collections_compat import Sequence
+from collections.abc import Sequence
+
 from ansible.plugins.lookup import LookupBase
 from ansible.errors import AnsibleError
 

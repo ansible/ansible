@@ -16,10 +16,9 @@ from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
 from ansible import context
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils._text import to_text, to_native
 from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.attribute import Attribute, FieldAttribute
@@ -36,7 +35,7 @@ def _generic_g(prop_name, self):
     try:
         value = self._attributes[prop_name]
     except KeyError:
-        raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+        raise AttributeError("'%s' does not have the keyword '%s'" % (self.__class__.__name__, prop_name))
 
     if value is Sentinel:
         value = self._attr_defaults[prop_name]
@@ -51,7 +50,7 @@ def _generic_g_method(prop_name, self):
         method = "_get_attr_%s" % prop_name
         return getattr(self, method)()
     except KeyError:
-        raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+        raise AttributeError("'%s' does not support the keyword '%s'" % (self.__class__.__name__, prop_name))
 
 
 def _generic_g_parent(prop_name, self):
@@ -64,7 +63,7 @@ def _generic_g_parent(prop_name, self):
             except AttributeError:
                 value = self._attributes[prop_name]
     except KeyError:
-        raise AttributeError("'%s' object has no attribute '%s'" % (self.__class__.__name__, prop_name))
+        raise AttributeError("'%s' nor it's parents support the keyword '%s'" % (self.__class__.__name__, prop_name))
 
     if value is Sentinel:
         value = self._attr_defaults[prop_name]
@@ -146,12 +145,15 @@ class BaseMeta(type):
                     # method, or if the attribute is marked as not inheriting
                     # its value from a parent object
                     method = "_get_attr_%s" % attr_name
-                    if method in src_dict or method in dst_dict:
-                        getter = partial(_generic_g_method, attr_name)
-                    elif ('_get_parent_attribute' in dst_dict or '_get_parent_attribute' in src_dict) and value.inherit:
-                        getter = partial(_generic_g_parent, attr_name)
-                    else:
-                        getter = partial(_generic_g, attr_name)
+                    try:
+                        if method in src_dict or method in dst_dict:
+                            getter = partial(_generic_g_method, attr_name)
+                        elif ('_get_parent_attribute' in dst_dict or '_get_parent_attribute' in src_dict) and value.inherit:
+                            getter = partial(_generic_g_parent, attr_name)
+                        else:
+                            getter = partial(_generic_g, attr_name)
+                    except AttributeError as e:
+                        raise AnsibleParserError("Invalid playbook definition: %s" % to_native(e), orig_exc=e)
 
                     setter = partial(_generic_s, attr_name)
                     deleter = partial(_generic_d, attr_name)
@@ -853,7 +855,7 @@ class Base(FieldAttributeBase):
     _become_exe = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_exe'))
 
     # used to hold sudo/su stuff
-    DEPRECATED_ATTRIBUTES = []
+    DEPRECATED_ATTRIBUTES = []  # type: list[str]
 
     def get_path(self):
         ''' return the absolute path of the playbook object and its line number '''

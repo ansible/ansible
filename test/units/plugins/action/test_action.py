@@ -25,7 +25,7 @@ import re
 
 from ansible import constants as C
 from units.compat import unittest
-from units.compat.mock import patch, MagicMock, mock_open
+from mock import patch, MagicMock, mock_open
 
 from ansible.errors import AnsibleError, AnsibleAuthenticationFailure
 from ansible.module_utils.six import text_type
@@ -283,6 +283,9 @@ class TestActionBase(unittest.TestCase):
         play_context.become = True
         play_context.become_user = 'foo'
 
+        mock_task.become = True
+        mock_task.become_user = True
+
         # our test class
         action_base = DerivedActionBase(
             task=mock_task,
@@ -308,7 +311,6 @@ class TestActionBase(unittest.TestCase):
         # ssh error
         action_base._low_level_execute_command.return_value = dict(rc=255, stdout='', stderr='')
         self.assertRaises(AnsibleError, action_base._make_tmp_path, 'root')
-        play_context.verbosity = 5
         self.assertRaises(AnsibleError, action_base._make_tmp_path, 'root')
 
         # general error
@@ -346,7 +348,7 @@ class TestActionBase(unittest.TestCase):
             self.assertEqual(runWithNoExpectation(execute), remote_paths)
 
         def assertThrowRegex(regex, execute=False):
-            self.assertRaisesRegexp(
+            self.assertRaisesRegex(
                 AnsibleError,
                 regex,
                 action_base._fixup_perms2,
@@ -503,7 +505,7 @@ class TestActionBase(unittest.TestCase):
             'stderr': '',
         }
         # TODO: Add test to assert warning is shown if
-        # ALLOW_WORLD_READABLE_TMPFILES is set in this case.
+        # world_readable_temp is set in this case.
         assertSuccess()
         action_base._remote_chgrp.assert_called_once_with(
             remote_paths,
@@ -655,6 +657,9 @@ class TestActionBase(unittest.TestCase):
         mock_task = MagicMock()
         mock_task.action = 'copy'
         mock_task.args = dict(a=1, b=2, c=3)
+        mock_task.diff = False
+        mock_task.check_mode = False
+        mock_task.no_log = False
 
         # create a mock connection, so we don't actually try and connect to things
         def build_module_command(env_string, shebang, cmd, arg_path=None):
@@ -729,6 +734,8 @@ class TestActionBase(unittest.TestCase):
 
         play_context.become = True
         play_context.become_user = 'foo'
+        mock_task.become = True
+        mock_task.become_user = True
         self.assertEqual(action_base._execute_module(), dict(_ansible_parsed=True, rc=0, stdout="ok", stdout_lines=['ok']))
 
         # test an invalid shebang return
@@ -740,6 +747,7 @@ class TestActionBase(unittest.TestCase):
         # test with check mode enabled, once with support for check
         # mode and once with support disabled to raise an error
         play_context.check_mode = True
+        mock_task.check_mode = True
         action_base._configure_module.return_value = ('new', '#!/usr/bin/python', 'this is the module data', 'path')
         self.assertEqual(action_base._execute_module(), dict(_ansible_parsed=True, rc=0, stdout="ok", stdout_lines=['ok']))
         action_base._supports_check_mode = False
@@ -778,6 +786,7 @@ class TestActionBase(unittest.TestCase):
     def test__remote_expand_user_relative_pathing(self):
         action_base = _action_base()
         action_base._play_context.remote_addr = 'bar'
+        action_base._connection.get_option.return_value = 'bar'
         action_base._low_level_execute_command = MagicMock(return_value={'stdout': b'../home/user'})
         action_base._connection._shell.join_path.return_value = '../home/user/foo'
         with self.assertRaises(AnsibleError) as cm:

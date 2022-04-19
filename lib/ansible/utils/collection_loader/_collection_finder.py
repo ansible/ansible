@@ -28,7 +28,7 @@ from types import ModuleType
 try:
     from importlib import import_module
 except ImportError:
-    def import_module(name):
+    def import_module(name):  # type: ignore[misc]
         __import__(name)
         return sys.modules[name]
 
@@ -36,7 +36,7 @@ try:
     from importlib import reload as reload_module
 except ImportError:
     # 2.7 has a global reload function instead...
-    reload_module = reload  # pylint:disable=undefined-variable
+    reload_module = reload  # type: ignore[name-defined]  # pylint:disable=undefined-variable
 
 try:
     from importlib.util import spec_from_loader
@@ -71,10 +71,10 @@ try:  # NOTE: py3/py2 compat
     # py2 mypy can't deal with try/excepts
     is_python_identifier = str.isidentifier  # type: ignore[attr-defined]
 except AttributeError:  # Python 2
-    def is_python_identifier(tested_str):  # type: (str) -> bool
+    def is_python_identifier(self):  # type: (str) -> bool
         """Determine whether the given string is a Python identifier."""
         # Ref: https://stackoverflow.com/a/55802320/595220
-        return bool(re.match(_VALID_IDENTIFIER_STRING_REGEX, tested_str))
+        return bool(re.match(_VALID_IDENTIFIER_STRING_REGEX, self))
 
 
 PB_EXTENSIONS = ('.yml', '.yaml')
@@ -660,7 +660,7 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
 # loads everything under a collection, including handling redirections defined by the collection
 class _AnsibleCollectionLoader(_AnsibleCollectionPkgLoaderBase):
     # HACK: stash this in a better place
-    _redirected_package_map = {}
+    _redirected_package_map = {}  # type: dict[str, str]
     _allows_package_code = True
 
     def _validate_args(self):
@@ -954,7 +954,7 @@ class AnsibleCollectionRef:
             return False
 
         return all(
-            # NOTE: keywords and identifiers are different in differnt Pythons
+            # NOTE: keywords and identifiers are different in different Pythons
             not iskeyword(ns_or_name) and is_python_identifier(ns_or_name)
             for ns_or_name in collection_name.split(u'.')
         )

@@ -13,6 +13,7 @@ from .constants import (
 
 from .util import (
     ANSIBLE_TEST_DATA_ROOT,
+    cache,
     read_lines_without_comments,
 )
 
@@ -210,9 +211,9 @@ def filter_completion(
         controller_only=False,  # type: bool
         include_defaults=False,  # type: bool
 ):  # type: (...) -> t.Dict[str, TCompletionConfig]
-    """Return a the given completion dictionary, filtering out configs which do not support the controller if controller_only is specified."""
+    """Return the given completion dictionary, filtering out configs which do not support the controller if controller_only is specified."""
     if controller_only:
-        completion = {name: config for name, config in completion.items() if config.controller_supported}
+        completion = {name: config for name, config in completion.items() if isinstance(config, PosixCompletionConfig) and config.controller_supported}
 
     if not include_defaults:
         completion = {name: config for name, config in completion.items() if not config.is_default}
@@ -220,7 +221,25 @@ def filter_completion(
     return completion
 
 
-DOCKER_COMPLETION = load_completion('docker', DockerCompletionConfig)
-REMOTE_COMPLETION = load_completion('remote', PosixRemoteCompletionConfig)
-WINDOWS_COMPLETION = load_completion('windows', WindowsRemoteCompletionConfig)
-NETWORK_COMPLETION = load_completion('network', NetworkRemoteCompletionConfig)
+@cache
+def docker_completion():  # type: () -> t.Dict[str, DockerCompletionConfig]
+    """Return docker completion entries."""
+    return load_completion('docker', DockerCompletionConfig)
+
+
+@cache
+def remote_completion():  # type: () -> t.Dict[str, PosixRemoteCompletionConfig]
+    """Return remote completion entries."""
+    return load_completion('remote', PosixRemoteCompletionConfig)
+
+
+@cache
+def windows_completion():  # type: () -> t.Dict[str, WindowsRemoteCompletionConfig]
+    """Return windows completion entries."""
+    return load_completion('windows', WindowsRemoteCompletionConfig)
+
+
+@cache
+def network_completion():  # type: () -> t.Dict[str, NetworkRemoteCompletionConfig]
+    """Return network completion entries."""
+    return load_completion('network', NetworkRemoteCompletionConfig)

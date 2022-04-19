@@ -23,13 +23,14 @@ import hashlib
 import os
 import string
 
+from collections.abc import Mapping
+
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.inventory.group import to_safe_group_name as original_safe
 from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.cache import CachePluginAdjudicator as CacheObject
 from ansible.module_utils._text import to_bytes, to_native
-from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.template import Templar
@@ -332,7 +333,7 @@ class Cacheable(object):
 
 class Constructable(object):
 
-    def _compose(self, template, variables):
+    def _compose(self, template, variables, disable_lookups=True):
         ''' helper method for plugins to compose variables for Ansible based on jinja2 expression and inventory vars'''
         t = self.templar
 
@@ -346,7 +347,8 @@ class Constructable(object):
         else:
             t.available_variables = variables
 
-        return t.template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string), disable_lookups=True)
+        return t.template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string),
+                          disable_lookups=disable_lookups)
 
     def _set_composite_vars(self, compose, variables, host, strict=False):
         ''' loops over compose entries to create vars for hosts '''

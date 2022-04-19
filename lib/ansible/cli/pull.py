@@ -130,7 +130,7 @@ class PullCLI(CLI):
         if not options.dest:
             hostname = socket.getfqdn()
             # use a hostname dependent directory, in case of $HOME on nfs
-            options.dest = os.path.join('~/.ansible/pull', hostname)
+            options.dest = os.path.join(C.ANSIBLE_HOME, 'pull', hostname)
         options.dest = os.path.expandvars(os.path.expanduser(options.dest))
 
         if os.path.exists(options.dest) and not os.path.isdir(options.dest):
@@ -168,7 +168,11 @@ class PullCLI(CLI):
         # Now construct the ansible command
         node = platform.node()
         host = socket.getfqdn()
-        limit_opts = 'localhost,%s,127.0.0.1' % ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
+        hostnames = ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
+        if hostnames:
+            limit_opts = 'localhost,%s,127.0.0.1' % hostnames
+        else:
+            limit_opts = 'localhost,127.0.0.1'
         base_opts = '-c local '
         if context.CLIARGS['verbosity'] > 0:
             base_opts += ' -%s' % ''.join(["v" for x in range(0, context.CLIARGS['verbosity'])])

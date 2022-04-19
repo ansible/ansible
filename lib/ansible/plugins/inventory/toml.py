@@ -87,12 +87,13 @@ host4 = {}
 '''
 
 import os
+import typing as t
 
+from collections.abc import MutableMapping, MutableSequence
 from functools import partial
 
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
 from ansible.module_utils.six import string_types, text_type
 from ansible.parsing.yaml.objects import AnsibleSequence, AnsibleUnicode
 from ansible.plugins.inventory import BaseFileInventoryPlugin
@@ -119,9 +120,9 @@ if HAS_TOML and hasattr(toml, 'TomlEncoder'):
                 AnsibleUnsafeBytes: self.dump_funcs.get(str),
                 AnsibleUnsafeText: self.dump_funcs.get(str),
             })
-    toml_dumps = partial(toml.dumps, encoder=AnsibleTomlEncoder())
+    toml_dumps = partial(toml.dumps, encoder=AnsibleTomlEncoder())  # type: t.Callable[[t.Any], str]
 else:
-    def toml_dumps(data):
+    def toml_dumps(data):  # type: (t.Any) -> str
         return toml.dumps(convert_yaml_objects_to_native(data))
 
 

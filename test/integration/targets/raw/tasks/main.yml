@@ -16,24 +16,24 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- set_fact: output_dir_test={{output_dir}}/test_command_raw
+- set_fact: remote_tmp_dir_test={{remote_tmp_dir}}/test_command_raw
 
 - name: make sure our testing sub-directory does not exist
-  file: path="{{ output_dir_test }}" state=absent
+  file: path="{{ remote_tmp_dir_test }}" state=absent
 
 - name: create our testing sub-directory
-  file: path="{{ output_dir_test }}" state=directory
+  file: path="{{ remote_tmp_dir_test }}" state=directory
 
 ##
 ## raw
 ##
 
 - name: touch a file
-  raw: "touch {{output_dir_test | expanduser}}/test.txt"
+  raw: "touch {{remote_tmp_dir_test | expanduser}}/test.txt"
   register: raw_result0
 - debug: var=raw_result0
 - stat:
-    path: "{{output_dir_test | expanduser}}/test.txt"
+    path: "{{remote_tmp_dir_test | expanduser}}/test.txt"
   register: raw_result0_stat
 - debug: var=raw_result0_stat
 - name: ensure proper results
@@ -66,7 +66,7 @@
   shell: which bash
   register: bash_path
 - name: run exmample non-posix command with bash
-  raw: "echo 'foobar' > {{output_dir_test | expanduser}}/test.txt ; cat < {{output_dir_test | expanduser}}/test.txt"
+  raw: "echo 'foobar' > {{remote_tmp_dir_test | expanduser}}/test.txt ; cat < {{remote_tmp_dir_test | expanduser}}/test.txt"
   args:
       executable: "{{ bash_path.stdout }}"
   register: raw_result2

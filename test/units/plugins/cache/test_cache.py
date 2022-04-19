@@ -23,7 +23,9 @@ import os
 import shutil
 import tempfile
 
-from units.compat import unittest, mock
+import mock
+
+from units.compat import unittest
 from ansible.errors import AnsibleError
 from ansible.plugins.cache import CachePluginAdjudicator
 from ansible.plugins.cache.base import BaseCacheModule
@@ -185,9 +187,9 @@ class TestFactCache(unittest.TestCase):
         # See https://github.com/ansible/ansible/issues/18751
         # Note no fact_connection config set, so this will fail
         with mock.patch('ansible.constants.CACHE_PLUGIN', 'json'):
-            self.assertRaisesRegexp(AnsibleError,
-                                    "Unable to load the facts cache plugin.*json.*",
-                                    FactCache)
+            self.assertRaisesRegex(AnsibleError,
+                                   "Unable to load the facts cache plugin.*json.*",
+                                   FactCache)
 
     def test_update(self):
         self.cache.update({'cache_key': {'key2': 'updatedvalue'}})

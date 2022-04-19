@@ -36,7 +36,7 @@ attributes:
       support: full
 '''
 
-    # also requries core above
+    # also requires core above
     IMPORT = r'''
 attributes:
     action:

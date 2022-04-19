@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright:  Ansible Project
@@ -47,22 +46,22 @@ seealso:
 EXAMPLES = r'''
 - hosts: all
   tasks:
-    - debug:
+    - ansible.builtin.debug:
         msg: task1
 
     - name: Include task list in play
-      import_tasks: stuff.yaml
+      ansible.builtin.import_tasks: stuff.yaml
 
-    - debug:
+    - ansible.builtin.debug:
         msg: task10
 
 - hosts: all
   tasks:
-    - debug:
+    - ansible.builtin.debug:
         msg: task1
 
     - name: Apply conditional to all imported tasks
-      import_tasks: stuff.yaml
+      ansible.builtin.import_tasks: stuff.yaml
       when: hostvar is defined
 '''
 

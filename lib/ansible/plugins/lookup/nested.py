@@ -19,7 +19,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: give users access to multiple databases
-  mysql_user:
+  community.mysql.mysql_user:
     name: "{{ item[0] }}"
     priv: "{{ item[1] }}.*:ALL"
     append_privs: yes
@@ -30,7 +30,7 @@ EXAMPLES = """
 # As with the case of 'with_items' above, you can use previously defined variables.:
 
 - name: here, 'users' contains the above list of employees
-  mysql_user:
+  community.mysql.mysql_user:
     name: "{{ item[0] }}"
     priv: "{{ item[1] }}.*:ALL"
     append_privs: yes

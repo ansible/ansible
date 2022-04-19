@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Dag Wieers <dag@wieers.com>
@@ -40,7 +39,7 @@ attributes:
     connection:
         support: none
     check_mode:
-        support: none
+        support: full
     diff_mode:
         support: none
     delegation:
@@ -58,7 +57,7 @@ author:
 
 EXAMPLES = r'''
 - name: Example using fail and when together
-  fail:
+  ansible.builtin.fail:
     msg: The system may not be provisioned according to the CMDB status.
   when: cmdb_status != "to-be-staged"
 '''

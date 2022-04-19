@@ -5,6 +5,8 @@ __metaclass__ = type
 
 import os
 
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 
@@ -41,7 +43,7 @@ def is_chroot(module=None):
 
 class ChrootFactCollector(BaseFactCollector):
     name = 'chroot'
-    _fact_ids = set(['is_chroot'])
+    _fact_ids = set(['is_chroot'])  # type: t.Set[str]
 
     def collect(self, module=None, collected_facts=None):
         return {'is_chroot': is_chroot(module)}

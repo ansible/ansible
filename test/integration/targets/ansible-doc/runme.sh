@@ -25,10 +25,10 @@ expected_out="$(sed '1 s/\(^> TESTNS\.TESTCOL\.RANDOMMODULE\).*(.*)$/\1/' random
 test "$current_out" == "$expected_out"
 
 # ensure we do work with valid collection name for list
-ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep -v "Invalid collection pattern"
+ansible-doc --list testns.testcol --playbook-dir ./ 2>&1 | grep -v "Invalid collection name"
 
 # ensure we dont break on invalid collection name for list
-ansible-doc --list testns.testcol.fakemodule  --playbook-dir ./ 2>&1 | grep "Invalid collection pattern"
+ansible-doc --list testns.testcol.fakemodule  --playbook-dir ./ 2>&1 | grep "Invalid collection name"
 
 
 # test listing diff plugin types from collection
@@ -47,9 +47,10 @@ do
 	justcol=$(ansible-doc -l -t ${ptype} testns.testcol|wc -l)
 	test "$justcol" -eq 0
 
+	# TODO: do we want per namespace?
 	# ensure we get 1 plugins when restricting namespace
-	justcol=$(ansible-doc -l -t ${ptype} --playbook-dir ./ testns|wc -l)
-	test "$justcol" -eq 1
+	#justcol=$(ansible-doc -l -t ${ptype} --playbook-dir ./ testns|wc -l)
+	#test "$justcol" -eq 1
 done
 
 #### test role functionality
@@ -102,3 +103,31 @@ test "$current_out" == "$expected_out"
 
 # just ensure it runs
 ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --playbook-dir /dev/null
+
+# create broken role argument spec
+mkdir -p broken-docs/collections/ansible_collections/testns/testcol/roles/testrole/meta
+cat <<EOF > broken-docs/collections/ansible_collections/testns/testcol/roles/testrole/meta/main.yml
+---
+dependencies:
+galaxy_info:
+
+argument_specs:
+    main:
+        short_description: testns.testcol.testrole short description for main entry point
+        description:
+            - Longer description for testns.testcol.testrole main entry point.
+        author: Ansible Core (@ansible)
+        options:
+            opt1:
+                description: opt1 description
+                    broken:
+                type: "str"
+                required: true
+EOF
+
+# ensure that --metadata-dump does not fail when --no-fail-on-errors is supplied
+ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --no-fail-on-errors --playbook-dir broken-docs testns.testcol
+
+# ensure that --metadata-dump does fail when --no-fail-on-errors is not supplied
+output=$(ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --playbook-dir broken-docs testns.testcol 2>&1 | grep -c 'ERROR!' || true)
+test "$output" -eq 1

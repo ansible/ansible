@@ -1,0 +1,20 @@
+---
+- name: Test DebianStrategy by setting hostname
+  become: 'yes'
+  hostname:
+    use: debian
+    name: "{{ ansible_distribution_release }}-bebop.ansible.example.com"
+
+- name: Test DebianStrategy by getting current hostname
+  command: hostname
+  register: get_hostname
+
+- name: Test DebianStrategy by verifying /etc/hostname content
+  command: grep -v '^#' /etc/hostname
+  register: grep_hostname
+
+- name: Test DebianStrategy using assertions
+  assert:
+    that:
+      - "'{{ ansible_distribution_release }}-bebop.ansible.example.com' in get_hostname.stdout"
+      - "'{{ ansible_distribution_release }}-bebop.ansible.example.com' in grep_hostname.stdout"

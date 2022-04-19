@@ -236,11 +236,6 @@
 
 # VERIFY CONTENTS
 
-- name: check what python version ansible is running on
-  command: "{{ ansible_python.executable }} -c 'import distutils.sysconfig ; print(distutils.sysconfig.get_python_version())'"
-  register: pyver
-  delegate_to: localhost
-
 - name: copy known good into place
   copy: src=foo.txt dest={{output_dir}}/foo.txt
 
@@ -756,3 +751,45 @@
 - assert:
     that:
       - out.rc == 0
+
+- template:
+    src: empty_template.j2
+    dest: "{{ output_dir }}/empty_template.templated"
+
+- assert:
+    that:
+      - test
+  vars:
+    test: "{{ lookup('file', '{{ output_dir }}/empty_template.templated')|length == 0 }}"
+
+- name: test jinja2 override without colon throws proper error
+  block:
+  - template:
+      src: override_separator.j2
+      dest: "{{ output_dir }}/override_separator.templated"
+  - assert:
+      that:
+        - False
+  rescue:
+  - assert:
+      that:
+        - "'failed to parse jinja2 override' in ansible_failed_result.msg"
+
+- name: test jinja2 override with colon in value
+  template:
+    src: override_colon_value.j2
+    dest: "{{ output_dir }}/override_colon_value.templated"
+  ignore_errors: yes
+  register: override_colon_value_task
+
+- copy:
+    src: override_colon_value.expected
+    dest: "{{output_dir}}/override_colon_value.expected"
+
+- command: "diff {{ output_dir }}/override_colon_value.templated {{ output_dir}}/override_colon_value.expected"
+  register: override_colon_value_diff
+
+- assert:
+    that:
+      - override_colon_value_task is success
+      - override_colon_value_diff.rc == 0

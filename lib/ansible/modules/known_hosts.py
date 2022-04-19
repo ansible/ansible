@@ -1,4 +1,3 @@
-#!/usr/bin/python
 
 # Copyright: (c) 2014, Matthew Vernon <mcv21@cam.ac.uk>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -56,26 +55,35 @@ options:
     choices: [ "absent", "present" ]
     default: "present"
     type: str
+attributes:
+  check_mode:
+    support: full
+  diff_mode:
+    support: full
+  platform:
+    platforms: posix
+extends_documentation_fragment:
+  - action_common_attributes
 author:
 - Matthew Vernon (@mcv21)
 '''
 
 EXAMPLES = r'''
 - name: Tell the host about our servers it might want to ssh to
-  known_hosts:
+  ansible.builtin.known_hosts:
     path: /etc/ssh/ssh_known_hosts
     name: foo.com.invalid
-    key: "{{ lookup('file', 'pubkeys/foo.com.invalid') }}"
+    key: "{{ lookup('ansible.builtin.file', 'pubkeys/foo.com.invalid') }}"
 
 - name: Another way to call known_hosts
-  known_hosts:
+  ansible.builtin.known_hosts:
     name: host1.example.com   # or 10.9.8.77
     key: host1.example.com,10.9.8.77 ssh-rsa ASDeararAIUHI324324  # some key gibberish
     path: /etc/ssh/ssh_known_hosts
     state: present
 
 - name: Add host with custom SSH port
-  known_hosts:
+  ansible.builtin.known_hosts:
     name: '[host1.example.com]:2222'
     key: '[host1.example.com]:2222 ssh-rsa ASDeararAIUHI324324' # some key gibberish
     path: /etc/ssh/ssh_known_hosts

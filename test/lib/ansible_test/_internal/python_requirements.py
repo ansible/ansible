@@ -109,6 +109,13 @@ class PipVersion(PipCommand):
     """Details required to get the pip version."""
 
 
+@dataclasses.dataclass(frozen=True)
+class PipBootstrap(PipCommand):
+    """Details required to bootstrap pip."""
+    pip_version: str
+    packages: t.List[str]
+
+
 # Entry Points
 
 
@@ -135,9 +142,9 @@ def install_requirements(
 
     if ansible:
         try:
-            ansible_cache = install_requirements.ansible_cache
+            ansible_cache = install_requirements.ansible_cache  # type: ignore[attr-defined]
         except AttributeError:
-            ansible_cache = install_requirements.ansible_cache = {}
+            ansible_cache = install_requirements.ansible_cache = {}  # type: ignore[attr-defined]
 
         ansible_installed = ansible_cache.get(python.path)
 
@@ -168,8 +175,23 @@ def install_requirements(
 
     run_pip(args, python, commands, connection)
 
+    # false positive: pylint: disable=no-member
     if any(isinstance(command, PipInstall) and command.has_package('pyyaml') for command in commands):
         check_pyyaml(python)
+
+
+def collect_bootstrap(python):  # type: (PythonConfig) -> t.List[PipCommand]
+    """Return the details necessary to bootstrap pip into an empty virtual environment."""
+    infrastructure_packages = get_venv_packages(python)
+    pip_version = infrastructure_packages['pip']
+    packages = [f'{name}=={version}' for name, version in infrastructure_packages.items()]
+
+    bootstrap = PipBootstrap(
+        pip_version=pip_version,
+        packages=packages,
+    )
+
+    return [bootstrap]
 
 
 def collect_requirements(
@@ -187,7 +209,9 @@ def collect_requirements(
     commands = []  # type: t.List[PipCommand]
 
     if virtualenv:
-        commands.extend(collect_package_install(packages=['virtualenv']))
+        # sanity tests on Python 2.x install virtualenv when it is too old or is not already installed and the `--requirements` option is given
+        # the last version of virtualenv with no dependencies is used to minimize the changes made outside a virtual environment
+        commands.extend(collect_package_install(packages=['virtualenv==16.7.12'], constraints=False))
 
     if coverage:
         commands.extend(collect_package_install(packages=[f'coverage=={COVERAGE_REQUIRED_VERSION}'], constraints=False))
@@ -207,15 +231,20 @@ def collect_requirements(
     if command in ('integration', 'windows-integration', 'network-integration'):
         commands.extend(collect_integration_install(command, controller))
 
-    if minimize:
-        # In some environments pkg_resources is installed as a separate pip package which needs to be removed.
-        # For example, using Python 3.8 on Ubuntu 18.04 a virtualenv is created with only pip and setuptools.
-        # However, a venv is created with an additional pkg-resources package which is independent of setuptools.
-        # Making sure pkg-resources is removed preserves the import test consistency between venv and virtualenv.
-        # Additionally, in the above example, the pyparsing package vendored with pkg-resources is out-of-date and generates deprecation warnings.
-        # Thus it is important to remove pkg-resources to prevent system installed packages from generating deprecation warnings.
-        commands.extend(collect_uninstall(packages=['pkg-resources'], ignore_errors=True))
-        commands.extend(collect_uninstall(packages=['setuptools', 'pip']))
+    if (sanity or minimize) and any(isinstance(command, PipInstall) for command in commands):
+        # bootstrap the managed virtual environment, which will have been created without any installed packages
+        # sanity tests which install no packages skip this step
+        commands = collect_bootstrap(python) + commands
+
+        # most infrastructure packages can be removed from sanity test virtual environments after they've been created
+        # removing them reduces the size of environments cached in containers
+        uninstall_packages = list(get_venv_packages(python))
+
+        if not minimize:
+            # installed packages may have run-time dependencies on setuptools
+            uninstall_packages.remove('setuptools')
+
+        commands.extend(collect_uninstall(packages=uninstall_packages))
 
     return commands
 
@@ -377,6 +406,41 @@ def collect_uninstall(packages, ignore_errors=False):  # type: (t.List[str], boo
 # Support
 
 
+def get_venv_packages(python):  # type: (PythonConfig) -> t.Dict[str, str]
+    """Return a dictionary of Python packages needed for a consistent virtual environment specific to the given Python version."""
+
+    # NOTE: This same information is needed for building the base-test-container image.
+    #       See: https://github.com/ansible/base-test-container/blob/main/files/installer.py
+
+    default_packages = dict(
+        pip='21.3.1',
+        setuptools='60.8.2',
+        wheel='0.37.1',
+    )
+
+    override_packages = {
+        '2.7': dict(
+            pip='20.3.4',  # 21.0 requires Python 3.6+
+            setuptools='44.1.1',  # 45.0.0 requires Python 3.5+
+            wheel=None,
+        ),
+        '3.5': dict(
+            pip='20.3.4',  # 21.0 requires Python 3.6+
+            setuptools='50.3.2',  # 51.0.0 requires Python 3.6+
+            wheel=None,
+        ),
+        '3.6': dict(
+            pip='21.3.1',  # 22.0 requires Python 3.7+
+            setuptools='59.6.0',  # 59.7.0 requires Python 3.7+
+            wheel=None,
+        ),
+    }
+
+    packages = {name: version or default_packages[name] for name, version in override_packages.get(python.version, default_packages).items()}
+
+    return packages
+
+
 def requirements_allowed(args, controller):  # type: (EnvironmentConfig, bool) -> bool
     """
     Return True if requirements can be installed, otherwise return False.
@@ -422,7 +486,7 @@ def prepare_pip_script(commands):  # type: (t.List[PipCommand]) -> str
 
 def usable_pip_file(path):  # type: (t.Optional[str]) -> bool
     """Return True if the specified pip file is usable, otherwise False."""
-    return path and os.path.exists(path) and os.path.getsize(path)
+    return bool(path) and os.path.exists(path) and bool(os.path.getsize(path))
 
 
 # Cryptography
@@ -452,11 +516,11 @@ def get_cryptography_requirements(python):  # type: (PythonConfig) -> t.List[str
         # pyopenssl 20.0.0 requires cryptography 3.2 or later
         pyopenssl = 'pyopenssl < 20.0.0'
     else:
-        # cryptography 3.4+ fails to install on many systems
-        # this is a temporary work-around until a more permanent solution is available
-        cryptography = 'cryptography < 3.4'
-        # no specific version of pyopenssl required, don't install it
-        pyopenssl = None
+        # cryptography 3.4+ builds require a working rust toolchain
+        # systems bootstrapped using ansible-core-ci can access additional wheels through the spare-tire package index
+        cryptography = 'cryptography'
+        # any future installation of pyopenssl is free to use any compatible version of cryptography
+        pyopenssl = ''
 
     requirements = [
         cryptography,

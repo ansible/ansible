@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2012, Stephen Fromm <sfromm@gmail.com>
@@ -89,8 +88,8 @@ options:
         description:
             - Optionally set the user's password to this crypted value.
             - On macOS systems, this value has to be cleartext. Beware of security issues.
-            - To create a disabled account on Linux systems, set this to C('!') or C('*').
-            - To create a disabled account on OpenBSD, set this to C('*************').
+            - To create a an account with a locked/disabled password on Linux systems, set this to C('!') or C('*').
+            - To create a an account with a locked/disabled password on OpenBSD, set this to C('*************').
             - See L(FAQ entry,https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module)
               for details on various ways to generate these password values.
         type: str
@@ -147,8 +146,8 @@ options:
     ssh_key_bits:
         description:
             - Optionally specify number of bits in SSH key to create.
+            - The default value depends on ssh-keygen.
         type: int
-        default: default set by ssh-keygen
         version_added: "0.9"
     ssh_key_type:
         description:
@@ -330,12 +329,12 @@ EXAMPLES = r'''
     expires: -1
 
 - name: Set maximum expiration date for password
-  user:
+  ansible.builtin.user:
     name: ram19
     password_expire_max: 10
 
 - name: Set minimum expiration date for password
-  user:
+  ansible.builtin.user:
     name: pushkar15
     password_expire_min: 5
 '''
@@ -497,11 +496,10 @@ class User(object):
 
     All subclasses MUST define platform and distribution (which may be None).
     """
-
     platform = 'Generic'
-    distribution = None
+    distribution = None  # type: str | None
     PASSWORDFILE = '/etc/passwd'
-    SHADOWFILE = '/etc/shadow'
+    SHADOWFILE = '/etc/shadow'  # type: str | None
     SHADOWFILE_EXPIRE_INDEX = 7
     LOGIN_DEFS = '/etc/login.defs'
     DATE_FORMAT = '%Y-%m-%d'
@@ -1049,29 +1047,27 @@ class User(object):
             info[1] = self.user_password()[0]
         return info
 
-    def set_password_expire_max(self):
-        command_name = 'chage'
-        cmd = [self.module.get_bin_path(command_name, True)]
-        cmd.append('-M')
-        cmd.append(self.password_expire_max)
-        cmd.append(self.name)
-        if self.password_expire_max == spwd.getspnam(self.name).sp_max:
-            self.module.exit_json(changed=False)
-        else:
-            self.execute_command(cmd)
-            self.module.exit_json(changed=True)
+    def set_password_expire(self):
+        min_needs_change = self.password_expire_min is not None
+        max_needs_change = self.password_expire_max is not None
 
-    def set_password_expire_min(self):
+        if HAVE_SPWD:
+            shadow_info = spwd.getspnam(self.name)
+            min_needs_change &= self.password_expire_min != shadow_info.sp_min
+            max_needs_change &= self.password_expire_max != shadow_info.sp_max
+
+        if not (min_needs_change or max_needs_change):
+            return (None, '', '')  # target state already reached
+
         command_name = 'chage'
         cmd = [self.module.get_bin_path(command_name, True)]
-        cmd.append('-m')
-        cmd.append(self.password_expire_min)
+        if min_needs_change:
+            cmd.extend(["-m", self.password_expire_min])
+        if max_needs_change:
+            cmd.extend(["-M", self.password_expire_max])
         cmd.append(self.name)
-        if self.password_expire_min == spwd.getspnam(self.name).sp_min:
-            self.module.exit_json(changed=False)
-        else:
-            self.execute_command(cmd)
-            self.module.exit_json(changed=True)
+
+        return self.execute_command(cmd)
 
     def user_password(self):
         passwd = ''
@@ -1171,11 +1167,11 @@ class User(object):
                 out_buffer = b''
                 err_buffer = b''
                 while p.poll() is None:
-                    r, w, e = select.select([master_out_fd, master_err_fd], [], [], 1)
+                    r_list = select.select([master_out_fd, master_err_fd], [], [], 1)[0]
                     first_prompt = b'Enter passphrase (empty for no passphrase):'
                     second_prompt = b'Enter same passphrase again'
                     prompt = first_prompt
-                    for fd in r:
+                    for fd in r_list:
                         if fd == master_out_fd:
                             chunk = os.read(master_out_fd, 10240)
                             out_buffer += chunk
@@ -2283,14 +2279,11 @@ class DarwinUser(User):
         # sys.stderr.write('*** |%s| %s -> %s\n' %  (property, out, lines))
         if len(lines) == 1:
             return lines[0].split(': ')[1]
-        else:
-            if len(lines) > 2:
-                return '\n'.join([lines[1].strip()] + lines[2:])
-            else:
-                if len(lines) == 2:
-                    return lines[1].strip()
-                else:
-                    return None
+        if len(lines) > 2:
+            return '\n'.join([lines[1].strip()] + lines[2:])
+        if len(lines) == 2:
+            return lines[1].strip()
+        return None
 
     def _get_next_uid(self, system=None):
         '''
@@ -2444,7 +2437,7 @@ class DarwinUser(User):
     def user_exists(self):
         '''Check is SELF.NAME is a known user on the system.'''
         cmd = self._get_dscl()
-        cmd += ['-list', '/Users/%s' % self.name]
+        cmd += ['-read', '/Users/%s' % self.name, 'UniqueID']
         (rc, out, err) = self.execute_command(cmd, obey_checkmode=False)
         return rc == 0
 
@@ -3211,15 +3204,14 @@ def main():
             result['ssh_key_file'] = user.get_ssh_key_path()
             result['ssh_public_key'] = user.get_ssh_public_key()
 
-    # deal with password expire max
-    if user.password_expire_max:
-        if user.user_exists():
-            user.set_password_expire_max()
-
-    # deal with password expire min
-    if user.password_expire_min:
-        if user.user_exists():
-            user.set_password_expire_min()
+        (rc, out, err) = user.set_password_expire()
+        if rc is None:
+            pass  # target state reached, nothing to do
+        else:
+            if rc != 0:
+                module.fail_json(name=user.name, msg=err, rc=rc)
+            else:
+                result['changed'] = True
 
     module.exit_json(**result)
 

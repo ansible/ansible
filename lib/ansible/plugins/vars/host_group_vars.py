@@ -23,13 +23,13 @@ DOCUMENTATION = '''
     version_added: "2.4"
     short_description: In charge of loading group_vars and host_vars
     requirements:
-        - whitelist in configuration
+        - Enabled in configuration
     description:
         - Loads YAML vars into corresponding groups/hosts in group_vars/ and host_vars/ directories.
         - Files are restricted by extension to one of .yaml, .json, .yml or no extension.
         - Hidden (starting with '.') and backup (ending with '~') files and directories are ignored.
         - Only applies to inventory sources that are existing paths.
-        - Starting in 2.10, this plugin requires whitelisting and is whitelisted by default.
+        - Starting in 2.10, this plugin requires enabling and is enabled by default.
     options:
       stage:
         ini:
@@ -48,6 +48,7 @@ DOCUMENTATION = '''
           - key: yaml_valid_extensions
             section: defaults
         type: list
+        elements: string
     extends_documentation_fragment:
       - vars_plugin_staging
 '''
@@ -61,7 +62,7 @@ from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.utils.vars import combine_vars
 
-FOUND = {}
+FOUND = {}  # type: dict[str, list[str]]
 
 
 class VarsModule(BaseVarsPlugin):

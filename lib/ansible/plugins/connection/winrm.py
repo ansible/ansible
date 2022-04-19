@@ -34,6 +34,8 @@ DOCUMENTATION = """
         vars:
             - name: ansible_user
             - name: ansible_winrm_user
+        keyword:
+            - name: remote_user
         type: str
       remote_password:
         description: Authentication password for the C(remote_user). Can be supplied as CLI option.
@@ -52,6 +54,8 @@ DOCUMENTATION = """
           - name: ansible_port
           - name: ansible_winrm_port
         default: 5986
+        keyword:
+            - name: port
         type: integer
       scheme:
         description:
@@ -74,6 +78,7 @@ DOCUMENTATION = """
            - If None (the default) the plugin will try to automatically guess the correct list
            - The choices available depend on your version of pywinrm
         type: list
+        elements: string
         vars:
           - name: ansible_winrm_transport
       kerberos_command:
@@ -315,7 +320,7 @@ class Connection(ConnectionBase):
         display.vvvvv("creating Kerberos CC at %s" % self._kerb_ccache.name)
         krb5ccname = "FILE:%s" % self._kerb_ccache.name
         os.environ["KRB5CCNAME"] = krb5ccname
-        krb5env = dict(KRB5CCNAME=krb5ccname)
+        krb5env = dict(PATH=os.environ["PATH"], KRB5CCNAME=krb5ccname)
 
         # Add any explicit environment vars into the krb5env block
         kinit_env_vars = self.get_option('kinit_env_vars')

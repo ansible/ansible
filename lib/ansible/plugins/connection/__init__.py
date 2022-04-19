@@ -8,6 +8,7 @@ __metaclass__ = type
 import fcntl
 import os
 import shlex
+import typing as t
 
 from abc import abstractmethod
 from functools import wraps
@@ -48,7 +49,7 @@ class ConnectionBase(AnsiblePlugin):
     # When running over this connection type, prefer modules written in a certain language
     # as discovered by the specified file extension.  An empty string as the
     # language means any language.
-    module_implementation_preferences = ('',)
+    module_implementation_preferences = ('',)  # type: t.Iterable[str]
     allow_executable = True
 
     # the following control whether or not the connection supports the
@@ -109,17 +110,8 @@ class ConnectionBase(AnsiblePlugin):
         list ['-o', 'Foo=1', '-o', 'Bar=foo bar'] that can be added to
         the argument list. The list will not contain any empty elements.
         """
-        try:
-            # Python 2.6.x shlex doesn't handle unicode type so we have to
-            # convert args to byte string for that case.  More efficient to
-            # try without conversion first but python2.6 doesn't throw an
-            # exception, it merely mangles the output:
-            # >>> shlex.split(u't e')
-            # ['t\x00\x00\x00', '\x00\x00\x00e\x00\x00\x00']
-            return [to_text(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
-        except AttributeError:
-            # In Python3, shlex.split doesn't work on a byte string.
-            return [to_text(x.strip()) for x in shlex.split(argstring) if x.strip()]
+        # In Python3, shlex.split doesn't work on a byte string.
+        return [to_text(x.strip()) for x in shlex.split(argstring) if x.strip()]
 
     @property
     @abstractmethod
@@ -229,6 +221,45 @@ class ConnectionBase(AnsiblePlugin):
 
     def reset(self):
         display.warning("Reset is not implemented for this connection")
+
+    def update_vars(self, variables):
+        '''
+        Adds 'magic' variables relating to connections to the variable dictionary provided.
+        In case users need to access from the play, this is a legacy from runner.
+        '''
+        for varname in C.COMMON_CONNECTION_VARS:
+            value = None
+            if varname in variables:
+                # dont update existing
+                continue
+            elif 'password' in varname or 'passwd' in varname:
+                # no secrets!
+                continue
+            elif varname == 'ansible_connection':
+                # its me mom!
+                value = self._load_name
+            elif varname == 'ansible_shell_type':
+                # its my cousin ...
+                value = self._shell._load_name
+            else:
+                # deal with generic options if the plugin supports em (for exmaple not all connections have a remote user)
+                options = C.config.get_plugin_options_from_var('connection', self._load_name, varname)
+                if options:
+                    value = self.get_option(options[0])  # for these variables there should be only one option
+                elif 'become' not in varname:
+                    # fallback to play_context, unles becoem related  TODO: in the end should come from task/play and not pc
+                    for prop, var_list in C.MAGIC_VARIABLE_MAPPING.items():
+                        if varname in var_list:
+                            try:
+                                value = getattr(self._play_context, prop)
+                                break
+                            except AttributeError:
+                                # it was not defined, fine to ignore
+                                continue
+
+            if value is not None:
+                display.debug('Set connection var {0} to {1}'.format(varname, value))
+                variables[varname] = value
 
 
 class NetworkConnectionBase(ConnectionBase):

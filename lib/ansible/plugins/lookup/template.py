@@ -20,6 +20,7 @@ DOCUMENTATION = """
         description:
             - Whether to convert YAML into data. If False, strings that are YAML will be left untouched.
             - Mutually exclusive with the jinja2_native option.
+        default: true
       variable_start_string:
         description: The string marking the beginning of a print statement.
         default: '{{'
@@ -57,16 +58,16 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: show templating results
-  debug:
-    msg: "{{ lookup('template', './some_template.j2') }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.template', './some_template.j2') }}"
 
 - name: show templating results with different variable start and end string
-  debug:
-    msg: "{{ lookup('template', './some_template.j2', variable_start_string='[%', variable_end_string='%]') }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.template', './some_template.j2', variable_start_string='[%', variable_end_string='%]') }}"
 
 - name: show templating results with different comment start and end string
-  debug:
-    msg: "{{ lookup('template', './some_template.j2', comment_start_string='[#', comment_end_string='#]') }}"
+  ansible.builtin.debug:
+    msg: "{{ lookup('ansible.builtin.template', './some_template.j2', comment_start_string='[#', comment_end_string='#]') }}"
 """
 
 RETURN = """
@@ -109,6 +110,11 @@ class LookupModule(LookupBase):
         comment_start_string = self.get_option('comment_start_string')
         comment_end_string = self.get_option('comment_end_string')
 
+        if jinja2_native:
+            templar = self._templar
+        else:
+            templar = self._templar.copy_with_new_env(environment_class=AnsibleEnvironment)
+
         for term in terms:
             display.debug("File lookup term: %s" % term)
 
@@ -139,14 +145,13 @@ class LookupModule(LookupBase):
                 vars.update(generate_ansible_template_vars(term, lookupfile))
                 vars.update(lookup_template_vars)
 
-                with self._templar.set_temporary_context(variable_start_string=variable_start_string,
-                                                         variable_end_string=variable_end_string,
-                                                         comment_start_string=comment_start_string,
-                                                         comment_end_string=comment_end_string,
-                                                         available_variables=vars, searchpath=searchpath,
-                                                         jinja2_native=jinja2_native):
-                    res = self._templar.template(template_data, preserve_trailing_newlines=True,
-                                                 convert_data=convert_data_p, escape_backslashes=False)
+                with templar.set_temporary_context(variable_start_string=variable_start_string,
+                                                   variable_end_string=variable_end_string,
+                                                   comment_start_string=comment_start_string,
+                                                   comment_end_string=comment_end_string,
+                                                   available_variables=vars, searchpath=searchpath):
+                    res = templar.template(template_data, preserve_trailing_newlines=True,
+                                           convert_data=convert_data_p, escape_backslashes=False)
 
                 if C.DEFAULT_JINJA2_NATIVE and not jinja2_native:
                     # jinja2_native is true globally but off for the lookup, we need this text

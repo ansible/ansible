@@ -35,14 +35,10 @@ try:
     from packaging.specifiers import SpecifierSet
     from packaging.version import Version
 except ImportError:
-    SpecifierSet = None
-    Version = None
+    SpecifierSet = None  # type: ignore[misc]
+    Version = None  # type: ignore[misc]
 
-try:
-    import importlib.util
-    imp = None
-except ImportError:
-    import imp
+import importlib.util
 
 display = Display()
 
@@ -788,15 +784,10 @@ class PluginLoader:
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
-            if imp is None:
-                spec = importlib.util.spec_from_file_location(to_native(full_name), to_native(path))
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-                sys.modules[full_name] = module
-            else:
-                with open(to_bytes(path), 'rb') as module_file:
-                    # to_native is used here because imp.load_source's path is for tracebacks and python's traceback formatting uses native strings
-                    module = imp.load_source(to_native(full_name), to_native(path), module_file)
+            spec = importlib.util.spec_from_file_location(to_native(full_name), to_native(path))
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            sys.modules[full_name] = module
         return module
 
     def _update_object(self, obj, name, path, redirected_names=None):
@@ -1042,10 +1033,10 @@ class Jinja2Loader(PluginLoader):
         # Instead, calling code deduplicates jinja2 plugin names when loading each file.
         kwargs['_dedupe'] = False
 
-        # TODO: move this to initalization and extract/dedupe plugin names in loader and offset this from
+        # TODO: move this to initialization and extract/dedupe plugin names in loader and offset this from
         # caller. It would have to cache/refresh on add_directory to reevaluate plugin list and dedupe.
         # Another option is to always prepend 'ansible.legac'y and force the collection path to
-        # load/find plugins, just need to check compatiblity of that approach.
+        # load/find plugins, just need to check compatibility of that approach.
         # This would also enable get/find_plugin for these type of plugins.
 
         # We have to instantiate a list of all files so that we can reverse the list.
@@ -1154,7 +1145,7 @@ def _configure_collection_loader():
         warnings.warn('AnsibleCollectionFinder has already been configured')
         return
 
-    finder = _AnsibleCollectionFinder(C.config.get_config_value('COLLECTIONS_PATHS'), C.config.get_config_value('COLLECTIONS_SCAN_SYS_PATH'))
+    finder = _AnsibleCollectionFinder(C.COLLECTIONS_PATHS, C.COLLECTIONS_SCAN_SYS_PATH)
     finder._install()
 
     # this should succeed now

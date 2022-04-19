@@ -7,8 +7,8 @@ import typing as t
 
 
 class EnumAction(argparse.Action):
-    """Parse an enum using the lowercases enum names."""
-    def __init__(self, **kwargs):  # type: (t.Dict[str, t.Any]) -> None
+    """Parse an enum using the lowercase enum names."""
+    def __init__(self, **kwargs: t.Any) -> None:
         self.enum_type = kwargs.pop('type', None)  # type: t.Type[enum.Enum]
         kwargs.setdefault('choices', tuple(e.name.lower() for e in self.enum_type))
         super().__init__(**kwargs)

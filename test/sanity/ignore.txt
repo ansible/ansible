@@ -8,6 +8,7 @@ lib/ansible/cli/galaxy.py import-3.8  # unguarded indirect resolvelib import
 lib/ansible/galaxy/collection/__init__.py import-3.8  # unguarded resolvelib import
 lib/ansible/galaxy/collection/concrete_artifact_manager.py import-3.8  # unguarded resolvelib import
 lib/ansible/galaxy/collection/galaxy_api_proxy.py import-3.8  # unguarded resolvelib imports
+lib/ansible/galaxy/collection/gpg.py import-3.8  # unguarded resolvelib imports
 lib/ansible/galaxy/dependency_resolution/__init__.py import-3.8  # circular imports
 lib/ansible/galaxy/dependency_resolution/dataclasses.py import-3.8  # circular imports
 lib/ansible/galaxy/dependency_resolution/errors.py import-3.8  # circular imports
@@ -19,6 +20,7 @@ lib/ansible/cli/galaxy.py import-3.9  # unguarded indirect resolvelib import
 lib/ansible/galaxy/collection/__init__.py import-3.9  # unguarded resolvelib import
 lib/ansible/galaxy/collection/concrete_artifact_manager.py import-3.9  # unguarded resolvelib import
 lib/ansible/galaxy/collection/galaxy_api_proxy.py import-3.9  # unguarded resolvelib imports
+lib/ansible/galaxy/collection/gpg.py import-3.9  # unguarded resolvelib imports
 lib/ansible/galaxy/dependency_resolution/__init__.py import-3.9  # circular imports
 lib/ansible/galaxy/dependency_resolution/dataclasses.py import-3.9  # circular imports
 lib/ansible/galaxy/dependency_resolution/errors.py import-3.9  # circular imports
@@ -30,6 +32,7 @@ lib/ansible/cli/galaxy.py import-3.10  # unguarded indirect resolvelib import
 lib/ansible/galaxy/collection/__init__.py import-3.10  # unguarded resolvelib import
 lib/ansible/galaxy/collection/concrete_artifact_manager.py import-3.10  # unguarded resolvelib import
 lib/ansible/galaxy/collection/galaxy_api_proxy.py import-3.10  # unguarded resolvelib imports
+lib/ansible/galaxy/collection/gpg.py import-3.10  # unguarded resolvelib imports
 lib/ansible/galaxy/dependency_resolution/__init__.py import-3.10  # circular imports
 lib/ansible/galaxy/dependency_resolution/dataclasses.py import-3.10  # circular imports
 lib/ansible/galaxy/dependency_resolution/errors.py import-3.10  # circular imports
@@ -45,7 +48,6 @@ lib/ansible/executor/powershell/async_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/exec_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/task_queue_manager.py pylint:disallowed-name
 lib/ansible/keyword_desc.yml no-unwanted-files
-lib/ansible/modules/apt_key.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
 lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid
 lib/ansible/modules/assemble.py validate-modules:nonexistent-parameter-documented
@@ -91,10 +93,8 @@ lib/ansible/modules/stat.py validate-modules:undocumented-parameter
 lib/ansible/modules/systemd.py validate-modules:parameter-invalid
 lib/ansible/modules/systemd.py validate-modules:return-syntax-error
 lib/ansible/modules/sysvinit.py validate-modules:return-syntax-error
-lib/ansible/modules/unarchive.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/uri.py validate-modules:doc-required-mismatch
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/user.py validate-modules:doc-default-incompatible-type
 lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
 lib/ansible/modules/yum.py pylint:disallowed-name
 lib/ansible/modules/yum.py validate-modules:parameter-invalid
@@ -113,6 +113,7 @@ lib/ansible/module_utils/compat/selinux.py import-3.9!skip # pass/fail depends o
 lib/ansible/module_utils/distro/_distro.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/distro/_distro.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/distro/_distro.py no-assert
+lib/ansible/module_utils/distro/_distro.py pylint:using-constant-test # bundled code we don't want to modify
 lib/ansible/module_utils/distro/_distro.py pep8!skip # bundled code we don't want to modify
 lib/ansible/module_utils/distro/__init__.py empty-init # breaks namespacing, bundled, do not override
 lib/ansible/module_utils/facts/__init__.py empty-init # breaks namespacing, deprecate and eventually remove
@@ -135,6 +136,7 @@ lib/ansible/module_utils/six/__init__.py no-dict-iterkeys
 lib/ansible/module_utils/six/__init__.py no-dict-itervalues
 lib/ansible/module_utils/six/__init__.py pylint:self-assigning-variable
 lib/ansible/module_utils/six/__init__.py replace-urlopen
+lib/ansible/module_utils/urls.py pylint:arguments-renamed
 lib/ansible/module_utils/urls.py pylint:disallowed-name
 lib/ansible/module_utils/urls.py replace-urlopen
 lib/ansible/parsing/vault/__init__.py pylint:disallowed-name
@@ -202,6 +204,7 @@ test/integration/targets/win_script/files/test_script_with_args.ps1 pslint:PSAvo
 test/integration/targets/win_script/files/test_script_with_splatting.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/lib/ansible_test/_data/requirements/sanity.pslint.ps1 pslint:PSCustomUseLiteralPath # Uses wildcards on purpose
 test/lib/ansible_test/_util/target/setup/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
+test/lib/ansible_test/_util/target/setup/requirements.py replace-urlopen
 test/support/integration/plugins/inventory/aws_ec2.py pylint:use-a-generator
 test/support/integration/plugins/modules/ec2_group.py pylint:use-a-generator
 test/support/integration/plugins/modules/timezone.py pylint:disallowed-name
@@ -265,3 +268,69 @@ test/units/utils/collection_loader/fixtures/collections_masked/ansible_collectio
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/testcoll/__init__.py empty-init  # testing that collections don't need inits
 test/units/utils/collection_loader/test_collection_loader.py pylint:undefined-variable  # magic runtime local var splatting
+lib/ansible/module_utils/six/__init__.py mypy-2.7:has-type  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.5:has-type  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.6:has-type  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.7:has-type  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.8:has-type  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.9:has-type  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.10:has-type  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-2.7:name-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.5:name-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.6:name-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.7:name-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.8:name-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.9:name-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.10:name-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-2.7:assignment  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.5:assignment  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.6:assignment  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.7:assignment  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-2.7:misc  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.5:misc  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.6:misc  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.7:misc  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.8:misc  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.9:misc  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.10:misc  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-2.7:var-annotated  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-2.7:attr-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.5:var-annotated  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.5:attr-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.6:var-annotated  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.6:attr-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.7:var-annotated  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.7:attr-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.8:var-annotated  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.8:attr-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.9:var-annotated  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.9:attr-defined  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.10:var-annotated  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.10:attr-defined  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-2.7:arg-type  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-3.5:valid-type  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-3.6:valid-type  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-3.7:valid-type  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-2.7:assignment  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-2.7:attr-defined  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-3.5:attr-defined  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-3.6:attr-defined  # vendored code
+lib/ansible/module_utils/distro/_distro.py mypy-3.7:attr-defined  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-2.7:misc  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.5:misc  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.6:misc  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.7:misc  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.8:misc  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.9:misc  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.10:misc  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-2.7:assignment  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.5:assignment  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.6:assignment  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.7:assignment  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.8:assignment  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.9:assignment  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-3.10:assignment  # vendored code
+lib/ansible/module_utils/compat/_selectors2.py mypy-2.7:attr-defined  # vendored code
+lib/ansible/plugins/cache/__init__.py pylint:ansible-deprecated-version
+lib/ansible/plugins/callback/default.py pylint:ansible-deprecated-version
+test/support/integration/plugins/modules/ec2.py pylint:ansible-deprecated-version

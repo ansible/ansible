@@ -14,7 +14,6 @@ from .init import (
 from .util import (
     ApplicationError,
     display,
-    MAXFD,
 )
 
 from .delegation import (
@@ -62,12 +61,12 @@ def main(cli_args=None):  # type: (t.Optional[t.List[str]]) -> None
         configure_timeout(config)
 
         display.info('RLIMIT_NOFILE: %s' % (CURRENT_RLIMIT_NOFILE,), verbosity=2)
-        display.info('MAXFD: %d' % MAXFD, verbosity=2)
 
         delegate_args = None
         target_names = None
 
         try:
+            data_context().check_layout()
             args.func(config)
         except PrimeContainers:
             pass
@@ -79,7 +78,6 @@ def main(cli_args=None):  # type: (t.Optional[t.List[str]]) -> None
             delegate_args = (ex.host_state, ex.exclude, ex.require)
 
         if delegate_args:
-            # noinspection PyTypeChecker
             delegate(config, *delegate_args)
 
         if target_names:

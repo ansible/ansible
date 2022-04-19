@@ -60,7 +60,8 @@ extends_documentation_fragment:
     - decrypt
 attributes:
     check_mode:
-        support: none
+        support: partial
+        details: while the script itself is arbitrary and cannot be subject to the check mode semantics it adds C(creates)/C(removes) options as a workaround
     diff_mode:
         support: none
     platform:
@@ -101,4 +102,7 @@ EXAMPLES = r'''
   ansible.builtin.script: /some/local/script.py
   args:
     executable: python3
+
+- name: Run a Powershell script on a windows host
+  script: subdirectories/under/path/with/your/playbook/script.ps1
 '''

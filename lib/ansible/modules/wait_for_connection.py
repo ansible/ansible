@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2017, Dag Wieers (@dagwieers) <dag@wieers.com>
@@ -67,10 +66,10 @@ author:
 
 EXAMPLES = r'''
 - name: Wait 600 seconds for target connection to become reachable/usable
-  wait_for_connection:
+  ansible.builtin.wait_for_connection:
 
 - name: Wait 300 seconds, but only start checking after 60 seconds
-  wait_for_connection:
+  ansible.builtin.wait_for_connection:
     delay: 60
     timeout: 300
 
@@ -79,23 +78,23 @@ EXAMPLES = r'''
   gather_facts: no
   tasks:
   - name: Send magic Wake-On-Lan packet to turn on individual systems
-    wakeonlan:
+    community.general.wakeonlan:
       mac: '{{ mac }}'
       broadcast: 192.168.0.255
     delegate_to: localhost
 
   - name: Wait for system to become reachable
-    wait_for_connection:
+    ansible.builtin.wait_for_connection:
 
   - name: Gather facts for first time
-    setup:
+    ansible.builtin.setup:
 
 # Build a new VM, wait for it to become ready and continue playbook
 - hosts: all
   gather_facts: no
   tasks:
   - name: Clone new VM, if missing
-    vmware_guest:
+    community.vmware.vmware_guest:
       hostname: '{{ vcenter_ipaddress }}'
       name: '{{ inventory_hostname_short }}'
       template: Windows 2012R2
@@ -106,11 +105,11 @@ EXAMPLES = r'''
     delegate_to: localhost
 
   - name: Wait for system to become reachable over WinRM
-    wait_for_connection:
+    ansible.builtin.wait_for_connection:
       timeout: 900
 
   - name: Gather facts for first time
-    setup:
+    ansible.builtin.setup:
 '''
 
 RETURN = r'''

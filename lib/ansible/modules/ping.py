@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
@@ -47,7 +46,7 @@ author:
 
 EXAMPLES = '''
 # Test we can logon to 'webservers' and execute python with json lib.
-# ansible webservers -m ping
+# ansible webservers -m ansible.builtin.ping
 
 - name: Example from an Ansible Playbook
   ansible.builtin.ping:

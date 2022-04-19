@@ -1,5 +1,4 @@
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import annotations
 
 import contextlib
 import fnmatch
@@ -48,6 +47,7 @@ def assemble_files_to_ship(complete_file_list):
         'hacking/cgroup_perf_recap_graph.py',
         'hacking/create_deprecated_issues.py',
         'hacking/deprecated_issue_template.md',
+        'hacking/create_deprecation_bug_reports.py',
         'hacking/fix_test_syntax.py',
         'hacking/get_library.py',
         'hacking/metadata-tool.py',
@@ -234,8 +234,9 @@ def install_sdist(tmp_dir, sdist_dir):
         raise Exception('sdist install failed:\n%s' % stderr)
 
     # Determine the prefix for the installed files
-    match = re.search('^creating (%s/.*?/(?:site|dist)-packages)/ansible$' %
+    match = re.search('^copying .* -> (%s/.*?/(?:site|dist)-packages)/ansible$' %
                       tmp_dir, stdout, flags=re.M)
+
     return match.group(1)
 
 

@@ -92,6 +92,7 @@ from ...data import (
 )
 
 from ...host_configs import (
+    InventoryConfig,
     OriginConfig,
 )
 
@@ -133,7 +134,7 @@ def generate_dependency_map(integration_targets):  # type: (t.List[IntegrationTa
     """Analyze the given list of integration test targets and return a dictionary expressing target names and the targets on which they depend."""
     targets_dict = dict((target.name, target) for target in integration_targets)
     target_dependencies = analyze_integration_target_dependencies(integration_targets)
-    dependency_map = {}
+    dependency_map = {}  # type: t.Dict[str, t.Set[IntegrationTarget]]
 
     invalid_targets = set()
 
@@ -158,7 +159,7 @@ def generate_dependency_map(integration_targets):  # type: (t.List[IntegrationTa
 
 def get_files_needed(target_dependencies):  # type: (t.List[IntegrationTarget]) -> t.List[str]
     """Return a list of files needed by the given list of target dependencies."""
-    files_needed = []
+    files_needed = []  # type: t.List[str]
 
     for target_dependency in target_dependencies:
         files_needed += target_dependency.needs_file
@@ -181,6 +182,18 @@ def check_inventory(args, inventory_path):  # type: (IntegrationConfig, str) -> 
 
             if 'ansible_ssh_private_key_file' in inventory:
                 display.warning('Use of "ansible_ssh_private_key_file" in inventory with the --docker or --remote option is unsupported and will likely fail.')
+
+
+def get_inventory_absolute_path(args: IntegrationConfig, target: InventoryConfig) -> str:
+    """Return the absolute inventory path used for the given integration configuration or target inventory config (if provided)."""
+    path = target.path or os.path.basename(get_inventory_relative_path(args))
+
+    if args.host_path:
+        path = os.path.join(data_context().content.root, path)  # post-delegation, path is relative to the content root
+    else:
+        path = os.path.join(data_context().content.root, data_context().content.integration_path, path)
+
+    return path
 
 
 def get_inventory_relative_path(args):  # type: (IntegrationConfig) -> str
@@ -228,7 +241,7 @@ def integration_test_environment(
         args,  # type: IntegrationConfig
         target,  # type: IntegrationTarget
         inventory_path_src,  # type: str
-):  # type: (...) -> t.ContextManager[IntegrationEnvironment]
+):  # type: (...) -> t.Iterator[IntegrationEnvironment]
     """Context manager that prepares the integration test environment and cleans it up."""
     ansible_config_src = args.get_ansible_config()
     ansible_config_relative = os.path.join(data_context().content.integration_path, '%s.cfg' % args.command)
@@ -242,7 +255,7 @@ def integration_test_environment(
         ansible_config = ansible_config_src
         vars_file = os.path.join(data_context().content.root, data_context().content.integration_vars_path)
 
-        yield IntegrationEnvironment(integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
+        yield IntegrationEnvironment(data_context().content.root, integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
         return
 
     # When testing a collection, the temporary directory must reside within the collection.
@@ -311,8 +324,7 @@ def integration_test_environment(
             display.info('Copying %s/ to %s/' % (dir_src, dir_dst), verbosity=2)
 
             if not args.explain:
-                # noinspection PyTypeChecker
-                shutil.copytree(to_bytes(dir_src), to_bytes(dir_dst), symlinks=True)
+                shutil.copytree(to_bytes(dir_src), to_bytes(dir_dst), symlinks=True)  # type: ignore[arg-type]  # incorrect type stub omits bytes path support
 
         for file_src, file_dst in file_copies:
             display.info('Copying %s to %s' % (file_src, file_dst), verbosity=2)
@@ -321,7 +333,7 @@ def integration_test_environment(
                 make_dirs(os.path.dirname(file_dst))
                 shutil.copy2(file_src, file_dst)
 
-        yield IntegrationEnvironment(integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
+        yield IntegrationEnvironment(temp_dir, integration_dir, targets_dir, inventory_path, ansible_config, vars_file)
     finally:
         if not args.explain:
             remove_tree(temp_dir)
@@ -332,7 +344,7 @@ def integration_test_config_file(
         args,  # type: IntegrationConfig
         env_config,  # type: CloudEnvironmentConfig
         integration_dir,  # type: str
-):  # type: (...) -> t.ContextManager[t.Optional[str]]
+):  # type: (...) -> t.Iterator[t.Optional[str]]
     """Context manager that provides a config file for integration tests, if needed."""
     if not env_config:
         yield None
@@ -349,7 +361,7 @@ def integration_test_config_file(
 
     config_file = json.dumps(config_vars, indent=4, sort_keys=True)
 
-    with named_temporary_file(args, 'config-file-', '.json', integration_dir, config_file) as path:
+    with named_temporary_file(args, 'config-file-', '.json', integration_dir, config_file) as path:  # type: str
         filename = os.path.relpath(path, integration_dir)
 
         display.info('>>> Config File: %s\n%s' % (filename, config_file), verbosity=3)
@@ -386,8 +398,8 @@ def create_inventory(
 def command_integration_filtered(
         args,  # type: IntegrationConfig
         host_state,  # type: HostState
-        targets,  # type: t.Tuple[IntegrationTarget]
-        all_targets,  # type: t.Tuple[IntegrationTarget]
+        targets,  # type: t.Tuple[IntegrationTarget, ...]
+        all_targets,  # type: t.Tuple[IntegrationTarget, ...]
         inventory_path,  # type: str
         pre_target=None,  # type: t.Optional[t.Callable[[IntegrationTarget], None]]
         post_target=None,  # type: t.Optional[t.Callable[[IntegrationTarget], None]]
@@ -401,7 +413,7 @@ def command_integration_filtered(
     all_targets_dict = dict((target.name, target) for target in all_targets)
 
     setup_errors = []
-    setup_targets_executed = set()
+    setup_targets_executed = set()  # type: t.Set[str]
 
     for target in all_targets:
         for setup_target in target.setup_once + target.setup_always:
@@ -526,7 +538,7 @@ def command_integration_filtered(
                 failed.append(target)
 
                 if args.continue_on_error:
-                    display.error(ex)
+                    display.error(str(ex))
                     continue
 
                 display.notice('To resume at this test target, use the option: --start-at %s' % target.name)
@@ -585,13 +597,13 @@ def command_integration_script(
             module_defaults=env_config.module_defaults,
         ), indent=4, sort_keys=True), verbosity=3)
 
-    with integration_test_environment(args, target, inventory_path) as test_env:
+    with integration_test_environment(args, target, inventory_path) as test_env:  # type: IntegrationEnvironment
         cmd = ['./%s' % os.path.basename(target.script_path)]
 
         if args.verbosity:
             cmd.append('-' + ('v' * args.verbosity))
 
-        env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
+        env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env)
         cwd = os.path.join(test_env.targets_dir, target.relative_path)
 
         env.update(dict(
@@ -602,7 +614,7 @@ def command_integration_script(
         if env_config and env_config.env_vars:
             env.update(env_config.env_vars)
 
-        with integration_test_config_file(args, env_config, test_env.integration_dir) as config_path:
+        with integration_test_config_file(args, env_config, test_env.integration_dir) as config_path:  # type: t.Optional[str]
             if config_path:
                 cmd += ['-e', '@%s' % config_path]
 
@@ -661,7 +673,7 @@ def command_integration_role(
             module_defaults=env_config.module_defaults,
         ), indent=4, sort_keys=True), verbosity=3)
 
-    with integration_test_environment(args, target, inventory_path) as test_env:
+    with integration_test_environment(args, target, inventory_path) as test_env:  # type: IntegrationEnvironment
         if os.path.exists(test_env.vars_file):
             vars_files.append(os.path.relpath(test_env.vars_file, test_env.integration_dir))
 
@@ -712,7 +724,7 @@ def command_integration_role(
             if args.verbosity:
                 cmd.append('-' + ('v' * args.verbosity))
 
-            env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config)
+            env = integration_environment(args, target, test_dir, test_env.inventory_path, test_env.ansible_config, env_config, test_env)
             cwd = test_env.integration_dir
 
             env.update(dict(
@@ -733,7 +745,7 @@ def run_setup_targets(
         args,  # type: IntegrationConfig
         host_state,  # type: HostState
         test_dir,  # type: str
-        target_names,  # type: t.List[str]
+        target_names,  # type: t.Sequence[str]
         targets_dict,  # type: t.Dict[str, IntegrationTarget]
         targets_executed,  # type: t.Set[str]
         inventory_path,  # type: str
@@ -767,6 +779,7 @@ def integration_environment(
         inventory_path,  # type: str
         ansible_config,  # type: t.Optional[str]
         env_config,  # type: t.Optional[CloudEnvironmentConfig]
+        test_env,  # type: IntegrationEnvironment
 ):  # type: (...) -> t.Dict[str, str]
     """Return a dictionary of environment variables to use when running the given integration test target."""
     env = ansible_environment(args, ansible_config=ansible_config)
@@ -775,6 +788,8 @@ def integration_environment(
 
     integration = dict(
         JUNIT_OUTPUT_DIR=ResultType.JUNIT.path,
+        JUNIT_TASK_RELATIVE_PATH=test_env.test_dir,
+        JUNIT_REPLACE_OUT_OF_TREE_PATH='out-of-tree:',
         ANSIBLE_CALLBACKS_ENABLED=','.join(sorted(set(callback_plugins))),
         ANSIBLE_TEST_CI=args.metadata.ci_provider or get_ci_provider().code,
         ANSIBLE_TEST_COVERAGE='check' if args.coverage_check else ('yes' if args.coverage else ''),
@@ -798,7 +813,8 @@ def integration_environment(
 
 class IntegrationEnvironment:
     """Details about the integration environment."""
-    def __init__(self, integration_dir, targets_dir, inventory_path, ansible_config, vars_file):
+    def __init__(self, test_dir, integration_dir, targets_dir, inventory_path, ansible_config, vars_file):
+        self.test_dir = test_dir
         self.integration_dir = integration_dir
         self.targets_dir = targets_dir
         self.inventory_path = inventory_path

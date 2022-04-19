@@ -1,0 +1,2 @@
+bugfixes:
+  - config, ensure that pulling values from configmanager are templated if possible.

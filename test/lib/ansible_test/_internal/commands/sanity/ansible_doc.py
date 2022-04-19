@@ -7,10 +7,12 @@ import re
 import typing as t
 
 from . import (
+    DOCUMENTABLE_PLUGINS,
     SanitySingleVersion,
     SanityFailure,
     SanitySuccess,
     SanityTargets,
+    SanityMessage,
 )
 
 from ...test import (
@@ -49,22 +51,7 @@ class AnsibleDocTest(SanitySingleVersion):
     """Sanity test for ansible-doc."""
     def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test."""
-        # This should use documentable plugins from constants instead
-        unsupported_plugin_types = {
-            # not supported by ansible-doc
-            'action',
-            'doc_fragments',
-            'filter',
-            'module_utils',
-            'terminal',
-            'test',
-            # The following are plugin directories not directly supported by ansible-core (and thus also not by ansible-doc)
-            # (https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#modules--plugins)
-            'plugin_utils',
-            'sub_plugins',
-        }
-
-        plugin_paths = [plugin_path for plugin_type, plugin_path in data_context().content.plugin_paths.items() if plugin_type not in unsupported_plugin_types]
+        plugin_paths = [plugin_path for plugin_type, plugin_path in data_context().content.plugin_paths.items() if plugin_type in DOCUMENTABLE_PLUGINS]
 
         return [target for target in targets
                 if os.path.splitext(target.path)[1] == '.py'
@@ -77,8 +64,8 @@ class AnsibleDocTest(SanitySingleVersion):
 
         paths = [target.path for target in targets.include]
 
-        doc_targets = collections.defaultdict(list)
-        target_paths = collections.defaultdict(dict)
+        doc_targets = collections.defaultdict(list)  # type: t.Dict[str, t.List[str]]
+        target_paths = collections.defaultdict(dict)  # type: t.Dict[str, t.Dict[str, str]]
 
         remap_types = dict(
             modules='module',
@@ -97,7 +84,7 @@ class AnsibleDocTest(SanitySingleVersion):
                 target_paths[plugin_type][data_context().content.prefix + plugin_name] = plugin_file_path
 
         env = ansible_environment(args, color=False)
-        error_messages = []
+        error_messages = []  # type: t.List[SanityMessage]
 
         for doc_type in sorted(doc_targets):
             for format_option in [None, '--json']:

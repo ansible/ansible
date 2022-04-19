@@ -19,17 +19,17 @@ from .io import (
 
 from .completion import (
     CompletionConfig,
-    DOCKER_COMPLETION,
+    docker_completion,
     DockerCompletionConfig,
     InventoryCompletionConfig,
-    NETWORK_COMPLETION,
+    network_completion,
     NetworkRemoteCompletionConfig,
     PosixCompletionConfig,
     PosixRemoteCompletionConfig,
     PosixSshCompletionConfig,
-    REMOTE_COMPLETION,
+    remote_completion,
     RemoteCompletionConfig,
-    WINDOWS_COMPLETION,
+    windows_completion,
     WindowsRemoteCompletionConfig,
     filter_completion,
 )
@@ -183,8 +183,10 @@ class PosixConfig(HostConfig, metaclass=abc.ABCMeta):
     def get_defaults(self, context):  # type: (HostContext) -> PosixCompletionConfig
         """Return the default settings."""
 
-    def apply_defaults(self, context, defaults):  # type: (HostContext, PosixCompletionConfig) -> None
+    def apply_defaults(self, context, defaults):  # type: (HostContext, CompletionConfig) -> None
         """Apply default settings."""
+        assert isinstance(defaults, PosixCompletionConfig)
+
         super().apply_defaults(context, defaults)
 
         self.python = self.python or NativePythonConfig()
@@ -206,17 +208,19 @@ class RemoteConfig(HostConfig, metaclass=abc.ABCMeta):
     provider: t.Optional[str] = None
 
     @property
-    def platform(self):
+    def platform(self):  # type: () -> str
         """The name of the platform."""
         return self.name.partition('/')[0]
 
     @property
-    def version(self):
+    def version(self):  # type: () -> str
         """The version of the platform."""
         return self.name.partition('/')[2]
 
-    def apply_defaults(self, context, defaults):  # type: (HostContext, RemoteCompletionConfig) -> None
+    def apply_defaults(self, context, defaults):  # type: (HostContext, CompletionConfig) -> None
         """Apply default settings."""
+        assert isinstance(defaults, RemoteCompletionConfig)
+
         super().apply_defaults(context, defaults)
 
         if self.provider == 'default':
@@ -262,8 +266,9 @@ class InventoryConfig(HostConfig):
         """Return the default settings."""
         return InventoryCompletionConfig()
 
-    def apply_defaults(self, context, defaults):  # type: (HostContext, InventoryCompletionConfig) -> None
+    def apply_defaults(self, context, defaults):  # type: (HostContext, CompletionConfig) -> None
         """Apply default settings."""
+        assert isinstance(defaults, InventoryCompletionConfig)
 
 
 @dataclasses.dataclass
@@ -277,7 +282,7 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
 
     def get_defaults(self, context):  # type: (HostContext) -> DockerCompletionConfig
         """Return the default settings."""
-        return filter_completion(DOCKER_COMPLETION).get(self.name) or DockerCompletionConfig(
+        return filter_completion(docker_completion()).get(self.name) or DockerCompletionConfig(
             name=self.name,
             image=self.name,
             placeholder=True,
@@ -285,7 +290,7 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
 
     def get_default_targets(self, context):  # type: (HostContext) -> t.List[ControllerConfig]
         """Return the default targets for this host config."""
-        if self.name in filter_completion(DOCKER_COMPLETION):
+        if self.name in filter_completion(docker_completion()):
             defaults = self.get_defaults(context)
             pythons = {version: defaults.get_python_path(version) for version in defaults.supported_pythons}
         else:
@@ -293,8 +298,10 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
 
         return [ControllerConfig(python=NativePythonConfig(version=version, path=path)) for version, path in pythons.items()]
 
-    def apply_defaults(self, context, defaults):  # type: (HostContext, DockerCompletionConfig) -> None
+    def apply_defaults(self, context, defaults):  # type: (HostContext, CompletionConfig) -> None
         """Apply default settings."""
+        assert isinstance(defaults, DockerCompletionConfig)
+
         super().apply_defaults(context, defaults)
 
         self.name = defaults.name
@@ -327,14 +334,14 @@ class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
 
     def get_defaults(self, context):  # type: (HostContext) -> PosixRemoteCompletionConfig
         """Return the default settings."""
-        return filter_completion(REMOTE_COMPLETION).get(self.name) or REMOTE_COMPLETION.get(self.platform) or PosixRemoteCompletionConfig(
+        return filter_completion(remote_completion()).get(self.name) or remote_completion().get(self.platform) or PosixRemoteCompletionConfig(
             name=self.name,
             placeholder=True,
         )
 
     def get_default_targets(self, context):  # type: (HostContext) -> t.List[ControllerConfig]
         """Return the default targets for this host config."""
-        if self.name in filter_completion(REMOTE_COMPLETION):
+        if self.name in filter_completion(remote_completion()):
             defaults = self.get_defaults(context)
             pythons = {version: defaults.get_python_path(version) for version in defaults.supported_pythons}
         else:
@@ -358,9 +365,7 @@ class WindowsRemoteConfig(RemoteConfig, WindowsConfig):
     """Configuration for a remoe Windows host."""
     def get_defaults(self, context):  # type: (HostContext) -> WindowsRemoteCompletionConfig
         """Return the default settings."""
-        return filter_completion(WINDOWS_COMPLETION).get(self.name) or WindowsRemoteCompletionConfig(
-            name=self.name,
-        )
+        return filter_completion(windows_completion()).get(self.name) or windows_completion().get(self.platform)
 
 
 @dataclasses.dataclass
@@ -381,12 +386,14 @@ class NetworkRemoteConfig(RemoteConfig, NetworkConfig):
 
     def get_defaults(self, context):  # type: (HostContext) -> NetworkRemoteCompletionConfig
         """Return the default settings."""
-        return filter_completion(NETWORK_COMPLETION).get(self.name) or NetworkRemoteCompletionConfig(
+        return filter_completion(network_completion()).get(self.name) or NetworkRemoteCompletionConfig(
             name=self.name,
         )
 
-    def apply_defaults(self, context, defaults):  # type: (HostContext, NetworkRemoteCompletionConfig) -> None
+    def apply_defaults(self, context, defaults):  # type: (HostContext, CompletionConfig) -> None
         """Apply default settings."""
+        assert isinstance(defaults, NetworkRemoteCompletionConfig)
+
         super().apply_defaults(context, defaults)
 
         self.collection = self.collection or defaults.collection
@@ -412,7 +419,7 @@ class OriginConfig(ControllerHostConfig, PosixConfig):
     @property
     def have_root(self):  # type: () -> bool
         """True if root is available, otherwise False."""
-        return os.getuid() != 0
+        return os.getuid() == 0
 
 
 @dataclasses.dataclass
@@ -424,8 +431,10 @@ class ControllerConfig(PosixConfig):
         """Return the default settings."""
         return context.controller_config.get_defaults(context)
 
-    def apply_defaults(self, context, defaults):  # type: (HostContext, PosixCompletionConfig) -> None
+    def apply_defaults(self, context, defaults):  # type: (HostContext, CompletionConfig) -> None
         """Apply default settings."""
+        assert isinstance(defaults, PosixCompletionConfig)
+
         self.controller = context.controller_config
 
         if not self.python and not defaults.supported_pythons:
@@ -449,7 +458,7 @@ class ControllerConfig(PosixConfig):
 
 
 class FallbackReason(enum.Enum):
-    """Reason fallback was peformed."""
+    """Reason fallback was performed."""
     ENVIRONMENT = enum.auto()
     PYTHON = enum.auto()
 

@@ -1,8 +1,8 @@
 .. _style_guide:
 
-*******************
-Ansible style guide
-*******************
+**********************************
+Ansible documentation style guide
+**********************************
 
 Welcome to the Ansible style guide!
 To create clear, concise, consistent, useful materials on docs.ansible.com, follow these guidelines:
@@ -78,6 +78,8 @@ reStructuredText guidelines
 
 The Ansible documentation is written in reStructuredText and processed by Sphinx.
 We follow these technical or mechanical guidelines on all rST pages:
+
+.. _headers_style:
 
 Header notation
 ---------------
@@ -167,6 +169,8 @@ For example, you can highlight Python code using following syntax:
          def my_beautiful_python_code():
             pass
 
+.. _style_links:
+
 Internal navigation
 -------------------
 
@@ -176,6 +180,10 @@ Local tables of contents also help users navigate quickly to the information the
 All internal links should use the ``:ref:`` syntax.
 Every page should have at least one anchor to support internal ``:ref:`` links.
 Long pages, or pages with multiple levels of headers, can also include a local TOC.
+
+.. note::
+
+	Avoid raw URLs. RST and sphinx allow ::code:`https://my.example.com`, but this is unhelpful for those using screen readers. ``:ref:`` links automatically pick up the header from the anchor, but for external links, always use the ::code:`link title <link-url>`_` format.
 
 .. _adding_anchors_rst:
 
@@ -251,6 +259,58 @@ The syntax is:
 
    .. contents::
       :local:
+
+Accessibility guidelines
+=========================
+
+Ansible documentation has a goal to be more accessible. Use the following guidelines to help us reach this goal.
+
+Images and alternative text
+  Ensure all icons, images, diagrams, and non text elements have a meaningful alternative-text description. Do not include screen captures of CLI output. Use ``code-block`` instead.
+
+  .. code-block:: text
+
+    .. image:: path/networkdiag.png
+       :width: 400
+       :alt: SpiffyCorp network diagram
+
+
+Links and hypertext
+  URLs and cross-reference links have descriptive text that conveys information about the content of the linked target. See :ref:`style_links` for how to format links.
+
+Tables
+  Tables have a simple, logical reading order from left to right, and top to bottom.
+  Tables include a header row and avoid empty or blank table cells.
+  Label tables with a descriptive title.
+
+  .. code-block:: reStructuredText
+
+    .. table:: File descriptions
+
+      +----------+----------------------------+
+      |File      |Purpose                     |
+      +==========+============================+
+      |foo.txt   |foo configuration settings  |
+      +----------+----------------------------+
+      |bar.txt   |bar configuration settings  |
+      +----------+----------------------------+
+
+
+Colors and other visual information
+  * Avoid instructions that rely solely on sensory characteristics. For example, do not use ``Click the square, blue button to continue.``
+  * Convey information by methods and not by color alone.
+  * Ensure there is sufficient contrast between foreground and background text or graphical elements in images and diagrams.
+  * Instructions for navigating through an interface make sense without directional indicators such as left, right, above, and below.
+
+Accessibility resources
+------------------------
+
+Use the following resources to help test your documentation changes:
+
+* `axe DevTools browser extension <https://chrome.google.com/webstore/detail/axe-devtools-web-accessib/lhdoppojpmngadmnindnejefpokejbdd?hl=en-US&_ga=2.98933278.1490638154.1645821120-953800914.1645821120>`_ - Highlights accessibility issues on a website page.
+* `WAVE browser extension <https://wave.webaim.org/extension/>`_ from WebAIM  - another accessibility tester.
+* `Orca screen reader <https://help.gnome.org/users/orca/stable/>`_ - Common tool used by people with vision impairments.
+* `color filter <https://www.toptal.com/designers/colorfilter/>`_ - For color-blind testing.
 
 More resources
 ==============

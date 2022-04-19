@@ -29,7 +29,7 @@ try:
     )
 except ImportError:
     """Use old lib location under 2.6-3.2."""
-    from collections import (  # pylint: disable=deprecated-class
+    from collections import (  # type: ignore[no-redef,attr-defined]  # pylint: disable=deprecated-class
         MappingView,
         ItemsView,
         KeysView,

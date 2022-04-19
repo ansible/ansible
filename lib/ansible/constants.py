@@ -7,11 +7,9 @@ __metaclass__ = type
 
 import re
 
-from ast import literal_eval
-from jinja2 import Template
 from string import ascii_letters, digits
 
-from ansible.config.manager import ConfigManager, ensure_type
+from ansible.config.manager import ConfigManager
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common.collections import Sequence
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
@@ -71,6 +69,7 @@ _ACTION_INCLUDE = add_internal_fqcns(('include', ))
 _ACTION_INCLUDE_ROLE = add_internal_fqcns(('include_role', ))
 _ACTION_INCLUDE_TASKS = add_internal_fqcns(('include_tasks', ))
 _ACTION_INCLUDE_VARS = add_internal_fqcns(('include_vars', ))
+_ACTION_INVENTORY_TASKS = add_internal_fqcns(('add_host', 'group_by'))
 _ACTION_META = add_internal_fqcns(('meta', ))
 _ACTION_SET_FACT = add_internal_fqcns(('set_fact', ))
 _ACTION_SETUP = add_internal_fqcns(('setup', ))
@@ -180,25 +179,8 @@ MAGIC_VARIABLE_MAPPING = dict(
 config = ConfigManager()
 
 # Generate constants from config
-for setting in config.data.get_settings():
-
-    value = setting.value
-    if setting.origin == 'default' and \
-       isinstance(setting.value, string_types) and \
-       (setting.value.startswith('{{') and setting.value.endswith('}}')):
-        try:
-            t = Template(setting.value)
-            value = t.render(vars())
-            try:
-                value = literal_eval(value)
-            except ValueError:
-                pass  # not a python data structure
-        except Exception:
-            pass  # not templatable
-
-        value = ensure_type(value, setting.type)
-
-    set_constant(setting.name, value)
+for setting in config.get_configuration_definitions():
+    set_constant(setting, config.get_config_value(setting, variables=vars()))
 
 for warn in config.WARNINGS:
     _warning(warn)

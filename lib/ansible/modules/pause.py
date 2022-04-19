@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -52,7 +51,7 @@ attributes:
     bypass_host_loop:
         support: full
     check_mode:
-        support: none
+        support: full
     connection:
         support: none
     delegation:
@@ -68,18 +67,18 @@ notes:
 
 EXAMPLES = '''
 - name: Pause for 5 minutes to build app cache
-  pause:
+  ansible.builtin.pause:
     minutes: 5
 
 - name: Pause until you can verify updates to an application were successful
-  pause:
+  ansible.builtin.pause:
 
 - name: A helpful reminder of what to look out for post-update
-  pause:
+  ansible.builtin.pause:
     prompt: "Make sure org.foo.FooOverload exception is not present"
 
 - name: Pause to get some sensitive input
-  pause:
+  ansible.builtin.pause:
     prompt: "Enter a secret"
     echo: no
 '''

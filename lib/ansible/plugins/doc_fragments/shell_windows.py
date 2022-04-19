@@ -43,6 +43,9 @@ options:
     description:
     - List of dictionaries of environment variables and their values to use when
       executing commands.
+    keyword:
+      - name: environment
     type: list
+    elements: dictionary
     default: [{}]
 """

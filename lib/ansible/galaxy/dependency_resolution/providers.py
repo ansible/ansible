@@ -7,19 +7,15 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import functools
+import typing as t
 
-try:
-    from typing import TYPE_CHECKING
-except ImportError:
-    TYPE_CHECKING = False
-
-if TYPE_CHECKING:
-    from typing import Iterable, List, NamedTuple, Optional, Union
+if t.TYPE_CHECKING:
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
     )
     from ansible.galaxy.collection.galaxy_api_proxy import MultiGalaxyAPIProxy
 
+from ansible.galaxy.collection.gpg import get_signature_from_source
 from ansible.galaxy.dependency_resolution.dataclasses import (
     Candidate,
     Requirement,
@@ -28,9 +24,39 @@ from ansible.galaxy.dependency_resolution.versioning import (
     is_pre_release,
     meets_requirements,
 )
+from ansible.module_utils.six import string_types
 from ansible.utils.version import SemanticVersion
 
+from collections.abc import Set
 from resolvelib import AbstractProvider
+
+
+class PinnedCandidateRequests(Set):
+    """Custom set class to store Candidate objects. Excludes the 'signatures' attribute when determining if a Candidate instance is in the set."""
+    CANDIDATE_ATTRS = ('fqcn', 'ver', 'src', 'type')
+
+    def __init__(self, candidates):
+        self._candidates = set(candidates)
+
+    def __iter__(self):
+        return iter(self._candidates)
+
+    def __contains__(self, value):
+        if not isinstance(value, Candidate):
+            raise ValueError(f"Expected a Candidate object but got {value!r}")
+        for candidate in self._candidates:
+            # Compare Candidate attributes excluding "signatures" since it is
+            # unrelated to whether or not a matching Candidate is user-requested.
+            # Candidate objects in the set are not expected to have signatures.
+            for attr in PinnedCandidateRequests.CANDIDATE_ATTRS:
+                if getattr(value, attr) != getattr(candidate, attr):
+                    break
+            else:
+                return True
+        return False
+
+    def __len__(self):
+        return len(self._candidates)
 
 
 class CollectionDependencyProvider(AbstractProvider):
@@ -40,11 +66,12 @@ class CollectionDependencyProvider(AbstractProvider):
             self,  # type: CollectionDependencyProvider
             apis,  # type: MultiGalaxyAPIProxy
             concrete_artifacts_manager=None,  # type: ConcreteArtifactsManager
-            user_requirements=None,  # type: Iterable[Requirement]
-            preferred_candidates=None,  # type: Iterable[Candidate]
+            user_requirements=None,  # type: t.Iterable[Requirement]
+            preferred_candidates=None,  # type: t.Iterable[Candidate]
             with_deps=True,  # type: bool
             with_pre_releases=False,  # type: bool
             upgrade=False,  # type: bool
+            include_signatures=True,  # type: bool
     ):  # type: (...) -> None
         r"""Initialize helper attributes.
 
@@ -60,14 +87,25 @@ class CollectionDependencyProvider(AbstractProvider):
         :param with_pre_releases: A flag specifying whether the \
                                   resolver should skip pre-releases. \
                                   Off by default.
+
+        :param upgrade: A flag specifying whether the resolver should \
+                        skip matching versions that are not upgrades. \
+                        Off by default.
+
+        :param include_signatures: A flag to determine whether to retrieve \
+                                   signatures from the Galaxy APIs and \
+                                   include signatures in matching Candidates. \
+                                   On by default.
         """
         self._api_proxy = apis
         self._make_req_from_dict = functools.partial(
             Requirement.from_requirement_dict,
             art_mgr=concrete_artifacts_manager,
         )
-        self._pinned_candidate_requests = set(
-            Candidate(req.fqcn, req.ver, req.src, req.type)
+        self._pinned_candidate_requests = PinnedCandidateRequests(
+            # NOTE: User-provided signatures are supplemental, so signatures
+            # NOTE: are not used to determine if a candidate is user-requested
+            Candidate(req.fqcn, req.ver, req.src, req.type, None)
             for req in (user_requirements or ())
             if req.is_concrete_artifact or (
                 req.ver != '*' and
@@ -78,6 +116,7 @@ class CollectionDependencyProvider(AbstractProvider):
         self._with_deps = with_deps
         self._with_pre_releases = with_pre_releases
         self._upgrade = upgrade
+        self._include_signatures = include_signatures
 
     def _is_user_requested(self, candidate):  # type: (Candidate) -> bool
         """Check if the candidate is requested by the user."""
@@ -106,14 +145,17 @@ class CollectionDependencyProvider(AbstractProvider):
             # NOTE: with the `source:` set, it'll match the first check
             # NOTE: but it still can have entries with `src=None` so this
             # NOTE: normalized check is still necessary.
+            # NOTE:
+            # NOTE: User-provided signatures are supplemental, so signatures
+            # NOTE: are not used to determine if a candidate is user-requested
             return Candidate(
-                candidate.fqcn, candidate.ver, None, candidate.type,
+                candidate.fqcn, candidate.ver, None, candidate.type, None
             ) in self._pinned_candidate_requests
 
         return False
 
     def identify(self, requirement_or_candidate):
-        # type: (Union[Candidate, Requirement]) -> str
+        # type: (Candidate | Requirement) -> str
         """Given requirement or candidate, return an identifier for it.
 
         This is used to identify a requirement or candidate, e.g.
@@ -126,10 +168,10 @@ class CollectionDependencyProvider(AbstractProvider):
 
     def get_preference(
             self,  # type: CollectionDependencyProvider
-            resolution,  # type: Optional[Candidate]
-            candidates,  # type: List[Candidate]
-            information,  # type: List[NamedTuple]
-    ):  # type: (...) -> Union[float, int]
+            resolution,  # type: Candidate | None
+            candidates,  # type: list[Candidate]
+            information,  # type: list[t.NamedTuple]
+    ):  # type: (...) -> float | int
         """Return sort key function return value for given requirement.
 
         This result should be based on preference that is defined as
@@ -183,7 +225,7 @@ class CollectionDependencyProvider(AbstractProvider):
         return len(candidates)
 
     def find_matches(self, requirements):
-        # type: (List[Requirement]) -> List[Candidate]
+        # type: (list[Requirement]) -> list[Candidate]
         r"""Find all possible candidates satisfying given requirements.
 
         This tries to get candidates based on the requirements' types.
@@ -211,29 +253,81 @@ class CollectionDependencyProvider(AbstractProvider):
         first_req = requirements[0]
         fqcn = first_req.fqcn
         # The fqcn is guaranteed to be the same
-        coll_versions = self._api_proxy.get_collection_versions(first_req)
+        version_req = "A SemVer-compliant version or '*' is required. See https://semver.org to learn how to compose it correctly. "
+        version_req += "This is an issue with the collection."
+        try:
+            coll_versions = self._api_proxy.get_collection_versions(first_req)
+        except TypeError as exc:
+            if first_req.is_concrete_artifact:
+                # Non hashable versions will cause a TypeError
+                raise ValueError(
+                    f"Invalid version found for the collection '{first_req}'. {version_req}"
+                ) from exc
+            # Unexpected error from a Galaxy server
+            raise
+
         if first_req.is_concrete_artifact:
             # FIXME: do we assume that all the following artifacts are also concrete?
             # FIXME: does using fqcn==None cause us problems here?
 
+            # Ensure the version found in the concrete artifact is SemVer-compliant
+            for version, req_src in coll_versions:
+                version_err = f"Invalid version found for the collection '{first_req}': {version} ({type(version)}). {version_req}"
+                # NOTE: The known cases causing the version to be a non-string object come from
+                # NOTE: the differences in how the YAML parser normalizes ambiguous values and
+                # NOTE: how the end-users sometimes expect them to be parsed. Unless the users
+                # NOTE: explicitly use the double quotes of one of the multiline string syntaxes
+                # NOTE: in the collection metadata file, PyYAML will parse a value containing
+                # NOTE: two dot-separated integers as `float`, a single integer as `int`, and 3+
+                # NOTE: integers as a `str`. In some cases, they may also use an empty value
+                # NOTE: which is normalized as `null` and turned into `None` in the Python-land.
+                # NOTE: Another known mistake is setting a minor part of the SemVer notation
+                # NOTE: skipping the "patch" bit like "1.0" which is assumed non-compliant even
+                # NOTE: after the conversion to string.
+                if not isinstance(version, string_types):
+                    raise ValueError(version_err)
+                elif version != '*':
+                    try:
+                        SemanticVersion(version)
+                    except ValueError as ex:
+                        raise ValueError(version_err) from ex
+
             return [
-                Candidate(fqcn, version, _none_src_server, first_req.type)
+                Candidate(fqcn, version, _none_src_server, first_req.type, None)
                 for version, _none_src_server in coll_versions
             ]
 
-        latest_matches = sorted(
-            {
-                candidate for candidate in (
-                    Candidate(fqcn, version, src_server, 'galaxy')
-                    for version, src_server in coll_versions
-                )
-                if all(self.is_satisfied_by(requirement, candidate) for requirement in requirements)
+        latest_matches = []
+        signatures = []
+        extra_signature_sources = []  # type: list[str]
+        for version, src_server in coll_versions:
+            tmp_candidate = Candidate(fqcn, version, src_server, 'galaxy', None)
+
+            unsatisfied = False
+            for requirement in requirements:
+                unsatisfied |= not self.is_satisfied_by(requirement, tmp_candidate)
                 # FIXME
-                # if all(self.is_satisfied_by(requirement, candidate) and (
-                #     requirement.src is None or  # if this is true for some candidates but not all it will break key param - Nonetype can't be compared to str
-                #     requirement.src == candidate.src
-                # ))
-            },
+                # unsatisfied |= not self.is_satisfied_by(requirement, tmp_candidate) or not (
+                #    requirement.src is None or  # if this is true for some candidates but not all it will break key param - Nonetype can't be compared to str
+                #    or requirement.src == candidate.src
+                # )
+                if unsatisfied:
+                    break
+                if not self._include_signatures:
+                    continue
+
+                extra_signature_sources.extend(requirement.signature_sources or [])
+
+            if not unsatisfied:
+                if self._include_signatures:
+                    signatures = src_server.get_collection_signatures(first_req.namespace, first_req.name, version)
+                    for extra_source in extra_signature_sources:
+                        signatures.append(get_signature_from_source(extra_source))
+                latest_matches.append(
+                    Candidate(fqcn, version, src_server, 'galaxy', frozenset(signatures))
+                )
+
+        latest_matches.sort(
             key=lambda candidate: (
                 SemanticVersion(candidate.ver), candidate.src,
             ),
@@ -299,7 +393,7 @@ class CollectionDependencyProvider(AbstractProvider):
         )
 
     def get_dependencies(self, candidate):
-        # type: (Candidate) -> List[Candidate]
+        # type: (Candidate) -> list[Candidate]
         r"""Get direct dependencies of a candidate.
 
         :returns: A collection of requirements that `candidate` \

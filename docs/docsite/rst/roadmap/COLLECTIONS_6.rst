@@ -14,25 +14,22 @@ Release schedule
 =================
 
 
-:TBD: New Collections can be reviewed for inclusion in Ansible 5. Submit a request to include a new collection in this `GitHub Discussion <https://github.com/ansible-collections/ansible-inclusion/discussions/new>`_.
-:TBD: ansible-core feature freeze.
-:TBD: Start of ansible-core 2.13 betas (weekly, as needed).
-:TBD: Ansible-6.0.0 alpha1 (roughly biweekly ``ansible`` alphas timed to coincide with ``ansible-core-2.13`` pre-releases).
-:TBD: Last day for new collections to be submitted for inclusion in Ansible-6. Collections MUST be reviewed and approved before being included. There is no guarantee that we will review every collection. The earlier your collection is submitted, the more likely it will be that your collection will be reviewed and the necessary feedback can be addressed in time for inclusion.
-:TBD: Community Meeting topic: List any new collection reviews which block release. List any backwards incompatible collection releases that beta1 should try to accommodate.
-:TBD: First ansible-core release candidate, stable-2.13 branch created.
-:TBD: Ansible-6.0.0 alpha2.
-:TBD: Last day for new collections to be **reviewed and approved** for inclusion in Ansible-6.
-:TBD: Community Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline.
-:TBD: Ansible-6.0.0 alpha3.
-:TBD: Ansible-core-2.13 released.
-:TBD: Last day for collections to make backwards incompatible releases that will be accepted into Ansible-6.
-:TBD: Create the ansible-build-data directory and files for Ansible-7. New collection approvals will target this.
-:TBD: Ansible-6.0.0 beta1 -- feature freeze [1]_ (weekly beta releases; collection owners and interested users should test for bugs).
-:TBD: Ansible-6.0.0 beta2.
-:TBD: Ansible-6.0.0 rc1 [2]_ [3]_ (weekly release candidates as needed; test and alert us to any blocker bugs).  Blocker bugs will slip release.
-:TBD: Ansible-6.0.0 release.
-:TBD: Release of Ansible-6.1.0 (bugfix + compatible features: every three weeks.)
+:2022-03-28: ansible-core feature freeze, stable-2.13 branch created.
+:2022-04-11: Start of ansible-core 2.13 betas (biweekly, as needed).
+:2022-04-12: Ansible-6.0.0 alpha1 (roughly biweekly ``ansible`` alphas timed to coincide with ``ansible-core-2.13`` pre-releases).
+:2022-04-27: Community Meeting topic: List any backwards incompatible collection releases that beta1 should try to accommodate.
+:2022-05-02: First ansible-core release candidate.
+:2022-05-03: Ansible-6.0.0 alpha2.
+:2022-05-11: Community Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline.
+:2022-05-17: Ansible-6.0.0 alpha3.
+:2022-05-23: Ansible-core-2.13 released.
+:2022-05-23: Last day for collections to make backwards incompatible releases that will be accepted into Ansible-6. This includes adding new collections to Ansible 6.0.0; from now on new collections have to wait for 6.1.0 or later.
+:2022-05-24: Create the ansible-build-data directory and files for Ansible-7.
+:2022-05-24: Ansible-6.0.0 beta1 -- feature freeze [1]_ (weekly beta releases; collection owners and interested users should test for bugs).
+:2022-05-31: Ansible-6.0.0 beta2.
+:2022-06-07: Ansible-6.0.0 rc1 [2]_ [3]_ (weekly release candidates as needed; test and alert us to any blocker bugs).  Blocker bugs will slip release.
+:2022-06-21: Ansible-6.0.0 release.
+:2022-07-12: Release of Ansible-6.1.0 (bugfix + compatible features: every three weeks.)
 
 .. [1] No new modules or major features accepted after this date. In practice, this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community.crypto 2.3.0; Ansible-6.0.0 could ship with community.crypto 2.3.1.  It would not ship with community.crypto 2.4.0.
 
@@ -57,3 +54,12 @@ Ansible 6.x minor releases will occur approximately every three weeks if changes
 
 
 For more information, reach out on a mailing list or a chat channel - see :ref:`communication` for more details.
+
+Planned work
+============
+
+More details can be found in `the community-topics planning issue <https://github.com/ansible-community/community-topics/issues/56>`_.
+
+* Remove compatibility code which prevents parallel install of Ansible 6 with Ansible 2.9 or ansible-base 2.10
+* Stop installing files (such as tests and development artifacts like editor configs) we have no use for
+* Ship Python wheels (as ansible-core 2.13 will likely also do) to improve installation performance

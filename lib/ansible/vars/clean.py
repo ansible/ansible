@@ -8,11 +8,12 @@ __metaclass__ = type
 import os
 import re
 
+from collections.abc import MutableMapping, MutableSequence
+
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils import six
 from ansible.module_utils._text import to_text
-from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
 from ansible.plugins.loader import connection_loader
 from ansible.utils.display import Display
 
@@ -152,13 +153,7 @@ def clean_facts(facts):
     # then we remove them (except for ssh host keys)
     for r_key in remove_keys:
         if not r_key.startswith('ansible_ssh_host_key_'):
-            try:
-                r_val = to_text(data[r_key])
-                if len(r_val) > 24:
-                    r_val = '%s ... %s' % (r_val[:13], r_val[-6:])
-            except Exception:
-                r_val = ' <failed to convert value to a string> '
-            display.warning("Removed restricted key from module data: %s = %s" % (r_key, r_val))
+            display.warning("Removed restricted key from module data: %s" % (r_key))
             del data[r_key]
 
     return strip_internal_keys(data)

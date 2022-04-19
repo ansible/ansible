@@ -140,7 +140,7 @@ def split_host_pattern(pattern):
 class InventoryManager(object):
     ''' Creates and manages inventory '''
 
-    def __init__(self, loader, sources=None, parse=True):
+    def __init__(self, loader, sources=None, parse=True, cache=True):
 
         # base objects
         self._loader = loader
@@ -164,7 +164,7 @@ class InventoryManager(object):
 
         # get to work!
         if parse:
-            self.parse_sources(cache=True)
+            self.parse_sources(cache=cache)
 
     @property
     def localhost(self):
@@ -208,7 +208,7 @@ class InventoryManager(object):
                 display.warning('Failed to load inventory plugin, skipping %s' % name)
 
         if not plugins:
-            raise AnsibleError("No inventory plugins available to generate inventory, make sure you have at least one whitelisted.")
+            raise AnsibleError("No inventory plugins available to generate inventory, make sure you have at least one enabled.")
 
         return plugins
 
@@ -232,7 +232,7 @@ class InventoryManager(object):
         else:
             if C.INVENTORY_UNPARSED_IS_FAILED:
                 raise AnsibleError("No inventory was parsed, please check your configuration and options.")
-            else:
+            elif C.INVENTORY_UNPARSED_WARNING:
                 display.warning("No inventory was parsed, only implicit localhost is available")
 
         for group in self.groups.values():
@@ -336,7 +336,6 @@ class InventoryManager(object):
         ''' clear all caches '''
         self._hosts_patterns_cache = {}
         self._pattern_cache = {}
-        # FIXME: flush inventory cache
 
     def refresh_inventory(self):
         ''' recalculate inventory '''

@@ -34,6 +34,8 @@ options:
     vars:
     - name: ansible_user
     - name: ansible_psrp_user
+    keyword:
+    - name: remote_user
   remote_password:
     description: Authentication password for the C(remote_user). Can be supplied as CLI option.
     type: str
@@ -52,6 +54,8 @@ options:
     vars:
     - name: ansible_port
     - name: ansible_psrp_port
+    keyword:
+    - name: port
   protocol:
     description:
     - Set the protocol to use for the connection.
@@ -872,7 +876,7 @@ if ($bytes_read -gt 0) {
                         % (command_name, str(error), position,
                            error.message, error.fq_error)
             stacktrace = error.script_stacktrace
-            if self._play_context.verbosity >= 3 and stacktrace is not None:
+            if display.verbosity >= 3 and stacktrace is not None:
                 error_msg += "\r\nStackTrace:\r\n%s" % stacktrace
             stderr_list.append(error_msg)
 

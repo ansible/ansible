@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -55,11 +54,13 @@ options:
     description:
       - List of file names to ignore.
     type: list
+    elements: str
     version_added: "2.2"
   extensions:
     description:
       - List of file extensions to read when using C(dir).
     type: list
+    elements: str
     default: [ json, yaml, yml ]
     version_added: "2.3"
   ignore_unknown_extensions:
@@ -99,7 +100,7 @@ attributes:
         support: full
     delegation:
         details:
-            - while variable assignment can be delegated to a different host the execution context is always the current invenotory_hostname
+            - while variable assignment can be delegated to a different host the execution context is always the current inventory_hostname
             - connection variables, if set at all, would reflect the host it would target, even if we are not connecting at all in this case
         support: partial
     diff_mode:
@@ -115,18 +116,18 @@ seealso:
 
 EXAMPLES = r'''
 - name: Include vars of stuff.yaml into the 'stuff' variable (2.2).
-  include_vars:
+  ansible.builtin.include_vars:
     file: stuff.yaml
     name: stuff
 
 - name: Conditionally decide to load in variables into 'plans' when x is 0, otherwise do not. (2.2)
-  include_vars:
+  ansible.builtin.include_vars:
     file: contingency_plan.yaml
     name: plans
   when: x == 0
 
 - name: Load a variable file based on the OS type, or a default if not found. Using free-form to specify the file.
-  include_vars: "{{ lookup('first_found', params) }}"
+  ansible.builtin.include_vars: "{{ lookup('ansible.builtin.first_found', params) }}"
   vars:
     params:
       files:
@@ -137,32 +138,32 @@ EXAMPLES = r'''
         - 'vars'
 
 - name: Bare include (free-form)
-  include_vars: myvars.yaml
+  ansible.builtin.include_vars: myvars.yaml
 
 - name: Include all .json and .jsn files in vars/all and all nested directories (2.3)
-  include_vars:
+  ansible.builtin.include_vars:
     dir: vars/all
     extensions:
       - 'json'
       - 'jsn'
 
 - name: Include all default extension files in vars/all and all nested directories and save the output in test. (2.2)
-  include_vars:
+  ansible.builtin.include_vars:
     dir: vars/all
     name: test
 
 - name: Include default extension files in vars/services (2.2)
-  include_vars:
+  ansible.builtin.include_vars:
     dir: vars/services
     depth: 1
 
 - name: Include only files matching bastion.yaml (2.2)
-  include_vars:
+  ansible.builtin.include_vars:
     dir: vars
     files_matching: bastion.yaml
 
 - name: Include all .yaml files except bastion.yaml (2.3)
-  include_vars:
+  ansible.builtin.include_vars:
     dir: vars
     ignore_files:
       - 'bastion.yaml'
@@ -170,7 +171,7 @@ EXAMPLES = r'''
       - 'yaml'
 
 - name: Ignore warnings raised for files with unknown extensions while loading (2.7)
-  include_vars:
+  ansible.builtin.include_vars:
     dir: vars
     ignore_unknown_extensions: True
     extensions:

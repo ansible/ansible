@@ -16,11 +16,12 @@ DOCUMENTATION = '''
         - File MUST have a valid extension, defined in configuration.
     notes:
         - If you want to set vars for the C(all) group inside the inventory file, the C(all) group must be the first entry in the file.
-        - Whitelisted in configuration by default.
+        - Enabled in configuration by default.
     options:
       yaml_extensions:
         description: list of 'valid' extensions for files containing YAML
         type: list
+        elements: string
         default: ['.yaml', '.yml', '.json']
         env:
           - name: ANSIBLE_YAML_FILENAME_EXT
@@ -67,10 +68,11 @@ all: # keys must be unique, i.e. only one 'hosts' per group
 
 import os
 
+from collections.abc import MutableMapping
+
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.plugins.inventory import BaseFileInventoryPlugin
 
 NoneType = type(None)
@@ -121,7 +123,7 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     def _parse_group(self, group, group_data):
 
-        if isinstance(group_data, (MutableMapping, NoneType)):
+        if isinstance(group_data, (MutableMapping, NoneType)):  # type: ignore[misc]
 
             try:
                 group = self.inventory.add_group(group)
@@ -136,17 +138,17 @@ class InventoryModule(BaseFileInventoryPlugin):
                         if isinstance(group_data[section], string_types):
                             group_data[section] = {group_data[section]: None}
 
-                        if not isinstance(group_data[section], (MutableMapping, NoneType)):
+                        if not isinstance(group_data[section], (MutableMapping, NoneType)):  # type: ignore[misc]
                             raise AnsibleParserError('Invalid "%s" entry for "%s" group, requires a dictionary, found "%s" instead.' %
                                                      (section, group, type(group_data[section])))
 
                 for key in group_data:
 
-                    if not isinstance(group_data[key], (MutableMapping, NoneType)):
+                    if not isinstance(group_data[key], (MutableMapping, NoneType)):  # type: ignore[misc]
                         self.display.warning('Skipping key (%s) in group (%s) as it is not a mapping, it is a %s' % (key, group, type(group_data[key])))
                         continue
 
-                    if isinstance(group_data[key], NoneType):
+                    if isinstance(group_data[key], NoneType):  # type: ignore[misc]
                         self.display.vvv('Skipping empty key (%s) in group (%s)' % (key, group))
                     elif key == 'vars':
                         for var in group_data[key]:

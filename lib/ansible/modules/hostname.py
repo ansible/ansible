@@ -71,6 +71,8 @@ import platform
 import socket
 import traceback
 
+import ansible.module_utils.compat.typing as t
+
 from ansible.module_utils.basic import (
     AnsibleModule,
     get_distribution,
@@ -84,9 +86,9 @@ from ansible.module_utils.six import PY3, text_type
 
 STRATS = {
     'alpine': 'Alpine',
-    'debian': 'Debian',
+    'debian': 'Systemd',
     'freebsd': 'FreeBSD',
-    'generic': 'Generic',
+    'generic': 'Base',
     'macos': 'Darwin',
     'macosx': 'Darwin',
     'darwin': 'Darwin',
@@ -97,89 +99,6 @@ STRATS = {
     'solaris': 'Solaris',
     'systemd': 'Systemd',
 }
-
-
-class UnimplementedStrategy(object):
-    def __init__(self, module):
-        self.module = module
-
-    def update_current_and_permanent_hostname(self):
-        self.unimplemented_error()
-
-    def update_current_hostname(self):
-        self.unimplemented_error()
-
-    def update_permanent_hostname(self):
-        self.unimplemented_error()
-
-    def get_current_hostname(self):
-        self.unimplemented_error()
-
-    def set_current_hostname(self, name):
-        self.unimplemented_error()
-
-    def get_permanent_hostname(self):
-        self.unimplemented_error()
-
-    def set_permanent_hostname(self, name):
-        self.unimplemented_error()
-
-    def unimplemented_error(self):
-        system = platform.system()
-        distribution = get_distribution()
-        if distribution is not None:
-            msg_platform = '%s (%s)' % (system, distribution)
-        else:
-            msg_platform = system
-        self.module.fail_json(
-            msg='hostname module cannot be used on platform %s' % msg_platform)
-
-
-class Hostname(object):
-    """
-    This is a generic Hostname manipulation class that is subclassed
-    based on platform.
-
-    A subclass may wish to set different strategy instance to self.strategy.
-
-    All subclasses MUST define platform and distribution (which may be None).
-    """
-
-    platform = 'Generic'
-    distribution = None
-    strategy_class = UnimplementedStrategy
-
-    def __new__(cls, *args, **kwargs):
-        new_cls = get_platform_subclass(Hostname)
-        return super(cls, new_cls).__new__(new_cls)
-
-    def __init__(self, module):
-        self.module = module
-        self.name = module.params['name']
-        self.use = module.params['use']
-
-        if self.use is not None:
-            strat = globals()['%sStrategy' % STRATS[self.use]]
-            self.strategy = strat(module)
-        elif self.platform == 'Linux' and ServiceMgrFactCollector.is_systemd_managed(module):
-            self.strategy = SystemdStrategy(module)
-        else:
-            self.strategy = self.strategy_class(module)
-
-    def update_current_and_permanent_hostname(self):
-        return self.strategy.update_current_and_permanent_hostname()
-
-    def get_current_hostname(self):
-        return self.strategy.get_current_hostname()
-
-    def set_current_hostname(self, name):
-        self.strategy.set_current_hostname(name)
-
-    def get_permanent_hostname(self):
-        return self.strategy.get_permanent_hostname()
-
-    def set_permanent_hostname(self, name):
-        self.strategy.set_permanent_hostname(name)
 
 
 class BaseStrategy(object):
@@ -221,6 +140,39 @@ class BaseStrategy(object):
         raise NotImplementedError
 
 
+class UnimplementedStrategy(BaseStrategy):
+    def update_current_and_permanent_hostname(self):
+        self.unimplemented_error()
+
+    def update_current_hostname(self):
+        self.unimplemented_error()
+
+    def update_permanent_hostname(self):
+        self.unimplemented_error()
+
+    def get_current_hostname(self):
+        self.unimplemented_error()
+
+    def set_current_hostname(self, name):
+        self.unimplemented_error()
+
+    def get_permanent_hostname(self):
+        self.unimplemented_error()
+
+    def set_permanent_hostname(self, name):
+        self.unimplemented_error()
+
+    def unimplemented_error(self):
+        system = platform.system()
+        distribution = get_distribution()
+        if distribution is not None:
+            msg_platform = '%s (%s)' % (system, distribution)
+        else:
+            msg_platform = system
+        self.module.fail_json(
+            msg='hostname module cannot be used on platform %s' % msg_platform)
+
+
 class CommandStrategy(BaseStrategy):
     COMMAND = 'hostname'
 
@@ -256,7 +208,7 @@ class FileStrategy(BaseStrategy):
             return ''
 
         try:
-            return get_file_lines(self.FILE)
+            return get_file_content(self.FILE, default='', strip=True)
         except Exception as e:
             self.module.fail_json(
                 msg="failed to read hostname: %s" % to_native(e),
@@ -380,14 +332,17 @@ class SystemdStrategy(BaseStrategy):
     def set_permanent_hostname(self, name):
         if len(name) > 64:
             self.module.fail_json(msg="name cannot be longer than 64 characters on systemd servers, try a shorter name")
-        cmd = [self.hostnamectl_cmd, '--pretty', 'set-hostname', name]
+        cmd = [self.hostnamectl_cmd, '--pretty', '--static', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
-        cmd = [self.hostnamectl_cmd, '--static', 'set-hostname', name]
-        rc, out, err = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
+
+    def update_current_and_permanent_hostname(self):
+        # Must set the permanent hostname prior to current to avoid NetworkManager complaints
+        # about setting the hostname outside of NetworkManager
+        self.update_permanent_hostname()
+        self.update_current_hostname()
+        return self.changed
 
 
 class OpenRCStrategy(BaseStrategy):
@@ -644,10 +599,52 @@ class DarwinStrategy(BaseStrategy):
             self.changed = True
 
 
-class FedoraHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Fedora'
-    strategy_class = SystemdStrategy
+class Hostname(object):
+    """
+    This is a generic Hostname manipulation class that is subclassed
+    based on platform.
+
+    A subclass may wish to set different strategy instance to self.strategy.
+
+    All subclasses MUST define platform and distribution (which may be None).
+    """
+
+    platform = 'Generic'
+    distribution = None  # type: str | None
+    strategy_class = UnimplementedStrategy  # type: t.Type[BaseStrategy]
+
+    def __new__(cls, *args, **kwargs):
+        new_cls = get_platform_subclass(Hostname)
+        return super(cls, new_cls).__new__(new_cls)
+
+    def __init__(self, module):
+        self.module = module
+        self.name = module.params['name']
+        self.use = module.params['use']
+
+        if self.use is not None:
+            strat = globals()['%sStrategy' % STRATS[self.use]]
+            self.strategy = strat(module)
+        elif platform.system() == 'Linux' and ServiceMgrFactCollector.is_systemd_managed(module):
+            # This is Linux and systemd is active
+            self.strategy = SystemdStrategy(module)
+        else:
+            self.strategy = self.strategy_class(module)
+
+    def update_current_and_permanent_hostname(self):
+        return self.strategy.update_current_and_permanent_hostname()
+
+    def get_current_hostname(self):
+        return self.strategy.get_current_hostname()
+
+    def set_current_hostname(self, name):
+        self.strategy.set_current_hostname(name)
+
+    def get_permanent_hostname(self):
+        return self.strategy.get_permanent_hostname()
+
+    def set_permanent_hostname(self, name):
+        self.strategy.set_permanent_hostname(name)
 
 
 class SLESHostname(Hostname):
@@ -657,65 +654,11 @@ class SLESHostname(Hostname):
         distribution_version = get_distribution_version()
         # cast to float may raise ValueError on non SLES, we use float for a little more safety over int
         if distribution_version and 10 <= float(distribution_version) <= 12:
-            strategy_class = SLESStrategy
+            strategy_class = SLESStrategy  # type: t.Type[BaseStrategy]
         else:
             raise ValueError()
     except ValueError:
         strategy_class = UnimplementedStrategy
-
-
-class OpenSUSEHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Opensuse'
-    strategy_class = SystemdStrategy
-
-
-class OpenSUSELeapHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Opensuse-leap'
-    strategy_class = SystemdStrategy
-
-
-class OpenSUSETumbleweedHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Opensuse-tumbleweed'
-    strategy_class = SystemdStrategy
-
-
-class AsteraHostname(Hostname):
-    platform = 'Linux'
-    distribution = '"astralinuxce"'
-    strategy_class = SystemdStrategy
-
-
-class ArchHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Arch'
-    strategy_class = SystemdStrategy
-
-
-class ArchARMHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Archarm'
-    strategy_class = SystemdStrategy
-
-
-class AlmaLinuxHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Almalinux'
-    strategy_class = SystemdStrategy
-
-
-class ManjaroHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Manjaro'
-    strategy_class = SystemdStrategy
-
-
-class ManjaroARMHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Manjaro-arm'
-    strategy_class = SystemdStrategy
 
 
 class RHELHostname(Hostname):
@@ -736,12 +679,6 @@ class AnolisOSHostname(Hostname):
     strategy_class = RedHatStrategy
 
 
-class ClearLinuxHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Clear-linux-os'
-    strategy_class = SystemdStrategy
-
-
 class CloudlinuxserverHostname(Hostname):
     platform = 'Linux'
     distribution = 'Cloudlinuxserver'
@@ -758,18 +695,6 @@ class AlinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Alinux'
     strategy_class = RedHatStrategy
-
-
-class CoreosHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Coreos'
-    strategy_class = SystemdStrategy
-
-
-class FlatcarHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Flatcar'
-    strategy_class = SystemdStrategy
 
 
 class ScientificHostname(Hostname):
@@ -856,6 +781,18 @@ class RaspbianHostname(Hostname):
     strategy_class = FileStrategy
 
 
+class UosHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Uos'
+    strategy_class = FileStrategy
+
+
+class DeepinHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Deepin'
+    strategy_class = FileStrategy
+
+
 class GentooHostname(Hostname):
     platform = 'Linux'
     distribution = 'Gentoo'
@@ -910,18 +847,6 @@ class DarwinHostname(Hostname):
     strategy_class = DarwinStrategy
 
 
-class OsmcHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Osmc'
-    strategy_class = SystemdStrategy
-
-
-class PardusHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Pardus'
-    strategy_class = SystemdStrategy
-
-
 class VoidLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Void'
@@ -934,16 +859,10 @@ class PopHostname(Hostname):
     strategy_class = FileStrategy
 
 
-class RockyHostname(Hostname):
+class EurolinuxHostname(Hostname):
     platform = 'Linux'
-    distribution = 'Rocky'
-    strategy_class = SystemdStrategy
-
-
-class RedosHostname(Hostname):
-    platform = 'Linux'
-    distribution = 'Redos'
-    strategy_class = SystemdStrategy
+    distribution = 'Eurolinux'
+    strategy_class = RedHatStrategy
 
 
 def main():

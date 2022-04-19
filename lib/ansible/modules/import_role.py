@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -86,22 +85,22 @@ seealso:
 EXAMPLES = r'''
 - hosts: all
   tasks:
-    - import_role:
+    - ansible.builtin.import_role:
         name: myrole
 
     - name: Run tasks/other.yaml instead of 'main'
-      import_role:
+      ansible.builtin.import_role:
         name: myrole
         tasks_from: other
 
     - name: Pass variables to role
-      import_role:
+      ansible.builtin.import_role:
         name: myrole
       vars:
         rolevar1: value from task
 
     - name: Apply condition to each task in role
-      import_role:
+      ansible.builtin.import_role:
         name: myrole
       when: not idontwanttorun
 '''

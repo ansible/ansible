@@ -8,7 +8,7 @@ __metaclass__ = type
 
 import os
 import pytest
-from units.compat.mock import MagicMock
+from mock import MagicMock
 
 import ansible.constants as C
 from ansible.cli.galaxy import GalaxyCLI, SERVER_DEF

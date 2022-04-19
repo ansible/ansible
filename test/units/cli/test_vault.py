@@ -24,7 +24,7 @@ import os
 import pytest
 
 from units.compat import unittest
-from units.compat.mock import patch, MagicMock
+from mock import patch, MagicMock
 from units.mock.vault_helper import TextVaultSecret
 
 from ansible import context, errors
@@ -70,18 +70,18 @@ class TestVaultCli(unittest.TestCase):
         mock_setup_vault_secrets.return_value = []
         cli = VaultCLI(args=['ansible-vault', 'view', '/dev/null/foo'])
         cli.parse()
-        self.assertRaisesRegexp(errors.AnsibleOptionsError,
-                                "A vault password is required to use Ansible's Vault",
-                                cli.run)
+        self.assertRaisesRegex(errors.AnsibleOptionsError,
+                               "A vault password is required to use Ansible's Vault",
+                               cli.run)
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     def test_encrypt_missing_file_no_secret(self, mock_setup_vault_secrets):
         mock_setup_vault_secrets.return_value = []
         cli = VaultCLI(args=['ansible-vault', 'encrypt', '/dev/null/foo'])
         cli.parse()
-        self.assertRaisesRegexp(errors.AnsibleOptionsError,
-                                "A vault password is required to use Ansible's Vault",
-                                cli.run)
+        self.assertRaisesRegex(errors.AnsibleOptionsError,
+                               "A vault password is required to use Ansible's Vault",
+                               cli.run)
 
     @patch('ansible.cli.vault.VaultCLI.setup_vault_secrets')
     @patch('ansible.cli.vault.VaultEditor')

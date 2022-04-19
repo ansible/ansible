@@ -25,6 +25,7 @@ DOCUMENTATION = '''
     options:
       host:
           description: Hostname/IP to connect to.
+          default: inventory_hostname
           vars:
                - name: inventory_hostname
                - name: ansible_host
@@ -197,6 +198,8 @@ DOCUMENTATION = '''
           vars:
             - name: ansible_port
             - name: ansible_ssh_port
+          keyword:
+            - name: port
       remote_user:
           description:
               - User name with which to login to the remote server, normally set by the remote_user keyword.
@@ -211,11 +214,15 @@ DOCUMENTATION = '''
             - name: ansible_ssh_user
           cli:
             - name: user
+          keyword:
+            - name: remote_user
       pipelining:
           env:
             - name: ANSIBLE_PIPELINING
             - name: ANSIBLE_SSH_PIPELINING
           ini:
+            - section: defaults
+              key: pipelining
             - section: connection
               key: pipelining
             - section: ssh_connection
@@ -295,7 +302,7 @@ DOCUMENTATION = '''
               alternatives: ssh_transfer_method
         default: smart
         description:
-          - "Preferred method to use when transfering files over SSH."
+          - "Preferred method to use when transferring files over SSH."
           - When set to I(smart), Ansible will try them until one succeeds or they all fail.
           - If set to I(True), it will force 'scp', if I(False) it will use 'sftp'.
           - This setting will overridden by ssh_transfer_method if set.
@@ -319,7 +326,7 @@ DOCUMENTATION = '''
       timeout:
         default: 10
         description:
-            - This is the default ammount of time we will wait while establishing an SSH connection.
+            - This is the default amount of time we will wait while establishing an SSH connection.
             - It also controls how long we can wait to access reading the connection once established (select on the socket).
         env:
             - name: ANSIBLE_TIMEOUT
@@ -361,7 +368,6 @@ import subprocess
 import time
 
 from functools import wraps
-from ansible import constants as C
 from ansible.errors import (
     AnsibleAuthenticationFailure,
     AnsibleConnectionFailure,
@@ -387,6 +393,7 @@ b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when th
                     )
 
 SSHPASS_AVAILABLE = None
+SSH_DEBUG = re.compile(r'^debug\d+: .*')
 
 
 class AnsibleControlPersistBrokenPipeError(AnsibleError):
@@ -691,7 +698,7 @@ class Connection(ConnectionBase):
                 self._add_args(b_command, b_args, u'disable batch mode for sshpass')
             b_command += [b'-b', b'-']
 
-        if self._play_context.verbosity > 3:
+        if display.verbosity > 3:
             b_command.append(b'-vvv')
 
         # Next, we add ssh_args
@@ -775,7 +782,7 @@ class Connection(ConnectionBase):
                         self.port,
                         self.user
                     )
-                b_args = (b"-o", b"ControlPath=" + to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict'))
+                b_args = (b"-o", b'ControlPath="%s"' % to_bytes(self.control_path % dict(directory=cpdir), errors='surrogate_or_strict'))
                 self._add_args(b_command, b_args, u"found only ControlPersist; added ControlPath")
 
         # Finally, we add any caller-supplied extras.
@@ -836,7 +843,10 @@ class Connection(ConnectionBase):
             suppress_output = False
 
             # display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, display_line))
-            if self.become.expect_prompt() and self.become.check_password_prompt(b_line):
+            if SSH_DEBUG.match(display_line):
+                # skip lines from ssh debug output to avoid false matches
+                pass
+            elif self.become.expect_prompt() and self.become.check_password_prompt(b_line):
                 display.debug(u"become_prompt: (source=%s, state=%s): '%s'" % (source, state, display_line))
                 self._flags['become_prompt'] = True
                 suppress_output = True
@@ -1274,6 +1284,8 @@ class Connection(ConnectionBase):
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
+        self.host = self.get_option('host') or self._play_context.remote_addr
+
         display.vvv(u"ESTABLISH SSH CONNECTION FOR USER: {0}".format(self.user), host=self.host)
 
         if getattr(self._shell, "_IS_WINDOWS", False):
@@ -1318,6 +1330,8 @@ class Connection(ConnectionBase):
 
         super(Connection, self).put_file(in_path, out_path)
 
+        self.host = self.get_option('host') or self._play_context.remote_addr
+
         display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self.host)
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_native(in_path)))
@@ -1332,6 +1346,8 @@ class Connection(ConnectionBase):
 
         super(Connection, self).fetch_file(in_path, out_path)
 
+        self.host = self.get_option('host') or self._play_context.remote_addr
+
         display.vvv(u"FETCH {0} TO {1}".format(in_path, out_path), host=self.host)
 
         # need to add / if path is rooted
@@ -1343,6 +1359,7 @@ class Connection(ConnectionBase):
     def reset(self):
 
         run_reset = False
+        self.host = self.get_option('host') or self._play_context.remote_addr
 
         # If we have a persistent ssh connection (ControlPersist), we can ask it to stop listening.
         # only run the reset if the ControlPath already exists or if it isn't configured and ControlPersist is set

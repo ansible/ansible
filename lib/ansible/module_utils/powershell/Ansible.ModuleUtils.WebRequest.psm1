@@ -265,7 +265,7 @@ Function Get-AnsibleWebRequest {
     # proxy to work with, otherwise just ignore the credentials property.
     if ($null -ne $proxy) {
         if ($ProxyUseDefaultCredential) {
-            # Weird hack, $web_request.Proxy returns an IWebProxy object which only gurantees the Credentials
+            # Weird hack, $web_request.Proxy returns an IWebProxy object which only guarantees the Credentials
             # property. We cannot set UseDefaultCredentials so we just set the Credentials to the
             # DefaultCredentials in the CredentialCache which does the same thing.
             $proxy.Credentials = [System.Net.CredentialCache]::DefaultCredentials

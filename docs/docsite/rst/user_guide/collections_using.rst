@@ -137,7 +137,7 @@ All the collections are downloaded by default to the ``./collections`` folder bu
 
 Once you have downloaded the collections, the folder contains the collections specified, their dependencies, and a
 ``requirements.yml`` file. You can use this folder as is with ``ansible-galaxy collection install`` to install the
-collections on a host without access to a Galaxy or Automation Hub server.
+collections on a host without access to a Galaxy server.
 
 .. code-block:: bash
 
@@ -270,6 +270,41 @@ In addition to the ``namespace.collection_name:version`` format, you can provide
 
 Verifying against ``tar.gz`` files is not supported. If your ``requirements.yml`` contains paths to tar files or URLs for installation, you can use the ``--ignore-errors`` flag to ensure that all collections using the ``namespace.name`` format in the file are processed.
 
+Signature verification
+----------------------
+
+If a collection has been signed by the Galaxy server, the server will provide ASCII armored, detached signatures to verify the authenticity of the MANIFEST.json before using it to verify the collection's contents. You must opt into signature verification by configuring a keyring for ``ansible-galaxy`` to use and providing the path with the ``--keyring`` option.
+
+In addition to any signatures provided by the Galaxy server, signature sources can also be provided in the requirements file and on the command line. Signature sources should be URIs.
+
+Use the ``--signature`` option to verify collection name(s) provided on the CLI with an additional signature. This option can be used multiple times to provide multiple signatures.
+
+.. code-block:: bash
+
+   ansible-galaxy collection verify my_namespace.my_collection --signature https://examplehost.com/detached_signature.asc --signature file:///path/to/local/detached_signature.asc --keyring ~/.ansible/pubring.kbx
+
+Collections in a requirements file should list any additional signature sources following the collection's "signatures" key.
+
+.. code-block:: yaml
+
+   # requirements.yml
+   collections:
+     - name: ns.coll
+       version: 1.0.0
+       signatures:
+         - https://examplehost.com/detached_signature.asc
+         - file:///path/to/local/detached_signature.asc
+
+.. code-block:: bash
+
+   ansible-galaxy collection verify -r requirements.yml --keyring ~/.ansible/pubring.kbx
+
+When a collection is installed from a Galaxy server, the signatures provided by the server to verify the collection's authenticity are saved alongside the installed collections. This data is used to verify the internal consistency of the collection without querying the Galaxy server again when the ``--offline`` option is provided.
+
+.. code-block:: bash
+
+   ansible-galaxy collection verify my_namespace.my_collection --offline --keyring ~/.ansible/pubring.kbx
+
 .. _collections_using_playbook:
 
 Using collections in a Playbook
@@ -343,6 +378,13 @@ In a playbook, you can control the collections Ansible searches for modules and 
 
 The ``collections`` keyword merely creates an ordered 'search path' for non-namespaced plugin and role references. It does not install content or otherwise change Ansible's behavior around the loading of plugins or roles. Note that an FQCN is still required for non-action or module plugins (for example, lookups, filters, tests).
 
+When using the ``collections`` keyword, it is not necessary to add in ``ansible.builtin`` as part of the search list. When left omitted, the following content is available by default:
+
+1. Standard ansible modules and plugins available through ``ansible-base``/``ansible-core``
+
+2. Support for older 3rd party plugin paths
+
+In general, it is preferable to use a module or plugin's FQCN over the ``collections`` keyword and the short name for all content in ``ansible-core``
 
 Using a playbook from a collection
 ==================================
@@ -390,4 +432,5 @@ This will have an implied entry in the ``collections:`` keyword of ``my_namespac
        The development mailing list
    :ref:`communication_irc`
        How to join Ansible chat channels
-
+   `Automation Hub <https://access.redhat.com/documentation/en-us/red_hat_ansible_automation_platform/>`_
+      Learn how to use collections with Red Hat Automation Hub

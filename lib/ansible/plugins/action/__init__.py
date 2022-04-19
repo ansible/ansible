@@ -15,13 +15,16 @@ import re
 import shlex
 import stat
 import tempfile
+
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsibleAuthenticationFailure
 from ansible.executor.module_common import modify_module
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
-from ansible.module_utils.common._collections_compat import Sequence
+from ansible.module_utils.common.arg_spec import ArgumentSpecValidator
+from ansible.module_utils.errors import UnsupportedError
 from ansible.module_utils.json_utils import _filter_non_json_lines
 from ansible.module_utils.six import binary_type, string_types, text_type
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -46,7 +49,7 @@ class ActionBase(ABC):
     '''
 
     # A set of valid arguments
-    _VALID_ARGS = frozenset([])
+    _VALID_ARGS = frozenset([])  # type: frozenset[str]
 
     def __init__(self, task, connection, play_context, loader, templar, shared_loader_obj):
         self._task = task
@@ -100,9 +103,9 @@ class ActionBase(ABC):
 
         if self._task.async_val and not self._supports_async:
             raise AnsibleActionFail('async is not supported for this task.')
-        elif self._play_context.check_mode and not self._supports_check_mode:
+        elif self._task.check_mode and not self._supports_check_mode:
             raise AnsibleActionSkip('check mode is not supported for this task.')
-        elif self._task.async_val and self._play_context.check_mode:
+        elif self._task.async_val and self._task.check_mode:
             raise AnsibleActionFail('check mode and async cannot be used on same task.')
 
         # Error if invalid argument is passed
@@ -116,6 +119,56 @@ class ActionBase(ABC):
             self._make_tmp_path()
 
         return result
+
+    def validate_argument_spec(self, argument_spec=None,
+                               mutually_exclusive=None,
+                               required_together=None,
+                               required_one_of=None,
+                               required_if=None,
+                               required_by=None,
+                               ):
+        """Validate an argument spec against the task args
+
+        This will return a tuple of (ValidationResult, dict) where the dict
+        is the validated, coerced, and normalized task args.
+
+        Be cautious when directly passing ``new_module_args`` directly to a
+        module invocation, as it will contain the defaults, and not only
+        the args supplied from the task. If you do this, the module
+        should not define ``mututally_exclusive`` or similar.
+
+        This code is roughly copied from the ``validate_argument_spec``
+        action plugin for use by other action plugins.
+        """
+
+        new_module_args = self._task.args.copy()
+
+        validator = ArgumentSpecValidator(
+            argument_spec,
+            mutually_exclusive=mutually_exclusive,
+            required_together=required_together,
+            required_one_of=required_one_of,
+            required_if=required_if,
+            required_by=required_by,
+        )
+        validation_result = validator.validate(new_module_args)
+
+        new_module_args.update(validation_result.validated_parameters)
+
+        try:
+            error = validation_result.errors[0]
+        except IndexError:
+            error = None
+
+        # Fail for validation errors, even in check mode
+        if error:
+            msg = validation_result.errors.msg
+            if isinstance(error, UnsupportedError):
+                msg = f"Unsupported parameters for ({self._load_name}) module: {msg}"
+
+            raise AnsibleActionFail(msg)
+
+        return validation_result, new_module_args
 
     def cleanup(self, force=False):
         """Method to perform a clean up at the end of an action plugin execution
@@ -342,6 +395,20 @@ class ActionBase(ABC):
 
         return self.get_shell_option('admin_users', ['root'])
 
+    def _get_remote_addr(self, tvars):
+        ''' consistently get the 'remote_address' for the action plugin '''
+        remote_addr = tvars.get('delegated_vars', {}).get('ansible_host', tvars.get('ansible_host', tvars.get('inventory_hostname', None)))
+        for variation in ('remote_addr', 'host'):
+            try:
+                remote_addr = self._connection.get_option(variation)
+            except KeyError:
+                continue
+            break
+        else:
+            # plugin does not have, fallback to play_context
+            remote_addr = self._play_context.remote_addr
+        return remote_addr
+
     def _get_remote_user(self):
         ''' consistently get the 'remote_user' for the action plugin '''
         # TODO: use 'current user running ansible' as fallback when moving away from play_context
@@ -400,7 +467,7 @@ class ActionBase(ABC):
                 output = 'Authentication failure.'
             elif result['rc'] == 255 and self._connection.transport in ('ssh',):
 
-                if self._play_context.verbosity > 3:
+                if display.verbosity > 3:
                     output = u'SSH encountered an unknown error. The output was:\n%s%s' % (result['stdout'], result['stderr'])
                 else:
                     output = (u'SSH encountered an unknown error during the connection. '
@@ -415,7 +482,7 @@ class ActionBase(ABC):
                           'Failed command was: %s, exited with result %d' % (cmd, result['rc']))
             if 'stdout' in result and result['stdout'] != u'':
                 output = output + u", stdout output: %s" % result['stdout']
-            if self._play_context.verbosity > 3 and 'stderr' in result and result['stderr'] != u'':
+            if display.verbosity > 3 and 'stderr' in result and result['stderr'] != u'':
                 output += u", stderr output: %s" % result['stderr']
             raise AnsibleConnectionFailure(output)
         else:
@@ -669,7 +736,7 @@ class ActionBase(ABC):
         # create an extra round trip.
         #
         # Also note that due to the above, this can prevent the
-        # ALLOW_WORLD_READABLE_TMPFILES logic below from ever getting called. We
+        # world_readable_temp logic below from ever getting called. We
         # leave this up to the user to rectify if they have both of these
         # features enabled.
         group = self.get_shell_option('common_remote_group')
@@ -876,7 +943,7 @@ class ActionBase(ABC):
             expanded = initial_fragment
 
         if '..' in os.path.dirname(expanded).split('/'):
-            raise AnsibleError("'%s' returned an invalid relative home directory path containing '..'" % self._play_context.remote_addr)
+            raise AnsibleError("'%s' returned an invalid relative home directory path containing '..'" % self._get_remote_addr({}))
 
         return expanded
 
@@ -891,7 +958,7 @@ class ActionBase(ABC):
     def _update_module_args(self, module_name, module_args, task_vars):
 
         # set check mode in the module arguments, if required
-        if self._play_context.check_mode:
+        if self._task.check_mode:
             if not self._supports_check_mode:
                 raise AnsibleError("check mode is not supported for this operation")
             module_args['_ansible_check_mode'] = True
@@ -900,13 +967,13 @@ class ActionBase(ABC):
 
         # set no log in the module arguments, if required
         no_target_syslog = C.config.get_config_value('DEFAULT_NO_TARGET_SYSLOG', variables=task_vars)
-        module_args['_ansible_no_log'] = self._play_context.no_log or no_target_syslog
+        module_args['_ansible_no_log'] = self._task.no_log or no_target_syslog
 
         # set debug in the module arguments, if required
         module_args['_ansible_debug'] = C.DEFAULT_DEBUG
 
         # let module know we are in diff mode
-        module_args['_ansible_diff'] = self._play_context.diff
+        module_args['_ansible_diff'] = self._task.diff
 
         # let module know our verbosity
         module_args['_ansible_verbosity'] = display.verbosity
@@ -1342,7 +1409,7 @@ class ActionBase(ABC):
                 diff['after_header'] = u'dynamically generated'
                 diff['after'] = source
 
-        if self._play_context.no_log:
+        if self._task.no_log:
             if 'before' in diff:
                 diff["before"] = u""
             if 'after' in diff:

@@ -1,6 +1,8 @@
 - hosts: localhost
   vars:
     git_install: '{{ lookup("file", lookup("env", "OUTPUT_DIR") + "/git_install.json") | from_json }}'
+    openssl_install: '{{ lookup("file", lookup("env", "OUTPUT_DIR") + "/openssl_install.json") | from_json }}'
+    ws_dir: '{{ lookup("file", lookup("env", "OUTPUT_DIR") + "/ws_dir.json") | from_json }}'
   tasks:
     - name: cleanup
       include_tasks: "{{ cleanup_filename }}"
@@ -17,3 +19,8 @@
       loop:
         - "~/.ansible/collections/ansible_collections"
         - /usr/share/ansible/collections/ansible_collections
+
+    - name: Remove webserver directory
+      file:
+        path: "{{ ws_dir }}"
+        state: absent

@@ -12,7 +12,7 @@ is the same as Ansible, it is just executed in a different manner. Since
 Ansible 2.4, the ``win_dsc`` module has been added and can be used to take advantage of
 existing DSC resources when interacting with a Windows host.
 
-More details on DSC can be viewed at `DSC Overview <https://docs.microsoft.com/en-us/powershell/scripting/dsc/overview/overview>`_.
+More details on DSC can be viewed at `DSC Overview <https://docs.microsoft.com/en-us/powershell/scripting/dsc/overview?view=powershell-7.2>`_.
 
 Host Requirements
 `````````````````
@@ -33,7 +33,7 @@ on the scenario.
 Reasons for using an Ansible module over a DSC resource:
 
 * The host does not support PowerShell v5.0, or it cannot easily be upgraded
-* The DSC resource does not offer a feature present in an Ansible module. For example
+* The DSC resource does not offer a feature present in an Ansible module. For example,
   win_regedit can manage the ``REG_NONE`` property type, while the DSC
   ``Registry`` resource cannot
 * DSC resources have limited check mode support, while some Ansible modules have
@@ -57,7 +57,7 @@ and it does the job, just use DSC for that task.
 How to Use DSC?
 ```````````````
 The ``win_dsc`` module takes in a free-form of options so that it changes
-according to the resource it is managing. A list of built in resources can be
+according to the resource it is managing. A list of built-in resources can be
 found at `resources <https://docs.microsoft.com/en-us/powershell/scripting/dsc/resources/resources>`_.
 
 Using the `Registry <https://docs.microsoft.com/en-us/powershell/scripting/dsc/reference/resources/windows/registryresource>`_
@@ -78,7 +78,7 @@ resource as an example, this is the DSC definition as documented by Microsoft:
     }
 
 When defining the task, ``resource_name`` must be set to the DSC resource being
-used - in this case the ``resource_name`` should be set to ``Registry``. The
+used - in this case, the ``resource_name`` should be set to ``Registry``. The
 ``module_version`` can refer to a specific version of the DSC resource
 installed; if left blank it will default to the latest version. The other
 options are parameters that are used to define the resource, such as ``Key`` and
@@ -154,10 +154,10 @@ invocation output for the above ``Registry`` task:
     }
 
 The ``invocation.module_args`` key shows the actual values that were set as
-well as other possible values that were not set. Unfortunately this will not
+well as other possible values that were not set. Unfortunately, this will not
 show the default value for a DSC property, only what was set from the Ansible
 task. Any ``*_password`` option will be masked in the output for security
-reasons, if there are any other sensitive module options, set ``no_log: True``
+reasons; if there are any other sensitive module options, set ``no_log: True``
 on the task to stop all task output from being logged.
 
 
@@ -165,8 +165,8 @@ Property Types
 --------------
 Each DSC resource property has a type that is associated with it. Ansible
 will try to convert the defined options to the correct type during execution.
-For simple types like ``[string]`` and ``[bool]`` this is a simple operation,
-but complex types like ``[PSCredential]`` or arrays (like ``[string[]]``) this
+For simple types like ``[string]`` and ``[bool]``, this is a simple operation,
+but complex types like ``[PSCredential]`` or arrays (like ``[string[]]``)
 require certain rules.
 
 PSCredential
@@ -174,7 +174,7 @@ PSCredential
 A ``[PSCredential]`` object is used to store credentials in a secure way, but
 Ansible has no way to serialize this over JSON. To set a DSC PSCredential property,
 the definition of that parameter should have two entries that are suffixed with
-``_username`` and ``_password`` for the username and password respectively.
+``_username`` and ``_password`` for the username and password, respectively.
 For example:
 
 .. code-block:: yaml+jinja
@@ -219,14 +219,14 @@ class definition is typically located in the ``<resource name>.schema.mof``.
 HashTable Type
 ++++++++++++++
 A ``[HashTable]`` object is also a dictionary but does not have a strict set of
-keys that can/need to be defined. Like a ``[CimInstance]``, define it like a
+keys that can/need to be defined. Like a ``[CimInstance]``, define it as a
 normal dictionary value in YAML. A ``[HashTable]]`` is defined with
 ``EmbeddedInstance("MSFT_KeyValuePair")`` in a DSC resource MOF definition.
 
 Arrays
 ++++++
 Simple type arrays like ``[string[]]`` or ``[UInt32[]]`` are defined as a list
-or as a comma separated string which are then cast to their type. Using a list
+or as a comma-separated string which is then cast to their type. Using a list
 is recommended because the values are not manually parsed by the ``win_dsc``
 module before being passed to the DSC engine. For example, to define a simple
 type array in Ansible:
@@ -264,7 +264,7 @@ like this example:
       Port: 80
       IPAddress: '*'
 
-The above example, is an array with two values of the class `MSFT_xWebBindingInformation <https://github.com/dsccommunity/xWebAdministration/blob/master/source/DSCResources/MSFT_xWebSite/MSFT_xWebSite.schema.mof>`_.
+The above example is an array with two values of the class `MSFT_xWebBindingInformation <https://github.com/dsccommunity/xWebAdministration/blob/master/source/DSCResources/MSFT_xWebSite/MSFT_xWebSite.schema.mof>`_.
 When defining a ``[CimInstance[]]``, be sure to read the resource documentation
 to find out what keys to use in the definition.
 
@@ -293,10 +293,10 @@ All the values above are equal to a UTC date time of February 22nd 2019 at
 Run As Another User
 -------------------
 By default, DSC runs each resource as the SYSTEM account and not the account
-that Ansible use to run the module. This means that resources that are dynamically
+that Ansible uses to run the module. This means that resources that are dynamically
 loaded based on a user profile, like the ``HKEY_CURRENT_USER`` registry hive,
 will be loaded under the ``SYSTEM`` profile. The parameter
-``PsDscRunAsCredential`` is a parameter that can be set for every DSC resource
+``PsDscRunAsCredential`` is a parameter that can be set for every DSC resource, and
 force the DSC engine to run under a different account. As
 ``PsDscRunAsCredential`` has a type of ``PSCredential``, it is defined with the
 ``_username`` and ``_password`` suffix.
@@ -337,7 +337,7 @@ The ``Find-DscResource`` cmdlet can also be used to find custom resources. For e
     # Find all DSC resources that relate to SQL
     Find-DscResource -ModuleName "*sql*"
 
-.. Note:: DSC resources developed by Microsoft that start with ``x``, means the
+.. Note:: DSC resources developed by Microsoft that start with ``x`` means the
     resource is experimental and comes with no support.
 
 Installing a Custom Resource
@@ -346,9 +346,9 @@ There are three ways that a DSC resource can be installed on a host:
 
 * Manually with the ``Install-Module`` cmdlet
 * Using the ``win_psmodule`` Ansible module
-* Saving the module manually and copying it another host
+* Saving the module manually and copying it to another host
 
-This is an example of installing the ``xWebAdministration`` resources using
+The following is an example of installing the ``xWebAdministration`` resources using
 ``win_psmodule``:
 
 .. code-block:: yaml+jinja
@@ -371,10 +371,10 @@ can be run:
 
     Save-Module -Name xWebAdministration -Path C:\temp
 
-This will create a folder called ``xWebAdministration`` in ``C:\temp`` which
+This will create a folder called ``xWebAdministration`` in ``C:\temp``, which
 can be copied to any host. For PowerShell to see this offline resource, it must
 be copied to a directory set in the ``PSModulePath`` environment variable.
-In most cases the path ``C:\Program Files\WindowsPowerShell\Module`` is set
+In most cases, the path ``C:\Program Files\WindowsPowerShell\Module`` is set
 through this variable, but the ``win_path`` module can be used to add different
 paths.
 

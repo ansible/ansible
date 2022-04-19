@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright:  Ansible Project
@@ -55,31 +54,31 @@ seealso:
 EXAMPLES = r'''
 - hosts: localhost
   tasks:
-    - debug:
+    - ansible.builtin.debug:
         msg: play1
 
 - name: Include a play after another play
-  include: otherplays.yaml
+  ansible.builtin.include: otherplays.yaml
 
 
 - hosts: all
   tasks:
-    - debug:
+    - ansible.builtin.debug:
         msg: task1
 
     - name: Include task list in play
-      include: stuff.yaml
+      ansible.builtin.include: stuff.yaml
 
-    - debug:
+    - ansible.builtin.debug:
         msg: task10
 
 - hosts: all
   tasks:
-    - debug:
+    - ansible.builtin.debug:
         msg: task1
 
     - name: Include task list in play only if the condition is true
-      include: "{{ hostvar }}.yaml"
+      ansible.builtin.include: "{{ hostvar }}.yaml"
       static: no
       when: hostvar is defined
 '''

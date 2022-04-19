@@ -152,7 +152,7 @@ def enumerate_python_arcs(
         modules,  # type: t.Dict[str, str]
         collection_search_re,  # type: t.Optional[t.Pattern]
         collection_sub_re,  # type: t.Optional[t.Pattern]
-):  # type: (...) -> t.Generator[t.Tuple[str, t.Set[t.Tuple[int, int]]]]
+):  # type: (...) -> t.Generator[t.Tuple[str, t.Set[t.Tuple[int, int]]], None, None]
     """Enumerate Python code coverage arcs in the given file."""
     if os.path.getsize(path) == 0:
         display.warning('Empty coverage file: %s' % path, verbosity=2)
@@ -193,7 +193,7 @@ def enumerate_powershell_lines(
         path,  # type: str
         collection_search_re,  # type: t.Optional[t.Pattern]
         collection_sub_re,  # type: t.Optional[t.Pattern]
-):  # type: (...) -> t.Generator[t.Tuple[str, t.Dict[int, int]]]
+):  # type: (...) -> t.Generator[t.Tuple[str, t.Dict[int, int]], None, None]
     """Enumerate PowerShell code coverage lines in the given file."""
     if os.path.getsize(path) == 0:
         display.warning('Empty coverage file: %s' % path, verbosity=2)
@@ -298,7 +298,7 @@ class PathChecker:
     def __init__(self, args, collection_search_re=None):  # type: (CoverageConfig, t.Optional[t.Pattern]) -> None
         self.args = args
         self.collection_search_re = collection_search_re
-        self.invalid_paths = []
+        self.invalid_paths = []  # type: t.List[str]
         self.invalid_path_chars = 0
 
     def check_path(self, path):  # type: (str) -> bool

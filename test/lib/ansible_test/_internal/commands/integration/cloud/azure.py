@@ -2,13 +2,7 @@
 from __future__ import annotations
 
 import configparser
-import os
-import urllib.parse
 import typing as t
-
-from ....io import (
-    read_text_file,
-)
 
 from ....util import (
     ApplicationError,
@@ -21,10 +15,6 @@ from ....config import (
 
 from ....target import (
     IntegrationTarget,
-)
-
-from ....http import (
-    HttpClient,
 )
 
 from ....core_ci import (
@@ -40,12 +30,10 @@ from . import (
 
 class AzureCloudProvider(CloudProvider):
     """Azure cloud provider plugin. Sets up cloud resources before delegation."""
-    SHERLOCK_CONFIG_PATH = os.path.expanduser('~/.ansible-sherlock-ci.cfg')
-
     def __init__(self, args):  # type: (IntegrationConfig) -> None
         super().__init__(args)
 
-        self.aci = None
+        self.aci = None  # type: t.Optional[AnsibleCoreCI]
 
         self.uses_config = True
 
@@ -54,9 +42,6 @@ class AzureCloudProvider(CloudProvider):
         aci = self._create_ansible_core_ci()
 
         if aci.available:
-            return
-
-        if os.path.isfile(self.SHERLOCK_CONFIG_PATH):
             return
 
         super().filter(targets, exclude)
@@ -78,40 +63,19 @@ class AzureCloudProvider(CloudProvider):
         super().cleanup()
 
     def _setup_dynamic(self):  # type: () -> None
-        """Request Azure credentials through Sherlock."""
+        """Request Azure credentials through ansible-core-ci."""
         display.info('Provisioning %s cloud environment.' % self.platform, verbosity=1)
 
         config = self._read_config_template()
         response = {}
 
-        if os.path.isfile(self.SHERLOCK_CONFIG_PATH):
-            sherlock_uri = read_text_file(self.SHERLOCK_CONFIG_PATH).splitlines()[0].strip() + '&rgcount=2'
+        aci = self._create_ansible_core_ci()
 
-            parts = urllib.parse.urlparse(sherlock_uri)
-            query_string = urllib.parse.parse_qs(parts.query)
-            base_uri = urllib.parse.urlunparse(parts[:4] + ('', ''))
+        aci_result = aci.start()
 
-            if 'code' not in query_string:
-                example_uri = 'https://example.azurewebsites.net/api/sandbox-provisioning'
-                raise ApplicationError('The Sherlock URI must include the API key in the query string. Example: %s?code=xxx' % example_uri)
-
-            display.info('Initializing azure/sherlock from: %s' % base_uri, verbosity=1)
-
-            http = HttpClient(self.args)
-            result = http.get(sherlock_uri)
-
-            display.info('Started azure/sherlock from: %s' % base_uri, verbosity=1)
-
-            if not self.args.explain:
-                response = result.json()
-        else:
-            aci = self._create_ansible_core_ci()
-
-            aci_result = aci.start()
-
-            if not self.args.explain:
-                response = aci_result['azure']
-                self.aci = aci
+        if not self.args.explain:
+            response = aci_result['azure']
+            self.aci = aci
 
         if not self.args.explain:
             values = dict(
