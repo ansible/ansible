@@ -1,12 +1,14 @@
-.. _installing_the_control_node:
-.. _from_yum:
+.. _installing_distros:
 
 Installing Ansible on specific operating systems
 ================================================
 
 Follow these instructions to install the Ansible community package on a variety of operating systems.
 
-Installing Ansible on CentOS or Fedora
+.. contents::
+  :local:
+
+Installing Ansible on Fedora or CentOS 
 ----------------------------------------------
 
 On Fedora:
@@ -24,7 +26,7 @@ On CentOS:
 
 RPMs for currently supported versions of CentOS are also available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_.
 
-Ansible can manage older operating systems that contain Python 2.6 or higher.
+Ansible can manage older CentOS operating systems that contain Python 2.6 or later.
 
 .. _from_apt:
 
@@ -33,7 +35,7 @@ Installing Ansible on Ubuntu
 
 Ubuntu builds are available `in a PPA here <https://launchpad.net/~ansible/+archive/ubuntu/ansible>`_.
 
-To configure the PPA on your machine and install Ansible run these commands:
+To configure the PPA on your system and install Ansible run these commands:
 
 .. code-block:: bash
 
@@ -42,9 +44,9 @@ To configure the PPA on your machine and install Ansible run these commands:
     $ sudo add-apt-repository --yes --update ppa:ansible/ansible
     $ sudo apt install ansible
 
-.. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties". You may want to use ``apt-get`` instead of ``apt`` in older versions. Also, be aware that only newer distributions (in other words, 18.04, 18.10, and so on) have a ``-u`` or ``--update`` flag, so adjust your script accordingly.
+.. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties". You may want to use ``apt-get`` rather than ``apt`` in older versions. Also, be aware that only newer distributions (that is, 18.04, 18.10, and later) have a ``-u`` or ``--update`` flag. Adjust your script as needed.
 
-Debian/Ubuntu packages can also be built from the source checkout, run:
+You can also build Debian/Ubuntu packages from the source checkout.
 
 .. code-block:: bash
 
@@ -53,7 +55,7 @@ Debian/Ubuntu packages can also be built from the source checkout, run:
 Installing Ansible on Debian
 ----------------------------
 
-Debian users may use the same source as the Ubuntu PPA (using the following table).
+Debian users can use the same source as the Ubuntu PPA (using the following table).
 
 .. list-table::
   :header-rows: 1
@@ -67,16 +69,11 @@ Debian users may use the same source as the Ubuntu PPA (using the following tabl
   * - Debian 10 (Buster)
     - ->
     - Ubuntu 18.04 (Bionic)
-  * - Debian 9 (Stretch)
-    - ->
-    - Ubuntu 16.04 (Xenial)
-  * - Debian 8 (Jessie)
-    - ->
-    - Ubuntu 14.04 (Trusty)
+
 
 .. note::
 
-    As of Ansible 4.0.0, new releases will only be generated for Ubuntu 18.04 (Bionic) or later releases.
+    Ansiblereleases are only generated for Ubuntu 18.04 (Bionic) or later releases.
 
 Add the following line to ``/etc/apt/sources.list`` or ``/etc/apt/sources.list.d/ansible.list``:
 
@@ -105,7 +102,7 @@ Then run these commands:
 Installing Ansible on Windows
 ------------------------------
 
-See :ref:`windows_faq_ansible`
+You cannot use a Windows system for the Ansible control node. See :ref:`windows_faq_ansible`
 
 .. seealso::
 
