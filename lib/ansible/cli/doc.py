@@ -51,7 +51,7 @@ display = Display()
 
 
 TARGET_OPTIONS = C.DOCUMENTABLE_PLUGINS + ('role', 'keyword',)
-PB_OBJECTS = ['Play', 'Role', 'Block', 'Task']
+PB_OBJECTS = ['Play', 'Role', 'Block', 'Task', 'Handler']
 PB_LOADED = {}
 SNIPPETS = ['inventory', 'lookup', 'module']
 
