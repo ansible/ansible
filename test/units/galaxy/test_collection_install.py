@@ -132,7 +132,7 @@ def reset_cli_args():
     co.GlobalCLIArgs._Singleton__instance = None
 
 
-@pytest.fixture()
+@pytest.fixture(params=[{}, None], ids=["not-none-deps", "none-deps"])
 def collection_artifact(request, tmp_path_factory):
     test_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections Input'))
     namespace = 'ansible_namespace'
@@ -144,15 +144,15 @@ def collection_artifact(request, tmp_path_factory):
     call_galaxy_cli(['init', '%s.%s' % (namespace, collection), '-c', '--init-path', test_dir,
                      '--collection-skeleton', skeleton_path])
     dependencies = getattr(request, 'param', None)
-    if dependencies:
-        galaxy_yml = os.path.join(collection_path, 'galaxy.yml')
-        with open(galaxy_yml, 'rb+') as galaxy_obj:
-            existing_yaml = yaml.safe_load(galaxy_obj)
-            existing_yaml['dependencies'] = dependencies
 
-            galaxy_obj.seek(0)
-            galaxy_obj.write(to_bytes(yaml.safe_dump(existing_yaml)))
-            galaxy_obj.truncate()
+    galaxy_yml = os.path.join(collection_path, 'galaxy.yml')
+    with open(galaxy_yml, 'rb+') as galaxy_obj:
+        existing_yaml = yaml.safe_load(galaxy_obj)
+        existing_yaml['dependencies'] = dependencies
+
+        galaxy_obj.seek(0)
+        galaxy_obj.write(to_bytes(yaml.safe_dump(existing_yaml)))
+        galaxy_obj.truncate()
 
     # Create a file with +x in the collection so we can test the permissions
     execute_path = os.path.join(collection_path, 'runme.sh')
