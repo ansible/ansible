@@ -146,7 +146,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def _preprocess_with_loop(self, ds, new_ds, k, v):
         ''' take a lookup plugin name and store it correctly '''
 
-        loop_name = k.replace("with_", "")
+        loop_name = k.removeprefix("with_")
         if new_ds.get('loop') is not None or new_ds.get('loop_with') is not None:
             raise AnsibleError("duplicate loop in task: %s" % loop_name, obj=ds)
         if v is None:
@@ -241,7 +241,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             if k in ('action', 'local_action', 'args', 'delegate_to') or k == action or k == 'shell':
                 # we don't want to re-assign these values, which were determined by the ModuleArgsParser() above
                 continue
-            elif k.startswith('with_') and k.replace("with_", "") in lookup_loader:
+            elif k.startswith('with_') and k.removeprefix("with_") in lookup_loader:
                 # transform into loop property
                 self._preprocess_with_loop(ds, new_ds, k, v)
             elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
