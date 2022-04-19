@@ -1,0 +1,4 @@
+bugfixes:
+  - ansible-test - Fix ``rstcheck`` sanity test to work with newer Jinja2 releases.
+  - ansible-test - Add ``docutils < 0.18`` constraint for compatibility with the Sphinx version used for docs builds.
+  - ansible-test - Add ``rstcheck == 3.3.1`` constraint to avoid issues with later versions which are incompatible.
