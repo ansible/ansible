@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Update ``rstcheck`` constraint from ``>= 3.3.1`` to ``== 3.3.1`` to avoid breaking changes in newer releases.

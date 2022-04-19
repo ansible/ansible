@@ -1,2 +1,3 @@
 rstcheck
+docutils == 0.16  # required for sphinx compatibility
 sphinx  # required for full functionality
