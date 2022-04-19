@@ -657,46 +657,46 @@ class StrategyBase:
                             # So, per the docs, we reassign the list so the proxy picks up and
                             # notifies all other threads
                             for notification in result_item['_ansible_notify']:
-                                    found = False
-                                    # Find the handler using the above helper.  First we look up the
-                                    # dependency chain of the current task (if it's from a role), otherwise
-                                    # we just look through the list of handlers in the current play/all
-                                    # roles and use the first one that matches the notify name
-                                    target_handler = search_handler_blocks_by_name(notification, iterator._play.handlers)
-                                    if target_handler is not None:
-                                        found = True
-                                        if target_handler.notify_host(original_host):
-                                           # only send one callback per handler
-                                           self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
+                                found = False
+                                # Find the handler using the above helper.  First we look up the
+                                # dependency chain of the current task (if it's from a role), otherwise
+                                # we just look through the list of handlers in the current play/all
+                                # roles and use the first one that matches the notify name
+                                target_handler = search_handler_blocks_by_name(notification, iterator._play.handlers)
+                                if target_handler is not None:
+                                    found = True
+                                    if target_handler.notify_host(original_host):
+                                        # only send one callback per handler
+                                        # NOTE: there is race condition on handler being redefined, but this will
+                                        # only affect the sending the callback multiple times, but not actual running of handler
+                                        self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
+                                        # no need to notify play
 
-                                    for listening_handler_block in iterator._play.handlers:
-                                        for listening_handler in listening_handler_block.block:
-                                            listeners = getattr(listening_handler, 'listen', []) or []
-                                            if not listeners:
-                                                continue
+                                for listening_handler_block in iterator._play.handlers:
+                                    for listening_handler in listening_handler_block.block:
+                                        listeners = getattr(listening_handler, 'listen', []) or []
+                                        if not listeners:
+                                            continue
 
-                                            listeners = listening_handler.get_validated_value(
-                                                'listen', listening_handler._valid_attrs['listen'], listeners, handler_templar
-                                            )
-                                            if notification not in listeners:
-                                                continue
-                                            else:
-                                                found = True
-                                                iterator._play.notify_handler(notification, original_host)
-                                                if listening_handler.notify_host(original_host):
-                                                    # only send one callback per handler
-                                                    self._tqm.send_callback('v2_playbook_on_notify', listening_handler, original_host)
-
-                                    # and if none were found, then we raise an error
-                                    if not found:
-                                        if C.ERROR_ON_MISSING_HANDLER:
-                                            raise AnsibleError("The requested notification '%s' was not found as a handler name "
-                                                                "nor in any listen keyword" % notification)
+                                        listeners = listening_handler.get_validated_value(
+                                            'listen', listening_handler._valid_attrs['listen'], listeners, handler_templar
+                                        )
+                                        if notification not in listeners:
+                                            continue
                                         else:
-                                            # keep notification, handler might be created later, if not it will emit warning
-                                            iterator._play.notify_handler(notification, original_host)
-                                            # cannot use callback as that requires handler object
-                                            # self._tqm.send_callback('v2_playbook_on_notify', notification, original_host)
+                                            found = True
+                                            if listening_handler.notify_host(original_host):
+                                                # only send one callback per handler NOTE: has same race as above
+                                                self._tqm.send_callback('v2_playbook_on_notify', listening_handler, original_host)
+
+                                # and if none were found, then we raise an error
+                                if not found and C.ERROR_ON_MISSING_HANDLER:
+                                    raise AnsibleError("The requested notification '%s' was not found as a handler name "
+                                                       "nor in any listen keyword" % notification)
+                                    # warnings happen on running handlers to avoid races
+
+                                # actual queue for handlers, may redo a lot of the work abouve, but no race conditions
+                                iterator._play.notify_handler(notification, original_host)
 
                     if 'add_host' in result_item:
                         # this task added a new host (add_host module)
@@ -1065,7 +1065,7 @@ class StrategyBase:
                     # actual matching
                     for term in listening:
                         if term in remaining_keys:
-                            notified_hosts.extend(notified.get(term,[]))
+                            notified_hosts.extend(notified.get(term, []))
                             seen.add(term)
                 try:
                     result = self._do_handler_run(handler, iterator=iterator, play_context=play_context, notified_hosts=notified_hosts)
