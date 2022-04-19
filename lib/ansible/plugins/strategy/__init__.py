@@ -1084,6 +1084,9 @@ class StrategyBase:
                 if unmatched in seen:
                     continue
                 display.warning("The requested notification '%s' was not found as a handler name nor as a part of any handler's listen keyword" % unmatched)
+
+        iterator._play._notified = {}
+
         return result
 
     def _do_handler_run(self, handler, iterator, play_context, notified_hosts=None):
