@@ -9,31 +9,10 @@ The Ansible VMware collection (on `Galaxy <https://galaxy.ansible.com/community/
 .. contents::
    :local:
 
-Testing with govcsim
-====================
-
-Most of the existing modules are covered by functional tests. The tests are located `here <https://github.com/ansible-collections/community.vmware/tree/main/tests/integration/targets>`_.
-
-By default, the tests run against a vCenter API simulator called `govcsim <https://github.com/vmware/govmomi/tree/master/vcsim>`_. ``ansible-test`` will automatically pull a `govcsim container <https://quay.io/repository/ansible/vcenter-test-container>`_ and use it to set-up the test environment.
-
-You can trigger the test of a module manually with the ``ansible-test`` command. For example, to trigger ``vcenter_folder`` tests:
-
-.. code-block:: shell
-
-    source hacking/env-setup
-    ansible-test integration --python 3.7 vcenter_folder
-
-``govcsim`` is handy because it is much faster than a regular test environment. However, ``govcsim`` does not
-support all the ESXi or vCenter features.
-
-.. note::
-
-   Do not confuse ``govcsim`` with ``vcsim``. ``vcsim`` is an older and outdated version of vCenter simulator, whereas ``govcsim`` is new and written in Go language.
-
 Testing with your own infrastructure
 ====================================
 
-You can also target a regular VMware environment. This paragraph explains step by step how you can run the test-suite yourself.
+You can target a regular VMware environment. This paragraph explains step by step how you can run the test-suite yourself.
 
 Requirements
 ------------
@@ -258,5 +237,3 @@ We try to enforce the following rules in our documentation:
 - VMware, not VMWare or vmware
 - ESXi, not esxi or ESXI
 - vCenter, not vcenter or VCenter
-
-We also refer to vcsim's Go implementation with ``govcsim``. This to avoid any confusion with the outdated implementation.
