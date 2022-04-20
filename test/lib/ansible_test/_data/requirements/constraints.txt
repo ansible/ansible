@@ -25,6 +25,7 @@ ntlm-auth >= 1.3.0 # message encryption support using cryptography
 requests < 2.20.0 ; python_version < '2.7' # requests 2.20.0 drops support for python 2.6
 requests-ntlm >= 1.1.0 # message encryption support
 requests-credssp >= 0.1.0 # message encryption support
+rstcheck==3.3.1 ; python_version >= '3.5' # only used on python 3.5+
 voluptuous >= 0.11.0 # Schema recursion via Self
 openshift >= 0.6.2, < 0.9.0 # merge_type support
 virtualenv < 16.0.0 ; python_version < '2.7' # virtualenv 16.0.0 and later require python 2.7 or later
