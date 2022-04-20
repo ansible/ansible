@@ -56,7 +56,7 @@ class RstcheckTest(SanitySingleVersion):
 
         cmd = [
             find_python(python_version),
-            '-m', 'rstcheck',
+            os.path.join(SANITY_ROOT, 'rstcheck', 'rstcheck-cli.py'),
             '--report', 'warning',
             '--ignore-substitutions', ','.join(ignore_substitutions),
         ] + paths
