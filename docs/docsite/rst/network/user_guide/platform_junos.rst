@@ -117,7 +117,7 @@ Example NETCONF task
 
    - name: Backup current switch config (junos)
      junipernetworks.junos.junos_config:
-       backup: yes
+       backup: true
      register: backup_junos_location
      when: ansible_network_os == 'junipernetworks.junos.junos'
 

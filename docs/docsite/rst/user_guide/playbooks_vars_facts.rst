@@ -615,7 +615,7 @@ By default, fact gathering runs once at the beginning of each play. If you creat
       - name: Create directory for ansible custom facts
         ansible.builtin.file:
           state: directory
-          recurse: yes
+          recurse: true
           path: /etc/ansible/facts.d
 
       - name: Install custom ipmi fact

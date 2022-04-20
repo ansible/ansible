@@ -1536,8 +1536,8 @@ msgid "Ansible expects to find certain files in certain places. As you expand yo
 msgstr "Ansible では、特定の場所にある特定のファイルを見つけることを想定しています。インベントリーを拡張し、ネットワークの Playbook を作成して実行する場合は、ファイルを以下のように作業用の Ansible プロジェクトディレクトリーに整理した状態にします。"
 
 #: ../../rst/network/getting_started/intermediate_concepts.rst:33
-msgid "The ``backup`` directory and the files in it get created when you run modules like ``vyos_config`` with the ``backup: yes`` parameter."
-msgstr "``backup`` ディレクトリーと、そのディレクトリーのファイルは、``backup: yes`` パラメーターを使用した ``vyos_config`` のモジュールを実行する際に作成されます。"
+msgid "The ``backup`` directory and the files in it get created when you run modules like ``vyos_config`` with the ``backup: true`` parameter."
+msgstr "``backup`` ディレクトリーと、そのディレクトリーのファイルは、``backup: true`` パラメーターを使用した ``vyos_config`` のモジュールを実行する際に作成されます。"
 
 #: ../../rst/network/getting_started/intermediate_concepts.rst:37
 msgid "Tracking changes to inventory and playbooks: source control with git"
@@ -1773,8 +1773,8 @@ msgid "Using ``become`` for privilege escalation"
 msgstr "権限昇格に ``become`` を使用"
 
 #: ../../rst/network/getting_started/network_differences.rst:59
-msgid "Use the top-level Ansible parameter ``become: yes`` with ``become_method: enable`` to run a task, play, or playbook with escalated privileges on any network platform that supports privilege escalation. You must use either ``connection: network_cli`` or ``connection: httpapi`` with ``become: yes`` with ``become_method: enable``. If you are using ``network_cli`` to connect Ansible to your network devices, a ``group_vars`` file would look like:"
-msgstr "特権昇格をサポートする任意のネットワークプラットフォームで、昇格された特権を使用してタスク、プレイ、または Playbook を実行するには、``become_method: enable`` の Ansible 最上位パラメーター ``become: yes`` を使用します。``connection: network_cli`` または ``connection: httpapi`` を、``become: yes`` と ``become_method: enable`` とともに使用する必要があります。``network_cli`` を使用して Ansible をネットワークデバイスに接続している場合、``group_vars`` ファイルは次のようになります。"
+msgid "Use the top-level Ansible parameter ``become: yes`` with ``become_method: enable`` to run a task, play, or playbook with escalated privileges on any network platform that supports privilege escalation. You must use either ``connection: network_cli`` or ``connection: httpapi`` with ``become: true`` with ``become_method: enable``. If you are using ``network_cli`` to connect Ansible to your network devices, a ``group_vars`` file would look like:"
+msgstr "特権昇格をサポートする任意のネットワークプラットフォームで、昇格された特権を使用してタスク、プレイ、または Playbook を実行するには、``become_method: enable`` の Ansible 最上位パラメーター ``become: yes`` を使用します。``connection: network_cli`` または ``connection: httpapi`` を、``become: true`` と ``become_method: enable`` とともに使用する必要があります。``network_cli`` を使用して Ansible をネットワークデバイスに接続している場合、``group_vars`` ファイルは次のようになります。"
 
 #: ../../rst/network/getting_started/network_differences.rst:68
 msgid "For more information, see :ref:`Become and Networks<become_network>`"
@@ -2746,8 +2746,8 @@ msgid "Privilege escalation"
 msgstr "権限昇格"
 
 #: ../../rst/network/user_guide/network_best_practices_2.5.rst:129
-msgid "Certain network platforms, such as Arista EOS and Cisco IOS, have the concept of different privilege modes. Certain network modules, such as those that modify system state including users, will only work in high privilege states. Ansible supports ``become`` when using ``connection: ansible.netcommon.network_cli``. This allows privileges to be raised for the specific tasks that need them. Adding ``become: yes`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task, as shown here:"
-msgstr "Arista EOS や Cisco IOS などの特定のネットワークプラットフォームには、異なる特権モードの概念があります。ユーザーを含むシステム状態を変更するような特定のネットワークモジュールは、高特権状態でのみ動作します。Ansible は、``connection: ansible.netcommon.network_cli`` の使用時に、``become`` をサポートします。これにより、権限を必要とする特定のタスクに対して権限を設定できます。次に示すように、``become: yes`` および ``become_method: enable`` を追加すると、タスクを実行する前に特権モードに入るように Ansible に通知します。"
+msgid "Certain network platforms, such as Arista EOS and Cisco IOS, have the concept of different privilege modes. Certain network modules, such as those that modify system state including users, will only work in high privilege states. Ansible supports ``become`` when using ``connection: ansible.netcommon.network_cli``. This allows privileges to be raised for the specific tasks that need them. Adding ``become: true`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task, as shown here:"
+msgstr "Arista EOS や Cisco IOS などの特定のネットワークプラットフォームには、異なる特権モードの概念があります。ユーザーを含むシステム状態を変更するような特定のネットワークモジュールは、高特権状態でのみ動作します。Ansible は、``connection: ansible.netcommon.network_cli`` の使用時に、``become`` をサポートします。これにより、権限を必要とする特定のタスクに対して権限を設定できます。次に示すように、``become: true`` および ``become_method: enable`` を追加すると、タスクを実行する前に特権モードに入るように Ansible に通知します。"
 
 #: ../../rst/network/user_guide/network_best_practices_2.5.rst:139
 msgid "For more information, see the :ref:`using become with network modules<become_network>` guide."
@@ -3426,8 +3426,8 @@ msgid "This occurs when you attempt to run a task that requires privileged mode 
 msgstr "これは、ユーザーモードシェルで特権モードを必要とするタスクを実行しようとすると発生します。"
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:625
-msgid "Use ``connection: ansible.netcommon.network_cli`` and ``become: yes``"
-msgstr "``connection: ansible.netcommon.network_cli`` および ``become: yes`` の使用"
+msgid "Use ``connection: ansible.netcommon.network_cli`` and ``become: true``"
+msgstr "``connection: ansible.netcommon.network_cli`` および ``become: true`` の使用"
 
 #: ../../rst/network/user_guide/network_debug_troubleshooting.rst:629
 msgid "Proxy Issues"
@@ -4406,8 +4406,8 @@ msgstr "``ansible_connection: ansible.netcommon.network_cli``"
 #: ../../rst/network/user_guide/platform_ios.rst:31
 #: ../../rst/network/user_guide/platform_ironware.rst:31
 #: ../../rst/network/user_guide/platform_nxos.rst:32
-msgid "supported: use ``ansible_become: yes`` with ``ansible_become_method: enable`` and ``ansible_become_password:``"
-msgstr "サポート対象: ``ansible_become: yes`` を、``ansible_become_method: enable`` および ``ansible_become_password:`` と併用します。"
+msgid "supported: use ``ansible_become: true`` with ``ansible_become_method: enable`` and ``ansible_become_password:``"
+msgstr "サポート対象: ``ansible_become: true`` を、``ansible_become_method: enable`` および ``ansible_become_password:`` と併用します。"
 
 #: ../../rst/network/user_guide/platform_cnos.rst:35
 #: ../../rst/network/user_guide/platform_dellos10.rst:35
@@ -4538,12 +4538,12 @@ msgid "supported: |br|"
 msgstr "サポート対象: |br|"
 
 #: ../../rst/network/user_guide/platform_eos.rst:35
-msgid "use ``ansible_become: yes`` with ``ansible_become_method: enable``"
-msgstr "``ansible_become: yes`` を ``ansible_become_method: enable`` と併用します。"
+msgid "use ``ansible_become: true`` with ``ansible_become_method: enable``"
+msgstr "``ansible_become: true`` を ``ansible_become_method: enable`` と併用します。"
 
 #: ../../rst/network/user_guide/platform_eos.rst:35
-msgid "``httpapi`` uses ``ansible_become: yes`` with ``ansible_become_method: enable``"
-msgstr "``httpapi`` は、``ansible_become: yes`` を ``ansible_become_method: enable`` と併用します。"
+msgid "``httpapi`` uses ``ansible_become: true`` with ``ansible_become_method: enable``"
+msgstr "``httpapi`` は、``ansible_become: true`` を ``ansible_become_method: enable`` と併用します。"
 
 #: ../../rst/network/user_guide/platform_eos.rst:39
 #: ../../rst/network/user_guide/platform_exos.rst:35
@@ -5479,8 +5479,8 @@ msgid "Extreme VOSS is part of the `community.network <https://galaxy.ansible.co
 msgstr "Extreme VOSS は `community.network <https://galaxy.ansible.com/community/network>`_ コレクションの一部で、現在は CLI 接続のみをサポートしています。このページでは、Ansible の VOSS で ``ansible.netcommon.network_cli`` を使用する方法を詳細に説明します。"
 
 #: ../../rst/network/user_guide/platform_voss.rst:32
-msgid "supported: use ``ansible_become: yes`` with ``ansible_become_method: enable``"
-msgstr "サポート対象: ``ansible_become: yes`` を ``ansible_become_method: enable`` と併用してください。"
+msgid "supported: use ``ansible_become: true`` with ``ansible_become_method: enable``"
+msgstr "サポート対象: ``ansible_become: true`` を ``ansible_become_method: enable`` と併用してください。"
 
 #: ../../rst/network/user_guide/platform_voss.rst:41
 msgid "VOSS does not support ``ansible_connection: local``. You must use ``ansible_connection: ansible.netcommon.network_cli``."

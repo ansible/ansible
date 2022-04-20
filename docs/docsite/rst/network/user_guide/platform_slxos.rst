@@ -65,7 +65,7 @@ Example CLI task
 
    - name: Backup current switch config (slxos)
      community.network.slxos_config:
-       backup: yes
+       backup: true
      register: backup_slxos_location
      when: ansible_network_os == 'community.network.slxos'
 

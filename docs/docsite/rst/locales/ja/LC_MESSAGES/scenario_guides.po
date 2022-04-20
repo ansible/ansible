@@ -1820,8 +1820,8 @@ msgid "In the above play we defined 3 tasks and use the group ``cloud-vm`` as ta
 msgstr "上記のプレイでは、3 つのタスクを定義し、グループ ``cloud-vm`` をターゲットとして使用し、クラウド内の仮想マシンをすべて処理しますが、代わりにこれらの仮想マシンに SSH を使用するため、``delegate_to: localhost`` を使用してワークステーションからローカルに API 呼び出しを実行します。"
 
 #: ../../rst/scenario_guides/guide_cloudstack.rst:269
-msgid "In the first task, we ensure we have a running VM created with the Debian template. If the VM is already created but stopped, it would just start it. If you like to change the offering on an existing VM, you must add ``force: yes`` to the task, which would stop the VM, change the offering and start the VM again."
-msgstr "最初のタスクでは、Debian テンプレートで実行中の仮想マシンが作成されていることを確認しました。仮想マシンが作成されていて停止している場合は、開始するだけです。既存の仮想マシンでオファリングを変更する場合は ``force: yes`` をタスクに追加します。これにより、仮想マシンは停止し、オファリングを変更して再度仮想マシンを開始します。"
+msgid "In the first task, we ensure we have a running VM created with the Debian template. If the VM is already created but stopped, it would just start it. If you like to change the offering on an existing VM, you must add ``force: true`` to the task, which would stop the VM, change the offering and start the VM again."
+msgstr "最初のタスクでは、Debian テンプレートで実行中の仮想マシンが作成されていることを確認しました。仮想マシンが作成されていて停止している場合は、開始するだけです。既存の仮想マシンでオファリングを変更する場合は ``force: true`` をタスクに追加します。これにより、仮想マシンは停止し、オファリングを変更して再度仮想マシンを開始します。"
 
 #: ../../rst/scenario_guides/guide_cloudstack.rst:271
 msgid "In the second task we ensure the ports are opened if we give a public IP to the VM."

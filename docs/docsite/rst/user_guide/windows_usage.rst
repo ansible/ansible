@@ -160,7 +160,7 @@ access a folder on the same host:
         password: '{{ item.password }}'
         groups: LocalGroup
         update_password: no
-        password_never_expires: yes
+        password_never_expires: true
       loop:
       - name: User1
         password: Password1
@@ -183,7 +183,7 @@ access a folder on the same host:
     - name: Remove parent inheritance of Development folder
       win_acl_inheritance:
         path: C:\Development
-        reorganize: yes
+        reorganize: true
         state: absent
 
 Domain

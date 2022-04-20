@@ -253,7 +253,7 @@ Update args command
 
     - hosts: test
       strategy: debug
-      gather_facts: yes
+      gather_facts: true
       vars:
         pkg_name: not_exist
       tasks:

@@ -212,7 +212,7 @@ Ansible loads any file called ``main.yml`` in a role sub-directory. This sample 
       service:
         name: ntpd
         state: started
-        enabled: yes
+        enabled: true
       tags: ntp
 
 Here is an example handlers file.  As a review, handlers are only fired when certain tasks report changes, and are run at the end

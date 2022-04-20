@@ -31,7 +31,7 @@ things in your playbooks.
      - ansible.builtin.service:
          name: foo
          state: started
-         enabled: yes
+         enabled: true
 
 If you think the service may not be started, the best thing to do is request it to be started.  If the service fails to start, Ansible
 will yell appropriately. (This should not be confused with whether the service is doing something functional, which we'll show more about how to

@@ -193,7 +193,7 @@ Deprecation of top-level connection arguments
         host: "{{ inventory_hostname }}"
         username: cisco
         password: cisco
-        authorize: yes
+        authorize: true
         auth_pass: cisco
 
 Will result in:
