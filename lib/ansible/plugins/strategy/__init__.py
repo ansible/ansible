@@ -17,6 +17,8 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+
+from yaml import load
 __metaclass__ = type
 
 import cmd
@@ -971,6 +973,70 @@ class StrategyBase:
 
         return ti_copy
 
+    def _host_inc(self, included_file):
+        '''
+        Since we skip incrementing the stats when the task result is
+        first processed, we do so now for each host in the list
+        '''
+        for host in included_file._hosts:
+            self._tqm._stats.increment('ok', host.name)
+        return
+    
+    def _load_helper(self, e, included_file, iterator, file):
+        '''
+        This helper serves to condense repeated code in the below loaders.
+
+        file is a temporary variable where if True, it means it is 
+        being called from the load_file function and 
+        False is load_role function
+        '''
+        if isinstance(e, AnsibleFileNotFound):
+            reason = "Could not find or access '%s' on the Ansible Controller." % to_text(e.file_name)
+        else:
+            reason = to_text(e)
+
+        if file:
+            for r in included_file._results:
+                r._result['failed'] = True
+
+        # mark all of the hosts including this file as failed, send callbacks,
+        # and increment the stats for this host
+        for host in included_file._hosts:
+            tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=reason))
+            if file:
+                iterator.mark_host_failed(host)
+                self._tqm._failed_hosts[host.name] = True
+            self._tqm._stats.increment('failures', host.name)
+            self._tqm.send_callback('v2_runner_on_failed', tr)
+        raise AnsibleError(reason) from e    
+
+    def _load_included_role(self, included_file, iterator):
+        '''
+        Serves to load when include_role tag is used. 
+        Will raise an AnsibleError exception if there is a failure while
+        trying to include the role, like if it does not exist.
+        '''
+        try:
+            new_ir = self._copy_included_file(included_file)
+
+            block_list, tmp = new_ir.get_block_list(
+                play=iterator._play,
+                variable_manager=self._variable_manager,
+                loader=self._loader,
+            )
+
+            self._host_inc(included_file)
+
+        except AnsibleParserError:
+            raise
+        except AnsibleError as e:
+            self._load_helper(e, included_file, None, False)
+
+        self._tqm.send_callback('v2_playbook_on_include', included_file)
+        display.debug("done processing included file")
+        return block_list
+
+
     def _load_included_file(self, included_file, iterator, is_handler=False):
         '''
         Loads an included YAML file of tasks, applying the optional set of variables.
@@ -996,30 +1062,12 @@ class StrategyBase:
                 variable_manager=self._variable_manager,
             )
 
-            # since we skip incrementing the stats when the task result is
-            # first processed, we do so now for each host in the list
-            for host in included_file._hosts:
-                self._tqm._stats.increment('ok', host.name)
+            self._host_inc(included_file)
+
         except AnsibleParserError:
             raise
         except AnsibleError as e:
-            if isinstance(e, AnsibleFileNotFound):
-                reason = "Could not find or access '%s' on the Ansible Controller." % to_text(e.file_name)
-            else:
-                reason = to_text(e)
-
-            for r in included_file._results:
-                r._result['failed'] = True
-
-            # mark all of the hosts including this file as failed, send callbacks,
-            # and increment the stats for this host
-            for host in included_file._hosts:
-                tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=reason))
-                iterator.mark_host_failed(host)
-                self._tqm._failed_hosts[host.name] = True
-                self._tqm._stats.increment('failures', host.name)
-                self._tqm.send_callback('v2_runner_on_failed', tr)
-            return []
+            self._load_helper(e, included_file, iterator, True)
 
         # finally, send the callback and return the list of blocks loaded
         self._tqm.send_callback('v2_playbook_on_include', included_file)
