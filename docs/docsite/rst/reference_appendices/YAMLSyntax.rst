@@ -80,7 +80,7 @@ Ansible doesn't really use these too much, but you can also specify a boolean va
     likes_emacs: TRUE
     uses_cvs: false
 
-Use lowercase 'true' or 'false' for boolean values in dictionaries if you want to be compatible with default yamllint options.
+Use lowercase 'true' or 'false' for boolean values in dictionaries if you want to be compatible with default ansible-lint/yamllint options that follows YAML 1.2 specification.
 
 Values can span multiple lines using ``|`` or ``>``.  Spanning multiple lines using a "Literal Block Scalar" ``|`` will include the newlines and any trailing spaces.
 Using a "Folded Block Scalar" ``>`` will fold newlines to spaces; it's used to make what would otherwise be a very long line easier to read and edit.
