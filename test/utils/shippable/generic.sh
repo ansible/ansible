@@ -15,4 +15,6 @@ fi
 
 # shellcheck disable=SC2086
 ansible-test integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
-    --docker default --python "${python}"
+    --controller "docker:default,python=${python}" --target "docker:default,python=${python}" \
+    --continue-on-error
+

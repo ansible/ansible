@@ -36,5 +36,6 @@ for python_version in "${python_versions[@]}"; do
     ansible-test integration --color -v --retry-on-error "${target}" ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} ${UNSTABLE:+"$UNSTABLE"} \
         --remote-terminate "${terminate}" \
         --remote-stage "${stage}" \
-        --docker --python "${python_version}"
+        --controller "docker:default" --target "docker:default,python=${python_version}" \
+        --continue-on-error
 done
