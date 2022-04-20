@@ -110,7 +110,7 @@ We will add the following code to the file.
   - name: Test for new_option, create new user WITHOUT the attribute
     postgresql_user:
       name: test_user
-      add_attribute: no
+      add_attribute: false
     register: result
 
   - name: Check the module returns what we expect

@@ -28,7 +28,7 @@ To demonstrate the concept of what a role is, the example ``playbook.yml`` below
    - name: configure cisco routers
      hosts: routers
      connection: ansible.netcommon.network_cli
-     gather_facts: no
+     gather_facts: false
      vars:
        dns: "8.8.8.8 8.8.4.4"
 
@@ -136,7 +136,7 @@ Finally, modify the original Ansible Playbook to remove the ``tasks`` and ``vars
    - name: configure cisco routers
      hosts: routers
      connection: ansible.netcommon.network_cli
-     gather_facts: no
+     gather_facts: false
 
      roles:
        - system-demo
@@ -212,7 +212,7 @@ Add a new ``vars`` section to the playbook to override the default behavior (whe
    - name: configure cisco routers
      hosts: routers
      connection: ansible.netcommon.network_cli
-     gather_facts: no
+     gather_facts: false
      vars:
        dns: 1.1.1.1
      roles:

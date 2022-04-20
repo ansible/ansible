@@ -537,7 +537,7 @@ By default, Ansible gathers facts at the beginning of each play. If you do not n
 .. code-block:: yaml
 
     - hosts: whatever
-      gather_facts: no
+      gather_facts: false
 
 Adding custom facts
 -------------------

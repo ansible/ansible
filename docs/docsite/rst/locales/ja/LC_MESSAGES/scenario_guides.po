@@ -157,8 +157,8 @@ msgid "Gathering facts"
 msgstr "ファクトの収集"
 
 #: ../../rst/scenario_guides/guide_aci.rst:114
-msgid "Because we run the modules on the Ansible controller gathering facts will not work. That is why when using these ACI modules it is mandatory to disable facts gathering. You can do this globally in your ``ansible.cfg`` or by adding ``gather_facts: no`` to every play."
-msgstr "Ansible コントローラーでモジュールを実行するため、ファクトの収集は機能しません。そのため、これらの ACI モジュールを使用する場合はファクトの収集を無効にする必要があります。これは、``ansible.cfg`` でグローバルに行うか、すべてのプレイに ``gather_facts: no`` を追加して行うことができます。"
+msgid "Because we run the modules on the Ansible controller gathering facts will not work. That is why when using these ACI modules it is mandatory to disable facts gathering. You can do this globally in your ``ansible.cfg`` or by adding ``gather_facts: false`` to every play."
+msgstr "Ansible コントローラーでモジュールを実行するため、ファクトの収集は機能しません。そのため、これらの ACI モジュールを使用する場合はファクトの収集を無効にする必要があります。これは、``ansible.cfg`` でグローバルに行うか、すべてのプレイに ``gather_facts: false`` を追加して行うことができます。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:128
 msgid "Delegating to localhost"
@@ -312,8 +312,8 @@ msgid "HTTP redirects can redirect from HTTP to HTTPS so ensure that the proxy e
 msgstr "HTTP リダイレクトは HTTP から HTTPS へリダイレクトできるため、両方のプロトコルのプロキシー環境が正しく設定されていることを確認します。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:238
-msgid "If proxy support is not needed, but the system may have it configured nevertheless, use the parameter ``use_proxy: no`` to avoid accidental system proxy usage."
-msgstr "プロキシーサポートが必要なくても、システムがそれを設定する可能性がある場合は、``use_proxy: no`` パラメーターを使用して、誤ったシステムプロキシーの使用を回避します。"
+msgid "If proxy support is not needed, but the system may have it configured nevertheless, use the parameter ``use_proxy: false`` to avoid accidental system proxy usage."
+msgstr "プロキシーサポートが必要なくても、システムがそれを設定する可能性がある場合は、``use_proxy: false`` パラメーターを使用して、誤ったシステムプロキシーの使用を回避します。"
 
 #: ../../rst/scenario_guides/guide_aci.rst:240
 msgid "Selective proxy support using the ``no_proxy`` environment variable is also supported."
@@ -4650,8 +4650,8 @@ msgid "It's common to run a test environment without a proper SSL certificate co
 msgstr "適切な SSL 証明書設定なしでテスト環境を実行することが一般的です。"
 
 #: ../../rst/scenario_guides/vmware_rest_scenarios/authentication.rst:46
-msgid "To ignore the SSL error, you can use the ``vcenter_validate_certs: no`` argument or ``export VMWARE_VALIDATE_CERTS=no`` to set the environment variable."
-msgstr "SSL エラーを無視するには、``vcenter_validate_certs: no`` 引数または ``export VMWARE_VALIDATE_CERTS=no`` を使用して環境変数を設定します。"
+msgid "To ignore the SSL error, you can use the ``vcenter_validate_certs: false`` argument or ``export VMWARE_VALIDATE_CERTS=no`` to set the environment variable."
+msgstr "SSL エラーを無視するには、``vcenter_validate_certs: false`` 引数または ``export VMWARE_VALIDATE_CERTS=no`` を使用して環境変数を設定します。"
 
 #: ../../rst/scenario_guides/vmware_rest_scenarios/collect_information.rst:5
 msgid "How to collect information about your environment"

@@ -55,7 +55,7 @@ want certain steps to execute in normal mode even when the ``--check`` flag is u
 
    tasks:
      - ansible.builtin.script: verify.sh
-       check_mode: no
+       check_mode: false
 
 Modules That Are Useful for Testing
 ```````````````````````````````````

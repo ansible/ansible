@@ -203,9 +203,9 @@ For example, to define a ``[CimInstance]`` value in Ansible:
 
     # [CimInstance]AuthenticationInfo == MSFT_xWebAuthenticationInformation
     AuthenticationInfo:
-      Anonymous: no
+      Anonymous: false
       Basic: true
-      Digest: no
+      Digest: false
       Windows: true
 
 In the above example, the CIM instance is a representation of the class
@@ -487,9 +487,9 @@ Setup IIS Website
           Port: 8080
           IPAddress: '*'
         AuthenticationInfo:
-          Anonymous: no
+          Anonymous: false
           Basic: true
-          Digest: no
+          Digest: false
           Windows: true
 
 .. seealso::

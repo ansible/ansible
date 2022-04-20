@@ -43,5 +43,5 @@ Ignore SSL certificate error
 
 It's common to run a test environment without a proper SSL certificate configuration.
 
-To ignore the SSL error, you can use the ``vcenter_validate_certs: no`` argument or
+To ignore the SSL error, you can use the ``vcenter_validate_certs: false`` argument or
 ``export VMWARE_VALIDATE_CERTS=no`` to set the environment variable. 

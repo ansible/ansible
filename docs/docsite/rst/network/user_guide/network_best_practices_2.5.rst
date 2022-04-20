@@ -188,7 +188,7 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
 
    - name: "Demonstrate connecting to switches"
      hosts: switches
-     gather_facts: no
+     gather_facts: false
 
      tasks:
        ###

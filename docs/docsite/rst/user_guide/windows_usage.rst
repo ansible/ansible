@@ -159,7 +159,7 @@ access a folder on the same host:
         name: '{{ item.name }}'
         password: '{{ item.password }}'
         groups: LocalGroup
-        update_password: no
+        update_password: false
         password_never_expires: true
       loop:
       - name: User1
@@ -199,7 +199,7 @@ are created:
         name: '{{ item.name }}'
         upn: '{{ item.name }}@MY.DOMAIN.COM'
         password: '{{ item.password }}'
-        password_never_expires: no
+        password_never_expires: false
         groups:
         - Test User
         - Application

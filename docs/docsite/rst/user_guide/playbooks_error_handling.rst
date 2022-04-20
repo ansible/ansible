@@ -54,7 +54,7 @@ And at the playbook level:
 
       - name: This executes, fails, and ends the play for this host
         ansible.builtin.command: /bin/true
-        ignore_unreachable: no
+        ignore_unreachable: false
 
 .. _resetting_unreachable:
 

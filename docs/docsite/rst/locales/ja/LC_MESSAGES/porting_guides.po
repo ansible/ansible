@@ -3010,8 +3010,8 @@ msgid "Tests succeeded/failed"
 msgstr "テストの成功/失敗"
 
 #: ../../rst/porting_guides/porting_guide_2.4.rst:178
-msgid "Prior to Ansible version 2.4, a task return code of ``rc`` would override a return code of ``failed``. In version 2.4,  both ``rc`` and ``failed`` are used to calculate the state of the task. Because of this, test plugins ``succeeded``/``failed``` have also been changed. This means that overriding a task failure with ``failed_when: no`` will result in ``succeeded``/``failed`` returning ``True``/``False``. For example::"
-msgstr "Ansible バージョン 2.4 以前では、タスクのリターンコードが ``rc`` の場合は、リターンコードが ``failed`` の場合よりも優先されていました。バージョン 2.4 では、タスクの状態を計算するのに ``rc`` と``failed`` の両方が使用されます。このため、テスト用プラグイン ``succeeded``/``failed``` も変更しました。これは、``failed_when: no`` でタスクの失敗を上書きすると ``succeeded``/``failed`` が ``True``/``False`` となります。たとえば次のようになります。"
+msgid "Prior to Ansible version 2.4, a task return code of ``rc`` would override a return code of ``failed``. In version 2.4,  both ``rc`` and ``failed`` are used to calculate the state of the task. Because of this, test plugins ``succeeded``/``failed``` have also been changed. This means that overriding a task failure with ``failed_when: false`` will result in ``succeeded``/``failed`` returning ``True``/``False``. For example::"
+msgstr "Ansible バージョン 2.4 以前では、タスクのリターンコードが ``rc`` の場合は、リターンコードが ``failed`` の場合よりも優先されていました。バージョン 2.4 では、タスクの状態を計算するのに ``rc`` と``failed`` の両方が使用されます。このため、テスト用プラグイン ``succeeded``/``failed``` も変更しました。これは、``failed_when: false`` でタスクの失敗を上書きすると ``succeeded``/``failed`` が ``True``/``False`` となります。たとえば次のようになります。"
 
 #: ../../rst/porting_guides/porting_guide_2.4.rst:196
 msgid "As we can see from the example above, in Ansible 2.3 ``succeeded``/``failed`` only checked the value of ``rc``."
@@ -3558,8 +3558,8 @@ msgid "We suggest you read this page along with `Ansible Changelog for 2.6 <http
 msgstr "必要な更新について理解するには、このページと併せて「`Ansible Changelog for 2.6 <https://github.com/ansible/ansible/blob/stable-2.6/changelogs/CHANGELOG-v2.6.rst>`_」を参照してください。"
 
 #: ../../rst/porting_guides/porting_guide_2.6.rst:20
-msgid "The deprecated task option ``always_run`` has been removed, please use ``check_mode: no`` instead."
-msgstr "非推奨のタスクオプション ``always_run`` が削除されました。代わりに ``check_mode: no`` を使用してください。"
+msgid "The deprecated task option ``always_run`` has been removed, please use ``check_mode: false`` instead."
+msgstr "非推奨のタスクオプション ``always_run`` が削除されました。代わりに ``check_mode: false`` を使用してください。"
 
 #: ../../rst/porting_guides/porting_guide_2.6.rst:25
 msgid "In the :ref:`nxos_igmp_interface module<nxos_igmp_interface_module>`, ``oif_prefix`` and ``oif_source`` properties are deprecated. Use ``ois_ps`` parameter with a dictionary of prefix and source to values instead."
@@ -4395,8 +4395,8 @@ msgid "The ``na_ontap_cluster_peer`` module has replaced ``source_intercluster_l
 msgstr "``na_ontap_cluster_peer`` モジュールでは、文字列オプションの ``source_intercluster_lif`` および ``dest_intercluster_lif`` が、リストオプションの ``source_intercluster_lifs`` および ``dest_intercluster_lifs`` に置き換わりました。"
 
 #: ../../rst/porting_guides/porting_guide_2.8.rst:445
-msgid "The ``modprobe`` module now detects kernel builtins. Previously, attempting to remove (with ``state: absent``) a builtin kernel module succeeded without any error message because ``modprobe`` did not detect the module as ``present``. Now, ``modprobe`` will fail if a kernel module is builtin and ``state: absent`` (with an error message from the modprobe binary like ``modprobe: ERROR: Module nfs is builtin.``), and it will succeed without reporting changed if ``state: present``. Any playbooks that are using ``changed_when: no`` to mask this quirk can safely remove that workaround. To get the previous behavior when applying ``state: absent`` to a builtin kernel module, use ``failed_when: false`` or ``ignore_errors: true`` in your playbook."
-msgstr "``modprobe`` モジュールがカーネルビルドインを検出するようになりました。これまでは、``modprobe`` がそのモジュールを ``present`` として検出していなかったため、組み込みカーネルモジュールを (``state: absent`` で) 削除しようとすると、成功してエラーメッセージも表示されませんでした。現在では、``modprobe`` はカーネルモジュールが組み込まれて ``state: absent`` の場合は失敗し (modprobe バイナリーから ``modprobe: ERROR: Module nfs is builtin.`` のようなエラーメッセージが表示されます)、``state: present`` の場合は変更を報告せずに成功します。この特異な動作を隠すために ``changed_when: no`` を使用している Playbook は、その回避策を削除しても問題はありません。組み込みカーネルモジュールに ``state: absent`` を適用して以前の動作を得るには、Playbook で ``failed_when: false`` または ``ignore_errors: true`` を使用してください。"
+msgid "The ``modprobe`` module now detects kernel builtins. Previously, attempting to remove (with ``state: absent``) a builtin kernel module succeeded without any error message because ``modprobe`` did not detect the module as ``present``. Now, ``modprobe`` will fail if a kernel module is builtin and ``state: absent`` (with an error message from the modprobe binary like ``modprobe: ERROR: Module nfs is builtin.``), and it will succeed without reporting changed if ``state: present``. Any playbooks that are using ``changed_when: false`` to mask this quirk can safely remove that workaround. To get the previous behavior when applying ``state: absent`` to a builtin kernel module, use ``failed_when: false`` or ``ignore_errors: true`` in your playbook."
+msgstr "``modprobe`` モジュールがカーネルビルドインを検出するようになりました。これまでは、``modprobe`` がそのモジュールを ``present`` として検出していなかったため、組み込みカーネルモジュールを (``state: absent`` で) 削除しようとすると、成功してエラーメッセージも表示されませんでした。現在では、``modprobe`` はカーネルモジュールが組み込まれて ``state: absent`` の場合は失敗し (modprobe バイナリーから ``modprobe: ERROR: Module nfs is builtin.`` のようなエラーメッセージが表示されます)、``state: present`` の場合は変更を報告せずに成功します。この特異な動作を隠すために ``changed_when: false`` を使用している Playbook は、その回避策を削除しても問題はありません。組み込みカーネルモジュールに ``state: absent`` を適用して以前の動作を得るには、Playbook で ``failed_when: false`` または ``ignore_errors: true`` を使用してください。"
 
 #: ../../rst/porting_guides/porting_guide_2.8.rst:453
 msgid "The ``digital_ocean`` module has been deprecated in favor of modules that do not require external dependencies. This allows for more flexibility and better module support."
@@ -5983,8 +5983,8 @@ msgid "The deprecated ``force`` option in ``win_firewall_rule`` has been removed
 msgstr "``win_firewall_rule`` の非推奨の ``force`` オプションは削除されました。"
 
 #: ../../rst/porting_guides/porting_guide_2.9.rst:707
-msgid ":ref:`openssl_certificate <openssl_certificate_module>`'s ``ownca`` provider creates authority key identifiers if not explicitly disabled with ``ownca_create_authority_key_identifier: no``. This is only the case for the ``cryptography`` backend, which is selected by default if the ``cryptography`` library is available."
-msgstr ":ref:`openssl_certificate <openssl_certificate_module>` の ``ownca`` プロバイダーは、``ownca_create_authority_key_identifier: no`` で明示的に無効にしていなければ、権限キーの識別子を作成します。これは、``cryptography`` バックエンドの場合のみで、``cryptography`` ライブラリーが利用可能な場合はデフォルトで選択されます。"
+msgid ":ref:`openssl_certificate <openssl_certificate_module>`'s ``ownca`` provider creates authority key identifiers if not explicitly disabled with ``ownca_create_authority_key_identifier: false``. This is only the case for the ``cryptography`` backend, which is selected by default if the ``cryptography`` library is available."
+msgstr ":ref:`openssl_certificate <openssl_certificate_module>` の ``ownca`` プロバイダーは、``ownca_create_authority_key_identifier: false`` で明示的に無効にしていなければ、権限キーの識別子を作成します。これは、``cryptography`` バックエンドの場合のみで、``cryptography`` ライブラリーが利用可能な場合はデフォルトで選択されます。"
 
 #: ../../rst/porting_guides/porting_guide_2.9.rst:708
 msgid ":ref:`openssl_certificate <openssl_certificate_module>`'s ``ownca`` and ``selfsigned`` providers create subject key identifiers if not explicitly disabled with ``ownca_create_subject_key_identifier: never_create`` resp. ``selfsigned_create_subject_key_identifier: never_create``. If a subject key identifier is provided by the CSR, it is taken; if not, it is created from the public key. This is only the case for the ``cryptography`` backend, which is selected by default if the ``cryptography`` library is available."

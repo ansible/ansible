@@ -114,7 +114,7 @@ While all items listed here will show a deprecation warning message, they still 
 * Using dictionary variables to set all task parameters is unsafe and will be removed in a future version. For example::
 
     - hosts: localhost
-      gather_facts: no
+      gather_facts: false
       vars:
         debug_params:
           msg: "hello there"
