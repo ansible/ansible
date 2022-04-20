@@ -350,14 +350,16 @@ class StrategyModule(StrategyBase):
                         # included hosts get the task list while those excluded get an equal-length
                         # list of noop tasks, to make sure that they continue running in lock-step
                         try:
+                            print(included_file)
                             if included_file._is_role:
-                                new_ir = self._copy_included_file(included_file)
+                                # new_ir = self._copy_included_file(included_file)
 
-                                new_blocks, handler_blocks = new_ir.get_block_list(
-                                    play=iterator._play,
-                                    variable_manager=self._variable_manager,
-                                    loader=self._loader,
-                                )
+                                # new_blocks, handler_blocks = new_ir.get_block_list(
+                                #     play=iterator._play,
+                                #     variable_manager=self._variable_manager,
+                                #     loader=self._loader,
+                                # )
+                                new_blocks = self._load_included_role(included_file, iterator=iterator)
                             else:
                                 new_blocks = self._load_included_file(included_file, iterator=iterator)
 
@@ -384,6 +386,7 @@ class StrategyModule(StrategyBase):
                         except AnsibleParserError:
                             raise
                         except AnsibleError as e:
+                            display.error(to_text(e), wrap_text=False)
                             for r in included_file._results:
                                 r._result['failed'] = True
 
