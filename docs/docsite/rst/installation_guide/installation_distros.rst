@@ -3,7 +3,9 @@
 Installing Ansible on specific operating systems
 ================================================
 
-Follow these instructions to install the Ansible community package on a variety of operating systems.
+The ``ansible`` package can always be :ref:`installed from PyPI using pip <intro_installation_guide>` on most systems but it is also packaged and maintained by the community for a variety of Linux distributions.
+
+The following instructions will guide you through installing the ``ansible`` package with your preferred distribution's package manager.
 
 .. contents::
   :local:
@@ -26,7 +28,6 @@ On CentOS:
 
 RPMs for currently supported versions of CentOS are also available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_.
 
-Ansible can manage older CentOS operating systems that contain Python 2.6 or later.
 
 .. _from_apt:
 
@@ -46,11 +47,8 @@ To configure the PPA on your system and install Ansible run these commands:
 
 .. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties". You may want to use ``apt-get`` rather than ``apt`` in older versions. Also, be aware that only newer distributions (that is, 18.04, 18.10, and later) have a ``-u`` or ``--update`` flag. Adjust your script as needed.
 
-You can also build Debian/Ubuntu packages from the source checkout.
 
-.. code-block:: bash
 
-    $ make deb
 
 Installing Ansible on Debian
 ----------------------------
@@ -73,7 +71,7 @@ Debian users can use the same source as the Ubuntu PPA (using the following tabl
 
 .. note::
 
-    Ansiblereleases are only generated for Ubuntu 18.04 (Bionic) or later releases.
+    Ansible releases are only built for Ubuntu 18.04 (Bionic) or later releases.
 
 Add the following line to ``/etc/apt/sources.list`` or ``/etc/apt/sources.list.d/ansible.list``:
 
