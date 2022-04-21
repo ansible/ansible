@@ -651,6 +651,7 @@
     - namespace8
     - namespace9
 
+# test --ignore-signature-status-code extends ANSIBLE_GALAXY_IGNORE_SIGNATURE_STATUS_CODES env var
 - name: install collections with only one valid signature by ignoring the other errors
   command: ansible-galaxy install -r {{ req_file }} {{ cli_opts }} {{ galaxy_verbosity }} --ignore-signature-status-code FAILURE
   register: install_req
@@ -688,6 +689,60 @@
     - (install_req_actual.results[0].content | b64decode | from_json).collection_info.version == '1.0.0'
     - (install_req_actual.results[1].content | b64decode | from_json).collection_info.version == '1.0.0'
     - (install_req_actual.results[2].content | b64decode | from_json).collection_info.version == '1.0.0'
+  vars:
+    install_stderr: "{{ install_req.stderr | regex_replace('\\n', ' ') }}"
+
+# test --ignore-signature-status-code passed multiple times
+- name: reinstall collections with only one valid signature by ignoring the other errors
+  command: ansible-galaxy install -r {{ req_file }} {{ cli_opts }} {{ galaxy_verbosity }} {{ ignore_errors }}
+  register: install_req
+  vars:
+    req_file: "{{ galaxy_dir }}/ansible_collections/requirements.yaml"
+    cli_opts: "-s {{ test_name }} --keyring {{ keyring }} --force"
+    keyring: "{{ gpg_homedir }}/pubring.kbx"
+    ignore_errors: "--ignore-signature-status-code BADSIG --ignore-signature-status-code FAILURE"
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
+
+- name: assert invalid signature is not fatal with ansible-galaxy install - {{ test_name }}
+  assert:
+    that:
+    - install_req is success
+    - '"Installing ''namespace7.name:1.0.0'' to" in install_req.stdout'
+    - '"Signature verification failed for ''namespace7.name'' (return code 1)" not in install_req.stdout'
+    - '"Not installing namespace7.name because GnuPG signature verification failed." not in install_stderr'
+    - '"Installing ''namespace8.name:1.0.0'' to" in install_req.stdout'
+    - '"Installing ''namespace9.name:1.0.0'' to" in install_req.stdout'
+  vars:
+    install_stderr: "{{ install_req.stderr | regex_replace('\\n', ' ') }}"
+
+# test --ignore-signature-status-code passed once with a list
+- name: reinstall collections with only one valid signature by ignoring the other errors
+  command: ansible-galaxy install -r {{ req_file }} {{ cli_opts }} {{ galaxy_verbosity }} {{ ignore_errors }}
+  register: install_req
+  vars:
+    req_file: "{{ galaxy_dir }}/ansible_collections/requirements.yaml"
+    cli_opts: "-s {{ test_name }} --keyring {{ keyring }} --force"
+    keyring: "{{ gpg_homedir }}/pubring.kbx"
+    ignore_errors: "--ignore-signature-status-code BADSIG FAILURE"
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
+    ANSIBLE_NOCOLOR: True
+    ANSIBLE_FORCE_COLOR: False
+
+- name: assert invalid signature is not fatal with ansible-galaxy install - {{ test_name }}
+  assert:
+    that:
+    - install_req is success
+    - '"Installing ''namespace7.name:1.0.0'' to" in install_req.stdout'
+    - '"Signature verification failed for ''namespace7.name'' (return code 1)" not in install_req.stdout'
+    - '"Not installing namespace7.name because GnuPG signature verification failed." not in install_stderr'
+    - '"Installing ''namespace8.name:1.0.0'' to" in install_req.stdout'
+    - '"Installing ''namespace9.name:1.0.0'' to" in install_req.stdout'
   vars:
     install_stderr: "{{ install_req.stderr | regex_replace('\\n', ' ') }}"
 

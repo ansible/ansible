@@ -472,7 +472,7 @@ class GalaxyCLI(CLI):
                                  'Descriptions for the choices can be seen at L(https://github.com/gpg/gnupg/blob/master/doc/DETAILS#general-status-codes).'
         verify_parser.add_argument('--required-valid-signature-count', dest='required_valid_signature_count', type=validate_signature_count,
                                    help=valid_signature_count_help, default=C.GALAXY_REQUIRED_VALID_SIGNATURE_COUNT)
-        verify_parser.add_argument('--ignore-signature-status-code', dest='ignore_gpg_errors', type=str, action='append',
+        verify_parser.add_argument('--ignore-signature-status-code', dest='ignore_gpg_errors', type=str, action='extend', nargs='+',
                                    help=ignore_gpg_status_help, default=C.GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES,
                                    choices=list(GPG_ERROR_MAP.keys()))
 
@@ -533,7 +533,7 @@ class GalaxyCLI(CLI):
                                              'collection name (mutually exclusive with --requirements-file).')
             install_parser.add_argument('--required-valid-signature-count', dest='required_valid_signature_count', type=validate_signature_count,
                                         help=valid_signature_count_help, default=C.GALAXY_REQUIRED_VALID_SIGNATURE_COUNT)
-            install_parser.add_argument('--ignore-signature-status-code', dest='ignore_gpg_errors', type=str, action='append',
+            install_parser.add_argument('--ignore-signature-status-code', dest='ignore_gpg_errors', type=str, action='extend', nargs='+',
                                         help=ignore_gpg_status_help, default=C.GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES,
                                         choices=list(GPG_ERROR_MAP.keys()))
             install_parser.add_argument('--offline', dest='offline', action='store_true', default=False,
@@ -557,7 +557,7 @@ class GalaxyCLI(CLI):
                                             help='Disable GPG signature verification when installing collections from a Galaxy server')
                 install_parser.add_argument('--required-valid-signature-count', dest='required_valid_signature_count', type=validate_signature_count,
                                             help=valid_signature_count_help, default=C.GALAXY_REQUIRED_VALID_SIGNATURE_COUNT)
-                install_parser.add_argument('--ignore-signature-status-code', dest='ignore_gpg_errors', type=str, action='append',
+                install_parser.add_argument('--ignore-signature-status-code', dest='ignore_gpg_errors', type=str, action='extend', nargs='+',
                                             help=ignore_gpg_status_help, default=C.GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES,
                                             choices=list(GPG_ERROR_MAP.keys()))
 

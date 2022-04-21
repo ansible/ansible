@@ -1,0 +1,6 @@
+bugfixes:
+  - >-
+    ansible-galaxy - Improve ignoring multiple signature error status codes on the command line
+    when installing or verifying collections. A space-separated list of error codes can follow
+    --ignore-signature-status-code in addition to specifying --ignore-signature-status-code
+    multiple times (for example, ``--ignore-signature-status-code NO_PUBKEY UNEXPECTED``).
