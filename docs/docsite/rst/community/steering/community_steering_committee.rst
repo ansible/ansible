@@ -35,6 +35,8 @@ The following table lists the current Steering Committee members. See :ref:`stee
   +------------------+---------------+-------------+
   | Name             | GitHub        | Start year  |
   +==================+===============+=============+
+  | Alexei Znamensky | russoz        | 2022        |
+  +------------------+---------------+-------------+
   | Alicia Cozine    | acozine       | 2021        |
   +------------------+---------------+-------------+
   | Andrew Klychkov  | Andersson007  | 2021        |
