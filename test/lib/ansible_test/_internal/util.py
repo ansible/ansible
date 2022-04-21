@@ -298,6 +298,8 @@ def raw_command(
     elif data is not None:
         stdin = subprocess.PIPE
         communicate = True
+    else:
+        stdin = subprocess.DEVNULL
 
     if stdout:
         communicate = True
