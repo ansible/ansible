@@ -816,7 +816,7 @@ The native jinja2 functionality actually allows us to return full Python objects
 
   Native jinja2 functionality is not needed when ``regex_search`` is used as an intermediate result that is then compared to the jinja2 ``none`` test.
 
-  .. code-block:: Jinja2
+  .. code-block:: Jinja
 
      {{ 'ansible' | regex_search('foobar') is none }}
 
