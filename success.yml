@@ -1,0 +1,11 @@
+- name: Reproducer that does not fail
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: A successful task
+      debug:
+        msg: Hello o/
+
+    - name: Include a role that does not exist
+      include_role:
+        name: does_not_exist

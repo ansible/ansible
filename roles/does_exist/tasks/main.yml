@@ -1,0 +1,8 @@
+  - name: does_exist inside role directory
+    my_test:
+      name: 'hello'
+      new: true
+    register: testout
+  - name: dump test output
+    debug:
+      msg: '{{ testout }}'
