@@ -279,7 +279,7 @@ def docker_pull(args, image):  # type: (EnvironmentConfig, str) -> None
 
 def docker_cp_to(args, container_id, src, dst):  # type: (EnvironmentConfig, str, str, str) -> None
     """Copy a file to the specified container."""
-    docker_command(args, ['cp', src, '%s:%s' % (container_id, dst)])
+    docker_command(args, ['cp', src, '%s:%s' % (container_id, dst)], capture=True)
 
 
 def docker_run(
