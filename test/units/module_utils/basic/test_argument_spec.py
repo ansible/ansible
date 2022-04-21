@@ -709,3 +709,16 @@ def test_no_log_none(stdin, capfd):
     # makes it into am.no_log_values. Instead we can check for the warning
     # emitted by am._log_invocation.
     assert len(get_warning_messages()) > 0
+
+
+@pytest.mark.parametrize("stdin", [{"pass": "testing"}], indirect=["stdin"])
+def test_no_log_alias(stdin, capfd):
+    """Given module parameters that use an alias for a parameter that matches
+    PASSWORD_MATCH and has no_log=True set, a warning should not be issued.
+    """
+    arg_spec = {
+        "other_pass": {"no_log": True, "aliases": ["pass"]},
+    }
+    am = basic.AnsibleModule(arg_spec)
+
+    assert len(get_warning_messages()) == 0
