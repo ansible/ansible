@@ -502,6 +502,7 @@ class AnsibleModule(object):
         self.validation_result = self.validator.validate(self.params)
         self.params.update(self.validation_result.validated_parameters)
         self.no_log_values.update(self.validation_result._no_log_values)
+        self.aliases.update(self.validation_result._aliases)
 
         try:
             error = self.validation_result.errors[0]

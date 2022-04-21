@@ -61,6 +61,7 @@ class ValidationResult:
         self._validated_parameters = deepcopy(parameters)
         self._deprecations = []
         self._warnings = []
+        self._aliases = {}
         self.errors = AnsibleValidationErrorMultiple()
         """
         :class:`~ansible.module_utils.errors.AnsibleValidationErrorMultiple` containing all
@@ -180,12 +181,11 @@ class ArgumentSpecValidator:
         alias_warnings = []
         alias_deprecations = []
         try:
-            aliases = _handle_aliases(self.argument_spec, result._validated_parameters, alias_warnings, alias_deprecations)
+            result._aliases.update(_handle_aliases(self.argument_spec, result._validated_parameters, alias_warnings, alias_deprecations))
         except (TypeError, ValueError) as e:
-            aliases = {}
             result.errors.append(AliasError(to_native(e)))
 
-        legal_inputs = _get_legal_inputs(self.argument_spec, result._validated_parameters, aliases)
+        legal_inputs = _get_legal_inputs(self.argument_spec, result._validated_parameters, result._aliases)
 
         for option, alias in alias_warnings:
             result._warnings.append({'option': option, 'alias': alias})
