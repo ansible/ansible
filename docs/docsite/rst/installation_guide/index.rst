@@ -9,5 +9,6 @@ Welcome to the Ansible Installation Guide!
    :maxdepth: 2
 
    intro_installation
+   installation_distros
    intro_configuration
 
