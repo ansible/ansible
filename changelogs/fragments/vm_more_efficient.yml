@@ -1,0 +1,2 @@
+bugfixes:
+  - variablemanager, more efficient read of vars files
