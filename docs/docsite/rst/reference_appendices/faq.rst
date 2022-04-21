@@ -800,7 +800,7 @@ and backups, which most file based modules also support:
 Why does the ``regex_search`` filter return `None` instead of an empty string?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Until the jinja2 2.10 release, Jinja was only able to return strings, but Ansible needed Python objects in some cases. Ansible uses ``safe_eval`` and  only sends strings that look like certain types of Python objects through this function. With ``regex_search`` that does not find a match, the result (``None``) is converted to the string "None" which isn't particularly useful in non-native jinja2.
+Until the jinja2 2.10 release, Jinja was only able to return strings, but Ansible needed Python objects in some cases. Ansible uses ``safe_eval`` and  only sends strings that look like certain types of Python objects through this function. With ``regex_search`` that does not find a match, the result (``None``) is converted to the string "None" which is not useful in non-native jinja2.
 
 The following example of a single templating action shows this behavior:
 
@@ -810,7 +810,7 @@ The following example of a single templating action shows this behavior:
 
 This example does not result in a Python ``None``, so Ansible historically converted it to "" (empty string).
 
-The native jinja2 functionality actually allows us to return full Python objects, that are always represented as python objects everywhere, and as such the result of a single templating action with ``regex_search`` can result in the Python ``None``.
+The native jinja2 functionality actually allows us to return full Python objects, that are always represented as Python objects everywhere, and as such the result of a single templating action with ``regex_search`` can result in the Python ``None``.
 
 .. note::
 
