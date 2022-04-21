@@ -11,7 +11,7 @@ The following instructions will guide you through installing the ``ansible`` pac
   :local:
 
 Installing Ansible on Fedora or CentOS 
-----------------------------------------------
+--------------------------------------
 
 On Fedora:
 
