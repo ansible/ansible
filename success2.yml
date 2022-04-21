@@ -1,0 +1,10 @@
+- name: Reproducer that does not fail with a success include role
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: A successful task
+      debug:
+        msg: Hello o/
+    - name: Include a role that does exist
+      include_role:
+        name: does_exist

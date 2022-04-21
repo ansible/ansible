@@ -1,0 +1,7 @@
+- name: Reproducer that fails
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Include a role that does not exist
+      include_role:
+        name: does_not_exist
