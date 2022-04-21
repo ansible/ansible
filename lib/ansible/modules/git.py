@@ -61,8 +61,10 @@ options:
         version_added: "2.12"
     ssh_opts:
         description:
-            - Options git will pass to ssh when used as protocol, it works via GIT_SSH_OPTIONS.
-            - For older versions it appends GIT_SSH_OPTIONS to GIT_SSH/GIT_SSH_COMMAND.
+            - Options git will pass to ssh when used as protocol, it works via C(git)'s
+              GIT_SSH/GIT_SSH_COMMAND environment variables.
+            - For older versions it appends GIT_SSH_OPTS (specific to this module) to the
+              variables above or via a wrapper script.
             - Other options can add to this list, like I(key_file) and I(accept_hostkey).
             - An example value could be "-o StrictHostKeyChecking=no" (although this particular
               option is better set by I(accept_hostkey)).
@@ -441,7 +443,7 @@ def write_ssh_wrapper(module):
 
     # use existing git_ssh/ssh_command, fallback to 'ssh'
     template = b("""#!/bin/sh
-%s $GIT_SSH_OPTS
+%s $GIT_SSH_OPTS "$@"
 """ % os.environ.get('GIT_SSH', os.environ.get('GIT_SSH_COMMAND', 'ssh')))
 
     # write it
@@ -484,27 +486,33 @@ def set_git_ssh_env(key_file, ssh_opts, git_version, module):
 
     # deal with key file
     if key_file:
-        os.environ["GIT_KEY"] = key_file
+        key_opt = '-i %s' % key_file
+        if key_opt not in ssh_opts:
+            ssh_opts += '  %s' % key_opt
 
         ikey = 'IdentitiesOnly=yes'
         if ikey not in ssh_opts:
             ssh_opts += ' -o %s' % ikey
 
-    # we should always have finalized string here.
-    os.environ["GIT_SSH_OPTS"] = ssh_opts
-
-    # older than 2.3 does not know how to use git_ssh_opts,
-    # so we force it into ssh command var
+    # older than 2.3 does not know how to use git_ssh_command,
+    # so we force it into get_ssh var
+    # https://github.com/gitster/git/commit/09d60d785c68c8fa65094ecbe46fbc2a38d0fc1f
     if git_version < LooseVersion('2.3.0'):
+        # for use in wrapper
+        os.environ["GIT_SSH_OPTS"] = ssh_opts
 
         # these versions don't support GIT_SSH_OPTS so have to write wrapper
         wrapper = write_ssh_wrapper(module)
 
-        # force use of git_ssh_opts via wrapper
-        os.environ["GIT_SSH"] = wrapper
-
-        # same as above but older git uses git_ssh_command
-        os.environ["GIT_SSH_COMMAND"] = wrapper
+        # force use of git_ssh_opts via wrapper, git_ssh cannot not handle arguments
+        os.environ['GIT_SSH'] = wrapper
+    else:
+        # we construct full finalized command string here
+        full_cmd = os.environ.get('GIT_SSH', os.environ.get('GIT_SSH_COMMAND', 'ssh'))
+        if ssh_opts:
+            full_cmd += ' ' + ssh_opts
+        # git_ssh_command can handle arguments to ssh
+        os.environ["GIT_SSH_COMMAND"] = full_cmd
 
 
 def get_version(module, git_path, dest, ref="HEAD"):
