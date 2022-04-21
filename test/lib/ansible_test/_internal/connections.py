@@ -60,7 +60,7 @@ class Connection(metaclass=abc.ABCMeta):
         """Extract the given archive file stream in the specified directory."""
         tar_cmd = ['tar', 'oxzf', '-', '-C', chdir]
 
-        retry(lambda: self.run(tar_cmd, stdin=src))
+        retry(lambda: self.run(tar_cmd, stdin=src, capture=True))
 
     def create_archive(self,
                        chdir,  # type: str
@@ -82,7 +82,7 @@ class Connection(metaclass=abc.ABCMeta):
 
         sh_cmd = ['sh', '-c', ' | '.join(' '.join(shlex.quote(cmd) for cmd in command) for command in commands)]
 
-        retry(lambda: self.run(sh_cmd, stdout=dst))
+        retry(lambda: self.run(sh_cmd, stdout=dst, capture=True))
 
 
 class LocalConnection(Connection):

@@ -656,12 +656,15 @@ class MissingEnvironmentVariable(ApplicationError):
         self.name = name
 
 
-def retry(func, ex_type=SubprocessError, sleep=10, attempts=10):
+def retry(func, ex_type=SubprocessError, sleep=10, attempts=10, warn=True):
     """Retry the specified function on failure."""
     for dummy in range(1, attempts):
         try:
             return func()
-        except ex_type:
+        except ex_type as ex:
+            if warn:
+                display.warning(str(ex))
+
             time.sleep(sleep)
 
     return func()
