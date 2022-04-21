@@ -14,6 +14,13 @@ short_description: Return service state information as fact data
 description:
      - Return service state information as fact data for various service management utilities.
 version_added: "2.5"
+options:
+  type:
+    description:
+      - Type of service we want to fetch
+    required: false
+    default: service
+    type: str
 requirements: ["Any of the following supported init systems: systemd, sysv, upstart, openrc, AIX SRC"]
 extends_documentation_fragment:
   -  action_common_attributes
@@ -46,6 +53,10 @@ EXAMPLES = r'''
 - name: Print service facts
   ansible.builtin.debug:
     var: ansible_facts.services
+
+- name: Populate timer service facts
+  ansible.builtin.service_facts:
+    type: timer
 '''
 
 RETURN = r'''
@@ -252,10 +263,10 @@ class SystemctlScanService(BaseService):
                 return True
         return False
 
-    def _list_from_units(self, systemctl_path, services):
+    def _list_from_units(self, systemctl_path, services, service_type):
 
         # list units as systemd sees them
-        rc, stdout, stderr = self.module.run_command("%s list-units --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
+        rc, stdout, stderr = self.module.run_command("%s list-units --no-pager --type %s --all" % (systemctl_path, service_type), use_unsafe_shell=True)
         if rc != 0:
             self.module.warn("Could not list units from systemd: %s" % stderr)
         else:
@@ -280,10 +291,10 @@ class SystemctlScanService(BaseService):
 
                 services[service_name] = {"name": service_name, "state": state_val, "status": status_val, "source": "systemd"}
 
-    def _list_from_unit_files(self, systemctl_path, services):
+    def _list_from_unit_files(self, systemctl_path, services, service_type):
 
         # now try unit files for complete picture and final 'status'
-        rc, stdout, stderr = self.module.run_command("%s list-unit-files --no-pager --type service --all" % systemctl_path, use_unsafe_shell=True)
+        rc, stdout, stderr = self.module.run_command("%s list-unit-files --no-pager --type %s --all" % (systemctl_path, service_type), use_unsafe_shell=True)
         if rc != 0:
             self.module.warn("Could not get unit files data from systemd: %s" % stderr)
         else:
@@ -308,8 +319,9 @@ class SystemctlScanService(BaseService):
         if self.systemd_enabled():
             systemctl_path = self.module.get_bin_path("systemctl", opt_dirs=["/usr/bin", "/usr/local/bin"])
             if systemctl_path:
-                self._list_from_units(systemctl_path, services)
-                self._list_from_unit_files(systemctl_path, services)
+                service_type = self.module.params['type']
+                self._list_from_units(systemctl_path, services, service_type)
+                self._list_from_unit_files(systemctl_path, services, service_type)
 
         return services
 
@@ -387,7 +399,7 @@ class OpenBSDScanService(BaseService):
 
 
 def main():
-    module = AnsibleModule(argument_spec=dict(), supports_check_mode=True)
+    module = AnsibleModule(argument_spec=dict(type=dict(type='str', default='service')), supports_check_mode=True)
     locale = get_best_parsable_locale(module)
     module.run_command_environ_update = dict(LANG=locale, LC_ALL=locale)
     service_modules = (ServiceScanService, SystemctlScanService, AIXScanService, OpenBSDScanService)
