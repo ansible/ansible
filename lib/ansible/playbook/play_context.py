@@ -109,7 +109,6 @@ class PlayContext(Base):
     _prompt = FieldAttribute(isa='string')
 
     # general flags
-    _verbosity = FieldAttribute(isa='int', default=0)
     _only_tags = FieldAttribute(isa='set', default=set)
     _skip_tags = FieldAttribute(isa='set', default=set)
 
@@ -118,6 +117,22 @@ class PlayContext(Base):
 
     # "PlayContext.force_handlers should not be used, the calling code should be using play itself instead"
     _force_handlers = FieldAttribute(isa='bool', default=False)
+
+    @property
+    def verbosity(self):
+        display.deprecated(
+            "PlayContext.verbosity is deprecated, use ansible.utils.display.Display.verbosity instead.",
+            version=2.18
+        )
+        return self._internal_verbosity
+
+    @verbosity.setter
+    def verbosity(self, value):
+        display.deprecated(
+            "PlayContext.verbosity is deprecated, use ansible.utils.display.Display.verbosity instead.",
+            version=2.18
+        )
+        self._internal_verbosity = value
 
     def __init__(self, play=None, passwords=None, connection_lockfd=None):
         # Note: play is really not optional.  The only time it could be omitted is when we create
@@ -143,6 +158,8 @@ class PlayContext(Base):
         # set options before play to allow play to override them
         if context.CLIARGS:
             self.set_attributes_from_cli()
+        else:
+            self._internal_verbosity = 0
 
         if play:
             self.set_attributes_from_play(play)
@@ -173,7 +190,7 @@ class PlayContext(Base):
         # From the command line.  These should probably be used directly by plugins instead
         # For now, they are likely to be moved to FieldAttribute defaults
         self.private_key_file = context.CLIARGS.get('private_key_file')  # Else default
-        self.verbosity = context.CLIARGS.get('verbosity')  # Else default
+        self._internal_verbosity = context.CLIARGS.get('verbosity')  # Else default
 
         # Not every cli that uses PlayContext has these command line args so have a default
         self.start_at_task = context.CLIARGS.get('start_at_task', None)  # Else default
