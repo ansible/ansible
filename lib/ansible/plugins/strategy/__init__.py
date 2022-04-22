@@ -1052,7 +1052,7 @@ class StrategyBase:
                 # 2 methods used as role handlers can have 2 diffish names
                 for name in (handler.get_name(), handler.name):
                     if notified.get(name, []):
-                        notified_hosts.extend(notified['name'])
+                        notified_hosts.extend(notified[name])
                         seen.add(name)
 
                 # listeners non unique, but we track for warnings (depends on toggle)
