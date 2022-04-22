@@ -386,8 +386,12 @@ class Play(Base, Taggable, CollectionSearch):
     def unlock_notifications(self):
         self._notification_lock.release()
 
+    def get_notified_handlers(self):
+        # should only be called from within a lock
+        return self._notified
+
     def clear_notifications(self):
-        # only should be called from within a lock
+        # should only be called from within a lock
         self._notified = {}
 
     def notify_handler(self, term, host):

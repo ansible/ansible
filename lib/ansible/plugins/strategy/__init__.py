@@ -1037,7 +1037,7 @@ class StrategyBase:
 
         result = self._tqm.RUN_OK
         iterator._play.lock_notifications()
-        notified = iterator._play._notified
+        notified = iterator._play.get_notified_handlers()
         seen = set()
 
         for handler_block in iterator._play.handlers:
