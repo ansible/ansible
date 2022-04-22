@@ -49,7 +49,7 @@ And handled using the ``botocore_at_least`` helper method:
         if not module.botocore_at_least("1.19.27"):
             module.fail_json(msg="botocore >= 1.19.27 is required to set the throughput for a volume")
 
-Starting with the 4.0 releases of both collections, all support for the original boto SDK has been dropped.  AWS Modules must be written using the more botocore and boto3 SDKs.
+Starting with the 4.0 releases of both collections, all support for the original boto SDK has been dropped.  AWS Modules must be written using the botocore and boto3 SDKs.
 
 
 Maintaining existing modules
@@ -603,7 +603,7 @@ two purposes. First indicates it's in an AWS test causing the test framework to 
 available during the test run. Second putting the test in a test group causing it to be run in the
 continuous integration build.
 
-Tests for new modules should be added to the `cloud/aws`. In general just copy
+Tests for new modules should be added to the `cloud/aws` group. In general just copy
 an existing aliases file such as the `aws_s3 tests aliases file <https://github.com/ansible-collections/amazon.aws/blob/master/tests/integration/targets/aws_s3/aliases>`_.
 
 
@@ -671,7 +671,7 @@ to the test.
 
 The `ansible-test` tool used for running the integration tests provides two
 helpful extra vars: `resource_prefix` and `tiny_prefix` which are unique to the
-test set, and should generally used as part of the name.
+test set, and should generally used as part of the name.  `resource_prefix` will generate a prefix based on the host the test is being run on;.  Sometimes this may result in a resource name that exceeds the character limit allowed by AWS.  In these cases, `tiny_prefix` will provide a 12-character randomly generated prefix.
 
 
 
