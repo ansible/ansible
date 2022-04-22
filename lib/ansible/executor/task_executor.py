@@ -215,11 +215,17 @@ class TaskExecutor:
             self._job_vars['ansible_search_path'].append(self._loader.get_basedir())
 
         templar = Templar(loader=self._loader, variables=self._job_vars)
+
+        if self._task.loop_control:
+            loop_with = templar.template(self._task.loop_control.lookup)
+        else:
+            loop_with = self._task.loop_with
+
         items = None
-        if self._task.loop_with:
-            if self._task.loop_with in self._shared_loader_obj.lookup_loader:
+        if loop_with:
+            if loop_with in self._shared_loader_obj.lookup_loader:
                 fail = True
-                if self._task.loop_with == 'first_found':
+                if loop_with == 'first_found':
                     # first_found loops are special. If the item is undefined then we want to fall through to the next value rather than failing.
                     fail = False
 
@@ -228,7 +234,7 @@ class TaskExecutor:
                     loop_terms = [t for t in loop_terms if not templar.is_template(t)]
 
                 # get lookup
-                mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop_with, loader=self._loader, templar=templar)
+                mylookup = self._shared_loader_obj.lookup_loader.get(loop_with, loader=self._loader, templar=templar)
 
                 # give lookup task 'context' for subdir (mostly needed for first_found)
                 for subdir in ['template', 'var', 'file']:  # TODO: move this to constants?
@@ -268,6 +274,7 @@ class TaskExecutor:
         loop_pause = self._task.loop_control.pause
         extended = self._task.loop_control.extended
         extended_allitems = self._task.loop_control.extended_allitems
+        loop_lookup = self._task.loop_control.lookup
         # ensure we always have a label
         label = self._task.loop_control.label or '{{' + loop_var + '}}'
 

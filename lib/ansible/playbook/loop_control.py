@@ -31,6 +31,7 @@ class LoopControl(FieldAttributeBase):
     pause = NonInheritableFieldAttribute(isa='float', default=0, always_post_validate=True)
     extended = NonInheritableFieldAttribute(isa='bool', always_post_validate=True)
     extended_allitems = NonInheritableFieldAttribute(isa='bool', default=True, always_post_validate=True)
+    lookup = NonInheritableFieldAttribute(isa='str', always_post_validate=True)
 
     def __init__(self):
         super(LoopControl, self).__init__()

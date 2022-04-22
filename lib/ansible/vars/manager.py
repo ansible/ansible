@@ -580,12 +580,17 @@ class VariableManager:
 
         templar = Templar(loader=self._loader, variables=vars_copy)
 
+        if task.loop_control:
+            loop_with = templar.template(task.loop_control.lookup)
+        else:
+            loop_with = task.loop_with
+
         items = []
         has_loop = True
-        if task.loop_with is not None:
-            if task.loop_with in lookup_loader:
+        if loop_with is not None:
+            if loop_with in lookup_loader:
                 fail = True
-                if task.loop_with == 'first_found':
+                if loop_with == 'first_found':
                     # first_found loops are special. If the item is undefined then we want to fall through to the next
                     fail = False
                 try:
@@ -594,7 +599,7 @@ class VariableManager:
                     if not fail:
                         loop_terms = [t for t in loop_terms if not templar.is_template(t)]
 
-                    mylookup = lookup_loader.get(task.loop_with, loader=self._loader, templar=templar)
+                    mylookup = lookup_loader.get(loop_with, loader=self._loader, templar=templar)
 
                     # give lookup task 'context' for subdir (mostly needed for first_found)
                     for subdir in ['template', 'var', 'file']:  # TODO: move this to constants?
