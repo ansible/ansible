@@ -13,7 +13,7 @@ import pathlib
 import yaml
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_bytes
-from antsibull.jinja2.environment import doc_environment
+from antsibull_docs.jinja2.environment import doc_environment
 
 # Pylint doesn't understand Python3 namespace modules.
 from ..change_detection import update_file_if_different  # pylint: disable=relative-beyond-top-level
