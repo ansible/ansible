@@ -390,12 +390,14 @@ def main():
     # Run daemon-reload first, if requested
     if module.params['daemon_reload'] and not module.check_mode:
         (rc, out, err) = module.run_command("%s daemon-reload" % (systemctl))
+        result['changed'] = True
         if rc != 0:
             module.fail_json(msg='failure %d during daemon-reload: %s' % (rc, err))
 
     # Run daemon-reexec
     if module.params['daemon_reexec'] and not module.check_mode:
         (rc, out, err) = module.run_command("%s daemon-reexec" % (systemctl))
+        result['changed'] = True
         if rc != 0:
             module.fail_json(msg='failure %d during daemon-reexec: %s' % (rc, err))
 
