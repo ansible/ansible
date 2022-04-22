@@ -5,4 +5,4 @@ sphinx == 4.2.0
 sphinx-notfound-page
 sphinx-ansible-theme
 straight.plugin
-antsibull
+antsibull-docs
