@@ -1038,9 +1038,7 @@ class StrategyBase:
         result = self._tqm.RUN_OK
         iterator._play.lock_notifications()
         notified = iterator._play._notified
-
         seen = set()
-        notified_hosts = []
 
         for handler_block in iterator._play.handlers:
             # FIXME: handlers need to support the rescue/always portions of blocks too,
@@ -1048,12 +1046,12 @@ class StrategyBase:
             #        we consider the ability of meta tasks to flush handlers
             for handler in handler_block.block:
 
+                notified_hosts = []
                 # if we match name, we remove from list as they are unique
                 # 2 methods used as role handlers can have 2 diffish names
                 for name in (handler.get_name(), handler.name):
                     if notified.get(name, []):
-                        notified_hosts.extend(notified[name])
-                        seen.add(name)
+                        notified_hosts.extend(notified.pop(name))
 
                 # listeners non unique, but we track for warnings (depends on toggle)
                 if handler.listen:
@@ -1086,7 +1084,7 @@ class StrategyBase:
 
         if notified:
             for unmatched in notified.keys():
-                if unmatched in seen or not notified[unmatched]:
+                if unmatched in seen:
                     continue
                 display.warning("The requested notification '%s' was not found as a handler name nor as a part of any handler's listen keyword" % unmatched)
 
