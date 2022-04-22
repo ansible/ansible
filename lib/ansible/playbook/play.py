@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import threading
+
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
@@ -94,6 +96,7 @@ class Play(Base, Taggable, CollectionSearch):
         self._removed_hosts = []
         self.ROLE_CACHE = {}
         self._notified = {}
+        self._notification_lock = threading.Condition(threading.Lock())
         self._named = {}
 
         self.only_tags = set(context.CLIARGS.get('tags', [])) or frozenset(('all',))
@@ -377,13 +380,25 @@ class Play(Base, Taggable, CollectionSearch):
         new_me._group_actions = self._group_actions
         return new_me
 
+    def lock_notifications(self):
+        self._notification_lock.acquire()
+
+    def unlock_notifications(self):
+        self._notification_lock.release()
+
+    def clear_notifications(self):
+        # only should be called from within a lock
+        self._notified = {}
+
     def notify_handler(self, term, host):
         ''' cache handler notifications by name/or term '''
         notified = False
+        self.lock_notifications()
         if term not in self._notified:
             self._notified[term] = [host]
             notified = True
         elif host not in self._notified[term]:
             self._notified[term].append(host)
             notified = True
+        self.unlock_notifications()
         return notified

@@ -252,7 +252,7 @@ class StrategyBase:
 
         self._results = deque()
         self._handler_results = deque()
-        self._results_lock = threading.Condition(threading.Lock())
+        self._results_lock = threading.Condition(Lock())
 
         # create the result processing thread for reading results in the background
         self._results_thread = threading.Thread(target=results_thread_main, args=(self,))
@@ -1036,8 +1036,11 @@ class StrategyBase:
         '''
 
         result = self._tqm.RUN_OK
+        iterator._play.lock_notifications()
         notified = iterator._play._notified
+
         seen = set()
+        notified_hosts = []
 
         for handler_block in iterator._play.handlers:
             # FIXME: handlers need to support the rescue/always portions of blocks too,
@@ -1047,8 +1050,10 @@ class StrategyBase:
 
                 # if we match name, we remove from list as they are unique
                 # 2 methods used as role handlers can have 2 diffish names
-                notified_hosts = notified.pop(handler.get_name(), [])
-                notified_hosts.extend(notified.pop(handler.name, []))
+                for name in (handler.get_name(), handler.name):
+                    if notified.get(name, []):
+                        notified_hosts.extend(notified['name'])
+                        seen.add(name)
 
                 # listeners non unique, but we track for warnings (depends on toggle)
                 if handler.listen:
@@ -1069,8 +1074,7 @@ class StrategyBase:
                             seen.add(term)
 
                 if notified_hosts:
-                    # unique it
-                    notified_hosts = list(set(notified_hosts))
+                    notified_hosts = list(set(notified_hosts))  # unique the list
                     try:
                         # actually run handler
                         result = self._do_handler_run(handler, iterator=iterator, play_context=play_context, notified_hosts=notified_hosts)
@@ -1079,13 +1083,16 @@ class StrategyBase:
                     except AttributeError as e:
                         display.vvv(traceback.format_exc())
                         raise AnsibleParserError("Invalid handler definition for '%s'" % (handler.get_name()), orig_exc=e)
+
         if notified:
             for unmatched in notified.keys():
-                if unmatched in seen:
+                if unmatched in seen or not notified[unmatched]:
                     continue
                 display.warning("The requested notification '%s' was not found as a handler name nor as a part of any handler's listen keyword" % unmatched)
 
-        iterator._play._notified = {}
+        # remove those processed
+        iterator._play.clear_notifications()
+        iterator._play.unlock_notifications()
 
         return result
 
