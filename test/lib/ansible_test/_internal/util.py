@@ -261,6 +261,7 @@ def raw_command(
         explain=False,  # type: bool
         stdin=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
         stdout=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
+        interactive=False,  # type: bool
         cmd_verbosity=1,  # type: int
         str_errors='strict',  # type: str
         error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
@@ -298,6 +299,8 @@ def raw_command(
     elif data is not None:
         stdin = subprocess.PIPE
         communicate = True
+    elif interactive:
+        pass  # allow the subprocess access to our stdin
     else:
         stdin = subprocess.DEVNULL
 

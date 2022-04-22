@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import abc
 import shlex
-import sys
 import tempfile
 import typing as t
 
@@ -47,6 +46,7 @@ class Connection(metaclass=abc.ABCMeta):
     def run(self,
             command,  # type: t.List[str]
             capture=False,  # type: bool
+            interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
@@ -93,6 +93,7 @@ class LocalConnection(Connection):
     def run(self,
             command,  # type: t.List[str]
             capture=False,  # type: bool
+            interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
@@ -105,6 +106,7 @@ class LocalConnection(Connection):
             data=data,
             stdin=stdin,
             stdout=stdout,
+            interactive=interactive,
         )
 
 
@@ -131,6 +133,7 @@ class SshConnection(Connection):
     def run(self,
             command,  # type: t.List[str]
             capture=False,  # type: bool
+            interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
@@ -143,7 +146,7 @@ class SshConnection(Connection):
 
         options.append('-q')
 
-        if not data and not stdin and not stdout and sys.stdin.isatty():
+        if interactive:
             options.append('-tt')
 
         with tempfile.NamedTemporaryFile(prefix='ansible-test-ssh-debug-', suffix='.log') as ssh_logfile:
@@ -166,6 +169,7 @@ class SshConnection(Connection):
                 data=data,
                 stdin=stdin,
                 stdout=stdout,
+                interactive=interactive,
                 error_callback=error_callback,
             )
 
@@ -209,6 +213,7 @@ class DockerConnection(Connection):
     def run(self,
             command,  # type: t.List[str]
             capture=False,  # type: bool
+            interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
@@ -219,7 +224,7 @@ class DockerConnection(Connection):
         if self.user:
             options.extend(['--user', self.user])
 
-        if not data and not stdin and not stdout and sys.stdin.isatty():
+        if interactive:
             options.append('-it')
 
         return docker_exec(
@@ -231,6 +236,7 @@ class DockerConnection(Connection):
             data=data,
             stdin=stdin,
             stdout=stdout,
+            interactive=interactive,
         )
 
     def inspect(self):  # type: () -> DockerInspect

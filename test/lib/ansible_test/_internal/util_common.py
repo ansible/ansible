@@ -126,6 +126,7 @@ class CommonConfig:
     """Configuration common to all commands."""
     def __init__(self, args, command):  # type: (t.Any, str) -> None
         self.command = command
+        self.interactive = False
         self.success = None  # type: t.Optional[bool]
 
         self.color = args.color  # type: bool
@@ -406,13 +407,14 @@ def run_command(
         always=False,  # type: bool
         stdin=None,  # type: t.Optional[t.IO[bytes]]
         stdout=None,  # type: t.Optional[t.IO[bytes]]
+        interactive=False,  # type: bool
         cmd_verbosity=1,  # type: int
         str_errors='strict',  # type: str
         error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Run the specified command and return stdout and stderr as a tuple."""
     explain = args.explain and not always
-    return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout,
+    return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout, interactive=interactive,
                        cmd_verbosity=cmd_verbosity, str_errors=str_errors, error_callback=error_callback)
 
 

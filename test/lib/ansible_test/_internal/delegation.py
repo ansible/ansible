@@ -192,7 +192,7 @@ def delegate_command(args, host_state, exclude, require):  # type: (EnvironmentC
         success = False
 
         try:
-            con.run(insert_options(command, options))
+            con.run(insert_options(command, options), interactive=args.interactive)
             success = True
         finally:
             if host_delegation:
