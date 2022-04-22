@@ -102,7 +102,7 @@ def find_latest_deps_file(build_data_working, ansible_version):
 def generate_base_docs(args):
     """Regenerate the documentation for all plugins listed in the plugin_to_collection_file."""
     # imports here so that they don't cause unnecessary deps for all of the plugins
-    from antsibull.cli import antsibull_docs
+    from antsibull_docs.cli import antsibull_docs
 
     with TemporaryDirectory() as tmp_dir:
         #
@@ -135,7 +135,7 @@ def generate_full_docs(args):
     """Regenerate the documentation for all plugins listed in the plugin_to_collection_file."""
     # imports here so that they don't cause unnecessary deps for all of the plugins
     import sh
-    from antsibull.cli import antsibull_docs
+    from antsibull_docs.cli import antsibull_docs
 
     with TemporaryDirectory() as tmp_dir:
         sh.git(['clone', 'https://github.com/ansible-community/ansible-build-data'], _cwd=tmp_dir)
