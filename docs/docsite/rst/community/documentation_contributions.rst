@@ -77,14 +77,19 @@ To build documentation locally, ensure you have a working :ref:`development envi
 To work with documentation on your local machine, you need to have python-3.9 or greater and install the `Ansible dependencies`_ and `documentation dependencies`_, which are listed in two files to make installation easier:
 
 .. _Ansible dependencies: https://github.com/ansible/ansible/blob/devel/requirements.txt
-.. _documentation dependencies: https://github.com/ansible/ansible/blob/devel/test/sanity/code-smell/docs-build.requirements.txt
+.. _documentation dependencies: https://github.com/ansible/ansible/blob/devel/docs/docsite/requirements.txt
 
 .. code-block:: bash
 
     pip install --user -r requirements.txt
+    pip install --user -r docs/docsite/requirements.txt
+
+If you want to install tested versions of these dependencies, use :file:`test/sanity/code-smell/docs-build.requirements.txt` instead, which matches the dependencies used by CI:
+
+. code-block:: bash
+    pip install --user -r requirements.txt
     pip install --user -r test/sanity/code-smell/docs-build.requirements.txt
 
-The :file:`test/sanity/code-smell/docs-build.requirements.txt` file installs tested versions of the documentation dependencies and matches the tests run in CI.
 
 
 You can drop ``--user`` if you have set up a virtual environment (venv/virtenv). 
