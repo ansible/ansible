@@ -42,5 +42,5 @@ Other checklists
 ================
 
 * :ref:`Tips for module development <developing_modules_best_practices>`.
-* :ref:`Amazon development checklist <AWS_module_development>`.
+* :ref:`Amazon development checklist <ansible_collections.amazon.aws.docsite.dev_guide_intro>`.
 * :ref:`Windows development checklist <developing_modules_general_windows>`.
