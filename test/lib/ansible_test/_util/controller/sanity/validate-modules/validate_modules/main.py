@@ -436,13 +436,14 @@ class ModuleValidator(Validator):
         base_path = self._get_base_branch_module_path()
 
         command = ['git', 'show', '%s:%s' % (self.base_branch, base_path or self.path)]
-        p = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True, check=False)
-
+        p = subprocess.Popen(command, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
         if int(p.returncode) != 0:
             return None
 
         t = tempfile.NamedTemporaryFile(delete=False)
-        t.write(p.stdout)
+        t.write(stdout)
         t.close()
 
         return t.name
@@ -2455,12 +2456,11 @@ class GitCache:
     @staticmethod
     def _git(args):
         cmd = ['git'] + args
-        p = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True, check=False)
-
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate()
         if p.returncode != 0:
-            raise GitError(p.stderr, p.returncode)
-
-        return p.stdout.splitlines()
+            raise GitError(stderr, p.returncode)
+        return stdout.decode('utf-8').splitlines()
 
 
 class GitError(Exception):
