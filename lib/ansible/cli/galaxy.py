@@ -151,7 +151,7 @@ def validate_signature_count(value):
     match = re.match(SIGNATURE_COUNT_RE, value)
 
     if match is None:
-        raise ValueError("{value} is not a valid signature count value")
+        raise ValueError(f"{value} is not a valid signature count value")
 
     return value
 
