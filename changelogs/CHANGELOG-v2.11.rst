@@ -5,13 +5,13 @@ ansible-core 2.11 "Hey Hey, What Can I Do" Release Notes
 .. contents:: Topics
 
 
-v2.11.11rc1
-===========
+v2.11.11
+========
 
 Release Summary
 ---------------
 
-| Release Date: 2022-04-18
+| Release Date: 2022-04-25
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
@@ -19,6 +19,7 @@ Bugfixes
 --------
 
 - Ansible.ModuleUtils.SID - Use user principal name as is for lookup in the ``Convert-ToSID`` function - https://github.com/ansible/ansible/issues/77316
+- ansible-test - Update ``rstcheck`` constraint from ``>= 3.3.1`` to ``== 3.3.1`` to avoid breaking changes in newer releases.
 - winrm - Ensure ``kinit`` is run with the same ``PATH`` env var as the Ansible process
 
 v2.11.10
