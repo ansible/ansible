@@ -5,6 +5,28 @@ ansible-core 2.13 "Nobody's Fault but Mine" Release Notes
 .. contents:: Topics
 
 
+v2.13.0b1
+=========
+
+Release Summary
+---------------
+
+| Release Date: 2022-04-25
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Update ``default`` containers to version 5.9.0.
+
+Bugfixes
+--------
+
+- ansible - Exclude Python 2.6 from Python interpreter discovery.
+- arg_spec - Fix incorrect ``no_log`` warning when a parameter alias is used (https://github.com/ansible/ansible/pull/77576)
+- variablemanager, more efficient read of vars files
+
 v2.13.0b0
 =========
 
@@ -259,6 +281,7 @@ Bugfixes
 - gather_facts - Fact gathering now continues even if it fails to read a file
 - gather_facts action now handles the move of base connection plugin types into collections to add/prevent subset argument correctly
 - gather_facts/setup will not fail anymore if capsh is present but not executable
+- git module fix docs and proper use of ssh wrapper script and GIT_SSH_COMMAND depending on version.
 - git module is more consistent and clearer about which ssh options are added to git calls.
 - git module no longer uses wrapper script for ssh options.
 - hacking - fix incorrect usage of deprecated fish-shell redirection operators that failed to honor ``--quiet`` flag when sourced (https://github.com/ansible/ansible/pull/77180).
