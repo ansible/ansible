@@ -258,7 +258,7 @@ class CollectionDetailError(ApplicationError):
         self.reason = reason
 
 
-def get_collection_detail(args, python):  # type: (EnvironmentConfig, PythonConfig) -> CollectionDetail
+def get_collection_detail(python):  # type: (PythonConfig) -> CollectionDetail
     """Return collection detail."""
     collection = data_context().content.collection
     directory = os.path.join(collection.root, collection.directory)
