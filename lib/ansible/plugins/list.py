@@ -165,7 +165,7 @@ def list_collection_plugins(ptype, collections, search_paths=None):
     if ptype in ('module',):
         # no 'invalid' tests for modules
         for plugin in plugins.keys():
-            plugins[plugin] = (plugins[plugin], None, [])
+            plugins[plugin] = (plugins[plugin], None)
     else:
         # detect invalid plugin candidates AND add loaded object to return data
         for plugin in list(plugins.keys()):
