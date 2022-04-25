@@ -87,7 +87,6 @@ To work with documentation on your local machine, you need to have python-3.9 or
 The :file:`docs/docsite/requirements.txt` file allows a wide range of versions and may install new releases of required packages. New releases of these packages may cause problems with the Ansible docs build. If you want to install tested versions of these dependencies, use :file:`test/sanity/code-smell/docs-build.requirements.txt` instead, which matches the dependencies used by CI:
 
 .. code-block:: bash
-   
     pip install --user -r requirements.txt
     pip install --user -r test/sanity/code-smell/docs-build.requirements.txt
 
