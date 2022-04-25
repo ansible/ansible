@@ -368,6 +368,6 @@ class AnsibleFilterTypeError(AnsibleTemplateError, TypeError):
     pass
 
 
-class AnsibleInvalidVarNameError(AnsibleError):
+class AnsibleInvalidVarNameError(AnsibleParserError):
     '''failure due to invalid variable name'''
     pass
