@@ -1714,6 +1714,21 @@ releases:
     - fqn-module-cache.yml
     - v2.11.10rc1_summary.yaml
     release_date: '2022-03-21'
+  2.11.11:
+    changes:
+      bugfixes:
+      - ansible-test - Update ``rstcheck`` constraint from ``>= 3.3.1`` to ``== 3.3.1``
+        to avoid breaking changes in newer releases.
+      release_summary: '| Release Date: 2022-04-25
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - ansible-test-rstcheck-pin.yml
+    - v2.11.11_summary.yaml
+    release_date: '2022-04-25'
   2.11.11rc1:
     changes:
       bugfixes:
