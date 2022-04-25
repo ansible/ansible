@@ -216,10 +216,12 @@ class TaskExecutor:
 
         templar = Templar(loader=self._loader, variables=self._job_vars)
 
-        if self._task.loop_control:
+        if self._task.loop_with:
+            loop_with = self._task.loop_with
+        elif self._task.loop_control:
             loop_with = templar.template(self._task.loop_control.lookup)
         else:
-            loop_with = self._task.loop_with
+            loop_with = None
 
         items = None
         if loop_with:
