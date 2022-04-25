@@ -436,7 +436,7 @@ class ModuleValidator(Validator):
         base_path = self._get_base_branch_module_path()
 
         command = ['git', 'show', '%s:%s' % (self.base_branch, base_path or self.path)]
-        p = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True)
+        p = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True, check=False)
 
         if int(p.returncode) != 0:
             return None
@@ -2455,7 +2455,7 @@ class GitCache:
     @staticmethod
     def _git(args):
         cmd = ['git'] + args
-        p = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True)
+        p = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, text=True, check=False)
 
         if p.returncode != 0:
             raise GitError(p.stderr, p.returncode)
