@@ -1570,8 +1570,8 @@ def _resolve_depenency_map(
 ):  # type: (...) -> dict[str, Candidate]
     """Return the resolved dependency map."""
     dist = distribution('ansible-core')
-    req, = [rr for r in dist.requires if (rr := PkgReq(r)).name == 'resolvelib']
-    if not req.specifier.contains(resolvelib.__version__):
+    req = next((rr for r in (dist.requires or []) if (rr := PkgReq(r)).name == 'resolvelib'), None)
+    if req is not None and not req.specifier.contains(resolvelib.__version__):
         raise AnsibleError(f"ansible-galaxy requires {req.name}{req.specifier}")
 
     collection_dep_resolver = build_collection_dependency_resolver(
