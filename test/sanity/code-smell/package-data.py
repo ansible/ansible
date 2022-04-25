@@ -172,15 +172,14 @@ def clean_repository(file_list):
 
 def create_sdist(tmp_dir):
     """Create an sdist in the repository"""
-    create = subprocess.run(
+    create = subprocess.Popen(
         ['make', 'snapshot', 'SDIST_DIR=%s' % tmp_dir],
-        stdin=subprocess.DEVNULL,
-        capture_output=True,
-        text=True,
-        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
     )
 
-    stderr = create.stderr
+    stderr = create.communicate()[1]
 
     if create.returncode != 0:
         raise Exception('make snapshot failed:\n%s' % stderr)
@@ -221,16 +220,15 @@ def extract_sdist(sdist_path, tmp_dir):
 
 def install_sdist(tmp_dir, sdist_dir):
     """Install the extracted sdist into the temporary directory"""
-    install = subprocess.run(
+    install = subprocess.Popen(
         ['python', 'setup.py', 'install', '--root=%s' % tmp_dir],
-        stdin=subprocess.DEVNULL,
-        capture_output=True,
-        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
         cwd=os.path.join(tmp_dir, sdist_dir),
-        check=False,
     )
 
-    stdout, stderr = install.stdout, install.stderr
+    stdout, stderr = install.communicate()
 
     if install.returncode != 0:
         raise Exception('sdist install failed:\n%s' % stderr)
