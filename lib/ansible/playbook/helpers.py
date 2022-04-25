@@ -95,6 +95,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
     from ansible.playbook.role_include import IncludeRole
     from ansible.playbook.handler_task_include import HandlerTaskInclude
     from ansible.template import Templar
+    from ansible.utils.plugin_docs import get_versioned_doclink
 
     if not isinstance(ds, list):
         raise AnsibleAssertionError('The ds (%s) should be a list but was a %s' % (ds, type(ds)))
@@ -155,7 +156,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 elif action in C._ACTION_IMPORT_TASKS:
                     is_static = True
                 else:
-                    display.deprecated('"include" is deprecated, use include_tasks/import_tasks instead', "2.16")
+                    include_link = get_versioned_doclink('user_guide/playbooks_reuse_includes.html')
+                    display.deprecated('"include" is deprecated, use include_tasks/import_tasks instead. See %s for details' % include_link, "2.16")
                     is_static = not templar.is_template(t.args['_raw_params']) and t.all_parents_static() and not t.loop
 
                 if is_static:
