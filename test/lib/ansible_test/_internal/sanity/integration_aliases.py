@@ -258,12 +258,6 @@ class IntegrationAliasesTest(SanityVersionNeutral):
             find=self.format_test_group_alias('linux').replace('linux', 'posix'),
         )
 
-        for cloud in clouds:
-            messages += self.check_ci_group(
-                targets=tuple(filter_targets(posix_targets, ['cloud/%s/' % cloud], include=True, directories=False, errors=False)),
-                find=self.format_test_group_alias(cloud, 'cloud'),
-            )
-
         return messages
 
     def check_windows_targets(self):
