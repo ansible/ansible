@@ -261,6 +261,7 @@ def raw_command(
         explain=False,  # type: bool
         stdin=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
         stdout=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
+        interactive=False,  # type: bool
         cmd_verbosity=1,  # type: int
         str_errors='strict',  # type: str
         error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
@@ -273,6 +274,14 @@ def raw_command(
         env = common_environment()
 
     cmd = list(cmd)
+
+    if not capture and not interactive:
+        # When not capturing stdout/stderr and not running interactively, send subprocess stdout/stderr through a shell to the current stdout.
+        # Additionally send output through a pipe to `tee` to block access to the current TTY, if any.
+        # This prevents subprocesses from sharing stdin/stdout/stderr with the current process or each other.
+        # Doing so allows subprocesses to safely make changes to their file handles, such as making them non-blocking (ssh does this).
+        # This also maintains consistency between local testing and CI systems, which typically do not provide a TTY.
+        cmd = ['/bin/sh', '-c', f'{shlex.join(cmd)} 2>&1 | tee']
 
     escaped_cmd = ' '.join(shlex.quote(c) for c in cmd)
 
@@ -298,6 +307,10 @@ def raw_command(
     elif data is not None:
         stdin = subprocess.PIPE
         communicate = True
+    elif interactive:
+        pass  # allow the subprocess access to our stdin
+    else:
+        stdin = subprocess.DEVNULL
 
     if stdout:
         communicate = True
@@ -654,12 +667,15 @@ class MissingEnvironmentVariable(ApplicationError):
         self.name = name
 
 
-def retry(func, ex_type=SubprocessError, sleep=10, attempts=10):
+def retry(func, ex_type=SubprocessError, sleep=10, attempts=10, warn=True):
     """Retry the specified function on failure."""
     for dummy in range(1, attempts):
         try:
             return func()
-        except ex_type:
+        except ex_type as ex:
+            if warn:
+                display.warning(str(ex))
+
             time.sleep(sleep)
 
     return func()
