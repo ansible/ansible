@@ -100,16 +100,7 @@ def run_coverage(args, host_state, output_file, command, cmd):  # type: (Coverag
 
     cmd = ['python', '-m', 'coverage.__main__', command, '--rcfile', COVERAGE_CONFIG_PATH] + cmd
 
-    stdout, stderr = intercept_python(args, host_state.controller_profile.python, cmd, env, capture=True)
-
-    stdout = (stdout or '').strip()
-    stderr = (stderr or '').strip()
-
-    if stdout:
-        display.info(stdout)
-
-    if stderr:
-        display.warning(stderr)
+    intercept_python(args, host_state.controller_profile.python, cmd, env)
 
 
 def get_all_coverage_files():  # type: () -> t.List[str]

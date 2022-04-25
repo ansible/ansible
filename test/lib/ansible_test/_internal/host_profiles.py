@@ -484,9 +484,8 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
 
             for dummy in range(1, 90):
                 try:
-                    intercept_python(self.args, self.args.controller_python, cmd, env, capture=True)
-                except SubprocessError as ex:
-                    display.warning(str(ex))
+                    intercept_python(self.args, self.args.controller_python, cmd, env)
+                except SubprocessError:
                     time.sleep(10)
                 else:
                     return
@@ -718,9 +717,8 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
 
             for dummy in range(1, 120):
                 try:
-                    intercept_python(self.args, self.args.controller_python, cmd, env, capture=True)
-                except SubprocessError as ex:
-                    display.warning(str(ex))
+                    intercept_python(self.args, self.args.controller_python, cmd, env)
+                except SubprocessError:
                     time.sleep(10)
                 else:
                     return

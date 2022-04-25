@@ -29,12 +29,13 @@ def main():
 
     try:
         cmd = ['make', 'core_singlehtmldocs']
-        sphinx = subprocess.run(cmd, stdin=subprocess.DEVNULL, capture_output=True, cwd=docs_dir, check=False, text=True)
+        sphinx = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=docs_dir)
+        stdout, stderr = sphinx.communicate()
     finally:
         shutil.move(tmp, requirements_txt)
 
-    stdout = sphinx.stdout
-    stderr = sphinx.stderr
+    stdout = stdout.decode('utf-8')
+    stderr = stderr.decode('utf-8')
 
     if sphinx.returncode != 0:
         sys.stderr.write("Command '%s' failed with status code: %d\n" % (' '.join(cmd), sphinx.returncode))
