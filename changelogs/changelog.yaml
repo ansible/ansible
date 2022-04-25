@@ -184,6 +184,8 @@ releases:
       - gather_facts action now handles the move of base connection plugin types into
         collections to add/prevent subset argument correctly
       - gather_facts/setup will not fail anymore if capsh is present but not executable
+      - git module fix docs and proper use of ssh wrapper script and GIT_SSH_COMMAND
+        depending on version.
       - git module is more consistent and clearer about which ssh options are added
         to git calls.
       - git module no longer uses wrapper script for ssh options.
@@ -720,3 +722,25 @@ releases:
     - win_LinkUtil-ignore-LIB.yml
     - winrm-kinit-path.yml
     release_date: '2022-04-11'
+  2.13.0b1:
+    changes:
+      bugfixes:
+      - ansible - Exclude Python 2.6 from Python interpreter discovery.
+      - arg_spec - Fix incorrect ``no_log`` warning when a parameter alias is used
+        (https://github.com/ansible/ansible/pull/77576)
+      - variablemanager, more efficient read of vars files
+      minor_changes:
+      - ansible-test - Update ``default`` containers to version 5.9.0.
+      release_summary: '| Release Date: 2022-04-25
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Nobody's Fault but Mine
+    fragments:
+    - 77576-arg_spec-no_log-aliases.yml
+    - ansible-test-default-container-update-5.9.0.yaml
+    - python-2.6-discovery.yml
+    - v2.13.0b1_summary.yaml
+    - vm_more_efficient.yml
+    release_date: '2022-04-25'
