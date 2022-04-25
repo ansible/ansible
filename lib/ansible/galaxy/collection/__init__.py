@@ -13,6 +13,7 @@ import json
 import os
 import queue
 import re
+import resolvelib
 import shutil
 import stat
 import sys
@@ -93,6 +94,7 @@ from ansible.galaxy.dependency_resolution.versioning import meets_requirements
 from ansible.module_utils.six import raise_from
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.yaml import yaml_dump
+from ansible.module_utils.compat.version import LooseVersion
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
@@ -104,6 +106,10 @@ MANIFEST_FORMAT = 1
 MANIFEST_FILENAME = 'MANIFEST.json'
 
 ModifiedContent = namedtuple('ModifiedContent', ['filename', 'expected', 'installed'])
+
+RESOLVELIB_LOWERBOUND = LooseVersion("0.5.3")
+RESOLVELIB_UPPERBOUND = LooseVersion("0.6.0")
+RESOLVELIB_VERSION = LooseVersion(resolvelib.__version__)
 
 SIGNATURE_COUNT_RE = r"^(?P<strict>\+)?(?:(?P<count>\d+)|(?P<all>all))$"
 
@@ -1566,6 +1572,9 @@ def _resolve_depenency_map(
         include_signatures,  # type: bool
 ):  # type: (...) -> dict[str, Candidate]
     """Return the resolved dependency map."""
+    if RESOLVELIB_VERSION < RESOLVELIB_LOWERBOUND or RESOLVELIB_VERSION >= RESOLVELIB_UPPERBOUND:
+        raise AnsibleError(f"ansible-galaxy requires resolvelib >= {RESOLVELIB_LOWERBOUND}, < {RESOLVELIB_UPPERBOUND}")
+
     collection_dep_resolver = build_collection_dependency_resolver(
         galaxy_apis=galaxy_apis,
         concrete_artifacts_manager=concrete_artifacts_manager,
