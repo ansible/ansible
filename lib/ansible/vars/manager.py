@@ -580,10 +580,10 @@ class VariableManager:
 
         templar = Templar(loader=self._loader, variables=vars_copy)
 
-        if self._task.loop_with:
-            loop_with = self._task.loop_with
-        elif self._task.loop_control:
-            loop_with = templar.template(self._task.loop_control.lookup)
+        if task.loop_with:
+            loop_with = task.loop_with
+        elif task.loop_control:
+            loop_with = templar.template(task.loop_control.lookup)
         else:
             loop_with = None
 
