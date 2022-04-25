@@ -106,16 +106,10 @@ stages:
       - template: templates/matrix.yml
         parameters:
           targets:
-            - name: OS X 10.11
-              test: osx/10.11
             - name: RHEL 7.9
               test: rhel/7.9
             - name: RHEL 8.2
               test: rhel/8.2
-            - name: FreeBSD 11.1
-              test: freebsd/11.1
-            - name: FreeBSD 12.0
-              test: freebsd/12.0
           groups:
             - 1
             - 2
@@ -132,14 +126,6 @@ stages:
               test: centos6
             - name: CentOS 7
               test: centos7
-            - name: Fedora 30
-              test: fedora30
-            - name: Fedora 31
-              test: fedora31
-            - name: openSUSE 15 py2
-              test: opensuse15py2
-            - name: openSUSE 15 py3
-              test: opensuse15
             - name: Ubuntu 16.04
               test: ubuntu1604
             - name: Ubuntu 18.04
@@ -149,56 +135,13 @@ stages:
             - 2
             - 3
             - 4
-  - stage: AWS
+  - stage: Galaxy
     dependsOn: []
     jobs:
       - template: templates/matrix.yml
         parameters:
           nameFormat: Python {0}
-          testFormat: aws/{0}
-          targets:
-            - test: 2.7
-            - test: 3.6
-          groups:
-            - 1
-            - 2
-  - stage: vCenter
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Python {0}
-          testFormat: vcenter/{0}/1
-          targets:
-            - test: 2.7
-            - test: 3.6
-  - stage: CloudStack
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Python {0}
-          testFormat: cs/{0}/1
-          targets:
-            - test: 2.7
-            - test: 3.6
-  - stage: Cloud
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Python {0}
-          testFormat: cloud/{0}/1
-          targets:
-            - test: 2.7
-            - test: 3.6
-  - stage: Hetzner
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Python {0}
-          testFormat: hcloud/{0}/1
+          testFormat: galaxy/{0}/1
           targets:
             - test: 2.7
             - test: 3.6
@@ -211,10 +154,6 @@ stages:
       - Network
       - Remote
       - Docker
-      - AWS
-      - vCenter
-      - CloudStack
-      - Cloud
-      - Hetzner
+      - Galaxy
     jobs:
       - template: templates/coverage.yml
