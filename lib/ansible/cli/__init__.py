@@ -34,7 +34,7 @@ def check_blocking_io():
             handles.append(getattr(handle, 'name', None) or '#%s' % fd)
 
     if handles:
-        raise SystemExit('Ansible requires blocking IO on stdin/stdout/stderr. Non-blocking file handles detected: %s' % ', '.join(_io for _io in handles))
+        raise SystemExit('ERROR: Ansible requires blocking IO on stdin/stdout/stderr. Non-blocking file handles detected: %s' % ', '.join(_io for _io in handles))
 
 
 check_blocking_io()
