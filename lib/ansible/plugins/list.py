@@ -161,13 +161,13 @@ def list_collection_plugins(ptype, collections, search_paths=None):
 
         plugins.update(_list_plugins_from_paths(ptype, dirs, collection))
 
-    # post process
-    if ptype in ('module', 'test', 'filter'):
-        # no 'invalid' tests for modules, tests/filters already verified
+    #  return plugin and it's class object, None for those not verifiable or failing
+    if ptype in ('module',):
+        # no 'invalid' tests for modules
         for plugin in plugins.keys():
             plugins[plugin] = (plugins[plugin], None, [])
     else:
-        # filter out invalid plugin candidates AND add loaded object to return data
+        # detect invalid plugin candidates AND add loaded object to return data
         for plugin in list(plugins.keys()):
             pobj = None
             try:
@@ -175,12 +175,8 @@ def list_collection_plugins(ptype, collections, search_paths=None):
             except Exception as e:
                 display.vvv("The '{0}' {1} plugin could not be loaded from '{2}': {3}".format(plugin, ptype, plugins[plugin], to_native(e)))
 
-            if pobj is None:
-                display.debug("Remove '{0}' {1} plugin from list".format(plugin, ptype))
-                del plugins[plugin]
-            else:
-                # sets final {plugin_name: (filepath, class), ...}
-                plugins[plugin] = (plugins[plugin], pobj)
+            # sets final {plugin_name: (filepath, class|NONE if not loaded), ...}
+            plugins[plugin] = (plugins[plugin], pobj)
 
     # {plugin_name: (filepath, class), ...}
     return plugins
