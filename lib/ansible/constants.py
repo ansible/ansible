@@ -13,7 +13,6 @@ from ansible.config.manager import ConfigManager
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common.collections import Sequence
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE
-from ansible.module_utils.six import string_types
 from ansible.release import __version__
 from ansible.utils.fqcn import add_internal_fqcns
 
@@ -100,7 +99,11 @@ COLOR_CODES = {
 REJECT_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
 BOOL_TRUE = BOOLEANS_TRUE
 COLLECTION_PTYPE_COMPAT = {'module': 'modules'}
-DOC_EXTENSIONS = ('.py', '.yml')
+
+PYTHON_DOC_EXTENSIONS = ('.py', '.pyc', '.pyo')
+YAML_DOC_EXTENSIONS = ('.yml', '.yaml')
+DOC_EXTENSIONS = PYTHON_DOC_EXTENSIONS + YAML_DOC_EXTENSIONS
+
 DEFAULT_BECOME_PASS = None
 DEFAULT_PASSWORD_CHARS = to_text(ascii_letters + digits + ".,:-_", errors='strict')  # characters included in auto-generated passwords
 DEFAULT_REMOTE_PASS = None

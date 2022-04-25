@@ -9,6 +9,7 @@ import os
 import pyclbr
 import tokenize
 
+from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_native
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -162,9 +163,9 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
     ''' returns a documentation dictionary from Ansible plugin docstrings '''
 
     # TODO: ensure adjacency to code (including ps1 for py files)
-    if filename.endswith(('.yml', '.yaml')):
+    if filename.endswith(C.YAML_DOC_EXTENSIONS):
         docstring = read_docstring_from_yaml_file(filename, verbose=verbose, ignore_errors=ignore_errors)
-    elif filename.endswith(('.py', '.pyc', '.pyo')):
+    elif filename.endswith(C.PYTHON_DOC_EXTENSIONS):
         docstring = read_docstring_from_python_module(filename, verbose=verbose, ignore_errors=ignore_errors)
     elif not ignore_errors:
         raise AnsibleError("Unknown documentation format: %s" % to_native(filename))
