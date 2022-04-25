@@ -621,6 +621,7 @@ class TaskExecutor:
 
         display.debug("starting attempt loop")
         result = None
+        retry_results = []
         for attempt in range(1, retries + 1):
             display.debug("running the handler")
             try:
@@ -748,6 +749,8 @@ class TaskExecutor:
                     result['failed'] = True
                     result['%s_when_result' % condname] = to_text(e)
 
+                retry_results.append(result)
+
             if retries > 1:
                 cond = Conditional(loader=self._loader)
                 cond.when = self._task.until
@@ -778,6 +781,9 @@ class TaskExecutor:
 
         if self._task.action not in C._ACTION_WITH_CLEAN_FACTS:
             result = wrap_var(result)
+
+        if retries > 1:
+            result['retry_results'] = retry_results
 
         # do the final update of the local variables here, for both registered
         # values and any facts which may have been created
