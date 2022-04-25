@@ -7,7 +7,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import sys
 
 # Used for determining if the system is running a new enough python version
@@ -17,28 +16,6 @@ if sys.version_info < (3, 8):
         'ERROR: Ansible requires Python 3.8 or newer on the controller. '
         'Current version: %s' % ''.join(sys.version.splitlines())
     )
-
-
-def check_blocking_io():
-    """Check stdin/stdout/stderr to make sure they are using blocking IO."""
-    handles = []
-
-    for handle in (sys.stdin, sys.stdout, sys.stderr):
-        # noinspection PyBroadException
-        try:
-            fd = handle.fileno()
-        except Exception:
-            continue  # not a real file handle, such as during the import sanity test
-
-        if not os.get_blocking(fd):
-            handles.append(getattr(handle, 'name', None) or '#%s' % fd)
-
-    if handles:
-        raise SystemExit('ERROR: Ansible requires blocking IO on stdin/stdout/stderr. '
-                         'Non-blocking file handles detected: %s' % ', '.join(_io for _io in handles))
-
-
-check_blocking_io()
 
 from importlib.metadata import version
 from ansible.module_utils.compat.version import LooseVersion
@@ -54,6 +31,7 @@ if jinja2_version < LooseVersion('3.0'):
 
 import errno
 import getpass
+import os
 import subprocess
 import traceback
 from abc import ABC, abstractmethod
