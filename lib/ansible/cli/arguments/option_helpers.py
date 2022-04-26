@@ -177,7 +177,7 @@ def version(prog=None):
     result.append("  ansible python module location = %s" % ':'.join(ansible.__path__))
     result.append("  ansible collection location = %s" % ':'.join(C.COLLECTIONS_PATHS))
     result.append("  executable location = %s" % sys.argv[0])
-    result.append("  python version = %s" % ''.join(sys.version.splitlines()))
+    result.append("  python version = %s (%s)" % (''.join(sys.version.splitlines()), to_native(sys.executable)))
     result.append("  jinja version = %s" % j2_version)
     result.append("  libyaml = %s" % HAS_LIBYAML)
     return "\n".join(result)

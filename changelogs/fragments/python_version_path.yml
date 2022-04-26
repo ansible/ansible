@@ -1,0 +1,2 @@
+minor_changes:
+  - version output now includes the path to the python executable that Ansible is running under
