@@ -1,6 +1,7 @@
 """Miscellaneous utility functions and classes."""
 from __future__ import annotations
 
+import abc
 import errno
 import fcntl
 import importlib.util
@@ -41,6 +42,7 @@ from .io import (
 
 from .thread import (
     mutex,
+    WrappedThread,
 )
 
 from .constants import (
@@ -293,17 +295,32 @@ def raw_command(
 
     cmd = list(cmd)
 
-    if not capture and not interactive:
-        # When not capturing stdout/stderr and not running interactively, send subprocess stdout/stderr through an additional subprocess.
-        # This isolates the stdout/stderr of the subprocess using pipes, and also hides the current TTY from it, if any.
-        # This prevents subprocesses from sharing stdin/stdout/stderr with the current process or each other.
-        # Doing so allows subprocesses to safely make changes to their file handles, such as making them non-blocking (ssh does this).
-        # This also maintains consistency between local testing and CI systems, which typically do not provide a TTY.
-        cmd = [sys.executable, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'run.py')] + cmd
-
     escaped_cmd = ' '.join(shlex.quote(c) for c in cmd)
 
-    display.info('Run command: %s' % escaped_cmd, verbosity=cmd_verbosity, truncate=True)
+    if capture:
+        description = 'Run'
+    elif interactive:
+        description = 'Interactive'
+    else:
+        description = 'Stream'
+
+    description += ' command'
+
+    with_types = []
+
+    if data:
+        with_types.append('data')
+
+    if stdin:
+        with_types.append('stdin')
+
+    if stdout:
+        with_types.append('stdout')
+
+    if with_types:
+        description += f' with {"/".join(with_types)}'
+
+    display.info(f'{description}: {escaped_cmd}', verbosity=cmd_verbosity, truncate=True)
     display.info('Working directory: %s' % cwd, verbosity=2)
 
     program = find_executable(cmd[0], cwd=cwd, path=env['PATH'], required='warning')
@@ -329,9 +346,15 @@ def raw_command(
     else:
         stdin = subprocess.DEVNULL
 
-    if capture:
+    if not interactive:
+        # When not running interactively, send subprocess stdout/stderr through a pipe.
+        # This isolates the stdout/stderr of the subprocess from the current process, and also hides the current TTY from it, if any.
+        # This prevents subprocesses from sharing stdout/stderr with the current process or each other.
+        # Doing so allows subprocesses to safely make changes to their file handles, such as making them non-blocking (ssh does this).
+        # This also maintains consistency between local testing and CI systems, which typically do not provide a TTY.
+        # To maintain output ordering, a single pipe is used for both stdout/stderr when not capturing output.
         stdout = stdout or subprocess.PIPE
-        stderr = subprocess.PIPE
+        stderr = subprocess.PIPE if capture else subprocess.STDOUT
         communicate = True
     else:
         stderr = None
@@ -351,7 +374,7 @@ def raw_command(
 
         if communicate:
             data_bytes = to_optional_bytes(data)
-            stdout_bytes, stderr_bytes = process.communicate(data_bytes)
+            stdout_bytes, stderr_bytes = communicate_with_process(process, data_bytes, stdout == subprocess.PIPE, stderr == subprocess.PIPE, capture=capture)
             stdout_text = to_optional_text(stdout_bytes, str_errors) or u''
             stderr_text = to_optional_text(stderr_bytes, str_errors) or u''
         else:
@@ -372,6 +395,114 @@ def raw_command(
         return stdout_text, stderr_text
 
     raise SubprocessError(cmd, status, stdout_text, stderr_text, runtime, error_callback)
+
+
+def communicate_with_process(process: subprocess.Popen, stdin: t.Optional[bytes], stdout: bool, stderr: bool, capture: bool) -> t.Tuple[bytes, bytes]:
+    """Communicate with the specified process, handling stdin/stdout/stderr as requested."""
+    threads: t.List[WrappedThread] = []
+    reader: t.Type[ReaderThread]
+
+    if capture:
+        reader = CaptureThread
+    else:
+        reader = OutputThread
+
+    if stdin is not None:
+        threads.append(WriterThread(process.stdin, stdin))
+
+    if stdout:
+        stdout_reader = reader(process.stdout)
+        threads.append(stdout_reader)
+    else:
+        stdout_reader = None
+
+    if stderr:
+        stderr_reader = reader(process.stderr)
+        threads.append(stderr_reader)
+    else:
+        stderr_reader = None
+
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        try:
+            thread.wait_for_result()
+        except Exception as ex:  # pylint: disable=broad-except
+            display.error(str(ex))
+
+    if isinstance(stdout_reader, ReaderThread):
+        stdout_bytes = b''.join(stdout_reader.lines)
+    else:
+        stdout_bytes = b''
+
+    if isinstance(stderr_reader, ReaderThread):
+        stderr_bytes = b''.join(stderr_reader.lines)
+    else:
+        stderr_bytes = b''
+
+    process.wait()
+
+    return stdout_bytes, stderr_bytes
+
+
+class WriterThread(WrappedThread):
+    """Thread to write data to stdin of a subprocess."""
+    def __init__(self, handle: t.IO[bytes], data: bytes) -> None:
+        super().__init__(self._run)
+
+        self.handle = handle
+        self.data = data
+
+    def _run(self) -> None:
+        """Workload to run on a thread."""
+        try:
+            self.handle.write(self.data)
+            self.handle.flush()
+        finally:
+            self.handle.close()
+
+
+class ReaderThread(WrappedThread, metaclass=abc.ABCMeta):
+    """Thread to read stdout from a subprocess."""
+    def __init__(self, handle: t.IO[bytes]) -> None:
+        super().__init__(self._run)
+
+        self.handle = handle
+        self.lines = []  # type: t.List[bytes]
+
+    @abc.abstractmethod
+    def _run(self) -> None:
+        """Workload to run on a thread."""
+
+
+class CaptureThread(ReaderThread):
+    """Thread to capture stdout from a subprocess into a buffer."""
+    def _run(self) -> None:
+        """Workload to run on a thread."""
+        src = self.handle
+        dst = self.lines
+
+        try:
+            for line in src:
+                dst.append(line)
+        finally:
+            src.close()
+
+
+class OutputThread(ReaderThread):
+    """Thread to pass stdout from a subprocess to stdout."""
+    def _run(self) -> None:
+        """Workload to run on a thread."""
+        src = self.handle
+        dst = sys.stdout.buffer
+
+        try:
+            for line in src:
+                dst.write(line)
+                dst.flush()
+        finally:
+            src.close()
 
 
 def common_environment():
