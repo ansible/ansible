@@ -282,6 +282,9 @@ def raw_command(
     if stdin and data:
         raise InternalError('Cannot combine stdin with data.')
 
+    if stdout and not capture:
+        raise InternalError('Redirection of stdout requires capture=True to avoid redirection of stderr to stdout.')
+
     if not cwd:
         cwd = os.getcwd()
 
@@ -291,9 +294,6 @@ def raw_command(
     cmd = list(cmd)
 
     if not capture and not interactive:
-        if stdout:
-            raise InternalError('Redirection of stdout requires capture=True to avoid redirection of stderr to stdout.')
-
         # When not capturing stdout/stderr and not running interactively, send subprocess stdout/stderr through an additional subprocess.
         # This isolates the stdout/stderr of the subprocess using pipes, and also hides the current TTY from it, if any.
         # This prevents subprocesses from sharing stdin/stdout/stderr with the current process or each other.
