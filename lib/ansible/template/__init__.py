@@ -1107,15 +1107,19 @@ class Templar:
 
             jvars = AnsibleJ2Vars(self, t.globals)
 
-            self.cur_context = new_context = t.new_context(jvars, shared=True)
-            rf = t.root_render_func(new_context)
+            # In case this is a recursive call to do_template we need to
+            # save/restore cur_context to prevent overriding __UNSAFE__.
+            cached_context = self.cur_context
+
+            self.cur_context = t.new_context(jvars, shared=True)
+            rf = t.root_render_func(self.cur_context)
 
             try:
                 if self.jinja2_native:
                     res = ansible_native_concat(rf)
                 else:
                     res = j2_concat(rf)
-                unsafe = getattr(new_context, 'unsafe', False)
+                unsafe = getattr(self.cur_context, 'unsafe', False)
                 if unsafe:
                     res = wrap_var(res)
             except TypeError as te:
@@ -1126,6 +1130,8 @@ class Templar:
                 else:
                     display.debug("failing because of a type error, template data is: %s" % to_text(data))
                     raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data), to_native(te)))
+            finally:
+                self.cur_context = cached_context
 
             if self.jinja2_native and not isinstance(res, string_types):
                 return res
