@@ -276,12 +276,15 @@ def raw_command(
     cmd = list(cmd)
 
     if not capture and not interactive:
-        # When not capturing stdout/stderr and not running interactively, send subprocess stdout/stderr through a shell to the current stdout.
-        # Additionally send output through a pipe to `tee` to block access to the current TTY, if any.
+        if stdout:
+            raise Exception('Redirection of stdout requires capture=True to avoid redirection of stderr to stdout.')
+
+        # When not capturing stdout/stderr and not running interactively, send subprocess stdout/stderr through an additional subprocess.
+        # This isolates the stdout/stderr of the subprocess using pipes, and also hides the current TTY from it, if any.
         # This prevents subprocesses from sharing stdin/stdout/stderr with the current process or each other.
         # Doing so allows subprocesses to safely make changes to their file handles, such as making them non-blocking (ssh does this).
         # This also maintains consistency between local testing and CI systems, which typically do not provide a TTY.
-        cmd = ['/bin/sh', '-c', f'{shlex.join(cmd)} 2>&1 | tee']
+        cmd = [sys.executable, os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'run.py')] + cmd
 
     escaped_cmd = ' '.join(shlex.quote(c) for c in cmd)
 
