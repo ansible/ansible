@@ -99,8 +99,8 @@ If your module does not need to target a remote host, you can quickly and easily
         }
     }
 
--  Now yu can run your test module locally and directly:
-   ``$ python -m library/my_test.py /tmp/args.json``
+-  Now you can run your test module locally and directly:
+   ``$ python library/my_test.py /tmp/args.json``
 
 This should return output like this:
 
