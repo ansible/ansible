@@ -201,7 +201,7 @@ def load_extra_vars(loader):
             # Arguments as Key-value
             data = parse_kv(extra_vars_opt)
 
-        validate_variable_names(data, 'extra vars')
+        validate_variable_names(data.keys(), 'extra_vars')
 
         if isinstance(data, MutableMapping):
             extra_vars = combine_vars(extra_vars, data)
