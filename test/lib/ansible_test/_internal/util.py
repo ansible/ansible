@@ -321,7 +321,6 @@ def raw_command(
 
     if stdin is not None:
         data = None
-        communicate = True
     elif data is not None:
         stdin = subprocess.PIPE
         communicate = True
@@ -329,9 +328,6 @@ def raw_command(
         pass  # allow the subprocess access to our stdin
     else:
         stdin = subprocess.DEVNULL
-
-    if stdout:
-        communicate = True
 
     if capture:
         stdout = stdout or subprocess.PIPE
