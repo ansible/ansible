@@ -2,4 +2,4 @@ minor_changes:
   - Expand invalid identifiers detection to all vars.
   - Expand reserved name detection to all vars, not just play vars to at least warn against conflicts.
   - Add a toggle for users to be able to choose how to handle reserved names conflicts, default to warn.
-  - Add lookup, query and q to 'reserved names' that playbook authors should avoid.
+  - Add Jinja2 reserved names to invalid identifies detection that playbook authors should avoid.
