@@ -277,7 +277,7 @@ def raw_command(
 
     if not capture and not interactive:
         if stdout:
-            raise Exception('Redirection of stdout requires capture=True to avoid redirection of stderr to stdout.')
+            raise InternalError('Redirection of stdout requires capture=True to avoid redirection of stderr to stdout.')
 
         # When not capturing stdout/stderr and not running interactively, send subprocess stdout/stderr through an additional subprocess.
         # This isolates the stdout/stderr of the subprocess using pipes, and also hides the current TTY from it, if any.
