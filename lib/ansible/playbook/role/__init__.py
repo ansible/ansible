@@ -211,7 +211,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         elif not isinstance(self._role_vars, Mapping):
             raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
-        validate_variable_names(self._role_vars.keys(), "'vars/main.yml' specified for role '%s'" % self._role_name)
+        validate_variable_names(self._role_vars.keys(), "'vars/main.yml' for role '%s'" % self._role_name)
 
         self._default_vars = self._load_role_yaml('defaults', main=self._from_files.get('defaults'), allow_dir=True)
         if self._default_vars is None:
@@ -219,7 +219,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         elif not isinstance(self._default_vars, Mapping):
             raise AnsibleParserError("The defaults/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
-        validate_variable_names(self._default_vars.keys(), "'defaults/main.yml' specified for role '%s'" % self._role_name)
+        validate_variable_names(self._default_vars.keys(), "'defaults/main.yml' for role '%s'" % self._role_name)
 
         # load the role's other files, if they exist
         metadata = self._load_role_yaml('meta')

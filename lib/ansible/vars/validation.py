@@ -20,10 +20,10 @@ def validate_variable_names(names, where=None, obj=None):
     if not isinstance(var_names, Iterable) or isinstance(var_names, string_types):
         var_names = [var_names]
 
-    where_msg = '' if where is None else f'in \'{where}\' '
+    where_msg = '' if where is None else f'in {where} '
     for name in itertools.filterfalse(isidentifier, var_names):
         raise AnsibleInvalidVarNameError(
-            f'Invalid variable name {where_msg}specified: "{name}". '
+            f'Invalid variable name {where_msg}specified: \'{name}\'. '
             'Variables must start with a letter or underscore character, '
             'and contain only letters, numbers and underscores.',
             obj=obj,

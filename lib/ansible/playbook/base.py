@@ -563,14 +563,14 @@ class FieldAttributeBase:
 
         try:
             if isinstance(ds, dict):
-                validate_variable_names(ds.keys(), "'vars' specified for %s" % self.__class__.__name__, obj=ds)
+                validate_variable_names(ds.keys(), "vars for %s" % self.__class__.__name__, obj=ds)
                 return combine_vars(self.vars, ds)
             elif isinstance(ds, list):
                 all_vars = self.vars
                 for item in ds:
                     if not isinstance(item, dict):
                         raise ValueError
-                    validate_variable_names(item.keys(), "'vars' specified for %s" % self.__class__.__name__, obj=ds)
+                    validate_variable_names(item.keys(), "vars for %s" % self.__class__.__name__, obj=ds)
                     all_vars = combine_vars(all_vars, item)
                 return all_vars
             elif ds is None:
