@@ -11,10 +11,10 @@ DOCUMENTATION = r'''
 ---
 author: Ansible Core Team (@ansible)
 module: include
-short_description: Include a play or task list
+short_description: Include a task list
 description:
-  - Includes a file with a list of plays or tasks to be executed in the current playbook.
-  - Files with a list of plays can only be included at the top level. Lists of tasks can only be included where tasks
+  - Includes a file with a list of tasks to be executed in the current playbook.
+  - Lists of tasks can only be included where tasks
     normally run (in play).
   - Before Ansible 2.0, all includes were 'static' and were executed when the play was compiled.
   - Static includes are not subject to most directives. For example, loops or conditionals are applied instead to each
@@ -40,7 +40,7 @@ notes:
     in an effort to clarify behaviours we are moving to a new set modules (M(ansible.builtin.include_tasks),
     M(ansible.builtin.include_role), M(ansible.builtin.import_playbook), M(ansible.builtin.import_tasks))
     that have well established and clear behaviours.
-  - B(This module will still be supported for some time but we are looking at deprecating it in the near future.)
+  - This module no longer supporst including plays. Use M(ansible.builtin.import_playbook) instead.
 seealso:
 - module: ansible.builtin.import_playbook
 - module: ansible.builtin.import_role
@@ -52,14 +52,6 @@ seealso:
 '''
 
 EXAMPLES = r'''
-- hosts: localhost
-  tasks:
-    - ansible.builtin.debug:
-        msg: play1
-
-- name: Include a play after another play
-  ansible.builtin.include: otherplays.yaml
-
 
 - hosts: all
   tasks:
@@ -84,5 +76,5 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-# This module does not return anything except plays or tasks to execute.
+# This module does not return anything except tasks to execute.
 '''
