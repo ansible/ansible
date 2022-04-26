@@ -254,7 +254,7 @@ def get_available_python_versions():  # type: () -> t.Dict[str, str]
 
 def raw_command(
         cmd,  # type: t.Iterable[str]
-        capture=False,  # type: bool
+        capture,  # type: bool
         env=None,  # type: t.Optional[t.Dict[str, str]]
         data=None,  # type: t.Optional[str]
         cwd=None,  # type: t.Optional[str]

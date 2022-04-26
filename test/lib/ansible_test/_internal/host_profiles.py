@@ -362,7 +362,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         setup_sh = bootstrapper.get_script()
         shell = setup_sh.splitlines()[0][2:]
 
-        docker_exec(self.args, self.container_name, [shell], data=setup_sh)
+        docker_exec(self.args, self.container_name, [shell], data=setup_sh, capture=False)
 
     def deprovision(self):  # type: () -> None
         """Deprovision the host after delegation has completed."""
@@ -548,7 +548,7 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
         shell = setup_sh.splitlines()[0][2:]
 
         ssh = self.get_origin_controller_connection()
-        ssh.run([shell], data=setup_sh)
+        ssh.run([shell], data=setup_sh, capture=False)
 
     def get_ssh_connection(self):  # type: () -> SshConnection
         """Return an SSH connection for accessing the host."""

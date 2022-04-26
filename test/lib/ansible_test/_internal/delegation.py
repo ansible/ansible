@@ -166,7 +166,7 @@ def delegate_command(args, host_state, exclude, require):  # type: (EnvironmentC
             con.run(['chmod', '644', os.path.join(content_root, args.metadata_path)], capture=True)
             con.run(['useradd', pytest_user, '--create-home'], capture=True)
 
-            con.run(insert_options(command, options + ['--requirements-mode', 'only']))
+            con.run(insert_options(command, options + ['--requirements-mode', 'only']), capture=False)
 
             container = con.inspect()
             networks = container.get_network_names()
@@ -192,7 +192,7 @@ def delegate_command(args, host_state, exclude, require):  # type: (EnvironmentC
         success = False
 
         try:
-            con.run(insert_options(command, options), interactive=args.interactive)
+            con.run(insert_options(command, options), capture=False, interactive=args.interactive)
             success = True
         finally:
             if host_delegation:

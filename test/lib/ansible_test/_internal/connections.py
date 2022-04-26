@@ -45,7 +45,7 @@ class Connection(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def run(self,
             command,  # type: t.List[str]
-            capture=False,  # type: bool
+            capture,  # type: bool
             interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
@@ -92,7 +92,7 @@ class LocalConnection(Connection):
 
     def run(self,
             command,  # type: t.List[str]
-            capture=False,  # type: bool
+            capture,  # type: bool
             interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
@@ -132,7 +132,7 @@ class SshConnection(Connection):
 
     def run(self,
             command,  # type: t.List[str]
-            capture=False,  # type: bool
+            capture,  # type: bool
             interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
@@ -212,7 +212,7 @@ class DockerConnection(Connection):
 
     def run(self,
             command,  # type: t.List[str]
-            capture=False,  # type: bool
+            capture,  # type: bool
             interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]

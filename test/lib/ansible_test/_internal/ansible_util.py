@@ -282,15 +282,15 @@ def run_playbook(
         args,  # type: EnvironmentConfig
         inventory_path,  # type: str
         playbook,   # type: str
-        run_playbook_vars=None,  # type: t.Optional[t.Dict[str, t.Any]]
-        capture=False,  # type: bool
+        capture,  # type: bool
+        variables=None,  # type: t.Optional[t.Dict[str, t.Any]]
 ):  # type: (...) -> None
     """Run the specified playbook using the given inventory file and playbook variables."""
     playbook_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'playbooks', playbook)
     cmd = ['ansible-playbook', '-i', inventory_path, playbook_path]
 
-    if run_playbook_vars:
-        cmd.extend(['-e', json.dumps(run_playbook_vars)])
+    if variables:
+        cmd.extend(['-e', json.dumps(variables)])
 
     if args.verbosity:
         cmd.append('-%s' % ('v' * args.verbosity))

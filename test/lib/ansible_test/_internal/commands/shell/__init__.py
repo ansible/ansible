@@ -91,4 +91,4 @@ def command_shell(args):  # type: (ShellConfig) -> None
     else:
         cmd = []
 
-    con.run(cmd, interactive=True)
+    con.run(cmd, capture=False, interactive=True)

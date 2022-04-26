@@ -370,7 +370,7 @@ def intercept_python(
         python,  # type: PythonConfig
         cmd,  # type: t.List[str]
         env,  # type: t.Dict[str, str]
-        capture=False,  # type: bool
+        capture,  # type: bool
         data=None,  # type: t.Optional[str]
         cwd=None,  # type: t.Optional[str]
         always=False,  # type: bool
@@ -400,7 +400,7 @@ def intercept_python(
 def run_command(
         args,  # type: CommonConfig
         cmd,  # type: t.Iterable[str]
-        capture=False,  # type: bool
+        capture,  # type: bool
         env=None,  # type: t.Optional[t.Dict[str, str]]
         data=None,  # type: t.Optional[str]
         cwd=None,  # type: t.Optional[str]

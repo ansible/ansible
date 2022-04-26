@@ -268,7 +268,7 @@ def docker_pull(args, image):  # type: (EnvironmentConfig, str) -> None
 
     for _iteration in range(1, 10):
         try:
-            docker_command(args, ['pull', image])
+            docker_command(args, ['pull', image], capture=False)
             return
         except SubprocessError:
             display.warning('Failed to pull docker image "%s". Waiting a few seconds before trying again.' % image)
@@ -510,8 +510,8 @@ def docker_exec(
         args,  # type: EnvironmentConfig
         container_id,  # type: str
         cmd,  # type: t.List[str]
+        capture,  # type: bool
         options=None,  # type: t.Optional[t.List[str]]
-        capture=False,  # type: bool
         stdin=None,  # type: t.Optional[t.IO[bytes]]
         stdout=None,  # type: t.Optional[t.IO[bytes]]
         interactive=False,  # type: bool
@@ -542,7 +542,7 @@ def docker_version(args):  # type: (CommonConfig) -> t.Dict[str, t.Any]
 def docker_command(
         args,  # type: CommonConfig
         cmd,  # type: t.List[str]
-        capture=False,  # type: bool
+        capture,  # type: bool
         stdin=None,  # type: t.Optional[t.IO[bytes]]
         stdout=None,  # type: t.Optional[t.IO[bytes]]
         interactive=False,  # type: bool
