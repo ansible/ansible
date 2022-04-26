@@ -443,3 +443,28 @@ class TestAnsibleContext(BaseTemplar, unittest.TestCase):
     def test_is_unsafe(self):
         context = self._context()
         self.assertFalse(context._is_unsafe(AnsibleUndefined()))
+
+
+def test_unsafe_lookup():
+    res = Templar(
+        None,
+        variables={
+            'var0': '{{ var1 }}',
+            'var1': ['unsafe'],
+        }
+    ).template('{{ lookup("list", var0) }}')
+    assert getattr(res[0], '__UNSAFE__', False)
+
+
+def test_unsafe_lookup_no_conversion():
+    res = Templar(
+        None,
+        variables={
+            'var0': '{{ var1 }}',
+            'var1': ['unsafe'],
+        }
+    ).template(
+        '{{ lookup("list", var0) }}',
+        convert_data=False,
+    )
+    assert getattr(res, '__UNSAFE__', False)

@@ -1,0 +1,2 @@
+bugfixes:
+  - Prevent losing unsafe on results returned from lookups (https://github.com/ansible/ansible/issues/77535)
