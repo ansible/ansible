@@ -73,11 +73,11 @@ class PinnedCandidateRequests(Set):
         return len(self._candidates)
 
 
-class CollectionDependencyProvider(AbstractProvider):
+class CollectionDependencyProviderBase(AbstractProvider):
     """Delegate providing a requirement interface for the resolver."""
 
     def __init__(
-            self,  # type: CollectionDependencyProvider
+            self,  # type: CollectionDependencyProviderBase
             apis,  # type: MultiGalaxyAPIProxy
             concrete_artifacts_manager=None,  # type: ConcreteArtifactsManager
             user_requirements=None,  # type: t.Iterable[Requirement]
@@ -180,18 +180,16 @@ class CollectionDependencyProvider(AbstractProvider):
         """
         return requirement_or_candidate.canonical_package_id
 
-    def get_preference(
-            self,  # type: CollectionDependencyProvider
-            resolution,  # type: t.Optional[Candidate]
-            candidates,  # type: list[Candidate]
-            information,  # type: list[t.NamedTuple]
-    ):  # type: (...) -> t.Union[float, int]
+    def get_preference(self, *args, **kwargs):
+        # type: (...) -> float | int
         """Return sort key function return value for given requirement.
 
         This result should be based on preference that is defined as
         "I think this requirement should be resolved first".
         The lower the return value is, the more preferred this
         group of arguments is.
+
+        resolvelib >=0.5.3, <0.7.0
 
         :param resolution: Currently pinned candidate, or ``None``.
 
@@ -207,6 +205,31 @@ class CollectionDependencyProvider(AbstractProvider):
           * ``parent`` specifies the candidate that provides
             (dependend on) the requirement, or `None`
             to indicate a root requirement.
+
+        resolvelib >=0.7.0, < 0.8.0
+
+        :param identifier: The value returned by identify()
+
+        :param resolutions: A mapping of identifier, candidate pairs.
+
+        :param candidates: A mapping of identifier, list of candidates pairs.
+
+        :param information: Mapping of requirement information of each package.
+            Each value is an iterator of *requirement information*.
+
+        resolvelib >=0.8.0, <= 0.8.1
+
+        :param identifier: The value returned by identify()
+
+        :param resolutions: A mapping of identifier, candidate pairs.
+
+        :param candidates: A mapping of identifier, list of candidates pairs.
+
+        :param information: Mapping of requirement information of each package.
+            Each value is an iterator of *requirement information*.
+
+        :param backtrack_causes: Sequence of requirement information that were
+            the requirements that caused the resolver to most recently backtrack.
 
         The preference could depend on a various of issues, including
         (not necessarily in this order):
@@ -229,6 +252,9 @@ class CollectionDependencyProvider(AbstractProvider):
         the value is, the more preferred this requirement is (i.e. the
         sorting function is called with ``reverse=False``).
         """
+        raise NotImplementedError
+
+    def _get_preference(self, candidates):
         if any(
                 candidate in self._preferred_candidates
                 for candidate in candidates
@@ -238,7 +264,10 @@ class CollectionDependencyProvider(AbstractProvider):
             return float('-inf')
         return len(candidates)
 
-    def find_matches(self, requirements):
+    def find_matches(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def _find_matches(self, requirements):
         # type: (list[Requirement]) -> list[Candidate]
         r"""Find all possible candidates satisfying given requirements.
 
@@ -438,3 +467,64 @@ class CollectionDependencyProvider(AbstractProvider):
             self._make_req_from_dict({'name': dep_name, 'version': dep_req})
             for dep_name, dep_req in req_map.items()
         ]
+
+
+class CollectionDependencyProvider(CollectionDependencyProviderBase):
+
+    def _get_candidates_from_args(self, *args):
+        if SemanticVersion(resolvelib_version) < SemanticVersion("0.7.0"):
+            resolution, candidates, information = args
+            return candidates
+
+        if SemanticVersion(resolvelib_version) < SemanticVersion("0.8.0"):
+            identifier, resolutions, candidates, information = args
+            return list(candidates[identifier])
+
+        identifier, resolutions, candidates, information, backtrack_causes = args
+        return list(candidates[identifier])
+
+    def _get_candidates_from_kwargs(self, **kwargs):
+        if SemanticVersion(resolvelib_version) < SemanticVersion("0.7.0"):
+            return kwargs['candidates']
+
+        candidates = kwargs['candidates']
+        identifier = kwargs['identifier']
+        return list(candidates[identifier])
+
+    def get_preference(self, *args, **kwargs):
+        try:
+            candidates = self._get_candidates_from_kwargs(**kwargs)
+        except KeyError:
+            try:
+                candidates = self._get_candidates_from_args(*args)
+            except (KeyError, ValueError) as err:
+                raise NotImplementedError from err
+
+        return self._get_preference(candidates)
+
+    def _get_requirements_from_args(self, *args):
+        if SemanticVersion(resolvelib_version) < SemanticVersion("0.6.0"):
+            requirements, = args
+            return requirements
+
+        identifier, requirements, incompatibilities = args
+        return list(requirements[identifier])
+
+    def _get_requirements_from_kwargs(self, **kwargs):
+        if SemanticVersion(resolvelib_version) < SemanticVersion("0.6.0"):
+            return kwargs['requirements']
+
+        requirements = kwargs['requirements']
+        identifier = kwargs['identifier']
+        return list(requirements[identifier])
+
+    def find_matches(self, *args, **kwargs):
+        try:
+            requirements = self._get_requirements_from_kwargs(**kwargs)
+        except KeyError:
+            try:
+                requirements = self._get_requirements_from_args(*args)
+            except (KeyError, ValueError) as err:
+                raise NotImplementedError from err
+
+        return self._find_matches(requirements)

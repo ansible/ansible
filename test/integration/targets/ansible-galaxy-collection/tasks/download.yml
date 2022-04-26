@@ -4,6 +4,12 @@
     path: '{{ galaxy_dir }}/download'
     state: directory
 
+- name: ensure requested resolvelib version is installed
+  pip:
+    name: resolvelib
+    version: "{{ resolvelib_version }}"
+    state: present
+
 - name: download collection with multiple dependencies with --no-deps
   command: ansible-galaxy collection download parent_dep.parent_collection:1.0.0 --no-deps -s pulp_v2 {{ galaxy_verbosity }}
   register: download_collection

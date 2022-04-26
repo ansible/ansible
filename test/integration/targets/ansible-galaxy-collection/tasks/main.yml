@@ -98,10 +98,12 @@
 - name: run ansible-galaxy collection install tests for {{ test_name }}
   include_tasks: install.yml
   vars:
+    test_id: '{{ item.name }}'
     test_name: '{{ item.name }}'
     test_server: '{{ item.server }}'
     vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
     requires_auth: '{{ item.requires_auth|default(false) }}'
+    resolvelib_version: "0.8.1"  # Latest supported version
   args:
     apply:
       environment:
@@ -116,6 +118,33 @@
   - name: pulp_v3
     server: '{{ pulp_server }}published/api/'
     v3: true
+
+- name: test installing collections with older resolvelib versions {{ test_name }}
+  include_tasks: install.yml
+  vars:
+    test_id: '{{ item.name }} (resolvelib {{ resolvelib_version }})'
+    test_name: '{{ item.name }}'
+    test_server: '{{ item.server }}'
+    vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
+    requires_auth: '{{ item.requires_auth|default(false) }}'
+    resolvelib_version: '{{ item.resolvelib|default("0.8.1") }}'
+  args:
+    apply:
+      environment:
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  loop:
+  - name: pulp_v3
+    server: '{{ pulp_server }}published/api/'
+    v3: true
+    resolvelib: "0.5.3"  # Oldest supported version
+  - name: pulp_v3
+    server: '{{ pulp_server }}published/api/'
+    v3: true
+    resolvelib: "0.6.0"
+  - name: pulp_v3
+    server: '{{ pulp_server }}published/api/'
+    v3: true
+    resolvelib: "0.7.0"
 
 - name: publish collection with a dep on another server
   setup_collections:
@@ -177,6 +206,12 @@
     apply:
       environment:
         ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  loop:
+    # test download with oldest and latest resolvelib versions
+    - "0.5.3"
+    - "0.8.1"
+  loop_control:
+    loop_var: resolvelib_version
 
 - name: run ansible-galaxy collection verify tests for {{ test_name }}
   include_tasks: verify.yml
