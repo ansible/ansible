@@ -267,6 +267,21 @@ def raw_command(
         error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Run the specified command and return stdout and stderr as a tuple."""
+    if capture and interactive:
+        raise InternalError('Cannot combine capture=True with interactive=True.')
+
+    if data and interactive:
+        raise InternalError('Cannot combine data with interactive=True.')
+
+    if stdin and interactive:
+        raise InternalError('Cannot combine stdin with interactive=True.')
+
+    if stdout and interactive:
+        raise InternalError('Cannot combine stdout with interactive=True.')
+
+    if stdin and data:
+        raise InternalError('Cannot combine stdin with data.')
+
     if not cwd:
         cwd = os.getcwd()
 
