@@ -11,7 +11,7 @@ Pygments==2.9.0
 PyYAML==5.4.1
 resolvelib==0.5.4
 rstcheck==3.3.1
-sphinx==4.0.2
+sphinx==2.1.2
 sphinx-notfound-page==0.7.1 # must be >= 0.6
 sphinx-intl==2.0.1
 sphinx-ansible-theme===0.7.0
