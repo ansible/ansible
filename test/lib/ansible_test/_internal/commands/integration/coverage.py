@@ -118,7 +118,7 @@ class CoverageHandler(t.Generic[THostConfig], metaclass=abc.ABCMeta):
     def run_playbook(self, playbook, variables):  # type: (str, t.Dict[str, str]) -> None
         """Run the specified playbook using the current inventory."""
         self.create_inventory()
-        run_playbook(self.args, self.inventory_path, playbook, variables)
+        run_playbook(self.args, self.inventory_path, playbook, capture=False, variables=variables)
 
 
 class PosixCoverageHandler(CoverageHandler[PosixConfig]):

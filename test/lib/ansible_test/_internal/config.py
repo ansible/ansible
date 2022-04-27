@@ -238,6 +238,7 @@ class ShellConfig(EnvironmentConfig):
         super().__init__(args, 'shell')
 
         self.raw = args.raw  # type: bool
+        self.interactive = True
 
 
 class SanityConfig(TestConfig):

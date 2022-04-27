@@ -122,14 +122,12 @@ def get_ps_argument_spec(filename, collection):
     })
 
     script_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ps_argspec.ps1')
-    proc = subprocess.Popen(['pwsh', script_path, util_manifest], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                            shell=False)
-    stdout, stderr = proc.communicate()
+    proc = subprocess.run(['pwsh', script_path, util_manifest], stdin=subprocess.DEVNULL, capture_output=True, text=True, check=False)
 
     if proc.returncode != 0:
-        raise AnsibleModuleImportError("STDOUT:\n%s\nSTDERR:\n%s" % (stdout.decode('utf-8'), stderr.decode('utf-8')))
+        raise AnsibleModuleImportError("STDOUT:\n%s\nSTDERR:\n%s" % (proc.stdout, proc.stderr))
 
-    kwargs = json.loads(stdout)
+    kwargs = json.loads(proc.stdout)
 
     # the validate-modules code expects the options spec to be under the argument_spec key not options as set in PS
     kwargs['argument_spec'] = kwargs.pop('options', {})
