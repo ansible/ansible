@@ -104,7 +104,7 @@
   become: true
   block:
    - name: setup selinux for ansible_user
-     shell: semanage login -a -s staff_u -r s0 {{ansible_user}}
+     shell: !unsafe semanage login -a -s staff_u -r s0 ${SUDO_USER}
 
    - name: see if we get expected string from id
      shell: id -Z
