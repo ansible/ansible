@@ -28,7 +28,6 @@ import mock
 from units.compat import unittest
 from ansible.errors import AnsibleError
 from ansible.plugins.cache import CachePluginAdjudicator
-from ansible.plugins.cache.base import BaseCacheModule
 from ansible.plugins.cache.memory import CacheModule as MemoryCache
 from ansible.plugins.loader import cache_loader
 from ansible.vars.fact_cache import FactCache
@@ -196,54 +195,5 @@ class TestFactCache(unittest.TestCase):
         assert self.cache['cache_key']['key2'] == 'updatedvalue'
 
 
-class TestAbstractClass(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    def test_subclass_error(self):
-        class CacheModule1(BaseCacheModule):
-            pass
-        with self.assertRaises(TypeError):
-            CacheModule1()  # pylint: disable=abstract-class-instantiated
-
-        class CacheModule2(BaseCacheModule):
-            def get(self, key):
-                super(CacheModule2, self).get(key)
-
-        with self.assertRaises(TypeError):
-            CacheModule2()  # pylint: disable=abstract-class-instantiated
-
-    def test_subclass_success(self):
-        class CacheModule3(BaseCacheModule):
-            def get(self, key):
-                super(CacheModule3, self).get(key)
-
-            def set(self, key, value):
-                super(CacheModule3, self).set(key, value)
-
-            def keys(self):
-                super(CacheModule3, self).keys()
-
-            def contains(self, key):
-                super(CacheModule3, self).contains(key)
-
-            def delete(self, key):
-                super(CacheModule3, self).delete(key)
-
-            def flush(self):
-                super(CacheModule3, self).flush()
-
-            def copy(self):
-                super(CacheModule3, self).copy()
-
-        self.assertIsInstance(CacheModule3(), CacheModule3)
-
-    def test_memory_cachemodule(self):
-        self.assertIsInstance(MemoryCache(), MemoryCache)
-
-    def test_memory_cachemodule_with_loader(self):
-        self.assertIsInstance(cache_loader.get('memory'), MemoryCache)
+def test_memory_cachemodule_with_loader():
+    assert isinstance(cache_loader.get('memory'), MemoryCache)
