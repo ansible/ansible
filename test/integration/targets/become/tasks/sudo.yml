@@ -109,4 +109,5 @@
      failed_when: "se_id.stdout != 'staff_u:sysadm_r:sysadm_t:s0'"
      become: false
   when:
+    - ansible_facts['selinux'] is defined and ansible_facts['selinux']['status'] != 'disabled'
     - ansible_facts['distribution'] in ['RedHat', 'CentOS']
