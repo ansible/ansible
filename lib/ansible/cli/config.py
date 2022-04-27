@@ -301,7 +301,6 @@ class ConfigCLI(CLI):
                 if subkey == 'env':
                     data.append('%s%s=%s' % (prefix, entry, default))
                 elif subkey == 'vars':
-                    print(entry, default, type(entry), type(default))
                     data.append(prefix + to_text(yaml_dump({entry: default}, default_flow_style=False), errors='surrogate_or_strict'))
                 data.append('')
 
