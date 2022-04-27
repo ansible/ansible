@@ -44,8 +44,8 @@ If ``VULTR_API_ACCOUNT`` environment variable or ``api_account`` module paramete
 Authentication
 --------------
 
-Before using the Ansible modules to interact with Vultr, ones need an API key.
-If one doesn't own one yet, log in to `Vultr <https://www.vultr.com>`_ go to Account, then API, enable API then the API key should show up.
+Before using the Ansible modules to interact with Vultr, you need an API key.
+If you don't yet own one, log in to `Vultr <https://www.vultr.com>`_ go to Account, then API, enable API then the API key should show up.
 
 Ensure you allow the usage of the API key from the proper IP addresses.
 
@@ -73,7 +73,7 @@ To check that everything is working properly run the following command:
   }
 
 
-If a similar output displays then everything is setup properly, else please ensure the proper ``VULTR_API_KEY`` has been specified and that Access Control on Vultr > Account > API page are accurate.
+If a similar output displays then everything is setup properly, else please ensure the proper ``VULTR_API_KEY`` has been specified and that Access Controls on Vultr > Account > API page are accurate.
 
 
 Usage
@@ -100,7 +100,7 @@ Dynamic Inventory
 -----------------
 
 Ansible provides a dynamic inventory plugin for `Vultr <https://www.vultr.com>`_.
-The configuration process is exactly the same as the one for the modules.
+The configuration process is exactly the same as for the modules.
 
 To be able to use it you need to enable it first by specifying the following in the ``ansible.cfg`` file:
 
