@@ -3,7 +3,7 @@
   vars:
     deep_undefined: "{{ nested_undefined_variable }}"
   tasks:
-    - name: These do not throw an error, deep_undefined is just evaluated to undefined, since 2.13
+    - name: These do not throw an error, deep_undefined is just evaluated to undefined, since 2.14
       assert:
         that:
           - lazy_eval or deep_undefined
