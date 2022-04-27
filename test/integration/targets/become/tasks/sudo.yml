@@ -100,9 +100,9 @@
      register: selinux_prereq
 
 - name: selinux_role tests
-  block
   become_method: sudo
   become: true
+  block:
    - name: setup selinux for ansible_user
      shell: semanage login -a -s staff_u -r s0 {{ansible_user}}
 
