@@ -101,7 +101,7 @@ expected_out="$(sed 's/ *"filename": "[^"]*",$//' noop_vars_plugin.output)"
 test "$current_out" == "$expected_out"
 
 # just ensure it runs
-ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --playbook-dir /dev/null
+ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --playbook-dir /dev/null >/dev/null
 
 # create broken role argument spec
 mkdir -p broken-docs/collections/ansible_collections/testns/testcol/roles/testrole/meta
@@ -125,7 +125,7 @@ argument_specs:
 EOF
 
 # ensure that --metadata-dump does not fail when --no-fail-on-errors is supplied
-ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --no-fail-on-errors --playbook-dir broken-docs testns.testcol
+ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --no-fail-on-errors --playbook-dir broken-docs testns.testcol >/dev/null
 
 # ensure that --metadata-dump does fail when --no-fail-on-errors is not supplied
 output=$(ANSIBLE_LIBRARY='./nolibrary' ansible-doc --metadata-dump --playbook-dir broken-docs testns.testcol 2>&1 | grep -c 'ERROR!' || true)
