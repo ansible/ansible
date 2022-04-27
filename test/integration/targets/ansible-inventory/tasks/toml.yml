@@ -4,12 +4,21 @@
       - tomli
       - tomli-w
       - toml
+    state: absent
 
 - name: Install toml package
   pip:
-    name: '{{ toml_package }}'
+    name: '{{ toml_package|difference(["tomllib"]) }}'
     state: present
-  when: toml_package != 'tomllib'
+
+- name: test toml parsing
+  command: ansible-inventory --list --toml -i {{ role_path }}/files/valid_sample.toml
+  register: toml_in
+
+- assert:
+    that:
+      - >
+        'foo = "bar"' in toml_in.stdout
 
 - name: "test option: --toml with valid group name"
   command: ansible-inventory --list --toml -i {{ role_path }}/files/valid_sample.yml
@@ -27,7 +36,8 @@
 - assert:
     that:
         - result is failed
-        - '"ERROR! The source inventory contains a non-string key" in result.stderr'
+        - >
+          "ERROR! The source inventory contains" in result.stderr
 
 - block:
   - name: "test toml output with unicode characters"
