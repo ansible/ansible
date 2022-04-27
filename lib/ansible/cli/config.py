@@ -10,6 +10,7 @@ __metaclass__ = type
 from ansible.cli import CLI
 
 import os
+import yaml
 import shlex
 import subprocess
 
@@ -24,14 +25,18 @@ from ansible.config.manager import ConfigManager, Setting
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common.json import json_dump
-from ansible.module_utils.common.yaml import yaml_dump
 from ansible.module_utils.six import string_types
 from ansible.parsing.quoting import is_quoted
+from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
 
 display = Display()
+
+
+def yaml_dump(data, default_flow_style=True):
+    return yaml.dump(data, Dumper=AnsibleDumper, default_flow_style=default_flow_style)
 
 
 def get_constants():
@@ -296,6 +301,7 @@ class ConfigCLI(CLI):
                 if subkey == 'env':
                     data.append('%s%s=%s' % (prefix, entry, default))
                 elif subkey == 'vars':
+                    print(entry, default, type(entry), type(default))
                     data.append(prefix + to_text(yaml_dump({entry: default}, default_flow_style=False), errors='surrogate_or_strict'))
                 data.append('')
 
