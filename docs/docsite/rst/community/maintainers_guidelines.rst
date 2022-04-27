@@ -3,6 +3,10 @@
 Maintainer responsibilities
 ===========================
 
+.. contents::
+   :depth: 1
+   :local:
+
 An Ansible collection maintainer is a contributor trusted by the community who makes significant and regular contributions to the project and who has shown themselves as a specialist in the related area.
 Collection maintainers have :ref:`extended permissions<collection_maintainers>` in the collection scope.
 
@@ -28,14 +32,14 @@ Multiple maintainers can divide responsibilities among each other.
 How to become a maintainer
 --------------------------
 
-A person who is interested in becoming a maintainer and satisfies the :ref:`requirements<maintainer_requirements>` may either self-nominate or be nominated by another maintainer.
+A person interested in becoming a maintainer and satisfies the :ref:`requirements<maintainer_requirements>` may either self-nominate or be nominated by another maintainer.
 
-To nominate a candidate, please create a GitHub issue in the relevant collection repository. If there is no response, the repository is not actively maintained, or the current maintainers do not have permissions to add the candidate, please create the issue in the `ansible/community <https://github.com/ansible/community>`_ repository.
+To nominate a candidate, create a GitHub issue in the relevant collection repository. If there is no response, the repository is not actively maintained, or the current maintainers do not have permissions to add the candidate, please create the issue in the `ansible/community <https://github.com/ansible/community>`_ repository.
 
 Communicating as a collection maintainer
 -----------------------------------------
 
- Maintainers must subscribe to the `"Changes impacting collection contributors and maintainers" GitHub repo <https://github.com/ansible-collections/news-for-maintainers>`_ and the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_. If you have something important to announce through the newsletter (for example, recent releases ), see the `Bullhorn's wiki page <https://github.com/ansible/community/wiki/News#the-bullhorn>`_ to learn how.
+ Maintainers must subscribe to the `"Changes impacting collection contributors and maintainers" GitHub repo <https://github.com/ansible-collections/news-for-maintainers>`_ and the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_. If you have something important to announce through the newsletter (for example, recent releases), see the `Bullhorn's wiki page <https://github.com/ansible/community/wiki/News#the-bullhorn>`_ to learn how.
 
 
 Collection contributors and maintainers should also communicate through:
@@ -61,7 +65,7 @@ Contributor Summits
 -------------------
 
 
-The quarterly Ansible Contributor Summit is a global event that provides our contributors a great opportunity to meet each other, communicate, share ideas, and see that there are other real persons behind the messages on Matrix/Libera.Chat IRC or GitHub. In other words, it gives a sense of community. Watch the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_ for information when the next contributor summit, invite contributors you know, and take part in the event together.
+The quarterly Ansible Contributor Summit is a global event that provides our contributors a great opportunity to meet each other, communicate, share ideas, and see that there are other real people behind the messages on Matrix or Libera Chat IRC or GitHub. This gives a sense of community. Watch the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_ for information when the next contributor summit, invite contributors you know, and take part in the event together.
 
 Weekly community Matrix/IRC meetings
 ------------------------------------
@@ -98,7 +102,7 @@ Here are some ways you can expand the community around your collection:
 Encouraging new contributors
 -----------------------------
 
-Easy fix items are the best way to attract and mentor new contributors. You should triage incoming issues to mark them with labels such as ``easyfix``, ``waiting_on_contributor``, and ``docs``. where appropriate. Do not fix these trivial non-critical bugs yourself. Instead, mentor a person who would like to contribute.
+Easy fix items are the best way to attract and mentor new contributors. You should triage incoming issues to mark them with labels such as ``easyfix``, ``waiting_on_contributor``, and ``docs``. where appropriate. Do not fix these trivial non-critical bugs yourself. Instead, mentor a person who wants to contribute.
 
 For some easy fix issues, you could ask the issue reporter whether they want to fix the issue themselves providing the link to a quickstart guide for creating PRs.
 
@@ -119,6 +123,74 @@ Some other general guidelines to encourage contributors:
 * If somebody suggests a good idea, mention it or put a thumbs up.
 * After merging, thank the author and reviewers for their time and effort.
 
+.. _review_checklist:
+
+Reviewing bug reports
+----------------------
+
+When users report bugs, verify the behavior reported. Remember to always be kind with your feedback.
+
+* [ ] Did the user made a mistake in the example code? We often see user errors reported as bugs.
+* [ ] Did the user assume an unexpected behavior? Ensure that the related documentation is clear.
+* [ ] Is there a minimal reproducer? If not, ask the reporter to reduce the complexity to help pinpoint the issue.
+* [ ] Is the issue a consequence of wrong-configured environment?
+* [ ] If it seems to be real bug, does the behaviour still exist in the most recent release or the development branch?
+* [ ] Reproduce the bug, or if you do not have a suitable infrastructure, ask other contributors to reproduce the bug.
+
+
+Reviewing suggested changes
+---------------------------
+
+When reviewing PRs, first verify the suggested changes do NOT:
+
+* [ ] Unnecessarily break backwards compatibility.
+* [ ] Bring more harm than value.
+* [ ] Introduce non-idempotent solutions.
+* [ ] Duplicate already existing features (inside or outside the collection).
+* [ ] Violate the :ref:`Ansible development conventions <module_conventions>`.
+
+
+Other standards to check for in a PR include:
+
+* [ ] A pull request does not contain a mix of bugfixes and new features that are not tightly related. If yes, ask the author to split the pull request into separate PRs.
+* [ ] If the pull request is not a documentation fix, it must include a :ref:`changelog fragment <collection_changelog_fragments>`. Check the format carefully as follows:
+
+  * New modules and plugins (that are not jinja2 filter and test plugins) do not need changelog fragments.
+  * For jinja2 filter and test plugins, check out the `special syntax for changelog fragments <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst#adding-new-roles-playbooks-test-and-filter-plugins>`_.
+  * The changelog content contains useful information for end users of the collection.
+* [ ] If new files are added with the pull request, they follow the `licensing rules <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#licensing>`_.
+* [ ] The changes follow the :ref:`Ansible documentation standards <developing_modules_documenting>` and the :ref:`style_guide`.
+* [ ] The changes follow the :ref:`Development conventions <developing_modules_best_practices>`.
+* [ ] If a new plugin is added, it is one of the `allowed plugin types <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst#modules-plugins>`_.
+* [ ] Documentation, examples, and return sections use FQCNs for the ``M(..)`` :ref:`format macros <module_documents_linking>` when referring to modules.
+* [ ] Modules and plugins from ansible-core use ``ansible.builtin.`` as an FQCN prefix when mentioned.
+* [ ] When a new option, module, plugin, or return value is added, the corresponding documentation or return sections use ``version_added:`` containing the *collection* version which they will be first released in.
+
+  * This  is typically the next minor release, sometimes the next major release. For example: if 2.7.5 is the current release, the next minor release will be 2.8.0, and the next major release will be 3.0.0).
+* [ ] FQCNs are used for ``extends_documentation_fragment:``, unless the author is referring to doc_fragments from ansible-core.
+* [ ] New features have corresponding examples in the :ref:`examples_block`.
+* [ ] Return values are documented in the :ref:`return_block`.
+
+
+Review tests in the PR
+----------------------
+Review the following if tests are applicable and possible to implement for the changes included in the PR:
+
+
+* [ ] Where applicable, the pull request has :ref:`testing_integration` and :ref:`testing_units`.
+* [ ] All changes are covered. For example, a bug case or a new option separately and in sensible combinations with other options.
+* [ ] Integration tests cover ``check_mode`` if supported.
+* [ ] Integration tests check an actual state of the system, not only what the module reports. For example, if the module changes a file, check that the file was actually changed by using the ``ansible.builtin.stat`` module..
+* [ ] Integration tests check return values, if applicable.
+
+
+Review for merge commits and breaking changes
+---------------------------------------------
+
+* [ ] The pull request does not contain merge commits. See the GitHub warnings at the bottom of the pull request. If merge commits are present, ask the author to rebase the pull request branch.
+* [ ] If the pull request contains breaking changes, ask the author and the collection maintainers if it is really needed and there is a way to not introduce breaking changes. If breaking changes are in present, they must only appear in the next major release and **not** in a minor or patch release. The only exception are breaking changes caused by security fixes that are absolutely necessary to fix the security issue.
+
+
 .. _maintainer_documentation:
 
 Maintaining good collection documentation
@@ -126,7 +198,7 @@ Maintaining good collection documentation
 
 Maintainers look after the collection documentation to ensure it matches the :ref:`style_guide`. This includes keeping the following documents accurate and updated regularly:
 
-* Collection module/plugin documentation that adheres to the :ref:`Ansible documentation format <module_documenting>`.
+* Collection module and plugin documentation that adheres to the :ref:`Ansible documentation format <module_documenting>`.
 * Collection user guides that follow the :ref:`Collection documentation format <collections_doc_dir>`.
 * Repository files that includes at least a ``README`` and ``CONTRIBUTING`` file.
 
