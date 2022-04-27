@@ -43,9 +43,8 @@ do
 	justcol=$(ansible-doc -l -t ${ptype} --playbook-dir ./ testns.testcol|wc -l)
 	test "$justcol" -eq 1
 
-	# ensure we get 0 plugins when restricting to collection, but not supplying it
-	justcol=$(ansible-doc -l -t ${ptype} testns.testcol|wc -l)
-	test "$justcol" -eq 0
+	# ensure we get error if passinginvalid collection, much less any plugins
+	ansible-doc -l -t ${ptype} testns.testcol  2>&1 | grep "unable to locate collection"
 
 	# TODO: do we want per namespace?
 	# ensure we get 1 plugins when restricting namespace

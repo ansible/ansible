@@ -71,7 +71,8 @@ from ansible.module_utils.compat.version import StrictVersion, LooseVersion
 from ansible.module_utils.basic import to_bytes
 from ansible.module_utils.six import PY3, with_metaclass, string_types
 from ansible.plugins.loader import fragment_loader
-from ansible.utils.plugin_docs import REJECTLIST, add_collection_to_versions_and_dates, add_fragments, get_docstring
+from ansible.plugins.list import IGNORE as REJECTLIST
+from ansible.utils.plugin_docs import add_collection_to_versions_and_dates, add_fragments, get_docstring
 from ansible.utils.version import SemanticVersion
 
 from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_argument_spec
@@ -294,7 +295,7 @@ class ModuleValidator(Validator):
     REJECTLIST_FILES = frozenset(('.git', '.gitignore', '.travis.yml',
                                   '.gitattributes', '.gitmodules', 'COPYING',
                                   '__init__.py', 'VERSION', 'test-docs.sh'))
-    REJECTLIST = REJECTLIST_FILES.union(REJECTLIST['MODULE'])
+    REJECTLIST = REJECTLIST_FILES.union(REJECTLIST['module'])
 
     PS_DOC_REJECTLIST = frozenset((
         'async_status.ps1',

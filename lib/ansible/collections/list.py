@@ -12,9 +12,21 @@ from ansible.errors import AnsibleError
 from ansible.collections import is_collection_path
 from ansible.module_utils._text import to_bytes
 from ansible.utils.collection_loader import AnsibleCollectionConfig
+from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.display import Display
 
 display = Display()
+
+
+def list_collections(coll_filter=None, search_paths=None, dedupe=False):
+
+    collections = {}
+    for candidate in list_collection_dirs(search_paths=search_paths, coll_filter=coll_filter):
+        if os.path.exists(candidate):
+            collection = _get_collection_name_from_path(candidate)
+            if collection not in collections or not dedupe:
+                collections[collection] = candidate
+    return collections
 
 
 def list_valid_collection_paths(search_paths=None, warn=False):
