@@ -108,18 +108,18 @@ try:
     HAS_TOML = True
 except ImportError:
     try:
-        import tomli_w as toml
+        import tomli_w as toml  # type: ignore[import,no-redef]
         HAS_TOMLIW = True
     except ImportError:
         pass
 
 HAS_TOMLLIB = False
 try:
-    import tomllib
+    import tomllib  # type: ignore[import]
     HAS_TOMLLIB = True
 except ImportError:
     try:
-        import tomli as tomllib
+        import tomli as tomllib  # type: ignore[no-redef]
         HAS_TOMLLIB = True
     except ImportError:
         pass
@@ -150,10 +150,10 @@ else:
 if HAS_TOML:
     # prefer toml if installed, since it supports both encoding and decoding
     toml_loads = toml.loads
-    TOMLDecodeError = toml.TomlDecodeError
+    TOMLDecodeError = toml.TomlDecodeError  # type: t.Any
 elif HAS_TOMLLIB:
     toml_loads = tomllib.loads
-    TOMLDecodeError = tomllib.TOMLDecodeError
+    TOMLDecodeError = tomllib.TOMLDecodeError  # type: t.Any  # type: ignore[no-redef]
 
 
 def convert_yaml_objects_to_native(obj):
