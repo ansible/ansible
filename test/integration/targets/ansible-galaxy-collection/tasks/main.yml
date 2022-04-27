@@ -103,7 +103,7 @@
     test_server: '{{ item.server }}'
     vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
     requires_auth: '{{ item.requires_auth|default(false) }}'
-    resolvelib_version: "0.8.1"  # Latest supported version
+    resolvelib_version: ">=0.8.0,<0.9.0"  # Latest supported version
   args:
     apply:
       environment:
