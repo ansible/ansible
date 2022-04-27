@@ -263,7 +263,7 @@ class VaultCLI(CLI):
                                      output_file=context.CLIARGS['output_file'])
 
         if sys.stdout.isatty():
-            display.display("Encryption successful", stderr=True)
+            display.display("Encryption successful", stderr=True, log_only=True)
 
     @staticmethod
     def format_ciphertext_yaml(b_ciphertext, indent=None, name=None):
@@ -387,7 +387,7 @@ class VaultCLI(CLI):
         self.editor.write_data(b'\n'.join(b_outs), context.CLIARGS['output_file'] or '-')
 
         if sys.stdout.isatty():
-            display.display("Encryption successful", stderr=True)
+            display.display("Encryption successful", stderr=True, log_only=True)
 
         # TODO: offer block or string ala eyaml
 
