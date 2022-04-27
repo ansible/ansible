@@ -74,7 +74,7 @@ Setting up your environment to build documentation locally
 
 To build documentation locally, ensure you have a working :ref:`development environment <environment_setup>`.
 
-To work with documentation on your local machine, you need to have python-3.5 or greater and install the `Ansible dependencies`_ and `documentation dependencies`_, which are listed in two :file:`requirements.txt` files to make installation easier:
+To work with documentation on your local machine, you need to have python-3.9 or greater and install the `Ansible dependencies`_ and `documentation dependencies`_, which are listed in two files to make installation easier:
 
 .. _Ansible dependencies: https://github.com/ansible/ansible/blob/devel/requirements.txt
 .. _documentation dependencies: https://github.com/ansible/ansible/blob/devel/docs/docsite/requirements.txt
@@ -84,12 +84,14 @@ To work with documentation on your local machine, you need to have python-3.5 or
     pip install --user -r requirements.txt
     pip install --user -r docs/docsite/requirements.txt
 
-The :file:`docs/docsite/requirements.txt` file allows a wide range of versions and may install new releases of required packages. New releases of these packages may cause problems with the Ansible docs build. If you want to install tested versions of these dependencies, use :file:`docs/docsite/known_good_reqs.txt` instead:
+The :file:`docs/docsite/requirements.txt` file allows a wide range of versions and may install new releases of required packages. New releases of these packages may cause problems with the Ansible docs build. If you want to install tested versions of these dependencies, use :file:`test/sanity/code-smell/docs-build.requirements.txt` instead, which matches the dependencies used by CI:
 
 .. code-block:: bash
 
     pip install --user -r requirements.txt
-    pip install --user -r docs/docsite/known_good_reqs.txt
+    pip install --user -r test/sanity/code-smell/docs-build.requirements.txt
+
+
 
 You can drop ``--user`` if you have set up a virtual environment (venv/virtenv). 
 
