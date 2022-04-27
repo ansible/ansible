@@ -19,13 +19,6 @@ from ansible.utils.vars import combine_vars
 display = Display()
 
 
-# modules that are ok that they do not have documentation strings
-REJECTLIST = {
-    'MODULE': frozenset(('async_wrapper',)),
-    'CACHE': frozenset(('base',)),
-}
-
-
 def merge_fragment(target, source):
 
     for key, value in source.items():
@@ -214,10 +207,19 @@ def add_fragments(doc, filename, fragment_loader, is_module=False):
         raise AnsibleError('unknown doc_fragment(s) in file {0}: {1}'.format(filename, to_native(', '.join(unknown_fragments))))
 
 
-def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False, collection_name=None, is_module=False):
+def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False, collection_name=None, is_module=None, plugin_type=None):
     """
     DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the doc_fragments plugins.
     """
+
+    if is_module is None:
+        if plugin_type is None:
+            is_module = False
+        else:
+            is_module = (plugin_type == 'module')
+    else:
+        # TODO deprecate is_module argument, now that we have 'type'
+        pass
 
     data = read_docstring(filename, verbose=verbose, ignore_errors=ignore_errors)
 
