@@ -819,10 +819,12 @@ class PluginLoader:
 
         if path not in self._module_cache:
             self._module_cache[path] = self._load_module_source(name, path)
-            self._load_config_defs(name, self._module_cache[path], path)
             found_in_cache = False
 
+        self._load_config_defs(name, self._module_cache[path], path)
+
         obj = getattr(self._module_cache[path], self.class_name)
+
         if self.base_class:
             # The import path is hardcoded and should be the right place,
             # so we are not expecting an ImportError.
