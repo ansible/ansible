@@ -51,7 +51,7 @@ You can learn these tools more in depth when working on your first contributions
 Each Ansible project has its own set of contributor guidelines. Familarize yourself with these as you prepare your first contributions.
 
 * :ref:`Ansible Core development <developer_guide>`.
-* :ref:`Ansible collectoin development <developing_collections>` and the collection-level contributor guidelines in the collection repository.
+* :ref:`Ansible collection development <developing_collections>` and the collection-level contributor guidelines in the collection repository.
 
 
 Making your first contribution
