@@ -469,7 +469,7 @@ class SshKey:
             make_dirs(os.path.dirname(key))
 
         if not os.path.isfile(key) or not os.path.isfile(pub):
-            run_command(args, ['ssh-keygen', '-m', 'PEM', '-q', '-t', self.KEY_TYPE, '-N', '', '-f', key])
+            run_command(args, ['ssh-keygen', '-m', 'PEM', '-q', '-t', self.KEY_TYPE, '-N', '', '-f', key], capture=True)
 
             if args.explain:
                 return key, pub

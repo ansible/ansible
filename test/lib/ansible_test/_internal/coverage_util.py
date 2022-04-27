@@ -48,7 +48,7 @@ def cover_python(
         cmd,  # type: t.List[str]
         target_name,  # type: str
         env,  # type: t.Dict[str, str]
-        capture=False,  # type: bool
+        capture,  # type: bool
         data=None,  # type: t.Optional[str]
         cwd=None,  # type: t.Optional[str]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]

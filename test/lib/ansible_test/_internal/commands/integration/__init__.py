@@ -619,7 +619,7 @@ def command_integration_script(
                 cmd += ['-e', '@%s' % config_path]
 
             env.update(coverage_manager.get_environment(target.name, target.aliases))
-            cover_python(args, host_state.controller_profile.python, cmd, target.name, env, cwd=cwd)
+            cover_python(args, host_state.controller_profile.python, cmd, target.name, env, cwd=cwd, capture=False)
 
 
 def command_integration_role(
@@ -738,7 +738,7 @@ def command_integration_role(
             env['ANSIBLE_ROLES_PATH'] = test_env.targets_dir
 
             env.update(coverage_manager.get_environment(target.name, target.aliases))
-            cover_python(args, host_state.controller_profile.python, cmd, target.name, env, cwd=cwd)
+            cover_python(args, host_state.controller_profile.python, cmd, target.name, env, cwd=cwd, capture=False)
 
 
 def run_setup_targets(

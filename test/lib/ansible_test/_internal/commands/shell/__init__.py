@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import sys
 import typing as t
 
 from ...util import (
@@ -43,6 +44,9 @@ def command_shell(args):  # type: (ShellConfig) -> None
     """Entry point for the `shell` command."""
     if args.raw and isinstance(args.targets[0], ControllerConfig):
         raise ApplicationError('The --raw option has no effect on the controller.')
+
+    if not sys.stdin.isatty():
+        raise ApplicationError('Standard input must be a TTY to launch a shell.')
 
     host_state = prepare_profiles(args, skip_setup=args.raw)  # shell
 
@@ -87,4 +91,4 @@ def command_shell(args):  # type: (ShellConfig) -> None
     else:
         cmd = []
 
-    con.run(cmd)
+    con.run(cmd, capture=False, interactive=True)

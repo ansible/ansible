@@ -794,7 +794,7 @@ def forward_ssh_ports(
     inventory = generate_ssh_inventory(ssh_connections)
 
     with named_temporary_file(args, 'ssh-inventory-', '.json', None, inventory) as inventory_path:  # type: str
-        run_playbook(args, inventory_path, playbook, dict(hosts_entries=hosts_entries))
+        run_playbook(args, inventory_path, playbook, capture=False, variables=dict(hosts_entries=hosts_entries))
 
     ssh_processes = []  # type: t.List[SshProcess]
 
@@ -827,7 +827,7 @@ def cleanup_ssh_ports(
     inventory = generate_ssh_inventory(ssh_connections)
 
     with named_temporary_file(args, 'ssh-inventory-', '.json', None, inventory) as inventory_path:  # type: str
-        run_playbook(args, inventory_path, playbook, dict(hosts_entries=hosts_entries))
+        run_playbook(args, inventory_path, playbook, capture=False, variables=dict(hosts_entries=hosts_entries))
 
     if ssh_processes:
         for process in ssh_processes:

@@ -262,7 +262,7 @@ def run_pip(
 
     if not args.explain:
         try:
-            connection.run([python.path], data=script)
+            connection.run([python.path], data=script, capture=False)
         except SubprocessError:
             script = prepare_pip_script([PipVersion()])
 

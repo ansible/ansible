@@ -159,12 +159,13 @@ def delegate_command(args, host_state, exclude, require):  # type: (EnvironmentC
                 os.path.join(content_root, ResultType.COVERAGE.relative_path),
             ]
 
-            con.run(['mkdir', '-p'] + writable_dirs)
-            con.run(['chmod', '777'] + writable_dirs)
-            con.run(['chmod', '755', working_directory])
-            con.run(['chmod', '644', os.path.join(content_root, args.metadata_path)])
-            con.run(['useradd', pytest_user, '--create-home'])
-            con.run(insert_options(command, options + ['--requirements-mode', 'only']))
+            con.run(['mkdir', '-p'] + writable_dirs, capture=True)
+            con.run(['chmod', '777'] + writable_dirs, capture=True)
+            con.run(['chmod', '755', working_directory], capture=True)
+            con.run(['chmod', '644', os.path.join(content_root, args.metadata_path)], capture=True)
+            con.run(['useradd', pytest_user, '--create-home'], capture=True)
+
+            con.run(insert_options(command, options + ['--requirements-mode', 'only']), capture=False)
 
             container = con.inspect()
             networks = container.get_network_names()
@@ -190,7 +191,7 @@ def delegate_command(args, host_state, exclude, require):  # type: (EnvironmentC
         success = False
 
         try:
-            con.run(insert_options(command, options))
+            con.run(insert_options(command, options), capture=False, interactive=args.interactive)
             success = True
         finally:
             if host_delegation:

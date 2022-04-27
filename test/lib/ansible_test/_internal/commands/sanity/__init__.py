@@ -945,6 +945,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
         cmd = [python.path, self.path]
 
         env = ansible_environment(args, color=False)
+        env.update(PYTHONUTF8='1')  # force all code-smell sanity tests to run with Python UTF-8 Mode enabled
 
         pattern = None
         data = None

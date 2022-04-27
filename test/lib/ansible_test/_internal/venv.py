@@ -20,6 +20,7 @@ from .util import (
     remove_tree,
     ApplicationError,
     str_to_version,
+    raw_command,
 )
 
 from .util_common import (
@@ -92,7 +93,7 @@ def create_virtual_environment(args,  # type: EnvironmentConfig
         # creating a virtual environment using 'venv' when running in a virtual environment created by 'virtualenv' results
         # in a copy of the original virtual environment instead of creation of a new one
         # avoid this issue by only using "real" python interpreters to invoke 'venv'
-        for real_python in iterate_real_pythons(args, python.version):
+        for real_python in iterate_real_pythons(python.version):
             if run_venv(args, real_python, system_site_packages, pip, path):
                 display.info('Created Python %s virtual environment using "venv": %s' % (python.version, path), verbosity=1)
                 return True
@@ -132,7 +133,7 @@ def create_virtual_environment(args,  # type: EnvironmentConfig
     return False
 
 
-def iterate_real_pythons(args, version):  # type: (EnvironmentConfig, str) -> t.Iterable[str]
+def iterate_real_pythons(version):  # type: (str) -> t.Iterable[str]
     """
     Iterate through available real python interpreters of the requested version.
     The current interpreter will be checked and then the path will be searched.
@@ -142,7 +143,7 @@ def iterate_real_pythons(args, version):  # type: (EnvironmentConfig, str) -> t.
 
     if version_info == sys.version_info[:len(version_info)]:
         current_python = sys.executable
-        real_prefix = get_python_real_prefix(args, current_python)
+        real_prefix = get_python_real_prefix(current_python)
 
         if real_prefix:
             current_python = find_python(version, os.path.join(real_prefix, 'bin'))
@@ -163,7 +164,7 @@ def iterate_real_pythons(args, version):  # type: (EnvironmentConfig, str) -> t.
     if found_python == current_python:
         return
 
-    real_prefix = get_python_real_prefix(args, found_python)
+    real_prefix = get_python_real_prefix(found_python)
 
     if real_prefix:
         found_python = find_python(version, os.path.join(real_prefix, 'bin'))
@@ -172,12 +173,12 @@ def iterate_real_pythons(args, version):  # type: (EnvironmentConfig, str) -> t.
         yield found_python
 
 
-def get_python_real_prefix(args, python_path):  # type: (EnvironmentConfig, str) -> t.Optional[str]
+def get_python_real_prefix(python_path):  # type: (str) -> t.Optional[str]
     """
     Return the real prefix of the specified interpreter or None if the interpreter is not a virtual environment created by 'virtualenv'.
     """
     cmd = [python_path, os.path.join(os.path.join(ANSIBLE_TEST_TARGET_TOOLS_ROOT, 'virtualenvcheck.py'))]
-    check_result = json.loads(run_command(args, cmd, capture=True, always=True)[0])
+    check_result = json.loads(raw_command(cmd, capture=True)[0])
     real_prefix = check_result['real_prefix']
     return real_prefix
 

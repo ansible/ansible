@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import abc
 import shlex
-import sys
 import tempfile
 import typing as t
 
@@ -46,7 +45,8 @@ class Connection(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def run(self,
             command,  # type: t.List[str]
-            capture=False,  # type: bool
+            capture,  # type: bool
+            interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
@@ -60,7 +60,7 @@ class Connection(metaclass=abc.ABCMeta):
         """Extract the given archive file stream in the specified directory."""
         tar_cmd = ['tar', 'oxzf', '-', '-C', chdir]
 
-        retry(lambda: self.run(tar_cmd, stdin=src))
+        retry(lambda: self.run(tar_cmd, stdin=src, capture=True))
 
     def create_archive(self,
                        chdir,  # type: str
@@ -82,7 +82,7 @@ class Connection(metaclass=abc.ABCMeta):
 
         sh_cmd = ['sh', '-c', ' | '.join(' '.join(shlex.quote(cmd) for cmd in command) for command in commands)]
 
-        retry(lambda: self.run(sh_cmd, stdout=dst))
+        retry(lambda: self.run(sh_cmd, stdout=dst, capture=True))
 
 
 class LocalConnection(Connection):
@@ -92,7 +92,8 @@ class LocalConnection(Connection):
 
     def run(self,
             command,  # type: t.List[str]
-            capture=False,  # type: bool
+            capture,  # type: bool
+            interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
@@ -105,6 +106,7 @@ class LocalConnection(Connection):
             data=data,
             stdin=stdin,
             stdout=stdout,
+            interactive=interactive,
         )
 
 
@@ -130,7 +132,8 @@ class SshConnection(Connection):
 
     def run(self,
             command,  # type: t.List[str]
-            capture=False,  # type: bool
+            capture,  # type: bool
+            interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
@@ -143,7 +146,7 @@ class SshConnection(Connection):
 
         options.append('-q')
 
-        if not data and not stdin and not stdout and sys.stdin.isatty():
+        if interactive:
             options.append('-tt')
 
         with tempfile.NamedTemporaryFile(prefix='ansible-test-ssh-debug-', suffix='.log') as ssh_logfile:
@@ -166,6 +169,7 @@ class SshConnection(Connection):
                 data=data,
                 stdin=stdin,
                 stdout=stdout,
+                interactive=interactive,
                 error_callback=error_callback,
             )
 
@@ -208,7 +212,8 @@ class DockerConnection(Connection):
 
     def run(self,
             command,  # type: t.List[str]
-            capture=False,  # type: bool
+            capture,  # type: bool
+            interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
@@ -219,7 +224,7 @@ class DockerConnection(Connection):
         if self.user:
             options.extend(['--user', self.user])
 
-        if not data and not stdin and not stdout and sys.stdin.isatty():
+        if interactive:
             options.append('-it')
 
         return docker_exec(
@@ -231,6 +236,7 @@ class DockerConnection(Connection):
             data=data,
             stdin=stdin,
             stdout=stdout,
+            interactive=interactive,
         )
 
     def inspect(self):  # type: () -> DockerInspect

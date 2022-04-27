@@ -18,11 +18,11 @@ from ...util import (
     ANSIBLE_TEST_TOOLS_ROOT,
     display,
     ApplicationError,
+    raw_command,
 )
 
 from ...util_common import (
     ResultType,
-    run_command,
     write_json_file,
     write_json_test_results,
 )
@@ -189,7 +189,7 @@ def _command_coverage_combine_powershell(args):  # type: (CoverageCombineConfig)
         cmd = ['pwsh', os.path.join(ANSIBLE_TEST_TOOLS_ROOT, 'coverage_stub.ps1')]
         cmd.extend(source_paths)
 
-        stubs = json.loads(run_command(args, cmd, capture=True, always=True)[0])
+        stubs = json.loads(raw_command(cmd, capture=True)[0])
 
         return dict((d['Path'], dict((line, 0) for line in d['Lines'])) for d in stubs)
 

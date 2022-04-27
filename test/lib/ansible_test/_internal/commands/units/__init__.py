@@ -295,7 +295,7 @@ def command_units(args):  # type: (UnitsConfig) -> None
         display.info('Unit test %s with Python %s' % (test_context, python.version))
 
         try:
-            cover_python(args, python, cmd, test_context, env)
+            cover_python(args, python, cmd, test_context, env, capture=False)
         except SubprocessError as ex:
             # pytest exits with status code 5 when all tests are skipped, which isn't an error for our use case
             if ex.status != 5:

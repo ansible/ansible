@@ -1,0 +1,10 @@
+bugfixes:
+  - ansible-test - Subprocesses are now isolated from the stdin, stdout and stderr of ansible-test.
+                   This avoids issues with subprocesses tampering with the file descriptors, such as SSH making them non-blocking.
+                   As a result of this change, subprocess output from unit and integration tests on stderr now go to stdout.
+  - ansible-test - Subprocesses no longer have access to the TTY ansible-test is connected to, if any.
+                   This maintains consistent behavior between local testing and CI systems, which typically do not provide a TTY.
+                   Tests which require a TTY should use pexpect or another mechanism to create a PTY.
+minor_changes:
+  - ansible-test - Blocking mode is now enforced for stdin, stdout and stderr.
+                   If any of these are non-blocking then ansible-test will exit during startup with an error.

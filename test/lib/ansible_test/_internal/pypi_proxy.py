@@ -124,7 +124,8 @@ def configure_target_pypi_proxy(args, profile, pypi_endpoint, pypi_hostname):  #
 
     force = 'yes' if profile.config.is_managed else 'no'
 
-    run_playbook(args, inventory_path, 'pypi_proxy_prepare.yml', dict(pypi_endpoint=pypi_endpoint, pypi_hostname=pypi_hostname, force=force), capture=True)
+    run_playbook(args, inventory_path, 'pypi_proxy_prepare.yml', capture=True, variables=dict(
+        pypi_endpoint=pypi_endpoint, pypi_hostname=pypi_hostname, force=force))
 
     atexit.register(cleanup_pypi_proxy)
 
