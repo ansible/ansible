@@ -1,0 +1,21 @@
+DOCUMENTATION:
+  name: finished
+  author: Ansible Core
+  version_added: "1.9"
+  short_description: check if a task has finished
+  description:
+    - Used to test if an async task has finished, it will aslo work with normal tasks but will issue a warning.
+    - This test checks for the existance of a C(finished) key in the input dictionary and that it is C(1) if present
+  options:
+    _input:
+      description: registered result from an Ansible task
+      type: dictionary
+      required: True
+EXAMPLES: |
+  # test 'status' to know how to respond
+  {{ (asynctaskpoll is finished}}
+
+RETURN:
+  _value:
+    description: Returns C(True) if the aysnc task has finished, C(False) otherwise.
+    type: boolean
