@@ -106,7 +106,7 @@ class CsCloudProvider(CloudProvider):
 
         # apply work-around for OverlayFS issue
         # https://github.com/docker/for-linux/issues/72#issuecomment-319904698
-        docker_exec(self.args, self.DOCKER_SIMULATOR_NAME, ['find', '/var/lib/mysql', '-type', 'f', '-exec', 'touch', '{}', ';'])
+        docker_exec(self.args, self.DOCKER_SIMULATOR_NAME, ['find', '/var/lib/mysql', '-type', 'f', '-exec', 'touch', '{}', ';'], capture=True)
 
         if self.args.explain:
             values = dict(
