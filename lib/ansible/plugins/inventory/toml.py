@@ -100,12 +100,12 @@ from ansible.plugins.inventory import BaseFileInventoryPlugin
 from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
 
+HAS_TOML = False
 HAS_TOMLIW = False
 try:
     import toml
     HAS_TOML = True
 except ImportError:
-    HAS_TOML = False
     try:
         import tomli_w as toml
         HAS_TOMLIW = True
@@ -127,6 +127,7 @@ display = Display()
 
 
 if HAS_TOML and hasattr(toml, 'TomlEncoder'):
+    # toml>=0.10.0
     class AnsibleTomlEncoder(toml.TomlEncoder):
         def __init__(self, *args, **kwargs):
             super(AnsibleTomlEncoder, self).__init__(*args, **kwargs)
@@ -139,6 +140,8 @@ if HAS_TOML and hasattr(toml, 'TomlEncoder'):
             })
     toml_dumps = partial(toml.dumps, encoder=AnsibleTomlEncoder())  # type: t.Callable[[t.Any], str]
 else:
+    # toml<0.10.0
+    # tomli-w
     def toml_dumps(data):  # type: (t.Any) -> str
         return toml.dumps(convert_yaml_objects_to_native(data))
 
@@ -253,6 +256,8 @@ class InventoryModule(BaseFileInventoryPlugin):
     def parse(self, inventory, loader, path, cache=True):
         ''' parses the inventory file '''
         if not HAS_TOMLLIB and not HAS_TOML:
+            # tomllib works here too, but we don't call it out in the error,
+            # since you either have it or not as part of cpython stdlib >= 3.11
             raise AnsibleParserError(
                 'The TOML inventory plugin requires the python "toml", or "tomli" library'
             )
