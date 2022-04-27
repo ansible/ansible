@@ -44,7 +44,7 @@ If ``VULTR_API_ACCOUNT`` environment variable or ``api_account`` module paramete
 Authentication
 --------------
 
-Before using the Ansible modules to interact with Vultr, one need an API key.
+Before using the Ansible modules to interact with Vultr, you need an API key.
 If you don't yet own one, log in to `Vultr <https://www.vultr.com>`_ go to Account, then API, enable API then the API key should show up.
 
 Ensure you allow the usage of the API key from the proper IP addresses.
