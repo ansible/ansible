@@ -32,16 +32,20 @@ ansible-doc --list testns.testcol.fakemodule  --playbook-dir ./ 2>&1 | grep "Inv
 
 
 # test listing diff plugin types from collection
-for ptype in cache inventory lookup vars
+for ptype in cache inventory lookup vars filter
 do
 	# each plugin type adds 1 from collection
 	# FIXME pre=$(ansible-doc -l -t ${ptype}|wc -l)
 	# FIXME post=$(ansible-doc -l -t ${ptype} --playbook-dir ./|wc -l)
 	# FIXME test "$pre" -eq $((post - 1))
-
+	if [ "${ptype}" == "filter" ]; then
+		expected=2
+	else
+		expected=1
+	fi
 	# ensure we ONLY list from the collection
 	justcol=$(ansible-doc -l -t ${ptype} --playbook-dir ./ testns.testcol|wc -l)
-	test "$justcol" -eq 1
+	test "$justcol" -eq "$expected"
 
 	# ensure we get error if passinginvalid collection, much less any plugins
 	ansible-doc -l -t ${ptype} testns.testcol  2>&1 | grep "unable to locate collection"
