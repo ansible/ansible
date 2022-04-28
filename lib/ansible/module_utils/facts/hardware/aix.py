@@ -221,6 +221,7 @@ class AIXHardware(Hardware):
 
         lsdev_cmd = self.module.get_bin_path('lsdev', True)
         lsattr_cmd = self.module.get_bin_path('lsattr', True)
+        entstat_cmd = self.module.get_bin_path('entstat', True)
         rc, out_lsdev, err = self.module.run_command(lsdev_cmd)
 
         for line in out_lsdev.splitlines():
@@ -243,6 +244,21 @@ class AIXHardware(Hardware):
                 'type': ' '.join(device_type),
                 'attributes': device_attrs
             }
+
+            if re.match(r"ent(\d+)", device_name):
+                entstat_cmd_args = [entstat_cmd, '-d', device_name]
+                rc, out_entstat, err = self.module.run_command(entstat_cmd_args)
+                for line in out_entstat.splitlines():
+                    m = re.match(r"ETHERNET STATISTICS \((ent\d+)\) :", line)
+                    if m:
+                        device_name = m.group(1)
+                        continue
+                    m = re.match(r"^Port VLAN ID:\s*(\d*)", line)
+                    if m:
+                        device_facts['devices'][device_name]['pvid'] = m.group(1)
+                        continue
+                    if re.match(r"VLAN Tag IDs:\s+(\d+)", line):
+                        device_facts['devices'][device_name]['vlan_tag_ids'] = m = re.findall(r"(\d+)", line)
 
         return device_facts
 
