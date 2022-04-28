@@ -119,7 +119,6 @@ class PlaybookExecutor:
                         continue
                     raise
 
-
                 # FIXME: move out of inventory self._inventory.set_playbook_basedir(os.path.realpath(os.path.dirname(playbook_path)))
 
                 if self._tqm is None:  # we are doing a listing
@@ -262,8 +261,9 @@ class PlaybookExecutor:
 
                 if context.CLIARGS['syntax']:
                     display.display(f"{playbook} - No issues encountered")
-                elif entrylist:
-                    return entrylist
+
+            if entrylist and not context.CLIARGS['syntax']:
+                return entrylist
 
         finally:
             if self._tqm is not None:
