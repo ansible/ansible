@@ -292,6 +292,7 @@ class TaskExecutor:
         if label is None:
             label = '{{' + loop_var + '}}'
 
+        # FIXME: when moving loop_control to post_validate, move the var name validation as well
         vars_to_validate = [loop_var]
         if index_var is not None:
             vars_to_validate.append(index_var)
