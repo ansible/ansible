@@ -180,7 +180,7 @@ Review the following if tests are applicable and possible to implement for the c
 * [ ] Where applicable, the pull request has :ref:`testing_integration` and :ref:`testing_units`.
 * [ ] All changes are covered. For example, a bug case or a new option separately and in sensible combinations with other options.
 * [ ] Integration tests cover ``check_mode`` if supported.
-* [ ] Integration tests check an actual state of the system, not only what the module reports. For example, if the module changes a file, check that the file was actually changed by using the ``ansible.builtin.stat`` module..
+* [ ] Integration tests check the actual state of the system, not only what the module reports. For example, if the module actually changes a file, check that the file was changed by using the ``ansible.builtin.stat`` module..
 * [ ] Integration tests check return values, if applicable.
 
 
