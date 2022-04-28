@@ -55,7 +55,7 @@ class CallbackModule(CallbackBase):
         if self._last_task_banner != result._task._uuid:
             self._print_task_banner(result._task)
 
-        self._handle_exception(result._result, use_stderr=self.display_failed_stderr)
+        self._handle_exception(result._result, use_stderr=self.get_option('display_failed_stderr'))
         self._handle_warnings(result._result)
 
         if result._task.loop and 'results' in result._result:
@@ -65,7 +65,7 @@ class CallbackModule(CallbackBase):
             if self._display.verbosity < 2 and self.get_option('show_task_path_on_failure'):
                 self._print_task_path(result._task)
             msg = "fatal: [%s]: FAILED! => %s" % (host_label, self._dump_results(result._result))
-            self._display.display(msg, color=C.COLOR_ERROR, stderr=self.display_failed_stderr)
+            self._display.display(msg, color=C.COLOR_ERROR, stderr=self.get_option('display_failed_stderr'))
 
         if ignore_errors:
             self._display.display("...ignoring", color=C.COLOR_SKIP)
@@ -85,7 +85,7 @@ class CallbackModule(CallbackBase):
             msg = "changed: [%s]" % (host_label,)
             color = C.COLOR_CHANGED
         else:
-            if not self.display_ok_hosts:
+            if not self.get_option('display_ok_hosts'):
                 return
 
             if self._last_task_banner != result._task._uuid:
@@ -107,7 +107,7 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_skipped(self, result):
 
-        if self.display_skipped_hosts:
+        if self.get_option('display_skipped_hosts'):
 
             self._clean_results(result._result, result._task.action)
 
@@ -128,7 +128,7 @@ class CallbackModule(CallbackBase):
 
         host_label = self.host_label(result)
         msg = "fatal: [%s]: UNREACHABLE! => %s" % (host_label, self._dump_results(result._result))
-        self._display.display(msg, color=C.COLOR_UNREACHABLE, stderr=self.display_failed_stderr)
+        self._display.display(msg, color=C.COLOR_UNREACHABLE, stderr=self.get_option('display_failed_stderr'))
 
     def v2_playbook_on_no_hosts_matched(self):
         self._display.display("skipping: no hosts matched", color=C.COLOR_SKIP)
@@ -156,7 +156,7 @@ class CallbackModule(CallbackBase):
             self._last_task_name = task.get_name().strip()
 
             # Display the task banner immediately if we're not doing any filtering based on task result
-            if self.display_skipped_hosts and self.display_ok_hosts:
+            if self.get_option('display_skipped_hosts') and self.get_option('display_ok_hosts'):
                 self._print_task_banner(task)
 
     def _print_task_banner(self, task):
@@ -180,7 +180,7 @@ class CallbackModule(CallbackBase):
         if task_name is None:
             task_name = task.get_name().strip()
 
-        if task.check_mode and self.check_mode_markers:
+        if task.check_mode and self.get_option('check_mode_markers'):
             checkmsg = " [CHECK MODE]"
         else:
             checkmsg = ""
@@ -203,7 +203,7 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_on_play_start(self, play):
         name = play.get_name().strip()
-        if play.check_mode and self.check_mode_markers:
+        if play.check_mode and self.get_option('check_mode_markers'):
             checkmsg = " [CHECK MODE]"
         else:
             checkmsg = ""
@@ -244,7 +244,7 @@ class CallbackModule(CallbackBase):
             msg = 'changed'
             color = C.COLOR_CHANGED
         else:
-            if not self.display_ok_hosts:
+            if not self.get_option('display_ok_hosts'):
                 return
 
             if self._last_task_banner != result._task._uuid:
@@ -265,18 +265,18 @@ class CallbackModule(CallbackBase):
 
         host_label = self.host_label(result)
         self._clean_results(result._result, result._task.action)
-        self._handle_exception(result._result, use_stderr=self.display_failed_stderr)
+        self._handle_exception(result._result, use_stderr=self.get_option('display_failed_stderr'))
 
         msg = "failed: [%s]" % (host_label,)
         self._handle_warnings(result._result)
         self._display.display(
             msg + " (item=%s) => %s" % (self._get_item_label(result._result), self._dump_results(result._result)),
             color=C.COLOR_ERROR,
-            stderr=self.display_failed_stderr
+            stderr=self.get_option('display_failed_stderr')
         )
 
     def v2_runner_item_on_skipped(self, result):
-        if self.display_skipped_hosts:
+        if self.get_option('display_skipped_hosts'):
             if self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
 
@@ -331,7 +331,7 @@ class CallbackModule(CallbackBase):
         self._display.display("", screen_only=True)
 
         # print custom stats if required
-        if stats.custom and self.show_custom_stats:
+        if stats.custom and self.get_option('show_custom_stats'):
             self._display.banner("CUSTOM STATS: ")
             # per host
             # TODO: come up with 'pretty format'
@@ -346,7 +346,7 @@ class CallbackModule(CallbackBase):
                 self._display.display('\tRUN: %s' % self._dump_results(stats.custom['_run'], indent=1).replace('\n', ''))
             self._display.display("", screen_only=True)
 
-        if context.CLIARGS['check'] and self.check_mode_markers:
+        if context.CLIARGS['check'] and self.get_option('check_mode_markers'):
             self._display.banner("DRY RUN")
 
     def v2_playbook_on_start(self, playbook):
@@ -365,7 +365,7 @@ class CallbackModule(CallbackBase):
                 if val:
                     self._display.display('%s: %s' % (argument, val), color=C.COLOR_VERBOSE, screen_only=True)
 
-        if context.CLIARGS['check'] and self.check_mode_markers:
+        if context.CLIARGS['check'] and self.get_option('check_mode_markers'):
             self._display.banner("DRY RUN")
 
     def v2_runner_retry(self, result):
