@@ -43,7 +43,6 @@ from ansible.vars.hostvars import HostVars
 from ansible.utils.display import Display
 from ansible.utils.lock import lock_decorator
 from ansible.utils.multiprocessing import context as multiprocessing_context
-from ansible.vars.validation import validate_variable_names
 
 
 __all__ = ['TaskQueueManager']
@@ -269,7 +268,6 @@ class TaskQueueManager:
 
         all_vars = self._variable_manager.get_vars(play=play)
         templar = Templar(loader=self._loader, variables=all_vars)
-        validate_variable_names(all_vars.keys())
 
         new_play = play.copy()
         new_play.post_validate(templar)
