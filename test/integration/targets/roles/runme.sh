@@ -18,4 +18,4 @@ set -eux
 # ensure role data is merged correctly
 ansible-playbook data_integrity.yml -i ../../inventory "$@"
 
-ansible-playbook no_outside.yml -i ../../inventory "$@" |grep 'Role skipped loading'
+[ "$(ansible-playbook no_outside.yml -i ../../inventory "$@" |grep -c 'Role skipped loading')" = "1"]
