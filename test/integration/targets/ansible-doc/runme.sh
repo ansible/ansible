@@ -32,7 +32,7 @@ ansible-doc --list testns.testcol.fakemodule  --playbook-dir ./ 2>&1 | grep "Inv
 
 
 # test listing diff plugin types from collection
-for ptype in cache inventory lookup vars
+for ptype in cache inventory lookup vars filter
 do
 	# each plugin type adds 1 from collection
 	# FIXME pre=$(ansible-doc -l -t ${ptype}|wc -l)
