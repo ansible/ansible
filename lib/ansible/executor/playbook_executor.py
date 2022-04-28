@@ -92,6 +92,8 @@ class PlaybookExecutor:
             list(become_loader.all(class_only=True))
 
             for playbook in self._playbooks:
+                if context.CLIARGS['syntax']:
+                    display.display(f"Running syntax check for {playbook}")
 
                 # deal with FQCN
                 resource = _get_collection_playbook_path(playbook)
@@ -115,7 +117,7 @@ class PlaybookExecutor:
                     if context.CLIARGS['syntax']:
                         # Don't return until done checking syntax for all playbooks
                         display.display(f"{err}")
-                        display.display(f"{playbook} - Failed syntax check")
+                        display.display("Failed syntax check")
                         continue
                     raise
 
@@ -260,7 +262,7 @@ class PlaybookExecutor:
                     break
 
                 if context.CLIARGS['syntax']:
-                    display.display(f"{playbook} - No issues encountered")
+                    display.display("No issues encountered")
 
             if entrylist and not context.CLIARGS['syntax']:
                 return entrylist
