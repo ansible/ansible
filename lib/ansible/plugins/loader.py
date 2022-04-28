@@ -391,7 +391,7 @@ class PluginLoader:
             type_name = get_plugin_class(self.class_name)
 
             # if type name != 'module_doc_fragment':
-            if type_name in C.CONFIGURABLE_PLUGINS:
+            if type_name in C.CONFIGURABLE_PLUGINS and not C.config.get_configuration_definition(type_name, name):
                 dstring = AnsibleLoader(getattr(module, 'DOCUMENTATION', ''), file_name=path).get_single_data()
                 if dstring:
                     add_fragments(dstring, path, fragment_loader=fragment_loader, is_module=(type_name == 'module'))
@@ -819,10 +819,12 @@ class PluginLoader:
 
         if path not in self._module_cache:
             self._module_cache[path] = self._load_module_source(name, path)
-            self._load_config_defs(name, self._module_cache[path], path)
             found_in_cache = False
 
+        self._load_config_defs(name, self._module_cache[path], path)
+
         obj = getattr(self._module_cache[path], self.class_name)
+
         if self.base_class:
             # The import path is hardcoded and should be the right place,
             # so we are not expecting an ImportError.
@@ -949,15 +951,18 @@ class PluginLoader:
                     else:
                         full_name = basename
                     module = self._load_module_source(full_name, path)
-                    self._load_config_defs(basename, module, path)
                 except Exception as e:
                     display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
                     continue
                 self._module_cache[path] = module
                 found_in_cache = False
+            else:
+                module = self._module_cache[path]
+
+            self._load_config_defs(basename, module, path)
 
             try:
-                obj = getattr(self._module_cache[path], self.class_name)
+                obj = getattr(module, self.class_name)
             except AttributeError as e:
                 display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
                 continue
