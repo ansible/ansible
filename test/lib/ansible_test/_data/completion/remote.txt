@@ -6,3 +6,5 @@ macos python_dir=/usr/local/bin provider=parallels
 rhel/7.9 python=2.7 provider=aws
 rhel/8.4 python=3.6,3.8 provider=aws
 rhel provider=aws
+ubuntu/22.04 python=3.10 provider=aws
+ubuntu provider=aws

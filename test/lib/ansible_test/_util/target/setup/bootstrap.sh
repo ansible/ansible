@@ -290,6 +290,39 @@ bootstrap_remote_rhel_pinned_pip_packages()
     pip_install "${pip_packages}"
 }
 
+bootstrap_remote_ubuntu()
+{
+    py_pkg_prefix="python3"
+
+    packages="
+        gcc
+        ${py_pkg_prefix}-dev
+        ${py_pkg_prefix}-pip
+        ${py_pkg_prefix}-venv
+        "
+
+    if [ "${controller}" ]; then
+        # The resolvelib package is not listed here because the available version (0.8.1) is incompatible with ansible.
+        # Instead, ansible-test will install it using pip.
+        packages="
+            ${packages}
+            ${py_pkg_prefix}-cryptography
+            ${py_pkg_prefix}-jinja2
+            ${py_pkg_prefix}-packaging
+            ${py_pkg_prefix}-yaml
+            "
+    fi
+
+    while true; do
+        # shellcheck disable=SC2086
+        apt-get update -qq -y && \
+        DEBIAN_FRONTEND=noninteractive apt-get install -qq -y --no-install-recommends ${packages} \
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
+    done
+}
+
 bootstrap_docker()
 {
     # Required for newer mysql-server packages to install/upgrade on Ubuntu 16.04.
@@ -308,6 +341,7 @@ bootstrap_remote()
             "freebsd") bootstrap_remote_freebsd ;;
             "macos") bootstrap_remote_macos ;;
             "rhel") bootstrap_remote_rhel ;;
+            "ubuntu") bootstrap_remote_ubuntu ;;
         esac
     done
 }
