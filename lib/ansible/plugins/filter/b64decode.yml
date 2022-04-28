@@ -1,6 +1,6 @@
 DOCUMENTATION:
   name: b64decode
-  author: ansbile core team
+  author: ansible core team
   version_added: 'historical'
   short_description: Decode a base64 string
   description:
