@@ -39,7 +39,7 @@ To nominate a candidate, create a GitHub issue in the relevant collection reposi
 Communicating as a collection maintainer
 -----------------------------------------
 
- Maintainers must subscribe to the `"Changes impacting collection contributors and maintainers" GitHub repo <https://github.com/ansible-collections/news-for-maintainers>`_ and the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_. If you have something important to announce through the newsletter (for example, recent releases), see the `Bullhorn's wiki page <https://github.com/ansible/community/wiki/News#the-bullhorn>`_ to learn how.
+ Maintainers MUST subscribe to the `"Changes impacting collection contributors and maintainers" GitHub repo <https://github.com/ansible-collections/news-for-maintainers>`_ and the `Bullhorn newsletter <https://github.com/ansible/community/wiki/News#the-bullhorn>`_. If you have something important to announce through the newsletter (for example, recent releases), see the `Bullhorn's wiki page <https://github.com/ansible/community/wiki/News#the-bullhorn>`_ to learn how.
 
 
 Collection contributors and maintainers should also communicate through:
@@ -128,10 +128,10 @@ Some other general guidelines to encourage contributors:
 Reviewing bug reports
 ----------------------
 
-When users report bugs, verify the behavior reported. Remember to always be kind with your feedback.
+When users report bugs, verify the behavior reported. Remember always to be kind with your feedback.
 
-* [ ] Did the user made a mistake in the example code? We often see user errors reported as bugs.
-* [ ] Did the user assume an unexpected behavior? Ensure that the related documentation is clear.
+* [ ] Did the user made a mistake in the code they put in the Steps to reproduce issue's section? We often see user errors reported as bugs.
+* [ ] Did the user assume an unexpected behavior? Ensure that the related documentation is clear. If not, the issue is useful to help us improve documentation.
 * [ ] Is there a minimal reproducer? If not, ask the reporter to reduce the complexity to help pinpoint the issue.
 * [ ] Is the issue a consequence of wrong-configured environment?
 * [ ] If it seems to be real bug, does the behaviour still exist in the most recent release or the development branch?
@@ -141,7 +141,7 @@ When users report bugs, verify the behavior reported. Remember to always be kind
 Reviewing suggested changes
 ---------------------------
 
-When reviewing PRs, first verify the suggested changes do NOT:
+When reviewing PRs, verify the suggested changes first. Do not:
 
 * [ ] Unnecessarily break backwards compatibility.
 * [ ] Bring more harm than value.
@@ -152,7 +152,7 @@ When reviewing PRs, first verify the suggested changes do NOT:
 
 Other standards to check for in a PR include:
 
-* [ ] A pull request does not contain a mix of bugfixes and new features that are not tightly related. If yes, ask the author to split the pull request into separate PRs.
+* [ ] A pull request MUST NOT contain a mix of bugfixes and new features that are not tightly related. If yes, ask the author to split the pull request into separate PRs.
 * [ ] If the pull request is not a documentation fix, it must include a :ref:`changelog fragment <collection_changelog_fragments>`. Check the format carefully as follows:
 
   * New modules and plugins (that are not jinja2 filter and test plugins) do not need changelog fragments.
@@ -188,7 +188,7 @@ Review for merge commits and breaking changes
 ---------------------------------------------
 
 * [ ] The pull request does not contain merge commits. See the GitHub warnings at the bottom of the pull request. If merge commits are present, ask the author to rebase the pull request branch.
-* [ ] If the pull request contains breaking changes, ask the author and the collection maintainers if it is really needed and there is a way to not introduce breaking changes. If breaking changes are in present, they must only appear in the next major release and **not** in a minor or patch release. The only exception are breaking changes caused by security fixes that are absolutely necessary to fix the security issue.
+* [ ] If the pull request contains breaking changes, ask the author and the collection maintainers if it really is needed, and there is a way not to introduce breaking changes. If breaking changes are present, they MUST only appear in the next major release and MUST NOT appear in a minor or patch release. The only exception is breaking changes caused by security fixes that are absolutely necessary to fix the security issue.
 
 
 .. _maintainer_documentation:
