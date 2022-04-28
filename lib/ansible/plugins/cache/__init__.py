@@ -43,12 +43,6 @@ class BaseCacheModule(AnsiblePlugin):
     _display = display
 
     def __init__(self, *args, **kwargs):
-        # Third party code is not using cache_loader to load plugin - fall back to previous behavior
-        if not hasattr(self, '_load_name'):
-            display.deprecated('Rather than importing custom CacheModules directly, use ansible.plugins.loader.cache_loader',
-                               version='2.14', collection_name='ansible.builtin')
-            self._load_name = self.__module__.rsplit('.', 1)[-1]
-            self._load_name = resource_from_fqcr(self.__module__)
         super(BaseCacheModule, self).__init__()
         self.set_options(var_options=args, direct=kwargs)
 
