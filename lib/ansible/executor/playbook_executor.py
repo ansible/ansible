@@ -23,6 +23,7 @@ import os
 
 from ansible import constants as C
 from ansible import context
+from ansible.errors import AnsibleParserError
 from ansible.executor.task_queue_manager import TaskQueueManager, AnsibleEndPlay
 from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -108,7 +109,17 @@ class PlaybookExecutor:
                 else:
                     AnsibleCollectionConfig.default_collection = None
 
-                pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
+                try:
+                    pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)
+                except AnsibleParserError as err:
+                    if context.CLIARGS['syntax']:
+                        # Don't return until done checking syntax for all playbooks
+                        display.display(f"{err}")
+                        display.display(f"{playbook} - Failed syntax check")
+                        continue
+                    raise
+
+
                 # FIXME: move out of inventory self._inventory.set_playbook_basedir(os.path.realpath(os.path.dirname(playbook_path)))
 
                 if self._tqm is None:  # we are doing a listing
@@ -249,8 +260,10 @@ class PlaybookExecutor:
                 if result != 0:
                     break
 
-            if entrylist:
-                return entrylist
+                if context.CLIARGS['syntax']:
+                    display.display(f"{playbook} - No issues encountered")
+                elif entrylist:
+                    return entrylist
 
         finally:
             if self._tqm is not None:
@@ -259,8 +272,10 @@ class PlaybookExecutor:
                 self._loader.cleanup_all_tmp_files()
 
         if context.CLIARGS['syntax']:
-            display.display("No issues encountered")
             return result
+
+        if entrylist:
+            return entrylist
 
         if context.CLIARGS['start_at_task'] and not self._tqm._start_at_done:
             display.error(
