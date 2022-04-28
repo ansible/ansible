@@ -26,7 +26,7 @@ from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_P
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder, _get_collection_metadata
 from ansible.utils.display import Display
-from ansible.utils.plugin_docs import add_fragments
+from ansible.utils.plugin_docs import add_collection_to_versions_and_dates, add_fragments
 from ansible import __version__ as ansible_version
 
 # TODO: take the packaging dep, or vendor SpecifierSet?
@@ -383,7 +383,7 @@ class PluginLoader:
         paths_with_context = self._get_paths_with_context(subdirs=subdirs)
         return [path_with_context.path for path_with_context in paths_with_context]
 
-    def _load_config_defs(self, name, module, path):
+    def _load_config_defs(self, name, module, path, collection_name=None):
         ''' Reads plugin docs to find configuration setting definitions, to push to config manager for later use '''
 
         # plugins w/o class name don't support config
@@ -394,6 +394,8 @@ class PluginLoader:
             if type_name in C.CONFIGURABLE_PLUGINS:
                 dstring = AnsibleLoader(getattr(module, 'DOCUMENTATION', ''), file_name=path).get_single_data()
                 if dstring:
+                    if collection_name:
+                        add_collection_to_versions_and_dates(dstring, collection_name, is_module=(type_name == 'module'))
                     add_fragments(dstring, path, fragment_loader=fragment_loader, is_module=(type_name == 'module'))
 
                 if dstring and 'options' in dstring and isinstance(dstring['options'], dict):
@@ -819,7 +821,8 @@ class PluginLoader:
 
         if path not in self._module_cache:
             self._module_cache[path] = self._load_module_source(name, path)
-            self._load_config_defs(name, self._module_cache[path], path)
+            self._load_config_defs(
+                name, self._module_cache[path], path, collection_name=plugin_load_context.plugin_resolved_collection)
             found_in_cache = False
 
         obj = getattr(self._module_cache[path], self.class_name)
@@ -915,11 +918,13 @@ class PluginLoader:
         all_matches = []
         found_in_cache = True
 
-        for i in self._get_paths():
-            all_matches.extend(glob.glob(to_native(os.path.join(i, "*.py"))))
+        for path_with_context in self._get_paths_with_context(subdirs=True):
+            all_matches.extend([
+                (path, path_with_context.internal)
+                for path in glob.glob(to_native(os.path.join(path_with_context.path, "*.py")))])
 
         loaded_modules = set()
-        for path in sorted(all_matches, key=os.path.basename):
+        for path, internal in sorted(all_matches, key=lambda pi: os.path.basename(pi[0])):
             name = os.path.splitext(path)[0]
             basename = os.path.basename(name)
 
@@ -949,7 +954,7 @@ class PluginLoader:
                     else:
                         full_name = basename
                     module = self._load_module_source(full_name, path)
-                    self._load_config_defs(basename, module, path)
+                    self._load_config_defs(basename, module, path, collection_name='ansible.builtin' if internal else None)
                 except Exception as e:
                     display.warning("Skipping plugin (%s) as it seems to be invalid: %s" % (path, to_text(e)))
                     continue

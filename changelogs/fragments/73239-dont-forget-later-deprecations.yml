@@ -1,0 +1,2 @@
+bugfixes:
+- "Plugin configuration loader now makes sure that the collection name is added for plugin deprecations (https://github.com/ansible/ansible/pull/73239)."
