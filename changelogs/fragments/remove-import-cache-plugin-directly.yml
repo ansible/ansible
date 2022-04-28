@@ -1,0 +1,2 @@
+removed_features:
+  - Remove deprecated functionality that allows loading cache plugins directly without using ``cache_loader``.
