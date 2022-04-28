@@ -24,6 +24,17 @@ string_to_vars = {
 }
 
 
+def _var2string(value):
+    ''' reverse lookup of the dict above '''
+    global string_to_vars
+    string = None
+    for k, v in string_to_vars.items():
+        if v == value:
+            string = k
+            break
+    return string
+
+
 def _init_doc_dict():
     ''' initialize a return dict for docs with the expected structure '''
     return {k: None for k in string_to_vars.values()}
@@ -87,7 +98,7 @@ def read_docstring_from_python_module(filename, verbose=True, ignore_errors=True
                     try:
                         data[next_string] = AnsibleLoader(value, file_name=filename).get_single_data()
                     except Exception as e:
-                        msg = "Unable to parse docs '%s' in python file '%s': %s" % (next_string, filename, to_native(e))
+                        msg = "Unable to parse docs '%s' in python file '%s': %s" % (_var2string(next_string), filename, to_native(e))
                         if not ignore_errors:
                             raise AnsibleParserError(msg, orig_exc=e)
                         elif verbose:
