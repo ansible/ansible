@@ -33,4 +33,4 @@ do
 done
 
 # test config loading
-ansible-playbook use_coll_name.yml -i '127.0.0.2,' "$@"
+ansible-playbook use_coll_name.yml -i ../../inventory -e 'ansible_connection=ansible.builtin.ssh' "$@"
