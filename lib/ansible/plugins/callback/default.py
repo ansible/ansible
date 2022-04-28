@@ -27,22 +27,6 @@ from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
 from ansible.utils.fqcn import add_internal_fqcns
 
-# These values use ansible.constants for historical reasons, mostly to allow
-# unmodified derivative plugins to work. However, newer options added to the
-# plugin are not also added to ansible.constants, so authors of derivative
-# callback plugins will eventually need to add a reference to the common docs
-# fragment for the 'default' callback plugin
-
-# these are used to provide backwards compat with old plugins that subclass from default
-# but still don't use the new config system and/or fail to document the options
-# TODO: Change the default of check_mode_markers to True in a future release (2.13)
-COMPAT_OPTIONS = (('display_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS),
-                  ('display_ok_hosts', True),
-                  ('show_custom_stats', C.SHOW_CUSTOM_STATS),
-                  ('display_failed_stderr', False),
-                  ('check_mode_markers', False),
-                  ('show_per_host_start', False))
-
 
 class CallbackModule(CallbackBase):
 
@@ -62,20 +46,6 @@ class CallbackModule(CallbackBase):
         self._last_task_name = None
         self._task_type_cache = {}
         super(CallbackModule, self).__init__()
-
-    def set_options(self, task_keys=None, var_options=None, direct=None):
-
-        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
-
-        # for backwards compat with plugins subclassing default, fallback to constants
-        for option, constant in COMPAT_OPTIONS:
-            try:
-                value = self.get_option(option)
-            except (AttributeError, KeyError):
-                self._display.deprecated("'%s' is subclassing DefaultCallback without the corresponding doc_fragment." % self._load_name,
-                                         version='2.14', collection_name='ansible.builtin')
-                value = constant
-            setattr(self, option, value)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
 
