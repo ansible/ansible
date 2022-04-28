@@ -39,6 +39,10 @@ def _preprocess_unsafe_encode(value):
     return value
 
 
+def json_dump(structure):
+    return json.dumps(structure, cls=AnsibleJSONEncoder, sort_keys=True, indent=4)
+
+
 class AnsibleJSONEncoder(json.JSONEncoder):
     '''
     Simple encoder class to deal with JSON encoding of Ansible internal types
