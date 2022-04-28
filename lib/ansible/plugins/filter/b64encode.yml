@@ -1,6 +1,6 @@
 DOCUMENTATION:
   name: b64encode
-  author: ansbile core team
+  author: ansible core team
   version_added: 'historical'
   short_description: Encode a string as base64
   description:
