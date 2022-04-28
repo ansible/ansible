@@ -31,3 +31,6 @@ do
 		exit 1
 	fi
 done
+
+# test config loading
+ansible-playbook use_coll_name.yml -i ../../inventory -e 'ansible_connection=ansible.builtin.ssh' "$@"
