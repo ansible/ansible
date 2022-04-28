@@ -617,13 +617,12 @@ DEFAULT_FACT_PATH:
   ini:
   - {key: fact_path, section: defaults}
   type: string
-  # TODO: deprecate in 2.14
-  #deprecated:
-  #    # TODO: when removing set playbook/play.py to default=None
-  #    why: the module_defaults keyword is a more generic version and can apply to all calls to the
-  #         M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
-  #    version: "2.18"
-  #    alternatives: module_defaults
+  deprecated:
+    # TODO: when removing set playbook/play.py to default=None
+    why: the module_defaults keyword is a more generic version and can apply to all calls to the
+         M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
+    version: "2.18"
+    alternatives: module_defaults
 DEFAULT_FILTER_PLUGIN_PATH:
   name: Jinja2 Filter Plugins Path
   default: '{{ ANSIBLE_HOME ~ "/plugins/filter:/usr/share/ansible/plugins/filter" }}'
@@ -679,13 +678,12 @@ DEFAULT_GATHER_SUBSET:
       section: defaults
   version_added: "2.1"
   type: list
-  # TODO: deprecate in 2.14
-  #deprecated:
-  #    # TODO: when removing set playbook/play.py to default=None
-  #    why: the module_defaults keyword is a more generic version and can apply to all calls to the
-  #         M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
-  #    version: "2.18"
-  #    alternatives: module_defaults
+  deprecated:
+    # TODO: when removing set playbook/play.py to default=None
+    why: the module_defaults keyword is a more generic version and can apply to all calls to the
+         M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
+    version: "2.18"
+    alternatives: module_defaults
 DEFAULT_GATHER_TIMEOUT:
   name: Gather facts timeout
   description:
@@ -695,13 +693,12 @@ DEFAULT_GATHER_TIMEOUT:
   ini:
   - {key: gather_timeout, section: defaults}
   type: integer
-  # TODO: deprecate in 2.14
-  #deprecated:
-  #    # TODO: when removing set playbook/play.py to default=None
-  #    why: the module_defaults keyword is a more generic version and can apply to all calls to the
-  #         M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
-  #    version: "2.18"
-  #    alternatives: module_defaults
+  deprecated:
+    # TODO: when removing set playbook/play.py to default=None
+    why: the module_defaults keyword is a more generic version and can apply to all calls to the
+         M(ansible.builtin.gather_facts) or M(ansible.builtin.setup) actions
+    version: "2.18"
+    alternatives: module_defaults
 DEFAULT_HASH_BEHAVIOUR:
   name: Hash merge behaviour
   default: replace
