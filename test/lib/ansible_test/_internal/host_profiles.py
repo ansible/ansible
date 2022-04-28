@@ -571,6 +571,8 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
             become = Sudo()
         elif self.config.platform == 'rhel':
             become = Sudo()
+        elif self.config.platform == 'ubuntu':
+            become = Sudo()
         else:
             raise NotImplementedError(f'Become support has not been implemented for platform "{self.config.platform}" and user "{settings.user}" is not root.')
 
