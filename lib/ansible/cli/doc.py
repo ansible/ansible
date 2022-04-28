@@ -1004,7 +1004,7 @@ class DocCLI(CLI, RoleMixin):
             if doc is None:
                 # handle test/filters that are in file with diff name
                 base = plugin.split('.')[-1]
-                basefile = filename.with_stem(base)
+                basefile = filename.with_name(base + filename.suffix)
                 for extension in ('.py', '.yml', '.yaml'):  # TODO: constant?
                     docfile = basefile.with_suffix(extension)
                     try:
