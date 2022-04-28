@@ -1,0 +1,5 @@
+- name: ensure configuration is loaded when we use FQCN and have already loaded using 'short namne' (which is case will all builtin connection plugins)
+  hosts: all # Do not use implicit `localhost` as `local` plugin won't make configuration lookup in default configuration
+  connection: ansible.builtin.ssh
+  tasks:
+    - ping:
