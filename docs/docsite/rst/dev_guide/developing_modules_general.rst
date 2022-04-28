@@ -80,15 +80,17 @@ The simplest way is to use ``ansible`` adhoc command:
 
 .. code:: shell
 
-    ansilbe -m library/my_test.py -a '... arguments' remotehost
+    ansible -m library/my_test.py -a 'name=hello new=true' remotehost
 
 If your module does not need to target a remote host, you can quickly and easily exercise your code locally like this:
 
 .. code:: shell
 
-    ansilbe -m library/my_test.py -a '... arguments' localhost
+    ansible -m library/my_test.py -a 'name=hello new=true' localhost
 
--  If for any reason you want to avoid going through Ansible, another way is to create an arguments file, a basic JSON config file that passes parameters to your module so that you can run it. Name the arguments file ``/tmp/args.json`` and add the following content:
+-  If for any reason (pdb, using print(), faster iteration, etc) you want to avoid going through Ansible,
+   another way is to create an arguments file, a basic JSON config file that passes parameters to your module so that you can run it.
+   Name the arguments file ``/tmp/args.json`` and add the following content:
 
 .. code:: json
 
@@ -99,10 +101,13 @@ If your module does not need to target a remote host, you can quickly and easily
         }
     }
 
--  Now you can run your test module locally and directly:
+-  Then the module can be tested locally and directly. This skips the packing steps and uses module_utils files directly:
+
+.. code:: console
+
    ``$ python library/my_test.py /tmp/args.json``
 
-This should return output like this:
+It should return output like this:
 
 .. code:: json
 
