@@ -12,7 +12,7 @@ DOCUMENTATION:
       required: true
 EXAMPLES: |
 
-  # To get the dir name of a file path, like ‘/etc/asdf’ out of ‘/etc/asdf/foo.txt’
+  # To get the dir name of a file path, like '/etc/asdf' out of '/etc/asdf/foo.txt'
   {{ mypath | dirname}}
 
 RETURN:
