@@ -108,8 +108,8 @@ Examine the output to see at which step the failure occurred. Investigate the re
 
 8. If the test succeeds, write more tests. Refer to the :ref:`Recommendations on coverage<collection_integration_recommendations>` section for details.
 
-``community.postregesql`` example
-----------------------------------
+``community.postgresql`` example
+--------------------------------
 
 Here is a real example of writing integration tests from scratch for the ``community.postgresql.postgresql_info`` module.
 
