@@ -11,9 +11,9 @@ DOCUMENTATION:
       type: string
       required: true
 EXAMPLES: |
-# To get '/home/myuser/stuff.txt' from '$HOME/stuff.txt'
-{{ mypath | expandvars }}
 
+  # To get '/home/myuser/stuff.txt' from '$HOME/stuff.txt'
+  {{ mypath | expandvars }}
 
 RETURN:
   _value:

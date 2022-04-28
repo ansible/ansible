@@ -11,9 +11,9 @@ DOCUMENTATION:
       type: path
       required: true
 EXAMPLES: |
-# To get the last name of a file path, like ‘foo.txt’ out of ‘/etc/asdf/foo.txt’
-{{ mypath | basename }}
 
+  # To get the last name of a file path, like ‘foo.txt’ out of ‘/etc/asdf/foo.txt’
+  {{ mypath | basename }}
 
 RETURN:
   _value:

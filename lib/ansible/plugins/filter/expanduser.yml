@@ -11,9 +11,9 @@ DOCUMENTATION:
       type: path
       required: true
 EXAMPLES: |
-# To get '/home/myuser/stuff.txt' from '~/stuff.txt'.
-{{ mypath | expanduser }}
 
+  # To get '/home/myuser/stuff.txt' from '~/stuff.txt'.
+  {{ mypath | expanduser }}
 
 RETURN:
   _value:
