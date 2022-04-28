@@ -22,7 +22,6 @@ __metaclass__ = type
 from collections.abc import MutableMapping
 
 from ansible.utils.vars import merge_hash
-from ansible.vars.validation import validate_variable_names
 
 
 class AggregateStats:
@@ -74,7 +73,6 @@ class AggregateStats:
 
     def set_custom_stats(self, which, what, host=None):
         ''' allow setting of a custom stat'''
-        validate_variable_names(which, 'stats')
 
         if host is None:
             host = '_run'
