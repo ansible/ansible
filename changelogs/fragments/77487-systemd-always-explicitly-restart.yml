@@ -1,0 +1,2 @@
+bugfixes:
+  - systemd - Always explicitly restart, even if the service isn't running, to propagate that action to dependent services.
