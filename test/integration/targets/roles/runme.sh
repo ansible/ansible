@@ -20,8 +20,6 @@ ansible-playbook data_integrity.yml -i ../../inventory "$@"
 
 # ensure role fails when trying to load 'non role' in  _from
 ansible-playbook no_outside.yml -i ../../inventory "$@" 2>&1 > role_outside_output.log || true
-if grep "as it is not inside the expected role path" output.log >/dev/null; then
+if grep "as it is not inside the expected role path" role_outside_output.log >/dev/null; then
   echo "Test passed (playbook failed with expected output, output not shown)."
-  exit 0
 fi
-rm role_outside_output.log
