@@ -18,11 +18,12 @@
 
 - name: check selinux policy type
   shell: grep '^SELINUXTYPE=' /etc/selinux/config | cut -d'=' -f2
+  ignore_errors: yes
   register: r
 
 - set_fact:
     selinux_policytype: "{{ r.stdout_lines[0] }}"
-  when: r.changed
+  when: r is success and r.stdout_lines
 
 - assert:
     that:
