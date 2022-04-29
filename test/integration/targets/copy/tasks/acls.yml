@@ -1,4 +1,9 @@
 - block:
+  - name: Install the acl package on Ubuntu
+    apt:
+      name: acl
+    when: ansible_distribution in ('Ubuntu')
+
   - block:
     - name: Testing ACLs
       copy:
