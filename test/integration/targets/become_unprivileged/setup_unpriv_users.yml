@@ -12,6 +12,7 @@
         name: sudo
         state: present
       delegate_to: localhost
+      when: ansible_distribution not in ["MacOSX", "Alpine"]
 
     - name: Create groups for unprivileged users
       group:
