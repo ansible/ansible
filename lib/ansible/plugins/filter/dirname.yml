@@ -10,6 +10,8 @@ DOCUMENTATION:
       description: A path
       type: path
       required: true
+  seealso:
+    - filter: basename
 EXAMPLES: |
 
   # To get the dir name of a file path, like '/etc/asdf' out of '/etc/asdf/foo.txt'
