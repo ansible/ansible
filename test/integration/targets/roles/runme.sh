@@ -19,7 +19,7 @@ set -eux
 ansible-playbook data_integrity.yml -i ../../inventory "$@"
 
 # ensure role fails when trying to load 'non role' in  _from
-ansible-playbook no_outside.yml -i ../../inventory "$@" 2>&1 > role_outside_output.log || true
+ansible-playbook no_outside.yml -i ../../inventory "$@" > role_outside_output.log 2>&1 || true
 if grep "as it is not inside the expected role path" role_outside_output.log >/dev/null; then
   echo "Test passed (playbook failed with expected output, output not shown)."
 else
