@@ -8,7 +8,7 @@ __metaclass__ = type
 
 
 DOCUMENTATION = '''
-module: systemd_services
+module: systemd_service
 author:
     - Ansible Core Team
 version_added: "2.2"
