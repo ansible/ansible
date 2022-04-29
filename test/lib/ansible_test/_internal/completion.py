@@ -160,6 +160,8 @@ class PosixRemoteCompletionConfig(RemoteCompletionConfig, PythonCompletionConfig
     placeholder: bool = False
 
     def __post_init__(self):
+        super().__post_init__()
+
         if not self.supported_pythons:
             if self.version and not self.placeholder:
                 raise Exception(f'POSIX remote completion entry "{self.name}" must provide a "python" setting.')
