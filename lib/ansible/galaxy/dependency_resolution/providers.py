@@ -186,7 +186,8 @@ class CollectionDependencyProviderBase(AbstractProvider):
         """
         return requirement_or_candidate.canonical_package_id
 
-    def get_preference(self, *args: t.Any, **kwargs: t.Any) -> float | int:
+    def get_preference(self, *args, **kwargs):
+        # type: (t.Any, t.Any) -> float | int
         """Return sort key function return value for given requirement.
 
         This result should be based on preference that is defined as
@@ -263,7 +264,8 @@ class CollectionDependencyProviderBase(AbstractProvider):
         """
         raise NotImplementedError
 
-    def _get_preference(self, candidates: list[Candidate]) -> float | int:
+    def _get_preference(self, candidates):
+        # type: (list[Candidate]) -> float | int
         if any(
                 candidate in self._preferred_candidates
                 for candidate in candidates
@@ -273,7 +275,8 @@ class CollectionDependencyProviderBase(AbstractProvider):
             return float('-inf')
         return len(candidates)
 
-    def find_matches(self, *args: t.Any, **kwargs: t.Any) -> list[Candidate]:
+    def find_matches(self, *args, **kwargs):
+        # type: (t.Any, t.Any) -> list[Candidate]
         r"""Find all possible candidates satisfying given requirements.
 
         This tries to get candidates based on the requirements' types.
@@ -308,7 +311,8 @@ class CollectionDependencyProviderBase(AbstractProvider):
         """
         raise NotImplementedError
 
-    def _find_matches(self, requirements: list[Requirement]) -> list[Candidate]:
+    def _find_matches(self, requirements):
+        # type: (list[Requirement]) -> list[Candidate]
         # FIXME: The first requirement may be a Git repo followed by
         # FIXME: its cloned tmp dir. Using only the first one creates
         # FIXME: loops that prevent any further dependency exploration.
@@ -491,7 +495,8 @@ class CollectionDependencyProviderBase(AbstractProvider):
 
 # Classes to handle resolvelib API changes between minor versions for 0.X
 class CollectionDependencyProvider050(CollectionDependencyProviderBase):
-    def find_matches(self, requirements: list[Requirement]) -> list[Candidate]:  # type: ignore[override]
+    def find_matches(self, requirements):  # type: ignore[override]
+        # type: (list[Requirement]) -> list[Candidate]
         return self._find_matches(requirements)
 
     def get_preference(self, resolution, candidates, information):  # type: ignore[override]
