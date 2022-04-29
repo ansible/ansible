@@ -27,4 +27,4 @@
   when: split is not success or not split.stat.exists
 - name: Show host details
   debug:
-    msg: "{{ message }}"
+    msg: "{{ message | trim }}"
