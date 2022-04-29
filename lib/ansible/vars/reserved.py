@@ -75,7 +75,11 @@ def handle_reserved_vars(myvars):
 
 def warn_if_reserved(myvars, additional=None):
     ''' this function warns if any variable passed conflicts with internally reserved names '''
-    # NOTE: the function is not used
+    display.deprecated(
+        'ansible.vars.reserved.warn_if_reserved function is deprecated. '
+        'Use functions from ansible.vars.reserved to replace its functionality.',
+        version='2.16'
+    )
     if additional is None:
         reserved = _RESERVED_NAMES
     else:
@@ -88,7 +92,11 @@ def warn_if_reserved(myvars, additional=None):
 
 
 def is_reserved_name(name):
-    # NOTE: the function is not used
+    display.deprecated(
+        'ansible.vars.reserved.is_reserved_name function is deprecated. '
+        'Use functions from ansible.vars.reserved to replace its functionality.',
+        version='2.16'
+    )
     return name in _RESERVED_NAMES
 
 
