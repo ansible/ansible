@@ -14,6 +14,7 @@ from ansible.playbook.block import Block
 from ansible.playbook.handler import Handler
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
+from ansible.plugins.loader import lookup_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
 
@@ -24,12 +25,12 @@ _e = Templar(None).environment
 _JINJA_RESERVED = frozenset(set(_e.globals).union(_e.filters, _e.tests))
 # FIXME: remove these exceptions if we can
 _RESERVE_EXCEPTIONS = frozenset(('environment', 'gather_subset', 'vars'))
-# FIXME: with_<lookups>
+_WITH_LOOKUPS = frozenset('with_%s' % l.__module__.rsplit('.', 1)[-1] for l in lookup_loader.all())
 
 
 def get_reserved_names(include_private=True):
     """Return the list of reserved names associated with play objects and internal template functions"""
-    result = set(_INTERNAL_HARDCODED).union(_JINJA_RESERVED)
+    result = set(_INTERNAL_HARDCODED).union(_JINJA_RESERVED, _WITH_LOOKUPS)
 
     # FIXME: find a way to 'not hardcode', possibly need role deps/includes
     class_list = (Play, Role, Block, Task, Handler)
