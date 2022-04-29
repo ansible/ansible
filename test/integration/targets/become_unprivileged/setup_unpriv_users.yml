@@ -7,6 +7,12 @@
   gather_facts: yes
   remote_user: root
   tasks:
+    - name: Ensure sudo is available
+      package:
+        name: sudo
+        state: present
+      delegate_to: localhost
+
     - name: Create groups for unprivileged users
       group:
         name: "{{ item }}"
