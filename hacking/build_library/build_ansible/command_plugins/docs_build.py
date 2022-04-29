@@ -112,7 +112,7 @@ def generate_base_docs(args):
 
         # The _ansible_version doesn't matter since we're only building docs for base
         deps_file_contents = {'_ansible_version': ansible_base__version__,
-                              '_ansible_base_version': ansible_base__version__}
+                              '_ansible_core_version': ansible_base__version__}
 
         with open(modified_deps_file, 'w') as f:
             f.write(yaml.dump(deps_file_contents))
@@ -161,7 +161,7 @@ def generate_full_docs(args):
             with open(modified_deps_file, 'r') as f:
                 deps_data = yaml.safe_load(f.read())
 
-            deps_data['_ansible_base_version'] = ansible_base__version__
+            deps_data['_ansible_core_version'] = ansible_base__version__
 
             with open(modified_deps_file, 'w') as f:
                 f.write(yaml.dump(deps_data))
