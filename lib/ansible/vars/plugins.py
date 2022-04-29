@@ -15,6 +15,7 @@ from ansible.plugins.loader import vars_loader
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
+from ansible.vars.validation import validate_variable_names
 
 display = Display()
 
@@ -36,6 +37,8 @@ def get_plugin_vars(loader, plugin, path, entities):
                 raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
             else:
                 raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
+
+    validate_variable_names(data.keys())
 
     return data
 
