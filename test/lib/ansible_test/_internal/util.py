@@ -6,8 +6,10 @@ import errno
 import fcntl
 import importlib.util
 import inspect
+import json
 import keyword
 import os
+import platform
 import pkgutil
 import random
 import re
@@ -98,6 +100,18 @@ MODE_DIRECTORY = MODE_READ | stat.S_IWUSR | stat.S_IXUSR | stat.S_IXGRP | stat.S
 MODE_DIRECTORY_WRITE = MODE_DIRECTORY | stat.S_IWGRP | stat.S_IWOTH
 
 
+class Architecture:
+    """
+    Normalized architecture names.
+    These are the architectures supported by ansible-test, such as when provisioning remote instances.
+    """
+    X86_64 = 'x86_64'
+    AARCH64 = 'aarch64'
+
+
+REMOTE_ARCHITECTURES = list(value for key, value in Architecture.__dict__.items() if not key.startswith('__'))
+
+
 def is_valid_identifier(value: str) -> bool:
     """Return True if the given value is a valid non-keyword Python identifier, otherwise return False."""
     return value.isidentifier() and not keyword.iskeyword(value)
@@ -119,6 +133,58 @@ def cache(func):  # type: (t.Callable[[], TValue]) -> t.Callable[[], TValue]
     wrapper = mutex(cache_func)
 
     return wrapper
+
+
+@mutex
+def detect_architecture(python: str) -> t.Optional[str]:
+    """Detect the architecture of the specified Python and return a normalized version, or None if it cannot be determined."""
+    results: t.Dict[str, t.Optional[str]]
+
+    try:
+        results = detect_architecture.results  # type: ignore[attr-defined]
+    except AttributeError:
+        results = detect_architecture.results = {}  # type: ignore[attr-defined]
+
+    if python in results:
+        return results[python]
+
+    if python == sys.executable or os.path.realpath(python) == os.path.realpath(sys.executable):
+        uname = platform.uname()
+    else:
+        data = raw_command([python, '-c', 'import json, platform; print(json.dumps(platform.uname()));'], capture=True)[0]
+        uname = json.loads(data)
+
+    translation = {
+        'x86_64': Architecture.X86_64,  # Linux, macOS
+        'amd64': Architecture.X86_64,  # FreeBSD
+        'aarch64': Architecture.AARCH64,  # Linux, FreeBSD
+        'arm64': Architecture.AARCH64,  # FreeBSD
+    }
+
+    candidates = []
+
+    if len(uname) >= 5:
+        candidates.append(uname[4])
+
+    if len(uname) >= 6:
+        candidates.append(uname[5])
+
+    candidates = sorted(set(candidates))
+    architectures = sorted(set(arch for arch in [translation.get(candidate) for candidate in candidates] if arch))
+
+    architecture: t.Optional[str] = None
+
+    if not architectures:
+        display.warning(f'Unable to determine architecture for Python interpreter "{python}" from: {candidates}')
+    elif len(architectures) == 1:
+        architecture = architectures[0]
+        display.info(f'Detected architecture {architecture} for Python interpreter: {python}', verbosity=1)
+    else:
+        display.warning(f'Conflicting architectures detected ({architectures}) for Python interpreter "{python}" from: {candidates}')
+
+    results[python] = architecture
+
+    return architecture
 
 
 def filter_args(args, filters):  # type: (t.List[str], t.Dict[str, int]) -> t.List[str]
