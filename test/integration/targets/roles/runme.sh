@@ -22,4 +22,7 @@ ansible-playbook data_integrity.yml -i ../../inventory "$@"
 ansible-playbook no_outside.yml -i ../../inventory "$@" 2>&1 > role_outside_output.log || true
 if grep "as it is not inside the expected role path" role_outside_output.log >/dev/null; then
   echo "Test passed (playbook failed with expected output, output not shown)."
+else
+  echo "Test failed, expected output from playbook failure is missing, output not shown)."
+  exit 1
 fi
