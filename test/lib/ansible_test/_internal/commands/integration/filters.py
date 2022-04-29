@@ -10,6 +10,7 @@ from ...config import (
 
 from ...util import (
     cache,
+    detect_architecture,
     display,
     get_type_map,
 )
@@ -223,6 +224,14 @@ class NetworkInventoryTargetFilter(TargetFilter[NetworkInventoryConfig]):
 
 class OriginTargetFilter(PosixTargetFilter[OriginConfig]):
     """Target filter for localhost."""
+    def filter_targets(self, targets, exclude):  # type: (t.List[IntegrationTarget], t.Set[str]) -> None
+        """Filter the list of targets, adding any which this host profile cannot support to the provided exclude list."""
+        super().filter_targets(targets, exclude)
+
+        arch = detect_architecture(self.config.python.path)
+
+        if arch:
+            self.skip(f'skip/{arch}', f'which are not supported by {arch}', targets, exclude)
 
 
 @cache
@@ -247,10 +256,7 @@ def get_target_filter(args, configs, controller):  # type: (IntegrationConfig, t
 
 def get_remote_skip_aliases(config):  # type: (RemoteConfig) -> t.Dict[str, str]
     """Return a dictionary of skip aliases and the reason why they apply."""
-    if isinstance(config, PosixRemoteConfig):
-        return get_platform_skip_aliases(config.platform, config.version, config.arch)
-
-    return get_platform_skip_aliases(config.platform, config.version, None)
+    return get_platform_skip_aliases(config.platform, config.version, config.arch)
 
 
 def get_platform_skip_aliases(platform, version, arch):  # type: (str, str, t.Optional[str]) -> t.Dict[str, str]
