@@ -39,6 +39,7 @@ from .util import (
     get_available_python_versions,
     str_to_version,
     version_to_str,
+    Architecture,
 )
 
 
@@ -206,6 +207,7 @@ class RemoteConfig(HostConfig, metaclass=abc.ABCMeta):
     """Base class for remote host configuration."""
     name: t.Optional[str] = None
     provider: t.Optional[str] = None
+    arch: t.Optional[str] = None
 
     @property
     def platform(self):  # type: () -> str
@@ -227,6 +229,7 @@ class RemoteConfig(HostConfig, metaclass=abc.ABCMeta):
             self.provider = None
 
         self.provider = self.provider or defaults.provider or 'aws'
+        self.arch = self.arch or defaults.arch or Architecture.X86_64
 
     @property
     def is_managed(self):  # type: () -> bool
@@ -330,8 +333,6 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
 @dataclasses.dataclass
 class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
     """Configuration for a POSIX remote host."""
-    arch: t.Optional[str] = None
-
     def get_defaults(self, context):  # type: (HostContext) -> PosixRemoteCompletionConfig
         """Return the default settings."""
         return filter_completion(remote_completion()).get(self.name) or remote_completion().get(self.platform) or PosixRemoteCompletionConfig(
@@ -388,6 +389,7 @@ class NetworkRemoteConfig(RemoteConfig, NetworkConfig):
         """Return the default settings."""
         return filter_completion(network_completion()).get(self.name) or NetworkRemoteCompletionConfig(
             name=self.name,
+            placeholder=True,
         )
 
     def apply_defaults(self, context, defaults):  # type: (HostContext, CompletionConfig) -> None

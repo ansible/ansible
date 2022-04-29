@@ -93,6 +93,18 @@ class PythonVersionUnspecifiedError(ApplicationError):
         super().__init__(f'A Python version was not specified for environment `{context}`. Use the `--python` option to specify a Python version.')
 
 
+class RemoteProviderUnspecifiedError(ApplicationError):
+    """A remote provider was not specified for a context which is unknown, thus the remote provider version is unknown."""
+    def __init__(self, context):
+        super().__init__(f'A remote provider was not specified for environment `{context}`. Use the `--remote-provider` option to specify a provider.')
+
+
+class RemoteArchitectureUnspecifiedError(ApplicationError):
+    """A remote architecture was not specified for a context which is unknown, thus the remote architecture version is unknown."""
+    def __init__(self, context):
+        super().__init__(f'A remote architecture was not specified for environment `{context}`. Use the `--remote-arch` option to specify an architecture.')
+
+
 class ControllerNotSupportedError(ApplicationError):
     """Option(s) were specified which do not provide support for the controller and would be ignored because they are irrelevant for the target."""
     def __init__(self, context):
@@ -115,6 +127,7 @@ class LegacyHostOptions:
     venv_system_site_packages: t.Optional[bool] = None
     remote: t.Optional[str] = None
     remote_provider: t.Optional[str] = None
+    remote_arch: t.Optional[str] = None
     docker: t.Optional[str] = None
     docker_privileged: t.Optional[bool] = None
     docker_seccomp: t.Optional[str] = None
@@ -371,33 +384,40 @@ def get_legacy_host_config(
 
             if remote_config.controller_supported:
                 if controller_python(options.python) or not options.python:
-                    controller = PosixRemoteConfig(name=options.remote, python=native_python(options), provider=options.remote_provider)
+                    controller = PosixRemoteConfig(name=options.remote, python=native_python(options), provider=options.remote_provider,
+                                                   arch=options.remote_arch)
                     targets = controller_targets(mode, options, controller)
                 else:
                     controller_fallback = f'remote:{options.remote}', f'--remote {options.remote} --python {options.python}', FallbackReason.PYTHON
-                    controller = PosixRemoteConfig(name=options.remote, provider=options.remote_provider)
+                    controller = PosixRemoteConfig(name=options.remote, provider=options.remote_provider, arch=options.remote_arch)
                     targets = controller_targets(mode, options, controller)
             else:
                 context, reason = f'--remote {options.remote}', FallbackReason.ENVIRONMENT
                 controller = None
-                targets = [PosixRemoteConfig(name=options.remote, python=native_python(options), provider=options.remote_provider)]
+                targets = [PosixRemoteConfig(name=options.remote, python=native_python(options), provider=options.remote_provider, arch=options.remote_arch)]
         elif mode == TargetMode.SHELL and options.remote.startswith('windows/'):
             if options.python and options.python not in CONTROLLER_PYTHON_VERSIONS:
                 raise ControllerNotSupportedError(f'--python {options.python}')
 
             controller = OriginConfig(python=native_python(options))
-            targets = [WindowsRemoteConfig(name=options.remote, provider=options.remote_provider)]
+            targets = [WindowsRemoteConfig(name=options.remote, provider=options.remote_provider, arch=options.remote_arch)]
         else:
             if not options.python:
                 raise PythonVersionUnspecifiedError(f'--remote {options.remote}')
 
+            if not options.remote_provider:
+                raise RemoteProviderUnspecifiedError(f'--remote {options.remote}')
+
+            if not options.remote_arch:
+                raise RemoteArchitectureUnspecifiedError(f'--remote {options.remote}')
+
             if controller_python(options.python):
-                controller = PosixRemoteConfig(name=options.remote, python=native_python(options), provider=options.remote_provider)
+                controller = PosixRemoteConfig(name=options.remote, python=native_python(options), provider=options.remote_provider, arch=options.remote_arch)
                 targets = controller_targets(mode, options, controller)
             else:
                 context, reason = f'--remote {options.remote} --python {options.python}', FallbackReason.PYTHON
                 controller = None
-                targets = [PosixRemoteConfig(name=options.remote, python=native_python(options), provider=options.remote_provider)]
+                targets = [PosixRemoteConfig(name=options.remote, python=native_python(options), provider=options.remote_provider, arch=options.remote_arch)]
 
         if not controller:
             if docker_available():
@@ -455,12 +475,13 @@ def handle_non_posix_targets(
     """Return a list of non-POSIX targets if the target mode is non-POSIX."""
     if mode == TargetMode.WINDOWS_INTEGRATION:
         if options.windows:
-            targets = [WindowsRemoteConfig(name=f'windows/{version}', provider=options.remote_provider) for version in options.windows]
+            targets = [WindowsRemoteConfig(name=f'windows/{version}', provider=options.remote_provider, arch=options.remote_arch)
+                       for version in options.windows]
         else:
             targets = [WindowsInventoryConfig(path=options.inventory)]
     elif mode == TargetMode.NETWORK_INTEGRATION:
         if options.platform:
-            network_targets = [NetworkRemoteConfig(name=platform, provider=options.remote_provider) for platform in options.platform]
+            network_targets = [NetworkRemoteConfig(name=platform, provider=options.remote_provider, arch=options.remote_arch) for platform in options.platform]
 
             for platform, collection in options.platform_collection or []:
                 for entry in network_targets:

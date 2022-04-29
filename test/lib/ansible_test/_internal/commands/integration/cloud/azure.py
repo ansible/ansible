@@ -29,6 +29,7 @@ from ....http import (
 
 from ....core_ci import (
     AnsibleCoreCI,
+    CloudResource,
 )
 
 from . import (
@@ -133,7 +134,7 @@ class AzureCloudProvider(CloudProvider):
 
     def _create_ansible_core_ci(self):  # type: () -> AnsibleCoreCI
         """Return an Azure instance of AnsibleCoreCI."""
-        return AnsibleCoreCI(self.args, 'azure', 'azure', 'azure', persist=False)
+        return AnsibleCoreCI(self.args, CloudResource(platform='azure'))
 
 
 class AzureCloudEnvironment(CloudEnvironment):

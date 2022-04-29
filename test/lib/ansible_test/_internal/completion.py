@@ -79,6 +79,7 @@ class PythonCompletionConfig(PosixCompletionConfig, metaclass=abc.ABCMeta):
 class RemoteCompletionConfig(CompletionConfig):
     """Base class for completion configuration of remote environments provisioned through Ansible Core CI."""
     provider: t.Optional[str] = None
+    arch: t.Optional[str] = None
 
     @property
     def platform(self):
@@ -98,6 +99,9 @@ class RemoteCompletionConfig(CompletionConfig):
     def __post_init__(self):
         if not self.provider:
             raise Exception(f'Remote completion entry "{self.name}" must provide a "provider" setting.')
+
+        if not self.arch:
+            raise Exception(f'Remote completion entry "{self.name}" must provide a "arch" setting.')
 
 
 @dataclasses.dataclass(frozen=True)
@@ -152,6 +156,11 @@ class NetworkRemoteCompletionConfig(RemoteCompletionConfig):
     """Configuration for remote network platforms."""
     collection: str = ''
     connection: str = ''
+    placeholder: bool = False
+
+    def __post_init__(self):
+        if not self.placeholder:
+            super().__post_init__()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -160,7 +169,8 @@ class PosixRemoteCompletionConfig(RemoteCompletionConfig, PythonCompletionConfig
     placeholder: bool = False
 
     def __post_init__(self):
-        super().__post_init__()
+        if not self.placeholder:
+            super().__post_init__()
 
         if not self.supported_pythons:
             if self.version and not self.placeholder:

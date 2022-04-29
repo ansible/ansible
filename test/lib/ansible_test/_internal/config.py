@@ -48,29 +48,6 @@ class TerminateMode(enum.Enum):
         return self.name.lower()
 
 
-class ParsedRemote:
-    """A parsed version of a "remote" string."""
-    def __init__(self, arch, platform, version):  # type: (t.Optional[str], str, str) -> None
-        self.arch = arch
-        self.platform = platform
-        self.version = version
-
-    @staticmethod
-    def parse(value):  # type: (str) -> t.Optional['ParsedRemote']
-        """Return a ParsedRemote from the given value or None if the syntax is invalid."""
-        parts = value.split('/')
-
-        if len(parts) == 2:
-            arch = None
-            platform, version = parts
-        elif len(parts) == 3:
-            arch, platform, version = parts
-        else:
-            return None
-
-        return ParsedRemote(arch, platform, version)
-
-
 class EnvironmentConfig(CommonConfig):
     """Configuration common to all commands which execute in an environment."""
     def __init__(self, args, command):  # type: (t.Any, str) -> None

@@ -40,6 +40,7 @@ from .host_configs import (
 from .core_ci import (
     AnsibleCoreCI,
     SshKey,
+    VmResource,
 )
 
 from .util import (
@@ -50,6 +51,7 @@ from .util import (
     get_type_map,
     sanitize_host_name,
     sorted_versions,
+    InternalError,
 )
 
 from .util_common import (
@@ -295,12 +297,18 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
 
     def create_core_ci(self, load):  # type: (bool) -> AnsibleCoreCI
         """Create and return an AnsibleCoreCI instance."""
+        if not self.config.arch:
+            raise InternalError(f'No arch specified for config: {self.config}')
+
         return AnsibleCoreCI(
             args=self.args,
-            platform=self.config.platform,
-            version=self.config.version,
-            provider=self.config.provider,
-            suffix='controller' if self.controller else 'target',
+            resource=VmResource(
+                platform=self.config.platform,
+                version=self.config.version,
+                architecture=self.config.arch,
+                provider=self.config.provider,
+                tag='controller' if self.controller else 'target',
+            ),
             load=load,
         )
 

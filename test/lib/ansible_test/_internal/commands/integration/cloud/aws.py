@@ -21,6 +21,7 @@ from ....target import (
 
 from ....core_ci import (
     AnsibleCoreCI,
+    CloudResource,
 )
 
 from ....host_configs import (
@@ -91,7 +92,7 @@ class AwsCloudProvider(CloudProvider):
 
     def _create_ansible_core_ci(self):  # type: () -> AnsibleCoreCI
         """Return an AWS instance of AnsibleCoreCI."""
-        return AnsibleCoreCI(self.args, 'aws', 'aws', 'aws', persist=False)
+        return AnsibleCoreCI(self.args, CloudResource(platform='aws'))
 
 
 class AwsCloudEnvironment(CloudEnvironment):

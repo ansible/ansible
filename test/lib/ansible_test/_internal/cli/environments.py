@@ -13,6 +13,10 @@ from ..constants import (
     SUPPORTED_PYTHON_VERSIONS,
 )
 
+from ..util import (
+    REMOTE_ARCHITECTURES,
+)
+
 from ..completion import (
     docker_completion,
     network_completion,
@@ -530,6 +534,13 @@ def add_environment_remote(
         metavar='PR',
         choices=REMOTE_PROVIDERS,
         help=suppress or 'remote provider to use: %(choices)s',
+    )
+
+    environments_parser.add_argument(
+        '--remote-arch',
+        metavar='ARCH',
+        choices=REMOTE_ARCHITECTURES,
+        help=suppress or 'remote arch to use: %(choices)s',
     )
 
 
