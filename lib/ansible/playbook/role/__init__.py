@@ -36,11 +36,8 @@ from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionConfig
-from ansible.utils.display import Display
 from ansible.utils.path import is_subpath
 from ansible.utils.vars import combine_vars
-
-display = Display()
 
 __all__ = ['Role', 'hash_params']
 
@@ -402,8 +399,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
                 for found in found_files:
 
                     if not is_subpath(found, file_path):
-                        display.warning("Role skipped loading '%s' as it is not inside the expected role path: '%s'" % (to_text(found), to_text(file_path)))
-                        continue
+                        raise AnsibleParserError("Failed loading '%s' for role (%s) as it is not inside the expected role path: '%s'" %
+                                                 (to_text(found), self._role_name, to_text(file_path)))
 
                     new_data = self._loader.load_from_file(found)
                     if new_data:
