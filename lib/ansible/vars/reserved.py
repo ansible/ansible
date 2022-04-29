@@ -11,6 +11,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
 from ansible.playbook import Play
 from ansible.playbook.block import Block
+from ansible.playbook.handler import Handler
 from ansible.playbook.role import Role
 from ansible.playbook.task import Task
 from ansible.template import Templar
@@ -31,7 +32,7 @@ def get_reserved_names(include_private=True):
     result = set(_INTERNAL_HARDCODED).union(_JINJA_RESERVED)
 
     # FIXME: find a way to 'not hardcode', possibly need role deps/includes
-    class_list = (Play, Role, Block, Task)
+    class_list = (Play, Role, Block, Task, Handler)
 
     for aclass in class_list:
         # build ordered list to loop over and dict with attributes
