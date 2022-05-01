@@ -113,6 +113,14 @@ options:
     type: bool
     default: "no"
     version_added: "2.7"
+  tsflags:
+    description:
+      - List of flags to be forwarded to RPM
+    type: list
+    elements: str
+    choices: ['noscripts', 'nocrypto', 'nocontexts', 'justdb', 'nodocs', 'notriggers']
+    default: []
+    version_added: "2.14"
   update_cache:
     description:
       - Force dnf to check if cache is out of date and redownload if needed.
@@ -667,6 +675,12 @@ class DnfModule(YumDnf):
         # Set skip_broken (in dnf this is strict=0)
         if self.skip_broken:
             conf.strict = 0
+
+        for flag in self.tsflags:
+            if flag in conf.tsflags:
+                continue
+            else:
+                conf.tsflags.append(flag)
 
         # Set best
         if self.nobest:

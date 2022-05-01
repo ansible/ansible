@@ -102,6 +102,14 @@ options:
     type: bool
     default: "no"
     version_added: "2.3"
+  tsflags:
+    description:
+      - List of flags to be forwarded to RPM
+    type: list
+    elements: str
+    choices: ['noscripts', 'nocrypto', 'nocontexts', 'justdb', 'nodocs', 'notriggers']
+    default: []
+    version_added: "2.14"
   update_cache:
     description:
       - Force yum to check if cache is out of date and redownload if needed.
@@ -1575,6 +1583,9 @@ class YumModule(YumDnf):
 
         if self.skip_broken:
             self.yum_basecmd.extend(['--skip-broken'])
+
+        if self.tsflags:
+            self.yum_basecmd.extend(['--setopt=tsflags=%s' % ','.join(self.tsflags)])
 
         if self.disablerepo:
             self.yum_basecmd.extend(['--disablerepo=%s' % ','.join(self.disablerepo)])

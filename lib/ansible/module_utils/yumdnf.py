@@ -45,6 +45,7 @@ yumdnf_argument_spec = dict(
         releasever=dict(default=None),
         security=dict(type='bool', default=False),
         skip_broken=dict(type='bool', default=False),
+        tsflags=dict(type='list', elements='str', default=[], choices=['noscripts', 'nocrypto', 'nocontexts', 'justdb', 'nodocs', 'notriggers']),
         # removed==absent, installed==present, these are accepted as aliases
         state=dict(type='str', default=None, choices=['absent', 'installed', 'latest', 'present', 'removed']),
         update_cache=dict(type='bool', default=False, aliases=['expire-cache']),
@@ -92,6 +93,7 @@ class YumDnf(with_metaclass(ABCMeta, object)):  # type: ignore[misc]
         self.releasever = self.module.params['releasever']
         self.security = self.module.params['security']
         self.skip_broken = self.module.params['skip_broken']
+        self.tsflags = self.module.params['tsflags']
         self.state = self.module.params['state']
         self.update_only = self.module.params['update_only']
         self.update_cache = self.module.params['update_cache']
