@@ -25,10 +25,14 @@ from ansible.galaxy.dependency_resolution.versioning import (
     meets_requirements,
 )
 from ansible.module_utils.six import string_types
-from ansible.utils.version import SemanticVersion
+from ansible.utils.version import SemanticVersion, LooseVersion
 
 from collections.abc import Set
 from resolvelib import AbstractProvider
+from resolvelib import __version__ as resolvelib_version
+
+
+RESOLVELIB_VERSION = SemanticVersion.from_loose_version(LooseVersion(resolvelib_version))
 
 
 class PinnedCandidateRequests(Set):
