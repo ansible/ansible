@@ -19,6 +19,7 @@
       copy:
         src: /etc/fstab
         dest: /mnt/fstab
+        remote_src: true
   always:
     - name: Unmount it
       command: umount /mnt
