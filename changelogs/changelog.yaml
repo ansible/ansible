@@ -744,3 +744,17 @@ releases:
     - v2.13.0b1_summary.yaml
     - vm_more_efficient.yml
     release_date: '2022-04-25'
+  2.13.0rc1:
+    changes:
+      bugfixes:
+      - Prevent losing unsafe on results returned from lookups (https://github.com/ansible/ansible/issues/77535)
+      release_summary: '| Release Date: 2022-05-02
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Nobody's Fault but Mine
+    fragments:
+    - 77535-prevent-losing-unsafe-lookups.yml
+    - v2.13.0rc1_summary.yaml
+    release_date: '2022-05-02'
