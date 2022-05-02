@@ -543,11 +543,14 @@ class CollectionDependencyProvider080(CollectionDependencyProviderBase):
         return self._get_preference(list(candidates[identifier]))
 
 
-if RESOLVELIB_080:
-    CollectionDependencyProvider = CollectionDependencyProvider080  # type: ignore[assignment,no-redef,misc]
-elif RESOLVELIB_070:
-    CollectionDependencyProvider = CollectionDependencyProvider070  # type: ignore[assignment,no-redef,misc]
-elif RESOLVELIB_060:
-    CollectionDependencyProvider = CollectionDependencyProvider060  # type: ignore[assignment,no-redef,misc]
-else:
-    CollectionDependencyProvider = CollectionDependencyProvider050  # type: ignore[assignment,no-redef,misc]
+def _get_provider():  # type () -> CollectionDependencyProviderBase
+    if RESOLVELIB_080:
+        return CollectionDependencyProvider080
+    elif RESOLVELIB_070:
+        return CollectionDependencyProvider070
+    elif RESOLVELIB_060:
+        return CollectionDependencyProvider060
+    return CollectionDependencyProvider050
+
+
+CollectionDependencyProvider = _get_provider()
