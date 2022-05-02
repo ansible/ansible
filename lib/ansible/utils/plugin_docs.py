@@ -5,16 +5,16 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from collections.abc import MutableMapping, MutableSet, MutableSequence
+from pathlib import Path
 
 from ansible import constants as C
 from ansible.release import __version__ as ansible_version
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError, AnsiblePluginNotFound
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native
 from ansible.parsing.plugin_docs import read_docstring
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.utils.display import Display
-from ansible.utils.vars import combine_vars
 
 display = Display()
 
@@ -271,3 +271,81 @@ def get_versioned_doclink(path):
         return '{0}{1}/{2}'.format(base_url, doc_version, path)
     except Exception as ex:
         return '(unable to create versioned doc link for path {0}: {1})'.format(path, to_native(ex))
+
+
+def _find_adjacent(path, plugin, extensions):
+
+    found = None
+    adjacent = Path(path)
+
+    plugin_base_name = plugin.split('.')[-1]
+    if adjacent.stem != plugin_base_name:
+        # this should only affect filters/tests
+        adjacent = adjacent.with_name(plugin_base_name)
+
+    for ext in extensions:
+        candidate = adjacent.with_suffix(ext)
+        if candidate.exists():
+            found = to_native(candidate)
+            break
+
+    return found
+
+
+def find_plugin_docfile(plugin, plugin_type, loader):
+    '''  if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding 'sidecar' file for docs '''
+
+    context = loader.find_plugin_with_context(plugin, ignore_deprecated=False, check_aliases=True)
+    if not context or not context.resolved:
+        # should only happen for filters/test
+        dummy, context = loader.get_with_context(plugin)
+
+    if not context or not context.resolved:
+        raise AnsiblePluginNotFound('%s was not found' % (plugin), plugin_load_context=context)
+
+    docfile = Path(context.plugin_resolved_path)
+    if docfile.suffix not in C.DOC_EXTENSIONS or (docfile.name != plugin and not docfile.name.startswith('_')):
+        # only look for adjacent if plugin file does not support documents or
+        # name does not match file basname (except deprecated)
+        filename = _find_adjacent(docfile, plugin, C.DOC_EXTENSIONS)
+    else:
+        filename = to_native(docfile)
+
+    if filename is None:
+        raise AnsibleError('%s cannot contain DOCUMENTATION nor does it have a companion documentation file' % (plugin))
+
+    return filename, context.plugin_resolved_collection
+
+
+def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
+
+    errors = None
+    docs = []
+
+    # find plugin doc file, if it doesn't exist this will throw error, we let it through
+    # can raise exception and short circuit when 'not found'
+    filename, collection_name = find_plugin_docfile(plugin, plugin_type, loader)
+
+    # if plugin is not supported extension (non python module)
+    try:
+        docs.extend(get_docstring(filename, fragment_loader, verbose=verbose, collection_name=collection_name, plugin_type=plugin_type))
+    except Exception as e:
+        errors = e
+
+    # if not already a sidecar, try sidecar (file adjacent to plugin that has docs instead of plugin itself)
+    if not docs or not docs[0]:
+        docfile = Path(filename)
+        if docfile.suffix not in C.YAML_DOC_EXTENSIONS:
+            candidate = _find_adjacent(docfile, plugin, C.YAML_DOC_EXTENSIONS)
+            if candidate is not None:
+                docs.extend(get_docstring(to_native(candidate), fragment_loader, verbose=verbose, collection_name=collection_name, plugin_type=plugin_type))
+
+        if not docs or not docs[0]:
+            # still no docs? error!
+            raise AnsibleParserError('%s did not contain a DOCUMENTATION attribute (%s)' % (plugin, filename), orig_exc=errors)
+
+    # add extra data to docs[0] (aka 'DOCUMENTATION')
+    docs[0]['filename'] = filename
+    docs[0]['collection'] = collection_name
+
+    return docs

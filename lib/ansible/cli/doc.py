@@ -26,7 +26,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.collections.list import list_collection_dirs
-from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError, AnsiblePluginNotFound
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common.json import json_dump
 from ansible.module_utils.common.yaml import yaml_dump
@@ -40,10 +40,7 @@ from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.display import Display
-from ansible.utils.plugin_docs import (
-    get_docstring,
-    get_versioned_doclink,
-)
+from ansible.utils.plugin_docs import get_plugin_docs, get_docstring, get_versioned_doclink
 
 display = Display()
 
@@ -65,10 +62,6 @@ def jdump(text):
     except TypeError as e:
         display.vvv(traceback.format_exc())
         raise AnsibleError('We could not convert all the documentation into JSON as there was a conversion issue: %s' % to_native(e))
-
-
-class PluginNotFound(Exception):
-    pass
 
 
 class RoleMixin(object):
@@ -649,7 +642,7 @@ class DocCLI(CLI, RoleMixin):
         loader = DocCLI._prep_loader(plugin_type)
 
         coll_filter = self._get_collection_filter()
-        self.plugins.update(list_plugins(plugin_type, coll_filter, context.CLIARGS['module_path']))
+        self.plugins.update(list_plugins(plugin_type, coll_filter))
 
         # get appropriate content depending on option
         if content == 'dir':
@@ -665,22 +658,19 @@ class DocCLI(CLI, RoleMixin):
     def _get_plugins_docs(self, plugin_type, names, fail_ok=False, fail_on_errors=True):
 
         loader = DocCLI._prep_loader(plugin_type)
-        search_paths = DocCLI.print_paths(loader)
 
         # get the docs for plugins in the command line list
         plugin_docs = {}
         for plugin in names:
             doc = {}
             try:
-                doc, plainexamples, returndocs, metadata = DocCLI._get_plugin_doc(plugin, plugin_type, loader, search_paths)
-            except PluginNotFound:
-                display.warning("%s %s not found in:\n%s\n" % (plugin_type, plugin, search_paths))
+                doc, plainexamples, returndocs, metadata = get_plugin_docs(plugin, plugin_type, loader, fragment_loader, (context.CLIARGS['verbosity'] > 0))
+            except AnsiblePluginNotFound as e:
+                display.warning(to_native(e))
                 continue
             except Exception as e:
                 if not fail_on_errors:
-                    plugin_docs[plugin] = {
-                        'error': 'Missing documentation or could not parse documentation: %s' % to_native(e),
-                    }
+                    plugin_docs[plugin] = {'error': 'Missing documentation or could not parse documentation: %s' % to_native(e)}
                     continue
                 display.vvv(traceback.format_exc())
                 msg = "%s %s missing documentation (or could not parse documentation): %s\n" % (plugin_type, plugin, to_native(e))
@@ -692,9 +682,7 @@ class DocCLI(CLI, RoleMixin):
             if not doc:
                 # The doc section existed but was empty
                 if not fail_on_errors:
-                    plugin_docs[plugin] = {
-                        'error': 'No valid documentation found',
-                    }
+                    plugin_docs[plugin] = {'error': 'No valid documentation found'}
                 continue
 
             docs = DocCLI._combine_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata)
@@ -703,9 +691,7 @@ class DocCLI(CLI, RoleMixin):
                 try:
                     json_dump(docs)
                 except Exception as e:  # pylint:disable=broad-except
-                    plugin_docs[plugin] = {
-                        'error': 'Cannot serialize documentation as JSON: %s' % to_native(e),
-                    }
+                    plugin_docs[plugin] = {'error': 'Cannot serialize documentation as JSON: %s' % to_native(e)}
                     continue
 
             plugin_docs[plugin] = docs
@@ -777,18 +763,23 @@ class DocCLI(CLI, RoleMixin):
             ptypes = TARGET_OPTIONS
             docs['all'] = {}
             for ptype in ptypes:
+
+                # TODO: remove when we have all shipped plugins of these types documented
+                # also fail_ok below should be False
+                if ptype in ('test', 'filter'):
+                    no_fail = True
+                else:
+                    no_fail = (not context.CLIARGS['no_fail_on_errors'])
+
                 if ptype == 'role':
-                    roles = self._create_role_list(fail_on_errors=not context.CLIARGS['no_fail_on_errors'])
-                    docs['all'][ptype] = self._create_role_doc(
-                        roles.keys(), context.CLIARGS['entry_point'], fail_on_errors=not context.CLIARGS['no_fail_on_errors'])
+                    roles = self._create_role_list(fail_on_errors=no_fail)
+                    docs['all'][ptype] = self._create_role_doc(roles.keys(), context.CLIARGS['entry_point'], fail_on_errors=no_fail)
                 elif ptype == 'keyword':
                     names = DocCLI._list_keywords()
                     docs['all'][ptype] = DocCLI._get_keywords_docs(names.keys())
                 else:
                     plugin_names = self._list_plugins(ptype, None)
-                    # TODO: remove exception for test/filter once all core ones are documented
-                    docs['all'][ptype] = self._get_plugins_docs(ptype, plugin_names, fail_ok=(ptype in ('test', 'filter')),
-                                                                fail_on_errors=not context.CLIARGS['no_fail_on_errors'])
+                    docs['all'][ptype] = self._get_plugins_docs(ptype, plugin_names, fail_ok=(ptype in ('test', 'filter')), fail_on_errors=no_fail)
                     # reset list after each type to avoid polution
         elif listing:
             if plugin_type == 'keyword':
@@ -863,7 +854,7 @@ class DocCLI(CLI, RoleMixin):
         paths = loader._get_paths_with_context()
         plugins = {}
         for path_context in paths:
-            plugins.update(list_plugins(plugin_type, searc_path=context.CLIARGS['module_path']))
+            plugins.update(list_plugins(plugin_type))
         return sorted(plugins.keys())
 
     @staticmethod
@@ -906,32 +897,6 @@ class DocCLI(CLI, RoleMixin):
             clean_ns = None
 
         return clean_ns
-
-    @staticmethod
-    def _get_plugin_doc(plugin, plugin_type, loader, search_paths):
-        # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-        for ext in C.DOC_EXTENSIONS:
-            result = loader.find_plugin_with_context(plugin, mod_type=ext, ignore_deprecated=True, check_aliases=True)
-            if result.resolved:
-                break
-        else:
-            if not result.resolved:
-                raise PluginNotFound('%s was not found in %s' % (plugin, search_paths))
-
-        filename = result.plugin_resolved_path
-        collection_name = result.plugin_resolved_collection
-
-        doc, plainexamples, returndocs, metadata = get_docstring(
-            filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0),
-            collection_name=collection_name, plugin_type=plugin_type)
-
-        # If the plugin existed but did not have a DOCUMENTATION element and was not removed, it's an error
-        if doc is None:
-            raise ValueError('%s did not contain a DOCUMENTATION attribute' % plugin)
-
-        doc['filename'] = filename
-        doc['collection'] = collection_name
-        return doc, plainexamples, returndocs, metadata
 
     @staticmethod
     def _combine_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata):
@@ -993,6 +958,7 @@ class DocCLI(CLI, RoleMixin):
 
         descs = {}
         for plugin in self.plugins.keys():
+            # TODO: move to plugin itself i.e: plugin.get_desc()
             doc = None
             filename = Path(to_native(self.plugins[plugin][0]))
             docerror = None
@@ -1006,7 +972,7 @@ class DocCLI(CLI, RoleMixin):
                 # handle test/filters that are in file with diff name
                 base = plugin.split('.')[-1]
                 basefile = filename.with_name(base + filename.suffix)
-                for extension in ('.py', '.yml', '.yaml'):  # TODO: constant?
+                for extension in C.DOC_EXTENSIONS:
                     docfile = basefile.with_suffix(extension)
                     try:
                         if docfile.exists():
