@@ -46,9 +46,6 @@ RESOLVELIB_VERSION = SemanticVersion.from_loose_version(LooseVersion(resolvelib_
 
 
 RESOLVELIB_VERSION = SemanticVersion.from_loose_version(LooseVersion(resolvelib_version))
-RESOLVELIB_060 = RESOLVELIB_VERSION >= SemanticVersion("0.6.0")
-RESOLVELIB_070 = RESOLVELIB_VERSION >= SemanticVersion("0.7.0")
-RESOLVELIB_080 = RESOLVELIB_VERSION >= SemanticVersion("0.8.0")
 
 
 class PinnedCandidateRequests(Set):
@@ -544,11 +541,11 @@ class CollectionDependencyProvider080(CollectionDependencyProviderBase):
 
 
 def _get_provider():  # type () -> CollectionDependencyProviderBase
-    if RESOLVELIB_080:
+    if RESOLVELIB_VERSION >= SemanticVersion("0.8.0"):
         return CollectionDependencyProvider080
-    elif RESOLVELIB_070:
+    elif RESOLVELIB_VERSION >= SemanticVersion("0.7.0"):
         return CollectionDependencyProvider070
-    elif RESOLVELIB_060:
+    elif RESOLVELIB_VERSION >= SemanticVersion("0.6.0"):
         return CollectionDependencyProvider060
     return CollectionDependencyProvider050
 
