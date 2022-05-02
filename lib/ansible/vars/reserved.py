@@ -20,7 +20,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
-_INTERNAL_HARDCODED = frozenset(('local_action',))
+_INTERNAL_HARDCODED = frozenset(('local_action', 'ansible'))
 _LOOKUPS = frozenset(l.__module__.rsplit('.', 1)[-1] for l in lookup_loader.all())
 _WITH_LOOKUPS = frozenset('with_%s' % l for l in _LOOKUPS)
 
