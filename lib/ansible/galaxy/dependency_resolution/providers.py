@@ -543,9 +543,9 @@ class CollectionDependencyProvider080(CollectionDependencyProviderBase):
 def _get_provider():  # type () -> CollectionDependencyProviderBase
     if RESOLVELIB_VERSION >= SemanticVersion("0.8.0"):
         return CollectionDependencyProvider080
-    elif RESOLVELIB_VERSION >= SemanticVersion("0.7.0"):
+    if RESOLVELIB_VERSION >= SemanticVersion("0.7.0"):
         return CollectionDependencyProvider070
-    elif RESOLVELIB_VERSION >= SemanticVersion("0.6.0"):
+    if RESOLVELIB_VERSION >= SemanticVersion("0.6.0"):
         return CollectionDependencyProvider060
     return CollectionDependencyProvider050
 
