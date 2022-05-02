@@ -21,16 +21,22 @@ from ansible.utils.display import Display
 display = Display()
 
 _INTERNAL_HARDCODED = frozenset(('local_action',))
+_LOOKUPS = frozenset(l.__module__.rsplit('.', 1)[-1] for l in lookup_loader.all())
+_WITH_LOOKUPS = frozenset('with_%s' % l for l in _LOOKUPS)
+
 _e = Templar(None).environment
-_JINJA_RESERVED = frozenset(set(_e.globals).union(_e.filters, _e.tests))
+_e.filters._load_ansible_plugins()
+_e.tests._load_ansible_plugins()
+
+_ANSIBLE_JINJA_RESERVED = frozenset(set(_e.globals).union(_e.filters, _e.tests, _LOOKUPS, _WITH_LOOKUPS))
+
 # FIXME: remove these exceptions if we can
 _RESERVE_EXCEPTIONS = frozenset(('environment', 'gather_subset', 'vars'))
-_WITH_LOOKUPS = frozenset('with_%s' % l.__module__.rsplit('.', 1)[-1] for l in lookup_loader.all())
 
 
 def get_reserved_names(include_private=True):
     """Return the list of reserved names associated with play objects and internal template functions"""
-    result = set(_INTERNAL_HARDCODED).union(_JINJA_RESERVED, _WITH_LOOKUPS)
+    result = set(_INTERNAL_HARDCODED).union(_ANSIBLE_JINJA_RESERVED)
 
     # FIXME: find a way to 'not hardcode', possibly need role deps/includes
     class_list = (Play, Role, Block, Task, Handler)
