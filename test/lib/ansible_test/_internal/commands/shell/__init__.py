@@ -50,7 +50,7 @@ def command_shell(args):  # type: (ShellConfig) -> None
     if args.raw and isinstance(args.targets[0], ControllerConfig):
         raise ApplicationError('The --raw option has no effect on the controller.')
 
-    if not args.export and not sys.stdin.isatty():
+    if not args.export and not args.cmd and not sys.stdin.isatty():
         raise ApplicationError('Standard input must be a TTY to launch a shell.')
 
     host_state = prepare_profiles(args, skip_setup=args.raw)  # shell
@@ -79,6 +79,10 @@ def command_shell(args):  # type: (ShellConfig) -> None
             create_posix_inventory(args, args.export, host_state.target_profiles, True)
 
     if args.export:
+        return
+
+    if args.cmd:
+        con.run(args.cmd, capture=False, interactive=False)
         return
 
     if isinstance(con, SshConnection) and args.raw:

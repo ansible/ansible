@@ -127,6 +127,7 @@ class CommonConfig:
     def __init__(self, args, command):  # type: (t.Any, str) -> None
         self.command = command
         self.interactive = False
+        self.check_layout = True
         self.success = None  # type: t.Optional[bool]
 
         self.color = args.color  # type: bool

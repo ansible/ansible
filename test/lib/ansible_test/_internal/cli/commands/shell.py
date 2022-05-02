@@ -39,6 +39,12 @@ def do_shell(
     shell = parser.add_argument_group(title='shell arguments')
 
     shell.add_argument(
+        'cmd',
+        nargs='*',
+        help='run the specified command',
+    )
+
+    shell.add_argument(
         '--raw',
         action='store_true',
         help='direct to shell with no setup',

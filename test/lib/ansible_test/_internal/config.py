@@ -214,7 +214,9 @@ class ShellConfig(EnvironmentConfig):
     def __init__(self, args):  # type: (t.Any) -> None
         super().__init__(args, 'shell')
 
+        self.cmd = args.cmd  # type: t.List[str]
         self.raw = args.raw  # type: bool
+        self.check_layout = self.delegate  # allow shell to be used without a valid layout as long as no delegation is required
         self.interactive = True
         self.export = args.export  # type: t.Optional[str]
 
