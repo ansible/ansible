@@ -216,6 +216,7 @@ class ShellConfig(EnvironmentConfig):
 
         self.raw = args.raw  # type: bool
         self.interactive = True
+        self.export = args.export  # type: t.Optional[str]
 
 
 class SanityConfig(TestConfig):

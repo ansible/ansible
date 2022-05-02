@@ -44,4 +44,10 @@ def do_shell(
         help='direct to shell with no setup',
     )
 
+    shell.add_argument(
+        '--export',
+        metavar='PATH',
+        help='export inventory instead of opening a shell',
+    )
+
     add_environments(parser, completer, ControllerMode.DELEGATED, TargetMode.SHELL)  # shell
