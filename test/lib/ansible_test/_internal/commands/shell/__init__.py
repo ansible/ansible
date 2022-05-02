@@ -82,7 +82,7 @@ def command_shell(args):  # type: (ShellConfig) -> None
         return
 
     if args.cmd:
-        con.run(args.cmd, capture=False, interactive=False)
+        con.run(args.cmd, capture=False, interactive=False, force_stdout=True)
         return
 
     if isinstance(con, SshConnection) and args.raw:

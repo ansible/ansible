@@ -32,7 +32,7 @@ class CoverageAnalyzeTargetsConfig(CoverageAnalyzeConfig):
     def __init__(self, args):  # type: (t.Any) -> None
         super().__init__(args)
 
-        self.info_stderr = True
+        self.display_stderr = True
 
 
 def make_report(target_indexes, arcs, lines):  # type: (TargetIndexes, Arcs, Lines) -> t.Dict[str, t.Any]
