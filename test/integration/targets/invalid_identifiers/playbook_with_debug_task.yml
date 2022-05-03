@@ -1,4 +1,0 @@
-- hosts: host1
-  gather_facts: no
-  tasks:
-    - debug:
