@@ -24,8 +24,15 @@ ansible-playbook set_stats.yml "$@" 2>&1 | grep "Invalid variable name"
 ansible-playbook task_vars.yml "$@" 2>&1 | grep "Invalid variable name"
 ansible-playbook vars_files.yml "$@" 2>&1 | grep "Invalid variable name"
 
-
-
-ansible -m debug -e 'lookup=function' localhost "$@" 2>&1 | grep "Invalid variable name"
+ansible -m debug -e 'lookup=ansible_jinja_global' localhost "$@" 2>&1 | grep "Invalid variable name"
+ansible -m debug -e 'lipsum=jinja_global' localhost "$@" 2>&1 | grep "Invalid variable name"
 ansible -m debug -e 'name=attribute' localhost "$@" 2>&1 | grep "Invalid variable name"
 ansible -m debug -e 'loop_with=private_attribute' localhost 2>&1 | grep "Invalid variable name"
+ansible -m debug -e 'def=python_keyword' localhost 2>&1 | grep "Invalid variable name"
+ansible -m debug -e 'ansible=ansible_keyword' localhost 2>&1 | grep "Invalid variable name"
+ansible -m debug -e 'to_nice_json=ansible_filter' localhost 2>&1 | grep "Invalid variable name"
+ansible -m debug -e 'truthy=ansible_test' localhost 2>&1 | grep "Invalid variable name"
+ansible -m debug -e 'with_items=with_lookup' localhost 2>&1 | grep "Invalid variable name"
+ansible -m debug -e 'fileglob=lookup' localhost 2>&1 | grep "Invalid variable name"
+ansible -m debug -e 'selectattr=jinja_filter' localhost 2>&1 | grep "Invalid variable name"
+ansible -m debug -e 'defined=jinja_test' localhost 2>&1 | grep "Invalid variable name"

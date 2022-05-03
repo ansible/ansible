@@ -62,7 +62,7 @@ class ActionModule(ActionBase):
             for (k, v) in data.items():
                 k = self._templar.template(k)
 
-                validate_variable_names(k, 'set_stats')
+                validate_variable_names(k, 'set_stats', legacy_fail=True)
 
                 stats['data'][k] = self._templar.template(v)
 

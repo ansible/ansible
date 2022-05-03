@@ -96,17 +96,15 @@
     that:
         - result is succeeded
 
-          #- name: "test option: --toml with invalid group name"
-          #  command: "ansible-inventory --list --toml -i {{ role_path }}/files/invalid_sample.yml"
-          #  ignore_errors: true
-          #  register: result
-          #  environment:
-          #    ANSIBLE_FORCE_COLOR: 0
-          #
-          #- assert:
-          #    that:
-          #        - result is failed
-          #        - "'Invalid variable name' in result.stderr"
+- name: "test option: --toml with invalid group name"
+  command: ansible-inventory --list --toml -i {{ role_path }}/files/invalid_sample.yml
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+        - result is failed
+        - '"ERROR! The source inventory contains a non-string key" in result.stderr'
 
 - name: "test json output with unicode characters"
   command: ansible-inventory --list -i {{ role_path }}/files/unicode.yml
