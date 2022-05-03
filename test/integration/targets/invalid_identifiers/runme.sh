@@ -2,6 +2,7 @@
 
 set -eux
 export ANSIBLE_FORCE_COLOR=0
+export ANSIBLE_DEPRECATION_WARNINGS=1
 
 ansible-playbook block_vars.yml "$@" 2>&1 | grep "Invalid variable name"
 ansible-playbook import_tasks.yml "$@" 2>&1 | grep "Invalid variable name"
