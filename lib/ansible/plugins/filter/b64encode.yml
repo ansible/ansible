@@ -5,7 +5,6 @@ DOCUMENTATION:
   short_description: Encode a string as base64
   description:
     - Base64 encoding function.
-  positional: _input
   options:
     _input:
       description: A string to encode.
