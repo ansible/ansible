@@ -1,5 +1,7 @@
 minor_changes:
-  - Expand invalid identifiers detection to all vars.
-  - Expand reserved name detection to all vars, not just play vars to at least warn against conflicts.
-  - Add a toggle for users to be able to choose how to handle reserved names conflicts, default to warn.
-  - Add Jinja2 reserved names to invalid identifies detection that playbook authors should avoid.
+  - Expand invalid variable names (invalid identifiers and reserved names) detection to all vars.
+  - Add Jinja2 and Ansible reserved names to invalid variable names detection that playbook authors should avoid.
+
+deprecated_features:
+  - "Using invalid variable names is deprecated and will be an error in 2.16."
+  - "``ansible.vars.reserved.warn_if_reserved`` function is deprecated and will be removed in 2.16. Use functions from ``ansible.vars.reserved`` and/or ``ansible.vars.validation`` to replace its functionality."

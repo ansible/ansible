@@ -39,44 +39,12 @@ def get_reserved_names(include_private=True):
     result = set(_INTERNAL_HARDCODED).union(_ANSIBLE_JINJA_RESERVED)
 
     # FIXME: find a way to 'not hardcode', possibly need role deps/includes
-    class_list = (Play, Role, Block, Task, Handler)
-
-    for aclass in class_list:
-        # build ordered list to loop over and dict with attributes
+    for aclass in (Play, Role, Block, Task, Handler):
         for name, attr in aclass.fattributes.items():
-            if attr.private:
-                private.add(name)
-            else:
-                public.add(name)
-
-    # local_action is implicit with action
-    if 'action' in public:
-        public.add('local_action')
-
-    # loop implies with_
-    # FIXME: remove after with_ is not only deprecated but removed
-    if 'loop' in private or 'loop' in public:
-        public.add('with_')
-
-    if include_private:
-        result = public.union(private)
-    else:
-        result = public
+            if attr.private or include_private:
+                result.add(name)
 
     return result
-
-
-def handle_reserved_vars(myvars):
-    """Warn if any variable passed conflicts with internally reserved names"""
-    if C.RESERVED_VAR_NAMES != 'ignore':
-        varnames = set(myvars)
-        reserved_varnames_used = varnames.intersection(_RESERVED_NAMES).difference(_RESERVE_EXCEPTIONS)
-        for varname in reserved_varnames_used:
-            msg = 'Found variable using reserved name: %s' % to_text(varname)
-            if C.RESERVED_VAR_NAMES == 'warn':
-                display.warning(msg)
-            elif C.RESERVED_VAR_NAMES == 'error':
-                raise AnsibleError(msg)
 
 
 def warn_if_reserved(myvars, additional=None):
@@ -98,12 +66,7 @@ def warn_if_reserved(myvars, additional=None):
 
 
 def is_reserved_name(name):
-    display.deprecated(
-        'ansible.vars.reserved.is_reserved_name function is deprecated. '
-        'Use functions from ansible.vars.reserved to replace its functionality.',
-        version='2.16'
-    )
     return name in _RESERVED_NAMES
 
 
-_RESERVED_NAMES = frozenset(get_reserved_names())
+_RESERVED_NAMES = frozenset(set(get_reserved_names()).difference(_RESERVE_EXCEPTIONS))
