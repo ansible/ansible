@@ -72,8 +72,8 @@
                     .bad: 1
           - fail:
               msg: "should not get here"
-      rescue:
-          - assert:
-              that:
-                  - ansible_failed_task.name == "EXPECTED FAILURE - bad data"
-                  - ansible_failed_result.msg == "Invalid variable name in 'set_stats' specified: \".bad\". Variables must start with a letter or underscore character, and contain only letters, numbers and underscores."
+                #rescue:
+                #    - assert:
+                #        that:
+                #            - ansible_failed_task.name == "EXPECTED FAILURE - bad data"
+                #            - ansible_failed_result.msg == "Invalid variable name in 'set_stats' specified: \".bad\". Variables must start with a letter or underscore character, and contain only letters, numbers and underscores."
