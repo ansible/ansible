@@ -51,8 +51,6 @@ The following table lists the current Steering Committee members. See :ref:`stee
   +------------------+---------------+-------------+
   | James Cassell    | jamescassell  | 2021        |
   +------------------+---------------+-------------+
-  | Jill Rouleau     | jillr         | 2021        |
-  +------------------+---------------+-------------+
   | John Barker      | gundalow      | 2021        |
   +------------------+---------------+-------------+
   | Mario Lenz       | mariolenz     | 2022        |

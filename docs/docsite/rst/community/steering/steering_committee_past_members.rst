@@ -12,9 +12,11 @@ people for their great service to the Community and the project!
   +------------------+-----------+-------------------+
   | Name             | GitHub    | Years of service  |
   +==================+===========+===================+
-  | Toshio Kuratomi  | abadger   | 2021              |
+  | Jill Rouleau     | jillr     | 2021-2022         |
   +------------------+-----------+-------------------+
   | Tadej Borovšak   | tadeboro  | 2021-2022         |
+  +------------------+-----------+-------------------+
+  | Toshio Kuratomi  | abadger   | 2021              |
   +------------------+-----------+-------------------+
 
 
