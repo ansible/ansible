@@ -36,7 +36,8 @@ def validate_variable_names(names, where=None, obj=None):
         f'Invalid variable names {where_msg}specified: {invalid_names}. '
         'Variables must start with a letter or underscore character, '
         'and contain only letters, numbers and underscores. '
-        'This will be an error in 2.16.'
+        'Variable names also must not conflict with Python, Jinja and '
+        'Ansible keywords. This will be an error in 2.16.'
     )
 
     # FIXME raise an error in 2.16
