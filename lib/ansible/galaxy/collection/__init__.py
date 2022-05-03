@@ -156,7 +156,7 @@ class CollectionVerifyResult:
 
 
 def verify_local_collection(local_collection, remote_collection, artifacts_manager):
-    # type: (Candidate, Candidate | None, ConcreteArtifactsManager) -> CollectionVerifyResult
+    # type: (Candidate, t.Optional[Candidate], ConcreteArtifactsManager) -> CollectionVerifyResult
     """Verify integrity of the locally installed collection.
 
     :param local_collection: Collection being checked.
