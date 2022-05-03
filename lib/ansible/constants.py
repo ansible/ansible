@@ -153,6 +153,7 @@ MAGIC_VARIABLE_MAPPING = dict(
     password=('ansible_ssh_pass', 'ansible_password'),
     port=('ansible_ssh_port', 'ansible_port'),
     pipelining=('ansible_ssh_pipelining', 'ansible_pipelining'),
+    # TODO: Maybe deprecate PlayContext.timeout and rename to connection_timeout?
     timeout=('ansible_ssh_timeout', 'ansible_timeout'),
     private_key_file=('ansible_ssh_private_key_file', 'ansible_private_key_file'),
 

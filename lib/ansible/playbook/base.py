@@ -188,8 +188,9 @@ class BaseMeta(type):
 
         # now create the attributes based on the FieldAttributes
         # available, including from parent (and grandparent) objects
-        _create_attrs(dct, dct)
         _process_parents(parents, dct)
+        # Prefer own attribute details
+        _create_attrs(dct, dct)
 
         return super(BaseMeta, cls).__new__(cls, name, parents, dct)
 

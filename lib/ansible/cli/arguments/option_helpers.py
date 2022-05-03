@@ -252,7 +252,8 @@ def add_connect_options(parser):
                                help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
     connect_group.add_argument('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
                                help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
-    connect_group.add_argument('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type=int, dest='timeout',
+    # The connection plugin may not set its own default, and will fallback to C.DEFAULT_TIMEOUT via PlayContext.timeout
+    connect_group.add_argument('-T', '--timeout', type=int, dest='timeout',
                                help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
 
     # ssh only

@@ -92,6 +92,8 @@ def _get_plugin_config(pname, ptype, config, variables):
         p = loader.get(pname, class_only=True)
         if p is None:
             raise AnsibleLookupError('Unable to load %s plugin "%s"' % (ptype, pname))
+
+        # FIXME: seems like variables don't necessarily reflect the vars used for setting connection options so the result may be wrong
         result = C.config.get_config_value(config, plugin_type=ptype, plugin_name=p._load_name, variables=variables)
     except AnsibleLookupError:
         raise

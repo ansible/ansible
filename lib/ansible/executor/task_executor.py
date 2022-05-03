@@ -1051,10 +1051,6 @@ class TaskExecutor:
 
         task_keys = self._task.dump_attrs()
 
-        # The task_keys 'timeout' attr is the task's timeout, not the connection timeout.
-        # The connection timeout is threaded through the play_context for now.
-        task_keys['timeout'] = self._play_context.timeout
-
         if self._play_context.password:
             # The connection password is threaded through the play_context for
             # now. This is something we ultimately want to avoid, but the first
@@ -1062,11 +1058,16 @@ class TaskExecutor:
             # config system instead of directly accessing play_context.
             task_keys['password'] = self._play_context.password
 
-        # Prevent task retries from overriding connection retries
+        # Prevent task retries/timeout from overriding connection retries
         del(task_keys['retries'])
+        del(task_keys['timeout'])
 
         # set options with 'templated vars' specific to this plugin and dependent ones
         self._connection.set_options(task_keys=task_keys, var_options=options)
+        if 'timeout' in self._connection._options and self._connection.get_option('timeout') is None:
+            task_keys.update({'timeout': self._play_context.timeout})
+            self._connection.set_options(task_keys=task_keys, var_options=options)
+
         varnames.extend(self._set_plugin_options('shell', variables, templar, task_keys))
 
         if self._connection.become is not None:
