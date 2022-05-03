@@ -25,7 +25,7 @@ IS_PY310_PLUS = sys.version_info[:2] >= (3, 10)
 frozen_dataclass = partial(dataclass, frozen=True, **({'slots': True} if IS_PY310_PLUS else {}))
 
 
-def get_signature_from_source(source, display=None):  # type: (str, Display | None) -> str
+def get_signature_from_source(source, display=None):  # type: (str, t.Optional[Display]) -> str
     if display is not None:
         display.vvvv(f"Using signature at {source}")
     try:
