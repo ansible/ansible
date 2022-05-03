@@ -155,7 +155,7 @@ class CollectionDependencyProvider(AbstractProvider):
         return False
 
     def identify(self, requirement_or_candidate):
-        # type: (Candidate | Requirement) -> str
+        # type: (t.Union[Candidate, Requirement]) -> str
         """Given requirement or candidate, return an identifier for it.
 
         This is used to identify a requirement or candidate, e.g.
@@ -168,10 +168,10 @@ class CollectionDependencyProvider(AbstractProvider):
 
     def get_preference(
             self,  # type: CollectionDependencyProvider
-            resolution,  # type: Candidate | None
+            resolution,  # type: t.Optional[Candidate]
             candidates,  # type: list[Candidate]
             information,  # type: list[t.NamedTuple]
-    ):  # type: (...) -> float | int
+    ):  # type: (...) -> t.Union[float, int]
         """Return sort key function return value for given requirement.
 
         This result should be based on preference that is defined as

@@ -286,6 +286,7 @@ lib/ansible/module_utils/six/__init__.py mypy-2.7:assignment  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.5:assignment  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.6:assignment  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.7:assignment  # vendored code
+lib/ansible/module_utils/six/__init__.py mypy-3.8:assignment  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-2.7:misc  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.5:misc  # vendored code
 lib/ansible/module_utils/six/__init__.py mypy-3.6:misc  # vendored code
