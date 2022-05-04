@@ -27,7 +27,7 @@ from collections import namedtuple
 from contextlib import contextmanager
 from hashlib import sha256
 from io import BytesIO
-from importlib.metadata import distribution
+from importlib.metadata import distribution, PackageNotFoundError
 from itertools import chain
 from packaging.requirements import Requirement as PkgReq
 
@@ -1569,10 +1569,14 @@ def _resolve_depenency_map(
         include_signatures,  # type: bool
 ):  # type: (...) -> dict[str, Candidate]
     """Return the resolved dependency map."""
-    dist = distribution('ansible-core')
-    req = next((rr for r in (dist.requires or []) if (rr := PkgReq(r)).name == 'resolvelib'), None)
-    if req is not None and not req.specifier.contains(RESOLVELIB_VERSION.vstring):
-        raise AnsibleError(f"ansible-galaxy requires {req.name}{req.specifier}")
+    try:
+        dist = distribution('ansible-core')
+    except PackageNotFoundError:
+        display.warning("Unable to find distribution 'ansible-core' to verify the resolvelib version is supported.")
+    else:
+        req = next((rr for r in (dist.requires or []) if (rr := PkgReq(r)).name == 'resolvelib'), None)
+        if req is not None and not req.specifier.contains(RESOLVELIB_VERSION.vstring):
+            raise AnsibleError(f"ansible-galaxy requires {req.name}{req.specifier}")
 
     collection_dep_resolver = build_collection_dependency_resolver(
         galaxy_apis=galaxy_apis,
