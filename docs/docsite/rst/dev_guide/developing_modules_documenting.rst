@@ -236,6 +236,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
   * Details of any important information that doesn't fit in one of the above sections.
   * For example, whether ``check_mode`` is or is not supported.
 
+.. _module_documents_linking:
 
 Linking and other format macros within module documentation
 -----------------------------------------------------------
@@ -253,8 +254,8 @@ content in a uniform way:
 * ``I()`` for option names. For example: ``Required if I(state=present).``  This is italicized in
   the documentation.
 * ``C()`` for files, option values, and inline code. For example: ``If not set the environment variable C(ACME_PASSWORD) will be used.`` or ``Use C(var | foo.bar.my_filter) to transform C(var) into the required format.``  This displays with a mono-space font in the documentation.
-* ``B()`` currently has no standardized usage.  It is displayed in boldface in the documentation.
-* ``HORIZONTALLINE`` is used sparingly as a separator in long descriptions.  It becomes a horizontal rule (the ``<hr>`` html tag) in the documentation.
+* ``B()`` currently has no standardized usage. It is displayed in boldface in the documentation.
+* ``HORIZONTALLINE`` is used sparingly as a separator in long descriptions. It becomes a horizontal rule (the ``<hr>`` html tag) in the documentation.
 
 .. note::
 
