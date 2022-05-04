@@ -514,27 +514,13 @@ class CollectionDependencyProvider060(CollectionDependencyProviderBase):
         return self._get_preference(candidates)
 
 
-class CollectionDependencyProvider070(CollectionDependencyProviderBase):
-    def find_matches(self, identifier, requirements, incompatibilities):  # type: ignore[override]
-        # type: (str, t.Mapping[str, t.Iterator[Requirement]], t.Mapping[str, t.Iterator[Requirement]]) -> list[Candidate]
-        return [
-            match for match in self._find_matches(list(requirements[identifier]))
-            if not any(match.ver == incompat.ver for incompat in incompatibilities[identifier])
-        ]
-
+class CollectionDependencyProvider070(CollectionDependencyProvider060):
     def get_preference(self, identifier, resolutions, candidates, information):  # type: ignore[override]
         # type: (str, t.Mapping[str, Candidate], t.Mapping[str, t.Iterator[Candidate]], t.Iterator[t.NamedTuple]) -> t.Union[float, int]
         return self._get_preference(list(candidates[identifier]))
 
 
-class CollectionDependencyProvider080(CollectionDependencyProviderBase):
-    def find_matches(self, identifier, requirements, incompatibilities):  # type: ignore[override]
-        # type: (str, t.Mapping[str, t.Iterator[Requirement]], t.Mapping[str, t.Iterator[Requirement]]) -> list[Candidate]
-        return [
-            match for match in self._find_matches(list(requirements[identifier]))
-            if not any(match.ver == incompat.ver for incompat in incompatibilities[identifier])
-        ]
-
+class CollectionDependencyProvider080(CollectionDependencyProvider060):
     def get_preference(self, identifier, resolutions, candidates, information, backtrack_causes):  # type: ignore[override]
         # type: (str, t.Mapping[str, Candidate], t.Mapping[str, t.Iterator[Candidate]], t.Iterator[t.NamedTuple], t.Sequence) -> t.Union[float, int]
         return self._get_preference(list(candidates[identifier]))
