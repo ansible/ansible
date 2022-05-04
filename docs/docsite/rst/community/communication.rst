@@ -117,6 +117,7 @@ Many of our community `Working Groups <https://github.com/ansible/community/wiki
 - `Linode Working Group <https://github.com/ansible/community/wiki/Linode>`_ - Matrix: `#linode:ansible.com <https://matrix.to:/#/#linode:ansible.com>`_ | IRC: ``#ansible-linode``
 - `Molecule Working Group <https://github.com/ansible/community/wiki/Molecule>`_ (`testing platform for Ansible playbooks and roles <https://molecule.readthedocs.io>`_) - Matrix: `#molecule:ansible.im <https://matrix.to:/#/#molecule:ansible.im>`_ | IRC: ``#ansible-molecule``
 - `Network Working Group <https://github.com/ansible/community/wiki/Network>`_ - Matrix: `#network:ansible.com <https://matrix.to:/#/#network:ansible.com>`_ | IRC: ``#ansible-network``
+- `PostgreSQL Working Group <https://github.com/ansible-collections/community.postgresql/wiki/PostgreSQL-Working-Group>`_ - Matrix: `#postgresql:ansible.com <https://matrix.to:/#/#postgresql:ansible.com>`
 - `Remote Management Working Group <https://github.com/ansible/community/issues/409>`_ - Matrix: `#devel:ansible.com <https://matrix.to:/#/#devel:ansible.com>`_ | IRC: ``#ansible-devel``
 - `Testing Working Group <https://github.com/ansible/community/wiki/Testing>`_  - Matrix: `#devel:ansible.com <https://matrix.to:/#/#devel:ansible.com>`_ | IRC: ``#ansible-devel``
 - `VMware Working Group <https://github.com/ansible/community/wiki/VMware>`_ - Matrix: `#vmware:ansible.com <https://matrix.to:/#/#vmware:ansible.com>`_ | IRC: ``#ansible-vmware``
