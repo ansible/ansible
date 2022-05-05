@@ -1,13 +1,15 @@
 .. _developing_modules_general:
 .. _module_dev_tutorial_sample:
 
-**************************
-Developing Ansible modules
-**************************
+******************
+Developing modules
+******************
 
 A module is a reusable, standalone script that Ansible runs on your behalf, either locally or remotely. Modules interact with your local machine, an API, or a remote system to perform specific tasks like changing a database password or spinning up a cloud instance. Each module can be used by the Ansible API, or by the :command:`ansible` or :command:`ansible-playbook` programs. A module provides a defined interface, accepts arguments, and returns information to Ansible by printing a JSON string to stdout before exiting.
 
 If you need functionality that is not available in any of the thousands of Ansible modules found in collections, you can easily write your own custom module. When you write a module for local use, you can choose any programming language and follow your own rules. Use this topic to learn how to create an Ansible module in Python. After you create a module, you must add it locally to the appropriate directory so that Ansible can find and execute it. For details about adding a module locally, see :ref:`developing_locally`.
+
+If you are developing a module in a :ref:`collection <developing_collections>`,  see those documents instead.
 
 .. contents::
    :local:
@@ -17,48 +19,27 @@ If you need functionality that is not available in any of the thousands of Ansib
 Preparing an environment for developing Ansible modules
 =======================================================
 
-Installing prerequisites via apt (Ubuntu)
------------------------------------------
+You just need ``ansible-core`` installed to test the module. Modules can be written in any language,
+but most of the following guide is assuming you are using Python.
+Modules for inclusion in Ansible itself must be Python or Powershell.
 
-Due to dependencies (for example ansible -> paramiko -> pynacl -> libffi):
+One advantage of using Python or Powershell for your custom modules is being able to use the ``module_utils`` common code that does a lot of the
+heavy lifting for argument processing, logging and response writing, among other things.
 
-.. code:: bash
+Creating a module
+=================
 
-    sudo apt update
-    sudo apt install build-essential libssl-dev libffi-dev python-dev
+It is highly recommended that you use a ``venv`` or ``virtualenv`` for Python development.
 
-Installing prerequisites via yum (CentOS)
------------------------------------------
+To create a module:
 
-Due to dependencies (for example ansible -> paramiko -> pynacl -> libffi):
+1. Create a ``library`` directory in your workspace, your test play should live in the same directory.
+2. Create your new module file: ``$ touch library/my_test.py``. Or just open/create it with your editor of choice.
+3. Paste the content below into your new module file. It includes the :ref:`required Ansible format and documentation <developing_modules_documenting>`, a simple :ref:`argument spec for declaring the module options <argument_spec>`, and some example code.
+4. Modify and extend the code to do what you want your new module to do. See the :ref:`programming tips <developing_modules_best_practices>` and :ref:`Python 3 compatibility <developing_python_3>` pages for pointers on writing clean and concise module code.
 
-.. code:: bash
-
-    sudo yum check-update
-    sudo yum update
-    sudo yum group install "Development Tools"
-    sudo yum install python3-devel openssl-devel libffi libffi-devel 
-
-Creating a development environment (platform-independent steps)
----------------------------------------------------------------
-
-1. Clone the Ansible repository:
-   ``$ git clone https://github.com/ansible/ansible.git``
-2. Change directory into the repository root dir: ``$ cd ansible``
-3. Create a virtual environment: ``$ python3 -m venv venv`` (or for
-   Python 2 ``$ virtualenv venv``. Note, this requires you to install
-   the virtualenv package: ``$ pip install virtualenv``)
-4. Activate the virtual environment: ``$ . venv/bin/activate``
-5. Install development requirements:
-   ``$ pip install -r requirements.txt``
-6. Run the environment setup script for each new development shell process:
-   ``$ . hacking/env-setup``
-
-.. note:: After the initial setup above, every time you are ready to start
-   developing Ansible you should be able to just run the following from the
-   root of the Ansible repo:
-   ``$ . venv/bin/activate && . hacking/env-setup``
-
+.. literalinclude:: ../../../../examples/scripts/my_test.py
+   :language: python
 
 Creating an info or a facts module
 ==================================
@@ -83,33 +64,7 @@ Info and facts modules, are just like any other Ansible Module, with a few minor
 5. They MUST NOT make any changes to the system.
 6. They MUST document the :ref:`return fields<return_block>` and :ref:`examples<examples_block>`.
 
-To create an info module:
-
-1. Navigate to the correct directory for your new module: ``$ cd lib/ansible/modules/``. If you are developing module using collection, ``$ cd plugins/modules/`` inside your collection development tree.
-2. Create your new module file: ``$ touch my_test_info.py``.
-3. Paste the content below into your new info module file. It includes the :ref:`required Ansible format and documentation <developing_modules_documenting>`, a simple :ref:`argument spec for declaring the module options <argument_spec>`, and some example code.
-4. Modify and extend the code to do what you want your new info module to do. See the :ref:`programming tips <developing_modules_best_practices>` and :ref:`Python 3 compatibility <developing_python_3>` pages for pointers on writing clean and concise module code.
-
-.. literalinclude:: ../../../../examples/scripts/my_test_info.py
-   :language: python
-
-Use the same process to create a facts module.
-
-.. literalinclude:: ../../../../examples/scripts/my_test_facts.py
-   :language: python
-
-Creating a module
-=================
-
-To create a module:
-
-1. Navigate to the correct directory for your new module: ``$ cd lib/ansible/modules/``. If you are developing a module in a :ref:`collection <developing_collections>`, ``$ cd plugins/modules/`` inside your collection development tree.
-2. Create your new module file: ``$ touch my_test.py``.
-3. Paste the content below into your new module file. It includes the :ref:`required Ansible format and documentation <developing_modules_documenting>`, a simple :ref:`argument spec for declaring the module options <argument_spec>`, and some example code.
-4. Modify and extend the code to do what you want your new module to do. See the :ref:`programming tips <developing_modules_best_practices>` and :ref:`Python 3 compatibility <developing_python_3>` pages for pointers on writing clean and concise module code.
-
-.. literalinclude:: ../../../../examples/scripts/my_test.py
-   :language: python
+The rest is just like creating a normal module.
 
 Verifying your module code
 ==========================
@@ -121,9 +76,21 @@ Our :ref:`debugging tips <debugging_modules>` will help if you run into bugs as 
 Verifying your module code locally
 ----------------------------------
 
+The simplest way is to use ``ansible`` adhoc command:
+
+.. code:: shell
+
+    ansible -m library/my_test.py -a 'name=hello new=true' remotehost
+
 If your module does not need to target a remote host, you can quickly and easily exercise your code locally like this:
 
--  Create an arguments file, a basic JSON config file that passes parameters to your module so that you can run it. Name the arguments file ``/tmp/args.json`` and add the following content:
+.. code:: shell
+
+    ansible -m library/my_test.py -a 'name=hello new=true' localhost
+
+-  If for any reason (pdb, using print(), faster iteration, etc) you want to avoid going through Ansible,
+   another way is to create an arguments file, a basic JSON config file that passes parameters to your module so that you can run it.
+   Name the arguments file ``/tmp/args.json`` and add the following content:
 
 .. code:: json
 
@@ -134,23 +101,24 @@ If your module does not need to target a remote host, you can quickly and easily
         }
     }
 
--  If you are using a virtual environment (which is highly recommended for
-   development) activate it: ``$ . venv/bin/activate``
--  Set up the environment for development: ``$ . hacking/env-setup``
--  Run your test module locally and directly:
-   ``$ python -m ansible.modules.my_test /tmp/args.json``
+-  Then the module can be tested locally and directly. This skips the packing steps and uses module_utils files directly:
 
-This should return output like this:
+.. code:: console
+
+   ``$ python library/my_test.py /tmp/args.json``
+
+It should return output like this:
 
 .. code:: json
 
     {"changed": true, "state": {"original_message": "hello", "new_message": "goodbye"}, "invocation": {"module_args": {"name": "hello", "new": true}}}
 
 
+
 Verifying your module code in a playbook
 ----------------------------------------
 
-The next step in verifying your new module is to consume it with an Ansible playbook.
+You can easily run a full test by including it in a playbook, as long as the ``library`` directory is in the same directory as the play:
 
 -  Create a playbook in any directory: ``$ touch testmod.yml``
 -  Add the following to the new playbook file:
@@ -178,7 +146,7 @@ The following two examples will get you started with testing your module code. P
 information, including instructions for :ref:`testing module documentation <testing_module_documentation>`, adding :ref:`integration tests <testing_integration>`, and more.
 
 .. note::
-  Every new module and plugin should have integration tests, even if the tests cannot be run on Ansible CI infrastructure.
+  If contributing to Ansible, every new module and plugin should have integration tests, even if the tests cannot be run on Ansible CI infrastructure.
   In this case, the tests should be marked with the ``unsupported`` alias in `aliases file <https://docs.ansible.com/ansible/latest/dev_guide/testing/sanity/integration-aliases.html>`_.
 
 Performing sanity tests
@@ -186,26 +154,11 @@ Performing sanity tests
 
 You can run through Ansible's sanity checks in a container:
 
-``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME``
+``$ ansible-test sanity -v --docker --python 3.10 MODULE_NAME``
 
 .. note::
 	Note that this example requires Docker to be installed and running. If you'd rather not use a container for this, you can choose to use ``--venv`` instead of ``--docker``.
 
-Adding unit tests
------------------
-
-You can add unit tests for your module in ``./test/units/modules``. You must first set up your testing environment. In this example, we're using Python 3.5.
-
-- Install the requirements (outside of your virtual environment): ``$ pip3 install -r ./test/lib/ansible_test/_data/requirements/units.txt``
-- Run ``. hacking/env-setup``
-- To run all tests do the following: ``$ ansible-test units --python 3.5``. If you are using a CI environment, these tests will run automatically.
-
-.. note:: Ansible uses pytest for unit testing.
-
-To run pytest against a single test module, you can run the following command. Ensure that you are providing the correct path of the test module:
-
-``$ pytest -r a --cov=. --cov-report=html --fulltrace --color yes
-test/units/modules/.../test/my_test.py``
 
 Contributing back to Ansible
 ============================
