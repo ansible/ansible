@@ -284,6 +284,12 @@ To force ``become`` to open a new systemd session that goes through
 For more information, see `this systemd issue
 <https://github.com/systemd/systemd/issues/825#issuecomment-127917622>`_.
 
+Resolving Temporary File Error Messsages
+----------------------------------------
+
+* Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user"
+* This error can be resolved by installing the package that provides the ``setfacl`` command. (This is frequently the ``acl`` package but check your OS documentation.)
+
 .. _become_network:
 
 Become and network automation
@@ -389,12 +395,17 @@ delegation or accessing forbidden system calls like the WUA API. You can use
 ``become`` with the same user as ``ansible_user`` to bypass these limitations
 and run commands that are not normally accessible in a WinRM session.
 
+.. Note::
+  On Windows you cannot connect with an underprivileged account and use become
+  to elevate your rights. Become can only be used if your connection account
+  is already an Administrator of the target host.
+
 Administrative rights
 ---------------------
 
 Many tasks in Windows require administrative privileges to complete. When using
 the ``runas`` become method, Ansible will attempt to run the module with the
-full privileges that are available to the remote user. If it fails to elevate
+full privileges that are available to the become user. If it fails to elevate
 the user token, it will continue to use the limited token during execution.
 
 A user must have the ``SeDebugPrivilege`` to run a become process with elevated
@@ -749,11 +760,9 @@ Limitations of become on Windows
 
 * The Secondary Logon service ``seclogon`` must be running to use ``ansible_become_method: runas``
 
-Resolving Temporary File Error Messsages
-----------------------------------------
-
-"Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user"
-* This error can be resolved by installing the package that provides the ``setfacl`` command. (This is frequently the ``acl`` package but check your OS documentation.
+* The connection user must already be an Administrator on the Windows host to
+  use ``runas``. The target become user does not need to be an Administrator
+  though.
 
 
 .. seealso::
