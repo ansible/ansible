@@ -11,7 +11,8 @@ DOCUMENTATION:
       type: path
       required: true
   seealso:
-    - filter: basename
+    - plugin: basename
+      plugin_type: filter
 EXAMPLES: |
 
   # To get the dir name of a file path, like '/etc/asdf' out of '/etc/asdf/foo.txt'

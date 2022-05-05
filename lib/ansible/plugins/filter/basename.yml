@@ -11,7 +11,8 @@ DOCUMENTATION:
       type: path
       required: true
   seealso:
-    - filter: dirname
+    - plugin_type: filter
+      plugin: dirname
 EXAMPLES: |
 
   # To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'
