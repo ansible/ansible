@@ -146,7 +146,7 @@ The following two examples will get you started with testing your module code. P
 information, including instructions for :ref:`testing module documentation <testing_module_documentation>`, adding :ref:`integration tests <testing_integration>`, and more.
 
 .. note::
-  If contirbuting to Ansible, every new module and plugin should have integration tests, even if the tests cannot be run on Ansible CI infrastructure.
+  If contributing to Ansible, every new module and plugin should have integration tests, even if the tests cannot be run on Ansible CI infrastructure.
   In this case, the tests should be marked with the ``unsupported`` alias in `aliases file <https://docs.ansible.com/ansible/latest/dev_guide/testing/sanity/integration-aliases.html>`_.
 
 Performing sanity tests
