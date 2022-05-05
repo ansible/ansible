@@ -235,7 +235,7 @@ class SanityConfig(TestConfig):
         self.keep_git = args.keep_git  # type: bool
         self.prime_venvs = args.prime_venvs  # type: bool
 
-        self.display_stderr = self.lint
+        self.display_stderr = self.lint or self.list_tests
 
         if self.keep_git:
             def git_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
