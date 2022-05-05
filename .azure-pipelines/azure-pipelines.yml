@@ -95,8 +95,6 @@ stages:
               test: rhel/8.3@3.6
             - name: RHEL 8.3 py38
               test: rhel/8.3@3.8
-            - name: FreeBSD 11.4
-              test: freebsd/11.4
             - name: FreeBSD 12.2
               test: freebsd/12.2
           groups:
@@ -172,8 +170,6 @@ stages:
               test: rhel/8.3@3.6
             - name: RHEL 8.3 py38
               test: rhel/8.3@3.8
-            - name: FreeBSD 11.4
-              test: freebsd/11.4
             - name: FreeBSD 12.2
               test: freebsd/12.2
   - stage: Incidental_Docker
