@@ -99,6 +99,193 @@ Networking
 
 No notable changes
 
+Porting Guide for v6.0.0a2
+==========================
+
+Known Issues
+------------
+
+ansible.netcommon
+~~~~~~~~~~~~~~~~~
+
+- eos - When using eos modules on Ansible 2.9, tasks will occasionally fail with ``import_modules`` enabled. This can be avoided by setting ``import_modules: no``
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- pacman - ``update_cache`` cannot differentiate between up to date and outdated package lists and will report ``changed`` in both situations (https://github.com/ansible-collections/community.general/pull/4318).
+- pacman - binaries specified in the ``executable`` parameter must support ``--print-format`` in order to be used by this module. In particular, AUR helper ``yay`` is known not to currently support it (https://github.com/ansible-collections/community.general/pull/4312).
+
+dellemc.openmanage
+~~~~~~~~~~~~~~~~~~
+
+- idrac_user - Issue(192043) The module may error out with the message ``unable to perform the import or export operation because there are pending attribute changes or a configuration job is in progress``. Wait for the job to complete and run the task again.
+- ome_application_alerts_smtp - Issue(212310) - The module does not provide a proper error message if the destination_address is more than 255 characters.
+- ome_application_alerts_syslog - Issue(215374) - The module does not provide a proper error message if the destination_address is more than 255 characters.
+- ome_application_console_preferences - Issue(224690) - The module does not display a proper error message when an unsupported value is provided for the parameters report_row_limit, email_sender_settings, and metric_collection_settings, and the value is applied on OpenManage Enterprise.
+- ome_device_local_access_configuration - Issue(215035) - The module reports ``Successfully updated the local access setting`` if an unsupported value is provided for the parameter timeout_limit. However, this value is not actually applied on OpenManage Enterprise Modular.
+- ome_device_local_access_configuration - Issue(217865) - The module does not display a proper error message if an unsupported value is provided for the user_defined and lcd_language parameters.
+- ome_device_network_services - Issue(212681) - The module does not provide a proper error message if unsupported values are provided for the parameters- port_number, community_name, max_sessions, max_auth_retries, and idle_timeout.
+- ome_device_power_settings - Issue(212679) - The module displays the following message if the value provided for the parameter ``power_cap`` is not within the supported range of 0 to 32767, ``Unable to complete the request because PowerCap does not exist or is not applicable for the resource URI.``
+- ome_device_quick_deploy - Issue(216352) - The module does not display a proper error message if an unsupported value is provided for the ipv6_prefix_length and vlan_id parameters.
+- ome_smart_fabric_uplink - Issue(186024) - The module does not allow the creation of multiple uplinks of the same name even though it is supported by OpenManage Enterprise Modular. If an uplink is created using the same name as an existing uplink, the existing uplink is modified.
+
+Breaking Changes
+----------------
+
+ansible.netcommon
+~~~~~~~~~~~~~~~~~
+
+- httpapi - Change default value of ``import_modules`` option from ``no`` to ``yes``
+- netconf - Change default value of ``import_modules`` option from ``no`` to ``yes``
+- network_cli - Change default value of ``import_modules`` option from ``no`` to ``yes``
+
+arista.eos
+~~~~~~~~~~
+
+- httpapi - the ``eos_use_sessions`` option is now a boolean instead of an integer.
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- Parts of this collection do not work with ansible-core 2.11 on Python 3.12+. Please either upgrade to ansible-core 2.12+, or use Python 3.11 or earlier (https://github.com/ansible-collections/community.general/pull/3988).
+- The symbolic links used to implement flatmapping for all modules were removed and replaced by ``meta/runtime.yml`` redirects. This effectively breaks compatibility with Ansible 2.9 for all modules (without using their "long" names, which is discouraged and which can change without previous notice since they are considered an implementation detail) (https://github.com/ansible-collections/community.general/pull/4548).
+- a_module test plugin - remove Ansible 2.9 compatibility code (https://github.com/ansible-collections/community.general/pull/4548).
+- archive - remove Ansible 2.9 compatibility code (https://github.com/ansible-collections/community.general/pull/4548).
+- git_config - remove Ansible 2.9 and early ansible-base 2.10 compatibility code (https://github.com/ansible-collections/community.general/pull/4548).
+- java_keystore - remove Ansible 2.9 compatibility code (https://github.com/ansible-collections/community.general/pull/4548).
+- lists_mergeby filter plugin - remove Ansible 2.9 compatibility code (https://github.com/ansible-collections/community.general/pull/4548).
+- maven_artifact - remove Ansible 2.9 compatibility code (https://github.com/ansible-collections/community.general/pull/4548).
+- memcached cache plugin - remove Ansible 2.9 compatibility code (https://github.com/ansible-collections/community.general/pull/4548).
+- path_join filter plugin shim - remove Ansible 2.9 compatibility code (https://github.com/ansible-collections/community.general/pull/4548).
+- redis cache plugin - remove Ansible 2.9 compatibility code (https://github.com/ansible-collections/community.general/pull/4548).
+
+Major Changes
+-------------
+
+ansible.netcommon
+~~~~~~~~~~~~~~~~~
+
+- cli_parse - this module has been moved to the ansible.utils collection. ``ansible.netcommon.cli_parse`` will continue to work to reference the module in its new location, but this redirect will be removed in a future release
+- network_cli - Change default value of `ssh_type` option from `paramiko` to `auto`. This value will use libssh if the ansible-pylibssh module is installed, otherwise will fallback to paramiko.
+
+arista.eos
+~~~~~~~~~~
+
+- Minimum required ansible.netcommon version is 2.5.1.
+- Updated base plugin references to ansible.netcommon.
+- `eos_facts` - change default gather_subset to `min` from `!config` (https://github.com/ansible-collections/arista.eos/issues/306).
+
+cisco.ios
+~~~~~~~~~
+
+- Minimum required ansible.netcommon version is 2.5.1.
+- Updated base plugin references to ansible.netcommon.
+- `facts` - default value for `gather_subset` is changed to min instead of !config.
+
+cisco.iosxr
+~~~~~~~~~~~
+
+- Minimum required ansible.netcommon version is 2.5.1.
+- Updated base plugin references to ansible.netcommon.
+- `facts` - default value for `gather_subset` is changed to min instead of !config.
+
+cisco.nxos
+~~~~~~~~~~
+
+- The minimum required ansible.netcommon version has been bumped to v2.6.1.
+- Updated base plugin references to ansible.netcommon.
+- `nxos_facts` - change default gather_subset to `min` from `!config` (https://github.com/ansible-collections/cisco.nxos/issues/418).
+- nxos_file_copy has been rewritten as a module. This change also removes the dependency on pexpect for file_pull operation. Since this now uses AnsibleModule class for argspec validation, the validation messages will be slighlty different. Expect changes in the return payload in some cases. All functionality remains unchanged.
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- The community.general collection no longer supports Ansible 2.9 and ansible-base 2.10. While we take no active measures to prevent usage, we will remove a lot of compatibility code and other compatility measures that will effectively prevent using most content from this collection with Ansible 2.9, and some content of this collection with ansible-base 2.10. Both Ansible 2.9 and ansible-base 2.10 will very soon be End of Life and if you are still using them, you should consider upgrading to ansible-core 2.11 or later as soon as possible (https://github.com/ansible-collections/community.general/pull/4548).
+
+community.postgresql
+~~~~~~~~~~~~~~~~~~~~
+
+- The community.postgresql collection no longer supports ``Ansible 2.9`` and ``ansible-base 2.10``. While we take no active measures to prevent usage and there are no plans to introduce incompatible code to the modules, we will stop testing against ``Ansible 2.9`` and ``ansible-base 2.10``. Both will very soon be End of Life and if you are still using them, you should consider upgrading to the ``latest Ansible / ansible-core 2.11 or later`` as soon as possible (https://github.com/ansible-collections/community.postgresql/pull/245).
+
+community.vmware
+~~~~~~~~~~~~~~~~
+
+- Drop VCSIM as a test target (https://github.com/ansible-collections/community.vmware/pull/1294).
+
+ibm.qradar
+~~~~~~~~~~
+
+- Minimum required ansible.netcommon version is 2.5.1.
+- Updated base plugin references to ansible.netcommon.
+
+junipernetworks.junos
+~~~~~~~~~~~~~~~~~~~~~
+
+- Minimum required ansible.netcommon version is 2.5.1.
+- Updated base plugin references to ansible.netcommon.
+- `junos_facts` - change default gather_subset to `min` from `!config`.
+
+splunk.es
+~~~~~~~~~
+
+- Minimum required ansible.netcommon version is 2.5.1.
+- Updated base plugin references to ansible.netcommon.
+
+vyos.vyos
+~~~~~~~~~
+
+- Minimum required ansible.netcommon version is 2.5.1.
+- Updated base plugin references to ansible.netcommon.
+- `vyos_facts` - change default gather_subset to `min` from `!config` (https://github.com/ansible-collections/vyos.vyos/issues/231).
+
+Removed Collections
+-------------------
+
+- community.kubernetes (previously included version: 2.0.1)
+- community.kubevirt (previously included version: 1.0.0)
+
+Removed Features
+----------------
+
+- The community.kubernetes collection has been removed from Ansible 6. It has been deprecated since Ansible 4.2, and version 2.0.0 included since Ansible 5 is only a set of deprecated redirects from community.kubernetes to kubernetes.core. If you still need the redirects, you can manually install community.kubernetes with ``ansible-galaxy collection install community.kubernetes`` (https://github.com/ansible-community/community-topics/issues/93).
+- The community.kubevirt collection has been removed from Ansible 6. It has not been working with the community.kubernetes collection included since Ansible 5.0.0, and unfortunately nobody managed to adjust the collection to work with kubernetes.core >= 2.0.0. If you need to use this collection, you need to manually install community.kubernetes < 2.0.0 together with community.kubevirt with ``ansible-galaxy collection install community.kubevirt 'community.kubernetes:<2.0.0'`` (https://github.com/ansible-community/community-topics/issues/92).
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- ali_instance_info - removed the options ``availability_zone``, ``instance_ids``, and ``instance_names``. Use filter item ``zone_id`` instead of ``availability_zone``, filter item ``instance_ids`` instead of ``instance_ids``, and filter item ``instance_name`` instead of ``instance_names`` (https://github.com/ansible-collections/community.general/pull/4516).
+- apt_rpm - removed the deprecated alias ``update-cache`` of ``update_cache`` (https://github.com/ansible-collections/community.general/pull/4516).
+- compose - removed various deprecated aliases. Use the version with ``_`` instead of ``-`` instead (https://github.com/ansible-collections/community.general/pull/4516).
+- dnsimple - remove support for dnsimple < 2.0.0 (https://github.com/ansible-collections/community.general/pull/4516).
+- github_deploy_key - removed the deprecated alias ``2fa_token`` of ``otp`` (https://github.com/ansible-collections/community.general/pull/4516).
+- homebrew, homebrew_cask - removed the deprecated alias ``update-brew`` of ``update_brew`` (https://github.com/ansible-collections/community.general/pull/4516).
+- linode - removed the ``backupsenabled`` option. Use ``backupweeklyday`` or ``backupwindow`` to enable backups (https://github.com/ansible-collections/community.general/pull/4516).
+- opkg - removed the deprecated alias ``update-cache`` of ``update_cache`` (https://github.com/ansible-collections/community.general/pull/4516).
+- pacman - if ``update_cache=true`` is used with ``name`` or ``upgrade``, the changed state will now also indicate if only the cache was updated. To keep the old behavior - only indicate ``changed`` when a package was installed/upgraded -, use ``changed_when`` as indicated in the module examples (https://github.com/ansible-collections/community.general/pull/4516).
+- pacman - removed the deprecated alias ``update-cache`` of ``update_cache`` (https://github.com/ansible-collections/community.general/pull/4516).
+- proxmox, proxmox_kvm, proxmox_snap - no longer allow to specify a VM name that matches multiple VMs. If this happens, the modules now fail (https://github.com/ansible-collections/community.general/pull/4516).
+- serverless - removed the ``functions`` option. It was not used by the module (https://github.com/ansible-collections/community.general/pull/4516).
+- slackpkg - removed the deprecated alias ``update-cache`` of ``update_cache`` (https://github.com/ansible-collections/community.general/pull/4516).
+- urpmi - removed the deprecated alias ``no-recommends`` of ``no_recommends`` (https://github.com/ansible-collections/community.general/pull/4516).
+- urpmi - removed the deprecated alias ``update-cache`` of ``update_cache`` (https://github.com/ansible-collections/community.general/pull/4516).
+- xbps - removed the deprecated alias ``update-cache`` of ``update_cache`` (https://github.com/ansible-collections/community.general/pull/4516).
+- xfconf - the ``get`` state has been removed. Use the ``xfconf_info`` module instead (https://github.com/ansible-collections/community.general/pull/4516).
+
+Deprecated Features
+-------------------
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- gem - the default of the ``norc`` option has been deprecated and will change to ``true`` in community.general 6.0.0. Explicitly specify a value to avoid a deprecation warning (https://github.com/ansible-collections/community.general/pull/4517).
+- mail callback plugin - not specifying ``sender`` is deprecated and will be disallowed in community.general 6.0.0 (https://github.com/ansible-collections/community.general/pull/4140).
+- module_helper module utils - deprecated the attribute ``ModuleHelper.VarDict`` (https://github.com/ansible-collections/community.general/pull/3801).
+- nmcli - deprecate default hairpin mode for a bridge. This so we can change it to ``false`` in community.general 7.0.0, as this is also the default in ``nmcli`` (https://github.com/ansible-collections/community.general/pull/4334).
+- pacman - from community.general 5.0.0 on, the ``changed`` status of ``update_cache`` will no longer be ignored if ``name`` or ``upgrade`` is specified. To keep the old behavior, add something like ``register: result`` and ``changed_when: result.packages | length > 0`` to your task (https://github.com/ansible-collections/community.general/pull/4329).
+- proxmox inventory plugin - the current default ``true`` of the ``want_proxmox_nodes_ansible_host`` option has been deprecated. The default will change to ``false`` in community.general 6.0.0. To keep the current behavior, explicitly set ``want_proxmox_nodes_ansible_host`` to ``true`` in your inventory configuration. We suggest to already switch to the new behavior by explicitly setting it to ``false``, and by using ``compose:`` to set ``ansible_host`` to the correct value. See the examples in the plugin documentation for details (https://github.com/ansible-collections/community.general/pull/4466).
+- vmadm - deprecated module parameter ``debug`` that was not used anywhere (https://github.com/ansible-collections/community.general/pull/4580).
+
 Porting Guide for v6.0.0a1
 ==========================
 
@@ -114,12 +301,6 @@ Ansible-core
 ~~~~~~~~~~~~
 
 - get_url - document ``check_mode`` correctly with unreliable changed status (https://github.com/ansible/ansible/issues/65687).
-
-community.general
-~~~~~~~~~~~~~~~~~
-
-- pacman - ``update_cache`` cannot differentiate between up to date and outdated package lists and will report ``changed`` in both situations (https://github.com/ansible-collections/community.general/pull/4318).
-- pacman - binaries specified in the ``executable`` parameter must support ``--print-format`` in order to be used by this module. In particular, AUR helper ``yay`` is known not to currently support it (https://github.com/ansible-collections/community.general/pull/4312).
 
 dellemc.openmanage
 ~~~~~~~~~~~~~~~~~~
@@ -459,13 +640,6 @@ cisco.nxos
 - Deprecated nxos_snmp_location module.
 - Deprecated nxos_snmp_traps module.
 - Deprecated nxos_snmp_user module.
-
-community.general
-~~~~~~~~~~~~~~~~~
-
-- mail callback plugin - not specifying ``sender`` is deprecated and will be disallowed in community.general 6.0.0 (https://github.com/ansible-collections/community.general/pull/4140).
-- module_helper module utils - deprecated the attribute ``ModuleHelper.VarDict`` (https://github.com/ansible-collections/community.general/pull/3801).
-- pacman - from community.general 5.0.0 on, the ``changed`` status of ``update_cache`` will no longer be ignored if ``name`` or ``upgrade`` is specified. To keep the old behavior, add something like ``register: result`` and ``changed_when: result.packages | length > 0`` to your task (https://github.com/ansible-collections/community.general/pull/4329).
 
 community.hashi_vault
 ~~~~~~~~~~~~~~~~~~~~~
