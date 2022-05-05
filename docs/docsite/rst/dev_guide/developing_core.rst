@@ -7,6 +7,7 @@ Although ``ansible-core`` (the code hosted in the `ansible/ansible repository <h
 .. toctree::
    :maxdepth: 1
 
+   core_branches_and_tags
    developing_program_flow_modules
 
 .. seealso::
