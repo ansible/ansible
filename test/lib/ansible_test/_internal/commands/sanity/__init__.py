@@ -174,7 +174,7 @@ def command_sanity(args):  # type: (SanityConfig) -> None
 
     for test in tests:
         if args.list_tests:
-            display.info(test.name)
+            print(test.name)  # display goes to stderr, this should be on stdout
             continue
 
         for version in SUPPORTED_PYTHON_VERSIONS:

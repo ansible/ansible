@@ -330,6 +330,7 @@ def raw_command(
         stdin=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
         stdout=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
         interactive=False,  # type: bool
+        force_stdout=False,  # type: bool
         cmd_verbosity=1,  # type: int
         str_errors='strict',  # type: str
         error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
@@ -352,6 +353,12 @@ def raw_command(
 
     if stdout and not capture:
         raise InternalError('Redirection of stdout requires capture=True to avoid redirection of stderr to stdout.')
+
+    if force_stdout and capture:
+        raise InternalError('Cannot combine force_stdout=True with capture=True.')
+
+    if force_stdout and interactive:
+        raise InternalError('Cannot combine force_stdout=True with interactive=True.')
 
     if not cwd:
         cwd = os.getcwd()
@@ -440,7 +447,8 @@ def raw_command(
 
         if communicate:
             data_bytes = to_optional_bytes(data)
-            stdout_bytes, stderr_bytes = communicate_with_process(process, data_bytes, stdout == subprocess.PIPE, stderr == subprocess.PIPE, capture=capture)
+            stdout_bytes, stderr_bytes = communicate_with_process(process, data_bytes, stdout == subprocess.PIPE, stderr == subprocess.PIPE, capture=capture,
+                                                                  force_stdout=force_stdout)
             stdout_text = to_optional_text(stdout_bytes, str_errors) or u''
             stderr_text = to_optional_text(stderr_bytes, str_errors) or u''
         else:
@@ -463,7 +471,14 @@ def raw_command(
     raise SubprocessError(cmd, status, stdout_text, stderr_text, runtime, error_callback)
 
 
-def communicate_with_process(process: subprocess.Popen, stdin: t.Optional[bytes], stdout: bool, stderr: bool, capture: bool) -> t.Tuple[bytes, bytes]:
+def communicate_with_process(
+        process: subprocess.Popen,
+        stdin: t.Optional[bytes],
+        stdout: bool,
+        stderr: bool,
+        capture: bool,
+        force_stdout: bool
+) -> t.Tuple[bytes, bytes]:
     """Communicate with the specified process, handling stdin/stdout/stderr as requested."""
     threads: t.List[WrappedThread] = []
     reader: t.Type[ReaderThread]
@@ -477,13 +492,13 @@ def communicate_with_process(process: subprocess.Popen, stdin: t.Optional[bytes]
         threads.append(WriterThread(process.stdin, stdin))
 
     if stdout:
-        stdout_reader = reader(process.stdout)
+        stdout_reader = reader(process.stdout, force_stdout)
         threads.append(stdout_reader)
     else:
         stdout_reader = None
 
     if stderr:
-        stderr_reader = reader(process.stderr)
+        stderr_reader = reader(process.stderr, force_stdout)
         threads.append(stderr_reader)
     else:
         stderr_reader = None
@@ -531,10 +546,11 @@ class WriterThread(WrappedThread):
 
 class ReaderThread(WrappedThread, metaclass=abc.ABCMeta):
     """Thread to read stdout from a subprocess."""
-    def __init__(self, handle: t.IO[bytes]) -> None:
+    def __init__(self, handle: t.IO[bytes], force_stdout: bool) -> None:
         super().__init__(self._run)
 
         self.handle = handle
+        self.force_stdout = force_stdout
         self.lines = []  # type: t.List[bytes]
 
     @abc.abstractmethod
@@ -561,7 +577,7 @@ class OutputThread(ReaderThread):
     def _run(self) -> None:
         """Workload to run on a thread."""
         src = self.handle
-        dst = sys.stdout.buffer
+        dst = sys.stdout.buffer if self.force_stdout else display.fd.buffer
 
         try:
             for line in src:
@@ -743,7 +759,7 @@ class Display:
         self.color = sys.stdout.isatty()
         self.warnings = []
         self.warnings_unique = set()
-        self.info_stderr = False
+        self.fd = sys.stderr  # default to stderr until config is initialized to avoid early messages going to stdout
         self.rows = 0
         self.columns = 0
         self.truncate = 0
@@ -755,7 +771,7 @@ class Display:
 
     def __warning(self, message):  # type: (str) -> None
         """Internal implementation for displaying a warning message."""
-        self.print_message('WARNING: %s' % message, color=self.purple, fd=sys.stderr)
+        self.print_message('WARNING: %s' % message, color=self.purple)
 
     def review_warnings(self):  # type: () -> None
         """Review all warnings which previously occurred."""
@@ -783,23 +799,27 @@ class Display:
 
     def notice(self, message):  # type: (str) -> None
         """Display a notice level message."""
-        self.print_message('NOTICE: %s' % message, color=self.purple, fd=sys.stderr)
+        self.print_message('NOTICE: %s' % message, color=self.purple)
 
     def error(self, message):  # type: (str) -> None
         """Display an error level message."""
-        self.print_message('ERROR: %s' % message, color=self.red, fd=sys.stderr)
+        self.print_message('ERROR: %s' % message, color=self.red)
+
+    def fatal(self, message):  # type: (str) -> None
+        """Display a fatal level message."""
+        self.print_message('FATAL: %s' % message, color=self.red, stderr=True)
 
     def info(self, message, verbosity=0, truncate=False):  # type: (str, int, bool) -> None
         """Display an info level message."""
         if self.verbosity >= verbosity:
             color = self.verbosity_colors.get(verbosity, self.yellow)
-            self.print_message(message, color=color, fd=sys.stderr if self.info_stderr else sys.stdout, truncate=truncate)
+            self.print_message(message, color=color, truncate=truncate)
 
     def print_message(  # pylint: disable=locally-disabled, invalid-name
             self,
             message,  # type: str
             color=None,  # type: t.Optional[str]
-            fd=sys.stdout,  # type: t.IO[str]
+            stderr=False,  # type: bool
             truncate=False,  # type: bool
     ):  # type: (...) -> None
         """Display a message."""
@@ -818,6 +838,8 @@ class Display:
             # convert color resets in message to desired color
             message = message.replace(self.clear, color)
             message = '%s%s%s' % (color, message, self.clear)
+
+        fd = sys.stderr if stderr else self.fd
 
         print(message, file=fd)
         fd.flush()

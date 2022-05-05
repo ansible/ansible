@@ -264,10 +264,10 @@ class TestFailure(TestResult):
             message = 'The test `%s` failed. See stderr output for details.' % command
             path = ''
             message = TestMessage(message, path)
-            print(message)
+            print(message)  # display goes to stderr, this should be on stdout
         else:
             for message in self.messages:
-                print(message)
+                print(message)  # display goes to stderr, this should be on stdout
 
     def write_junit(self, args):  # type: (TestConfig) -> None
         """Write results to a junit XML file."""

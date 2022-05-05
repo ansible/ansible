@@ -128,6 +128,7 @@ class CommonConfig:
     def __init__(self, args, command):  # type: (t.Any, str) -> None
         self.command = command
         self.interactive = False
+        self.check_layout = True
         self.success = None  # type: t.Optional[bool]
 
         self.color = args.color  # type: bool
@@ -137,7 +138,7 @@ class CommonConfig:
         self.truncate = args.truncate  # type: int
         self.redact = args.redact  # type: bool
 
-        self.info_stderr = False  # type: bool
+        self.display_stderr = False  # type: bool
 
         self.session_name = generate_name()
 
@@ -434,6 +435,7 @@ def run_command(
         stdin=None,  # type: t.Optional[t.IO[bytes]]
         stdout=None,  # type: t.Optional[t.IO[bytes]]
         interactive=False,  # type: bool
+        force_stdout=False,  # type: bool
         cmd_verbosity=1,  # type: int
         str_errors='strict',  # type: str
         error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
@@ -441,7 +443,7 @@ def run_command(
     """Run the specified command and return stdout and stderr as a tuple."""
     explain = args.explain and not always
     return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout, interactive=interactive,
-                       cmd_verbosity=cmd_verbosity, str_errors=str_errors, error_callback=error_callback)
+                       force_stdout=force_stdout, cmd_verbosity=cmd_verbosity, str_errors=str_errors, error_callback=error_callback)
 
 
 def yamlcheck(python):

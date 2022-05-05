@@ -515,6 +515,7 @@ def docker_exec(
         stdin=None,  # type: t.Optional[t.IO[bytes]]
         stdout=None,  # type: t.Optional[t.IO[bytes]]
         interactive=False,  # type: bool
+        force_stdout=False,  # type: bool
         data=None,  # type: t.Optional[str]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Execute the given command in the specified container."""
@@ -524,7 +525,8 @@ def docker_exec(
     if data or stdin or stdout:
         options.append('-i')
 
-    return docker_command(args, ['exec'] + options + [container_id] + cmd, capture=capture, stdin=stdin, stdout=stdout, interactive=interactive, data=data)
+    return docker_command(args, ['exec'] + options + [container_id] + cmd, capture=capture, stdin=stdin, stdout=stdout, interactive=interactive,
+                          force_stdout=force_stdout, data=data)
 
 
 def docker_info(args):  # type: (CommonConfig) -> t.Dict[str, t.Any]
@@ -546,15 +548,19 @@ def docker_command(
         stdin=None,  # type: t.Optional[t.IO[bytes]]
         stdout=None,  # type: t.Optional[t.IO[bytes]]
         interactive=False,  # type: bool
+        force_stdout=False,  # type: bool
         always=False,  # type: bool
         data=None,  # type: t.Optional[str]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Run the specified docker command."""
     env = docker_environment()
     command = [require_docker().command]
+
     if command[0] == 'podman' and _get_podman_remote():
         command.append('--remote')
-    return run_command(args, command + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, interactive=interactive, always=always, data=data)
+
+    return run_command(args, command + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, interactive=interactive, always=always,
+                       force_stdout=force_stdout, data=data)
 
 
 def docker_environment():  # type: () -> t.Dict[str, str]

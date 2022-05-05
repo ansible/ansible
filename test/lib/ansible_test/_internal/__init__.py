@@ -57,7 +57,7 @@ def main():
         display.truncate = config.truncate
         display.redact = config.redact
         display.color = config.color
-        display.info_stderr = config.info_stderr
+        display.fd = sys.stderr if config.display_stderr else sys.stdout
         configure_timeout(config)
 
         display.info('RLIMIT_NOFILE: %s' % (CURRENT_RLIMIT_NOFILE,), verbosity=2)
@@ -66,7 +66,9 @@ def main():
         target_names = None
 
         try:
-            data_context().check_layout()
+            if config.check_layout:
+                data_context().check_layout()
+
             args.func(config)
         except PrimeContainers:
             pass
@@ -82,7 +84,7 @@ def main():
 
         if target_names:
             for target_name in target_names:
-                print(target_name)  # info goes to stderr, this should be on stdout
+                print(target_name)  # display goes to stderr, this should be on stdout
 
         display.review_warnings()
         config.success = True
@@ -90,7 +92,7 @@ def main():
         display.warning(u'%s' % ex)
         sys.exit(0)
     except ApplicationError as ex:
-        display.error(u'%s' % ex)
+        display.fatal(u'%s' % ex)
         sys.exit(1)
     except KeyboardInterrupt:
         sys.exit(2)
