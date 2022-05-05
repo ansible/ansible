@@ -371,15 +371,6 @@ class ConfigManager(object):
                         options.append(option_name)
         return options
 
-    def get_plugin_options_from_cli(self, plugin_type, name, cli_option):
-        options = []
-        for option_name, pdef in self.get_configuration_definitions(plugin_type, name).items():
-            if 'cli' in pdef and pdef['cli']:
-                for cli_entry in pdef['cli']:
-                    if cli_option == cli_entry['name']:
-                        options.append(option_name)
-        return options
-
     def get_configuration_definition(self, name, plugin_type=None, plugin_name=None):
 
         ret = {}

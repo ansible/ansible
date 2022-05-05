@@ -324,20 +324,18 @@ DOCUMENTATION = '''
           - name: ansible_ssh_use_tty
             version_added: '2.7'
       timeout:
+        # default has no effect and is only for documentation purposes. The value must reflect the default of --timeout.
         default: 10
         description:
             - This is the default amount of time we will wait while establishing an SSH connection.
             - It also controls how long we can wait to access reading the connection once established (select on the socket).
+        # env has no effect and is only for documentation purposes (reflects --timeout)
         env:
-            - name: ANSIBLE_TIMEOUT
-            - name: ANSIBLE_SSH_TIMEOUT
-              version_added: '2.11'
+             - name: ANSIBLE_TIMEOUT
+        # ini has no effect and is only for documentation purposes (reflects --timeout)
         ini:
             - key: timeout
               section: defaults
-            - key: timeout
-              section: ssh_connection
-              version_added: '2.11'
         vars:
           - name: ansible_ssh_timeout
             version_added: '2.11'

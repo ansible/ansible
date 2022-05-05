@@ -1037,15 +1037,6 @@ class TaskExecutor:
         option_vars = C.config.get_plugin_vars('connection', self._connection._load_name)
         varnames.extend(option_vars)
 
-        # This seems like it should be fixed more generally (or maybe made into a validate-modules error).
-        # This is special-casing timeout, so connection plugins that use the cli option can also set their own default value.
-        timeout_options = C.config.get_plugin_options_from_cli('connection', self._connection._load_name, 'timeout')
-        timeout_options_no_default = []
-        for option in timeout_options:
-            option_definition = C.config.get_configuration_definition(option, plugin_type='connection', plugin_name=self._connection._load_name)
-            if 'default' not in option_definition:
-                timeout_options_no_default.append(option)
-
         # create dict of 'templated vars'
         options = {'_extras': {}}
         for k in option_vars:
@@ -1073,10 +1064,6 @@ class TaskExecutor:
 
         # set options with 'templated vars' specific to this plugin and dependent ones
         self._connection.set_options(task_keys=task_keys, var_options=options)
-        for option in timeout_options_no_default:
-            if self._connection.get_option(option) is None:
-                # Hopefully no connection plugin allows None as a valid configured timeout, making this not the implicit default...
-                self._connection.set_option(option, C.DEFAULT_TIMEOUT)
 
         varnames.extend(self._set_plugin_options('shell', variables, templar, task_keys))
 
