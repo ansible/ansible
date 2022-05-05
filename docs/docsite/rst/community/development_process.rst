@@ -20,10 +20,12 @@ If you want to follow the conversation about what features will be added to ``an
 
 * the :ref:`roadmaps`
 * the :ref:`Ansible Release Schedule <release_and_maintenance>`
+* the :ref:`ansible-core project branches and tags <core_branches_and_tags>`
 * various GitHub `projects <https://github.com/ansible/ansible/projects>`_ - for example:
 
    * the `2.12 release project <https://github.com/ansible/ansible/projects/43>`_
    * the `core documentation project <https://github.com/ansible/ansible/projects/27>`_
+
 
 .. _community_pull_requests:
 
@@ -34,7 +36,7 @@ Micro development: the lifecycle of a PR
 If you want to contribute a feature or fix a bug in ``ansible-core`` or in a collection, you must open a **pull request** ("PR" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general. The ultimate goal of any pull request is to get merged and become part of a collection or ``ansible-core``.
 Here's an overview of the PR lifecycle:
 
-* Contributor opens a PR
+* Contributor opens a PR (always against the ``devel`` branch)
 * Ansibot reviews the PR
 * Ansibot assigns labels
 * Ansibot pings maintainers
@@ -43,6 +45,7 @@ Here's an overview of the PR lifecycle:
 * Contributor addresses any feedback from reviewers
 * Developers, maintainers, community re-review
 * PR merged or closed
+* PR `backported <backport_process>`_ to one or more ``stable-X.Y`` branches (optional, bugfixes only)
 
 Automated PR review: ansibullbot
 --------------------------------
