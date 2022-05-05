@@ -94,6 +94,7 @@ exclude_patterns = [
     '2.10_index.rst',
     'ansible_index.rst',
     'core_index.rst',
+    'dev_guide/core_branches_and_tags.rst',
     'porting_guides/core_porting_guides.rst',
     'porting_guides/porting_guide_base_2.10.rst',
     'porting_guides/porting_guide_core_*',
