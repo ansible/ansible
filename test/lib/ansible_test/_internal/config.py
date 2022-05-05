@@ -214,8 +214,12 @@ class ShellConfig(EnvironmentConfig):
     def __init__(self, args):  # type: (t.Any) -> None
         super().__init__(args, 'shell')
 
+        self.cmd = args.cmd  # type: t.List[str]
         self.raw = args.raw  # type: bool
+        self.check_layout = self.delegate  # allow shell to be used without a valid layout as long as no delegation is required
         self.interactive = True
+        self.export = args.export  # type: t.Optional[str]
+        self.display_stderr = True
 
 
 class SanityConfig(TestConfig):
@@ -231,7 +235,7 @@ class SanityConfig(TestConfig):
         self.keep_git = args.keep_git  # type: bool
         self.prime_venvs = args.prime_venvs  # type: bool
 
-        self.info_stderr = self.lint
+        self.display_stderr = self.lint or self.list_tests
 
         if self.keep_git:
             def git_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
@@ -270,7 +274,7 @@ class IntegrationConfig(TestConfig):
 
         if self.list_targets:
             self.explain = True
-            self.info_stderr = True
+            self.display_stderr = True
 
     def get_ansible_config(self):  # type: () -> str
         """Return the path to the Ansible config for the given config."""

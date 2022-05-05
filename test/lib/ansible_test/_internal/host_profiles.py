@@ -150,7 +150,7 @@ class Inventory:
         inventory_text = inventory_text.strip()
 
         if not args.explain:
-            write_text_file(path, inventory_text)
+            write_text_file(path, inventory_text + '\n')
 
         display.info(f'>>> Inventory\n{inventory_text}', verbosity=3)
 

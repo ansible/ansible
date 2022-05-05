@@ -50,6 +50,7 @@ class Connection(metaclass=abc.ABCMeta):
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
+            force_stdout=False,  # type: bool
             ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
         """Run the specified command and return the result."""
 
@@ -97,6 +98,7 @@ class LocalConnection(Connection):
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
+            force_stdout=False,  # type: bool
             ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
         """Run the specified command and return the result."""
         return run_command(
@@ -107,6 +109,7 @@ class LocalConnection(Connection):
             stdin=stdin,
             stdout=stdout,
             interactive=interactive,
+            force_stdout=force_stdout,
         )
 
 
@@ -137,6 +140,7 @@ class SshConnection(Connection):
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
+            force_stdout=False,  # type: bool
             ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
         """Run the specified command and return the result."""
         options = list(self.options)
@@ -170,6 +174,7 @@ class SshConnection(Connection):
                 stdin=stdin,
                 stdout=stdout,
                 interactive=interactive,
+                force_stdout=force_stdout,
                 error_callback=error_callback,
             )
 
@@ -217,6 +222,7 @@ class DockerConnection(Connection):
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
+            force_stdout=False,  # type: bool
             ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
         """Run the specified command and return the result."""
         options = []
@@ -237,6 +243,7 @@ class DockerConnection(Connection):
             stdin=stdin,
             stdout=stdout,
             interactive=interactive,
+            force_stdout=force_stdout,
         )
 
     def inspect(self):  # type: () -> DockerInspect
