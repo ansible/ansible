@@ -36,8 +36,11 @@ How to run
    # Run all sanity tests including disabled ones
    ansible-test sanity --allow-disabled
 
-   # Run all sanity tests against against certain files
+   # Run all sanity tests against certain file(s)
    ansible-test sanity lib/ansible/modules/files/template.py
+   
+   # Run all sanity tests against certain folder(s)
+   ansible-test sanity lib/ansible/modules/files/
 
    # Run all tests inside docker (good if you don't have dependencies installed)
    ansible-test sanity --docker default
