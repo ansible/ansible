@@ -21,18 +21,24 @@ Playbooks are written in YAML and are easy to read, write, share and understand.
 
 
 Plays
-=====
+-----
 
 The playbook object that maps manged nodes (hosts) to tasks, all Ansible execution is run in this context. Contains an ordered list of tasks and can be run repeatedly and loop over the mapped hosts over each task.
 Plays can include variables as well as tasks.
 
+Roles
+.....
+
+A limited distribution of reusable ansible content (tasks, handlers, variables, plugins, templates and files) that can be referenced inside a Play.
+
+
 Tasks
-=====
+.....
 The units of action in Ansible, must be contained in a Play, directly or via another playbook ojbect contained in a Play (Role, or imported/included task list file).
 You can execute a single task once with an ad hoc command ``ansible`` or ``ansible-console`` (both create a virtual Play).
 
 Handlers
-========
+........
 Tasks that only execute when notified by a previous task which resulted in a 'changed' status.
 
 Modules
@@ -43,13 +49,7 @@ The units of code Ansible executes. Each module has a particular use, from admin
 Collections
 ===========
 
-Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. You can install and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_. To learn more about collections, see :ref:`collections`.
-
-Roles
-=====
-
-A more limited distribution of reusable ansible content (tasks, handlers, variables, templates and files) that can be referenced inside a Play.
-
+Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. You can install and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_. To learn more about collections, see :ref:`collections`. Unlike roles you can use any part of a collection without importing the whole thing.
 
 AAP
 ===
