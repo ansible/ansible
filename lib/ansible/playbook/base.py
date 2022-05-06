@@ -581,7 +581,7 @@ class FieldAttributeBase:
                     if not isinstance(item, dict):
                         raise ValueError
                     _validate_variable_keys(item)
-                    warn_if_reserved(ds.keys(), where='vars')
+                    warn_if_reserved(item.keys(), where='vars')
                     all_vars = combine_vars(all_vars, item)
                 return all_vars
             elif ds is None:
