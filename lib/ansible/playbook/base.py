@@ -26,7 +26,7 @@ from ansible.utils.collection_loader._collection_finder import _get_collection_m
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars, get_unique_id
-from ansible.vars.validation import validate_variable_names
+from ansible.utils.vars import isidentifier
 
 display = Display()
 
@@ -560,17 +560,28 @@ class FieldAttributeBase:
         as a list of dictionaries. If the later, this method will turn the
         list into a single dictionary.
         '''
+        # avoid circular import
+        from ansible.vars.reserved import warn_if_reserved
+
+        # FIXME until 2.16 keep using isidentifier/warn_if_reserved for backwards compat
+        #       see ansible.vars.validate_variable_names for more info
+        def _validate_variable_keys(ds):
+            for key in ds:
+                if not isidentifier(key):
+                    raise TypeError("'%s' is not a valid variable name" % key)
 
         try:
             if isinstance(ds, dict):
-                validate_variable_names(ds.keys(), "vars for %s" % self.__class__.__name__, obj=ds, legacy_fail=True)
+                _validate_variable_keys(ds)
+                warn_if_reserved(ds.keys(), where='vars')
                 return combine_vars(self.vars, ds)
             elif isinstance(ds, list):
                 all_vars = self.vars
                 for item in ds:
                     if not isinstance(item, dict):
                         raise ValueError
-                    validate_variable_names(item.keys(), "vars for %s" % self.__class__.__name__, obj=ds, legacy_fail=True)
+                    _validate_variable_keys(item)
+                    warn_if_reserved(ds.keys(), where='vars')
                     all_vars = combine_vars(all_vars, item)
                 return all_vars
             elif ds is None:
@@ -580,6 +591,8 @@ class FieldAttributeBase:
         except ValueError as e:
             raise AnsibleParserError("Vars in a %s must be specified as a dictionary, or a list of dictionaries" % self.__class__.__name__,
                                      obj=ds, orig_exc=e)
+        except TypeError as e:
+            raise AnsibleParserError("Invalid variable name in vars specified for %s: %s" % (self.__class__.__name__, e), obj=ds, orig_exc=e)
 
     def _extend_value(self, value, new_value, prepend=False):
         '''

@@ -21,7 +21,8 @@ __metaclass__ = type
 
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.vars.validation import validate_variable_names
+from ansible.utils.vars import isidentifier
+from ansible.vars.reserved import warn_if_reserved
 
 
 class ActionModule(ActionBase):
@@ -60,9 +61,18 @@ class ActionModule(ActionBase):
                         stats[opt] = val
 
             for (k, v) in data.items():
+
                 k = self._templar.template(k)
 
-                validate_variable_names(k, 'set_stats', legacy_fail=True)
+                # FIXME until 2.16 keep using isidentifier/warn_if_reserved for backwards compat
+                #       see ansible.vars.validate_variable_names for more info
+                if not isidentifier(k):
+                    result['failed'] = True
+                    result['msg'] = ("The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only "
+                                     "letters, numbers and underscores." % k)
+                    return result
+
+                warn_if_reserved([k], where='set_stats')
 
                 stats['data'][k] = self._templar.template(v)
 

@@ -9,11 +9,6 @@ __metaclass__ = type
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text
-from ansible.playbook import Play
-from ansible.playbook.block import Block
-from ansible.playbook.handler import Handler
-from ansible.playbook.role import Role
-from ansible.playbook.task import Task
 from ansible.plugins.loader import lookup_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
@@ -38,6 +33,13 @@ def get_reserved_names(include_private=True):
     """Return the list of reserved names associated with play objects and internal template functions"""
     result = set(_INTERNAL_HARDCODED).union(_ANSIBLE_JINJA_RESERVED)
 
+    # avoid circular imports
+    from ansible.playbook import Play
+    from ansible.playbook.block import Block
+    from ansible.playbook.handler import Handler
+    from ansible.playbook.role import Role
+    from ansible.playbook.task import Task
+
     # FIXME: find a way to 'not hardcode', possibly need role deps/includes
     for aclass in (Play, Role, Block, Task, Handler):
         for name, attr in aclass.fattributes.items():
@@ -47,13 +49,8 @@ def get_reserved_names(include_private=True):
     return result
 
 
-def warn_if_reserved(myvars, additional=None):
-    ''' this function warns if any variable passed conflicts with internally reserved names '''
-    display.deprecated(
-        'ansible.vars.reserved.warn_if_reserved function is deprecated. '
-        'Use functions from ansible.vars.reserved to replace its functionality.',
-        version='2.16'
-    )
+def warn_if_reserved(myvars, additional=None, where=None):
+    """Warn if any variable passed conflicts with internally reserved names"""
     if additional is None:
         reserved = _RESERVED_NAMES
     else:
@@ -61,8 +58,18 @@ def warn_if_reserved(myvars, additional=None):
 
     varnames = set(myvars)
     varnames.discard('vars')  # we add this one internally, so safe to ignore
-    for varname in varnames.intersection(reserved):
-        display.warning('Found variable using reserved name: %s' % varname)
+    invalid_names = varnames.intersection(reserved)
+
+    where_msg = '' if where is None else f'in {where} '
+    msg = (
+        f'Invalid variable names {where_msg}specified: {invalid_names}. '
+        'Variables must start with a letter or underscore character, '
+        'and contain only letters, numbers and underscores. '
+        'Variable names also must not conflict with Python, Jinja and '
+        'Ansible keywords. This will be an error in 2.16.'
+    )
+
+    display.deprecated(msg, version=2.16)
 
 
 def is_reserved_name(name):

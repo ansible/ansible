@@ -366,8 +366,3 @@ class AnsibleCollectionUnsupportedVersionError(AnsiblePluginError):
 class AnsibleFilterTypeError(AnsibleTemplateError, TypeError):
     ''' a Jinja filter templating failure due to bad type'''
     pass
-
-
-class AnsibleInvalidVarNameError(AnsibleParserError):
-    '''failure due to invalid variable name'''
-    pass

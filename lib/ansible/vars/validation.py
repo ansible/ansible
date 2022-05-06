@@ -4,7 +4,6 @@
 
 from collections.abc import Iterable
 
-from ansible.errors import AnsibleInvalidVarNameError
 from ansible.module_utils.six import string_types
 from ansible.utils.display import Display
 
@@ -12,7 +11,7 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def validate_variable_names(names, where=None, obj=None, legacy_fail=False):
+def validate_variable_names(names, where=None):
     """Check that given variable names are valid otherwise raise an error."""
     # avoid circular imports
     from ansible.utils.vars import isidentifier
@@ -41,12 +40,13 @@ def validate_variable_names(names, where=None, obj=None, legacy_fail=False):
         'Ansible keywords. This will be an error in 2.16.'
     )
 
-    if legacy_fail:
-        # for cases that predates this function where invalid variable
-        # names caused an error (register, set_fact, set_stats)
-        # FIXME make this default in 2.16
-        #       (remove ANSIBLE_DEPRECATION_WARNINGS=1 in
-        #       invalid_var_names integration tests)
-        raise AnsibleInvalidVarNameError(msg, obj=obj)
-    else:
-        display.deprecated(msg, version=2.16)
+    # FIXME in 2.16:
+    # * raise an error
+    # * remove ANSIBLE_DEPRECATION_WARNINGS=1 in targets/invalid_var_names
+    # * replace isdentifier/warn_if_reserved with this function in:
+    #   - register
+    #   - set_fact
+    #   - set_stats
+    #   - ansible.playbook.base
+    # * deprecate ansible.vars.warn_if_reserved
+    display.deprecated(msg, version=2.16)

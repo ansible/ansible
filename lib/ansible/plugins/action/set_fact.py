@@ -22,7 +22,8 @@ from ansible.errors import AnsibleActionFail
 from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
-from ansible.vars.validation import validate_variable_names
+from ansible.utils.vars import isidentifier
+from ansible.vars.reserved import warn_if_reserved
 
 import ansible.constants as C
 
@@ -45,7 +46,13 @@ class ActionModule(ActionBase):
             for (k, v) in self._task.args.items():
                 k = self._templar.template(k)
 
-                validate_variable_names(k, 'set_fact', legacy_fail=True)
+                # FIXME until 2.16 keep using isidentifier/warn_if_reserved for backwards compat
+                #       see ansible.vars.validate_variable_names for more info
+                if not isidentifier(k):
+                    raise AnsibleActionFail("The variable name '%s' is not valid. Variables must start with a letter or underscore character, "
+                                            "and contain only letters, numbers and underscores." % k)
+
+                warn_if_reserved([k], where='set_fact')
 
                 # NOTE: this should really use BOOLEANS from convert_bool, but only in the k=v case,
                 # right now it converts matching explicit YAML strings also when 'jinja2_native' is disabled.
