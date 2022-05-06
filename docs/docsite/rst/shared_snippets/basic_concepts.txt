@@ -1,34 +1,56 @@
 Control node
 ============
 
-Any machine with Ansible installed. You can run Ansible commands and playbooks by invoking the ``ansible`` or ``ansible-playbook`` command from any control node. You can use any computer that has a Python installation as a control node - laptops, shared desktops, and servers can all run Ansible. However, you cannot use a Windows machine as a control node. You can have multiple control nodes.
+The machine from which you run the Ansible CLI tools (with Ansible installed), the ``ansible`` or ``ansible-playbook`` binaries. You can use any computer that meets the software requirements as a control node - laptops, shared desktops, and servers can all run Ansible. You can have multiple control nodes, but Ansible itself does not coordinate across them, see AAP for a .
 
 Managed nodes
 =============
 
-The network devices (and/or servers) you manage with Ansible. Managed nodes are also sometimes called "hosts". Ansible is not installed on managed nodes.
+The target devices (servers, network appliances or any computer) you manage with Ansible. Managed nodes are also sometimes called "hosts". Ansible is not installed on managed nodes.
 
 Inventory
 =========
 
-A list of managed nodes. An inventory file is also sometimes called a "hostfile". Your inventory can specify information like IP address for each managed node. An inventory can also organize managed nodes, creating and nesting groups for easier scaling. To learn more about inventory, see :ref:`the Working with Inventory<intro_inventory>` section.
+A list of managed nodesi provided by one or more 'inventory sources'. Your inventory can specify information like IP address for each managed node,.organize managed nodes into groups and assigning data specific to the group or host by using variables. To learn more about inventory, see :ref:`the Working with Inventory<intro_inventory>` section. Sometimes an inventory source file is also reffered to as a 'hostfile'.
 
-Collections
-===========
+Playbooks
+=========
 
-Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. You can install and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_. To learn more about collections, see :ref:`collections`.
+They contain Plays (which are the basic unit of Ansible exeuction), this is both an 'execution concept' and how we describe the files on which ``ansible-playbook`` operates on.
+Playbooks are written in YAML and are easy to read, write, share and understand. To learn more about playbooks, see :ref:`about_playbooks`.
+
+
+Plays
+=====
+
+The playbook object that maps manged nodes (hosts) to tasks, all Ansible execution is run in this context. Contains an ordered list of tasks and can be run repeatedly and loop over the mapped hosts over each task.
+Plays can include variables as well as tasks.
+
+Tasks
+=====
+The units of action in Ansible, must be contained in a Play, directly or via another playbook ojbect contained in a Play (Role, or imported/included task list file).
+You can execute a single task once with an ad hoc command ``ansible`` or ``ansible-console`` (both create a virtual Play).
+
+Handlers
+========
+Tasks that only execute when notified by a previous task which resulted in a 'changed' status.
 
 Modules
 =======
 
 The units of code Ansible executes. Each module has a particular use, from administering users on a specific type of database to managing VLAN interfaces on a specific type of network device. You can invoke a single module with a task, or invoke several different modules in a playbook. Starting in Ansible 2.10, modules are grouped in collections. For an idea of how many collections Ansible includes, take a look at the :ref:`list_of_collections`.
 
-Tasks
+Collections
+===========
+
+Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. You can install and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_. To learn more about collections, see :ref:`collections`.
+
+Roles
 =====
 
-The units of action in Ansible. You can execute a single task once with an ad hoc command.
+A more limited distribution of reusable ansible content (tasks, handlers, variables, templates and files) that can be referenced inside a Play.
 
-Playbooks
-=========
 
-Ordered lists of tasks, saved so you can run those tasks in that order repeatedly. Playbooks can include variables as well as tasks. Playbooks are written in YAML and are easy to read, write, share and understand. To learn more about playbooks, see :ref:`about_playbooks`.
+AAP
+===
+Ansilbe Automation Platform, this is a product that includes enteprise level features and integrates many tools of the Ansible ecosystem: ansible-core, awx, automation hub, etc.
