@@ -17,7 +17,8 @@ DOCUMENTATION = '''
         - Values passed in the INI format using the C(key=value) syntax are interpreted differently depending on where they are declared within your inventory.
         - When declared inline with the host, INI values are processed by Python's ast.literal_eval function
           (U(https://docs.python.org/3/library/ast.html#ast.literal_eval)) and interpreted as Python literal structures
-          (strings, numbers, tuples, lists, dicts, booleans, None). Host lines accept multiple C(key=value) parameters per line.
+         (strings, numbers, tuples, lists, dicts, booleans, None). If you want a number to be treated as a string, you must quote it.
+          Host lines accept multiple C(key=value) parameters per line.
           Therefore they need a way to indicate that a space is part of a value rather than a separator.
         - When declared in a C(:vars) section, INI values are interpreted as strings. For example C(var=FALSE) would create a string equal to C(FALSE).
           Unlike host lines, C(:vars) sections accept only a single entry per line, so everything after the C(=) must be the value for the entry.
