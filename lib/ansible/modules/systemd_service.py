@@ -512,10 +512,15 @@ def main():
 
             # check systemctl result or if it is a init script
             if rc == 0:
-                enabled = True
-                # Check if the service is indirect or alias and if out contains exactly 1 line of string 'indirect'/ 'alias' it's disabled
-                if out.splitlines() == ["indirect"] or out.splitlines() == ["alias"]:
+                # https://www.freedesktop.org/software/systemd/man/systemctl.html#is-enabled%20UNIT%E2%80%A6
+                if out.rstrip() in (
+                        "enabled-runtime",  # transiently enabled but we're trying to set a permanent enabled
+                        "indirect",  # We've been asked to enable this unit so do so despite possible reasons
+                                     # that systemctl may have for thinking it's enabled already.
+                        "alias"):  # Let systemd handle the alias as we can't be sure what's needed.
                     enabled = False
+                else:
+                    enabled = True
 
             elif rc == 1:
                 # if not a user or global user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
