@@ -32,7 +32,6 @@ from ansible.utils.unsafe_proxy import to_unsafe_text, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, isidentifier
-from ansible.vars.reserved import warn_if_reserved
 from ansible.vars.validation import validate_variable_names
 
 display = Display()
@@ -670,6 +669,7 @@ class TaskExecutor:
                 if not isidentifier(self._task.register):
                     raise AnsibleError("Invalid variable name in 'register' specified: '%s'" % self._task.register)
 
+                from ansible.vars.reserved import warn_if_reserved
                 warn_if_reserved([self._task.register], where='register')
 
                 vars_copy[self._task.register] = result
