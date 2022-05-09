@@ -401,7 +401,7 @@ class ConfigManager(object):
 
         return ret
 
-    def _loop_entries(self, container, entry_list):
+    def _loop_entries(self, container, entry_list, sentinel=None):
         ''' repeat code for value entry assignment '''
 
         value = None
@@ -412,6 +412,8 @@ class ConfigManager(object):
                 temp_value = container.get(name, None)
             except UnicodeEncodeError:
                 self.WARNINGS.add(u'value for config entry {0} contains invalid characters, ignoring...'.format(to_text(name)))
+                continue
+            if sentinel is not None and name in sentinel:
                 continue
             if temp_value is not None:  # only set if entry is defined in container
                 # inline vault variables should be converted to a text string
@@ -498,7 +500,10 @@ class ConfigManager(object):
             if value is None and 'cli' in defs[config]:
                 # avoid circular import .. until valid
                 from ansible import context
-                value, origin = self._loop_entries(context.CLIARGS, defs[config]['cli'])
+
+                sentinel = context.CLIARGS.get('_ansible_sentinel')
+                value, origin = self._loop_entries(context.CLIARGS, defs[config]['cli'], sentinel)
+
                 origin = 'cli: %s' % origin
 
             # env vars are next precedence

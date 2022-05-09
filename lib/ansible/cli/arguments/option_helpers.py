@@ -22,6 +22,71 @@ from ansible.release import __version__
 from ansible.utils.path import unfrackpath
 
 
+class CustomArgumentParser(argparse.ArgumentParser):
+    sentinel = set()
+
+    def __init__(self, *args, **kwargs):
+        self._sentinel = set()
+        super(CustomArgumentParser, self).__init__(*args, **kwargs)
+
+    def _record_sentinel(self, func):
+        def wrapper(*args, **kwargs):
+            action = func(*args, **kwargs)
+            action.parser = self
+            if hasattr(action, 'dest'):
+                self._sentinel.add(action.dest)
+            return action
+        return wrapper
+
+    def add_argument_group(self, *args, **kwargs):
+        group = super(CustomArgumentParser, self).add_argument_group(*args, **kwargs)
+        group._add_action = self._record_sentinel(group._add_action)
+        return group
+
+    def add_mutually_exclusive_group(self, **kwargs):
+        group = super(CustomArgumentParser, self).add_mutually_exclusive_group(**kwargs)
+        group._add_action = self._record_sentinel(group._add_action)
+        return group
+
+    def add_argument(self, *args, **kwargs):
+        return self._record_sentinel(
+            super(CustomArgumentParser, self).add_argument
+        )(*args, **kwargs)
+
+    def parse_known_args(self, *args, **kwargs):
+        namespace, args = super(CustomArgumentParser, self).parse_known_args(*args, **kwargs)
+        namespace._ansible_sentinel = self._sentinel
+        return namespace, args
+
+
+class StoreAction(argparse._StoreAction):
+    def __call__(self, *args, **kwargs):
+        if self.dest in self.parser._sentinel:
+            self.parser._sentinel.remove(self.dest)
+        return super(StoreAction, self).__call__(*args, **kwargs)
+
+
+class StoreTrueAction(argparse._StoreTrueAction):
+    def __call__(self, *args, **kwargs):
+        if self.dest in self.parser._sentinel:
+            self.parser._sentinel.remove(self.dest)
+        return super(StoreTrueAction, self).__call__(*args, **kwargs)
+
+
+class AppendAction(argparse._AppendAction):
+    def __call__(self, *args, **kwargs):
+        if self.dest in self.parser._sentinel:
+            self.parser._sentinel.remove(self.dest)
+        return super(AppendAction, self).__call__(*args, **kwargs)
+
+
+class CountAction(argparse._CountAction):
+    def __call__(self, *args, **kwargs):
+        if self.dest in self.parser._sentinel:
+            self.parser._sentinel.remove(self.dest)
+        return super(CountAction, self).__call__(*args, **kwargs)
+
+
 #
 # Special purpose OptionParsers
 #
@@ -192,7 +257,7 @@ def create_base_parser(prog, usage="", desc=None, epilog=None):
     Create an options parser for all ansible scripts
     """
     # base opts
-    parser = argparse.ArgumentParser(
+    parser = CustomArgumentParser(
         prog=prog,
         formatter_class=SortingHelpFormatter,
         epilog=epilog,
@@ -209,7 +274,7 @@ def create_base_parser(prog, usage="", desc=None, epilog=None):
 
 def add_verbosity_options(parser):
     """Add options for verbosity"""
-    parser.add_argument('-v', '--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action="count",
+    parser.add_argument('-v', '--verbose', dest='verbosity', default=C.DEFAULT_VERBOSITY, action=CountAction,
                         help="Causes Ansible to print more debug messages. Adding multiple -v will increase the verbosity, "
                              "the builtin plugins currently evaluate up to -vvvvvv. A reasonable level to start is -vvv, "
                              "connection debugging might require -vvvv.")
@@ -217,15 +282,15 @@ def add_verbosity_options(parser):
 
 def add_async_options(parser):
     """Add options for commands which can launch async tasks"""
-    parser.add_argument('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type=int, dest='poll_interval',
+    parser.add_argument('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type=int, dest='poll_interval', action=StoreAction,
                         help="set the poll interval if using -B (default=%s)" % C.DEFAULT_POLL_INTERVAL)
-    parser.add_argument('-B', '--background', dest='seconds', type=int, default=0,
+    parser.add_argument('-B', '--background', dest='seconds', type=int, default=0, action=StoreAction,
                         help='run asynchronously, failing after X seconds (default=N/A)')
 
 
 def add_basedir_options(parser):
     """Add options for commands which can set a playbook basedir"""
-    parser.add_argument('--playbook-dir', default=C.PLAYBOOK_DIR, dest='basedir', action='store',
+    parser.add_argument('--playbook-dir', default=C.PLAYBOOK_DIR, dest='basedir', action=StoreAction,
                         help="Since this tool does not use playbooks, use this as a substitute playbook directory. "
                              "This sets the relative path for many features including roles/ group_vars/ etc.",
                         type=unfrack_path())
@@ -233,11 +298,11 @@ def add_basedir_options(parser):
 
 def add_check_options(parser):
     """Add options for commands which can run with diagnostic information of tasks"""
-    parser.add_argument("-C", "--check", default=False, dest='check', action='store_true',
+    parser.add_argument("-C", "--check", default=False, dest='check', action=StoreTrueAction,
                         help="don't make any changes; instead, try to predict some of the changes that may occur")
-    parser.add_argument('--syntax-check', dest='syntax', action='store_true',
+    parser.add_argument('--syntax-check', dest='syntax', action=StoreTrueAction,
                         help="perform a syntax check on the playbook, but do not execute it")
-    parser.add_argument("-D", "--diff", default=C.DIFF_ALWAYS, dest='diff', action='store_true',
+    parser.add_argument("-D", "--diff", default=C.DIFF_ALWAYS, dest='diff', action=StoreTrueAction,
                         help="when changing (small) files and templates, show the differences in those"
                              " files; works great with --check")
 
@@ -247,56 +312,56 @@ def add_connect_options(parser):
     connect_group = parser.add_argument_group("Connection Options", "control as whom and how to connect to hosts")
 
     connect_group.add_argument('--private-key', '--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
-                               help='use this file to authenticate the connection', type=unfrack_path())
-    connect_group.add_argument('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
+                               action=StoreAction, help='use this file to authenticate the connection', type=unfrack_path())
+    connect_group.add_argument('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user', action=StoreAction,
                                help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
-    connect_group.add_argument('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
+    connect_group.add_argument('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT, action=StoreAction,
                                help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
-    connect_group.add_argument('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type=int, dest='timeout',
+    connect_group.add_argument('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type=int, dest='timeout', action=StoreAction,
                                help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
 
     # ssh only
-    connect_group.add_argument('--ssh-common-args', default=None, dest='ssh_common_args',
+    connect_group.add_argument('--ssh-common-args', default=None, dest='ssh_common_args', action=StoreAction,
                                help="specify common arguments to pass to sftp/scp/ssh (e.g. ProxyCommand)")
-    connect_group.add_argument('--sftp-extra-args', default=None, dest='sftp_extra_args',
+    connect_group.add_argument('--sftp-extra-args', default=None, dest='sftp_extra_args', action=StoreAction,
                                help="specify extra arguments to pass to sftp only (e.g. -f, -l)")
-    connect_group.add_argument('--scp-extra-args', default=None, dest='scp_extra_args',
+    connect_group.add_argument('--scp-extra-args', default=None, dest='scp_extra_args', action=StoreAction,
                                help="specify extra arguments to pass to scp only (e.g. -l)")
-    connect_group.add_argument('--ssh-extra-args', default=None, dest='ssh_extra_args',
+    connect_group.add_argument('--ssh-extra-args', default=None, dest='ssh_extra_args', action=StoreAction,
                                help="specify extra arguments to pass to ssh only (e.g. -R)")
 
     parser.add_argument_group(connect_group)
 
     connect_password_group = parser.add_mutually_exclusive_group()
-    connect_password_group.add_argument('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
+    connect_password_group.add_argument('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action=StoreTrueAction,
                                         help='ask for connection password')
     connect_password_group.add_argument('--connection-password-file', '--conn-pass-file', default=C.CONNECTION_PASSWORD_FILE, dest='connection_password_file',
-                                        help="Connection password file", type=unfrack_path(), action='store')
+                                        help="Connection password file", type=unfrack_path(), action=StoreAction)
 
     parser.add_argument_group(connect_password_group)
 
 
 def add_fork_options(parser):
     """Add options for commands that can fork worker processes"""
-    parser.add_argument('-f', '--forks', dest='forks', default=C.DEFAULT_FORKS, type=int,
+    parser.add_argument('-f', '--forks', dest='forks', default=C.DEFAULT_FORKS, type=int, action=StoreAction,
                         help="specify number of parallel processes to use (default=%s)" % C.DEFAULT_FORKS)
 
 
 def add_inventory_options(parser):
     """Add options for commands that utilize inventory"""
-    parser.add_argument('-i', '--inventory', '--inventory-file', dest='inventory', action="append",
+    parser.add_argument('-i', '--inventory', '--inventory-file', dest='inventory', action=AppendAction,
                         help="specify inventory host path or comma separated host list. --inventory-file is deprecated")
-    parser.add_argument('--list-hosts', dest='listhosts', action='store_true',
+    parser.add_argument('--list-hosts', dest='listhosts', action=StoreAction,
                         help='outputs a list of matching hosts; does not execute anything else')
-    parser.add_argument('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
+    parser.add_argument('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset', action=StoreAction,
                         help='further limit selected hosts to an additional pattern')
 
 
 def add_meta_options(parser):
     """Add options for commands which can launch meta tasks from the command line"""
-    parser.add_argument('--force-handlers', default=C.DEFAULT_FORCE_HANDLERS, dest='force_handlers', action='store_true',
+    parser.add_argument('--force-handlers', default=C.DEFAULT_FORCE_HANDLERS, dest='force_handlers', action=StoreTrueAction,
                         help="run handlers even if a task fails")
-    parser.add_argument('--flush-cache', dest='flush_cache', action='store_true',
+    parser.add_argument('--flush-cache', dest='flush_cache', action=StoreTrueAction,
                         help="clear the fact cache for every host in inventory")
 
 
@@ -310,9 +375,9 @@ def add_module_options(parser):
 
 def add_output_options(parser):
     """Add options for commands which can change their output"""
-    parser.add_argument('-o', '--one-line', dest='one_line', action='store_true',
+    parser.add_argument('-o', '--one-line', dest='one_line', action=StoreTrueAction,
                         help='condense output')
-    parser.add_argument('-t', '--tree', dest='tree', default=None,
+    parser.add_argument('-t', '--tree', dest='tree', default=None, action=StoreAction,
                         help='log output to this directory')
 
 
@@ -326,12 +391,12 @@ def add_runas_options(parser):
     runas_group = parser.add_argument_group("Privilege Escalation Options", "control how and which user you become as on target hosts")
 
     # consolidated privilege escalation (become)
-    runas_group.add_argument("-b", "--become", default=C.DEFAULT_BECOME, action="store_true", dest='become',
+    runas_group.add_argument("-b", "--become", default=C.DEFAULT_BECOME, action=StoreTrueAction, dest='become',
                              help="run operations with become (does not imply password prompting)")
-    runas_group.add_argument('--become-method', dest='become_method', default=C.DEFAULT_BECOME_METHOD,
+    runas_group.add_argument('--become-method', dest='become_method', default=C.DEFAULT_BECOME_METHOD, action=StoreAction,
                              help='privilege escalation method to use (default=%s)' % C.DEFAULT_BECOME_METHOD +
                                   ', use `ansible-doc -t become -l` to list valid choices.')
-    runas_group.add_argument('--become-user', default=None, dest='become_user', type=str,
+    runas_group.add_argument('--become-user', default=None, dest='become_user', type=str, action=StoreAction,
                              help='run operations as this user (default=%s)' % C.DEFAULT_BECOME_USER)
 
     parser.add_argument_group(runas_group)
@@ -351,41 +416,41 @@ def add_runas_prompt_options(parser, runas_group=None):
 
     runas_pass_group = parser.add_mutually_exclusive_group()
 
-    runas_pass_group.add_argument('-K', '--ask-become-pass', dest='become_ask_pass', action='store_true',
+    runas_pass_group.add_argument('-K', '--ask-become-pass', dest='become_ask_pass', action=StoreTrueAction,
                                   default=C.DEFAULT_BECOME_ASK_PASS,
                                   help='ask for privilege escalation password')
     runas_pass_group.add_argument('--become-password-file', '--become-pass-file', default=C.BECOME_PASSWORD_FILE, dest='become_password_file',
-                                  help="Become password file", type=unfrack_path(), action='store')
+                                  help="Become password file", type=unfrack_path(), action=StoreAction)
 
     parser.add_argument_group(runas_pass_group)
 
 
 def add_runtask_options(parser):
     """Add options for commands that run a task"""
-    parser.add_argument('-e', '--extra-vars', dest="extra_vars", action="append", type=maybe_unfrack_path('@'),
+    parser.add_argument('-e', '--extra-vars', dest="extra_vars", action=AppendAction, type=maybe_unfrack_path('@'),
                         help="set additional variables as key=value or YAML/JSON, if filename prepend with @", default=[])
 
 
 def add_tasknoplay_options(parser):
     """Add options for commands that run a task w/o a defined play"""
-    parser.add_argument('--task-timeout', type=int, dest="task_timeout", action="store", default=C.TASK_TIMEOUT,
+    parser.add_argument('--task-timeout', type=int, dest="task_timeout", action=StoreAction, default=C.TASK_TIMEOUT,
                         help="set task timeout limit in seconds, must be positive integer.")
 
 
 def add_subset_options(parser):
     """Add options for commands which can run a subset of tasks"""
-    parser.add_argument('-t', '--tags', dest='tags', default=C.TAGS_RUN, action='append',
+    parser.add_argument('-t', '--tags', dest='tags', default=C.TAGS_RUN, action=AppendAction,
                         help="only run plays and tasks tagged with these values")
-    parser.add_argument('--skip-tags', dest='skip_tags', default=C.TAGS_SKIP, action='append',
+    parser.add_argument('--skip-tags', dest='skip_tags', default=C.TAGS_SKIP, action=AppendAction,
                         help="only run plays and tasks whose tags do not match these values")
 
 
 def add_vault_options(parser):
     """Add options for loading vault files"""
-    parser.add_argument('--vault-id', default=[], dest='vault_ids', action='append', type=str,
+    parser.add_argument('--vault-id', default=[], dest='vault_ids', action=AppendAction, type=str,
                         help='the vault identity to use')
     base_group = parser.add_mutually_exclusive_group()
-    base_group.add_argument('--ask-vault-password', '--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
+    base_group.add_argument('--ask-vault-password', '--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action=StoreTrueAction,
                             help='ask for vault password')
     base_group.add_argument('--vault-password-file', '--vault-pass-file', default=[], dest='vault_password_files',
-                            help="vault password file", type=unfrack_path(), action='append')
+                            help="vault password file", type=unfrack_path(), action=AppendAction)
