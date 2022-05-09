@@ -27,6 +27,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import (
+    _resolve_depenency_map,
     build_collection,
     download_collections,
     find_existing_collections,
@@ -36,6 +37,7 @@ from ansible.galaxy.collection import (
     validate_collection_path,
     verify_collections,
     SIGNATURE_COUNT_RE,
+    MultiGalaxyAPIProxy,
 )
 from ansible.galaxy.collection.concrete_artifact_manager import (
     ConcreteArtifactsManager,
@@ -251,6 +253,7 @@ class GalaxyCLI(CLI):
         self.add_publish_options(collection_parser, parents=[common])
         self.add_install_options(collection_parser, parents=[common, force, cache_options])
         self.add_list_options(collection_parser, parents=[common, collections_path])
+        self.add_search_options(collection_parser, parents=[common, force, cache_options])
         self.add_verify_options(collection_parser, parents=[common, collections_path])
 
         # Add sub parser for the Galaxy role actions
@@ -343,15 +346,39 @@ class GalaxyCLI(CLI):
                                      help="Format to display the list of collections in.")
 
     def add_search_options(self, parser, parents=None):
-        search_parser = parser.add_parser('search', parents=parents,
-                                          help='Search the Galaxy database by tags, platforms, author and multiple '
-                                               'keywords.')
-        search_parser.set_defaults(func=self.execute_search)
+        galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
+        if galaxy_type == 'role':
+            search_parser = parser.add_parser('search', parents=parents,
+                                              help='Search the Galaxy database by tags, platforms, author and multiple '
+                                                   'keywords.')
+            search_parser.set_defaults(func=self.execute_search)
 
-        search_parser.add_argument('--platforms', dest='platforms', help='list of OS platforms to filter by')
-        search_parser.add_argument('--galaxy-tags', dest='galaxy_tags', help='list of galaxy tags to filter by')
-        search_parser.add_argument('--author', dest='author', help='GitHub username')
-        search_parser.add_argument('args', help='Search terms', metavar='searchterm', nargs='*')
+            search_parser.add_argument('--platforms', dest='platforms', help='list of OS platforms to filter by')
+            search_parser.add_argument('--galaxy-tags', dest='galaxy_tags', help='list of galaxy tags to filter by')
+            search_parser.add_argument('--author', dest='author', help='GitHub username')
+            search_parser.add_argument('args', help='Search terms', metavar='searchterm', nargs='*')
+        else:
+            search_parser = parser.add_parser('search', parents=parents,
+                                              help='Search the Galaxy database with a collection name or requirements file.')
+            search_parser.set_defaults(func=self.execute_search_collection)
+
+            search_parser.add_argument('args', metavar='collection_name', nargs='*',
+                                       help='The collection(s) name of a collection on a Galaxy server. This is '
+                                            'mutually exclusive with --requirements-file.')
+            search_parser.add_argument('--regex', '--pattern', dest='re_pattern', help='The pattern used to find matching collection names. '
+                                       'To filter by version requirement, provide --requirements/collection requirement args instead.')
+
+            search_parser.add_argument('-r', '--requirements-file', dest='requirements',
+                                       help='A file containing a list of collections to search for.')
+            search_parser.add_argument('--pre', dest='allow_pre_release', action='store_true',
+                                       help='Include pre-release versions. Semantic versioning pre-releases are ignored by default')
+            search_parser.add_argument('--deps', dest='allow_dependencies', action='store_true',
+                                       help='Include dependencies in the search results.')
+            search_parser.add_argument('--deprecated', dest='allow_deprecated', action='store_true',
+                                       help='Include deprecated collections in the search results.')
+            search_parser.add_argument('--count', type=int, help='The number of results to display if there is no exact match. '
+                                       'This only impacts retrieving collection namespaces, e.g. "ansible-galaxy search --name-regex community.*"')
+            search_parser.add_argument('--json', dest='display_json', action='store_true', default=False, help='Display search results as json')
 
     def add_import_options(self, parser, parents=None):
         import_parser = parser.add_parser('import', parents=parents, help='Import a role into a galaxy server')
@@ -482,6 +509,8 @@ class GalaxyCLI(CLI):
             install_parser.add_argument('--ignore-signature-status-code', dest='ignore_gpg_errors', type=str, action='append',
                                         help=ignore_gpg_status_help, default=C.GALAXY_IGNORE_INVALID_SIGNATURE_STATUS_CODES,
                                         choices=list(GPG_ERROR_MAP.keys()))
+            install_parser.add_argument('--dry-run', dest='dry_run', default=False, action='store_true',
+                                        help='check which collections will be installed')
         else:
             install_parser.add_argument('-r', '--role-file', dest='requirements',
                                         help='A file containing a list of roles to be installed.')
@@ -1331,6 +1360,7 @@ class GalaxyCLI(CLI):
             allow_pre_release=allow_pre_release,
             artifacts_manager=artifacts_manager,
             disable_gpg_verify=disable_gpg_verify,
+            dry_run=context.CLIARGS.get('dry_run', False),
         )
 
         return 0
@@ -1674,6 +1704,99 @@ class GalaxyCLI(CLI):
         self.pager(data)
 
         return True
+
+    @with_collection_artifacts_manager
+    def execute_search_collection(self, artifacts_manager=None):
+
+        search_requirements = context.CLIARGS['args']
+        requirements_file = context.CLIARGS['requirements']
+        requirements_name_re = context.CLIARGS['re_pattern']
+        max_count = context.CLIARGS['count']
+
+        allow_deprecated = context.CLIARGS['allow_deprecated']
+        allow_deps = context.CLIARGS['allow_dependencies']
+        allow_pre_release = context.CLIARGS['allow_pre_release']
+
+        display_json = context.CLIARGS['display_json']
+
+        if requirements_file is not None or search_requirements:
+            if max_count is not None:
+                raise AnsibleError("--count is mutually exclusive with collection requirements")
+
+            search_result = self._search_requirement_info(search_requirements, requirements_file, artifacts_manager, not allow_deps, allow_pre_release)
+
+        elif requirements_name_re:
+            search_result = self._search_requirement_name(requirements_name_re, max_count, allow_deprecated)
+        else:
+            raise AnsibleError("One of --name-regex, --requirements, or a collection name is required for 'ansible-galaxy collection search'")
+
+        if display_json:
+            display.display(json.dumps(search_result, sort_keys=True, indent=4))
+        else:
+            display.display(yaml_dump(search_result, sort_keys=True, indent=4))
+
+    def _search_requirement_info(self, requirements, requirements_file, artifacts_manager, no_deps, allow_pre_release):
+        search_result = {}
+
+        if requirements_file:
+            requirements_file = GalaxyCLI._resolve_path(requirements_file)
+
+        requirements = self._require_one_of_collections_requirements(requirements, requirements_file, None, artifacts_manager)
+        collection_requirements = requirements['collections']
+
+        dep_map = _resolve_depenency_map(collection_requirements, self.api_servers, artifacts_manager, None, no_deps, allow_pre_release, False, False)
+        for fqcn, collection in dep_map.items():
+            if not isinstance(collection.src, GalaxyAPI):
+                continue
+
+            api = collection.src
+            namespace_name_ver = (collection.namespace, collection.name, collection.ver,)
+
+            if f"Server {api.name} ({api.api_server})" not in search_result:
+                search_result[f"Server {api.name} ({api.api_server})"] = {}
+
+            search_result[f"Server {api.name} ({api.api_server})"][fqcn] = api.get_collection_version_metadata_source_data(*namespace_name_ver)
+
+        return search_result
+
+    def _search_requirement_name(self, pattern, max_count, include_deprecated):
+        search_result = {}
+
+        try:
+            validate_collection_name(pattern)
+        except Exception:
+            valid_collection_name = False
+        else:
+            valid_collection_name = True
+
+        count = 0
+        for api in self.api_servers:
+
+            if valid_collection_name:
+                try:
+                    namespace, collection = pattern.split('.')
+                    info = api.get_collection_info(namespace, collection)
+                except Exception:
+                    pass
+                else:
+                    search_result[f"Server {api.name} ({api.api_server})"] = {pattern: {f: getattr(info, f) for f in info._fields}}
+                    break
+
+            for name, collection_info in api.list_collections():
+                if max_count is not None and count >= max_count:
+                    break
+                if not re.match(pattern, name):
+                    continue
+                if not include_deprecated and collection_info.deprecated:
+                    continue
+
+                if f"Server {api.name} ({api.api_server})" not in search_result:
+                    search_result[f"Server {api.name} ({api.api_server})"] = {}
+
+                count += 1
+                search_result[f"Server {api.name} ({api.api_server})"][name] = {f: getattr(collection_info, f) for f in collection_info._fields}
+
+        return search_result
 
     def execute_import(self):
         """ used to import a role into Ansible Galaxy """

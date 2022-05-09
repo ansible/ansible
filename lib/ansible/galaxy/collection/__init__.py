@@ -630,6 +630,7 @@ def install_collections(
         allow_pre_release,  # type: bool
         artifacts_manager,  # type: ConcreteArtifactsManager
         disable_gpg_verify,  # type: bool
+        dry_run=False,  # type: bool
 ):  # type: (...) -> None
     """Install Ansible collections to the path specified.
 
@@ -736,6 +737,9 @@ def install_collections(
                     "or disable signature verification. "
                     "Skipping signature verification."
                 )
+            if dry_run:
+                display.display(f"{to_text(collection)} was installed successfully (dry run)")
+                continue
 
             try:
                 install(concrete_coll_pin, output_path, artifacts_manager)

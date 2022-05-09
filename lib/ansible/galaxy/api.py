@@ -219,6 +219,8 @@ class GalaxyError(AnsibleError):
 # Keep the raw string results for the date. It's too complex to parse as a datetime object and the various APIs return
 # them in different formats.
 CollectionMetadata = collections.namedtuple('CollectionMetadata', ['namespace', 'name', 'created_str', 'modified_str'])
+# add deprecated and latest_version to metadata instead?
+CollectionSearch = collections.namedtuple('CollectionSearch', ['created_str', 'modified_str', 'deprecated', 'latest_version'])
 
 
 class CollectionVersionMetadata:
@@ -615,6 +617,62 @@ class GalaxyAPI:
         return data
 
     # Collection APIs #
+    @g_connect(['v2', 'v3'])
+    def list_collections(self):
+        relative_link = False
+        if 'v3' in self.available_api_versions:
+            api_path = self.available_api_versions['v3']
+            pagination_path = ['links', 'next']
+            relative_link = True  # AH pagination results are relative an not an absolute URI.
+        else:
+            api_path = self.available_api_versions['v2']
+            pagination_path = ['next']
+
+        page_size_name = 'limit' if 'v3' in self.available_api_versions else 'page_size'
+        error_context_msg = 'Error when getting available collections from %s (%s)' \
+                            % (self.name, self.api_server)
+
+        collections_url = _urljoin(self.api_server, api_path, 'collections') + '/' + '?%s=%s' % (page_size_name, COLLECTION_PAGE_SIZE)
+        try:
+            data = self._call_galaxy(collections_url, error_context_msg=error_context_msg, cache=False)
+        except GalaxyError as err:
+            if err.http_code != 404:
+                raise
+            # v3 doesn't raise a 404 so we need to mimick the empty response from APIs that do.
+            return
+
+        # v3 automation-hub is the only known API that uses `data`
+        # since v3 pulp_ansible does not, we cannot rely on version
+        # to indicate which key to use
+        results_key = 'data' if 'data' in data else 'results'
+
+        while True:
+            next_link = data
+            for path in pagination_path:
+                next_link = next_link.get(path, {})
+
+            if not next_link:
+                for info in data[results_key]:
+                    name = f"{info['namespace']['name']}.{info['name']}"
+                    result = CollectionSearch(
+                        created_str=info['created'], modified_str=info['modified'], latest_version=info['latest_version']['version'], deprecated=info['deprecated']
+                    )
+                    yield name, result
+                break
+
+            next_url = urlparse(collections_url)
+            next_path = urlparse(next_link)
+            next_link = next_url._replace(path=next_path.path, query=next_path.query).geturl()
+
+            data = self._call_galaxy(to_native(next_link, errors='surrogate_or_strict'),
+                                     error_context_msg=error_context_msg, cache=False)
+
+            for info in data[results_key]:
+                name = f"{info['namespace']['name']}.{info['name']}"
+                result = CollectionSearch(
+                    created_str=info['created'], modified_str=info['modified'], latest_version=info['latest_version']['version'], deprecated=info['deprecated']
+                )
+                yield name, result
 
     @g_connect(['v2', 'v3'])
     def publish_collection(self, collection_path):
@@ -729,6 +787,27 @@ class GalaxyAPI:
             raise AnsibleError("Galaxy import process failed: %s (Code: %s)" % (description, code))
 
     @g_connect(['v2', 'v3'])
+    def get_collection_info(self, namespace, name):
+        error_context_msg = 'Error when getting the collection info for %s.%s from %s (%s)' \
+                            % (namespace, name, self.name, self.api_server)
+        if 'v3' in self.available_api_versions:
+            info_url = _urljoin(self.api_server, self.available_api_versions['v3'], 'collections', namespace, name, '/')
+            timestamp_field_map = [('created_str', 'created_at'), ('modified_str', 'updated_at'),]
+        else:
+            info_url = _urljoin(self.api_server, self.available_api_versions['v2'], 'collections', namespace, name, '/')
+            timestamp_field_map = [('created_str', 'created'), ('modified_str', 'modified'),]
+
+        data = self._call_galaxy(info_url, error_context_msg=error_context_msg)
+
+        info = {}
+        for name, api_field in timestamp_field_map:
+            info[name] = data.get(api_field, None)
+        info['deprecated'] = data['deprecated']
+        info['latest_version'] = data['latest_version']['version']
+
+        return CollectionSearch(**info)
+
+    @g_connect(['v2', 'v3'])
     def get_collection_metadata(self, namespace, name):
         """
         Gets the collection information from the Galaxy server about a specific Collection.
@@ -762,6 +841,18 @@ class GalaxyAPI:
         return CollectionMetadata(namespace, name, **metadata)
 
     @g_connect(['v2', 'v3'])
+    def get_collection_version_metadata_source_data(self, namespace, name, version):
+        api_path = self.available_api_versions.get('v3', self.available_api_versions.get('v2'))
+        url_paths = [self.api_server, api_path, 'collections', namespace, name, 'versions', version, '/']
+
+        n_collection_url = _urljoin(*url_paths)
+        error_context_msg = 'Error when getting collection version metadata for %s.%s:%s from %s (%s)' \
+                            % (namespace, name, version, self.name, self.api_server)
+        data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg, cache=True)
+        self._set_cache()
+        return data
+
+    @g_connect(['v2', 'v3'])
     def get_collection_version_metadata(self, namespace, name, version):
         """
         Gets the collection information from the Galaxy server about a specific Collection version.
@@ -771,17 +862,8 @@ class GalaxyAPI:
         :param version: Version of the collection to get the information for.
         :return: CollectionVersionMetadata about the collection at the version requested.
         """
-        api_path = self.available_api_versions.get('v3', self.available_api_versions.get('v2'))
-        url_paths = [self.api_server, api_path, 'collections', namespace, name, 'versions', version, '/']
-
-        n_collection_url = _urljoin(*url_paths)
-        error_context_msg = 'Error when getting collection version metadata for %s.%s:%s from %s (%s)' \
-                            % (namespace, name, version, self.name, self.api_server)
-        data = self._call_galaxy(n_collection_url, error_context_msg=error_context_msg, cache=True)
-        self._set_cache()
-
+        data = self.get_collection_version_metadata_source_data(namespace, name, version)
         signatures = data.get('signatures') or []
-
         return CollectionVersionMetadata(data['namespace']['name'], data['collection']['name'], data['version'],
                                          data['download_url'], data['artifact']['sha256'],
                                          data['metadata']['dependencies'], data['href'], signatures)
