@@ -358,7 +358,7 @@ Here's a simple lookup plugin implementation --- this lookup returns the content
 
     DOCUMENTATION = """
       name: file
-      author: Daniel Hokka Zakrisson (dhozac) <daniel@hozac.com>
+      author: Daniel Hokka Zakrisson (@dhozac) <daniel@hozac.com>
       version_added: "0.9"  # for collections, use the collection version, not the Ansible version
       short_description: read file contents
       description:
