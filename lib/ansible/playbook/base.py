@@ -25,8 +25,7 @@ from ansible.plugins.loader import module_loader, action_loader
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
-from ansible.utils.vars import combine_vars, get_unique_id
-from ansible.utils.vars import isidentifier
+from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
 
 display = Display()
 

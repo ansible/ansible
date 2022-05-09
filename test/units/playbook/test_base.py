@@ -210,6 +210,13 @@ class TestBase(unittest.TestCase):
               'vars': 'I am a string, not a dict or a list of dicts'}
         self.assertRaises(AnsibleParserError, self.b.load_data, ds)
 
+    def test_vars_not_valid_identifier(self):
+        ds = {'environment': [],
+              'vars': [{'var_2_key': 'var_2_value'},
+                       {'1an-invalid identifer': 'var_1_value'}]
+              }
+        self.assertRaises(AnsibleParserError, self.b.load_data, ds)
+
     def test_vars_is_list_but_not_of_dicts(self):
         ds = {'environment': [],
               'vars': ['foo', 'bar', 'this is a string not a dict']

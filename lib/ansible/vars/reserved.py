@@ -6,9 +6,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible import constants as C
-from ansible.errors import AnsibleError
-from ansible.module_utils._text import to_text
 from ansible.plugins.loader import lookup_loader
 from ansible.template import Templar
 from ansible.utils.display import Display

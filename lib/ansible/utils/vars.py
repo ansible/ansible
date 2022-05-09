@@ -29,13 +29,11 @@ from json import dumps
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils.six import string_types, PY3
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_text
 from ansible.parsing.splitter import parse_kv
 from ansible.vars.validation import validate_variable_names
 
-
-ADDITIONAL_PY2_KEYWORDS = frozenset(("True", "False", "None"))
 
 _MAXSIZE = 2 ** 32
 cur_id = 0

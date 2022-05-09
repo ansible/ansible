@@ -168,8 +168,6 @@ class TestTaskExecutor(unittest.TestCase):
 
         mock_task = MagicMock()
         mock_task.copy.side_effect = _copy
-        mock_task.loop_control.loop_var = 'item'
-        mock_task.loop_control.index_var = None
 
         mock_play_context = MagicMock()
 
