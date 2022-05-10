@@ -7,7 +7,7 @@ DOCUMENTATION:
     - Will do a shell-like substitution of environment variables on the provided input.
   options:
     _input:
-      description: String that contains environment variables
+      description: A string that contains environment variables.
       type: string
       required: true
 EXAMPLES: |
