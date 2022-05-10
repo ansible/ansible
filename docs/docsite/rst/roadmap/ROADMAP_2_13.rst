@@ -37,9 +37,8 @@ Release Phase
 - 2022-04-25 Beta 2 (if necessary)
 
 - 2022-05-02 Release Candidate 1
-- 2022-05-16 Release Candidate 2 (if necessary)
 
-- 2022-05-23 Release
+- 2022-05-16 Release
 
 Release Manager
 ===============
