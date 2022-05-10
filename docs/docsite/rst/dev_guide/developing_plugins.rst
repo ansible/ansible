@@ -225,7 +225,7 @@ but with an extra option so you can see how configuration works in Ansible versi
 
     # not only visible to ansible-doc, it also 'declares' the options the plugin requires and how to configure them.
     DOCUMENTATION = '''
-    callback: timer
+    name: timer
     callback_type: aggregate
     requirements:
         - enable in configuration
@@ -357,8 +357,8 @@ Here's a simple lookup plugin implementation --- this lookup returns the content
     __metaclass__ = type
 
     DOCUMENTATION = """
-      lookup: file
-      author: Daniel Hokka Zakrisson <daniel@hozac.com>
+      name: file
+      author: Daniel Hokka Zakrisson (@dhozac) <daniel@hozac.com>
       version_added: "0.9"  # for collections, use the collection version, not the Ansible version
       short_description: read file contents
       description:
