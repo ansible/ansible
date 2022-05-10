@@ -8,7 +8,7 @@ Multiple control nodes are possible, but Ansible itself does not coordinate acro
 Managed nodes
 =============
 Also referred to as 'hosts', these are The target devices (servers, network appliances or any computer) you aim to manage with Ansible.
-Ansible is not normally installed on managed nodes, unless you are using ``ansible-pull`, but this is rare and not the recommended setup.
+Ansible is not normally installed on managed nodes, unless you are using ``ansible-pull``, but this is rare and not the recommended setup.
 
 
 Inventory
@@ -56,7 +56,7 @@ Plugins
 =======
 Pieces of code that expand Ansible's core capabilities, they can control how you connect to a managed node (connection plugins),
 manipulate data (filter plugins) and even control what is displayed in the console (callback plugins).
-:ref:`Working with plugins`
+:ref:`working with plugins`
 
 
 Collections
