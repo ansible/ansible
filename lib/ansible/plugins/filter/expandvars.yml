@@ -4,7 +4,7 @@ DOCUMENTATION:
   version_added: "1.5"
   short_description: expand environment variables
   description:
-    - Will do shell-like substitution of environment variables on the provided input.
+    - Will do a shell-like substitution of environment variables on the provided input.
   options:
     _input:
       description: String that contains environment variables
