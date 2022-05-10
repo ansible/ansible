@@ -2,7 +2,7 @@ DOCUMENTATION:
   name: basename
   author: ansible core team
   version_added: "1.5"
-  short_description: Return a path with '~' translation
+  short_description: Returns a path with '~' translation.
   description:
     - Translates `~` in a path to the proper user's home directory.
   options:
