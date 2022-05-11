@@ -7,7 +7,7 @@ Multiple control nodes are possible, but Ansible itself does not coordinate acro
 
 Managed nodes
 =============
-Also referred to as 'hosts', these are The target devices (servers, network appliances or any computer) you aim to manage with Ansible.
+Also referred to as 'hosts', these are the target devices (servers, network appliances or any computer) you aim to manage with Ansible.
 Ansible is not normally installed on managed nodes, unless you are using ``ansible-pull``, but this is rare and not the recommended setup.
 
 
@@ -20,7 +20,7 @@ To learn more about inventory, see :ref:`the Working with Inventory<intro_invent
 
 Playbooks
 =========
-They contain Plays (which are the basic unit of Ansible execution), this is both an 'execution concept' and how we describe the files on which ``ansible-playbook`` operates on.
+They contain Plays (which are the basic unit of Ansible execution). this is both an 'execution concept' and how we describe the files on which ``ansible-playbook`` operates on.
 Playbooks are written in YAML and are easy to read, write, share and understand. To learn more about playbooks, see :ref:`about_playbooks`.
 
 Plays
@@ -46,24 +46,24 @@ Special form of a Task, that only execute when notified by a previous task which
 
 Modules
 =======
-The code or binaries that Ansible copies and executes on each managed node (when needed) to accoplish the action defined in each Task.
+The code or binaries that Ansible copies and executes on each managed node (when needed) to accomplish the action defined in each Task.
 Each module has a particular use, from administering users on a specific type of database to managing VLAN interfaces on a specific type of network device.
 You can invoke a single module with a task, or invoke several different modules in a playbook.
-Starting in Ansible 2.10, modules are grouped in collections. For an idea of how many collections Ansible includes, take a look at the :ref:`list_of_collections`.
+Ansible modules are grouped in collections. For an idea of how many collections Ansible includes, see the :ref:`list_of_collections`.
 
 
 Plugins
 =======
 Pieces of code that expand Ansible's core capabilities, they can control how you connect to a managed node (connection plugins),
 manipulate data (filter plugins) and even control what is displayed in the console (callback plugins).
-:ref:`working_with_plugins`
+See :ref:`working_with_plugins` for details.
 
 
 Collections
 ===========
-Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. You can install and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_. To learn more about collections, see :ref:`collections`. Colleciton resources can be used independantly and discretely from each other.
+Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. You can install and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_. To learn more about collections, see :ref:`collections`. Collection resources can be used independently and discretely from each other.
 
 
 AAP
 ===
-Short for 'Ansible Automation Platform'. This is a product that includes enterprise level features and integrates many tools of the Ansible ecosystem: ansible-core, awx, automation hub, etc.
+Short for 'Ansible Automation Platform'. This is a product that includes enterprise level features and integrates many tools of the Ansible ecosystem: ansible-core, awx, galaxyNG, and so on.
