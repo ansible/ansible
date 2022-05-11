@@ -89,6 +89,13 @@
 - set_fact:
     cache_version_build: 0
 
+- name: test installing a collection with an unsupported version of resolvelib
+  include_tasks: unsupported_resolvelib.yml
+  args:
+    apply:
+      environment:
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+
 - name: run ansible-galaxy collection install tests for {{ test_name }}
   include_tasks: install.yml
   vars:
