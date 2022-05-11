@@ -11,7 +11,7 @@ DOCUMENTATION:
       type: path
       required: true
   seealso:
-    - plugin: basename
+    - plugin: ansible.builtin.basename
       plugin_type: filter
 EXAMPLES: |
 
@@ -20,5 +20,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: The directory portion of the original path
+    description: The directory portion of the original path.
     type: path

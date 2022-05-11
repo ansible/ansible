@@ -7,7 +7,7 @@ DOCUMENTATION:
     - Translates `~` in a path to the proper user's home directory.
   options:
     _input:
-      description: String that contains a path
+      description: A string that contains a path.
       type: path
       required: true
 EXAMPLES: |
@@ -17,5 +17,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: The translated path
+    description: The translated path.
     type: path

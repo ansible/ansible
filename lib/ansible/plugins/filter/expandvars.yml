@@ -8,7 +8,7 @@ DOCUMENTATION:
   options:
     _input:
       description: A string that contains environment variables.
-      type: string
+      type: str
       required: true
 EXAMPLES: |
 
@@ -17,5 +17,5 @@ EXAMPLES: |
 
 RETURN:
   _value:
-    description: The string with translated environment variable values
-    type: string
+    description: The string with translated environment variable values.
+    type: str
