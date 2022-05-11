@@ -61,11 +61,14 @@ class AnsiblePlugin(ABC):
         self._options = {}
         self._hash = None
 
+    def _gen_signature(self):
+        # create immutable
+        s_options = pickle.dumps(self.get_options(hostvars=variables))
+        self._hash = hash(self._load_name) + hash(s_options)
+
     def signature(self):
         if self._hash is None:
-            # create immutable
-            s_options = pickle.dumps(self.get_options())
-            self._hash = hash(self._load_name) + hash(s_options)
+            self._gen_signature()
         return self._hash
 
     def get_option(self, option, hostvars=None):
@@ -85,7 +88,6 @@ class AnsiblePlugin(ABC):
         return options
 
     def set_option(self, option, value):
-
         self._options[option] = value
         self._hash = None
 
@@ -104,7 +106,7 @@ class AnsiblePlugin(ABC):
         if self.allow_extras and var_options and '_extras' in var_options:
             self.set_option('_extras', var_options['_extras'])
 
-        self._hash = None
+        self._gen_signature()
 
     def has_option(self, option):
         if not self._options:
