@@ -114,14 +114,17 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
         """
         return _plugin_info.get_plugin_info(self)
 
+    def _gen_signature(self):
+        # create immutable
+        s_options = pickle.dumps(self.get_options(hostvars=variables))
+        self._hash = hash(self._load_name) + hash(s_options)
+
     def signature(self):
         return self.__hash__()
 
     def __hash__(self):
         if self._hash is None:
-            # create immutable
-            s_options = pickle.dumps(self.get_options())
-            self._hash = hash(self._load_name) + hash(s_options)
+            self._gen_signature()
         return self._hash
 
     def get_option(self, option, hostvars=None):
@@ -161,7 +164,7 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
             self._options['_extras'] = var_options['_extras']
         _display._report_config_warnings(self.__plugin_info)
 
-        self._hash = None
+        self._gen_signature()
 
     def has_option(self, option):
         if not self._options:
