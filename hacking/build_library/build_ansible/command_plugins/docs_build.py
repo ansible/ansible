@@ -14,7 +14,7 @@ from tempfile import TemporaryDirectory
 
 import yaml
 
-from ansible.release import __version__ as ansible_base__version__
+from ansible.release import __version__ as ansible_core__version__
 
 # Pylint doesn't understand Python3 namespace modules.
 # pylint: disable=relative-beyond-top-level
@@ -96,23 +96,23 @@ def find_latest_deps_file(build_data_working, ansible_version):
 
 
 #
-# Subcommand base
+# Subcommand core
 #
 
-def generate_base_docs(args):
+def generate_core_docs(args):
     """Regenerate the documentation for all plugins listed in the plugin_to_collection_file."""
     # imports here so that they don't cause unnecessary deps for all of the plugins
     from antsibull_docs.cli import antsibull_docs
 
     with TemporaryDirectory() as tmp_dir:
         #
-        # Construct a deps file with our version of ansible_base in it
+        # Construct a deps file with our version of ansible_core in it
         #
         modified_deps_file = os.path.join(tmp_dir, 'ansible.deps')
 
-        # The _ansible_version doesn't matter since we're only building docs for base
-        deps_file_contents = {'_ansible_version': ansible_base__version__,
-                              '_ansible_core_version': ansible_base__version__}
+        # The _ansible_version doesn't matter since we're only building docs for core
+        deps_file_contents = {'_ansible_version': ansible_core__version__,
+                              '_ansible_core_version': ansible_core__version__}
 
         with open(modified_deps_file, 'w') as f:
             f.write(yaml.dump(deps_file_contents))
@@ -139,7 +139,7 @@ def generate_full_docs(args):
 
     with TemporaryDirectory() as tmp_dir:
         sh.git(['clone', 'https://github.com/ansible-community/ansible-build-data'], _cwd=tmp_dir)
-        # If we want to validate that the ansible version and ansible-base branch version match,
+        # If we want to validate that the ansible version and ansible-core branch version match,
         # this would be the place to do it.
 
         build_data_working = os.path.join(tmp_dir, 'ansible-build-data')
@@ -153,15 +153,15 @@ def generate_full_docs(args):
         else:
             latest_filename = find_latest_deps_file(build_data_working, ansible_version)
 
-            # Make a copy of the deps file so that we can set the ansible-base version we'll use
+            # Make a copy of the deps file so that we can set the ansible-core version we'll use
             modified_deps_file = os.path.join(tmp_dir, 'ansible.deps')
             shutil.copyfile(latest_filename, modified_deps_file)
 
-            # Put our version of ansible-base into the deps file
+            # Put our version of ansible-core into the deps file
             with open(modified_deps_file, 'r') as f:
                 deps_data = yaml.safe_load(f.read())
 
-            deps_data['_ansible_core_version'] = ansible_base__version__
+            deps_data['_ansible_core_version'] = ansible_core__version__
 
             with open(modified_deps_file, 'w') as f:
                 f.write(yaml.dump(deps_data))
@@ -182,7 +182,7 @@ class CollectionPluginDocs(Command):
     name = 'docs-build'
     _ACTION_HELP = """Action to perform.
         full: Regenerate the rst for the full ansible website.
-        base: Regenerate the rst for plugins in ansible-base and then build the website.
+        core: Regenerate the rst for plugins in ansible-core and then build the website.
         named: Regenerate the rst for the named plugins and then build the website.
     """
 
@@ -196,14 +196,14 @@ class CollectionPluginDocs(Command):
                             ' hierarchy.')
         # I think we should make the actions a subparser but need to look in git history and see if
         # we tried that and changed it for some reason.
-        parser.add_argument('action', action='store', choices=('full', 'base', 'named'),
+        parser.add_argument('action', action='store', choices=('full', 'core', 'named'),
                             default='full', help=cls._ACTION_HELP)
         parser.add_argument("-o", "--output-dir", action="store", dest="output_dir",
                             default=DEFAULT_OUTPUT_DIR,
                             help="Output directory for generated doc files")
         parser.add_argument("-t", "--top-dir", action="store", dest="top_dir",
                             default=DEFAULT_TOP_DIR,
-                            help="Toplevel directory of this ansible-base checkout or expanded"
+                            help="Toplevel directory of this ansible-core checkout or expanded"
                             " tarball.")
         parser.add_argument("-l", "--limit-to-modules", '--limit-to', action="store",
                             dest="limit_to", default=None,
@@ -231,8 +231,8 @@ class CollectionPluginDocs(Command):
         if args.action == 'full':
             return generate_full_docs(args)
 
-        if args.action == 'base':
-            return generate_base_docs(args)
+        if args.action == 'core':
+            return generate_core_docs(args)
         # args.action == 'named' (Invalid actions are caught by argparse)
         raise NotImplementedError('Building docs for specific files is not yet implemented')
 
