@@ -50,6 +50,13 @@ def test_distribution_version(am, mocker, testcase):
             data = data.strip()
         return data
 
+    def mock_get_file_lines(fname, strip=True):
+        """give fake lines if file exists, otherwise return empty list"""
+        data = mock_get_file_content(fname=fname, strip=strip)
+        if data:
+            return [data]
+        return []
+
     def mock_get_uname(am, flags):
         if '-v' in flags:
             return testcase.get('uname_v', None)
@@ -115,6 +122,7 @@ def test_distribution_version(am, mocker, testcase):
         return ret
 
     mocker.patch('ansible.module_utils.facts.system.distribution.get_file_content', mock_get_file_content)
+    mocker.patch('ansible.module_utils.facts.system.distribution.get_file_lines', mock_get_file_lines)
     mocker.patch('ansible.module_utils.facts.system.distribution.get_uname', mock_get_uname)
     mocker.patch('ansible.module_utils.facts.system.distribution._file_exists', mock_file_exists)
     mocker.patch('ansible.module_utils.distro.name', mock_distro_name)
