@@ -14,7 +14,7 @@ import ansible.module_utils.compat.typing as t
 
 from ansible.module_utils.common.sys_info import get_distribution, get_distribution_version, \
     get_distribution_codename
-from ansible.module_utils.facts.utils import get_file_content
+from ansible.module_utils.facts.utils import get_file_content, get_file_lines
 from ansible.module_utils.facts.collector import BaseFactCollector
 
 
@@ -334,6 +334,12 @@ class DistributionFiles:
                     rc, out, err = self.module.run_command(cmd)
                     if rc == 0:
                         debian_facts['distribution_release'] = out.strip()
+            debian_version_path = '/etc/debian_version'
+            distdata = get_file_lines(debian_version_path)
+            for line in distdata:
+                m = re.search(r'(\d+)\.(\d+)', line.strip())
+                if m:
+                    debian_facts['distribution_minor_version'] = m.groups()[1]
         elif 'Ubuntu' in data:
             debian_facts['distribution'] = 'Ubuntu'
             # nothing else to do, Ubuntu gets correct info from python functions
