@@ -54,6 +54,11 @@ The Ansible community team typically releases two major versions of the communit
 
 Starting with version 2.10, the Ansible community team guarantees maintenance for only one major community package release at a time. For example, when Ansible 4.0.0 gets released, the team will stop making new 3.x releases. Community members may maintain older versions if desired.
 
+.. note:: 
+    
+   Each Ansible EOL version may issue one final maintenance release at or shortly after the first release of the next version. When this happens, the final maintenance release is EOL at the date it releases. 
+
+
 .. note::
 
    Older, unmaintained versions of the Ansible community package might contain unfixed security vulnerabilities (*CVEs*). If you are using a release of the Ansible community package that is no longer maintained, we strongly encourage you to upgrade as soon as possible in order to benefit from the latest features and security fixes.
@@ -75,8 +80,8 @@ This table links to the changelogs for each major Ansible release. These changel
 Ansible Community Package Release       Status                          Core version dependency
 ==================================      ============================    =========================
 6.0.0                                   In development (unreleased)     2.13
-`5.x Changelogs`_                       Current (latest stable)         2.12
-`4.x Changelogs`_                       End of life after 4.10          2.11
+`5.x Changelogs`_                       Current (EOL after 5.10)        2.12
+`4.x Changelogs`_                       Unmaintained (end of life)      2.11
 `3.x Changelogs`_                       Unmaintained (end of life)      2.10
 `2.10 Changelogs`_                      Unmaintained (end of life)      2.10
 ==================================      ============================    =========================
