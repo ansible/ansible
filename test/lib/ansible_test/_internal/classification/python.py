@@ -321,11 +321,6 @@ class ModuleUtilFinder(ast.NodeVisitor):
         if is_subdir(self.path, data_context().content.test_path):
             return  # invalid imports in tests are ignored
 
-        path = get_import_path(name, True)
-
-        if os.path.exists(path) and os.path.getsize(path) == 0:
-            return  # zero length __init__.py files are ignored during earlier processing, do not warn about them now
-
         # Treat this error as a warning so tests can be executed as best as possible.
         # This error should be detected by unit or integration tests.
         display.warning('%s:%d Invalid module_utils import: %s' % (self.path, line_number, import_name))
