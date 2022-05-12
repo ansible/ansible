@@ -27,12 +27,9 @@ string_to_vars = {
 def _var2string(value):
     ''' reverse lookup of the dict above '''
     global string_to_vars
-    string = None
     for k, v in string_to_vars.items():
         if v == value:
-            string = k
-            break
-    return string
+            return k
 
 
 def _init_doc_dict():
@@ -133,7 +130,7 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
                         theid = t.id
                     except AttributeError:
                         # skip errors can happen when trying to use the normal code
-                        display.warning("Failed to assign id for %s on %s, skipping" % (t, filename))
+                        display.warning("Building documentation, failed to assign id for %s on %s, skipping" % (t, filename))
                         continue
 
                     if theid in string_to_vars:
@@ -149,10 +146,10 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
                                 # string should be yaml if already not a dict
                                 data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
 
-                        display.debug('doc assigned: %s' % varkey)
+                        display.debug('Documenation assigned: %s' % varkey)
 
     except Exception as e:
-        msg = "Unable to parse docs in python file '%s': %s" % (filename, to_native(e))
+        msg = "Unable to parse documentation in python file '%s': %s" % (filename, to_native(e))
         if not ignore_errors:
             raise AnsibleParserError(msg, orig_exc=e)
         elif verbose:
