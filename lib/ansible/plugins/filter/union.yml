@@ -20,7 +20,7 @@ DOCUMENTATION:
     - plugin_type: filter
       plugin: ansible.builtin.intersect
     - plugin_type: filter
-      plugin: ansible.builtin.symetric_difference
+      plugin: ansible.builtin.symmetric_difference
     - plugin_type: filter
       plugin: ansible.builtin.unique
 EXAMPLES: |
