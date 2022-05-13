@@ -1,5 +1,5 @@
 DOCUMENTATION:
-  name: symetric_difference
+  name: symmetric_difference
   author: Brian Coca (@bcoca)
   version_added: "1.4"
   short_description: different items from 2 lists
