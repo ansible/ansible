@@ -1,0 +1,28 @@
+DOCUMENTATION:
+  name: unique
+  author: Brian Coca (@bcoca)
+  version_added: "1.4"
+  short_description: set of unique items of a list
+  description:
+    - Creates a list of unique elements (a set) from the provided input list
+  options:
+    _input:
+      description: A list
+      type: list
+      required: true
+  seealso:
+    - plugin_type: filter
+      plugin: ansible.builtin.difference
+    - plugin_type: filter
+      plugin: ansible.builtin.intersect
+    - plugin_type: filter
+      plugin: ansible.builtin.symetric_difference
+    - plugin_type: filter
+      plugin: ansible.builtin.union
+EXAMPLES: |
+  # return only the unique elements of mylist
+  {{ mylist | unique}}
+RETURN:
+  _value:
+    description: A list with unique elements, also known as a set
+    type: list

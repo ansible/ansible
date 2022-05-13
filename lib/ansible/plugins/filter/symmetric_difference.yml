@@ -1,0 +1,32 @@
+DOCUMENTATION:
+  name: symetric_difference
+  author: Brian Coca (@bcoca)
+  version_added: "1.4"
+  short_description: different items from 2 lists
+  description:
+    - Provide a unique list of all the elements of unique to each list
+  options:
+    _input:
+      description: A list
+      type: list
+      required: true
+    _second_list:
+      description: A list
+      type: list
+      required: true
+  seealso:
+    - plugin_type: filter
+      plugin: ansible.builtin.difference
+    - plugin_type: filter
+      plugin: ansible.builtin.intersect
+    - plugin_type: filter
+      plugin: ansible.builtin.union
+    - plugin_type: filter
+      plugin: ansible.builtin.unique
+EXAMPLES: |
+  # return the elements of mylist not in otherlist and the elements in otherlist not in mylist
+  {{ mylist | symetric_difference(otherlist)}}
+RETURN:
+  _value:
+    description: A unique list of the elements from 2 lists that are unique to each one
+    type: list
