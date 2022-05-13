@@ -260,19 +260,19 @@ class LinuxNetwork(Network):
 
             ip_path = self.module.get_bin_path("ip")
 
-            args = [ip_path, 'addr', 'show', 'primary', device]
+            args = [ip_path, 'addr', 'show', 'primary', 'dev', device]
             rc, primary_data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
             if rc == 0:
                 parse_ip_output(primary_data)
             else:
                 # possibly busybox, fallback to running without the "primary" arg
                 # https://github.com/ansible/ansible/issues/50871
-                args = [ip_path, 'addr', 'show', device]
+                args = [ip_path, 'addr', 'show', 'dev', device]
                 rc, data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
                 if rc == 0:
                     parse_ip_output(data)
 
-            args = [ip_path, 'addr', 'show', 'secondary', device]
+            args = [ip_path, 'addr', 'show', 'secondary', 'dev', device]
             rc, secondary_data, stderr = self.module.run_command(args, errors='surrogate_then_replace')
             if rc == 0:
                 parse_ip_output(secondary_data, secondary=True)
