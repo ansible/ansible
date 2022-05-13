@@ -185,6 +185,13 @@ This will keep the playbook in 'collection context', as if you had added ``colle
 
 You can have most of the subdirectories you would expect, such ``files/``, ``vars/`` or  ``templates/`` but no ``roles/`` since those are handled already in the collection.
 
+Also, playbooks within a collection follow the same guidelines as any playbooks except for these few adjustments:
+
+ - Directory: It must be in ``/playbooks directory``.
+ - Hosts: The host should be defined as a variable so the users of a playbook do not mistakenly run the plays against their entire inventory (if the host is set to all). For example - ``hosts: '{{target|default("all")}}'``.
+
+To run the plays, users can now use such commands as ``ansible-playbook --e 'targets=webservers'`` or ``ansible-playbook --limit webservers``. Either way, the collection owner should document their playbooks and how to use them in the ``/docs`` folder or ``README`` file.
+
 .. _developing_collections_tests_directory:
 
 tests directory
