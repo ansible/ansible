@@ -996,7 +996,7 @@ class Templar:
                 return wrap_var(ran)
 
             try:
-                if self.jinja2_native and isinstance(ran[0], NativeJinjaText):
+                if isinstance(list(ran)[0], NativeJinjaText):
                     ran = wrap_var(NativeJinjaText(",".join(ran)))
                 else:
                     ran = wrap_var(",".join(ran))
