@@ -5,12 +5,10 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
-import os
-import pyclbr
 import tokenize
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.module_utils._text import to_text, to_native
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.utils.display import Display
@@ -24,6 +22,14 @@ string_to_vars = {
     'RETURN': 'returndocs',
     'ANSIBLE_METADATA': 'metadata',  # NOTE: now unused, but kept for backwards compat
 }
+
+
+def _var2string(value):
+    ''' reverse lookup of the dict above '''
+    global string_to_vars
+    for k, v in string_to_vars.items():
+        if v == value:
+            return k
 
 
 def _init_doc_dict():
@@ -41,25 +47,17 @@ def read_docstring_from_yaml_file(filename, verbose=True, ignore_errors=True):
     try:
         with open(filename, 'rb') as yamlfile:
             file_data = AnsibleLoader(yamlfile.read(), file_name=filename).get_single_data()
-
-    except Exception:
-        if verbose:
-            display.error("unable to parse %s" % filename)
+    except Exception as e:
+        msg = "Unable to parse yaml file '%s': %s" % (filename, to_native(e))
         if not ignore_errors:
-            raise
+            raise AnsibleParserError(msg, orig_exc=e)
+        elif verbose:
+            display.error(msg)
 
     for key in string_to_vars:
         data[string_to_vars[key]] = file_data.get(key, None)
 
     return data
-
-
-def _find_jinja_function(filename, verbose=True, ignore_errors=True):
-
-    # for finding filters/tests
-    module_name = os.path.splitext(os.path.basename(filename))[0]
-    paths = [os.path.dirname(filename)]
-    mdata = pyclbr.readmodule_ex(module_name, paths)
 
 
 def read_docstring_from_python_module(filename, verbose=True, ignore_errors=True):
@@ -97,11 +95,11 @@ def read_docstring_from_python_module(filename, verbose=True, ignore_errors=True
                     try:
                         data[next_string] = AnsibleLoader(value, file_name=filename).get_single_data()
                     except Exception as e:
-                        if ignore_errors:
-                            if verbose:
-                                display.error("unable to parse %s" % filename)
-                        else:
-                            raise
+                        msg = "Unable to parse docs '%s' in python file '%s': %s" % (_var2string(next_string), filename, to_native(e))
+                        if not ignore_errors:
+                            raise AnsibleParserError(msg, orig_exc=e)
+                        elif verbose:
+                            display.error(msg)
 
                 next_string = None
 
@@ -132,7 +130,7 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
                         theid = t.id
                     except AttributeError:
                         # skip errors can happen when trying to use the normal code
-                        display.warning("Failed to assign id for %s on %s, skipping" % (t, filename))
+                        display.warning("Building documentation, failed to assign id for %s on %s, skipping" % (t, filename))
                         continue
 
                     if theid in string_to_vars:
@@ -148,13 +146,14 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
                                 # string should be yaml if already not a dict
                                 data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
 
-                        display.debug('assigned: %s' % varkey)
+                        display.debug('Documenation assigned: %s' % varkey)
 
-    except Exception:
-        if verbose:
-            display.error("unable to parse %s" % filename)
+    except Exception as e:
+        msg = "Unable to parse documentation in python file '%s': %s" % (filename, to_native(e))
         if not ignore_errors:
-            raise
+            raise AnsibleParserError(msg, orig_exc=e)
+        elif verbose:
+            display.error(msg)
 
     return data
 
@@ -162,7 +161,7 @@ def read_docstring_from_python_file(filename, verbose=True, ignore_errors=True):
 def read_docstring(filename, verbose=True, ignore_errors=True):
     ''' returns a documentation dictionary from Ansible plugin docstrings '''
 
-    # TODO: ensure adjacency to code (including ps1 for py files)
+    # NOTE: adjacency of doc file to code file is responsibility of caller
     if filename.endswith(C.YAML_DOC_EXTENSIONS):
         docstring = read_docstring_from_yaml_file(filename, verbose=verbose, ignore_errors=ignore_errors)
     elif filename.endswith(C.PYTHON_DOC_EXTENSIONS):
