@@ -996,7 +996,7 @@ class Templar:
                 return wrap_var(ran)
 
             try:
-                if isinstance(list(ran)[0], NativeJinjaText):
+                if isinstance(ran[0], NativeJinjaText):
                     ran = wrap_var(NativeJinjaText(",".join(ran)))
                 else:
                     ran = wrap_var(",".join(ran))
@@ -1013,6 +1013,11 @@ class Templar:
                     ran = wrap_var(ran[0])
                 else:
                     ran = wrap_var(ran)
+
+            except KeyError:
+                # Lookup Plugin returned a dict.  Return comma-separated string.
+                # See https://github.com/ansible/ansible/pull/77789
+                ran = wrap_var(",".join(ran))
 
         return ran
 
