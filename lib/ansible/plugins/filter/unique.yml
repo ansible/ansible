@@ -20,8 +20,10 @@ DOCUMENTATION:
     - plugin_type: filter
       plugin: ansible.builtin.union
 EXAMPLES: |
-  # return only the unique elements of mylist
-  {{ mylist | unique}}
+  # return only the unique elements of list1
+  # list1: [1, 2, 5, 1, 3, 4, 10]
+  {{ list1 | unique }}
+  # => [1, 2, 5, 3, 4, 10]
 RETURN:
   _value:
     description: A list with unique elements, also known as a set

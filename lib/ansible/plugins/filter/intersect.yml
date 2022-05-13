@@ -24,8 +24,11 @@ DOCUMENTATION:
     - plugin_type: filter
       plugin: ansible.builtin.union
 EXAMPLES: |
-  # return only the common elements of mylist and otherlist
-  {{ mylist | intersect(otherlist)}}
+  # return only the common elements of list1 and list2
+  # list1: [1, 2, 5, 3, 4, 10]
+  # list2: [1, 2, 3, 4, 5, 11, 99]
+  {{ list1 | intersect(list2) }}
+  # => [1, 2, 5, 3, 4]
 RETURN:
   _value:
     description: A list with unique elements common to both lists, also known as a set

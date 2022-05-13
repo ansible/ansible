@@ -24,8 +24,11 @@ DOCUMENTATION:
     - plugin_type: filter
       plugin: ansible.builtin.unique
 EXAMPLES: |
-  # return the elements of mylist not in otherlist
-  {{ mylist | difference(otherlist)}}
+  # return the elements of list1 not in list2
+  # list1: [1, 2, 5, 1, 3, 4, 10]
+  # list2: [1, 2, 3, 4, 5, 11, 99]
+  {{ list1 | difference(list2) }}
+  # => [10]
 RETURN:
   _value:
     description: A unique list of the elements from the first list that do not appear on the 2nd
