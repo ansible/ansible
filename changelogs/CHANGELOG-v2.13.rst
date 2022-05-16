@@ -5,50 +5,13 @@ ansible-core 2.13 "Nobody's Fault but Mine" Release Notes
 .. contents:: Topics
 
 
-v2.13.0rc1
-==========
+v2.13.0
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2022-05-02
-| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
-
-
-Bugfixes
---------
-
-- Prevent losing unsafe on results returned from lookups (https://github.com/ansible/ansible/issues/77535)
-
-v2.13.0b1
-=========
-
-Release Summary
----------------
-
-| Release Date: 2022-04-25
-| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
-
-
-Minor Changes
--------------
-
-- ansible-test - Update ``default`` containers to version 5.9.0.
-
-Bugfixes
---------
-
-- ansible - Exclude Python 2.6 from Python interpreter discovery.
-- arg_spec - Fix incorrect ``no_log`` warning when a parameter alias is used (https://github.com/ansible/ansible/pull/77576)
-- variablemanager, more efficient read of vars files
-
-v2.13.0b0
-=========
-
-Release Summary
----------------
-
-| Release Date: 2022-04-11
+| Release Date: 2022-05-16
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
@@ -125,6 +88,7 @@ Minor Changes
 - ansible-test - Update ``default`` containers to version 5.6.2.
 - ansible-test - Update ``default`` containers to version 5.7.0.
 - ansible-test - Update ``default`` containers to version 5.8.0.
+- ansible-test - Update ``default`` containers to version 5.9.0.
 - ansible-test - Update ``pip`` used to bootstrap remote FreeBSD instances from version 20.3.4 to 21.3.1.
 - ansible-test - Update sanity test requirements.
 - ansible-test - Update the NIOS test plugin container to version 1.4.0.
@@ -220,11 +184,13 @@ Bugfixes
 - Interpreter discovery - Add ``RHEL`` to ``OS_FAMILY_MAP`` for correct family fallback for interpreter discovery (https://github.com/ansible/ansible/issues/77368)
 - Make include_role/include_tasks work with any_errors_fatal (https://github.com/ansible/ansible/issues/50897)
 - Parser errors from within includes should not be rescueable (https://github.com/ansible/ansible/issues/73657)
+- Prevent losing unsafe on results returned from lookups (https://github.com/ansible/ansible/issues/77535)
 - Templating - Ensure we catch exceptions when getting ``.filters`` and ``.tests`` attributes on their respective plugins and properly error, instead of aborting which results in no filters being added to the jinja2 environment
 - Trigger an undefined error when an undefined variable is detected within a dictionary and/or list (https://github.com/ansible/ansible/pull/75587)
 - _run_loop - Add the task name to the warning (https://github.com/ansible/ansible/issues/76011)
 - ``Templar.copy_with_new_env`` - set the ``finalize`` method of the new ``Templar`` object for the new environment (https://github.com/ansible/ansible/issues/76379)
 - add_host/group_by: fix using changed_when in a loop (https://github.com/ansible/ansible/issues/71627)
+- ansible - Exclude Python 2.6 from Python interpreter discovery.
 - ansible-config avoid showing _terms and _input when --only-changed.
 - ansible-doc - Fix ansible-doc -l ansible.builtin / ansible.legacy not returning anything
 - ansible-doc - ignore plugin deprecation warnings (https://github.com/ansible/ansible/issues/75671)
@@ -281,6 +247,7 @@ Bugfixes
 - ansible.builtin.file modification_time supports check_mode
 - ansible_facts.devices - Fix parsing of device serial number detected via sg_inq for rhel8 (https://github.com/ansible/ansible/issues/75420)
 - apt - fails to deploy deb file to old debian systems using python-apt < 0.8.9 (https://github.com/ansible/ansible/issues/47277)
+- arg_spec - Fix incorrect ``no_log`` warning when a parameter alias is used (https://github.com/ansible/ansible/pull/77576)
 - async - Improve performance of sending async callback events by never sending the full task through the queue (https://github.com/ansible/ansible/issues/76729)
 - catch the case that cowsay is broken which would lead to missing output
 - cleaning facts will now only warn about the variable name and not post the content, which can be undesireable to disclose
@@ -344,6 +311,7 @@ Bugfixes
 - user - allow password min and max to be set at the same time (https://github.com/ansible/ansible/issues/75017)
 - user - update logic to check if user exists or not in MacOS.
 - validate_argument_spec - Skip suboption validation if the top level option is an invalid type (https://github.com/ansible/ansible/issues/75612).
+- variablemanager, more efficient read of vars files
 - vault - Warn instead of fail for missing vault IDs if at least one valid vault secret is found.
 - winrm - Ensure ``kinit`` is run with the same ``PATH`` env var as the Ansible process
 - yum - prevent storing unnecessary cache data by running `yum makecache fast` (https://github.com/ansible/ansible/issues/76336)
