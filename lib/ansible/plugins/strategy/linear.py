@@ -366,6 +366,7 @@ class StrategyModule(StrategyBase):
                         display.debug("processing included file: %s" % included_file._filename)
                         # included hosts get the task list while those excluded get an equal-length
                         # list of noop tasks, to make sure that they continue running in lock-step
+                        is_handler = False
                         try:
                             if included_file._is_role:
                                 new_ir = self._copy_included_file(included_file)
@@ -378,43 +379,38 @@ class StrategyModule(StrategyBase):
                             else:
                                 is_handler = isinstance(included_file._task, Handler)
                                 new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=is_handler)
-                                if is_handler:
-                                    # TODO filter tags to allow tags on handlers from include_tasks
-                                    #      also where handlers are inserted from roles/include_role/import_role and regular handlers
-                                    iterator._play.handlers.extend(new_blocks)
-                                    for host in included_file._hosts:
-                                        if host in hosts_left:
-                                            iterator.notify_include_handler(host, new_blocks)
-                                    noop_blocks = []
-                                    for new_block in new_blocks:
-                                        noop_blocks.append(self._prepare_and_create_noop_block_from(new_block, task._parent, iterator))
 
-                                    for host in hosts_left:
-                                        if host not in included_file._hosts:
-                                            iterator.notify_include_handler(host, noop_blocks)
-                                    # TODO comment why
-                                    continue
-
-                            display.debug("iterating over new_blocks loaded from include file")
-                            for new_block in new_blocks:
-                                task_vars = self._variable_manager.get_vars(
-                                    play=iterator._play,
-                                    task=new_block.get_first_parent_include(),
-                                    _hosts=self._hosts_cache,
-                                    _hosts_all=self._hosts_cache_all,
-                                )
-                                display.debug("filtering new block on tags")
-                                final_block = new_block.filter_tagged_tasks(task_vars)
-                                display.debug("done filtering new block on tags")
-
-                                noop_block = self._prepare_and_create_noop_block_from(final_block, task._parent, iterator)
-
+                            if is_handler:
+                                # TODO filter tags to allow tags on handlers from include_tasks
+                                #      also where handlers are inserted from roles/include_role/import_role and regular handlers
+                                iterator._play.handlers.extend(new_blocks)
+                                noop_blocks = [self._prepare_and_create_noop_block_from(new_block, task._parent, iterator) for new_block in new_blocks]
                                 for host in hosts_left:
                                     if host in included_file._hosts:
-                                        all_blocks[host].append(final_block)
+                                        iterator.notify_include_handler(host, new_blocks)
                                     else:
-                                        all_blocks[host].append(noop_block)
-                            display.debug("done iterating over new_blocks loaded from include file")
+                                        iterator.notify_include_handler(host, noop_blocks)
+                            else:
+                                display.debug("iterating over new_blocks loaded from include file")
+                                for new_block in new_blocks:
+                                    task_vars = self._variable_manager.get_vars(
+                                        play=iterator._play,
+                                        task=new_block.get_first_parent_include(),
+                                        _hosts=self._hosts_cache,
+                                        _hosts_all=self._hosts_cache_all,
+                                    )
+                                    display.debug("filtering new block on tags")
+                                    final_block = new_block.filter_tagged_tasks(task_vars)
+                                    display.debug("done filtering new block on tags")
+
+                                    noop_block = self._prepare_and_create_noop_block_from(final_block, task._parent, iterator)
+
+                                    for host in hosts_left:
+                                        if host in included_file._hosts:
+                                            all_blocks[host].append(final_block)
+                                        else:
+                                            all_blocks[host].append(noop_block)
+                                display.debug("done iterating over new_blocks loaded from include file")
                         except AnsibleParserError:
                             raise
                         except AnsibleError as e:

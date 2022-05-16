@@ -245,6 +245,7 @@ class StrategyModule(StrategyBase):
                 all_blocks = dict((host, []) for host in hosts_left)
                 for included_file in included_files:
                     display.debug("collecting new blocks for %s" % included_file)
+                    is_handler = False
                     try:
                         if included_file._is_role:
                             new_ir = self._copy_included_file(included_file)
@@ -257,15 +258,6 @@ class StrategyModule(StrategyBase):
                         else:
                             is_handler = isinstance(included_file._task, Handler)
                             new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=is_handler)
-                            if is_handler:
-                                # TODO filter tags to allow tags on handlers from include_tasks
-                                #      also where handlers are inserted from roles/include_role/import_role and regular handlers
-                                iterator._play.handlers.extend(new_blocks)
-                                for host in included_file._hosts:
-                                    if host in hosts_left:
-                                        iterator.notify_include_handler(host, new_blocks)
-                                # short-circuit the loop here because we already added included handlers into iterator
-                                continue
                     except AnsibleParserError:
                         raise
                     except AnsibleError as e:
@@ -277,17 +269,25 @@ class StrategyModule(StrategyBase):
                         display.warning(to_text(e))
                         continue
 
-                    for new_block in new_blocks:
-                        task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block.get_first_parent_include(),
-                                                                    _hosts=self._hosts_cache,
-                                                                    _hosts_all=self._hosts_cache_all)
-                        final_block = new_block.filter_tagged_tasks(task_vars)
-                        for host in hosts_left:
-                            if host in included_file._hosts:
-                                all_blocks[host].append(final_block)
+                    if is_handler:
+                        # TODO filter tags to allow tags on handlers from include_tasks
+                        #      also where handlers are inserted from roles/include_role/import_role and regular handlers
+                        iterator._play.handlers.extend(new_blocks)
+                        for host in filter(lambda x: x in hosts_left, included_file._hosts):
+                            iterator.notify_include_handler(host, new_blocks)
+                    else:
+                        for new_block in new_blocks:
+                            task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block.get_first_parent_include(),
+                                                                        _hosts=self._hosts_cache,
+                                                                        _hosts_all=self._hosts_cache_all)
+                            final_block = new_block.filter_tagged_tasks(task_vars)
+                            for host in hosts_left:
+                                if host in included_file._hosts:
+                                    all_blocks[host].append(final_block)
                     display.debug("done collecting new blocks for %s" % included_file)
 
                 display.debug("adding all collected blocks from %d included file(s) to iterator" % len(included_files))
+                # NOTE all_blocks is empty for handlers as they are added above
                 for host in hosts_left:
                     iterator.add_tasks(host, all_blocks[host])
                 display.debug("done adding collected blocks to iterator")
