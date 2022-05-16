@@ -4,5 +4,3 @@ bugfixes:
      store an error message as the fact value and emit a warning just as if
      just as if the facts execution has failed. The stat can fail e.g. on
      dangling symlinks.
-     Furthermore also ignore errors while opening a static fact file not only
-     when reading it.
