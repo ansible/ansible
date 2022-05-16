@@ -5,6 +5,22 @@ ansible-core 2.11 "Hey Hey, What Can I Do" Release Notes
 .. contents:: Topics
 
 
+v2.11.12rc1
+===========
+
+Release Summary
+---------------
+
+| Release Date: 2022-05-16
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Prevent losing unsafe on results returned from lookups (https://github.com/ansible/ansible/issues/77535)
+- plugin loader will now load config data for plugin by name instead of by file to avoid issues with the same file being loaded under different names (fqcn + short name).
+
 v2.11.11
 ========
 

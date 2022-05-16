@@ -1747,6 +1747,24 @@ releases:
     - v2.11.11rc1_summary.yaml
     - winrm-kinit-path.yml
     release_date: '2022-04-18'
+  2.11.12rc1:
+    changes:
+      bugfixes:
+      - Prevent losing unsafe on results returned from lookups (https://github.com/ansible/ansible/issues/77535)
+      - plugin loader will now load config data for plugin by name instead of by file
+        to avoid issues with the same file being loaded under different names (fqcn
+        + short name).
+      release_summary: '| Release Date: 2022-05-16
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Hey Hey, What Can I Do
+    fragments:
+    - 77535-prevent-losing-unsafe-lookups.yml
+    - config_load_by_name.yml
+    - v2.11.12rc1_summary.yaml
+    release_date: '2022-05-16'
   2.11.1rc1:
     changes:
       bugfixes:
