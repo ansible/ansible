@@ -75,7 +75,7 @@ No notable changes
 Plugins
 =======
 
-No notable changes
+* Custom strategy plugins need to be changed in order to properly subclass ``StrategyBase`` which is an abstract class in Ansible Core 2.14. Such plugins need to define ``_flush_handlers`` method, see ``linear.py`` and/or ``free.py`` in ``lib/ansible/plugins/strategy`` to see how the method is implemented in respective strategy plugins included in Ansible Core.
 
 
 Porting custom scripts
