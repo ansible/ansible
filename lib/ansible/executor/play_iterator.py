@@ -103,7 +103,7 @@ class HostState:
         if not isinstance(other, HostState):
             return False
 
-        for attr in ('_blocks', '_notified__handlers',
+        for attr in ('_blocks', '_notified_handlers',
                      'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
                      'run_state', 'fail_state', 'pre_flushing_run_state', 'pending_setup',
                      'tasks_child_state', 'rescue_child_state', 'always_child_state', 'handlers_child_state'):
