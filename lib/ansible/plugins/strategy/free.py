@@ -258,7 +258,8 @@ class StrategyModule(StrategyBase):
                             is_handler = isinstance(included_file._task, Handler)
                             new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=is_handler)
                             if is_handler:
-                                # TODO filter tags to allow tags on handlers
+                                # TODO filter tags to allow tags on handlers from include_tasks
+                                #      also where handlers are inserted from roles/include_role/import_role and regular handlers
                                 iterator._play.handlers.extend(new_blocks)
                                 for host in included_file._hosts:
                                     if host in hosts_left:
