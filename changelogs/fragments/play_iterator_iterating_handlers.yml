@@ -1,0 +1,2 @@
+major_changes:
+  - "Move handler processing into new ``PlayIterator`` phase to use the configured strategy (https://github.com/ansible/ansible/pull/73159)"
