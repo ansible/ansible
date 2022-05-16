@@ -8,3 +8,4 @@ fedora35 image=quay.io/ansible/fedora35-test-container:4.0.0 python=3.10 seccomp
 opensuse15 image=quay.io/ansible/opensuse15-test-container:4.0.0 python=3.6
 ubuntu1804 image=quay.io/ansible/ubuntu1804-test-container:3.1.0 python=3.6 seccomp=unconfined
 ubuntu2004 image=quay.io/ansible/ubuntu2004-test-container:4.0.0 python=3.8 seccomp=unconfined
+ubuntu2204 image=quay.io/ansible/ubuntu2204-test-container:4.0.0 python=3.10 seccomp=unconfined

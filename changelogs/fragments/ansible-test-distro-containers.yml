@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Ubuntu 22.04 has been added as a test container.

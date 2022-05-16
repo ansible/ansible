@@ -38,10 +38,7 @@
         - "not apt_multi_secondary.changed"
 
 - name: remove all {{ apt_foreign_arch }} packages
-  apt:
-    name: "*:{{ apt_foreign_arch }}"
-    state: absent
-    purge: yes
+  shell: "apt-get remove -y --allow-remove-essential '*:{{ apt_foreign_arch }}'"
 
 - name: remove {{ apt_foreign_arch }} architecture
   command: dpkg --remove-architecture {{ apt_foreign_arch }}
