@@ -47,10 +47,8 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.conditional import Conditional
-from ansible.playbook.handler import Handler
 from ansible.playbook.handler_block import HandlerBlock
 from ansible.playbook.helpers import load_list_of_blocks
-from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import loader as plugin_loader
