@@ -1442,3 +1442,26 @@ releases:
     - v2.12.5rc1_summary.yaml
     - winrm-kinit-path.yml
     release_date: '2022-04-18'
+  2.12.6rc1:
+    changes:
+      bugfixes:
+      - Prevent losing unsafe on results returned from lookups (https://github.com/ansible/ansible/issues/77535)
+      - arg_spec - Fix incorrect ``no_log`` warning when a parameter alias is used
+        (https://github.com/ansible/ansible/pull/77576)
+      - plugin loader will now load config data for plugin by name instead of by file
+        to avoid issues with the same file being loaded under different names (fqcn
+        + short name).
+      - variablemanager, more efficient read of vars files
+      release_summary: '| Release Date: 2022-05-16
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Dazed and Confused
+    fragments:
+    - 77535-prevent-losing-unsafe-lookups.yml
+    - 77576-arg_spec-no_log-aliases.yml
+    - config_load_by_name.yml
+    - v2.12.6rc1_summary.yaml
+    - vm_more_efficient.yml
+    release_date: '2022-05-16'

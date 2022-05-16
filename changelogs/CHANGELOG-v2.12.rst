@@ -5,6 +5,24 @@ ansible-core 2.12 "Dazed and Confused" Release Notes
 .. contents:: Topics
 
 
+v2.12.6rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2022-05-16
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Bugfixes
+--------
+
+- Prevent losing unsafe on results returned from lookups (https://github.com/ansible/ansible/issues/77535)
+- arg_spec - Fix incorrect ``no_log`` warning when a parameter alias is used (https://github.com/ansible/ansible/pull/77576)
+- plugin loader will now load config data for plugin by name instead of by file to avoid issues with the same file being loaded under different names (fqcn + short name).
+- variablemanager, more efficient read of vars files
+
 v2.12.5
 =======
 
