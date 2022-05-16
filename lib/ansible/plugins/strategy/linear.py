@@ -82,6 +82,7 @@ class StrategyModule(StrategyBase):
     def _flush_handlers(self, iterator, host):
         for host in self._inventory.get_hosts(iterator._play.hosts):
             host_state = iterator.get_state_for_host(host.name)
+            # prevent flush_handlers in a handler
             if host.name not in self._tqm._unreachable_hosts and host_state.run_state not in (IteratingStates.HANDLERS, IteratingStates.COMPLETE):
                 host_state.pre_flushing_run_state = host_state.run_state
                 host_state.run_state = IteratingStates.HANDLERS
