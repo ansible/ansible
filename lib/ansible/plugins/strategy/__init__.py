@@ -27,7 +27,6 @@ import pprint
 import sys
 import threading
 import time
-import traceback
 
 from collections import deque
 from multiprocessing import Lock
@@ -44,7 +43,7 @@ from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.executor.task_queue_manager import CallbackSend
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.handler_block import HandlerBlock
