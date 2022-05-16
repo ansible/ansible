@@ -381,15 +381,15 @@ class StrategyModule(StrategyBase):
                                 new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=is_handler)
 
                             if is_handler:
-                                # TODO filter tags to allow tags on handlers from include_tasks
+                                # TODO filter tags to allow tags on handlers from include_tasks: merge with the else block
                                 #      also where handlers are inserted from roles/include_role/import_role and regular handlers
                                 iterator._play.handlers.extend(new_blocks)
                                 noop_blocks = [self._prepare_and_create_noop_block_from(new_block, task._parent, iterator) for new_block in new_blocks]
                                 for host in hosts_left:
                                     if host in included_file._hosts:
-                                        iterator.notify_include_handler(host, new_blocks)
+                                        all_blocks[host].append(new_blocks)
                                     else:
-                                        iterator.notify_include_handler(host, noop_blocks)
+                                        all_blocks[host].append(noop_blocks)
                             else:
                                 display.debug("iterating over new_blocks loaded from include file")
                                 for new_block in new_blocks:

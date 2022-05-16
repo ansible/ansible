@@ -608,7 +608,11 @@ class PlayIterator:
                 target_block.always = before + task_list + after
                 state._blocks[state.cur_block] = target_block
         elif state.run_state == IteratingStates.HANDLERS:
-            raise AnsibleAssertionError("Handlers should be added using notify_handler or notify_include_handler methods." + ', '.join(task_list))
+            if state.handlers_child_state:
+                state.handlers_child_state = self._insert_tasks_into_state(state.handlers_child_state, task_list)
+            else:
+                for task in task_list:
+                    state.notify_include_handler(task)
 
         return state
 
@@ -639,6 +643,3 @@ class PlayIterator:
 
     def notify_handler(self, host, handler):
         return self._host_states[host.name].notify_handler(handler)
-
-    def notify_include_handler(self, host, handler_blocks):
-        return self._host_states[host.name].notify_include_handler(handler_blocks)

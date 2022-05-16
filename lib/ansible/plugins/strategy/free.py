@@ -270,11 +270,11 @@ class StrategyModule(StrategyBase):
                         continue
 
                     if is_handler:
-                        # TODO filter tags to allow tags on handlers from include_tasks
+                        # TODO filter tags to allow tags on handlers from include_tasks: merge with the else block
                         #      also where handlers are inserted from roles/include_role/import_role and regular handlers
                         iterator._play.handlers.extend(new_blocks)
                         for host in filter(lambda x: x in hosts_left, included_file._hosts):
-                            iterator.notify_include_handler(host, new_blocks)
+                            all_blocks[host].append(new_blocks)
                     else:
                         for new_block in new_blocks:
                             task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block.get_first_parent_include(),
@@ -287,7 +287,6 @@ class StrategyModule(StrategyBase):
                     display.debug("done collecting new blocks for %s" % included_file)
 
                 display.debug("adding all collected blocks from %d included file(s) to iterator" % len(included_files))
-                # NOTE all_blocks is empty for handlers as they are added above
                 for host in hosts_left:
                     iterator.add_tasks(host, all_blocks[host])
                 display.debug("done adding collected blocks to iterator")
