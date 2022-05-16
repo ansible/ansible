@@ -262,7 +262,7 @@ class StrategyModule(StrategyBase):
                                 iterator._play.handlers.extend(new_blocks)
                                 for host in included_file._hosts:
                                     if host in hosts_left:
-                                        iterator.add_included_handlers(host, new_blocks)
+                                        iterator.notify_include_handler(host, new_blocks)
                                 # short-circuit the loop here because we already added included handlers into iterator
                                 continue
                     except AnsibleParserError:

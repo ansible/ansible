@@ -59,7 +59,7 @@ class FailedStates(IntFlag):
 class HostState:
     def __init__(self, blocks):
         self._blocks = blocks[:]
-        self._handlers = deque()
+        self._notified_handlers = deque()
 
         self.cur_block = 0
         self.cur_regular_task = 0
@@ -77,7 +77,7 @@ class HostState:
         self.did_start_at_task = False
 
     def __repr__(self):
-        return "HostState(%r, %r)" % (self._blocks, self._handlers)
+        return "HostState(%r, %r)" % (self._blocks, self._notified_handlers)
 
     def __str__(self):
         return ("HOST STATE: block=%d, task=%d, rescue=%d, always=%d, run_state=%s, fail_state=%s, pre_flushing_run_state=%s, pending_setup=%s, "
@@ -103,7 +103,7 @@ class HostState:
         if not isinstance(other, HostState):
             return False
 
-        for attr in ('_blocks', '_handlers',
+        for attr in ('_blocks', '_notified__handlers',
                      'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
                      'run_state', 'fail_state', 'pre_flushing_run_state', 'pending_setup',
                      'tasks_child_state', 'rescue_child_state', 'always_child_state', 'handlers_child_state'):
@@ -114,27 +114,27 @@ class HostState:
 
     @property
     def handlers(self):
-        return self._handlers
+        return self._notified_handlers
 
     def get_current_block(self):
         return self._blocks[self.cur_block]
 
     def pop_current_handler(self):
-        return self._handlers.popleft()
+        return self._notified_handlers.popleft()
 
-    def add_handler(self, handler):
-        if handler not in self._handlers:
-            self._handlers.append(handler)
+    def notify_handler(self, handler):
+        if handler not in self._notified_handlers:
+            self._notified_handlers.append(handler)
             return True
         return False
 
-    def add_included_handlers(self, handler_blocks):
+    def notify_include_handler(self, handler_blocks):
         # deque.extendleft reverses order
-        self._handlers.extendleft(reversed(handler_blocks))
+        self._notified_handlers.extendleft(reversed(handler_blocks))
 
     def copy(self):
         new_state = HostState(self._blocks)
-        new_state._handlers = self._handlers.copy()
+        new_state._notified_handlers = self._notified_handlers.copy()
         new_state.cur_block = self.cur_block
         new_state.cur_regular_task = self.cur_regular_task
         new_state.cur_rescue_task = self.cur_rescue_task
@@ -608,7 +608,7 @@ class PlayIterator:
                 target_block.always = before + task_list + after
                 state._blocks[state.cur_block] = target_block
         elif state.run_state == IteratingStates.HANDLERS:
-            raise AnsibleAssertionError("Handlers should be added using add_handler or add_included_handlers methods." + ', '.join(task_list))
+            raise AnsibleAssertionError("Handlers should be added using notify_handler or notify_include_handler methods." + ', '.join(task_list))
 
         return state
 
@@ -637,8 +637,8 @@ class PlayIterator:
             raise AnsibleAssertionError('Expected fail_state to be a FailedStates but was %s' % (type(fail_state)))
         self._host_states[hostname].fail_state = fail_state
 
-    def add_handler(self, host, handler):
-        return self._host_states[host.name].add_handler(handler)
+    def notify_handler(self, host, handler):
+        return self._host_states[host.name].notify_handler(handler)
 
-    def add_included_handlers(self, host, handler_blocks):
-        return self._host_states[host.name].add_included_handlers(handler_blocks)
+    def notify_include_handler(self, host, handler_blocks):
+        return self._host_states[host.name].notify_include_handler(handler_blocks)

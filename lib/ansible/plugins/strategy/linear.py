@@ -383,14 +383,14 @@ class StrategyModule(StrategyBase):
                                     iterator._play.handlers.extend(new_blocks)
                                     for host in included_file._hosts:
                                         if host in hosts_left:
-                                            iterator.add_included_handlers(host, new_blocks)
+                                            iterator.notify_include_handler(host, new_blocks)
                                     noop_blocks = []
                                     for new_block in new_blocks:
                                         noop_blocks.append(self._prepare_and_create_noop_block_from(new_block, task._parent, iterator))
 
                                     for host in hosts_left:
                                         if host not in included_file._hosts:
-                                            iterator.add_included_handlers(host, noop_blocks)
+                                            iterator.notify_include_handler(host, noop_blocks)
                                     # TODO comment why
                                     continue
 
@@ -523,5 +523,5 @@ class StrategyModule(StrategyBase):
                     noop_handlers.append(self._create_noop_block_from(handler, None))
 
             for host in not_notified_hosts:
-                iterator.host_states[host.name]._handlers.extend(noop_handlers)
+                iterator.host_states[host.name]._notified_handlers.extend(noop_handlers)
         display.debug("done making sure handlers are executed in lock-step by adding noop handlers")

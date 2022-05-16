@@ -646,7 +646,7 @@ class StrategyBase(metaclass=abc.ABCMeta):
                                 target_handler = search_handler_blocks_by_name(handler_name, iterator._play.handlers)
                                 if target_handler is not None:
                                     found = True
-                                    if iterator.add_handler(original_host, target_handler):
+                                    if iterator.notify_handler(original_host, target_handler):
                                         self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
 
                                 for listening_handler_block in iterator._play.handlers:
@@ -670,7 +670,7 @@ class StrategyBase(metaclass=abc.ABCMeta):
                                         else:
                                             found = True
 
-                                        if iterator.add_handler(original_host, listening_handler):
+                                        if iterator.notify_handler(original_host, listening_handler):
                                             self._tqm.send_callback('v2_playbook_on_notify', listening_handler, original_host)
 
                                 # and if none were found, then we raise an error
