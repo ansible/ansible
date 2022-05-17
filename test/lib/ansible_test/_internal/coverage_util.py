@@ -63,7 +63,7 @@ class CoverageVersion:
 
 
 COVERAGE_VERSIONS = (
-    CoverageVersion('6.3.2', 7, (3, 7), (3, 11)),
+    CoverageVersion('6.3.3', 7, (3, 7), (3, 11)),
     CoverageVersion('4.5.4', 0, (2, 6), (3, 7)),
 )
 """
