@@ -16,3 +16,25 @@
     - name: Remove IP from interface
       command: ip address delete 100.42.42.1/32 dev {{ ansible_facts.default_ipv4.interface }}
       ignore_errors: yes
+
+- block:
+    - name: Add bridge device
+      command: ip link add name br1337 type bridge stp_state 1
+
+    - name: Gather network facts
+      setup:
+        gather_subset: network
+
+    - debug:
+        var: ansible_facts.br1337
+
+    - assert:
+        that:
+          - ansible_facts.br1337.type == 'bridge'
+          - ansible_facts.br1337.id != ''
+          - ansible_facts.br1337.stp is true
+
+  always:
+    - name: Remove bridge device
+      command: ip link delete br1337 type bridge
+      ignore_errors: yes
