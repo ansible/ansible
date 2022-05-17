@@ -143,6 +143,7 @@ EXAMPLES = '''
     scope: user
   environment:
     XDG_RUNTIME_DIR: "/run/user/{{ myuid }}"
+
 '''
 
 RETURN = '''
@@ -276,11 +277,12 @@ status:
 '''  # NOQA
 
 import os
+import getpass
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.facts.system.chroot import is_chroot
 from ansible.module_utils.service import sysv_exists, sysv_is_enabled, fail_if_missing
-from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import to_bytes, to_native, to_text
 
 
 def is_running_service(service_status):
@@ -330,9 +332,33 @@ def parse_systemctl_show(lines):
     return parsed
 
 
+def enable_linger(module):
+    ''' allows for lingering dbus sessions '''
+
+    enabled = False
+    user = getpass.getuser()
+    ldir = os.path.join('var', 'lib', 'systemd', 'linger', user)
+
+    if not os.path.exists(to_bytes(ldir, errors='surrogate_or_strict')):
+        loginctl = module.get_bin_path('loginctl', required=True)
+        rc, out, err = module.run_command([loginctl, 'enable-linger', user])
+        if rc != 0:
+            module.warn("Unable to force linger (rc=%s): %s" % (rc, err))
+        enabled = True
+
+    return enabled
+
+
+def disable_linger(module):
+
+    loginctl = module.get_bin_path('loginctl')
+    rc, out, err = module.run_command([loginctl, 'disable-linger', getpass.getuser()])
+    if rc != 0:
+        module.warn("Failed to disable session lingerng (rc=%s): %s" % (rc, err))
+
+
 # ===========================================
 # Main control flow
-
 def main():
     # initialize
     module = AnsibleModule(
@@ -364,8 +390,31 @@ def main():
 
     systemctl = module.get_bin_path('systemctl', True)
 
-    if os.getenv('XDG_RUNTIME_DIR') is None:
-        os.environ['XDG_RUNTIME_DIR'] = '/run/user/%s' % os.geteuid()
+    xdg = os.getenv('XDG_RUNTIME_DIR')
+    euid = os.geteuid()
+    xdg_path = '/run/user/%s' % euid
+    lingered = False
+    if xdg is None:
+        if not os.path.exists(to_bytes(xdg_path, errors='surrogate_or_strict')) and euid != 0:
+            lingered = enable_linger(module)
+            if lingered:
+                module.warn("No dbus session found, forcing loginctl to enable linger")
+            else:
+                module.debug("No dbus session found, but linger is enabled")
+        else:
+            os.environ['XDG_RUNTIME_DIR'] = xdg_path
+            module.warn("Setting missing XDG_RUNTIME_DIR to %s" % to_text(xdg_path))
+    elif not os.path.exists(to_bytes(xdg)):
+        msg = "Existing XDG_RUNTIME_DIR (%s) pointed at non existing/accessible path, " % to_text(xdg)
+        if not os.path_exists(to_bytes(xdg_path, errors='surrogate_or_strict')) and euid != 0:
+            lingered = enable_linger(module)
+            if lingered:
+                module.warn(msg + "forcing loginctl to enable linger")
+            else:
+                module.debug(msg + "session lingering was enabled though, attempting to use that")
+        else:
+            os.environ['XDG_RUNTIME_DIR'] = xdg_path
+            module.warn(msg + "using '%s' instead" % to_text(xdg_path))
 
     ''' Set CLI options depending on params '''
     # if scope is 'system' or None, we can ignore as there is no extra switch.
@@ -561,6 +610,9 @@ def main():
             else:
                 # this should not happen?
                 module.fail_json(msg="Service is in unknown state", status=result['status'])
+
+    if lingered:
+        disable_linger(module)
 
     module.exit_json(**result)
 
