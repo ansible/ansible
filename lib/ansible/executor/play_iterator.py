@@ -611,8 +611,7 @@ class PlayIterator:
             if state.handlers_child_state:
                 state.handlers_child_state = self._insert_tasks_into_state(state.handlers_child_state, task_list)
             else:
-                for task in task_list:
-                    state.notify_include_handler(task)
+                state.notify_include_handler(task_list)
 
         return state
 

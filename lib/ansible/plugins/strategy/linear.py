@@ -382,18 +382,16 @@ class StrategyModule(StrategyBase):
                                 new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=is_handler)
 
                             if is_handler:
-                                # TODO filter tags to allow tags on handlers from include_tasks: merge with the else block
-                                #      also where handlers are inserted from roles/include_role/import_role and regular handlers
+                                # TODO filter tags
                                 iterator._play.handlers.extend(new_blocks)
-                                noop_blocks = [self._prepare_and_create_noop_block_from(new_block, task._parent, iterator) for new_block in new_blocks]
-                                for host in hosts_left:
-                                    if host in included_file._hosts:
-                                        all_blocks[host].append(new_blocks)
-                                    else:
-                                        all_blocks[host].append(noop_blocks)
-                            else:
-                                display.debug("iterating over new_blocks loaded from include file")
-                                for new_block in new_blocks:
+
+                            display.debug("iterating over new_blocks loaded from include file")
+                            for new_block in new_blocks:
+                                if is_handler:
+                                    # TODO filter tags to allow tags on handlers from include_tasks: merge with the else block
+                                    #      also where handlers are inserted from roles/include_role/import_role and regular handlers
+                                    final_block = new_block
+                                else:
                                     task_vars = self._variable_manager.get_vars(
                                         play=iterator._play,
                                         task=new_block.get_first_parent_include(),
@@ -404,14 +402,14 @@ class StrategyModule(StrategyBase):
                                     final_block = new_block.filter_tagged_tasks(task_vars)
                                     display.debug("done filtering new block on tags")
 
-                                    noop_block = self._prepare_and_create_noop_block_from(final_block, task._parent, iterator)
+                                noop_block = self._prepare_and_create_noop_block_from(final_block, task._parent, iterator)
 
-                                    for host in hosts_left:
-                                        if host in included_file._hosts:
-                                            all_blocks[host].append(final_block)
-                                        else:
-                                            all_blocks[host].append(noop_block)
-                                display.debug("done iterating over new_blocks loaded from include file")
+                                for host in hosts_left:
+                                    if host in included_file._hosts:
+                                        all_blocks[host].append(final_block)
+                                    else:
+                                        all_blocks[host].append(noop_block)
+                            display.debug("done iterating over new_blocks loaded from include file")
                         except AnsibleParserError:
                             raise
                         except AnsibleError as e:

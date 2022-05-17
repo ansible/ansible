@@ -270,20 +270,22 @@ class StrategyModule(StrategyBase):
                         continue
 
                     if is_handler:
-                        # TODO filter tags to allow tags on handlers from include_tasks: merge with the else block
-                        #      also where handlers are inserted from roles/include_role/import_role and regular handlers
+                        # TODO filter tags
                         iterator._play.handlers.extend(new_blocks)
-                        for host in filter(lambda x: x in hosts_left, included_file._hosts):
-                            all_blocks[host].append(new_blocks)
-                    else:
-                        for new_block in new_blocks:
+
+                    for new_block in new_blocks:
+                        if is_handler:
+                            # TODO filter tags to allow tags on handlers from include_tasks: merge with the else block
+                            #      also where handlers are inserted from roles/include_role/import_role and regular handlers
+                            final_block = new_block
+                        else:
                             task_vars = self._variable_manager.get_vars(play=iterator._play, task=new_block.get_first_parent_include(),
                                                                         _hosts=self._hosts_cache,
                                                                         _hosts_all=self._hosts_cache_all)
                             final_block = new_block.filter_tagged_tasks(task_vars)
-                            for host in hosts_left:
-                                if host in included_file._hosts:
-                                    all_blocks[host].append(final_block)
+                        for host in hosts_left:
+                            if host in included_file._hosts:
+                                all_blocks[host].append(final_block)
                     display.debug("done collecting new blocks for %s" % included_file)
 
                 display.debug("adding all collected blocks from %d included file(s) to iterator" % len(included_files))
