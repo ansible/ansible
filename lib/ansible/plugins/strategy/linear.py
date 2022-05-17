@@ -496,15 +496,15 @@ class StrategyModule(StrategyBase):
 
     def _lock_step_handlers(self, results, iterator):
         display.debug("making sure handlers are executed in lock-step by adding noop handlers")
-        noop_handler = Handler()
-        noop_handler.action = 'meta'
-        noop_handler.args['_raw_params'] = 'noop'
-        noop_handler.implicit = True
-        noop_handler.set_loader(iterator._play._loader)
-        self.noop_task = noop_handler
-        max_handlers_notified = 0
+
+        # NOTE: notified handlers are stored in a list-like data structure (deque) per host,
+        #       on a HostState object, see play_iterator.py
+
         notified_hosts = []
         not_notified_hosts = []
+        max_handlers_notified = 0
+        # go through task results and find which hosts were(not) notified
+        # also find max number of handlers notified in any of the hosts
         for r in results:
             handlers_notified = len(r._result.get('_ansible_notify', []))
             max_handlers_notified = max(max_handlers_notified, handlers_notified)
@@ -512,14 +512,38 @@ class StrategyModule(StrategyBase):
                 notified_hosts.append(r._host)
             else:
                 not_notified_hosts.append(r._host)
+
+        # create a noop handler
+        noop_handler = Handler()
+        noop_handler.action = 'meta'
+        noop_handler.args['_raw_params'] = 'noop'
+        noop_handler.implicit = True
+        noop_handler.set_loader(iterator._play._loader)
+        self.noop_task = noop_handler
+
+        # we need to add noop handlers only if there are both notified hosts and host that were not notified (skipped for any reason)
+        # because otherwise they all have the same number of notified handlers, either non-zero or no handlers
         if notified_hosts and not_notified_hosts:
             noop_handlers = []
-            for handler in list(iterator.host_states[notified_hosts[0].name].handlers)[-max_handlers_notified:]:
+            # ASSUMPTION: all notified hosts have the same number of notified handlers, which is max_handlers_notified from above
+            # so based on the assumption, take the first notified host and its last max_handlers_notified handlers
+            # FIXME does this assumption not hold for when handler names in notify are variables? or $other?
+            notified_handlers = list(iterator.host_states[notified_hosts[0].name].handlers)[-max_handlers_notified:]
+
+            # use the above handlers to create their noop copies
+            for handler in notified_handlers:
                 if isinstance(handler, Handler):
                     noop_handlers.append(noop_handler)
-                else:
+                elif isinstance(handler, HandlerBlock):
                     noop_handlers.append(self._create_noop_block_from(handler, None))
+                else:
+                    raise AnsibleAssertionError('Expected handler to be either Handler or HandlerBlock, was "%s"' % type(handler))
+            # FIXME when handler names are templated then two hosts may have notified different handlers and the noop copy above would
+            #       differ from the actual handler (in its structure) which may or may not cause issue with the lock-step?
 
+            # finally noop handlers are added for hosts that were not notified to ensure lock-step
             for host in not_notified_hosts:
-                iterator.host_states[host.name]._notified_handlers.extend(noop_handlers)
+                iterator.host_states[host.name]._notified_handlers.extend(noop_handlers)  # access _notified_handlers directly so we can call extend on it FIXME
+
+        # done, that was horrible! FIXME
         display.debug("done making sure handlers are executed in lock-step by adding noop handlers")
