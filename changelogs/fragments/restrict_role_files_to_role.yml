@@ -1,0 +1,2 @@
+bugfixes:
+  - roles, fixed issue with roles loading paths not contained in the role itself when using the `_from` options.
