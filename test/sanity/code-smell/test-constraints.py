@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import re
 import sys
 
@@ -14,8 +15,14 @@ def main():
         if path == 'test/lib/ansible_test/_data/requirements/ansible.txt':
             # This file is an exact copy of the ansible requirements.txt and should not conflict with other constraints.
             continue
+
         with open(path, 'r') as path_fd:
             requirements[path] = parse_requirements(path_fd.read().splitlines())
+
+        if path == 'test/lib/ansible_test/_data/requirements/ansible-test.txt':
+            # Special handling is required for ansible-test's requirements file.
+            check_ansible_test(path, requirements.pop(path))
+            continue
 
     frozen_sanity = {}
     non_sanity_requirements = set()
@@ -63,6 +70,33 @@ def main():
             for req in requirements:
                 print('%s:%d:%d: sanity constraint (%s) does not match others for package `%s`' % (
                     req[0], req[1], req[3].start('constraints') + 1, req[3].group('constraints'), name))
+
+
+def check_ansible_test(path: str, requirements: list[tuple[int, str, re.Match]]) -> None:
+    sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent.joinpath('lib')))
+
+    from ansible_test._internal.python_requirements import VIRTUALENV_VERSION
+    from ansible_test._internal.coverage_util import COVERAGE_VERSIONS
+    from ansible_test._internal.util import version_to_str
+
+    expected_lines = set([
+        f"virtualenv == {VIRTUALENV_VERSION} ; python_version < '3'",
+    ] + [
+        f"coverage == {item.coverage_version} ; python_version >= '{version_to_str(item.min_python)}' and python_version <= '{version_to_str(item.max_python)}'"
+        for item in COVERAGE_VERSIONS
+    ])
+
+    for idx, requirement in enumerate(requirements):
+        lineno, line, match = requirement
+
+        if line in expected_lines:
+            expected_lines.remove(line)
+            continue
+
+        print('%s:%d:%d: unexpected line: %s' % (path, lineno, 1, line))
+
+    for expected_line in sorted(expected_lines):
+        print('%s:%d:%d: missing line: %s' % (path, requirements[-1][0] + 1, 1, expected_line))
 
 
 def parse_requirements(lines):
