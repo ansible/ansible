@@ -90,7 +90,6 @@ lib/ansible/modules/stat.py validate-modules:doc-default-does-not-match-spec  # 
 lib/ansible/modules/stat.py validate-modules:parameter-invalid
 lib/ansible/modules/stat.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/stat.py validate-modules:undocumented-parameter
-lib/ansible/modules/systemd_service.py validate-modules:module-incorrect-version-added
 lib/ansible/modules/systemd_service.py validate-modules:parameter-invalid
 lib/ansible/modules/systemd_service.py validate-modules:return-syntax-error
 lib/ansible/modules/sysvinit.py validate-modules:return-syntax-error
