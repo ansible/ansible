@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Distribution specific test containers are now multi-arch, supporting both x86_64 and aarch64.
