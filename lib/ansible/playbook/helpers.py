@@ -275,6 +275,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     task_list.append(t)
 
             elif action in C._ACTION_ALL_PROPER_INCLUDE_IMPORT_ROLES:
+                if use_handlers:
+                    raise AnsibleParserError(f"Using '{action}' as a handler is not supported.", obj=task_ds)
+
                 ir = IncludeRole.load(
                     task_ds,
                     block=block,

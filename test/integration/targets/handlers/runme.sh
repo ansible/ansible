@@ -114,3 +114,7 @@ grep out.txt -e "ERROR! The requested handler 'handler name with myvar' was not 
 grep out.txt -e "\[WARNING\]: Handler 'handler name with {{ test_var }}' is unusable"
 [ "$(grep out.txt -ce 'handler ran')" = "0" ]
 [ "$(grep out.txt -ce 'handler with var ran')" = "0" ]
+
+# Test include_role and import_role cannot be used as handlers
+ansible-playbook test_role_as_handler.yml "$@"  2>&1 | tee out.txt
+grep out.txt -e "ERROR! Using 'include_role' as a handler is not supported."
