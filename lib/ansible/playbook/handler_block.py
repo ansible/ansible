@@ -13,12 +13,12 @@ class HandlerBlock(Block):
     def __init__(self, play=None, parent_block=None, role=None, task_include=None, implicit=False):
         self.cached_name = False
 
-        super(HandlerBlock, self).__init__(
+        super().__init__(
             play=play,
             parent_block=parent_block,
             role=role,
             task_include=task_include,
-            implicit=False,
+            implicit=implicit,
         )
 
         self._use_handlers = True

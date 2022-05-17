@@ -495,8 +495,14 @@ class StrategyBase(metaclass=abc.ABCMeta):
             # iterate in reversed order since last handler loaded with the same name wins
             for handler_block in reversed(handler_blocks):
                 if not handler_block.name:
-                    # unnamed block, implicit or user-defined, treat all tasks within the block.block as separate handlers,
-                    # rescue and always sections are ignored
+                    # FIXME ignore and warn on unnamed user-defined blocks? are they useful?
+                    # FIXME the _implicit is not set optimally, needs to be fixed
+                    if not handler_block._implicit:
+                        # unnamed user-defined block, treat all tasks within the block.block as separate handlers
+                        # rescue and always sections are ignored
+                        ...
+
+                    # unnamed implicit block, treat all tasks within the block.block as separate handlers
                     handlers = handler_block.block
                 else:
                     # the whole block is a handler
