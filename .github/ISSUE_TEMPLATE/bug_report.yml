@@ -119,15 +119,15 @@ body:
   attributes:
     label: Configuration
     description: >-
-      Paste verbatim output from `ansible-config dump --only-changed`
+      Paste verbatim output from `ansible-config dump --only-changed -t all`
       below, under the prompt line.
       Please don't wrap it with tripple backticks — your
       whole input will be turned into a code snippet automatically.
     render: console
     value: |
-      $ ansible-config dump --only-changed
+      $ ansible-config dump --only-changed -t all
     placeholder: |
-      $ ansible-config dump --only-changed
+      $ ansible-config dump --only-changed -t all
       DEFAULT_GATHERING(~/src/github/ansible/ansible/ansible.cfg) = smart
       DEFAULT_HOST_LIST(~/src/github/ansible/ansible/ansible.cfg) = ['~/src/github/ansible/ansible/hosts']
       DEFAULT_VAULT_PASSWORD_FILE(~/src/github/ansible/ansible/ansible.cfg) = ~/src/github/ansible/ansible/vault/print-password.sh
