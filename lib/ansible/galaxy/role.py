@@ -27,14 +27,16 @@ import datetime
 import os
 import tarfile
 import tempfile
-from ansible.module_utils.compat.version import LooseVersion
+
+from collections.abc import MutableSequence
 from shutil import rmtree
 
 from ansible import context
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common.yaml import yaml_dump, yaml_load
+from ansible.module_utils.compat.version import LooseVersion
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.display import Display
@@ -53,6 +55,7 @@ class GalaxyRole(object):
     def __init__(self, galaxy, api, name, src=None, version=None, scm=None, path=None):
 
         self._metadata = None
+        self._metadata_dependencies = None
         self._requirements = None
         self._install_info = None
         self._validate_certs = not context.CLIARGS['ignore_certs']
@@ -119,6 +122,24 @@ class GalaxyRole(object):
                         break
 
         return self._metadata
+
+    @property
+    def metadata_dependencies(self):
+        """
+        Returns a list of dependencies from role metadata
+        """
+        if self._metadata_dependencies is None:
+            self._metadata_dependencies = []
+
+            if self.metadata is not None:
+                self._metadata_dependencies = self.metadata.get('dependencies') or []
+
+        if not isinstance(self._metadata_dependencies, MutableSequence):
+            raise AnsibleParserError(
+                f"Expected role dependencies to be a list. Role {self} has meta/main.yml with dependencies {self._metadata_dependencies}"
+            )
+
+        return self._metadata_dependencies
 
     @property
     def install_info(self):
@@ -404,5 +425,8 @@ class GalaxyRole(object):
                         f.close()
 
                     break
+
+        if not isinstance(self._requirements, MutableSequence):
+            raise AnsibleParserError(f"Expected role dependencies to be a list. Role {self} has meta/requirements.yml {self._requirements}")
 
         return self._requirements
