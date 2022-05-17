@@ -63,12 +63,12 @@ class CoverageVersion:
 
 
 COVERAGE_VERSIONS = (
+    # IMPORTANT: Keep this in sync with the ansible-test.txt requirements file.
     CoverageVersion('6.3.3', 7, (3, 7), (3, 11)),
-    CoverageVersion('4.5.4', 0, (2, 6), (3, 7)),
+    CoverageVersion('4.5.4', 0, (2, 6), (3, 6)),
 )
 """
 This tuple specifies the coverage version to use for Python version ranges.
-When versions overlap, the latest version of coverage (listed first) will be used.
 """
 
 CONTROLLER_COVERAGE_VERSION = COVERAGE_VERSIONS[0]
@@ -91,6 +91,9 @@ def get_coverage_version(version: str) -> CoverageVersion:
 
     if not supported_versions:
         raise InternalError(f'Python {version} has no matching entry in COVERAGE_VERSIONS.')
+
+    if len(supported_versions) > 1:
+        raise InternalError(f'Python {version} has multiple matching entries in COVERAGE_VERSIONS.')
 
     coverage_version = supported_versions[0]
 
