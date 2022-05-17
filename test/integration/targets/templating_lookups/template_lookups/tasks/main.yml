@@ -87,4 +87,15 @@
     that:
       - password1 != password2
 
+# 77788 - KeyError when wantlist=False with dict returned
+- name: Test that dicts can be parsed with wantlist false
+  set_fact:
+    dict_wantlist_true: "{{ lookup('77788', wantlist=True) }}"
+    dict_wantlist_false: "{{ lookup('77788', wantlist=False) }}"
+
+- assert:
+    that:
+      - dict_wantlist_true is mapping
+      - dict_wantlist_false is string
+
 - include_tasks: ./errors.yml

@@ -1,0 +1,2 @@
+bugfixes:
+  - lookup plugin - catch KeyError when lookup returns dictionary (https://github.com/ansible/ansible/pull/77789).
