@@ -1014,6 +1014,11 @@ class Templar:
                 else:
                     ran = wrap_var(ran)
 
+            except KeyError:
+                # Lookup Plugin returned a dict.  Return comma-separated string.
+                # See https://github.com/ansible/ansible/pull/77789
+                ran = wrap_var(",".join(ran))
+
         return ran
 
     def _make_undefined(self, hint=None):
