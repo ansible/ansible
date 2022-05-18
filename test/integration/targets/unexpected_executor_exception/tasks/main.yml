@@ -1,0 +1,7 @@
+- unexpected:
+  register: result
+  ignore_errors: true
+
+- assert:
+    that:
+      - 'result.msg == "Unexpected failure during module execution: boom"'
