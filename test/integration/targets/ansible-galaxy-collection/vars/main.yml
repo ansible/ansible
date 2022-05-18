@@ -2,6 +2,10 @@ galaxy_verbosity: "{{ '' if not ansible_verbosity else '-' ~ ('v' * ansible_verb
 
 gpg_homedir: "{{ galaxy_dir }}/gpg"
 
+unsupported_resolvelib_versions:
+  - "0.5.1"
+  - "0.6.0"
+
 pulp_repositories:
   - published
   - secondary

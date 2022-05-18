@@ -1,13 +1,14 @@
-- name: get installed resolvelib version
-  shell: "{{ ansible_python_interpreter }} -m pip freeze | grep 'resolvelib'"
-  register: installed_resolvelib
-
-- block:
-    - name: install a version of resolvelib that is unsupported by ansible-galaxy
+- vars:
+    venv_dest: "{{ galaxy_dir }}/test_resolvelib_{{ resolvelib_version }}"
+  block:
+    - name: install another version of resolvelib that is unsupported by ansible-galaxy
       pip:
         name: resolvelib
-        version: "0.5.2"
+        version: "{{ resolvelib_version }}"
         state: present
+        virtualenv_python: "{{ ansible_python_interpreter }}"
+        virtualenv: "{{ venv_dest }}"
+        virtualenv_site_packages: True
 
     - name: create test collection install directory - {{ test_name }}
       file:
@@ -15,9 +16,10 @@
         state: directory
 
     - name: install simple collection from first accessible server (expected failure)
-      command: ansible-galaxy collection install namespace1.name1 {{ galaxy_verbosity }}
+      command: "ansible-galaxy collection install namespace1.name1 {{ galaxy_verbosity }}"
       environment:
         ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+        PATH: "{{ venv_dest }}/bin:{{ ansible_env.PATH }}"
       register: resolvelib_version_error
       ignore_errors: yes
 
@@ -29,15 +31,10 @@
         expected_error: "ansible-galaxy requires resolvelib<0.6.0,>=0.5.3"
 
   always:
-    - name: reinstall the supported version of resolvelib
-      pip:
-        name: resolvelib
-        version: "{{ reinstall_version }}"
-        state: present
-      vars:
-        reinstall_version: "{{ installed_resolvelib.stdout | regex_search('resolvelib==(.*$)', '\\1') | first }}"
-
-    - name: cleanup install directory
+    - name: cleanup venv and install directory
       file:
         path: '{{ galaxy_dir }}/ansible_collections'
         state: absent
+      loop:
+        - '{{ galaxy_dir }}/ansible_collections'
+        - '{{ venv_dest }}'

@@ -50,6 +50,12 @@
     src: ansible.cfg.j2
     dest: '{{ galaxy_dir }}/ansible.cfg'
 
+- name: test install command an unsupported version of resolvelib
+  include_tasks: unsupported_resolvelib.yml
+  loop: "{{ unsupported_resolvelib_versions }}"
+  loop_control:
+    loop_var: resolvelib_version
+
 - name: run ansible-galaxy collection publish tests for {{ test_name }}
   include_tasks: publish.yml
   args:
@@ -88,13 +94,6 @@
 # Stores the cached test version number index as we run install many times
 - set_fact:
     cache_version_build: 0
-
-- name: test installing a collection with an unsupported version of resolvelib
-  include_tasks: unsupported_resolvelib.yml
-  args:
-    apply:
-      environment:
-        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
 
 - name: run ansible-galaxy collection install tests for {{ test_name }}
   include_tasks: install.yml
