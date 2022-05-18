@@ -313,6 +313,11 @@
     - assert:
         that: "rekeyed == {'value': {'test': 'value'}}"
 
+- name: Assert that symmetric_difference can handle non-hashable types
+  assert:
+    that:
+      - '[{"foo": "bar"}, {"foo": "bar"}] | symmetric_difference([]) == [{"foo": "bar"}]'
+
 # TODO: For some reason, the coverage tool isn't accounting for the last test
 # so add another "last test" to fake it...
 - assert:
