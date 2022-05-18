@@ -1,0 +1,21 @@
+DOCUMENTATION:
+  name: urn
+  author: Ansible Core
+  version_added: "2.14"
+  short_description: check if string is a valid URN
+  description:
+    - Validates that the input string conforms to the URN standard
+  options:
+    _input:
+      description: possible URI
+      type: string
+      required: True
+EXAMPLES: |
+  # urls are uris
+  {{ 'urn:isbn:9780302376463' is urn }}
+  # this is url/uri but not urn
+  {{ 'mailto://nowone@example.com' is not urn }}
+RETURN:
+  _value:
+    description: Returns C(TRUE) if the string is a URN and C(False) if not
+    type: boolean
