@@ -99,6 +99,76 @@ Networking
 
 No notable changes
 
+Porting Guide for v6.0.0a3
+==========================
+
+Added Collections
+-----------------
+
+- vmware.vmware_rest (version 2.1.5)
+
+Breaking Changes
+----------------
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- lists_mergeby and groupby_as_dict filter plugins - adjust filter plugin filename. This change is not visible to end-users, it only affects possible other collections importing Python paths (https://github.com/ansible-collections/community.general/pull/4625).
+- yarn - remove unsupported and unnecessary ``--no-emoji`` flag (https://github.com/ansible-collections/community.general/pull/4662).
+
+vmware.vmware_rest
+~~~~~~~~~~~~~~~~~~
+
+- The vmware_rest 2.0.0 support vSphere 7.0.2 onwards.
+- vcenter_vm_storage_policy - the format of the ``disks`` parameter has changed.
+- vcenter_vm_storage_policy - the module has a new mandatory paramter: ``vm_home``.
+
+Major Changes
+-------------
+
+cisco.asa
+~~~~~~~~~
+
+- Minimum required ansible.netcommon version is 2.5.1.
+- Updated base plugin references to ansible.netcommon.
+
+community.mysql
+~~~~~~~~~~~~~~~
+
+- The community.mysql collection no longer supports ``Ansible 2.9`` and ``ansible-base 2.10``. While we take no active measures to prevent usage and there are no plans to introduce incompatible code to the modules, we will stop testing against ``Ansible 2.9`` and ``ansible-base 2.10``. Both will very soon be End of Life and if you are still using them, you should consider upgrading to the ``latest Ansible / ansible-core 2.11 or later`` as soon as possible (https://github.com/ansible-collections/community.mysql/pull/343).
+
+frr.frr
+~~~~~~~
+
+- Minimum required ansible.netcommon version is 2.5.1.
+- Updated base plugin references to ansible.netcommon.
+
+Deprecated Features
+-------------------
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- ansible_galaxy_install - deprecated support for ``ansible`` 2.9 and ``ansible-base`` 2.10 (https://github.com/ansible-collections/community.general/pull/4601).
+- dig lookup plugin - the ``DLV`` record type has been decommissioned in 2017 and support for it will be removed from community.general 6.0.0 (https://github.com/ansible-collections/community.general/pull/4618).
+
+community.hashi_vault
+~~~~~~~~~~~~~~~~~~~~~
+
+- token_validate options - the shared auth option ``token_validate`` will change its default from ``True`` to ``False`` in community.hashi_vault version 4.0.0. The ``vault_login`` lookup and module will keep the default value of ``True`` (https://github.com/ansible-collections/community.hashi_vault/issues/248).
+
+community.network
+~~~~~~~~~~~~~~~~~
+
+- Support for Ansible 2.9 and ansible-base 2.10 is deprecated, and will be removed in the next major release (community.network 4.0.0) this spring. While most content will probably still work with ansible-base 2.10, we will remove symbolic links for modules and action plugins, which will make it impossible to use them with Ansible 2.9 anymore. Please use community.network 3.x.y with Ansible 2.9 and ansible-base 2.10, as these releases will continue to support Ansible 2.9 and ansible-base 2.10 even after they are End of Life (https://github.com/ansible-community/community-topics/issues/50, https://github.com/ansible-collections/community.network/pull/382).
+
+vmware.vmware_rest
+~~~~~~~~~~~~~~~~~~
+
+- vcenter_vm_storage_policy_compliance - drop the module, it returns 404 error.
+- vcenter_vm_tools - remove the ``upgrade`` state.
+- vcenter_vm_tools_installer - remove the module from the collection.
+
 Porting Guide for v6.0.0a2
 ==========================
 
