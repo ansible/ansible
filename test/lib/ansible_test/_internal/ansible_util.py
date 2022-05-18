@@ -3,12 +3,14 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
-import sys
 import typing as t
 
 from .constants import (
     SOFT_RLIMIT_NOFILE,
+)
+
+from .io import (
+    write_text_file,
 )
 
 from .util import (
@@ -19,6 +21,7 @@ from .util import (
     ANSIBLE_BIN_PATH,
     ANSIBLE_SOURCE_ROOT,
     ANSIBLE_TEST_TOOLS_ROOT,
+    get_ansible_version,
     raw_command,
 )
 
@@ -211,27 +214,35 @@ def get_ansible_python_path(args):  # type: (CommonConfig) -> str
         os.symlink(ANSIBLE_LIB_ROOT, os.path.join(python_path, 'ansible'))
 
     if not args.explain:
-        generate_dist_info()
+        generate_egg_info(python_path)
 
     get_ansible_python_path.python_path = python_path  # type: ignore[attr-defined]
 
     return python_path
 
 
-def generate_dist_info():  # type: () -> None
-    """Generate ansible-core dist_info from setup.py"""
-    with subprocess.Popen(
-        [
-            sys.executable,
-            'setup.py',
-            'dist_info'
-        ],
-        cwd=ANSIBLE_SOURCE_ROOT,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        stdin=subprocess.PIPE,
-    ) as process:
-        process.communicate()
+def generate_egg_info(path):  # type: (str) -> None
+    """Generate an egg-info in the specified base directory."""
+    # minimal PKG-INFO stub following the format defined in PEP 241
+    # required for older setuptools versions to avoid a traceback when importing pkg_resources from packages like cryptography
+    # newer setuptools versions are happy with an empty directory
+    # including a stub here means we don't need to locate the existing file or have setup.py generate it when running from source
+    pkg_info = '''
+Metadata-Version: 1.0
+Name: ansible
+Version: %s
+Platform: UNKNOWN
+Summary: Radically simple IT automation
+Author-email: info@ansible.com
+License: GPLv3+
+''' % get_ansible_version()
+
+    pkg_info_path = os.path.join(path, 'ansible_core.egg-info', 'PKG-INFO')
+
+    if os.path.exists(pkg_info_path):
+        return
+
+    write_text_file(pkg_info_path, pkg_info.lstrip(), create_directories=True)
 
 
 class CollectionDetail:

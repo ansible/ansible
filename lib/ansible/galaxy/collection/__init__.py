@@ -91,7 +91,7 @@ from ansible.galaxy.dependency_resolution.errors import (
     CollectionDependencyResolutionImpossible,
     CollectionDependencyInconsistentCandidate,
 )
-from ansible.galaxy.dependency_resolution.providers import RESOLVELIB_VERSION
+from ansible.galaxy.dependency_resolution.providers import RESOLVELIB_VERSION, RESOLVELIB_LOWERBOUND, RESOLVELIB_UPPERBOUND
 from ansible.galaxy.dependency_resolution.versioning import meets_requirements
 from ansible.module_utils.six import raise_from
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -1572,10 +1572,18 @@ def _resolve_depenency_map(
     try:
         dist = distribution('ansible-core')
     except PackageNotFoundError:
-        display.warning("Unable to find distribution 'ansible-core' to verify the resolvelib version is supported.")
+        req = None
     else:
         req = next((rr for r in (dist.requires or []) if (rr := PkgReq(r)).name == 'resolvelib'), None)
-        if req is not None and not req.specifier.contains(RESOLVELIB_VERSION.vstring):
+    finally:
+        if req is None:
+            # TODO: replace the hardcoded versions with a warning if the dist info is missing
+            # display.warning("Unable to find 'ansible-core' distribution requirements to verify the resolvelib version is supported.")
+            if RESOLVELIB_VERSION < RESOLVELIB_LOWERBOUND or RESOLVELIB_VERSION >= RESOLVELIB_UPPERBOUND:
+                raise AnsibleError(
+                    f"ansible-galaxy requires resolvelib<{RESOLVELIB_UPPERBOUND.vstring},>={RESOLVELIB_LOWERBOUND.vstring}"
+                )
+        elif req.specifier.contains(RESOLVELIB_VERSION.vstring):
             raise AnsibleError(f"ansible-galaxy requires {req.name}{req.specifier}")
 
     collection_dep_resolver = build_collection_dependency_resolver(
