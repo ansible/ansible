@@ -174,3 +174,13 @@
       - add_host_loop_res.results[1] is changed
       - add_host_loop_res.results[2] is not changed
       - add_host_loop_res is changed
+
+- name: Add host with host:port in name
+  add_host:
+    name: '127.0.1.1:2222'
+  register: hostport
+
+- assert:
+    that:
+      - hostport.add_host.host_name == '127.0.1.1'
+      - hostport.add_host.host_vars.ansible_ssh_port == 2222

@@ -7,12 +7,23 @@
       command: echo foo
       notify:
         - notify_listen
+
+    - name: notify another handler
+      debug:
+      changed_when: true
+      notify: another_listen
+
+    - name: nofity another handler 2
+      debug:
+      changed_when: true
+      notify: another_listen
   post_tasks:
     - name: assert all defined handlers ran without error
       assert:
         that:
         - "notify_listen_ran_1 is defined"
         - "notify_listen_ran_2 is defined"
+        - "another_listen_ran is true"
   handlers:
     - name: first listening handler has a name
       set_fact:
@@ -22,3 +33,7 @@
     - set_fact:
         notify_listen_ran_2: True
       listen: notify_listen
+
+    - set_fact:
+        another_listen_ran: '{{ False if another_listen_ran is defined else True }}'
+      listen: another_listen
