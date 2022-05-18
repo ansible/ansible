@@ -116,16 +116,16 @@ stages:
               test: alpine3
             - name: CentOS 7
               test: centos7
-            - name: Fedora 34
-              test: fedora34
             - name: Fedora 35
               test: fedora35
+            - name: Fedora 36
+              test: fedora36
             - name: openSUSE 15
               test: opensuse15
-            - name: Ubuntu 18.04
-              test: ubuntu1804
             - name: Ubuntu 20.04
               test: ubuntu2004
+            - name: Ubuntu 22.04
+              test: ubuntu2204
           groups:
             - 1
             - 2
