@@ -5,17 +5,22 @@ DOCUMENTATION:
   short_description: check if string is a valid URL
   description:
     - Validates a string to conform to the URL standard
-    - This is the same as calling the C(uri) test with ``schema=['ftp', 'ftp', 'http', 'https']``
   options:
     _input:
       description: possible URL
       type: string
       required: True
+    schemes:
+      description: subset of URI schemas to validate against, otherwise ANY scheme is considered valid
+      type: list
+      elements: string
 EXAMPLES: |
   # simple url
   {{ 'http://example.com' is url }}
-  # but not all uris are urls
-  {{ 'mailto://nowone@example.com' is not url }}
+  # looking only for file transfers uris
+  {{ 'mailto://nowone@example.com' is not uri(schemes=['ftp', 'ftps', 'sftp', 'file']) }}
+  #  but it is according to standard
+  {{ 'mailto://nowone@example.com' is not uri }}
   # more complex url
   {{ 'ftp://admin:secret@example.com/path/to/myfile.yml' is url }}
 RETURN:

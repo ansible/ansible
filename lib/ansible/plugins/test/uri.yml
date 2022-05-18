@@ -10,8 +10,8 @@ DOCUMENTATION:
       description: possible URI
       type: string
       required: True
-    schemas:
-      description: subset of URI schemas to validate against, otherwise ANY schema is considered valid
+    schemes:
+      description: subset of URI schemas to validate against, otherwise ANY scheme is considered valid
       type: list
       elements: string
       required: False
@@ -21,9 +21,9 @@ EXAMPLES: |
   # but not all uris are urls
   {{ 'mailto://nowone@example.com' is uri }}
   # looking only for file transfers uris
-  {{ 'mailto://nowone@example.com' is not uri(schemas=['ftp', 'ftps', 'sftp', 'file']) }}
-  # make sure uri is also url
-  {{ 'http://nobody:secret@example.com' is uri(schemas=['ftp', 'ftps', 'http', 'https']) }}
+  {{ 'mailto://nowone@example.com' is not uri(schemes=['ftp', 'ftps', 'sftp', 'file']) }}
+  # make sure url conforms to the 'special schemas'
+  {{ 'http://nobody:secret@example.com' is uri(['ftp', 'ftps', 'http', 'https', 'ws', 'wss']) }}
 RETURN:
   _value:
     description: Returns C(False) if the string is not a URI or the schema extracted does not match the supplied list
