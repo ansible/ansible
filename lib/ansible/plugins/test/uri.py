@@ -7,19 +7,31 @@ __metaclass__ = type
 from urllib.parse import urlparse
 
 
-def is_uri(value, schemas=None):
-    ''' Will verify that the string passed is a valid 'uri' according to spec, if passed a list of valid schemas it will even match those '''
+def is_uri(value, schemes=None):
+    ''' Will verify that the string passed is a valid 'uri', if passed a list of valid schemes it will match those '''
     try:
         x = urlparse(value)
-        isit = all([x.scheme, x.netloc, not schemas or x.scheme in schemas])
+        isit = all([x.scheme is not None, x.path is not None, not schemes or x.scheme in schemes])
     except Exception as e:
         isit = False
     return isit
 
 
-def is_url(value):
-    ''' Will verify that the string passed is a valid 'url' according to spec '''
-    return is_uri(value, ['http', 'ftp', 'https', 'ftps'])
+def is_url(value, schemes=None):
+    ''' Will verify that the string passed is a valid 'url' '''
+
+    isit = is_uri(value, schemes)
+    if isit:
+        try:
+            x = urlparse(value)
+            isit = bool(x.netloc or x.scheme == 'file')
+        except Exception as e:
+            isit = False
+    return isit
+
+
+def is_urn(value):
+    return is_uri(value, ['urn'])
 
 
 class TestModule(object):
@@ -28,6 +40,7 @@ class TestModule(object):
     def tests(self):
         return {
             # file testing
-            'url': is_url,
             'uri': is_uri,
+            'url': is_url,
+            'urn': is_urn,
         }
