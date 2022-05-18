@@ -44,10 +44,8 @@ def verify_signature(request, public_key_pem):
 
     public_key = load_pem_public_key(public_key_pem.encode(), default_backend())
 
-    verifier = public_key.verifier(
+    public_key.verify(
         base64.b64decode(signature.encode()),
+        payload_bytes,
         ec.ECDSA(hashes.SHA256()),
     )
-
-    verifier.update(payload_bytes)
-    verifier.verify()
