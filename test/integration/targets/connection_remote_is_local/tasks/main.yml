@@ -11,5 +11,5 @@
       - >-
         '/i/dont/exist' not in result.stdout
   vars:
-    local_tmp: '{{ q("config", "remote_tmp", plugin_type="shell", plugin_name="sh")|first|expanduser }}'
+    local_tmp: '{{ q("config", "remote_tmp", plugin_type="shell", plugin_name="sh")|first|expanduser|realpath }}'
     ansible_local: '{{ local_tmp }}/ansible-local-\S+'
