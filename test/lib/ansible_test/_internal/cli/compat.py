@@ -93,18 +93,6 @@ class PythonVersionUnspecifiedError(ApplicationError):
         super().__init__(f'A Python version was not specified for environment `{context}`. Use the `--python` option to specify a Python version.')
 
 
-class RemoteProviderUnspecifiedError(ApplicationError):
-    """A remote provider was not specified for a context which is unknown, thus the remote provider version is unknown."""
-    def __init__(self, context):
-        super().__init__(f'A remote provider was not specified for environment `{context}`. Use the `--remote-provider` option to specify a provider.')
-
-
-class RemoteArchitectureUnspecifiedError(ApplicationError):
-    """A remote architecture was not specified for a context which is unknown, thus the remote architecture version is unknown."""
-    def __init__(self, context):
-        super().__init__(f'A remote architecture was not specified for environment `{context}`. Use the `--remote-arch` option to specify an architecture.')
-
-
 class ControllerNotSupportedError(ApplicationError):
     """Option(s) were specified which do not provide support for the controller and would be ignored because they are irrelevant for the target."""
     def __init__(self, context):
@@ -404,12 +392,6 @@ def get_legacy_host_config(
         else:
             if not options.python:
                 raise PythonVersionUnspecifiedError(f'--remote {options.remote}')
-
-            if not options.remote_provider:
-                raise RemoteProviderUnspecifiedError(f'--remote {options.remote}')
-
-            if not options.remote_arch:
-                raise RemoteArchitectureUnspecifiedError(f'--remote {options.remote}')
 
             if controller_python(options.python):
                 controller = PosixRemoteConfig(name=options.remote, python=native_python(options), provider=options.remote_provider, arch=options.remote_arch)
