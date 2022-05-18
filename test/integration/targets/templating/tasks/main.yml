@@ -1,0 +1,8 @@
+- command: echo {% raw %}{{ foo }}{% endraw %}
+  register: result
+
+- assert:
+    that:
+      - result.stdout_lines|first == expected
+  vars:
+    expected: !unsafe '{{ foo }}'
