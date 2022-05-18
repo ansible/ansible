@@ -1579,7 +1579,7 @@ def _resolve_depenency_map(
         if req is None:
             # TODO: replace the hardcoded versions with a warning if the dist info is missing
             # display.warning("Unable to find 'ansible-core' distribution requirements to verify the resolvelib version is supported.")
-            if RESOLVELIB_VERSION < RESOLVELIB_LOWERBOUND or RESOLVELIB_VERSION >= RESOLVELIB_UPPERBOUND:
+            if not RESOLVELIB_LOWERBOUND <= RESOLVELIB_VERSION < RESOLVELIB_UPPERBOUND:
                 raise AnsibleError(
                     f"ansible-galaxy requires resolvelib<{RESOLVELIB_UPPERBOUND.vstring},>={RESOLVELIB_LOWERBOUND.vstring}"
                 )
