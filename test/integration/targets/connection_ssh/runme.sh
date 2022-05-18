@@ -46,14 +46,18 @@ fi
 
 set -e
 
-# temporary work-around for issues due to new scp filename checking
-# https://github.com/ansible/ansible/issues/52640
-if [[ "$(scp -T 2>&1)" == "usage: scp "* ]]; then
+if [[ "$(scp -O 2>&1)" == "usage: scp "* ]]; then
+    # scp supports the -O option (and thus the -T option as well)
+    # work-around required
+    # see: https://www.openssh.com/txt/release-9.0
+    scp_args=("-e" "ansible_scp_extra_args=-TO")
+elif [[ "$(scp -T 2>&1)" == "usage: scp "* ]]; then
     # scp supports the -T option
     # work-around required
+    # see: https://github.com/ansible/ansible/issues/52640
     scp_args=("-e" "ansible_scp_extra_args=-T")
 else
-    # scp does not support the -T option
+    # scp does not support the -T or -O options
     # no work-around required
     # however we need to put something in the array to keep older versions of bash happy
     scp_args=("-e" "")
