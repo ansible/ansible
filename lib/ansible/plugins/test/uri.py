@@ -18,7 +18,7 @@ def is_uri(value, schemes=None):
 
 
 def is_url(value, schemes=None):
-    ''' Will verify that the string passed is a valid 'url' '''
+    ''' Will verify that the string passed is a valid 'URL' '''
 
     isit = is_uri(value, schemes)
     if isit:
