@@ -4,7 +4,7 @@ DOCUMENTATION:
   version_added: "2.14"
   short_description: check if string is a valid URL
   description:
-    - Validates a string to conform to the URL standard
+    - Validates a string to conform to the URL standard.
   options:
     _input:
       description: Possible URL.
