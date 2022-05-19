@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 
 
 def is_uri(value, schemes=None):
-    ''' Will verify that the string passed is a valid 'uri', if passed a list of valid schemes it will match those '''
+    ''' Will verify that the string passed is a valid 'URI', if given a list of valid schemes it will match those '''
     try:
         x = urlparse(value)
         isit = all([x.scheme is not None, x.path is not None, not schemes or x.scheme in schemes])
