@@ -592,7 +592,7 @@ class TaskExecutor:
         # get handler
         self._handler, module_context = self._get_action_handler_with_module_context(connection=self._connection, templar=templar)
 
-        if module_context is not None and module_context.action_plugin:
+        if module_context is not None:
             module_defaults_fqcn = module_context.resolved_fqcn
         else:
             module_defaults_fqcn = self._task.resolved_action
@@ -1116,13 +1116,13 @@ class TaskExecutor:
 
         collections = self._task.collections
 
-        # Check if the module has specified to action handler
-        module = None
-        if self._shared_loader_obj.module_loader.has_plugin(self._task.action, collection_list=collections):
-            module = self._shared_loader_obj.module_loader.find_plugin_with_context(
-                self._task.action, collection_list=self._task.collections
-            )
-        if module is not None and module.resolved and module.action_plugin:
+        # Check if the module has specified an action handler
+        module = self._shared_loader_obj.module_loader.find_plugin_with_context(
+            self._task.action, collection_list=collections
+        )
+        if not module.resolved or not module.action_plugin:
+            module = None
+        if module is not None:
             handler_name = module.action_plugin
         # let action plugin override module, fallback to 'normal' action plugin otherwise
         elif self._shared_loader_obj.action_loader.has_plugin(self._task.action, collection_list=collections):

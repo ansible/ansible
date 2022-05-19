@@ -208,7 +208,8 @@ class TestTaskExecutor(unittest.TestCase):
             final_q=MagicMock(),
         )
 
-        te._shared_loader_obj.module_loader.has_plugin.return_value = False
+        context = MagicMock(resolved=False)
+        te._shared_loader_obj.module_loader.find_plugin_with_context.return_value = context
         action_loader = te._shared_loader_obj.action_loader
         action_loader.has_plugin.return_value = True
 
@@ -244,7 +245,8 @@ class TestTaskExecutor(unittest.TestCase):
             final_q=MagicMock(),
         )
 
-        te._shared_loader_obj.module_loader.has_plugin = MagicMock(return_value=False)
+        context = MagicMock(resolved=False)
+        te._shared_loader_obj.module_loader.find_plugin_with_context.return_value = context
         action_loader = te._shared_loader_obj.action_loader
         action_loader.has_plugin.side_effect = [False, True]
         action_loader.get.return_value = mock.sentinel.handler
@@ -285,7 +287,8 @@ class TestTaskExecutor(unittest.TestCase):
         action_loader.get.return_value = mock.sentinel.handler
         action_loader.__contains__.return_value = False
         module_loader = te._shared_loader_obj.module_loader
-        module_loader.has_plugin.return_value = False  # True/False doesn't matter, but need to set more mock objects if True
+        context = MagicMock(resolved=False)
+        module_loader.find_plugin_with_context.return_value = context
 
         mock_connection = MagicMock()
         mock_templar = MagicMock()
@@ -339,8 +342,6 @@ class TestTaskExecutor(unittest.TestCase):
         mock_queue = MagicMock()
 
         shared_loader = MagicMock()
-        shared_loader.module_loader = module_loader
-        shared_loader.module_loader.has_plugin = MagicMock(return_value=False)  # True needs extra MagicMock of find_plugin_with_context
         new_stdin = None
         job_vars = dict(omit="XXXXXXXXXXXXXXXXXXX")
 
