@@ -11,7 +11,7 @@ DOCUMENTATION:
       type: string
       required: True
     schemes:
-      description: subset of URI schemas to validate against, otherwise ANY scheme is considered valid
+      description: Subset of URI schemas to validate against, otherwise B(any) scheme is considered valid.
       type: list
       elements: string
       required: False
