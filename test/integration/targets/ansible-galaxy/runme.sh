@@ -194,6 +194,70 @@ popd # ${galaxy_testdir}
 rm -fr "${galaxy_testdir}"
 rm -fr "${HOME}/.ansible/roles/${galaxy_local_test_role}"
 
+# Galaxy install test case (expected failure)
+#
+# Install role with a meta/requirements.yml that is not a list of roles
+mkdir -p "${role_testdir}"
+pushd "${role_testdir}"
+
+    ansible-galaxy role init --init-path . unsupported_requirements_format
+    cat <<EOF > ./unsupported_requirements_format/meta/requirements.yml
+roles:
+  - src: git+file:///${galaxy_local_test_role_git_repo}
+EOF
+    tar czvf unsupported_requirements_format.tar.gz unsupported_requirements_format
+
+    set +e
+    ansible-galaxy role install -p ./roles unsupported_requirements_format.tar.gz 2>&1 | tee out.txt
+    rc="$?"
+    set -e
+
+    # Test that installing the role was an error
+    [[ ! "$rc" == 0 ]]
+    grep out.txt -qe 'Expected role dependencies to be a list.'
+
+    # Test that the role was not installed to the expected directory
+    [[ ! -d "${HOME}/.ansible/roles/unsupported_requirements_format" ]]
+
+popd # ${role_testdir}
+rm -rf "${role_testdir}"
+
+# Galaxy install test case (expected failure)
+#
+# Install role with meta/main.yml dependencies that is not a list of roles
+mkdir -p "${role_testdir}"
+pushd "${role_testdir}"
+
+    ansible-galaxy role init --init-path . unsupported_requirements_format
+    cat <<EOF > ./unsupported_requirements_format/meta/main.yml
+galaxy_info:
+  author: Ansible
+  description: test unknown dependency format (expected failure)
+  company: your company (optional)
+  license: license (GPL-2.0-or-later, MIT, etc)
+  min_ansible_version: 2.1
+  galaxy_tags: []
+dependencies:
+  roles:
+    - src: git+file:///${galaxy_local_test_role_git_repo}
+EOF
+    tar czvf unsupported_requirements_format.tar.gz unsupported_requirements_format
+
+    set +e
+    ansible-galaxy role install -p ./roles unsupported_requirements_format.tar.gz 2>&1 | tee out.txt
+    rc="$?"
+    set -e
+
+    # Test that installing the role was an error
+    [[ ! "$rc" == 0 ]]
+    grep out.txt -qe 'Expected role dependencies to be a list.'
+
+    # Test that the role was not installed to the expected directory
+    [[ ! -d "${HOME}/.ansible/roles/unsupported_requirements_format" ]]
+
+popd # ${role_testdir}
+rm -rf "${role_testdir}"
+
 # Galaxy install test case
 #
 # Ensure that if both a role_file and role_path is provided, they are both
