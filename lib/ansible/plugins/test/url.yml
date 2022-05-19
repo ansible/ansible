@@ -17,7 +17,7 @@ DOCUMENTATION:
 EXAMPLES: |
   # simple url
   {{ 'http://example.com' is url }}
-  # looking only for file transfers uris
+  # looking only for file transfers URIs
   {{ 'mailto://nowone@example.com' is not uri(schemes=['ftp', 'ftps', 'sftp', 'file']) }}
   #  but it is according to standard
   {{ 'mailto://nowone@example.com' is not uri }}
