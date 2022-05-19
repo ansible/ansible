@@ -7,7 +7,7 @@ DOCUMENTATION:
     - Validates a string to conform to the URL standard
   options:
     _input:
-      description: possible URL
+      description: Possible URL.
       type: string
       required: True
     schemes:
