@@ -81,17 +81,27 @@ from ansible.galaxy.collection.gpg import (
     get_signature_from_source,
     GPG_ERROR_MAP,
 )
-from ansible.galaxy.dependency_resolution import (
-    build_collection_dependency_resolver,
-)
+try:
+    from ansible.galaxy.dependency_resolution import (
+        build_collection_dependency_resolver,
+    )
+    from ansible.galaxy.dependency_resolution.errors import (
+        CollectionDependencyResolutionImpossible,
+        CollectionDependencyInconsistentCandidate,
+    )
+    from ansible.galaxy.dependency_resolution.providers import (
+        RESOLVELIB_VERSION,
+        RESOLVELIB_LOWERBOUND,
+        RESOLVELIB_UPPERBOUND,
+    )
+except ImportError:
+    HAS_RESOLVELIB = False
+else:
+    HAS_RESOLVELIB = True
+
 from ansible.galaxy.dependency_resolution.dataclasses import (
     Candidate, Requirement, _is_installed_collection_dir,
 )
-from ansible.galaxy.dependency_resolution.errors import (
-    CollectionDependencyResolutionImpossible,
-    CollectionDependencyInconsistentCandidate,
-)
-from ansible.galaxy.dependency_resolution.providers import RESOLVELIB_VERSION, RESOLVELIB_LOWERBOUND, RESOLVELIB_UPPERBOUND
 from ansible.galaxy.dependency_resolution.versioning import meets_requirements
 from ansible.module_utils.six import raise_from
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -1569,6 +1579,8 @@ def _resolve_depenency_map(
         include_signatures,  # type: bool
 ):  # type: (...) -> dict[str, Candidate]
     """Return the resolved dependency map."""
+    if not HAS_RESOLVELIB:
+        raise AnsibleError("Failed to import resolvelib, check that a supported version is installed")
     try:
         dist = distribution('ansible-core')
     except PackageNotFoundError:

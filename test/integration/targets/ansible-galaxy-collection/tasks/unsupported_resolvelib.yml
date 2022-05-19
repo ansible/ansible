@@ -26,9 +26,10 @@
     - assert:
         that:
           - resolvelib_version_error is failed
-          - expected_error in resolvelib_version_error.stderr
+          - compat_error in resolvelib_version_error.stderr or import_error in resolvelib_version_error.stderr
       vars:
-        expected_error: "ansible-galaxy requires resolvelib<0.6.0,>=0.5.3"
+        import_error: "Failed to import resolvelib"
+        compat_error: "ansible-galaxy requires resolvelib<0.6.0,>=0.5.3"
 
   always:
     - name: cleanup venv and install directory
