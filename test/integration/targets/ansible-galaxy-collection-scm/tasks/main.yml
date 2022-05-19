@@ -23,11 +23,8 @@
   - include_tasks: ./multi_collection_repo_individual.yml
   - include_tasks: ./setup_recursive_scm_dependency.yml
   - include_tasks: ./scm_dependency_deduplication.yml
-    loop:
-      - "0.5.3"  # Oldest supported
-      - "0.6.0"
-      - "0.7.0"
-      - "0.8.1"  # Latest supported
+  - include_tasks: ./test_supported_resolvelib_versions.yml
+    loop: "{{ supported_resolvelib_versions }}"
     loop_control:
       loop_var: resolvelib_version
   - include_tasks: ./download.yml

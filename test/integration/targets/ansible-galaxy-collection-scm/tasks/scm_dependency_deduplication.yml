@@ -1,9 +1,3 @@
-- name: ensure requested resolvelib version is installed
-  pip:
-    name: resolvelib
-    version: "{{ resolvelib_version }}"
-    state: present
-
 - name: Install all collections in a repo, one of which has a recursive dependency
   command: 'ansible-galaxy collection install git+file://{{ scm_path }}/namespace_1/.git'
   register: command
