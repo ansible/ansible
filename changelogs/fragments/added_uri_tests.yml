@@ -1,2 +1,2 @@
 minor_changes:
-  - new tests url and uri will verify a string matches the standard, but they don't check existance of the resource
+  - new tests url, uri and urn will verify string as such, but they don't check existance of the resource
