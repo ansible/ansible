@@ -11,7 +11,7 @@ DOCUMENTATION:
       type: string
       required: True
 EXAMPLES: |
-  # urls are uris
+  # ISBN in URN format
   {{ 'urn:isbn:9780302376463' is urn }}
   # this is url/uri but not urn
   {{ 'mailto://nowone@example.com' is not urn }}
