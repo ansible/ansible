@@ -4,7 +4,7 @@ DOCUMENTATION:
   version_added: "1.4"
   short_description: union of lists
   description:
-    - Provide a unique list of all the elements of 2 lists
+    - Provide a unique list of all the elements of 2 lists.
   options:
     _input:
       description: A list

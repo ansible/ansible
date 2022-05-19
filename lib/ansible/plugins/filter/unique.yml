@@ -4,7 +4,7 @@ DOCUMENTATION:
   version_added: "1.4"
   short_description: set of unique items of a list
   description:
-    - Creates a list of unique elements (a set) from the provided input list
+    - Creates a list of unique elements (a set) from the provided input list.
   options:
     _input:
       description: A list

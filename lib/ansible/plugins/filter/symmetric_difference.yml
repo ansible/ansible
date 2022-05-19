@@ -4,7 +4,7 @@ DOCUMENTATION:
   version_added: "1.4"
   short_description: different items from 2 lists
   description:
-    - Provide a unique list of all the elements of unique to each list
+    - Provide a unique list of all the elements unique to each list.
   options:
     _input:
       description: A list
