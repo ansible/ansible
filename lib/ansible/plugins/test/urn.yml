@@ -17,5 +17,5 @@ EXAMPLES: |
   {{ 'mailto://nowone@example.com' is not urn }}
 RETURN:
   _value:
-    description: Returns C(TRUE) if the string is a URN and C(False) if not
+    description: Returns C(TRUE) if the string is a URN and C(False) if  it is not
     type: boolean
