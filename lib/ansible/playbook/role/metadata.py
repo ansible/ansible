@@ -72,6 +72,7 @@ class RoleMetadata(Base, CollectionSearch):
                 raise AnsibleParserError("Expected role dependencies to be a list.", obj=self._ds)
 
             for role_def in ds:
+                # FIXME: consolidate with ansible-galaxy to keep this in sync
                 if isinstance(role_def, string_types) or 'role' in role_def or 'name' in role_def:
                     roles.append(role_def)
                     continue

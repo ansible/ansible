@@ -1376,9 +1376,10 @@ class GalaxyCLI(CLI):
             # install dependencies, if we want them
             if not no_deps and installed:
                 if not role.metadata:
+                    # NOTE: the meta file is also required for installing the role, not just dependencies
                     display.warning("Meta file %s is empty. Skipping dependencies." % role.path)
                 else:
-                    role_dependencies = (role.metadata.get('dependencies') or []) + role.requirements
+                    role_dependencies = role.metadata_dependencies + role.requirements
                     for dep in role_dependencies:
                         display.debug('Installing dep %s' % dep)
                         dep_req = RoleRequirement()
