@@ -35,7 +35,7 @@ def is_urn(value):
 
 
 class TestModule(object):
-    ''' Ansible uri jinja2 tests '''
+    ''' Ansible URI jinja2 test '''
 
     def tests(self):
         return {
