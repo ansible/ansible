@@ -14,6 +14,7 @@
     - name: Install requests<2.20 (CentOS/RHEL 6)
       pip:
         name: requests<2.20
+        extra_args: "-c {{ remote_constraints }}"
       register: result
       until: result is success
       when: ansible_distribution_file_variety|default() == 'RedHat' and ansible_distribution_major_version is version('6', '<=')
