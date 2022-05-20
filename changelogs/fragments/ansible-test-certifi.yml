@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Add certifi constraint for Python 2.
