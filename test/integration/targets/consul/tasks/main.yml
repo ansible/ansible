@@ -21,6 +21,7 @@
     - name: Install python-consul
       pip:
         name: python-consul
+        extra_args: "-c {{ remote_constraints }}"
       register: result
       until: result is success
 
