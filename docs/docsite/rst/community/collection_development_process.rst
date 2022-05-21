@@ -61,7 +61,7 @@ More precisely:
 
 * Every bugfix PR must have a changelog fragment. The only exception are fixes to a change that has not yet been included in a release.
 * Every feature PR must have a changelog fragment.
-* New modules and plugins (including jinja2 filter and test plugins) must have ``versions_added`` set correctly in their documenation, and do not need a changelog fragment. The tooling detects new modules and plugins by their ``versions_added`` value and announces them in the next release's changelog automatically.
+* New modules and plugins (including jinja2 filter and test plugins) must have ``version_added`` entries set correctly in their documentation, and do not need a changelog fragment. The tooling detects new modules and plugins by their ``version_added`` values and announces them in the next release's changelog automatically.
 
 We build short summary changelogs for minor releases as well as for major releases. If you backport a bugfix, include a changelog fragment with the backport PR.
 
