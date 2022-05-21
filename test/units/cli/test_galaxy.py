@@ -1093,7 +1093,7 @@ def test_parse_requirements_without_mandatory_name_key(requirements_cli, require
 
     expected = "Neither the collection requirement entry key 'name', nor 'source' point to a concrete resolvable collection artifact. "
     expected += r"Also 'name' is not an FQCN\. A valid collection name must be in the format <namespace>\.<collection>\. "
-    expected += r"Please make sure that the namespace and the collection name  contain characters from \[a\-zA\-Z0\-9_\] only\."
+    expected += r"Please make sure that the namespace and the collection name contain characters from \[a\-zA\-Z0\-9_\] only\."
 
     with pytest.raises(AnsibleError, match=expected):
         requirements_cli._parse_requirements_file(requirements_file)
