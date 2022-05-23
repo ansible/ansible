@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.compat import unittest
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from ansible.template.vars import AnsibleJ2Vars
 

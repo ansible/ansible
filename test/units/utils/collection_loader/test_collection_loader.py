@@ -17,7 +17,7 @@ from ansible.utils.collection_loader._collection_finder import (
     _get_collection_name_from_path, _get_collection_role_path, _get_collection_metadata, _iter_modules_impl
 )
 from ansible.utils.collection_loader._collection_config import _EventSource
-from mock import MagicMock, NonCallableMagicMock, patch
+from unittest.mock import MagicMock, NonCallableMagicMock, patch
 
 
 # fixture to ensure we always clean up the import stuff when we're done

@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.compat import unittest
-from mock import patch
+from unittest.mock import patch
 from ansible.playbook.task import Task
 from ansible.parsing.yaml import objects
 from ansible import errors

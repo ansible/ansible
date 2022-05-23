@@ -3,7 +3,7 @@ __metaclass__ = type
 
 from units.compat import unittest
 from units.mock.loader import DictDataLoader
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from ansible.template import Templar
 from ansible import errors

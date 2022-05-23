@@ -24,7 +24,7 @@ import os
 import pytest
 
 from units.compat import unittest
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 from units.mock.vault_helper import TextVaultSecret
 
 from ansible import context, errors

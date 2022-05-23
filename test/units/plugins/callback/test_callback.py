@@ -25,7 +25,7 @@ import textwrap
 import types
 
 from units.compat import unittest
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host

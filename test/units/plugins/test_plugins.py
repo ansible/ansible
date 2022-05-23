@@ -23,7 +23,7 @@ __metaclass__ = type
 import os
 
 from units.compat import unittest
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 from ansible.plugins.loader import PluginLoader, PluginPathContext
 
 

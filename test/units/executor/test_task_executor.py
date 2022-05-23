@@ -19,10 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import mock
+from unittest import mock
 
 from units.compat import unittest
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor, remove_omit
 from ansible.plugins.loader import action_loader, lookup_loader
