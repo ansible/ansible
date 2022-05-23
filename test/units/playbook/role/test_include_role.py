@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.compat import unittest
-from mock import patch
+from unittest.mock import patch
 
 from ansible.playbook import Play
 from ansible.playbook.role_include import IncludeRole

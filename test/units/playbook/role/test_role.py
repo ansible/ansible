@@ -22,7 +22,7 @@ __metaclass__ = type
 from collections.abc import Container
 
 from units.compat import unittest
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.block import Block

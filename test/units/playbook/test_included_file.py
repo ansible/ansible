@@ -23,7 +23,7 @@ import os
 
 import pytest
 
-from mock import MagicMock
+from unittest.mock import MagicMock
 from units.mock.loader import DictDataLoader
 
 from ansible.playbook.block import Block

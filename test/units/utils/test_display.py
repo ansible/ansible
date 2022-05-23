@@ -5,7 +5,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 

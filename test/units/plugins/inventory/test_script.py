@@ -22,7 +22,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import pytest
-import mock
+from unittest import mock
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
