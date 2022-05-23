@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 
 from units.compat import unittest
-from mock import MagicMock
+from unittest.mock import MagicMock
 from units.mock.loader import DictDataLoader
 
 from ansible import errors

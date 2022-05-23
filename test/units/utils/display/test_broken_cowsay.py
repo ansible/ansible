@@ -8,7 +8,7 @@ __metaclass__ = type
 
 
 from ansible.utils.display import Display
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 
 def test_display_with_fake_cowsay_binary(capsys, mocker):
