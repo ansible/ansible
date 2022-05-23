@@ -220,6 +220,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         if self._role:
             new_me._role = self._role
 
+        new_me._implicit = self._implicit
+
         new_me.validate()
         return new_me
 

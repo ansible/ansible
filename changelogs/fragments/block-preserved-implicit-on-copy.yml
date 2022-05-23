@@ -1,0 +1,2 @@
+bugfixes:
+  - Preserve ``Block``'s ``_implicit`` flag on copies.
