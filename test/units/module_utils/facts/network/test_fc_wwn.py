@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 from ansible.module_utils.facts.network import fc_wwn
-from mock import Mock
+from units.compat.mock import Mock
 
 
 # AIX lsdev

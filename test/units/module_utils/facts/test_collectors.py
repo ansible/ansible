@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import pytest
 
-from mock import Mock, patch
+from units.compat.mock import Mock, patch
 
 from . base import BaseFactsTest
 

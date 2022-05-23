@@ -4,8 +4,7 @@ __metaclass__ = type
 import collections
 import sys
 
-import mock
-
+from units.compat.mock import Mock
 from units.compat import unittest
 
 try:
@@ -41,14 +40,14 @@ class AptExpandPkgspecTestCase(unittest.TestCase):
 
     def test_pkgname_wildcard_version_wildcard(self):
         foo = ["apt*=1.0*"]
-        m_mock = mock.Mock()
+        m_mock = Mock()
         self.assertEqual(
             expand_pkgspec_from_fnmatches(m_mock, foo, self.fake_cache),
             ['apt', 'apt-utils'])
 
     def test_pkgname_expands(self):
         foo = ["apt*"]
-        m_mock = mock.Mock()
+        m_mock = Mock()
         self.assertEqual(
             expand_pkgspec_from_fnmatches(m_mock, foo, self.fake_cache),
             ["apt", "apt-utils"])

@@ -19,7 +19,7 @@ __metaclass__ = type
 import os
 
 from units.compat import unittest
-from mock import Mock, patch
+from units.compat.mock import Mock, patch
 
 from ansible.module_utils.facts import timeout
 

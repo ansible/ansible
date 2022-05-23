@@ -13,7 +13,7 @@ from ansible.module_utils.urls import (Request, open_url, urllib_request, HAS_SS
 from ansible.module_utils.urls import SSLValidationHandler, HTTPSClientAuthHandler, RedirectHandlerFactory
 
 import pytest
-from mock import call
+from units.compat.mock import call
 
 
 if HAS_SSLCONTEXT:
