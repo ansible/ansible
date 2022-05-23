@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 
 from units.compat import unittest
-from mock import patch, mock_open
+from unittest.mock import patch, mock_open
 from ansible.errors import AnsibleParserError, yaml_strings, AnsibleFileNotFound
 from ansible.parsing.vault import AnsibleVaultError
 from ansible.module_utils._text import to_text

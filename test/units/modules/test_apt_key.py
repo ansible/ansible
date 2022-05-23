@@ -3,7 +3,7 @@ __metaclass__ = type
 
 import os
 
-import mock
+from unittest import mock
 
 from units.compat import unittest
 

@@ -10,7 +10,7 @@ import pytest
 import sys
 
 from io import StringIO
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import connection_loader
