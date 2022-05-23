@@ -18,7 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.compat import unittest
-from mock import patch
+from units.compat.mock import patch
 
 from ansible.module_utils.facts import utils
 
