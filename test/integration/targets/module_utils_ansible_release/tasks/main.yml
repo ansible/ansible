@@ -1,0 +1,9 @@
+- name: Get module_utils ansible_release vars
+  ansible_release:
+  register: ansible_release
+
+- assert:
+    that:
+      - ansible_release['version'][0]|int != 0
+      - ansible_release['author'] == 'Ansible, Inc.'
+      - ansible_release['codename']|length > 0
