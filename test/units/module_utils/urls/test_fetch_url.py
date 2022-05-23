@@ -14,7 +14,7 @@ from ansible.module_utils.six.moves.http_client import HTTPMessage
 from ansible.module_utils.urls import fetch_url, urllib_error, ConnectionError, NoSSLError, httplib
 
 import pytest
-from mock import MagicMock
+from units.compat.mock import MagicMock
 
 
 class AnsibleModuleExit(Exception):
