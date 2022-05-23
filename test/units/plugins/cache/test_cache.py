@@ -23,7 +23,7 @@ import os
 import shutil
 import tempfile
 
-import mock
+from unittest import mock
 
 from units.compat import unittest
 from ansible.errors import AnsibleError
