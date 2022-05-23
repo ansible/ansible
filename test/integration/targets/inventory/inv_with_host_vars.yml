@@ -1,0 +1,5 @@
+all:
+  hosts:
+    host1:
+      host_var1: 'defined'
+      host_var2: 'defined'

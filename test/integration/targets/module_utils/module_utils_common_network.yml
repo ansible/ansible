@@ -1,0 +1,10 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - test_network:
+        subnet: "10.0.0.2/24"
+      register: subnet
+
+    - assert:
+        that:
+          - subnet.resolved == "10.0.0.0/24"
