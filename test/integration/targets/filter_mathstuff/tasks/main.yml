@@ -313,22 +313,6 @@
     - assert:
         that: "rekeyed == {'value': {'test': 'value'}}"
 
-- name: Assert that symmetric_difference can handle non-hashable types
-  assert:
-    that:
-      - '[{"foo": "bar"}, {"foo": "bar"}] | symmetric_difference([{"baz": "qux"}]) == [{"foo": "bar"}, {"baz": "qux"}]'
-      - '[{"fruit": "apple"}] | symmetric_difference([]) == [{"fruit": "apple"}]'
-      - '{{ [{"foo": "bar"}, {"foo": "bar"}] | symmetric_difference([{"baz": "qux"}]) == [{"foo": "bar"}, {"baz": "qux"}] }}'
-      - '{{ [{"fruit": "apple"}] | symmetric_difference([]) == [{"fruit": "apple"}] }}'
-
-- name: Set fact variant of the above
-  set_fact:
-    foo_symm_diff: '{{ [{"foo": "bar"}, {"foo": "bar"}] | symmetric_difference([{"baz": "qux"}]) == [{"foo": "bar"}, {"baz": "qux"}] }}'
-
-- assert:
-    that:
-      - foo_symm_diff is true
-
 # TODO: For some reason, the coverage tool isn't accounting for the last test
 # so add another "last test" to fake it...
 - assert:
