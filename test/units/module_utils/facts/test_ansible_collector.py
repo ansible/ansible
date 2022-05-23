@@ -21,7 +21,7 @@ __metaclass__ = type
 
 # for testing
 from units.compat import unittest
-from mock import Mock, patch
+from units.compat.mock import Mock, patch
 
 from ansible.module_utils.facts import collector
 from ansible.module_utils.facts import ansible_collector
