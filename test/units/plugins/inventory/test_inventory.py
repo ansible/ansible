@@ -22,7 +22,7 @@ __metaclass__ = type
 import string
 import textwrap
 
-import mock
+from unittest import mock
 
 from ansible import constants as C
 from units.compat import unittest

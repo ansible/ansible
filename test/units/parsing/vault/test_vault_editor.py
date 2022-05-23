@@ -27,7 +27,7 @@ from io import BytesIO, StringIO
 import pytest
 
 from units.compat import unittest
-from mock import patch
+from unittest.mock import patch
 
 from ansible import errors
 from ansible.parsing import vault

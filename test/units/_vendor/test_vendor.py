@@ -9,7 +9,7 @@ import pkgutil
 import pytest
 import sys
 
-from mock import MagicMock, NonCallableMagicMock, patch
+from unittest.mock import MagicMock, NonCallableMagicMock, patch
 
 
 def reset_internal_vendor_package():

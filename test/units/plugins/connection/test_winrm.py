@@ -12,7 +12,7 @@ import pytest
 
 from io import StringIO
 
-from mock import MagicMock
+from unittest.mock import MagicMock
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.play_context import PlayContext
