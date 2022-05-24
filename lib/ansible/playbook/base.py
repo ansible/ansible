@@ -507,9 +507,13 @@ class FieldAttributeBase(metaclass=BaseMeta):
         return fq_group_name, resolved_actions
 
     def _resolve_action(self, action_name, mandatory=True):
-        context = action_loader.find_plugin_with_context(action_name)
-        if not context.resolved:
-            context = module_loader.find_plugin_with_context(action_name)
+        context = module_loader.find_plugin_with_context(action_name)
+        if context.resolved and not context.action_plugin:
+            prefer = action_loader.find_plugin_with_context(action_name)
+            if prefer.resolved:
+                context = prefer
+        elif not context.resolved:
+            context = action_loader.find_plugin_with_context(action_name)
 
         if context.resolved:
             return context.resolved_fqcn
