@@ -7,7 +7,7 @@ DOCUMENTATION:
     - Validates that the input string conforms to the URN standard
   options:
     _input:
-      description: possible URI
+      description: Possible URN.
       type: string
       required: True
 EXAMPLES: |
