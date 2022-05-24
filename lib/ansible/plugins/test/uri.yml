@@ -22,7 +22,7 @@ EXAMPLES: |
   {{ 'mailto://nowone@example.com' is uri }}
   # looking only for file transfers uris
   {{ 'mailto://nowone@example.com' is not uri(schemes=['ftp', 'ftps', 'sftp', 'file']) }}
-  # make sure url conforms to the 'special schemas'
+  # make sure URL conforms to the 'special schemas'
   {{ 'http://nobody:secret@example.com' is uri(['ftp', 'ftps', 'http', 'https', 'ws', 'wss']) }}
 RETURN:
   _value:
