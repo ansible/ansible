@@ -126,6 +126,7 @@ class PluginLoadContext(object):
         self.deprecation_warnings = []
         self.resolved = False
         self._resolved_fqcn = None
+        self.action_plugin = None
 
     @property
     def resolved_fqcn(self):
@@ -166,13 +167,14 @@ class PluginLoadContext(object):
         self.deprecation_warnings.append(warning_text)
         return self
 
-    def resolve(self, resolved_name, resolved_path, resolved_collection, exit_reason):
+    def resolve(self, resolved_name, resolved_path, resolved_collection, exit_reason, action_plugin):
         self.pending_redirect = None
         self.plugin_resolved_name = resolved_name
         self.plugin_resolved_path = resolved_path
         self.plugin_resolved_collection = resolved_collection
         self.exit_reason = exit_reason
         self.resolved = True
+        self.action_plugin = action_plugin
         return self
 
     def redirect(self, redirect_name):
@@ -231,8 +233,12 @@ class PluginLoader:
 
         self._searched_paths = set()
 
+    @property
+    def type(self):
+        return AnsibleCollectionRef.legacy_plugin_dir_to_plugin_type(self.subdir)
+
     def __repr__(self):
-        return 'PluginLoader(type={0})'.format(AnsibleCollectionRef.legacy_plugin_dir_to_plugin_type(self.subdir))
+        return 'PluginLoader(type={0})'.format(self.type)
 
     def _clear_caches(self):
 
@@ -459,6 +465,7 @@ class PluginLoader:
         # check collection metadata to see if any special handling is required for this plugin
         routing_metadata = self._query_collection_routing_meta(acr, plugin_type, extension=extension)
 
+        action_plugin = None
         # TODO: factor this into a wrapper method
         if routing_metadata:
             deprecation = routing_metadata.get('deprecation', None)
@@ -497,6 +504,9 @@ class PluginLoader:
                 return plugin_load_context.redirect(redirect)
                 # TODO: non-FQCN case, do we support `.` prefix for current collection, assume it with no dots, require it for subdirs in current, or ?
 
+            if self.type == 'modules':
+                action_plugin = routing_metadata.get('action_plugin')
+
         n_resource = to_native(acr.resource, errors='strict')
         # we want this before the extension is added
         full_name = '{0}.{1}'.format(acr.n_python_package_name, n_resource)
@@ -519,7 +529,7 @@ class PluginLoader:
         # FIXME: and is file or file link or ...
         if os.path.exists(n_resource_path):
             return plugin_load_context.resolve(
-                full_name, to_text(n_resource_path), acr.collection, 'found exact match for {0} in {1}'.format(full_name, acr.collection))
+                full_name, to_text(n_resource_path), acr.collection, 'found exact match for {0} in {1}'.format(full_name, acr.collection), action_plugin)
 
         if extension:
             # the request was extension-specific, don't try for an extensionless match
@@ -538,7 +548,8 @@ class PluginLoader:
             pass
 
         return plugin_load_context.resolve(
-            full_name, to_text(found_files[0]), acr.collection, 'found fuzzy extension match for {0} in {1}'.format(full_name, acr.collection))
+            full_name, to_text(found_files[0]), acr.collection,
+            'found fuzzy extension match for {0} in {1}'.format(full_name, acr.collection), action_plugin)
 
     def find_plugin(self, name, mod_type='', ignore_deprecated=False, check_aliases=False, collection_list=None):
         ''' Find a plugin named name '''
