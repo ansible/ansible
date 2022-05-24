@@ -83,7 +83,7 @@ ansible_structure:
 	if python -c "import sys, packaging.version as p; sys.exit(not p.Version('$(MAJOR_VERSION)') >  p.Version('2.10'))" ; then \
 		echo "Creating symlinks in ansible_structure"; \
 		ln -sf ../rst/ansible_index.rst rst/index.rst; \
-		ln -sf ../dev_guide/ansible_index.rst rst/dev_guide/index.rst \
+		ln -sf ../dev_guide/ansible_index.rst rst/dev_guide/index.rst; \
 		ln -sf ../sphinx_conf/ansible_conf.py rst/conf.py; \
 	else \
 		echo 'Creating symlinks for older ansible in ansible_structure'; \
