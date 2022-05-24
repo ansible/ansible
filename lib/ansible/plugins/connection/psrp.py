@@ -25,6 +25,7 @@ options:
     default: inventory_hostname
     type: str
     vars:
+    - name: inventory_hostname
     - name: ansible_host
     - name: ansible_psrp_host
   remote_user:

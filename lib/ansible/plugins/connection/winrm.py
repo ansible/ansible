@@ -25,6 +25,7 @@ DOCUMENTATION = """
             - Address of the windows machine
         default: inventory_hostname
         vars:
+            - name: inventory_hostname
             - name: ansible_host
             - name: ansible_winrm_host
         type: str
