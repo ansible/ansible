@@ -16,7 +16,7 @@ DOCUMENTATION:
       elements: string
       required: False
 EXAMPLES: |
-  # urls are uris
+  # URLs are URIs
   {{ 'http://example.com' is uri }}
   # but not all uris are urls
   {{ 'mailto://nowone@example.com' is uri }}
