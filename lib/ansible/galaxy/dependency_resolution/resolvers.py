@@ -6,7 +6,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from resolvelib import Resolver
+try:
+    from resolvelib import Resolver
+except ImportError:
+    class Resolver:  # type: ignore[no-redef]
+        pass
 
 
 class CollectionDependencyResolver(Resolver):

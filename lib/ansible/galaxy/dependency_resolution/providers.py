@@ -28,8 +28,15 @@ from ansible.module_utils.six import string_types
 from ansible.utils.version import SemanticVersion, LooseVersion
 
 from collections.abc import Set
-from resolvelib import AbstractProvider
-from resolvelib import __version__ as resolvelib_version
+
+try:
+    from resolvelib import AbstractProvider
+    from resolvelib import __version__ as resolvelib_version
+except ImportError:
+    class AbstractProvider:  # type: ignore[no-redef]
+        pass
+
+    resolvelib_version = '0.0.0'
 
 
 # TODO: add python requirements to ansible-test's ansible-core distribution info and remove the hardcoded lowerbound/upperbound fallback

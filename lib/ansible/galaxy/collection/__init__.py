@@ -29,7 +29,16 @@ from hashlib import sha256
 from io import BytesIO
 from importlib.metadata import distribution, PackageNotFoundError
 from itertools import chain
-from packaging.requirements import Requirement as PkgReq
+
+try:
+    from packaging.requirements import Requirement as PkgReq
+except ImportError:
+    class PkgReq:  # type: ignore[no-redef]
+        pass
+
+    HAS_PACKAGING = False
+else:
+    HAS_PACKAGING = True
 
 if t.TYPE_CHECKING:
     from ansible.galaxy.collection.concrete_artifact_manager import (
@@ -1581,6 +1590,8 @@ def _resolve_depenency_map(
     """Return the resolved dependency map."""
     if not HAS_RESOLVELIB:
         raise AnsibleError("Failed to import resolvelib, check that a supported version is installed")
+    if not HAS_PACKAGING:
+        raise AnsibleError("Failed to import packaging, check that a supported version is installed")
     try:
         dist = distribution('ansible-core')
     except PackageNotFoundError:
