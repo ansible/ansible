@@ -45,9 +45,6 @@ RESOLVELIB_UPPERBOUND = SemanticVersion("0.6.0")
 RESOLVELIB_VERSION = SemanticVersion.from_loose_version(LooseVersion(resolvelib_version))
 
 
-RESOLVELIB_VERSION = SemanticVersion.from_loose_version(LooseVersion(resolvelib_version))
-
-
 class PinnedCandidateRequests(Set):
     """Custom set class to store Candidate objects. Excludes the 'signatures' attribute when determining if a Candidate instance is in the set."""
     CANDIDATE_ATTRS = ('fqcn', 'ver', 'src', 'type')
