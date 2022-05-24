@@ -6,7 +6,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from resolvelib.resolvers import (
-    ResolutionImpossible as CollectionDependencyResolutionImpossible,
-    InconsistentCandidate as CollectionDependencyInconsistentCandidate,
-)
+try:
+    from resolvelib.resolvers import (
+        ResolutionImpossible as CollectionDependencyResolutionImpossible,
+        InconsistentCandidate as CollectionDependencyInconsistentCandidate,
+    )
+except ImportError:
+    class CollectionDependencyResolutionImpossible(Exception):  # type: ignore[no-redef]
+        pass
+
+    class CollectionDependencyInconsistentCandidate(Exception):  # type: ignore[no-redef]
+        pass

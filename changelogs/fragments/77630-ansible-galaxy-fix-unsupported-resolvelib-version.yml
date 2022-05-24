@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - handle unsupported versions of resolvelib gracefully.

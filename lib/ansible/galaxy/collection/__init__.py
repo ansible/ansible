@@ -27,7 +27,18 @@ from collections import namedtuple
 from contextlib import contextmanager
 from hashlib import sha256
 from io import BytesIO
+from importlib.metadata import distribution, PackageNotFoundError
 from itertools import chain
+
+try:
+    from packaging.requirements import Requirement as PkgReq
+except ImportError:
+    class PkgReq:  # type: ignore[no-redef]
+        pass
+
+    HAS_PACKAGING = False
+else:
+    HAS_PACKAGING = True
 
 if t.TYPE_CHECKING:
     from ansible.galaxy.collection.concrete_artifact_manager import (
@@ -79,15 +90,26 @@ from ansible.galaxy.collection.gpg import (
     get_signature_from_source,
     GPG_ERROR_MAP,
 )
-from ansible.galaxy.dependency_resolution import (
-    build_collection_dependency_resolver,
-)
+try:
+    from ansible.galaxy.dependency_resolution import (
+        build_collection_dependency_resolver,
+    )
+    from ansible.galaxy.dependency_resolution.errors import (
+        CollectionDependencyResolutionImpossible,
+        CollectionDependencyInconsistentCandidate,
+    )
+    from ansible.galaxy.dependency_resolution.providers import (
+        RESOLVELIB_VERSION,
+        RESOLVELIB_LOWERBOUND,
+        RESOLVELIB_UPPERBOUND,
+    )
+except ImportError:
+    HAS_RESOLVELIB = False
+else:
+    HAS_RESOLVELIB = True
+
 from ansible.galaxy.dependency_resolution.dataclasses import (
     Candidate, Requirement, _is_installed_collection_dir,
-)
-from ansible.galaxy.dependency_resolution.errors import (
-    CollectionDependencyResolutionImpossible,
-    CollectionDependencyInconsistentCandidate,
 )
 from ansible.galaxy.dependency_resolution.versioning import meets_requirements
 from ansible.module_utils.six import raise_from
@@ -1566,6 +1588,27 @@ def _resolve_depenency_map(
         include_signatures,  # type: bool
 ):  # type: (...) -> dict[str, Candidate]
     """Return the resolved dependency map."""
+    if not HAS_RESOLVELIB:
+        raise AnsibleError("Failed to import resolvelib, check that a supported version is installed")
+    if not HAS_PACKAGING:
+        raise AnsibleError("Failed to import packaging, check that a supported version is installed")
+    try:
+        dist = distribution('ansible-core')
+    except PackageNotFoundError:
+        req = None
+    else:
+        req = next((rr for r in (dist.requires or []) if (rr := PkgReq(r)).name == 'resolvelib'), None)
+    finally:
+        if req is None:
+            # TODO: replace the hardcoded versions with a warning if the dist info is missing
+            # display.warning("Unable to find 'ansible-core' distribution requirements to verify the resolvelib version is supported.")
+            if not RESOLVELIB_LOWERBOUND <= RESOLVELIB_VERSION < RESOLVELIB_UPPERBOUND:
+                raise AnsibleError(
+                    f"ansible-galaxy requires resolvelib<{RESOLVELIB_UPPERBOUND.vstring},>={RESOLVELIB_LOWERBOUND.vstring}"
+                )
+        elif req.specifier.contains(RESOLVELIB_VERSION.vstring):
+            raise AnsibleError(f"ansible-galaxy requires {req.name}{req.specifier}")
+
     collection_dep_resolver = build_collection_dependency_resolver(
         galaxy_apis=galaxy_apis,
         concrete_artifacts_manager=concrete_artifacts_manager,
