@@ -50,7 +50,7 @@
     src: ansible.cfg.j2
     dest: '{{ galaxy_dir }}/ansible.cfg'
 
-- name: test install command an unsupported version of resolvelib
+- name: test install command using an unsupported version of resolvelib
   include_tasks: unsupported_resolvelib.yml
   loop: "{{ unsupported_resolvelib_versions }}"
   loop_control:
