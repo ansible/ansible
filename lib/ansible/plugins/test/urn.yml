@@ -4,7 +4,7 @@ DOCUMENTATION:
   version_added: "2.14"
   short_description: check if string is a valid URN
   description:
-    - Validates that the input string conforms to the URN standard
+    - Validates that the input string conforms to the URN standard.
   options:
     _input:
       description: Possible URN.

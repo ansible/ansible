@@ -15,7 +15,7 @@ DOCUMENTATION:
       type: list
       elements: string
 EXAMPLES: |
-  # simple url
+  # simple URL
   {{ 'http://example.com' is url }}
   # looking only for file transfers URIs
   {{ 'mailto://nowone@example.com' is not uri(schemes=['ftp', 'ftps', 'sftp', 'file']) }}
