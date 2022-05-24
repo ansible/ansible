@@ -212,7 +212,6 @@ class TestTaskExecutor(unittest.TestCase):
         te._shared_loader_obj.module_loader.find_plugin_with_context.return_value = context
         action_loader = te._shared_loader_obj.action_loader
         action_loader.has_plugin.return_value = True
-
         action_loader.get.return_value = mock.sentinel.handler
 
         mock_connection = MagicMock()
