@@ -4,12 +4,15 @@ __metaclass__ = type
 
 # pylint: disable=wildcard-import,unused-wildcard-import
 
+# catch *all* exceptions to prevent type annotation support module bugs causing runtime failures
+# (eg, https://github.com/ansible/ansible/issues/77857)
+
 try:
     from typing_extensions import *
-except ImportError:
+except Exception:  # pylint: disable=broad-except
     pass
 
 try:
     from typing import *  # type: ignore[misc]
-except ImportError:
+except Exception:  # pylint: disable=broad-except
     pass
