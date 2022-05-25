@@ -1,6 +1,6 @@
 - name: Create multiline_search test file
   copy:
-    dest: "{{ output_dir }}/listener.ora"
+    dest: "{{ remote_tmp_dir }}/listener.ora"
     content: |
       LISTENER=(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=IPC)(KEY=LISTENER)))) # line added by Agent
       ENABLE_GLOBAL_DYNAMIC_ENDPOINT_LISTENER=ON                                   # line added by Agent
@@ -34,7 +34,7 @@
 
 - name: Add block using multiline_search enabled
   blockinfile:
-    path: "{{ output_dir }}/listener.ora"
+    path: "{{ remote_tmp_dir }}/listener.ora"
     block: "{{ listener_line }}"
     insertafter: '(?m)SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
     marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK 1-->"
@@ -42,7 +42,7 @@
 
 - name: Add block using multiline_search enabled again
   blockinfile:
-    path: "{{ output_dir }}/listener.ora"
+    path: "{{ remote_tmp_dir }}/listener.ora"
     block: "{{ listener_line }}"
     insertafter: '(?m)SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
     marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK 1-->"
@@ -50,7 +50,7 @@
 
 - name: Try to add block using without multiline flag in regex should add block add end of file
   blockinfile:
-    path: "{{ output_dir }}/listener.ora"
+    path: "{{ remote_tmp_dir }}/listener.ora"
     block: "{{ listener_line }}"
     insertafter: 'SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
     marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK 2-->"
@@ -58,7 +58,7 @@
 
 - name: Stat the listener.ora file
   stat:
-    path: "{{ output_dir }}/listener.ora"
+    path: "{{ remote_tmp_dir }}/listener.ora"
   register: listener_ora_file
 
 - name: Ensure insertafter worked correctly
