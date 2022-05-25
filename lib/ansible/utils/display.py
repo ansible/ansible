@@ -315,6 +315,9 @@ class Display(metaclass=Singleton):
 
             # With locks, and the fact that we aren't printing from forks
             # just write, and let the system flush. Everything should come out peachy
+            # I've left this code for historical purposes, or in case we need to add this
+            # back at a later date. For now ``TaskQueueManager.cleanup`` will perform a
+            # final flush at shutdown.
             # try:
             #     fileobj.flush()
             # except IOError as e:
