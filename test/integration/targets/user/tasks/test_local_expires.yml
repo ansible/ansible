@@ -11,6 +11,13 @@
   tags:
     - user_test_local_mode
 
+- name: Remove local_ansibulluser group
+  group:
+    name: local_ansibulluser
+    state: absent
+  tags:
+    - user_test_local_mode
+
 - name: Set user expiration
   user:
     name: local_ansibulluser
