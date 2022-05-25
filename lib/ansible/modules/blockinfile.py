@@ -51,7 +51,7 @@ options:
     - A special value is available; C(EOF) for inserting the block at the end of the file.
     - If specified regular expression has no matches, C(EOF) will be used instead.
     - The presence of the multiline flag (?m) in the regular expression controls whether the match is done line by line or with multiple lines.
-      This behaviour was added in ansible-core 2.12.
+      This behaviour was added in ansible-core 2.14.
     type: str
     choices: [ EOF, '*regex*' ]
     default: EOF
@@ -177,7 +177,7 @@ import os
 import tempfile
 from ansible.module_utils.six import b
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 
 
 def write_changes(module, contents, path):
@@ -308,9 +308,9 @@ def main():
                 match = insertre.search(original)
                 if match:
                     if insertafter:
-                        n0 = original.decode().count('\n', 0, match.end())
+                        n0 = to_native(original).count('\n', 0, match.end())
                     elif insertbefore:
-                        n0 = original.decode().count('\n', 0, match.start())
+                        n0 = to_native(original).count('\n', 0, match.start())
             else:
                 for i, line in enumerate(lines):
                     if insertre.search(line):
