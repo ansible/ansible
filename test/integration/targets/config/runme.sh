@@ -19,6 +19,10 @@ ANSIBLE_CONFIG=nonexistent.cfg ansible-config dump --only-changed -v | grep 'No 
 # https://github.com/ansible/ansible/pull/73715
 ANSIBLE_CONFIG=inline_comment_ansible.cfg ansible-config dump --only-changed | grep "'ansibull'"
 
+# test type headers are only displayed with --only-changed -t all for changed options
+env -i PATH="$PATH" PYTHONPATH="$PYTHONPATH" ansible-config dump --only-changed -t all | grep -v "CONNECTION"
+env -i PATH="$PATH" PYTHONPATH="$PYTHONPATH" ANSIBLE_SSH_PIPELINING=True ansible-config dump --only-changed -t all | grep "CONNECTION"
+
 # test the config option validation
 ansible-playbook validation.yml "$@"
 
