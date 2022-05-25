@@ -27,7 +27,7 @@ DOCUMENTATION = '''
 '''
 
 from ansible.errors import AnsibleError
-from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable, get_cache_plugin
+from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 from ansible.utils.display import Display
 
 from copy import deepcopy
@@ -78,20 +78,15 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             raise AnsibleError("Failed to run cache tests: {0}".format(e)) from e
 
     def exercise_test_cache(self):
-        cache_name = self.get_option('cache_plugin')
-        cache_options = deepcopy(self.cache._plugin._options)
-        test_cache = get_cache_plugin(cache_name, **cache_options)
-
         failed = []
         for test_name in self.test_cache_methods:
-            test = getattr(self, test_name)
             try:
-                test(test_cache)
+                getattr(self, test_name)()
             except AssertionError:
                 failed.append(test_name)
             finally:
-                test_cache.flush()
-                test_cache.update_cache_if_changed()
+                self.cache.flush()
+                self.cache.update_cache_if_changed()
 
         if failed:
             raise AnsibleError(f"Cache tests failed: {', '.join(failed)}")
@@ -103,173 +98,168 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             display.warning(f"Assertion {a} == {b} failed")
             raise
 
-    def test_plugin_name(self, cache):
-        self.test_equal(self.get_option('cache_plugin'), cache._plugin_name)
+    def test_plugin_name(self):
+        self.test_equal(self.cache._plugin_name, self.get_option('cache_plugin'))
 
-    def test_update_cache_if_changed(self, cache):
-        cache._retrieved = {}
-        cache._cache = {'foo': 'bar'}
+    def test_update_cache_if_changed(self):
+        self.cache._retrieved = {}
+        self.cache._cache = {'foo': 'bar'}
 
-        cache.update_cache_if_changed()
+        self.cache.update_cache_if_changed()
 
-        self.test_equal(cache._retrieved, {'foo': 'bar'})
-        self.test_equal(cache._cache, {'foo': 'bar'})
+        self.test_equal(self.cache._retrieved, {'foo': 'bar'})
+        self.test_equal(self.cache._cache, {'foo': 'bar'})
 
-    def test_set_cache(self, cache):
+    def test_set_cache(self):
         cache_key1 = 'key1'
         cache1 = {'hosts': {'h1': {'foo': 'bar'}}}
         cache_key2 = 'key2'
         cache2 = {'hosts': {'h2': {}}}
 
-        cache._cache = {cache_key1: cache1, cache_key2: cache2}
+        self.cache._cache = {cache_key1: cache1, cache_key2: cache2}
+        self.cache.set_cache()
 
-        cache.set_cache()
+        self.test_equal(self.cache._plugin.contains(cache_key1), True)
+        self.test_equal(self.cache._plugin.get(cache_key1), cache1)
+        self.test_equal(self.cache._plugin.contains(cache_key2), True)
+        self.test_equal(self.cache._plugin.get(cache_key2), cache2)
 
-        self.test_equal(cache._plugin.contains(cache_key1), True)
-        self.test_equal(cache._plugin.get(cache_key1), cache1)
-        self.test_equal(cache._plugin.contains(cache_key2), True)
-        self.test_equal(cache._plugin.get(cache_key2), cache2)
-
-    def test_load_whole_cache(self, cache):
+    def test_load_whole_cache(self):
         cache_data = {
             'key1': {'hosts': {'h1': {'foo': 'bar'}}},
             'key2': {'hosts': {'h2': {}}},
         }
-        cache._cache = cache_data
-        cache.set_cache()
-        cache._cache = {}
+        self.cache._cache = cache_data
+        self.cache.set_cache()
+        self.cache._cache = {}
 
-        cache.load_whole_cache()
+        self.cache.load_whole_cache()
+        self.test_equal(self.cache._cache, cache_data)
 
-        self.test_equal(cache._cache, cache_data)
-
-    def test_iter(self, cache):
+    def test_iter(self):
         cache_data = {
             'key1': {'hosts': {'h1': {'foo': 'bar'}}},
             'key2': {'hosts': {'h2': {}}},
         }
-        cache._cache = cache_data
+        self.cache._cache = cache_data
+        self.test_equal(sorted(list(self.cache)), ['key1', 'key2'])
 
-        cache_keys = sorted(list(cache))
-        self.test_equal(cache_keys, ['key1', 'key2'])
-
-    def test_len(self, cache):
+    def test_len(self):
         cache_data = {
             'key1': {'hosts': {'h1': {'foo': 'bar'}}},
             'key2': {'hosts': {'h2': {}}},
         }
-        cache._cache = cache_data
+        self.cache._cache = cache_data
+        self.test_equal(len(self.cache), 2)
 
-        self.test_equal(len(cache), 2)
-
-    def test_get_missing_key(self, cache):
+    def test_get_missing_key(self):
         # cache should behave like a dictionary
         # a missing key with __getitem__ should raise a KeyError
         try:
-            cache['keyerror']
+            self.cache['keyerror']
         except KeyError:
             pass
         else:
             assert False
 
         # get should return the default instead
-        self.test_equal(cache.get('missing'), None)
-        self.test_equal(cache.get('missing', 'default'), 'default')
+        self.test_equal(self.cache.get('missing'), None)
+        self.test_equal(self.cache.get('missing', 'default'), 'default')
 
-    def _setup_expired(self, cache):
-        cache._cache = {'expired': True}
-        cache.set_cache()
+    def _setup_expired(self):
+        self.cache._cache = {'expired': True}
+        self.cache.set_cache()
 
         # empty the in-memory info to test loading the key
         # keys that expire mid-use do not cause errors
-        cache._cache = {}
-        cache._retrieved = {}
-        cache._plugin._cache = {}
+        self.cache._cache = {}
+        self.cache._retrieved = {}
+        self.cache._plugin._cache = {}
 
-        cache._plugin.set_option('timeout', 1)
-        cache._plugin._timeout = 1
+        self.cache._plugin.set_option('timeout', 1)
+        self.cache._plugin._timeout = 1
         sleep(2)
 
-    def _cleanup_expired(self, cache):
+    def _cleanup_expired(self):
         # Set cache timeout back to never
-        cache._plugin.set_option('timeout', 0)
-        cache._plugin._timeout = 0
+        self.cache._plugin.set_option('timeout', 0)
+        self.cache._plugin._timeout = 0
 
-    def test_get_expired_key(self, cache):
-        if not hasattr(cache._plugin, '_timeout'):
+    def test_get_expired_key(self):
+        if not hasattr(self.cache._plugin, '_timeout'):
             # DB-backed caches do not have a standard timeout interface
             return
 
-        self._setup_expired(cache)
+        self._setup_expired()
         try:
-            cache['key1']
+            self.cache['expired']
         except KeyError:
             pass
         else:
             assert False
         finally:
-            self._cleanup_expired(cache)
+            self._cleanup_expired()
 
-        self._setup_expired(cache)
+        self._setup_expired()
         try:
-            self.test_equal(cache.get('key1'), None)
-            self.test_equal(cache.get('key1', 'default'), 'default')
+            self.test_equal(self.cache.get('expired'), None)
+            self.test_equal(self.cache.get('expired', 'default'), 'default')
         finally:
-            self._cleanup_expired(cache)
+            self._cleanup_expired()
 
-    def test_get(self, cache):
+    def test_get(self):
         # test cache behaves like a dictionary
 
         # set the cache to test getting a key that exists
         k1 = {'hosts': {'h1': {'foo': 'bar'}}}
         k2 = {'hosts': {'h2': {}}}
-        cache._cache = {'key1': k1, 'key2': k2}
-        cache.set_cache()
+        self.cache._cache = {'key1': k1, 'key2': k2}
+        self.cache.set_cache()
 
-        self.test_equal(cache['key1'], k1)
-        self.test_equal(cache.get('key1'), k1)
+        self.test_equal(self.cache['key1'], k1)
+        self.test_equal(self.cache.get('key1'), k1)
 
         # empty the in-memory info to test loading the key from the plugin
-        cache._cache = {}
-        cache._retrieved = {}
-        cache._plugin._cache = {}
+        self.cache._cache = {}
+        self.cache._retrieved = {}
+        self.cache._plugin._cache = {}
 
-        self.test_equal(cache['key1'], k1)
-        self.test_equal(cache.get('key1'), k1)
+        self.test_equal(self.cache['key1'], k1)
+        self.test_equal(self.cache.get('key1'), k1)
 
-    def test_items(self, cache):
-        self.test_equal(cache.items(), {}.items())
-
-        test_items = {'hosts': {'host1': {'foo': 'bar'}}}
-        cache._cache = test_items
-        self.test_equal(cache.items(), test_items.items())
-
-    def test_keys(self, cache):
-        self.test_equal(cache.keys(), {}.keys())
+    def test_items(self):
+        self.test_equal(self.cache.items(), {}.items())
 
         test_items = {'hosts': {'host1': {'foo': 'bar'}}}
-        cache._cache = test_items
-        self.test_equal(cache.keys(), test_items.keys())
+        self.cache._cache = test_items
+        self.test_equal(self.cache.items(), test_items.items())
 
-    def test_values(self, cache):
-        self.test_equal(list(cache.values()), list({}.values()))
+    def test_keys(self):
+        self.test_equal(self.cache.keys(), {}.keys())
 
         test_items = {'hosts': {'host1': {'foo': 'bar'}}}
-        cache._cache = test_items
-        self.test_equal(list(cache.values()), list(test_items.values()))
+        self.cache._cache = test_items
+        self.test_equal(self.cache.keys(), test_items.keys())
 
-    def test_pop(self, cache):
+    def test_values(self):
+        self.test_equal(list(self.cache.values()), list({}.values()))
+
+        test_items = {'hosts': {'host1': {'foo': 'bar'}}}
+        self.cache._cache = test_items
+        self.test_equal(list(self.cache.values()), list(test_items.values()))
+
+    def test_pop(self):
         try:
-            cache.pop('missing')
+            self.cache.pop('missing')
         except KeyError:
             pass
         else:
             assert False
 
-        self.test_equal(cache.pop('missing', 'default'), 'default')
+        self.test_equal(self.cache.pop('missing', 'default'), 'default')
 
-        cache._cache = {'cache_key': 'cache'}
-        self.test_equal(cache.pop('cache_key'), 'cache')
+        self.cache._cache = {'cache_key': 'cache'}
+        self.test_equal(self.cache.pop('cache_key'), 'cache')
 
         # test backing plugin cache isn't modified
         cache_key1 = 'key1'
@@ -277,16 +267,16 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         cache_key2 = 'key2'
         cache2 = {'hosts': {'h2': {}}}
 
-        cache._cache = {cache_key1: cache1, cache_key2: cache2}
-        cache.set_cache()
+        self.cache._cache = {cache_key1: cache1, cache_key2: cache2}
+        self.cache.set_cache()
 
-        self.test_equal(cache.pop('key1'), cache1)
-        self.test_equal(cache._cache, {cache_key2: cache2})
-        self.test_equal(cache._plugin._cache, {cache_key1: cache1, cache_key2: cache2})
+        self.test_equal(self.cache.pop('key1'), cache1)
+        self.test_equal(self.cache._cache, {cache_key2: cache2})
+        self.test_equal(self.cache._plugin._cache, {cache_key1: cache1, cache_key2: cache2})
 
-    def test_del(self, cache):
+    def test_del(self):
         try:
-            del cache['missing']
+            del self.cache['missing']
         except KeyError:
             pass
         else:
@@ -297,43 +287,43 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         cache_key2 = 'key2'
         cache2 = {'hosts': {'h2': {}}}
 
-        cache._cache = {cache_key1: cache1, cache_key2: cache2}
-        cache.set_cache()
+        self.cache._cache = {cache_key1: cache1, cache_key2: cache2}
+        self.cache.set_cache()
 
-        del cache['key1']
+        del self.cache['key1']
 
-        self.test_equal(cache._cache, {cache_key2: cache2})
-        self.test_equal(cache._plugin._cache, {cache_key1: cache1, cache_key2: cache2})
+        self.test_equal(self.cache._cache, {cache_key2: cache2})
+        self.test_equal(self.cache._plugin._cache, {cache_key1: cache1, cache_key2: cache2})
 
-    def test_set(self, cache):
+    def test_set(self):
         cache_key = 'key1'
         hosts = {'hosts': {'h1': {'foo': 'bar'}}}
-        cache[cache_key] = hosts
+        self.cache[cache_key] = hosts
 
-        self.test_equal(cache._cache, {cache_key: hosts})
-        self.test_equal(cache._plugin._cache, {})
+        self.test_equal(self.cache._cache, {cache_key: hosts})
+        self.test_equal(self.cache._plugin._cache, {})
 
-    def test_update(self, cache):
+    def test_update(self):
         cache_key1 = 'key1'
         cache1 = {'hosts': {'h1': {'foo': 'bar'}}}
         cache_key2 = 'key2'
         cache2 = {'hosts': {'h2': {}}}
 
-        cache._cache = {cache_key1: cache1}
-        cache.update({cache_key2: cache2})
-        self.test_equal(cache._cache, {cache_key1: cache1, cache_key2: cache2})
+        self.cache._cache = {cache_key1: cache1}
+        self.cache.update({cache_key2: cache2})
+        self.test_equal(self.cache._cache, {cache_key1: cache1, cache_key2: cache2})
 
-    def test_flush(self, cache):
+    def test_flush(self):
         cache_key1 = 'key1'
         cache1 = {'hosts': {'h1': {'foo': 'bar'}}}
         cache_key2 = 'key2'
         cache2 = {'hosts': {'h2': {}}}
 
-        cache._cache = {cache_key1: cache1, cache_key2: cache2}
-        cache.set_cache()
+        self.cache._cache = {cache_key1: cache1, cache_key2: cache2}
+        self.cache.set_cache()
 
         # Unlike the dict write methods, cache.flush() flushes the backing plugin
-        cache.flush()
+        self.cache.flush()
 
-        self.test_equal(cache._cache, {})
-        self.test_equal(cache._plugin._cache, {})
+        self.test_equal(self.cache._cache, {})
+        self.test_equal(self.cache._plugin._cache, {})
