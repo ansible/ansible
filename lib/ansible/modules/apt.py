@@ -510,17 +510,20 @@ def package_status(m, pkgname, version_cmp, version, default_release, cache, sta
             try:
                 provided_packages = cache.get_providing_packages(pkgname)
                 if provided_packages:
-                    is_installed = False
-                    version_installable = None
-                    version_ok = False
-                    # when virtual package providing only one package, look up status of target package
+                    # When this is a virtual package satisfied by only
+                    # one installed package, return the status of the target
+                    # package to avoid requesting re-install
                     if cache.is_virtual_package(pkgname) and len(provided_packages) == 1:
                         package = provided_packages[0]
-                        installed, version_ok, version_installable, has_files = \
+                        installed, installed_version, version_installable, has_files = \
                             package_status(m, package.name, version_cmp, version, default_release, cache, state='install')
                         if installed:
-                            is_installed = True
-                    return is_installed, version_ok, version_installable, False
+                            return installed, installed_version, version_installable, has_files
+
+                    # Otherwise return nothing so apt will sort out
+                    # what package to satisfy this with
+                    return False, False, None, False
+
                 m.fail_json(msg="No package matching '%s' is available" % pkgname)
             except AttributeError:
                 # python-apt version too old to detect virtual packages
