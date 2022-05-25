@@ -1606,7 +1606,7 @@ def _resolve_depenency_map(
                 raise AnsibleError(
                     f"ansible-galaxy requires resolvelib<{RESOLVELIB_UPPERBOUND.vstring},>={RESOLVELIB_LOWERBOUND.vstring}"
                 )
-        elif req.specifier.contains(RESOLVELIB_VERSION.vstring):
+        elif not req.specifier.contains(RESOLVELIB_VERSION.vstring):
             raise AnsibleError(f"ansible-galaxy requires {req.name}{req.specifier}")
 
     collection_dep_resolver = build_collection_dependency_resolver(
