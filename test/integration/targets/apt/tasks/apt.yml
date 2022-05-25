@@ -507,3 +507,25 @@
     that:
       - "allow_change_held_packages_no_update is not changed"
       - "allow_change_held_packages_hello_version.stdout == allow_change_held_packages_hello_version_again.stdout"
+
+# Virtual package
+- name: Install a virtual package
+  apt:
+    package:
+      - emacs-nox
+      - yaml-mode # <- the virtual package
+    state: latest
+  register: install_virtual_package_result
+
+- name: Check the virtual package install result
+  assert:
+    that:
+      - install_virtual_package_result is changed
+
+- name: Clean up virtual-package install
+  apt:
+    package:
+      - emacs-nox
+      - elpa-yaml-mode
+    state: absent
+    purge: yes
