@@ -50,6 +50,8 @@ options:
     - If specified and no begin/ending C(marker) lines are found, the block will be inserted after the last match of specified regular expression.
     - A special value is available; C(EOF) for inserting the block at the end of the file.
     - If specified regular expression has no matches, C(EOF) will be used instead.
+    - The presence of the multiline flag (?m) in the regular expression controls whether the match is done line by line or with multiple lines.
+      This behaviour was added in ansible-core 2.14.
     type: str
     choices: [ EOF, '*regex*' ]
     default: EOF
@@ -58,6 +60,8 @@ options:
     - If specified and no begin/ending C(marker) lines are found, the block will be inserted before the last match of specified regular expression.
     - A special value is available; C(BOF) for inserting the block at the beginning of the file.
     - If specified regular expression has no matches, the block will be inserted at the end of the file.
+    - The presence of the multiline flag (?m) in the regular expression controls whether the match is done line by line or with multiple lines.
+      This behaviour was added in ansible-core 2.14.
     type: str
     choices: [ BOF, '*regex*' ]
   create:
@@ -158,6 +162,14 @@ EXAMPLES = r'''
     - { name: host1, ip: 10.10.1.10 }
     - { name: host2, ip: 10.10.1.11 }
     - { name: host3, ip: 10.10.1.12 }
+
+- name: Search with a multiline search flags regex and if found insert after
+  blockinfile:
+    path: listener.ora
+    block: "{{ listener_line | indent(width=8, first=True) }}"
+    insertafter: '(?m)SID_LIST_LISTENER_DG =\n.*\(SID_LIST ='
+    marker: "    <!-- {mark} ANSIBLE MANAGED BLOCK -->"
+
 '''
 
 import re
@@ -165,7 +177,7 @@ import os
 import tempfile
 from ansible.module_utils.six import b
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 
 
 def write_changes(module, contents, path):
@@ -292,9 +304,17 @@ def main():
     if None in (n0, n1):
         n0 = None
         if insertre is not None:
-            for i, line in enumerate(lines):
-                if insertre.search(line):
-                    n0 = i
+            if insertre.flags & re.MULTILINE:
+                match = insertre.search(original)
+                if match:
+                    if insertafter:
+                        n0 = to_native(original).count('\n', 0, match.end())
+                    elif insertbefore:
+                        n0 = to_native(original).count('\n', 0, match.start())
+            else:
+                for i, line in enumerate(lines):
+                    if insertre.search(line):
+                        n0 = i
             if n0 is None:
                 n0 = len(lines)
             elif insertafter is not None:
