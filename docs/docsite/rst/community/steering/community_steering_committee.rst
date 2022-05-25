@@ -119,7 +119,7 @@ When reviewing community collection `inclusion requests <https://github.com/ansi
 
 #. For a collection to be included in the Ansible community package, the collection:
 
-  * Must be reviewed and approved by at least one Steering Committee member and one non-Steering Committee person.
+  * Must be reviewed and approved by at least two persons, where at least one person is a Steering Committee member.
   * Non-Steering Committee reviews to be counted for inclusion must be checked and approved by another Steering Committee member.
   * Reviewers must not be involved significantly in development of the collection. They must declare any potential conflict of interest (for example, being friends/relatives/coworkers of the maintainers/authors, being users of the collection, or having contributed to that collection recently or in the past).
 
