@@ -252,6 +252,7 @@
           # dir contents are considered until the depth exceeds the requested depth
           # there are 8 files/directories in the requested depth and 4 that exceed it by 1
           - files_with_depth.examined == 12
+
 - name: exclude with regex
   find:
     paths: "{{ remote_tmp_dir_test }}"
@@ -267,6 +268,19 @@
   assert:
     that:
       - '"{{ remote_tmp_dir_test }}/e/f/g/h/8.ogg" not in find_test3_list'
+
+- name: patterns with regex
+  find:
+    paths: "{{ remote_tmp_dir_test }}"
+    recurse: yes
+    use_regex: true
+    patterns: .*\.ogg
+  register: find_test4
+
+- name: assert we matched the ogg file
+  assert:
+    that:
+      - remote_tmp_dir_test ~ "/e/f/g/h/8.ogg" in find_test4.files|map(attribute="path")
 
 - name: create our age/size testing sub-directory
   file:
