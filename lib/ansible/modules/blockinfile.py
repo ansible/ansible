@@ -61,7 +61,7 @@ options:
     - A special value is available; C(BOF) for inserting the block at the beginning of the file.
     - If specified regular expression has no matches, the block will be inserted at the end of the file.
     - The presence of the multiline flag (?m) in the regular expression controls whether the match is done line by line or with multiple lines.
-      This behaviour was added in ansible-core 2.12.
+      This behaviour was added in ansible-core 2.14.
     type: str
     choices: [ BOF, '*regex*' ]
   create:
