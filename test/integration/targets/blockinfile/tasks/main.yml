@@ -38,3 +38,4 @@
 - import_tasks: validate.yml
 - import_tasks: insertafter.yml
 - import_tasks: insertbefore.yml
+- import_tasks: multiline_search.yml
