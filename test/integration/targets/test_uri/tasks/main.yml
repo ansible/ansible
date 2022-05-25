@@ -1,0 +1,43 @@
+- name: urX tests
+  vars:
+    special: ['http', 'https', 'ftp', 'ftps', 'ws', 'wss', 'file']
+  block:
+  - name: Assert uri tests
+    assert:
+      that:
+        - "'http://searchengine.tld' is uri"      # simple case, urls are uris but not all uris are urls
+        - "'ftp://searchengine.tld' is uri"       # other scheme
+        - "'file://etc/hosts' is uri"
+        - "'mailto://me@example.com' is uri"
+        - "'sftp://me@example.com' is uri"
+        - "'asldkfjhalsidfthjo' is uri" # junk can look like uri (either implied scheme or empty path)
+        - "'asldkfjhalsidfthjo' is not uri(special)" # validate against the schemes i know i need
+        - "'http://admin:secret@example.com' is uri"
+        - "'ftps://admin:secret@example.com' is uri"
+        - "'admin:secret@example.com' is uri" # scheme is implied
+        - "'http://admin:secret@example.com/myfile?parm=1&param=2' is uri"
+        - "'urn:isbn:9780307476463' is uri" # book ref
+
+  - name: Assert url tests
+    assert:
+      that:
+        - "'http://searchengine.tld' is url"      # simple case
+        - "'htp://searchengine.tld' is not url(special)"   # bad scheme for explicit expectations
+        - "'htp://searchengine.tld' is url"   # bad scheme, but valid if no explicit list
+        - "'ftp://searchengine.tld' is url"
+        - "'ftp://searchengine.tld' is url"
+        - "'ftp:// searchengine.tld' is url"
+        - "'file://etc/hosts' is url"
+        - "'mailto://me@example.com' is url"
+        - "'asldkfjhalsidfthjo' is not url" # junk
+        - "'http://admin:secret@example.com' is url"
+        - "'ftps://admin:secret@example.com' is url"
+        - "'admin:secret@example.com' is not url"
+        - "'http://admin:secret@example.com/myfile?parm=1&param=2' is url"
+        - "'urn:isbn:9780307476463' is not url" # book ref
+  - name: assert urn
+    assert:
+      that:
+        - "'urn:isbn:9780307476463' is urn" # book ref
+        - "'ftps://admin:secret@example.com' is not urn"
+        - "'admin:secret@example.com' is not urn"
