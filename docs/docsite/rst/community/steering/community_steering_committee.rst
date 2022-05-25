@@ -117,7 +117,11 @@ When reviewing community collection `inclusion requests <https://github.com/ansi
 
 #. In the course of the review, the Committee member marks items as completed or leaves a comment saying whether the reviewer expects an issue to be addressed or whether it is optional (for example, it could be **MUST FIX:** <what> or **SHOULD FIX:** <what> under an item).
 
-#. For a collection to be included in the Ansible community package, the collection must be reviewed and approved by at least two Committee members.
+#. For a collection to be included in the Ansible community package, the collection:
+
+  * Must be reviewed and approved by at least one Steering Committee member and one non-Steering Committee person.
+  * Non-Steering Committee reviews to be counted for inclusion must be checked and approved by another Steering Committee member.
+  * Reviewers must not be involved in development of the collection.
 
 #. After the collection gets two or more Committee member approvals, a Committee member creates a `community topic <https://github.com/ansible-community/community-topics/issues>`_ linked to the corresponding inclusion request. The issue's description says that the collection has been approved by two or more Committee members and establishes a date (a week by default) when the inclusion decision will be considered made. This time period can be used to raise concerns.
 
