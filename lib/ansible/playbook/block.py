@@ -220,6 +220,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         if self._role:
             new_me._role = self._role
 
+        new_me._implicit = self._implicit
+
         new_me.validate()
         return new_me
 
@@ -241,6 +243,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         if self._parent is not None:
             data['parent'] = self._parent.copy(exclude_tasks=True).serialize()
             data['parent_type'] = self._parent.__class__.__name__
+
+        data['implicit'] = self._implicit
 
         return data
 
@@ -281,6 +285,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
             p.deserialize(parent_data)
             self._parent = p
             self._dep_chain = self._parent.get_dep_chain()
+
+        self._implicit = data.get('implicit')
 
     def set_loader(self, loader):
         self._loader = loader
