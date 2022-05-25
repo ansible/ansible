@@ -6,3 +6,13 @@
       - result.stdout_lines|first == expected
   vars:
     expected: !unsafe '{{ foo }}'
+
+- name: Assert that templating can convert JSON null, true, and false to Python
+  assert:
+    that:
+      - foo.null is none
+      - foo.true is true
+      - foo.false is false
+  vars:
+    # Kind of hack to just send a JSON string through jinja, by templating out nothing
+    foo: '{{ "" }}{"null": null, "true": true, "false": false}'
