@@ -392,7 +392,7 @@ class ConfigCLI(CLI):
 
         entries = []
         for setting in sorted(config):
-            changed = (config[setting].origin != 'default')
+            changed = (config[setting].origin not in ('default', 'REQUIRED'))
 
             if context.CLIARGS['format'] == 'display':
                 if isinstance(config[setting], Setting):
@@ -512,8 +512,9 @@ class ConfigCLI(CLI):
             for ptype in C.CONFIGURABLE_PLUGINS:
                 plugin_list = self._get_plugin_configs(ptype, context.CLIARGS['args'])
                 if context.CLIARGS['format'] == 'display':
-                    output.append('\n%s:\n%s' % (ptype.upper(), '=' * len(ptype)))
-                    output.extend(plugin_list)
+                    if not context.CLIARGS['only_changed'] or plugin_list:
+                        output.append('\n%s:\n%s' % (ptype.upper(), '=' * len(ptype)))
+                        output.extend(plugin_list)
                 else:
                     if ptype in ('modules', 'doc_fragments'):
                         pname = ptype.upper()
