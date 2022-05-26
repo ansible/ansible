@@ -636,7 +636,7 @@ Information about Ansible: magic variables
 
 You can access information about Ansible operations, including the python version being used, the hosts and groups in inventory, and the directories for playbooks and roles, using "magic" variables. Like connection variables, magic variables are :ref:`special_variables`. Magic variable names are reserved - do not set variables with these names. The variable ``environment`` is also reserved.
 
-The most commonly used magic variables are ``hostvars``, ``groups``, ``group_names``, and ``inventory_hostname``. With ``hostvars``, you can access variables defined for any host in the play, at any point in a playbook. You can access Ansible facts using the ``hostvars`` variable too, but only after you have gathered (or cached) facts.
+The most commonly used magic variables are ``hostvars``, ``groups``, ``group_names``, and ``inventory_hostname``. With ``hostvars``, you can access variables defined for any host in the play, at any point in a playbook. You can access Ansible facts using the ``hostvars`` variable too, but only after you have gathered (or cached) facts.  Note that variables defined at play objects are not defined for specific hosts and therefore are not mapped to hostvars.
 
 If you want to configure your database server using the value of a 'fact' from another node, or the value of an inventory variable assigned to another node, you can use ``hostvars`` in a template or on an action line:
 
