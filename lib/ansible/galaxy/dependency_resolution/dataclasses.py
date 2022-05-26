@@ -338,7 +338,7 @@ class _ComputedReqKindsMixin:
                     'not an FQCN. A valid collection name must be in '
                     'the format <namespace>.<collection>. Please make '
                     'sure that the namespace and the collection name '
-                    ' contain characters from [a-zA-Z0-9_] only.'
+                    'contain characters from [a-zA-Z0-9_] only.'
                     '{extra_tip!s}'.format(extra_tip=tip),
                 )
 
