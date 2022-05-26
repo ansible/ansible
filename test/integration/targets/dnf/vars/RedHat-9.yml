@@ -1,2 +1,3 @@
-astream_name: '@container-tools:latest/common'
-astream_name_no_stream: '@container-tools/common'
+# RHEL9.0 contains no modules, to be re-introduced in 9.1
+# astream_name: '@container-tools:latest/common'
+# astream_name_no_stream: '@container-tools/common'

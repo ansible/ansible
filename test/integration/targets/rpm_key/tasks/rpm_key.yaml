@@ -29,11 +29,6 @@
     url: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/sl-5.02-1.el7.x86_64.rpm
     dest: /tmp/sl.rpm
 
-- name: download Mono key
-  get_url:
-    url: https://ci-files.testing.ansible.com/test/integration/targets/rpm_key/mono.gpg
-    dest: /tmp/mono.gpg
-
 - name: remove EPEL GPG key from keyring
   rpm_key:
     state: absent
@@ -69,21 +64,11 @@
   rpm_key:
     state: present
     key: /tmp/RPM-GPG-KEY-EPEL-7
-
-- name: add Mono gpg key
-  rpm_key:
-      state: present
-      key: /tmp/mono.gpg
-
-- name: add Mono gpg key
-  rpm_key:
-      state: present
-      key: /tmp/mono.gpg
-  register: mono_indempotence
+  register: key_idempotence
 
 - name: verify idempotence
   assert:
-    that: "not mono_indempotence.changed"
+    that: "not key_idempotence.changed"
 
 - name: check GPG signature of sl. Should return okay
   shell: "rpm --checksig /tmp/sl.rpm"
