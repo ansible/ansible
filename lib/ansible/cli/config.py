@@ -479,8 +479,10 @@ class ConfigCLI(CLI):
             text = self._get_global_configs()
             # deal with plugins
             for ptype in C.CONFIGURABLE_PLUGINS:
-                text.append('\n%s:\n%s' % (ptype.upper(), '=' * len(ptype)))
-                text.extend(self._get_plugin_configs(ptype, context.CLIARGS['args']))
+                plugin_list = self._get_plugin_configs(ptype, context.CLIARGS['args'])
+                if not context.CLIARGS['only_changed'] or plugin_list:
+                    text.append('\n%s:\n%s' % (ptype.upper(), '=' * len(ptype)))
+                    text.extend(plugin_list)
         else:
             # deal with plugins
             text = self._get_plugin_configs(context.CLIARGS['type'], context.CLIARGS['args'])
