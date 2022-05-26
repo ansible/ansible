@@ -1,5 +1,5 @@
 - name: Ensure hostname doesn't confuse NetworkManager
-  when: ansible_os_family == 'RedHat'
+  when: ansible_os_family == 'RedHat' and ansible_distribution_major_version is version('8')
   block:
     - name: slurp /var/log/messages
       slurp:
@@ -23,7 +23,7 @@
   register: current_after_hn2
 
 - name: Ensure hostname doesn't confuse NetworkManager
-  when: ansible_os_family == 'RedHat'
+  when: ansible_os_family == 'RedHat' and ansible_distribution_major_version is version('8')
   block:
     - name: slurp /var/log/messages
       slurp:

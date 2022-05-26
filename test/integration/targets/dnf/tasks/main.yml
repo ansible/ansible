@@ -54,8 +54,10 @@
     - ansible_distribution_major_version is version('23', '>=')
 
 - include_tasks: modularity.yml
-  when: (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('29', '>=')) or
-        (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('8', '>='))
+  when:
+    - astream_name is defined
+    - (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('29', '>=')) or
+      (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('8', '>='))
   tags:
     - dnf_modularity
 
