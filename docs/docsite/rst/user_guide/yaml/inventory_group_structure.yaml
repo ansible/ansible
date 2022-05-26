@@ -15,7 +15,7 @@ spines:
 network:
   children:
     leafs:
-      spines:
+    spines:
 
 webservers:
   hosts:
@@ -27,4 +27,4 @@ webservers:
 datacenter:
   children:
     network:
-      webservers:
+    webservers:

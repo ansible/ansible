@@ -16,7 +16,7 @@ Complete the following steps:
 
 #. Open a terminal window on your control node.
 #. Create a new inventory file named ``inventory.yaml`` in any directory and open it for editing.
-#. Add a new group for your hosts then specify the IP address or FQDN of each managed node with the ``ansible_host`` field.
+#. Add a new group for your hosts then specify the IP address or fully qualified domain name (FQDN) of each managed node with the ``ansible_host`` field.
    The following example adds the IP addresses of three virtual machines in KVM: 
 
    .. literalinclude:: yaml/inventory_example_vms.yaml
@@ -41,7 +41,7 @@ Complete the following steps:
 
 Congratulations! You have successfully built an inventory.
 
-Best practices when building inventories
+Tips for building inventories
 ========================================
 
 * Ensure that group names are meaningful and unique. Group names are also case sensitive.

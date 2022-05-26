@@ -30,12 +30,12 @@ Complete the following steps to get up and running:
    
    .. code-block:: bash 
       
-      python -m pip install --user ansible
+      python3 -m pip install --user ansible
 
-#. Create an inventory by adding the IP address or FQDN of one or more remote systems to ``/etc/ansible/hosts``.
+#. Create an inventory by adding the IP address or fully qualified domain name (FQDN) of one or more remote systems to ``/etc/ansible/hosts``.
    The following example adds the IP addresses of three virtual machines in KVM:
 
-   .. code-block:: text
+   .. code-block:: ini
 
       [myvirtualmachines]
       192.0.2.50
