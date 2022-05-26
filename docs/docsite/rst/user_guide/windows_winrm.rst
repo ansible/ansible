@@ -5,11 +5,14 @@ Windows Remote Management
 Unlike Linux/Unix hosts, which use SSH by default, Windows hosts are
 configured with WinRM. This topic covers how to configure and use WinRM with Ansible.
 
-.. contents:: Topics
+.. contents:: 
    :local:
+   :depth: 2
+
 
 What is WinRM?
-``````````````
+----------------
+
 WinRM is a management protocol used by Windows to remotely communicate with
 another server. It is a SOAP-based protocol that communicates over HTTP/HTTPS, and is
 included in all recent Windows operating systems. Since Windows
@@ -35,8 +38,11 @@ with the Ansible package, but can be installed by running the following:
      avoid using Kerberos auth.
 
 
-Authentication Options
-``````````````````````
+.. _winrm_auth:
+
+WinRM authentication options
+-----------------------------
+
 When connecting to a Windows host, there are several different options that can be used
 when authenticating with an account. The authentication type may be set on inventory
 hosts or groups with the ``ansible_winrm_transport`` variable.
@@ -57,8 +63,11 @@ The following matrix is a high level overview of the options:
 | CredSSP     | Yes            | Yes                       | Yes                   | Yes             |
 +-------------+----------------+---------------------------+-----------------------+-----------------+
 
+.. _winrm_basic:
+
 Basic
------
+^^^^^^
+
 Basic authentication is one of the simplest authentication options to use, but is
 also the most insecure. This is because the username and password are simply
 base64 encoded, and if a secure channel is not in use (eg, HTTPS) then it can be
@@ -80,8 +89,12 @@ enabled by running the following in PowerShell:
 
     Set-Item -Path WSMan:\localhost\Service\Auth\Basic -Value $true
 
+
+.. _winrm_certificate:
+
 Certificate
------------
+^^^^^^^^^^^^
+
 Certificate authentication uses certificates as keys similar to SSH key
 pairs, but the file format and key generation process is different.
 
@@ -104,8 +117,11 @@ be enabled by running the following in PowerShell:
 .. Note:: Encrypted private keys cannot be used as the urllib3 library that
     is used by Ansible for WinRM does not support this functionality.
 
+.._winrm_certificate_generate:
+
 Generate a Certificate
 ++++++++++++++++++++++
+
 A certificate must be generated before it can be mapped to a local user.
 This can be done using one of the following methods:
 
@@ -175,8 +191,11 @@ To generate a certificate with ``New-SelfSignedCertificate``:
     the following command with OpenSSL
     ``openssl pkcs12 -in cert.pfx -nocerts -nodes -out cert_key.pem -passin pass: -passout pass:``
 
+.. _winrm_certificate_import:
+
 Import a Certificate to the Certificate Store
 +++++++++++++++++++++++++++++++++++++++++++++
+
 Once a certificate has been generated, the issuing certificate needs to be
 imported into the ``Trusted Root Certificate Authorities`` of the
 ``LocalMachine`` store, and the client certificate public key must be present
@@ -214,8 +233,11 @@ The code to import the client certificate public key is:
     $store.Close()
 
 
+.. _winrm_certificate_mapping:
+
 Mapping a Certificate to an Account
 +++++++++++++++++++++++++++++++++++
+
 Once the certificate has been imported, map it to the local user account:
 
 .. code-block:: powershell
@@ -241,8 +263,12 @@ Once this is complete, the hostvar ``ansible_winrm_cert_pem`` should be set to
 the path of the public key and the ``ansible_winrm_cert_key_pem`` variable should be set to
 the path of the private key.
 
+
+.. _winrm_ntlm:
+
 NTLM
-----
+^^^^^
+
 NTLM is an older authentication mechanism used by Microsoft that can support
 both local and domain accounts. NTLM is enabled by default on the WinRM
 service, so no setup is required before using it.
@@ -268,8 +294,11 @@ This example shows host variables configured to use NTLM authentication:
     ansible_connection: winrm
     ansible_winrm_transport: ntlm
 
+.. _winrm_kerberos:
+
 Kerberos
---------
+^^^^^^^^^
+
 Kerberos is the recommended authentication option to use when running in a
 domain environment. Kerberos supports features like credential delegation and
 message encryption over HTTP and is one of the more secure options that
@@ -303,8 +332,11 @@ There are some extra host variables that can be set:
     ansible_winrm_kerberos_delegation: allows the credentials to traverse multiple hops
     ansible_winrm_kerberos_hostname_override: the hostname to be used for the kerberos exchange
 
+.. _winrm_kerberos_install:
+
 Installing the Kerberos Library
 +++++++++++++++++++++++++++++++
+
 Some system dependencies that must be installed prior to using Kerberos. The script below lists the dependencies based on the distro:
 
 .. code-block:: shell
@@ -349,8 +381,11 @@ be install using ``pip``:
      names and versions available may differ between tools.
 
 
+.. _winrm_kerberos_config:
+
 Configuring Host Kerberos
 +++++++++++++++++++++++++
+
 Once the dependencies have been installed, Kerberos needs to be configured so
 that it can communicate with a domain. This configuration is done through the
 ``/etc/krb5.conf`` file, which is installed with the packages in the script above.
@@ -390,8 +425,11 @@ You can configure other settings in this file such as the default domain. See
 `krb5.conf <https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html>`_
 for more details.
 
+.. _winrm_kerberos_ticket_auto:
+
 Automatic Kerberos Ticket Management
 ++++++++++++++++++++++++++++++++++++
+
 Ansible version 2.3 and later defaults to automatically managing Kerberos tickets
 when both ``ansible_user`` and ``ansible_password`` are specified for a host. In
 this process, a new ticket is created in a temporary credential cache for each
@@ -407,8 +445,11 @@ host system path. To specify a different location or binary name, set the
 ``ansible_winrm_kinit_cmd`` hostvar to the fully qualified path to a MIT krbv5
 ``kinit``-compatible binary.
 
+.. _winrm_kerberos_ticket_manual:
+
 Manual Kerberos Ticket Management
 +++++++++++++++++++++++++++++++++
+
 To manually manage Kerberos tickets, the ``kinit`` binary is used. To
 obtain a new ticket the following command is used:
 
@@ -430,8 +471,11 @@ To destroy all the tickets that have been acquired, use the following command:
 
     kdestroy
 
+.. _winrm_kerberos_troubleshoot:
+
 Troubleshooting Kerberos
 ++++++++++++++++++++++++
+
 Kerberos is reliant on a properly-configured environment to
 work. To troubleshoot Kerberos issues, ensure that:
 
@@ -460,8 +504,11 @@ work. To troubleshoot Kerberos issues, ensure that:
 
 * If the default kerberos tooling has been replaced or modified (some IdM solutions may do this), this may cause issues when installing or upgrading the Python Kerberos library. As of the time of this writing, this library is called ``pykerberos`` and is known to work with both MIT and Heimdal Kerberos libraries. To resolve ``pykerberos`` installation issues, ensure the system dependencies for Kerberos have been met (see: `Installing the Kerberos Library`_), remove any custom Kerberos tooling paths from the PATH environment variable, and retry the installation of Python Kerberos library package.
 
+.. _winrm_credssp:
+
 CredSSP
--------
+^^^^^^^
+
 CredSSP authentication is a newer authentication protocol that allows
 credential delegation. This is achieved by encrypting the username and password
 after authentication has succeeded and sending that to the server using the
@@ -496,6 +543,8 @@ be enabled by running the following in PowerShell:
 
     Enable-WSManCredSSP -Role Server -Force
 
+.. _winrm_credssp_install:
+
 Installing CredSSP Library
 ++++++++++++++++++++++++++
 
@@ -505,8 +554,11 @@ The ``requests-credssp`` wrapper can be installed using ``pip``:
 
     pip install pywinrm[credssp]
 
+.. _winrm_credssp_tls:
+
 CredSSP and TLS 1.2
 +++++++++++++++++++
+
 By default the ``requests-credssp`` library is configured to authenticate over
 the TLS 1.2 protocol. TLS 1.2 is installed and enabled by default for Windows Server 2012
 and Windows 8 and more recent releases.
@@ -523,8 +575,11 @@ There are two ways that older hosts can be used with CredSSP:
 See :ref:`winrm_tls12` for more information on how to enable TLS 1.2 on the
 Windows host.
 
+.. _winrm _credssp_cert:
+
 Set CredSSP Certificate
 +++++++++++++++++++++++
+
 CredSSP works by encrypting the credentials through the TLS protocol and uses a self-signed certificate by default. The ``CertificateThumbprint`` option under the WinRM service configuration can be used to specify the thumbprint of
 another certificate.
 
@@ -543,8 +598,11 @@ To explicitly set the certificate to use for CredSSP:
     # Set the thumbprint value
     Set-Item -Path WSMan:\localhost\Service\CertificateThumbprint -Value $certificate_thumbprint
 
+.. _winrm_nonadmin:
+
 Non-Administrator Accounts
-``````````````````````````
+---------------------------
+
 WinRM is configured by default to only allow connections from accounts in the local
 ``Administrators`` group. This can be changed by running:
 
@@ -559,8 +617,11 @@ enabled.
 While non-administrative accounts can be used with WinRM, most typical server administration
 tasks require some level of administrative access, so the utility is usually limited.
 
+.. _winrm_encrypt:
+
 WinRM Encryption
-````````````````
+-----------------
+
 By default WinRM will fail to work when running over an unencrypted channel.
 The WinRM protocol considers the channel to be encrypted if using TLS over HTTP
 (HTTPS) or using message level encryption. Using WinRM with TLS is the
@@ -595,8 +656,11 @@ requirement:
     absolutely required. Doing so could allow sensitive information like
     credentials and files to be intercepted by others on the network.
 
+.. _winrm_inventory:
+
 Inventory Options
-`````````````````
+------------------
+
 Ansible's Windows support relies on a few standard variables to indicate the
 username, password, and connection type of the remote hosts. These variables
 are most easily set up in the inventory, but can be set on the ``host_vars``/
@@ -692,8 +756,11 @@ for each authentication option. See the section on authentication above for more
     encryption done over TLS. The WinRM payload is still encrypted with TLS
     when run over HTTPS, even if ``ansible_winrm_message_encryption=never``.
 
+.. _winrm_ipv6:
+
 IPv6 Addresses
-``````````````
+---------------
+
 IPv6 addresses can be used instead of IPv4 addresses or hostnames. This option
 is normally set in an inventory. Ansible will attempt to parse the address
 using the `ipaddress <https://docs.python.org/3/library/ipaddress.html>`_
@@ -717,8 +784,11 @@ would an IPv4 address or hostname:
     use IPv6 addresses in Python 2.7, make sure to run ``pip install ipaddress`` which installs
     a backported package.
 
+.. _winrm_https:
+
 HTTPS Certificate Validation
-````````````````````````````
+-----------------------------
+
 As part of the TLS protocol, the certificate is validated to ensure the host
 matches the subject and the client trusts the issuer of the server certificate.
 When using a self-signed certificate or setting
@@ -754,7 +824,8 @@ is located in the install path of the Python package
 .. _winrm_tls12:
 
 TLS 1.2 Support
-```````````````
+----------------
+
 As WinRM runs over the HTTP protocol, using HTTPS means that the TLS protocol
 is used to encrypt the WinRM messages. TLS will automatically attempt to
 negotiate the best protocol and cipher suite that is available to both the
@@ -883,8 +954,10 @@ suites that are offered by the Windows host. One tool that can give you a GUI
 to manage these settings is `IIS Crypto <https://www.nartac.com/Products/IISCrypto/>`_
 from Nartac Software.
 
-Limitations
-```````````
+.. _winrm_limitations:
+
+WinRM limitations
+------------------
 Due to the design of the WinRM protocol , there are a few limitations
 when using WinRM that can cause issues when creating playbooks for Ansible.
 These include:
