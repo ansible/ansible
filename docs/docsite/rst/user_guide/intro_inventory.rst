@@ -188,6 +188,8 @@ In YAML:
         hosts:
           www[01:50:2].example.com:
 
+The example above would make the subdomains www01, www03, www05, ..., www49 match, but not www00, www02, www50 and so on, because the stride (increment) is 2 units each step.
+
 For numeric patterns, leading zeros can be included or removed, as desired. Ranges are inclusive. You can also define alphabetic ranges:
 
 .. code-block:: text
