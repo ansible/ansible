@@ -96,4 +96,3 @@ Continue by :ref:`learning how to build an inventory<get_started_inventory>`.
 
    get_started_inventory
    get_started_playbook
-   quickstart
