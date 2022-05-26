@@ -1317,7 +1317,11 @@ FACTS_MODULES:
   name: Gather Facts Modules
   default:
     - smart
-  description: "Which modules to run during a play's fact gathering stage, using the default of 'smart' will try to figure it out based on connection type."
+  description:
+    - "Which modules to run during a play's fact gathering stage, using the default of 'smart' will try to figure it out based on connection type."
+    - "If adding your own modules but you still want to use the default Ansible facts, you will want to include 'setup'
+      or corresponding network module to the list (if you add 'smart', Ansible will also figure it out)."
+    - "This does not affect explicit calls to the 'setup' module, but does always affect the 'gather_facts' action (implicit or explicit)."
   env: [{name: ANSIBLE_FACTS_MODULES}]
   ini:
     - {key: facts_modules, section: defaults}
