@@ -13,15 +13,6 @@ User Guide
 Welcome to the Ansible User Guide! This guide covers how to work with Ansible, including using the command line, working with inventory, interacting with data, writing tasks, plays, and playbooks; executing playbooks, and reference materials.
 Quickly find answers in the following sections or expand the table of contents below to scroll through all resources.
 
-Getting started with Ansible
-============================
-
-Quickly learn the basics to get up and running with Ansible.
-You can then build an inventory before creating and running your first playbook.
-
-:ref:`Start using Ansible in a few easy steps <intro_getting_started>`.
-
-
 Writing tasks, plays, and playbooks
 ===================================
 
@@ -89,8 +80,6 @@ Here is the complete list of resources in the Ansible User Guide:
 .. toctree::
    :maxdepth: 2
 
-   intro_getting_started
-   quickstart
    basic_concepts
    intro_adhoc
    cheatsheet

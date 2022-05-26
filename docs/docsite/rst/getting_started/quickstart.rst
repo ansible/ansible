@@ -1,14 +1,12 @@
 .. _quickstart_guide:
 
-Ansible Quickstart Guide
+Ansible quickstart video
 ========================
 
-We've recorded a short video that introduces Ansible.
+The `Ansible quickstart video <https://www.ansible.com/resources/videos/quick-start-video?hsLang=en-us>`_ provides a high-level explanation of Ansible and how you can use it to automate complex IT operations.
+This short video also introduces you to other products in the Ansible ecosystem.
 
-The `quickstart video <https://www.ansible.com/resources/get-started?hsLang=en-us>`_ is about 13 minutes long and gives you a high level
-introduction to Ansible -- what it does and how to use it. We'll also tell you about other products in the Ansible ecosystem.
-
-Enjoy, and be sure to visit the rest of the documentation to learn more.
+We hope you enjoy the quickstart video.
 
 .. seealso::
 

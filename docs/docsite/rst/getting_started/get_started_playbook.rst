@@ -54,6 +54,9 @@ In this output you can see:
 * The play recap that summarizes results of all tasks in the playbook per host.
   In this example, there are three tasks so ``ok=3`` indicates that each task ran successfully.
 
+Congratulations! You have just created your first Ansible playbook.
+Why not take a look at our :ref:`quickstart video<quickstart_guide>`?
+
 .. seealso::
 
    :ref:`playbooks_intro`

@@ -1,10 +1,12 @@
-.. _intro_getting_started:
+.. _getting_started_index:
 
-****************************
+############################
 Getting started with Ansible
-****************************
+############################
 
 Ansible automates the management of remote systems and controls their desired state.
+A basic Ansible environment has three main components:
+
 
 Control node
    A system on which Ansible is installed.
@@ -76,12 +78,7 @@ Complete the following steps to get up and running:
       :language: text
 
 Congratulations! You are now using Ansible.
-Continue by learning how to build an inventory.
-
-.. toctree::
-   :maxdepth: 1
-
-   get_started_inventory
+Continue by :ref:`learning how to build an inventory<get_started_inventory>`.
 
 .. seealso::
 
@@ -93,3 +90,10 @@ Continue by learning how to build an inventory.
        Questions? Help? Ideas?  Stop by the list on Google Groups
    :ref:`communication_irc`
        How to join Ansible chat channels
+
+.. toctree::
+   :maxdepth: 1
+
+   get_started_inventory
+   get_started_playbook
+   quickstart

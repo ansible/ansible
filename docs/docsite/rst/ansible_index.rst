@@ -26,6 +26,12 @@ Ansible releases a new major release approximately twice a year. The core applic
 
 .. toctree::
    :maxdepth: 2
+   :caption: Ansible getting started
+
+   getting_started/index
+
+.. toctree::
+   :maxdepth: 2
    :caption: Installation, Upgrade & Configuration
 
    installation_guide/index

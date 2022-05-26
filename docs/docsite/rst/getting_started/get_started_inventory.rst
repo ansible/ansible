@@ -42,7 +42,7 @@ Complete the following steps:
 Congratulations! You have successfully built an inventory.
 
 Tips for building inventories
-========================================
+=============================
 
 * Ensure that group names are meaningful and unique. Group names are also case sensitive.
 * Avoid spaces, hyphens, and preceding numbers (use ``floor_19``, not ``19th_floor``) in group names.
@@ -86,12 +86,7 @@ Variables can also apply to all hosts in a group.
 .. literalinclude:: yaml/inventory_variables_group.yaml
    :language: yaml
 
-Now that you know how to build an inventory, continue by learning how to create a playbook.
-
-.. toctree::
-   :maxdepth: 1
-
-   get_started_playbook
+Now that you know how to build an inventory, continue by :ref:`learning how to create a playbook<get_started_playbook>`.
 
 .. seealso::
 
