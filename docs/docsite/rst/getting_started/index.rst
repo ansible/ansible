@@ -20,9 +20,9 @@ Inventory
    You create an inventory on the control node to describe host deployments to Ansible.
 
 .. image:: ../images/ansible_basic.svg
-   :width: 600px
+   :width: 400px
    :align: center
-   :height: 300px
+   :height: 200px
    :alt: Basic components of an Ansible environment include a control node, an inventory of managed nodes, and a module copied to each managed node.
 
 Ready to start using Ansible?
