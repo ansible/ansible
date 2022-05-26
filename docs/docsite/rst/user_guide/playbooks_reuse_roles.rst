@@ -455,7 +455,7 @@ In this example, Ansible runs ``foo`` twice because we have explicitly enabled i
 Using role dependencies
 =======================
 
-Role dependencies let you automatically pull in other roles when using a role. Ansible does not execute role dependencies when you include or import a role. You must use the ``roles`` keyword if you want Ansible to execute role dependencies.
+Role dependencies let you automatically pull in other roles when using a role.
 
 Role dependencies are prerequisites, not true dependencies. The roles do not have a parent/child relationship. Ansible loads all listed roles, runs the roles listed under ``dependencies`` first, then runs the role that lists them. The play object is the parent of all roles, including roles called by a ``dependencies`` list.
 
