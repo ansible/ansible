@@ -5,13 +5,15 @@ Creating a playbook
 *******************
 
 Playbooks are automation blueprints, in ``YAML`` format, that Ansible uses to deploy and configure managed nodes.
-Playbooks define the order in which Ansible performs actions, from top to bottom, and contain the following objects:
+
+Playbook 
+   A list of plays that define the order in which Ansible performs operations, from top to bottom, to achieve an overall goal.
 
 Play
    An ordered list of tasks that maps to managed nodes in an inventory.
 
 Task
-   A list of one or more modules that defines the actions that Ansible performs.
+   A list of one or more modules that defines the operations that Ansible performs.
 
 Module
    A unit of code or binary that Ansible runs on managed nodes.
