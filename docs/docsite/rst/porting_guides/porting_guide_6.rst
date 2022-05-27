@@ -99,6 +99,159 @@ Networking
 
 No notable changes
 
+Porting Guide for v6.0.0b1
+==========================
+
+Added Collections
+-----------------
+
+- cisco.dnac (version 6.4.0)
+- community.sap_libs (version 1.1.0)
+
+Known Issues
+------------
+
+dellemc.openmanage
+~~~~~~~~~~~~~~~~~~
+
+- idrac_user - Issue(192043) The module may error out with the message ``unable to perform the import or export operation because there are pending attribute changes or a configuration job is in progress``. Wait for the job to complete and run the task again.
+- ome_application_alerts_smtp - Issue(212310) - The module does not provide a proper error message if the destination_address is more than 255 characters.
+- ome_application_alerts_syslog - Issue(215374) - The module does not provide a proper error message if the destination_address is more than 255 characters.
+- ome_application_console_preferences - Issue(224690) - The module does not display a proper error message when an unsupported value is provided for the parameters report_row_limit, email_sender_settings, and metric_collection_settings, and the value is applied on OpenManage Enterprise.
+- ome_device_local_access_configuration - Issue(215035) - The module reports ``Successfully updated the local access setting`` if an unsupported value is provided for the parameter timeout_limit. However, this value is not actually applied on OpenManage Enterprise Modular.
+- ome_device_local_access_configuration - Issue(217865) - The module does not display a proper error message if an unsupported value is provided for the user_defined and lcd_language parameters.
+- ome_device_network_services - Issue(212681) - The module does not provide a proper error message if unsupported values are provided for the parameters- port_number, community_name, max_sessions, max_auth_retries, and idle_timeout.
+- ome_device_power_settings - Issue(212679) - The module displays the following message if the value provided for the parameter ``power_cap`` is not within the supported range of 0 to 32767, ``Unable to complete the request because PowerCap does not exist or is not applicable for the resource URI.``
+- ome_device_quick_deploy - Issue(216352) - The module does not display a proper error message if an unsupported value is provided for the ipv6_prefix_length and vlan_id parameters.
+- ome_smart_fabric_uplink - Issue(186024) - The module does not allow the creation of multiple uplinks of the same name even though it is supported by OpenManage Enterprise Modular. If an uplink is created using the same name as an existing uplink, the existing uplink is modified.
+
+Major Changes
+-------------
+
+cisco.dnac
+~~~~~~~~~~
+
+- Adds _info plugins to query information from database.
+- Adds new plugins related to DNA version 2.2.2.3.
+- Adds plugins for resource's operations that have different structure in request/response bodies (ie. _create, _update, _delete plugins).
+- Adds plugins without state that perform special operation on DNA Center.
+- Adds resources for modules to manage CRUD operations.
+- Moves the module parameters out of the inventory and places them inside the tasks themselves.
+- Update dnacentersdk requirement from 2.4.4 to 2.4.5
+- Update dnacentersdk requirement from 2.4.5 to 2.4.6
+- Updates previous plugins to follow DNA version 2.2.2.3 specification.
+- applications_health_info - new `applicationName` parameter.
+- business_sda_wireless_controller_create - Removed 'deviceIPAddress' arguments.
+- business_sda_wireless_controller_delete - Removed 'deviceName' and 'siteNameHierarchy' arguments.
+- network_device - Removed 'managementIpAddress' arguments.
+- network_device - change `isForceDelete` parameter to `cleanConfig` parameter.
+- network_device - new `cleanConfig` parameter.
+- network_device_lexicographically_sorted_info - change `limit` param type from str to int
+- network_device_lexicographically_sorted_info - change `offset` param type from str to int
+- reserve_ip_subpool - new `ipv4GateWay` parameter.
+- reserve_ip_subpool_update - Removed 'type', 'ipv4GlobalPool', 'ipv4Prefix', 'ipv4PrefixLength', 'ipv4Subnet' and 'ipv4TotalHost' arguments.
+- sda_device_info - change `deviceIPAddress` to `deviceManagementIpAddress` parameter.
+- sda_fabric - remove `payload` parameter.
+- sda_fabric_authentication_profile - add `authenticateTemplateName` parameter.
+- sda_fabric_authentication_profile - add `authenticationOrder` parameter.
+- sda_fabric_authentication_profile - add `dot1xToMabFallbackTimeout` parameter.
+- sda_fabric_authentication_profile - add `numberOfHosts` parameter.
+- sda_fabric_authentication_profile - add `wakeOnLan` parameter.
+- sda_fabric_authentication_profile - remove `payload` parameter.
+- sda_fabric_authentication_profile_info - add `authenticateTemplateName` parameter.
+- sda_fabric_border_device - add `borderSessionType` parameter.
+- sda_fabric_border_device - add `connectedToInternet` parameter.
+- sda_fabric_border_device - add `deviceManagementIpAddress` parameter.
+- sda_fabric_border_device - add `externalAutonomouSystemNumber` parameter.
+- sda_fabric_border_device - add `externalConnectivityIpPoolName` parameter.
+- sda_fabric_border_device - add `externalConnectivitySettings` parameter.
+- sda_fabric_border_device - add `externalDomainRoutingProtocolName` parameter.
+- sda_fabric_border_device - add `interfaceName` parameter.
+- sda_fabric_border_device - add `internalAutonomouSystemNumber` parameter.
+- sda_fabric_border_device - add `l3Handoff` parameter.
+- sda_fabric_border_device - add `siteNameHierarchy` parameter.
+- sda_fabric_border_device - add `virtualNetworkName` parameter.
+- sda_fabric_border_device - add `virtualNetwork` parameter.
+- sda_fabric_border_device - add `vlanId parameter.`
+- sda_fabric_border_device - change `deviceIPAddress` to `deviceManagementIpAddress` parameter.
+- sda_fabric_border_device - changes in externalConnectivitySettings from object to list.
+- sda_fabric_border_device - remove `payload` parameter.
+- sda_fabric_border_device_info - change `deviceIPAddress` to `deviceManagementIpAddress` parameter.
+- sda_fabric_control_plane_device - add `siteNameHierarchy` parameter.
+- sda_fabric_control_plane_device - change `deviceIPAddress` to `deviceManagementIpAddress` parameter.
+- sda_fabric_control_plane_device - remove `payload` parameter.
+- sda_fabric_control_plane_device_info - change `deviceIPAddress` to `deviceManagementIpAddress` parameter.
+- sda_fabric_edge_device - add `siteNameHierarchy` parameter.
+- sda_fabric_edge_device - change `deviceIPAddress` to `deviceManagementIpAddress` parameter.
+- sda_fabric_edge_device - remove `payload` parameter.
+- sda_fabric_edge_device_info - change `deviceIPAddress` to `deviceManagementIpAddress` parameter.
+- sda_fabric_site - add `fabricName` parameter.
+- sda_fabric_site - remove `payload` parameter.
+- sda_multicast - change `fabricSiteNameHierarchy` to `siteNameHierarchy` parameter.
+- sda_multicast_info - change `fabricSiteNameHierarchy` to `siteNameHierarchy` parameter.
+- sda_port_assignment_for_access_point - add `authenticateTemplateName` parameter.
+- sda_port_assignment_for_access_point - add `dataIpAddressPoolName` parameter.
+- sda_port_assignment_for_access_point - add `deviceManagementIpAddress` parameter.
+- sda_port_assignment_for_access_point - add `interfaceDescription` parameter.
+- sda_port_assignment_for_access_point - add `siteNameHierarchy` parameter.
+- sda_port_assignment_for_access_point - change `device_ip` to `deviceManagementIpAddress` parameter.
+- sda_port_assignment_for_access_point - remove `payload` parameter.
+- sda_port_assignment_for_access_point_info - change `device_ip` to `deviceManagementIpAddress` parameter.
+- sda_port_assignment_for_user_device - add `authenticateTemplateName` parameter.
+- sda_port_assignment_for_user_device - add `dataIpAddressPoolName` parameter.
+- sda_port_assignment_for_user_device - add `interfaceDescription` parameter.
+- sda_port_assignment_for_user_device - add `scalableGroupName` parameter.
+- sda_port_assignment_for_user_device - add `siteNameHierarchy` parameter.
+- sda_port_assignment_for_user_device - add `voiceIpAddressPoolName` parameter.
+- sda_port_assignment_for_user_device - change `device_ip` to `deviceManagementIpAddress` parameter.
+- sda_port_assignment_for_user_device - remove `payload` parameter.
+- sda_port_assignment_for_user_device_info - change `device_ip` to `deviceManagementIpAddress` parameter.
+- sda_virtual_network - remove `payload` parameter.
+- sda_virtual_network_ip_pool - add `siteNameHierarchy`, `ipPoolName`, `trafficType`, `authenticationPolicyName`, `scalableGroupName`, `isL2FloodingEnabled`, `isThisCriticalPool`, `poolType`, `vlanName`, `isWirelessPool` parameters.
+- sda_virtual_network_ip_pool - remove `payload` and `ipPoolName` parameter.
+- service_provider_profile_delete - Rename argument from 'sp_profile_name' to 'spProfileName'.
+- site_health_info - add `siteType`, `offset`, `limit` parameters
+- snmpv2_read_community_credential - remove `id` and `instanceTenantId` parameter.
+- snmpv2_write_community_credential - remove `id` and `instanceTenantId` parameter.
+
+dellemc.openmanage
+~~~~~~~~~~~~~~~~~~
+
+- idrac_server_config_profile - The module is enhanced to support export, import, and preview the SCP configuration using Redfish and added support for check mode.
+
+fortinet.fortios
+~~~~~~~~~~~~~~~~
+
+- Support FortiOS 7.0.2, 7.0.3, 7.0.4, 7.0.5.
+
+Removed Features
+----------------
+
+community.hashi_vault
+~~~~~~~~~~~~~~~~~~~~~
+
+- aws_iam auth - the deprecated alias ``aws_iam_login`` for the ``aws_iam`` value of the ``auth_method`` option has been removed (https://github.com/ansible-collections/community.hashi_vault/issues/194).
+- community.hashi_vault collection - support for Ansible 2.9 and ansible-base 2.10 has been removed (https://github.com/ansible-collections/community.hashi_vault/issues/189).
+- hashi_vault lookup - the deprecated ``[lookup_hashi_vault]`` INI config section has been removed in favor of the collection-wide ``[hashi_vault_collection]`` section (https://github.com/ansible-collections/community.hashi_vault/issues/179).
+
+Deprecated Features
+-------------------
+
+- The collection ``community.sap`` has been renamed to ``community.sap_libs``. For now both collections are included in Ansible. The content in ``community.sap`` will be replaced with deprecated redirects to the new collection in Ansible 7.0.0, and these redirects will eventually be removed from Ansible. Please update your FQCNs for ``community.sap``.
+
+community.docker
+~~~~~~~~~~~~~~~~
+
+- Support for Ansible 2.9 and ansible-base 2.10 is deprecated, and will be removed in the next major release (community.docker 3.0.0). Some modules might still work with these versions afterwards, but we will no longer keep compatibility code that was needed to support them (https://github.com/ansible-collections/community.docker/pull/361).
+- The dependency on docker-compose for Execution Environments is deprecated and will be removed in community.docker 3.0.0. The `Python docker-compose library <https://pypi.org/project/docker-compose/>`__ is unmaintained and can cause dependency issues. You can manually still install it in an Execution Environment when needed (https://github.com/ansible-collections/community.docker/pull/373).
+- Various modules - the default of ``tls_hostname`` that was supposed to be removed in community.docker 2.0.0 will now be removed in version 3.0.0 (https://github.com/ansible-collections/community.docker/pull/362).
+- docker_stack - the return values ``out`` and ``err`` that were supposed to be removed in community.docker 2.0.0 will now be removed in version 3.0.0 (https://github.com/ansible-collections/community.docker/pull/362).
+
+community.hashi_vault
+~~~~~~~~~~~~~~~~~~~~~
+
+- token_validate options - the shared auth option ``token_validate`` will change its default from ``true`` to ``false`` in community.hashi_vault version 4.0.0. The ``vault_login`` lookup and module will keep the default value of ``true`` (https://github.com/ansible-collections/community.hashi_vault/issues/248).
+
 Porting Guide for v6.0.0a3
 ==========================
 
