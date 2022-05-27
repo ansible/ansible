@@ -12,6 +12,10 @@ For example, inventories usually contain the SSH user so you do not need to incl
 In the previous section, you added managed nodes directly to the ``/etc/ansible/hosts`` file.
 Now let's create an inventory file that you can add to source control for flexibility, reuse, and for sharing with other users.
 
+.. note::
+   Inventory files can be in ``INI`` or ``YAML`` format.
+   For demonstration purposes this section uses ``YAML`` format only.
+
 Complete the following steps: 
 
 #. Open a terminal window on your control node.
