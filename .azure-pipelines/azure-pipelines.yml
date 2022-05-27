@@ -158,18 +158,6 @@ stages:
             - test: 3.9
             - test: '3.10'
             - test: 3.11
-  - stage: Incidental_Remote
-    displayName: Incidental Remote
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: i/{0}
-          targets:
-            - name: RHEL 8.6 py36
-              test: rhel/8.6@3.6
-            - name: RHEL 8.6 py38
-              test: rhel/8.6@3.8
   - stage: Incidental_Windows
     displayName: Incidental Windows
     dependsOn: []
@@ -211,7 +199,6 @@ stages:
       - Docker
       - Galaxy
       - Generic
-      - Incidental_Remote
       - Incidental_Windows
       - Incidental
     jobs:
