@@ -45,7 +45,7 @@ Downloading a collection from Automation Hub
 
 You can download collections from Automation Hub at the command line. Automation Hub content is available to subscribers only, so you must download an API token and configure your local environment to provide it before you can you download collections. To download a collection from Automation Hub with the ``ansible-galaxy`` command:
 
-1. Get your Automation Hub API token. Go to https://cloud.redhat.com/ansible/automation-hub/token/ and click :guilabel:`Get API token` from the version dropdown to copy your API token.
+1. Get your Automation Hub API token. Go to https://cloud.redhat.com/ansible/automation-hub/token/ and click :guilabel:`Load token` from the version dropdown to copy your API token.
 2. Configure Red Hat Automation Hub server in the ``server_list``  option under the ``[galaxy]`` section in your :file:`ansible.cfg` file.
 
   .. code-block:: ini
