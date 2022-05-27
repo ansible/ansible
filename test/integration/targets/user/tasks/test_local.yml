@@ -132,6 +132,18 @@
   tags:
     - user_test_local_mode
 
+# If we don't re-assign, then "Set user expiration" will
+# fail.
+- name: Re-assign named group for local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    group: local_ansibulluser
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
 - name: Remove local_ansibulluser again
   user:
     name: local_ansibulluser
