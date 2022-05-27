@@ -1,5 +1,0 @@
-docker_pip_extra_packages:
-  # Installing requests >=2.12.0 on Ubuntu 14.04 breaks certificate validation. We restrict to an older version
-  # to ensure out get_url tests work out fine. This is only an issue if pyOpenSSL is also installed.
-  # Not sure why RHEL7 needs this specific version
-  - requests==2.6.0
