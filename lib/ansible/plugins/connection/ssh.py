@@ -174,7 +174,7 @@ DOCUMENTATION = '''
             - name: ssh_extra_args
           default: ''
       reconnection_retries:
-          description: Number of attempts to connect.
+          description: Number of attempts to connect. Ansible retries connections only if it gets an SSH error with a return code of 255.
           default: 0
           type: integer
           env:
