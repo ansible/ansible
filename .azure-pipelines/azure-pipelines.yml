@@ -39,48 +39,6 @@ resources:
 pool: Standard
 
 stages:
-  - stage: Sanity
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Test {0}
-          testFormat: sanity/{0}
-          targets:
-            - test: 1
-            - test: 2
-            - test: 3
-            - test: 4
-            - test: 5
-  - stage: Units
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Python {0}
-          testFormat: units/{0}
-          targets:
-            - test: 2.7
-            - test: 3.5
-            - test: 3.6
-            - test: 3.7
-            - test: 3.8
-            - test: 3.9
-            - test: '3.10'
-            - test: 3.11
-  - stage: Windows
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Server {0}
-          testFormat: windows/{0}/1
-          targets:
-            - test: 2012
-            - test: 2012-R2
-            - test: 2016
-            - test: 2019
-            - test: 2022
   - stage: Remote
     dependsOn: []
     jobs:
@@ -158,42 +116,12 @@ stages:
             - test: 3.9
             - test: '3.10'
             - test: 3.11
-  - stage: Incidental_Windows
-    displayName: Incidental Windows
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          nameFormat: Server {0}
-          testFormat: i/windows/{0}
-          targets:
-            - test: 2012
-            - test: 2012-R2
-            - test: 2016
-            - test: 2019
-            - test: 2022
-  - stage: Incidental
-    dependsOn: []
-    jobs:
-      - template: templates/matrix.yml
-        parameters:
-          testFormat: i/{0}/1
-          targets:
-            - name: IOS Python
-              test: ios/csr1000v/
-            - name: VyOS Python
-              test: vyos/1.1.8/
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:
-      - Sanity
-      - Units
-      - Windows
       - Remote
       - Docker
       - Galaxy
       - Generic
-      - Incidental_Windows
-      - Incidental
     jobs:
       - template: templates/coverage.yml
