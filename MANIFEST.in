@@ -7,6 +7,7 @@ include docs/docsite/rst/collections/all_plugins.rst
 exclude docs/docsite/rst_warnings
 exclude docs/docsite/rst/conf.py
 exclude docs/docsite/rst/index.rst
+exclude docs/docsite/rst/dev_guide/index.rst
 exclude docs/docsite/rst/dev_guide/testing/sanity/bin-symlinks.rst
 exclude docs/docsite/rst/dev_guide/testing/sanity/botmeta.rst
 exclude docs/docsite/rst/dev_guide/testing/sanity/integration-aliases.rst
