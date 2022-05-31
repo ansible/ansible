@@ -38,6 +38,7 @@ docs/docsite/rst/cli/ansible-*.rst
 docs/docsite/rst/cli/ansible.rst
 docs/docsite/rst/dev_guide/collections_galaxy_meta.rst
 docs/docsite/rst/dev_guide/testing/sanity/index.rst.new
+docs/docsite/rst/dev_guide/index.rst
 docs/docsite/rst/modules/*.rst
 docs/docsite/rst/collections/*.rst
 !docs/docsite/rst/collections/all_plugins.rst
