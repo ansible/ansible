@@ -1,9 +1,0 @@
----
-- hosts: 127.0.0.1
-  connection: local
-  gather_facts: no
-  tasks:
-    - name: assert inventory was not populated by aws_ec2 inventory plugin
-      assert:
-        that:
-          - "'aws_ec2' not in groups"
