@@ -62,6 +62,7 @@ def assemble_files_to_ship(complete_file_list):
         # Generated as part of a build step
         'docs/docsite/rst/conf.py',
         'docs/docsite/rst/index.rst',
+        'docs/docsite/rst/dev_guide/index.rst',
         # Possibly should be included
         'examples/scripts/uptime.py',
         'examples/scripts/my_test.py',
