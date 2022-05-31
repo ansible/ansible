@@ -183,10 +183,6 @@ stages:
               test: ios/csr1000v/
             - name: VyOS Python
               test: vyos/1.1.8/
-            - name: AWS Python 2.7
-              test: aws/2.7
-            - name: AWS Python 3.6
-              test: aws/3.6
             - name: Cloud Python
               test: cloud/
   - stage: Summary

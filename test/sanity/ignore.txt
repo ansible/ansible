@@ -170,13 +170,7 @@ test/integration/targets/win_script/files/test_script_with_splatting.ps1 pslint:
 test/lib/ansible_test/_data/requirements/sanity.pslint.ps1 pslint:PSCustomUseLiteralPath # Uses wildcards on purpose
 test/lib/ansible_test/_util/target/setup/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 test/lib/ansible_test/_util/target/setup/requirements.py replace-urlopen
-test/support/integration/plugins/inventory/aws_ec2.py pylint:use-a-generator
-test/support/integration/plugins/modules/ec2_group.py pylint:use-a-generator
 test/support/integration/plugins/modules/timezone.py pylint:disallowed-name
-test/support/integration/plugins/module_utils/aws/core.py pylint:property-with-parameters
-test/support/integration/plugins/module_utils/cloud.py future-import-boilerplate
-test/support/integration/plugins/module_utils/cloud.py metaclass-boilerplate
-test/support/integration/plugins/module_utils/cloud.py pylint:isinstance-second-argument-not-valid-type
 test/support/integration/plugins/module_utils/compat/ipaddress.py future-import-boilerplate
 test/support/integration/plugins/module_utils/compat/ipaddress.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/compat/ipaddress.py no-unicode-literals
@@ -304,4 +298,3 @@ lib/ansible/module_utils/compat/_selectors2.py mypy-3.9:assignment  # vendored c
 lib/ansible/module_utils/compat/_selectors2.py mypy-3.10:assignment  # vendored code
 lib/ansible/module_utils/compat/_selectors2.py mypy-3.11:assignment  # vendored code
 lib/ansible/module_utils/compat/_selectors2.py mypy-2.7:attr-defined  # vendored code
-test/support/integration/plugins/modules/ec2.py pylint:ansible-deprecated-version
