@@ -6,9 +6,16 @@
   # work around for ansible-runner showing ansible warnings on stdout
   set_fact:
     pbexec_json: "{{ script.stdout | parse_json }}"
+    expected_events:
+      - playbook_on_start
+      - playbook_on_play_start
+      - playbook_on_task_start
+      - runner_on_start
+      - runner_on_ok
+      - playbook_on_stats
 
 - assert:
     that:
         - "pbexec_json.rc == 0"
-        - "pbexec_json.events|length == 7"
+        - "pbexec_json.events == expected_events"
         - "'localhost' in pbexec_json.stats.ok"
