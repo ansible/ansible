@@ -85,6 +85,7 @@
     - testgroup2
     - testgroup3
     - testgroup4
+    - testgroup5
   tags:
     - user_test_local_mode
 
@@ -121,6 +122,28 @@
   tags:
     - user_test_local_mode
 
+- name: Assign named group for local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    group: testgroup5
+  register: local_user_test_6
+  tags:
+    - user_test_local_mode
+
+# If we don't re-assign, then "Set user expiration" will
+# fail.
+- name: Re-assign named group for local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    group: local_ansibulluser
+  ignore_errors: yes
+  tags:
+    - user_test_local_mode
+
 - name: Remove local_ansibulluser again
   user:
     name: local_ansibulluser
@@ -139,6 +162,7 @@
     - testgroup2
     - testgroup3
     - testgroup4
+    - testgroup5
   tags:
     - user_test_local_mode
 
@@ -149,6 +173,7 @@
       - local_user_test_2 is not changed
       - local_user_test_3 is changed
       - local_user_test_4 is changed
+      - local_user_test_6 is changed
       - local_user_test_remove_1 is changed
       - local_user_test_remove_2 is not changed
   tags:
