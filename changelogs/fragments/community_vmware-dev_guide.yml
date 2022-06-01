@@ -1,2 +1,0 @@
-minor_changes:
-  - community.vmware - Migrated the Developer Guide to the `community.vmware` repo (https://github.com/ansible/ansible/pull/77723).
