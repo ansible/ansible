@@ -119,8 +119,8 @@ When reviewing community collection `inclusion requests <https://github.com/ansi
 
 #. For a collection to be included in the Ansible community package, the collection:
 
-  * Must be reviewed and approved by at least two persons, where at least one person is a Steering Committee member.
-  * A Non-Steering Committee review to be counted for inclusion must be checked and approved by another Steering Committee member.
+  * MUST be reviewed and approved by at least two persons, where at least one person is a Steering Committee member.
+  * For a Non-Steering Committee review to be counted for inclusion, it MUST be checked and approved by *another* Steering Committee member.
   * Reviewers must not be involved significantly in development of the collection. They must declare any potential conflict of interest (for example, being friends/relatives/coworkers of the maintainers/authors, being users of the collection, or having contributed to that collection recently or in the past).
 
 #. After the collection gets two or more Committee member approvals, a Committee member creates a `community topic <https://github.com/ansible-community/community-topics/issues>`_ linked to the corresponding inclusion request. The issue's description says that the collection has been approved by two or more Committee members and establishes a date (a week by default) when the inclusion decision will be considered made. This time period can be used to raise concerns.
