@@ -17,7 +17,7 @@ Task
 
 Module
    A unit of code or binary that Ansible runs on managed nodes.
-   Ansible modules are grouped in collections with a fully qualified collection name (FQCN) for each module.
+   Ansible modules are grouped in collections with a :term:`Fully Qualified Collection Name (FQCN)` for each module.
 
 In the previous section, you used the ``ansible`` command to ping hosts in your inventory.
 Now let's create a playbook that pings your hosts and also prints a "Hello world" message.
