@@ -44,17 +44,17 @@ class TestConstructor(SafeConstructor):
 
 
 TestConstructor.add_constructor(
-    u'!unsafe',
+    '!unsafe',
     TestConstructor.construct_yaml_unsafe)
 
 
 TestConstructor.add_constructor(
-    u'!vault',
+    '!vault',
     TestConstructor.construct_yaml_str)
 
 
 TestConstructor.add_constructor(
-    u'!vault-encrypted',
+    '!vault-encrypted',
     TestConstructor.construct_yaml_str)
 
 
@@ -90,7 +90,7 @@ class YamlChecker:
         for path in paths:
             extension = os.path.splitext(path)[1]
 
-            with open(path) as file:
+            with open(path, encoding='utf-8') as file:
                 contents = file.read()
 
             if extension in ('.yml', '.yaml'):

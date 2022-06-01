@@ -1,3 +1,4 @@
+"""Disallow use of Unicode quotes."""
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
@@ -6,6 +7,7 @@ import sys
 
 
 def main():
+    """Main entry point."""
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
         with open(path, 'rb') as path_fd:
             for line, text in enumerate(path_fd.readlines()):
@@ -15,7 +17,7 @@ def main():
                     print('%s:%d:%d: UnicodeDecodeError: %s' % (path, line + 1, ex.start + 1, ex))
                     continue
 
-                match = re.search(u'([‘’“”])', text)
+                match = re.search('([‘’“”])', text)
 
                 if match:
                     print('%s:%d:%d: use ASCII quotes `\'` and `"` instead of Unicode quotes' % (

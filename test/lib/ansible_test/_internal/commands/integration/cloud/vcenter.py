@@ -100,7 +100,7 @@ class VcenterEnvironment(CloudEnvironment):
             parser = configparser.ConfigParser()
             parser.read(self.config_path)  # static
 
-            env_vars = dict()
+            env_vars = {}
             ansible_vars = dict(
                 resource_prefix=self.resource_prefix,
             )

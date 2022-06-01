@@ -250,7 +250,7 @@ def enumerate_powershell_lines(
     try:
         coverage_run = read_json_file(path)
     except Exception as ex:  # pylint: disable=locally-disabled, broad-except
-        display.error(u'%s' % ex)
+        display.error('%s' % ex)
         return
 
     for filename, hits in coverage_run.items():

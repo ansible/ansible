@@ -52,7 +52,7 @@ from .constants import (
 )
 
 C = t.TypeVar('C')
-TType = t.TypeVar('TType')
+TBase = t.TypeVar('TBase')
 TKey = t.TypeVar('TKey')
 TValue = t.TypeVar('TValue')
 
@@ -449,8 +449,8 @@ def raw_command(
             data_bytes = to_optional_bytes(data)
             stdout_bytes, stderr_bytes = communicate_with_process(process, data_bytes, stdout == subprocess.PIPE, stderr == subprocess.PIPE, capture=capture,
                                                                   force_stdout=force_stdout)
-            stdout_text = to_optional_text(stdout_bytes, str_errors) or u''
-            stderr_text = to_optional_text(stderr_bytes, str_errors) or u''
+            stdout_text = to_optional_text(stdout_bytes, str_errors) or ''
+            stderr_text = to_optional_text(stderr_bytes, str_errors) or ''
         else:
             process.wait()
             stdout_text, stderr_text = None, None
@@ -1036,19 +1036,19 @@ def sanitize_host_name(name):
     return re.sub('[^A-Za-z0-9]+', '-', name)[:63].strip('-')
 
 
-def get_generic_type(base_type, generic_base_type):  # type: (t.Type, t.Type[TType]) -> t.Optional[t.Type[TType]]
+def get_generic_type(base_type, generic_base_type):  # type: (t.Type, t.Type[TValue]) -> t.Optional[t.Type[TValue]]
     """Return the generic type arg derived from the generic_base_type type that is associated with the base_type type, if any, otherwise return None."""
     # noinspection PyUnresolvedReferences
     type_arg = t.get_args(base_type.__orig_bases__[0])[0]
     return None if isinstance(type_arg, generic_base_type) else type_arg
 
 
-def get_type_associations(base_type, generic_base_type):  # type: (t.Type[TType], t.Type[TValue]) -> t.List[t.Tuple[t.Type[TValue], t.Type[TType]]]
+def get_type_associations(base_type, generic_base_type):  # type: (t.Type[TBase], t.Type[TValue]) -> t.List[t.Tuple[t.Type[TValue], t.Type[TBase]]]
     """Create and return a list of tuples associating generic_base_type derived types with a corresponding base_type derived type."""
     return [item for item in [(get_generic_type(sc_type, generic_base_type), sc_type) for sc_type in get_subclasses(base_type)] if item[1]]
 
 
-def get_type_map(base_type, generic_base_type):  # type: (t.Type[TType], t.Type[TValue]) -> t.Dict[t.Type[TValue], t.Type[TType]]
+def get_type_map(base_type, generic_base_type):  # type: (t.Type[TBase], t.Type[TValue]) -> t.Dict[t.Type[TValue], t.Type[TBase]]
     """Create and return a mapping of generic_base_type derived types to base_type derived types."""
     return {item[0]: item[1] for item in get_type_associations(base_type, generic_base_type)}
 

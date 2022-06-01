@@ -1,3 +1,4 @@
+"""Enforce proper usage of __future__ imports."""
 from __future__ import annotations
 
 import ast
@@ -5,6 +6,7 @@ import sys
 
 
 def main():
+    """Main entry point."""
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
         with open(path, 'rb') as path_fd:
             lines = path_fd.read().splitlines()
@@ -21,7 +23,7 @@ def main():
                 break
 
         if missing:
-            with open(path) as file:
+            with open(path, encoding='utf-8') as file:
                 contents = file.read()
 
             # noinspection PyBroadException
