@@ -38,7 +38,7 @@ Find the task that best describes what you want to do:
       * an :ref:`Amazon module <AWS_module_development>`.
       * an :ref:`OpenStack module <OpenStack_module_development>`.
       * an :ref:`oVirt/RHV module <oVirt_module_development>`.
-      * a :ref:`VMware module <VMware_module_development>`.
+      * a :ref:`VMware module <ansible_collections.community.vmware.docsite.vmware_ansible_devguide>`.
    * I want to :ref:`write a series of related modules <developing_modules_in_groups>` that integrate Ansible with a new product (for example, a database, cloud provider, network platform, and so on).
 
 * I want to refine my code:
