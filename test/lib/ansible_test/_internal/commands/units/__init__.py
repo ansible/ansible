@@ -234,6 +234,11 @@ def command_units(args):  # type: (UnitsConfig) -> None
     if args.requirements_mode == 'only':
         sys.exit()
 
+    if data_context().content.is_ansible:
+        config_name = 'ansible-core.ini'
+    else:
+        config_name = 'default.ini'
+
     for test_context, python, paths, env in test_sets:
         cmd = [
             'pytest',
@@ -243,7 +248,7 @@ def command_units(args):  # type: (UnitsConfig) -> None
             '--color',
             'yes' if args.color else 'no',
             '-p', 'no:cacheprovider',
-            '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest.ini'),
+            '-c', os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytest', 'config', config_name),
             '--junit-xml', os.path.join(ResultType.JUNIT.path, 'python%s-%s-units.xml' % (python.version, test_context)),
             '--strict-markers',  # added in pytest 4.5.0
             '--rootdir', data_context().content.root,
