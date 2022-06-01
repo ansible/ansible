@@ -167,7 +167,7 @@ class InventoryManager(object):
             self.parse_sources(cache=cache)
 
         self._cached_dynamic_hosts = []
-        self._cached_dynamic_groups = []
+        self._cached_dynamic_grouping = []
 
     @property
     def localhost(self):

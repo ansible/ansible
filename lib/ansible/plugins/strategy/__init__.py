@@ -697,14 +697,14 @@ class StrategyBase:
                     if 'add_host' in result_item:
                         # this task added a new host (add_host module)
                         new_host_info = result_item.get('add_host', dict())
-                        self._add_host(new_host_info, result_item)
+                        self._inventory.add_dynamic_host(new_host_info, result_item)
                         # ensure host is available for subsequent plays
                         if result_item.get('changed') and new_host_info['host_name'] not in self._hosts_cache_all:
                             self._hosts_cache_all.append(new_host_info['host_name'])
 
                     elif 'add_group' in result_item:
                         # this task added a new group (group_by module)
-                        self._add_group(original_host, result_item)
+                        self._inventory.add_dynamic_group(original_host, result_item)
 
                     if 'add_host' in result_item or 'add_group' in result_item:
                         item_vars = _get_item_vars(result_item, original_task)

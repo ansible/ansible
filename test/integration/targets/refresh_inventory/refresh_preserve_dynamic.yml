@@ -1,0 +1,56 @@
+- hosts: all
+  gather_facts: false
+  tasks:
+      - name: check initial state
+        assert:
+          that:
+            - "'one' in ansible_play_hosts"
+            - "'two' in ansible_play_hosts"
+            - "'three' in ansible_play_hosts"
+            - "'four' not in ansible_play_hosts"
+        run_once: true
+
+      - name: add a host
+        add_host:
+          name: yolo
+
+- hosts: all
+  gather_facts: false
+  tasks:
+    - block:
+      - name: check added host state
+        assert:
+          that:
+            - "'yolo' in ansible_play_hosts"
+
+      - name: change symlink
+        file: src=./inventory_new.yml dest=./inventory.yml state=link force=yes follow=false
+        delegate_to: localhost
+
+      - name: refresh the inventory to new source
+        meta: refresh_inventory
+
+      run_once: true
+      always:
+        - name: revert symlink, invenotry was already reread or failed
+          file: src=./inventory_old.yml dest=./inventory.yml state=link force=yes follow=false
+          delegate_to: localhost
+
+- hosts: all
+  gather_facts: false
+  tasks:
+      - name: check refreshed state
+        assert:
+          that:
+            - "'one' not in ansible_play_hosts"
+            - "'two' in ansible_play_hosts"
+            - "'three' in ansible_play_hosts"
+            - "'four' in ansible_play_hosts"
+        run_once: true
+
+      - name: check added host state
+        assert:
+          that:
+            - "'yolo' in ansible_play_hosts"
+        run_once: true
+
