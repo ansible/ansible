@@ -13,15 +13,24 @@
       - name: add a host
         add_host:
           name: yolo
+          parity: null
+
+      - name: group em
+        group_by:
+          key: parity
 
 - hosts: all
   gather_facts: false
   tasks:
-    - block:
+    - name: test and ensure we restore symlink
+      run_once: true
+      block:
       - name: check added host state
         assert:
           that:
             - "'yolo' in ansible_play_hosts"
+            - "'two' in groups['even']"
+            - "'three' in groups['odd']"
 
       - name: change symlink
         file: src=./inventory_new.yml dest=./inventory.yml state=link force=yes follow=false
@@ -30,7 +39,6 @@
       - name: refresh the inventory to new source
         meta: refresh_inventory
 
-      run_once: true
       always:
         - name: revert symlink, invenotry was already reread or failed
           file: src=./inventory_old.yml dest=./inventory.yml state=link force=yes follow=false
@@ -52,5 +60,6 @@
         assert:
           that:
             - "'yolo' in ansible_play_hosts"
+            - "'two' in groups['even']"
+            - "'three' in groups['odd']"
         run_once: true
-
