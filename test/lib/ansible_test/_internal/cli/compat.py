@@ -201,6 +201,9 @@ def convert_legacy_args(
         '--controller',
         '--target',
         '--target-python',
+        '--target-posix',
+        '--target-windows',
+        '--target-network',
     ]
 
     used_old_options = old_options.get_options_used()
