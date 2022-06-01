@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Prevent ``--target-`` prefixed options for the ``shell`` command from being combined with legacy environment options.
