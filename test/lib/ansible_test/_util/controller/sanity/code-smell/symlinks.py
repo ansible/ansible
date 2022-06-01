@@ -1,3 +1,4 @@
+"""Check for unwanted symbolic links."""
 from __future__ import annotations
 
 import os
@@ -5,6 +6,7 @@ import sys
 
 
 def main():
+    """Main entry point."""
     root_dir = os.getcwd() + os.path.sep
 
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
