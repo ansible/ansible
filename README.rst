@@ -1,4 +1,4 @@
-|PyPI version| |Docs badge| |Chat badge| |Build Status| |Code Of Conduct| |Mailing Lists| |License| |CII Best Practices|
+|PyPI version| |Docs badge| |Chat badge| |Build Status| |Code Of Conduct| |Mailing Lists| |License| |CII Best Practices| |Contribute with Gitpod|
 
 *******
 Ansible
@@ -113,3 +113,6 @@ See `COPYING <COPYING>`_ to see the full text.
 .. |CII Best Practices| image:: https://bestpractices.coreinfrastructure.org/projects/2372/badge
    :target: https://bestpractices.coreinfrastructure.org/projects/2372
    :alt: Ansible CII Best Practices certification
+.. |Contribute with Gitpod| image:: https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod
+   :target: https://gitpod.io/#https://github.com/ansible/ansible
+   :alt: Contribute with Gitpod
