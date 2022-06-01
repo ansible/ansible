@@ -7,6 +7,21 @@
 # the necessary changes to allow Ansible to connect, authenticate and
 # execute PowerShell commands.
 #
+# IMPORTANT: This script uses self-signed certificates and authentication mechanisms
+# that are intended for development environments and evaluation purposes only.
+# Production environments and deployments that are exposed on the network should
+# use CA-signed certificates and secure authentication mechanisms such as Kerberos.
+#
+# To run this script in Powershell:
+#
+# [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+# $url = "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"
+# $file = "$env:temp\ConfigureRemotingForAnsible.ps1"
+#
+# (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
+#
+# powershell.exe -ExecutionPolicy ByPass -File $file
+#
 # All events are logged to the Windows EventLog, useful for unattended runs.
 #
 # Use option -Verbose in order to see the verbose output messages.
