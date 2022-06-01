@@ -221,7 +221,7 @@ class PylintTest(SanitySingleVersion):
         if parser.has_section('ansible-test'):
             config = dict(parser.items('ansible-test'))
         else:
-            config = dict()
+            config = {}
 
         disable_plugins = set(i.strip() for i in config.get('disable-plugins', '').split(',') if i)
         load_plugins = set(plugin_names + ['pylint.extensions.mccabe']) - disable_plugins

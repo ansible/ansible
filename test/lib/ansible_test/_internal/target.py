@@ -40,7 +40,7 @@ def find_target_completion(target_func, prefix, short):  # type: (t.Callable[[],
         matches = list(walk_completion_targets(targets, prefix, short))
         return matches
     except Exception as ex:  # pylint: disable=locally-disabled, broad-except
-        return [u'%s' % ex]
+        return ['%s' % ex]
 
 
 def walk_completion_targets(targets, prefix, short=False):  # type: (t.Iterable[CompletionTarget], str, bool) -> t.Tuple[str, ...]

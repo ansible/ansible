@@ -1,3 +1,4 @@
+"""Disallow use of assert."""
 from __future__ import annotations
 
 import re
@@ -7,8 +8,9 @@ ASSERT_RE = re.compile(r'^\s*assert[^a-z0-9_:]')
 
 
 def main():
+    """Main entry point."""
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
-        with open(path, 'r') as file:
+        with open(path, 'r', encoding='utf-8') as file:
             for i, line in enumerate(file.readlines()):
                 matches = ASSERT_RE.findall(line)
 

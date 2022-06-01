@@ -96,9 +96,9 @@ class PslintTest(SanityVersionNeutral):
         cwd = data_context().content.root + '/'
 
         # replace unicode smart quotes and ellipsis with ascii versions
-        stdout = re.sub(u'[\u2018\u2019]', "'", stdout)
-        stdout = re.sub(u'[\u201c\u201d]', '"', stdout)
-        stdout = re.sub(u'[\u2026]', '...', stdout)
+        stdout = re.sub('[\u2018\u2019]', "'", stdout)
+        stdout = re.sub('[\u201c\u201d]', '"', stdout)
+        stdout = re.sub('[\u2026]', '...', stdout)
 
         messages = json.loads(stdout)
 

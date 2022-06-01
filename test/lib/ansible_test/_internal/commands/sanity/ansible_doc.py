@@ -102,7 +102,7 @@ class AnsibleDocTest(SanitySingleVersion):
                     status = ex.status
 
                 if status:
-                    summary = u'%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr)
+                    summary = '%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr)
                     return SanityFailure(self.name, summary=summary)
 
                 if stdout:
@@ -113,7 +113,7 @@ class AnsibleDocTest(SanitySingleVersion):
                     stderr = re.sub(r'\[WARNING]: [^ ]+ [^ ]+ has been removed\n', '', stderr).strip()
 
                 if stderr:
-                    summary = u'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
+                    summary = 'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
                     return SanityFailure(self.name, summary=summary)
 
         if args.explain:

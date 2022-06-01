@@ -1,6 +1,8 @@
-# a script to check for illegal filenames on various Operating Systems. The
-# main rules are derived from restrictions on Windows
-# https://msdn.microsoft.com/en-us/library/aa365247#naming_conventions
+"""
+Check for illegal filenames on various operating systems.
+The main rules are derived from restrictions on Windows:
+https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#naming-conventions
+"""
 from __future__ import annotations
 
 import os
@@ -53,6 +55,7 @@ ILLEGAL_END_CHARS = [
 
 
 def check_path(path, is_dir=False):
+    """Check the specified path for unwanted characters and names."""
     type_name = 'directory' if is_dir else 'file'
     file_name = os.path.basename(path.rstrip(os.path.sep))
     name = os.path.splitext(file_name)[0]
@@ -71,6 +74,7 @@ def check_path(path, is_dir=False):
 
 
 def main():
+    """Main entry point."""
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
         check_path(path, is_dir=path.endswith(os.path.sep))
 

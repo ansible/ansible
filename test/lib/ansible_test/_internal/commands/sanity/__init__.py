@@ -1010,7 +1010,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
                 return SanityFailure(self.name, messages=messages)
 
         if stderr or status:
-            summary = u'%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
+            summary = '%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr, stdout=stdout)
             return SanityFailure(self.name, summary=summary)
 
         messages = settings.process_errors([], paths)
