@@ -89,10 +89,10 @@ def main(cli_args=None):  # type: (t.Optional[t.List[str]]) -> None
         display.review_warnings()
         config.success = True
     except ApplicationWarning as ex:
-        display.warning(u'%s' % ex)
+        display.warning('%s' % ex)
         sys.exit(0)
     except ApplicationError as ex:
-        display.fatal(u'%s' % ex)
+        display.fatal('%s' % ex)
         sys.exit(1)
     except KeyboardInterrupt:
         sys.exit(2)

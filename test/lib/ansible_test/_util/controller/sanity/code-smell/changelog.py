@@ -1,3 +1,4 @@
+"""Check changelog fragment naming, syntax, etc."""
 from __future__ import annotations
 
 import os
@@ -6,6 +7,7 @@ import subprocess
 
 
 def main():
+    """Main entry point."""
     paths = sys.argv[1:] or sys.stdin.read().splitlines()
 
     allowed_extensions = ('.yml', '.yaml')

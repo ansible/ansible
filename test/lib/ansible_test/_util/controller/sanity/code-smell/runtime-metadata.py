@@ -123,7 +123,7 @@ def get_collection_version():
 def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
     """Validate explicit runtime metadata file"""
     try:
-        with open(path, 'r') as f_path:
+        with open(path, 'r', encoding='utf-8') as f_path:
             routing = yaml.safe_load(f_path)
     except yaml.error.MarkedYAMLError as ex:
         print('%s:%d:%d: YAML load failed: %s' % (path, ex.context_mark.line +
@@ -251,7 +251,7 @@ def validate_metadata_file(path, is_ansible, check_deprecation_dates=False):
 
 
 def main():
-    """Validate runtime metadata"""
+    """Main entry point."""
     paths = sys.argv[1:] or sys.stdin.read().splitlines()
 
     collection_legacy_file = 'meta/routing.yml'
