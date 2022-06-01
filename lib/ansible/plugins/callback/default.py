@@ -130,6 +130,9 @@ class CallbackModule(CallbackBase):
         msg = "fatal: [%s]: UNREACHABLE! => %s" % (host_label, self._dump_results(result._result))
         self._display.display(msg, color=C.COLOR_UNREACHABLE, stderr=self.get_option('display_failed_stderr'))
 
+        if result._task.ignore_unreachable:
+            self._display.display("...ignoring", color=C.COLOR_SKIP)
+
     def v2_playbook_on_no_hosts_matched(self):
         self._display.display("skipping: no hosts matched", color=C.COLOR_SKIP)
 

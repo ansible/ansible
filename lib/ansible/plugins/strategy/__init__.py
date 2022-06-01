@@ -631,10 +631,10 @@ class StrategyBase:
                 if not ignore_unreachable:
                     self._tqm._unreachable_hosts[original_host.name] = True
                     iterator._play._removed_hosts.append(original_host.name)
+                    self._tqm._stats.increment('dark', original_host.name)
                 else:
-                    self._tqm._stats.increment('skipped', original_host.name)
-                    task_result._result['skip_reason'] = 'Host %s is unreachable' % original_host.name
-                self._tqm._stats.increment('dark', original_host.name)
+                    self._tqm._stats.increment('ok', original_host.name)
+                    self._tqm._stats.increment('ignored', original_host.name)
                 self._tqm.send_callback('v2_runner_on_unreachable', task_result)
             elif task_result.is_skipped():
                 self._tqm._stats.increment('skipped', original_host.name)
