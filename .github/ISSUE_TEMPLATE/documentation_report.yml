@@ -129,14 +129,16 @@ body:
   attributes:
     label: Configuration
     description: >-
-      Paste verbatim output from `ansible-config dump --only-changed -t all`
-      below, under the prompt line.
+      Paste verbatim output from `ansible-config dump --only-changed -t all` below, under the prompt line.
+      (if using a version older than ansible-core 2.12 you should omit the '-t all')
       Please don't wrap it with tripple backticks — your
       whole input will be turned into a code snippet automatically.
     render: console
     value: |
+      # if using a version older than ansible-core 2.12 you should omit the '-t all'
       $ ansible-config dump --only-changed -t all
     placeholder: |
+      # if using a version older than ansible-core 2.12 you should omit the '-t all'
       $ ansible-config dump --only-changed -t all
       DEFAULT_GATHERING(~/src/github/ansible/ansible/ansible.cfg) = smart
       DEFAULT_HOST_LIST(~/src/github/ansible/ansible/ansible.cfg) = ['~/src/github/ansible/ansible/hosts']
