@@ -10,19 +10,8 @@ User Guide
 
     Red Hat is committed to replacing problematic language in our code, documentation, and web properties. We are beginning with these four terms: master, slave, blacklist, and whitelist. We ask that you open an issue or pull request if you come upon a term that we have missed. For more details, see `our CTO Chris Wright's message <https://www.redhat.com/en/blog/making-open-source-more-inclusive-eradicating-problematic-language>`_.
 
-Welcome to the Ansible User Guide! This guide covers how to work with Ansible, including using the command line, working with inventory, interacting with data, writing tasks, plays, and playbooks; executing playbooks, and reference materials. This page outlines the most common situations and questions that bring readers to this section. If you prefer a traditional table of contents, you can find one at the bottom of the page.
-
-Getting started
-===============
-
-* I'd like an overview of how Ansible works. Where can I find:
-
-  * a :ref:`quick video overview <quickstart_guide>`
-  * a :ref:`text introduction <intro_getting_started>`
-
-* I'm ready to learn about Ansible. What :ref:`basic_concepts` do I need to learn?
-* I want to use Ansible without writing a playbook. How do I use :ref:`ad hoc commands <intro_adhoc>`?
-* I'm running an Ansible command and forgot which flags to use. Do you have a :ref:`cheatsheet`?
+Welcome to the Ansible User Guide! This guide covers how to work with Ansible, including using the command line, working with inventory, interacting with data, writing tasks, plays, and playbooks; executing playbooks, and reference materials.
+Quickly find answers in the following sections or expand the table of contents below to scroll through all resources.
 
 Writing tasks, plays, and playbooks
 ===================================
@@ -83,21 +72,19 @@ Advanced features and reference
 * Rejecting :ref:`specific modules <plugin_filtering_config>`
 * Module :ref:`maintenance <modules_support>`
 
-Traditional Table of Contents
-=============================
+Table of contents
+=================
 
-If you prefer to read the entire User Guide, here's a list of the pages in order:
+Here is the complete list of resources in the Ansible User Guide:
 
 .. toctree::
    :maxdepth: 2
 
-   quickstart
-   cheatsheet
    basic_concepts
-   intro_getting_started
    intro_adhoc
-   playbooks
+   cheatsheet
    playbooks_intro
+   playbooks
    playbooks_best_practices
    become
    playbooks_loops
