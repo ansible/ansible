@@ -343,14 +343,12 @@ class InventoryManager(object):
     def refresh_inventory(self):
         ''' recalculate inventory '''
 
-        print('clear')
         self.clear_caches()
         self._inventory = InventoryData()
         self.parse_sources(cache=False)
         for host in self._cached_dynamic_hosts:
             self.add_dynamic_host(host, {'refresh': True})
         for host, result in self._cached_dynamic_grouping:
-            print('host', host, 'res', result)
             result['refresh'] = True
             self.add_dynamic_group(host, result)
 
@@ -706,7 +704,6 @@ class InventoryManager(object):
         '''
 
         changed = False
-        print(host, result_item)
 
         if not result_item.get('refresh'):
             self._cached_dynamic_grouping.append((host, result_item))
