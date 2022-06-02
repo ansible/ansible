@@ -1,0 +1,8 @@
+webservers:
+  hosts:
+    webserver01:
+      ansible_host: 192.0.2.140
+      http_port: 80
+    webserver02:
+      ansible_host: 192.0.2.150
+      http_port: 443

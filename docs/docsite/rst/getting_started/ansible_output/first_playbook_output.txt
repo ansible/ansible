@@ -1,0 +1,27 @@
+PLAY [My first play] **********************************************************************
+
+TASK [Gathering Facts] ********************************************************************
+ok: [vm01]
+ok: [vm02]
+ok: [vm03]
+
+TASK [Ping my hosts] **********************************************************************
+ok: [vm01]
+ok: [vm02]
+ok: [vm03]
+
+TASK [Print message] **********************************************************************
+ok: [vm01] => {
+    "msg": "Hello world"
+}
+ok: [vm02] => {
+    "msg": "Hello world"
+}
+ok: [vm03] => {
+    "msg": "Hello world"
+}
+
+PLAY RECAP ********************************************************************************
+vm01: ok=3    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+vm02: ok=3    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+vm03: ok=3    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
