@@ -599,7 +599,7 @@
       - dict2items_fail is failed
       - '"dict2items requires a dictionary" in dict2items_fail.msg'
 
-- name: Verify items2dict throws on non-Mapping
+- name: Verify items2dict throws on non-list
   set_fact:
     foo: '{{True|items2dict}}'
   ignore_errors: yes
@@ -611,6 +611,50 @@
       - '[{"key": "foo", "value": "bar"}, {"key": "banana", "value": "fruit"}]|items2dict == {"foo": "bar", "banana": "fruit"}'
       - items2dict_fail is failed
       - '"items2dict requires a list" in items2dict_fail.msg'
+
+- name: Verify items2dict throws on list of non-Mapping
+  set_fact:
+    foo: '{{[True]|items2dict}}'
+  ignore_errors: yes
+  register: items2dict_fail
+
+- name: Verify items2dict
+  assert:
+    that:
+      - items2dict_fail is failed
+      - '"items2dict requires a list of dictionaries" in items2dict_fail.msg'
+
+- name: Verify items2dict throws on missing key
+  set_fact:
+    foo: '{{ list_of_dicts | items2dict}}'
+  vars:
+    list_of_dicts: [{"key": "foo", "value": "bar"}, {"notkey": "banana", "value": "fruit"}]
+  ignore_errors: yes
+  register: items2dict_fail
+
+- name: Verify items2dict
+  assert:
+    that:
+      - items2dict_fail is failed
+      - error in items2dict_fail.msg
+  vars:
+    error: "items2dict requires each dictionary in the list to contain the keys 'key' and 'value'"
+
+- name: Verify items2dict throws on missing value
+  set_fact:
+    foo: '{{ list_of_dicts | items2dict}}'
+  vars:
+    list_of_dicts: [{"key": "foo", "value": "bar"}, {"key": "banana", "notvalue": "fruit"}]
+  ignore_errors: yes
+  register: items2dict_fail
+
+- name: Verify items2dict
+  assert:
+    that:
+      - items2dict_fail is failed
+      - error in items2dict_fail.msg
+  vars:
+    error: "items2dict requires each dictionary in the list to contain the keys 'key' and 'value'"
 
 - name: Verify path_join throws on non-string and non-sequence
   set_fact:

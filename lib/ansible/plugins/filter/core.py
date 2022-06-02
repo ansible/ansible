@@ -543,7 +543,15 @@ def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='
     if not is_sequence(mylist):
         raise AnsibleFilterTypeError("items2dict requires a list, got %s instead." % type(mylist))
 
-    return dict((item[key_name], item[value_name]) for item in mylist)
+    try:
+        return dict((item[key_name], item[value_name]) for item in mylist)
+    except KeyError:
+        raise AnsibleFilterTypeError(
+            "items2dict requires each dictionary in the list to contain the keys '%s' and '%s', got %s instead."
+            % (key_name, value_name, mylist)
+        )
+    except TypeError:
+        raise AnsibleFilterTypeError("items2dict requires a list of dictionaries, got %s instead." % mylist)
 
 
 def path_join(paths):
