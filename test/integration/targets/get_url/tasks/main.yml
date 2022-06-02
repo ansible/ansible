@@ -376,6 +376,13 @@
       30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892 *not_target1.txt
       d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b *not_target2.txt
 
+# completing 27617 with bug 54390
+- name: create sha256 checksum only with no filename inside
+  copy:
+    dest: '{{ files_dir }}/sha256sum_checksum_only.txt'
+    content: |
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006
+
 - copy:
     src: "testserver.py"
     dest: "{{ remote_tmp_dir }}/testserver.py"
@@ -509,11 +516,22 @@
     path: "{{ remote_tmp_dir }}/71420sha256_with_dot.txt"
   register: stat_result_sha256_with_file_scheme_71420
 
+- name: download src with sha256 checksum url with no filename
+  get_url:
+    url: 'http://localhost:{{ http_port }}/27617.txt'
+    dest: '{{ remote_tmp_dir }}/27617sha256_with_no_filename.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum_checksum_only.txt'
+  register: result_sha256_checksum_only
+
+- stat:
+    path: "{{ remote_tmp_dir }}/27617.txt"
+  register: stat_result_sha256_checksum_only
+
 - name: Assert that the file was downloaded
   assert:
     that:
-      - result_sha1_check_mode is changed
       - result_sha1 is changed
+      - result_sha1_check_mode is changed
       - result_sha256 is changed
       - result_sha256_with_dot is changed
       - result_sha256_with_asterisk is changed
@@ -527,12 +545,14 @@
       - result_sha256_71420 is changed
       - result_sha256_with_dot_71420 is changed
       - result_sha256_with_asterisk_71420 is changed
+      - result_sha256_checksum_only is changed
       - result_sha256_with_file_scheme_71420 is changed
       - "stat_result_sha1_71420.stat.exists == true"
       - "stat_result_sha256_71420.stat.exists == true"
       - "stat_result_sha256_with_dot_71420.stat.exists == true"
       - "stat_result_sha256_with_asterisk_71420.stat.exists == true"
       - "stat_result_sha256_with_file_scheme_71420.stat.exists == true"
+      - "stat_result_sha256_checksum_only.stat.exists == true"
 
 #https://github.com/ansible/ansible/issues/16191
 - name: Test url split with no filename
