@@ -12,7 +12,7 @@
         run_once: true
 
       - name: change symlink
-        file: src=./inventory_new.yml dest=./inventory.yml state=link force=yes follow=false
+        file: src=./inventory_new.yml dest=./inventory_refresh.yml state=link force=yes follow=false
         delegate_to: localhost
         run_once: true
 
@@ -21,7 +21,7 @@
 
       always:
         - name: revert symlink, invenotry was already reread or failed
-          file: src=./inventory_old.yml dest=./inventory.yml state=link force=yes follow=false
+          file: src=./inventory_old.yml dest=./inventory_refresh.yml state=link force=yes follow=false
           delegate_to: localhost
           run_once: true
 
