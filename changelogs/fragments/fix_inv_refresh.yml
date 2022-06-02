@@ -1,0 +1,2 @@
+bugfixes:
+  - meta: refresh_invenotry does not clobber entries added by add_host/group_by anymore.

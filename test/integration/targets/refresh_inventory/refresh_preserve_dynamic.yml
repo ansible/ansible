@@ -17,7 +17,7 @@
 
       - name: group em
         group_by:
-          key: parity
+          key: '{{parity}}'
 
 - hosts: all
   gather_facts: false
@@ -29,6 +29,8 @@
         assert:
           that:
             - "'yolo' in ansible_play_hosts"
+            - "'even' in groups"
+            - "'odd' in groups"
             - "'two' in groups['even']"
             - "'three' in groups['odd']"
 
@@ -60,6 +62,8 @@
         assert:
           that:
             - "'yolo' in ansible_play_hosts"
+            - "'even' in groups"
+            - "'odd' in groups"
             - "'two' in groups['even']"
             - "'three' in groups['odd']"
         run_once: true
