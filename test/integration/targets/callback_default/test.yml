@@ -78,6 +78,23 @@
       diff: true
       changed_when: false
 
+    - debug:
+        msg: "{{ item }}"
+      loop: []
+
+    - debug:
+        msg: "{{ item }}"
+      loop: "{{ empty_list }}"
+      vars:
+        empty_list: []
+
+    - debug:
+        msg: "{{ item }}"
+      when: False
+      loop:
+        - 1
+        - 2
+
   handlers:
     - name: Test handler 1
       command: echo foo

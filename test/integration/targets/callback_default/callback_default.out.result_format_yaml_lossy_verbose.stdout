@@ -188,6 +188,24 @@ ok: [testhost] =>
     msg: 1 replacements made
     rc: 0
 
+TASK [debug] *******************************************************************
+skipping: [testhost] => 
+    skipped_reason: No items in the list
+
+TASK [debug] *******************************************************************
+skipping: [testhost] => 
+    skipped_reason: No items in the list
+
+TASK [debug] *******************************************************************
+skipping: [testhost] => (item=1)  => 
+    ansible_loop_var: item
+    item: 1
+skipping: [testhost] => (item=2)  => 
+    ansible_loop_var: item
+    item: 2
+skipping: [testhost] => 
+    msg: All items skipped
+
 RUNNING HANDLER [Test handler 1] ***********************************************
 changed: [testhost] => 
     changed: true
@@ -278,5 +296,5 @@ ok: [testhost] =>
     item: 1
 
 PLAY RECAP *********************************************************************
-testhost                   : ok=19   changed=11   unreachable=0    failed=0    skipped=1    rescued=1    ignored=2   
+testhost                   : ok=19   changed=11   unreachable=0    failed=0    skipped=4    rescued=1    ignored=2   
 

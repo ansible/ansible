@@ -114,13 +114,13 @@ class CallbackModule(CallbackBase):
             if self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
 
-            if result._task.loop and 'results' in result._result:
+            if result._task.loop is not None and 'results' in result._result:
                 self._process_items(result)
-            else:
-                msg = "skipping: [%s]" % result._host.get_name()
-                if self._run_is_verbose(result):
-                    msg += " => %s" % self._dump_results(result._result)
-                self._display.display(msg, color=C.COLOR_SKIP)
+
+            msg = "skipping: [%s]" % result._host.get_name()
+            if self._run_is_verbose(result):
+                msg += " => %s" % self._dump_results(result._result)
+            self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_runner_on_unreachable(self, result):
         if self._last_task_banner != result._task._uuid:
