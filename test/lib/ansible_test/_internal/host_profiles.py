@@ -40,6 +40,7 @@ from .host_configs import (
 from .core_ci import (
     AnsibleCoreCI,
     SshKey,
+    VmResource,
 )
 
 from .util import (
@@ -50,6 +51,7 @@ from .util import (
     get_type_map,
     sanitize_host_name,
     sorted_versions,
+    InternalError,
 )
 
 from .util_common import (
@@ -148,7 +150,7 @@ class Inventory:
         inventory_text = inventory_text.strip()
 
         if not args.explain:
-            write_text_file(path, inventory_text)
+            write_text_file(path, inventory_text + '\n')
 
         display.info(f'>>> Inventory\n{inventory_text}', verbosity=3)
 
@@ -295,12 +297,18 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
 
     def create_core_ci(self, load):  # type: (bool) -> AnsibleCoreCI
         """Create and return an AnsibleCoreCI instance."""
+        if not self.config.arch:
+            raise InternalError(f'No arch specified for config: {self.config}')
+
         return AnsibleCoreCI(
             args=self.args,
-            platform=self.config.platform,
-            version=self.config.version,
-            provider=self.config.provider,
-            suffix='controller' if self.controller else 'target',
+            resource=VmResource(
+                platform=self.config.platform,
+                version=self.config.version,
+                architecture=self.config.arch,
+                provider=self.config.provider,
+                tag='controller' if self.controller else 'target',
+            ),
             load=load,
         )
 
@@ -362,7 +370,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         setup_sh = bootstrapper.get_script()
         shell = setup_sh.splitlines()[0][2:]
 
-        docker_exec(self.args, self.container_name, [shell], data=setup_sh)
+        docker_exec(self.args, self.container_name, [shell], data=setup_sh, capture=False)
 
     def deprovision(self):  # type: () -> None
         """Deprovision the host after delegation has completed."""
@@ -484,8 +492,9 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
 
             for dummy in range(1, 90):
                 try:
-                    intercept_python(self.args, self.args.controller_python, cmd, env)
-                except SubprocessError:
+                    intercept_python(self.args, self.args.controller_python, cmd, env, capture=True)
+                except SubprocessError as ex:
+                    display.warning(str(ex))
                     time.sleep(10)
                 else:
                     return
@@ -547,7 +556,7 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
         shell = setup_sh.splitlines()[0][2:]
 
         ssh = self.get_origin_controller_connection()
-        ssh.run([shell], data=setup_sh)
+        ssh.run([shell], data=setup_sh, capture=False)
 
     def get_ssh_connection(self):  # type: () -> SshConnection
         """Return an SSH connection for accessing the host."""
@@ -569,6 +578,8 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
         elif self.config.platform == 'macos':
             become = Sudo()
         elif self.config.platform == 'rhel':
+            become = Sudo()
+        elif self.config.platform == 'ubuntu':
             become = Sudo()
         else:
             raise NotImplementedError(f'Become support has not been implemented for platform "{self.config.platform}" and user "{settings.user}" is not root.')
@@ -717,8 +728,9 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
 
             for dummy in range(1, 120):
                 try:
-                    intercept_python(self.args, self.args.controller_python, cmd, env)
-                except SubprocessError:
+                    intercept_python(self.args, self.args.controller_python, cmd, env, capture=True)
+                except SubprocessError as ex:
+                    display.warning(str(ex))
                     time.sleep(10)
                 else:
                     return

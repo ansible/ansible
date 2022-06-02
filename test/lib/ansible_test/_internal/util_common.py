@@ -126,6 +126,8 @@ class CommonConfig:
     """Configuration common to all commands."""
     def __init__(self, args, command):  # type: (t.Any, str) -> None
         self.command = command
+        self.interactive = False
+        self.check_layout = True
         self.success = None  # type: t.Optional[bool]
 
         self.color = args.color  # type: bool
@@ -135,7 +137,7 @@ class CommonConfig:
         self.truncate = args.truncate  # type: int
         self.redact = args.redact  # type: bool
 
-        self.info_stderr = False  # type: bool
+        self.display_stderr = False  # type: bool
 
         self.session_name = generate_name()
 
@@ -369,7 +371,7 @@ def intercept_python(
         python,  # type: PythonConfig
         cmd,  # type: t.List[str]
         env,  # type: t.Dict[str, str]
-        capture=False,  # type: bool
+        capture,  # type: bool
         data=None,  # type: t.Optional[str]
         cwd=None,  # type: t.Optional[str]
         always=False,  # type: bool
@@ -399,21 +401,23 @@ def intercept_python(
 def run_command(
         args,  # type: CommonConfig
         cmd,  # type: t.Iterable[str]
-        capture=False,  # type: bool
+        capture,  # type: bool
         env=None,  # type: t.Optional[t.Dict[str, str]]
         data=None,  # type: t.Optional[str]
         cwd=None,  # type: t.Optional[str]
         always=False,  # type: bool
         stdin=None,  # type: t.Optional[t.IO[bytes]]
         stdout=None,  # type: t.Optional[t.IO[bytes]]
+        interactive=False,  # type: bool
+        force_stdout=False,  # type: bool
         cmd_verbosity=1,  # type: int
         str_errors='strict',  # type: str
         error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Run the specified command and return stdout and stderr as a tuple."""
     explain = args.explain and not always
-    return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout,
-                       cmd_verbosity=cmd_verbosity, str_errors=str_errors, error_callback=error_callback)
+    return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout, interactive=interactive,
+                       force_stdout=force_stdout, cmd_verbosity=cmd_verbosity, str_errors=str_errors, error_callback=error_callback)
 
 
 def yamlcheck(python):

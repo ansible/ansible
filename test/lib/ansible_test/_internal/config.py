@@ -48,29 +48,6 @@ class TerminateMode(enum.Enum):
         return self.name.lower()
 
 
-class ParsedRemote:
-    """A parsed version of a "remote" string."""
-    def __init__(self, arch, platform, version):  # type: (t.Optional[str], str, str) -> None
-        self.arch = arch
-        self.platform = platform
-        self.version = version
-
-    @staticmethod
-    def parse(value):  # type: (str) -> t.Optional['ParsedRemote']
-        """Return a ParsedRemote from the given value or None if the syntax is invalid."""
-        parts = value.split('/')
-
-        if len(parts) == 2:
-            arch = None
-            platform, version = parts
-        elif len(parts) == 3:
-            arch, platform, version = parts
-        else:
-            return None
-
-        return ParsedRemote(arch, platform, version)
-
-
 class EnvironmentConfig(CommonConfig):
     """Configuration common to all commands which execute in an environment."""
     def __init__(self, args, command):  # type: (t.Any, str) -> None
@@ -237,7 +214,12 @@ class ShellConfig(EnvironmentConfig):
     def __init__(self, args):  # type: (t.Any) -> None
         super().__init__(args, 'shell')
 
+        self.cmd = args.cmd  # type: t.List[str]
         self.raw = args.raw  # type: bool
+        self.check_layout = self.delegate  # allow shell to be used without a valid layout as long as no delegation is required
+        self.interactive = True
+        self.export = args.export  # type: t.Optional[str]
+        self.display_stderr = True
 
 
 class SanityConfig(TestConfig):
@@ -253,7 +235,7 @@ class SanityConfig(TestConfig):
         self.keep_git = args.keep_git  # type: bool
         self.prime_venvs = args.prime_venvs  # type: bool
 
-        self.info_stderr = self.lint
+        self.display_stderr = self.lint or self.list_tests
 
         if self.keep_git:
             def git_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
@@ -292,7 +274,7 @@ class IntegrationConfig(TestConfig):
 
         if self.list_targets:
             self.explain = True
-            self.info_stderr = True
+            self.display_stderr = True
 
     def get_ansible_config(self):  # type: () -> str
         """Return the path to the Ansible config for the given config."""
