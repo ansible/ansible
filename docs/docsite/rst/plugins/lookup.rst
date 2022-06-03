@@ -39,7 +39,7 @@ You can use lookup plugins anywhere you can use templating in Ansible: in a play
   vars:
     file_contents: "{{ lookup('file', 'path/to/file.txt') }}"
 
-Lookups are an integral part of loops. Wherever you see ``with_``, the part after the underscore is the name of a lookup. For this reason, most lookups output lists and take lists as input; for example, ``with_items`` uses the :ref:`items <items_lookup>` lookup::
+Lookups are an integral part of loops. Wherever you see ``with_``, the part after the underscore is the name of a lookup. For this reason, lookups are expected to output lists; for example, ``with_items`` uses the :ref:`items <items_lookup>` lookup::
 
   tasks:
     - name: count to 3
