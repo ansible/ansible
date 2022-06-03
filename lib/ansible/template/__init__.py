@@ -988,6 +988,14 @@ class Templar:
                 raise AnsibleError(to_native(msg), orig_exc=e)
             return [] if wantlist else None
 
+        if not is_sequence(ran):
+            display.deprecated(
+                f'The lookup plugin \'{name}\' was expected to return a list, got \'{type(ran)}\' instead. '
+                f'The lookup plugin \'{name}\' needs to be changed to return a list. '
+                'This will be an error in Ansible 2.18',
+                version='2.18'
+            )
+
         if ran and allow_unsafe is False:
             if self.cur_context:
                 self.cur_context.unsafe = True
@@ -1013,9 +1021,10 @@ class Templar:
                     ran = wrap_var(ran[0])
                 else:
                     ran = wrap_var(ran)
-
             except KeyError:
-                # Lookup Plugin returned a dict.  Return comma-separated string.
+                # Lookup Plugin returned a dict.  Return comma-separated string of keys
+                # for backwards compat.
+                # FIXME this can be removed when support for non-list return types is removed.
                 # See https://github.com/ansible/ansible/pull/77789
                 ran = wrap_var(",".join(ran))
 
