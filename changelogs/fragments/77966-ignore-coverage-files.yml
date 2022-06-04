@@ -1,0 +1,2 @@
+bugfixes:
+  - "Properly ignore coverage files (.py,cover) (https://github.com/ansible/ansible/issues/77966)"
