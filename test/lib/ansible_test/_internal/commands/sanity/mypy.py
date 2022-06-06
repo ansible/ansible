@@ -4,6 +4,7 @@ from __future__ import annotations
 import dataclasses
 import os
 import re
+import sys
 import typing as t
 
 from . import (
@@ -83,6 +84,10 @@ class MypyTest(SanityMultipleVersion):
         return True
 
     def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
+        if sys.version_info >= (3, 11):
+            display.warning(f'Skipping sanity test "{self.name}" which can test Python {args.controller_python.version}, but cannot run under that version.')
+            return SanitySkipped(self.name, python.version)
+
         settings = self.load_processor(args, python.version)
 
         paths = [target.path for target in targets.include]
