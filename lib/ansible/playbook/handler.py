@@ -28,7 +28,12 @@ class Handler(Task):
 
     listen = FieldAttribute(isa='list', default=list, listof=string_types, static=True)
 
+    obj_cnt = 0
+
     def __init__(self, block=None, role=None, task_include=None):
+        self.lockstep_id = Handler.obj_cnt
+        Handler.obj_cnt += 1
+
         self.cached_name = False
 
         super(Handler, self).__init__(block=block, role=role, task_include=task_include)
