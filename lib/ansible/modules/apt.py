@@ -479,6 +479,9 @@ def package_version_compare(version, other_version):
 
 
 def package_best_match(pkgname, version_cmp, version, release, cache):
+    if not version and not release:
+        # Return no version to let the apt command select the appropriate version
+        return None
     policy = apt_pkg.Policy(cache)
     if release:
         # 990 is the priority used in `apt-get -t`
