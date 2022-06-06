@@ -160,7 +160,6 @@ Ansible conventions offer a predictable user interface across all modules, playb
 * Implement declarative operations (not CRUD) so the user can ignore existing state and focus on final state. For example, use ``started/stopped``, ``present/absent``.
 * Strive for a consistent final state (aka idempotency). If running your module twice in a row against the same system would result in two different states, see if you can redesign or rewrite to achieve consistent final state. If you can't, document the behavior and the reasons for it.
 * Provide consistent return values within the standard Ansible return structure, even if NA/None are used for keys normally returned under other options.
-* Follow additional guidelines that apply to families of modules if applicable. For example, AWS modules should follow the  :ref:`Amazon development checklist <AWS_module_development>`.
 
 
 Module Security
