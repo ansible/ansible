@@ -957,7 +957,7 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, g
             module.fail_json(msg="Failed to %s: %s %s" % (label, out, err), cmd=command)
 
 
-def submodules_fetch(git_path, module, remote, track_submodules, dest):
+def submodules_fetch(git_path, module, track_submodules, dest):
     changed = False
 
     if not os.path.exists(os.path.join(dest, '.gitmodules')):
@@ -1404,7 +1404,7 @@ def main():
     # Deal with submodules
     submodules_updated = False
     if recursive and not bare:
-        submodules_updated = submodules_fetch(git_path, module, remote, track_submodules, dest)
+        submodules_updated = submodules_fetch(git_path, module, track_submodules, dest)
         if submodules_updated:
             result.update(submodules_changed=submodules_updated)
 
