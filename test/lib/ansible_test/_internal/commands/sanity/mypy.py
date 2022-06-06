@@ -60,9 +60,15 @@ class MypyTest(SanityMultipleVersion):
     """Sanity test which executes mypy."""
     ansible_only = True
 
+    vendored_paths = (
+        'lib/ansible/module_utils/six/__init__.py',
+        'lib/ansible/module_utils/distro/_distro.py',
+        'lib/ansible/module_utils/compat/_selectors2.py',
+    )
+
     def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test."""
-        return [target for target in targets if os.path.splitext(target.path)[1] == '.py' and (
+        return [target for target in targets if os.path.splitext(target.path)[1] == '.py' and target.path not in self.vendored_paths and (
                 target.path.startswith('lib/ansible/') or target.path.startswith('test/lib/ansible_test/_internal/')
                 or target.path.startswith('test/lib/ansible_test/_util/target/sanity/import/'))]
 
