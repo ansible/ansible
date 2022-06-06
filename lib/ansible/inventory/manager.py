@@ -166,9 +166,12 @@ class InventoryManager(object):
         if parse:
             self.parse_sources(cache=cache)
 
+        self._cached_dynamic_hosts = []
+        self._cached_dynamic_grouping = []
+
     @property
     def localhost(self):
-        return self._inventory.localhost
+        return self._inventory.get_host('localhost')
 
     @property
     def groups(self):
@@ -343,6 +346,11 @@ class InventoryManager(object):
         self.clear_caches()
         self._inventory = InventoryData()
         self.parse_sources(cache=False)
+        for host in self._cached_dynamic_hosts:
+            self.add_dynamic_host(host, {'refresh': True})
+        for host, result in self._cached_dynamic_grouping:
+            result['refresh'] = True
+            self.add_dynamic_group(host, result)
 
     def _match_list(self, items, pattern_str):
         # compile patterns
@@ -648,3 +656,97 @@ class InventoryManager(object):
 
     def clear_pattern_cache(self):
         self._pattern_cache = {}
+
+    def add_dynamic_host(self, host_info, result_item):
+        '''
+        Helper function to add a new host to inventory based on a task result.
+        '''
+
+        changed = False
+        if not result_item.get('refresh'):
+            self._cached_dynamic_hosts.append(host_info)
+
+        if host_info:
+            host_name = host_info.get('host_name')
+
+            # Check if host in inventory, add if not
+            if host_name not in self.hosts:
+                self.add_host(host_name, 'all')
+                changed = True
+            new_host = self.hosts.get(host_name)
+
+            # Set/update the vars for this host
+            new_host_vars = new_host.get_vars()
+            new_host_combined_vars = combine_vars(new_host_vars, host_info.get('host_vars', dict()))
+            if new_host_vars != new_host_combined_vars:
+                new_host.vars = new_host_combined_vars
+                changed = True
+
+            new_groups = host_info.get('groups', [])
+            for group_name in new_groups:
+                if group_name not in self.groups:
+                    group_name = self._inventory.add_group(group_name)
+                    changed = True
+                new_group = self.groups[group_name]
+                if new_group.add_host(self.hosts[host_name]):
+                    changed = True
+
+            # reconcile inventory, ensures inventory rules are followed
+            if changed:
+                self.reconcile_inventory()
+
+            result_item['changed'] = changed
+
+    def add_dynamic_group(self, host, result_item):
+        '''
+        Helper function to add a group (if it does not exist), and to assign the
+        specified host to that group.
+        '''
+
+        changed = False
+
+        if not result_item.get('refresh'):
+            self._cached_dynamic_grouping.append((host, result_item))
+
+        # the host here is from the executor side, which means it was a
+        # serialized/cloned copy and we'll need to look up the proper
+        # host object from the master inventory
+        real_host = self.hosts.get(host.name)
+        if real_host is None:
+            if host.name == self.localhost.name:
+                real_host = self.localhost
+            elif not result_item.get('refresh'):
+                raise AnsibleError('%s cannot be matched in inventory' % host.name)
+            else:
+                # host was removed from inventory during refresh, we should not process
+                return
+
+        group_name = result_item.get('add_group')
+        parent_group_names = result_item.get('parent_groups', [])
+
+        if group_name not in self.groups:
+            group_name = self.add_group(group_name)
+
+        for name in parent_group_names:
+            if name not in self.groups:
+                # create the new group and add it to inventory
+                self.add_group(name)
+                changed = True
+
+        group = self._inventory.groups[group_name]
+        for parent_group_name in parent_group_names:
+            parent_group = self.groups[parent_group_name]
+            new = parent_group.add_child_group(group)
+            if new and not changed:
+                changed = True
+
+        if real_host not in group.get_hosts():
+            changed = group.add_host(real_host)
+
+        if group not in real_host.get_groups():
+            changed = real_host.add_group(group)
+
+        if changed:
+            self.reconcile_inventory()
+
+        result_item['changed'] = changed

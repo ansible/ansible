@@ -43,7 +43,7 @@ from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
 from ansible.executor.task_queue_manager import CallbackSend
 from ansible.module_utils.six import string_types
-from ansible.module_utils._text import to_text, to_native
+from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.handler import Handler
@@ -697,11 +697,14 @@ class StrategyBase:
                     if 'add_host' in result_item:
                         # this task added a new host (add_host module)
                         new_host_info = result_item.get('add_host', dict())
-                        self._add_host(new_host_info, result_item)
+                        self._inventory.add_dynamic_host(new_host_info, result_item)
+                        # ensure host is available for subsequent plays
+                        if result_item.get('changed') and new_host_info['host_name'] not in self._hosts_cache_all:
+                            self._hosts_cache_all.append(new_host_info['host_name'])
 
                     elif 'add_group' in result_item:
                         # this task added a new group (group_by module)
-                        self._add_group(original_host, result_item)
+                        self._inventory.add_dynamic_group(original_host, result_item)
 
                     if 'add_host' in result_item or 'add_group' in result_item:
                         item_vars = _get_item_vars(result_item, original_task)
@@ -870,92 +873,6 @@ class StrategyBase:
         display.debug("no more pending results, returning what we have")
 
         return ret_results
-
-    def _add_host(self, host_info, result_item):
-        '''
-        Helper function to add a new host to inventory based on a task result.
-        '''
-
-        changed = False
-
-        if host_info:
-            host_name = host_info.get('host_name')
-
-            # Check if host in inventory, add if not
-            if host_name not in self._inventory.hosts:
-                self._inventory.add_host(host_name, 'all')
-                self._hosts_cache_all.append(host_name)
-                changed = True
-            new_host = self._inventory.hosts.get(host_name)
-
-            # Set/update the vars for this host
-            new_host_vars = new_host.get_vars()
-            new_host_combined_vars = combine_vars(new_host_vars, host_info.get('host_vars', dict()))
-            if new_host_vars != new_host_combined_vars:
-                new_host.vars = new_host_combined_vars
-                changed = True
-
-            new_groups = host_info.get('groups', [])
-            for group_name in new_groups:
-                if group_name not in self._inventory.groups:
-                    group_name = self._inventory.add_group(group_name)
-                    changed = True
-                new_group = self._inventory.groups[group_name]
-                if new_group.add_host(self._inventory.hosts[host_name]):
-                    changed = True
-
-            # reconcile inventory, ensures inventory rules are followed
-            if changed:
-                self._inventory.reconcile_inventory()
-
-            result_item['changed'] = changed
-
-    def _add_group(self, host, result_item):
-        '''
-        Helper function to add a group (if it does not exist), and to assign the
-        specified host to that group.
-        '''
-
-        changed = False
-
-        # the host here is from the executor side, which means it was a
-        # serialized/cloned copy and we'll need to look up the proper
-        # host object from the master inventory
-        real_host = self._inventory.hosts.get(host.name)
-        if real_host is None:
-            if host.name == self._inventory.localhost.name:
-                real_host = self._inventory.localhost
-            else:
-                raise AnsibleError('%s cannot be matched in inventory' % host.name)
-        group_name = result_item.get('add_group')
-        parent_group_names = result_item.get('parent_groups', [])
-
-        if group_name not in self._inventory.groups:
-            group_name = self._inventory.add_group(group_name)
-
-        for name in parent_group_names:
-            if name not in self._inventory.groups:
-                # create the new group and add it to inventory
-                self._inventory.add_group(name)
-                changed = True
-
-        group = self._inventory.groups[group_name]
-        for parent_group_name in parent_group_names:
-            parent_group = self._inventory.groups[parent_group_name]
-            new = parent_group.add_child_group(group)
-            if new and not changed:
-                changed = True
-
-        if real_host not in group.get_hosts():
-            changed = group.add_host(real_host)
-
-        if group not in real_host.get_groups():
-            changed = real_host.add_group(group)
-
-        if changed:
-            self._inventory.reconcile_inventory()
-
-        result_item['changed'] = changed
 
     def _copy_included_file(self, included_file):
         '''

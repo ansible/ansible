@@ -1,0 +1,8 @@
+all:
+  hosts:
+    one:
+      parity: odd
+    two:
+      parity: even
+    three:
+      parity: odd
