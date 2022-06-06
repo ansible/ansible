@@ -206,7 +206,7 @@
   args:
     name: libuser
     state: present
-  when: ansible_facts.system in ['Linux'] and ansible_distribution != 'Alpine'
+  when: ansible_facts.system in ['Linux'] and ansible_distribution != 'Alpine' and ansible_os_family != 'Suse'
   tags:
     - user_test_local_mode
 
