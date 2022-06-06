@@ -241,7 +241,7 @@ When executing Ansible on a system with macOS as a controller machine one might 
 
   .. error::
         +[__NSCFConstantString initialize] may have been in progress in another thread when fork() was called. We cannot safely call it or ignore it in the fork() child process. Crashing instead. Set a breakpoint on objc_initializeAfterForkError to debug.
-        ERROR! A worker was found in a dead state:
+        ERROR! A worker was found in a dead state
 
 In general the recommended workaround is to set the following environment variable in your shell:
 
