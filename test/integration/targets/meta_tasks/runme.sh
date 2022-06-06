@@ -72,3 +72,7 @@ for test_strategy in linear free; do
   [ "$(grep -c "META: ending batch" <<< "$out" )" -eq 2 ]
   grep -qv 'Failed to end_batch' <<< "$out"
 done
+
+# test refresh
+ansible-playbook -i inventory_refresh.yml refresh.yml "$@"
+ansible-playbook -i inventory_refresh.yml refresh_preserve_dynamic.yml "$@"
