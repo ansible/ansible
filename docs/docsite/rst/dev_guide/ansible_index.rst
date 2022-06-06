@@ -35,7 +35,7 @@ Find the task that best describes what you want to do:
    * I want to write a specific kind of module:
       * a :ref:`network module <developing_modules_network>`
       * a :ref:`Windows module <developing_modules_general_windows>`.
-      * an :ref:`Amazon module <AWS_module_development>`.
+      * an :ref:`Amazon module <ansible_collections.amazon.aws.docsite.dev_guide_intro>`.
       * an :ref:`OpenStack module <OpenStack_module_development>`.
       * an :ref:`oVirt/RHV module <oVirt_module_development>`.
       * a :ref:`VMware module <ansible_collections.community.vmware.docsite.vmware_ansible_devguide>`.
