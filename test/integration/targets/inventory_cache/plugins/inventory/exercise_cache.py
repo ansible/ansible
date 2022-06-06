@@ -30,7 +30,6 @@ from ansible.errors import AnsibleError
 from ansible.plugins.inventory import BaseInventoryPlugin, Cacheable
 from ansible.utils.display import Display
 
-from copy import deepcopy
 from time import sleep
 
 
