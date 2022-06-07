@@ -28,11 +28,11 @@ import os
 import random
 import subprocess
 import sys
-import textwrap
 import time
 
 from struct import unpack, pack
 from termios import TIOCGWINSZ
+from textwrap import wrap
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
@@ -241,7 +241,7 @@ class Display(metaclass=Singleton):
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
 
-    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True):
+    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True, nowrap=False):
         """ Display a message to the user
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
@@ -251,11 +251,17 @@ class Display(metaclass=Singleton):
 
         if not log_only:
 
-            has_newline = msg.endswith(u'\n')
-            if has_newline:
-                msg2 = msg[:-1]
+            istty = stderr and sys.__stderr__.isatty() or not stderr and sys.__stdout__.isatty()
+
+            if istty and not nowrap:
+                wrapped = wrap(msg, self.columns, drop_whitespace=False)
+                msg2 = "\n".join(wrapped) + "\n"
             else:
                 msg2 = msg
+
+            has_newline = msg.endswith(u'\n')
+            if has_newline:
+                msg2 = msg2[:-1]
 
             if color:
                 msg2 = stringc(msg2, color)
@@ -374,7 +380,7 @@ class Display(metaclass=Singleton):
 
         return message_text
 
-    def deprecated(self, msg, version=None, removed=False, date=None, collection_name=None):
+    def deprecated(self, msg, version=None, removed=False, date=None, collection_name=None, wrap_text=C.NOTTY_WRAP):
         if not removed and not C.DEPRECATION_WARNINGS:
             return
 
@@ -383,25 +389,16 @@ class Display(metaclass=Singleton):
         if removed:
             raise AnsibleError(message_text)
 
-        wrapped = textwrap.wrap(message_text, self.columns, drop_whitespace=False)
-        message_text = "\n".join(wrapped) + "\n"
-
         if message_text not in self._deprecations:
-            self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
             self._deprecations[message_text] = 1
+            self.display(message_text, color=C.COLOR_DEPRECATE, stderr=True, nowrap=(not wrap_text))
 
-    def warning(self, msg, formatted=False):
+    def warning(self, msg, formatted=C.NOTTY_WRAP):
 
-        if not formatted:
-            new_msg = "[WARNING]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, self.columns)
-            new_msg = "\n".join(wrapped) + "\n"
-        else:
+        if msg not in self._warns:
+            self._warns[msg] = 1
             new_msg = "\n[WARNING]: \n%s" % msg
-
-        if new_msg not in self._warns:
-            self.display(new_msg, color=C.COLOR_WARN, stderr=True)
-            self._warns[new_msg] = 1
+            self.display(new_msg, color=C.COLOR_WARN, stderr=True, nowrap=formatted)
 
     def system_warning(self, msg):
         if C.SYSTEM_WARNINGS:
@@ -428,7 +425,7 @@ class Display(metaclass=Singleton):
         if star_len <= 3:
             star_len = 3
         stars = u"*" * star_len
-        self.display(u"\n%s %s" % (msg, stars), color=color)
+        self.display(u"\n%s %s" % (msg, stars), color=color, nowrap=True)
 
     def banner_cowsay(self, msg, color=None):
         if u": [" in msg:
@@ -445,12 +442,12 @@ class Display(metaclass=Singleton):
         runcmd.append(to_bytes(msg))
         cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
-        self.display(u"%s\n" % to_text(out), color=color)
+        self.display(u"%s\n" % to_text(out), color=color, nowrap=True)
 
-    def error(self, msg, wrap_text=True):
+    def error(self, msg, wrap_text=C.NOTTY_WRAP):
         if wrap_text:
             new_msg = u"\n[ERROR]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, self.columns)
+            wrapped = wrap(new_msg, self.columns)
             new_msg = u"\n".join(wrapped) + u"\n"
         else:
             new_msg = u"ERROR! %s" % msg
