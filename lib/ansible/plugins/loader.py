@@ -543,6 +543,8 @@ class PluginLoader:
         if not found_files:
             return plugin_load_context.nope('failed fuzzy extension match for {0} in {1}'.format(full_name, acr.collection))
 
+        found_files = sorted(found_files)  # sort to ensure deterministic results, with the shortest match first
+
         if len(found_files) > 1:
             # TODO: warn?
             pass
