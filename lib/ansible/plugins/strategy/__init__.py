@@ -23,6 +23,7 @@ import cmd
 import functools
 import os
 import pprint
+import queue
 import sys
 import threading
 import time
@@ -30,7 +31,6 @@ import traceback
 
 from collections import deque
 from multiprocessing import Lock
-from queue import Queue
 
 from jinja2.exceptions import UndefinedError
 
@@ -41,7 +41,7 @@ from ansible.executor import action_write_locks
 from ansible.executor.play_iterator import IteratingStates, FailedStates
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
-from ansible.executor.task_queue_manager import CallbackSend
+from ansible.executor.task_queue_manager import CallbackSend, DisplaySend
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
@@ -116,6 +116,8 @@ def results_thread_main(strategy):
             result = strategy._final_q.get()
             if isinstance(result, StrategySentinel):
                 break
+            elif isinstance(result, DisplaySend):
+                display.display(*result.args, **result.kwargs)
             elif isinstance(result, CallbackSend):
                 for arg in result.args:
                     if isinstance(arg, TaskResult):
@@ -136,7 +138,7 @@ def results_thread_main(strategy):
                 display.warning('Received an invalid object (%s) in the result queue: %r' % (type(result), result))
         except (IOError, EOFError):
             break
-        except Queue.Empty:
+        except queue.Empty:
             pass
 
 

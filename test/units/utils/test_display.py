@@ -11,6 +11,7 @@ import pytest
 
 from ansible.module_utils.six import PY3
 from ansible.utils.display import Display, get_text_width, initialize_locale
+from ansible.utils.multiprocessing import context as multiprocessing_context
 
 
 def test_get_text_width():
@@ -63,3 +64,52 @@ def test_Display_banner_get_text_width_fallback(monkeypatch):
     msg = args[0]
     stars = u' %s' % (77 * u'*')
     assert msg.endswith(stars)
+
+
+def test_Display_set_queue_parent():
+    display = Display()
+    pytest.raises(RuntimeError, display.set_queue, 'foo')
+
+
+def test_Display_set_queue_fork():
+    def test():
+        display = Display()
+        display.set_queue('foo')
+        assert display._final_q == 'foo'
+    p = multiprocessing_context.Process(target=test)
+    p.start()
+    p.join()
+    assert p.exitcode == 0
+
+
+def test_Display_display_fork():
+    def test():
+        queue = MagicMock()
+        display = Display()
+        display.set_queue(queue)
+        display.display('foo')
+        queue.send_display.assert_called_once_with(
+            'foo', color=None, stderr=False, screen_only=False, log_only=False, newline=True
+        )
+
+    p = multiprocessing_context.Process(target=test)
+    p.start()
+    p.join()
+    assert p.exitcode == 0
+
+
+def test_Display_display_lock(monkeypatch):
+    lock = MagicMock()
+    display = Display()
+    monkeypatch.setattr(display, '_lock', lock)
+    display.display('foo')
+    lock.__enter__.assert_called_once_with()
+
+
+def test_Display_display_lock_fork(monkeypatch):
+    lock = MagicMock()
+    display = Display()
+    monkeypatch.setattr(display, '_lock', lock)
+    monkeypatch.setattr(display, '_final_q', MagicMock())
+    display.display('foo')
+    lock.__enter__.assert_not_called()
