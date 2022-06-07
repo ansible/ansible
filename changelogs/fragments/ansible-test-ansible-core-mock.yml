@@ -1,3 +1,2 @@
 minor_changes:
-  - ansible-test - Avoid using the ``mock_use_standalone_module`` setting for ``pytest`` when running ansible-core unit tests.
-                   This has no effect on unit tests for collections.
+  - ansible-test - Avoid using the ``mock_use_standalone_module`` setting for unit tests running on Python 3.8 or later.
