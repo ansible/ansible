@@ -4,7 +4,7 @@
 # packages, not optional ones, and with the widest range of versions that could
 # be suitable)
 jinja2 >= 3.0.0
-PyYAML
+PyYAML >= 5.1  # PyYAML 5.1 is required for Python 3.8+ support
 cryptography
 packaging
 # NOTE: resolvelib 0.x version bumps should be considered major/breaking
