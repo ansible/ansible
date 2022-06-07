@@ -49,6 +49,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         'test_len',
         'test_get_missing_key',
         'test_get_expired_key',
+        'test_initial_get',
         'test_get',
         'test_items',
         'test_keys',
@@ -206,7 +207,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         finally:
             self._cleanup_expired()
 
-    def test_get(self):
+    def test_initial_get(self):
         # test cache behaves like a dictionary
 
         # set the cache to test getting a key that exists
@@ -215,13 +216,28 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
         self.cache._cache = {'key1': k1, 'key2': k2}
         self.cache.set_cache()
 
+        # empty the in-memory info to test loading the key from the plugin
+        self.cache._cache = {}
+        self.cache._retrieved = {}
+        self.cache._plugin._cache = {}
+
         self.test_equal(self.cache['key1'], k1)
-        self.test_equal(self.cache.get('key1'), k1)
 
         # empty the in-memory info to test loading the key from the plugin
         self.cache._cache = {}
         self.cache._retrieved = {}
         self.cache._plugin._cache = {}
+
+        self.test_equal(self.cache.get('key1'), k1)
+
+    def test_get(self):
+        # test cache behaves like a dictionary
+
+        # set the cache to test getting a key that exists
+        k1 = {'hosts': {'h1': {'foo': 'bar'}}}
+        k2 = {'hosts': {'h2': {}}}
+        self.cache._cache = {'key1': k1, 'key2': k2}
+        self.cache.set_cache()
 
         self.test_equal(self.cache['key1'], k1)
         self.test_equal(self.cache.get('key1'), k1)
