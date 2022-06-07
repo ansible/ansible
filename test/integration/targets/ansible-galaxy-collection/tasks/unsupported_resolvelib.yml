@@ -27,10 +27,12 @@
     - assert:
         that:
           - resolvelib_version_error is failed
-          - compat_error in resolvelib_version_error.stderr or import_error in resolvelib_version_error.stderr
+          - resolvelib_version_error.stderr | regex_search(error)
       vars:
+        error: "({{ import_error }}|{{ compat_error }})"
         import_error: "Failed to import resolvelib"
-        compat_error: "ansible-galaxy requires resolvelib<0.6.0,>=0.5.3"
+        compat_error: "ansible-galaxy requires resolvelib<{{major_minor_patch}},>={{major_minor_patch}}"
+        major_minor_patch: "[0-9]\\d*\\.[0-9]\\d*\\.[0-9]\\d*"
 
   always:
     - name: cleanup venv and install directory
