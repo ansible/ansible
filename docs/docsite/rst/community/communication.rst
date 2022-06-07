@@ -142,14 +142,14 @@ The Ansible community holds regular meetings on various topics on Matrix/IRC, an
 Ansible Community Topics
 ========================
 
-The :ref:`Ansible Community Steering Committee <steering_responsibilties>` uses the `community-topics repository <https://github.com/ansible-community/community-topics/issues>`_ to asynchronously discuss with the Community and vote on Community topics in corresponding issues.
+The :ref:`Ansible Community Steering Committee <steering_responsibilities>` uses the `community-topics repository <https://github.com/ansible-community/community-topics/issues>`_ to asynchronously discuss with the Community and vote on Community topics in corresponding issues.
 
 Create a new issue in the `repository <https://github.com/ansible-community/community-topics/issues>`_ if you want to discuss an idea that impacts any of the following:
 
 * Ansible Community
 * Community collection best practices and `requirements <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`_
 * `Community collection inclusion policy <https://github.com/ansible-collections/ansible-inclusion/blob/main/README.md>`_
-* :ref:`The Community governance <steering_responsibilties>`
+* :ref:`The Community governance <steering_responsibilities>`
 * Other proposals of importance that need the Committee or overall Ansible community attention
 
 Ansible Automation Platform support questions
