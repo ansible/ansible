@@ -412,6 +412,10 @@ class ModuleValidator(Validator):
         try:
             for child in self.ast.body:
                 if not isinstance(child, ast.Assign):
+                    # allow string constant expressions (these are docstrings)
+                    if isinstance(child, ast.Expr) and isinstance(child.value, ast.Constant) and isinstance(child.value.value, str):
+                        continue
+
                     # allowed from __future__ imports
                     if isinstance(child, ast.ImportFrom) and child.module == '__future__':
                         for future_import in child.names:
