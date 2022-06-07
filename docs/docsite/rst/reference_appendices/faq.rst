@@ -234,6 +234,22 @@ need to install them into the virtualenv. There are two methods:
       $ cp -v /usr/lib64/python3.*/site-packages/*selinux*.so ./py3-ansible/lib64/python3.*/site-packages/
 
 
+Running on macOS
+----------------
+
+When executing Ansible on a system with macOS as a controller machine one might encounter the following error:
+
+  .. error::
+        +[__NSCFConstantString initialize] may have been in progress in another thread when fork() was called. We cannot safely call it or ignore it in the fork() child process. Crashing instead. Set a breakpoint on objc_initializeAfterForkError to debug.
+        ERROR! A worker was found in a dead state
+
+In general the recommended workaround is to set the following environment variable in your shell:
+
+  .. code-block:: shell
+
+        $ export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+
+
 Running on BSD
 --------------
 
