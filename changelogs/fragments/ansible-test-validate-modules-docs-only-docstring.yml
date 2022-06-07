@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-test - validate-modules - Documentation-only modules, used for documenting actions,
+    are now allowed to have docstrings (https://github.com/ansible/ansible/issues/77972).
