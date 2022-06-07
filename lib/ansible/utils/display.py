@@ -41,7 +41,6 @@ from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import text_type
 from ansible.utils.color import stringc
-from ansible.utils.lock import lock_decorator
 from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.utils.singleton import Singleton
 from ansible.utils.unsafe_proxy import wrap_var
@@ -208,7 +207,7 @@ class Display(metaclass=Singleton):
 
         self._final_q = None
 
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
 
         self.columns = None
         self.verbosity = verbosity
@@ -238,15 +237,6 @@ class Display(metaclass=Singleton):
 
         self._set_column_width()
 
-    @property
-    def _display_lock(self):
-        """Return the lock only when _final_q is not set, when set, return a nullcontext
-        to prevent deadlocks
-        """
-        if self._final_q:
-            return contextlib.nullcontext()
-        return self._lock
-
     def set_queue(self, queue):
         """Set the _final_q on Display, so that we know to proxy display over the queue
         instead of directly writing to stdout/stderr from forks
@@ -268,7 +258,6 @@ class Display(metaclass=Singleton):
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
 
-    @lock_decorator(attr='_display_lock')
     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True):
         """ Display a message to the user
 
@@ -311,7 +300,8 @@ class Display(metaclass=Singleton):
             else:
                 fileobj = sys.stderr
 
-            fileobj.write(msg2)
+            with self._lock:
+                fileobj.write(msg2)
 
             # With locks, and the fact that we aren't printing from forks
             # just write, and let the system flush. Everything should come out peachy
