@@ -169,3 +169,8 @@
         that:
         - '"Downloading collection ''ansible_test.my_collection:1.0.0'' to" in download_collection.stdout'
         - download_collection_actual.stat.exists
+
+- name: remove test download dir
+  file:
+    path: '{{ galaxy_dir }}/download'
+    state: absent
