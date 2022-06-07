@@ -412,57 +412,105 @@ class DocCLI(CLI, RoleMixin):
 
         return t
 
-    def init_parser(self):
+    def add_snippet_options(self, parser, configurable=True):
+        if not configurable:
+            parser.set_defaults(**{'show_snippet': False, 'json_format': False})
+            return
+
+        exclusive_opts = parser.add_mutually_exclusive_group()
+        exclusive_opts.add_argument("-s", "--snippet", action="store_true", default=False, dest="show_snippet",
+                                    help="Show playbook snippet for these plugin")
+        exclusive_opts.add_argument("-j", "--json", action="store_true", default=False, dest='json_format',
+                                    help='Change output into json format.')
+
+    def add_role_options(self, parser, configurable=True):
+        if not configurable:
+            parser.set_defaults(**{'json_format': False, 'roles_path': C.DEFAULT_ROLES_PATH, 'entry_point': None})
+            return
+
+        parser.add_argument("-j", "--json", action="store_true", default=False, dest='json_format',
+                            help='Change output into json format.')
+        parser.add_argument("-r", "--roles-path", dest='roles_path', default=C.DEFAULT_ROLES_PATH,
+                            type=opt_help.unfrack_path(pathsep=True), action=opt_help.PrependListAction,
+                            help='The path to the directory containing your roles.')
+        parser.add_argument("-e", "--entry-point", dest="entry_point",
+                            help="Select the entry point for role(s).")
+
+    def add_format_options(self, parser, configurable=True):
+        if not configurable:
+            parser.set_defaults(**{'json_format': False})
+            return
+
+        parser.add_argument("-j", "--json", action="store_true", default=False, dest='json_format',
+                            help='Change output into json format.')
+
+    def add_metadata_dump_options(self, parser, configurable=True):
+        if not configurable:
+            parser.set_defaults(**{'no_fail_on_errors': False})
+            return
+
+        parser.add_argument("--no-fail-on-errors", action="store_true", default=False, dest='no_fail_on_errors',
+                            help='**For internal use only** Only used for --metadata-dump. '
+                            'Do not fail on errors. Report the error message in the JSON instead.')
+
+    def add_list_options(self, parser, configurable=True):
+        if not configurable:
+            parser.set_defaults(**{'list_files': False, 'list_dir': False})
+            return
 
         coll_filter = 'A supplied argument will be used for filtering, can be a namespace or full collection name.'
+        parser.add_argument("-F", "--list_files", action="store_true", default=False, dest="list_files",
+                            help='Show plugin names and their source files without summaries (implies --list). %s' % coll_filter)
+        parser.add_argument("-l", "--list", action="store_true", default=False, dest='list_dir',
+                            help='List available plugins. %s' % coll_filter)
+
+    def init_parser(self):
+
+        parser = opt_help.argparse.ArgumentParser(add_help=False)
+        parser.add_argument('args', nargs='*', help='Plugin', metavar='plugin')
+
+        exclusive_opts = parser.add_mutually_exclusive_group()
+        exclusive_opts.add_argument("-t", "--type", action="store", dest='type', default='module',
+                                    help='Choose which plugin type (defaults to "module"). '
+                                    'Available plugin types are : {0}'.format(TARGET_OPTIONS),
+                                    choices=TARGET_OPTIONS)
+        exclusive_opts.add_argument("--metadata-dump", action="store_true", default=False, dest='dump',
+                                    help='**For internal use only** Dump json metadata for all entries, ignores other options.')
+
+        # --metadata-dump and --type are mutually exclusive
+        # If neither are provided, it's implicitly --type module
+        parser_opts = parser.parse_known_args()[0]
+        if parser_opts.dump:
+            display_type = 'metadata'
+            self.add_metadata_dump_options(parser)
+            self.add_list_options(parser, configurable=False)
+        else:
+            self.add_list_options(parser)
+            self.add_metadata_dump_options(parser, configurable=False)
+            display_type = parser_opts.type
+
+        if display_type in SNIPPETS:
+            self.add_snippet_options(parser)
+        else:
+            self.add_snippet_options(parser, configurable=False)
+
+        if display_type == 'role' or parser_opts.dump:
+            self.add_role_options(parser)
+        else:
+            self.add_role_options(parser, configurable=False)
+
+        if display_type not in SNIPPETS and display_type != 'role' and display_type in TARGET_OPTIONS:
+            self.add_format_options(parser)
+        else:
+            self.add_format_options(parser, configurable=False)
 
         super(DocCLI, self).init_parser(
             desc="plugin documentation tool",
-            epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com"
+            epilog="See man pages for Ansible CLI options or website for tutorials https://docs.ansible.com",
+            parents=[parser],
         )
         opt_help.add_module_options(self.parser)
         opt_help.add_basedir_options(self.parser)
-
-        # targets
-        self.parser.add_argument('args', nargs='*', help='Plugin', metavar='plugin')
-
-        self.parser.add_argument("-t", "--type", action="store", default='module', dest='type',
-                                 help='Choose which plugin type (defaults to "module"). '
-                                      'Available plugin types are : {0}'.format(TARGET_OPTIONS),
-                                 choices=TARGET_OPTIONS)
-
-        # formatting
-        self.parser.add_argument("-j", "--json", action="store_true", default=False, dest='json_format',
-                                 help='Change output into json format.')
-
-        # TODO: warn if not used with -t roles
-        # role-specific options
-        self.parser.add_argument("-r", "--roles-path", dest='roles_path', default=C.DEFAULT_ROLES_PATH,
-                                 type=opt_help.unfrack_path(pathsep=True),
-                                 action=opt_help.PrependListAction,
-                                 help='The path to the directory containing your roles.')
-
-        # modifiers
-        exclusive = self.parser.add_mutually_exclusive_group()
-        # TODO: warn if not used with -t roles
-        exclusive.add_argument("-e", "--entry-point", dest="entry_point",
-                               help="Select the entry point for role(s).")
-
-        # TODO: warn with --json as it is incompatible
-        exclusive.add_argument("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
-                               help='Show playbook snippet for these plugin types: %s' % ', '.join(SNIPPETS))
-
-        # TODO: warn when arg/plugin is passed
-        exclusive.add_argument("-F", "--list_files", action="store_true", default=False, dest="list_files",
-                               help='Show plugin names and their source files without summaries (implies --list). %s' % coll_filter)
-        exclusive.add_argument("-l", "--list", action="store_true", default=False, dest='list_dir',
-                               help='List available plugins. %s' % coll_filter)
-        exclusive.add_argument("--metadata-dump", action="store_true", default=False, dest='dump',
-                               help='**For internal use only** Dump json metadata for all entries, ignores other options.')
-
-        self.parser.add_argument("--no-fail-on-errors", action="store_true", default=False, dest='no_fail_on_errors',
-                                 help='**For internal use only** Only used for --metadata-dump. '
-                                      'Do not fail on errors. Report the error message in the JSON instead.')
 
     def post_process_args(self, options):
         options = super(DocCLI, self).post_process_args(options)

@@ -187,7 +187,7 @@ def version(prog=None):
 # Functions to add pre-canned options to an OptionParser
 #
 
-def create_base_parser(prog, usage="", desc=None, epilog=None):
+def create_base_parser(prog, usage="", desc=None, epilog=None, parents=None):
     """
     Create an options parser for all ansible scripts
     """
@@ -198,6 +198,7 @@ def create_base_parser(prog, usage="", desc=None, epilog=None):
         epilog=epilog,
         description=desc,
         conflict_handler='resolve',
+        parents=parents or [],
     )
     version_help = "show program's version number, config file location, configured module search path," \
                    " module location, executable location and exit"

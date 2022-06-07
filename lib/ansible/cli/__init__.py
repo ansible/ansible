@@ -341,7 +341,7 @@ class CLI(ABC):
         return op
 
     @abstractmethod
-    def init_parser(self, usage="", desc=None, epilog=None):
+    def init_parser(self, usage="", desc=None, epilog=None, parents=None):
         """
         Create an options parser for most ansible scripts
 
@@ -355,7 +355,7 @@ class CLI(ABC):
                 ansible.arguments.option_helpers.add_runas_options(self.parser)
                 self.parser.add_option('--my-option', dest='my_option', action='store')
         """
-        self.parser = opt_help.create_base_parser(self.name, usage=usage, desc=desc, epilog=epilog)
+        self.parser = opt_help.create_base_parser(self.name, usage=usage, desc=desc, epilog=epilog, parents=parents)
 
     @abstractmethod
     def post_process_args(self, options):
