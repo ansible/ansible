@@ -29,6 +29,7 @@ import random
 import subprocess
 import sys
 import textwrap
+import threading
 import time
 
 from struct import unpack, pack
@@ -39,6 +40,7 @@ from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import text_type
 from ansible.utils.color import stringc
+from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.utils.singleton import Singleton
 from ansible.utils.unsafe_proxy import wrap_var
 
@@ -202,6 +204,10 @@ class Display(metaclass=Singleton):
 
     def __init__(self, verbosity=0):
 
+        self._final_q = None
+
+        self._lock = threading.RLock()
+
         self.columns = None
         self.verbosity = verbosity
 
@@ -230,6 +236,16 @@ class Display(metaclass=Singleton):
 
         self._set_column_width()
 
+    def set_queue(self, queue):
+        """Set the _final_q on Display, so that we know to proxy display over the queue
+        instead of directly writing to stdout/stderr from forks
+
+        This is only needed in ansible.executor.process.worker:WorkerProcess._run
+        """
+        if multiprocessing_context.parent_process() is None:
+            raise RuntimeError('queue cannot be set in parent process')
+        self._final_q = queue
+
     def set_cowsay_info(self):
         if C.ANSIBLE_NOCOWS:
             return
@@ -246,6 +262,13 @@ class Display(metaclass=Singleton):
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
         """
+
+        if self._final_q:
+            # If _final_q is set, that means we are in a WorkerProcess
+            # and instead of displaying messages directly from the fork
+            # we will proxy them through the queue
+            return self._final_q.send_display(msg, color=color, stderr=stderr,
+                                              screen_only=screen_only, log_only=log_only, newline=newline)
 
         nocolor = msg
 
@@ -276,15 +299,21 @@ class Display(metaclass=Singleton):
             else:
                 fileobj = sys.stderr
 
-            fileobj.write(msg2)
+            with self._lock:
+                fileobj.write(msg2)
 
-            try:
-                fileobj.flush()
-            except IOError as e:
-                # Ignore EPIPE in case fileobj has been prematurely closed, eg.
-                # when piping to "head -n1"
-                if e.errno != errno.EPIPE:
-                    raise
+            # With locks, and the fact that we aren't printing from forks
+            # just write, and let the system flush. Everything should come out peachy
+            # I've left this code for historical purposes, or in case we need to add this
+            # back at a later date. For now ``TaskQueueManager.cleanup`` will perform a
+            # final flush at shutdown.
+            # try:
+            #     fileobj.flush()
+            # except IOError as e:
+            #     # Ignore EPIPE in case fileobj has been prematurely closed, eg.
+            #     # when piping to "head -n1"
+            #     if e.errno != errno.EPIPE:
+            #         raise
 
         if logger and not screen_only:
             # We first convert to a byte string so that we get rid of
