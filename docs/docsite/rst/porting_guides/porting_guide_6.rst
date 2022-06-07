@@ -99,6 +99,14 @@ Networking
 
 No notable changes
 
+Porting Guide for v6.0.0rc1
+===========================
+
+Major Changes
+-------------
+
+- Add a ``ansible-community`` CLI tool that allows to print the version of the Ansible community distribution. Use ``ansible-community --version`` to print this version.
+
 Porting Guide for v6.0.0b1
 ==========================
 
