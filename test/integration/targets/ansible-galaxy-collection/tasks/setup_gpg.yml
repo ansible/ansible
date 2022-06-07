@@ -12,7 +12,7 @@
   register: user
 
 - name: generate key for user with gpg
-  command: "gpg --no-tty --homedir {{ gpg_homedir }} --passphrase SECRET --pinentry-mode loopback --quick-gen-key {{ user.stdout }} default default"
+  command: "gpg --no-tty --homedir {{ gpg_homedir }} --passphrase '' --pinentry-mode loopback --quick-gen-key {{ user.stdout }} default default"
 
 - name: list gpg keys for user
   command: "gpg --no-tty --homedir {{ gpg_homedir }} --list-keys {{ user.stdout }}"
