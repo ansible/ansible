@@ -1,0 +1,3 @@
+minor_changes:
+  - ansible-test - Update the ``default`` containers to 6.4.0.
+  - ansible-test - Update the ``base`` container to 3.2.0.
