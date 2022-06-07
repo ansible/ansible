@@ -312,6 +312,11 @@ class ZipArchive(object):
         self.zipinfo_cmd_path = None
         self._files_in_archive = []
         self._infodict = dict()
+        self.zipinfoflag = ''
+        self.binaries = (
+            ('unzip', 'cmd_path'),
+            ('zipinfo', 'zipinfo_cmd_path'),
+        )
 
     def _permstr_to_octal(self, modestr, umask):
         ''' Convert a Unix permission string (rw-r--r--) into a mode (0644) '''
@@ -399,7 +404,10 @@ class ZipArchive(object):
 
     def is_unarchived(self):
         # BSD unzip doesn't support zipinfo listings with timestamp.
-        cmd = [self.zipinfo_cmd_path, '-T', '-s', self.src]
+        if self.zipinfoflag:
+            cmd = [self.zipinfo_cmd_path, self.zipinfoflag, '-T', '-s', self.src]
+        else:
+            cmd = [self.zipinfo_cmd_path, '-T', '-s', self.src]
 
         if self.excludes:
             cmd.extend(['-x', ] + self.excludes)
@@ -720,12 +728,8 @@ class ZipArchive(object):
         return dict(cmd=cmd, rc=rc, out=out, err=err)
 
     def can_handle_archive(self):
-        binaries = (
-            ('unzip', 'cmd_path'),
-            ('zipinfo', 'zipinfo_cmd_path'),
-        )
         missing = []
-        for b in binaries:
+        for b in self.binaries:
             try:
                 setattr(self, b[1], get_bin_path(b[0]))
             except ValueError:
@@ -948,9 +952,32 @@ class TarZstdArchive(TgzArchive):
         self.zipflag = '--use-compress-program=zstd'
 
 
+class ZipZArchive(ZipArchive):
+    def __init__(self, src, b_dest, file_args, module):
+        super(ZipZArchive, self).__init__(src, b_dest, file_args, module)
+        self.zipinfoflag = '-Z'
+        self.binaries = (
+            ('unzip', 'cmd_path'),
+            ('unzip', 'zipinfo_cmd_path'),
+        )
+
+    def can_handle_archive(self):
+        unzip_available, error_msg = super(ZipZArchive, self).can_handle_archive()
+
+        if not unzip_available:
+            return unzip_available, error_msg
+
+        # Ensure unzip -Z is available before we use it in is_unarchive
+        cmd = [self.zipinfo_cmd_path, self.zipinfoflag]
+        rc, out, err = self.module.run_command(cmd)
+        if 'zipinfo' in out.lower():
+            return True, None
+        return False, 'Command "unzip -Z" could not handle archive: %s' % err
+
+
 # try handlers in order and return the one that works or bail if none work
 def pick_handler(src, dest, file_args, module):
-    handlers = [ZipArchive, TgzArchive, TarArchive, TarBzipArchive, TarXzArchive, TarZstdArchive]
+    handlers = [ZipArchive, ZipZArchive, TgzArchive, TarArchive, TarBzipArchive, TarXzArchive, TarZstdArchive]
     reasons = set()
     for handler in handlers:
         obj = handler(src, dest, file_args, module)
