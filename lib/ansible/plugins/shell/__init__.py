@@ -68,10 +68,9 @@ class ShellBase(AnsiblePlugin):
         if not isinstance(env, Sequence):
             env = [env]
         for env_dict in env:
-            if isinstance(env_dict, Mapping):
-                self.env.update(env_dict)
-            else:
+            if not isinstance(env_dict, Mapping):
                 raise AnsibleError('The "envirionment" keyword takes a list of dictionaries (or single dictionary), but got a "%s" instead' % type(env_dict))
+            self.env.update(env_dict)
 
         # We can remove the try: except in the future when we make ShellBase a proper subset of
         # *all* shells.  Right now powershell and third party shells which do not use the
