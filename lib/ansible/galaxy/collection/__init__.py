@@ -27,7 +27,7 @@ from collections import namedtuple
 from contextlib import contextmanager
 from hashlib import sha256
 from io import BytesIO
-from importlib.metadata import distribution, PackageNotFoundError
+from importlib.metadata import distribution
 from itertools import chain
 
 try:
@@ -1594,7 +1594,7 @@ def _resolve_depenency_map(
         raise AnsibleError("Failed to import packaging, check that a supported version is installed")
     try:
         dist = distribution('ansible-core')
-    except PackageNotFoundError:
+    except Exception:
         req = None
     else:
         req = next((rr for r in (dist.requires or []) if (rr := PkgReq(r)).name == 'resolvelib'), None)
