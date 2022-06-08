@@ -106,15 +106,18 @@ class HostState:
         if self.run_state == IteratingStates.TASKS:
             if self.cur_regular_task != other.cur_regular_task:
                 return False
-            s = self.tasks_child_state; o = other.tasks_child_state
+            s = self.tasks_child_state
+            o = other.tasks_child_state
         elif self.run_state == IteratingStates.RESCUE:
             if self.cur_rescue_task != other.cur_rescue_task:
                 return False
-            s = self.rescue_child_state; o = other.rescue_child_state
+            s = self.rescue_child_state
+            o = other.rescue_child_state
         elif self.run_state == IteratingStates.ALWAYS:
             if self.cur_always_task != other.cur_always_task:
                 return False
-            s = self.always_child_state; o = other.always_child_state
+            s = self.always_child_state
+            o = other.always_child_state
 
         if (s is not None and o is not None) or (s is None and o is None):
             return s == o
@@ -141,15 +144,18 @@ class HostState:
         if self.run_state == IteratingStates.TASKS:
             if self.cur_regular_task != other.cur_regular_task:
                 return self.cur_regular_task < other.cur_regular_task
-            s = self.tasks_child_state; o = other.tasks_child_state
+            s = self.tasks_child_state
+            o = other.tasks_child_state
         elif self.run_state == IteratingStates.RESCUE:
             if self.cur_rescue_task != other.cur_rescue_task:
                 return self.cur_rescue_task < other.cur_rescue_task
-            s = self.rescue_child_state; o = other.rescue_child_state
+            s = self.rescue_child_state
+            o = other.rescue_child_state
         elif self.run_state == IteratingStates.ALWAYS:
             if self.cur_always_task != other.cur_always_task:
                 return self.cur_always_task < other.cur_always_task
-            s = self.always_child_state; o = other.always_child_state
+            s = self.always_child_state
+            o = other.always_child_state
 
         if s is not None and o is not None:
             return s < o
