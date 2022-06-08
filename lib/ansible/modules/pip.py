@@ -455,15 +455,15 @@ def _get_pip(module, env=None, executable=None):
 def _have_pip_module():  # type: () -> bool
     """Return True if the `pip` module can be found using the current Python interpreter, otherwise return False."""
     try:
-        import importlib
+        from importlib.util import find_spec
     except ImportError:
-        importlib = None  # type: types.ModuleType | None  # type: ignore[no-redef]
+        find_spec = None  # type: ignore[assignment] # type: ignore[no-redef]
 
-    if importlib:
+    if find_spec:
         # noinspection PyBroadException
         try:
             # noinspection PyUnresolvedReferences
-            found = bool(importlib.util.find_spec('pip'))
+            found = bool(find_spec('pip'))
         except Exception:
             found = False
     else:
