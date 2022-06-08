@@ -1,6 +1,6 @@
 - name: generate revocation certificate
   expect:
-    command: "gpg --homedir {{ gpg_homedir }} --output {{ gpg_homedir }}/revoke.asc --gen-revoke {{ fingerprint }}"
+    command: "gpg --homedir {{ gpg_homedir }} --pinentry-mode loopback --output {{ gpg_homedir }}/revoke.asc --gen-revoke {{ fingerprint }}"
     responses:
       "Create a revocation certificate for this key": "y"
       "Please select the reason for the revocation": "0"

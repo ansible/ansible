@@ -182,8 +182,6 @@ def sign_manifest(signature_path, manifest_path, module, collection_setup_result
         "--pinentry-mode",
         "loopback",
         "--yes",
-        "--passphrase",
-        "SECRET",
         "--homedir",
         module.params['signature_dir'],
         "--detach-sign",
