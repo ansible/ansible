@@ -25,12 +25,16 @@ from units.compat import unittest
 from unittest.mock import patch, MagicMock
 from ansible.errors import AnsibleError
 from ansible.executor.task_executor import TaskExecutor, remove_omit
-from ansible.plugins.loader import action_loader, lookup_loader
+from ansible.plugins.loader import action_loader, lookup_loader, module_loader
 from ansible.parsing.yaml.objects import AnsibleUnicode
 from ansible.utils.unsafe_proxy import AnsibleUnsafeText, AnsibleUnsafeBytes
 from ansible.module_utils.six import text_type
 
+from collections import namedtuple
 from units.mock.loader import DictDataLoader
+
+
+get_with_context_result = namedtuple('get_with_context_result', ['object', 'plugin_load_context'])
 
 
 class TestTaskExecutor(unittest.TestCase):
@@ -204,6 +208,8 @@ class TestTaskExecutor(unittest.TestCase):
             final_q=MagicMock(),
         )
 
+        context = MagicMock(resolved=False)
+        te._shared_loader_obj.module_loader.find_plugin_with_context.return_value = context
         action_loader = te._shared_loader_obj.action_loader
         action_loader.has_plugin.return_value = True
         action_loader.get.return_value = mock.sentinel.handler
@@ -238,6 +244,8 @@ class TestTaskExecutor(unittest.TestCase):
             final_q=MagicMock(),
         )
 
+        context = MagicMock(resolved=False)
+        te._shared_loader_obj.module_loader.find_plugin_with_context.return_value = context
         action_loader = te._shared_loader_obj.action_loader
         action_loader.has_plugin.side_effect = [False, True]
         action_loader.get.return_value = mock.sentinel.handler
@@ -252,7 +260,7 @@ class TestTaskExecutor(unittest.TestCase):
         handler = te._get_action_handler(mock_connection, mock_templar)
 
         self.assertIs(mock.sentinel.handler, handler)
-        action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections),
+        action_loader.has_plugin.assert_has_calls([mock.call(action, collection_list=te._task.collections),  # called twice
                                                    mock.call(module_prefix, collection_list=te._task.collections)])
 
         action_loader.get.assert_called_once_with(
@@ -277,6 +285,9 @@ class TestTaskExecutor(unittest.TestCase):
         action_loader.has_plugin.return_value = False
         action_loader.get.return_value = mock.sentinel.handler
         action_loader.__contains__.return_value = False
+        module_loader = te._shared_loader_obj.module_loader
+        context = MagicMock(resolved=False)
+        module_loader.find_plugin_with_context.return_value = context
 
         mock_connection = MagicMock()
         mock_templar = MagicMock()
@@ -302,6 +313,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_host = MagicMock()
 
         mock_task = MagicMock()
+        mock_task.action = 'mock.action'
         mock_task.args = dict()
         mock_task.retries = 0
         mock_task.delay = -1
@@ -328,7 +340,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_action = MagicMock()
         mock_queue = MagicMock()
 
-        shared_loader = None
+        shared_loader = MagicMock()
         new_stdin = None
         job_vars = dict(omit="XXXXXXXXXXXXXXXXXXX")
 
@@ -344,7 +356,8 @@ class TestTaskExecutor(unittest.TestCase):
         )
 
         te._get_connection = MagicMock(return_value=mock_connection)
-        te._get_action_handler = MagicMock(return_value=mock_action)
+        context = MagicMock()
+        te._get_action_handler_with_context = MagicMock(return_value=get_with_context_result(mock_action, context))
 
         mock_action.run.return_value = dict(ansible_facts=dict())
         res = te._execute()
