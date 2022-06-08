@@ -254,7 +254,7 @@ def pfilter(f, patterns=None, excludes=None, use_regex=False):
         return True
 
     if use_regex:
-        if patterns and not excludes:
+        if patterns and (not excludes or len(excludes) == 0):
             for p in patterns:
                 r = re.compile(p)
                 if r.match(f):
@@ -271,7 +271,7 @@ def pfilter(f, patterns=None, excludes=None, use_regex=False):
                     return True
 
     else:
-        if patterns and not excludes:
+        if patterns and (not excludes or len(excludes) == 0):
             for p in patterns:
                 if fnmatch.fnmatch(f, p):
                     return True
