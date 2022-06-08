@@ -183,8 +183,6 @@ stages:
               test: ios/csr1000v/
             - name: VyOS Python
               test: vyos/1.1.8/
-            - name: Cloud Python
-              test: cloud/
   - stage: Summary
     condition: succeededOrFailed()
     dependsOn:
