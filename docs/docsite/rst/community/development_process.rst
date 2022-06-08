@@ -391,7 +391,7 @@ We do **not** backport features.
 
 .. note::
 
-    The branch name ``backport/2.13/[PR_NUMBER_FROM_DEVEL]`` is somewhat arbitrary, but conveys meaning about the purpose of the branch. This branch name format is not required, but it can be helpful, especially when making multiple backport PRs for multiple stable branches.
+    The branch name ``backport/2.13/[PR_NUMBER_FROM_DEVEL]`` is somewhat arbitrary but conveys meaning about the purpose of the branch. This branch name format is not required, but it can be helpful, especially when making multiple backport PRs for multiple stable branches.
 
 .. note::
 
