@@ -299,12 +299,13 @@ class CallbackBase(AnsiblePlugin):
 
         if 'exception' in result:
             msg = "An exception occurred during task execution. "
+            exception_str = to_text(result['exception'])
             if self._display.verbosity < 3:
                 # extract just the actual error message from the exception text
-                error = result['exception'].strip().split('\n')[-1]
+                error = exception_str.strip().split('\n')[-1]
                 msg += "To see the full traceback, use -vvv. The error was: %s" % error
             else:
-                msg = "The full traceback is:\n" + result['exception']
+                msg = "The full traceback is:\n" + exception_str
                 del result['exception']
 
             self._display.display(msg, color=C.COLOR_ERROR, stderr=use_stderr)
