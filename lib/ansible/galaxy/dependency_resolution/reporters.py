@@ -6,7 +6,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from resolvelib import BaseReporter
+try:
+    from resolvelib import BaseReporter
+except ImportError:
+    class BaseReporter:  # type: ignore[no-redef]
+        pass
 
 
 class CollectionDependencyReporter(BaseReporter):

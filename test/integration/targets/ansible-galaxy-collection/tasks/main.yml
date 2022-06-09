@@ -50,6 +50,12 @@
     src: ansible.cfg.j2
     dest: '{{ galaxy_dir }}/ansible.cfg'
 
+- name: test install command using an unsupported version of resolvelib
+  include_tasks: unsupported_resolvelib.yml
+  loop: "{{ unsupported_resolvelib_versions }}"
+  loop_control:
+    loop_var: resolvelib_version
+
 - name: run ansible-galaxy collection publish tests for {{ test_name }}
   include_tasks: publish.yml
   args:
