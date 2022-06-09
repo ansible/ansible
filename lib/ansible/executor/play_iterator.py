@@ -91,6 +91,9 @@ class HostState:
                 ))
 
     def __eq__(self, other):
+        """Compare two HostStates whether they are at the same point of execution.
+        Used in the linear strategy for lockstep.
+        """
         if not isinstance(other, HostState):
             raise AnsibleAssertionError(f'HostState can be compared only to another HostState, got {type(other)}')
 
