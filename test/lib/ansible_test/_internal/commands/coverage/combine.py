@@ -242,8 +242,7 @@ def _command_coverage_combine_powershell(args):  # type: (CoverageCombineConfig)
 
         if args.all:
             missing_sources = [source for source, _source_line_count in sources if source not in coverage_data]
-            stubs = _default_stub_value(missing_sources)
-            coverage_data.update(stubs)
+            coverage_data.update(_default_stub_value(missing_sources))
 
         if not args.explain:
             if args.export:

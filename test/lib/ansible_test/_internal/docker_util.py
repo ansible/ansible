@@ -132,12 +132,13 @@ def get_podman_host_ip():  # type: () -> str
 
 
 @cache
-def get_podman_default_hostname():  # type: () -> str
-    """Return the default hostname of the Podman service.
-
-    --format was added in podman 3.3.0, this functionality depends on it's availability
+def get_podman_default_hostname():  # type: () -> t.Optional[str]
     """
-    hostname = None
+    Return the default hostname of the Podman service.
+
+    --format was added in podman 3.3.0, this functionality depends on its availability
+    """
+    hostname: t.Optional[str] = None
     try:
         stdout = raw_command(['podman', 'system', 'connection', 'list', '--format=json'], capture=True)[0]
     except SubprocessError:
