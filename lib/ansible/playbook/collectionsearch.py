@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from ansible.module_utils.compat.importlib import import_module
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.utils.collection_loader import AnsibleCollectionConfig
@@ -58,5 +59,13 @@ class CollectionSearch:
             if is_template(collection_name, env):
                 display.warning('"collections" is not templatable, but we found: %s, '
                                 'it will not be templated and will be used "as is".' % (collection_name))
+
+            if collection_name in ('ansible.builtin', 'ansible.legacy',):
+                continue
+
+            try:
+                import_module('ansible_collections.' + collection_name)
+            except ImportError:
+                display.warning(f"Unable to import collection {collection_name}")
 
         return ds

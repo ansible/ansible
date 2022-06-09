@@ -187,13 +187,6 @@ class StrategyModule(StrategyBase):
 
                     task_action = templar.template(task.action)
 
-                    try:
-                        action = action_loader.get(task_action, class_only=True, collection_list=task.collections)
-                    except KeyError:
-                        # we don't care here, because the action may simply not have a
-                        # corresponding action plugin
-                        action = None
-
                     if task_action in C._ACTION_META:
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
@@ -210,6 +203,13 @@ class StrategyModule(StrategyBase):
                             else:
                                 skip_rest = True
                                 break
+
+                        try:
+                            action = action_loader.get(task_action, class_only=True, collection_list=task.collections)
+                        except KeyError:
+                            # we don't care here, because the action may simply not have a
+                            # corresponding action plugin
+                            action = None
 
                         run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
 
