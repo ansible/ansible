@@ -1583,7 +1583,16 @@ Some hash types allow providing a rounds parameter:
     {{ 'secretpassword' | password_hash('sha256', 'mysecretsalt', rounds=10000) }}
     # => "$5$rounds=10000$mysecretsalt$Tkm80llAxD4YHll6AgNIztKn0vzAACsuuEfYeGP7tm7"
 
-Hash type 'blowfish' (BCrypt) provides the facility to specify the version of the BCrypt algorithm
+The filter `password_hash` produces different results depending on whether you installed `passlib` or not.
+
+To ensure idempotency, specify `rounds` to be neither `crypt`'s nor `passlib`'s default, which is `5000` for `crypt` and a variable value (`535000` for sha256, `656000` for sha512) for `passlib`:
+
+.. code-block:: yaml+jinja
+
+    {{ 'secretpassword' | password_hash('sha256', 'mysecretsalt', rounds=5001) }}
+    # => "$5$rounds=5001$mysecretsalt$wXcTWWXbfcR8er5IVf7NuquLvnUA6s8/qdtOhAZ.xN."
+
+Hash type 'blowfish' (BCrypt) provides the facility to specify the version of the BCrypt algorithm.
 
 .. code-block:: yaml+jinja
 
