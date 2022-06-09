@@ -41,7 +41,7 @@ class CompType(enum.Enum):
     """
     MENU_COMPLETION = '%'
     """
-    Menu completion, which cyles through each completion instead of showing a list.
+    Menu completion, which cycles through each completion instead of showing a list.
     For help using this feature, see: https://stackoverflow.com/questions/12044574/getting-complete-and-menu-complete-to-work-together
     """
     LIST = '?'
