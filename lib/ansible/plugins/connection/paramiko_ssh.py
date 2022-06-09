@@ -131,6 +131,7 @@ DOCUMENTATION = """
       banner_timeout:
         type: float
         default: 30
+        version_added: '2.14'
         description:
           - Configures, in seconds, the amount of time to wait for the SSH
             banner to be presented. This option is supported by paramiko
@@ -138,10 +139,8 @@ DOCUMENTATION = """
         ini:
           - section: paramiko_connection
             key: banner_timeout
-            version_added: '2.10'
         env:
           - name: ANSIBLE_PARAMIKO_BANNER_TIMEOUT
-            version_added: '2.10'
 # TODO:
 #timeout=self._play_context.timeout,
 """
