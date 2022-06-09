@@ -3,13 +3,13 @@
 
 from __future__ import annotations
 
-from ansible.module_utils.compat.importlib import import_module
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.template import is_template
 from ansible.utils.display import Display
 
+from importlib.util import find_spec
 from jinja2.nativetypes import NativeEnvironment
 
 display = Display()
@@ -64,8 +64,11 @@ class CollectionSearch:
                 continue
 
             try:
-                import_module('ansible_collections.' + collection_name)
-            except ImportError:
+                spec = find_spec('ansible_collections.' + collection_name)
+                if spec is None:
+                    # only the namespace exists
+                    raise ImportError
+            except (ImportError, ValueError):
                 display.warning(f"Unable to import collection {collection_name}")
 
         return ds
