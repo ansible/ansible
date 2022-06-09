@@ -1,0 +1,2 @@
+minor_changes:
+  - Display a warning for missing collections that are referenced using the collections keyword (https://github.com/ansible/ansible/issues/71483).
