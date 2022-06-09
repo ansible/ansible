@@ -36,7 +36,7 @@ variables:
 resources:
   containers:
     - container: default
-      image: quay.io/ansible/azure-pipelines-test-container:1.9.0
+      image: quay.io/ansible/azure-pipelines-test-container:3.0.0
 
 pool: Standard
 
