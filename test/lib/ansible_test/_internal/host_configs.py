@@ -363,7 +363,7 @@ class WindowsConfig(HostConfig, metaclass=abc.ABCMeta):
 
 @dataclasses.dataclass
 class WindowsRemoteConfig(RemoteConfig, WindowsConfig):
-    """Configuration for a remoe Windows host."""
+    """Configuration for a remote Windows host."""
     def get_defaults(self, context):  # type: (HostContext) -> WindowsRemoteCompletionConfig
         """Return the default settings."""
         return filter_completion(windows_completion()).get(self.name) or windows_completion().get(self.platform)
@@ -381,7 +381,7 @@ class NetworkConfig(HostConfig, metaclass=abc.ABCMeta):
 
 @dataclasses.dataclass
 class NetworkRemoteConfig(RemoteConfig, NetworkConfig):
-    """Configuration for a remoe network host."""
+    """Configuration for a remote network host."""
     collection: t.Optional[str] = None
     connection: t.Optional[str] = None
 

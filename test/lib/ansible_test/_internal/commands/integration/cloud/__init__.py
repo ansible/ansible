@@ -322,7 +322,7 @@ class CloudProvider(CloudBase):
 
         return static
 
-    def _write_config(self, content):  # type: (t.Text) -> None
+    def _write_config(self, content):  # type: (str) -> None
         """Write the given content to the config file."""
         prefix = '%s-' % os.path.splitext(os.path.basename(self.config_static_path))[0]
 
@@ -337,7 +337,7 @@ class CloudProvider(CloudBase):
             config_fd.write(to_bytes(content))
             config_fd.flush()
 
-    def _read_config_template(self):  # type: () -> t.Text
+    def _read_config_template(self):  # type: () -> str
         """Read and return the configuration template."""
         lines = read_text_file(self.config_template_path).splitlines()
         lines = [line for line in lines if not line.startswith('#')]
@@ -345,7 +345,7 @@ class CloudProvider(CloudBase):
         return config
 
     @staticmethod
-    def _populate_config_template(template, values):  # type: (t.Text, t.Dict[str, str]) -> t.Text
+    def _populate_config_template(template, values):  # type: (str, t.Dict[str, str]) -> str
         """Populate and return the given template with the provided values."""
         for key in sorted(values):
             value = values[key]

@@ -198,7 +198,7 @@ def create_ssh_port_forwards(
 ):  # type: (...) -> SshProcess
     """
     Create SSH port forwards using the provided list of tuples (target_host, target_port).
-    Port bindings will be automatically assigned by SSH and must be collected with a subseqent call to collect_port_forwards.
+    Port bindings will be automatically assigned by SSH and must be collected with a subsequent call to collect_port_forwards.
     """
     options = dict(
         LogLevel='INFO',  # info level required to get messages on stderr indicating the ports assigned to each forward

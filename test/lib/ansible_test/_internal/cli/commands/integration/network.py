@@ -69,7 +69,7 @@ def complete_network_testcase(prefix: str, parsed_args: argparse.Namespace, **_)
     testcases = []
 
     # since testcases are module specific, don't autocomplete if more than one
-    # module is specidied
+    # module is specified
     if len(parsed_args.include) != 1:
         return []
 

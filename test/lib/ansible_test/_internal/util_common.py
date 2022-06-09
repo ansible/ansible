@@ -61,8 +61,8 @@ CHECK_YAML_VERSIONS = {}  # type: t.Dict[str, t.Any]
 
 
 class ShellScriptTemplate:
-    """A simple substition template for shell scripts."""
-    def __init__(self, template):  # type: (t.Text) -> None
+    """A simple substitution template for shell scripts."""
+    def __init__(self, template):  # type: (str) -> None
         self.template = template
 
     def substitute(self, **kwargs: t.Union[str, t.List[str]]) -> str:

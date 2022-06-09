@@ -19,7 +19,7 @@ def read_json_file(path):  # type: (str) -> t.Any
     return json.loads(read_text_file(path))
 
 
-def read_text_file(path):  # type: (str) -> t.Text
+def read_text_file(path):  # type: (str) -> str
     """Return the contents of the specified path as text."""
     return to_text(read_binary_file(path))
 
