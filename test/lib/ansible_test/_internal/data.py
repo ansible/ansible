@@ -247,7 +247,7 @@ class PluginInfo:
 def content_plugins():
     """
     Analyze content.
-    The primary purpose of this analysis is to facilitiate mapping of integration tests to the plugin(s) they are intended to test.
+    The primary purpose of this analysis is to facilitate mapping of integration tests to the plugin(s) they are intended to test.
     """
     plugins = {}  # type: t.Dict[str, t.Dict[str, PluginInfo]]
 
