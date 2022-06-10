@@ -246,6 +246,7 @@ class StrategyModule(StrategyBase):
                     display.debug("generating all_blocks data")
                     all_blocks = dict((host, []) for host in hosts_left)
                     display.debug("done generating all_blocks data")
+                    tasks_ = []
                     for included_file in included_files:
                         display.debug("processing included file: %s" % included_file._filename)
                         try:
@@ -275,6 +276,9 @@ class StrategyModule(StrategyBase):
                                 for host in hosts_left:
                                     if host in included_file._hosts:
                                         all_blocks[host].append(final_block)
+
+                                tasks_.extend(final_block.get_tasks())
+
                             display.debug("done iterating over new_blocks loaded from include file")
                         except AnsibleParserError:
                             raise
@@ -295,13 +299,7 @@ class StrategyModule(StrategyBase):
                     for host in hosts_left:
                         iterator.add_tasks(host, all_blocks[host])
 
-                    for host, blocks in all_blocks.items():
-                        tasks = []
-                        for block in blocks:
-                            tasks.extend(block.get_tasks())
-                        if tasks:
-                            Task.all_tasks[iterator.cur_task:iterator.cur_task] = tasks
-                            break
+                    Task.all_tasks[iterator.cur_task:iterator.cur_task] = tasks_
 
                     display.debug("done extending task lists")
                     display.debug("done processing included files")
