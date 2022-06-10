@@ -25,8 +25,9 @@ import shlex
 import time
 
 from ansible.errors import AnsibleError
-from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_native
+from ansible.module_utils.six import text_type, string_types
+from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.plugins import AnsiblePlugin
 
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
@@ -60,12 +61,16 @@ class ShellBase(AnsiblePlugin):
         super(ShellBase, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         # set env if needed, deal with environment's 'dual nature' list of dicts or dict
+        # TODO: config system should already resolve this so we should be able to just iterate over dicts
         env = self.get_option('environment')
-        if isinstance(env, list):
-            for env_dict in env:
-                self.env.update(env_dict)
-        else:
-            self.env.update(env)
+        if isinstance(env, string_types):
+            raise AnsibleError('The "envirionment" keyword takes a list of dictionaries or a dictionary, not a string')
+        if not isinstance(env, Sequence):
+            env = [env]
+        for env_dict in env:
+            if not isinstance(env_dict, Mapping):
+                raise AnsibleError('The "envirionment" keyword takes a list of dictionaries (or single dictionary), but got a "%s" instead' % type(env_dict))
+            self.env.update(env_dict)
 
         # We can remove the try: except in the future when we make ShellBase a proper subset of
         # *all* shells.  Right now powershell and third party shells which do not use the
