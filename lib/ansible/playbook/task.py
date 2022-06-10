@@ -86,6 +86,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     # deprecated, used to be loop and loop_args but loop has been repurposed
     _loop_with = FieldAttribute(isa='string', private=True, inherit=False)
 
+    all_tasks = []
+
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
 
@@ -394,6 +396,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
         new_me.implicit = self.implicit
         new_me.resolved_action = self.resolved_action
+        new_me._uuid = self._uuid
 
         return new_me
 
