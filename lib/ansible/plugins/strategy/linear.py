@@ -272,8 +272,6 @@ class StrategyModule(StrategyBase):
                                 final_block = new_block.filter_tagged_tasks(task_vars)
                                 display.debug("done filtering new block on tags")
 
-                                Task.all_tasks[iterator.cur_task:iterator.cur_task] = final_block.get_tasks()
-
                                 for host in hosts_left:
                                     if host in included_file._hosts:
                                         all_blocks[host].append(final_block)
@@ -296,6 +294,14 @@ class StrategyModule(StrategyBase):
 
                     for host in hosts_left:
                         iterator.add_tasks(host, all_blocks[host])
+
+                    for host, blocks in all_blocks.items():
+                        tasks = []
+                        for block in blocks:
+                            tasks.extend(block.get_tasks())
+                        if tasks:
+                            Task.all_tasks[iterator.cur_task:iterator.cur_task] = tasks
+                            break
 
                     display.debug("done extending task lists")
                     display.debug("done processing included files")
