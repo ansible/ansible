@@ -3,7 +3,7 @@
 Steering Committee membership guidelines
 ==========================================
 
-This document describes the expectations and policies related to membership in the `Ansible Community Steering Committee <https://github.com/ansible/community-docs/blob/main/ansible_community_steering_committee.rst>`_ (hereinafter the Committee).
+This document describes the expectations and policies related to membership in the :ref:`Ansible Community Steering Committee <steering_responsibilities>` (hereinafter the Committee).
 
 .. contents:: Topics:
 

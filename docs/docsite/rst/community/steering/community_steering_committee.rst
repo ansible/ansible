@@ -1,12 +1,10 @@
 
-.. _steering_responsibilties:
+.. _steering_responsibilities:
  
 Steering Committee mission and responsibilities
 ===============================================
 
-The Steering Committee mission is to provide continuity, guidance, and
-suggestions to the Ansible community, to ensure the delivery and high quality of the Ansible package. The Committee helps decide the technical direction of the Ansible project and is responsible for approval of new proposals and policies in the community, package, and community collections world, new community collection-inclusion requests, and other technical aspects regarding inclusion and packaging.
-
+The Steering Committee mission is to provide continuity, guidance, and suggestions to the Ansible community to ensure the delivery and high quality of the Ansible package. In addition, the committee helps decide the technical direction of the Ansible project. It is responsible for approving new proposals and policies in the community, package, and community collections world, new community collection-inclusion requests, and other technical aspects regarding inclusion and packaging.
 The Committee should reflect the scope and breadth of the Ansible community.
 
 Steering Committee responsibilities
@@ -117,7 +115,11 @@ When reviewing community collection `inclusion requests <https://github.com/ansi
 
 #. In the course of the review, the Committee member marks items as completed or leaves a comment saying whether the reviewer expects an issue to be addressed or whether it is optional (for example, it could be **MUST FIX:** <what> or **SHOULD FIX:** <what> under an item).
 
-#. For a collection to be included in the Ansible community package, the collection must be reviewed and approved by at least two Committee members.
+#. For a collection to be included in the Ansible community package, the collection:
+
+  * MUST be reviewed and approved by at least two persons, where at least one person is a Steering Committee member.
+  * For a Non-Steering Committee review to be counted for inclusion, it MUST be checked and approved by *another* Steering Committee member.
+  * Reviewers must not be involved significantly in development of the collection. They must declare any potential conflict of interest (for example, being friends/relatives/coworkers of the maintainers/authors, being users of the collection, or having contributed to that collection recently or in the past).
 
 #. After the collection gets two or more Committee member approvals, a Committee member creates a `community topic <https://github.com/ansible-community/community-topics/issues>`_ linked to the corresponding inclusion request. The issue's description says that the collection has been approved by two or more Committee members and establishes a date (a week by default) when the inclusion decision will be considered made. This time period can be used to raise concerns.
 
