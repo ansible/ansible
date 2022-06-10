@@ -98,6 +98,7 @@
 - name: run ansible-galaxy collection install tests for {{ test_name }}
   include_tasks: install.yml
   vars:
+    test_id: '{{ item.name }}'
     test_name: '{{ item.name }}'
     test_server: '{{ item.server }}'
     vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
@@ -116,6 +117,16 @@
   - name: pulp_v3
     server: '{{ pulp_server }}published/api/'
     v3: true
+
+- name: test installing and downloading collections with the range of supported resolvelib versions
+  include_tasks: supported_resolvelib.yml
+  args:
+    apply:
+      environment:
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  loop: '{{ supported_resolvelib_versions }}'
+  loop_control:
+    loop_var: resolvelib_version
 
 - name: publish collection with a dep on another server
   setup_collections:
