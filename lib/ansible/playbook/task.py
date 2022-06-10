@@ -394,6 +394,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
         new_me.implicit = self.implicit
         new_me.resolved_action = self.resolved_action
+        new_me._uuid = self._uuid
 
         return new_me
 
