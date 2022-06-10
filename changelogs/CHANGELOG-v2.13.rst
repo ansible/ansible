@@ -5,6 +5,102 @@ ansible-core 2.13 "Nobody's Fault but Mine" Release Notes
 .. contents:: Topics
 
 
+v2.13.1rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2022-06-13
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Add an 'action_plugin' field for modules in runtime.yml plugin_routing.
+
+  This fixes module_defaults by supporting modules-as-redirected-actions
+  without redirecting module_defaults entries to the common action.
+
+  .. code: yaml
+
+     plugin_routing:
+       action:
+         facts:
+           redirect: ns.coll.eos
+         command:
+           redirect: ns.coll.eos
+       modules:
+         facts:
+           redirect: ns.coll.eos_facts
+         command:
+           redirect: ns.coll.eos_command
+
+  With the runtime.yml above for ns.coll, a task such as
+
+  .. code: yaml
+
+     - hosts: all
+       module_defaults:
+         ns.coll.eos_facts: {'valid_for_eos_facts': 'value'}
+         ns.coll.eos_command: {'not_valid_for_eos_facts': 'value'}
+       tasks:
+         - ns.coll.facts:
+
+  will end up with defaults for eos_facts and eos_command
+  since both modules redirect to the same action.
+
+  To select an action plugin for a module without merging
+  module_defaults, define an action_plugin field for the resolved
+  module in the runtime.yml.
+
+  .. code: yaml
+
+     plugin_routing:
+       modules:
+         facts:
+           redirect: ns.coll.eos_facts
+           action_plugin: ns.coll.eos
+         command:
+           redirect: ns.coll.eos_command
+           action_plugin: ns.coll.eos
+
+  The action_plugin field can be a redirected action plugin, as
+  it is resolved normally.
+
+  Using the modified runtime.yml, the example task will only use
+  the ns.coll.eos_facts defaults.
+- ansible-galaxy - Support resolvelib versions 0.6.x, 0.7.x, and 0.8.x. The full range of supported versions is now >= 0.5.3, < 0.9.0.
+- ansible-test - Add RHEL 9.0 remote support.
+- ansible-test - Add support for Ubuntu VMs using the ``--remote`` option.
+- ansible-test - Add support for exporting inventory with ``ansible-test shell --export {path}``.
+- ansible-test - Add support for multi-arch remotes.
+- ansible-test - Add support for running non-interactive commands with ``ansible-test shell``.
+- ansible-test - Avoid using the ``mock_use_standalone_module`` setting for unit tests running on Python 3.8 or later.
+- ansible-test - Blocking mode is now enforced for stdin, stdout and stderr. If any of these are non-blocking then ansible-test will exit during startup with an error.
+- ansible-test - Improve consistency of output messages by using stdout or stderr for most output, but not both.
+- ansible-test - The ``shell`` command can be used outside a collection if no controller delegation is required.
+
+Bugfixes
+--------
+
+- Add PyYAML >= 5.1 as a dependency of ansible-core to be compatible with Python 3.8+.
+- ansible-config dump - Only display plugin type headers when plugin options are changed if --only-changed is specified.
+- ansible-galaxy - handle unsupported versions of resolvelib gracefully.
+- ansible-test - Fix internal validation of remote completion configuration.
+- ansible-test - Prevent ``--target-`` prefixed options for the ``shell`` command from being combined with legacy environment options.
+- ansible-test - Sanity test output with the ``--lint`` option is no longer mixed in with bootstrapping output.
+- ansible-test - Subprocesses are now isolated from the stdin, stdout and stderr of ansible-test. This avoids issues with subprocesses tampering with the file descriptors, such as SSH making them non-blocking. As a result of this change, subprocess output from unit and integration tests on stderr now go to stdout.
+- ansible-test - Subprocesses no longer have access to the TTY ansible-test is connected to, if any. This maintains consistent behavior between local testing and CI systems, which typically do not provide a TTY. Tests which require a TTY should use pexpect or another mechanism to create a PTY.
+- apt module now correctly handles virtual packages.
+- lookup plugin - catch KeyError when lookup returns dictionary (https://github.com/ansible/ansible/pull/77789).
+- pip - fix cases where resolution of pip Python module fails when importlib.util has not already been imported
+- plugin loader - Sort results when fuzzy matching plugin names (https://github.com/ansible/ansible/issues/77966).
+- plugin loader will now load config data for plugin by name instead of by file to avoid issues with the same file being loaded under different names (fqcn + short name).
+- psrp connection now handles default to inventory_hostname correctly.
+- winrm connection now handles default to inventory_hostname correctly.
+
 v2.13.0
 =======
 
