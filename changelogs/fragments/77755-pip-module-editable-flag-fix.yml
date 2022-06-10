@@ -1,0 +1,4 @@
+bugfixes:
+  - pip - when editable set to true, '-e' flag is passed before each package.
+    When requirments file is used, editable flag does not pass '-e' to avoid
+    errors.
