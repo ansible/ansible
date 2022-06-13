@@ -68,7 +68,7 @@ from ansible.module_utils._text import to_text
 
 
 def locally_installed(module, pkgname):
-    (rc, out, err) = module.run_command(f'rpm -q {pkgname}'.split())
+    (rc, out, err) = module.run_command('rpm -q {0}'.format(pkgname).split())
     return (rc == 0)
 
 
