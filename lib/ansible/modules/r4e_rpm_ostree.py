@@ -60,6 +60,14 @@ EXAMPLES = '''
     state: present
 '''
 
+RETURN = """
+msg:
+    description: status of rpm transaction
+    returned: always
+    type: str
+    sample: "No changes made."
+"""
+
 import os
 import traceback
 
