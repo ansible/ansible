@@ -641,7 +641,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='present', choices=state_map.keys()),
+            state=dict(type='str', default='present', choices=list(state_map.keys())),
             name=dict(type='list', elements='str'),
             version=dict(type='str'),
             requirements=dict(type='str'),
