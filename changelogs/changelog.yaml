@@ -769,3 +769,100 @@ releases:
     - 77535-prevent-losing-unsafe-lookups.yml
     - v2.13.0rc1_summary.yaml
     release_date: '2022-05-02'
+  2.13.1rc1:
+    changes:
+      bugfixes:
+      - Add PyYAML >= 5.1 as a dependency of ansible-core to be compatible with Python
+        3.8+.
+      - ansible-config dump - Only display plugin type headers when plugin options
+        are changed if --only-changed is specified.
+      - ansible-galaxy - handle unsupported versions of resolvelib gracefully.
+      - ansible-test - Fix internal validation of remote completion configuration.
+      - ansible-test - Prevent ``--target-`` prefixed options for the ``shell`` command
+        from being combined with legacy environment options.
+      - ansible-test - Sanity test output with the ``--lint`` option is no longer
+        mixed in with bootstrapping output.
+      - ansible-test - Subprocesses are now isolated from the stdin, stdout and stderr
+        of ansible-test. This avoids issues with subprocesses tampering with the file
+        descriptors, such as SSH making them non-blocking. As a result of this change,
+        subprocess output from unit and integration tests on stderr now go to stdout.
+      - ansible-test - Subprocesses no longer have access to the TTY ansible-test
+        is connected to, if any. This maintains consistent behavior between local
+        testing and CI systems, which typically do not provide a TTY. Tests which
+        require a TTY should use pexpect or another mechanism to create a PTY.
+      - apt module now correctly handles virtual packages.
+      - lookup plugin - catch KeyError when lookup returns dictionary (https://github.com/ansible/ansible/pull/77789).
+      - pip - fix cases where resolution of pip Python module fails when importlib.util
+        has not already been imported
+      - plugin loader - Sort results when fuzzy matching plugin names (https://github.com/ansible/ansible/issues/77966).
+      - plugin loader will now load config data for plugin by name instead of by file
+        to avoid issues with the same file being loaded under different names (fqcn
+        + short name).
+      - psrp connection now handles default to inventory_hostname correctly.
+      - winrm connection now handles default to inventory_hostname correctly.
+      minor_changes:
+      - "Add an 'action_plugin' field for modules in runtime.yml plugin_routing.\n\nThis
+        fixes module_defaults by supporting modules-as-redirected-actions\nwithout
+        redirecting module_defaults entries to the common action.\n\n.. code: yaml\n\n
+        \  plugin_routing:\n     action:\n       facts:\n         redirect: ns.coll.eos\n
+        \      command:\n         redirect: ns.coll.eos\n     modules:\n       facts:\n
+        \        redirect: ns.coll.eos_facts\n       command:\n         redirect:
+        ns.coll.eos_command\n\nWith the runtime.yml above for ns.coll, a task such
+        as\n\n.. code: yaml\n\n   - hosts: all\n     module_defaults:\n       ns.coll.eos_facts:
+        {'valid_for_eos_facts': 'value'}\n       ns.coll.eos_command: {'not_valid_for_eos_facts':
+        'value'}\n     tasks:\n       - ns.coll.facts:\n\nwill end up with defaults
+        for eos_facts and eos_command\nsince both modules redirect to the same action.\n\nTo
+        select an action plugin for a module without merging\nmodule_defaults, define
+        an action_plugin field for the resolved\nmodule in the runtime.yml.\n\n..
+        code: yaml\n\n   plugin_routing:\n     modules:\n       facts:\n         redirect:
+        ns.coll.eos_facts\n         action_plugin: ns.coll.eos\n       command:\n
+        \        redirect: ns.coll.eos_command\n         action_plugin: ns.coll.eos\n\nThe
+        action_plugin field can be a redirected action plugin, as\nit is resolved
+        normally.\n\nUsing the modified runtime.yml, the example task will only use\nthe
+        ns.coll.eos_facts defaults.\n"
+      - ansible-galaxy - Support resolvelib versions 0.6.x, 0.7.x, and 0.8.x. The
+        full range of supported versions is now >= 0.5.3, < 0.9.0.
+      - ansible-test - Add RHEL 9.0 remote support.
+      - ansible-test - Add support for Ubuntu VMs using the ``--remote`` option.
+      - ansible-test - Add support for exporting inventory with ``ansible-test shell
+        --export {path}``.
+      - ansible-test - Add support for multi-arch remotes.
+      - ansible-test - Add support for running non-interactive commands with ``ansible-test
+        shell``.
+      - ansible-test - Avoid using the ``mock_use_standalone_module`` setting for
+        unit tests running on Python 3.8 or later.
+      - ansible-test - Blocking mode is now enforced for stdin, stdout and stderr.
+        If any of these are non-blocking then ansible-test will exit during startup
+        with an error.
+      - ansible-test - Improve consistency of output messages by using stdout or stderr
+        for most output, but not both.
+      - ansible-test - The ``shell`` command can be used outside a collection if no
+        controller delegation is required.
+      release_summary: '| Release Date: 2022-06-13
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Nobody's Fault but Mine
+    fragments:
+    - 77265-module_defaults-with-modules-as-redirected-actions.yaml
+    - 77630-ansible-galaxy-fix-unsupported-resolvelib-version.yml
+    - 77649-support-recent-resolvelib-versions.yml
+    - 77789-catch-keyerror-lookup-dict.yml
+    - 77898-ansible-config-dump-only-changed-all-types.yml
+    - 77936-add-pyyaml-version.yml
+    - ansible-test-ansible-core-mock.yml
+    - ansible-test-multi-arch-remotes.yml
+    - ansible-test-remote-completion-validation.yml
+    - ansible-test-rhel-9.yaml
+    - ansible-test-shell-features.yml
+    - ansible-test-subprocess-isolation.yml
+    - ansible-test-target-options.yml
+    - ansible-test-ubuntu-remote.yml
+    - apt_virtual_fix.yml
+    - config_load_by_name.yml
+    - pip-lazy-import.yml
+    - plugin-loader-deterministic-fuzzy-match.yml
+    - v2.13.1rc1_summary.yaml
+    - windows_conn_option_fix.yml
+    release_date: '2022-06-13'
