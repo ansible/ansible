@@ -17,6 +17,7 @@ module: rpm_ostree_upgrade
 short_description: Manage rpm-ostree upgrade transactions
 description:
     - Manage an rpm-ostree upgrade transactions
+version_added: "2.4.0"
 author:
 - Adam Miller (@maxamillion)
 requirements:
