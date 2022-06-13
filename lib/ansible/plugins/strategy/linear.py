@@ -74,10 +74,14 @@ class StrategyModule(StrategyBase):
         if host_tasks_to_run:
             while True:
                 tasks = [task._uuid for host, (state, task) in host_tasks_to_run]
-                cur_task = Task.all_tasks[iterator.cur_task]
-                iterator.cur_task += 1
-                if cur_task._uuid in tasks:
-                    break
+                try:
+                    cur_task = Task.all_tasks[iterator.cur_task]
+                except IndexError:
+                    iterator.cur_task = 0
+                else:
+                    iterator.cur_task += 1
+                    if cur_task._uuid in tasks:
+                        break
 
             rvals = []
             display.debug("starting to advance hosts")
