@@ -5,6 +5,80 @@ ansible-core 2.12 "Dazed and Confused" Release Notes
 .. contents:: Topics
 
 
+v2.12.7rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2022-06-13
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Add an 'action_plugin' field for modules in runtime.yml plugin_routing.
+
+  This fixes module_defaults by supporting modules-as-redirected-actions
+  without redirecting module_defaults entries to the common action.
+
+  .. code: yaml
+
+     plugin_routing:
+       action:
+         facts:
+           redirect: ns.coll.eos
+         command:
+           redirect: ns.coll.eos
+       modules:
+         facts:
+           redirect: ns.coll.eos_facts
+         command:
+           redirect: ns.coll.eos_command
+
+  With the runtime.yml above for ns.coll, a task such as
+
+  .. code: yaml
+
+     - hosts: all
+       module_defaults:
+         ns.coll.eos_facts: {'valid_for_eos_facts': 'value'}
+         ns.coll.eos_command: {'not_valid_for_eos_facts': 'value'}
+       tasks:
+         - ns.coll.facts:
+
+  will end up with defaults for eos_facts and eos_command
+  since both modules redirect to the same action.
+
+  To select an action plugin for a module without merging
+  module_defaults, define an action_plugin field for the resolved
+  module in the runtime.yml.
+
+  .. code: yaml
+
+     plugin_routing:
+       modules:
+         facts:
+           redirect: ns.coll.eos_facts
+           action_plugin: ns.coll.eos
+         command:
+           redirect: ns.coll.eos_command
+           action_plugin: ns.coll.eos
+
+  The action_plugin field can be a redirected action plugin, as
+  it is resolved normally.
+
+  Using the modified runtime.yml, the example task will only use
+  the ns.coll.eos_facts defaults.
+- ansible-test - Avoid using the ``mock_use_standalone_module`` setting for unit tests running on Python 3.8 or later.
+
+Bugfixes
+--------
+
+- pip - fix cases where resolution of pip Python module fails when importlib.util has not already been imported
+- plugin loader - Sort results when fuzzy matching plugin names (https://github.com/ansible/ansible/issues/77966).
+
 v2.12.6
 =======
 
