@@ -63,9 +63,8 @@ class StrategyModule(StrategyBase):
         state_task_per_host = {}
         for host in hosts:
             state, task  = iterator.get_next_task_for_host(host, peek=True)
-            if task is None:
-                continue
-            state_task_per_host[host.name] = state, task
+            if task is not None:
+                state_task_per_host[host.name] = state, task
 
         if not state_task_per_host:
             return [(h, None) for h in hosts]
