@@ -1,0 +1,2 @@
+bugfixes:
+  - user - Fix error "Permission denied" in user module while generating SSH keys (https://github.com/ansible/ansible/issues/78017).
