@@ -403,7 +403,7 @@ class Constructable(object):
                     trailing_separator = keyed.get('trailing_separator')
                     if trailing_separator is not None and default_value_name is not None:
                         raise AnsibleParserError("parameters are mutually exclusive for keyed groups: default_value|trailing_separator")
-                    if key or (key == '' and default_value_name is not None):
+                    if key or default_value_name:
                         prefix = keyed.get('prefix', '')
                         sep = keyed.get('separator', '_')
                         raw_parent_name = keyed.get('parent_group', None)
@@ -422,16 +422,21 @@ class Constructable(object):
                                 new_raw_group_names.append(default_value_name)
                             else:
                                 new_raw_group_names.append(key)
+                        elif key is None and default_value_name is not None:
+                            new_raw_group_names.append(default_value_name)
                         elif isinstance(key, list):
                             for name in key:
-                                # if list item is empty, 'default_value' will be used as group name
-                                if name == '' and default_value_name is not None:
+                                # if list item is empty or null, 'default_value' will be used as group name
+                                if not name and default_value_name is not None:
                                     new_raw_group_names.append(default_value_name)
                                 else:
                                     new_raw_group_names.append(name)
                         elif isinstance(key, Mapping):
                             for (gname, gval) in key.items():
+                                if gval is None:
+                                    gval = ''
                                 bare_name = '%s%s%s' % (gname, sep, gval)
+
                                 if gval == '':
                                     # key's value is empty
                                     if default_value_name is not None:

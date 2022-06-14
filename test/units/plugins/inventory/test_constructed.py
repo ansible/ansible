@@ -228,7 +228,7 @@ def test_keyed_group_exclusive_argument(inventory_module):
 
 def test_keyed_group_empty_value(inventory_module):
     inventory_module.inventory.add_host('server0')
-    inventory_module.inventory.set_variable('server0', 'tags', {'environment': 'prod', 'status': ''})
+    inventory_module.inventory.set_variable('server0', 'tags', {'environment': 'prod', 'status': '', 'last_status': None})
     host = inventory_module.inventory.get_host('server0')
     keyed_groups = [
         {
@@ -240,13 +240,13 @@ def test_keyed_group_empty_value(inventory_module):
     inventory_module._add_host_to_keyed_groups(
         keyed_groups, host.vars, host.name, strict=False
     )
-    for group_name in ('tag_environment_prod', 'tag_status_'):
+    for group_name in ('tag_environment_prod', 'tag_status_', 'tag_last_status_'):
         assert group_name in inventory_module.inventory.groups
 
 
 def test_keyed_group_dict_with_default_value(inventory_module):
     inventory_module.inventory.add_host('server0')
-    inventory_module.inventory.set_variable('server0', 'tags', {'environment': 'prod', 'status': ''})
+    inventory_module.inventory.set_variable('server0', 'tags', {'environment': 'prod', 'status': '', 'last_status': None})
     host = inventory_module.inventory.get_host('server0')
     keyed_groups = [
         {
@@ -259,7 +259,7 @@ def test_keyed_group_dict_with_default_value(inventory_module):
     inventory_module._add_host_to_keyed_groups(
         keyed_groups, host.vars, host.name, strict=False
     )
-    for group_name in ('tag_environment_prod', 'tag_status_running'):
+    for group_name in ('tag_environment_prod', 'tag_status_running', 'tag_last_status_running'):
         assert group_name in inventory_module.inventory.groups
 
 
@@ -320,7 +320,7 @@ def test_keyed_group_list_with_default_value(inventory_module):
 
 def test_keyed_group_with_trailing_separator(inventory_module):
     inventory_module.inventory.add_host('server0')
-    inventory_module.inventory.set_variable('server0', 'tags', {'environment': 'prod', 'status': ''})
+    inventory_module.inventory.set_variable('server0', 'tags', {'environment': 'prod', 'status': '', 'last_status': None})
     host = inventory_module.inventory.get_host('server0')
     keyed_groups = [
         {
@@ -333,5 +333,5 @@ def test_keyed_group_with_trailing_separator(inventory_module):
     inventory_module._add_host_to_keyed_groups(
         keyed_groups, host.vars, host.name, strict=False
     )
-    for group_name in ('tag_environment_prod', 'tag_status'):
+    for group_name in ('tag_environment_prod', 'tag_status', 'tag_last_status'):
         assert group_name in inventory_module.inventory.groups
