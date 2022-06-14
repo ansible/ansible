@@ -4,6 +4,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ctypes
+import ctypes.util
 import multiprocessing
 import random
 import re
@@ -18,9 +20,11 @@ from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_text, to_bytes
 from ansible.utils.display import Display
 
+CRYPT_NAME = None
 PASSLIB_E = CRYPT_E = None
 HAS_CRYPT = PASSLIB_AVAILABLE = False
 try:
+    raise Exception('boom')
     import passlib
     import passlib.hash
     from passlib.utils.handlers import HasRawSalt, PrefixWrapper
@@ -33,7 +37,25 @@ except Exception as e:
     PASSLIB_E = e
 
 try:
-    import crypt
+    # prefer ``libcrypt``/``libxcrypt`` over ``libc``
+    for _lib_name, _allow_none in (('crypt', False), ('c', True)):
+        _lib_so = ctypes.util.find_library(_lib_name)
+        if not _lib_so and not _allow_none:
+            # None will load ``libc`` in LoadLibrary, if we requested ``crypt``
+            # we don't want to allow that becoming ``libc``
+            continue
+        _lib = ctypes.cdll.LoadLibrary(_lib_so)
+        try:
+            crypt = _lib.crypt
+        except AttributeError:
+            # Whatever lib this is exists, but is missing ``crypt``
+            continue
+        crypt.argtypes = [ctypes.c_char_p, ctypes.c_char_p]
+        crypt.restype = ctypes.c_char_p
+        break
+    else:
+        raise ImportError('Cannot find crypt implementation')
+    CRYPT_NAME = _lib_name
     HAS_CRYPT = True
 except Exception as e:
     CRYPT_E = e
@@ -92,13 +114,15 @@ class CryptHash(BaseHash):
         super(CryptHash, self).__init__(algorithm)
 
         if not HAS_CRYPT:
-            raise AnsibleError("crypt.crypt cannot be used as the 'crypt' python library is not installed or is unusable.", orig_exc=CRYPT_E)
+            raise AnsibleError("crypt cannot be used as the 'libcrypt' library is not installed or is unusable.", orig_exc=CRYPT_E)
 
-        if sys.platform.startswith('darwin'):
-            raise AnsibleError("crypt.crypt not supported on Mac OS X/Darwin, install passlib python module")
+        if sys.platform.startswith('darwin') and CRYPT_NAME != 'crypt':
+            # crypt in macos doesn't implement what we need. Installing libxcrypt or passlib offer usable
+            # mechanisms for password hashing
+            raise AnsibleError("crypt not supported on Mac OS X/Darwin, install libxcrypt or the passlib python module")
 
         if algorithm not in self.algorithms:
-            raise AnsibleError("crypt.crypt does not support '%s' algorithm" % self.algorithm)
+            raise AnsibleError("crypt does not support '%s' algorithm" % self.algorithm)
         self.algo_data = self.algorithms[algorithm]
 
     def hash(self, secret, salt=None, salt_size=None, rounds=None, ident=None):
@@ -146,7 +170,7 @@ class CryptHash(BaseHash):
         # crypt.crypt on Python < 3.9 returns None if it cannot parse saltstring
         # On Python >= 3.9, it throws OSError.
         try:
-            result = crypt.crypt(secret, saltstring)
+            result = to_text(crypt(to_bytes(secret), to_bytes(saltstring)))
             orig_exc = None
         except OSError as e:
             result = None
@@ -256,7 +280,7 @@ def passlib_or_crypt(secret, algorithm, salt=None, salt_size=None, rounds=None, 
         return PasslibHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
     if HAS_CRYPT:
         return CryptHash(algorithm).hash(secret, salt=salt, salt_size=salt_size, rounds=rounds, ident=ident)
-    raise AnsibleError("Unable to encrypt nor hash, either crypt or passlib must be installed.", orig_exc=CRYPT_E)
+    raise AnsibleError("Unable to encrypt nor hash, either crypt or passlib must be installed", orig_exc=CRYPT_E)
 
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None, ident=None):
