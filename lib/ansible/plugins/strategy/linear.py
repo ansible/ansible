@@ -68,7 +68,7 @@ class StrategyModule(StrategyBase):
             state_task_per_host[host.name] = state, task
 
         if not state_task_per_host:
-            return []
+            return [(h, None) for h in hosts]
 
         task_uuids = [t._uuid for s, t in state_task_per_host.values()]
         while True:
