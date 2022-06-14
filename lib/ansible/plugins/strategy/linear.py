@@ -62,9 +62,9 @@ class StrategyModule(StrategyBase):
 
         state_task_per_host = {}
         for host in hosts:
-            state, task  = iterator.get_next_task_for_host(host, peek=True)
+            state, task = iterator.get_next_task_for_host(host, peek=True)
             if task is not None:
-                state_task_per_host[host.name] = state, task
+                state_task_per_host[host] = state, task
 
         if not state_task_per_host:
             return [(h, None) for h in hosts]
@@ -82,8 +82,7 @@ class StrategyModule(StrategyBase):
                     break
 
         host_tasks = []
-        for host in hosts:
-            state, task = state_task_per_host.get(host.name)
+        for host, (state, task) in state_task_per_host.items():
             if cur_task._uuid == task._uuid:
                 iterator.set_state_for_host(host.name, state)
                 host_tasks.append((host, task))
