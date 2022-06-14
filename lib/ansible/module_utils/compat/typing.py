@@ -21,5 +21,5 @@ except Exception:  # pylint: disable=broad-except
 try:
     cast
 except NameError:
-    def cast(typ, val):
+    def cast(typ, val):  # type: ignore[no-redef]
         return val
