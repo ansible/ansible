@@ -60,47 +60,37 @@ class StrategyModule(StrategyBase):
         noop_task.implicit = True
         noop_task.set_loader(iterator._play._loader)
 
-        host_tasks = {}
-        display.debug("building list of next tasks for hosts")
+        state_task_per_host = {}
         for host in hosts:
-            host_tasks[host.name] = iterator.get_next_task_for_host(host, peek=True)
-        display.debug("done building task lists")
+            state, task  = iterator.get_next_task_for_host(host, peek=True)
+            if task is None:
+                continue
+            state_task_per_host[host.name] = state, task
 
-        display.debug("counting tasks in each state of execution")
-        host_tasks_to_run = [(host, state_task)
-                             for host, state_task in host_tasks.items()
-                             if state_task and state_task[1]]
+        if not state_task_per_host:
+            return []
 
-        if host_tasks_to_run:
-            while True:
-                tasks = [task._uuid for host, (state, task) in host_tasks_to_run]
-                try:
-                    cur_task = Task.all_tasks[iterator.cur_task]
-                except IndexError:
-                    iterator.cur_task = 0
-                else:
-                    iterator.cur_task += 1
-                    if cur_task._uuid in tasks:
-                        break
+        task_uuids = [t._uuid for s, t in state_task_per_host.values()]
+        while True:
+            try:
+                cur_task = Task.all_tasks[iterator.cur_task]
+            except IndexError:
+                # pick up any tasks left after clear_host_errors
+                iterator.cur_task = 0
+            else:
+                iterator.cur_task += 1
+                if cur_task._uuid in task_uuids:
+                    break
 
-            rvals = []
-            display.debug("starting to advance hosts")
-            for host in hosts:
-                host_state_task = host_tasks.get(host.name)
-                if host_state_task is None:
-                    continue
-                (state, task) = host_state_task
-                if task is None:
-                    continue
-                if cur_task._uuid == task._uuid:
-                    iterator.set_state_for_host(host.name, state)
-                    rvals.append((host, task))
-                else:
-                    rvals.append((host, noop_task))
-            display.debug("done advancing hosts to next task")
-            return rvals
-
-        return [(host, None) for host in hosts]
+        host_tasks = []
+        for host in hosts:
+            state, task = state_task_per_host.get(host.name)
+            if cur_task._uuid == task._uuid:
+                iterator.set_state_for_host(host.name, state)
+                host_tasks.append((host, task))
+            else:
+                host_tasks.append((host, noop_task))
+        return host_tasks
 
     def run(self, iterator, play_context):
         '''
@@ -250,7 +240,7 @@ class StrategyModule(StrategyBase):
                     display.debug("generating all_blocks data")
                     all_blocks = dict((host, []) for host in hosts_left)
                     display.debug("done generating all_blocks data")
-                    tasks_ = []
+                    included_tasks = []
                     for included_file in included_files:
                         display.debug("processing included file: %s" % included_file._filename)
                         try:
@@ -281,7 +271,7 @@ class StrategyModule(StrategyBase):
                                     if host in included_file._hosts:
                                         all_blocks[host].append(final_block)
 
-                                tasks_.extend(final_block.get_tasks())
+                                included_tasks.extend(final_block.get_tasks())
 
                             display.debug("done iterating over new_blocks loaded from include file")
                         except AnsibleParserError:
@@ -303,7 +293,7 @@ class StrategyModule(StrategyBase):
                     for host in hosts_left:
                         iterator.add_tasks(host, all_blocks[host])
 
-                    Task.all_tasks[iterator.cur_task:iterator.cur_task] = tasks_
+                    Task.all_tasks[iterator.cur_task:iterator.cur_task] = included_tasks
 
                     display.debug("done extending task lists")
                     display.debug("done processing included files")
