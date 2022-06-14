@@ -472,6 +472,7 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.sys_info import get_platform_subclass
+import ansible.module_utils.compat.typing as t
 
 
 class StructSpwdType(ctypes.Structure):
@@ -489,7 +490,12 @@ class StructSpwdType(ctypes.Structure):
 
 
 try:
-    _LIBC = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
+    _LIBC = ctypes.cdll.LoadLibrary(
+        t.cast(
+            str,
+            ctypes.util.find_library('c')
+        )
+    )
     _LIBC.getspnam.argtypes = (ctypes.c_char_p,)
     _LIBC.getspnam.restype = ctypes.POINTER(StructSpwdType)
     HAVE_SPWD = True
