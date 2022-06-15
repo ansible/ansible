@@ -26,6 +26,7 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
+from ansible.plugins.list import list_plugins
 from ansible.plugins.loader import module_loader, fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.color import stringc
@@ -150,17 +151,12 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.prompt = stringc(prompt, color, wrap_nonvisible_chars=True)
 
     def list_modules(self):
-        modules = set()
         if context.CLIARGS['module_path']:
             for path in context.CLIARGS['module_path']:
                 if path:
                     module_loader.add_directory(path)
 
-        module_paths = module_loader._get_paths()
-        for path in module_paths:
-            if path is not None:
-                modules.update(self._find_modules_in_path(path))
-        return modules
+        return list_plugins('module')
 
     def _find_modules_in_path(self, path):
 
