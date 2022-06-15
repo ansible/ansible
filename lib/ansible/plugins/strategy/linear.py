@@ -72,7 +72,7 @@ class StrategyModule(StrategyBase):
         task_uuids = [t._uuid for s, t in state_task_per_host.values()]
         while True:
             try:
-                cur_task = Task.all_tasks[iterator.cur_task]
+                cur_task = iterator.all_tasks[iterator.cur_task]
             except IndexError:
                 # pick up any tasks left after clear_host_errors
                 iterator.cur_task = 0
@@ -291,7 +291,7 @@ class StrategyModule(StrategyBase):
                     for host in hosts_left:
                         iterator.add_tasks(host, all_blocks[host])
 
-                    Task.all_tasks[iterator.cur_task:iterator.cur_task] = included_tasks
+                    iterator.all_tasks[iterator.cur_task:iterator.cur_task] = included_tasks
 
                     display.debug("done extending task lists")
                     display.debug("done processing included files")

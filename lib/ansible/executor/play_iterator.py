@@ -162,13 +162,13 @@ class PlayIterator:
 
         setup_block = setup_block.filter_tagged_tasks(all_vars)
         self._blocks.append(setup_block)
-        Task.all_tasks.extend(setup_block.get_tasks())
+        self.all_tasks = setup_block.get_tasks()
 
         for block in self._play.compile():
             new_block = block.filter_tagged_tasks(all_vars)
             if new_block.has_tasks():
                 self._blocks.append(new_block)
-                Task.all_tasks.extend(new_block.get_tasks())
+                self.all_tasks.extend(new_block.get_tasks())
 
         self._host_states = {}
         start_at_matched = False
