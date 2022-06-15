@@ -457,6 +457,7 @@ Variable                    Description
 To disable the ``ansible_loop.allitems`` item, to reduce memory consumption, set ``loop_control.extended_allitems: no``.
 
 ::
+
       loop_control:
         extended: yes
         extended_allitems: no
