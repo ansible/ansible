@@ -33,17 +33,16 @@ notes:
     - Some distros will always record tasks involving the setting of passwords as changed. This is due to debconf-get-selections masking passwords.
     - It is highly recommended to add I(no_log=True) to task while handling sensitive information using this module.
     - The debconf module does not reconfigure packages, it just updates the debconf database.
-      An additional step is needed (typically via I(notify) if debconf makes a change)
+      An additional step is needed (typically with I(notify) if debconf makes a change)
       to reconfigure the package and apply the changes.
       debconf is extensively used for pre-seeding configuration prior to installation
       rather than modifying configurations.
-      So, whilst dpkg-reconfigure does use debconf data, it is not always authoritative
+      So, while dpkg-reconfigure does use debconf data, it is not always authoritative
       and you may need to check how your package is handled.
-    - "As an additional 'gotcha', dpkg-reconfigure is a 3-phase process. It invokes the
-      control scripts from the C(/var/lib/dpkg/info) directory with the following arguments:"
-    - C(<package>.prerm  reconfigure <version>)
-    - C(<package>.config reconfigure <version>)
-    - C(<package>.postinst control <version>)
+    - Also note dpkg-reconfigure is a 3-phase process. It invokes the
+      control scripts from the C(/var/lib/dpkg/info) directory with the
+      C(<package>.prerm  reconfigure <version>),
+      C(<package>.config reconfigure <version>) and C(<package>.postinst control <version>) arguments.
     - The main issue is that the C(<package>.config reconfigure) step for many packages
       will first reset the debconf database (overriding changes made by this module) by
       checking the on-disk configuration. If this is the case for your package then
