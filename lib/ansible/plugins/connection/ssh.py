@@ -1408,7 +1408,7 @@ class Connection(ConnectionBase):
         if args.t:
             return True
 
-        for arg in args.o:
+        for arg in args.o or []:
             val = arg.split('=', 1)
             if val[0].lower() == 'requesttty':
                 if val[1].lower() in ('yes', 'force'):
