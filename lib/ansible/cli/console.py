@@ -580,7 +580,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         try:
             attr = object.__getattribute__(self, name)
         except Exception as e:
-            module = None
+            attr = None
             if name.startswith('do_'):
                 module = self.name.replace('do_', '')
                 if module_loader.find_plugin(module):
@@ -591,8 +591,10 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 if module_loader.find_plugin(module):
                     setattr(self, name, lambda module=module: self.helpdefault(module))
                     attr = object.__getattribute__(self, name)
-            else:
+
+            if attr is None:
                 raise
+
         return attr
 
 
