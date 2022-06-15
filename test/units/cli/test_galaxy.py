@@ -324,15 +324,6 @@ class ValidRoleTests(object):
         for d in self.expected_role_dirs:
             self.assertTrue(os.path.isdir(os.path.join(self.role_dir, d)), msg="Expected role subdirectory {0} doesn't exist".format(d))
 
-    def test_travis_yml(self):
-        with open(os.path.join(self.role_dir, '.travis.yml'), 'r') as f:
-            contents = f.read()
-
-        with open(os.path.join(self.role_skeleton_path, '.travis.yml'), 'r') as f:
-            expected_contents = f.read()
-
-        self.assertEqual(expected_contents, contents, msg='.travis.yml does not match expected')
-
     def test_readme_contents(self):
         with open(os.path.join(self.role_dir, 'README.md'), 'r') as readme:
             contents = readme.read()
