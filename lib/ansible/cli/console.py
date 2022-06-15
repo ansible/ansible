@@ -82,7 +82,6 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.loader = None
         self.passwords = dict()
 
-        self.modules = None
         self.cwd = '*'
 
         # Defaults for these are set from the CLI in run()
@@ -94,6 +93,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.diff = None
         self.forks = None
         self.task_timeout = None
+        self.collections = None
 
         cmd.Cmd.__init__(self)
 
@@ -151,35 +151,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.prompt = stringc(prompt, color, wrap_nonvisible_chars=True)
 
     def list_modules(self):
-        if context.CLIARGS['module_path']:
-            for path in context.CLIARGS['module_path']:
-                if path:
-                    module_loader.add_directory(path)
-
-        return list_plugins('module')
-
-    def _find_modules_in_path(self, path):
-
-        if os.path.isdir(path):
-            for module in os.listdir(path):
-                if module.startswith('.'):
-                    continue
-                elif os.path.isdir(module):
-                    self._find_modules_in_path(module)
-                elif module.startswith('__'):
-                    continue
-                elif any(module.endswith(x) for x in C.REJECT_EXTS):
-                    continue
-                elif module in C.IGNORE_FILES:
-                    continue
-                elif module.startswith('_'):
-                    fullpath = '/'.join([path, module])
-                    if os.path.islink(fullpath):  # avoids aliases
-                        continue
-                    module = module.replace('_', '', 1)
-
-                module = os.path.splitext(module)[0]  # removes the extension
-                yield module
+        return list_plugins('module', self.collections)
 
     def default(self, arg, forceshell=False):
         """ actually runs modules """
@@ -190,16 +162,19 @@ class ConsoleCLI(CLI, cmd.Cmd):
             display.error("No host found")
             return False
 
-        if arg.split()[0] in self.modules:
-            module = arg.split()[0]
-            module_args = ' '.join(arg.split()[1:])
-        else:
-            module = 'shell'
-            module_args = arg
+        # defaults
+        module = 'shell'
+        module_args = arg
 
-        if forceshell is True:
-            module = 'shell'
-            module_args = arg
+        if forceshell is not True:
+            possible_module, *possible_args = arg.split()
+            if module_loader.find_plugin(possible_module):
+                # we found module!
+                module = possible_module
+                if possible_args:
+                    module_args = ' '.join(possible_args)
+                else:
+                    module_args = ''
 
         if self.callback:
             cb = self.callback
@@ -223,6 +198,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 become_method=self.become_method,
                 check_mode=self.check_mode,
                 diff=self.diff,
+                collections=self.collections,
             )
             play = Play().load(play_ds, variable_manager=self.variable_manager, loader=self.loader)
         except Exception as e:
@@ -258,8 +234,10 @@ class ConsoleCLI(CLI, cmd.Cmd):
             display.error('User interrupted execution')
             return False
         except Exception as e:
+            if self.verbosity >= 3:
+                import traceback
+                display.v(traceback.format_exc())
             display.error(to_text(e))
-            # FIXME: add traceback in very very verbose mode
             return False
 
     def emptyline(self):
@@ -279,21 +257,61 @@ class ConsoleCLI(CLI, cmd.Cmd):
         """
         self.default(arg, True)
 
+    def help_shell(self):
+        display.display("You can run shell commands through the shell module.")
+
     def do_forks(self, arg):
         """Set the number of forks"""
-        if not arg:
-            display.display('Usage: forks <number>')
-            return
+        if arg:
+            try:
+                forks = int(arg)
+            except TypeError:
+                display.error('Invalid argument for "forks"')
+                self.usage_forks()
 
-        forks = int(arg)
-        if forks <= 0:
-            display.display('forks must be greater than or equal to 1')
-            return
+            if forks > 0:
+                self.forks = forks
+                self.set_prompt()
 
-        self.forks = forks
-        self.set_prompt()
+            else:
+                display.display('forks must be greater than or equal to 1')
+        else:
+            self.usage_forks()
+
+    def help_forks(self):
+        display.display("Set the number of forks to use per task")
+        self.usage_forks()
+
+    def usage_forks(self):
+        display.display('Usage: forks <number>')
 
     do_serial = do_forks
+    help_serial = help_forks
+
+    def do_collections(self, arg):
+        """Set list of collections for 'short name' usage"""
+        if arg in ('', 'none'):
+            self.collections = None
+        elif not arg:
+            self.usage_collections()
+        else:
+            collections = arg.split(',')
+            for collection in collections:
+                if self.collections is None:
+                    self.collections = []
+                self.collections.append(collection.strip())
+
+        if self.collections:
+            display.v('Collections name seearch is set to: %s' % ', '.join(self.collections))
+        else:
+            display.v('Collections name seearch is using defaults')
+
+    def help_collections(self):
+        display.display("Set the collection name search path when using short names for plugins")
+        self.usage_collections()
+
+    def usage_collections(self):
+        display.display('Usage: collections <collection1>[, <collection2> ...]\n Use empty quotes or "none" to reset to default.\n')
 
     def do_verbosity(self, arg):
         """Set verbosity level"""
@@ -305,6 +323,9 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 display.v('verbosity level set to %s' % arg)
             except (TypeError, ValueError) as e:
                 display.error('The verbosity must be a valid integer: %s' % to_text(e))
+
+    def help_verbosity(self):
+        display.display("Set the verbosity level, equivalent to -v for 1 and -vvvv for 4.")
 
     def do_cd(self, arg):
         """
@@ -326,14 +347,27 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         self.set_prompt()
 
+    def help_cd(self):
+        display.display("Change active host/group. ")
+        self.usage_cd()
+
+    def usage_cd(self):
+        display.display("Usage: cd <group>|<host>|<host pattern>")
+
     def do_list(self, arg):
         """List the hosts in the current group"""
-        if arg == 'groups':
+        if not arg:
+            for host in self.selected:
+                display.display(host.name)
+        elif arg == 'groups':
             for group in self.groups:
                 display.display(group)
         else:
-            for host in self.selected:
-                display.display(host.name)
+            display.error('Invalid option passed to "list"')
+            self.help_list()
+
+    def help_list(self):
+        display.display("List the hosts in the current group or a list of groups if you add 'groups'.")
 
     def do_become(self, arg):
         """Toggle whether plays run with become"""
@@ -344,6 +378,9 @@ class ConsoleCLI(CLI, cmd.Cmd):
         else:
             display.display("Please specify become value, e.g. `become yes`")
 
+    def help_become(self):
+        display.display("Toggle wheether the tasks are run with become")
+
     def do_remote_user(self, arg):
         """Given a username, set the remote user plays are run by"""
         if arg:
@@ -351,6 +388,9 @@ class ConsoleCLI(CLI, cmd.Cmd):
             self.set_prompt()
         else:
             display.display("Please specify a remote user, e.g. `remote_user root`")
+
+    def help_remote_user(self):
+        display.display("Set the user for use as login to the remote target")
 
     def do_become_user(self, arg):
         """Given a username, set the user that plays are run by when using become"""
@@ -361,6 +401,9 @@ class ConsoleCLI(CLI, cmd.Cmd):
             display.v("Current user is %s" % self.become_user)
         self.set_prompt()
 
+    def help_become_user(self):
+        display.display("Set the user for use as in privilege escalation (which remote user attempts to 'become' when become is enabled)")
+
     def do_become_method(self, arg):
         """Given a become_method, set the privilege escalation method when using become"""
         if arg:
@@ -369,6 +412,9 @@ class ConsoleCLI(CLI, cmd.Cmd):
         else:
             display.display("Please specify a become_method, e.g. `become_method su`")
             display.v("Current become_method is %s" % self.become_method)
+
+    def help_become_method(self):
+        display.display("Set the privilege escalation plugin to use when become is enabled")
 
     def do_check(self, arg):
         """Toggle whether plays run with check mode"""
@@ -379,6 +425,9 @@ class ConsoleCLI(CLI, cmd.Cmd):
             display.display("Please specify check mode value, e.g. `check yes`")
             display.v("check mode is currently %s." % self.check_mode)
 
+    def help_check(self):
+        display.display("Toggle check_mode for the tasks")
+
     def do_diff(self, arg):
         """Toggle whether plays run with diff"""
         if arg:
@@ -387,6 +436,9 @@ class ConsoleCLI(CLI, cmd.Cmd):
         else:
             display.display("Please specify a diff value , e.g. `diff yes`")
             display.v("diff mode is currently %s" % self.diff)
+
+    def help_diff(self):
+        display.display("Toggle diff output for the tasks")
 
     def do_timeout(self, arg):
         """Set the timeout"""
@@ -400,17 +452,28 @@ class ConsoleCLI(CLI, cmd.Cmd):
             except (TypeError, ValueError) as e:
                 display.error('The timeout must be a valid positive integer, or 0 to disable: %s' % to_text(e))
         else:
-            display.display('Usage: timeout <seconds>')
+            self.usage_timeout()
+
+    def help_timeout(self):
+        display.display("Set task timeout in seconds")
+        self.usage_timeout()
+
+    def usage_timeout(self):
+        display.display('Usage: timeout <seconds>')
 
     def do_exit(self, args):
         """Exits from the console"""
         sys.stdout.write('\nAnsible-console was exited.\n')
         return -1
 
+    def help_exit(self):
+        display.display("LEAVE!")
+
     do_EOF = do_exit
+    help_EOF = help_exit
 
     def helpdefault(self, module_name):
-        if module_name in self.modules:
+        if module_name:
             in_path = module_loader.find_plugin(module_name)
             if in_path:
                 oc, a, _dummy1, _dummy2 = plugin_docs.get_docstring(in_path, fragment_loader)
@@ -424,6 +487,9 @@ class ConsoleCLI(CLI, cmd.Cmd):
             else:
                 display.error('%s is not a valid command, use ? to list all valid commands.' % module_name)
 
+    def help_help(self):
+        display.warning("Don't be redundant!")
+
     def complete_cd(self, text, line, begidx, endidx):
         mline = line.partition(' ')[2]
         offs = len(mline) - len(text)
@@ -436,7 +502,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
         return [to_native(s)[offs:] for s in completions if to_native(s).startswith(to_native(mline))]
 
     def completedefault(self, text, line, begidx, endidx):
-        if line.split()[0] in self.modules:
+        print(line)
+        if line.split()[0] in list_modules():
             mline = line.split(' ')[-1]
             offs = len(mline) - len(text)
             completions = self.module_args(line.split()[0])
@@ -469,7 +536,13 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.forks = context.CLIARGS['forks']
         self.task_timeout = context.CLIARGS['task_timeout']
 
-        # dynamically add modules as commands
+        # set module path if needed
+        if context.CLIARGS['module_path']:
+            for path in context.CLIARGS['module_path']:
+                if path:
+                    module_loader.add_directory(path)
+
+        # dynamically add 'cannonical' modules as commands, aliases coudld be used and dynamically loaded
         self.modules = self.list_modules()
         for module in self.modules:
             setattr(self, 'do_' + module, lambda arg, module=module: self.default(module + ' ' + arg))
@@ -501,6 +574,25 @@ class ConsoleCLI(CLI, cmd.Cmd):
         atexit.register(readline.write_history_file, histfile)
         self.set_prompt()
         self.cmdloop()
+
+    def __getattribute__(self, name):
+        display.debug('n', name)
+        try:
+            attr = object.__getattribute__(self, name)
+        except Exception as e:
+            module = None
+            if name.startswith('do_'):
+                module = self.name.replace('do_', '')
+                setattr(self, name, lambda arg, module=module: self.default(module + ' ' + arg))
+                attr = object.__getattribute__(self, name)
+            elif name.startswith('help_'):
+                module = self.name.replace('help_', '')
+                setattr(self, name, lambda module=module: self.helpdefault(module))
+                attr = object.__getattribute__(self, name)
+            else:
+                raise
+        display.debug(attr)
+        return attr
 
 
 def main(args=None):
