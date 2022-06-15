@@ -221,6 +221,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 )
 
                 result = self._tqm.run(play)
+                display.debug(result)
             finally:
                 if self._tqm:
                     self._tqm.cleanup()
@@ -576,22 +577,22 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.cmdloop()
 
     def __getattribute__(self, name):
-        display.debug('n', name)
         try:
             attr = object.__getattribute__(self, name)
         except Exception as e:
             module = None
             if name.startswith('do_'):
                 module = self.name.replace('do_', '')
-                setattr(self, name, lambda arg, module=module: self.default(module + ' ' + arg))
-                attr = object.__getattribute__(self, name)
+                if module_loader.find_plugin(module):
+                    setattr(self, name, lambda arg, module=module: self.default(module + ' ' + arg))
+                    attr = object.__getattribute__(self, name)
             elif name.startswith('help_'):
                 module = self.name.replace('help_', '')
-                setattr(self, name, lambda module=module: self.helpdefault(module))
-                attr = object.__getattribute__(self, name)
+                if module_loader.find_plugin(module):
+                    setattr(self, name, lambda module=module: self.helpdefault(module))
+                    attr = object.__getattribute__(self, name)
             else:
                 raise
-        display.debug(attr)
         return attr
 
 
