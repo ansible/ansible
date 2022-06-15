@@ -20,20 +20,8 @@ An Ansible role has a defined directory structure with eight main standard direc
     site.yml
     webservers.yml
     fooservers.yml
-    roles/
-        common/
-            tasks/
-            handlers/
-            library/
-            files/
-            templates/
-            vars/
-            defaults/
-            meta/
-        webservers/
-            tasks/
-            defaults/
-            meta/
+.. include:: shared_snippets/role_directory.txt
+
 
 By default Ansible will look in each directory within a role for a ``main.yml`` file for relevant content (also ``main.yaml`` and ``main``):
 

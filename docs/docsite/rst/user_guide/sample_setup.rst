@@ -16,7 +16,7 @@ Sample directory layout
 
 This layout organizes most tasks in roles, with a single inventory file for each environment and a few playbooks in the top-level directory:
 
-  .. code-block:: console
+.. code-block:: console
 
     production                # inventory file for production servers
     staging                   # inventory file for staging environment
@@ -37,31 +37,7 @@ This layout organizes most tasks in roles, with a single inventory file for each
     dbservers.yml             # playbook for dbserver tier
     tasks/                    # task files included from playbooks
         webservers-extra.yml  # <-- avoids confusing playbook with task files
-
-    roles/
-        common/               # this hierarchy represents a "role"
-            tasks/            #
-                main.yml      #  <-- tasks file can include smaller files if warranted
-            handlers/         #
-                main.yml      #  <-- handlers file
-            templates/        #  <-- files for use with the template resource
-                ntp.conf.j2   #  <------- templates end in .j2
-            files/            #
-                bar.txt       #  <-- files for use with the copy resource
-                foo.sh        #  <-- script files for use with the script resource
-            vars/             #
-                main.yml      #  <-- variables associated with this role
-            defaults/         #
-                main.yml      #  <-- default lower priority variables for this role
-            meta/             #
-                main.yml      #  <-- role dependencies
-            library/          # roles can also include custom modules
-            module_utils/     # roles can also include custom module_utils
-            lookup_plugins/   # or other types of plugins, like lookup in this case
-
-        webtier/              # same kind of structure as "common" was above, done for the webtier role
-        monitoring/           # ""
-        fooapp/               # ""
+.. include:: shared_snippets/role_directory.txt
 
 .. note:: By default, Ansible assumes your playbooks are stored in one directory with roles stored in a sub-directory called ``roles/``. As you use Ansible to automate more tasks, you may want to move your playbooks into a sub-directory called ``playbooks/``. If you do this, you must configure the path to your ``roles/`` directory using the ``roles_path`` setting in ansible.cfg.
 
