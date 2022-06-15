@@ -156,10 +156,10 @@ else:
 
 if HAS_TOML:
     # prefer toml if installed, since it supports both encoding and decoding
-    toml_loads = toml.loads
+    toml_loads = toml.loads  # type: ignore[assignment]
     TOMLDecodeError = toml.TomlDecodeError  # type: t.Any
 elif HAS_TOMLLIB:
-    toml_loads = tomllib.loads
+    toml_loads = tomllib.loads  # type: ignore[assignment]
     TOMLDecodeError = tomllib.TOMLDecodeError  # type: t.Any  # type: ignore[no-redef]
 
 
