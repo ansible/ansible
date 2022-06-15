@@ -80,6 +80,66 @@ pip_install() {
     done
 }
 
+bootstrap_remote_alpine()
+{
+    py_pkg_prefix="py3"
+
+    packages="
+        bash
+        gcc
+        python3-dev
+        ${py_pkg_prefix}-pip
+        "
+
+    if [ "${controller}" ]; then
+        packages="
+            ${packages}
+            ${py_pkg_prefix}-cryptography
+            ${py_pkg_prefix}-packaging
+            ${py_pkg_prefix}-yaml
+            ${py_pkg_prefix}-jinja2
+            ${py_pkg_prefix}-resolvelib
+            "
+    fi
+
+    while true; do
+        # shellcheck disable=SC2086
+        apk add -q ${packages} \
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
+    done
+}
+
+bootstrap_remote_fedora()
+{
+    py_pkg_prefix="python3"
+
+    packages="
+        gcc
+        ${py_pkg_prefix}-devel
+        "
+
+    if [ "${controller}" ]; then
+        packages="
+            ${packages}
+            ${py_pkg_prefix}-cryptography
+            ${py_pkg_prefix}-jinja2
+            ${py_pkg_prefix}-packaging
+            ${py_pkg_prefix}-pyyaml
+            ${py_pkg_prefix}-resolvelib
+            "
+    fi
+
+    while true; do
+        # shellcheck disable=SC2086
+        dnf install -q -y ${packages} \
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
+    done
+}
+
 bootstrap_remote_freebsd()
 {
     if [ "${python_version}" = "2.7" ]; then
@@ -287,21 +347,42 @@ bootstrap_remote_ubuntu()
 
     packages="
         gcc
-        ${py_pkg_prefix}-dev
-        ${py_pkg_prefix}-pip
-        ${py_pkg_prefix}-venv
+        python${python_version}-dev
+        python3-pip
+        python${python_version}-venv
         "
 
     if [ "${controller}" ]; then
-        # The resolvelib package is not listed here because the available version (0.8.1) is incompatible with ansible.
-        # Instead, ansible-test will install it using pip.
+        cryptography_pkg="${py_pkg_prefix}-cryptography"
+        jinja2_pkg="${py_pkg_prefix}-jinja2"
+        packaging_pkg="${py_pkg_prefix}-packaging"
+        pyyaml_pkg="${py_pkg_prefix}-yaml"
+        resolvelib_pkg="${py_pkg_prefix}-resolvelib"
+
+        # Declare platforms which do not have supporting OS packages available.
+        # For these ansible-test will use pip to install the requirements instead.
+        # Only the platform is checked since Ubuntu shares Python packages across Python versions.
+        case "${platform_version}" in
+            "20.04")
+                jinja2_pkg=""  # too old
+                resolvelib_pkg=""  # not available
+                ;;
+        esac
+
         packages="
             ${packages}
-            ${py_pkg_prefix}-cryptography
-            ${py_pkg_prefix}-jinja2
-            ${py_pkg_prefix}-packaging
-            ${py_pkg_prefix}-yaml
+            ${cryptography_pkg}
+            ${jinja2_pkg}
+            ${packaging_pkg}
+            ${pyyaml_pkg}
+            ${resolvelib_pkg}
             "
+
+        if [ "${platform_version}/${python_version}" = "20.04/3.9" ]; then
+            # Install pyyaml using pip so libyaml support is available on Python 3.9.
+            # The OS package install (which is installed by default) only has a .so file for Python 3.8.
+            pip_install "--upgrade pyyaml"
+        fi
     fi
 
     while true; do
@@ -329,6 +410,8 @@ bootstrap_remote()
         python_package_version="$(echo "${python_version}" | tr -d '.')"
 
         case "${platform}" in
+            "alpine") bootstrap_remote_alpine ;;
+            "fedora") bootstrap_remote_fedora ;;
             "freebsd") bootstrap_remote_freebsd ;;
             "macos") bootstrap_remote_macos ;;
             "rhel") bootstrap_remote_rhel ;;
