@@ -180,11 +180,7 @@ class InventoryCLI(CLI):
             from ansible.parsing.yaml.dumper import AnsibleDumper
             results = to_text(yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False, allow_unicode=True))
         elif context.CLIARGS['toml']:
-            from ansible.plugins.inventory.toml import toml_dumps, HAS_TOML, HAS_TOMLIW
-            if not HAS_TOML and not HAS_TOMLIW:
-                raise AnsibleError(
-                    'The python "toml" or "tomli-w" library is required when using the TOML output format'
-                )
+            from ansible.plugins.inventory.toml import toml_dumps
             try:
                 results = toml_dumps(stuff)
             except TypeError as e:

@@ -93,7 +93,7 @@ import typing as t
 from collections.abc import MutableMapping, MutableSequence
 from functools import partial
 
-from ansible.errors import AnsibleFileNotFound, AnsibleParserError
+from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleRuntimeError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import string_types, text_type
 from ansible.parsing.yaml.objects import AnsibleSequence, AnsibleUnicode
@@ -102,16 +102,18 @@ from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
 
 HAS_TOML = False
-HAS_TOMLIW = False
 try:
     import toml
     HAS_TOML = True
 except ImportError:
-    try:
-        import tomli_w as toml  # type: ignore[import,no-redef]
-        HAS_TOMLIW = True
-    except ImportError:
-        pass
+    pass
+
+HAS_TOMLIW = False
+try:
+    import tomli_w  # type: ignore[import]
+    HAS_TOMLIW = True
+except ImportError:
+    pass
 
 HAS_TOMLLIB = False
 try:
@@ -144,8 +146,13 @@ else:
     # toml<0.10.0
     # tomli-w
     def toml_dumps(data):  # type: (t.Any) -> str
-        return toml.dumps(convert_yaml_objects_to_native(data))
-
+        if HAS_TOML:
+            return toml.dumps(convert_yaml_objects_to_native(data))
+        elif HAS_TOMLIW:
+            return tomli_w.dumps(convert_yaml_objects_to_native(data))
+        raise AnsibleRuntimeError(
+            'The python "toml" or "tomli-w" library is required when using the TOML output format'
+        )
 
 if HAS_TOML:
     # prefer toml if installed, since it supports both encoding and decoding
