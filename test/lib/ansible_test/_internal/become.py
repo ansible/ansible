@@ -22,6 +22,25 @@ class Become(metaclass=abc.ABCMeta):
         """Return the given command, if any, with privilege escalation."""
 
 
+class Doas(Become):
+    """Become using 'doas'."""
+    @property
+    def method(self):  # type: () -> str
+        """The name of the Ansible become plugin that is equivalent to this."""
+        raise NotImplementedError('Ansible has no built-in doas become plugin.')
+
+    def prepare_command(self, command):  # type: (t.List[str]) -> t.List[str]
+        """Return the given command, if any, with privilege escalation."""
+        become = ['doas', '-n']
+
+        if command:
+            become.extend(['sh', '-c', ' '.join(shlex.quote(c) for c in command)])
+        else:
+            become.extend(['-s'])
+
+        return become
+
+
 class Su(Become):
     """Become using 'su'."""
     @property
