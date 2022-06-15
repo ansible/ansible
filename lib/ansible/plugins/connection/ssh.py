@@ -360,6 +360,7 @@ DOCUMENTATION = '''
           - name: ansible_ssh_pkcs11_provider
 '''
 
+import argparse
 import errno
 import fcntl
 import hashlib
@@ -397,6 +398,10 @@ b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when th
 
 SSHPASS_AVAILABLE = None
 SSH_DEBUG = re.compile(r'^debug\d+: .*')
+
+tty_parser = argparse.ArgumentParser()
+tty_parser.add_argument('-t', action='count')
+tty_parser.add_argument('-o', action='append')
 
 
 class AnsibleControlPersistBrokenPipeError(AnsibleError):
@@ -1390,3 +1395,23 @@ class Connection(ConnectionBase):
 
     def close(self):
         self._connected = False
+
+    def disallow_pipelining(self):
+        opts = []
+        for opt in ('ssh_args', 'ssh_common_args', 'ssh_extra_args'):
+            attr = self.get_option(opt)
+            if attr is not None:
+                opts.extend(self._split_ssh_args(attr))
+
+        args, dummy = tty_parser.parse_known_args(opts)
+
+        if args.t:
+            return True
+
+        for arg in args.o:
+            val = arg.split('=', 1)
+            if val[0].lower() == 'requesttty':
+                if val[1].lower() in ('yes', 'force'):
+                    return True
+
+        return False
