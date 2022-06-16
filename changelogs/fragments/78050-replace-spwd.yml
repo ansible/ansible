@@ -1,0 +1,3 @@
+bugfixes:
+- user module - Replace uses of the deprecated ``spwd`` python module with ctypes
+  (https://github.com/ansible/ansible/pull/78050)

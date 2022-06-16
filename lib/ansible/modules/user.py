@@ -451,6 +451,8 @@ password_expire_min:
 '''
 
 
+import ctypes
+import ctypes.util
 import errno
 import grp
 import calendar
@@ -470,15 +472,42 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.locale import get_best_parsable_locale
 from ansible.module_utils.common.sys_info import get_platform_subclass
+import ansible.module_utils.compat.typing as t
+
+
+class StructSpwdType(ctypes.Structure):
+    _fields_ = [
+        ('sp_namp', ctypes.c_char_p),
+        ('sp_pwdp', ctypes.c_char_p),
+        ('sp_lstchg', ctypes.c_long),
+        ('sp_min', ctypes.c_long),
+        ('sp_max', ctypes.c_long),
+        ('sp_warn', ctypes.c_long),
+        ('sp_inact', ctypes.c_long),
+        ('sp_expire', ctypes.c_long),
+        ('sp_flag', ctypes.c_ulong),
+    ]
+
 
 try:
-    import spwd
+    _LIBC = ctypes.cdll.LoadLibrary(
+        t.cast(
+            str,
+            ctypes.util.find_library('c')
+        )
+    )
+    _LIBC.getspnam.argtypes = (ctypes.c_char_p,)
+    _LIBC.getspnam.restype = ctypes.POINTER(StructSpwdType)
     HAVE_SPWD = True
-except ImportError:
+except AttributeError:
     HAVE_SPWD = False
 
 
 _HASH_RE = re.compile(r'[^a-zA-Z0-9./=]')
+
+
+def getspnam(b_name):
+    return _LIBC.getspnam(b_name).contents
 
 
 class User(object):
@@ -1053,16 +1082,10 @@ class User(object):
 
         if HAVE_SPWD:
             try:
-                shadow_info = spwd.getspnam(self.name)
-            except KeyError:
+                shadow_info = getspnam(to_bytes(self.name))
+            except ValueError:
                 return None, '', ''
-            except OSError as e:
-                # Python 3.6 raises PermissionError instead of KeyError
-                # Due to absence of PermissionError in python2.7 need to check
-                # errno
-                if e.errno in (errno.EACCES, errno.EPERM, errno.ENOENT):
-                    return None, '', ''
-                raise
+
             min_needs_change &= self.password_expire_min != shadow_info.sp_min
             max_needs_change &= self.password_expire_max != shadow_info.sp_max
 
@@ -1084,18 +1107,12 @@ class User(object):
         expires = ''
         if HAVE_SPWD:
             try:
-                passwd = spwd.getspnam(self.name)[1]
-                expires = spwd.getspnam(self.name)[7]
+                shadow_info = getspnam(to_bytes(self.name))
+                passwd = to_native(shadow_info.sp_pwdp)
+                expires = shadow_info.sp_expire
                 return passwd, expires
-            except KeyError:
+            except ValueError:
                 return passwd, expires
-            except OSError as e:
-                # Python 3.6 raises PermissionError instead of KeyError
-                # Due to absence of PermissionError in python2.7 need to check
-                # errno
-                if e.errno in (errno.EACCES, errno.EPERM, errno.ENOENT):
-                    return passwd, expires
-                raise
 
         if not self.user_exists():
             return passwd, expires
