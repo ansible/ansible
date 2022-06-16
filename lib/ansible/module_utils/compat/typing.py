@@ -16,3 +16,10 @@ try:
     from typing import *  # type: ignore[misc]
 except Exception:  # pylint: disable=broad-except
     pass
+
+
+try:
+    cast
+except NameError:
+    def cast(typ, val):  # type: ignore[no-redef]
+        return val
