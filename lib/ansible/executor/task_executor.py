@@ -283,6 +283,7 @@ class TaskExecutor:
             index_var = templar.template(self._task.loop_control.index_var)
             loop_pause = templar.template(self._task.loop_control.pause)
             extended = templar.template(self._task.loop_control.extended)
+            extended_allitems = templar.template(self._task.loop_control.extended_allitems)
 
             # This may be 'None',so it is templated below after we ensure a value and an item is assigned
             label = self._task.loop_control.label
@@ -310,7 +311,6 @@ class TaskExecutor:
 
             if extended:
                 task_vars['ansible_loop'] = {
-                    'allitems': items,
                     'index': item_index + 1,
                     'index0': item_index,
                     'first': item_index == 0,
@@ -319,6 +319,8 @@ class TaskExecutor:
                     'revindex': items_len - item_index,
                     'revindex0': items_len - item_index - 1,
                 }
+                if extended_allitems:
+                    task_vars['ansible_loop']['allitems'] = items
                 try:
                     task_vars['ansible_loop']['nextitem'] = items[item_index + 1]
                 except IndexError:
