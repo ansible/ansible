@@ -631,9 +631,8 @@ The WinRM protocol considers the channel to be encrypted if using TLS over HTTP
 recommended option as it works with all authentication options, but requires
 a certificate to be created and used on the WinRM listener.
 
-The ``ConfigureRemotingForAnsible.ps1`` creates a self-signed certificate and
-creates the listener with that certificate. If in a domain environment, ADCS
-can also create a certificate for the host that is issued by the domain itself.
+If in a domain environment, ADCS can create a certificate for the host that 
+is issued by the domain itself.
 
 If using HTTPS is not an option, then HTTP can be used when the authentication
 option is ``NTLM``, ``Kerberos`` or ``CredSSP``. These protocols will encrypt

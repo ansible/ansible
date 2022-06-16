@@ -107,38 +107,10 @@ For more details, please refer to the `Hotfix document <https://support.microsof
 
 WinRM Setup
 ```````````
-Once Powershell has been upgraded to at least version 3.0, the final step is for the
-WinRM service to be configured so that Ansible can connect to it. There are two
+Once Powershell has been upgraded to at least version 3.0, the final step is to
+configure the WinRM service so that Ansible can connect to it. There are two
 main components of the WinRM service that governs how Ansible can interface with
 the Windows host: the ``listener`` and the ``service`` configuration settings.
-
-Details about each component can be read below, but the script
-`ConfigureRemotingForAnsible.ps1 <https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1>`_
-can be used to set up the basics. This script sets up both HTTP and HTTPS
-listeners with a self-signed certificate and enables the ``Basic``
-authentication option on the service.
-
-To use this script, run the following in PowerShell:
-
-.. code-block:: powershell
-
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    $url = "https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1"
-    $file = "$env:temp\ConfigureRemotingForAnsible.ps1"
-
-    (New-Object -TypeName System.Net.WebClient).DownloadFile($url, $file)
-
-    powershell.exe -ExecutionPolicy ByPass -File $file
-
-There are different switches and parameters (like ``-EnableCredSSP`` and
-``-ForceNewSSLCert``) that can be set alongside this script. The documentation
-for these options are located at the top of the script itself.
-
-.. Note:: The ConfigureRemotingForAnsible.ps1 script is intended for training and
-    development purposes only and should not be used in a
-    production environment, since it enables settings (like ``Basic`` authentication)
-    that can be inherently insecure. Kerberos is considered a safer production setup. See :ref:`winrm_kerberos` for details.
-
 
 WinRM Listener
 --------------
@@ -466,7 +438,6 @@ this problems is to either:
 * Use an authentication option that supports credential delegation like ``credssp`` or ``kerberos`` with credential delegation enabled
 
 See `KB4076842 <https://support.microsoft.com/en-us/help/4076842>`_ for more information on this problem.
-
 
 Windows SSH Setup
 `````````````````
