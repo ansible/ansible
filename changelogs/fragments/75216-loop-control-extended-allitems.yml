@@ -1,0 +1,3 @@
+minor_changes:
+- Loops - Add new ``loop_control.extended_allitems`` to allow users to disable tracking all loop items for each loop
+  (https://github.com/ansible/ansible/issues/75216)
