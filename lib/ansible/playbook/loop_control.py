@@ -30,6 +30,7 @@ class LoopControl(FieldAttributeBase):
     _label = FieldAttribute(isa='str')
     _pause = FieldAttribute(isa='float', default=0)
     _extended = FieldAttribute(isa='bool')
+    _extended_allitems = FieldAttribute(isa='bool', default=True)
 
     def __init__(self):
         super(LoopControl, self).__init__()

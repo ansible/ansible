@@ -10,3 +10,14 @@
         - third
       loop_control:
         extended: yes
+
+    - debug:
+        var: ansible_loop
+      loop:
+        - first
+        - second
+        - third
+      loop_control:
+        extended: yes
+        extended_allitems: no
+      failed_when: ansible_loop.allitems is defined
