@@ -58,7 +58,7 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
     is_silent = discovery_mode.endswith('_silent')
 
     try:
-        platform_python_map = C.config.get_config_value('INTERPRETER_PYTHON_DISTRO_MAP', variables=task_vars)
+        platform_python_map = C.config.get_config_value('_INTERPRETER_PYTHON_DISTRO_MAP', variables=task_vars)
         bootstrap_python_list = C.config.get_config_value('INTERPRETER_PYTHON_FALLBACK', variables=task_vars)
 
         display.vvv(msg=u"Attempting {0} interpreter discovery".format(interpreter_name), host=host)
