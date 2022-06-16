@@ -34,6 +34,7 @@ options:
   dest:
     description:
       - Remote absolute path where the archive should be unpacked.
+      - The given path must exist. Base directory is not created by this module.
     type: path
     required: true
   copy:
@@ -46,6 +47,7 @@ options:
   creates:
     description:
       - If the specified absolute path (file or directory) already exists, this step will B(not) be run.
+      - The specified absolute path (file or directory) must be below the base path given with C(dest:).
     type: path
     version_added: "1.6"
   io_buffer_size:
