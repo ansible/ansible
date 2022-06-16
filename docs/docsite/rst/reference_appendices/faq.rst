@@ -811,6 +811,31 @@ and backups, which most file based modules also support:
              path: "{{ updated['backup_file'] }}"
              state: absent
 
+.. _jinja2_faqs:
+
+Why does the ``regex_search`` filter return `None` instead of an empty string?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Until the jinja2 2.10 release, Jinja was only able to return strings, but Ansible needed Python objects in some cases. Ansible uses ``safe_eval`` and  only sends strings that look like certain types of Python objects through this function. With ``regex_search`` that does not find a match, the result (``None``) is converted to the string "None" which is not useful in non-native jinja2.
+
+The following example of a single templating action shows this behavior:
+
+.. code-block:: Jinja
+
+  {{ 'ansible' | regex_search('foobar') }}
+
+This example does not result in a Python ``None``, so Ansible historically converted it to "" (empty string).
+
+The native jinja2 functionality actually allows us to return full Python objects, that are always represented as Python objects everywhere, and as such the result of a single templating action with ``regex_search`` can result in the Python ``None``.
+
+.. note::
+
+  Native jinja2 functionality is not needed when ``regex_search`` is used as an intermediate result that is then compared to the jinja2 ``none`` test.
+
+  .. code-block:: Jinja
+
+     {{ 'ansible' | regex_search('foobar') is none }}
+
 
 .. _docs_contributions:
 
