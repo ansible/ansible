@@ -1826,16 +1826,20 @@ The ``regex_search`` filter returns an empty string if it cannot find a match:
     {{ 'ansible' | regex_search('foobar') }}
     # => ''
 
-Note that due to historic behavior and custom re-implementation of some of the Jinja internals in Ansible there is an exception to the behavior. When used in a Jinja expression (for example in conjunction with operators, other filters, and so on) the return value differs, in those situations the return value is ``none``. See the two examples below:
 
-.. code-block:: yaml+jinja
+.. note::
+
+
+  The ``regex_search`` filter returns ``None`` when used in a Jinja expression (for example in conjunction with operators, other filters, and so on). See the two examples below.
+
+  .. code-block:: Jinja
 
     {{ 'ansible' | regex_search('foobar') == '' }}
     # => False
-    {{ 'ansible' | regex_search('foobar') == none }}
+    {{ 'ansible' | regex_search('foobar') is none }}
     # => True
 
-When ``jinja2_native`` setting is enabled, the ``regex_search`` filter always returns ``none`` if it cannot find a match.
+  This is due to historic behavior and the custom re-implementation of some of the Jinja internals in Ansible. Enable the ``jinja2_native`` setting if you want the ``regex_search`` filter to always return ``None`` if it cannot find a match. See :ref:`jinja2_faqs` for details.
 
 To extract all occurrences of regex matches in a string, use the ``regex_findall`` filter:
 
@@ -2038,7 +2042,7 @@ To split a string into a list:
 .. code-block:: yaml+jinja
 
     {{ csv_string | split(",") }}
-    
+
 .. versionadded:: 2.11
 
 To work with Base64 encoded strings:
