@@ -1537,7 +1537,7 @@ INTERPRETER_PYTHON:
     installed later may change which one is used). This warning behavior can be disabled by setting ``auto_silent`` or
     ``auto_legacy_silent``. The value of ``auto_legacy`` provides all the same behavior, but for backwards-compatibility
     with older Ansible releases that always defaulted to ``/usr/bin/python``, will use that interpreter if present.
-INTERPRETER_PYTHON_DISTRO_MAP:
+_INTERPRETER_PYTHON_DISTRO_MAP:
   name: Mapping of known included platform pythons for various Linux distros
   default:
     redhat:
