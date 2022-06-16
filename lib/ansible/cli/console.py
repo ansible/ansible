@@ -503,8 +503,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         return [to_native(s)[offs:] for s in completions if to_native(s).startswith(to_native(mline))]
 
     def completedefault(self, text, line, begidx, endidx):
-        print(line)
-        if line.split()[0] in list_modules():
+        if line.split()[0] in self.list_modules():
             mline = line.split(' ')[-1]
             offs = len(mline) - len(text)
             completions = self.module_args(line.split()[0])
