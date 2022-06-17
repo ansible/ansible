@@ -49,6 +49,7 @@ This documentation covers the version of ``ansible-core`` noted in the upper lef
    :caption: Using Ansible Core
 
    user_guide/index
+   playbook_guide/index
    win_guide/index
    tips_tricks/index
 
