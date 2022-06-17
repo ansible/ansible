@@ -70,7 +70,7 @@ class CliconfBase(AnsiblePlugin):
             from ansible.module_utils.connection import Connection
 
             conn = Connection()
-            conn.get('show lldp neighbors detail'')
+            conn.get('show lldp neighbors detail')
             conn.get_config('running')
             conn.edit_config(['hostname test', 'netconf ssh'])
     """
@@ -262,11 +262,11 @@ class CliconfBase(AnsiblePlugin):
                     'supports_rollback': <bool>,           # identify if rollback is supported or not
                     'supports_defaults': <bool>,           # identify if fetching running config with default is supported
                     'supports_commit_comment': <bool>,     # identify if adding comment to commit is supported of not
-                    'supports_onbox_diff: <bool>,          # identify if on box diff capability is supported or not
-                    'supports_generate_diff: <bool>,       # identify if diff capability is supported within plugin
-                    'supports_multiline_delimiter: <bool>, # identify if multiline demiliter is supported within config
-                    'supports_diff_match: <bool>,          # identify if match is supported
-                    'supports_diff_ignore_lines: <bool>,   # identify if ignore line in diff is supported
+                    'supports_onbox_diff': <bool>,          # identify if on box diff capability is supported or not
+                    'supports_generate_diff': <bool>,       # identify if diff capability is supported within plugin
+                    'supports_multiline_delimiter': <bool>, # identify if multiline demiliter is supported within config
+                    'supports_diff_match': <bool>,          # identify if match is supported
+                    'supports_diff_ignore_lines': <bool>,   # identify if ignore line in diff is supported
                     'supports_config_replace': <bool>,     # identify if running config replace with candidate config is supported
                     'supports_admin': <bool>,              # identify if admin configure mode is supported or not
                     'supports_commit_label': <bool>,       # identify if commit label is supported or not
