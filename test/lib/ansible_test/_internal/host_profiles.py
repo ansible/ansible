@@ -99,7 +99,7 @@ from .connections import (
 
 from .become import (
     Become,
-    Su,
+    SUPPORTED_BECOME_METHODS,
     Sudo,
 )
 
@@ -573,16 +573,11 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
 
         if settings.user == 'root':
             become = None  # type: t.Optional[Become]
-        elif self.config.platform == 'freebsd':
-            become = Su()
-        elif self.config.platform == 'macos':
-            become = Sudo()
-        elif self.config.platform == 'rhel':
-            become = Sudo()
-        elif self.config.platform == 'ubuntu':
-            become = Sudo()
+        elif self.config.become:
+            become = SUPPORTED_BECOME_METHODS[self.config.become]()
         else:
-            raise NotImplementedError(f'Become support has not been implemented for platform "{self.config.platform}" and user "{settings.user}" is not root.')
+            display.warning(f'Defaulting to "sudo" for platform "{self.config.platform}" become support.', unique=True)
+            become = Sudo()
 
         return SshConnection(self.args, settings, become)
 
