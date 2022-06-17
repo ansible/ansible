@@ -1006,20 +1006,28 @@ class GalaxyCLI(CLI):
             description='your {0} description'.format(galaxy_type),
             ansible_plugin_list_dir=get_versioned_doclink('plugins/plugins.html'),
         )
-        if galaxy_type == 'role':
-            inject_data.update(dict(
-                author='your name',
-                company='your company (optional)',
-                license='license (GPL-2.0-or-later, MIT, etc)',
-                role_name=obj_name,
-                role_type=context.CLIARGS['role_type'],
-                issue_tracker_url='http://example.com/issue/tracker',
-                repository_url='http://example.com/repository',
-                documentation_url='http://docs.example.com',
-                homepage_url='http://example.com',
-                min_ansible_version=ansible_version[:3],  # x.y
-                dependencies=[],
-            ))
+
+        if galaxy_type == "role":
+            if len(str(ansible_version)) <= 3:
+                min_ansible_version = '"' + ansible_version[:3] + '"'  # x.y
+            else:
+                min_ansible_version = '"' + ansible_version[:4] + '"'  # x.yy
+
+            inject_data.update(
+                dict(
+                    author="your name",
+                    company="your company (optional)",
+                    license="license (GPL-2.0-or-later, MIT, etc)",
+                    role_name=obj_name,
+                    role_type=context.CLIARGS["role_type"],
+                    issue_tracker_url="http://example.com/issue/tracker",
+                    repository_url="http://example.com/repository",
+                    documentation_url="http://docs.example.com",
+                    homepage_url="http://example.com",
+                    min_ansible_version=min_ansible_version,
+                    dependencies=[],
+                )
+            )
 
             skeleton_ignore_expressions = C.GALAXY_ROLE_SKELETON_IGNORE
             obj_path = os.path.join(init_path, obj_name)
