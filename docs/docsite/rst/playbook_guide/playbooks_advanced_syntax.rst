@@ -1,13 +1,11 @@
 .. _playbooks_advanced_syntax:
 
-***************
-Advanced Syntax
-***************
+************************
+Advanced playbook syntax
+************************
 
-The advanced YAML syntax examples on this page give you more control over the data placed in YAML files used by Ansible. You can find additional information about Python-specific YAML in the official `PyYAML Documentation <https://pyyaml.org/wiki/PyYAMLDocumentation#YAMLtagsandPythontypes>`_.
-
-.. contents::
-   :local:
+The advanced YAML syntax examples on this page give you more control over the data placed in YAML files used by Ansible.
+You can find additional information about Python-specific YAML in the official `PyYAML Documentation <https://pyyaml.org/wiki/PyYAMLDocumentation#YAMLtagsandPythontypes>`_.
 
 .. _unsafe_strings:
 
