@@ -333,6 +333,8 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
 @dataclasses.dataclass
 class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
     """Configuration for a POSIX remote host."""
+    become: t.Optional[str] = None
+
     def get_defaults(self, context):  # type: (HostContext) -> PosixRemoteCompletionConfig
         """Return the default settings."""
         return filter_completion(remote_completion()).get(self.name) or remote_completion().get(self.platform) or PosixRemoteCompletionConfig(
@@ -349,6 +351,14 @@ class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
             pythons = {context.controller_config.python.version: context.controller_config.python.path}
 
         return [ControllerConfig(python=NativePythonConfig(version=version, path=path)) for version, path in pythons.items()]
+
+    def apply_defaults(self, context, defaults):  # type: (HostContext, CompletionConfig) -> None
+        """Apply default settings."""
+        assert isinstance(defaults, PosixRemoteCompletionConfig)
+
+        super().apply_defaults(context, defaults)
+
+        self.become = self.become or defaults.become
 
     @property
     def have_root(self):  # type: () -> bool
