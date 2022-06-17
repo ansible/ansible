@@ -120,9 +120,9 @@
   - name: verify they are all different, this is not guaranteed, but statisically almost impossible
     assert:
       that:
-        - pns[0]['msg'] == pns[1]['msg']
-        - pns[0]['msg'] == pns[2]['msg']
-        - pns[1]['msg'] == pns[2]['msg']
+        - pns[0]['msg'] != pns[1]['msg']
+        - pns[0]['msg'] != pns[2]['msg']
+        - pns[1]['msg'] != pns[2]['msg']
 
   - name: generate passwords, with seed k=v
     debug:
