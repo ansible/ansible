@@ -138,13 +138,13 @@ DEFAULT_LENGTH = 20
 VALID_PARAMS = frozenset(('length', 'encrypt', 'chars', 'ident', 'seed'))
 
 
-def _parse_parameters(term, kwargs):
+def _parse_parameters(term, kwargs=None):
     """Hacky parsing of params
 
     See https://github.com/ansible/ansible-modules-core/issues/1968#issuecomment-136842156
     and the first_found lookup For how we want to fix this later
     """
-    if not kwargs:
+    if kwargs is None:
         kwargs = {}
 
     first_split = term.split(' ', 1)
