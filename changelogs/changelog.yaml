@@ -1476,6 +1476,17 @@ releases:
     - v2.12.6rc1_summary.yaml
     - vm_more_efficient.yml
     release_date: '2022-05-16'
+  2.12.7:
+    changes:
+      release_summary: '| Release Date: 2022-06-20
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: Dazed and Confused
+    fragments:
+    - v2.12.7_summary.yaml
+    release_date: '2022-06-20'
   2.12.7rc1:
     changes:
       bugfixes:
