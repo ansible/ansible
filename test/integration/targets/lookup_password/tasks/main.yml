@@ -108,11 +108,12 @@
   vars:
     inl: "{{passwords_inline['results']}}"
     kv: "{{passwords['results']}}"
+    l: [1, 2, 3]
   block:
   - name: generate passwords with seed inline
     debug:
       msg: '{{ lookup("password", "/dev/null seed=foo")}}'
-    loop: [1,2,3]
+    loop: "{{ l }}"
     register: passwords_inline
 
   - name: verify they are all the same
@@ -124,7 +125,7 @@
   - name: generate passwords, with seed k=v
     debug:
       msg: '{{ lookup("password", "/dev/null", seed="foo")}}'
-    loop: [1,2,3]
+    loop: "{{ l }}"
     register: passwords
 
   - name: verify they are all the same
