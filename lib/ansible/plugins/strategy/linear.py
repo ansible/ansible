@@ -141,7 +141,7 @@ class StrategyModule(StrategyBase):
                                                                                                                                                   num_rescue,
                                                                                                                                                   num_always))
 
-        def _advance_selected_hosts(hosts, cur_block, cur_state):
+        def _advance_selected_hosts(hosts, cur_block, cur_state, any_errors_fatal):
             '''
             This helper returns the task for all hosts in the requested
             state, otherwise they get a noop dummy task. This also advances
@@ -161,8 +161,13 @@ class StrategyModule(StrategyBase):
                 if task is None:
                     continue
                 if s.run_state == cur_state and s.cur_block == cur_block:
+                    if s.run_state == IteratingStates.RESCUE:
+                        any_errors_fatal.pop(host.name, None)
+                    if any_errors_fatal and s.run_state not in (IteratingStates.RESCUE, IteratingStates.ALWAYS):
+                        rvals.append((host, noop_task))
+                    else:
+                        rvals.append((host, task))
                     iterator.set_state_for_host(host.name, state)
-                    rvals.append((host, task))
                 else:
                     rvals.append((host, noop_task))
             display.debug("done advancing hosts to next task")
@@ -172,25 +177,25 @@ class StrategyModule(StrategyBase):
         # while all other hosts get a noop
         if num_setups:
             display.debug("advancing hosts in SETUP")
-            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.SETUP)
+            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.SETUP, self._any_errors_fatal)
 
         # if any hosts are in TASKS, return the next normal
         # task for these hosts, while all other hosts get a noop
         if num_tasks:
             display.debug("advancing hosts in TASKS")
-            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.TASKS)
+            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.TASKS, self._any_errors_fatal)
 
         # if any hosts are in RESCUE, return the next rescue
         # task for these hosts, while all other hosts get a noop
         if num_rescue:
             display.debug("advancing hosts in RESCUE")
-            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.RESCUE)
+            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.RESCUE, self._any_errors_fatal)
 
         # if any hosts are in ALWAYS, return the next always
         # task for these hosts, while all other hosts get a noop
         if num_always:
             display.debug("advancing hosts in ALWAYS")
-            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.ALWAYS)
+            return _advance_selected_hosts(hosts, lowest_cur_block, IteratingStates.ALWAYS, self._any_errors_fatal)
 
         # at this point, everything must be COMPLETE, so we
         # return None for all hosts in the list
@@ -415,6 +420,13 @@ class StrategyModule(StrategyBase):
                         failed_hosts.append(res._host.name)
                     elif res.is_unreachable():
                         unreachable_hosts.append(res._host.name)
+
+                    if any_errors_fatal:
+                        if res._host.name in failed_hosts or res._host.name in unreachable_hosts:
+                            self._any_errors_fatal[res._host.name] = res._host
+                        elif res.is_failed():
+                            # The host isn't done yet, but will be fatal unless rescued
+                            self._any_errors_fatal[res._host.name] = res._host
 
                 # if any_errors_fatal and we had an error, mark all hosts as failed
                 if any_errors_fatal and (len(failed_hosts) > 0 or len(unreachable_hosts) > 0):
