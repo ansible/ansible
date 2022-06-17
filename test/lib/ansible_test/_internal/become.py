@@ -5,6 +5,10 @@ import abc
 import shlex
 import typing as t
 
+from .util import (
+    get_subclasses,
+)
+
 
 class Become(metaclass=abc.ABCMeta):
     """Base class for become implementations."""
@@ -50,3 +54,6 @@ class Sudo(Become):
             become.extend(['sh', '-c', ' '.join(shlex.quote(c) for c in command)])
 
         return become
+
+
+SUPPORTED_BECOME_METHODS = {cls.__name__.lower(): cls for cls in get_subclasses(Become)}
