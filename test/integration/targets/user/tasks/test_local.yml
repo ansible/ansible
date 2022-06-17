@@ -85,6 +85,7 @@
     - testgroup2
     - testgroup3
     - testgroup4
+    - local_ansibulluser
   tags:
     - user_test_local_mode
 
@@ -139,6 +140,7 @@
     - testgroup2
     - testgroup3
     - testgroup4
+    - local_ansibulluser
   tags:
     - user_test_local_mode
 

@@ -664,22 +664,26 @@ class User(object):
             # exists with the same name as the user to prevent
             # errors from useradd trying to create a group when
             # USERGROUPS_ENAB is set in /etc/login.defs.
-            if os.path.exists('/etc/redhat-release'):
-                dist = distro.version()
-                major_release = int(dist.split('.')[0])
-                if major_release <= 5 or self.local:
-                    cmd.append('-n')
+            if self.local:
+                # luseradd uses -n instead of -N
+                cmd.append('-n')
+            else:
+                if os.path.exists('/etc/redhat-release'):
+                    dist = distro.version()
+                    major_release = int(dist.split('.')[0])
+                    if major_release <= 5:
+                        cmd.append('-n')
+                    else:
+                        cmd.append('-N')
+                elif os.path.exists('/etc/SuSE-release'):
+                    # -N did not exist in useradd before SLE 11 and did not
+                    # automatically create a group
+                    dist = distro.version()
+                    major_release = int(dist.split('.')[0])
+                    if major_release >= 12:
+                        cmd.append('-N')
                 else:
                     cmd.append('-N')
-            elif os.path.exists('/etc/SuSE-release'):
-                # -N did not exist in useradd before SLE 11 and did not
-                # automatically create a group
-                dist = distro.version()
-                major_release = int(dist.split('.')[0])
-                if major_release >= 12:
-                    cmd.append('-N')
-            else:
-                cmd.append('-N')
 
         if self.groups is not None and len(self.groups):
             groups = self.get_groups_set()
