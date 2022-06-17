@@ -31,3 +31,4 @@ Working with the Ansible collection repositories
 * How do I :ref:`rebase my PR <rebase_guide>`?
 * How do I learn about Ansible's :ref:`testing (CI) process <developing_testing>`?
 * How do I :ref:`deprecate a module <deprecating_modules>`?
+* See `Collection developer tutorials <https://www.ansible.com/products/ansible-community-training>`_ for a quick introduction on how to develop and test your collection contributions.
