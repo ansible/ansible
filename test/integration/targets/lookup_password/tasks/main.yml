@@ -102,3 +102,34 @@
   assert:
     that:
         - "newpass != newpass2"
+
+
+- name: test both types of args and that seed guarantees same results
+  vars:
+    inl: "{{passwords_inline['results']}}"
+    kv: "{{passwords['results']}}"
+  block:
+  - name: generate passwords with seed inline
+    debug:
+      msg: '{{ lookup("password", "/dev/null seed=foo")}}'
+    loop: [1,2,3]
+    register: passwords_inline
+
+  - name: verify they are all the same
+    assert:
+      that:
+        - inl[0]['msg'] == inl[1]['msg']
+        - inl[0]['msg'] == inl[2]['msg']
+
+  - name: generate passwords, with seed k=v
+    debug:
+      msg: '{{ lookup("password", "/dev/null", seed="foo")}}'
+    loop: [1,2,3]
+    register: passwords
+
+  - name: verify they are all the same
+    assert:
+      that:
+        - kv[0]['msg'] == kv[1]['msg']
+        - kv[0]['msg'] == kv[2]['msg']
+        - kv[0]['msg'] == inl[0]['msg']
