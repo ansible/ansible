@@ -123,5 +123,4 @@ Here is the complete list of resources in the Ansible User Guide:
    ../plugins/plugins
    ../reference_appendices/playbooks_keywords
    intro_bsd
-   windows
    collections_using
