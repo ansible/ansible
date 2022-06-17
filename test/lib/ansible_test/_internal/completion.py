@@ -21,6 +21,10 @@ from .data import (
     data_context,
 )
 
+from .become import (
+    SUPPORTED_BECOME_METHODS,
+)
+
 
 @dataclasses.dataclass(frozen=True)
 class CompletionConfig(metaclass=abc.ABCMeta):
@@ -166,11 +170,15 @@ class NetworkRemoteCompletionConfig(RemoteCompletionConfig):
 @dataclasses.dataclass(frozen=True)
 class PosixRemoteCompletionConfig(RemoteCompletionConfig, PythonCompletionConfig):
     """Configuration for remote POSIX platforms."""
+    become: t.Optional[str] = None
     placeholder: bool = False
 
     def __post_init__(self):
         if not self.placeholder:
             super().__post_init__()
+
+        if self.become and self.become not in SUPPORTED_BECOME_METHODS:
+            raise Exception(f'POSIX remote completion entry "{self.name}" setting "become" must be omitted or one of: {", ".join(SUPPORTED_BECOME_METHODS)}')
 
         if not self.supported_pythons:
             if self.version and not self.placeholder:
