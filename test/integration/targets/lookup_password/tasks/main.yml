@@ -103,7 +103,6 @@
     that:
         - "newpass != newpass2"
 
-
 - name: test both types of args and that seed guarantees same results
   vars:
     pns: "{{passwords_noseed['results']}}"
@@ -136,5 +135,3 @@
         - kv[0]['msg'] == kv[1]['msg']
         - kv[0]['msg'] == kv[2]['msg']
         - kv[0]['msg'] == inl[0]['msg']
-
-
