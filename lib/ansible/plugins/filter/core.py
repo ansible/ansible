@@ -229,7 +229,7 @@ def from_yaml_all(data):
 
 
 @pass_environment
-def rand(environment, end, start=None, step=None, seed=None):
+def rand(environment, end, weights=None, cum_weights=None, k=1, start=None, step=None, seed=None):
     if seed is None:
         r = SystemRandom()
     else:
@@ -243,10 +243,12 @@ def rand(environment, end, start=None, step=None, seed=None):
     elif hasattr(end, '__iter__'):
         if start or step:
             raise AnsibleFilterError('start and step can only be used with integer values')
-        return r.choice(end)
+        random_element = r.choices(end,weights=weights,cum_weights=cum_weights,k=k)
+        if k == 1:
+          random_element = random_element[0]
+        return random_element
     else:
         raise AnsibleFilterError('random can only be used on sequences and integers')
-
 
 def randomize_list(mylist, seed=None):
     try:
