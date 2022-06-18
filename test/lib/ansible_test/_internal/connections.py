@@ -81,7 +81,7 @@ class Connection(metaclass=abc.ABCMeta):
         # Using gzip to compress the archive allows this to work on all POSIX systems we support.
         commands = [tar_cmd, gzip_cmd]
 
-        sh_cmd = ['sh', '-c', ' | '.join(' '.join(shlex.quote(cmd) for cmd in command) for command in commands)]
+        sh_cmd = ['sh', '-c', ' | '.join(shlex.join(command) for command in commands)]
 
         retry(lambda: self.run(sh_cmd, stdout=dst, capture=True))
 
@@ -160,7 +160,7 @@ class SshConnection(Connection):
                 options.extend(['-p', str(self.settings.port)])
 
             options.append(f'{self.settings.user}@{self.settings.host}')
-            options.append(' '.join(shlex.quote(cmd) for cmd in command))
+            options.append(shlex.join(command))
 
             def error_callback(ex):  # type: (SubprocessError) -> None
                 """Error handler."""

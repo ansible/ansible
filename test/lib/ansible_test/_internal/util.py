@@ -368,7 +368,7 @@ def raw_command(
 
     cmd = list(cmd)
 
-    escaped_cmd = ' '.join(shlex.quote(c) for c in cmd)
+    escaped_cmd = shlex.join(cmd)
 
     if capture:
         description = 'Run'
@@ -867,7 +867,7 @@ class SubprocessError(ApplicationError):
             runtime=None,  # type: t.Optional[float]
             error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
     ):  # type: (...) -> None
-        message = 'Command "%s" returned exit status %s.\n' % (' '.join(shlex.quote(c) for c in cmd), status)
+        message = 'Command "%s" returned exit status %s.\n' % (shlex.join(cmd), status)
 
         if stderr:
             message += '>>> Standard Error\n'
