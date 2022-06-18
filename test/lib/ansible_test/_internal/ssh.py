@@ -176,7 +176,7 @@ def run_ssh_command(
     cmd = create_ssh_command(ssh, options, cli_args, command)
     env = common_environment()
 
-    cmd_show = ' '.join([shlex.quote(c) for c in cmd])
+    cmd_show = shlex.join(cmd)
     display.info('Run background command: %s' % cmd_show, verbosity=1, truncate=True)
 
     cmd_bytes = [to_bytes(c) for c in cmd]

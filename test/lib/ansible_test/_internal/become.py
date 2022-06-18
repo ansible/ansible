@@ -34,7 +34,7 @@ class Doas(Become):
         become = ['doas', '-n']
 
         if command:
-            become.extend(['sh', '-c', ' '.join(shlex.quote(c) for c in command)])
+            become.extend(['sh', '-c', shlex.join(command)])
         else:
             become.extend(['-s'])
 
@@ -53,7 +53,7 @@ class Su(Become):
         become = ['su', '-l', 'root']
 
         if command:
-            become.extend(['-c', ' '.join(shlex.quote(c) for c in command)])
+            become.extend(['-c', shlex.join(command)])
 
         return become
 
@@ -70,7 +70,7 @@ class Sudo(Become):
         become = ['sudo', '-in']
 
         if command:
-            become.extend(['sh', '-c', ' '.join(shlex.quote(c) for c in command)])
+            become.extend(['sh', '-c', shlex.join(command)])
 
         return become
 
