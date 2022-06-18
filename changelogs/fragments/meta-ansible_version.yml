@@ -1,0 +1,3 @@
+bugfixes:
+  - write ``min_ansible_version`` in semantic version format and as a string in
+    ``meta/main.yml``, instead of a float (https://github.com/ansible/ansible/pull/78081).
