@@ -57,6 +57,7 @@ from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
+from ansible.utils.version import SemanticVersion, LooseVersion
 
 display = Display()
 urlparse = six.moves.urllib.parse.urlparse
@@ -1008,11 +1009,8 @@ class GalaxyCLI(CLI):
         )
 
         if galaxy_type == "role":
-            if len(str(ansible_version)) <= 3:
-                min_ansible_version = '"' + ansible_version[:3] + '"'  # x.y
-            else:
-                min_ansible_version = '"' + ansible_version[:4] + '"'  # x.yy
-
+            semantic_version = SemanticVersion.from_loose_version(LooseVersion(ansible_version))
+            min_ansible_version=f"{semantic_version.major}.{semantic_version.minor}"
             inject_data.update(
                 dict(
                     author="your name",
@@ -1024,7 +1022,7 @@ class GalaxyCLI(CLI):
                     repository_url="http://example.com/repository",
                     documentation_url="http://docs.example.com",
                     homepage_url="http://example.com",
-                    min_ansible_version=min_ansible_version,
+                    min_ansible_version='"' + min_ansible_version + '"',
                     dependencies=[],
                 )
             )
