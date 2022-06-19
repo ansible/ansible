@@ -137,23 +137,21 @@ class ActionModule(ActionBase):
     def get_distribution(self, task_vars):
         # FIXME: only execute the module if we don't already have the facts we need
         distribution = {}
-        display.debug('{action}: running setup module to get distribution'.format(action=self._task.action))
+        display.debug(f'{self._task.action}: running setup module to get distribution')
         module_output = self._execute_module(
             task_vars=task_vars,
             module_name='ansible.legacy.setup',
             module_args={'gather_subset': 'min'})
         try:
             if module_output.get('failed', False):
-                raise AnsibleError('Failed to determine system distribution. {0}, {1}'.format(
-                    to_native(module_output['module_stdout']).strip(),
-                    to_native(module_output['module_stderr']).strip()))
+                raise AnsibleError(f'Failed to determine system distribution. {to_native(module_output['module_stdout']).strip()}, {to_native(module_output['module_stderr']).strip()}')
             distribution['name'] = module_output['ansible_facts']['ansible_distribution'].lower()
             distribution['version'] = to_text(module_output['ansible_facts']['ansible_distribution_version'].split('.')[0])
             distribution['family'] = to_text(module_output['ansible_facts']['ansible_os_family'].lower())
-            display.debug("{action}: distribution: {dist}".format(action=self._task.action, dist=distribution))
+            display.debug(f"{self._task.action}: distribution: {distribution}")
             return distribution
         except KeyError as ke:
-            raise AnsibleError('Failed to get distribution information. Missing "{0}" in output.'.format(ke.args[0]))
+            raise AnsibleError(f'Failed to get distribution information. Missing "{ke.args[0]}" in output.')
 
     def get_shutdown_command(self, task_vars, distribution):
         reboot_command = self._task.args.get('reboot_command')
@@ -179,10 +177,7 @@ class ActionModule(ActionBase):
                 err_msg = "'search_paths' must be a string or flat list of strings, got {0}"
                 raise AnsibleError(err_msg.format(search_paths))
 
-            display.debug('{action}: running find module looking in {paths} to get path for "{command}"'.format(
-                action=self._task.action,
-                command=shutdown_bin,
-                paths=search_paths))
+            display.debug(f'{self._task.action}: running find module looking in {search_paths} to get path for "{shutdown_bin}"')
 
             find_result = self._execute_module(
                 task_vars=task_vars,
@@ -197,16 +192,13 @@ class ActionModule(ActionBase):
 
             full_path = [x['path'] for x in find_result['files']]
             if not full_path:
-                raise AnsibleError('Unable to find command "{0}" in search paths: {1}'.format(shutdown_bin, search_paths))
+                raise AnsibleError(f'Unable to find command "{shutdown_bin}" in search paths: {search_paths}')
             return full_path[0]
 
     def deprecated_args(self):
         for arg, version in self.DEPRECATED_ARGS.items():
             if self._task.args.get(arg) is not None:
-                display.warning("Since Ansible {version}, {arg} is no longer a valid option for {action}".format(
-                    version=version,
-                    arg=arg,
-                    action=self._task.action))
+                display.warning(f"Since Ansible {version}, {arg} is no longer a valid option for {self._task.action}")
 
     def get_system_boot_time(self, distribution):
         boot_time_command = self._get_value_from_facts('BOOT_TIME_COMMANDS', distribution, 'DEFAULT_BOOT_TIME_COMMAND')
@@ -218,28 +210,24 @@ class ActionModule(ActionBase):
             except TypeError as e:
                 raise AnsibleError("Invalid value given for 'boot_time_command': %s." % to_native(e))
 
-        display.debug("{action}: getting boot time with command: '{command}'".format(action=self._task.action, command=boot_time_command))
+        display.debug(f"{self._task.action}: getting boot time with command: '{boot_time_command}'")
         command_result = self._low_level_execute_command(boot_time_command, sudoable=self.DEFAULT_SUDOABLE)
 
         if command_result['rc'] != 0:
             stdout = command_result['stdout']
             stderr = command_result['stderr']
-            raise AnsibleError("{action}: failed to get host boot time info, rc: {rc}, stdout: {out}, stderr: {err}".format(
-                               action=self._task.action,
-                               rc=command_result['rc'],
-                               out=to_native(stdout),
-                               err=to_native(stderr)))
-        display.debug("{action}: last boot time: {boot}".format(action=self._task.action, boot=command_result['stdout'].strip()))
+            raise AnsibleError(f"{self._task.action}: failed to get host boot time info, rc: {command_result['rc']}, stdout: {to_native(stdout)}, stderr: {to_native(stderr)}")
+        display.debug(f"{self._task.action}: last boot time: {command_result['stdout'].strip()}")
         return command_result['stdout'].strip()
 
     def check_boot_time(self, distribution, previous_boot_time):
-        display.vvv("{action}: attempting to get system boot time".format(action=self._task.action))
+        display.vvv(f"{self._task.action}: attempting to get system boot time")
         connect_timeout = self._task.args.get('connect_timeout', self._task.args.get('connect_timeout_sec', self.DEFAULT_CONNECT_TIMEOUT))
 
         # override connection timeout from defaults to custom value
         if connect_timeout:
             try:
-                display.debug("{action}: setting connect_timeout to {value}".format(action=self._task.action, value=connect_timeout))
+                display.debug(f"{self._task.action}: setting connect_timeout to {connect_timeout}")
                 self._connection.set_option("connection_timeout", connect_timeout)
                 self._connection.reset()
             except AttributeError:
@@ -258,8 +246,8 @@ class ActionModule(ActionBase):
 
     def run_test_command(self, distribution, **kwargs):
         test_command = self._task.args.get('test_command', self._get_value_from_facts('TEST_COMMANDS', distribution, 'DEFAULT_TEST_COMMAND'))
-        display.vvv("{action}: attempting post-reboot test command".format(action=self._task.action))
-        display.debug("{action}: attempting post-reboot test command '{command}'".format(action=self._task.action, command=test_command))
+        display.vvv(f"{self._task.action}: attempting post-reboot test command")
+        display.debug(f"{self._task.action}: attempting post-reboot test command '{test_command}'")
         try:
             command_result = self._low_level_execute_command(test_command, sudoable=self.DEFAULT_SUDOABLE)
         except Exception:
@@ -272,12 +260,10 @@ class ActionModule(ActionBase):
             raise
 
         if command_result['rc'] != 0:
-            msg = 'Test command failed: {err} {out}'.format(
-                err=to_native(command_result['stderr']),
-                out=to_native(command_result['stdout']))
+            msg = f'Test command failed: {to_native(command_result['stderr'])} {to_native(command_result['stdout'])}'
             raise RuntimeError(msg)
 
-        display.vvv("{action}: system successfully rebooted".format(action=self._task.action))
+        display.vvv(f"{self._task.action}: system successfully rebooted")
 
     def do_until_success_or_timeout(self, action, reboot_timeout, action_desc, distribution, action_kwargs=None):
         max_end_time = datetime.utcnow() + timedelta(seconds=reboot_timeout)
@@ -291,7 +277,7 @@ class ActionModule(ActionBase):
             try:
                 action(distribution=distribution, **action_kwargs)
                 if action_desc:
-                    display.debug('{action}: {desc} success'.format(action=self._task.action, desc=action_desc))
+                    display.debug(f'{self._task.action}: {action_desc} success')
                 return
             except Exception as e:
                 if isinstance(e, AnsibleConnectionFailure):
@@ -310,30 +296,26 @@ class ActionModule(ActionBase):
                         error = to_text(e).splitlines()[-1]
                     except IndexError as e:
                         error = to_text(e)
-                    display.debug("{action}: {desc} fail '{err}', retrying in {sleep:.4} seconds...".format(
-                        action=self._task.action,
-                        desc=action_desc,
-                        err=error,
-                        sleep=fail_sleep))
+                    display.debug(f"{self._task.action}: {action_desc} fail '{error}', retrying in {fail_sleep:.4} seconds...")
                 fail_count += 1
                 time.sleep(fail_sleep)
 
-        raise TimedOutException('Timed out waiting for {desc} (timeout={timeout})'.format(desc=action_desc, timeout=reboot_timeout))
+        raise TimedOutException(f'Timed out waiting for {action_desc} (timeout={reboot_timeout})')
 
     def perform_reboot(self, task_vars, distribution):
         result = {}
         reboot_result = {}
         shutdown_command = self.get_shutdown_command(task_vars, distribution)
         shutdown_command_args = self.get_shutdown_command_args(distribution)
-        reboot_command = '{0} {1}'.format(shutdown_command, shutdown_command_args)
+        reboot_command = f'{shutdown_command} {shutdown_command_args}'
 
         try:
-            display.vvv("{action}: rebooting server...".format(action=self._task.action))
-            display.debug("{action}: rebooting server with command '{command}'".format(action=self._task.action, command=reboot_command))
+            display.vvv(f"{self._task.action}: rebooting server...")
+            display.debug(f"{self._task.action}: rebooting server with command '{reboot_command}'")
             reboot_result = self._low_level_execute_command(reboot_command, sudoable=self.DEFAULT_SUDOABLE)
         except AnsibleConnectionFailure as e:
             # If the connection is closed too quickly due to the system being shutdown, carry on
-            display.debug('{action}: AnsibleConnectionFailure caught and handled: {error}'.format(action=self._task.action, error=to_text(e)))
+            display.debug(f'{self._task.action}: AnsibleConnectionFailure caught and handled: {to_text(e)}')
             reboot_result['rc'] = 0
 
         result['start'] = datetime.utcnow()
@@ -341,16 +323,14 @@ class ActionModule(ActionBase):
         if reboot_result['rc'] != 0:
             result['failed'] = True
             result['rebooted'] = False
-            result['msg'] = "Reboot command failed. Error was: '{stdout}, {stderr}'".format(
-                stdout=to_native(reboot_result['stdout'].strip()),
-                stderr=to_native(reboot_result['stderr'].strip()))
+            result['msg'] = f"Reboot command failed. Error was: '{to_native(reboot_result['stdout'].strip())}, {to_native(reboot_result['stderr'].strip())}'"
             return result
 
         result['failed'] = False
         return result
 
     def validate_reboot(self, distribution, original_connection_timeout=None, action_kwargs=None):
-        display.vvv('{action}: validating reboot'.format(action=self._task.action))
+        display.vvv(f'{self._task.action}: validating reboot')
         result = {}
 
         try:
@@ -372,15 +352,12 @@ class ActionModule(ActionBase):
             else:
                 if original_connection_timeout != connect_timeout:
                     try:
-                        display.debug("{action}: setting connect_timeout back to original value of {value}".format(
-                            action=self._task.action,
-                            value=original_connection_timeout))
+                        display.debug(f"{self._task.action}: setting connect_timeout back to original value of {original_connection_timeout}")
                         self._connection.set_option("connection_timeout", original_connection_timeout)
                         self._connection.reset()
                     except (AnsibleError, AttributeError) as e:
                         # reset the connection to clear the custom connection timeout
-                        display.debug("{action}: failed to reset connection_timeout back to default: {error}".format(action=self._task.action,
-                                                                                                                     error=to_text(e)))
+                        display.debug(f"{self._task.action}: failed to reset connection_timeout back to default: {to_text(e)}".)
 
             # finally run test command to ensure everything is working
             # FUTURE: add a stability check (system must remain up for N seconds) to deal with self-multi-reboot updates
@@ -408,7 +385,7 @@ class ActionModule(ActionBase):
 
         # If running with local connection, fail so we don't reboot ourself
         if self._connection.transport == 'local':
-            msg = 'Running {0} with local connection would reboot the control node.'.format(self._task.action)
+            msg = f'Running {self._task.action} with local connection would reboot the control node.'
             return {'changed': False, 'elapsed': 0, 'rebooted': False, 'failed': True, 'msg': msg}
 
         if self._play_context.check_mode:
@@ -439,9 +416,9 @@ class ActionModule(ActionBase):
         original_connection_timeout = None
         try:
             original_connection_timeout = self._connection.get_option('connection_timeout')
-            display.debug("{action}: saving original connect_timeout of {timeout}".format(action=self._task.action, timeout=original_connection_timeout))
+            display.debug(f"{self._task.action}: saving original connect_timeout of {original_connection_timeout}".format(action=self._task.action, timeout=))
         except KeyError:
-            display.debug("{action}: connect_timeout connection option has not been set".format(action=self._task.action))
+            display.debug(f"{self._task.action}: connect_timeout connection option has not been set".format(action=self._task.action))
         # Initiate reboot
         reboot_result = self.perform_reboot(task_vars, distribution)
 
@@ -452,8 +429,8 @@ class ActionModule(ActionBase):
             return result
 
         if self.post_reboot_delay != 0:
-            display.debug("{action}: waiting an additional {delay} seconds".format(action=self._task.action, delay=self.post_reboot_delay))
-            display.vvv("{action}: waiting an additional {delay} seconds".format(action=self._task.action, delay=self.post_reboot_delay))
+            display.debug(f"{self._task.action}: waiting an additional {self.post_reboot_delay} seconds")
+            display.vvv(f"{self._task.action}: waiting an additional {self.post_reboot_delay} seconds")
             time.sleep(self.post_reboot_delay)
 
         # Make sure reboot was successful
