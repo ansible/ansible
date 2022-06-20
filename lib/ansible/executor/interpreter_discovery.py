@@ -48,7 +48,7 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
 
     # FUTURE: add logical equivalence for "python3" in the case of py3-only modules?
     if interpreter_name != 'python':
-        raise ValueError('Interpreter discovery not supported for {0}'.format(interpreter_name))
+        raise ValueError(f'Interpreter discovery not supported for {interpreter_name}')
 
     host = task_vars.get('inventory_hostname', 'unknown')
     res = None
@@ -61,11 +61,11 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
         platform_python_map = C.config.get_config_value('_INTERPRETER_PYTHON_DISTRO_MAP', variables=task_vars)
         bootstrap_python_list = C.config.get_config_value('INTERPRETER_PYTHON_FALLBACK', variables=task_vars)
 
-        display.vvv(msg=u"Attempting {0} interpreter discovery".format(interpreter_name), host=host)
+        display.vvv(msg=u", fAttempting {interpreter_name} interpreter discovery", host=host)
 
         # not all command -v impls accept a list of commands, so we have to call it once per python
         command_list = ["command -v '%s'" % py for py in bootstrap_python_list]
-        shell_bootstrap = "echo PLATFORM; uname; echo FOUND; {0}; echo ENDFOUND".format('; '.join(command_list))
+        shell_bootstrap = f"echo PLATFORM; uname; echo FOUND; {'; '.join(command_list)}; echo ENDFOUND"
 
         # FUTURE: in most cases we probably don't want to use become, but maybe sometimes we do?
         res = action._low_level_execute_command(shell_bootstrap, sudoable=False)
@@ -92,7 +92,7 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
             return u'/usr/bin/python'
 
         if platform_type != 'linux':
-            raise NotImplementedError('unsupported platform for extended discovery: {0}'.format(to_native(platform_type)))
+            raise NotImplementedError(f'unsupported platform for extended discovery: {to_native(platform_type)}')
 
         platform_script = pkgutil.get_data('ansible.executor.discovery', 'python_target.py')
 
@@ -114,7 +114,7 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
 
         version_map = platform_python_map.get(distro.lower().strip()) or platform_python_map.get(family)
         if not version_map:
-            raise NotImplementedError('unsupported Linux distribution: {0}'.format(distro))
+            raise NotImplementedError(f'unsupported Linux distribution: {distro}')
 
         platform_interpreter = to_text(_version_fuzzy_match(version, version_map), errors='surrogate_or_strict')
 
