@@ -303,9 +303,9 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 self.collections.append(collection.strip())
 
         if self.collections:
-            display.v('Collections name seearch is set to: %s' % ', '.join(self.collections))
+            display.v('Collections name search is set to: %s' % ', '.join(self.collections))
         else:
-            display.v('Collections name seearch is using defaults')
+            display.v('Collections name search is using defaults')
 
     def help_collections(self):
         display.display("Set the collection name search path when using short names for plugins")
@@ -380,7 +380,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
             display.display("Please specify become value, e.g. `become yes`")
 
     def help_become(self):
-        display.display("Toggle wheether the tasks are run with become")
+        display.display("Toggle whether the tasks are run with become")
 
     def do_remote_user(self, arg):
         """Given a username, set the remote user plays are run by"""
@@ -403,7 +403,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.set_prompt()
 
     def help_become_user(self):
-        display.display("Set the user for use as in privilege escalation (which remote user attempts to 'become' when become is enabled)")
+        display.display("Set the user for use with privilege escalation (which remote user attempts to 'become' when become is enabled)")
 
     def do_become_method(self, arg):
         """Given a become_method, set the privilege escalation method when using become"""
