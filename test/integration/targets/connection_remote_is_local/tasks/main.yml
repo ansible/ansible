@@ -2,6 +2,7 @@
   environment:
     ANSIBLE_REMOTE_TEMP: /i/dont/exist
     ANSIBLE_NOCOLOR: 'true'
+    ANSIBLE_PIPELINING: 'false'
   register: result
 
 - assert:
