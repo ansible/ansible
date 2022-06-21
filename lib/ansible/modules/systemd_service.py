@@ -42,6 +42,12 @@ options:
         description:
             - Whether the unit should be masked or not, a masked unit is impossible to start.
         type: bool
+    reset_failed:
+        description:
+            - Reset the 'failed' state of the specified unit, or if no unit name is passed, reset the state of all units.
+        type: bool
+        default: no
+        aliases: [ reset-failed ]
     daemon_reload:
         description:
             - Run daemon-reload before doing any other operations, to make sure systemd has read any changes.
@@ -135,6 +141,10 @@ EXAMPLES = '''
 - name: Just force systemd to re-execute itself (2.8 and above)
   ansible.builtin.systemd:
     daemon_reexec: yes
+
+- name: Reset failed state of all units
+  ansible.builtin.systemd:
+    reset_failed: yes
 
 - name: Run a user service when XDG_RUNTIME_DIR is not set on remote login
   ansible.builtin.systemd:
@@ -342,6 +352,7 @@ def main():
             enabled=dict(type='bool'),
             force=dict(type='bool'),
             masked=dict(type='bool'),
+            reset_failed=dict(type='bool', default=False, aliases=['reset-failed']),
             daemon_reload=dict(type='bool', default=False, aliases=['daemon-reload']),
             daemon_reexec=dict(type='bool', default=False, aliases=['daemon-reexec']),
             scope=dict(type='str', default='system', choices=['system', 'user', 'global']),
@@ -398,6 +409,18 @@ def main():
         (rc, out, err) = module.run_command("%s daemon-reexec" % (systemctl))
         if rc != 0:
             module.fail_json(msg='failure %d during daemon-reexec: %s' % (rc, err))
+
+    # Run reset-failed of all units
+    if module.params['reset_failed'] is True and unit is None:
+        (rc, out, err) = module.run_command("%s --failed" % (systemctl))
+        if rc != 0:
+            module.fail_json(msg='failure %d during reset-failed of all units: %s' % (rc,err))
+        if '0 loaded units listed' not in out:
+            result['changed'] = True
+            if not module.check_mode:
+                (rc, out, err) = module.run_command("%s reset-failed" % (systemctl))
+                if rc != 0:
+                    module.fail_json(msg='failure %d during reset-failed of all units: %s' % (rc,err))
 
     if unit:
         found = False
@@ -482,6 +505,16 @@ def main():
                     (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                     if rc != 0:
                         # some versions of system CAN mask/unmask non existing services, we only fail on missing if they don't
+                        fail_if_missing(module, found, unit, msg='host')
+
+        # reset-failed the unit
+        if module.params['reset_failed'] is True:
+            (rc, out, err) = module.run_command("%s is-failed '%s'" % (systemctl, unit))
+            if out.strip() == 'failed':
+                result['changed'] = True
+                if not module.check_mode:
+                    (rc, out, err) = module.run_command("%s reset-failed '%s'" % (systemctl, unit))
+                    if rc != 0:
                         fail_if_missing(module, found, unit, msg='host')
 
         # Enable/disable service startup at boot if requested
