@@ -98,7 +98,7 @@ Ansible Community Package Release       Status                          Core ver
 ansible-core release cycle
 --------------------------
 
-``ansible-core`` is developed and released on a flexible release cycle. This cycle can be extended to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`ansible_core_roadmaps` for upcoming release details.
+``ansible-core`` is developed and released on a flexible release cycle. We can extend this cycle to properly implement and test larger changes before a new release is made available. See :ref:`ansible_core_roadmaps` for upcoming release details.
 
 ``ansible-core`` has a graduated maintenance structure that extends to three major releases.
 For more information, read about the :ref:`development_and_stable_version_maintenance_workflow` or
@@ -167,7 +167,8 @@ Feature freezes
 
 During final preparations for a new release, core developers and maintainers focus on improving the release candidate, not on adding or reviewing new features. We may impose a feature freeze.
 
-A feature freeze means that we delay new features and fixes that are not related to the pending release so we can create the new release as soon as possible.
+A feature freeze means that we delay new features and fixes unrelated to the pending release so we can create the new release as soon as possible.
+
 
 
 Release candidates
@@ -239,12 +240,12 @@ Sometimes we remove a feature, normally in favor of a reimplementation that we h
 Ansible community package deprecation cycle
 --------------------------------------------
 
-Since Ansible is a package of individual collections, the deprecation cycle depends on the collection maintainers. We recommend the collection maintainers deprecate a feature in one Ansible major version and do not remove that feature for one year, or at least until the next major Ansible version. For example, deprecate the feature in 3.1.0, and do not remove the feature until 5.0.0, or 4.0.0 at the earliest. Collections should use semantic versioning, such that the major collection version cannot be changed within an Ansible major version. Therefore, the removal should not happen before the next major Ansible community package release. This is up to each collection maintainer and cannot be guaranteed.
+Since Ansible is a package of individual collections, the deprecation cycle depends on the collection maintainers. We recommend the collection maintainers deprecate a feature in one Ansible major version and do not remove that feature for one year, or at least until the next major Ansible version. For example, deprecate the feature in 3.1.0 and do not remove the feature until 5.0.0 or 4.0.0 at the earliest. Collections should use semantic versioning, such that the major collection version cannot be changed within an Ansible major version. Therefore, the removal should not happen before the next major Ansible community package release. This is up to each collection maintainer and cannot be guaranteed.
 
 ansible-core deprecation cycle
 -------------------------------
 
-The deprecation cycle in ``ansible-core`` is normally across 4 feature releases (2.x.y, where the x marks a feature release and the y a bug fix release), so the feature is normally removed in the 4th release after we announce the deprecation. For example, something deprecated in 2.9 will be removed in 2.13, assuming we do not jump to 3.x before that point. The tracking is tied to the number of releases, not the release numbering.
+The deprecation cycle in ``ansible-core`` is normally across 4 feature releases (2.x. where the x marks a feature release). The feature is normally removed in the 4th release after we announce the deprecation. For example, something deprecated in 2.10 will be removed in 2.14. The tracking is tied to the number of releases, not the release numbering itself.
 
 .. seealso::
 
