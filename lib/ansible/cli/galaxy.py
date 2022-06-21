@@ -1010,7 +1010,7 @@ class GalaxyCLI(CLI):
 
         if galaxy_type == "role":
             semantic_version = SemanticVersion.from_loose_version(LooseVersion(ansible_version))
-            min_ansible_version=f"{semantic_version.major}.{semantic_version.minor}"
+            min_ansible_version = f"{semantic_version.major}.{semantic_version.minor}"
             inject_data.update(
                 dict(
                     author="your name",
