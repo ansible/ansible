@@ -52,7 +52,7 @@ class AdHocCLI(CLI):
 
         # options unique to ansible ad-hoc
         self.parser.add_argument('-a', '--args', dest='module_args',
-                                 help="The action's options in space separated k=v format: -a 'opt1=val1 opt2=val2' " \
+                                 help="The action's options in space separated k=v format: -a 'opt1=val1 opt2=val2' "
                                       "or a json string: -a '{\"opt1\": \"val1\", \"opt2\": \"val2\"}'",
                                  default=C.DEFAULT_MODULE_ARGS)
         self.parser.add_argument('-m', '--module-name', dest='module_name',
@@ -77,7 +77,7 @@ class AdHocCLI(CLI):
         module_args = None
         if module_args_raw and module_args_raw.startswith('{') and module_args_raw.endswith('}'):
             try:
-                module_args = from_yaml(module_args_raw, json_only=True)
+                module_args = from_yaml(module_args_raw.strip(), json_only=True)
             except AnsibleParserError:
                 pass
 
