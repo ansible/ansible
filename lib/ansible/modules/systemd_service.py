@@ -48,6 +48,7 @@ options:
         type: bool
         default: no
         aliases: [ reset-failed ]
+        version_added: 2.14
     daemon_reload:
         description:
             - Run daemon-reload before doing any other operations, to make sure systemd has read any changes.
