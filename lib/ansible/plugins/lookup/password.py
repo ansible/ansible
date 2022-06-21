@@ -124,7 +124,6 @@ _raw:
 import os
 import string
 import time
-import shutil
 import hashlib
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
@@ -139,12 +138,15 @@ DEFAULT_LENGTH = 20
 VALID_PARAMS = frozenset(('length', 'encrypt', 'chars', 'ident', 'seed'))
 
 
-def _parse_parameters(term):
+def _parse_parameters(term, kwargs=None):
     """Hacky parsing of params
 
     See https://github.com/ansible/ansible-modules-core/issues/1968#issuecomment-136842156
     and the first_found lookup For how we want to fix this later
     """
+    if kwargs is None:
+        kwargs = {}
+
     first_split = term.split(' ', 1)
     if len(first_split) <= 1:
         # Only a single argument given, therefore it's a path
@@ -172,12 +174,12 @@ def _parse_parameters(term):
         raise AnsibleError('Unrecognized parameter(s) given to password lookup: %s' % ', '.join(invalid_params))
 
     # Set defaults
-    params['length'] = int(params.get('length', DEFAULT_LENGTH))
-    params['encrypt'] = params.get('encrypt', None)
-    params['ident'] = params.get('ident', None)
-    params['seed'] = params.get('seed', None)
+    params['length'] = int(params.get('length', kwargs.get('length', DEFAULT_LENGTH)))
+    params['encrypt'] = params.get('encrypt', kwargs.get('encrypt', None))
+    params['ident'] = params.get('ident', kwargs.get('ident', None))
+    params['seed'] = params.get('seed', kwargs.get('seed', None))
 
-    params['chars'] = params.get('chars', None)
+    params['chars'] = params.get('chars', kwargs.get('chars', None))
     if params['chars']:
         tmp_chars = []
         if u',,' in params['chars']:
@@ -338,7 +340,7 @@ class LookupModule(LookupBase):
         ret = []
 
         for term in terms:
-            relpath, params = _parse_parameters(term)
+            relpath, params = _parse_parameters(term, kwargs)
             path = self._loader.path_dwim(relpath)
             b_path = to_bytes(path, errors='surrogate_or_strict')
             chars = _gen_candidate_chars(params['chars'])
