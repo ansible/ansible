@@ -46,13 +46,15 @@ def _decode_escapes(s):
     return _ESCAPE_SEQUENCE_RE.sub(decode_match, s)
 
 
-def parse_kv(args, check_raw=False):
+def parse_kv(args, check_raw=False, action=None):
     '''
     Convert a string of key/value items to a dict. If any free-form params
     are found and the check_raw option is set to True, they will be added
     to a new parameter called '_raw_params'. If check_raw is not enabled,
     they will simply be ignored.
     '''
+    # avoid circular import
+    from ansible.plugins.action import get_action_options
 
     args = to_text(args, nonstring='passthru')
 
@@ -88,7 +90,7 @@ def parse_kv(args, check_raw=False):
                 v = x[pos + 1:]
 
                 # FIXME: make the retrieval of this list of shell/command options a function, so the list is centralized
-                if check_raw and k not in ('creates', 'removes', 'chdir', 'executable', 'warn', 'stdin', 'stdin_add_newline', 'strip_empty_ends'):
+                if check_raw and k not in get_action_options(action):
                     raw_params.append(orig_x)
                 else:
                     options[k.strip()] = unquote(v.strip())
@@ -167,7 +169,6 @@ def split_args(args):
     Basically this is a variation shlex that has some more intelligence for
     how Ansible needs to use it.
     '''
-
     # the list of params parsed out of the arg string
     # this is going to be the result value when we are done
     params = []
