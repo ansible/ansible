@@ -105,7 +105,7 @@ Porting Guide for v6.0.0
 Added Collections
 -----------------
 
-- cisco.dnac (version 6.5.0)
+- cisco.dnac (version 6.4.0)
 - community.sap (version 1.0.0)
 - community.sap_libs (version 1.1.0)
 - vmware.vmware_rest (version 2.1.5)
@@ -629,7 +629,6 @@ amazon.aws
 cisco.ios
 ~~~~~~~~~
 
-- Deprecated ios_linkagg_module in favor of ios_lag_interfaces.
 - Deprecates lldp module.
 - `ios_acls` - Deprecated fragment attribute added boolean alternate as enable_fragment.
 
@@ -655,7 +654,6 @@ community.general
 ~~~~~~~~~~~~~~~~~
 
 - ansible_galaxy_install - deprecated support for ``ansible`` 2.9 and ``ansible-base`` 2.10 (https://github.com/ansible-collections/community.general/pull/4601).
-- cmd_runner module utils - deprecated ``fmt`` in favour of ``cmd_runner_fmt`` as the parameter format object (https://github.com/ansible-collections/community.general/pull/4777).
 - dig lookup plugin - the ``DLV`` record type has been decommissioned in 2017 and support for it will be removed from community.general 6.0.0 (https://github.com/ansible-collections/community.general/pull/4618).
 - gem - the default of the ``norc`` option has been deprecated and will change to ``true`` in community.general 6.0.0. Explicitly specify a value to avoid a deprecation warning (https://github.com/ansible-collections/community.general/pull/4517).
 - mail callback plugin - not specifying ``sender`` is deprecated and will be disallowed in community.general 6.0.0 (https://github.com/ansible-collections/community.general/pull/4140).
