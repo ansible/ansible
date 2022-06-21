@@ -575,24 +575,23 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.set_prompt()
         self.cmdloop()
 
-    def __getattribute__(self, name):
-        try:
-            attr = object.__getattribute__(self, name)
-        except Exception as e:
-            attr = None
-            if name.startswith('do_'):
-                module = self.name.replace('do_', '')
-                if module_loader.find_plugin(module):
-                    setattr(self, name, lambda arg, module=module: self.default(module + ' ' + arg))
-                    attr = object.__getattribute__(self, name)
-            elif name.startswith('help_'):
-                module = self.name.replace('help_', '')
-                if module_loader.find_plugin(module):
-                    setattr(self, name, lambda module=module: self.helpdefault(module))
-                    attr = object.__getattribute__(self, name)
+    def __getattr__(self, name):
+        ''' handle not found to populate dynamically a module function if module matching name exists '''
+        attr = None
 
-            if attr is None:
-                raise
+        if name.startswith('do_'):
+            module = name.replace('do_', '')
+            if module_loader.find_plugin(module):
+                setattr(self, name, lambda arg, module=module: self.default(module + ' ' + arg))
+                attr = object.__getattr__(self, name)
+        elif name.startswith('help_'):
+            module = name.replace('help_', '')
+            if module_loader.find_plugin(module):
+                setattr(self, name, lambda module=module: self.helpdefault(module))
+                attr = object.__getattr__(self, name)
+
+        if attr is None:
+            raise AttributeError(f"{self.__class__} does not have a {name} attribute")
 
         return attr
 
