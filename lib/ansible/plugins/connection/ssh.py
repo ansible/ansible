@@ -1423,10 +1423,10 @@ class Connection(ConnectionBase):
     def has_tty(self):
         return self._is_tty_requested()
 
-    def is_pipelining_enabled(self, module_style='new', wrap_async=False):
+    def is_pipelining_enabled(self, wrap_async=False):
         ''' override parent method and ensure we don't request a tty '''
 
         if self._is_tty_requested():
             return False
         else:
-            return super(Connection, self).is_pipelining_enabled(module_style, wrap_async)
+            return super(Connection, self).is_pipelining_enabled(wrap_async)

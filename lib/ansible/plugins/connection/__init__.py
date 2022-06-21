@@ -261,7 +261,7 @@ class ConnectionBase(AnsiblePlugin):
                 display.debug('Set connection var {0} to {1}'.format(varname, value))
                 variables[varname] = value
 
-    def is_pipelining_enabled(self, module_style='new', wrap_async=False):
+    def is_pipelining_enabled(self, wrap_async=False):
 
         is_enabled = False
         if self.has_pipelining and (not self.become or self.become.pipelining):
@@ -270,14 +270,11 @@ class ConnectionBase(AnsiblePlugin):
             except KeyError:
                 is_enabled = self._play_context.get('pipelining')
 
-        always_pipeline = self._connection.always_pipeline_modules
-
         # any of these require a true
         conditions = [
-            is_enabled or always_pipeline,      # enabled via config or forced via connection (eg winrm)
-            module_style == "new",              # old style modules do not support pipelining
-            not C.DEFAULT_KEEP_REMOTE_FILES,    # user wants remote files
-            not wrap_async or always_pipeline,  # async does not normally support pipelining unless it does (eg winrm)
+            is_enabled,                       # enabled via config or forced via connection (eg winrm)
+            not C.DEFAULT_KEEP_REMOTE_FILES,  # user wants remote files
+            not wrap_async,                   # async does not normally support pipelining unless it does (eg winrm)
         ]
 
         return all(conditions)

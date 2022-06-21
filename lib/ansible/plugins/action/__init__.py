@@ -361,7 +361,9 @@ class ActionBase(ABC):
         '''
         Determines if we are required and can do pipelining
         '''
-        return self._connection.is_pipelining_enabled(module_style, wrap_async)
+        # ask connection plugin if it is supported and enabled
+        # only 'new style modules support pipelining'
+        return self._connection.is_pipelining_enabled(wrap_async) and module_style == 'new'
 
     def _get_admin_users(self):
         '''
