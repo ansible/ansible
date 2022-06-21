@@ -39,7 +39,7 @@ The two community releases are related - the release cycle follows this pattern:
 
    * Newest release of the Ansible community package is the only version now maintained
    * Work on new features continues in Collections
-   * Individual Collections can make multiple minor and/or major releases
+   * Individual Collections can make multiple minor and major releases
 
 #. Minor releases of three maintained ansible-core versions every three weeks (2.11.1)
 #. Minor releases of the single maintained Ansible community package version every three weeks (4.1.0)
@@ -61,15 +61,16 @@ Starting with version 2.10, the Ansible community team guarantees maintenance fo
 
 .. note::
 
-   Older, unmaintained versions of the Ansible community package might contain unfixed security vulnerabilities (*CVEs*). If you are using a release of the Ansible community package that is no longer maintained, we strongly encourage you to upgrade as soon as possible in order to benefit from the latest features and security fixes.
+   Older, unmaintained versions of the Ansible community package might contain unfixed security vulnerabilities (*CVEs*). If you are using a release of the Ansible community package that is no longer maintained, we strongly encourage you to upgrade as soon as possible to benefit from the latest features and security fixes.
 
-Each major release of the Ansible community package accepts the latest released version of each included Collection and the latest released version of ansible-core. For specific schedules and deadlines, see the :ref:`ansible_roadmaps` for each version. Major releases of the Ansible community package can contain breaking changes in the modules and other plugins within the included Collections and/or in core features.
+Each major release of the Ansible community package accepts the latest released version of each included Collection and the latest released version of ansible-core. For specific schedules and deadlines, see the :ref:`ansible_roadmaps` for each version. Major releases of the Ansible community package can contain breaking changes in the modules and other plugins within the included Collections and in core features.
 
-The Ansible community package follows semantic versioning rules. Minor releases of the Ansible community package accept only backwards-compatible changes in included Collections, in other words, not Collections major releases. Collections must also use semantic versioning, so the Collection version numbers reflect this rule. For example, if Ansible 3.0.0 releases with community.general 2.0.0, then all minor releases of Ansible 3.x (such as Ansible 3.1.0 or Ansible 3.5.0) must include a 2.x release of community.general (such as 2.8.0 or 2.9.5) and not 3.x.x or later major releases.
+The Ansible community package follows semantic versioning rules. Minor releases of the Ansible community package accept only backwards-compatible changes in included Collections, that is, not Collections major releases. Collections must also use semantic versioning, so the Collection version numbers reflect this rule. For example, if Ansible 3.0.0 releases with community.general 2.0.0, then all minor releases of Ansible 3.x (such as Ansible 3.1.0 or Ansible 3.5.0) must include a 2.x release of community.general (such as 2.8.0 or 2.9.5) and not 3.x.x or later major releases.
 
 Work in Collections is tracked within the individual Collection repositories.
 
-You can refer to the :ref:`Ansible package porting guides<porting_guides>` for tips on updating your playbooks to run on newer versions of Ansible. For Ansible 2.10 and later releases, you can install the Ansible package with ``pip``. See :ref:`intro_installation_guide` for details.  For older releases, you can download the Ansible release from `<https://releases.ansible.com/ansible/>`_.
+You can refer to the :ref:`Ansible package porting guides<porting_guides>` for tips on updating your playbooks to run on newer versions of Ansible. For Ansible 2.10 and later releases, you can install the Ansible package with ``pip``. See :ref:`intro_installation_guide` for details. You can download older Ansible releases from `<https://releases.ansible.com/ansible/>`_.
+
 
 Ansible community changelogs
 ----------------------------
@@ -79,13 +80,15 @@ This table links to the changelogs for each major Ansible release. These changel
 ==================================      ============================    =========================
 Ansible Community Package Release       Status                          Core version dependency
 ==================================      ============================    =========================
-6.0.0                                   In development (unreleased)     2.13
-`5.x Changelogs`_                       Current (EOL after 5.10)        2.12
+7.0.0                                   In development (unreleased)     2.14
+`6.x Changelogs`_                       Current                         2.13
+`5.x Changelogs`_                       Unmaintained/EOL after 5.10     2.12
 `4.x Changelogs`_                       Unmaintained (end of life)      2.11
 `3.x Changelogs`_                       Unmaintained (end of life)      2.10
 `2.10 Changelogs`_                      Unmaintained (end of life)      2.10
 ==================================      ============================    =========================
 
+.. _6.x Changelogs: https://github.com/ansible-community/ansible-build-data/blob/main/6/CHANGELOG-v6.rst
 .. _5.x Changelogs: https://github.com/ansible-community/ansible-build-data/blob/main/5/CHANGELOG-v5.rst
 .. _4.x Changelogs: https://github.com/ansible-community/ansible-build-data/blob/main/4/CHANGELOG-v4.rst
 .. _3.x Changelogs: https://github.com/ansible-community/ansible-build-data/blob/main/3/CHANGELOG-v3.rst
@@ -95,7 +98,7 @@ Ansible Community Package Release       Status                          Core ver
 ansible-core release cycle
 --------------------------
 
-``ansible-core`` is developed and released on a flexible release cycle. This cycle can be extended in order to allow for larger changes to be properly implemented and tested before a new release is made available. See :ref:`ansible_core_roadmaps` for upcoming release details.
+``ansible-core`` is developed and released on a flexible release cycle. We can extend this cycle to properly implement and test larger changes before a new release is made available. See :ref:`ansible_core_roadmaps` for upcoming release details.
 
 ``ansible-core`` has a graduated maintenance structure that extends to three major releases.
 For more information, read about the :ref:`development_and_stable_version_maintenance_workflow` or
@@ -164,7 +167,8 @@ Feature freezes
 
 During final preparations for a new release, core developers and maintainers focus on improving the release candidate, not on adding or reviewing new features. We may impose a feature freeze.
 
-A feature freeze means that we delay new features and fixes that are not related to the pending release so we can ship the new release as soon as possible.
+A feature freeze means that we delay new features and fixes unrelated to the pending release so we can create the new release as soon as possible.
+
 
 
 Release candidates
@@ -213,7 +217,7 @@ The Ansible community develops and maintains ``ansible-core`` on GitHub_, with a
 
 We generally do not provide fixes for unmaintained releases of ``ansible-core``, however, there can sometimes be exceptions for critical issues.
 
-For more information on adding features or fixing bugs in ``ansible-core`` see :ref:`community_development_process`.
+For more information about adding features or fixing bugs in ``ansible-core`` see :ref:`community_development_process`.
 
 .. _GitHub: https://github.com/ansible/ansible
 
@@ -236,12 +240,12 @@ Sometimes we remove a feature, normally in favor of a reimplementation that we h
 Ansible community package deprecation cycle
 --------------------------------------------
 
-Since Ansible is a package of individual collections, the deprecation cycle depends on the collection maintainers. We recommend the collection maintainers deprecate a feature in one Ansible major version and do not remove that feature for one year, or at least until the next major Ansible version. For example, deprecate the feature in 3.1.0, and do not remove the feature until 5.0.0, or 4.0.0 at the earliest. Collections should use semantic versioning, such that the major collection version cannot be changed within an Ansible major version. Thus the removal should not happen before the next major Ansible community package release. This is up to each collection maintainer and cannot be guaranteed.
+Since Ansible is a package of individual collections, the deprecation cycle depends on the collection maintainers. We recommend the collection maintainers deprecate a feature in one Ansible major version and do not remove that feature for one year, or at least until the next major Ansible version. For example, deprecate the feature in 3.1.0 and do not remove the feature until 5.0.0 or 4.0.0 at the earliest. Collections should use semantic versioning, such that the major collection version cannot be changed within an Ansible major version. Therefore, the removal should not happen before the next major Ansible community package release. This is up to each collection maintainer and cannot be guaranteed.
 
 ansible-core deprecation cycle
 -------------------------------
 
-The deprecation cycle in ``ansible-core`` is normally across 4 feature releases (2.x.y, where the x marks a feature release and the y a bugfix release), so the feature is normally removed in the 4th release after we announce the deprecation. For example, something deprecated in 2.9 will be removed in 2.13, assuming we do not jump to 3.x before that point. The tracking is tied to the number of releases, not the release numbering.
+The deprecation cycle in ``ansible-core`` is normally across 4 feature releases (2.x. where the x marks a feature release). The feature is normally removed in the 4th release after we announce the deprecation. For example, something deprecated in 2.10 will be removed in 2.14. The tracking is tied to the number of releases, not the release numbering itself.
 
 .. seealso::
 
