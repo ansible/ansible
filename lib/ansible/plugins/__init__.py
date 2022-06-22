@@ -145,6 +145,10 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
         return option in self._options
 
     @property
+    def plugin_type(self):
+        return self.__class__.__name__.lower().replace('module', '')
+
+    @property
     def option_definitions(self):
         if (not hasattr(self, "_defs")) or self._defs is None:
             self._defs = C.config.get_configuration_definitions(plugin_type=self.plugin_type, name=self._load_name)
