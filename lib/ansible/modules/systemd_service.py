@@ -47,13 +47,13 @@ options:
             - Run daemon-reload before doing any other operations, to make sure systemd has read any changes.
             - When set to C(true), runs daemon-reload even if the module does not start or stop anything.
         type: bool
-        default: no
+        default: false
         aliases: [ daemon-reload ]
     daemon_reexec:
         description:
             - Run daemon_reexec command before doing any other operations, the systemd manager will serialize the manager state.
         type: bool
-        default: no
+        default: false
         aliases: [ daemon-reexec ]
         version_added: "2.8"
     scope:
@@ -74,7 +74,7 @@ options:
             - Do not synchronously wait for the requested operation to finish.
               Enqueued job will continue without Ansible blocking on its completion.
         type: bool
-        default: no
+        default: false
         version_added: "2.3"
 extends_documentation_fragment: action_common_attributes
 attributes:
@@ -108,7 +108,7 @@ EXAMPLES = '''
 - name: Restart service cron on centos, in all cases, also issue daemon-reload to pick up config changes
   ansible.builtin.systemd:
     state: restarted
-    daemon_reload: yes
+    daemon_reload: true
     name: crond
 
 - name: Reload service httpd, in all cases
@@ -119,22 +119,22 @@ EXAMPLES = '''
 - name: Enable service httpd and ensure it is not masked
   ansible.builtin.systemd:
     name: httpd
-    enabled: yes
-    masked: no
+    enabled: true
+    masked: false
 
 - name: Enable a timer unit for dnf-automatic
   ansible.builtin.systemd:
     name: dnf-automatic.timer
     state: started
-    enabled: yes
+    enabled: true
 
 - name: Just force systemd to reread configs (2.4 and above)
   ansible.builtin.systemd:
-    daemon_reload: yes
+    daemon_reload: true
 
 - name: Just force systemd to re-execute itself (2.8 and above)
   ansible.builtin.systemd:
-    daemon_reexec: yes
+    daemon_reexec: true
 
 - name: Run a user service when XDG_RUNTIME_DIR is not set on remote login
   ansible.builtin.systemd:
