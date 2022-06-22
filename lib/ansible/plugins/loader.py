@@ -501,7 +501,7 @@ class PluginLoader:
 
         # plugins w/o class name don't support config
         if self.class_name:
-            type_name = get_plugin_class(self.class_name)
+            type_name = self.class_name.lower().replace('module', '')
 
             # if type name != 'module_doc_fragment':
             if type_name in C.CONFIGURABLE_PLUGINS and not C.config.has_configuration_definition(type_name, name):
