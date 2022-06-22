@@ -1,0 +1,2 @@
+minor_changes:
+  - updated the vendored distro library to 1.7.0 upstream version (used in fact gathering).
