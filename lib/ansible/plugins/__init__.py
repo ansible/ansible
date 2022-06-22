@@ -43,13 +43,6 @@ PATH_CACHE = {}  # type: dict[str, list[PluginPathContext] | None]
 PLUGIN_PATH_CACHE = {}  # type: dict[str, dict[str, dict[str, PluginPathContext]]]
 
 
-def get_plugin_class(obj):
-    if isinstance(obj, string_types):
-        return obj.lower().replace('module', '')
-    else:
-        return obj.__class__.__name__.lower().replace('module', '')
-
-
 class AnsiblePlugin(ABC):
 
     # allow extra passthrough parameters

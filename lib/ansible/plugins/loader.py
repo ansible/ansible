@@ -26,7 +26,7 @@ from ansible.module_utils.compat.importlib import import_module
 from ansible.module_utils.six import string_types
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.loader import AnsibleLoader
-from ansible.plugins import get_plugin_class, MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
+from ansible.plugins import MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE
 from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleCollectionRef
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder, _get_collection_metadata
 from ansible.utils.display import Display
@@ -398,7 +398,7 @@ class PluginLoader:
 
         # plugins w/o class name don't support config
         if self.class_name:
-            type_name = get_plugin_class(self.class_name)
+            type_name = self.class_name.lower().replace('module', '')
 
             # if type name != 'module_doc_fragment':
             if type_name in C.CONFIGURABLE_PLUGINS and not C.config.has_configuration_definition(type_name, name):
