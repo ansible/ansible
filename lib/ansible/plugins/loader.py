@@ -304,7 +304,7 @@ class PluginLoader:
         ret = []
         for i in paths:
             if i not in ret:
-                ret.append(i)
+                ret.append(to_text(i, errors='surrogate_or_strict'))
         return os.pathsep.join(ret)
 
     def print_paths(self):
