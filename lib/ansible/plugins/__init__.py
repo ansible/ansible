@@ -103,6 +103,7 @@ class AnsiblePlugin(ABC):
     @property
     def plugin_type(self):
         return self.__class__.__name__.lower().replace('module', '')
+<<<<<<< HEAD
 
     @property
     def option_definitions(self):
@@ -134,3 +135,5 @@ class AnsibleJinja2Plugin(AnsiblePlugin):
     @property
     def j2_function(self):
         return self._function
+=======
+>>>>>>> f738e1e53d (sws)
