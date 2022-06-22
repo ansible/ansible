@@ -149,6 +149,7 @@ options:
     description:
       - Path to file to be submitted to the remote server.
       - Cannot be used with I(body).
+      - Should be used with I(force_basic_auth) to ensure success when the remote end sends a 401.
     type: path
     version_added: '2.7'
   remote_src:
