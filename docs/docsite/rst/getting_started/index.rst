@@ -96,3 +96,4 @@ Continue by :ref:`learning how to build an inventory<get_started_inventory>`.
 
    get_started_inventory
    get_started_playbook
+   basic_concepts
