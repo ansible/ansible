@@ -34,6 +34,8 @@ description:
   - This module will replace all instances of a pattern within a file.
   - It is up to the user to maintain idempotence by ensuring that the
     same pattern would never match any replacements made.
+  - If you use this module to edit a file and if the file belongs to a different user than the user
+    running Ansible, this module will change the owner of the file to the user running Ansible.
 version_added: "1.6"
 options:
   path:

@@ -17,6 +17,8 @@ description:
   - This module ensures a particular line is in a file, or replace an
     existing line using a back-referenced regular expression.
   - This is primarily useful when you want to change a single line in a file only.
+  - If you use this module to edit a file and if the file belongs to a different user than the user
+    running Ansible, this module will change the owner of the file to the user running Ansible.
   - See the M(ansible.builtin.replace) module if you want to change multiple, similar lines
     or check M(ansible.builtin.blockinfile) if you want to insert/update/remove a block of lines in a file.
     For other cases, see the M(ansible.builtin.copy) or M(ansible.builtin.template) modules.
