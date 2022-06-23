@@ -298,7 +298,6 @@ class AnsibleCoreCI:
                 version=self.version,
                 architecture=self.arch,
                 public_key=self.ssh_key.pub_contents,
-                query=False,
                 winrm_config=winrm_config,
             )
         )
