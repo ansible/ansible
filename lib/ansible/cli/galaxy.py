@@ -640,7 +640,9 @@ class GalaxyCLI(CLI):
 
         cmd_server = context.CLIARGS['api_server']
         cmd_token = GalaxyToken(token=context.CLIARGS['api_key'])
-        validate_certs = True if context.CLIARGS['validate_certs'] is None else context.CLIARGS['validate_certs']
+
+        # resolve validate_certs
+        validate_certs = (True if C.GALAXY_IGNORE_CERTS is None else not C.GALAXY_IGNORE_CERTS) if context.CLIARGS['validate_certs'] is None else context.CLIARGS['validate_certs']
         if cmd_server:
             # Cmd args take precedence over the config entry but fist check if the arg was a name and use that config
             # entry, otherwise create a new API entry for the server specified.
