@@ -17,7 +17,7 @@ options:
         version_added: "2.1"
         description:
             - "If supplied, restrict the additional facts collected to the given subset.
-              Possible values: C(all), C(all_ipv4_addresses), C(all_ipv6_addresses), C(apparmor), C(architecture), 
+              Possible values: C(all), C(all_ipv4_addresses), C(all_ipv6_addresses), C(apparmor), C(architecture),
               C(caps), C(chroot),C(cmdline), C(date_time), C(default_ipv4), C(default_ipv6), C(devices),
               C(distribution), C(distribution_major_version), C(distribution_release), C(distribution_version),
               C(dns), C(effective_group_ids), C(effective_user_id), C(env), C(facter), C(fips), C(hardware),
