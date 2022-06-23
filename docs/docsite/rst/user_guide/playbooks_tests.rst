@@ -516,7 +516,7 @@ When looking to determine types, it may be tempting to use the ``type_debug`` fi
        Looping in playbooks
    :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :ref:`playbooks_best_practices`
+   :ref:`tips_and_tricks`
        Tips and tricks for playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
