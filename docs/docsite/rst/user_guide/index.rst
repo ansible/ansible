@@ -80,7 +80,6 @@ Here is the complete list of resources in the Ansible User Guide:
 .. toctree::
    :maxdepth: 2
 
-   basic_concepts
    intro_adhoc
    cheatsheet
    playbooks_intro
