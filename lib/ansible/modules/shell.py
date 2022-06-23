@@ -90,6 +90,8 @@ notes:
   - An alternative to using inline shell scripts with this module is to use
     the M(ansible.builtin.script) module possibly together with the M(ansible.builtin.template) module.
   - For rebooting systems, use the M(ansible.builtin.reboot) or M(ansible.windows.win_reboot) module.
+  - Free-form arguments can create unexpected syntax errors (such as Jinja2 parsing errors from apostrophes 
+    within a comment). Use the I(cmd) argument instead.
 seealso:
 - module: ansible.builtin.command
 - module: ansible.builtin.raw

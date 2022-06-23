@@ -24,6 +24,8 @@ description:
        arguments, pass parameters using the C(args) L(task keyword,../reference_appendices/playbooks_keywords.html#task)
        or use C(cmd) parameter.
      - Either a free form command or C(cmd) parameter is required, see the examples.
+     - Free-form arguments can create unexpected syntax errors (such as Jinja2 parsing errors from apostrophes 
+       within a comment). Use the I(cmd) argument instead.
      - For Windows targets, use the M(ansible.windows.win_command) module instead.
 extends_documentation_fragment:
     - action_common_attributes
