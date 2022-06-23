@@ -1397,6 +1397,7 @@ class Connection(ConnectionBase):
     def close(self):
         self._connected = False
 
+    # TODO: add has_tty property that returns reflection of this answer, but need to fix conditional that depends on has_tty first
     def _is_tty_requested(self):
 
         # check if we require tty (only from our args, cannot see options in configuration files)
@@ -1418,10 +1419,6 @@ class Connection(ConnectionBase):
                     return True
 
         return False
-
-    @property
-    def has_tty(self):
-        return self._is_tty_requested()
 
     def is_pipelining_enabled(self, wrap_async=False):
         ''' override parent method and ensure we don't request a tty '''
