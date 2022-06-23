@@ -1,4 +1,4 @@
 Windows Support
 ===============
 
-This page has been split up and moved to the new section :ref:`windows`.
+You can find documentation for using Ansible on Windows at :ref:`win_guide_index`.
