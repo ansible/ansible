@@ -21,6 +21,9 @@ options:
   free_form:
     description:
       - Path to the local script file followed by optional arguments.
+      - Free-form arguments can create unexpected syntax errors (such as Jinja2 parsing errors from apostrophes
+        within a comment). Use the I(cmd) argument instead.
+
   cmd:
     type: str
     description:

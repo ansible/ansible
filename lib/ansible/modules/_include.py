@@ -34,6 +34,9 @@ options:
   free-form:
     description:
       - This module allows you to specify the name of the file directly without any other options.
+      - Free-form arguments can create unexpected syntax errors (such as Jinja2 parsing errors from apostrophes
+        within a comment).
+
 notes:
   - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
   - Include has some unintuitive behaviours depending on if it is running in a static or dynamic in play or in playbook context,

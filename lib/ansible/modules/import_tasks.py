@@ -21,6 +21,9 @@ options:
       - The name of the imported file is specified directly without any other option.
       - Most keywords, including loops and conditionals, only applied to the imported tasks, not to this statement itself.
       - If you need any of those to apply, use M(ansible.builtin.include_tasks) instead.
+      - Free-form arguments can create unexpected syntax errors (such as Jinja2 parsing errors from apostrophes
+        within a comment).
+
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.conn

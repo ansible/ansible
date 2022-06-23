@@ -83,6 +83,9 @@ options:
     description:
       - This module allows you to specify the 'file' option directly without any other options.
       - There is no 'free-form' option, this is just an indicator, see example below.
+      - Free-form arguments can create unexpected syntax errors (such as Jinja2 parsing errors from apostrophes
+        within a comment).
+
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.conn

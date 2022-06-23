@@ -17,6 +17,8 @@ options:
     description:
       - The raw module takes a free form command to run.
       - There is no parameter actually named 'free form'; see the examples!
+      - Free-form arguments can create unexpected syntax errors (such as Jinja2 parsing errors from apostrophes
+       within a comment).
     required: true
   executable:
     description:

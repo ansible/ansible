@@ -33,6 +33,9 @@ options:
       - |
         Supplying a file name via free-form C(- include_tasks: file.yml) of a file to be included is the equivalent
         of specifying an argument of I(file).
+      - Free-form arguments can create unexpected syntax errors (such as Jinja2 parsing errors from apostrophes
+        within a comment).
+
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.conn

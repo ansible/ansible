@@ -21,6 +21,9 @@ options:
   free-form:
     description:
       - The name of the imported playbook is specified directly without any other option.
+      - Free-form arguments can create unexpected syntax errors (such as Jinja2 parsing errors from apostrophes
+        within a comment).
+
 extends_documentation_fragment:
   - action_common_attributes
   - action_common_attributes.conn
