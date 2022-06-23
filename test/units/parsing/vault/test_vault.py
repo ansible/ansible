@@ -259,8 +259,10 @@ class TestFileVaultSecret(unittest.TestCase):
 
 
 class TestScriptVaultSecret(unittest.TestCase):
+    SAMPLE_FILENAME = './some-script.sh'
+
     def test(self):
-        secret = vault.ScriptVaultSecret()
+        secret = vault.ScriptVaultSecret(self.SAMPLE_FILENAME)
         self.assertIsNone(secret._bytes)
         self.assertIsNone(secret._text)
 
@@ -274,7 +276,7 @@ class TestScriptVaultSecret(unittest.TestCase):
     @patch('ansible.parsing.vault.subprocess.Popen')
     def test_read_file(self, mock_popen):
         self._mock_popen(mock_popen, stdout=b'some_password')
-        secret = vault.ScriptVaultSecret()
+        secret = vault.ScriptVaultSecret(self.SAMPLE_FILENAME)
         with patch.object(secret, 'loader') as mock_loader:
             mock_loader.is_executable = MagicMock(return_value=True)
             secret.load()
@@ -282,7 +284,7 @@ class TestScriptVaultSecret(unittest.TestCase):
     @patch('ansible.parsing.vault.subprocess.Popen')
     def test_read_file_empty(self, mock_popen):
         self._mock_popen(mock_popen, stdout=b'')
-        secret = vault.ScriptVaultSecret()
+        secret = vault.ScriptVaultSecret(self.SAMPLE_FILENAME)
         with patch.object(secret, 'loader') as mock_loader:
             mock_loader.is_executable = MagicMock(return_value=True)
             self.assertRaisesRegex(vault.AnsibleVaultPasswordError,
@@ -293,7 +295,7 @@ class TestScriptVaultSecret(unittest.TestCase):
     def test_read_file_os_error(self, mock_popen):
         self._mock_popen(mock_popen)
         mock_popen.side_effect = OSError('That is not an executable')
-        secret = vault.ScriptVaultSecret()
+        secret = vault.ScriptVaultSecret(self.SAMPLE_FILENAME)
         with patch.object(secret, 'loader') as mock_loader:
             mock_loader.is_executable = MagicMock(return_value=True)
             self.assertRaisesRegex(errors.AnsibleError,
@@ -303,7 +305,7 @@ class TestScriptVaultSecret(unittest.TestCase):
     @patch('ansible.parsing.vault.subprocess.Popen')
     def test_read_file_not_executable(self, mock_popen):
         self._mock_popen(mock_popen)
-        secret = vault.ScriptVaultSecret()
+        secret = vault.ScriptVaultSecret(self.SAMPLE_FILENAME)
         with patch.object(secret, 'loader') as mock_loader:
             mock_loader.is_executable = MagicMock(return_value=False)
             self.assertRaisesRegex(vault.AnsibleVaultError,
