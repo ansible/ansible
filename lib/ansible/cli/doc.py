@@ -937,7 +937,7 @@ class DocCLI(CLI, RoleMixin):
         return text
 
     @staticmethod
-    def find_plugins(path, internal, ptype, collection=None):
+    def find_plugins(path, internal, ptype, collection=None, depth=0):
         # if internal, collection could be set to `ansible.builtin`
 
         display.vvvv("Searching %s for plugins" % path)
@@ -960,6 +960,8 @@ class DocCLI(CLI, RoleMixin):
             if plugin.startswith('.'):
                 continue
             elif os.path.isdir(full_path):
+                if ptype == 'module' and not plugin.startswith('__') and collection is not None and not internal:
+                    plugin_list.update(DocCLI.find_plugins(full_path, False, ptype, collection=collection, depth=depth + 1))
                 continue
             elif any(plugin.endswith(x) for x in C.REJECT_EXTS):
                 continue
@@ -977,7 +979,11 @@ class DocCLI(CLI, RoleMixin):
             if plugin not in REJECTLIST.get(bkey, ()):
 
                 if collection:
-                    plugin = '%s.%s' % (collection, plugin)
+                    composite = [collection]
+                    if depth:
+                        composite.extend(path.split(os.path.sep)[depth * -1:])
+                    composite.append(plugin)
+                    plugin = '.'.join(composite)
 
                 plugin_list.add(plugin)
                 display.vvvv("Added %s" % plugin)

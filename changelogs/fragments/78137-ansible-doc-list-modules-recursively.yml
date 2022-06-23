@@ -1,0 +1,2 @@
+bugfixes:
+  - "ansible-doc - when listing modules in collections, proceed recursively. This fixes module listing for community.general 5.x.y and community.network 4.x.y (https://github.com/ansible/ansible/pull/78137)."
