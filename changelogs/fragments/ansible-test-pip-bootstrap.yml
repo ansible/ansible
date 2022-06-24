@@ -1,0 +1,3 @@
+minor_changes:
+  - ansible-test - An improved error message is shown when the download of a pip bootstrap script fails.
+                   The download now uses ``urllib2`` instead of ``urllib`` on Python 2.
