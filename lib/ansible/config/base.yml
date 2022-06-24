@@ -1338,7 +1338,6 @@ ERROR_ON_VAULT_SECRET:
   type: boolean
 GALAXY_IGNORE_CERTS:
   name: Galaxy validate certs
-  default: False
   description:
     - If set to yes, ansible-galaxy will not validate TLS certificates.
       This can be useful for testing against a server with a self-signed certificate.

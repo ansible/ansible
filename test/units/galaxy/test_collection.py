@@ -363,6 +363,8 @@ def test_validate_certs_with_server_url(global_ignore_certs, monkeypatch):
 
 @pytest.mark.parametrize('global_ignore_certs', [True, False])
 def test_validate_certs_with_server_config(global_ignore_certs, server_config, monkeypatch):
+
+    # test sidesteps real resolution and forces the server config to override the cli option
     get_plugin_options = MagicMock(side_effect=server_config)
     monkeypatch.setattr(C.config, 'get_plugin_options', get_plugin_options)
 
@@ -380,9 +382,10 @@ def test_validate_certs_with_server_config(global_ignore_certs, server_config, m
     monkeypatch.setattr(galaxy_cli, '_execute_install_collection', mock_execute_install)
     galaxy_cli.run()
 
-    assert galaxy_cli.api_servers[0].validate_certs is False
-    assert galaxy_cli.api_servers[1].validate_certs is True
-    assert galaxy_cli.api_servers[2].validate_certs is not global_ignore_certs
+    # server cfg, so should match def above, if not specified so it should use default (true)
+    assert galaxy_cli.api_servers[0].validate_certs is server_config[0].get('validate_certs', True)
+    assert galaxy_cli.api_servers[1].validate_certs is server_config[1].get('validate_certs', True)
+    assert galaxy_cli.api_servers[2].validate_certs is server_config[2].get('validate_certs', True)
 
 
 def test_build_collection_no_galaxy_yaml():

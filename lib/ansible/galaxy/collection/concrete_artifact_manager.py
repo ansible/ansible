@@ -206,7 +206,7 @@ class ConcreteArtifactsManager:
                     validate_certs=self._validate_certs,
                     timeout=self.timeout
                 )
-            except URLError as err:
+            except Exception as err:
                 raise_from(
                     AnsibleError(
                         'Failed to download collection tar '
