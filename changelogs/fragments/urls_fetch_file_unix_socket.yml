@@ -1,0 +1,2 @@
+minor_changes:
+  - module_utils.urls, the fetch_file method now accepts unix_socket kwarg

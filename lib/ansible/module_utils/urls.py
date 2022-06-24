@@ -1884,7 +1884,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
 def fetch_file(module, url, data=None, headers=None, method=None,
                use_proxy=True, force=False, last_mod_time=None, timeout=10,
-               unredirected_headers=None):
+               unredirected_headers=None, unix_socket=None):
     '''Download and save a file via HTTP(S) or FTP (needs the module as parameter).
     This is basically a wrapper around fetch_url().
 
@@ -1899,6 +1899,8 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     :kwarg last_mod_time: Default: None
     :kwarg int timeout:   Default: 10
     :kwarg unredirected_headers: (optional) A list of headers to not attach on a redirected request
+    :kwarg unix_socket: (optional) String of file system path to unix socket file to use when establishing
+        connection to the provided url
 
     :returns: A string, the path to the downloaded file.
     '''
@@ -1909,7 +1911,7 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     module.add_cleanup_file(fetch_temp_file.name)
     try:
         rsp, info = fetch_url(module, url, data, headers, method, use_proxy, force, last_mod_time, timeout,
-                              unredirected_headers=unredirected_headers)
+                              unredirected_headers=unredirected_headers, unix_socket=unix_socket)
         if not rsp:
             module.fail_json(msg="Failure downloading %s, %s" % (url, info['msg']))
         data = rsp.read(bufsize)
