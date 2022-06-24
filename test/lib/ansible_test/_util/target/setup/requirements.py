@@ -18,6 +18,7 @@ if DESIRED_RLIMIT_NOFILE < CURRENT_RLIMIT_NOFILE:
     CURRENT_RLIMIT_NOFILE = DESIRED_RLIMIT_NOFILE
 
 import base64
+import contextlib
 import errno
 import io
 import json
@@ -41,10 +42,10 @@ except ImportError:
 try:
     from urllib.request import urlopen
 except ImportError:
-    from urllib import urlopen
+    # noinspection PyCompatibility,PyUnresolvedReferences
+    from urllib2 import urlopen  # pylint: disable=ansible-bad-import-from
 
 ENCODING = 'utf-8'
-PAYLOAD = b'{payload}'  # base-64 encoded JSON payload which will be populated before this script is executed
 
 Text = type(u'')
 
@@ -91,7 +92,20 @@ def bootstrap(pip, options):  # type: (str, t.Dict[str, t.Any]) -> None
         log('Downloading pip %s bootstrap script: %s' % (pip_version, url))
 
         make_dirs(os.path.dirname(cache_path))
-        download_file(url, temp_path)
+
+        try:
+            download_file(url, temp_path)
+        except Exception as ex:
+            raise ApplicationError(('''
+Download failed: %s
+
+The bootstrap script can be manually downloaded and saved to: %s
+
+If you're behind a proxy, consider commenting on the following GitHub issue:
+
+https://github.com/ansible/ansible/issues/77304
+''' % (ex, cache_path)).strip())
+
         shutil.move(temp_path, cache_path)
 
         log('Cached pip %s bootstrap script: %s' % (pip_version, cache_path))
@@ -196,8 +210,8 @@ def devnull():  # type: () -> t.IO[bytes]
 def download_file(url, path):  # type: (str, str) -> None
     """Download the given URL to the specified file path."""
     with open(to_bytes(path), 'wb') as saved_file:
-        download = urlopen(url)
-        shutil.copyfileobj(download, saved_file)
+        with contextlib.closing(urlopen(url)) as download:
+            shutil.copyfileobj(download, saved_file)
 
 
 class ApplicationError(Exception):
@@ -316,6 +330,8 @@ def to_text(value, errors='strict'):  # type: (t.AnyStr, str) -> t.Text
 
     raise Exception('value is not bytes or text: %s' % type(value))
 
+
+PAYLOAD = b'{payload}'  # base-64 encoded JSON payload which will be populated before this script is executed
 
 if __name__ == '__main__':
     main()
