@@ -220,7 +220,7 @@ class GalaxyError(AnsibleError):
 # them in different formats.
 CollectionMetadata = collections.namedtuple('CollectionMetadata', ['namespace', 'name', 'created_str', 'modified_str'])
 # add deprecated and latest_version to metadata instead?
-CollectionSearch = collections.namedtuple('CollectionSearch', ['created_str', 'modified_str', 'deprecated', 'latest_version'])
+CollectionSearch = collections.namedtuple('CollectionSearch', ['created', 'modified', 'deprecated', 'latest_version'])
 
 
 class CollectionVersionMetadata:
@@ -654,10 +654,13 @@ class GalaxyAPI:
             if not next_link:
                 for info in data[results_key]:
                     name = f"{info['namespace']['name']}.{info['name']}"
-                    result = CollectionSearch(
-                        created_str=info['created'], modified_str=info['modified'], latest_version=info['latest_version']['version'], deprecated=info['deprecated']
-                    )
-                    yield name, result
+                    display_info = {
+                        'created': info['created'],
+                        'modified': info['modified'],
+                        'latest_version': info['latest_version']['version'],
+                        'deprecated': info['deprecated'],
+                    }
+                    yield name, CollectionSearch(**display_info)
                 break
 
             next_url = urlparse(collections_url)
@@ -669,10 +672,13 @@ class GalaxyAPI:
 
             for info in data[results_key]:
                 name = f"{info['namespace']['name']}.{info['name']}"
-                result = CollectionSearch(
-                    created_str=info['created'], modified_str=info['modified'], latest_version=info['latest_version']['version'], deprecated=info['deprecated']
-                )
-                yield name, result
+                display_info = {
+                    'created': info['created'],
+                    'modified': info['modified'],
+                    'latest_version': info['latest_version']['version'],
+                    'deprecated': info['deprecated'],
+                }
+                yield name, CollectionSearch(**display_info)
 
     @g_connect(['v2', 'v3'])
     def publish_collection(self, collection_path):

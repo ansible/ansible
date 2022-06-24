@@ -738,7 +738,7 @@ def install_collections(
                     "Skipping signature verification."
                 )
             if dry_run:
-                display.display(f"{to_text(collection)} was installed successfully (dry run)")
+                display.display(f"{to_text(concrete_coll_pin)} was installed successfully (dry run)")
                 continue
 
             try:

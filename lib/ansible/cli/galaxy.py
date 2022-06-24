@@ -253,7 +253,7 @@ class GalaxyCLI(CLI):
         self.add_publish_options(collection_parser, parents=[common])
         self.add_install_options(collection_parser, parents=[common, force, cache_options])
         self.add_list_options(collection_parser, parents=[common, collections_path])
-        self.add_search_options(collection_parser, parents=[common, force, cache_options])
+        self.add_search_options(collection_parser, parents=[common])
         self.add_verify_options(collection_parser, parents=[common, collections_path])
 
         # Add sub parser for the Galaxy role actions
@@ -1711,22 +1711,21 @@ class GalaxyCLI(CLI):
         search_requirements = context.CLIARGS['args']
         requirements_file = context.CLIARGS['requirements']
         requirements_name_re = context.CLIARGS['re_pattern']
-        max_count = context.CLIARGS['count']
 
         allow_deprecated = context.CLIARGS['allow_deprecated']
         allow_deps = context.CLIARGS['allow_dependencies']
         allow_pre_release = context.CLIARGS['allow_pre_release']
 
+        count = context.CLIARGS['count']
+
         display_json = context.CLIARGS['display_json']
 
         if requirements_file is not None or search_requirements:
-            if max_count is not None:
+            if count is not None:
                 raise AnsibleError("--count is mutually exclusive with collection requirements")
-
             search_result = self._search_requirement_info(search_requirements, requirements_file, artifacts_manager, not allow_deps, allow_pre_release)
-
         elif requirements_name_re:
-            search_result = self._search_requirement_name(requirements_name_re, max_count, allow_deprecated)
+            search_result = self._search_requirement_name(requirements_name_re, count, allow_deprecated)
         else:
             raise AnsibleError("One of --name-regex, --requirements, or a collection name is required for 'ansible-galaxy collection search'")
 
@@ -1749,13 +1748,15 @@ class GalaxyCLI(CLI):
             if not isinstance(collection.src, GalaxyAPI):
                 continue
 
-            api = collection.src
-            namespace_name_ver = (collection.namespace, collection.name, collection.ver,)
+            server = {'name': collection.src.name, 'url': f'{collection.src}'}
 
-            if f"Server {api.name} ({api.api_server})" not in search_result:
-                search_result[f"Server {api.name} ({api.api_server})"] = {}
+            if server['name'] not in search_result:
+                search_result[server['name']] = {'metadata': server, 'collections': {}}
 
-            search_result[f"Server {api.name} ({api.api_server})"][fqcn] = api.get_collection_version_metadata_source_data(*namespace_name_ver)
+            result = collection.src.get_collection_version_metadata_source_data(
+                collection.namespace, collection.name, collection.ver
+            )
+            search_result[server['name']]['collections'][fqcn] = result
 
         return search_result
 
@@ -1771,6 +1772,7 @@ class GalaxyCLI(CLI):
 
         count = 0
         for api in self.api_servers:
+            server = {'name': api.name, 'url': f'{api}'}
 
             if valid_collection_name:
                 try:
@@ -1779,7 +1781,7 @@ class GalaxyCLI(CLI):
                 except Exception:
                     pass
                 else:
-                    search_result[f"Server {api.name} ({api.api_server})"] = {pattern: {f: getattr(info, f) for f in info._fields}}
+                    search_result[server['name']]['collections'] = {pattern: {f: getattr(info, f) for f in info._fields}}
                     break
 
             for name, collection_info in api.list_collections():
@@ -1790,11 +1792,11 @@ class GalaxyCLI(CLI):
                 if not include_deprecated and collection_info.deprecated:
                     continue
 
-                if f"Server {api.name} ({api.api_server})" not in search_result:
-                    search_result[f"Server {api.name} ({api.api_server})"] = {}
+                if server['name'] not in search_result:
+                    search_result[server['name']] = {'metadata': server, 'collections': {}}
 
                 count += 1
-                search_result[f"Server {api.name} ({api.api_server})"][name] = {f: getattr(collection_info, f) for f in collection_info._fields}
+                search_result[server['name']]['collections'][fqcn] = {f: getattr(collection_info, f) for f in collection_info._fields}
 
         return search_result
 
