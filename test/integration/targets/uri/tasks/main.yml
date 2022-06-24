@@ -43,7 +43,7 @@
 
 - name: start SimpleHTTPServer
   shell: cd {{ files_dir }} && {{ ansible_python.executable }} {{ remote_tmp_dir}}/testserver.py {{ http_port }}
-  async: 120 # this test set can take ~1m to run on FreeBSD (via Shippable)
+  async: 180 # this test is slower on remotes like FreeBSD, and running split slows it down further
   poll: 0
 
 - wait_for: port={{ http_port }}
@@ -181,7 +181,7 @@
     - /etc/ssl/certs/ca-certificates.crt
     - /var/lib/ca-certificates/ca-bundle.pem
     - /usr/local/share/certs/ca-root-nss.crt
-    - '{{ macos_cafile.stdout_lines|default(["/_i_dont_exist_ca.pem"])|first }}'
+    - '{{ cafile_path.stdout_lines|default(["/_i_dont_exist_ca.pem"])|first }}'
     - /etc/ssl/cert.pem
   register: ca_bundle_candidates
 
