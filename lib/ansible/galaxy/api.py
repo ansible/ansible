@@ -269,6 +269,7 @@ class GalaxyAPI:
         self.timeout = timeout
         self._available_api_versions = available_api_versions or {}
         self._priority = priority
+        self._server_timeout = timeout
 
         b_cache_dir = to_bytes(C.GALAXY_CACHE_DIR, errors='surrogate_or_strict')
         makedirs_safe(b_cache_dir, mode=0o700)
@@ -378,7 +379,7 @@ class GalaxyAPI:
         try:
             display.vvvv("Calling Galaxy at %s" % url)
             resp = open_url(to_native(url), data=args, validate_certs=self.validate_certs, headers=headers,
-                            method=method, timeout=self.timeout, http_agent=user_agent(), follow_redirects='safe')
+                            method=method, timeout=self._server_timeout, http_agent=user_agent(), follow_redirects='safe')
         except HTTPError as e:
             raise GalaxyError(e, error_context_msg)
         except Exception as e:
@@ -436,7 +437,14 @@ class GalaxyAPI:
         """
         url = _urljoin(self.api_server, self.available_api_versions['v1'], "tokens") + '/'
         args = urlencode({"github_token": github_token})
-        resp = open_url(url, data=args, validate_certs=self.validate_certs, method="POST", http_agent=user_agent(), timeout=self.timeout)
+
+        try:
+            resp = open_url(url, data=args, validate_certs=self.validate_certs, method="POST", http_agent=user_agent(), timeout=self._server_timeout)
+        except HTTPError as e:
+            raise GalaxyError(e, 'Attempting to authenticate to galaxy')
+        except Exception as e:
+            raise AnsibleError('Unable to authenticate to galaxy: %s' % to_native(e), orig_exc=e)
+
         data = json.loads(to_text(resp.read(), errors='surrogate_or_strict'))
         return data
 
