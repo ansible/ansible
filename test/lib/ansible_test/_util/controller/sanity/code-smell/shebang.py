@@ -78,6 +78,8 @@ def validate_module_shebang(shebang, executable, path):
 
 
 def validate_shebang(shebang, mode, path):
+    """Check shebangs, execute bits and byte order marks for a single file"""
+
     if is_excluded_path(path):
         return True
 
@@ -145,6 +147,8 @@ def validate_shebang(shebang, mode, path):
 
 
 def main():
+    """Check shebangs, execute bits and byte order marks for all files"""
+
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
         with open(path, 'rb') as path_fd:
             shebang = path_fd.readline().strip()
