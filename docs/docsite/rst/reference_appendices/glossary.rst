@@ -72,7 +72,7 @@ when a term comes up on the mailing list.
 
     community.network (collection)
         Similar to ``community.general``, focusing on network content. `community.network <https://galaxy.ansible.com/community/network>`_ on Galaxy.
-``
+
     Connection Plugin
         By default, Ansible talks to remote machines through pluggable
         libraries.  Ansible uses native OpenSSH (:term:`SSH (Native)`) or
