@@ -325,6 +325,37 @@ class TestScriptVaultSecret(unittest.TestCase):
                                    r'Vault password script.*returned non-zero \(%s\): %s' % (rc, stderr),
                                    secret.load)
 
+    @patch('ansible.parsing.vault.subprocess.Popen')
+    def test_argv0_not_absolute(self, mock_popen):
+        self._test_argv0(mock_popen, 'path/to/get_password.sh')
+        # executable is untouched (not even path separators replaced on
+        # Windows).
+        exe = 'path/to/get_password.sh'
+        self.assertEqual(mock_popen.call_args.kwargs['executable'], exe)
+
+    @patch('ansible.parsing.vault.subprocess.Popen')
+    def test_argv0_not_through_path(self, mock_popen):
+        self._test_argv0(mock_popen, 'get_password.sh')
+        # executable is made relative.
+        exe = os.path.join('.', 'get_password.sh')
+        self.assertEqual(mock_popen.call_args.kwargs['executable'], exe)
+
+    @patch('ansible.parsing.vault.subprocess.Popen')
+    def test_argv0_expand_user(self, mock_popen):
+        self._test_argv0(mock_popen, '~/../get_password.sh')
+        # executable is expanded filename, but otherwise unchanged.
+        exe = os.path.join(os.path.expanduser('~'), '..', 'get_password.sh')
+        self.assertEqual(mock_popen.call_args.kwargs['executable'], exe)
+
+    def _test_argv0(self, mock_popen, script_filename):
+        self._mock_popen(mock_popen, stdout=b'some_other_password')
+        secret = vault.ScriptVaultSecret(script_filename)
+        with patch.object(secret, 'loader') as mock_loader:
+            mock_loader.is_executable = MagicMock(return_value=True)
+            secret.load()
+        # argv0 is untouched, no other args are supplied.
+        self.assertEqual(mock_popen.call_args.args[0], [script_filename])
+
 
 class TestScriptIsClient(unittest.TestCase):
     def test_randomname(self):
