@@ -266,7 +266,7 @@ class ConnectionBase(AnsiblePlugin):
         is_enabled = False
         if self.has_pipelining and (not self.become or self.become.pipelining):
             try:
-                is_enabled = self.get_options('pipelining')
+                is_enabled = self.get_option('pipelining')
             except KeyError:
                 is_enabled = self._play_context.get('pipelining')
 
@@ -276,7 +276,6 @@ class ConnectionBase(AnsiblePlugin):
             is_enabled or self.always_pipeline_modules,       # enabled via config or forced via connection (eg winrm)
             not C.DEFAULT_KEEP_REMOTE_FILES,                  # user wants remote files
             not wrap_async or self.has_native_async,          # async does not normally support pipelining unless it does (eg winrm)
-            not getattr(self, 'remote_is_local', False)       # avoid for netowrking modules
         ]
 
         return all(conditions)
