@@ -56,14 +56,6 @@ class StrategyModule(StrategyBase):
         super(StrategyModule, self).__init__(tqm)
         self._host_pinned = False
 
-    def _flush_handlers(self, iterator, host):
-        host_state = iterator.host_states[host.name]
-
-        # prevent meta: flush_handlers in a handler
-        if host.name not in self._tqm._unreachable_hosts and host_state.run_state not in (IteratingStates.HANDLERS, IteratingStates.COMPLETE):
-            host_state.pre_flushing_run_state = host_state.run_state
-            host_state.run_state = IteratingStates.HANDLERS
-
     def run(self, iterator, play_context):
         '''
         The "free" strategy is a bit more complex, in that it allows tasks to
