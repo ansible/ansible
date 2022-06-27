@@ -68,10 +68,10 @@ when a term comes up on the mailing list.
         The second part of a Fully Qualified Collection Name. The collection name divides the collection namespace and usually reflects the function of the collection content. For example, the ``cisco`` namespace might contain ``cisco.ios``, ``cisco.aci``, and ``cisco.nxos``, with content for managing the different network devices maintained by Cisco.
 
     community.general (collection)
-        A special collection managed by the Ansible Community Team containing all the modules and plugins which shipped in Ansible 2.9 that do not have their own dedicated Collection. See `community.general <https://galaxy.ansible.com/community/general>`_` on Galaxy.
+        A special collection managed by the Ansible Community Team containing all the modules and plugins which shipped in Ansible 2.9 that do not have their own dedicated Collection. See `community.general <https://galaxy.ansible.com/community/general>`_ on Galaxy.
 
     community.network (collection)
-        Similar to ``community.general``, focusing on network content. `community.network <https://galaxy.ansible.com/community/network>`_` on Galaxy.
+        Similar to ``community.general``, focusing on network content. `community.network <https://galaxy.ansible.com/community/network>`_ on Galaxy.
 
     Connection Plugin
         By default, Ansible talks to remote machines through pluggable
