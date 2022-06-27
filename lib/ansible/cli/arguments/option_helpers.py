@@ -87,7 +87,7 @@ def ensure_value(namespace, name, value):
 #
 # Callbacks to validate and normalize Options
 #
-def unfrack_path(pathsep=False):
+def unfrack_path(pathsep=False, follow=True):
     """Turn an Option's data into a single path in Ansible locations"""
     def inner(value):
         if pathsep:
@@ -96,7 +96,7 @@ def unfrack_path(pathsep=False):
         if value == '-':
             return value
 
-        return unfrackpath(value)
+        return unfrackpath(value, follow=follow)
     return inner
 
 
@@ -271,7 +271,7 @@ def add_connect_options(parser):
     connect_password_group.add_argument('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
                                         help='ask for connection password')
     connect_password_group.add_argument('--connection-password-file', '--conn-pass-file', default=C.CONNECTION_PASSWORD_FILE, dest='connection_password_file',
-                                        help="Connection password file", type=unfrack_path(), action='store')
+                                        help="Connection password file", type=unfrack_path(follow=False), action='store')
 
     parser.add_argument_group(connect_password_group)
 
@@ -355,7 +355,7 @@ def add_runas_prompt_options(parser, runas_group=None):
                                   default=C.DEFAULT_BECOME_ASK_PASS,
                                   help='ask for privilege escalation password')
     runas_pass_group.add_argument('--become-password-file', '--become-pass-file', default=C.BECOME_PASSWORD_FILE, dest='become_password_file',
-                                  help="Become password file", type=unfrack_path(), action='store')
+                                  help="Become password file", type=unfrack_path(follow=False), action='store')
 
     parser.add_argument_group(runas_pass_group)
 
@@ -388,4 +388,4 @@ def add_vault_options(parser):
     base_group.add_argument('--ask-vault-password', '--ask-vault-pass', default=C.DEFAULT_ASK_VAULT_PASS, dest='ask_vault_pass', action='store_true',
                             help='ask for vault password')
     base_group.add_argument('--vault-password-file', '--vault-pass-file', default=[], dest='vault_password_files',
-                            help="vault password file", type=unfrack_path(), action='append')
+                            help="vault password file", type=unfrack_path(follow=False), action='append')
