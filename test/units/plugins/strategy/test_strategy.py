@@ -38,11 +38,6 @@ import pytest
 pytestmark = pytest.mark.skipif(True, reason="Temporarily disabled due to fragile tests that need rewritten")
 
 
-class TestStrategy(StrategyBase):
-    def _flush_handlers(self, iterator, host):
-        ...
-
-
 class TestStrategyBase(unittest.TestCase):
 
     def test_strategy_base_init(self):
@@ -68,7 +63,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_tqm = MagicMock(TaskQueueManager)
         mock_tqm._final_q = mock_queue
         mock_tqm._workers = []
-        strategy_base = TestStrategy(tqm=mock_tqm)
+        strategy_base = StrategyBase(tqm=mock_tqm)
         strategy_base.cleanup()
 
     def test_strategy_base_run(self):
@@ -108,7 +103,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_tqm._failed_hosts = dict()
         mock_tqm._unreachable_hosts = dict()
         mock_tqm._workers = []
-        strategy_base = TestStrategy(tqm=mock_tqm)
+        strategy_base = StrategyBase(tqm=mock_tqm)
 
         mock_host = MagicMock()
         mock_host.name = 'host1'
@@ -162,7 +157,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_play = MagicMock()
         mock_play.hosts = ["host%02d" % (i + 1) for i in range(0, 5)]
 
-        strategy_base = TestStrategy(tqm=mock_tqm)
+        strategy_base = StrategyBase(tqm=mock_tqm)
         strategy_base._hosts_cache = strategy_base._hosts_cache_all = mock_hosts_names
 
         mock_tqm._failed_hosts = []
@@ -207,7 +202,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_task.throttle = 0
 
         try:
-            strategy_base = TestStrategy(tqm=tqm)
+            strategy_base = StrategyBase(tqm=tqm)
             strategy_base._queue_task(host=mock_host, task=mock_task, task_vars=dict(), play_context=MagicMock())
             self.assertEqual(strategy_base._cur_worker, 1)
             self.assertEqual(strategy_base._pending_results, 1)
@@ -312,7 +307,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_var_mgr.set_host_facts.return_value = None
         mock_var_mgr.get_vars.return_value = dict()
 
-        strategy_base = TestStrategy(tqm=mock_tqm)
+        strategy_base = StrategyBase(tqm=mock_tqm)
         strategy_base._inventory = mock_inventory
         strategy_base._variable_manager = mock_var_mgr
         strategy_base._blocked_hosts = dict()
@@ -458,7 +453,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_tqm = MagicMock()
         mock_tqm._final_q = mock_queue
 
-        strategy_base = TestStrategy(tqm=mock_tqm)
+        strategy_base = StrategyBase(tqm=mock_tqm)
         strategy_base._loader = fake_loader
         strategy_base.cleanup()
 

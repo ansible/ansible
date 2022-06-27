@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import abc
 import cmd
 import functools
 import os
@@ -201,7 +200,7 @@ def debug_closure(func):
     return inner
 
 
-class StrategyBase(metaclass=abc.ABCMeta):
+class StrategyBase:
 
     '''
     This is the base class for strategy plugins, which contains some common
@@ -900,10 +899,6 @@ class StrategyBase(metaclass=abc.ABCMeta):
     def _cond_not_supported_warn(self, task_name):
         display.warning("%s task does not support when conditional" % task_name)
 
-    @abc.abstractmethod
-    def _flush_handlers(self, iterator, host):
-        ...
-
     def _execute_meta(self, task, play_context, iterator, target_host):
 
         # meta tasks store their args in the _raw_params field of args,
@@ -922,13 +917,17 @@ class StrategyBase(metaclass=abc.ABCMeta):
         self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
 
         # These don't support "when" conditionals
-        if meta_action in ('noop', 'flush_handlers', 'refresh_inventory', 'reset_connection') and task.when:
+        if meta_action in ('noop', 'refresh_inventory', 'reset_connection') and task.when:
             self._cond_not_supported_warn(meta_action)
 
         if meta_action == 'noop':
             msg = "noop"
         elif meta_action == 'flush_handlers':
-            self._flush_handlers(iterator, target_host)
+            host_state = iterator.get_state_for_host(target_host.name)
+            # prevent flush_handlers in a handler
+            if target_host.name not in self._tqm._unreachable_hosts and host_state.run_state not in (IteratingStates.HANDLERS, IteratingStates.COMPLETE):
+                host_state.pre_flushing_run_state = host_state.run_state
+                host_state.run_state = IteratingStates.HANDLERS
             msg = "ran handlers"
         elif meta_action == 'refresh_inventory':
             self._inventory.refresh_inventory()

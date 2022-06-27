@@ -78,14 +78,6 @@ class StrategyModule(StrategyBase):
 
         return self._create_noop_block_from(original_block, parent)
 
-    def _flush_handlers(self, iterator, host):
-        for host in self._inventory.get_hosts(iterator._play.hosts):
-            host_state = iterator.get_state_for_host(host.name)
-            # prevent flush_handlers in a handler
-            if host.name not in self._tqm._unreachable_hosts and host_state.run_state not in (IteratingStates.HANDLERS, IteratingStates.COMPLETE):
-                host_state.pre_flushing_run_state = host_state.run_state
-                host_state.run_state = IteratingStates.HANDLERS
-
     def _get_next_task_lockstep(self, hosts, iterator):
         '''
         Returns a list of (host, task) tuples, where the task may
@@ -306,7 +298,7 @@ class StrategyModule(StrategyBase):
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
                         results.extend(self._execute_meta(task, play_context, iterator, host))
-                        if task.args.get('_raw_params', None) not in ('noop', 'reset_connection', 'end_host', 'role_complete'):
+                        if task.args.get('_raw_params', None) not in ('noop', 'reset_connection', 'end_host', 'role_complete', 'flush_handlers'):
                             run_once = True
                         if (task.any_errors_fatal or run_once) and not task.ignore_errors:
                             any_errors_fatal = True
