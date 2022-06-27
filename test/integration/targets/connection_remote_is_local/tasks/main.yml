@@ -1,4 +1,4 @@
-- command: ansible-playbook {{ role_path }}/test.yml -vvv -i {{ '-i '.join(ansible_inventory_sources) }}
+- command: ansible-playbook {{ role_path }}/test.yml -vvv -i {{ role_path_ }}/inventory
   environment:
     ANSIBLE_REMOTE_TEMP: /i/dont/exist
     ANSIBLE_NOCOLOR: 'true'
