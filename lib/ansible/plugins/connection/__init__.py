@@ -268,7 +268,7 @@ class ConnectionBase(AnsiblePlugin):
             try:
                 is_enabled = self.get_option('pipelining')
             except KeyError:
-                is_enabled = self._play_context.get('pipelining')
+                is_enabled = getattr(self._play_context, 'pipelining', False)
 
         # TODO: deprecate always_pipeline_modules and has_native_async in favor for each plugin overriding this function
         # any of these require a true
