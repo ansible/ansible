@@ -526,7 +526,7 @@ Possible values (sample, not complete list):
        An introduction to playbooks
    :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :ref:`playbooks_best_practices`
+   :ref:`tips_and_tricks`
        Tips and tricks for playbooks
    :ref:`playbooks_variables`
        All about variables

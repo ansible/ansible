@@ -83,7 +83,6 @@ Here is the complete list of resources in the Ansible User Guide:
    cheatsheet
    playbooks_intro
    playbooks
-   playbooks_best_practices
    become
    playbooks_loops
    playbooks_delegation

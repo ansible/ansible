@@ -14,7 +14,7 @@ The content on this page has been moved to :ref:`playbooks_reuse`.
        Learn about YAML syntax
    :ref:`working_with_playbooks`
        Review the basic Playbook language features
-   :ref:`playbooks_best_practices`
+   :ref:`tips_and_tricks`
        Tips and tricks for playbooks
    :ref:`playbooks_variables`
        All about variables in playbooks

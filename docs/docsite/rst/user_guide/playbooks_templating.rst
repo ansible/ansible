@@ -51,7 +51,7 @@ fmt
        Looping in playbooks
    :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :ref:`playbooks_best_practices`
+   :ref:`tips_and_tricks`
        Tips and tricks for playbooks
    `Jinja2 Docs <https://jinja.palletsprojects.com/en/latest/templates/>`_
       Jinja2 documentation, includes the syntax and semantics of the templates
