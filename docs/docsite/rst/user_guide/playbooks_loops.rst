@@ -487,7 +487,7 @@ Migrating from with_X to loop
        An introduction to playbooks
    :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :ref:`playbooks_best_practices`
+   :ref:`tips_and_tricks`
        Tips and tricks for playbooks
    :ref:`playbooks_conditionals`
        Conditional statements in playbooks

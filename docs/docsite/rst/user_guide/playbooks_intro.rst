@@ -145,7 +145,7 @@ The `ansible-lint default rules <https://docs.ansible.com/ansible-lint/rules/def
        Learn how to test Ansible Playbooks syntax
    :ref:`yaml_syntax`
        Learn about YAML syntax
-   :ref:`playbooks_best_practices`
+   :ref:`tips_and_tricks`
        Tips for managing playbooks in the real world
    :ref:`list_of_collections`
        Browse existing collections, modules, and plugins

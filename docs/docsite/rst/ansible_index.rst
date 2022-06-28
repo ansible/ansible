@@ -43,6 +43,7 @@ Ansible releases a new major release approximately twice a year. The core applic
 
    user_guide/index
    win_guide/index
+   tips_tricks/index
 
 .. toctree::
    :maxdepth: 2
