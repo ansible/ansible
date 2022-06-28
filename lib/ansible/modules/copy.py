@@ -268,7 +268,7 @@ mode:
     description: Permissions of the target, after execution.
     returned: success
     type: str
-    sample: 0644
+    sample: "0644"
 size:
     description: Size of the target, after execution.
     returned: success
