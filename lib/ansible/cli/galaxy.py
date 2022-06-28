@@ -374,8 +374,8 @@ class GalaxyCLI(CLI):
                                        help='Include pre-release versions. Semantic versioning pre-releases are ignored by default')
             search_parser.add_argument('--deps', dest='allow_dependencies', action='store_true',
                                        help='Include dependencies in the search results.')
-            search_parser.add_argument('--deprecated', dest='allow_deprecated', action='store_true',
-                                       help='Include deprecated collections in the search results.')
+            #search_parser.add_argument('--deprecated', dest='allow_deprecated', action='store_true',
+            #                           help='Include deprecated collections in the search results.')
             search_parser.add_argument('--count', type=int, help='The number of results to display if there is no exact match. '
                                        'This only impacts retrieving collection namespaces, e.g. "ansible-galaxy search --name-regex community.*"')
             search_parser.add_argument('--json', dest='display_json', action='store_true', default=False, help='Display search results as json')
@@ -1712,7 +1712,8 @@ class GalaxyCLI(CLI):
         requirements_file = context.CLIARGS['requirements']
         requirements_name_re = context.CLIARGS['re_pattern']
 
-        allow_deprecated = context.CLIARGS['allow_deprecated']
+        allow_deprecated = None  # FIXME?
+        #allow_deprecated = context.CLIARGS['allow_deprecated']
         allow_deps = context.CLIARGS['allow_dependencies']
         allow_pre_release = context.CLIARGS['allow_pre_release']
 
@@ -1748,15 +1749,15 @@ class GalaxyCLI(CLI):
             if not isinstance(collection.src, GalaxyAPI):
                 continue
 
-            server = {'name': collection.src.name, 'url': f'{collection.src}'}
+            server = {'server_name': collection.src.name, 'url': f'{collection.src.api_server}'}
 
-            if server['name'] not in search_result:
-                search_result[server['name']] = {'metadata': server, 'collections': {}}
+            if server['server_name'] not in search_result:
+                search_result[server['server_name']] = {'_metadata': server, 'collections': {}}
 
             result = collection.src.get_collection_version_metadata_source_data(
                 collection.namespace, collection.name, collection.ver
             )
-            search_result[server['name']]['collections'][fqcn] = result
+            search_result[server['server_name']]['collections'][fqcn] = result
 
         return search_result
 
@@ -1770,33 +1771,42 @@ class GalaxyCLI(CLI):
         else:
             valid_collection_name = True
 
-        count = 0
-        for api in self.api_servers:
-            server = {'name': api.name, 'url': f'{api}'}
-
-            if valid_collection_name:
+        # try to find an exact match directly first
+        if valid_collection_name:
+            for api in self.api_servers:
+                server = {'server_name': api.name, 'url': f'{api.api_server}'}
                 try:
                     namespace, collection = pattern.split('.')
                     info = api.get_collection_info(namespace, collection)
                 except Exception:
                     pass
                 else:
-                    search_result[server['name']]['collections'] = {pattern: {f: getattr(info, f) for f in info._fields}}
-                    break
+                    search_result[server['server_name']]['collections'] = {pattern: {f: getattr(info, f) for f in info._fields}}
+            if search_result:
+                return search_result
 
-            for name, collection_info in api.list_collections():
-                if max_count is not None and count >= max_count:
-                    break
-                if not re.match(pattern, name):
-                    continue
-                if not include_deprecated and collection_info.deprecated:
-                    continue
+        # find any matches by listing all collections
+        count = 0
+        for api in self.api_servers:
+            server = {'server_name': api.name, 'url': f'{api.api_server}'}
 
-                if server['name'] not in search_result:
-                    search_result[server['name']] = {'metadata': server, 'collections': {}}
+            try:
+                for name, collection_info in api.list_collections():
+                    if max_count is not None and count >= max_count:
+                        break
+                    if not re.match(pattern, name):
+                        continue
+                    # if not include_deprecated and collection_info.deprecated:
+                    #     continue
 
-                count += 1
-                search_result[server['name']]['collections'][fqcn] = {f: getattr(collection_info, f) for f in collection_info._fields}
+                    if server['server_name'] not in search_result:
+                        search_result[server['server_name']] = {'_metadata': server, 'collections': {}}
+
+                    count += 1
+                    search_result[server['server_name']]['collections'][name] = {f: getattr(collection_info, f) for f in collection_info._fields}
+            except Exception as e:
+                display.warning(f"Skipping server {api}: {e}")
+                pass
 
         return search_result
 

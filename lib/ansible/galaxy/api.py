@@ -137,6 +137,28 @@ def get_cache_id(url):
     return '%s:%s' % (url_info.hostname, port or '')
 
 
+def format_collection_search(data, results_key, fields, namespace_field):
+    for info in data[results_key]:
+        display_info = {}
+        for field_name, field_attrs in fields:
+            final = None
+            for attr in field_attrs:
+                if final is None:
+                    final = info[attr]
+                else:
+                    final = final[attr]
+            display_info[field_name] = final
+
+        ns = None
+        for attr in namespace_field:
+            if ns is None:
+                ns = info[attr]
+            else:
+                ns = ns[attr]
+        name = f"{ns}.{info['name']}"
+        yield name, CollectionSearch(**display_info)
+
+
 @cache_lock
 def _load_cache(b_cache_path):
     """ Loads the cache file requested if possible. The file must not be world writable. """
@@ -220,7 +242,8 @@ class GalaxyError(AnsibleError):
 # them in different formats.
 CollectionMetadata = collections.namedtuple('CollectionMetadata', ['namespace', 'name', 'created_str', 'modified_str'])
 # add deprecated and latest_version to metadata instead?
-CollectionSearch = collections.namedtuple('CollectionSearch', ['created', 'modified', 'deprecated', 'latest_version'])
+CollectionSearch = collections.namedtuple('CollectionSearch', ['created', 'modified', 'latest_version'])
+#CollectionSearch = collections.namedtuple('CollectionSearch', ['created', 'modified', 'deprecated', 'latest_version'])
 
 
 class CollectionVersionMetadata:
@@ -624,9 +647,23 @@ class GalaxyAPI:
             api_path = self.available_api_versions['v3']
             pagination_path = ['links', 'next']
             relative_link = True  # AH pagination results are relative an not an absolute URI.
+            namespace_field = ['namespace']
+            fields = [
+                ('created', ('created_at',)),
+                ('modified', ('updated_at',)),
+                ('latest_version', ('highest_version', 'version',)),
+                #('deprecated', ('deprecated',)),
+            ]
         else:
             api_path = self.available_api_versions['v2']
             pagination_path = ['next']
+            namespace_field = ['namespace', 'name']
+            fields = [
+                ('created', ('created',)),
+                ('modified', ('modified',)),
+                ('latest_version', ('latest_version', 'version',)),
+                #('deprecated', ('deprecated',)),
+            ]
 
         page_size_name = 'limit' if 'v3' in self.available_api_versions else 'page_size'
         error_context_msg = 'Error when getting available collections from %s (%s)' \
@@ -652,15 +689,8 @@ class GalaxyAPI:
                 next_link = next_link.get(path, {})
 
             if not next_link:
-                for info in data[results_key]:
-                    name = f"{info['namespace']['name']}.{info['name']}"
-                    display_info = {
-                        'created': info['created'],
-                        'modified': info['modified'],
-                        'latest_version': info['latest_version']['version'],
-                        'deprecated': info['deprecated'],
-                    }
-                    yield name, CollectionSearch(**display_info)
+                for name, result in format_collection_search(data, results_key, fields, namespace_field):
+                    yield name, result
                 break
 
             next_url = urlparse(collections_url)
@@ -670,15 +700,8 @@ class GalaxyAPI:
             data = self._call_galaxy(to_native(next_link, errors='surrogate_or_strict'),
                                      error_context_msg=error_context_msg, cache=False)
 
-            for info in data[results_key]:
-                name = f"{info['namespace']['name']}.{info['name']}"
-                display_info = {
-                    'created': info['created'],
-                    'modified': info['modified'],
-                    'latest_version': info['latest_version']['version'],
-                    'deprecated': info['deprecated'],
-                }
-                yield name, CollectionSearch(**display_info)
+            for name, result in format_collection_search(data, results_key, fields, namespace_field):
+                yield name, result
 
     @g_connect(['v2', 'v3'])
     def publish_collection(self, collection_path):
@@ -799,17 +822,18 @@ class GalaxyAPI:
         if 'v3' in self.available_api_versions:
             info_url = _urljoin(self.api_server, self.available_api_versions['v3'], 'collections', namespace, name, '/')
             timestamp_field_map = [('created_str', 'created_at'), ('modified_str', 'updated_at'),]
+            latest_version = 'highest_version'
         else:
             info_url = _urljoin(self.api_server, self.available_api_versions['v2'], 'collections', namespace, name, '/')
             timestamp_field_map = [('created_str', 'created'), ('modified_str', 'modified'),]
+            latest_version = 'latest_reason'
 
         data = self._call_galaxy(info_url, error_context_msg=error_context_msg)
 
         info = {}
         for name, api_field in timestamp_field_map:
             info[name] = data.get(api_field, None)
-        info['deprecated'] = data['deprecated']
-        info['latest_version'] = data['latest_version']['version']
+        info['latest_version'] = data[latest_version]['version']
 
         return CollectionSearch(**info)
 
