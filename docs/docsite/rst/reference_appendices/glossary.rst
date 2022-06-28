@@ -16,11 +16,11 @@ when a term comes up on the mailing list.
 
     Ad Hoc
         Refers to running Ansible to perform some quick command, using
-        :command:`/usr/bin/ansible`, rather than the :term:`orchestration`
+        :command:`/usr/bin/ansible`, rather than the :term:`orchestration <Orchestration>`
         language, which is :command:`/usr/bin/ansible-playbook`.  An example
         of an ad hoc command might be rebooting 50 machines in your
         infrastructure.  Anything you can do ad hoc can be accomplished by
-        writing a :term:`playbook <playbooks>` and playbooks can also glue
+        writing a :term:`playbook <Playbooks>` and playbooks can also glue
         lots of other operations together.
 
     Ansible (the package)
@@ -111,13 +111,13 @@ when a term comes up on the mailing list.
     Executor
         A core software component of Ansible that is the power behind
         :command:`/usr/bin/ansible` directly -- and corresponds to the
-        invocation of each task in a :term:`playbook <playbooks>`.  The
+        invocation of each task in a :term:`playbook <Playbooks>`.  The
         Executor is something Ansible developers may talk about, but it's not
         really user land vocabulary.
 
     Facts
         Facts are simply things that are discovered about remote nodes.  While
-        they can be used in :term:`playbooks` and templates just like
+        they can be used in :term:`playbooks <Playbooks>` and templates just like
         variables, facts are things that are inferred, rather than set.  Facts
         are automatically discovered by Ansible when running plays by
         executing the internal :ref:`setup module <setup_module>` on the remote nodes.  You
@@ -150,7 +150,7 @@ when a term comes up on the mailing list.
 
     Gather Facts (Boolean)
         :term:`Facts` are mentioned above.  Sometimes when running a multi-play
-        :term:`playbook <playbooks>`, it is desirable to have some plays that
+        :term:`playbook <Playbooks>`, it is desirable to have some plays that
         don't bother with fact computation if they aren't going to need to
         utilize any of these values.  Setting ``gather_facts: False`` on
         a playbook allows this implicit fact gathering to be skipped.
@@ -175,12 +175,12 @@ when a term comes up on the mailing list.
         alongside an inventory file, with an optional filename named after
         each group.  This is a convenient place to put variables that are
         provided to a given group, especially complex data structures, so that
-        these variables do not have to be embedded in the :term:`inventory`
-        file or :term:`playbook <playbooks>`.
+        these variables do not have to be embedded in the :term:`inventory <Inventory>`
+        file or :term:`playbook <Playbooks>`.
 
     Handlers
         Handlers are just like regular tasks in an Ansible
-        :term:`playbook <playbooks>` (see :term:`Tasks`) but are only run if
+        :term:`playbook <Playbooks>` (see :term:`tasks <Task>`) but are only run if
         the Task contains a ``notify`` keyword and also indicates that it
         changed something.  For example, if a config file is changed, then the
         task referencing the config file templating operation may notify
@@ -196,7 +196,7 @@ when a term comes up on the mailing list.
         are not to be accessed on the default SSH port.
 
     Host Specifier
-        Each :term:`Play <plays>` in Ansible maps a series of :term:`tasks` (which define the role,
+        Each :term:`play <Plays>` in Ansible maps a series of :term:`tasks <Task>` (which define the role,
         purpose, or orders of a system) to a set of systems.
 
         This ``hosts:`` keyword in each play is often called the hosts specifier.
@@ -209,7 +209,7 @@ when a term comes up on the mailing list.
         :file:`host_vars/` can contain a file named after each hostname in the
         inventory file, in :term:`YAML` format.  This provides a convenient place to
         assign variables to the host without having to embed them in the
-        :term:`inventory` file.  The Host Vars file can also be used to define complex
+        :term:`inventory <Inventory>` file.  The Host Vars file can also be used to define complex
         data structures that can't be represented in the inventory file.
 
     Idempotency
@@ -218,10 +218,10 @@ when a term comes up on the mailing list.
         any intervening actions.
 
     Includes
-        The idea that :term:`playbook <playbooks>` files (which are nothing
-        more than lists of :term:`plays`) can include other lists of plays,
-        and task lists can externalize lists of :term:`tasks` in other files,
-        and similarly with :term:`handlers`.  Includes can be parameterized,
+        The idea that :term:`playbook <Playbooks>` files (which are nothing
+        more than lists of :term:`plays <Plays>`) can include other lists of plays,
+        and task lists can externalize lists of :term:`tasks <Task>` in other files,
+        and similarly with :term:`handlers <Handlers>`.  Includes can be parameterized,
         which means that the loaded file can pass variables.  For instance, an
         included play for setting up a WordPress blog may take a parameter
         called ``user`` and that play could be included more than once to
@@ -235,7 +235,7 @@ when a term comes up on the mailing list.
 
     Inventory Script
         A very simple program (or a complicated one) that looks up
-        :term:`hosts <Host>`, :term:`group` membership for hosts, and variable
+        :term:`hosts <Host>`, :term:`group <Group>` membership for hosts, and variable
         information from an external resource -- whether that be a SQL
         database, a CMDB solution, or something like LDAP.  This concept was
         adapted from Puppet (where it is called an "External Nodes
@@ -257,7 +257,7 @@ when a term comes up on the mailing list.
 
     Lazy Evaluation
         In general, Ansible evaluates any variables in
-        :term:`playbook <playbooks>` content at the last possible second,
+        :term:`playbook <Playbooks>` content at the last possible second,
         which means that if you define a data structure that data structure
         itself can define variable values within it, and everything "just
         works" as you would expect.  This also means variable strings can
@@ -265,13 +265,13 @@ when a term comes up on the mailing list.
 
     Library
         A collection of modules made available to :command:`/usr/bin/ansible`
-        or an Ansible :term:`playbook <playbooks>`.
+        or an Ansible :term:`playbook <Playbooks>`.
 
     Limit Groups
         By passing ``--limit somegroup`` to :command:`ansible` or
         :command:`ansible-playbook`, the commands can be limited to a subset
         of :term:`hosts <Host>`.  For instance, this can be used to run
-        a :term:`playbook <playbooks>` that normally targets an entire set of
+        a :term:`playbook <Playbooks>` that normally targets an entire set of
         servers to one particular server.
 
     Local Action
@@ -280,7 +280,7 @@ when a term comes up on the mailing list.
         execute on the controller itself.
 
     Local Connection
-        By using ``connection: local`` in a :term:`playbook <playbooks>`, or
+        By using ``connection: local`` in a :term:`playbook <Playbooks>`, or
         passing ``-c local`` to :command:`/usr/bin/ansible`, this indicates
         that we are executing a local fork instead of executing on the remote machine.
         You probably want ``local_action`` or ``delegate_to: localhost`` instead
@@ -314,7 +314,7 @@ when a term comes up on the mailing list.
         in Python.  Modules just have to return :term:`JSON`.  Once modules are
         executed on remote machines, they are removed, so no long running
         daemons are used.  Ansible refers to the collection of available
-        modules as a :term:`library`.
+        modules as a :term:`library <Library>`.
 
     Multi-Tier
         The concept that IT systems are not managed one system at a time, but
@@ -330,9 +330,9 @@ when a term comes up on the mailing list.
         The first part of a fully qualified collection name, the namespace usually reflects a functional content category. Example: in ``cisco.ios.ios_config``, ``cisco`` is the namespace. Namespaces are reserved and distributed by Red Hat at Red Hat's discretion. Many, but not all, namespaces will correspond with vendor names. See `Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_ on the Galaxy docsite for namespace requirements.
 
     Notify
-        The act of a :term:`task <tasks>` registering a change event and
-        informing a :term:`handler <handlers>` task that another
-        :term:`action` needs to be run at the end of the :term:`play <plays>`.  If
+        The act of a :term:`task <Task>` registering a change event and
+        informing a :term:`handler <Handlers>` task that another
+        :term:`action <Action>` needs to be run at the end of the :term:`play <Plays>`.  If
         a handler is notified by multiple tasks, it will still be run only
         once.  Handlers are run in the order they are listed, not in the order
         that they are notified.
@@ -356,35 +356,35 @@ when a term comes up on the mailing list.
         paramiko.  The paramiko library is generally fast and easy to manage,
         though users who want to use Kerberos or Jump Hosts may wish to switch
         to a native SSH binary such as OpenSSH by specifying the connection
-        type in their :term:`playbooks`, or using the ``-c ssh`` flag.
+        type in their :term:`playbook <Playbooks>`, or using the ``-c ssh`` flag.
 
     Playbooks
         Playbooks are the language by which Ansible orchestrates, configures,
         administers, or deploys systems.  They are called playbooks partially
         because it's a sports analogy, and it's supposed to be fun using them.
-        They aren't workbooks :)
+        They aren't workbooks.
 
     Plays
-        A :term:`playbook <playbooks>` is a list of plays.  A play is
+        A :term:`playbook <Playbooks>` is a list of plays.  A play is
         minimally a mapping between a set of :term:`hosts <Host>` selected by a host
         specifier (usually chosen by :term:`groups <Group>` but sometimes by
-        hostname :term:`globs <Globbing>`) and the :term:`tasks` which run on those
+        hostname :term:`globs <Globbing>`) and the :term:`tasks <Task>` which run on those
         hosts to define the role that those systems will perform. There can be
         one or many plays in a playbook.
 
     Pull Mode
-        By default, Ansible runs in :term:`push mode`, which allows it very
+        By default, Ansible runs in :term:`push mode <Push Mode>`, which allows it very
         fine-grained control over when it talks to each system.  Pull mode is
         provided for when you would rather have nodes check in every N minutes
         on a particular schedule.  It uses a program called
         :command:`ansible-pull` and can also be set up (or reconfigured) using
-        a push-mode :term:`playbook <playbooks>`.  Most Ansible users use push
+        a push-mode :term:`playbook <Playbooks>`.  Most Ansible users use push
         mode, but pull mode is included for variety and the sake of having
         choices.
 
         :command:`ansible-pull` works by checking configuration orders out of
         git on a crontab and then managing the machine locally, using the
-        :term:`local connection` plugin.
+        :term:`local connection <Local Connection>` plugin.
 
     Push Mode
         Push mode is the default mode of Ansible. In fact, it's not really
@@ -394,7 +394,7 @@ when a term comes up on the mailing list.
         to check in.
 
     Register Variable
-        The result of running any :term:`task <tasks>` in Ansible can be
+        The result of running any :term:`task <Task>` in Ansible can be
         stored in a variable for use in a template or a conditional statement.
         The keyword used to define the variable is called ``register``, taking
         its name from the idea of registers in assembly programming (though
@@ -408,20 +408,20 @@ when a term comes up on the mailing list.
         example, we might wish to change the owner of :file:`/etc/motd` to
         ``root`` if it is not already set to ``root``, or set its mode to
         ``0644`` if it is not already set to ``0644``.  The resource models
-        are :term:`idempotent <idempotency>` meaning change commands are not
+        are :term:`idempotent <Idempotency>` meaning change commands are not
         run unless needed, and Ansible will bring the system back to a desired
         state regardless of the actual state -- rather than you having to tell
         it how to get to the state.
 
     Roles
         Roles are units of organization in Ansible.  Assigning a role to
-        a group of :term:`hosts <Host>` (or a set of :term:`groups <group>`,
+        a group of :term:`hosts <Host>` (or a set of :term:`groups <Group>`,
         or :term:`host patterns <Globbing>`, and so on) implies that they should
         implement a specific behavior.  A role may include applying certain
-        variable values, certain :term:`tasks`, and certain :term:`handlers`
+        variable values, certain :term:`tasks <Task>`, and certain :term:`handlers <Handlers>`
         -- or just one or more of these things.  Because of the file structure
         associated with a role, roles become redistributable units that allow
-        you to share behavior among :term:`playbooks` -- or even with other users.
+        you to share behavior among :term:`playbooks <Playbooks>` -- or even with other users.
 
     Rolling Update
         The act of addressing a number of nodes in a group N at a time to
@@ -429,7 +429,7 @@ when a term comes up on the mailing list.
         instance, in a web topology of 500 nodes handling very large volume,
         it may be reasonable to update 10 or 20 machines at a time, moving on
         to the next 10 or 20 when done.  The ``serial:`` keyword in an Ansible
-        :term:`playbooks` control the size of the rolling update pool.  The
+        :term:`playbooks <Playbooks>` control the size of the rolling update pool.  The
         default is to address the batch size all at once, so this is something
         that you must opt-in to.  OS configuration (such as making sure config
         files are correct) does not typically have to use the rolling update
@@ -452,7 +452,7 @@ when a term comes up on the mailing list.
 
     SSH (Native)
         Native OpenSSH as an Ansible transport is specified with ``-c ssh``
-        (or a config file, or a keyword in the :term:`playbook <playbooks>`)
+        (or a config file, or a keyword in the :term:`playbook <Playbooks>`)
         and can be useful if wanting to login via Kerberized SSH or using SSH
         jump hosts, and so on.  In 1.2.1, ``ssh`` will be used by default if the
         OpenSSH binary on the control machine is sufficiently new.
@@ -464,7 +464,7 @@ when a term comes up on the mailing list.
         ControlMaster/ControlPersist capability.
 
     Tags
-        Ansible allows tagging resources in a :term:`playbook <playbooks>`
+        Ansible allows tagging resources in a :term:`playbook <Playbooks>`
         with arbitrary keywords, and then running only the parts of the
         playbook that correspond to those keywords.  For instance, it is
         possible to have an entire OS configuration, and have certain steps
@@ -472,20 +472,17 @@ when a term comes up on the mailing list.
         the time server information on a remote host.
 
     Task
-        :term:`Playbooks` exist to run tasks.  Tasks combine an :term:`action`
-        (a module and its arguments) with a name and optionally some other
-        keywords (like :term:`looping keywords <loops>`).   :term:`Handlers`
-        are also tasks, but they are a special kind of task that do not run
-        unless they are notified by name when a task reports an underlying
+        :term:`Playbooks <Playbooks>` exist to run tasks. Tasks combine an
+        :term:`action <Action>` (a module and its arguments) with a name and
+        optionally some other keywords (like :term:`looping keywords <Loops>`).
+        :term:`Handlers <Handlers>` are also tasks, but they are a special kind of task that
+        do not run unless they are notified by name when a task reports an underlying
         change on a remote system.
-
-    Tasks
-        A list of :term:`Task`.
 
     Templates
         Ansible can easily transfer files to remote systems but often it is
         desirable to substitute variables in other files.  Variables may come
-        from the :term:`inventory` file, :term:`Host Vars`, :term:`Group
+        from the :term:`inventory <Inventory>` file, :term:`Host Vars`, :term:`Group
         Vars`, or :term:`Facts`. Templates use the :term:`Jinja2` template
         engine and can also include logical constructs like loops and if
         statements.
@@ -498,7 +495,7 @@ when a term comes up on the mailing list.
         :term:`local <Local Connection>`.
 
     When
-        An optional conditional statement attached to a :term:`task <tasks>` that is used to
+        An optional conditional statement attached to a :term:`task <Task>` that is used to
         determine if the task should run or not. If the expression following
         the ``when:`` keyword evaluates to false, the task will be ignored.
 
@@ -506,14 +503,14 @@ when a term comes up on the mailing list.
         As opposed to :term:`Facts`, variables are names of values (they can
         be simple scalar values -- integers, booleans, strings) or complex
         ones (dictionaries/hashes, lists) that can be used in templates and
-        :term:`playbooks`.  They are declared things, not things that are
+        :term:`playbooks <Playbooks>`.  They are declared things, not things that are
         inferred from the remote system's current state or nature (which is
         what Facts are).
 
     YAML
         Ansible does not want to force people to write programming language
         code to automate infrastructure, so Ansible uses YAML to define
-        :term:`playbook <playbooks>` configuration languages and also variable
+        :term:`playbook <Playbooks>` configuration languages and also variable
         files.  YAML is nice because it has a minimum of syntax and is very
         clean and easy for people to skim.  It is a good data format for
         configuration files and humans, but also machine readable.  Ansible's

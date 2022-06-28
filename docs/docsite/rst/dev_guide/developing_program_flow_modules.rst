@@ -173,7 +173,7 @@ Executor/task_executor
 ----------------------
 
 The TaskExecutor receives the module name and parameters that were parsed from
-the :term:`playbook <playbooks>` (or from the command line in the case of
+the :term:`playbook <Playbooks>` (or from the command line in the case of
 :command:`/usr/bin/ansible`). It uses the name to decide whether it's looking
 at a module or an :ref:`Action Plugin <flow_action_plugins>`. If it's
 a module, it loads the :ref:`Normal Action Plugin <flow_normal_action_plugin>`
@@ -208,7 +208,7 @@ which lives in :file:`plugins/action/__init__.py`. It uses the
 ``Connection`` and ``Shell`` objects to do its work.
 
 .. note::
-    When :term:`tasks <tasks>` are run with the ``async:`` parameter, Ansible
+    When :term:`tasks <Tasks>` are run with the ``async:`` parameter, Ansible
     uses the ``async`` Action Plugin instead of the ``normal`` Action Plugin
     to invoke it. That program flow is currently not documented. Read the
     source for information on how that works.

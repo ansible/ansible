@@ -50,7 +50,7 @@ order: Controls the sorting of hosts as they are used for executing the play. Po
 poll: Sets the polling interval in seconds for async tasks (default 10s).
 port: Used to override the default port used in a connection.
 post_tasks: A list of tasks to execute after the :term:`tasks` section.
-pre_tasks: A list of tasks to execute before :term:`roles`.
+pre_tasks: A list of tasks to execute before :term:`roles <Roles>`.
 remote_user: User used to log into the target via the connection plugin.
 register: Name of variable that will contain task status and module return data.
 rescue: List of tasks in a :term:`block` that run if there is a task error in the main :term:`block` list.
@@ -60,7 +60,7 @@ run_once: Boolean that will bypass the host loop, forcing the task to attempt to
 serial: Explicitly define how Ansible batches the execution of the current play on the play's target. See :ref:`rolling_update_batch_size`.
 strategy: Allows you to choose the connection plugin to use for the play.
 tags: Tags applied to the task or included tasks, this allows selecting subsets of tasks from the command line.
-tasks: Main list of tasks to execute in the play, they run after :term:`roles` and before :term:`post_tasks`.
+tasks: Main list of tasks to execute in the play, they run after :term:`roles <Roles>` and before :term:`post_tasks`.
 timeout: Time limit for task to execute in, if exceeded Ansible will interrupt and fail the task.
 throttle: Limit number of concurrent task runs on task, block and playbook level. This is independent of the forks and serial settings, but cannot be set higher than those limits. For example, if forks is set to 10 and the throttle is set to 15, at most 10 hosts will be operated on in parallel.
 until: "This keyword implies a ':term:`retries` loop' that will go on until the condition supplied here is met or we hit the :term:`retries` limit."
