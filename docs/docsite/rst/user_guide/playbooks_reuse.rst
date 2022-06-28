@@ -216,7 +216,7 @@ Imports are processed before the play begins, so the name of the import no longe
        Conditionals in playbooks
    :ref:`playbooks_loops`
        Loops in playbooks
-   :ref:`tips_and_tricks`
+   :ref:`playbooks_best_practices`
        Tips and tricks for playbooks
    :ref:`ansible_galaxy`
        How to share roles on galaxy, role management

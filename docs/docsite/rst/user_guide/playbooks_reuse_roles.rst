@@ -591,7 +591,7 @@ Read the `Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_ page
        Learn about YAML syntax
    :ref:`working_with_playbooks`
        Review the basic Playbook language features
-   :ref:`tips_and_tricks`
+   :ref:`playbooks_best_practices`
        Tips and tricks for playbooks
    :ref:`playbooks_variables`
        Variables in playbooks
