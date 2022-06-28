@@ -502,7 +502,7 @@ For information about advanced YAML syntax used to declare variables and have mo
        Looping in playbooks
    :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :ref:`playbooks_best_practices`
+   :ref:`tips_and_tricks`
        Tips and tricks for playbooks
    :ref:`special_variables`
        List of special variables

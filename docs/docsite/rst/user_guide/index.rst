@@ -16,7 +16,6 @@ Quickly find answers in the following sections or expand the table of contents b
 Writing tasks, plays, and playbooks
 ===================================
 
-* I'm writing my first playbook. What should I :ref:`know before I begin <playbooks_tips_and_tricks>`?
 * I have a specific use case for a task or play:
 
   * Executing tasks with elevated privileges or as a different user with :ref:`become <become>`
@@ -84,7 +83,6 @@ Here is the complete list of resources in the Ansible User Guide:
    cheatsheet
    playbooks_intro
    playbooks
-   playbooks_best_practices
    become
    playbooks_loops
    playbooks_delegation
