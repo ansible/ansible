@@ -5,9 +5,13 @@ DOCUMENTATION:
   short_description: Decode a base64 string
   description:
     - Base64 decoding function
-  positional: _input
+  positional: input
   options:
     _input:
+      description: A base64 string to decode
+      type: string
+      required: true
+    input:
       description: A base64 string to decode
       type: string
       required: true
