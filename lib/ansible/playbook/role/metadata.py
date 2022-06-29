@@ -39,10 +39,10 @@ class RoleMetadata(Base, CollectionSearch):
     within each Role (meta/main.yml).
     '''
 
-    _allow_duplicates = FieldAttribute(isa='bool', default=False)
-    _dependencies = FieldAttribute(isa='list', default=list)
-    _galaxy_info = FieldAttribute(isa='GalaxyInfo')
-    _argument_specs = FieldAttribute(isa='dict', default=dict)
+    allow_duplicates = FieldAttribute(isa='bool', default=False)
+    dependencies = FieldAttribute(isa='list', default=list)
+    galaxy_info = FieldAttribute(isa='GalaxyInfo')
+    argument_specs = FieldAttribute(isa='dict', default=dict)
 
     def __init__(self, owner=None):
         self._owner = owner
