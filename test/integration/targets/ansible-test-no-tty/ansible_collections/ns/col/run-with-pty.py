@@ -4,4 +4,4 @@
 import pty
 import sys
 
-sys.exit(pty.spawn(sys.argv[1:]))
+sys.exit(1 if pty.spawn(sys.argv[1:]) else 0)
