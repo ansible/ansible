@@ -123,6 +123,9 @@ echo "rc was $WRONG_RC (1 is expected)"
 
 set -eux
 
+# create symlink for password test. we did not commit this in the repository
+# because e.g. a (win)zipped repository would've destroyed the symlink.
+ln -sf unicorn-password-script.py password-script.py
 
 # new format, view
 ansible-vault view "$@" --vault-password-file vault-password format_1_1_AES256.yml

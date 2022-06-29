@@ -91,7 +91,7 @@ def unfrack_path(pathsep=False, follow=True):
     """Turn an Option's data into a single path in Ansible locations"""
     def inner(value):
         if pathsep:
-            return [unfrackpath(x) for x in value.split(os.pathsep) if x]
+            return [unfrackpath(x, follow=follow) for x in value.split(os.pathsep) if x]
 
         if value == '-':
             return value
@@ -271,7 +271,7 @@ def add_connect_options(parser):
     connect_password_group.add_argument('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
                                         help='ask for connection password')
     connect_password_group.add_argument('--connection-password-file', '--conn-pass-file', default=C.CONNECTION_PASSWORD_FILE, dest='connection_password_file',
-                                        help="Connection password file", type=unfrack_path(follow=False), action='store')
+                                        help="Connection password file", type=unfrack_path(), action='store')
 
     parser.add_argument_group(connect_password_group)
 
@@ -304,7 +304,8 @@ def add_module_options(parser):
     """Add options for commands that load modules"""
     module_path = C.config.get_configuration_definition('DEFAULT_MODULE_PATH').get('default', '')
     parser.add_argument('-M', '--module-path', dest='module_path', default=None,
-                        help="prepend colon-separated path(s) to module library (default=%s)" % module_path,
+                        help='prepend colon-separated path(s) to module library (default=%s) '
+                             '(semicolon-separated on windows)' % module_path,
                         type=unfrack_path(pathsep=True), action=PrependListAction)
 
 
@@ -355,7 +356,7 @@ def add_runas_prompt_options(parser, runas_group=None):
                                   default=C.DEFAULT_BECOME_ASK_PASS,
                                   help='ask for privilege escalation password')
     runas_pass_group.add_argument('--become-password-file', '--become-pass-file', default=C.BECOME_PASSWORD_FILE, dest='become_password_file',
-                                  help="Become password file", type=unfrack_path(follow=False), action='store')
+                                  help="Become password file", type=unfrack_path(), action='store')
 
     parser.add_argument_group(runas_pass_group)
 

@@ -26,25 +26,19 @@ import sys
 # is invoked as such (through a symlink) does it behave like we expect.
 # That way we test that symlink support works:
 # https://github.com/ansible/ansible/issues/18319
-CONTEXT = {
-    'password': {
-        'PASSWORD': 'test-vault-password',
-    },
-    'DEFAULT': {
-        'PASSWORD': 'rainbows-are-pretty',
-    },
-}
+PASSWORDS = dict(
+    password='test-vault-password',
+    default='rainbows-are-pretty',
+)
 
 
 def main(args):
     # './password-script.py' -> 'password'
     # './unicorn-whatever.py' -> 'unicorn'
     context = os.path.basename(args[0]).split('-', 1)[0]
-
-    values = CONTEXT.get(context, CONTEXT['DEFAULT'])
-    print(values['PASSWORD'])
+    print(PASSWORDS.get(context, PASSWORDS['default']))
     return 0
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[:]))
+    sys.exit(main(sys.argv))
