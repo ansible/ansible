@@ -50,7 +50,7 @@ def extract_keywords(keyword_definitions):
 
         # Maintain order of the actual class names for our output
         # Build up a mapping of playbook classes to the attributes that they hold
-        pb_keywords[pb_class_name] = {k: v for (k, v) in playbook_class._valid_attrs.items()
+        pb_keywords[pb_class_name] = {k: v for (k, v) in playbook_class.fattributes.items()
                                       # Filter private attributes as they're not usable in playbooks
                                       if not v.private}
 
@@ -60,7 +60,7 @@ def extract_keywords(keyword_definitions):
                 pb_keywords[pb_class_name][keyword] = keyword_definitions[keyword]
             else:
                 # check if there is an alias, otherwise undocumented
-                alias = getattr(getattr(playbook_class, '_%s' % keyword), 'alias', None)
+                alias = getattr(playbook_class.fattributes.get(keyword), 'alias', None)
                 if alias and alias in keyword_definitions:
                     pb_keywords[pb_class_name][alias] = keyword_definitions[alias]
                     del pb_keywords[pb_class_name][keyword]

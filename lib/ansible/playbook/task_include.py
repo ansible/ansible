@@ -21,7 +21,6 @@ __metaclass__ = type
 
 import ansible.constants as C
 from ansible.errors import AnsibleParserError
-from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 from ansible.utils.display import Display

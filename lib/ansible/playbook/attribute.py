@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from copy import copy, deepcopy
 
+from ansible.utils.sentinel import Sentinel
 
 _CONTAINERS = frozenset(('list', 'dict', 'set'))
 
@@ -37,10 +38,7 @@ class Attribute:
         priority=0,
         class_type=None,
         always_post_validate=False,
-        inherit=True,
         alias=None,
-        extend=False,
-        prepend=False,
         static=False,
     ):
 
@@ -70,9 +68,6 @@ class Attribute:
             the field will be an instance of that class.
         :kwarg always_post_validate: Controls whether a field should be post
             validated or not (default: False).
-        :kwarg inherit: A boolean value, which controls whether the object
-            containing this field should attempt to inherit the value from its
-            parent object if the local value is None.
         :kwarg alias: An alias to use for the attribute name, for situations where
             the attribute name may conflict with a Python reserved word.
         """
@@ -85,14 +80,14 @@ class Attribute:
         self.priority = priority
         self.class_type = class_type
         self.always_post_validate = always_post_validate
-        self.inherit = inherit
         self.alias = alias
-        self.extend = extend
-        self.prepend = prepend
         self.static = static
 
         if default is not None and self.isa in _CONTAINERS and not callable(default):
             raise TypeError('defaults for FieldAttribute may not be mutable, please provide a callable instead')
+
+    def __set_name__(self, owner, name):
+        self.name = name
 
     def __eq__(self, other):
         return other.priority == self.priority
@@ -114,6 +109,94 @@ class Attribute:
     def __ge__(self, other):
         return other.priority >= self.priority
 
+    def __get__(self, obj, obj_type=None):
+        method = f'_get_attr_{self.name}'
+        if hasattr(obj, method):
+            # NOTE this appears to be not used in the codebase,
+            # _get_attr_connection has been replaced by ConnectionFieldAttribute.
+            # Leaving it here for test_attr_method from
+            # test/units/playbook/test_base.py to pass and for backwards compat.
+            if getattr(obj, '_squashed', False):
+                value = getattr(obj, f'_{self.name}', Sentinel)
+            else:
+                value = getattr(obj, method)()
+        else:
+            value = getattr(obj, f'_{self.name}', Sentinel)
+
+        if value is Sentinel:
+            value = self.default
+            if callable(value):
+                value = value()
+                setattr(obj, f'_{self.name}', value)
+
+        return value
+
+    def __set__(self, obj, value):
+        setattr(obj, f'_{self.name}', value)
+        if self.alias is not None:
+            setattr(obj, f'_{self.alias}', value)
+
+    # NOTE this appears to be not needed in the codebase,
+    # leaving it here for test_attr_int_del from
+    # test/units/playbook/test_base.py to pass.
+    def __delete__(self, obj):
+        delattr(obj, f'_{self.name}')
+
+
+class NonInheritableFieldAttribute(Attribute):
+    ...
+
 
 class FieldAttribute(Attribute):
-    pass
+    def __init__(self, extend=False, prepend=False, **kwargs):
+        super().__init__(**kwargs)
+
+        self.extend = extend
+        self.prepend = prepend
+
+    def __get__(self, obj, obj_type=None):
+        if getattr(obj, '_squashed', False) or getattr(obj, '_finalized', False):
+            value = getattr(obj, f'_{self.name}', Sentinel)
+        else:
+            try:
+                value = obj._get_parent_attribute(self.name)
+            except AttributeError:
+                method = f'_get_attr_{self.name}'
+                if hasattr(obj, method):
+                    # NOTE this appears to be not needed in the codebase,
+                    # _get_attr_connection has been replaced by ConnectionFieldAttribute.
+                    # Leaving it here for test_attr_method from
+                    # test/units/playbook/test_base.py to pass and for backwards compat.
+                    if getattr(obj, '_squashed', False):
+                        value = getattr(obj, f'_{self.name}', Sentinel)
+                    else:
+                        value = getattr(obj, method)()
+                else:
+                    value = getattr(obj, f'_{self.name}', Sentinel)
+
+        if value is Sentinel:
+            value = self.default
+            if callable(value):
+                value = value()
+                setattr(obj, f'_{self.name}', value)
+
+        return value
+
+
+class ConnectionFieldAttribute(FieldAttribute):
+    def __get__(self, obj, obj_type=None):
+        from ansible.module_utils.compat.paramiko import paramiko
+        from ansible.utils.ssh_functions import check_for_controlpersist
+        value = super().__get__(obj, obj_type)
+
+        if value == 'smart':
+            value = 'ssh'
+            # see if SSH can support ControlPersist if not use paramiko
+            if not check_for_controlpersist('ssh') and paramiko is not None:
+                value = "paramiko"
+
+        # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
+        elif value == 'persistent' and paramiko is not None:
+            value = 'paramiko'
+
+        return value

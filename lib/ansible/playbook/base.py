@@ -10,7 +10,6 @@ import operator
 import os
 
 from copy import copy as shallowcopy
-from functools import partial
 
 from jinja2.exceptions import UndefinedError
 
@@ -21,7 +20,7 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils._text import to_text, to_native
 from ansible.parsing.dataloader import DataLoader
-from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.playbook.attribute import Attribute, FieldAttribute, ConnectionFieldAttribute, NonInheritableFieldAttribute
 from ansible.plugins.loader import module_loader, action_loader
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, AnsibleCollectionRef
 from ansible.utils.display import Display
@@ -29,54 +28,6 @@ from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
 
 display = Display()
-
-
-def _generic_g(prop_name, self):
-    try:
-        value = self._attributes[prop_name]
-    except KeyError:
-        raise AttributeError("'%s' does not have the keyword '%s'" % (self.__class__.__name__, prop_name))
-
-    if value is Sentinel:
-        value = self._attr_defaults[prop_name]
-
-    return value
-
-
-def _generic_g_method(prop_name, self):
-    try:
-        if self._squashed:
-            return self._attributes[prop_name]
-        method = "_get_attr_%s" % prop_name
-        return getattr(self, method)()
-    except KeyError:
-        raise AttributeError("'%s' does not support the keyword '%s'" % (self.__class__.__name__, prop_name))
-
-
-def _generic_g_parent(prop_name, self):
-    try:
-        if self._squashed or self._finalized:
-            value = self._attributes[prop_name]
-        else:
-            try:
-                value = self._get_parent_attribute(prop_name)
-            except AttributeError:
-                value = self._attributes[prop_name]
-    except KeyError:
-        raise AttributeError("'%s' nor it's parents support the keyword '%s'" % (self.__class__.__name__, prop_name))
-
-    if value is Sentinel:
-        value = self._attr_defaults[prop_name]
-
-    return value
-
-
-def _generic_s(prop_name, self, value):
-    self._attributes[prop_name] = value
-
-
-def _generic_d(prop_name, self):
-    del self._attributes[prop_name]
 
 
 def _validate_action_group_metadata(action, found_group_metadata, fq_group_name):
@@ -118,83 +69,30 @@ def _validate_action_group_metadata(action, found_group_metadata, fq_group_name)
         display.warning(" ".join(metadata_warnings))
 
 
-class BaseMeta(type):
+# FIXME use @property and @classmethod together which is possible since Python 3.9
+class _FABMeta(type):
 
-    """
-    Metaclass for the Base object, which is used to construct the class
-    attributes based on the FieldAttributes available.
-    """
-
-    def __new__(cls, name, parents, dct):
-        def _create_attrs(src_dict, dst_dict):
-            '''
-            Helper method which creates the attributes based on those in the
-            source dictionary of attributes. This also populates the other
-            attributes used to keep track of these attributes and via the
-            getter/setter/deleter methods.
-            '''
-            keys = list(src_dict.keys())
-            for attr_name in keys:
-                value = src_dict[attr_name]
-                if isinstance(value, Attribute):
-                    if attr_name.startswith('_'):
-                        attr_name = attr_name[1:]
-
-                    # here we selectively assign the getter based on a few
-                    # things, such as whether we have a _get_attr_<name>
-                    # method, or if the attribute is marked as not inheriting
-                    # its value from a parent object
-                    method = "_get_attr_%s" % attr_name
-                    try:
-                        if method in src_dict or method in dst_dict:
-                            getter = partial(_generic_g_method, attr_name)
-                        elif ('_get_parent_attribute' in dst_dict or '_get_parent_attribute' in src_dict) and value.inherit:
-                            getter = partial(_generic_g_parent, attr_name)
-                        else:
-                            getter = partial(_generic_g, attr_name)
-                    except AttributeError as e:
-                        raise AnsibleParserError("Invalid playbook definition: %s" % to_native(e), orig_exc=e)
-
-                    setter = partial(_generic_s, attr_name)
-                    deleter = partial(_generic_d, attr_name)
-
-                    dst_dict[attr_name] = property(getter, setter, deleter)
-                    dst_dict['_valid_attrs'][attr_name] = value
-                    dst_dict['_attributes'][attr_name] = Sentinel
-                    dst_dict['_attr_defaults'][attr_name] = value.default
-
-                    if value.alias is not None:
-                        dst_dict[value.alias] = property(getter, setter, deleter)
-                        dst_dict['_valid_attrs'][value.alias] = value
-                        dst_dict['_alias_attrs'][value.alias] = attr_name
-
-        def _process_parents(parents, dst_dict):
-            '''
-            Helper method which creates attributes from all parent objects
-            recursively on through grandparent objects
-            '''
-            for parent in parents:
-                if hasattr(parent, '__dict__'):
-                    _create_attrs(parent.__dict__, dst_dict)
-                    new_dst_dict = parent.__dict__.copy()
-                    new_dst_dict.update(dst_dict)
-                    _process_parents(parent.__bases__, new_dst_dict)
-
-        # create some additional class attributes
-        dct['_attributes'] = {}
-        dct['_attr_defaults'] = {}
-        dct['_valid_attrs'] = {}
-        dct['_alias_attrs'] = {}
-
-        # now create the attributes based on the FieldAttributes
-        # available, including from parent (and grandparent) objects
-        _create_attrs(dct, dct)
-        _process_parents(parents, dct)
-
-        return super(BaseMeta, cls).__new__(cls, name, parents, dct)
+    @property
+    def fattributes(cls):
+        # FIXME is this worth caching?
+        fattributes = {}
+        for class_obj in reversed(cls.__mro__):
+            for name, attr in list(class_obj.__dict__.items()):
+                if not isinstance(attr, Attribute):
+                    continue
+                fattributes[name] = attr
+                if attr.alias:
+                    setattr(class_obj, attr.alias, attr)
+                    fattributes[attr.alias] = attr
+        return fattributes
 
 
-class FieldAttributeBase(metaclass=BaseMeta):
+class FieldAttributeBase(metaclass=_FABMeta):
+
+    # FIXME use @property and @classmethod together which is possible since Python 3.9
+    @property
+    def fattributes(self):
+        return self.__class__.fattributes
 
     def __init__(self):
 
@@ -211,17 +109,7 @@ class FieldAttributeBase(metaclass=BaseMeta):
         # every object gets a random uuid:
         self._uuid = get_unique_id()
 
-        # we create a copy of the attributes here due to the fact that
-        # it was initialized as a class param in the meta class, so we
-        # need a unique object here (all members contained within are
-        # unique already).
-        self._attributes = self.__class__._attributes.copy()
-        self._attr_defaults = self.__class__._attr_defaults.copy()
-        for key, value in self._attr_defaults.items():
-            if callable(value):
-                self._attr_defaults[key] = value()
-
-        # and init vars, avoid using defaults in field declaration as it lives across plays
+        # init vars, avoid using defaults in field declaration as it lives across plays
         self.vars = dict()
 
     @property
@@ -273,17 +161,14 @@ class FieldAttributeBase(metaclass=BaseMeta):
 
         # Walk all attributes in the class. We sort them based on their priority
         # so that certain fields can be loaded before others, if they are dependent.
-        for name, attr in sorted(self._valid_attrs.items(), key=operator.itemgetter(1)):
+        for name, attr in sorted(self.fattributes.items(), key=operator.itemgetter(1)):
             # copy the value over unless a _load_field method is defined
-            target_name = name
-            if name in self._alias_attrs:
-                target_name = self._alias_attrs[name]
             if name in ds:
                 method = getattr(self, '_load_%s' % name, None)
                 if method:
-                    self._attributes[target_name] = method(name, ds[name])
+                    setattr(self, name, method(name, ds[name]))
                 else:
-                    self._attributes[target_name] = ds[name]
+                    setattr(self, name, ds[name])
 
         # run early, non-critical validation
         self.validate()
@@ -316,7 +201,7 @@ class FieldAttributeBase(metaclass=BaseMeta):
         not map to attributes for this object.
         '''
 
-        valid_attrs = frozenset(self._valid_attrs.keys())
+        valid_attrs = frozenset(self.fattributes)
         for key in ds:
             if key not in valid_attrs:
                 raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (key, self.__class__.__name__), obj=ds)
@@ -327,18 +212,14 @@ class FieldAttributeBase(metaclass=BaseMeta):
 
         if not self._validated:
             # walk all fields in the object
-            for (name, attribute) in self._valid_attrs.items():
-
-                if name in self._alias_attrs:
-                    name = self._alias_attrs[name]
-
+            for (name, attribute) in self.fattributes.items():
                 # run validator only if present
                 method = getattr(self, '_validate_%s' % name, None)
                 if method:
                     method(attribute, name, getattr(self, name))
                 else:
                     # and make sure the attribute is of the type it should be
-                    value = self._attributes[name]
+                    value = getattr(self, name)
                     if value is not None:
                         if attribute.isa == 'string' and isinstance(value, (list, dict)):
                             raise AnsibleParserError(
@@ -528,8 +409,8 @@ class FieldAttributeBase(metaclass=BaseMeta):
         parent attributes.
         '''
         if not self._squashed:
-            for name in self._valid_attrs.keys():
-                self._attributes[name] = getattr(self, name)
+            for name in self.fattributes:
+                setattr(self, name, getattr(self, name))
             self._squashed = True
 
     def copy(self):
@@ -542,11 +423,8 @@ class FieldAttributeBase(metaclass=BaseMeta):
         except RuntimeError as e:
             raise AnsibleError("Exceeded maximum object depth. This may have been caused by excessive role recursion", orig_exc=e)
 
-        for name in self._valid_attrs.keys():
-            if name in self._alias_attrs:
-                continue
-            new_me._attributes[name] = shallowcopy(self._attributes[name])
-            new_me._attr_defaults[name] = shallowcopy(self._attr_defaults[name])
+        for name in self.fattributes:
+            setattr(new_me, name, shallowcopy(getattr(self, f'_{name}', Sentinel)))
 
         new_me._loader = self._loader
         new_me._variable_manager = self._variable_manager
@@ -621,8 +499,7 @@ class FieldAttributeBase(metaclass=BaseMeta):
         # save the omit value for later checking
         omit_value = templar.available_variables.get('omit')
 
-        for (name, attribute) in self._valid_attrs.items():
-
+        for (name, attribute) in self.fattributes.items():
             if attribute.static:
                 value = getattr(self, name)
 
@@ -748,7 +625,7 @@ class FieldAttributeBase(metaclass=BaseMeta):
         Dumps all attributes to a dictionary
         '''
         attrs = {}
-        for (name, attribute) in self._valid_attrs.items():
+        for (name, attribute) in self.fattributes.items():
             attr = getattr(self, name)
             if attribute.isa == 'class' and hasattr(attr, 'serialize'):
                 attrs[name] = attr.serialize()
@@ -761,8 +638,8 @@ class FieldAttributeBase(metaclass=BaseMeta):
         Loads attributes from a dictionary
         '''
         for (attr, value) in attrs.items():
-            if attr in self._valid_attrs:
-                attribute = self._valid_attrs[attr]
+            if attr in self.fattributes:
+                attribute = self.fattributes[attr]
                 if attribute.isa == 'class' and isinstance(value, dict):
                     obj = attribute.class_type()
                     obj.deserialize(value)
@@ -806,14 +683,11 @@ class FieldAttributeBase(metaclass=BaseMeta):
         if not isinstance(data, dict):
             raise AnsibleAssertionError('data (%s) should be a dict but is a %s' % (data, type(data)))
 
-        for (name, attribute) in self._valid_attrs.items():
+        for (name, attribute) in self.fattributes.items():
             if name in data:
                 setattr(self, name, data[name])
             else:
-                if callable(attribute.default):
-                    setattr(self, name, attribute.default())
-                else:
-                    setattr(self, name, attribute.default)
+                setattr(self, name, attribute.default)
 
         # restore the UUID field
         setattr(self, '_uuid', data.get('uuid'))
@@ -823,40 +697,40 @@ class FieldAttributeBase(metaclass=BaseMeta):
 
 class Base(FieldAttributeBase):
 
-    _name = FieldAttribute(isa='string', default='', always_post_validate=True, inherit=False)
+    name = NonInheritableFieldAttribute(isa='string', default='', always_post_validate=True)
 
     # connection/transport
-    _connection = FieldAttribute(isa='string', default=context.cliargs_deferred_get('connection'))
-    _port = FieldAttribute(isa='int')
-    _remote_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('remote_user'))
+    connection = ConnectionFieldAttribute(isa='string', default=context.cliargs_deferred_get('connection'))
+    port = FieldAttribute(isa='int')
+    remote_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('remote_user'))
 
     # variables
-    _vars = FieldAttribute(isa='dict', priority=100, inherit=False, static=True)
+    vars = NonInheritableFieldAttribute(isa='dict', priority=100, static=True)
 
     # module default params
-    _module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)
+    module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)
 
     # flags and misc. settings
-    _environment = FieldAttribute(isa='list', extend=True, prepend=True)
-    _no_log = FieldAttribute(isa='bool')
-    _run_once = FieldAttribute(isa='bool')
-    _ignore_errors = FieldAttribute(isa='bool')
-    _ignore_unreachable = FieldAttribute(isa='bool')
-    _check_mode = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('check'))
-    _diff = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('diff'))
-    _any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL)
-    _throttle = FieldAttribute(isa='int', default=0)
-    _timeout = FieldAttribute(isa='int', default=C.TASK_TIMEOUT)
+    environment = FieldAttribute(isa='list', extend=True, prepend=True)
+    no_log = FieldAttribute(isa='bool')
+    run_once = FieldAttribute(isa='bool')
+    ignore_errors = FieldAttribute(isa='bool')
+    ignore_unreachable = FieldAttribute(isa='bool')
+    check_mode = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('check'))
+    diff = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('diff'))
+    any_errors_fatal = FieldAttribute(isa='bool', default=C.ANY_ERRORS_FATAL)
+    throttle = FieldAttribute(isa='int', default=0)
+    timeout = FieldAttribute(isa='int', default=C.TASK_TIMEOUT)
 
     # explicitly invoke a debugger on tasks
-    _debugger = FieldAttribute(isa='string')
+    debugger = FieldAttribute(isa='string')
 
     # Privilege escalation
-    _become = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('become'))
-    _become_method = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_method'))
-    _become_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_user'))
-    _become_flags = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_flags'))
-    _become_exe = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_exe'))
+    become = FieldAttribute(isa='bool', default=context.cliargs_deferred_get('become'))
+    become_method = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_method'))
+    become_user = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_user'))
+    become_flags = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_flags'))
+    become_exe = FieldAttribute(isa='string', default=context.cliargs_deferred_get('become_exe'))
 
     # used to hold sudo/su stuff
     DEPRECATED_ATTRIBUTES = []  # type: list[str]

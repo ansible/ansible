@@ -590,13 +590,13 @@ class DocCLI(CLI, RoleMixin):
                         loaded_class = importlib.import_module(obj_class)
                         PB_LOADED[pobj] = getattr(loaded_class, pobj, None)
 
-                    if keyword in PB_LOADED[pobj]._valid_attrs:
+                    if keyword in PB_LOADED[pobj].fattributes:
                         kdata['applies_to'].append(pobj)
 
                         # we should only need these once
                         if 'type' not in kdata:
 
-                            fa = getattr(PB_LOADED[pobj], '_%s' % keyword)
+                            fa = PB_LOADED[pobj].fattributes.get(keyword)
                             if getattr(fa, 'private'):
                                 kdata = {}
                                 raise KeyError

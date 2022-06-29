@@ -23,10 +23,11 @@ from units.compat import unittest
 
 from ansible.errors import AnsibleParserError
 from ansible.module_utils.six import string_types
-from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.attribute import FieldAttribute, NonInheritableFieldAttribute
 from ansible.template import Templar
 from ansible.playbook import base
 from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
+from ansible.utils.sentinel import Sentinel
 
 from units.mock.loader import DictDataLoader
 
@@ -77,7 +78,7 @@ class TestBase(unittest.TestCase):
     def _assert_copy(self, orig, copy):
         self.assertIsInstance(copy, self.ClassUnderTest)
         self.assertIsInstance(copy, base.Base)
-        self.assertEqual(len(orig._valid_attrs), len(copy._valid_attrs))
+        self.assertEqual(len(orig.fattributes), len(copy.fattributes))
 
         sentinel = 'Empty DS'
         self.assertEqual(getattr(orig, '_ds', sentinel), getattr(copy, '_ds', sentinel))
@@ -107,8 +108,8 @@ class TestBase(unittest.TestCase):
 
         d = self.ClassUnderTest()
         d.deserialize(data)
-        self.assertIn('run_once', d._attributes)
-        self.assertIn('check_mode', d._attributes)
+        self.assertIn('_run_once', d.__dict__)
+        self.assertIn('_check_mode', d.__dict__)
 
         data = {'no_log': False,
                 'remote_user': None,
@@ -122,9 +123,9 @@ class TestBase(unittest.TestCase):
 
         d = self.ClassUnderTest()
         d.deserialize(data)
-        self.assertNotIn('a_sentinel_with_an_unlikely_name', d._attributes)
-        self.assertIn('run_once', d._attributes)
-        self.assertIn('check_mode', d._attributes)
+        self.assertNotIn('_a_sentinel_with_an_unlikely_name', d.__dict__)
+        self.assertIn('_run_once', d.__dict__)
+        self.assertIn('_check_mode', d.__dict__)
 
     def test_serialize_then_deserialize(self):
         ds = {'environment': [],
@@ -165,7 +166,7 @@ class TestBase(unittest.TestCase):
         # environment is supposed to be  a list. This
         # seems like it shouldn't work?
         ret = self.b.load_data(ds)
-        self.assertEqual(True, ret._attributes['environment'])
+        self.assertEqual(True, ret._environment)
 
     def test_post_validate(self):
         ds = {'environment': [],
@@ -312,7 +313,7 @@ class ExampleException(Exception):
 
 # naming fails me...
 class ExampleParentBaseSubClass(base.Base):
-    _test_attr_parent_string = FieldAttribute(isa='string', default='A string attr for a class that may be a parent for testing')
+    test_attr_parent_string = FieldAttribute(isa='string', default='A string attr for a class that may be a parent for testing')
 
     def __init__(self):
 
@@ -324,9 +325,8 @@ class ExampleParentBaseSubClass(base.Base):
 
 
 class ExampleSubClass(base.Base):
-    _test_attr_blip = FieldAttribute(isa='string', default='example sub class test_attr_blip',
-                                     inherit=False,
-                                     always_post_validate=True)
+    test_attr_blip = NonInheritableFieldAttribute(isa='string', default='example sub class test_attr_blip',
+                                                  always_post_validate=True)
 
     def __init__(self):
         super(ExampleSubClass, self).__init__()
@@ -339,39 +339,39 @@ class ExampleSubClass(base.Base):
 
 
 class BaseSubClass(base.Base):
-    _name = FieldAttribute(isa='string', default='', always_post_validate=True)
-    _test_attr_bool = FieldAttribute(isa='bool', always_post_validate=True)
-    _test_attr_int = FieldAttribute(isa='int', always_post_validate=True)
-    _test_attr_float = FieldAttribute(isa='float', default=3.14159, always_post_validate=True)
-    _test_attr_list = FieldAttribute(isa='list', listof=string_types, always_post_validate=True)
-    _test_attr_list_no_listof = FieldAttribute(isa='list', always_post_validate=True)
-    _test_attr_list_required = FieldAttribute(isa='list', listof=string_types, required=True,
-                                              default=list, always_post_validate=True)
-    _test_attr_string = FieldAttribute(isa='string', default='the_test_attr_string_default_value')
-    _test_attr_string_required = FieldAttribute(isa='string', required=True,
-                                                default='the_test_attr_string_default_value')
-    _test_attr_percent = FieldAttribute(isa='percent', always_post_validate=True)
-    _test_attr_set = FieldAttribute(isa='set', default=set, always_post_validate=True)
-    _test_attr_dict = FieldAttribute(isa='dict', default=lambda: {'a_key': 'a_value'}, always_post_validate=True)
-    _test_attr_class = FieldAttribute(isa='class', class_type=ExampleSubClass)
-    _test_attr_class_post_validate = FieldAttribute(isa='class', class_type=ExampleSubClass,
-                                                    always_post_validate=True)
-    _test_attr_unknown_isa = FieldAttribute(isa='not_a_real_isa', always_post_validate=True)
-    _test_attr_example = FieldAttribute(isa='string', default='the_default',
-                                        always_post_validate=True)
-    _test_attr_none = FieldAttribute(isa='string', always_post_validate=True)
-    _test_attr_preprocess = FieldAttribute(isa='string', default='the default for preprocess')
-    _test_attr_method = FieldAttribute(isa='string', default='some attr with a getter',
+    name = FieldAttribute(isa='string', default='', always_post_validate=True)
+    test_attr_bool = FieldAttribute(isa='bool', always_post_validate=True)
+    test_attr_int = FieldAttribute(isa='int', always_post_validate=True)
+    test_attr_float = FieldAttribute(isa='float', default=3.14159, always_post_validate=True)
+    test_attr_list = FieldAttribute(isa='list', listof=string_types, always_post_validate=True)
+    test_attr_list_no_listof = FieldAttribute(isa='list', always_post_validate=True)
+    test_attr_list_required = FieldAttribute(isa='list', listof=string_types, required=True,
+                                             default=list, always_post_validate=True)
+    test_attr_string = FieldAttribute(isa='string', default='the_test_attr_string_default_value')
+    test_attr_string_required = FieldAttribute(isa='string', required=True,
+                                               default='the_test_attr_string_default_value')
+    test_attr_percent = FieldAttribute(isa='percent', always_post_validate=True)
+    test_attr_set = FieldAttribute(isa='set', default=set, always_post_validate=True)
+    test_attr_dict = FieldAttribute(isa='dict', default=lambda: {'a_key': 'a_value'}, always_post_validate=True)
+    test_attr_class = FieldAttribute(isa='class', class_type=ExampleSubClass)
+    test_attr_class_post_validate = FieldAttribute(isa='class', class_type=ExampleSubClass,
+                                                   always_post_validate=True)
+    test_attr_unknown_isa = FieldAttribute(isa='not_a_real_isa', always_post_validate=True)
+    test_attr_example = FieldAttribute(isa='string', default='the_default',
                                        always_post_validate=True)
-    _test_attr_method_missing = FieldAttribute(isa='string', default='some attr with a missing getter',
-                                               always_post_validate=True)
+    test_attr_none = FieldAttribute(isa='string', always_post_validate=True)
+    test_attr_preprocess = FieldAttribute(isa='string', default='the default for preprocess')
+    test_attr_method = FieldAttribute(isa='string', default='some attr with a getter',
+                                      always_post_validate=True)
+    test_attr_method_missing = FieldAttribute(isa='string', default='some attr with a missing getter',
+                                              always_post_validate=True)
 
     def _get_attr_test_attr_method(self):
         return 'foo bar'
 
     def _validate_test_attr_example(self, attr, name, value):
         if not isinstance(value, str):
-            raise ExampleException('_test_attr_example is not a string: %s type=%s' % (value, type(value)))
+            raise ExampleException('test_attr_example is not a string: %s type=%s' % (value, type(value)))
 
     def _post_validate_test_attr_example(self, attr, value, templar):
         after_template_value = templar.template(value)
@@ -379,21 +379,6 @@ class BaseSubClass(base.Base):
 
     def _post_validate_test_attr_none(self, attr, value, templar):
         return None
-
-    def _get_parent_attribute(self, attr, extend=False, prepend=False):
-        value = None
-        try:
-            value = self._attributes[attr]
-            if self._parent and (value is None or extend):
-                parent_value = getattr(self._parent, attr, None)
-                if extend:
-                    value = self._extend_value(value, parent_value, prepend)
-                else:
-                    value = parent_value
-        except KeyError:
-            pass
-
-        return value
 
 
 # terrible name, but it is a TestBase subclass for testing subclasses of Base
@@ -420,7 +405,7 @@ class TestBaseSubClass(TestBase):
         ds = {'test_attr_int': MOST_RANDOM_NUMBER}
         bsc = self._base_validate(ds)
         del bsc.test_attr_int
-        self.assertNotIn('test_attr_int', bsc._attributes)
+        self.assertNotIn('_test_attr_int', bsc.__dict__)
 
     def test_attr_float(self):
         roughly_pi = 4.0
@@ -569,18 +554,18 @@ class TestBaseSubClass(TestBase):
         string_list = ['foo', 'bar']
         ds = {'test_attr_list': string_list}
         bsc = self._base_validate(ds)
-        self.assertEqual(string_list, bsc._attributes['test_attr_list'])
+        self.assertEqual(string_list, bsc._test_attr_list)
 
     def test_attr_list_none(self):
         ds = {'test_attr_list': None}
         bsc = self._base_validate(ds)
-        self.assertEqual(None, bsc._attributes['test_attr_list'])
+        self.assertEqual(None, bsc._test_attr_list)
 
     def test_attr_list_no_listof(self):
         test_list = ['foo', 'bar', 123]
         ds = {'test_attr_list_no_listof': test_list}
         bsc = self._base_validate(ds)
-        self.assertEqual(test_list, bsc._attributes['test_attr_list_no_listof'])
+        self.assertEqual(test_list, bsc._test_attr_list_no_listof)
 
     def test_attr_list_required(self):
         string_list = ['foo', 'bar']
@@ -590,7 +575,7 @@ class TestBaseSubClass(TestBase):
         fake_loader = DictDataLoader({})
         templar = Templar(loader=fake_loader)
         bsc.post_validate(templar)
-        self.assertEqual(string_list, bsc._attributes['test_attr_list_required'])
+        self.assertEqual(string_list, bsc._test_attr_list_required)
 
     def test_attr_list_required_empty_string(self):
         string_list = [""]
