@@ -55,7 +55,7 @@ When adding a second copyright line for a significant feature or rewrite, add th
     # Copyright: (c) 2017, [New Contributor(s)]
     # Copyright: (c) 2015, [Original Contributor(s)]
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
+    # If you are unsure what to use for copyright, use Copyright: (c) <year>, Ansible Project
 .. _ansible_metadata_block:
 
 ANSIBLE_METADATA block
