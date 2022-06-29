@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Assert no TTY is available."""
 
 import sys
 
