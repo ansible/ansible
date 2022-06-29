@@ -58,6 +58,27 @@ if HAS_CURSES:
     CLEAR_TO_EOL = curses.tigetstr('el') or CLEAR_TO_EOL
 
 
+def setraw(fd, when=termios.TCSAFLUSH):
+    """Put terminal into a raw mode.
+
+    Copied from ``tty`` from CPython 3.11.0, and modified to not remove OPOST from OFLAG
+
+    OPOST is kept to prevent an issue with multi line prompts from being corrupted now that display
+    is proxied via the queue from forks. The problem is a race condition, in that we proxy the display
+    over the fork, but before it can be displayed, this plugin will have continued executing, potentially
+    setting stdout and stdin to raw which remove output post processing that commonly converts NL to CRLF
+    """
+    mode = termios.tcgetattr(fd)
+    mode[tty.IFLAG] = mode[tty.IFLAG] & ~(termios.BRKINT | termios.ICRNL | termios.INPCK | termios.ISTRIP | termios.IXON)
+    # mode[tty.OFLAG] = mode[tty.OFLAG] & ~(termios.OPOST)
+    mode[tty.CFLAG] = mode[tty.CFLAG] & ~(termios.CSIZE | termios.PARENB)
+    mode[tty.CFLAG] = mode[tty.CFLAG] | termios.CS8
+    mode[tty.LFLAG] = mode[tty.LFLAG] & ~(termios.ECHO | termios.ICANON | termios.IEXTEN | termios.ISIG)
+    mode[tty.CC][termios.VMIN] = 1
+    mode[tty.CC][termios.VTIME] = 0
+    termios.tcsetattr(fd, when, mode)
+
+
 class AnsibleTimeoutExceeded(Exception):
     pass
 
@@ -200,12 +221,12 @@ class ActionModule(ActionBase):
                     backspace = [b'\x7f', b'\x08']
 
                 old_settings = termios.tcgetattr(stdin_fd)
-                tty.setraw(stdin_fd)
+                setraw(stdin_fd)
 
                 # Only set stdout to raw mode if it is a TTY. This is needed when redirecting
                 # stdout to a file since a file cannot be set to raw mode.
                 if isatty(stdout_fd):
-                    tty.setraw(stdout_fd)
+                    setraw(stdout_fd)
 
                 # Only echo input if no timeout is specified
                 if not seconds and echo:
