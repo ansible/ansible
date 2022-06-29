@@ -969,9 +969,8 @@ class DocCLI(CLI, RoleMixin):
                 continue
             elif plugin in C.IGNORE_FILES:
                 continue
-            elif plugin .startswith('_'):
-                if os.path.islink(full_path):  # avoids aliases
-                    continue
+            elif os.path.islink(full_path):  # avoids aliases
+                continue
 
             plugin = os.path.splitext(plugin)[0]  # removes the extension
             plugin = plugin.lstrip('_')  # remove underscore from deprecated plugins
