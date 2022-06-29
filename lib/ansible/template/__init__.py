@@ -673,7 +673,7 @@ class AnsibleNativeEnvironment(AnsibleEnvironment):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.finalize = _unroll_iterator(lambda thing: _fail_on_undefined(thing))
+        self.finalize = _unroll_iterator(_fail_on_undefined(thing))
 
 
 class Templar:
