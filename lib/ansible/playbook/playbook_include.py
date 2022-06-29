@@ -41,8 +41,8 @@ display = Display()
 
 class PlaybookInclude(Base, Conditional, Taggable):
 
-    _import_playbook = FieldAttribute(isa='string')
-    _vars = FieldAttribute(isa='dict', default=dict)
+    import_playbook = FieldAttribute(isa='string')
+    vars_val = FieldAttribute(isa='dict', default=dict, alias='vars')
 
     @staticmethod
     def load(data, basedir, variable_manager=None, loader=None):
@@ -120,7 +120,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
             # those attached to each block (if any)
             if new_obj.when:
                 for task_block in (entry.pre_tasks + entry.roles + entry.tasks + entry.post_tasks):
-                    task_block._attributes['when'] = new_obj.when[:] + task_block.when[:]
+                    task_block._when = new_obj.when[:] + task_block.when[:]
 
         return pb
 

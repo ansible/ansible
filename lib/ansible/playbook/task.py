@@ -26,7 +26,7 @@ from ansible.module_utils.six import string_types
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.plugins.loader import lookup_loader
-from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.attribute import FieldAttribute, NonInheritableFieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
@@ -63,28 +63,28 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     # might be possible to define others
 
     # NOTE: ONLY set defaults on task attributes that are not inheritable,
-    # inheritance is only triggered if the 'current value' is None,
+    # inheritance is only triggered if the 'current value' is Sentinel,
     # default can be set at play/top level object and inheritance will take it's course.
 
-    _args = FieldAttribute(isa='dict', default=dict)
-    _action = FieldAttribute(isa='string')
+    args = FieldAttribute(isa='dict', default=dict)
+    action = FieldAttribute(isa='string')
 
-    _async_val = FieldAttribute(isa='int', default=0, alias='async')
-    _changed_when = FieldAttribute(isa='list', default=list)
-    _delay = FieldAttribute(isa='int', default=5)
-    _delegate_to = FieldAttribute(isa='string')
-    _delegate_facts = FieldAttribute(isa='bool')
-    _failed_when = FieldAttribute(isa='list', default=list)
-    _loop = FieldAttribute()
-    _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
-    _notify = FieldAttribute(isa='list')
-    _poll = FieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
-    _register = FieldAttribute(isa='string', static=True)
-    _retries = FieldAttribute(isa='int', default=3)
-    _until = FieldAttribute(isa='list', default=list)
+    async_val = FieldAttribute(isa='int', default=0, alias='async')
+    changed_when = FieldAttribute(isa='list', default=list)
+    delay = FieldAttribute(isa='int', default=5)
+    delegate_to = FieldAttribute(isa='string')
+    delegate_facts = FieldAttribute(isa='bool')
+    failed_when = FieldAttribute(isa='list', default=list)
+    loop = FieldAttribute()
+    loop_control = NonInheritableFieldAttribute(isa='class', class_type=LoopControl)
+    notify = FieldAttribute(isa='list')
+    poll = FieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
+    register = FieldAttribute(isa='string', static=True)
+    retries = FieldAttribute(isa='int', default=3)
+    until = FieldAttribute(isa='list', default=list)
 
     # deprecated, used to be loop and loop_args but loop has been repurposed
-    _loop_with = FieldAttribute(isa='string', private=True, inherit=False)
+    loop_with = NonInheritableFieldAttribute(isa='string', private=True)
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
@@ -182,7 +182,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         else:
             # Validate this untemplated field early on to guarantee we are dealing with a list.
             # This is also done in CollectionSearch._load_collections() but this runs before that call.
-            collections_list = self.get_validated_value('collections', self._collections, collections_list, None)
+            collections_list = self.get_validated_value('collections', self.fattributes.get('collections'), collections_list, None)
 
         if default_collection and not self._role:  # FIXME: and not a collections role
             if collections_list:
@@ -460,11 +460,10 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         '''
         Generic logic to get the attribute or parent attribute for a task value.
         '''
-
-        extend = self._valid_attrs[attr].extend
-        prepend = self._valid_attrs[attr].prepend
+        extend = self.fattributes.get(attr).extend
+        prepend = self.fattributes.get(attr).prepend
         try:
-            value = self._attributes[attr]
+            value = getattr(self, f'_{attr}', Sentinel)
             # If parent is static, we can grab attrs from the parent
             # otherwise, defer to the grandparent
             if getattr(self._parent, 'statically_loaded', True):
@@ -478,7 +477,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                     if attr != 'vars' and hasattr(_parent, '_get_parent_attribute'):
                         parent_value = _parent._get_parent_attribute(attr)
                     else:
-                        parent_value = _parent._attributes.get(attr, Sentinel)
+                        parent_value = getattr(_parent, f'_{attr}', Sentinel)
 
                     if extend:
                         value = self._extend_value(value, parent_value, prepend)

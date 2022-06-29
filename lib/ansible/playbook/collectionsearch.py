@@ -36,13 +36,13 @@ def _ensure_default_collection(collection_list=None):
 class CollectionSearch:
 
     # this needs to be populated before we can resolve tasks/roles/etc
-    _collections = FieldAttribute(isa='list', listof=string_types, priority=100, default=_ensure_default_collection,
-                                  always_post_validate=True, static=True)
+    collections = FieldAttribute(isa='list', listof=string_types, priority=100, default=_ensure_default_collection,
+                                 always_post_validate=True, static=True)
 
     def _load_collections(self, attr, ds):
         # We are always a mixin with Base, so we can validate this untemplated
         # field early on to guarantee we are dealing with a list.
-        ds = self.get_validated_value('collections', self._collections, ds, None)
+        ds = self.get_validated_value('collections', self.fattributes.get('collections'), ds, None)
 
         # this will only be called if someone specified a value; call the shared value
         _ensure_default_collection(collection_list=ds)

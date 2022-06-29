@@ -43,7 +43,7 @@ display = Display()
 
 class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
-    _role = FieldAttribute(isa='string')
+    role = FieldAttribute(isa='string')
 
     def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None, collection_list=None):
 
@@ -210,7 +210,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
         role_def = dict()
         role_params = dict()
-        base_attribute_names = frozenset(self._valid_attrs.keys())
+        base_attribute_names = frozenset(self.fattributes)
         for (key, value) in ds.items():
             # use the list of FieldAttribute values to determine what is and is not
             # an extra parameter for this role (or sub-class of this role)

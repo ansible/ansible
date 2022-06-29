@@ -77,46 +77,46 @@ class PlayContext(Base):
     '''
 
     # base
-    _module_compression = FieldAttribute(isa='string', default=C.DEFAULT_MODULE_COMPRESSION)
-    _shell = FieldAttribute(isa='string')
-    _executable = FieldAttribute(isa='string', default=C.DEFAULT_EXECUTABLE)
+    module_compression = FieldAttribute(isa='string', default=C.DEFAULT_MODULE_COMPRESSION)
+    shell = FieldAttribute(isa='string')
+    executable = FieldAttribute(isa='string', default=C.DEFAULT_EXECUTABLE)
 
     # connection fields, some are inherited from Base:
     # (connection, port, remote_user, environment, no_log)
-    _remote_addr = FieldAttribute(isa='string')
-    _password = FieldAttribute(isa='string')
-    _timeout = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
-    _connection_user = FieldAttribute(isa='string')
-    _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
-    _pipelining = FieldAttribute(isa='bool', default=C.ANSIBLE_PIPELINING)
+    remote_addr = FieldAttribute(isa='string')
+    password = FieldAttribute(isa='string')
+    timeout = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
+    connection_user = FieldAttribute(isa='string')
+    private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
+    pipelining = FieldAttribute(isa='bool', default=C.ANSIBLE_PIPELINING)
 
     # networking modules
-    _network_os = FieldAttribute(isa='string')
+    network_os = FieldAttribute(isa='string')
 
     # docker FIXME: remove these
-    _docker_extra_args = FieldAttribute(isa='string')
+    docker_extra_args = FieldAttribute(isa='string')
 
     # ???
-    _connection_lockfd = FieldAttribute(isa='int')
+    connection_lockfd = FieldAttribute(isa='int')
 
     # privilege escalation fields
-    _become = FieldAttribute(isa='bool')
-    _become_method = FieldAttribute(isa='string')
-    _become_user = FieldAttribute(isa='string')
-    _become_pass = FieldAttribute(isa='string')
-    _become_exe = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_EXE)
-    _become_flags = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_FLAGS)
-    _prompt = FieldAttribute(isa='string')
+    become = FieldAttribute(isa='bool')
+    become_method = FieldAttribute(isa='string')
+    become_user = FieldAttribute(isa='string')
+    become_pass = FieldAttribute(isa='string')
+    become_exe = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_EXE)
+    become_flags = FieldAttribute(isa='string', default=C.DEFAULT_BECOME_FLAGS)
+    prompt = FieldAttribute(isa='string')
 
     # general flags
-    _only_tags = FieldAttribute(isa='set', default=set)
-    _skip_tags = FieldAttribute(isa='set', default=set)
+    only_tags = FieldAttribute(isa='set', default=set)
+    skip_tags = FieldAttribute(isa='set', default=set)
 
-    _start_at_task = FieldAttribute(isa='string')
-    _step = FieldAttribute(isa='bool', default=False)
+    start_at_task = FieldAttribute(isa='string')
+    step = FieldAttribute(isa='bool', default=False)
 
     # "PlayContext.force_handlers should not be used, the calling code should be using play itself instead"
-    _force_handlers = FieldAttribute(isa='bool', default=False)
+    force_handlers = FieldAttribute(isa='bool', default=False)
 
     @property
     def verbosity(self):
@@ -353,21 +353,3 @@ class PlayContext(Base):
                         variables[var_opt] = var_val
             except AttributeError:
                 continue
-
-    def _get_attr_connection(self):
-        ''' connections are special, this takes care of responding correctly '''
-        conn_type = None
-        if self._attributes['connection'] == 'smart':
-            conn_type = 'ssh'
-            # see if SSH can support ControlPersist if not use paramiko
-            if not check_for_controlpersist('ssh') and paramiko is not None:
-                conn_type = "paramiko"
-
-        # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
-        elif self._attributes['connection'] == 'persistent' and paramiko is not None:
-            conn_type = 'paramiko'
-
-        if conn_type:
-            self.connection = conn_type
-
-        return self._attributes['connection']
