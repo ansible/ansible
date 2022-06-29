@@ -129,6 +129,7 @@ except ImportError:
 display = Display()
 
 
+# dumps
 if HAS_TOML and hasattr(toml, 'TomlEncoder'):
     # toml>=0.10.0
     class AnsibleTomlEncoder(toml.TomlEncoder):
@@ -154,6 +155,7 @@ else:
             'The python "toml" or "tomli-w" library is required when using the TOML output format'
         )
 
+# loads
 if HAS_TOML:
     # prefer toml if installed, since it supports both encoding and decoding
     toml_loads = toml.loads  # type: ignore[assignment]
@@ -164,15 +166,17 @@ elif HAS_TOMLLIB:
 
 
 def convert_yaml_objects_to_native(obj):
-    """Older versions of the ``toml`` python library, don't have a pluggable
-    way to tell the encoder about custom types, so we need to ensure objects
-    that we pass are native types.
+    """Older versions of the ``toml`` python library, and tomllib, don't have
+    a pluggable way to tell the encoder about custom types, so we need to
+    ensure objects that we pass are native types.
 
-    Only used on ``toml<0.10.0`` where ``toml.TomlEncoder`` is missing.
+    Used with:
+      - ``toml<0.10.0`` where ``toml.TomlEncoder`` is missing
+      - ``tomli`` or ``tomllib``
 
     This function recurses an object and ensures we cast any of the types from
     ``ansible.parsing.yaml.objects`` into their native types, effectively cleansing
-    the data before we hand it over to ``toml``
+    the data before we hand it over to the toml library.
 
     This function doesn't directly check for the types from ``ansible.parsing.yaml.objects``
     but instead checks for the types those objects inherit from, to offer more flexibility.
