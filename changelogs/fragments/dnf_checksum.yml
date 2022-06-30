@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf now handles downloaded package associated errors more gracefully, for example mismatching checksum.
