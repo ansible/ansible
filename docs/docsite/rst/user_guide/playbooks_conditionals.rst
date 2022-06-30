@@ -280,14 +280,16 @@ You can use conditionals with re-usable tasks files, playbooks, or roles. Ansibl
 Conditionals with imports
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When you add a conditional to an import statement, Ansible applies the condition to all tasks within the imported file. This behavior is the equivalent of :ref:`tag_inheritance`. Ansible applies the condition to every task, and evaluates each task separately. For example, you might have a playbook called ``main.yml`` and a tasks file called ``other_tasks.yml``:
+When you add a conditional to an import statement, Ansible applies the condition to all tasks within the imported file. This behavior is the equivalent of :ref:`tag_inheritance`. Ansible applies the condition to every task, and evaluates each task separately. For example, if you want to define and then display a variable that was not previously defined, you might have a playbook called ``main.yml`` and a tasks file called ``other_tasks.yml``:
 
 .. code-block:: yaml
 
     # all tasks within an imported file inherit the condition from the import statement
     # main.yml
-    - import_tasks: other_tasks.yml # note "import"
-      when: x is not defined
+    - hosts: all
+      tasks:
+      - import_tasks: other_tasks.yml # note "import"
+        when: x is not defined
 
     # other_tasks.yml
     - name: Set a variable
@@ -314,7 +316,20 @@ Ansible expands this at execution time to the equivalent of:
       when: x is not defined
       # Ansible skips this task, because x is now defined
 
-Thus if ``x`` is initially undefined, the ``debug`` task will be skipped. If this is not the behavior you want, use an ``include_*`` statement to apply a condition only to that statement itself.
+If ``x`` is initially defined, both tasks are skipped as intended. But if ``x`` is initially undefined, the debug task will be skipped since the conditional is evaluated for every imported task. The conditional will evaluate to ``true`` for the ``set_fact`` task, which will define the variable and cause the ``debug`` conditional to evaluate to ``false``.
+
+If this is not the behavior you want, use an ``include_*`` statement to apply a condition only to that statement itself.
+
+.. code-block:: yaml
+
+    # using a conditional on include_* only applies to the include task itself
+    # main.yml
+    - hosts: all
+      tasks:
+      - include_tasks: other_tasks.yml # note "include"
+        when: x is not defined
+
+Now if ``x`` is initially undefined, the debug task will not be skipped because the conditional is evaluated at the time of the include and does not apply to the individual tasks.
 
 You can apply conditions to ``import_playbook`` as well as to the other ``import_*`` statements. When you use this approach, Ansible returns a 'skipped' message for every task on every host that does not match the criteria, creating repetitive output. In many cases the :ref:`group_by module <group_by_module>` can be a more streamlined way to accomplish the same objective; see :ref:`os_variance`.
 
