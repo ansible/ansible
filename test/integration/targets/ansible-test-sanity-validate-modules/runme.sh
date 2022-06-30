@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
-set -eux -o pipefail
+source ../collection/setup.sh
 
-cp -a "${TEST_DIR}/ansible_collections" "${WORK_DIR}"
-cd "${WORK_DIR}/ansible_collections/ns/ps_only"
+set -eux
+
+ansible-test sanity --test validate-modules --color --truncate 0 "${@}"
+
+cd ../ps_only
 
 if ! command -V pwsh; then
   echo "skipping test since pwsh is not available"
