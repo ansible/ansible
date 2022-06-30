@@ -9,7 +9,6 @@ __metaclass__ = type
 
 import os
 import sys
-import locale
 
 # Used for determining if the system is running a new enough python version
 # and should only restrict on our documented minimum versions
@@ -44,9 +43,9 @@ check_blocking_io()
 
 def check_encoding():
     """Check file system encoding and locale to ensure UTF-8."""
-
+    from ansible.utils.locale import initialize_locale
     fs_enc = sys.getfilesystemencoding()
-    lang, encoding = locale.getdefaultlocale(['LC_ALL', 'LC_CTYPE', 'LANG', 'LANGUAGE'])
+    lang, encoding = initialize_locale()
     if fs_enc.lower() != 'utf-8':
         raise SystemExit('ERROR: Ansible requires the system encoding to be UTF-8; Detected %s.' % fs_enc)
 
@@ -80,8 +79,7 @@ from pathlib import Path
 
 try:
     from ansible import constants as C
-    from ansible.utils.display import Display, initialize_locale
-    initialize_locale()
+    from ansible.utils.display import Display
     display = Display()
 except Exception as e:
     print('ERROR: %s' % e, file=sys.stderr)

@@ -10,7 +10,8 @@ from unittest.mock import MagicMock
 import pytest
 
 from ansible.module_utils.six import PY3
-from ansible.utils.display import Display, get_text_width, initialize_locale
+from ansible.utils.display import Display, get_text_width
+from ansible.utils.locale import initialize_locale
 from ansible.utils.multiprocessing import context as multiprocessing_context
 
 

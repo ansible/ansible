@@ -40,6 +40,7 @@ from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import text_type
 from ansible.utils.color import stringc
+from ansible.utils.locale import LOCALE_INITIALIZED, LOCALE_INITIALIZATION_ERR
 from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.utils.singleton import Singleton
 from ansible.utils.unsafe_proxy import wrap_var
@@ -52,24 +53,6 @@ _LIBC.wcwidth.argtypes = (ctypes.c_wchar,)
 _LIBC.wcswidth.argtypes = (ctypes.c_wchar_p, ctypes.c_int)
 # Max for c_int
 _MAX_INT = 2 ** (ctypes.sizeof(ctypes.c_int) * 8 - 1) - 1
-
-_LOCALE_INITIALIZED = False
-_LOCALE_INITIALIZATION_ERR = None
-
-
-def initialize_locale():
-    """Set the locale to the users default setting
-    and set ``_LOCALE_INITIALIZED`` to indicate whether
-    ``get_text_width`` may run into trouble
-    """
-    global _LOCALE_INITIALIZED, _LOCALE_INITIALIZATION_ERR
-    if _LOCALE_INITIALIZED is False:
-        try:
-            locale.setlocale(locale.LC_ALL, '')
-        except locale.Error as e:
-            _LOCALE_INITIALIZATION_ERR = e
-        else:
-            _LOCALE_INITIALIZED = True
 
 
 def get_text_width(text):
@@ -86,15 +69,15 @@ def get_text_width(text):
     if not isinstance(text, text_type):
         raise TypeError('get_text_width requires text, not %s' % type(text))
 
-    if _LOCALE_INITIALIZATION_ERR:
+    if LOCALE_INITIALIZATION_ERR:
         Display().warning(
-            'An error occurred while calling ansible.utils.display.initialize_locale '
+            'An error occurred while calling ansible.utils.locale.initialize_locale '
             '(%s). This may result in incorrectly calculated text widths that can '
-            'cause Display to print incorrect line lengths' % _LOCALE_INITIALIZATION_ERR
+            'cause Display to print incorrect line lengths' % LOCALE_INITIALIZATION_ERR
         )
-    elif not _LOCALE_INITIALIZED:
+    elif not LOCALE_INITIALIZED:
         Display().warning(
-            'ansible.utils.display.initialize_locale has not been called, '
+            'ansible.utils.locale.initialize_locale has not been called, '
             'this may result in incorrectly calculated text widths that can '
             'cause Display to print incorrect line lengths'
         )
@@ -130,9 +113,9 @@ def get_text_width(text):
             w = 0
         width += w
 
-    if width == 0 and counter and not _LOCALE_INITIALIZED:
+    if width == 0 and counter and not LOCALE_INITIALIZED:
         raise EnvironmentError(
-            'ansible.utils.display.initialize_locale has not been called, '
+            'ansible.utils.locale.initialize_locale has not been called, '
             'and get_text_width could not calculate text width of %r' % text
         )
 
