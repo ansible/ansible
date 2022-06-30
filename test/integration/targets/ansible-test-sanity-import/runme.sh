@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 
-set -eux -o pipefail
-
-cp -a "${TEST_DIR}/ansible_collections" "${WORK_DIR}"
-cd "${WORK_DIR}/ansible_collections/ns/col"
-
-"${TEST_DIR}/../collection/update-ignore.py"
+source ../collection/setup.sh
 
 vendor_dir="$(python -c 'import pathlib, ansible._vendor; print(pathlib.Path(ansible._vendor.__file__).parent)')"
 
