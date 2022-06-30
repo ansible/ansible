@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-set -eux -o pipefail
+source ../collection/setup.sh
+
+set -eux
 
 cd "${WORK_DIR}"
 
@@ -10,6 +12,9 @@ ansible-test --version
 
 # the --help option should show the current working directory when it is unsupported
 ansible-test --help 2>&1 | grep '^Current working directory: '
+
+# some shell commands also work without a supported directory
+ansible-test shell pwd
 
 if ansible-test sanity 1>stdout 2>stderr; then
   echo "ansible-test did not fail"
