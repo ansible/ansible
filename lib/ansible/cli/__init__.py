@@ -45,13 +45,13 @@ def check_encoding():
     """Check file system encoding and locale to ensure UTF-8."""
     from ansible.utils.locale import initialize_locale
     fs_enc = sys.getfilesystemencoding()
-    lang, encoding = initialize_locale()
+    encoding = initialize_locale()
     if fs_enc.lower() != 'utf-8':
         raise SystemExit('ERROR: Ansible requires the system encoding to be UTF-8; Detected %s.' % fs_enc)
 
     # This allows ``C`` encoding right now, and I know we have people running from C
     # With ``C`` we get ``(None, None)``
-    if all((lang, encoding)) and encoding.lower() not in ('utf-8', 'utf8'):
+    if encoding and encoding.lower() not in ('utf-8', 'utf8'):
         raise SystemExit('ERROR: Ansible requires the locale encoding to be UTF-8; Detected %s.' % encoding)
 
 
