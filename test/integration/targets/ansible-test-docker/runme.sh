@@ -1,24 +1,14 @@
 #!/usr/bin/env bash
 
-set -eu -o pipefail
+source ../collection/setup.sh
 
-# tests must be executed outside of the ansible source tree
-# otherwise ansible-test will test the ansible source instead of the test collection
-# the temporary directory provided by ansible-test resides within the ansible source tree
-tmp_dir=$(mktemp -d)
+set -x
 
-trap 'rm -rf "${tmp_dir}"' EXIT
+# common args for all tests
+# because we are running in shippable/generic/ we are already in the default docker container
+common=(--python "${ANSIBLE_TEST_PYTHON_VERSION}" --venv --venv-system-site-packages --color --truncate 0 "${@}")
 
-export TEST_DIR
-export WORK_DIR
-
-TEST_DIR="$PWD"
-
-for test in collection-tests/*.sh; do
-  WORK_DIR="${tmp_dir}/$(basename "${test}" ".sh")"
-  mkdir "${WORK_DIR}"
-  echo "**********************************************************************"
-  echo "TEST: ${test}: STARTING"
-  "${test}" "${@}" || (echo "TEST: ${test}: FAILED" && exit 1)
-  echo "TEST: ${test}: PASSED"
-done
+# tests
+ansible-test sanity "${common[@]}"
+ansible-test units "${common[@]}"
+ansible-test integration "${common[@]}"
