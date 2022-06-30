@@ -42,3 +42,5 @@ ansible-playbook unsafe.yml -v "$@"
 ansible-playbook in_template_overrides.yml -v "$@"
 
 ansible-playbook lazy_eval.yml -i ../../inventory -v "$@"
+
+ansible-playbook undefined_in_import.yml -i ../../inventory -v "$@"

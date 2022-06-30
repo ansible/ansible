@@ -609,6 +609,28 @@ def get_fqcr_and_name(resource, collection='ansible.builtin'):
     return fqcr, name
 
 
+def _fail_on_undefined(data):
+    """Recursively find an undefined value in a nested data structure
+    and properly raise the undefined exception.
+    """
+    if isinstance(data, Mapping):
+        for value in data.values():
+            _fail_on_undefined(value)
+    elif is_sequence(data):
+        for item in data:
+            _fail_on_undefined(item)
+    else:
+        if isinstance(data, StrictUndefined):
+            # To actually raise the undefined exception we need to
+            # access the undefined object otherwise the exception would
+            # be raised on the next access which might not be properly
+            # handled.
+            # See https://github.com/ansible/ansible/issues/52158
+            # and StrictUndefined implementation in upstream Jinja2.
+            str(data)
+    return data
+
+
 @_unroll_iterator
 def _ansible_finalize(thing):
     """A custom finalize function for jinja2, which prevents None from being
@@ -622,7 +644,7 @@ def _ansible_finalize(thing):
     which can produce a generator in the middle of a template are already
     wrapped with ``_unroll_generator`` in ``JinjaPluginIntercept``.
     """
-    return thing if thing is not None else ''
+    return thing if _fail_on_undefined(thing) is not None else ''
 
 
 class AnsibleEnvironment(NativeEnvironment):
@@ -651,7 +673,7 @@ class AnsibleNativeEnvironment(AnsibleEnvironment):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.finalize = _unroll_iterator(lambda thing: thing)
+        self.finalize = _unroll_iterator(_fail_on_undefined)
 
 
 class Templar:
