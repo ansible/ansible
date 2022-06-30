@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
-set -eux -o pipefail
+source ../collection/setup.sh
 
-cp -a "${TEST_DIR}/ansible_collections" "${WORK_DIR}"
-cd "${WORK_DIR}/ansible_collections/ns/col_constraints"
+set -x
 
 options=$("${TEST_DIR}"/../ansible-test/venv-pythons.py)
 IFS=', ' read -r -a pythons <<< "${options}"
