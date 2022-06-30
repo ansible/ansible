@@ -19,7 +19,7 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-- ansible.builtin.debug: msg="the value of foo.txt is {{lookup('ansible.builtin.unvault', '/etc/foo.txt')|to_string }}"
+- ansible.builtin.debug: msg="the value of foo.txt is {{ lookup('ansible.builtin.unvault', '/etc/foo.txt') | string | trim }}"
 """
 
 RETURN = """
