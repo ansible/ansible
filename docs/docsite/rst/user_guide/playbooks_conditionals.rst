@@ -280,7 +280,7 @@ You can use conditionals with re-usable tasks files, playbooks, or roles. Ansibl
 Conditionals with imports
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When you add a conditional to an import statement, Ansible applies the condition to all tasks within the imported file. This behavior is the equivalent of :ref:`tag_inheritance`. Ansible applies the condition to every task, and evaluates each task separately. For example, if you want to define and then display a variable that wasn't previously defined, you might have a playbook called ``main.yml`` and a tasks file called ``other_tasks.yml``:
+When you add a conditional to an import statement, Ansible applies the condition to all tasks within the imported file. This behavior is the equivalent of :ref:`tag_inheritance`. Ansible applies the condition to every task, and evaluates each task separately. For example, if you want to define and then display a variable that was not previously defined, you might have a playbook called ``main.yml`` and a tasks file called ``other_tasks.yml``:
 
 .. code-block:: yaml
 
