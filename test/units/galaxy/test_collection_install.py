@@ -181,13 +181,14 @@ def test_concrete_artifact_manager_scm_no_executable(monkeypatch):
     monkeypatch.setattr(collection.concrete_artifact_manager.subprocess, 'check_call', mock_subprocess_check_call)
     mock_mkdtemp = MagicMock(return_value='')
     monkeypatch.setattr(collection.concrete_artifact_manager, 'mkdtemp', mock_mkdtemp)
+    mock_get_bin_path = MagicMock(side_effect=[ValueError('Failed to find required executable')])
+    monkeypatch.setattr(collection.concrete_artifact_manager, 'get_bin_path', mock_get_bin_path)
 
     error = re.escape(
         "Could not find git executable to extract the collection from the Git repository `https://github.com/org/repo`"
     )
-    with mock.patch.dict(os.environ, {"PATH": ""}):
-        with pytest.raises(AnsibleError, match=error):
-            collection.concrete_artifact_manager._extract_collection_from_git(url, version, b'path')
+    with pytest.raises(AnsibleError, match=error):
+        collection.concrete_artifact_manager._extract_collection_from_git(url, version, b'path')
 
 
 @pytest.mark.parametrize(
