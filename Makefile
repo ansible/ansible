@@ -18,9 +18,9 @@ SDIST_DIR ?= 'dist'
 # This doesn't evaluate until it's called. The -D argument is the
 # directory of the target file ($@), kinda like `dirname`.
 MANPAGES ?= $(patsubst %.rst.in,%,$(wildcard ./docs/man/man1/ansible*.1.rst.in))
-ifneq ($(shell which rst2man 2>/dev/null),)
+ifneq ($(shell command -v rst2man 2>/dev/null),)
 ASCII2MAN = rst2man $< $@
-else ifneq ($(shell which rst2man.py 2>/dev/null),)
+else ifneq ($(shell command -v rst2man.py 2>/dev/null),)
 ASCII2MAN = rst2man.py $< $@
 else
 ASCII2MAN = @echo "ERROR: rst2man from docutils command is not installed but is required to build $(MANPAGES)" && exit 1
