@@ -98,7 +98,7 @@ You can create dynamic groups using host variables with the constructed ``keyed_
       private_only: "public_ip_address is not defined"
     compose:
       # use a private address where a public one isn't assigned
-      ansible_host: public_ip_address is defined | ternary(public_ip_address, private_ip_address)
+      ansible_host: public_ip_address|default(private_ip_address)
       # alternatively, set the ansible_host variable to connect with the private IP address without changing the hostname
       # ansible_host: private_ip_address
       # if you *must* set a string here (perhaps to identify the inventory source if you have multiple
