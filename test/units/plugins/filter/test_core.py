@@ -28,14 +28,16 @@ UUID_TEST_CASES = (
 )
 
 RANDOM_TEST_CASES = (
-    (['elemA', 'elemB', 'elemC'], [1,0,0], 1000, {'elemA': 1000}),
-    (['elemA', 'elemB', 'elemC'], [0,1,0], 1000, {'elemB': 1000}),
-    (['elemA', 'elemB', 'elemC'], [0,0,1], 1000, {'elemC': 1000})
+    (['elemA', 'elemB', 'elemC'], [1, 0, 0], 1000, {'elemA': 1000}),
+    (['elemA', 'elemB', 'elemC'], [0, 1, 0], 1000, {'elemB': 1000}),
+    (['elemA', 'elemB', 'elemC'], [0, 0, 1], 1000, {'elemC': 1000})
 )
+
 
 @pytest.mark.parametrize('values, weights, k, expected', RANDOM_TEST_CASES)
 def test_random_filter(values, weights, k, expected):
     assert expected == Counter(rand(end=values, weights=weights, k=k))
+
 
 @pytest.mark.parametrize('value, expected', UUID_DEFAULT_NAMESPACE_TEST_CASES)
 def test_to_uuid_default_namespace(value, expected):

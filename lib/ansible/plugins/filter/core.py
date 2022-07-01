@@ -249,6 +249,7 @@ def rand(end, start=None, step=None, seed=None, weights=None, cum_weights=None, 
     else:
         raise AnsibleFilterError('random can only be used on sequences and integers')
 
+
 def randomize_list(mylist, seed=None):
     try:
         mylist = list(mylist)
