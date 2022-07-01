@@ -12,7 +12,8 @@ DOCUMENTATION = r'''
         - TOML based inventory format
         - File MUST have a valid '.toml' file extension
     notes:
-        - Requires the 'toml' python library
+        - >
+          Requires one of the following python libraries: 'toml', 'tomli', or 'tomllib'
 '''
 
 EXAMPLES = r'''# fmt: toml
@@ -92,7 +93,7 @@ import typing as t
 from collections.abc import MutableMapping, MutableSequence
 from functools import partial
 
-from ansible.errors import AnsibleFileNotFound, AnsibleParserError
+from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleRuntimeError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import string_types, text_type
 from ansible.parsing.yaml.objects import AnsibleSequence, AnsibleUnicode
@@ -100,16 +101,37 @@ from ansible.plugins.inventory import BaseFileInventoryPlugin
 from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
 
+HAS_TOML = False
 try:
     import toml
     HAS_TOML = True
 except ImportError:
-    HAS_TOML = False
+    pass
+
+HAS_TOMLIW = False
+try:
+    import tomli_w  # type: ignore[import]
+    HAS_TOMLIW = True
+except ImportError:
+    pass
+
+HAS_TOMLLIB = False
+try:
+    import tomllib  # type: ignore[import]
+    HAS_TOMLLIB = True
+except ImportError:
+    try:
+        import tomli as tomllib  # type: ignore[no-redef]
+        HAS_TOMLLIB = True
+    except ImportError:
+        pass
 
 display = Display()
 
 
+# dumps
 if HAS_TOML and hasattr(toml, 'TomlEncoder'):
+    # toml>=0.10.0
     class AnsibleTomlEncoder(toml.TomlEncoder):
         def __init__(self, *args, **kwargs):
             super(AnsibleTomlEncoder, self).__init__(*args, **kwargs)
@@ -122,20 +144,39 @@ if HAS_TOML and hasattr(toml, 'TomlEncoder'):
             })
     toml_dumps = partial(toml.dumps, encoder=AnsibleTomlEncoder())  # type: t.Callable[[t.Any], str]
 else:
+    # toml<0.10.0
+    # tomli-w
     def toml_dumps(data):  # type: (t.Any) -> str
-        return toml.dumps(convert_yaml_objects_to_native(data))
+        if HAS_TOML:
+            return toml.dumps(convert_yaml_objects_to_native(data))
+        elif HAS_TOMLIW:
+            return tomli_w.dumps(convert_yaml_objects_to_native(data))
+        raise AnsibleRuntimeError(
+            'The python "toml" or "tomli-w" library is required when using the TOML output format'
+        )
+
+# loads
+if HAS_TOML:
+    # prefer toml if installed, since it supports both encoding and decoding
+    toml_loads = toml.loads  # type: ignore[assignment]
+    TOMLDecodeError = toml.TomlDecodeError  # type: t.Any
+elif HAS_TOMLLIB:
+    toml_loads = tomllib.loads  # type: ignore[assignment]
+    TOMLDecodeError = tomllib.TOMLDecodeError  # type: t.Any  # type: ignore[no-redef]
 
 
 def convert_yaml_objects_to_native(obj):
-    """Older versions of the ``toml`` python library, don't have a pluggable
-    way to tell the encoder about custom types, so we need to ensure objects
-    that we pass are native types.
+    """Older versions of the ``toml`` python library, and tomllib, don't have
+    a pluggable way to tell the encoder about custom types, so we need to
+    ensure objects that we pass are native types.
 
-    Only used on ``toml<0.10.0`` where ``toml.TomlEncoder`` is missing.
+    Used with:
+      - ``toml<0.10.0`` where ``toml.TomlEncoder`` is missing
+      - ``tomli`` or ``tomllib``
 
     This function recurses an object and ensures we cast any of the types from
     ``ansible.parsing.yaml.objects`` into their native types, effectively cleansing
-    the data before we hand it over to ``toml``
+    the data before we hand it over to the toml library.
 
     This function doesn't directly check for the types from ``ansible.parsing.yaml.objects``
     but instead checks for the types those objects inherit from, to offer more flexibility.
@@ -207,8 +248,8 @@ class InventoryModule(BaseFileInventoryPlugin):
 
         try:
             (b_data, private) = self.loader._get_file_contents(file_name)
-            return toml.loads(to_text(b_data, errors='surrogate_or_strict'))
-        except toml.TomlDecodeError as e:
+            return toml_loads(to_text(b_data, errors='surrogate_or_strict'))
+        except TOMLDecodeError as e:
             raise AnsibleParserError(
                 'TOML file (%s) is invalid: %s' % (file_name, to_native(e)),
                 orig_exc=e
@@ -226,9 +267,11 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     def parse(self, inventory, loader, path, cache=True):
         ''' parses the inventory file '''
-        if not HAS_TOML:
+        if not HAS_TOMLLIB and not HAS_TOML:
+            # tomllib works here too, but we don't call it out in the error,
+            # since you either have it or not as part of cpython stdlib >= 3.11
             raise AnsibleParserError(
-                'The TOML inventory plugin requires the python "toml" library'
+                'The TOML inventory plugin requires the python "toml", or "tomli" library'
             )
 
         super(InventoryModule, self).parse(inventory, loader, path)

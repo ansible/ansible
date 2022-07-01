@@ -476,7 +476,7 @@ You can set the following Emacs options to avoid cases of disclosure. There may 
 Using encrypted variables and files
 ===================================
 
-When you run a task or playbook that uses encrypted variables or files, you must provide the passwords to decrypt the variables or files. You can do this at the command line or in the playbook itself.
+When you run a task or playbook that uses encrypted variables or files, you must provide the passwords to decrypt the variables or files. You can do this at the command line or by setting a default password source in a config option or an environment variable.
 
 Passing a single password
 -------------------------
@@ -575,7 +575,9 @@ If you use one vault ID more frequently than any other, you can set the config o
 Setting a default password source
 ---------------------------------
 
-If you use one vault password file more frequently than any other, you can set the :ref:`DEFAULT_VAULT_PASSWORD_FILE` config option or the :envvar:`ANSIBLE_VAULT_PASSWORD_FILE` environment variable to specify that file. For example, if you set ``ANSIBLE_VAULT_PASSWORD_FILE=~/.vault_pass.txt``, Ansible will automatically search for the password in that file. This is useful if, for example, you use Ansible from a continuous integration system such as Jenkins.
+If you don't want to provide the password file on the command line or if you use one vault password file more frequently than any other, you can set the :ref:`DEFAULT_VAULT_PASSWORD_FILE` config option or the :envvar:`ANSIBLE_VAULT_PASSWORD_FILE` environment variable to specify a default file to use. For example, if you set ``ANSIBLE_VAULT_PASSWORD_FILE=~/.vault_pass.txt``, Ansible will automatically search for the password in that file. This is useful if, for example, you use Ansible from a continuous integration system such as Jenkins.
+
+The file that you reference can be either a file containing the password (in plain text), or it can be a script (with executable permissions set) that returns the password.
 
 When are encrypted files made visible?
 ======================================

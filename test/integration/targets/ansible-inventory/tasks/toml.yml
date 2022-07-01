@@ -1,0 +1,66 @@
+- name: Ensure no toml packages are installed
+  pip:
+    name:
+      - tomli
+      - tomli-w
+      - toml
+    state: absent
+
+- name: Install toml package
+  pip:
+    name: '{{ toml_package|difference(["tomllib"]) }}'
+    state: present
+
+- name: test toml parsing
+  command: ansible-inventory --list --toml -i {{ role_path }}/files/valid_sample.toml
+  register: toml_in
+
+- assert:
+    that:
+      - >
+        'foo = "bar"' in toml_in.stdout
+
+- name: "test option: --toml with valid group name"
+  command: ansible-inventory --list --toml -i {{ role_path }}/files/valid_sample.yml
+  register: result
+
+- assert:
+    that:
+        - result is succeeded
+
+- name: "test option: --toml with invalid group name"
+  command: ansible-inventory --list --toml -i {{ role_path }}/files/invalid_sample.yml
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+        - result is failed
+        - >
+          "ERROR! The source inventory contains" in result.stderr
+
+- block:
+  - name: "test toml output with unicode characters"
+    command: ansible-inventory --list --toml -i {{ role_path }}/files/unicode.yml
+    register: result
+
+  - assert:
+      that:
+          - result is succeeded
+          - result.stdout is contains('příbor')
+
+  - block:
+    - name: "test toml output file with unicode characters"
+      command: ansible-inventory --list --toml --output unicode_inventory.toml -i {{ role_path }}/files/unicode.yml
+
+    - set_fact:
+        toml_inventory_file: "{{ lookup('file', 'unicode_inventory.toml') | string }}"
+
+    - assert:
+        that:
+            - toml_inventory_file is contains('příbor')
+    always:
+      - file:
+          name: unicode_inventory.toml
+          state: absent
+  when: ansible_python.version.major|int == 3

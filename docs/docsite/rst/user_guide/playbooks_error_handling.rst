@@ -267,7 +267,7 @@ You can also use blocks to define responses to task errors. This approach is sim
 
    :ref:`playbooks_intro`
        An introduction to playbooks
-   :ref:`playbooks_best_practices`
+   :ref:`tips_and_tricks`
        Tips and tricks for playbooks
    :ref:`playbooks_conditionals`
        Conditional statements in playbooks
