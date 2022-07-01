@@ -201,17 +201,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         # copy over all field attributes from the RoleInclude
         # update self._attr directly, to avoid squashing
         for attr_name in self.fattributes:
-            if attr_name in ('when', 'tags'):
-                setattr(
-                    self,
-                    f'_{attr_name}',
-                    self._extend_value(
-                        getattr(self, f'_{attr_name}', Sentinel),
-                        getattr(role_include, f'_{attr_name}', Sentinel),
-                    )
-                )
-            else:
-                setattr(self, f'_{attr_name}', getattr(role_include, f'_{attr_name}', Sentinel))
+            setattr(self, f'_{attr_name}', getattr(role_include, f'_{attr_name}', Sentinel))
 
         # vars and default vars are regular dictionaries
         self._role_vars = self._load_role_yaml('vars', main=self._from_files.get('vars'), allow_dir=True)
