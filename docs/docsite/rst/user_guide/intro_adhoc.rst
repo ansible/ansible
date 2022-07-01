@@ -114,6 +114,8 @@ Managing packages
 
 You might also use an ad hoc task to install, update, or remove packages on managed nodes using a package management module like yum. To ensure a package is installed without updating it:
 
+Package management modules support common functions to install, remove, and generally manage packages. Some specific functions for a package manager might not be present in the Ansible module since they are not part of general package management.
+
 .. code-block:: bash
 
     $ ansible webservers -m ansible.builtin.yum -a "name=acme state=present"
