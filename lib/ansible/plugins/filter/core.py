@@ -228,8 +228,7 @@ def from_yaml_all(data):
     return data
 
 
-@pass_environment
-def rand(environment, end, start=None, step=None, seed=None, weights=None, cum_weights=None, k=1):
+def rand(end, start=None, step=None, seed=None, weights=None, cum_weights=None, k=1):
     if seed is None:
         r = SystemRandom()
     else:
@@ -249,7 +248,6 @@ def rand(environment, end, start=None, step=None, seed=None, weights=None, cum_w
         return random_element
     else:
         raise AnsibleFilterError('random can only be used on sequences and integers')
-
 
 def randomize_list(mylist, seed=None):
     try:

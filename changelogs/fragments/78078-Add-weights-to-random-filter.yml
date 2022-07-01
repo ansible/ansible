@@ -1,2 +1,2 @@
 minor_changes:
-  - Add optional params to random filter so it supports weights, accumulative weights and sampling https://github.com/ansible/ansible/pull/78078
+  - Add optional params to random filter so it supports weights, cumulative weights and list of random elements to be returned https://github.com/ansible/ansible/pull/78078

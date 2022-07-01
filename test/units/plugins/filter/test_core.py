@@ -11,8 +11,9 @@ import pytest
 
 from ansible.module_utils._text import to_native
 from ansible.plugins.filter.core import to_uuid
+from ansible.plugins.filter.core import rand
 from ansible.errors import AnsibleFilterError
-
+from collections import Counter
 
 UUID_DEFAULT_NAMESPACE_TEST_CASES = (
     ('example.com', 'ae780c3a-a3ab-53c2-bfb4-098da300b3fe'),
@@ -26,6 +27,20 @@ UUID_TEST_CASES = (
     ('11111111-2222-3333-4444-555555555555', 'example.com', 'e776faa5-5299-55dc-9057-7a00e6be2364'),
 )
 
+RANDOM_TEST_CASES = (
+    (['elemA', 'elemB', 'elemC'], [1,0,0], 1000, {'elemA': 1000}),
+    (['elemA', 'elemB', 'elemC'], [0,1,0], 1000, {'elemB': 1000}),
+    (['elemA', 'elemB', 'elemC'], [0,0,1], 1000, {'elemC': 1000})
+)
+
+@pytest.mark.parametrize('values, weights, k, expected', RANDOM_TEST_CASES)
+def test_random_filter(values, weights, k, expected):
+    def count(array):
+        counter = {}
+        for elem in array:
+            counter[elem] = counter.get(elem, 0) + 1
+        return counter
+    assert expected == count(rand(end=values, weights=weights, k=k))
 
 @pytest.mark.parametrize('value, expected', UUID_DEFAULT_NAMESPACE_TEST_CASES)
 def test_to_uuid_default_namespace(value, expected):
