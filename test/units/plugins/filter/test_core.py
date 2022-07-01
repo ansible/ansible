@@ -35,12 +35,7 @@ RANDOM_TEST_CASES = (
 
 @pytest.mark.parametrize('values, weights, k, expected', RANDOM_TEST_CASES)
 def test_random_filter(values, weights, k, expected):
-    def count(array):
-        counter = {}
-        for elem in array:
-            counter[elem] = counter.get(elem, 0) + 1
-        return counter
-    assert expected == count(rand(end=values, weights=weights, k=k))
+    assert expected == Counter(rand(end=values, weights=weights, k=k))
 
 @pytest.mark.parametrize('value, expected', UUID_DEFAULT_NAMESPACE_TEST_CASES)
 def test_to_uuid_default_namespace(value, expected):
