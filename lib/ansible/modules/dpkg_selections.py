@@ -46,6 +46,11 @@ EXAMPLES = '''
   ansible.builtin.dpkg_selections:
     name: python
     selection: hold
+
+- name: Allow python to be upgraded
+  ansible.builtin.dpkg_selections:
+    name: python
+    selection: install
 '''
 
 from ansible.module_utils.basic import AnsibleModule
