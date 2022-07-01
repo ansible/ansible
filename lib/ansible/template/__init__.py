@@ -1120,15 +1120,21 @@ class Templar:
             # save/restore cur_context to prevent overriding __UNSAFE__.
             cached_context = self.cur_context
 
+            # the concat function is set for each Ansible environment,
+            # however for convert_data=False we need to use the concat
+            # function that avoids any evaluation and set it temporarily
+            # on the environment so it is used correctly even when
+            # the concat function is called internally in Jinja,
+            # most notably for macro execution
+            cached_concat = self.environment.concat
+            if not self.jinja2_native and not convert_data:
+                self.environment.concat = ansible_concat
+
             self.cur_context = t.new_context(jvars, shared=True)
             rf = t.root_render_func(self.cur_context)
 
             try:
-                if not self.jinja2_native and not convert_data:
-                    res = ansible_concat(rf)
-                else:
-                    res = self.environment.concat(rf)
-
+                res = self.environment.concat(rf)
                 unsafe = getattr(self.cur_context, 'unsafe', False)
                 if unsafe:
                     res = wrap_var(res)
@@ -1142,6 +1148,7 @@ class Templar:
                     raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data), to_native(te)))
             finally:
                 self.cur_context = cached_context
+                self.environment.concat = cached_concat
 
             if isinstance(res, string_types) and preserve_trailing_newlines:
                 # The low level calls above do not preserve the newline
