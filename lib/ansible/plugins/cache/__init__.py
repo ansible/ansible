@@ -24,7 +24,7 @@ import time
 import errno
 
 from abc import abstractmethod
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, Mapping
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -136,6 +136,8 @@ class BaseFileCacheModule(BaseCacheModule):
             cachefile = self._get_cache_file_name(key)
             try:
                 value = self._load(cachefile)
+                if not isinstance(value, Mapping):
+                    raise ValueError(f"data stored and loaded by cache plugins should be a Mapping, not {type(value)}")
                 self._cache[key] = value
             except ValueError as e:
                 display.warning("error in '%s' cache plugin while trying to read %s : %s. "
