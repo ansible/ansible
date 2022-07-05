@@ -23,7 +23,7 @@ def initialize_locale():
     if LOCALE_INITIALIZED is False:
         try:
             locale.setlocale(locale.LC_ALL, '')
-            LOCALE = locale.getlocale(locale.LC_ALL)
+            LOCALE = locale.getlocale()
         except locale.Error as e:
             LOCALE_INITIALIZATION_ERR = e
         else:
