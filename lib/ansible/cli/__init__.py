@@ -55,9 +55,7 @@ def check_encoding():
             'ERROR: Ansible could not initialize the preferred locale: %s' % locale_utils.LOCALE_INITIALIZATION_ERR
         )
 
-    # This allows ``C`` encoding right now, and I know we have people running from C
-    # With ``C`` we get ``(None, None)``
-    if encoding and encoding.lower() not in ('utf-8', 'utf8'):
+    if not encoding or encoding.lower() not in ('utf-8', 'utf8'):
         raise SystemExit('ERROR: Ansible requires the locale encoding to be UTF-8; Detected %s.' % encoding)
 
 
