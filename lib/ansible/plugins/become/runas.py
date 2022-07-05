@@ -8,7 +8,7 @@ DOCUMENTATION = """
     name: runas
     short_description: Run As user
     description:
-        - This become plugins allows your remote/login user to execute commands as another user via the windows runas facility.
+        - This become plugin allows your remote/login user to execute commands as another user via the windows runas facility.
     author: ansible (@core)
     version_added: "2.8"
     options:
