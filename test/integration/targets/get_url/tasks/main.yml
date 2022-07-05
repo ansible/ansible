@@ -582,11 +582,11 @@
 - name: Test gzip decompression
   get_url:
     url: https://{{ httpbin_host }}/gzip
-    dest: "{{ output_dir }}/gzip.json"
+    dest: "{{ remote_tmp_dir }}/gzip.json"
 
 - name: Get gzip file contents
   slurp:
-    path: "{{ output_dir }}/gzip.json"
+    path: "{{ remote_tmp_dir }}/gzip.json"
   register: gzip_json
 
 - name: validate gzip decompression
@@ -597,11 +597,11 @@
 - name: Test gzip no decompression
   get_url:
     url: https://{{ httpbin_host }}/gzip
-    dest: "{{ output_dir }}/gzip.json.gz"
+    dest: "{{ remote_tmp_dir }}/gzip.json.gz"
     decompress: no
 
 - name: Get gzip file contents
-  command: 'gunzip -c {{ output_dir }}/gzip.json.gz'
+  command: 'gunzip -c {{ remote_tmp_dir }}/gzip.json.gz'
   register: gzip_json
 
 - name: validate gzip no decompression

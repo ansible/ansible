@@ -64,6 +64,9 @@ try:
 except ImportError:
     HAS_GZIP = False
     GZIP_IMP_ERR = traceback.format_exc()
+    GzipFile = object
+else:
+    GzipFile = gzip.GzipFile  # type: ignore[assignment,misc]
 
 try:
     import email.policy
@@ -790,7 +793,7 @@ def parse_content_type(response):
     return content_type, main_type, sub_type, charset
 
 
-class GzipDecodedReader(gzip.GzipFile if HAS_GZIP else object):
+class GzipDecodedReader(GzipFile):
     """A file-like object to decode a response encoded with the gzip
     method, as described in RFC 1952.
 
