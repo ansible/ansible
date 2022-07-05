@@ -43,11 +43,17 @@ check_blocking_io()
 
 def check_encoding():
     """Check file system encoding and locale to ensure UTF-8."""
-    from ansible.utils.locale import initialize_locale
+    import ansible.utils.locale as locale_utils
     fs_enc = sys.getfilesystemencoding()
-    encoding = initialize_locale()
     if fs_enc.lower() != 'utf-8':
         raise SystemExit('ERROR: Ansible requires the system encoding to be UTF-8; Detected %s.' % fs_enc)
+
+    locale, encoding = locale_utils.initialize_locale()
+
+    if not locale_utils.LOCALE_INITIALIZED:
+        raise SystemExit(
+            'ERROR: Ansible could not initialize the preferred locale: %s' % locale_utils.LOCALE_INITIALIZATION_ERR
+        )
 
     # This allows ``C`` encoding right now, and I know we have people running from C
     # With ``C`` we get ``(None, None)``

@@ -11,19 +11,19 @@ import locale
 
 LOCALE_INITIALIZED = False
 LOCALE_INITIALIZATION_ERR = None
-LOCALE = None
+LOCALE = (None, None)
 
 
 def initialize_locale():
     """Set the locale to the users default setting
-    and set ``_LOCALE_INITIALIZED`` to indicate whether
+    and set ``LOCALE_INITIALIZED`` to indicate whether
     ``get_text_width`` may run into trouble
     """
     global LOCALE, LOCALE_INITIALIZED, LOCALE_INITIALIZATION_ERR
     if LOCALE_INITIALIZED is False:
         try:
             locale.setlocale(locale.LC_ALL, '')
-            LOCALE = locale.getpreferredencoding(False)
+            LOCALE = locale.getlocale(locale.LC_ALL)
         except locale.Error as e:
             LOCALE_INITIALIZATION_ERR = e
         else:
