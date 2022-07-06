@@ -508,6 +508,32 @@
       - "allow_change_held_packages_no_update is not changed"
       - "allow_change_held_packages_hello_version.stdout == allow_change_held_packages_hello_version_again.stdout"
 
+- name: Try removing package hello
+  apt:
+    name: hello
+    state: absent
+  register: package_removed
+  check_mode: yes
+  ignore_errors: True
+
+- name: Verify that package was not removed
+  assert:
+    that:
+    - package_removed is failed
+
+- name: Try removing package (allow_change_held_packages=yes)
+  apt:
+    name: hello
+    state: absent
+    allow_change_held_packages: yes
+  register: package_removed
+  check_mode: yes
+
+- name: Verify that package was removed
+  assert:
+    that:
+    - package_removed is success
+
 # Virtual package
 - name: Install a virtual package
   apt:
