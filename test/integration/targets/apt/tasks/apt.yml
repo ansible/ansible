@@ -356,7 +356,7 @@
       - libcaca-dev
       - libslang2-dev
 
-# https://github.com/ansible/ansible/issues/38995
+# # https://github.com/ansible/ansible/issues/38995
 - name: build-dep for a package
   apt:
     name: tree
@@ -508,18 +508,35 @@
       - "allow_change_held_packages_no_update is not changed"
       - "allow_change_held_packages_hello_version.stdout == allow_change_held_packages_hello_version_again.stdout"
 
+# Remove pkg on hold
+- name: Put hello on hold
+  shell: apt-mark hold hello
+
+- name: Get hold list
+  shell: apt-mark showhold
+  register: hello_hold
+
+- name: Check that the package hello is on the hold list
+  assert:
+    that:
+      - "'hello' in hello_hold.stdout"
+
 - name: Try removing package hello
   apt:
     name: hello
     state: absent
   register: package_removed
-  check_mode: yes
-  ignore_errors: True
+  ignore_errors: true
+
+- name: verify the package is not removed with dpkg
+  shell: dpkg -l hello
+  register: dpkg_result
 
 - name: Verify that package was not removed
   assert:
     that:
     - package_removed is failed
+    - dpkg_result is success
 
 - name: Try removing package (allow_change_held_packages=yes)
   apt:
@@ -527,12 +544,18 @@
     state: absent
     allow_change_held_packages: yes
   register: package_removed
-  check_mode: yes
 
-- name: Verify that package was removed
+- name: verify the package is removed with dpkg
+  shell: dpkg -l hello
+  register: dpkg_result
+  ignore_errors: true
+
+- name: Verify that package removal was succesfull
   assert:
     that:
     - package_removed is success
+    - dpkg_result is failed
+    - package_removed.changed
 
 # Virtual package
 - name: Install a virtual package
