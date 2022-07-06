@@ -40,3 +40,5 @@ ansible-playbook unsafe.yml -v "$@"
 
 # ensure Jinja2 overrides from a template are used
 ansible-playbook in_template_overrides.yml -v "$@"
+
+ansible-playbook undefined_in_import.yml -i ../../inventory -v "$@"
