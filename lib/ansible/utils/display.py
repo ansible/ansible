@@ -40,7 +40,6 @@ from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import text_type
 from ansible.utils.color import stringc
-from ansible.utils.locale import LOCALE_INITIALIZED
 from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.utils.singleton import Singleton
 from ansible.utils.unsafe_proxy import wrap_var
@@ -100,10 +99,9 @@ def get_text_width(text):
             w = 0
         width += w
 
-    if width == 0 and counter and not LOCALE_INITIALIZED:
+    if width == 0 and counter:
         raise EnvironmentError(
-            'ansible.utils.locale.initialize_locale has not been called, '
-            'and get_text_width could not calculate text width of %r' % text
+            'get_text_width could not calculate text width of %r' % text
         )
 
     # It doesn't make sense to have a negative printable width
