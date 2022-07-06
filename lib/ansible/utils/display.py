@@ -40,7 +40,7 @@ from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import text_type
 from ansible.utils.color import stringc
-from ansible.utils.locale import LOCALE_INITIALIZED, LOCALE_INITIALIZATION_ERR
+from ansible.utils.locale import LOCALE_INITIALIZED
 from ansible.utils.multiprocessing import context as multiprocessing_context
 from ansible.utils.singleton import Singleton
 from ansible.utils.unsafe_proxy import wrap_var
@@ -68,19 +68,6 @@ def get_text_width(text):
     """
     if not isinstance(text, text_type):
         raise TypeError('get_text_width requires text, not %s' % type(text))
-
-    if LOCALE_INITIALIZATION_ERR:
-        Display().warning(
-            'An error occurred while calling ansible.utils.locale.initialize_locale '
-            '(%s). This may result in incorrectly calculated text widths that can '
-            'cause Display to print incorrect line lengths' % LOCALE_INITIALIZATION_ERR
-        )
-    elif not LOCALE_INITIALIZED:
-        Display().warning(
-            'ansible.utils.locale.initialize_locale has not been called, '
-            'this may result in incorrectly calculated text widths that can '
-            'cause Display to print incorrect line lengths'
-        )
 
     try:
         width = _LIBC.wcswidth(text, _MAX_INT)
