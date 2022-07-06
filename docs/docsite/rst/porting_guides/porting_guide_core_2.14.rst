@@ -37,7 +37,7 @@ Playbook
 Command Line
 ============
 
-* At startup the system encoding and locale are checked to verify they are UTF-8. If not, the process exits with an error reporting the errant encoding. If you were previously using the ``C`` or ``POSIX`` locale, you may be able to use ``C.UTF-8``. If you were previously using a locale such as ``en_US.ISO-8859-1``, you may be able to use ``en_US.UTF-8``. For simplicity it may be easiest to export the appropriate locale using the ``LC_ALL`` environment variable.
+* At startup the filesystem encoding and locale are checked to verify they are UTF-8. If not, the process exits with an error reporting the errant encoding. If you were previously using the ``C`` or ``POSIX`` locale, you may be able to use ``C.UTF-8``. If you were previously using a locale such as ``en_US.ISO-8859-1``, you may be able to use ``en_US.UTF-8``. For simplicity it may be easiest to export the appropriate locale using the ``LC_ALL`` environment variable.
 
 
 Deprecated
