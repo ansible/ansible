@@ -1052,7 +1052,17 @@ class User(object):
         max_needs_change = self.password_expire_max is not None
 
         if HAVE_SPWD:
-            shadow_info = spwd.getspnam(self.name)
+            try:
+                shadow_info = spwd.getspnam(self.name)
+            except KeyError:
+                return None, '', ''
+            except OSError as e:
+                # Python 3.6 raises PermissionError instead of KeyError
+                # Due to absence of PermissionError in python2.7 need to check
+                # errno
+                if e.errno in (errno.EACCES, errno.EPERM, errno.ENOENT):
+                    return None, '', ''
+                raise
             min_needs_change &= self.password_expire_min != shadow_info.sp_min
             max_needs_change &= self.password_expire_max != shadow_info.sp_max
 
