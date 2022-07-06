@@ -1259,8 +1259,11 @@ class ActionBase(ABC):
             # always append hint
             data['msg'] += '\nSee stdout/stderr for the exact error'
 
-            if 'rc' in res:
+            if '_ansible_original_rc' in res:
+                data['rc'] = res['_ansible_original_rc']
+            elif 'rc' in res:
                 data['rc'] = res['rc']
+
         return data
 
     # FIXME: move to connection base

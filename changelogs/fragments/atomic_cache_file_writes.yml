@@ -1,0 +1,2 @@
+bugfixes:
+  - cache plugins, base class for file backed cache now ensures that we atomicaly update the cache files to avoid issues with high concurrency.

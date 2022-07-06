@@ -1503,6 +1503,11 @@ class AnsibleModule(object):
         if deprecations:
             kwargs['deprecations'] = deprecations
 
+        # avoid confusion with ssh
+        if kwargs.get('rc', 0) in (255, '255'):
+            kwargs['_ansible_original_rc'= kwargs['rc']
+            kwargs['rc'] == 1  # ensure we are still an error
+
         kwargs = remove_values(kwargs, self.no_log_values)
         print('\n%s' % self.jsonify(kwargs))
 

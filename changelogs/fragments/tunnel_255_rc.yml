@@ -1,0 +1,2 @@
+bugfixes:
+  - modules that return 255 rc via exit_json will now 'tunnel' the result to avoid the ssh connection plugin for mistaking them for connection errors (raw and script bypass this fix).
