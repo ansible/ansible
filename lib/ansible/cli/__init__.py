@@ -7,6 +7,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import locale
 import os
 import sys
 
@@ -43,20 +44,20 @@ check_blocking_io()
 
 def check_encoding():
     """Check file system encoding and locale to ensure UTF-8."""
-    import ansible.utils.locale as locale_utils
+    try:
+        locale.setlocale(locale.LC_ALL, '')
+    except locale.Error as e:
+        raise SystemExit(
+            'ERROR: Ansible could not initialize the preferred locale: %s' % e
+        )
+
+    dummy, encoding = locale.getlocale()
+    if not encoding or encoding.lower() not in ('utf-8', 'utf8'):
+        raise SystemExit('ERROR: Ansible requires the locale encoding to be UTF-8; Detected %s.' % encoding)
+
     fs_enc = sys.getfilesystemencoding()
     if fs_enc.lower() != 'utf-8':
         raise SystemExit('ERROR: Ansible requires the filesystem encoding to be UTF-8; Detected %s.' % fs_enc)
-
-    locale, encoding = locale_utils.initialize_locale()
-
-    if not locale_utils.LOCALE_INITIALIZED:
-        raise SystemExit(
-            'ERROR: Ansible could not initialize the preferred locale: %s' % locale_utils.LOCALE_INITIALIZATION_ERR
-        )
-
-    if not encoding or encoding.lower() not in ('utf-8', 'utf8'):
-        raise SystemExit('ERROR: Ansible requires the locale encoding to be UTF-8; Detected %s.' % encoding)
 
 
 check_encoding()

@@ -10,14 +10,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ansible.module_utils.six import PY3
 from ansible.utils.display import Display, get_text_width
-from ansible.utils.locale import initialize_locale
 from ansible.utils.multiprocessing import context as multiprocessing_context
 
 
 def test_get_text_width():
-    initialize_locale()
+    locale.setlocale(locale.LC_ALL, '')
     assert get_text_width(u'コンニチハ') == 10
     assert get_text_width(u'abコcd') == 6
     assert get_text_width(u'café') == 4
@@ -39,12 +37,12 @@ def test_get_text_width():
 
 def test_get_text_width_no_locale(monkeypatch):
     monkeypatch.setenv('LC_ALL', 'C.UTF-8')
-    initialize_locale()
+    locale.setlocale(locale.LC_ALL, '')
     pytest.raises(EnvironmentError, get_text_width, '\U000110cd')
 
 
 def test_Display_banner_get_text_width(monkeypatch):
-    initialize_locale()
+    locale.setlocale(locale.LC_ALL, '')
     display = Display()
     display_mock = MagicMock()
     monkeypatch.setattr(display, 'display', display_mock)
@@ -58,7 +56,7 @@ def test_Display_banner_get_text_width(monkeypatch):
 
 def test_Display_banner_get_text_width_fallback(monkeypatch):
     monkeypatch.setenv('LC_ALL', 'C.UTF-8')
-    initialize_locale()
+    locale.setlocale(locale.LC_ALL, '')
     display = Display()
     display_mock = MagicMock()
     monkeypatch.setattr(display, 'display', display_mock)
