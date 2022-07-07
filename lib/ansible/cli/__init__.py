@@ -46,12 +46,12 @@ def check_encoding():
     """Check file system encoding and locale to ensure UTF-8."""
     try:
         locale.setlocale(locale.LC_ALL, '')
-    except locale.Error as e:
+        dummy, encoding = locale.getlocale()
+    except (locale.Error, ValueError) as e:
         raise SystemExit(
             'ERROR: Ansible could not initialize the preferred locale: %s' % e
         )
 
-    dummy, encoding = locale.getlocale()
     if not encoding or encoding.lower() not in ('utf-8', 'utf8'):
         raise SystemExit('ERROR: Ansible requires the locale encoding to be UTF-8; Detected %s.' % encoding)
 
