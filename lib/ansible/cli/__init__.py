@@ -46,7 +46,7 @@ def check_encoding():
     import ansible.utils.locale as locale_utils
     fs_enc = sys.getfilesystemencoding()
     if fs_enc.lower() != 'utf-8':
-        raise SystemExit('ERROR: Ansible requires the system encoding to be UTF-8; Detected %s.' % fs_enc)
+        raise SystemExit('ERROR: Ansible requires the filesystem encoding to be UTF-8; Detected %s.' % fs_enc)
 
     locale, encoding = locale_utils.initialize_locale()
 
