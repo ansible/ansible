@@ -28,5 +28,4 @@ def initialize_locale():
             LOCALE_INITIALIZATION_ERR = e
         else:
             LOCALE_INITIALIZED = True
-            return LOCALE
     return LOCALE
