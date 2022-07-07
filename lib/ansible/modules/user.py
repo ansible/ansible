@@ -1081,17 +1081,14 @@ class User(object):
         return info
 
     def set_password_expire(self):
-        min_needs_change = self.password_expire_min is not None
-        max_needs_change = self.password_expire_max is not None
-
         if HAVE_SPWD:
             try:
                 shadow_info = getspnam(to_bytes(self.name))
             except ValueError:
                 return None, '', ''
 
-            min_needs_change &= self.password_expire_min != shadow_info.sp_min
-            max_needs_change &= self.password_expire_max != shadow_info.sp_max
+            min_needs_change = self.password_expire_min != shadow_info.sp_min
+            max_needs_change = self.password_expire_max != shadow_info.sp_max
 
         if not (min_needs_change or max_needs_change):
             return (None, '', '')  # target state already reached
@@ -3235,7 +3232,8 @@ def main():
             result['ssh_key_file'] = user.get_ssh_key_path()
             result['ssh_public_key'] = user.get_ssh_public_key()
 
-        (rc, out, err) = user.set_password_expire()
+        if not (user.password_expire_min is None and user.password_expire_max is None):
+            (rc, out, err) = user.set_password_expire()
         if rc is None:
             pass  # target state reached, nothing to do
         else:
