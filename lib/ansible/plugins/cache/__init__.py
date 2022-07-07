@@ -168,7 +168,7 @@ class BaseFileCacheModule(BaseCacheModule):
                 display.warning("error in '%s' cache plugin while trying to move '%s' to '%s' : %s" % (self.plugin_name, tmpfile_path, cachefile, to_bytes(e)))
         finally:
             try:
-                os.unlink(tempfile_path)
+                os.unlink(tmpfile_path)
             except OSError:
                 pass
 
