@@ -3,8 +3,16 @@
   register: bash
   ignore_errors: true
 
+- name: get available locales
+  command: locale -a
+  register: locale_a
+  ignore_errors: true
+
+- set_fact:
+    non_utf8: '{{ locale_a.stdout_lines | select("contains", ".") | reject("search", "(?i)(\.UTF-?8$)") | default([None], true) | first }}'
+
 - meta: end_host
-  when: bash is failed
+  when: bash is failed or non_utf8 is falsy
 
 - name: Test successful encodings
   shell: '{{ item }} ansible --version'
