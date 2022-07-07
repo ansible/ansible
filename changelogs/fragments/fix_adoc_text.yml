@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-doc will not add 'website for' in ":ref:" substitutions as it made them confusing.
