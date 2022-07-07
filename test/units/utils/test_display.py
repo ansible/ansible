@@ -43,7 +43,7 @@ def test_get_text_width_no_locale():
     try:
         pytest.raises(EnvironmentError, get_text_width, u'🚀🐮')
     finally:
-        locale.setlocale(locale.LC_ALL, orig_locale)
+        locale.setlocale(locale.LC_ALL, '.'.join(orig_locale))
 
 
 def test_Display_banner_get_text_width(monkeypatch):
@@ -73,7 +73,7 @@ def test_Display_banner_get_text_width_fallback(monkeypatch):
         stars = u' %s' % (77 * u'*')
         assert msg.endswith(stars)
     finally:
-        locale.setlocale(locale.LC_ALL, orig_locale)
+        locale.setlocale(locale.LC_ALL, '.'.join(orig_locale))
 
 
 def test_Display_set_queue_parent():
