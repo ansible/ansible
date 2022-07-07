@@ -35,9 +35,8 @@ def test_get_text_width():
     pytest.raises(TypeError, get_text_width, b'four')
 
 
-def test_get_text_width_no_locale(monkeypatch):
-    monkeypatch.setenv('LC_ALL', 'C.UTF-8')
-    locale.setlocale(locale.LC_ALL, '')
+def test_get_text_width_no_locale():
+    locale.setlocale(locale.LC_ALL, 'C.UTF-8')
     pytest.raises(EnvironmentError, get_text_width, '\U000110cd')
 
 
@@ -55,8 +54,7 @@ def test_Display_banner_get_text_width(monkeypatch):
 
 
 def test_Display_banner_get_text_width_fallback(monkeypatch):
-    monkeypatch.setenv('LC_ALL', 'C.UTF-8')
-    locale.setlocale(locale.LC_ALL, '')
+    locale.setlocale(locale.LC_ALL, 'C.UTF-8')
     display = Display()
     display_mock = MagicMock()
     monkeypatch.setattr(display, 'display', display_mock)
