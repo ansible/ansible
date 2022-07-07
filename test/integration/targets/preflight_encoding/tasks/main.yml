@@ -1,0 +1,47 @@
+- name: find bash
+  shell: command -v bash
+  register: bash
+  ignore_errors: true
+
+- meta: end_host
+  when: bash is failed
+
+- name: Test successful encodings
+  shell: '{{ item }} ansible --version'
+  args:
+    executable: '{{ bash.stdout_lines|first }}'
+  loop:
+    - LC_ALL={{ utf8 }}
+    - LC_ALL={{ cutf8 }}
+    - LC_ALL= LC_CTYPE={{ utf8 }}
+    - LC_ALL= LC_CTYPE={{ cutf8 }}
+
+- name: Test unsuccessful encodings
+  shell: '{{ item }} ansible --version'
+  args:
+    executable: '{{ bash.stdout_lines|first }}'
+  loop:
+    - LC_ALL={{ non_utf8 }}
+    - LC_ALL= LC_CTYPE={{ non_utf8 }}
+  ignore_errors: true
+  register: result
+
+- name: test locales error
+  shell: LC_ALL=ham_sandwich LC_CTYPE={{ utf8 }} ansible --version
+  args:
+    executable: '{{ bash.stdout_lines|first }}'
+  ignore_errors: true
+  register: locales_error
+
+- assert:
+    that:
+      - result is failed
+      - result.results | select('failed') | length == 2
+      - >-
+        'ERROR: Ansible requires the system encoding to be UTF-8' in result.results[0].stderr
+      - >-
+        'ERROR: Ansible requires the system encoding to be UTF-8' in result.results[1].stderr
+
+      - locales_error is failed
+      - >-
+        'ERROR: Ansible could not initialize the preferred locale' in locales_error.stderr
