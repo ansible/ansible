@@ -254,12 +254,6 @@ class Display(metaclass=Singleton):
             if has_newline or newline:
                 msg2 = msg2 + u'\n'
 
-            msg2 = to_bytes(msg2, encoding=self._output_encoding(stderr=stderr))
-            # Convert back to text string
-            # We first convert to a byte string so that we get rid of
-            # characters that are invalid in the user's locale
-            msg2 = to_text(msg2, self._output_encoding(stderr=stderr), errors='replace')
-
             # Note: After Display() class is refactored need to update the log capture
             # code in 'bin/ansible-connection' (and other relevant places).
             if not stderr:
@@ -284,12 +278,7 @@ class Display(metaclass=Singleton):
             #         raise
 
         if logger and not screen_only:
-            # We first convert to a byte string so that we get rid of
-            # color and characters that are invalid in the user's locale
-            msg2 = to_bytes(nocolor.lstrip(u'\n'))
-
-            # Convert back to text string
-            msg2 = to_text(msg2, self._output_encoding(stderr=stderr))
+            msg2 = nocolor.lstrip(u'\n')
 
             lvl = logging.INFO
             if color:
@@ -457,15 +446,10 @@ class Display(metaclass=Singleton):
 
     @staticmethod
     def prompt(msg, private=False):
-        prompt_string = to_bytes(msg, encoding=Display._output_encoding())
-        # Convert back into text.  We do this double conversion
-        # to get rid of characters that are illegal in the user's locale
-        prompt_string = to_text(prompt_string)
-
         if private:
-            return getpass.getpass(prompt_string)
+            return getpass.getpass(msg)
         else:
-            return input(prompt_string)
+            return input(msg)
 
     def do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
 
@@ -509,16 +493,6 @@ class Display(metaclass=Singleton):
         if unsafe:
             result = wrap_var(result)
         return result
-
-    @staticmethod
-    def _output_encoding(stderr=False):
-        encoding = locale.getpreferredencoding()
-        # https://bugs.python.org/issue6202
-        # Python2 hardcodes an obsolete value on Mac.  Use MacOSX defaults
-        # instead.
-        if encoding in ('mac-roman',):
-            encoding = 'utf-8'
-        return encoding
 
     def _set_column_width(self):
         if os.isatty(1):
