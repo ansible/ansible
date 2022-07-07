@@ -29,9 +29,9 @@ TTY_IFY_DATA = {
     'L(the user guide, https://docs.ansible.com/)': 'the user guide <https://docs.ansible.com/>',
     'R(the user guide, user-guide)': 'the user guide',
     # de-rsty refs and anchors
-    'yolo :ref:`my boy` does stuff': 'yolo website for `my boy` does stuff',
-    '.. seealso:: Something amazing': 'See website for: Something amazing',
-    '.. seealso:: Troublesome multiline\n Stuff goes htere': 'See website for: Troublesome multiline\n Stuff goes htere',
+    'yolo :ref:`my boy` does stuff': 'yolo `my boy` does stuff',
+    '.. seealso:: Something amazing': 'See also: Something amazing',
+    '.. seealso:: Troublesome multiline\n Stuff goes htere': 'See also: Troublesome multiline\n Stuff goes htere',
     '.. note:: boring stuff': 'Note: boring stuff',
 }
 
