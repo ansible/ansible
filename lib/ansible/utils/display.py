@@ -58,10 +58,7 @@ def get_text_width(text):
 
     We try first with ``wcswidth``, and fallback to iterating each
     character and using wcwidth individually, falling back to a value of 0
-    for non-printable wide characters
-
-    On Py2, this depends on ``locale.setlocale(locale.LC_ALL, '')``,
-    that in the case of Ansible is done in ``bin/ansible``
+    for non-printable wide characters.
     """
     if not isinstance(text, text_type):
         raise TypeError('get_text_width requires text, not %s' % type(text))
