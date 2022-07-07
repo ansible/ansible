@@ -38,9 +38,9 @@
       - result is failed
       - result.results | select('failed') | length == 2
       - >-
-        'ERROR: Ansible requires the system encoding to be UTF-8' in result.results[0].stderr
+        'ERROR: Ansible requires the filesystem encoding to be UTF-8' in result.results[0].stderr
       - >-
-        'ERROR: Ansible requires the system encoding to be UTF-8' in result.results[1].stderr
+        'ERROR: Ansible requires the filesystem encoding to be UTF-8' in result.results[1].stderr
 
       - locales_error is failed
       - >-
