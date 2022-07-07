@@ -37,13 +37,10 @@ def test_get_text_width():
     pytest.raises(TypeError, get_text_width, b'four')
 
 
-def test_get_text_width_no_locale():
-    orig_locale = initialize_locale()
-    locale.setlocale(locale.LC_ALL, 'C')
-    try:
-        pytest.raises(EnvironmentError, get_text_width, u'🚀🐮')
-    finally:
-        locale.setlocale(locale.LC_ALL, '.'.join(orig_locale))
+def test_get_text_width_no_locale(monkeypatch):
+    monkeypatch.setenv('LC_ALL', 'C.UTF-8')
+    initialize_locale()
+    pytest.raises(EnvironmentError, get_text_width, '\U000110cd')
 
 
 def test_Display_banner_get_text_width(monkeypatch):
@@ -60,20 +57,17 @@ def test_Display_banner_get_text_width(monkeypatch):
 
 
 def test_Display_banner_get_text_width_fallback(monkeypatch):
-    orig_locale = initialize_locale()
-    locale.setlocale(locale.LC_ALL, 'C')
-    try:
-        display = Display()
-        display_mock = MagicMock()
-        monkeypatch.setattr(display, 'display', display_mock)
+    monkeypatch.setenv('LC_ALL', 'C.UTF-8')
+    initialize_locale()
+    display = Display()
+    display_mock = MagicMock()
+    monkeypatch.setattr(display, 'display', display_mock)
 
-        display.banner(u'🚀🐮', color=False, cows=False)
-        args, kwargs = display_mock.call_args
-        msg = args[0]
-        stars = u' %s' % (77 * u'*')
-        assert msg.endswith(stars)
-    finally:
-        locale.setlocale(locale.LC_ALL, '.'.join(orig_locale))
+    display.banner(u'\U000110cd', color=False, cows=False)
+    args, kwargs = display_mock.call_args
+    msg = args[0]
+    stars = u' %s' % (78 * u'*')
+    assert msg.endswith(stars)
 
 
 def test_Display_set_queue_parent():
