@@ -155,9 +155,10 @@ class BaseFileCacheModule(BaseCacheModule):
     def set(self, key, value):
 
         self._cache[key] = value
+
+        cachefile = self._get_cache_file_name(key)
+        tmpfile_handle, tmpfile_path = tempfile.mkstemp(dir=os.path.dirname(cachefile))
         try:
-            cachefile = self._get_cache_file_name(key)
-            tmpfile_handle, tmpfile_path = tempfile.mkstemp(dir=os.path.dirname(cachefile))
             try:
                 self._dump(value, tmpfile_path)
             except (OSError, IOError) as e:
