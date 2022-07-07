@@ -30,8 +30,8 @@ TTY_IFY_DATA = {
     'R(the user guide, user-guide)': 'the user guide',
     # de-rsty refs and anchors
     'yolo :ref:`my boy` does stuff': 'yolo `my boy` does stuff',
-    '.. seealso:: Something amazing': 'Something amazing',
-    '.. seealso:: Troublesome multiline\n Stuff goes htere': 'Troublesome multiline\n Stuff goes htere',
+    '.. seealso:: Something amazing': 'See also: Something amazing',
+    '.. seealso:: Troublesome multiline\n Stuff goes htere': 'See also: Troublesome multiline\n Stuff goes htere',
     '.. note:: boring stuff': 'Note: boring stuff',
 }
 
