@@ -19,9 +19,10 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import copy
-import os
-import time
 import errno
+import os
+import tempfile
+import time
 
 from abc import abstractmethod
 from collections.abc import MutableMapping
@@ -156,10 +157,21 @@ class BaseFileCacheModule(BaseCacheModule):
         self._cache[key] = value
 
         cachefile = self._get_cache_file_name(key)
+        tmpfile_handle, tmpfile_path = tempfile.mkstemp(dir=os.path.dirname(cachefile))
         try:
-            self._dump(value, cachefile)
-        except (OSError, IOError) as e:
-            display.warning("error in '%s' cache plugin while trying to write to %s : %s" % (self.plugin_name, cachefile, to_bytes(e)))
+            try:
+                self._dump(value, tmpfile_path)
+            except (OSError, IOError) as e:
+                display.warning("error in '%s' cache plugin while trying to write to '%s' : %s" % (self.plugin_name, tmpfile_path, to_bytes(e)))
+            try:
+                os.rename(tmpfile_path, cachefile)
+            except (OSError, IOError) as e:
+                display.warning("error in '%s' cache plugin while trying to move '%s' to '%s' : %s" % (self.plugin_name, tmpfile_path, cachefile, to_bytes(e)))
+        finally:
+            try:
+                os.unlink(tmpfile_path)
+            except OSError:
+                pass
 
     def has_expired(self, key):
 
