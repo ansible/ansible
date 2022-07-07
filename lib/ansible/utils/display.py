@@ -276,7 +276,7 @@ class Display(metaclass=Singleton):
             #         raise
 
         if logger and not screen_only:
-            msg2 = nocolor.lstrip(u'\n')
+            msg2 = nocolor.lstrip('\n')
 
             lvl = logging.INFO
             if color:
