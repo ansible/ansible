@@ -532,6 +532,23 @@ EXAMPLES = r'''
       - "443"
       - "8081:8083"
     jump: ACCEPT
+    
+- name: Drop packages with state NEW and whithout SYN flag.
+  ansible.builtin.iptables:
+    chain: INPUT
+    jump: DROP
+    protocol: tcp
+    match: tcp
+    tcp_flags:
+      negate: true
+      flags:
+        - FIN
+        - SYN
+        - RST
+        - ACK
+      flags_set:
+        - SYN
+    ctstate: NEW
 '''
 
 import re
@@ -570,8 +587,12 @@ def append_param(rule, param, flag, is_list):
 
 def append_tcp_flags(rule, param, flag):
     if param:
-        if 'flags' in param and 'flags_set' in param:
-            rule.extend([flag, ','.join(param['flags']), ','.join(param['flags_set'])])
+        if 'flags' in param and 'flags_set' in param and 'negate' in param:
+
+            if param['negate']:
+                rule.extend(['!', flag, ','.join(param['flags']), ','.join(param['flags_set'])])
+            else:
+                rule.extend([flag, ','.join(param['flags']), ','.join(param['flags_set'])])
 
 
 def append_match_flag(rule, param, flag, negatable):
@@ -770,6 +791,7 @@ def main():
             match=dict(type='list', elements='str', default=[]),
             tcp_flags=dict(type='dict',
                            options=dict(
+                                negate=dict(type='bool', default=False),
                                 flags=dict(type='list', elements='str'),
                                 flags_set=dict(type='list', elements='str'))
                            ),
