@@ -537,6 +537,23 @@ EXAMPLES = r'''
       - "443"
       - "8081:8083"
     jump: ACCEPT
+
+- name: Drop packages with state NEW and whithout SYN flag.
+  ansible.builtin.iptables:
+    chain: INPUT
+    jump: DROP
+    protocol: tcp
+    match: tcp
+    tcp_flags:
+      negate: true
+      flags:
+        - FIN
+        - SYN
+        - RST
+        - ACK
+      flags_set:
+        - SYN
+    ctstate: NEW
 '''
 
 import re
