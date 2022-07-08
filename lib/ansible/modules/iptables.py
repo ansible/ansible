@@ -121,6 +121,11 @@ options:
     default: {}
     version_added: "2.4"
     suboptions:
+        negate:
+            description: 
+                - When the negate is Thrue, the sense is inverted.
+            type: bool
+            default: false
         flags:
             description:
                 - List of flags you want to examine.
@@ -570,8 +575,11 @@ def append_param(rule, param, flag, is_list):
 
 def append_tcp_flags(rule, param, flag):
     if param:
-        if 'flags' in param and 'flags_set' in param:
-            rule.extend([flag, ','.join(param['flags']), ','.join(param['flags_set'])])
+        if 'flags' in param and 'flags_set' in param and 'negate' in param:
+            if param['negate']:
+                rule.extend(['!', flag, ','.join(param['flags']), ','.join(param['flags_set'])])
+            else:
+                rule.extend([flag, ','.join(param['flags']), ','.join(param['flags_set'])])
 
 
 def append_match_flag(rule, param, flag, negatable):
@@ -770,6 +778,7 @@ def main():
             match=dict(type='list', elements='str', default=[]),
             tcp_flags=dict(type='dict',
                            options=dict(
+                                negate=dict(type='bool', default=False),
                                 flags=dict(type='list', elements='str'),
                                 flags_set=dict(type='list', elements='str'))
                            ),
