@@ -5,6 +5,32 @@ ansible-core 2.13 "Nobody's Fault but Mine" Release Notes
 .. contents:: Topics
 
 
+v2.13.2rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2022-07-11
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - An improved error message is shown when the download of a pip bootstrap script fails. The download now uses ``urllib2`` instead of ``urllib`` on Python 2.
+
+Bugfixes
+--------
+
+- Move undefined check from concat to finalize (https://github.com/ansible/ansible/issues/78156)
+- ansible-doc - no longer list module and plugin aliases that are created with symlinks (https://github.com/ansible/ansible/pull/78137).
+- ansible-doc - when listing modules in collections, proceed recursively. This fixes module listing for community.general 5.x.y and community.network 4.x.y (https://github.com/ansible/ansible/pull/78137).
+- ansible-doc will not add 'website for' in ":ref:" substitutions as it made them confusing.
+- file backed cache plugins now handle concurrent access by making atomic updates to the files.
+- password lookup does not ignore k=v arguments anymore.
+- user - Fix error "Permission denied" in user module while generating SSH keys (https://github.com/ansible/ansible/issues/78017).
+
 v2.13.1
 =======
 
