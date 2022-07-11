@@ -42,8 +42,10 @@ def check_blocking_io():
 check_blocking_io()
 
 
-def check_encoding():
-    """Check file system encoding and locale to ensure UTF-8."""
+def initialize_locale():
+    """Set the locale to the users default setting and ensure
+    the locale and filesystem encoding are UTF-8.
+    """
     try:
         locale.setlocale(locale.LC_ALL, '')
         dummy, encoding = locale.getlocale()
@@ -60,7 +62,7 @@ def check_encoding():
         raise SystemExit('ERROR: Ansible requires the filesystem encoding to be UTF-8; Detected %s.' % fs_enc)
 
 
-check_encoding()
+initialize_locale()
 
 
 from importlib.metadata import version
