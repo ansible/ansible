@@ -88,8 +88,7 @@ def combine_vars(a, b, merge=None):
     else:
         # HASH_BEHAVIOUR == 'replace'
         _validate_mutable_mappings(a, b)
-        result = a.copy()
-        result.update(b)
+        result = a | b
         return result
 
 
