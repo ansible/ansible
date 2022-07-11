@@ -37,7 +37,7 @@ from ansible.utils.vars import combine_vars, isidentifier
 display = Display()
 
 
-RETURN_VARS = [x for x in C.MAGIC_VARIABLE_MAPPING.items() if 'become' not in x and '_pass' not in x]
+RETURN_VARS = [x for x in C.MAGIC_VARIABLE_MAPPING.items() if 'become' not in x and '_pass' not in x]syntax_error
 
 __all__ = ['TaskExecutor']
 
