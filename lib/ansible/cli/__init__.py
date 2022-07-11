@@ -7,6 +7,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import locale
 import os
 import sys
 
@@ -40,6 +41,30 @@ def check_blocking_io():
 
 check_blocking_io()
 
+
+def initialize_locale():
+    """Set the locale to the users default setting and ensure
+    the locale and filesystem encoding are UTF-8.
+    """
+    try:
+        locale.setlocale(locale.LC_ALL, '')
+        dummy, encoding = locale.getlocale()
+    except (locale.Error, ValueError) as e:
+        raise SystemExit(
+            'ERROR: Ansible could not initialize the preferred locale: %s' % e
+        )
+
+    if not encoding or encoding.lower() not in ('utf-8', 'utf8'):
+        raise SystemExit('ERROR: Ansible requires the locale encoding to be UTF-8; Detected %s.' % encoding)
+
+    fs_enc = sys.getfilesystemencoding()
+    if fs_enc.lower() != 'utf-8':
+        raise SystemExit('ERROR: Ansible requires the filesystem encoding to be UTF-8; Detected %s.' % fs_enc)
+
+
+initialize_locale()
+
+
 from importlib.metadata import version
 from ansible.module_utils.compat.version import LooseVersion
 
@@ -61,8 +86,7 @@ from pathlib import Path
 
 try:
     from ansible import constants as C
-    from ansible.utils.display import Display, initialize_locale
-    initialize_locale()
+    from ansible.utils.display import Display
     display = Display()
 except Exception as e:
     print('ERROR: %s' % e, file=sys.stderr)
