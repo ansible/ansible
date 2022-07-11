@@ -1,0 +1,62 @@
+- name: find bash
+  shell: command -v bash
+  register: bash
+  ignore_errors: true
+
+- meta: end_host
+  when: bash is failed
+
+- name: get available locales
+  command: locale -a
+  register: locale_a
+  ignore_errors: true
+
+- set_fact:
+    non_utf8: '{{ locale_a.stdout_lines | select("contains", ".") | reject("search", "(?i)(\.UTF-?8$)") | default([None], true) | first }}'
+    has_cutf8: '{{ locale_a.stdout_lines | select("search", "(?i)C.UTF-?8") != [] }}'
+
+- name: Test successful encodings
+  shell: '{{ item }} ansible --version'
+  args:
+    executable: '{{ bash.stdout_lines|first }}'
+  loop:
+    - LC_ALL={{ utf8 }}
+    - LC_ALL={{ cutf8 }}
+    - LC_ALL= LC_CTYPE={{ utf8 }}
+    - LC_ALL= LC_CTYPE={{ cutf8 }}
+  when: cutf8 not in item or (cutf8 in item and has_cutf8)
+
+- name: test locales error
+  shell: LC_ALL=ham_sandwich LC_CTYPE={{ utf8 }} ansible --version
+  args:
+    executable: '{{ bash.stdout_lines|first }}'
+  ignore_errors: true
+  register: locales_error
+
+- assert:
+    that:
+      - locales_error is failed
+      - >-
+        'ERROR: Ansible could not initialize the preferred locale' in locales_error.stderr
+
+- meta: end_host
+  when: non_utf8 is falsy
+
+- name: Test unsuccessful encodings
+  shell: '{{ item }} ansible --version'
+  args:
+    executable: '{{ bash.stdout_lines|first }}'
+  loop:
+    - LC_ALL={{ non_utf8 }}
+    - LC_ALL= LC_CTYPE={{ non_utf8 }}
+  ignore_errors: true
+  register: result
+
+- assert:
+    that:
+      - result is failed
+      - result.results | select('failed') | length == 2
+      - >-
+        'ERROR: Ansible requires the locale encoding to be UTF-8' in result.results[0].stderr
+      - >-
+        'ERROR: Ansible requires the locale encoding to be UTF-8' in result.results[1].stderr

@@ -4,10 +4,7 @@ set -eux
 
 [ -f "${INVENTORY}" ]
 
-# Run connection tests with both the default and C locale.
-
-                ansible-playbook test_connection.yml -i "${INVENTORY}" "$@"
-LC_ALL=C LANG=C ansible-playbook test_connection.yml -i "${INVENTORY}" "$@"
+ansible-playbook test_connection.yml -i "${INVENTORY}" "$@"
 
 # Check that connection vars do not appear in the output
 # https://github.com/ansible/ansible/pull/70853
