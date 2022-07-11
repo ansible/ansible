@@ -232,9 +232,9 @@ class VariableManager:
                     try:
                         for entity in entities:
                             if isinstance(entity, Host):
-                                data.update(plugin.get_host_vars(entity.name))
+                                data |= plugin.get_host_vars(entity.name)
                             else:
-                                data.update(plugin.get_group_vars(entity.name))
+                                data |= plugin.get_group_vars(entity.name)
                     except AttributeError:
                         if hasattr(plugin, 'run'):
                             raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
@@ -305,7 +305,7 @@ class VariableManager:
             # TODO: cleaning of facts should eventually become part of taskresults instead of vars
             try:
                 facts = wrap_var(self._fact_cache.get(host.name, {}))
-                all_vars.update(namespace_facts(facts))
+                all_vars |= namespace_facts(facts)
 
                 # push facts to main namespace
                 if C.INJECT_FACTS_AS_VARS:
@@ -670,7 +670,7 @@ class VariableManager:
                 raise TypeError('The object retrieved for {0} must be a MutableMapping but was'
                                 ' a {1}'.format(host, type(host_cache)))
             # Update the existing facts
-            host_cache.update(facts)
+            host_cache |= facts
 
         # Save the facts back to the backing store
         self._fact_cache[host] = host_cache
@@ -684,7 +684,7 @@ class VariableManager:
             raise AnsibleAssertionError("the type of 'facts' to set for nonpersistent_facts should be a Mapping but is a %s" % type(facts))
 
         try:
-            self._nonpersistent_fact_cache[host].update(facts)
+            self._nonpersistent_fact_cache[host] |= facts
         except KeyError:
             self._nonpersistent_fact_cache[host] = facts
 

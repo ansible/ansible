@@ -116,10 +116,10 @@ class TaskInclude(Task):
         else:
             all_vars = dict()
             if self._parent:
-                all_vars.update(self._parent.get_vars())
+                all_vars |= self._parent.get_vars()
 
-            all_vars.update(self.vars)
-            all_vars.update(self.args)
+            all_vars |= self.vars
+            all_vars |= self.args
 
             if 'tags' in all_vars:
                 del all_vars['tags']

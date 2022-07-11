@@ -323,7 +323,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                     else:
                         isdict = templar.template(env_item, convert_bare=False)
                         if isinstance(isdict, dict):
-                            env.update(isdict)
+                            env |= isdict
                         else:
                             display.warning("could not parse environment value, skipping: %s" % value)
 
@@ -362,9 +362,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def get_vars(self):
         all_vars = dict()
         if self._parent:
-            all_vars.update(self._parent.get_vars())
+            all_vars |= self._parent.get_vars()
 
-        all_vars.update(self.vars)
+        all_vars |= self.vars
 
         if 'tags' in all_vars:
             del all_vars['tags']
@@ -376,9 +376,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def get_include_params(self):
         all_vars = dict()
         if self._parent:
-            all_vars.update(self._parent.get_include_params())
+            all_vars |= self._parent.get_include_params()
         if self.action in C._ACTION_ALL_INCLUDES:
-            all_vars.update(self.vars)
+            all_vars |= self.vars
         return all_vars
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
