@@ -93,8 +93,8 @@ stages:
               test: rhel/7.9
             - name: RHEL 8.6 py36
               test: rhel/8.6@3.6
-            - name: RHEL 8.6 py38
-              test: rhel/8.6@3.8
+            - name: RHEL 8.6 py39
+              test: rhel/8.6@3.9
             - name: RHEL 9.0
               test: rhel/9.0
             - name: FreeBSD 12.3
@@ -142,7 +142,6 @@ stages:
           nameFormat: Python {0}
           testFormat: galaxy/{0}/1
           targets:
-            - test: 3.8
             - test: 3.9
             - test: '3.10'
             - test: 3.11
@@ -154,7 +153,6 @@ stages:
           nameFormat: Python {0}
           testFormat: generic/{0}/1
           targets:
-            - test: 3.8
             - test: 3.9
             - test: '3.10'
             - test: 3.11
