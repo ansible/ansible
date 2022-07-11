@@ -5,17 +5,17 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import locale
 from unittest.mock import MagicMock
 
 import pytest
 
-from ansible.module_utils.six import PY3
-from ansible.utils.display import Display, get_text_width, initialize_locale
+from ansible.utils.display import Display, get_text_width
 from ansible.utils.multiprocessing import context as multiprocessing_context
 
 
 def test_get_text_width():
-    initialize_locale()
+    locale.setlocale(locale.LC_ALL, '')
     assert get_text_width(u'コンニチハ') == 10
     assert get_text_width(u'abコcd') == 6
     assert get_text_width(u'café') == 4
@@ -35,13 +35,13 @@ def test_get_text_width():
     pytest.raises(TypeError, get_text_width, b'four')
 
 
-@pytest.mark.skipif(PY3, reason='Fallback only happens reliably on py2')
 def test_get_text_width_no_locale():
-    pytest.raises(EnvironmentError, get_text_width, u'🚀🐮')
+    locale.setlocale(locale.LC_ALL, 'C.UTF-8')
+    pytest.raises(EnvironmentError, get_text_width, '\U000110cd')
 
 
 def test_Display_banner_get_text_width(monkeypatch):
-    initialize_locale()
+    locale.setlocale(locale.LC_ALL, '')
     display = Display()
     display_mock = MagicMock()
     monkeypatch.setattr(display, 'display', display_mock)
@@ -53,16 +53,16 @@ def test_Display_banner_get_text_width(monkeypatch):
     assert msg.endswith(stars)
 
 
-@pytest.mark.skipif(PY3, reason='Fallback only happens reliably on py2')
 def test_Display_banner_get_text_width_fallback(monkeypatch):
+    locale.setlocale(locale.LC_ALL, 'C.UTF-8')
     display = Display()
     display_mock = MagicMock()
     monkeypatch.setattr(display, 'display', display_mock)
 
-    display.banner(u'🚀🐮', color=False, cows=False)
+    display.banner(u'\U000110cd', color=False, cows=False)
     args, kwargs = display_mock.call_args
     msg = args[0]
-    stars = u' %s' % (77 * u'*')
+    stars = u' %s' % (78 * u'*')
     assert msg.endswith(stars)
 
 

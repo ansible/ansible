@@ -19,10 +19,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ctypes.util
-import errno
 import fcntl
 import getpass
-import locale
 import logging
 import os
 import random
@@ -53,24 +51,6 @@ _LIBC.wcswidth.argtypes = (ctypes.c_wchar_p, ctypes.c_int)
 # Max for c_int
 _MAX_INT = 2 ** (ctypes.sizeof(ctypes.c_int) * 8 - 1) - 1
 
-_LOCALE_INITIALIZED = False
-_LOCALE_INITIALIZATION_ERR = None
-
-
-def initialize_locale():
-    """Set the locale to the users default setting
-    and set ``_LOCALE_INITIALIZED`` to indicate whether
-    ``get_text_width`` may run into trouble
-    """
-    global _LOCALE_INITIALIZED, _LOCALE_INITIALIZATION_ERR
-    if _LOCALE_INITIALIZED is False:
-        try:
-            locale.setlocale(locale.LC_ALL, '')
-        except locale.Error as e:
-            _LOCALE_INITIALIZATION_ERR = e
-        else:
-            _LOCALE_INITIALIZED = True
-
 
 def get_text_width(text):
     """Function that utilizes ``wcswidth`` or ``wcwidth`` to determine the
@@ -78,26 +58,10 @@ def get_text_width(text):
 
     We try first with ``wcswidth``, and fallback to iterating each
     character and using wcwidth individually, falling back to a value of 0
-    for non-printable wide characters
-
-    On Py2, this depends on ``locale.setlocale(locale.LC_ALL, '')``,
-    that in the case of Ansible is done in ``bin/ansible``
+    for non-printable wide characters.
     """
     if not isinstance(text, text_type):
         raise TypeError('get_text_width requires text, not %s' % type(text))
-
-    if _LOCALE_INITIALIZATION_ERR:
-        Display().warning(
-            'An error occurred while calling ansible.utils.display.initialize_locale '
-            '(%s). This may result in incorrectly calculated text widths that can '
-            'cause Display to print incorrect line lengths' % _LOCALE_INITIALIZATION_ERR
-        )
-    elif not _LOCALE_INITIALIZED:
-        Display().warning(
-            'ansible.utils.display.initialize_locale has not been called, '
-            'this may result in incorrectly calculated text widths that can '
-            'cause Display to print incorrect line lengths'
-        )
 
     try:
         width = _LIBC.wcswidth(text, _MAX_INT)
@@ -130,10 +94,9 @@ def get_text_width(text):
             w = 0
         width += w
 
-    if width == 0 and counter and not _LOCALE_INITIALIZED:
+    if width == 0 and counter:
         raise EnvironmentError(
-            'ansible.utils.display.initialize_locale has not been called, '
-            'and get_text_width could not calculate text width of %r' % text
+            'get_text_width could not calculate text width of %r' % text
         )
 
     # It doesn't make sense to have a negative printable width
@@ -286,12 +249,6 @@ class Display(metaclass=Singleton):
             if has_newline or newline:
                 msg2 = msg2 + u'\n'
 
-            msg2 = to_bytes(msg2, encoding=self._output_encoding(stderr=stderr))
-            # Convert back to text string
-            # We first convert to a byte string so that we get rid of
-            # characters that are invalid in the user's locale
-            msg2 = to_text(msg2, self._output_encoding(stderr=stderr), errors='replace')
-
             # Note: After Display() class is refactored need to update the log capture
             # code in 'bin/ansible-connection' (and other relevant places).
             if not stderr:
@@ -316,12 +273,7 @@ class Display(metaclass=Singleton):
             #         raise
 
         if logger and not screen_only:
-            # We first convert to a byte string so that we get rid of
-            # color and characters that are invalid in the user's locale
-            msg2 = to_bytes(nocolor.lstrip(u'\n'))
-
-            # Convert back to text string
-            msg2 = to_text(msg2, self._output_encoding(stderr=stderr))
+            msg2 = nocolor.lstrip('\n')
 
             lvl = logging.INFO
             if color:
@@ -489,15 +441,10 @@ class Display(metaclass=Singleton):
 
     @staticmethod
     def prompt(msg, private=False):
-        prompt_string = to_bytes(msg, encoding=Display._output_encoding())
-        # Convert back into text.  We do this double conversion
-        # to get rid of characters that are illegal in the user's locale
-        prompt_string = to_text(prompt_string)
-
         if private:
-            return getpass.getpass(prompt_string)
+            return getpass.getpass(msg)
         else:
-            return input(prompt_string)
+            return input(msg)
 
     def do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
 
@@ -541,16 +488,6 @@ class Display(metaclass=Singleton):
         if unsafe:
             result = wrap_var(result)
         return result
-
-    @staticmethod
-    def _output_encoding(stderr=False):
-        encoding = locale.getpreferredencoding()
-        # https://bugs.python.org/issue6202
-        # Python2 hardcodes an obsolete value on Mac.  Use MacOSX defaults
-        # instead.
-        if encoding in ('mac-roman',):
-            encoding = 'utf-8'
-        return encoding
 
     def _set_column_width(self):
         if os.isatty(1):
