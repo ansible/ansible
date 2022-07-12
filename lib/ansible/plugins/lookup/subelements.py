@@ -101,7 +101,7 @@ class LookupModule(LookupBase):
             raise AnsibleError(
                 "subelements lookup expects a list of two or three items, " + msg)
 
-        terms[0] = listify_lookup_plugin_terms(terms[0], templar=self._templar, loader=self._loader)
+        terms[0] = listify_lookup_plugin_terms(terms[0], templar=self._templar)
 
         # check lookup terms - check number of terms
         if not isinstance(terms, list) or not 2 <= len(terms) <= 3:
