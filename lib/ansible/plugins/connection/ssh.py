@@ -389,10 +389,11 @@ from ansible.utils.path import unfrackpath, makedirs_safe
 
 display = Display()
 
-
+# error messages that indicate 255 return code is not from ssh itself.
 b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when there's an exception
-                                                            # while invoking a script via -m
-                    b'PHP Parse error:',  # Php always returns error 255
+                                                            #   while invoking a script via -m
+                    b'PHP Parse error:',                    # Php always returns with error
+                    b'chmod: invalid mode',                 # chmod, but really only on AIX
                     )
 
 SSHPASS_AVAILABLE = None
