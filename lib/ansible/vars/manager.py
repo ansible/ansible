@@ -550,8 +550,7 @@ class VariableManager:
                     # first_found loops are special. If the item is undefined then we want to fall through to the next
                     fail = False
                 try:
-                    loop_terms = listify_lookup_plugin_terms(terms=task.loop, templar=templar,
-                                                             loader=self._loader, fail_on_undefined=fail, convert_bare=False)
+                    loop_terms = listify_lookup_plugin_terms(terms=task.loop, templar=templar, fail_on_undefined=fail, convert_bare=False)
 
                     if not fail:
                         loop_terms = [t for t in loop_terms if not templar.is_template(t)]
