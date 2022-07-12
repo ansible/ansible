@@ -1322,7 +1322,7 @@ class YumModule(YumDnf):
         updates = {}
         obsoletes = {}
         update_all = False
-        cmd = self.yum_basecmd.copy()
+        cmd = self.yum_basecmd[:]
 
         # determine if we're doing an update all
         if '*' in items:
