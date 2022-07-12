@@ -52,11 +52,11 @@ Using Python 3 on the managed machines with commands and playbooks
     localhost-py3 ansible_host=localhost ansible_connection=local ansible_python_interpreter=/usr/bin/python3
 
     # Example of setting a group of hosts to use Python3
-    [py3-hosts]
+    [py3_hosts]
     ubuntu16
     fedora27
 
-    [py3-hosts:vars]
+    [py3_hosts:vars]
     ansible_python_interpreter=/usr/bin/python3
 
 .. seealso:: :ref:`intro_inventory` for more information.
