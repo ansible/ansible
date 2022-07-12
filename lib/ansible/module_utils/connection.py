@@ -144,7 +144,7 @@ class Connection(object):
             )
 
         try:
-            data = json.dumps(req, cls=AnsibleJSONEncoder)
+            data = json.dumps(req, cls=AnsibleJSONEncoder, vault_to_text=True)
         except TypeError as exc:
             raise ConnectionError(
                 "Failed to encode some variables as JSON for communication with ansible-connection. "
