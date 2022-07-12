@@ -22,6 +22,8 @@ DOCUMENTATION = '''
     notes:
         - Many options default to C(None) here but that only means we do not override the SSH tool's defaults and/or configuration.
           For example, if you specify the port in this plugin it will override any C(Port) entry in your C(.ssh/config).
+        - The ssh CLI tool uses return code 255 as a 'connection error', this can conflict with commands/tools that
+          also return 255 as an error code and will look like an 'unreachable' condition or 'connection error' to this plugin.
     options:
       host:
           description: Hostname/IP to connect to.
