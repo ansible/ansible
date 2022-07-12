@@ -674,7 +674,7 @@ def return_contains(v):
 
 def return_schema(for_collection, plugin_type='module'):
     if plugin_type == 'module':
-        return_types = Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str')
+        return_types = Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'raw', 'str')
         element_types = Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str')
     else:
         return_types = Any(None, 'boolean', 'bool', 'integer', 'int', 'float', 'list', 'dict', 'dictionary', 'path', 'str', 'string', 'raw')
