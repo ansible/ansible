@@ -210,6 +210,16 @@ bootstrap_remote_freebsd()
 extra-index-url = https://spare-tire.testing.ansible.com/simple/
 prefer-binary = yes
 " > /etc/pip.conf
+
+    # enable ACL support on the root filesystem (required for become between unprivileged users)
+    fs_path="/"
+    fs_device="$(mount -v "${fs_path}" | cut -w -f 1)"
+    # shellcheck disable=SC2001
+    fs_device_escaped=$(echo "${fs_device}" | sed 's|/|\\/|g')
+
+    mount -o acls "${fs_device}" "${fs_path}"
+    awk 'BEGIN{FS=" "}; /'"${fs_device_escaped}"'/ {gsub(/^rw$/,"rw,acls", $4); print; next} // {print}' /etc/fstab > /etc/fstab.new
+    mv /etc/fstab.new /etc/fstab
 }
 
 bootstrap_remote_macos()

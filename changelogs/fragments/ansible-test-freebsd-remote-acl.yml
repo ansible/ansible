@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Remote FreeBSD instances now have ACLs enabled on the root filesystem.
