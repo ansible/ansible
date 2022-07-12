@@ -1322,7 +1322,7 @@ class YumModule(YumDnf):
         updates = {}
         obsoletes = {}
         update_all = False
-        cmd = None
+        cmd = self.yum_basecmd[:]
 
         # determine if we're doing an update all
         if '*' in items:
@@ -1341,7 +1341,7 @@ class YumModule(YumDnf):
             self.module.fail_json(**res)
 
         if update_all:
-            cmd = self.yum_basecmd + ['update']
+            cmd.append('update')
             will_update = set(updates.keys())
             will_update_from_other_package = dict()
         else:
@@ -1523,12 +1523,12 @@ class YumModule(YumDnf):
             cmd.extend(['--releasever=%s' % self.releasever])
 
         # run commands
-        if cmd:     # update all
+        if update_all:
             rc, out, err = self.module.run_command(cmd)
             res['changed'] = True
         elif self.update_only:
             if pkgs['update']:
-                cmd = self.yum_basecmd + ['update'] + pkgs['update']
+                cmd += ['update'] + pkgs['update']
                 locale = get_best_parsable_locale(self.module)
                 lang_env = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
                 rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
@@ -1539,7 +1539,7 @@ class YumModule(YumDnf):
             else:
                 rc, out, err = [0, '', '']
         elif pkgs['install'] or will_update and not self.update_only:
-            cmd = self.yum_basecmd + ['install'] + pkgs['install'] + pkgs['update']
+            cmd += ['install'] + pkgs['install'] + pkgs['update']
             locale = get_best_parsable_locale(self.module)
             lang_env = dict(LANG=locale, LC_ALL=locale, LC_MESSAGES=locale)
             rc, out, err = self.module.run_command(cmd, environ_update=lang_env)
