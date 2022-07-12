@@ -5,3 +5,4 @@ minor_changes:
 bugfixes:
   - "Ensure handlers observe ``any_errors_fatal`` (https://github.com/ansible/ansible/issues/46447)"
   - "Bug fix for when handlers were ran on failed hosts after an ``always`` section was executed (https://github.com/ansible/ansible/issues/52561)"
+  - "Fix handlers execution with ``serial`` in the ``linear`` strategy (https://github.com/ansible/ansible/issues/54991)"

@@ -134,3 +134,7 @@ set -e
 # https://github.com/ansible/ansible/issues/52561
 ansible-playbook 52561.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'handler1 ran')" = "1" ]
+
+# Test flush_handlers meta task does not imply any_errors_fatal
+ansible-playbook 54991.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'handler ran')" = "4" ]
