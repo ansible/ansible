@@ -109,6 +109,25 @@
             - "yum_result.rc == 0"
             - "yum_result.changed"
             - "rpm_result.rc == 0"
+    - name: remove python before another test
+      yum:
+        name: 'python'
+        state: absent
+        installroot: "{{ buildah_mount.stdout }}"
+        releasever: "{{ buildah_host_releasever.stdout }}"
+    - name: test yum install of python using releasever with latest
+      yum:
+        name: 'python'
+        state: latest
+        installroot: "{{ buildah_mount.stdout }}"
+        releasever: "{{ buildah_host_releasever.stdout }}"
+      register: yum_result
+    - name: verify installation of python
+      assert:
+        that:
+            - "yum_result.rc == 0"
+            - "yum_result.changed"
+            - "rpm_result.rc == 0"
   always:
     - name: remove buildah container
       command: "buildah rm yum_installroot_releasever_test"
