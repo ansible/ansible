@@ -81,6 +81,18 @@ options:
 '''
 
 EXAMPLES = '''
+- name: One way to avoid apt_key once it is removed from your distro
+  block:
+    - name: somerepo |no apt key
+      ansible.builtin.get_url:
+        url: https://download.example.com/linux/ubuntu/gpg
+        dest: /etc/apt/trusted.gpg.d/somerepo.asc
+
+    - name: somerepo | apt source
+      ansible.builtin.apt_repository:
+      repo: "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/somerepo.asc] https://download.example.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+      state: present
+
 - name: Add an apt key by id from a keyserver
   ansible.builtin.apt_key:
     keyserver: keyserver.ubuntu.com
