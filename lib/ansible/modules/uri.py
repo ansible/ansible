@@ -464,61 +464,39 @@ def format_message(err, resp):
 
 
 def write_file(module, dest, content, resp):
-    # create a tempfile with some test content
-    fd, tmpsrc = tempfile.mkstemp(dir=module.tmpdir)
-    f = os.fdopen(fd, 'wb')
+    """
+    Create temp file and write content to dest file only if content changed
+    """
     try:
-        if isinstance(content, binary_type):
-            f.write(content)
-        else:
-            shutil.copyfileobj(content, f)
+        fd, tmpsrc = tempfile.mkstemp(dir=module.tmpdir)
+        with os.fdopen(fd, 'wb') as f:
+            if isinstance(content, binary_type):
+                f.write(content)
+            else:
+                shutil.copyfileobj(content, f)
     except Exception as e:
-        os.remove(tmpsrc)
+        if os.path.exists(tmpsrc):
+            os.remove(tmpsrc)
         msg = format_message("Failed to create temporary content file: %s" % to_native(e), resp)
         module.fail_json(msg=msg, **resp)
-    f.close()
 
     checksum_src = None
     checksum_dest = None
 
-    # raise an error if there is no tmpsrc file
-    if not os.path.exists(tmpsrc):
-        os.remove(tmpsrc)
-        msg = format_message("Source '%s' does not exist" % tmpsrc, resp)
-        module.fail_json(msg=msg, **resp)
-    if not os.access(tmpsrc, os.R_OK):
-        os.remove(tmpsrc)
-        msg = format_message("Source '%s' not readable" % tmpsrc, resp)
-        module.fail_json(msg=msg, **resp)
     checksum_src = module.sha1(tmpsrc)
-
-    # check if there is no dest file
-    if os.path.exists(dest):
-        # raise an error if copy has no permission on dest
-        if not os.access(dest, os.W_OK):
-            os.remove(tmpsrc)
-            msg = format_message("Destination '%s' not writable" % dest, resp)
-            module.fail_json(msg=msg, **resp)
-        if not os.access(dest, os.R_OK):
-            os.remove(tmpsrc)
-            msg = format_message("Destination '%s' not readable" % dest, resp)
-            module.fail_json(msg=msg, **resp)
-        checksum_dest = module.sha1(dest)
-    else:
-        if not os.access(os.path.dirname(dest), os.W_OK):
-            os.remove(tmpsrc)
-            msg = format_message("Destination dir '%s' not writable" % os.path.dirname(dest), resp)
-            module.fail_json(msg=msg, **resp)
+    checksum_dest = module.sha1(dest)
 
     if checksum_src != checksum_dest:
         try:
-            shutil.copyfile(tmpsrc, dest)
+            module.atomic_move(tmpsrc, dest)
         except Exception as e:
-            os.remove(tmpsrc)
+            if os.path.exists(tmpsrc):
+                os.remove(tmpsrc)
             msg = format_message("failed to copy %s to %s: %s" % (tmpsrc, dest, to_native(e)), resp)
             module.fail_json(msg=msg, **resp)
 
-    os.remove(tmpsrc)
+    if os.path.exists(tmpsrc):
+        os.remove(tmpsrc)
 
 
 def absolute_location(url, location):
