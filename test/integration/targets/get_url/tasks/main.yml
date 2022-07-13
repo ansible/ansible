@@ -579,6 +579,36 @@
       - (result.content | b64decode | from_json).headers.get('Foo') == 'bar'
       - (result.content | b64decode | from_json).headers.get('Baz') == 'qux'
 
+- name: Test gzip decompression
+  get_url:
+    url: https://{{ httpbin_host }}/gzip
+    dest: "{{ remote_tmp_dir }}/gzip.json"
+
+- name: Get gzip file contents
+  slurp:
+    path: "{{ remote_tmp_dir }}/gzip.json"
+  register: gzip_json
+
+- name: validate gzip decompression
+  assert:
+    that:
+      - (gzip_json.content|b64decode|from_json).gzipped
+
+- name: Test gzip no decompression
+  get_url:
+    url: https://{{ httpbin_host }}/gzip
+    dest: "{{ remote_tmp_dir }}/gzip.json.gz"
+    decompress: no
+
+- name: Get gzip file contents
+  command: 'gunzip -c {{ remote_tmp_dir }}/gzip.json.gz'
+  register: gzip_json
+
+- name: validate gzip no decompression
+  assert:
+    that:
+      - (gzip_json.stdout|from_json).gzipped
+
 - name: Test client cert auth, with certs
   get_url:
     url: "https://ansible.http.tests/ssl_client_verify"

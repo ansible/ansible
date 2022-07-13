@@ -213,6 +213,7 @@ test/units/module_utils/basic/test_deprecate_warn.py pylint:ansible-deprecated-v
 test/units/module_utils/basic/test_run_command.py pylint:disallowed-name
 test/units/module_utils/urls/fixtures/multipart.txt line-endings  # Fixture for HTTP tests that use CRLF
 test/units/module_utils/urls/test_fetch_url.py replace-urlopen
+test/units/module_utils/urls/test_gzip.py replace-urlopen
 test/units/module_utils/urls/test_Request.py replace-urlopen
 test/units/parsing/vault/test_vault.py pylint:disallowed-name
 test/units/playbook/role/test_role.py pylint:disallowed-name
