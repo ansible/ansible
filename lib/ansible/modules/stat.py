@@ -322,12 +322,12 @@ stat:
             sample: 50ba294cdf28c0d5bcde25708df53346825a429f
         pw_name:
             description: User name of owner
-            returned: success, path exists and user can read stats and installed python supports it
+            returned: success, path exists, user can read stats, owner name can be looked up and installed python supports it
             type: str
             sample: httpd
         gr_name:
             description: Group name of owner
-            returned: success, path exists and user can read stats and installed python supports it
+            returned: success, path exists, user can read stats, owner group can be looked up and installed python supports it
             type: str
             sample: www-data
         mimetype:
