@@ -699,6 +699,27 @@
     that:
       - sanitize_keys.json.args['key-********'] == 'value-********'
 
+- name: Test gzip encoding
+  uri:
+    url: "https://{{ httpbin_host }}/gzip"
+  register: result
+
+- name: Validate gzip decoding
+  assert:
+    that:
+      - result.json.gzipped
+
+- name: test gzip encoding no auto decompress
+  uri:
+    url: "https://{{ httpbin_host }}/gzip"
+    decompress: false
+  register: result
+
+- name: Assert gzip wasn't decompressed
+  assert:
+    that:
+      - result.json is undefined
+
 - name: Create a testing file
   copy:
     content: "content"
