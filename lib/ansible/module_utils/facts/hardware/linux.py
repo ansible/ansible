@@ -818,7 +818,7 @@ class LinuxHardware(Hardware):
     def get_lvm_facts(self):
         """ Get LVM Facts if running as root and lvm utils are available """
 
-        lvm_facts = {}
+        lvm_facts = {'lvm': 'N/A'}
 
         if os.getuid() == 0 and self.module.get_bin_path('vgs'):
             lvm_util_options = '--noheadings --nosuffix --units g --separator ,'
