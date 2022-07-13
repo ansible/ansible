@@ -26,6 +26,12 @@ description:
      - For Windows targets, use the M(ansible.windows.win_get_url) module instead.
 version_added: '0.6'
 options:
+  decompress:
+    description:
+      - Whether to attempt to decompress gzip content-encoded responses
+    type: bool
+    default: true
+    version_added: '2.14'
   url:
     description:
       - HTTP, HTTPS, or FTP URL in the form (http|https|ftp)://[user[:pass]]@host.domain[:port]/path
@@ -363,7 +369,8 @@ def url_filename(url):
     return fn
 
 
-def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest='', method='GET', unredirected_headers=None):
+def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest='', method='GET', unredirected_headers=None,
+            decompress=True):
     """
     Download data from the url and store in a temporary file.
 
@@ -372,7 +379,7 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
 
     start = datetime.datetime.utcnow()
     rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method,
-                          unredirected_headers=unredirected_headers)
+                          unredirected_headers=unredirected_headers, decompress=decompress)
     elapsed = (datetime.datetime.utcnow() - start).seconds
 
     if info['status'] == 304:
@@ -457,6 +464,7 @@ def main():
         headers=dict(type='dict'),
         tmp_dest=dict(type='path'),
         unredirected_headers=dict(type='list', elements='str', default=[]),
+        decompress=dict(type='bool', default=True),
     )
 
     module = AnsibleModule(
@@ -476,6 +484,7 @@ def main():
     headers = module.params['headers']
     tmp_dest = module.params['tmp_dest']
     unredirected_headers = module.params['unredirected_headers']
+    decompress = module.params['decompress']
 
     result = dict(
         changed=False,
@@ -577,7 +586,8 @@ def main():
     # download to tmpsrc
     start = datetime.datetime.utcnow()
     method = 'HEAD' if module.check_mode else 'GET'
-    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest, method, unredirected_headers=unredirected_headers)
+    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest, method,
+                           unredirected_headers=unredirected_headers, decompress=decompress)
     result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     result['src'] = tmpsrc
 
