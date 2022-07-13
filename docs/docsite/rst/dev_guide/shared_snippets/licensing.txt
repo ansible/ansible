@@ -7,3 +7,6 @@
       * All other ``module_utils`` must be licensed under BSD, so GPL-licensed third-party and Galaxy modules can use them.
       * If there's doubt about the appropriate license for a file in ``module_utils``, the Ansible Core Team will decide during an Ansible Core Community Meeting.
    * All other files shipped with Ansible, including all modules, must be licensed under the GPL license (GPLv3 or later).
+   * Existing license requirements still apply to content in ansible/ansible (ansible-core).
+   * Content that was previously in ansible/ansible or a collection and has moved to a new collection must retain the license it had in its prior repository.
+   * Copyright entries by previous committers must also be kept in any moved files.
