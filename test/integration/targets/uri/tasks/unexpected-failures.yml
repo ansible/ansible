@@ -23,5 +23,4 @@
     that:
       - ret is failed
       - "not ret.msg.startswith('MODULE FAILURE')"
-      - '"Destination dir ''" ~ remote_dir_expanded ~ "/non/existent'' not writable" in ret.msg'
-      - ret.status == 200
+      - '"Could not replace file" in ret.msg'
