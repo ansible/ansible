@@ -131,6 +131,18 @@ EXAMPLES = '''
   ansible.builtin.apt_repository:
     repo: 'ppa:nginx/stable'
     codename: trusty
+
+- name: One way to avoid apt_key once it is removed from your distro
+  block:
+    - name: somerepo |no apt key
+      ansible.builtin.get_url:
+        url: https://download.example.com/linux/ubuntu/gpg
+        dest: /etc/apt/trusted.gpg.d/somerepo.asc
+
+    - name: somerepo | apt source
+      ansible.builtin.apt_repository:
+      repo: "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/somerepo.asc] https://download.example.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+      state: present
 '''
 
 RETURN = '''#'''
