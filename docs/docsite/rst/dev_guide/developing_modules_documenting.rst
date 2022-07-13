@@ -33,28 +33,24 @@ Begin your Ansible module with ``#!/usr/bin/python`` - this "shebang" allows ``a
 Copyright and license
 =====================
 
-After the shebang and UTF-8 coding, add a `copyright line <https://www.gnu.org/licenses/gpl-howto.en.html>`_ with the original copyright holder and a license declaration. The license declaration should be ONLY one line, not the full GPL prefix.:
+After the shebang and UTF-8 coding, add a `copyright line <https://www.linuxfoundation.org/blog/copyright-notices-in-open-source-software-projects/>`_ with the original copyright holder and a license declaration. The license declaration should be ONLY one line, not the full GPL prefix.:
 
 .. code-block:: python
 
     #!/usr/bin/python
     # -*- coding: utf-8 -*-
 
-    # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
+    # Copyright: Contributors to the Ansible project
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-Major additions to the module (for instance, rewrites) may add additional copyright lines. Any legal review will include the source control history, so an exhaustive copyright header is not necessary.
-Please do not edit the existing copyright year. This simplifies project administration and is unlikely to cause any interesting legal issues.
-When adding a second copyright line for a significant feature or rewrite, add the newer line above the older one:
+Additions to the module (for instance, rewrites) are not permitted to add additional copyright lines other than the default copyright statement if missing:
 
 .. code-block:: python
 
-    #!/usr/bin/python
-    # -*- coding: utf-8 -*-
-
-    # Copyright: (c) 2017, [New Contributor(s)]
-    # Copyright: (c) 2015, [Original Contributor(s)]
-    # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+    # Copyright: Contributors to the Ansible project
+    
+Any legal review will include the source control history, so an exhaustive copyright header is not necessary.
+Please do not include a copyright year. If the existing copyright statement includes a year, do not edit the existing copyright year. Any existing copyright header should not be modified without permission from the copyright author.
 
 .. _ansible_metadata_block:
 
