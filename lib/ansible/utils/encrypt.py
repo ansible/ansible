@@ -99,6 +99,15 @@ class CryptHash(BaseHash):
 
         if algorithm not in self.algorithms:
             raise AnsibleError("crypt.crypt does not support '%s' algorithm" % self.algorithm)
+
+        display.deprecated(
+            "Encryption using the Python crypt module is deprecated. The "
+            "Python crypt module is deprecated and will be removed from "
+            "Python 3.13. Install the passlib library for continued "
+            "encryption functionality.",
+            version=2.17
+        )
+
         self.algo_data = self.algorithms[algorithm]
 
     def hash(self, secret, salt=None, salt_size=None, rounds=None, ident=None):
