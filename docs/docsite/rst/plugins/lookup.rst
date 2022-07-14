@@ -21,7 +21,7 @@ Lookup plugins are an Ansible-specific extension to the Jinja2 templating langua
 Enabling lookup plugins
 -----------------------
 
-Ansible enables all lookup plugins it can find. You do not need to maintain a list of enabled lookup plugins. To activate a custom lookup, place it in one of four locations:
+Ansible enables all lookup plugins in the configured paths. You do not need to maintain a list of enabled lookup plugins. Use the fully-qualified collection name (FQCN) for lookup plugins in a collection and the collection itself must be installed in the discoverable paths for collections. See :ref:`collections` for details. To activate a custom lookup, place it in one of four locations:
 
  - in the ```lookup_plugins`` directory adjacent to your play
  - in the ``plugins/lookup/`` directory of a collection you have installed
