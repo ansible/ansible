@@ -483,6 +483,8 @@ Kerberos is reliant on a properly-configured environment to
 work. To troubleshoot Kerberos issues, ensure that:
 
 * The hostname set for the Windows host is the FQDN and not an IP address.
+  * If you connect using an IP address you will get the error message `Server not found in Kerberos database`.
+  * To determine if you are connecting using an IP address or an FQDN run your playbook (or call the ``win_ping`` module) using the `-vvv` flag.
 
 * The forward and reverse DNS lookups are working properly in the domain. To
   test this, ping the windows host by name and then use the ip address returned
