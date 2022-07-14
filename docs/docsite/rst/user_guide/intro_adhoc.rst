@@ -112,7 +112,9 @@ As well as delete directories (recursively) and delete files:
 Managing packages
 -----------------
 
-You might also use an ad hoc task to install, update, or remove packages on managed nodes using a package management module like yum. To ensure a package is installed without updating it:
+You might also use an ad hoc task to install, update, or remove packages on managed nodes using a package management module such as  ``yum``.  Package management modules support common functions to install, remove, and generally manage packages. Some specific functions for a package manager might not be present in the Ansible module since they are not part of general package management.
+
+To ensure a package is installed without updating it:
 
 .. code-block:: bash
 
