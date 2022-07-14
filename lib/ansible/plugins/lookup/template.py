@@ -153,7 +153,7 @@ class LookupModule(LookupBase):
                     res = templar.template(template_data, preserve_trailing_newlines=True,
                                            convert_data=convert_data_p, escape_backslashes=False)
 
-                if C.DEFAULT_JINJA2_NATIVE and not jinja2_native:
+                if (C.DEFAULT_JINJA2_NATIVE and not jinja2_native) or not convert_data_p:
                     # jinja2_native is true globally but off for the lookup, we need this text
                     # not to be processed by literal_eval anywhere in Ansible
                     res = NativeJinjaText(res)
