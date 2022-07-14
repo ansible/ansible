@@ -71,3 +71,42 @@
         that:
           - ansible_facts.getent_shadow['ansibulluser'][2] == '0'
           - ansible_facts.getent_shadow['ansibulluser'][3] == '0'
+
+    - block:
+        - name: create an unprivileged user for next test
+          user:
+            name: unpriv
+            state: present
+
+        # https://github.com/ansible/ansible/issues/78222
+        - name: test modifying password expiration without permission is an error
+          user:
+            name: ansibulluser
+            password_expire_min: 10
+            password_expire_max: 20
+          become_user: unpriv
+          become: yes
+          ignore_errors: yes
+          register: password_exp_failed
+
+        # https://github.com/ansible/ansible/issues/78017
+        - name: test permission error getting shadow info is ignored if password_expire_min and password_expire_max are None
+          user:
+            name: ansibulluser
+          become_user: unpriv
+          become: yes
+          ignore_errors: yes
+          register: password_exp_unchanged
+
+        - assert:
+            that:
+              - password_exp_unchanged is success
+              - not password_exp_unchanged.changed
+              - password_exp_failed is failed
+              #- password_exp_failed.rc == 13
+      always:
+        - name: remove unprivileged user
+          user:
+            name: unpriv
+            state: absent
+            remove: yes

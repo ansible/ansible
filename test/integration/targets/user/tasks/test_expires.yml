@@ -145,3 +145,30 @@
         that:
           - bsd_account_expiration.stdout == '0'
   when: ansible_facts.os_family == 'FreeBSD'
+
+- block:
+    - name: create an unprivileged user for next test
+      user:
+        name: unpriv
+        state: present
+
+    # https://github.com/ansible/ansible/pull/40341
+    - name: test modifying password expiration without permission is an error
+      user:
+        name: ansibulluser
+        expires: -1
+      become_user: unpriv
+      become: yes
+      ignore_errors: yes
+      register: password_exp_failed
+
+    - assert:
+        that:
+          - password_exp_failed is failed
+          #- password_exp_failed.rc == 13 os-dependent
+  always:
+    - name: remove unprivileged user
+      user:
+        name: unpriv
+        state: absent
+        remove: yes
