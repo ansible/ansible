@@ -761,3 +761,11 @@
       - test
   vars:
     test: "{{ lookup('file', '{{ output_dir }}/empty_template.templated')|length == 0 }}"
+
+- assert:
+    that:
+      - data_not_converted | type_debug == 'NativeJinjaUnsafeText'
+      - data_converted | type_debug == 'dict'
+  vars:
+    data_not_converted: "{{ lookup('template', 'json_macro.j2', convert_data=False) }}"
+    data_converted: "{{ lookup('template', 'json_macro.j2') }}"
