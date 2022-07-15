@@ -8,7 +8,7 @@ DOCUMENTATION = """
     name: sudo
     short_description: Substitute User DO
     description:
-        - This become plugins allows your remote/login user to execute commands as another user via the sudo utility.
+        - This become plugin allows your remote/login user to execute commands as another user via the sudo utility.
     author: ansible (@core)
     version_added: "2.8"
     options:

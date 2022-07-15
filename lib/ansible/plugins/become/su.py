@@ -8,7 +8,7 @@ DOCUMENTATION = """
     name: su
     short_description: Substitute User
     description:
-        - This become plugins allows your remote/login user to execute commands as another user via the su utility.
+        - This become plugin allows your remote/login user to execute commands as another user via the su utility.
     author: ansible (@core)
     version_added: "2.8"
     options:
