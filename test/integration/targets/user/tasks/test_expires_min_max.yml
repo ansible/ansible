@@ -103,7 +103,7 @@
               - password_exp_unchanged is success
               - not password_exp_unchanged.changed
               - password_exp_failed is failed
-              #- password_exp_failed.rc == 13
+              - password_exp_failed.rc == 13
       always:
         - name: remove unprivileged user
           user:
