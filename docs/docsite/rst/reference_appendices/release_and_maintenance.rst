@@ -82,7 +82,7 @@ Ansible Community Package Release       Status                          Core ver
 ==================================      ============================    =========================
 7.0.0                                   In development (unreleased)     2.14
 `6.x Changelogs`_                       Current                         2.13
-`5.x Changelogs`_                       Unmaintained/EOL after 5.10     2.12
+`5.x Changelogs`_                       Unmaintained (end of life)      2.12
 `4.x Changelogs`_                       Unmaintained (end of life)      2.11
 `3.x Changelogs`_                       Unmaintained (end of life)      2.10
 `2.10 Changelogs`_                      Unmaintained (end of life)      2.10
