@@ -17,12 +17,6 @@
 
 # Ensure unreadable file and directory handling and error messages
 # https://github.com/ansible/ansible/issues/67340
-- name: create test user
-  user:
-    name: "{{ become_test_user }}"
-    create_home: yes
-  notify:
-    - "remove test user and their home dir"
 
 - name: create unreadable file
   copy:
@@ -35,9 +29,10 @@
   slurp:
     src: "{{ remote_tmp_dir }}/qux.txt"
   register: slurp_unreadable_file
-  become: yes
-  become_user: "{{ become_test_user }}"
-  become_method: su
+  vars: &test_user_become
+    ansible_become: yes
+    ansible_become_user: "{{ test_user_name }}"
+    ansible_become_password: "{{ test_user_plaintext_password }}"
   ignore_errors: yes
 
 - name: create unreadable directory
@@ -51,9 +46,7 @@
   slurp:
     src: "{{ remote_tmp_dir }}/test_data"
   register: slurp_unreadable_dir
-  become: yes
-  become_user: "{{ become_test_user }}"
-  become_method: su
+  vars: *test_user_become
   ignore_errors: yes
 
 - name: Try to access file as directory
