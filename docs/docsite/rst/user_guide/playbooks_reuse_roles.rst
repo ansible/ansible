@@ -32,7 +32,7 @@ By default Ansible will look in each directory within a role for a ``main.yml`` 
 - ``vars/main.yml`` - other variables for the role (see :ref:`playbooks_variables` for more information).
 - ``files/main.yml`` - files that the role deploys.
 - ``templates/main.yml`` - templates that the role deploys.
-- ``meta/main.yml`` - metadata for the role, including role dependencies.
+- ``meta/main.yml`` - metadata for the role, including role dependencies, and optional Galaxy metadata such as platforms supported etc.
 
 You can add other YAML files in some directories. For example, you can place platform-specific tasks in separate files and refer to them in the ``tasks/main.yml`` file:
 
@@ -581,7 +581,7 @@ Sharing roles: Ansible Galaxy
 
 The client ``ansible-galaxy`` is included in Ansible. The Galaxy client allows you to download roles from Ansible Galaxy, and also provides an excellent default framework for creating your own roles.
 
-Read the `Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_ page for more information
+Read the `Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_ page for more information. One page there which refers back to this one frequently is the Galaxy Roles document which explains the required metadata your role needs for use in Galaxy <https://galaxy.ansible.com/docs/contributing/creating_role.html>. 
 
 .. seealso::
 
