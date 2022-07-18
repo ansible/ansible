@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Ansible devel\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-23 10:50+0100\n"
+"POT-Creation-Date: 2022-04-14 14:48+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -23,6 +23,9 @@ msgstr "Oops!"
 #: ../../rst/404.rst:7
 msgid "The version of the Ansible documentation you were looking at doesn't contain that page."
 msgstr "参照している Ansible ドキュメントのバージョンには、そのページが含まれていません。"
+
+msgid "Cowsay 404"
+msgstr "Cowsay 404"
 
 #: ../../rst/404.rst:12
 msgid "Use the back button to return to the version you were browsing, or use the navigation at left to explore our latest release. Once you're on a non-404 page, you can use the version-changer to select a version."
