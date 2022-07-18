@@ -14,12 +14,12 @@ ansible-playbook
 
 .. code-block:: bash
 
-   ansible-playbook -i /path/to/my_inventory_file -u my_connection_user -k /path/to/my_ssh_key -f 3 -T 30 -t my_tag -m /path/to/my_modules -b -K my_playbook.yml
+   ansible-playbook -i /path/to/my_inventory_file -u my_connection_user -k -f 3 -T 30 -t my_tag -m /path/to/my_modules -b -K my_playbook.yml
 
 Loads ``my_playbook.yml`` from the current working directory and:
   - ``-i`` - uses ``my_inventory_file`` in the path provided for :ref:`inventory <intro_inventory>` to match the :ref:`pattern <intro_patterns>`.
   - ``-u`` - connects :ref:`over SSH <connections>` as ``my_connection_user``.
-  - ``-k`` - uses ``my_ssh_key`` in the path provided for SSH authentication.
+  - ``-k`` - asks for password which is then provided to SSH authentication.
   - ``-f`` - allocates 3 :ref:`forks <playbooks_strategies>`.
   - ``-T`` - sets a 30-second timeout.
   - ``-t`` - runs only tasks marked with the :ref:`tag <tags>` ``my_tag``.
