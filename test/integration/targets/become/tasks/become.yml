@@ -2,7 +2,7 @@
   raw: whoami
   register: whoami
 
-- name: implicit tilde expansion reflects become user (broken={{ become_test_config.implicit_tilde_broken | default(False) }}) ({{ become_test }})
+- name: implicit tilde expansion reflects become user ({{ become_test }})
   stat:
     path: "~"
   register: stat_home_implicit
@@ -35,7 +35,7 @@
       - "whoami.stdout|trim == '{{ ansible_become_user }}'"
 
       - "stat_home_implicit.stat.exists == True"
-      - "stat_home_implicit.stat.path|basename == '{{ ansible_become_user }}' or (become_test_config.implicit_tilde_broken | default(False))"
+      - "stat_home_implicit.stat.path|basename == '{{ ansible_become_user }}'"
 
       - "stat_home_explicit.stat.exists == True"
       - "stat_home_explicit.stat.path|basename == '{{ ansible_become_user }}'"
