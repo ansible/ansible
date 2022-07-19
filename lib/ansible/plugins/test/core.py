@@ -32,6 +32,8 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.display import Display
 from ansible.utils.version import SemanticVersion
 
+from packaging.version import Version as PEP440Version
+
 display = Display()
 
 
@@ -165,6 +167,7 @@ def version_compare(value, version, operator='eq', strict=None, version_type=Non
         'strict': StrictVersion,
         'semver': SemanticVersion,
         'semantic': SemanticVersion,
+        'pep440': PEP440Version,
     }
 
     if strict is not None and version_type is not None:
