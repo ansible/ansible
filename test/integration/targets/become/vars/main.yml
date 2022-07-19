@@ -1,0 +1,18 @@
+become_test: >-
+  {{ become_test_config.method }} from {{ connection_user.stdout }} to {{ become_test_config.user }}
+  {{ 'with' if become_test_config.password else 'without' }} password
+  {{ 'with flags: ' + become_test_config.flags if become_test_config.flags | default('') else 'without flags' }}
+
+become_methods:
+  - method: sudo
+    user: "{{ test_user_name }}"
+    password: "{{ test_user_plaintext_password if connection_user.stdout != 'root' else None }}"
+    # Some systems are not configured to allow sudo for non-root users.
+    # The tests could be updated in the future to temporarily enable sudo for the connection user.
+    skip: "{{ connection_user.stdout != 'root' and ansible_distribution == 'FreeBSD' }}"
+    # Implicit tilde support `~` is broken on systems which do not set HOME to that of the become user.
+    # Explicit tilde support `~username` is unaffected.
+    implicit_tilde_broken: "{{ ansible_distribution == 'MacOSX' }}"
+  - method: su
+    user: "{{ test_user_name }}"
+    password: "{{ test_user_plaintext_password if connection_user.stdout != 'root' else None }}"
