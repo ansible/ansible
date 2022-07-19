@@ -211,12 +211,15 @@
     - user_test_local_mode
 
 - name: Ensure lgroupadd is present - Alpine
-  # NOTE: The `libuser` package is currently only available in the
-  # NOTE: `edge` branch.
-  # FIXME: If it ever becomes available in the `main` repository for
-  # FIXME: currently tested Alpine versions, the `--repository=...`
-  # FIXME: option can be dropped.
-  command: apk add -U libuser --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
+  block:
+    - name: Get the latest Alpine package signing keys
+      command: apk add -U -l -u alpine-keys
+      tags:
+        - user_test_local_mode
+    - name: Install libuser - Alpine
+      command: apk add -U libuser --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
+      tags:
+        - user_test_local_mode
   when: ansible_distribution == 'Alpine'
   tags:
     - user_test_local_mode

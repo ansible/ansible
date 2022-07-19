@@ -32,7 +32,11 @@
       # FIXME: If it ever becomes available in the `main` repository for
       # FIXME: currently tested Alpine versions, the `--repository=...`
       # FIXME: option can be dropped.
-      command: apk add -U {{ faketime_pkg }} --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+      block:
+        - name: Get the latest Alpine package signing keys
+          command: apk add -U -l -u alpine-keys
+        - name: Install {{ faketime_pkg }} - Alpine
+          command: apk add -U {{ faketime_pkg }} --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
       when: ansible_distribution == 'Alpine'
 
     - name: Find libfaketime path
