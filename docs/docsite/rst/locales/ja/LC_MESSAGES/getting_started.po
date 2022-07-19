@@ -276,7 +276,7 @@ msgstr "Playbook の ``gather_facts`` キーワードの詳細を確認できま
 
 #: ../../rst/getting_started/index.rst:5
 msgid "Getting started with Ansible"
-msgstr "MySQL のスタートガイド"
+msgstr "Ansible のスタートガイド"
 
 #: ../../rst/getting_started/index.rst:7
 msgid "Ansible automates the management of remote systems and controls their desired state. A basic Ansible environment has three main components:"
