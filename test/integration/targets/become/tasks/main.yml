@@ -9,7 +9,6 @@
   vars:
     ansible_become: yes
     ansible_become_user: "{{ become_test_config.user }}"
-    ansible_become_flags: "{{ become_test_config.flags | default(None) }}"
     ansible_become_method: "{{ become_test_config.method }}"
     ansible_become_password: "{{ become_test_config.password | default(None) }}"
   loop: "{{ 
