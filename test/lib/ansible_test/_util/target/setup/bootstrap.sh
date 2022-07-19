@@ -116,6 +116,7 @@ bootstrap_remote_fedora()
     py_pkg_prefix="python3"
 
     packages="
+        acl
         gcc
         ${py_pkg_prefix}-devel
         "
@@ -340,6 +341,7 @@ bootstrap_remote_ubuntu()
     py_pkg_prefix="python3"
 
     packages="
+        acl
         gcc
         python${python_version}-dev
         python3-pip
