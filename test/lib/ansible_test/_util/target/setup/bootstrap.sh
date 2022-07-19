@@ -90,6 +90,7 @@ bootstrap_remote_alpine()
         gcc
         python3-dev
         ${py_pkg_prefix}-pip
+        sudo
         "
 
     if [ "${controller}" ]; then
@@ -222,6 +223,9 @@ prefer-binary = yes
     mount -o acls "${fs_device}" "${fs_path}"
     awk 'BEGIN{FS=" "}; /'"${fs_device_escaped}"'/ {gsub(/^rw$/,"rw,acls", $4); print; next} // {print}' /etc/fstab > /etc/fstab.new
     mv /etc/fstab.new /etc/fstab
+
+    # enable sudo without a password for the wheel group, allowing ansible to use the sudo become plugin
+    echo '%wheel ALL=(ALL:ALL) NOPASSWD: ALL' > /usr/local/etc/sudoers.d/ansible-test
 }
 
 bootstrap_remote_macos()

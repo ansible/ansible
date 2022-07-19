@@ -1,11 +1,11 @@
-alpine/3.16 python=3.10 become=doas provider=aws arch=x86_64
-alpine become=doas provider=aws arch=x86_64
+alpine/3.16 python=3.10 become=doas_sudo provider=aws arch=x86_64
+alpine become=doas_sudo provider=aws arch=x86_64
 fedora/35 python=3.10 become=sudo provider=aws arch=x86_64
 fedora/36 python=3.10 become=sudo provider=aws arch=x86_64
 fedora become=sudo provider=aws arch=x86_64
-freebsd/12.3 python=3.8 python_dir=/usr/local/bin become=su provider=aws arch=x86_64
-freebsd/13.0 python=3.7,2.7,3.8,3.9 python_dir=/usr/local/bin become=su provider=aws arch=x86_64
-freebsd python_dir=/usr/local/bin become=su provider=aws arch=x86_64
+freebsd/12.3 python=3.8 python_dir=/usr/local/bin become=su_sudo provider=aws arch=x86_64
+freebsd/13.0 python=3.7,2.7,3.8,3.9 python_dir=/usr/local/bin become=su_sudo provider=aws arch=x86_64
+freebsd python_dir=/usr/local/bin become=su_sudo provider=aws arch=x86_64
 macos/12.0 python=3.10 python_dir=/usr/local/bin become=sudo provider=parallels arch=x86_64
 macos python_dir=/usr/local/bin become=sudo provider=parallels arch=x86_64
 rhel/7.9 python=2.7 become=sudo provider=aws arch=x86_64

@@ -12,6 +12,11 @@ from .util import (
 
 class Become(metaclass=abc.ABCMeta):
     """Base class for become implementations."""
+    @classmethod
+    def name(cls):
+        """The name of this plugin."""
+        return cls.__name__.lower()
+
     @property
     @abc.abstractmethod
     def method(self):  # type: () -> str
@@ -41,6 +46,19 @@ class Doas(Become):
         return become
 
 
+class DoasSudo(Doas):
+    """Become using 'doas' in ansible-test and then after bootstrapping use 'sudo' for other ansible commands."""
+    @classmethod
+    def name(cls):
+        """The name of this plugin."""
+        return 'doas_sudo'
+
+    @property
+    def method(self):  # type: () -> str
+        """The name of the Ansible become plugin that is equivalent to this."""
+        return 'sudo'
+
+
 class Su(Become):
     """Become using 'su'."""
     @property
@@ -56,6 +74,19 @@ class Su(Become):
             become.extend(['-c', ' '.join(shlex.quote(c) for c in command)])
 
         return become
+
+
+class SuSudo(Su):
+    """Become using 'su' in ansible-test and then after bootstrapping use 'sudo' for other ansible commands."""
+    @classmethod
+    def name(cls):
+        """The name of this plugin."""
+        return 'su_sudo'
+
+    @property
+    def method(self):  # type: () -> str
+        """The name of the Ansible become plugin that is equivalent to this."""
+        return 'sudo'
 
 
 class Sudo(Become):
@@ -75,4 +106,4 @@ class Sudo(Become):
         return become
 
 
-SUPPORTED_BECOME_METHODS = {cls.__name__.lower(): cls for cls in get_subclasses(Become)}
+SUPPORTED_BECOME_METHODS = {cls.name(): cls for cls in get_subclasses(Become)}
