@@ -85,6 +85,7 @@ bootstrap_remote_alpine()
     py_pkg_prefix="py3"
 
     packages="
+        acl
         bash
         gcc
         python3-dev
