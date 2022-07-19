@@ -1,7 +1,6 @@
 become_test: >-
   {{ become_test_config.method }} from {{ connection_user.stdout }} to {{ become_test_config.user }}
   {{ 'with' if become_test_config.password else 'without' }} password
-  {{ 'with flags: ' + become_test_config.flags if become_test_config.flags | default('') else 'without flags' }}
 
 become_methods:
   - method: sudo
