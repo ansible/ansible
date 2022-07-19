@@ -35,8 +35,6 @@ from ansible.plugins.strategy import StrategyBase
 
 import pytest
 
-pytestmark = pytest.mark.skipif(True, reason="Temporarily disabled due to fragile tests that need rewritten")
-
 
 class TestStrategyBase(unittest.TestCase):
 
