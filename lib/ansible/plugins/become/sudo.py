@@ -73,6 +73,19 @@ DOCUMENTATION = """
             ini:
               - section: sudo_become_plugin
                 key: password
+        selinux_role:
+            description:
+                - For selinux systems, the role to assume when running commands.
+                - Note that your sudo executable needs to support this option, otherwise it will error out.
+            version_added: '2.14'
+            required: False
+            vars:
+              - name: ansible_sudo_selinux_role
+            env:
+              - name: ANSIBLE_SUDO_SELINUX_ROLE
+            ini:
+              - section: sudo_become_plugin
+                key: selinux_role
 """
 
 import re
@@ -117,5 +130,9 @@ class BecomeModule(BecomeBase):
         user = self.get_option('become_user') or ''
         if user:
             user = '-u %s' % (user)
+
+        selinux_role = self.get_option('selinux_role')
+        if selinux_role:
+            flags += '-r %s' % (selinux_role)
 
         return ' '.join([becomecmd, flags, prompt, user, self._build_success_command(cmd, shell)])

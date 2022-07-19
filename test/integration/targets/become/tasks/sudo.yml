@@ -89,3 +89,34 @@
     state: "absent"
     remove: "yes"
     force: "yes"
+
+- name: selinux_role prereq
+  become_method: sudo
+  become: true
+  block:
+   - name: install semanage
+     yum: name=policycoreutils-python-utils state=present
+     ignore_errors: true
+     register: selinux_prereq
+
+- name: selinux_role tests
+  become_method: sudo
+  become: true
+  block:
+   - name: setup selinux for ansible_user
+     shell: !unsafe semanage login -a -s staff_u ${SUDO_USER}
+     #shell: !unsafe semanage login -a -s staff_u -r s0 ${SUDO_USER}
+
+   - name: see if we get expected string from id
+     shell: id -Z
+     register: se_id
+
+   - debug:
+       msg: 'result of id: {{se_id.stdout}}'
+     failed_when: "se_id.stdout != 'staff_u:sysadm_r:sysadm_t:s0'"
+     become: false
+
+  when:
+    - selinux_prereq is success
+    - ansible_facts['distribution'] in ['RedHat', 'CentOS']
+    - ansible_facts['selinux']['status'] != 'disabled'
