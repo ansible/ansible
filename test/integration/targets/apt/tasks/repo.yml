@@ -40,6 +40,106 @@
         state: absent
         allow_unauthenticated: yes
 
+# https://github.com/ansible/ansible/issues/77969
+- block:
+  - name: Pin the preferred version of foo
+    copy:
+      content: |-
+              Package: foo
+              Pin: version 1.0.0
+              Pin-Priority: 1001
+      dest: /etc/apt/preferences.d/foo
+
+  - name: Install unspecified version
+    apt:
+      name: foo
+      state: latest
+    register: apt_result
+
+  - name: Check install with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+
+  - name: Check if install was successful
+    assert:
+      that:
+        - "apt_result is success"
+        - "dpkg_result is success"
+        - "'1.0.0' in dpkg_result.stdout"
+
+  - name: Remove foo between tests
+    apt:
+      name: foo
+      state: absent
+
+  - name: Test preferring pinned version when possible with >=
+    apt:
+      name: foo>=1.0.0
+      state: latest
+    register: apt_result
+
+  - name: Check install with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+
+  - name: Check if install was successful
+    assert:
+      that:
+        - "apt_result is success"
+        - "dpkg_result is success"
+        # NOTE: latest version is not installed
+        - "'1.0.0' in dpkg_result.stdout"
+
+  - name: Remove foo between tests
+    apt:
+      name: foo
+      state: absent
+
+  - name: Override pin with >=
+    apt:
+      name: foo>=1.0.1
+      state: latest
+
+  - name: Check install with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+
+  - name: Check if install was successful
+    assert:
+      that:
+        - "dpkg_result is success"
+        - "'1.0.1' in dpkg_result.stdout"
+
+  - name: Remove foo between tests
+    apt:
+      name: foo
+      state: absent
+
+  - name: Override pin with =
+    apt:
+      name: foo=1.0.1
+      state: latest
+
+  - name: Check install with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+
+  - name: Check if install was successful
+    assert:
+      that:
+        - "dpkg_result is success"
+        - "'1.0.1' in dpkg_result.stdout"
+  always:
+  - name: Clean up package
+    apt:
+      name: foo
+      state: absent
+      allow_unauthenticated: yes
+
+  - name: Clean up file
+    file:
+      path: /etc/apt/preferences.d/foo
+      state: absent
 
 # https://github.com/ansible/ansible/issues/30638
 - block:
@@ -105,7 +205,11 @@
       - ["=1.0.0", null, false, null]
       - ["=1.0.0", null, true, null]
       - ["=1.0.1", null, false, "1.0.1"]
-      #- ["=1.0.*", null, false, null] # legacy behavior. should not upgrade without state=latest
+      # legacy behavior that should be deprecated
+      # should not upgrade without state=latest
+      - ["=1.0.*", null, false, "1.0.1"]
+      # uncomment correct assertion once deprecation period is complete
+      # - ["=1.0.*", null, false, null]
       - ["=1.0.*", null, true, "1.0.1"]
       - [">=1.0.0", null, false, null]
       - [">=1.0.0", null, true, "1.0.1"]
