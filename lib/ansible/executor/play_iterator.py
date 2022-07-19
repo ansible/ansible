@@ -76,6 +76,8 @@ class HostState:
         self.did_rescue = False
         self.did_start_at_task = False
 
+        self._handlers_sorted = False
+
     def __repr__(self):
         return "HostState(%r, %r)" % (self._blocks, self._notified_handlers)
 
@@ -434,6 +436,11 @@ class PlayIterator:
                         state.cur_always_task += 1
 
             elif state.run_state == IteratingStates.HANDLERS:
+                if not state._handlers_sorted:
+                    all_handlers = [h for b in self._play.handlers for h in b.block]
+                    state._notified_handlers = deque((h for h in all_handlers if h in state.handlers))
+                    state._handlers_sorted = True
+
                 if state.handlers_child_state:
                     state.handlers_child_state, task = self._get_next_task_from_state(state.handlers_child_state, host=host)
                     if self._check_failed_state(state.handlers_child_state):
@@ -445,8 +452,10 @@ class PlayIterator:
                             continue
                 else:
                     if state.fail_state != FailedStates.NONE and not self._play.force_handlers:
+                        state._handlers_sorted = False
                         state.run_state = IteratingStates.COMPLETE
                     elif len(state.handlers) == 0:
+                        state._handlers_sorted = False
                         state.run_state = state.pre_flushing_run_state
                     else:
                         task = state.pop_current_handler()
