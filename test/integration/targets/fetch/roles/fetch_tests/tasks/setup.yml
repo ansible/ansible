@@ -18,6 +18,7 @@
   user:
     name: fetcher
     create_home: yes
+    group: "{{ _fetch_group | default(omit) }}"
     groups: "{{ _fetch_additional_groups | default(omit) }}"
     append: "{{ True if _fetch_additional_groups else False }}"
     password: "{{ password | default(omit) }}"
