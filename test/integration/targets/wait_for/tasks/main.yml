@@ -104,6 +104,16 @@
     - waitfor['match_groupdict']['foo'] == 'data'
     - waitfor['match_groups'] == ['data', '123']
 
+- name: copy non-ascii file
+  copy:
+    src: latin1.txt
+    dest: "{{remote_tmp_dir}}/latin1.txt"
+
+- name: test non-ascii file
+  wait_for:
+    path: "{{remote_tmp_dir}}/latin1.txt"
+    search_regex: slightly
+
 - name: test wait for port timeout
   wait_for:
     port: 12121
