@@ -507,7 +507,7 @@ def package_best_match(pkgname, version_cmp, version, release, cache, installed_
         # Maybe Instead docs should have a note that pkg=ver/pkg>=ver disregard apt preferences?
         dep_cache = apt_pkg.DepCache(cache)
         better_ver = dep_cache.get_candidate_ver(pkg)
-        
+
         if better_ver is not None and apt_pkg.version_compare(better_ver.ver_str, version) >= 0:
             pkgver = better_ver
     elif version_cmp is None and version and installed_version and pkgver is None:
