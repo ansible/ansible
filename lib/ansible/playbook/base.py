@@ -69,9 +69,9 @@ def _validate_action_group_metadata(action, found_group_metadata, fq_group_name)
         display.warning(" ".join(metadata_warnings))
 
 
-# FIXME use @property and @classmethod together which is possible since Python 3.9
-class _FABMeta(type):
+class FieldAttributeBase:
 
+    @classmethod
     @property
     def fattributes(cls):
         # FIXME is this worth caching?
@@ -85,14 +85,6 @@ class _FABMeta(type):
                     setattr(class_obj, attr.alias, attr)
                     fattributes[attr.alias] = attr
         return fattributes
-
-
-class FieldAttributeBase(metaclass=_FABMeta):
-
-    # FIXME use @property and @classmethod together which is possible since Python 3.9
-    @property
-    def fattributes(self):
-        return self.__class__.fattributes
 
     def __init__(self):
 
