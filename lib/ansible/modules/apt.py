@@ -471,19 +471,6 @@ def package_split(pkgspec):
     return parts[0], None, None
 
 
-def package_versions(pkgname, pkg, pkg_cache):
-    try:
-        versions = set(p.version for p in pkg.versions)
-    except AttributeError:
-        # assume older version of python-apt is installed
-        # apt.package.Package#versions require python-apt >= 0.7.9.
-        pkg_cache_list = (p for p in pkg_cache.Packages if p.Name == pkgname)
-        pkg_versions = (p.VersionList for p in pkg_cache_list)
-        versions = set(p.VerStr for p in itertools.chain(*pkg_versions))
-
-    return versions
-
-
 def package_version_compare(version, other_version):
     try:
         return apt_pkg.version_compare(version, other_version)
@@ -491,7 +478,7 @@ def package_version_compare(version, other_version):
         return apt_pkg.VersionCompare(version, other_version)
 
 
-def package_best_match(pkgname, version_cmp, version, release, cache, installed_version):
+def package_best_match(pkgname, version_cmp, version, release, cache):
     policy = apt_pkg.Policy(cache)
     if release:
         # 990 is the priority used in `apt-get -t`
@@ -501,27 +488,6 @@ def package_best_match(pkgname, version_cmp, version, release, cache, installed_
         policy.create_pin('Version', pkgname, version, 991)
     pkg = cache[pkgname]
     pkgver = policy.get_candidate_ver(pkg)
-
-    if version_cmp == ">=":
-        # Try to find version that satisfies current request and pinned versions
-        # Maybe Instead docs should have a note that pkg=ver/pkg>=ver disregard apt preferences?
-        dep_cache = apt_pkg.DepCache(cache)
-        better_ver = dep_cache.get_candidate_ver(pkg)
-
-        if better_ver is not None and apt_pkg.version_compare(better_ver.ver_str, version) >= 0:
-            pkgver = better_ver
-    elif version_cmp is None and version and installed_version and pkgver is None:
-        # Make sure we indicate if any upgrade is available when version_cmp is None
-        versions = package_versions(pkgname, pkg, cache)
-        avail_upgrades = fnmatch.filter(versions, version)
-
-        for candidate in avail_upgrades:
-            if package_version_compare(candidate, installed_version) > 0:
-                # We delegate to apt to find the best match when version_cmp is None,
-                # so this candidate is not necessarily the one that will be installed.
-                pkgver = candidate
-                break
-
     if not pkgver:
         return None
     if version_cmp == "=" and not fnmatch.fnmatch(pkgver.ver_str, version):
@@ -582,17 +548,15 @@ def package_status(m, pkgname, version_cmp, version, default_release, cache, sta
             # assume older version of python-apt is installed
             package_is_installed = pkg.isInstalled
 
-    installed_version = None
+    version_best = package_best_match(pkgname, version_cmp, version, default_release, cache._cache)
+    version_is_installed = False
+    version_installable = None
     if package_is_installed:
         try:
             installed_version = pkg.installed.version
         except AttributeError:
             installed_version = pkg.installedVersion
 
-    version_best = package_best_match(pkgname, version_cmp, version, default_release, cache._cache, installed_version)
-    version_is_installed = False
-    version_installable = None
-    if package_is_installed:
         if version_cmp == "=":
             # check if the version is matched as well
             version_is_installed = fnmatch.fnmatch(installed_version, version)

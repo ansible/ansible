@@ -72,32 +72,9 @@
       name: foo
       state: absent
 
-  - name: Test preferring pinned version when possible with >=
-    apt:
-      name: foo>=1.0.0
-      state: latest
-    register: apt_result
-
-  - name: Check install with dpkg
-    shell: dpkg-query -l foo
-    register: dpkg_result
-
-  - name: Check if install was successful
-    assert:
-      that:
-        - "apt_result is success"
-        - "dpkg_result is success"
-        # NOTE: latest version is not installed
-        - "'1.0.0' in dpkg_result.stdout"
-
-  - name: Remove foo between tests
-    apt:
-      name: foo
-      state: absent
-
   - name: Override pin with >=
     apt:
-      name: foo>=1.0.1
+      name: foo>=1.0.0
       state: latest
 
   - name: Check install with dpkg
