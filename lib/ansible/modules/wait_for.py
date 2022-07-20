@@ -224,6 +224,7 @@ match_groupdict:
 '''
 
 import binascii
+import contextlib
 import datetime
 import errno
 import math
@@ -585,7 +586,7 @@ def main():
                         break
                     try:
                         with open(b_path, 'rb') as f:
-                            with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+                            with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as mm:
                                 search = b_compiled_search_re.search(mm)
                                 if search:
                                     if search.groupdict():
