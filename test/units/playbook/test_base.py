@@ -488,7 +488,7 @@ class TestBaseSubClass(TestBase):
     def test_attr_class_post_validate_class_not_instance(self):
         not_a_esc = ExampleSubClass
         ds = {'test_attr_class_post_validate': not_a_esc}
-        self.assertRaisesRegex(AnsibleParserError, 'is not a valid.*got a.*Meta.*instead',
+        self.assertRaisesRegex(AnsibleParserError, "is not a valid.*got a <class 'type'> instead",
                                self._base_validate, ds)
 
     def test_attr_class_post_validate_wrong_class(self):

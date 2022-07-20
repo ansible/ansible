@@ -1,0 +1,2 @@
+minor_changes:
+  - Utilize @classmethod and @property together to form classproperty (Python 3.9) to access field attributes of a class
