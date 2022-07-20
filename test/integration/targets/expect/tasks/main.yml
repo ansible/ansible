@@ -109,10 +109,15 @@
       foo: bar
   register: chdir_result
 
+- name: get remote_tmp_dir real path
+  raw: >
+    {{ ansible_python_interpreter }} -c 'import os; os.chdir("{{remote_tmp_dir}}"); print(os.getcwd())'
+  register: remote_tmp_dir_real_path
+
 - name: assert chdir works
   assert:
     that:
-    - "'{{chdir_result.stdout |expanduser | realpath }}' == '{{remote_tmp_dir | expanduser | realpath}}'"
+    - "'{{chdir_result.stdout | trim}}' == '{{remote_tmp_dir_real_path.stdout | trim}}'"
 
 - name: test timeout option
   expect:
