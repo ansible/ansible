@@ -46,11 +46,30 @@
     copy:
       content: |-
               Package: foo
-              Pin: version 1.0.0
+              Pin: version 0.9.0
               Pin-Priority: 1001
       dest: /etc/apt/preferences.d/foo
 
+  # Test install code path
   - name: Install unspecified version
+    apt:
+      name: foo
+      state: present
+    register: apt_result
+
+  - name: Check install with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+
+  - name: Check if install was successful
+    assert:
+      that:
+        - "apt_result is success"
+        - "dpkg_result is success"
+        - "'0.9.0' in dpkg_result.stdout"
+
+  # Test upgrade code path when no change is made
+  - name: Install unspecified version (idempotence)
     apt:
       name: foo
       state: latest
@@ -63,16 +82,40 @@
   - name: Check if install was successful
     assert:
       that:
-        - "apt_result is success"
-        - "dpkg_result is success"
-        - "'1.0.0' in dpkg_result.stdout"
+        - apt_result is success
+        - not apt_result.changed
+        - dpkg_result is success
+        - "'0.9.0' in dpkg_result.stdout"
 
-  - name: Remove foo between tests
+  - name: Update the pin to test upgrading with an unspecified version
+    copy:
+      content: |-
+              Package: foo
+              Pin: version 1.0.0
+              Pin-Priority: 1001
+      dest: /etc/apt/preferences.d/foo
+
+  # Test upgrade code path when a change is made
+  - name: Upgrade unspecified version
     apt:
       name: foo
-      state: absent
+      state: latest
+    register: apt_result
 
-  - name: Override pin with >=
+  - name: Check install with dpkg
+    shell: dpkg-query -l foo
+    register: dpkg_result
+
+  - name: Check if install was successful
+    assert:
+      that:
+        - apt_result is success
+        - apt_result.changed
+        - dpkg_result is success
+        - "'1.0.0' in dpkg_result.stdout"
+
+  # Test a specific version requested with >= ignores pinned versions
+  - name: Upgrade to latest version by specifying version
     apt:
       name: foo>=1.0.0
       state: latest
@@ -87,15 +130,16 @@
         - "dpkg_result is success"
         - "'1.0.1' in dpkg_result.stdout"
 
-  - name: Remove foo between tests
+  - name: Remove foo for next test
     apt:
       name: foo
       state: absent
 
-  - name: Override pin with =
+  # Test a specific version requested with = ignores pinned versions
+  - name: Install specific version
     apt:
       name: foo=1.0.1
-      state: latest
+      state: present
 
   - name: Check install with dpkg
     shell: dpkg-query -l foo
