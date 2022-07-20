@@ -82,8 +82,7 @@ class ActionModule(ActionBase):
                     self._fixup_perms2((self._connection._shell.tmpdir, tmp_src))
                 kwargs['body'] = body
 
-            new_module_args = self._task.args.copy()
-            new_module_args.update(kwargs)
+            new_module_args = self._task.args | kwargs
 
             # call with ansible.legacy prefix to prevent collections collisions while allowing local override
             result.update(self._execute_module('ansible.legacy.uri', module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))

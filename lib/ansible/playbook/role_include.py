@@ -78,7 +78,7 @@ class IncludeRole(TaskInclude):
             myplay = play
 
         ri = RoleInclude.load(self._role_name, play=myplay, variable_manager=variable_manager, loader=loader, collection_list=self.collections)
-        ri.vars.update(self.vars)
+        ri.vars |= self.vars
 
         if variable_manager is not None:
             available_variables = variable_manager.get_vars(play=myplay, task=self)
@@ -147,7 +147,7 @@ class IncludeRole(TaskInclude):
 
         # build options for role includes
         for key in my_arg_names.intersection(IncludeRole.FROM_ARGS):
-            from_key = key.replace('_from', '')
+            from_key = key.removesuffix('_from')
             args_value = ir.args.get(key)
             if not isinstance(args_value, string_types):
                 raise AnsibleParserError('Expected a string for %s but got %s instead' % (key, type(args_value)))
@@ -179,7 +179,7 @@ class IncludeRole(TaskInclude):
     def get_include_params(self):
         v = super(IncludeRole, self).get_include_params()
         if self._parent_role:
-            v.update(self._parent_role.get_role_params())
+            v |= self._parent_role.get_role_params()
             v.setdefault('ansible_parent_role_names', []).insert(0, self._parent_role.get_name())
             v.setdefault('ansible_parent_role_paths', []).insert(0, self._parent_role._role_path)
         return v

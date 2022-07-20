@@ -10,7 +10,7 @@ from importlib.metadata import distribution
 
 
 def _short_name(name):
-    return name.replace('ansible-', '').replace('ansible', 'adhoc')
+    return name.removeprefix('ansible-').replace('ansible', 'adhoc')
 
 
 def main():

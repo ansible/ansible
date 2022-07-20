@@ -190,7 +190,7 @@ class IncludedFile:
                         new_task._role_name = role_name
                         for from_arg in new_task.FROM_ARGS:
                             if from_arg in include_args:
-                                from_key = from_arg.replace('_from', '')
+                                from_key = from_arg.removesuffix('_from')
                                 new_task._from_files[from_key] = templar.template(include_args.pop(from_arg))
 
                         omit_token = task_vars.get('omit')

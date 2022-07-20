@@ -82,9 +82,9 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         all_vars = {}
 
         if self._parent:
-            all_vars.update(self._parent.get_vars())
+            all_vars |= self._parent.get_vars()
 
-        all_vars.update(self.vars.copy())
+        all_vars |= self.vars.copy()
 
         return all_vars
 
