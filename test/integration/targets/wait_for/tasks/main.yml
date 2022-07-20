@@ -104,10 +104,8 @@
     - waitfor['match_groupdict']['foo'] == 'data'
     - waitfor['match_groups'] == ['data', '123']
 
-- name: copy non-ascii file
-  copy:
-    src: latin1.txt
-    dest: "{{remote_tmp_dir}}/latin1.txt"
+- name: write non-ascii file
+  script: write_latin1.py "{{remote_tmp_dir}}/latin1.txt"
 
 - name: test non-ascii file
   wait_for:
