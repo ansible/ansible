@@ -27,7 +27,7 @@ from struct import unpack, pack
 from termios import TIOCGWINSZ
 
 try:
-    from typing_extensions import TypeGuard  # TypeGuard was added in Python 3.9
+    from typing_extensions import TypeGuard  # TypeGuard was added in Python 3.10
 except ImportError:
     TypeGuard = None
 
