@@ -146,7 +146,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def _preprocess_with_loop(self, ds, new_ds, k, v):
         ''' take a lookup plugin name and store it correctly '''
 
-        loop_name = k.replace("with_", "")
+        loop_name = k.removeprefix("with_")
         if new_ds.get('loop') is not None or new_ds.get('loop_with') is not None:
             raise AnsibleError("duplicate loop in task: %s" % loop_name, obj=ds)
         if v is None:
@@ -241,7 +241,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             if k in ('action', 'local_action', 'args', 'delegate_to') or k == action or k == 'shell':
                 # we don't want to re-assign these values, which were determined by the ModuleArgsParser() above
                 continue
-            elif k.startswith('with_') and k.replace("with_", "") in lookup_loader:
+            elif k.startswith('with_') and k.removeprefix("with_") in lookup_loader:
                 # transform into loop property
                 self._preprocess_with_loop(ds, new_ds, k, v)
             elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
@@ -323,7 +323,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                     else:
                         isdict = templar.template(env_item, convert_bare=False)
                         if isinstance(isdict, dict):
-                            env.update(isdict)
+                            env |= isdict
                         else:
                             display.warning("could not parse environment value, skipping: %s" % value)
 
@@ -362,9 +362,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def get_vars(self):
         all_vars = dict()
         if self._parent:
-            all_vars.update(self._parent.get_vars())
+            all_vars |= self._parent.get_vars()
 
-        all_vars.update(self.vars)
+        all_vars |= self.vars
 
         if 'tags' in all_vars:
             del all_vars['tags']
@@ -376,9 +376,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def get_include_params(self):
         all_vars = dict()
         if self._parent:
-            all_vars.update(self._parent.get_include_params())
+            all_vars |= self._parent.get_include_params()
         if self.action in C._ACTION_ALL_INCLUDES:
-            all_vars.update(self.vars)
+            all_vars |= self.vars
         return all_vars
 
     def copy(self, exclude_parent=False, exclude_tasks=False):

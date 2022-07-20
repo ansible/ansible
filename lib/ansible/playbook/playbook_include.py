@@ -65,7 +65,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
 
         all_vars = self.vars.copy()
         if variable_manager:
-            all_vars.update(variable_manager.get_vars())
+            all_vars |= variable_manager.get_vars()
 
         templar = Templar(loader=loader, variables=all_vars)
 
@@ -105,8 +105,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
             if new_obj.when and isinstance(entry, Play):
                 entry._included_conditional = new_obj.when[:]
 
-            temp_vars = entry.vars.copy()
-            temp_vars.update(new_obj.vars)
+            temp_vars = entry.vars | new_obj.vars
             param_tags = temp_vars.pop('tags', None)
             if param_tags is not None:
                 entry.tags.extend(param_tags.split(','))

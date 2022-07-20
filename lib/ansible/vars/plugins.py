@@ -28,9 +28,9 @@ def get_plugin_vars(loader, plugin, path, entities):
         try:
             for entity in entities:
                 if isinstance(entity, Host):
-                    data.update(plugin.get_host_vars(entity.name))
+                    data |= plugin.get_host_vars(entity.name)
                 else:
-                    data.update(plugin.get_group_vars(entity.name))
+                    data |= plugin.get_group_vars(entity.name)
         except AttributeError:
             if hasattr(plugin, 'run'):
                 raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))

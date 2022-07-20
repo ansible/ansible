@@ -914,7 +914,7 @@ class AnsibleCollectionRef:
         """
         legacy_plugin_dir_name = to_text(legacy_plugin_dir_name)
 
-        plugin_type = legacy_plugin_dir_name.replace(u'_plugins', u'')
+        plugin_type = legacy_plugin_dir_name.removesuffix(u'_plugins')
 
         if plugin_type == u'library':
             plugin_type = u'modules'
