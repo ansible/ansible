@@ -693,7 +693,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         package_names.append(name)
         installed, installed_version, version_installable, has_files = package_status(m, name, version_cmp, version, default_release, cache, state='install')
         if (not installed and not only_upgrade) or (installed and not installed_version) or (upgrade and version_installable):
-            if version_cmp is not None and (version_installable or version):
+            if (version_cmp or default_release) and (version_installable or version):
                 pkg_list.append("'%s=%s'" % (name, version_installable or version))
             else:
                 pkg_list.append("'%s'" % name)
