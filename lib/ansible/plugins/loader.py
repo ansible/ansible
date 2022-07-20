@@ -628,7 +628,7 @@ class PluginLoader:
                     if candidate_name.startswith('ansible.legacy'):
                         # 'ansible.legacy' refers to the plugin finding behavior used before collections existed.
                         # They need to search 'library' and the various '*_plugins' directories in order to find the file.
-                        plugin_load_context = self._find_plugin_legacy(name.replace('ansible.legacy.', '', 1),
+                        plugin_load_context = self._find_plugin_legacy(name.removeprefix('ansible.legacy.'),
                                                                        plugin_load_context, ignore_deprecated, check_aliases, suffix)
                     else:
                         # 'ansible.builtin' should be handled here. This means only internal, or builtin, paths are searched.

@@ -99,7 +99,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
         # result and the role name
         if isinstance(ds, dict):
             (new_role_def, role_params) = self._split_role_params(ds)
-            new_ds.update(new_role_def)
+            new_ds |= new_role_def
             self._role_params = role_params
 
         # set the role name in the new ds

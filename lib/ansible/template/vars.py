@@ -123,7 +123,6 @@ class AnsibleJ2Vars(Mapping):
 
         # prior to version 2.9, locals contained all of the vars and not just the current
         # local vars so this was not necessary for locals to propagate down to nested includes
-        new_locals = self._locals.copy()
-        new_locals.update(locals)
+        new_locals = self._locals | locals
 
         return AnsibleJ2Vars(self._templar, self._globals, locals=new_locals)

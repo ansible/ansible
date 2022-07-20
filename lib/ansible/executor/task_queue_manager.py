@@ -418,7 +418,7 @@ class TaskQueueManager:
             for possible in [method_name, 'v2_on_any']:
                 gotit = getattr(callback_plugin, possible, None)
                 if gotit is None:
-                    gotit = getattr(callback_plugin, possible.replace('v2_', ''), None)
+                    gotit = getattr(callback_plugin, possible.removeprefix('v2_'), None)
                 if gotit is not None:
                     methods.append(gotit)
 
