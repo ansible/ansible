@@ -1,0 +1,2 @@
+bugfixes:
+  - apt - if the user hasn't specified a version, let the Python apt library determine the best candidate when installing/upgrading a package (https://github.com/ansible/ansible/issues/77969).
