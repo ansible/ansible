@@ -487,7 +487,12 @@ def package_best_match(pkgname, version_cmp, version, release, cache):
         # You can't pin to a minimum version, only equality with a glob
         policy.create_pin('Version', pkgname, version, 991)
     pkg = cache[pkgname]
-    pkgver = policy.get_candidate_ver(pkg)
+    if version_cmp or release:
+        pkgver = policy.get_candidate_ver(pkg)
+    else:
+        # Look for upgrades, respecting pinned versions
+        dep_cache = apt_pkg.DepCache(cache)
+        pkgver = dep_cache.get_candidate_ver(pkg)
     if not pkgver:
         return None
     if version_cmp == "=" and not fnmatch.fnmatch(pkgver.ver_str, version):
