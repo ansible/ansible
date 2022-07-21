@@ -23,6 +23,7 @@ Customize the CLI output
 
 You can change the output from Ansible CLI commands using :ref:`callback_plugins`.
 
+.. _playbook_tips:
 
 Playbook tips
 =============
@@ -52,6 +53,8 @@ Use comments
 
 Even with task names and explicit state, sometimes a part of a playbook or role (or inventory/variable file) needs more explanation.
 Adding a comment (any line starting with '#') helps others (and possibly yourself in future) understand what a play or task (or variable setting) does, how it does it, and why.
+
+.. _inventory_tips:
 
 Inventory tips
 ==============
@@ -102,6 +105,8 @@ When running a playbook, Ansible finds the variables in the unencrypted file, wh
 There is no limit to the number of variable and vault files or their names.
 
 Note that using this strategy in your inventory still requires *all vault passwords to be available* (for example for ``ansible-playbook`` or `AWX/Ansible Tower <https://github.com/ansible/awx/issues/223#issuecomment-768386089>`_) when run with that inventory.
+
+.. _execution_tips:
 
 Execution tricks
 ================
