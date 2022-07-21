@@ -269,8 +269,8 @@ class IntegrationConfig(TestConfig):
         self.tags = args.tags
         self.skip_tags = args.skip_tags
         self.diff = args.diff
-        self.no_temp_workdir = args.no_temp_workdir
-        self.no_temp_unicode = args.no_temp_unicode
+        self.no_temp_workdir = args.no_temp_workdir  # type: bool
+        self.no_temp_unicode = args.no_temp_unicode  # type: bool
 
         if self.list_targets:
             self.explain = True
