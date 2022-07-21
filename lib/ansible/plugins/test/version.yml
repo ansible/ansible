@@ -40,7 +40,7 @@ DOCUMENTATION:
       required: False
       default: False
     version_type:
-      description: Version scheme to use for comparison
+      description: Version scheme to use for comparison. Mutually exclusive with C(strict). See C(notes) for descriptions on the version types.
       type: string
       required: False
       choices:
