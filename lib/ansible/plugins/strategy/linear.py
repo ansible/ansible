@@ -67,19 +67,49 @@ class StrategyModule(StrategyBase):
                 state_task_per_host[host] = state, task
 
         if not state_task_per_host:
+            # could just return an empty list but tests expect this
             return [(h, None) for h in hosts]
 
+
+        if self._in_handlers and not any(True for s, t in state_task_per_host.values() if s.run_state == IteratingStates.HANDLERS):  # TODO get_active_state?
+            self._in_handlers = False
+
+        if len([True for s, t in state_task_per_host.values() if s.run_state == IteratingStates.HANDLERS and s.fail_state != FailedStates.NONE]) == len(state_task_per_host.values()) and iterator._play.force_handlers:
+            self._in_handlers = True
+
+        flatten_handlers = []
+        for handler_block in iterator._play.handlers:
+            for handler_task in handler_block.block:
+                flatten_handlers.append(handler_task)
+
         task_uuids = [t._uuid for s, t in state_task_per_host.values()]
-        while True:
-            try:
-                cur_task = iterator.all_tasks[iterator.cur_task]
-            except IndexError:
-                # pick up any tasks left after clear_host_errors
-                iterator.cur_task = 0
-            else:
-                iterator.cur_task += 1
-                if cur_task._uuid in task_uuids:
-                    break
+
+        if self._in_handlers:
+            while True:
+                try:
+                    cur_task = flatten_handlers[iterator.cur_handler]
+                except IndexError:
+                    # pick up any tasks left after clear_host_errors
+                    iterator.cur_handler = 0
+                else:
+                    iterator.cur_handler += 1
+                    if cur_task._uuid in task_uuids:
+                        break
+        else:
+            while True:
+                try:
+                    cur_task = iterator.all_tasks[iterator.cur_task]
+                except IndexError:
+                    # pick up any tasks left after clear_host_errors
+                    iterator.cur_task = 0
+                else:
+                    iterator.cur_task += 1
+                    if cur_task._uuid in task_uuids:
+                        break
+
+        if cur_task.action == 'meta' and cur_task.args.get('_raw_params', None) == 'flush_handlers':
+            self._in_handlers = True
+            iterator.cur_handler = 0
 
         host_tasks = []
         for host, (state, task) in state_task_per_host.items():
@@ -96,6 +126,7 @@ class StrategyModule(StrategyBase):
         it for all hosts, then wait for the queue to drain before
         moving on to the next task
         '''
+        self._in_handlers = False
 
         # iterate over each task, while there is one left to run
         result = self._tqm.RUN_OK

@@ -239,6 +239,7 @@ class PlayIterator:
 
         self.end_play = False
         self.cur_task = 0
+        self.cur_handler = 0
 
     def get_host_state(self, host):
         # Since we're using the PlayIterator to carry forward failed hosts,
