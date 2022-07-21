@@ -330,25 +330,27 @@ class GalaxyAPI:
         should_retry_error=is_rate_limit_exception
     )
     def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None,
-                     cache=False):
+                     cache=False, cache_key=None):
         url_info = urlparse(url)
         cache_id = get_cache_id(url)
+        if not cache_key:
+            cache_key = url_info.path
         query = parse_qs(url_info.query)
         if cache and self._cache:
             server_cache = self._cache.setdefault(cache_id, {})
             iso_datetime_format = '%Y-%m-%dT%H:%M:%SZ'
 
             valid = False
-            if url_info.path in server_cache:
-                expires = datetime.datetime.strptime(server_cache[url_info.path]['expires'], iso_datetime_format)
+            if cache_key in server_cache:
+                expires = datetime.datetime.strptime(server_cache[cache_key]['expires'], iso_datetime_format)
                 valid = datetime.datetime.utcnow() < expires
 
             is_paginated_url = 'page' in query or 'offset' in query
             if valid and not is_paginated_url:
                 # Got a hit on the cache and we aren't getting a paginated response
-                path_cache = server_cache[url_info.path]
+                path_cache = server_cache[cache_key]
                 if path_cache.get('paginated'):
-                    if '/v3/' in url_info.path:
+                    if '/v3/' in cache_key:
                         res = {'links': {'next': None}}
                     else:
                         res = {'next': None}
@@ -368,7 +370,7 @@ class GalaxyAPI:
                 # The cache entry had expired or does not exist, start a new blank entry to be filled later.
                 expires = datetime.datetime.utcnow()
                 expires += datetime.timedelta(days=1)
-                server_cache[url_info.path] = {
+                server_cache[cache_key] = {
                     'expires': expires.strftime(iso_datetime_format),
                     'paginated': False,
                 }
@@ -393,7 +395,7 @@ class GalaxyAPI:
                                % (resp.url, to_native(resp_data)))
 
         if cache and self._cache:
-            path_cache = self._cache[cache_id][url_info.path]
+            path_cache = self._cache[cache_id][cache_key]
 
             # v3 can return data or results for paginated results. Scan the result so we can determine what to cache.
             paginated_key = None
@@ -815,6 +817,7 @@ class GalaxyAPI:
         page_size_name = 'limit' if 'v3' in self.available_api_versions else 'page_size'
         versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/?%s=%d' % (page_size_name, COLLECTION_PAGE_SIZE))
         versions_url_info = urlparse(versions_url)
+        cache_key = versions_url_info.path
 
         # We should only rely on the cache if the collection has not changed. This may slow things down but it ensures
         # we are not waiting a day before finding any new collections that have been published.
@@ -834,7 +837,7 @@ class GalaxyAPI:
             if cached_modified_date != modified_date:
                 modified_cache['%s.%s' % (namespace, name)] = modified_date
                 if versions_url_info.path in server_cache:
-                    del server_cache[versions_url_info.path]
+                    del server_cache[cache_key]
 
                 self._set_cache()
 
@@ -842,7 +845,7 @@ class GalaxyAPI:
                             % (namespace, name, self.name, self.api_server)
 
         try:
-            data = self._call_galaxy(versions_url, error_context_msg=error_context_msg, cache=True)
+            data = self._call_galaxy(versions_url, error_context_msg=error_context_msg, cache=True, cache_key=cache_key)
         except GalaxyError as err:
             if err.http_code != 404:
                 raise
@@ -876,7 +879,7 @@ class GalaxyAPI:
                 next_link = versions_url.replace(versions_url_info.path, next_link)
 
             data = self._call_galaxy(to_native(next_link, errors='surrogate_or_strict'),
-                                     error_context_msg=error_context_msg, cache=True)
+                                     error_context_msg=error_context_msg, cache=True, cache_key=cache_key)
         self._set_cache()
 
         return versions
