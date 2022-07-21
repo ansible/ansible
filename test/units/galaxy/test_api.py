@@ -75,6 +75,57 @@ def get_test_galaxy_api(url, version, token_ins=None, token_value=None, no_cache
     return api
 
 
+def get_v3_collection_versions(namespace='namespace', name='collection'):
+    pagination_path = f"/api/galaxy/content/community/v3/plugin/{namespace}/content/community/collections/index/{namespace}/{name}/versions"
+    page_versions = (('1.0.0', '1.0.1',), ('1.0.2', '1.0.3',), ('1.0.4', '1.0.5'),)
+    responses = [
+        {},  # TODO: initial response
+    ]
+
+    first = f"{pagination_path}/?limit=100"
+    last = f"{pagination_path}/?limit=100&offset=200"
+    page_versions = [
+        {
+            "versions": ('1.0.0', '1.0.1',),
+            "url": first,
+        },
+        {
+            "versions": ('1.0.2', '1.0.3',),
+            "url": f"{pagination_path}/?limit=100&offset=100",
+        },
+        {
+            "versions": ('1.0.4', '1.0.5'),
+            "url": last,
+        },
+    ]
+
+    previous = None
+    for page in range(0, len(page_versions)):
+        data = []
+
+        if page_versions[page]["url"] == last:
+            next_page = None
+        else:
+            next_page = page_versions[page + 1]["url"]
+        links = {"first": first, "last": last, "next": next_page, "previous": previous}
+
+        for version in page_versions[page]["versions"]:
+            data.append(
+                {
+                    "version": f"{version}",
+                    "href": f"{pagination_path}/{version}/",
+                    "created_at": "2022-05-13T15:55:58.913107Z",
+                    "updated_at": "2022-05-13T15:55:58.913121Z",
+                    "requires_ansible": ">=2.9.10"
+                }
+            )
+
+        responses.append({"meta": {"count": 6}, "links": links, "data": data})
+
+        previous = page_versions[page]["url"]
+    return responses
+
+
 def get_collection_versions(namespace='namespace', name='collection'):
     base_url = 'https://galaxy.server.com/api/v2/collections/{0}/{1}/'.format(namespace, name)
     versions_url = base_url + 'versions/'
@@ -1143,6 +1194,35 @@ def test_cache_complete_pagination(cache_dir, monkeypatch):
 
     cached_server = final_cache['galaxy.server.com:']
     cached_collection = cached_server['/api/v2/collections/namespace/collection/versions/']
+    cached_versions = [r['version'] for r in cached_collection['results']]
+
+    assert final_cache == api._cache
+    assert cached_versions == actual_versions
+
+
+def test_cache_complete_pagination_v3(cache_dir, monkeypatch):
+
+    responses = get_v3_collection_versions()
+    cache_file = os.path.join(cache_dir, 'api.json')
+
+    api = get_test_galaxy_api('https://galaxy.server.com/api/', 'v3', no_cache=False)
+
+    mock_open = MagicMock(
+        side_effect=[
+            StringIO(to_text(json.dumps(r)))
+            for r in responses
+        ]
+    )
+    monkeypatch.setattr(galaxy_api, 'open_url', mock_open)
+
+    actual_versions = api.get_collection_versions('namespace', 'collection')
+    assert actual_versions == [u'1.0.0', u'1.0.1', u'1.0.2', u'1.0.3', u'1.0.4', u'1.0.5']
+
+    with open(cache_file) as fd:
+        final_cache = json.loads(fd.read())
+
+    cached_server = final_cache['galaxy.server.com:']
+    cached_collection = cached_server['/api/v3/collections/namespace/collection/versions/']
     cached_versions = [r['version'] for r in cached_collection['results']]
 
     assert final_cache == api._cache

@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-galaxy - fix setting the cache for paginated responses from Galaxy NG/AH (https://github.com/ansible/ansible/issues/77911).
