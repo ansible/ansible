@@ -169,13 +169,31 @@ As of Ansible 2.11 the ``version`` test accepts a ``version_type`` parameter whi
 
 .. code-block:: console
 
-    loose, strict, semver, semantic
+    loose, strict, semver, semantic, pep440
+
+``loose``
+  This type corresponds to the Python ``distutils.version.LooseVersion`` class. All version formats are valid for this type. The rules for comparison are simple and predictable, but may not always give expected results.
+
+``strict``
+  This type corresponds to the Python ``distutils.version.StrictVersion`` class. A version number consists of two or three dot-separated numeric components, with an optional "pre-release" tag on the end. The pre-release tag consists of a single letter 'a' or 'b' followed by a number.  If the numeric components of two version numbers are equal, then one with a pre-release tag will always be deemed earlier (lesser) than one without.
+
+``semver``/``semantic``
+  This type implements the `Semantic Version <https://semver.org>`_ scheme for version comparison.
+
+``pep440``
+  This type implements the Python `PEP-440 <https://peps.python.org/pep-0440/>`_ versioning rules for version comparison. Added in version 2.14.
 
 Using ``version_type`` to compare a semantic version would be achieved like the following
 
 .. code-block:: yaml+jinja
 
     {{ sample_semver_var is version('2.0.0-rc.1+build.123', 'lt', version_type='semver') }}
+
+In Ansible 2.14, the ``pep440`` option for ``version_type`` was added, and the rules of this type are defined in `PEP-440 <https://peps.python.org/pep-0440/>`_. The following example showcases how this type can differentiate pre-releases as being less than a general release.
+
+.. code-block:: yaml+jinja
+
+   {{ '2.14.0rc1' is version('2.14.0', 'lt', version_type='pep440') }}
 
 When using ``version`` in a playbook or role, don't use ``{{ }}`` as described in the `FAQ <https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#when-should-i-use-also-how-to-interpolate-variables-or-dynamic-variable-names>`_
 
