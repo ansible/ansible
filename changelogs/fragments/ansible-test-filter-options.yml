@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Delegation now properly handles arguments given after ``--`` on the command line.
