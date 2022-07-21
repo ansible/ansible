@@ -1,7 +1,7 @@
 .. _playbook_guide_index:
 
 ##########################
-Guide to Ansible playbooks
+Using Ansible playbooks
 ##########################
 
 .. note::
