@@ -32,6 +32,12 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.display import Display
 from ansible.utils.version import SemanticVersion
 
+try:
+    from packaging.version import Version as PEP440Version
+    HAS_PACKAGING = True
+except ImportError:
+    HAS_PACKAGING = False
+
 display = Display()
 
 
@@ -165,6 +171,7 @@ def version_compare(value, version, operator='eq', strict=None, version_type=Non
         'strict': StrictVersion,
         'semver': SemanticVersion,
         'semantic': SemanticVersion,
+        'pep440': PEP440Version,
     }
 
     if strict is not None and version_type is not None:
@@ -175,6 +182,9 @@ def version_compare(value, version, operator='eq', strict=None, version_type=Non
 
     if not version:
         raise errors.AnsibleFilterError("Version parameter to compare against cannot be empty")
+
+    if version_type == 'pep440' and not HAS_PACKAGING:
+        raise errors.AnsibleFilterError("The pep440 version_type requires the Python 'packaging' library")
 
     Version = LooseVersion
     if strict:
