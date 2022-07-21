@@ -35,7 +35,7 @@ DOCUMENTATION:
         - ne
       default: eq
     strict:
-      descrption: Whether to use strict version scheme. Mutually exclusive with C(version_type)
+      description: Whether to use strict version scheme. Mutually exclusive with C(version_type)
       type: boolean
       required: False
       default: False
