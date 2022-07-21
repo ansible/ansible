@@ -1,9 +1,10 @@
 # edit "sanity.pylint.in" and generate with: hacking/update-sanity-requirements.py --test pylint
-astroid==2.6.6
+astroid==2.7.3
 isort==5.10.1
-lazy-object-proxy==1.6.0
+lazy-object-proxy==1.7.1
 mccabe==0.6.1
-pylint==2.9.6
+platformdirs==2.5.2
+pylint==2.10.2
 PyYAML==6.0
 toml==0.10.2
 wrapt==1.12.1
