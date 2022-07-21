@@ -104,6 +104,16 @@
     - waitfor['match_groupdict']['foo'] == 'data'
     - waitfor['match_groups'] == ['data', '123']
 
+- name: write non-ascii file
+  script: write_utf16.py "{{remote_tmp_dir}}/utf16.txt"
+  args:
+    executable: '{{ ansible_facts.python.executable }}'
+
+- name: test non-ascii file
+  wait_for:
+    path: "{{remote_tmp_dir}}/utf16.txt"
+    search_regex: completed
+
 - name: test wait for port timeout
   wait_for:
     port: 12121
