@@ -83,6 +83,7 @@ class HostState:
 
     def __str__(self):
         return ("HOST STATE: block=%d, task=%d, rescue=%d, always=%d, run_state=%s, fail_state=%s, pre_flushing_run_state=%s, pending_setup=%s, "
+                "handlers_sorted=%s, "
                 "tasks child state? (%s), rescue child state? (%s), always child state? (%s), handlers child state? (%s), "
                 "did rescue? %s, did start at task? %s" % (
                     self.cur_block,
@@ -93,6 +94,7 @@ class HostState:
                     self.fail_state,
                     self.pre_flushing_run_state,
                     self.pending_setup,
+                    self._handlers_sorted,
                     self.tasks_child_state,
                     self.rescue_child_state,
                     self.always_child_state,
@@ -108,7 +110,8 @@ class HostState:
         for attr in ('_blocks', '_notified_handlers',
                      'cur_block', 'cur_regular_task', 'cur_rescue_task', 'cur_always_task',
                      'run_state', 'fail_state', 'pre_flushing_run_state', 'pending_setup',
-                     'tasks_child_state', 'rescue_child_state', 'always_child_state', 'handlers_child_state'):
+                     'tasks_child_state', 'rescue_child_state', 'always_child_state', 'handlers_child_state',
+                     '_handlers_sorted'):
             if getattr(self, attr) != getattr(other, attr):
                 return False
 
