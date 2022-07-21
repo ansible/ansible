@@ -21,12 +21,14 @@ These illustrate best practices as well as how to put many of the various concep
    :maxdepth: 2
 
    playbooks_templating
-   playbooks_special_topics
-   guide_rolling_upgrade
+   playbooks_filters
+   playbooks_tests
+   playbooks_lookups
+   playbooks_python_version
+   playbooks_templating_now
    playbooks_loops
    playbooks_delegation
    playbooks_conditionals
-   playbooks_tests
    playbooks_blocks
    playbooks_handlers
    playbooks_error_handling
@@ -34,8 +36,7 @@ These illustrate best practices as well as how to put many of the various concep
    playbooks_reuse
    playbooks_reuse_roles
    playbooks_module_defaults
-   playbooks_lookups
    playbooks_prompts
    playbooks_variables
    playbooks_vars_facts
-   playbooks_filters
+   guide_rolling_upgrade
