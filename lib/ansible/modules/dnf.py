@@ -24,7 +24,8 @@ options:
         When using state=latest, this can be '*' which means run: dnf -y update.
         You can also pass a url or a local path to a rpm file.
         To operate on several packages this can accept a comma separated string of packages or a list of packages."
-      - Comparison operators for package version are valid here C(>), C(<), C(>=), C(<=). Example - C(name>=1.0)
+      - Comparison operators for package version are valid here C(>), C(<), C(>=), C(<=). Example - C(name >= 1.0).
+        Spaces around the operator are required.
       - You can also pass an absolute path for a binary which is provided by the package to install.
         See examples for more information.
     required: true
@@ -285,7 +286,7 @@ EXAMPLES = '''
 
 - name: Install Apache >= 2.4
   ansible.builtin.dnf:
-    name: httpd>=2.4
+    name: httpd >= 2.4
     state: present
 
 - name: Install the latest version of Apache and MariaDB
