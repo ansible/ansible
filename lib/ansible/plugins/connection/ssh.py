@@ -396,6 +396,7 @@ b_NOT_SSH_ERRORS = (b'Traceback (most recent call last):',  # Python-2.6 when th
                                                             #   while invoking a script via -m
                     b'PHP Parse error:',                    # Php always returns with error
                     b'chmod: invalid mode',                 # chmod, but really only on AIX
+                    b'chmod: A flag or octal number is not correct.',    # chmod, other AIX
                     )
 
 SSHPASS_AVAILABLE = None
@@ -440,7 +441,8 @@ def _handle_error(remaining_retries, command, return_tuple, no_log, host, displa
     if return_tuple[0] == 255:
         SSH_ERROR = True
         for signature in b_NOT_SSH_ERRORS:
-            if signature in return_tuple[1]:
+            # 1 == stout, 2 == stderr
+            if signature in return_tuple[1] or signature in return_tuple[2]:
                 SSH_ERROR = False
                 break
 
