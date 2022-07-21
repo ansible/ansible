@@ -12,7 +12,7 @@
         - handler2
     - name: EXPECTED FAILURE
       fail:
-      when: test_force_handlers | default(false)
+      when: test_force_handlers | default(false) | bool
   handlers:
     - name: handler1
       set_fact:
