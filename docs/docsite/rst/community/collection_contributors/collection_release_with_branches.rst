@@ -203,7 +203,7 @@ Publishing the collection
   * Whether to add ignore entries to the corresponding ``tests/sanity/ignore-*.txt`` file and create issues, for example for removed features in ``modules/plugins``.
 
   Once the CI tests pass, merge the pull request. Make sure that this pull request is merged not too much later after the release
-  for ``verison_added`` sanity tests not to expect the wrong version for the new feature pull request.
+  for ``version_added`` sanity tests not to expect the wrong version for the new feature pull request.
 
 .. note::
 
