@@ -79,85 +79,50 @@ def get_v3_collection_versions(namespace='namespace', name='collection'):
     pagination_path = f"/api/galaxy/content/community/v3/plugin/{namespace}/content/community/collections/index/{namespace}/{name}/versions"
     page_versions = (('1.0.0', '1.0.1',), ('1.0.2', '1.0.3',), ('1.0.4', '1.0.5'),)
     responses = [
+        {},  # TODO: initial response
+    ]
+
+    first = f"{pagination_path}/?limit=100"
+    last = f"{pagination_path}/?limit=100&offset=200"
+    page_versions = [
         {
-            # TODO: initial response
+            "versions": ('1.0.0', '1.0.1',),
+            "url": first,
         },
         {
-            "meta": {"count": 6},
-            "links": {
-                "first": f"{pagination_path}/?limit=100",
-                "previous": None,
-                "next": f"{pagination_path}/?limit=100&offset=100",
-                "last": f"{pagination_path}/?limit=100&offset=200",
-            },
-            "data": [
-                {
-                    "version": f"{page_versions[0][0]}",
-                    "href": f"{pagination_path}/{page_versions[0][0]}/",
-                    "created_at": "2022-05-13T15:55:58.913107Z",
-                    "updated_at": "2022-05-13T15:55:58.913121Z",
-                    "requires_ansible": ">=2.9.10"
-                },
-                {
-                    "version": f"{page_versions[0][1]}",
-                    "href": f"{pagination_path}/{page_versions[0][1]}/",
-                    "created_at": "2022-05-13T15:55:58.913107Z",
-                    "updated_at": "2022-05-13T15:55:58.913121Z",
-                    "requires_ansible": ">=2.9.10"
-                },
-            ]
+            "versions": ('1.0.2', '1.0.3',),
+            "url": f"{pagination_path}/?limit=100&offset=100",
         },
         {
-            "meta": {"count": 6},
-            "links": {
-                "first": f"{pagination_path}/?limit=100",
-                "previous": f"{pagination_path}/?limit=100",
-                "next": f"{pagination_path}/?limit=100&offset=200",
-                "last": f"{pagination_path}/?limit=100&offset=200",
-            },
-            "data": [
-                {
-                    "version": f"{page_versions[1][0]}",
-                    "href": f"{pagination_path}/{page_versions[1][0]}/",
-                    "created_at": "2022-05-13T15:55:58.913107Z",
-                    "updated_at": "2022-05-13T15:55:58.913121Z",
-                    "requires_ansible": ">=2.9.10"
-                },
-                {
-                    "version": f"{page_versions[1][1]}",
-                    "href": f"{pagination_path}/{page_versions[1][1]}/",
-                    "created_at": "2022-05-13T15:55:58.913107Z",
-                    "updated_at": "2022-05-13T15:55:58.913121Z",
-                    "requires_ansible": ">=2.9.10"
-                },
-            ]
-        },
-        {
-            "meta": {"count": 6},
-            "links": {
-                "first": f"{pagination_path}/?limit=100",
-                "previous": f"{pagination_path}/?limit=100&offset=100",
-                "next": None,
-                "last": f"{pagination_path}/?limit=100&offset=200",
-            },
-            "data": [
-                {
-                    "version": f"{page_versions[2][0]}",
-                    "href": f"{pagination_path}/{page_versions[2][0]}/",
-                    "created_at": "2022-05-13T15:55:58.913107Z",
-                    "updated_at": "2022-05-13T15:55:58.913121Z",
-                    "requires_ansible": ">=2.9.10"
-                },
-                {
-                    "version": f"{page_versions[2][1]}",
-                    "href": f"{pagination_path}/{page_versions[2][1]}/",
-                    "created_at": "2022-05-13T15:55:58.913107Z",
-                    "updated_at": "2022-05-13T15:55:58.913121Z",
-                    "requires_ansible": ">=2.9.10"
-                },
-            ]
+            "versions": ('1.0.4', '1.0.5'),
+            "url": last,
         },
     ]
+
+    previous = None
+    for page in range(0, len(page_versions)):
+        data = []
+
+        if page_versions[page]["url"] == last:
+            next_page = None
+        else:
+            next_page = page_versions[page + 1]["url"]
+        links = {"first": first, "last": last, "next": next_page, "previous": previous}
+
+        for version in page_versions[page]["versions"]:
+            data.append(
+                {
+                    "version": f"{version}",
+                    "href": f"{pagination_path}/{version}/",
+                    "created_at": "2022-05-13T15:55:58.913107Z",
+                    "updated_at": "2022-05-13T15:55:58.913121Z",
+                    "requires_ansible": ">=2.9.10"
+                }
+            )
+
+        responses.append({"meta": {"count": 6}, "links": links, "data": data})
+
+        previous = page_versions[page]["url"]
     return responses
 
 
