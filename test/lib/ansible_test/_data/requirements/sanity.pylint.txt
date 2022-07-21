@@ -3,7 +3,7 @@ astroid==2.6.6
 isort==5.10.1
 lazy-object-proxy==1.6.0
 mccabe==0.6.1
-pylint==2.9.3
+pylint==2.9.6
 PyYAML==6.0
 toml==0.10.2
 wrapt==1.12.1
