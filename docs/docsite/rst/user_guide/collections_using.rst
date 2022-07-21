@@ -275,7 +275,7 @@ Signature verification
 
 If a collection has been signed by the Galaxy server, the server will provide ASCII armored, detached signatures to verify the authenticity of the MANIFEST.json before using it to verify the collection's contents. You must opt into signature verification by :ref:`configuring a keyring <galaxy_gpg_keyring>` for ``ansible-galaxy``, or by providing the path with the ``--keyring`` option.
 
-To import a public key into a keyring for use with ``ansible-galaxy`` use the following steps.
+To import a public key into a keyring for use with ``ansible-galaxy`` use the following step.
 
 .. code-block:: bash
 
@@ -283,7 +283,7 @@ To import a public key into a keyring for use with ``ansible-galaxy`` use the fo
 
 In addition to any signatures provided by the Galaxy server, signature sources can also be provided in the requirements file and on the command line. Signature sources should be URIs.
 
-Detached signatures for a collection can be manually generated using the ``gpg`` CLI using the following steps. These steps assume you have generated a GPG private key, but do not cover this process.
+You can manually generate detached signatures for a collection using the ``gpg`` CLI using the following step. This step assume you have generated a GPG private key, but do not cover this process.
 
 .. code-block:: bash
 
