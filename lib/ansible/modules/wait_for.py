@@ -224,9 +224,11 @@ match_groupdict:
 '''
 
 import binascii
+import contextlib
 import datetime
 import errno
 import math
+import mmap
 import os
 import re
 import select
@@ -236,7 +238,7 @@ import traceback
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.common.sys_info import get_platform_subclass
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_bytes
 
 
 HAS_PSUTIL = False
@@ -496,14 +498,22 @@ def main():
     delay = module.params['delay']
     port = module.params['port']
     state = module.params['state']
+
     path = module.params['path']
+    b_path = to_bytes(path, errors='surrogate_or_strict', nonstring='passthru')
+
     search_regex = module.params['search_regex']
+    b_search_regex = to_bytes(search_regex, errors='surrogate_or_strict', nonstring='passthru')
+
     msg = module.params['msg']
 
     if search_regex is not None:
-        compiled_search_re = re.compile(search_regex, re.MULTILINE)
+        try:
+            b_compiled_search_re = re.compile(b_search_regex, re.MULTILINE)
+        except re.error as e:
+            module.fail_json(msg="Invalid regular expression: %s" % e)
     else:
-        compiled_search_re = None
+        b_compiled_search_re = None
 
     match_groupdict = {}
     match_groups = ()
@@ -536,7 +546,7 @@ def main():
         while datetime.datetime.utcnow() < end:
             if path:
                 try:
-                    if not os.access(path, os.F_OK):
+                    if not os.access(b_path, os.F_OK):
                         break
                 except IOError:
                     break
@@ -562,7 +572,7 @@ def main():
         while datetime.datetime.utcnow() < end:
             if path:
                 try:
-                    os.stat(path)
+                    os.stat(b_path)
                 except OSError as e:
                     # If anything except file not present, throw an error
                     if e.errno != 2:
@@ -571,22 +581,20 @@ def main():
                     # file doesn't exist yet, so continue
                 else:
                     # File exists.  Are there additional things to check?
-                    if not compiled_search_re:
+                    if not b_compiled_search_re:
                         # nope, succeed!
                         break
                     try:
-                        f = open(path)
-                        try:
-                            search = re.search(compiled_search_re, f.read())
-                            if search:
-                                if search.groupdict():
-                                    match_groupdict = search.groupdict()
-                                if search.groups():
-                                    match_groups = search.groups()
+                        with open(b_path, 'rb') as f:
+                            with contextlib.closing(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)) as mm:
+                                search = b_compiled_search_re.search(mm)
+                                if search:
+                                    if search.groupdict():
+                                        match_groupdict = search.groupdict()
+                                    if search.groups():
+                                        match_groups = search.groups()
 
-                                break
-                        finally:
-                            f.close()
+                                    break
                     except IOError:
                         pass
             elif port:
@@ -598,8 +606,8 @@ def main():
                     pass
                 else:
                     # Connected -- are there additional conditions?
-                    if compiled_search_re:
-                        data = ''
+                    if b_compiled_search_re:
+                        b_data = b''
                         matched = False
                         while datetime.datetime.utcnow() < end:
                             max_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
@@ -612,8 +620,8 @@ def main():
                             if not response:
                                 # Server shutdown
                                 break
-                            data += to_native(response, errors='surrogate_or_strict')
-                            if re.search(compiled_search_re, data):
+                            b_data += response
+                            if b_compiled_search_re.search(b_data):
                                 matched = True
                                 break
 
