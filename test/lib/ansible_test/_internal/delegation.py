@@ -15,7 +15,6 @@ from .config import (
     CommonConfig,
     EnvironmentConfig,
     IntegrationConfig,
-    SanityConfig,
     ShellConfig,
     TestConfig,
     UnitsConfig,
@@ -248,11 +247,6 @@ def generate_command(
         require,  # type: t.List[str]
 ):  # type: (...) -> t.List[str]
     """Generate the command necessary to delegate ansible-test."""
-    options = {
-        '--color': 1,
-        '--docker-no-pull': 0,
-    }
-
     cmd = [os.path.join(ansible_bin_path, 'ansible-test')]
     cmd = [python.path] + cmd
 
@@ -288,16 +282,7 @@ def generate_command(
 
     cmd = ['/usr/bin/env'] + env_args + cmd
 
-    cmd += list(filter_options(args, args.host_settings.filtered_args, options, exclude, require))
-    cmd += ['--color', 'yes' if args.color else 'no']
-
-    if isinstance(args, SanityConfig):
-        base_branch = args.base_branch or get_ci_provider().get_base_branch()
-
-        if base_branch:
-            cmd += ['--base-branch', base_branch]
-
-    cmd.extend(['--host-path', args.host_path])
+    cmd += list(filter_options(args, args.host_settings.filtered_args, exclude, require))
 
     return cmd
 
@@ -305,66 +290,55 @@ def generate_command(
 def filter_options(
         args,  # type: EnvironmentConfig
         argv,  # type: t.List[str]
-        options,  # type: t.Dict[str, int]
         exclude,  # type: t.List[str]
         require,  # type: t.List[str]
 ):  # type: (...) -> t.Iterable[str]
     """Return an iterable that filters out unwanted CLI options and injects new ones as requested."""
-    options = options.copy()
-
-    options['--truncate'] = 1
-    options['--redact'] = 0
-    options['--no-redact'] = 0
-
-    if isinstance(args, TestConfig):
-        options.update({
-            '--changed': 0,
-            '--tracked': 0,
-            '--untracked': 0,
-            '--ignore-committed': 0,
-            '--ignore-staged': 0,
-            '--ignore-unstaged': 0,
-            '--changed-from': 1,
-            '--changed-path': 1,
-            '--metadata': 1,
-            '--exclude': 1,
-            '--require': 1,
-        })
-    elif isinstance(args, SanityConfig):
-        options.update({
-            '--base-branch': 1,
-        })
-
-    if isinstance(args, IntegrationConfig):
-        options.update({
-            '--no-temp-unicode': 0,
-        })
-
-    for arg in filter_args(argv, options):
-        yield arg
-
-    for arg in args.delegate_args:
-        yield arg
-
-    for target in exclude:
-        yield '--exclude'
-        yield target
-
-    for target in require:
-        yield '--require'
-        yield target
+    replace: list[tuple[str, int, t.Optional[t.Union[bool, str, list[str]]]]] = [
+        ('--docker-no-pull', 0, False),
+        ('--truncate', 1, str(args.truncate)),
+        ('--color', 1, 'yes' if args.color else 'no'),
+        ('--redact', 0, False),
+        ('--no-redact', 0, not args.redact),
+        ('--host-path', 1, args.host_path),
+    ]
 
     if isinstance(args, TestConfig):
-        if args.metadata_path:
-            yield '--metadata'
-            yield args.metadata_path
+        replace.extend([
+            ('--changed', 0, False),
+            ('--tracked', 0, False),
+            ('--untracked', 0, False),
+            ('--ignore-committed', 0, False),
+            ('--ignore-staged', 0, False),
+            ('--ignore-unstaged', 0, False),
+            ('--changed-from', 1, False),
+            ('--changed-path', 1, False),
+            ('--metadata', 1, args.metadata_path),
+            ('--exclude', 1, exclude),
+            ('--require', 1, require),
+            ('--base-branch', 1, args.base_branch or get_ci_provider().get_base_branch()),
+        ])
 
-    yield '--truncate'
-    yield '%d' % args.truncate
+    pass_through_args: list[str] = []
 
-    if not args.redact:
-        yield '--no-redact'
+    for arg in filter_args(argv, {option: count for option, count, replacement in replace}):
+        if arg == '--' or pass_through_args:
+            pass_through_args.append(arg)
+            continue
 
-    if isinstance(args, IntegrationConfig):
-        if args.no_temp_unicode:
-            yield '--no-temp-unicode'
+        yield arg
+
+    for option, _count, replacement in replace:
+        if not replacement:
+            continue
+
+        if isinstance(replacement, bool):
+            yield option
+        elif isinstance(replacement, str):
+            yield from [option, replacement]
+        elif isinstance(replacement, list):
+            for item in replacement:
+                yield from [option, item]
+
+    yield from args.delegate_args
+    yield from pass_through_args
