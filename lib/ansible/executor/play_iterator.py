@@ -155,6 +155,7 @@ class HostState:
             new_state.always_child_state = self.always_child_state.copy()
         if self.handlers_child_state is not None:
             new_state.handlers_child_state = self.handlers_child_state.copy()
+        new_state._handlers_sorted = self._handlers_sorted
         return new_state
 
 
