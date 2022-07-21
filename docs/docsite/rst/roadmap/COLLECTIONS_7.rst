@@ -22,14 +22,13 @@ Release schedule
 :2022-10-18: Ansible-7.0.0 alpha2.
 :2022-10-26: Community Meeting topic: Decide what contingencies to activate for any blockers that do not meet the deadline.
 :2022-11-07: Ansible-core-2.14 released.
-:2022-11-08: Ansible-7.0.0 alpha3.
-:2022-11-14: Last day for collections to make backwards incompatible releases that will be accepted into Ansible-7. This includes adding new collections to Ansible 7.0.0; from now on new collections have to wait for 7.1.0 or later.
-:2022-11-15: Create the ansible-build-data directory and files for Ansible-8.
-:2022-11-15: Ansible-7.0.0 beta1 -- feature freeze [1]_ (weekly beta releases; collection owners and interested users should test for bugs).
-:2022-11-22: Ansible-7.0.0 beta2.
-:2022-11-29: Ansible-7.0.0 rc1 [2]_ [3]_ (weekly release candidates as needed; test and alert us to any blocker bugs).  Blocker bugs will slip release.
-:2022-12-13: Ansible-7.0.0 release.
-:2022-01-03: Release of Ansible-7.1.0 (bugfix + compatible features: every three weeks.)
+:2022-11-07: Last day for collections to make backwards incompatible releases that will be accepted into Ansible-7. This includes adding new collections to Ansible 7.0.0; from now on new collections have to wait for 7.1.0 or later.
+:2022-11-08: Create the ansible-build-data directory and files for Ansible-8.
+:2022-11-08: Ansible-7.0.0 beta1 -- feature freeze [1]_ (weekly beta releases; collection owners and interested users should test for bugs).
+:2022-11-15: Ansible-7.0.0 beta2.
+:2022-11-22: Ansible-7.0.0 rc1 [2]_ [3]_ (weekly release candidates as needed; test and alert us to any blocker bugs).  Blocker bugs will slip release.
+:2022-12-06: Ansible-7.0.0 release.
+:2022-12-27: Release of Ansible-7.1.0 (bugfix + compatible features: every three weeks.)
 
 .. [1] No new modules or major features accepted after this date. In practice, this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community.crypto 2.3.0; Ansible-7.0.0 could ship with community.crypto 2.3.1.  It would not ship with community.crypto 2.4.0.
 
