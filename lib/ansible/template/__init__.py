@@ -432,12 +432,15 @@ class JinjaPluginIntercept(MutableMapping):
         if not isinstance(key, string_types):
             raise ValueError('key must be a string, got %s instead' % type(key))
 
-        plugin = None
         if key not in self._loaded_builtins:
+            plugin = None
             try:
                 plugin = self._pluginloader.get(key)
             except (AnsibleError, KeyError) as e:
                 raise TemplateSyntaxError('Could not load "%s": %s' % (key, to_native(e)), 0)
+            except Exception as e:
+                display.vvvv('Unexpected plugin load (%s) exception: %s' % (key, to_native(e)))
+                raise e
 
             # if a plugin was found/loaded
             if plugin:
@@ -458,7 +461,6 @@ class JinjaPluginIntercept(MutableMapping):
                 # conditionally unroll iterators/generators to avoid having to use `|list` after every filter
                 func = _unroll_iterator(func)
 
-        print(key, func)
         return func
 
     def __setitem__(self, key, value):

@@ -1206,7 +1206,7 @@ class Jinja2Loader(PluginLoader):
             try:
                 plugins = plugins_list()
             except Exception as e:
-                display.vvvv("Skipping %s plugins in '%s' as it seems to be invalid: %r" % (self.type, to_text(p_map.object._original_path), e))
+                display.vvvv("Skipping %s plugins in '%s' as it seems to be invalid: %r" % (self.type, to_text(p_map._original_path), e))
                 continue
 
             for plugin_name in plugins.keys():
