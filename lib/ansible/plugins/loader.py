@@ -1065,6 +1065,7 @@ class Jinja2Loader(PluginLoader):
 
         context = PluginLoadContext()
 
+        # avoid collection path for legacy
         name = name.removeprefix('ansible.legacy.')
 
         if '.' not in name and not collection_list:
@@ -1079,14 +1080,12 @@ class Jinja2Loader(PluginLoader):
                     return get_with_context_result(known_plugin, context)
 
         plugin = None
-
         key, leaf_key = get_fqcr_and_name(name)
         seen = set()
 
         # follow the meta!
         while True:
 
-            print(key)
             if key in seen:
                 raise AnsibleError('recursive collection redirect found for %r' % name, 0)
             seen.add(key)
