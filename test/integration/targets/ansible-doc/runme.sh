@@ -158,7 +158,7 @@ count=$(ANSIBLE_LIBRARY='./nolibrary' ansible-doc -l ansible.builtin |wc -l)
 # produce 'sidecar' docs for test
 [ "$(ansible-doc -t test --playbook-dir ./ testns.testcol.yolo| wc -l)" -gt "0" ]
 [ "$(ansible-doc -t filter --playbook-dir ./ donothing| wc -l)" -gt "0" ]
-# [ "$(ansible-doc -t filter --playbook-dir ./ ansible.legacy.donothing| wc -l)" -gt "0" ]
+[ "$(ansible-doc -t filter --playbook-dir ./ ansible.legacy.donothing| wc -l)" -gt "0" ]
 
 # produce 'sidecar' docs for module
 [ "$(ansible-doc -M ./library test_win_module| wc -l)" -gt "0" ]

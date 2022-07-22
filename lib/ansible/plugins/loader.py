@@ -1065,6 +1065,8 @@ class Jinja2Loader(PluginLoader):
 
         context = PluginLoadContext()
 
+        name = name.removeprefix('ansible.legacy.')
+
         if '.' not in name and not collection_list:
             # find in builtin/legacy list
             for known_plugin in self.all(*args, **kwargs):
@@ -1077,12 +1079,14 @@ class Jinja2Loader(PluginLoader):
                     return get_with_context_result(known_plugin, context)
 
         plugin = None
+
         key, leaf_key = get_fqcr_and_name(name)
         seen = set()
 
         # follow the meta!
         while True:
 
+            print(key)
             if key in seen:
                 raise AnsibleError('recursive collection redirect found for %r' % name, 0)
             seen.add(key)
@@ -1090,6 +1094,7 @@ class Jinja2Loader(PluginLoader):
             acr = AnsibleCollectionRef.try_parse_fqcr(key, self.type)
             if not acr:
                 raise KeyError('invalid plugin name: {0}'.format(key))
+
             try:
                 ts = _get_collection_metadata(acr.collection)
             except ValueError as e:
@@ -1145,7 +1150,6 @@ class Jinja2Loader(PluginLoader):
             parent_prefix = '{0}.{1}'.format(parent_prefix, acr.subdirs)
 
         try:
-            # TODO: implement collection-level redirect
             for dummy, module_name, ispkg in pkgutil.iter_modules(pkg.__path__, prefix=parent_prefix + '.'):
                 if ispkg:
                     continue
