@@ -442,8 +442,9 @@ class PlayIterator:
 
             elif state.run_state == IteratingStates.HANDLERS:
                 if not state._handlers_sorted:
-                    all_handlers = [h for b in self._play.handlers for h in b.block]
-                    state._notified_handlers = deque((h for h in all_handlers if h in state.handlers))
+                    if state.handlers:
+                        all_handlers = [h for b in self._play.handlers for h in b.block]
+                        state._notified_handlers = deque((h for h in all_handlers if h in state.handlers))
                     state._handlers_sorted = True
 
                 if state.handlers_child_state:
