@@ -166,3 +166,6 @@ count=$(ANSIBLE_LIBRARY='./nolibrary' ansible-doc -l ansible.builtin |wc -l)
 
 # test 'double DOCUMENTATION' use
 [ "$(ansible-doc --playbook-dir ./ double_doc| wc -l)" -gt "0" ]
+
+# don't break on module dir
+ansible-doc --list --module-path ./modules
