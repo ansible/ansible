@@ -74,7 +74,7 @@ If the named test uses error codes then the error code to ignore must be appende
 Below are some example ignore entries for an Ansible collection::
 
     roles/my_role/files/my_script.sh shellcheck:SC2154 # ignore undefined variable
-    plugins/modules/my_module.py validate-modules:E105 # ignore license check
+    plugins/modules/my_module.py validate-modules:missing-gplv3-license # ignore license check
     plugins/modules/my_module.py import-3.8 # needs update to support collections.abc on Python 3.8+
 
 It is also possible to skip a sanity test for a specific file.
@@ -85,6 +85,7 @@ Below are some example skip entries for an Ansible collection::
 
     plugins/module_utils/my_util.py validate-modules!skip # waiting for bug fix in module validator
     plugins/lookup/my_plugin.py compile-2.6!skip # Python 2.6 is not supported on the controller
+    For a full list of sanity tests and test names, see :ref:`all_sanity_tests <https://docs.ansible.com/ansible/latest/dev_guide/testing/sanity/index.html#all-sanity-tests>`
 
 Ignore File Errors
 ------------------
