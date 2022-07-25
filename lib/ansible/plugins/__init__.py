@@ -128,9 +128,6 @@ class AnsibleJinja2Plugin(AnsiblePlugin):
 
     has_option = get_option = get_options = option_definitions = set_option = set_options = _no_options
 
-    def run(self, *args, **kwargs):
-        return self._function(*args, **kwargs)
-
     @property
     def j2_function(self):
         return self._function
