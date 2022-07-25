@@ -476,13 +476,6 @@ class FieldAttributeBase:
             elif not isinstance(value, dict):
                 raise TypeError("%s is not a dictionary" % value)
         elif attribute.isa == 'class':
-            if value is None:
-                if attribute.class_type is not None:
-                    value = attribute.class_type()
-                else:
-                    raise AnsibleAssertionError(
-                        "attribute.class_type is required for attribute.isa=class when no default is given"
-                    )
             if not isinstance(value, attribute.class_type):
                 raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute.class_type, type(value)))
             value.post_validate(templar=templar)

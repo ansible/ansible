@@ -276,6 +276,12 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         if not isinstance(value, list):
             setattr(self, name, [value])
 
+    def _validate_loop_control(self, attr, name, value):
+        # ensure loop_control is of class_type even if not specified by user
+        # so default values are properly set
+        if value is None:
+            setattr(self, name, attr.class_type())
+
     def post_validate(self, templar):
         '''
         Override of base class post_validate, to also do final validation on

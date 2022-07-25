@@ -265,20 +265,15 @@ class TaskExecutor:
         task_vars = self._job_vars
         templar = Templar(loader=self._loader, variables=task_vars)
 
-        lc = self._task.get_validated_value(
-            'loop_control',
-            self._task.fattributes.get('loop_control'),
-            self._task.loop_control,
-            templar
-        )
+        self._task.loop_control.post_validate(templar=templar)
 
-        loop_var = lc.loop_var
-        index_var = lc.index_var
-        loop_pause = lc.pause
-        extended = lc.extended
-        extended_allitems = lc.extended_allitems
+        loop_var = self._task.loop_control.loop_var
+        index_var = self._task.loop_control.index_var
+        loop_pause = self._task.loop_control.pause
+        extended = self._task.loop_control.extended
+        extended_allitems = self._task.loop_control.extended_allitems
         # ensure we always have a label
-        label = lc.label or '{{' + loop_var + '}}'
+        label = self._task.loop_control.label or '{{' + loop_var + '}}'
 
         if loop_var in task_vars:
             display.warning(u"%s: The loop variable '%s' is already in use. "
