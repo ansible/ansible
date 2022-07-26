@@ -27,6 +27,7 @@ from .util import (
     ANSIBLE_BIN_PATH,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_ROOT,
+    OutputStream,
 )
 
 from .util_common import (
@@ -191,7 +192,12 @@ def delegate_command(args, host_state, exclude, require):  # type: (EnvironmentC
         success = False
 
         try:
-            con.run(insert_options(command, options), capture=False, interactive=args.interactive)
+            # When delegating, preserve the original separate stdout/stderr streams, but only when the following conditions are met:
+            # 1) Display output is being sent to stderr. This indicates the output on stdout must be kept separate from stderr.
+            # 2) The delegation is non-interactive. Interactive mode, which generally uses a TTY, is not compatible with intercepting stdout/stderr.
+            # The downside to having separate streams is that individual lines of output from each are more likely to appear out-of-order.
+            output_stream = OutputStream.ORIGINAL if args.display_stderr and not args.interactive else None
+            con.run(insert_options(command, options), capture=False, interactive=args.interactive, output_stream=output_stream)
             success = True
         finally:
             if host_delegation:

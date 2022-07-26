@@ -28,6 +28,7 @@ from .util import (
     MODE_DIRECTORY,
     MODE_FILE_EXECUTE,
     MODE_FILE,
+    OutputStream,
     PYTHON_PATHS,
     raw_command,
     ANSIBLE_TEST_DATA_ROOT,
@@ -435,7 +436,7 @@ def run_command(
         stdin=None,  # type: t.Optional[t.IO[bytes]]
         stdout=None,  # type: t.Optional[t.IO[bytes]]
         interactive=False,  # type: bool
-        force_stdout=False,  # type: bool
+        output_stream=None,  # type: t.Optional[OutputStream]
         cmd_verbosity=1,  # type: int
         str_errors='strict',  # type: str
         error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
@@ -443,7 +444,7 @@ def run_command(
     """Run the specified command and return stdout and stderr as a tuple."""
     explain = args.explain and not always
     return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout, interactive=interactive,
-                       force_stdout=force_stdout, cmd_verbosity=cmd_verbosity, str_errors=str_errors, error_callback=error_callback)
+                       output_stream=output_stream, cmd_verbosity=cmd_verbosity, str_errors=str_errors, error_callback=error_callback)
 
 
 def yamlcheck(python):

@@ -20,6 +20,7 @@ from .util import (
     find_executable,
     SubprocessError,
     cache,
+    OutputStream,
 )
 
 from .util_common import (
@@ -515,7 +516,7 @@ def docker_exec(
         stdin=None,  # type: t.Optional[t.IO[bytes]]
         stdout=None,  # type: t.Optional[t.IO[bytes]]
         interactive=False,  # type: bool
-        force_stdout=False,  # type: bool
+        output_stream=None,  # type: t.Optional[OutputStream]
         data=None,  # type: t.Optional[str]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Execute the given command in the specified container."""
@@ -526,7 +527,7 @@ def docker_exec(
         options.append('-i')
 
     return docker_command(args, ['exec'] + options + [container_id] + cmd, capture=capture, stdin=stdin, stdout=stdout, interactive=interactive,
-                          force_stdout=force_stdout, data=data)
+                          output_stream=output_stream, data=data)
 
 
 def docker_info(args):  # type: (CommonConfig) -> t.Dict[str, t.Any]
@@ -548,7 +549,7 @@ def docker_command(
         stdin=None,  # type: t.Optional[t.IO[bytes]]
         stdout=None,  # type: t.Optional[t.IO[bytes]]
         interactive=False,  # type: bool
-        force_stdout=False,  # type: bool
+        output_stream=None,  # type: t.Optional[OutputStream]
         always=False,  # type: bool
         data=None,  # type: t.Optional[str]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
@@ -560,7 +561,7 @@ def docker_command(
         command.append('--remote')
 
     return run_command(args, command + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, interactive=interactive, always=always,
-                       force_stdout=force_stdout, data=data)
+                       output_stream=output_stream, data=data)
 
 
 def docker_environment():  # type: () -> t.Dict[str, str]

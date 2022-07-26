@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import abc
 import errno
+import enum
 import fcntl
 import importlib.util
 import inspect
@@ -98,6 +99,24 @@ MODE_FILE_WRITE = MODE_FILE | stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH
 
 MODE_DIRECTORY = MODE_READ | stat.S_IWUSR | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 MODE_DIRECTORY_WRITE = MODE_DIRECTORY | stat.S_IWGRP | stat.S_IWOTH
+
+
+class OutputStream(enum.Enum):
+    """The output stream to use when running a subprocess and redirecting/capturing stdout or stderr."""
+
+    ORIGINAL = enum.auto()
+    AUTO = enum.auto()
+
+    def get_buffer(self, original: t.BinaryIO) -> t.BinaryIO:
+        """Return the correct output buffer to use, taking into account the given original buffer."""
+
+        if self == OutputStream.ORIGINAL:
+            return original
+
+        if self == OutputStream.AUTO:
+            return display.fd.buffer
+
+        raise NotImplementedError(str(self))
 
 
 class Architecture:
@@ -330,12 +349,14 @@ def raw_command(
         stdin=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
         stdout=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
         interactive=False,  # type: bool
-        force_stdout=False,  # type: bool
+        output_stream=None,  # type: t.Optional[OutputStream]
         cmd_verbosity=1,  # type: int
         str_errors='strict',  # type: str
         error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Run the specified command and return stdout and stderr as a tuple."""
+    output_stream = output_stream or OutputStream.AUTO
+
     if capture and interactive:
         raise InternalError('Cannot combine capture=True with interactive=True.')
 
@@ -354,11 +375,11 @@ def raw_command(
     if stdout and not capture:
         raise InternalError('Redirection of stdout requires capture=True to avoid redirection of stderr to stdout.')
 
-    if force_stdout and capture:
-        raise InternalError('Cannot combine force_stdout=True with capture=True.')
+    if output_stream != OutputStream.AUTO and capture:
+        raise InternalError(f'Cannot combine {output_stream=} with capture=True.')
 
-    if force_stdout and interactive:
-        raise InternalError('Cannot combine force_stdout=True with interactive=True.')
+    if output_stream != OutputStream.AUTO and interactive:
+        raise InternalError(f'Cannot combine {output_stream=} with interactive=True.')
 
     if not cwd:
         cwd = os.getcwd()
@@ -425,9 +446,9 @@ def raw_command(
         # This prevents subprocesses from sharing stdout/stderr with the current process or each other.
         # Doing so allows subprocesses to safely make changes to their file handles, such as making them non-blocking (ssh does this).
         # This also maintains consistency between local testing and CI systems, which typically do not provide a TTY.
-        # To maintain output ordering, a single pipe is used for both stdout/stderr when not capturing output.
+        # To maintain output ordering, a single pipe is used for both stdout/stderr when not capturing output unless the output stream is ORIGINAL.
         stdout = stdout or subprocess.PIPE
-        stderr = subprocess.PIPE if capture else subprocess.STDOUT
+        stderr = subprocess.PIPE if capture or output_stream == OutputStream.ORIGINAL else subprocess.STDOUT
         communicate = True
     else:
         stderr = None
@@ -448,7 +469,7 @@ def raw_command(
         if communicate:
             data_bytes = to_optional_bytes(data)
             stdout_bytes, stderr_bytes = communicate_with_process(process, data_bytes, stdout == subprocess.PIPE, stderr == subprocess.PIPE, capture=capture,
-                                                                  force_stdout=force_stdout)
+                                                                  output_stream=output_stream)
             stdout_text = to_optional_text(stdout_bytes, str_errors) or u''
             stderr_text = to_optional_text(stderr_bytes, str_errors) or u''
         else:
@@ -477,7 +498,7 @@ def communicate_with_process(
         stdout: bool,
         stderr: bool,
         capture: bool,
-        force_stdout: bool
+        output_stream: OutputStream,
 ) -> t.Tuple[bytes, bytes]:
     """Communicate with the specified process, handling stdin/stdout/stderr as requested."""
     threads: t.List[WrappedThread] = []
@@ -492,13 +513,13 @@ def communicate_with_process(
         threads.append(WriterThread(process.stdin, stdin))
 
     if stdout:
-        stdout_reader = reader(process.stdout, force_stdout)
+        stdout_reader = reader(process.stdout, output_stream.get_buffer(sys.stdout.buffer))
         threads.append(stdout_reader)
     else:
         stdout_reader = None
 
     if stderr:
-        stderr_reader = reader(process.stderr, force_stdout)
+        stderr_reader = reader(process.stderr, output_stream.get_buffer(sys.stderr.buffer))
         threads.append(stderr_reader)
     else:
         stderr_reader = None
@@ -546,11 +567,11 @@ class WriterThread(WrappedThread):
 
 class ReaderThread(WrappedThread, metaclass=abc.ABCMeta):
     """Thread to read stdout from a subprocess."""
-    def __init__(self, handle: t.IO[bytes], force_stdout: bool) -> None:
+    def __init__(self, handle: t.IO[bytes], buffer: t.BinaryIO) -> None:
         super().__init__(self._run)
 
         self.handle = handle
-        self.force_stdout = force_stdout
+        self.buffer = buffer
         self.lines = []  # type: t.List[bytes]
 
     @abc.abstractmethod
@@ -577,7 +598,7 @@ class OutputThread(ReaderThread):
     def _run(self) -> None:
         """Workload to run on a thread."""
         src = self.handle
-        dst = sys.stdout.buffer if self.force_stdout else display.fd.buffer
+        dst = self.buffer
 
         try:
             for line in src:
