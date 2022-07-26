@@ -23,5 +23,6 @@ class FilterModule(object):
     def filters(self):
         return {
             'noop': nochange,
-            'ultimatequestion': meaningoflife
+            'ultimatequestion': meaningoflife,
+            'b64decode': nochange,   # here to colide with basename of builtin
         }
