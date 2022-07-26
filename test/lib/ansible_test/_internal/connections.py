@@ -16,6 +16,7 @@ from .config import (
 
 from .util import (
     Display,
+    OutputStream,
     SubprocessError,
     retry,
 )
@@ -50,7 +51,7 @@ class Connection(metaclass=abc.ABCMeta):
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
-            force_stdout=False,  # type: bool
+            output_stream=None,  # type: t.Optional[OutputStream]
             ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
         """Run the specified command and return the result."""
 
@@ -98,7 +99,7 @@ class LocalConnection(Connection):
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
-            force_stdout=False,  # type: bool
+            output_stream=None,  # type: t.Optional[OutputStream]
             ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
         """Run the specified command and return the result."""
         return run_command(
@@ -109,7 +110,7 @@ class LocalConnection(Connection):
             stdin=stdin,
             stdout=stdout,
             interactive=interactive,
-            force_stdout=force_stdout,
+            output_stream=output_stream,
         )
 
 
@@ -140,7 +141,7 @@ class SshConnection(Connection):
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
-            force_stdout=False,  # type: bool
+            output_stream=None,  # type: t.Optional[OutputStream]
             ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
         """Run the specified command and return the result."""
         options = list(self.options)
@@ -174,7 +175,7 @@ class SshConnection(Connection):
                 stdin=stdin,
                 stdout=stdout,
                 interactive=interactive,
-                force_stdout=force_stdout,
+                output_stream=output_stream,
                 error_callback=error_callback,
             )
 
@@ -222,7 +223,7 @@ class DockerConnection(Connection):
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
             stdout=None,  # type: t.Optional[t.IO[bytes]]
-            force_stdout=False,  # type: bool
+            output_stream=None,  # type: t.Optional[OutputStream]
             ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
         """Run the specified command and return the result."""
         options = []
@@ -243,7 +244,7 @@ class DockerConnection(Connection):
             stdin=stdin,
             stdout=stdout,
             interactive=interactive,
-            force_stdout=force_stdout,
+            output_stream=output_stream,
         )
 
     def inspect(self):  # type: () -> DockerInspect

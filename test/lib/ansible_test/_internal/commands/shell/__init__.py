@@ -7,6 +7,7 @@ import typing as t
 
 from ...util import (
     ApplicationError,
+    OutputStream,
     display,
 )
 
@@ -82,7 +83,10 @@ def command_shell(args):  # type: (ShellConfig) -> None
         return
 
     if args.cmd:
-        con.run(args.cmd, capture=False, interactive=False, force_stdout=True)
+        # Running a command is assumed to be non-interactive. Only a shell (no command) is interactive.
+        # If we want to support interactive commands in the future, we'll need an `--interactive` command line option.
+        # Command stderr output is allowed to mix with our own output, which is all sent to stderr.
+        con.run(args.cmd, capture=False, interactive=False, output_stream=OutputStream.ORIGINAL)
         return
 
     if isinstance(con, SshConnection) and args.raw:

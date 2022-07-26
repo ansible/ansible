@@ -29,10 +29,6 @@ TargetSetIndexes = t.Dict[t.FrozenSet[int], int]
 
 class CoverageAnalyzeTargetsConfig(CoverageAnalyzeConfig):
     """Configuration for the `coverage analyze targets` command."""
-    def __init__(self, args):  # type: (t.Any) -> None
-        super().__init__(args)
-
-        self.display_stderr = True
 
 
 def make_report(target_indexes, arcs, lines):  # type: (TargetIndexes, Arcs, Lines) -> t.Dict[str, t.Any]
