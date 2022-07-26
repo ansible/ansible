@@ -85,7 +85,8 @@ Below are some example skip entries for an Ansible collection::
 
     plugins/module_utils/my_util.py validate-modules!skip # waiting for bug fix in module validator
     plugins/lookup/my_plugin.py compile-2.6!skip # Python 2.6 is not supported on the controller
-    For a full list of sanity tests and test names, see :ref:`all_sanity_tests <https://docs.ansible.com/ansible/latest/dev_guide/testing/sanity/index.html#all-sanity-tests>`
+
+For a full list of sanity tests and test names, see :ref:`all_sanity_tests <https://docs.ansible.com/ansible/latest/dev_guide/testing/sanity/index.html#all-sanity-tests>`
 
 Ignore File Errors
 ------------------
