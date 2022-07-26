@@ -193,7 +193,7 @@ This example uses `Python argument list unpacking <https://docs.python.org/3/tut
 
     - hosts: all
       vars:
-        mygroups
+        mygroups:
           - prod
           - web
       tasks:
