@@ -217,7 +217,7 @@ class ShellConfig(EnvironmentConfig):
         self.cmd = args.cmd  # type: t.List[str]
         self.raw = args.raw  # type: bool
         self.check_layout = self.delegate  # allow shell to be used without a valid layout as long as no delegation is required
-        self.interactive = True
+        self.interactive = sys.stdin.isatty() and not args.cmd  # delegation should only be interactive when stdin is a TTY and no command was given
         self.export = args.export  # type: t.Optional[str]
         self.display_stderr = True
 

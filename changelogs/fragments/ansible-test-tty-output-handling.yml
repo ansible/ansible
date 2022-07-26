@@ -1,0 +1,7 @@
+bugfixes:
+  - ansible-test - The ``shell`` command no longer requests a TTY when using delegation unless an interactive shell is being used.
+                   An interactive shell is the default behavior when no command is given to pass to the shell.
+  - ansible-test - The ``shell`` command no longer redirects all output to stdout when running a provided command.
+                   Any command output written to stderr will be mixed with the stderr output from ansible-test.
+  - ansible-test - Delegation for commands which generate output for programmatic consumption no longer redirect all output to stdout.
+                   The affected commands and options are ``shell``, ``sanity --lint``, ``sanity --list-tests``, ``integration --list-targets``, ``coverage analyze``
