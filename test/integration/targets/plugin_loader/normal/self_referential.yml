@@ -1,0 +1,5 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: ensure a self-referential action plugin loads properly
+      self_referential:
