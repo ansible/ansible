@@ -796,11 +796,22 @@ class PluginLoader:
             return sys.modules[full_name]
 
         with warnings.catch_warnings():
+            # FIXME: this still has issues if the module was previously imported but not "cached",
+            #  we should bypass this entire codepath for things that are directly importable
             warnings.simplefilter("ignore", RuntimeWarning)
             spec = importlib.util.spec_from_file_location(to_native(full_name), to_native(path))
             module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
+
+            # mimic import machinery; make the module-being-loaded available in sys.modules during import
+            # and remove if there's a failure...
             sys.modules[full_name] = module
+
+            try:
+                spec.loader.exec_module(module)
+            except Exception:
+                del sys.modules[full_name]
+                raise
+
         return module
 
     def _update_object(self, obj, name, path, redirected_names=None):
