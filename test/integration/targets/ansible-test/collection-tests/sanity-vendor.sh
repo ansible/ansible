@@ -5,7 +5,7 @@ set -eux -o pipefail
 cp -a "${TEST_DIR}/ansible_collections" "${WORK_DIR}"
 cd "${WORK_DIR}/ansible_collections/ns/col"
 
-"${TEST_DIR}/collection-tests/update-ignore.py"
+"${TEST_DIR}/../collection/update-ignore.py"
 
 vendor_dir="$(python -c 'import pathlib, ansible._vendor; print(pathlib.Path(ansible._vendor.__file__).parent)')"
 
