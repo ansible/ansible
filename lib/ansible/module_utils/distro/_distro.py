@@ -87,6 +87,7 @@ _OS_RELEASE_BASENAME = "os-release"
 #: * Value: Normalized value.
 NORMALIZED_OS_ID = {
     "ol": "oracle",  # Oracle Linux
+    "opensuse-leap": "opensuse",  # Newer versions of OpenSuSE report as opensuse-leap
 }
 
 #: Translation table for normalizing the "Distributor ID" attribute returned by
