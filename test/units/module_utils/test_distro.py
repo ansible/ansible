@@ -31,3 +31,9 @@ class TestDistro():
     def test_id(self):
         id = distro.id()
         assert isinstance(id, string_types), 'distro.id() returned %s (%s) which is not a string' % (id, type(id))
+
+    def test_opensuse_leap_id(self):
+        name = distro.name()
+        if name == 'openSUSE Leap':
+            id = distro.id()
+            assert id == 'opensuse', "OpenSUSE Leap did not return 'opensuse' as id"
