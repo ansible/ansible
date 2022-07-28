@@ -2,4 +2,3 @@ bcrypt ; python_version >= '3.8'  # controller only
 passlib ; python_version >= '3.8'  # controller only
 pexpect ; python_version >= '3.8'  # controller only
 pywinrm ; python_version >= '3.8'  # controller only
-unittest2 ; python_version < '2.7'
