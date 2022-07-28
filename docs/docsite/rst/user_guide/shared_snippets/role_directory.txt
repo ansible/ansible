@@ -16,7 +16,7 @@
           defaults/         #
               main.yml      #  <-- default lower priority variables for this role
           meta/             #
-              main.yml      #  <-- role dependencies
+              main.yml      #  <-- role dependencies and optional Galaxy info
           library/          # roles can also include custom modules
           module_utils/     # roles can also include custom module_utils
           lookup_plugins/   # or other types of plugins, like lookup in this case
