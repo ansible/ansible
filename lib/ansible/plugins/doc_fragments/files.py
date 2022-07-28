@@ -34,10 +34,14 @@ options:
   owner:
     description:
     - Name of the user that should own the filesystem object, as would be fed to I(chown).
+    - When left unspecified, it uses the current user unless you are root, in which
+      case it can preserve the previous ownership.
     type: str
   group:
     description:
     - Name of the group that should own the filesystem object, as would be fed to I(chown).
+    - When left unspecified, it uses the current group of the current user unless you are root,
+      in which case it can preserve the previous ownership.
     type: str
   seuser:
     description:
