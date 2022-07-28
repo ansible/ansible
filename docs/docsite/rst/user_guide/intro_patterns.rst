@@ -82,9 +82,9 @@ You can use wildcard patterns with FQDNs or IP addresses, as long as the hosts a
 
 .. code-block:: yaml
 
-   192.0.\*
-   \*.example.com
-   \*.com
+   192.0.*
+   *.example.com
+   *.com
 
 You can mix wildcard patterns and groups at the same time:
 
