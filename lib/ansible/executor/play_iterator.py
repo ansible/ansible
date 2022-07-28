@@ -442,6 +442,7 @@ class PlayIterator:
 
             elif state.run_state == IteratingStates.HANDLERS:
                 if not state._handlers_sorted:
+                    # handlers are executed in the order they are defined, not in the order notified
                     if state.handlers:
                         all_handlers = [h for b in self._play.handlers for h in b.block]
                         state._notified_handlers = deque((h for h in all_handlers if h in state.handlers))
