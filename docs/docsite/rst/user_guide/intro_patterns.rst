@@ -130,7 +130,7 @@ host in/is (a or b) AND host in/is all(c) AND host NOT in/is all(d, e)
 
 now a:b:!e:!d:&c is a slight change as the !e gets processed before the !d, not that this makes much of a difference:
 
-host in/is (a or b) AND host in/is all(c) AND host NOT in/is all(e, d)
+Host in/is (a or b) AND host in/is all(c) AND host NOT in/is all(e, d).
 
 Advanced pattern options
 ------------------------
