@@ -14,7 +14,7 @@ ansible_config_file
     The full path of used Ansible configuration file
 
 ansible_dependent_role_names
-    The names of the roles currently imported into the current play as dependencies of other plays
+    The names of the roles currently imported into the current play as dependencies of other roles
 
 ansible_diff_mode
     Boolean that indicates if we are in diff mode or not
