@@ -97,6 +97,8 @@ jobs:
         ansible:
           # List versions of ansible-core the collection supports here. For example:
           - stable-2.12
+          - stable-2.12
+          - stable-2.13
           - devel
         python:
           # List all Python versions that the collection supports here
