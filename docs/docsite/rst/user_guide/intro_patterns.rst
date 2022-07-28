@@ -121,14 +121,19 @@ you must use the alias in your pattern. In the example above, you must use ``hos
 Pattern processing order
 ------------------------
 
-The processing is a bit special, first all :, get processed, then & and then ! position only accounts for processing order inside each operation:
-a:b:&c:!d:!e == &c:a:!d:b:!e == !d:a:!e:&c:b
+The processing is a bit special and happens in the following order: 
+1.  ``:`` and ``,``  
+2. `` &``
+3.  ``!``  
 
-all of them result in :
+This positioning only accounts for processing order inside each operation:
+``a:b:&c:!d:!e == &c:a:!d:b:!e == !d:a:!e:&c:b``
 
-host in/is (a or b) AND host in/is all(c) AND host NOT in/is all(d, e)
+All of these result in  the following:
 
-now a:b:!e:!d:&c is a slight change as the !e gets processed before the !d, not that this makes much of a difference:
+Host in/is (a or b) AND host in/is all(c) AND host NOT in/is all(d, e).
+
+Now ``a:b:!e:!d:&c`` is a slight change as the ``!e`` gets processed before the ``!d``, though  this doesn't make much of a difference:
 
 Host in/is (a or b) AND host in/is all(c) AND host NOT in/is all(e, d).
 
