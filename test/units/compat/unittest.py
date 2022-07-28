@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+# Allow wildcard import because we really do want to import all of
+# unittests's symbols into this compat shim
 # pylint: disable=wildcard-import,unused-wildcard-import
 
 from unittest import *
