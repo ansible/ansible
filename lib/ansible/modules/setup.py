@@ -158,7 +158,7 @@ EXAMPLES = """
 # Collect no facts, even the default minimum subset of facts:
 # ansible all -m ansible.builtin.setup -a 'gather_subset=!all,!min'
 
-# Display facts from Windows hosts with custom facts stored in C(C:\\custom_facts).
+# Display facts from Windows hosts with custom facts stored in C:\\custom_facts.
 # ansible windows -m ansible.builtin.setup -a "fact_path='c:\\custom_facts'"
 
 # Gathers facts for the machines in the dbservers group (a.k.a Delegating facts)
