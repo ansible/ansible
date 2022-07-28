@@ -1989,7 +1989,8 @@ def fetch_file(module, url, data=None, headers=None, method=None,
     '''
     # download file
     bufsize = 65536
-    file_name, file_ext = os.path.splitext(str(url.rsplit('/', 1)[1]))
+    parts = urlparse(url)
+    file_name, file_ext = os.path.splitext(os.path.basename(parts.path))
     fetch_temp_file = tempfile.NamedTemporaryFile(dir=module.tmpdir, prefix=file_name, suffix=file_ext, delete=False)
     module.add_cleanup_file(fetch_temp_file.name)
     try:
