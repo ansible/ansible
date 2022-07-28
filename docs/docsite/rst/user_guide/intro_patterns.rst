@@ -129,7 +129,7 @@ The processing is a bit special and happens in the following order:
 This positioning only accounts for processing order inside each operation:
 ``a:b:&c:!d:!e == &c:a:!d:b:!e == !d:a:!e:&c:b``
 
-All of these result in  the following:
+All of these result in the following:
 
 Host in/is (a or b) AND host in/is all(c) AND host NOT in/is all(d, e).
 
