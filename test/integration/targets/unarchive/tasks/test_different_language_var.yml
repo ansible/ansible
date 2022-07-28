@@ -1,9 +1,9 @@
 - name: test non-ascii with different LANGUAGE
   when: ansible_os_family == 'Debian'
   block:
-    - name: install de language pack
+    - name: install fr language pack
       apt: 
-        name: language-pack-de 
+        name: language-pack-fr
         state: present
       
     - name: create our unarchive destination
@@ -38,4 +38,4 @@
         state: absent
 
   environment:
-    LANGUAGE: de_DE:en
+    LANGUAGE: fr_FR:fr
