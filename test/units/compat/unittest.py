@@ -19,24 +19,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-'''
-Compat module for Python2.7's unittest module
-'''
-
-import sys
-
 # Allow wildcard import because we really do want to import all of
 # unittests's symbols into this compat shim
 # pylint: disable=wildcard-import,unused-wildcard-import
-if sys.version_info < (2, 7):
-    try:
-        # Need unittest2 on python2.6
-        from unittest2 import *
-    except ImportError:
-        print('You need unittest2 installed on python2.6.x to run tests')
-else:
-    from unittest import *
+from unittest import *
 
-    if not hasattr(TestCase, 'assertRaisesRegex'):
-        # added in Python 3.2
-        TestCase.assertRaisesRegex = TestCase.assertRaisesRegexp
+if not hasattr(TestCase, 'assertRaisesRegex'):
+    # added in Python 3.2
+    TestCase.assertRaisesRegex = TestCase.assertRaisesRegexp
