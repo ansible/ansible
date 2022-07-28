@@ -11,8 +11,7 @@ import json
 import pytest
 
 from collections.abc import Mapping
-from datetime import date, datetime
-from pytz import timezone as tz
+from datetime import date, datetime, timezone, timedelta
 
 from ansible.parsing.ajson import AnsibleJSONEncoder, AnsibleJSONDecoder
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
@@ -127,8 +126,8 @@ class TestAnsibleJSONEncoder:
             (datetime(2019, 5, 14, 13, 47, 16, 923866), '2019-05-14T13:47:16.923866'),
             (date(2019, 5, 14), '2019-05-14'),
             (date(2020, 5, 14), '2020-05-14'),
-            (datetime(2019, 6, 15, 14, 45, tzinfo=tz('UTC')), '2019-06-15T14:45:00+00:00'),
-            (datetime(2019, 6, 15, 14, 45, tzinfo=tz('Europe/Helsinki')), '2019-06-15T14:45:00+01:40'),
+            (datetime(2019, 6, 15, 14, 45, tzinfo=timezone.utc), '2019-06-15T14:45:00+00:00'),
+            (datetime(2019, 6, 15, 14, 45, tzinfo=timezone(timedelta(hours=1, minutes=40))), '2019-06-15T14:45:00+01:40'),
         ]
     )
     def test_date_datetime(self, ansible_json_encoder, test_input, expected):
