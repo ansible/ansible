@@ -1,0 +1,2 @@
+bugfixes:
+  - pause module will now report proper 'echo' vs always being true.
