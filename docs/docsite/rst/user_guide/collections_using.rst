@@ -273,7 +273,7 @@ Verifying against ``tar.gz`` files is not supported. If your ``requirements.yml`
 Signature verification
 ----------------------
 
-If a collection has been signed by the Galaxy server, the server will provide ASCII armored, detached signatures to verify the authenticity of the MANIFEST.json before using it to verify the collection's contents. You must opt into signature verification by :ref:`configuring a keyring <galaxy_gpg_keyring>` for ``ansible-galaxy``, or by providing the path with the ``--keyring`` option.
+If a collection has been signed by the Automation Hub or self-hosted pulp or on-premise Hub server, the server will provide ASCII armored, detached signatures to verify the authenticity of the MANIFEST.json before using it to verify the collection's contents. You must opt into signature verification by :ref:`configuring a keyring <galaxy_gpg_keyring>` for ``ansible-galaxy``, or by providing the path with the ``--keyring`` option.
 
 To import a public key into a keyring for use with ``ansible-galaxy`` use the following step.
 
