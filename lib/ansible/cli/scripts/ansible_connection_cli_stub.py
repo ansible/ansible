@@ -89,7 +89,7 @@ class ConnectionProcess(object):
         self.connection = None
         self._ansible_playbook_pid = ansible_playbook_pid
 
-    def start(self, variables):
+    def start(self, options):
         messages = list()
         result = {}
 
@@ -104,7 +104,7 @@ class ConnectionProcess(object):
             self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null',
                                                     task_uuid=self._task_uuid, ansible_playbook_pid=self._ansible_playbook_pid)
             try:
-                self.connection.set_options(var_options=variables)
+                self.connection.set_options(direct=options)
             except ConnectionError as exc:
                 messages.append(('debug', to_text(exc)))
                 raise ConnectionError('Unable to decode JSON from response set_options. See the debug log for more information.')
@@ -248,11 +248,11 @@ def main(args=None):
 
     try:
         # read the play context data via stdin, which means depickling it
-        vars_data = read_stream(stdin)
+        opts_data = read_stream(stdin)
         init_data = read_stream(stdin)
 
         pc_data = pickle.loads(init_data, encoding='bytes')
-        variables = pickle.loads(vars_data, encoding='bytes')
+        options = pickle.loads(opts_data, encoding='bytes')
 
         play_context = PlayContext()
         play_context.deserialize(pc_data)
@@ -289,7 +289,7 @@ def main(args=None):
                         os.close(r)
                         wfd = os.fdopen(w, 'w')
                         process = ConnectionProcess(wfd, play_context, socket_path, original_path, task_uuid, ansible_playbook_pid)
-                        process.start(variables)
+                        process.start(options)
                     except Exception:
                         messages.append(('error', traceback.format_exc()))
                         rc = 1
@@ -312,7 +312,7 @@ def main(args=None):
                 messages.append(('vvvv', 'found existing local domain socket, using it!'))
                 conn = Connection(socket_path)
                 try:
-                    conn.set_options(var_options=variables)
+                    conn.set_options(direct=options)
                 except ConnectionError as exc:
                     messages.append(('debug', to_text(exc)))
                     raise ConnectionError('Unable to decode JSON from response set_options. See the debug log for more information.')

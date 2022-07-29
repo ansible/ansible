@@ -1148,7 +1148,7 @@ class TaskExecutor:
         return handler, module
 
 
-def start_connection(play_context, variables, task_uuid):
+def start_connection(play_context, options, task_uuid):
     '''
     Starts the persistent connection
     '''
@@ -1197,7 +1197,7 @@ def start_connection(play_context, variables, task_uuid):
 
     try:
         termios.tcsetattr(master, termios.TCSANOW, new)
-        write_to_file_descriptor(master, variables)
+        write_to_file_descriptor(master, options)
         write_to_file_descriptor(master, play_context.serialize())
 
         (stdout, stderr) = p.communicate()
