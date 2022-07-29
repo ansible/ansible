@@ -133,7 +133,7 @@ class ActionModule(ActionBase):
         duration_unit = 'minutes'
         prompt = None
         seconds = None
-        echo = True
+        echo = new_module_args['echo']
         echo_prompt = ''
         result.update(dict(
             changed=False,
@@ -146,7 +146,6 @@ class ActionModule(ActionBase):
             echo=echo
         ))
 
-        echo = new_module_args['echo']
         # Add a note saying the output is hidden if echo is disabled
         if not echo:
             echo_prompt = ' (output is hidden)'
