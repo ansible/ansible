@@ -117,6 +117,25 @@ you must use the alias in your pattern. In the example above, you must use ``hos
 .. code-block:: console
 
    [WARNING]: Could not match supplied host pattern, ignoring: 127.0.0.2
+   
+Pattern processing order
+------------------------
+
+The processing is a bit special and happens in the following order: 
+1.  ``:`` and ``,``  
+2. `` &``
+3.  ``!``  
+
+This positioning only accounts for processing order inside each operation:
+``a:b:&c:!d:!e == &c:a:!d:b:!e == !d:a:!e:&c:b``
+
+All of these result in the following:
+
+Host in/is (a or b) AND host in/is all(c) AND host NOT in/is all(d, e).
+
+Now ``a:b:!e:!d:&c`` is a slight change as the ``!e`` gets processed before the ``!d``, though  this doesn't make much of a difference:
+
+Host in/is (a or b) AND host in/is all(c) AND host NOT in/is all(e, d).
 
 Advanced pattern options
 ------------------------
