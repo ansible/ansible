@@ -37,7 +37,7 @@ To use any Role resource, the Role itself must be imported into the Play.
 Tasks
 .....
 The definition of an 'action' to be applied to the managed host. Tasks must always be contained in a Play, directly or indirectly (Role, or imported/included task list file).
-You can execute a single task once with an ad hoc command with ``ansible`` or ``ansible-console`` (both create a virtual Play).
+You can execute a single task once with an ad hoc command using ``ansible`` or ``ansible-console`` (both create a virtual Play).
 
 Handlers
 ........
