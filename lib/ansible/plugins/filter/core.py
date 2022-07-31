@@ -35,7 +35,7 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import recursive_check_defined
 from ansible.utils.display import Display
 from ansible.utils.encrypt import passlib_or_crypt
-from ansible.utils.hashing import md5s, checksum_s
+from ansible.utils.hashing import md5s, checksum_s, crc32s
 from ansible.utils.unicode import unicode_wrap
 from ansible.utils.vars import merge_hash
 
@@ -621,6 +621,8 @@ class FilterModule(object):
             'sha1': checksum_s,
             # checksum of string as used by ansible for checksumming files
             'checksum': checksum_s,
+            # crc32 hex digest of string
+            'crc32': crc32s,
             # generic hashing
             'password_hash': get_encrypted_password,
             'hash': get_hash,

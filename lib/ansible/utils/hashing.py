@@ -22,6 +22,7 @@ __metaclass__ = type
 import os
 
 from hashlib import sha1
+from zlib import crc32
 
 try:
     from hashlib import md5 as _md5
@@ -87,3 +88,8 @@ def md5(filename):
     if not _md5:
         raise ValueError('MD5 not available.  Possibly running in FIPS mode')
     return secure_hash(filename, _md5)
+
+
+def crc32s(data):
+    data = to_bytes(data, errors='surrogate_or_strict')
+    return "{0:x}".format(crc32(data))
