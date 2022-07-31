@@ -61,7 +61,7 @@ See :ref:`working_with_plugins` for details.
 
 Collections
 ===========
-A format in which Ansible content are distributed that can contain playbooks, roles, modules, and plugins. You can install and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_. To learn more about collections, see :ref:`collections`. Collection resources can be used independently and discretely from each other.
+A format in which Ansible content is distributed that can contain playbooks, roles, modules, and plugins. You can install and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_. To learn more about collections, see :ref:`collections`. Collection resources can be used independently and discretely from each other.
 
 
 AAP
