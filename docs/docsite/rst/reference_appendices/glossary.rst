@@ -33,7 +33,7 @@ when a term comes up on the mailing list.
         Name used starting with 2.11. The installable package (RPM/Python/Deb package) generated from the `ansible/ansible repository <https://github.com/ansible/ansible>`_. Contains the command-line tools and the code for basic features and functions, such as copying module code to managed nodes. The ``ansible-core`` package includes a few modules and plugins and allows you to add others by installing collections.
 
     Ansible Galaxy
-        An `online resource <galaxy.ansible.com>`_ for finding and sharing Ansible community content. Also, the command-line utility that lets users install individual Ansible Collections, for example`` ansible-galaxy install community.crypto``.
+        An `online resource <galaxy.ansible.com>`_ for finding and sharing Ansible community content, somtimes referred to as community Galaxy. Also, the command-line utility that lets users install individual Ansible Collections, for example ``ansible-galaxy collection install community.crypto``.
 
     Async
         Refers to a task that is configured to run in the background rather
@@ -434,6 +434,9 @@ when a term comes up on the mailing list.
         that you must opt-in to.  OS configuration (such as making sure config
         files are correct) does not typically have to use the rolling update
         model, but can do so if desired.
+
+    self-hosted Galaxy
+        An on-premises version of the `GalaxyNG codebase <https://galaxyng.netlify.app/>`_ to find and share your own currated set of content. You can access your content with the ``ansible-galaxy collection`` command.
 
     Serial
         .. seealso::
