@@ -7,7 +7,7 @@ Using collections
 
 Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. As modules move from the core Ansible repository into collections, the module documentation will move to the :ref:`collections pages <list_of_collections>`.
 
-You can install and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_.
+You can install and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_ or a `self-hosted Galaxy server <https://galaxyng.netlify.app/>`_.
 
 * For details on how to *develop* collections see :ref:`developing_collections`.
 * For the current development status of Collections and FAQ see `Ansible Collections Community Guide <https://github.com/ansible-collections/overview/blob/main/README.rst>`_.
@@ -273,7 +273,7 @@ Verifying against ``tar.gz`` files is not supported. If your ``requirements.yml`
 Signature verification
 ----------------------
 
-If a collection has been signed by the Automation Hub or self-hosted pulp or on-premise Hub server, the server will provide ASCII armored, detached signatures to verify the authenticity of the MANIFEST.json before using it to verify the collection's contents. This option is not available on community Galaxy.
+If a collection has been signed by a self-hosted Galaxy server, the server will provide ASCII armored, detached signatures to verify the authenticity of the MANIFEST.json before using it to verify the collection's contents. This option is not available on community Galaxy.
 
 You must opt into signature verification by :ref:`configuring a keyring <galaxy_gpg_keyring>` for ``ansible-galaxy``, or by providing the path with the ``--keyring`` option.
 
@@ -283,7 +283,7 @@ To import a public key into a keyring for use with ``ansible-galaxy`` use the fo
 
    gpg --import --no-default-keyring --keyring ~/.ansible/pubring.kbx my-public-key.asc
 
-In addition to any signatures provided by the Galaxy server, signature sources can also be provided in the requirements file and on the command line. Signature sources should be URIs.
+In addition to any signatures provided by the self-hosted Galaxy server, signature sources can also be provided in the requirements file and on the command line. Signature sources should be URIs.
 
 You can manually generate detached signatures for a collection using the ``gpg`` CLI using the following step. This step assume you have generated a GPG private key, but do not cover this process.
 
@@ -314,7 +314,7 @@ Collections in a requirements file should list any additional signature sources 
 
    ansible-galaxy collection verify -r requirements.yml --keyring ~/.ansible/pubring.kbx
 
-When a collection is installed from a Galaxy server, the signatures provided by the server to verify the collection's authenticity are saved alongside the installed collections. This data is used to verify the internal consistency of the collection without querying the Galaxy server again when the ``--offline`` option is provided.
+When a collection is installed from a self-hosted Galaxy server, the signatures provided by the server to verify the collection's authenticity are saved alongside the installed collections. This data is used to verify the internal consistency of the collection without querying the self-hosted Galaxy server again when the ``--offline`` option is provided.
 
 .. code-block:: bash
 
