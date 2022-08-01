@@ -18,11 +18,11 @@ DOCUMENTATION = """
             required: True
         key_name:
             description:
-                - Use it to override the 'key' key name in the dictionaries.
+                - Use it to override the 'key' key name in the dictionaries. By default it will be set to 'key'.
             required: False
         value_name:
             description:
-                - Use it to override the 'key' key name in the dictionaries.
+                - Use it to override the 'key' key name in the dictionaries. By default it will be set to 'value'.
             required: False
 """
 
@@ -51,6 +51,12 @@ tasks:
     ansible.builtin.set_fact:
       alice_exists: true
     loop: "{{ lookup('ansible.builtin.dict', users) }}"
+    when: "'alice' in item.key"
+  # Set key_name and value_name example
+  - name: set_fact when alice in key
+    ansible.builtin.set_fact:
+      alice_exists: true
+    loop: "{{ lookup('ansible.builtin.dict', users, key_name='user', value_name='user_data0') }}"
     when: "'alice' in item.key"
 """
 
