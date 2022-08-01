@@ -1,2 +1,5 @@
-# No current way to split controller and test node
-unsupported
+context/target
+destructive
+needs/root
+shippable/posix/group3
+skip/docker
