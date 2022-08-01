@@ -16,14 +16,16 @@ DOCUMENTATION = """
             description:
                 - A list of dictionaries
             required: True
-        key_name:
-            description:
-                - Use it to override the 'key' key name in the dictionaries. By default it will be set to 'key'.
-            required: False
         value_name:
             description:
                 - Use it to override the 'key' key name in the dictionaries. By default it will be set to 'value'.
             required: False
+            default: 'value'
+        key_name:
+            description:
+                - Use it to override the 'key' key name in the dictionaries. By default it will be set to 'key'.
+            required: False
+            default: 'key'
 """
 
 EXAMPLES = """
@@ -56,7 +58,7 @@ tasks:
   - name: set_fact when alice in key
     ansible.builtin.set_fact:
       alice_exists: true
-    loop: "{{ lookup('ansible.builtin.dict', users, key_name='user', value_name='user_data0') }}"
+    loop: "{{ lookup('ansible.builtin.dict', users, key_name='user', value_name='user_data') }}"
     when: "'alice' in item.key"
 """
 
@@ -76,9 +78,9 @@ from ansible.plugins.lookup import LookupBase
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
-
-        key_name = kwargs.get('key_name', 'key')
-        value_name = kwargs.get('value_name', 'value')
+        self.set_options(var_options=variables, direct=kwargs)
+        value_name = self.get_option('value_name')
+        key_name = self.get_option('key_name')
 
         # NOTE: can remove if with_ is removed
         if not isinstance(terms, list):
