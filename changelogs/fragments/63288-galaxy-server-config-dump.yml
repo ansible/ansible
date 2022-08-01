@@ -1,0 +1,2 @@
+minor_changes:
+- ansible-config - Add support for dumping or listing Galaxy server config definitions - https://github.com/ansible/ansible/issues/63288
