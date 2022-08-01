@@ -147,3 +147,6 @@ ansible-playbook include_handlers_fail_force.yml --force-handlers -i inventory.h
 
 ansible-playbook test_flush_handlers_as_handler.yml -i inventory.handlers "$@"  2>&1 | tee out.txt
 grep out.txt -e "ERROR! flush_handlers cannot be used as a handler"
+
+ansible-playbook test_skip_flush.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'handler ran')" = "0" ]

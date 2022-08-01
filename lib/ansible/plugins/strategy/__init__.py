@@ -923,13 +923,17 @@ class StrategyBase:
         if meta_action == 'noop':
             msg = "noop"
         elif meta_action == 'flush_handlers':
-            host_state = iterator.get_state_for_host(target_host.name)
-            if host_state.run_state == IteratingStates.HANDLERS:
-                raise AnsibleError('flush_handlers cannot be used as a handler')
-            if target_host.name not in self._tqm._unreachable_hosts:
-                host_state.pre_flushing_run_state = host_state.run_state
-                host_state.run_state = IteratingStates.HANDLERS
-            msg = "ran handlers"
+            if _evaluate_conditional(target_host):
+                host_state = iterator.get_state_for_host(target_host.name)
+                if host_state.run_state == IteratingStates.HANDLERS:
+                    raise AnsibleError('flush_handlers cannot be used as a handler')
+                if target_host.name not in self._tqm._unreachable_hosts:
+                    host_state.pre_flushing_run_state = host_state.run_state
+                    host_state.run_state = IteratingStates.HANDLERS
+                msg = "triggered running handlers for %s" % target_host.name
+            else:
+                skipped = True
+                skip_reason += ', not running handlers for %s' % target_host.name
         elif meta_action == 'refresh_inventory':
             self._inventory.refresh_inventory()
             self._set_hosts_cache(iterator._play)
