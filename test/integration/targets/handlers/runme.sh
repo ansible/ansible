@@ -141,3 +141,7 @@ ansible-playbook 54991.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
 
 ansible-playbook order.yml -i inventory.handlers "$@" 2>&1
 ansible-playbook order.yml --force-handlers -e test_force_handlers=true -i inventory.handlers "$@" 2>&1
+
+
+ansible-playbook include_handlers_fail_force.yml --force-handlers -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'included handler ran')" = "1" ]
