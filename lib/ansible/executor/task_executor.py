@@ -1012,6 +1012,10 @@ class TaskExecutor:
             # Some plugins are assigned to private attrs, ``become`` is not
             plugin = getattr(self._connection, plugin_type)
 
+        # network_cli's "real" connection plugin is not named connection
+        # to avoid the confusion of having connection.connection
+        if plugin_type == "ssh_type_conn":
+            plugin_type = "connection"
         option_vars = C.config.get_plugin_vars(plugin_type, plugin._load_name)
         options = {}
         for k in option_vars:
@@ -1085,6 +1089,9 @@ class TaskExecutor:
         sub = getattr(self._connection, '_sub_plugin', None)
         if sub is not None and sub.get('type') != 'external':
             varnames.extend(self._set_plugin_options(sub.get('type'), variables, templar, task_keys))
+        sub_conn = getattr(self._connection, 'ssh_type_conn', None)
+        if sub_conn is not None:
+            varnames.extend(self._set_plugin_options("ssh_type_conn", variables, templar, task_keys))
 
         return varnames
 
