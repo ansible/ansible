@@ -65,7 +65,7 @@ class LookupModule(LookupBase):
 
         key_name = kwargs.get('key_name', 'key')
         value_name = kwargs.get('value_name', 'value')
-        
+
         # NOTE: can remove if with_ is removed
         if not isinstance(terms, list):
             terms = [terms]
