@@ -12,6 +12,7 @@ To distribute your collection and allow others to use it, you can publish your c
 Distribution server               Collections accepted
 ================================= ========================================================
 Ansible Galaxy                    All collections
+:term:`self-hosted Galaxy`        All collections
 Red Hat Automation Hub            Only collections certified by Red Hat
 Privately hosted Automation Hub   Collections authorized by the owners
 ================================= ========================================================

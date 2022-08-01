@@ -41,6 +41,7 @@ To use signature verification for signed collections:
 
 1. :ref:`Configured a GnuPG keyring <galaxy_gpg_keyring>` for ``ansible-galaxy``, or provide the path to the keyring with the ``--keyring`` option when you install the signed collection.
    
+
 2. Import the public key from the self-hosted Galaxy server into that keyring.
    
    .. code-block:: bash
@@ -365,6 +366,7 @@ Use the ``--signature`` option to verify collection name(s) provided on the CLI 
    ansible-galaxy collection verify my_namespace.my_collection --signature https://examplehost.com/detached_signature.asc --signature file:///path/to/local/detached_signature.asc --keyring ~/.ansible/pubring.kbx
 
 Optionally, you can verify a collection signature with a ``requirements.yml`` file.
+
 .. code-block:: bash
 
    ansible-galaxy collection verify -r requirements.yml --keyring ~/.ansible/pubring.kbx

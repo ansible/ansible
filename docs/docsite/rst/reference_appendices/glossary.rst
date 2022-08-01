@@ -436,7 +436,7 @@ when a term comes up on the mailing list.
         model, but can do so if desired.
 
     self-hosted Galaxy
-        An on-premises version of the `GalaxyNG codebase <https://galaxyng.netlify.app/>`_ to find and share your own currated set of content. You can access your content with the ``ansible-galaxy collection`` command.
+        An on-premises version of the `GalaxyNG codebase <https://galaxyng.netlify.app/>`_ to find and share your own curated set of content. You can access your content with the ``ansible-galaxy collection`` command.
 
     Serial
         .. seealso::
