@@ -30,6 +30,79 @@ Installing collections with ``ansible-galaxy``
 
 .. include:: ../shared_snippets/installing_collections.txt
 
+.. _installing_signed_collections:
+
+Installing collections with signature verification
+---------------------------------------------------
+
+If a collection has been signed by a :term:`self-hosted Galaxy`` server, the server will provide ASCII armored, detached signatures to verify the authenticity of the ``MANIFEST.json`` before using it to verify the collection's contents. This option is not available on community Galaxy.
+
+To use signature verification for signed collections:
+
+1. :ref:`Configured a GnuPG keyring <galaxy_gpg_keyring>` for ``ansible-galaxy``, or provide the path to the keyring with the ``--keyring`` option when you install the signed collection.
+   
+2. Import the public key from the self-hosted Galaxy server into that keyring.
+   
+   .. code-block:: bash
+
+     gpg --import --no-default-keyring --keyring ~/.ansible/pubring.kbx my-public-key.asc
+
+
+3. Verify the signature when you install the collection.
+   .. code-block:: bash
+
+     ansible-galaxy collection install my_namespace.my_collection --signature https://examplehost.com/detached_signature.asc --keyring ~/.ansible/pubring.kbx
+
+   The ``--keyring`` option is not necessary if you have :ref:`configured a GnuPG keyring <galaxy_gpg_keyring>`. 
+
+4. Optionally, verify the signature at any point after installation to prove the collection has not been tampered with. See :ref:`verify_signed_collections` for details.
+
+
+You can also include signatures in addition to those provided by the self-hosted Galaxy server. Use the ``--signature`` option to verify the collection's ``MANIFEST.json`` with these additional signatures. Supplemental signatures should be provided as URIs.
+
+.. code-block:: bash
+
+   ansible-galaxy collection install my_namespace.my_collection --signature https://examplehost.com/detached_signature.asc --keyring ~/.ansible/pubring.kbx
+
+GnuPG verification only occurs for collections installed from a self-hosted Galaxy server. User-provided signatures are not used to verify collections installed from git repositories, source directories, or URLs/paths to tar.gz files.
+
+You can also include additional signatures in the collection ``requirements.yml`` file under the ``signatures`` key.
+
+.. code-block:: yaml
+
+   # requirements.yml
+   collections:
+     - name: ns.coll
+       version: 1.0.0
+       signatures:
+         - https://examplehost.com/detached_signature.asc
+         - file:///path/to/local/detached_signature.asc
+
+See :ref:`collection requirements file <collection_requirements_file>` for details on how to install collections with this file.
+
+By default, verification is considered successful if a minimum of 1 signature successfully verifies the collection. The number of required signatures can be configured with ``--required-valid-signature-count`` or :ref:`GALAXY_REQUIRED_VALID_SIGNATURE_COUNT`. All signatures can be required by setting the option to ``all``. To fail signature verification if no valid signatures are found, prepend the value with ``+``, such as ``+all`` or ``+1``.
+
+.. code-block:: bash
+
+   export ANSIBLE_GALAXY_GPG_KEYRING=~/.ansible/pubring.kbx
+   export ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT=2
+   ansible-galaxy collection install my_namespace.my_collection --signature https://examplehost.com/detached_signature.asc --signature file:///path/to/local/detached_signature.asc
+
+Certain GnuPG errors can be ignored with ``--ignore-signature-status-code`` or :ref:`GALAXY_REQUIRED_VALID_SIGNATURE_COUNT`. :ref:`GALAXY_REQUIRED_VALID_SIGNATURE_COUNT` should be a list, and ``--ignore-signature-status-code`` can be provided multiple times to ignore multiple additional error status codes.
+
+This example requires any signatures provided by the self-hosted Galaxy server to verify the collection except if they fail due to NO_PUBKEY:
+
+.. code-block:: bash
+
+   export ANSIBLE_GALAXY_GPG_KEYRING=~/.ansible/pubring.kbx
+   export ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT=all
+   ansible-galaxy collection install my_namespace.my_collection --ignore-signature-status-code NO_PUBKEY
+
+If verification fails for the example above, only errors other than NO_PUBKEY will be displayed.
+
+If verification is unsuccessful, the collection will not be installed. GnuPG signature verification can be disabled with ``--disable-gpg-verify`` or by configuring :ref:`GALAXY_DISABLE_GPG_VERIFY`.
+
+
 .. _collections_older_version:
 
 Installing an older version of a collection
@@ -270,27 +343,13 @@ In addition to the ``namespace.collection_name:version`` format, you can provide
 
 Verifying against ``tar.gz`` files is not supported. If your ``requirements.yml`` contains paths to tar files or URLs for installation, you can use the ``--ignore-errors`` flag to ensure that all collections using the ``namespace.name`` format in the file are processed.
 
-Signature verification
-----------------------
+.. _verify_signed_collections:
 
-If a collection has been signed by a :term:`self-hosted Galaxy`` server, the server will provide ASCII armored, detached signatures to verify the authenticity of the MANIFEST.json before using it to verify the collection's contents. This option is not available on community Galaxy.
+Verifying signed collections
+-----------------------------
 
-You must opt into signature verification by :ref:`configuring a keyring <galaxy_gpg_keyring>` for ``ansible-galaxy``, or by providing the path with the ``--keyring`` option.
+If a collection has been signed by a :term:`self-hosted Galaxy`` server, the server will provide ASCII armored, detached signatures to verify the authenticity of the MANIFEST.json before using it to verify the collection's contents. This option is not available on community Galaxy. See :ref:`installing_signed_collections` for how to verify a signed collection when you install it.
 
-To import a public key into a keyring for use with ``ansible-galaxy`` use the following step.
-
-.. code-block:: bash
-
-   gpg --import --no-default-keyring --keyring ~/.ansible/pubring.kbx my-public-key.asc
-
-In addition to any signatures provided by the self-hosted Galaxy server, signature sources can also be provided in the requirements file and on the command line. Signature sources should be URIs.
-
-You can manually generate detached signatures for a collection using the ``gpg`` CLI using the following step. This step assume you have generated a GPG private key, but do not cover this process.
-
-.. code-block:: bash
-
-   ansible-galaxy collection build
-   tar -Oxzf namespace-name-1.0.0.tar.gz MANIFEST.json | gpg --output namespace-name-1.0.0.asc --detach-sign --armor --local-user email@example.com -
 
 Use the ``--signature`` option to verify collection name(s) provided on the CLI with an additional signature. This option can be used multiple times to provide multiple signatures.
 
@@ -298,18 +357,7 @@ Use the ``--signature`` option to verify collection name(s) provided on the CLI 
 
    ansible-galaxy collection verify my_namespace.my_collection --signature https://examplehost.com/detached_signature.asc --signature file:///path/to/local/detached_signature.asc --keyring ~/.ansible/pubring.kbx
 
-Collections in a requirements file should list any additional signature sources following the collection's "signatures" key.
-
-.. code-block:: yaml
-
-   # requirements.yml
-   collections:
-     - name: ns.coll
-       version: 1.0.0
-       signatures:
-         - https://examplehost.com/detached_signature.asc
-         - file:///path/to/local/detached_signature.asc
-
+Optionally, you can verify a collection signature with a ``requirements.yml`` file.
 .. code-block:: bash
 
    ansible-galaxy collection verify -r requirements.yml --keyring ~/.ansible/pubring.kbx
@@ -319,6 +367,7 @@ When a collection is installed from a self-hosted Galaxy server, the signatures 
 .. code-block:: bash
 
    ansible-galaxy collection verify my_namespace.my_collection --offline --keyring ~/.ansible/pubring.kbx
+
 
 .. _collections_using_playbook:
 

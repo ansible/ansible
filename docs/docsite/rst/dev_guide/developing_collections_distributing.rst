@@ -179,6 +179,22 @@ For more information on the :file:`galaxy.yml` file, see :ref:`collections_galax
 .. note::
      The ``build_ignore`` feature is only supported with ``ansible-galaxy collection build`` in Ansible 2.10 or newer.
 
+
+.. _signing_collections:
+
+Signing a collection
+--------------------------
+
+You can include a GnuPG signature with your collection on a self-hosted Galaxy server. See `Enabling collection signing <https://galaxyng.netlify.app/config/collection_signing/>`_ for details.
+
+You can also manually generate detached signatures for a collection using the ``gpg`` CLI using the following step. This step assume you have generated a GPG private key, but do not cover this process.
+
+.. code-block:: bash
+
+   ansible-galaxy collection build
+   tar -Oxzf namespace-name-1.0.0.tar.gz MANIFEST.json | gpg --output namespace-name-1.0.0.asc --detach-sign --armor --local-user email@example.com -
+
+
 .. _trying_collection_locally:
 
 Preparing to publish your collection
