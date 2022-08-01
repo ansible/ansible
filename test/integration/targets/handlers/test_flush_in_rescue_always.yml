@@ -1,0 +1,27 @@
+- hosts: A,B
+  gather_facts: false
+  tasks:
+    - block:
+        - name: EXPECTED_FAILURE
+          fail:
+          when: inventory_hostname == 'A'
+      rescue:
+        - command: echo
+          notify: handler_rescue
+
+        - meta: flush_handlers
+
+        - name: EXPECTED_FAILURE
+          fail:
+      always:
+        - command: echo
+          notify: handler_always
+
+        - meta: flush_handlers
+  handlers:
+    - name: handler_rescue
+      debug:
+        msg: handler ran in rescue
+    - name: handler_always
+      debug:
+        msg: handler ran in always

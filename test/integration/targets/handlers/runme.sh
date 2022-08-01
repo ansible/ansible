@@ -150,3 +150,7 @@ grep out.txt -e "ERROR! flush_handlers cannot be used as a handler"
 
 ansible-playbook test_skip_flush.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
 [ "$(grep out.txt -ce 'handler ran')" = "0" ]
+
+ansible-playbook test_flush_in_rescue_always.yml -i inventory.handlers "$@" 2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'handler ran in rescue')" = "1" ]
+[ "$(grep out.txt -ce 'handler ran in always')" = "2" ]
