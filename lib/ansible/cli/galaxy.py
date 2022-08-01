@@ -27,6 +27,7 @@ from yaml.error import YAMLError
 import ansible.constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
+from ansible.config.manager import ConfigManager
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
 from ansible.galaxy.api import GalaxyAPI, GalaxyError
@@ -86,6 +87,40 @@ SERVER_ADDITIONAL = {
     'timeout': {'default': C.GALAXY_SERVER_TIMEOUT, 'cli': [{'name': 'timeout'}]},
     'token': {'default': None},
 }
+
+
+def initialize_galaxy_server_config(config: ConfigManager, server_list: t.List[str]) -> None:
+    def server_config_def(section, key, required, option_type):
+        config_def = {
+            'description': 'The %s of the %s Galaxy server' % (key, section),
+            'ini': [
+                {
+                    'section': 'galaxy_server.%s' % section,
+                    'key': key,
+                }
+            ],
+            'env': [
+                {'name': 'ANSIBLE_GALAXY_SERVER_%s_%s' % (section.upper(), key.upper())},
+            ],
+            'required': required,
+            'type': option_type,
+        }
+        if key in SERVER_ADDITIONAL:
+            config_def.update(SERVER_ADDITIONAL[key])
+
+        return config_def
+
+    # Need to filter out empty strings or non truthy values as an empty server list env var is equal to [''].
+    for server_key in server_list:
+        if not server_key:
+            continue
+
+        # Abuse the 'plugin config' by making 'galaxy_server' a type of plugin
+        # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
+        # section [galaxy_server.<server>] for the values url, username, password, and token.
+        config_dict = dict((k, server_config_def(server_key, k, req, ensure_type)) for k, req, ensure_type in SERVER_DEF)
+        defs = AnsibleLoader(yaml_dump(config_dict)).get_single_data()
+        config.initialize_plugin_configuration_definitions('galaxy_server', server_key, defs)
 
 
 def with_collection_artifacts_manager(wrapped_method):
@@ -618,25 +653,9 @@ class GalaxyCLI(CLI):
 
         self.galaxy = Galaxy()
 
-        def server_config_def(section, key, required, option_type):
-            config_def = {
-                'description': 'The %s of the %s Galaxy server' % (key, section),
-                'ini': [
-                    {
-                        'section': 'galaxy_server.%s' % section,
-                        'key': key,
-                    }
-                ],
-                'env': [
-                    {'name': 'ANSIBLE_GALAXY_SERVER_%s_%s' % (section.upper(), key.upper())},
-                ],
-                'required': required,
-                'type': option_type,
-            }
-            if key in SERVER_ADDITIONAL:
-                config_def.update(SERVER_ADDITIONAL[key])
-
-            return config_def
+        # Need to filter out empty strings or non truthy values as an empty server list env var is equal to [''].
+        server_list = [s for s in C.GALAXY_SERVER_LIST or [] if s]
+        initialize_galaxy_server_config(C.config, server_list)
 
         galaxy_options = {}
         for optional_key in ['clear_response_cache', 'no_cache']:
@@ -645,15 +664,7 @@ class GalaxyCLI(CLI):
 
         config_servers = []
 
-        # Need to filter out empty strings or non truthy values as an empty server list env var is equal to [''].
-        server_list = [s for s in C.GALAXY_SERVER_LIST or [] if s]
         for server_priority, server_key in enumerate(server_list, start=1):
-            # Abuse the 'plugin config' by making 'galaxy_server' a type of plugin
-            # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
-            # section [galaxy_server.<server>] for the values url, username, password, and token.
-            config_dict = dict((k, server_config_def(server_key, k, req, ensure_type)) for k, req, ensure_type in SERVER_DEF)
-            defs = AnsibleLoader(yaml_dump(config_dict)).get_single_data()
-            C.config.initialize_plugin_configuration_definitions('galaxy_server', server_key, defs)
 
             # resolve the config created options above with existing config and user options
             server_options = C.config.get_plugin_options('galaxy_server', server_key)

@@ -13,14 +13,17 @@ import shlex
 import subprocess
 import sys
 import yaml
+import typing as t
 
 from collections.abc import Mapping
 
 from ansible import context
 import ansible.plugins.loader as plugin_loader
+from ansible.plugins.loader import PluginLoader
 
 from ansible import constants as C
 from ansible.cli.arguments import option_helpers as opt_help
+from ansible.cli.galaxy import initialize_galaxy_server_config
 from ansible.config.manager import ConfigManager, Setting
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
@@ -102,7 +105,7 @@ class ConfigCLI(CLI):
         opt_help.add_verbosity_options(common)
         common.add_argument('-c', '--config', dest='config_file',
                             help="path to configuration file, defaults to first file found in precedence.")
-        common.add_argument("-t", "--type", action="store", default='base', dest='type', choices=['all', 'base'] + list(C.CONFIGURABLE_PLUGINS),
+        common.add_argument("-t", "--type", action="store", default='base', dest='type', choices=['all', 'base', 'galaxy_server'] + list(C.CONFIGURABLE_PLUGINS),
                             help="Filter down to a specific plugin type.")
         common.add_argument('args', help='Specific plugin to target, requires type of plugin to be set', nargs='*')
 
@@ -177,6 +180,13 @@ class ConfigCLI(CLI):
         elif context.CLIARGS['action'] == 'view':
             raise AnsibleError('Invalid or no config file was supplied')
 
+        # Galaxy server config is not defined as part of the base.yml config or
+        # a plugin definition. The defs should be loaded if this type was
+        # requested.
+        if context.CLIARGS['type'] in ['all', 'galaxy_server']:
+            galaxy_server_list = self.config.get_config_value('GALAXY_SERVER_LIST')
+            initialize_galaxy_server_config(self.config, galaxy_server_list)
+
         # run the requested action
         context.CLIARGS['func']()
 
@@ -228,32 +238,34 @@ class ConfigCLI(CLI):
         except Exception as e:
             raise AnsibleError("Failed to open editor: %s" % to_native(e))
 
-    def _list_plugin_settings(self, ptype, plugins=None):
+    def _list_plugin_settings(self, ptype, plugins=None, loader: t.Optional[PluginLoader] = None):
         entries = {}
-        loader = getattr(plugin_loader, '%s_loader' % ptype)
 
-        # build list
-        if plugins:
-            plugin_cs = []
-            for plugin in plugins:
-                p = loader.get(plugin, class_only=True)
-                if p is None:
-                    display.warning("Skipping %s as we could not find matching plugin" % plugin)
-                else:
-                    plugin_cs.append(p)
+        if loader:
+            if plugins:
+                plugin_cs = []
+                for plugin in plugins:
+                    p = loader.get(plugin, class_only=True)
+                    if p is None:
+                        display.warning("Skipping %s as we could not find matching plugin" % plugin)
+                    else:
+                        plugin_cs.append(loader.get(plugin, class_only=True))
+            else:
+                plugin_cs = loader.all(class_only=True)
         else:
-            plugin_cs = loader.all(class_only=True)
+            plugin_cs = plugins
 
-        # iterate over class instances
         for plugin in plugin_cs:
-            finalname = name = plugin._load_name
-            if name.startswith('_'):
-                # alias or deprecated
+            # in case of deprecastion they diverge
+            finalname = name = getattr(plugin, "_load_name", plugin)
+            if name.startswith('_') and hasattr(plugin, "_original_path"):
                 if os.path.islink(plugin._original_path):
+                    # skip alias
                     continue
-                else:
-                    finalname = name.replace('_', '', 1) + ' (DEPRECATED)'
+                # deprecated, but use 'nice name'
+                finalname = name.replace('_', '', 1) + ' (DEPRECATED)'
 
+            # default entries per plugin
             entries[finalname] = self.config.get_configuration_definitions(ptype, name)
 
         return entries
@@ -267,14 +279,18 @@ class ConfigCLI(CLI):
             # this dumps main/common configs
             config_entries = self.config.get_configuration_definitions(ignore_private=True)
 
-        if context.CLIARGS['type'] != 'base':
+        if context.CLIARGS['type'] in ('galaxy_server', 'all'):
+            server_list = context.CLIARGS['args'] or self.config.get_config_value('GALAXY_SERVER_LIST')
+            config_entries['GALAXY_SERVERS'] = self._list_plugin_settings('galaxy_server', server_list)
+
+        if context.CLIARGS['type'] not in ('base', 'galaxy_server'):
             config_entries['PLUGINS'] = {}
 
         if context.CLIARGS['type'] == 'all':
             # now each plugin type
             for ptype in C.CONFIGURABLE_PLUGINS:
                 config_entries['PLUGINS'][ptype.upper()] = self._list_plugin_settings(ptype)
-        elif context.CLIARGS['type'] != 'base':
+        elif context.CLIARGS['type'] not in ('base', 'galaxy_server'):
             # only for requested types
             config_entries['PLUGINS'][context.CLIARGS['type']] = self._list_plugin_settings(context.CLIARGS['type'], context.CLIARGS['args'])
 
@@ -483,49 +499,23 @@ class ConfigCLI(CLI):
 
         return self._render_settings(config)
 
-    def _get_plugin_configs(self, ptype, plugins):
-
-        # prep loading
-        loader = getattr(plugin_loader, '%s_loader' % ptype)
+    def _get_plugin_configs(self, ptype, plugins, loader: t.Optional[PluginLoader] = None):
 
         # acumulators
         output = []
-        config_entries = {}
+        config_entries = self._list_plugin_settings(ptype, plugins, loader=loader)
 
-        # build list
-        if plugins:
-            plugin_cs = []
-            for plugin in plugins:
-                p = loader.get(plugin, class_only=True)
-                if p is None:
-                    display.warning("Skipping %s as we could not find matching plugin" % plugin)
-                else:
-                    plugin_cs.append(loader.get(plugin, class_only=True))
-        else:
-            plugin_cs = loader.all(class_only=True)
-
-        for plugin in plugin_cs:
-            # in case of deprecastion they diverge
-            finalname = name = plugin._load_name
-            if name.startswith('_'):
-                if os.path.islink(plugin._original_path):
-                    # skip alias
+        for name in config_entries.keys():
+            if loader:
+                try:
+                    # populate config entries by loading plugin
+                    dump = loader.get(name, class_only=True)
+                except Exception as e:
+                    display.warning('Skipping "%s" %s plugin, as we cannot load plugin to check config due to : %s' % (name, ptype, to_native(e)))
                     continue
-                # deprecated, but use 'nice name'
-                finalname = name.replace('_', '', 1) + ' (DEPRECATED)'
-
-            # default entries per plugin
-            config_entries[finalname] = self.config.get_configuration_definitions(ptype, name)
-
-            try:
-                # populate config entries by loading plugin
-                dump = loader.get(name, class_only=True)
-            except Exception as e:
-                display.warning('Skipping "%s" %s plugin, as we cannot load plugin to check config due to : %s' % (name, ptype, to_native(e)))
-                continue
 
             # actually get the values
-            for setting in config_entries[finalname].keys():
+            for setting in config_entries[name].keys():
                 try:
                     v, o = C.config.get_config_value_and_origin(setting, cfile=self.config_file, plugin_type=ptype, plugin_name=name, variables=get_constants())
                 except AnsibleError as e:
@@ -539,17 +529,17 @@ class ConfigCLI(CLI):
                     # not all cases will be error
                     o = 'REQUIRED'
 
-                config_entries[finalname][setting] = Setting(setting, v, o, None)
+                config_entries[name][setting] = Setting(setting, v, o, None)
 
             # pretty please!
-            results = self._render_settings(config_entries[finalname])
+            results = self._render_settings(config_entries[name])
             if results:
                 if context.CLIARGS['format'] == 'display':
                     # avoid header for empty lists (only changed!)
-                    output.append('\n%s:\n%s' % (finalname, '_' * len(finalname)))
+                    output.append('\n%s:\n%s' % (name, '_' * len(name)))
                     output.extend(results)
                 else:
-                    output.append({finalname: results})
+                    output.append({name: results})
 
         return output
 
@@ -563,22 +553,41 @@ class ConfigCLI(CLI):
         elif context.CLIARGS['type'] == 'all':
             # deal with base
             output = self._get_global_configs()
+
             # deal with plugins
-            for ptype in C.CONFIGURABLE_PLUGINS:
-                plugin_list = self._get_plugin_configs(ptype, context.CLIARGS['args'])
+            for ptype in list(C.CONFIGURABLE_PLUGINS) + ['galaxy_server']:
+                loader = None
+
+                if ptype == 'galaxy_server':
+                    loader = None
+                    plugins = context.CLIARGS['args'] or self.config.get_config_value('GALAXY_SERVER_LIST')
+                else:
+                    loader = getattr(plugin_loader, '%s_loader' % ptype)
+                    plugins = context.CLIARGS['args']
+
+                plugin_list = self._get_plugin_configs(ptype, plugins, loader=loader)
                 if context.CLIARGS['format'] == 'display':
                     if not context.CLIARGS['only_changed'] or plugin_list:
                         output.append('\n%s:\n%s' % (ptype.upper(), '=' * len(ptype)))
                         output.extend(plugin_list)
                 else:
-                    if ptype in ('modules', 'doc_fragments'):
+                    if ptype in ('galaxy_server', 'modules', 'doc_fragments'):
                         pname = ptype.upper()
                     else:
                         pname = '%s_PLUGINS' % ptype.upper()
                     output.append({pname: plugin_list})
         else:
             # deal with plugins
-            output = self._get_plugin_configs(context.CLIARGS['type'], context.CLIARGS['args'])
+            loader = None
+
+            if context.CLIARGS['type'] == 'galaxy_server':
+                loader = None
+                plugins = context.CLIARGS['args'] or self.config.get_config_value('GALAXY_SERVER_LIST')
+            else:
+                loader = getattr(plugin_loader, '%s_loader' % context.CLIARGS['type'])
+                plugins = context.CLIARGS['args']
+
+            output = self._get_plugin_configs(context.CLIARGS['type'], plugins, loader=loader)
 
         if context.CLIARGS['format'] == 'display':
             text = '\n'.join(output)
