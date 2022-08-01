@@ -63,6 +63,9 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
+        key_name = kwargs.get('key_name', 'key')
+        value_name = kwargs.get('value_name', 'value')
+        
         # NOTE: can remove if with_ is removed
         if not isinstance(terms, list):
             terms = [terms]
@@ -73,5 +76,5 @@ class LookupModule(LookupBase):
             if not isinstance(term, Mapping):
                 raise AnsibleError("with_dict expects a dict")
 
-            results.extend(self._flatten_hash_to_list(term))
+            results.extend(self._flatten_hash_to_list(term, key_name=key_name, value_name=value_name))
         return results
