@@ -1079,6 +1079,7 @@ class GalaxyCLI(CLI):
                                    "You can use --force to re-initialize this directory,\n"
                                    "however it will reset any main.yml files that may have\n"
                                    "been modified there already." % to_native(obj_path))
+            shutil.rmtree(b_obj_path)
 
         if obj_skeleton is not None:
             own_skeleton = False
