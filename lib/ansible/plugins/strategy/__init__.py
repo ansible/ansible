@@ -924,8 +924,9 @@ class StrategyBase:
             msg = "noop"
         elif meta_action == 'flush_handlers':
             host_state = iterator.get_state_for_host(target_host.name)
-            # prevent flush_handlers in a handler
-            if target_host.name not in self._tqm._unreachable_hosts and host_state.run_state not in (IteratingStates.HANDLERS, IteratingStates.COMPLETE):
+            if host_state.run_state == IteratingStates.HANDLERS:
+                raise AnsibleError('flush_handlers cannot be used as a handler')
+            if target_host.name not in self._tqm._unreachable_hosts:
                 host_state.pre_flushing_run_state = host_state.run_state
                 host_state.run_state = IteratingStates.HANDLERS
             msg = "ran handlers"

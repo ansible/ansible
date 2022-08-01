@@ -3,7 +3,7 @@
   tasks:
     - command: echo
       notify:
-        - noop_handler
+        - handler
   handlers:
-    - name: noop_handler
-      meta: noop
+    - name: handler
+      meta: flush_handlers
