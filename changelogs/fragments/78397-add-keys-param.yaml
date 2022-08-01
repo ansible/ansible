@@ -1,0 +1,2 @@
+minor_changes:
+  - add optional parameters key_name and value_name to dict lookup plugin

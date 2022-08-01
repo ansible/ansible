@@ -10,12 +10,20 @@ DOCUMENTATION = """
     short_description: returns key/value pair items from dictionaries
     description:
         - Takes dictionaries as input and returns a list with each item in the list being a dictionary with 'key' and 'value' as
-          keys to the previous dictionary's structure.
+          keys to the previous dictionary's structure. The new keys 'key' and 'value' can be overridden using the optional parameters key_name and value_name.
     options:
         _terms:
             description:
                 - A list of dictionaries
             required: True
+        key_name:
+            description:
+                - Use it to override the 'key' key name in the dictionaries.
+            required: False
+        value_name:
+            description:
+                - Use it to override the 'key' key name in the dictionaries.
+            required: False
 """
 
 EXAMPLES = """
