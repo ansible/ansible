@@ -415,7 +415,9 @@ def get_venv_packages(python):  # type: (PythonConfig) -> t.Dict[str, str]
     #       See: https://github.com/ansible/base-test-container/blob/main/files/installer.py
 
     default_packages = dict(
+        packaging='21.3',
         pip='21.3.1',
+        pyyaml='6.0',
         setuptools='60.8.2',
         wheel='0.37.1',
     )
