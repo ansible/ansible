@@ -494,6 +494,23 @@ def test_missing_required_galaxy_key(galaxy_yml_dir):
         collection.concrete_artifact_manager._get_meta_from_src_dir(galaxy_yml_dir)
 
 
+@pytest.mark.parametrize('galaxy_yml_dir', [b'namespace: test_namespace'], indirect=True)
+def test_galaxy_yaml_no_mandatory_keys(galaxy_yml_dir):
+    expected = "The collection galaxy.yml at '%s/galaxy.yml' is missing the " \
+               "following mandatory keys: authors, name, readme, version" % to_native(galaxy_yml_dir)
+
+    with pytest.raises(ValueError, match=expected):
+        assert collection.concrete_artifact_manager._get_meta_from_src_dir(galaxy_yml_dir, require_build_metadata=False) == expected
+
+
+@pytest.mark.parametrize('galaxy_yml_dir', [b'My life story is so very interesting'], indirect=True)
+def test_galaxy_yaml_no_mandatory_keys_bad_yaml(galaxy_yml_dir):
+    expected = "The collection galaxy.yml at '%s/galaxy.yml' is incorrectly formatted." % to_native(galaxy_yml_dir)
+
+    with pytest.raises(AnsibleError, match=expected):
+        collection.concrete_artifact_manager._get_meta_from_src_dir(galaxy_yml_dir)
+
+
 @pytest.mark.parametrize('galaxy_yml_dir', [b"""
 namespace: namespace
 name: collection
