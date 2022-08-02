@@ -1545,6 +1545,8 @@ class GalaxyCLI(CLI):
 
         :param artifacts_manager: Artifacts manager.
         """
+        if artifacts_manager is not None:
+            artifacts_manager.require_build_metadata = False
 
         output_format = context.CLIARGS['output_format']
         collections_search_paths = set(context.CLIARGS['collections_path'])

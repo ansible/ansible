@@ -5,6 +5,8 @@
     - 'dev.collection2'
     - 'dev.collection3'
     - 'dev.collection4'
+    - 'dev.collection5'
+    - 'dev.collection6'
 
 - name: replace the default version of the collections
   lineinfile:
@@ -32,6 +34,17 @@
   - before: "^version: 1.0.0"
     after: "version:"
 
+- name: replace galaxy.yml content with a string
+  copy:
+    content: "invalid"
+    dest: "{{ galaxy_dir }}/dev/ansible_collections/dev/collection5/galaxy.yml"
+
+- name: remove galaxy.yml key required by build
+  lineinfile:
+    path: "{{ galaxy_dir }}/dev/ansible_collections/dev/collection6/galaxy.yml"
+    line: "version: 1.0.0"
+    state: absent
+
 - name: list collections in development without semver versions
   command: ansible-galaxy collection list {{ galaxy_verbosity }}
   register: list_result
@@ -45,6 +58,8 @@
       - "'dev.collection2 placeholder' in list_result.stdout"
       - "'dev.collection3 *' in list_result.stdout"
       - "'dev.collection4 *' in list_result.stdout"
+      - "'dev.collection5 *' in list_result.stdout"
+      - "'dev.collection6 *' in list_result.stdout"
 
 - name: list collections in human format
   command: ansible-galaxy collection list --format human
@@ -58,6 +73,8 @@
       # Note the version displayed is the 'placeholder' string rather than "*" since it is not falsey
       - "'dev.collection2 placeholder' in list_result_human.stdout"
       - "'dev.collection3 *' in list_result_human.stdout"
+      - "'dev.collection5 *' in list_result.stdout"
+      - "'dev.collection6 *' in list_result.stdout"
 
 - name: list collections in yaml format
   command: ansible-galaxy collection list --format yaml
@@ -67,10 +84,12 @@
 
 - assert:
     that:
-      - "item.value | length == 4"
+      - "item.value | length == 6"
       - "item.value['dev.collection1'].version == '*'"
       - "item.value['dev.collection2'].version == 'placeholder'"
       - "item.value['dev.collection3'].version == '*'"
+      - "item.value['dev.collection5'].version == '*'"
+      - "item.value['dev.collection6'].version == '*'"
   with_dict: "{{ list_result_yaml.stdout | from_yaml }}"
 
 - name: list collections in json format
@@ -81,10 +100,12 @@
 
 - assert:
     that:
-      - "item.value | length == 4"
+      - "item.value | length == 6"
       - "item.value['dev.collection1'].version == '*'"
       - "item.value['dev.collection2'].version == 'placeholder'"
       - "item.value['dev.collection3'].version == '*'"
+      - "item.value['dev.collection5'].version == '*'"
+      - "item.value['dev.collection6'].version == '*'"
   with_dict: "{{ list_result_json.stdout | from_json }}"
 
 - name: list single collection in json format
