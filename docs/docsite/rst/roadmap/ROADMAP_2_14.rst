@@ -48,7 +48,6 @@ Release Manager
 Planned work
 ============
 
-* Data Tagging
 * Implement sidecar docs to support documenting filter/test plugins, as well as non Python modules
 * Proxy Display over queue from forks
 * Move handler processing into new PlayIterator phase to use the configured strategy
@@ -61,4 +60,4 @@ Delayed work
 
 The following work has been delayed and retargeted for a future release:
 
-* N/A
+* Data Tagging
