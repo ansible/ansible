@@ -556,8 +556,8 @@ class ConfigManager(object):
                     origin = 'default'
                     value = ensure_type(defs[config].get('default'), defs[config].get('type'), origin=origin)
                 else:
-                    raise AnsibleOptionsError('Invalid type for configuration option %s: %s' %
-                                              (to_native(_get_entry(plugin_type, plugin_name, config)), to_native(e)))
+                    raise AnsibleOptionsError('Invalid type for configuration option %s (from %s): %s' %
+                                              (to_native(_get_entry(plugin_type, plugin_name, config)).strip(), origin, to_native(e)))
 
             # deal with restricted values
             if value is not None and 'choices' in defs[config] and defs[config]['choices'] is not None:
