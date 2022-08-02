@@ -23,7 +23,8 @@ See :ref:`Ansible communication channels <communication>` for details on how to 
    :maxdepth: 1
    :glob:
    :caption: Ansible Release Roadmaps
-
+   
+   COLLECTIONS_7
    COLLECTIONS_6
    COLLECTIONS_5
    COLLECTIONS_4
