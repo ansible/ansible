@@ -1,0 +1,2 @@
+bugfixes:
+  - Do not allow handlers from dynamic includes to be notified (https://github.com/ansible/ansible/pull/78399)

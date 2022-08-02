@@ -118,3 +118,8 @@ grep out.txt -e "\[WARNING\]: Handler 'handler name with {{ test_var }}' is unus
 # Test include_role and import_role cannot be used as handlers
 ansible-playbook test_role_as_handler.yml "$@"  2>&1 | tee out.txt
 grep out.txt -e "ERROR! Using 'include_role' as a handler is not supported."
+
+# Test notifying a handler from within include_tasks does not work anymore
+ansible-playbook test_notify_included.yml "$@"  2>&1 | tee out.txt
+[ "$(grep out.txt -ce 'I was included')" = "1" ]
+grep out.txt -e "ERROR! The requested handler 'handler_from_include' was not found in either the main handlers list nor in the listening handlers list"
