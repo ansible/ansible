@@ -22,7 +22,7 @@ A user can then install your collection on their systems.
 Creating a collection skeleton
 ==============================
 
-To start a new collection run in your collections directory:
+To start a new collection, run the following command in your collections directory:
 
 .. code-block:: bash
 
