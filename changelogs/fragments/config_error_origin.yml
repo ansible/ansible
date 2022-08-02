@@ -1,0 +1,2 @@
+bugfixes:
+  - if a config setting prevents running ansible it should at least show it's "origin".
