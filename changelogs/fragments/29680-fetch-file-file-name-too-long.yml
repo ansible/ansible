@@ -1,0 +1,3 @@
+bugfixes:
+- fetch_file - Ensure we only use the filename when calculating a tempfile, and do not incude the query string
+  (https://github.com/ansible/ansible/issues/29680)
