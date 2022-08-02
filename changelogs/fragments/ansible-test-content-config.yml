@@ -1,0 +1,3 @@
+bugfixes:
+  - "ansible-test - Test configuration for collections is now parsed only once, prior to delegation.
+                    Fixes issue: https://github.com/ansible/ansible/issues/78334"

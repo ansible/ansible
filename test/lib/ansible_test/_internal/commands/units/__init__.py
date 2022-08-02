@@ -103,7 +103,7 @@ def command_units(args):  # type: (UnitsConfig) -> None
 
     paths = [target.path for target in include]
 
-    content_config = get_content_config()
+    content_config = get_content_config(args)
     supported_remote_python_versions = content_config.modules.python_versions
 
     if content_config.modules.controller_only:
