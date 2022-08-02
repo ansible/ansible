@@ -1079,7 +1079,15 @@ class GalaxyCLI(CLI):
                                    "You can use --force to re-initialize this directory,\n"
                                    "however it will reset any main.yml files that may have\n"
                                    "been modified there already." % to_native(obj_path))
-            shutil.rmtree(b_obj_path)
+
+            # delete the contents rather than the collection root in case init was run from the root (--init-path ../../)
+            for root, dirs, files in os.walk(b_obj_path, topdown=True):
+                for old_dir in dirs:
+                    path = os.path.join(root, old_dir)
+                    shutil.rmtree(path)
+                for old_file in files:
+                    path = os.path.join(root, old_file)
+                    os.unlink(path)
 
         if obj_skeleton is not None:
             own_skeleton = False
