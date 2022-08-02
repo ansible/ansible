@@ -1,0 +1,16 @@
+major_changes:
+  - ansible-test - At startup the filesystem encoding is checked to verify it is UTF-8.
+                   If not, the process exits with an error reporting the errant encoding.
+  - ansible-test - At startup the locale is configured as ``en_US.UTF-8``, with a fallback to ``C.UTF-8``.
+                   If neither encoding is available the process exits with an error.
+                   If the fallback is used, a warning is displayed.
+                   In previous versions the ``en_US.UTF-8`` locale was always requested.
+                   However, no startup checking was performed to verify the locale was successfully configured.
+breaking_changes:
+  - ansible-test - At startup the filesystem encoding is checked to verify it is UTF-8.
+                   If not, the process exits with an error reporting the errant encoding.
+  - ansible-test - At startup the locale is configured as ``en_US.UTF-8``, with a fallback to ``C.UTF-8``.
+                   If neither encoding is available the process exits with an error.
+                   If the fallback is used, a warning is displayed.
+                   In previous versions the ``en_US.UTF-8`` locale was always requested.
+                   However, no startup checking was performed to verify the locale was successfully configured.

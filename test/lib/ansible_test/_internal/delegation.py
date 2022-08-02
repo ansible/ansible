@@ -7,6 +7,10 @@ import os
 import tempfile
 import typing as t
 
+from .locale_util import (
+    STANDARD_LOCALE,
+)
+
 from .io import (
     make_dirs,
 )
@@ -256,12 +260,7 @@ def generate_command(
     cmd = [os.path.join(ansible_bin_path, 'ansible-test')]
     cmd = [python.path] + cmd
 
-    # Force the encoding used during delegation.
-    # This is only needed because ansible-test relies on Python's file system encoding.
-    # Environments that do not have the locale configured are thus unable to work with unicode file paths.
-    # Examples include FreeBSD and some Linux containers.
     env_vars = dict(
-        LC_ALL='en_US.UTF-8',
         ANSIBLE_TEST_CONTENT_ROOT=content_root,
     )
 
@@ -275,6 +274,14 @@ def generate_command(
 
         env_vars.update(
             PYTHONPATH=library_path,
+        )
+    else:
+        # When delegating to a host other than the origin, the locale must be explicitly set.
+        # Setting of the locale for the origin host is handled by common_environment().
+        # Not all connections support setting the locale, and for those that do, it isn't guaranteed to work.
+        # This is needed to make sure the delegated environment is configured for UTF-8 before running Python.
+        env_vars.update(
+            LC_ALL=STANDARD_LOCALE,
         )
 
     # Propagate the TERM environment variable to the remote host when using the shell command.
