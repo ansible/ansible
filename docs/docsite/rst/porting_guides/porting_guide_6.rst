@@ -99,6 +99,38 @@ Networking
 
 No notable changes
 
+Porting Guide for v6.2.0
+========================
+
+Added Collections
+-----------------
+
+- ibm.spectrum_virtualize (version 1.9.0)
+
+Known Issues
+------------
+
+netapp.ontap
+~~~~~~~~~~~~
+
+- na_ontap_snapshot - added documentation to use UTC format for ``expiry_time``.
+
+Major Changes
+-------------
+
+community.postgresql
+~~~~~~~~~~~~~~~~~~~~
+
+- postgresql_user - the ``groups`` argument has been deprecated and will be removed in ``community.postgresql 3.0.0``. Please use the ``postgresql_membership`` module to specify group/role memberships instead (https://github.com/ansible-collections/community.postgresql/issues/277).
+
+Deprecated Features
+-------------------
+
+community.hashi_vault
+~~~~~~~~~~~~~~~~~~~~~
+
+- vault_kv2_get lookup - the ``engine_mount_point option`` in the ``vault_kv2_get`` lookup only will change its default from ``kv`` to ``secret`` in community.hashi_vault version 4.0.0 (https://github.com/ansible-collections/community.hashi_vault/issues/279).
+
 Porting Guide for v6.1.0
 ========================
 
