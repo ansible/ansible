@@ -40,6 +40,14 @@ except ImportError:
 else:
     HAS_PACKAGING = True
 
+try:
+    from distlib.manifest import Manifest
+    from distlib import DistlibException
+except ImportError:
+    HAS_DISTLIB = False
+else:
+    HAS_DISTLIB = True
+
 if t.TYPE_CHECKING:
     from ansible.galaxy.collection.concrete_artifact_manager import (
         ConcreteArtifactsManager,
@@ -452,6 +460,7 @@ def build_collection(u_collection_path, u_output_path, force):
         collection_meta['namespace'],  # type: ignore[arg-type]
         collection_meta['name'],  # type: ignore[arg-type]
         collection_meta['build_ignore'],  # type: ignore[arg-type]
+        collection_meta.get('manifest_directives') or [],  # type: ignore[arg-type]
     )
 
     artifact_tarball_file_name = '{ns!s}-{name!s}-{ver!s}.tar.gz'.format(
@@ -1007,23 +1016,15 @@ def _verify_file_hash(b_path, filename, expected_hash, error_queue):
         error_queue.append(ModifiedContent(filename=filename, expected=expected_hash, installed=actual_hash))
 
 
-def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns):
+def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, manifest_directives):
     # type: (bytes, str, str, list[str]) -> FilesManifestType
     # We always ignore .pyc and .retry files as well as some well known version control directories. The ignore
     # patterns can be extended by the build_ignore key in galaxy.yml
-    b_ignore_patterns = [
-        b'MANIFEST.json',
-        b'FILES.json',
-        b'galaxy.yml',
-        b'galaxy.yaml',
-        b'.git',
-        b'*.pyc',
-        b'*.retry',
-        b'tests/output',  # Ignore ansible-test result output directory.
-        to_bytes('{0}-{1}-*.tar.gz'.format(namespace, name)),  # Ignores previously built artifacts in the root dir.
-    ]
-    b_ignore_patterns += [to_bytes(p) for p in ignore_patterns]
-    b_ignore_dirs = frozenset([b'CVS', b'.bzr', b'.hg', b'.git', b'.svn', b'__pycache__', b'.tox'])
+    if ignore_patterns and manifest_directives:
+        raise AnsibleError('"build_ignore" and "manifest_directives" are mutually exclusive')
+
+    if manifest_directives and not HAS_DISTLIB:
+        raise AnsibleError('Use of "manifest_directives" requires the python "distlib" library')
 
     entry_template = {
         'name': None,
@@ -1044,6 +1045,78 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns):
         ],
         'format': MANIFEST_FORMAT,
     }  # type: FilesManifestType
+
+    # TODO: This should be swapped, left for initial testing
+    if ignore_patterns:
+        return _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns, entry_template, manifest)
+
+    return _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives, entry_template, manifest)
+
+
+def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives, entry_template, manifest):
+    if not manifest_directives:
+        manifest_directives = [
+            'recursive-include tests **',
+            'recursive-include docs **',
+            'include meta/*.yml',
+            'include *.txt *.md *.rst COPYING LICENSE',
+            'recursive-include changelogs **.yml **.yaml',
+        ]
+        for plugin in ['action', 'become', 'cache', 'callback', 'cliconf', 'connection', 'doc_fragments',
+                       'filter', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', 'strategy',
+                       'terminal', 'test', 'vars']:
+            manifest_directives.append(
+                f'recursive-include plugins/{plugin} **.py **.yml **.yaml'
+            )
+        manifest_directives.append(
+            'recursive-include plugins/modules **.py **.ps1 **.yml **.yaml'
+        )
+        manifest_directives.extend([
+            'recursive-exclude tests/output **',
+        ])
+
+    u_collection_path = to_text(b_collection_path, errors='surrogate_or_strict')
+    m = Manifest(u_collection_path)
+    for directive in manifest_directives:
+        try:
+            m.process_directive(directive)
+        except DistlibException as e:
+            raise AnsibleError(f'Invalid manifest directive: {e}')
+        except Exception as e:
+            raise AnsibleError(f'Unknown error processing manifest directive: {e}')
+
+    for abs_path in m.sorted(wantdirs=True):
+        rel_path = os.path.relpath(abs_path, u_collection_path)
+        if os.path.isdir(abs_path):
+            manifest_entry = entry_template.copy()
+            manifest_entry['name'] = rel_path
+            manifest_entry['ftype'] = 'dir'
+        else:
+            manifest_entry = entry_template.copy()
+            manifest_entry['name'] = rel_path
+            manifest_entry['ftype'] = 'file'
+            manifest_entry['chksum_type'] = 'sha256'
+            manifest_entry['chksum_sha256'] = secure_hash(abs_path, hash_func=sha256)
+
+        manifest['files'].append(manifest_entry)
+
+    return manifest
+
+
+def _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns, entry_template, manifest):
+    b_ignore_patterns = [
+        b'MANIFEST.json',
+        b'FILES.json',
+        b'galaxy.yml',
+        b'galaxy.yaml',
+        b'.git',
+        b'*.pyc',
+        b'*.retry',
+        b'tests/output',  # Ignore ansible-test result output directory.
+        to_bytes('{0}-{1}-*.tar.gz'.format(namespace, name)),  # Ignores previously built artifacts in the root dir.
+    ]
+    b_ignore_patterns += [to_bytes(p) for p in ignore_patterns]
+    b_ignore_dirs = frozenset([b'CVS', b'.bzr', b'.hg', b'.git', b'.svn', b'__pycache__', b'.tox'])
 
     def _walk(b_path, b_top_level_dir):
         for b_item in os.listdir(b_path):
@@ -1427,6 +1500,7 @@ def install_src(collection, b_collection_path, b_collection_output_path, artifac
         b_collection_path,
         collection_meta['namespace'], collection_meta['name'],
         collection_meta['build_ignore'],
+        collection_meta.get('manifest_directives') or [],
     )
 
     collection_output_path = _build_collection_dir(
