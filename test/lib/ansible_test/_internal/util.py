@@ -32,6 +32,11 @@ try:
 except ImportError:
     TypeGuard = None
 
+from .locale_util import (
+    LOCALE_WARNING,
+    CONFIGURED_LOCALE,
+)
+
 from .encoding import (
     to_bytes,
     to_optional_bytes,
@@ -611,7 +616,7 @@ class OutputThread(ReaderThread):
 def common_environment():
     """Common environment used for executing all programs."""
     env = dict(
-        LC_ALL='en_US.UTF-8',
+        LC_ALL=CONFIGURED_LOCALE,
         PATH=os.environ.get('PATH', os.path.defpath),
     )
 
@@ -649,6 +654,15 @@ def common_environment():
     env.update(pass_vars(required=required, optional=optional))
 
     return env
+
+
+def report_locale() -> None:
+    """Report the configured locale and the locale warning, if applicable."""
+
+    display.info(f'Configured locale: {CONFIGURED_LOCALE}', verbosity=1)
+
+    if LOCALE_WARNING:
+        display.warning(LOCALE_WARNING)
 
 
 def pass_vars(required, optional):  # type: (t.Collection[str], t.Collection[str]) -> t.Dict[str, str]
