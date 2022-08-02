@@ -387,10 +387,6 @@ class StrategyModule(StrategyBase):
                                 is_handler = isinstance(included_file._task, Handler)
                                 new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=is_handler)
 
-                            if is_handler:
-                                # TODO filter tags
-                                iterator._play.handlers.extend(new_blocks)
-
                             display.debug("iterating over new_blocks loaded from include file")
                             for new_block in new_blocks:
                                 if is_handler:

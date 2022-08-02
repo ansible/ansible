@@ -261,10 +261,6 @@ class StrategyModule(StrategyBase):
                         display.warning(to_text(e))
                         continue
 
-                    if is_handler:
-                        # TODO filter tags
-                        iterator._play.handlers.extend(new_blocks)
-
                     for new_block in new_blocks:
                         if is_handler:
                             # TODO filter tags to allow tags on handlers from include_tasks: merge with the else block
