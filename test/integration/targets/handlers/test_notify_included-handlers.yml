@@ -1,0 +1,3 @@
+- name: handler_from_include
+  debug:
+    msg: I was included
