@@ -14,6 +14,7 @@ from .init import (
 from .util import (
     ApplicationError,
     display,
+    report_locale,
 )
 
 from .delegation import (
@@ -59,6 +60,7 @@ def main(cli_args=None):  # type: (t.Optional[t.List[str]]) -> None
         display.color = config.color
         display.fd = sys.stderr if config.display_stderr else sys.stdout
         configure_timeout(config)
+        report_locale()
 
         display.info('RLIMIT_NOFILE: %s' % (CURRENT_RLIMIT_NOFILE,), verbosity=2)
 
