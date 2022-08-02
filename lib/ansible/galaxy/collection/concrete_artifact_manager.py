@@ -31,6 +31,7 @@ from ansible.galaxy.dependency_resolution.dataclasses import _GALAXY_YAML
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.process import get_bin_path
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.module_utils.common.yaml import yaml_load
 from ansible.module_utils.six import raise_from
 from ansible.module_utils.urls import open_url
@@ -72,6 +73,7 @@ class ConcreteArtifactsManager:
         self.timeout = timeout  # type: int
         self._required_signature_count = required_signature_count  # type: str
         self._ignore_signature_errors = ignore_signature_errors  # type: list[str]
+        self._require_build_metadata = True  # type: bool
 
     @property
     def keyring(self):
@@ -86,6 +88,16 @@ class ConcreteArtifactsManager:
         if self._ignore_signature_errors is None:
             return []
         return self._ignore_signature_errors
+
+    @property
+    def require_build_metadata(self):
+        # type: () -> bool
+        return self._require_build_metadata
+
+    @require_build_metadata.setter
+    def require_build_metadata(self, value):
+        # type: (bool) -> None
+        self._require_build_metadata = value
 
     def get_galaxy_artifact_source_info(self, collection):
         # type: (Candidate) -> dict[str, t.Union[str, list[dict[str, str]]]]
@@ -286,7 +298,7 @@ class ConcreteArtifactsManager:
         elif collection.is_dir:  # should we just build a coll instead?
             # FIXME: what if there's subdirs?
             try:
-                collection_meta = _get_meta_from_dir(b_artifact_path)
+                collection_meta = _get_meta_from_dir(b_artifact_path, self.require_build_metadata)
             except LookupError as lookup_err:
                 raise_from(
                     AnsibleError(
@@ -338,6 +350,7 @@ class ConcreteArtifactsManager:
             keyring=None,  # type: str
             required_signature_count=None,  # type: str
             ignore_signature_errors=None,  # type: list[str]
+            require_build_metadata=True,  # type: bool
     ):  # type: (...) -> t.Iterator[ConcreteArtifactsManager]
         """Custom ConcreteArtifactsManager constructor with temp dir.
 
@@ -505,6 +518,7 @@ def _consume_file(read_from, write_to=None):
 def _normalize_galaxy_yml_manifest(
         galaxy_yml,  # type: dict[str, t.Union[str, list[str], dict[str, str], None]]
         b_galaxy_yml_path,  # type: bytes
+        require_build_metadata=True,  # type: bool
 ):
     # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None]]
     galaxy_yml_schema = (
@@ -533,8 +547,14 @@ def _normalize_galaxy_yml_manifest(
     set_keys = set(galaxy_yml.keys())
     missing_keys = mandatory_keys.difference(set_keys)
     if missing_keys:
-        raise AnsibleError("The collection galaxy.yml at '%s' is missing the following mandatory keys: %s"
-                           % (to_native(b_galaxy_yml_path), ", ".join(sorted(missing_keys))))
+        msg = (
+            "The collection galaxy.yml at '%s' is missing the following mandatory keys: %s"
+            % (to_native(b_galaxy_yml_path), ", ".join(sorted(missing_keys)))
+        )
+        if require_build_metadata:
+            raise AnsibleError(msg)
+        display.warning(msg)
+        raise ValueError(msg)
 
     extra_keys = set_keys.difference(all_keys)
     if len(extra_keys) > 0:
@@ -570,15 +590,17 @@ def _normalize_galaxy_yml_manifest(
 
 def _get_meta_from_dir(
         b_path,  # type: bytes
+        require_build_metadata=True,  # type: bool
 ):  # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None]]
     try:
         return _get_meta_from_installed_dir(b_path)
     except LookupError:
-        return _get_meta_from_src_dir(b_path)
+        return _get_meta_from_src_dir(b_path, require_build_metadata)
 
 
 def _get_meta_from_src_dir(
         b_path,  # type: bytes
+        require_build_metadata=True,  # type: bool
 ):  # type: (...) -> dict[str, t.Union[str, list[str], dict[str, str], None]]
     galaxy_yml = os.path.join(b_path, _GALAXY_YAML)
     if not os.path.isfile(galaxy_yml):
@@ -603,7 +625,14 @@ def _get_meta_from_src_dir(
                 yaml_err,
             )
 
-    return _normalize_galaxy_yml_manifest(manifest, galaxy_yml)
+    if not isinstance(manifest, dict):
+        if require_build_metadata:
+            raise AnsibleError(f"The collection galaxy.yml at '{to_native(galaxy_yml)}' is incorrectly formatted.")
+        # Valid build metadata is not required by ansible-galaxy list. Raise ValueError to fall back to implicit metadata.
+        display.warning(f"The collection galaxy.yml at '{to_native(galaxy_yml)}' is incorrectly formatted.")
+        raise ValueError(f"The collection galaxy.yml at '{to_native(galaxy_yml)}' is incorrectly formatted.")
+
+    return _normalize_galaxy_yml_manifest(manifest, galaxy_yml, require_build_metadata)
 
 
 def _get_json_from_installed_dir(
