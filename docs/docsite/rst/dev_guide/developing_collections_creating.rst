@@ -33,7 +33,7 @@ To start a new collection, run the following command in your collections directo
 	Both the namespace and collection names use the same strict set of requirements. See `Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_ on the Galaxy docsite for those requirements.
 
 It will create the structure ``[my_namespace]/[my_collection]/[collection skeleton]``.
-The git project must be initialized in the collection directory.
+.. hint:: The git project should be initialized in the collection directory.
 Once the skeleton exists, you can populate the directories with the content you want inside the collection. See `ansible-collections <https://github.com/ansible-collections/>`_ GitHub Org to get a better idea of what you can place inside a collection.
 
 Reference: the ``ansible-galaxy collection`` command
