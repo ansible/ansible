@@ -43,6 +43,51 @@
     - (init_custom_path_actual.files | map(attribute='path') | list)[1] | basename in ['docs', 'plugins', 'roles']
     - (init_custom_path_actual.files | map(attribute='path') | list)[2] | basename in ['docs', 'plugins', 'roles']
 
+- name: add a directory to the init collection path to test that --force removes it
+  file:
+    state: directory
+    path: "{{ galaxy_dir }}/scratch/custom-init-dir/ansible_test2/my_collection/remove_me"
+
+- name: create collection with custom init path
+  command: ansible-galaxy collection init ansible_test2.my_collection --init-path "{{ galaxy_dir }}/scratch/custom-init-dir" --force {{ galaxy_verbosity }}
+  register: init_custom_path
+
+- name: get result of create default skeleton
+  find:
+    path: '{{ galaxy_dir }}/scratch/custom-init-dir/ansible_test2/my_collection'
+    file_type: directory
+  register: init_custom_path_actual
+
+- name: assert create collection with custom init path
+  assert:
+    that:
+    - '"Collection ansible_test2.my_collection was created successfully" in init_custom_path.stdout'
+    - init_custom_path_actual.files | length == 3
+    - (init_custom_path_actual.files | map(attribute='path') | list)[0] | basename in ['docs', 'plugins', 'roles']
+    - (init_custom_path_actual.files | map(attribute='path') | list)[1] | basename in ['docs', 'plugins', 'roles']
+    - (init_custom_path_actual.files | map(attribute='path') | list)[2] | basename in ['docs', 'plugins', 'roles']
+
+- name: create collection in cwd with custom init path
+  command: ansible-galaxy collection init ansible_test2.my_collection --init-path ../../ --force {{ galaxy_verbosity }}
+  args:
+    chdir: "{{ galaxy_dir }}/scratch/custom-init-dir/ansible_test2/my_collection"
+  register: init_custom_path
+
+- name: get result of create default skeleton
+  find:
+    path: '{{ galaxy_dir }}/scratch/custom-init-dir/ansible_test2/my_collection'
+    file_type: directory
+  register: init_custom_path_actual
+
+- name: assert create collection with custom init path
+  assert:
+    that:
+    - '"Collection ansible_test2.my_collection was created successfully" in init_custom_path.stdout'
+    - init_custom_path_actual.files | length == 3
+    - (init_custom_path_actual.files | map(attribute='path') | list)[0] | basename in ['docs', 'plugins', 'roles']
+    - (init_custom_path_actual.files | map(attribute='path') | list)[1] | basename in ['docs', 'plugins', 'roles']
+    - (init_custom_path_actual.files | map(attribute='path') | list)[2] | basename in ['docs', 'plugins', 'roles']
+
 - name: create collection for ignored files and folders
   command: ansible-galaxy collection init ansible_test.ignore
   args:
