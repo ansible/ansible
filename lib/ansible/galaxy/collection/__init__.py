@@ -1077,12 +1077,13 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_d
     directives.extend(manifest_directives)
 
     directives.extend([
-        'exclude galaxy.yml galaxy.yaml',
+        f'exclude galaxy.yml galaxy.yaml MANIFEST.json FILES.json {namespace}-{name}-*.tar.gz',
         'recursive-exclude tests/output **',
-        'global-exclude /.*',
+        'global-exclude /.* /__pycache__',
     ])
 
-    display.display('\n'.join(directives))
+    display.vvv('Manifest Directives:')
+    display.vvv(textwrap.indent('\n'.join(directives), '    '))
 
     u_collection_path = to_text(b_collection_path, errors='surrogate_or_strict')
     m = Manifest(u_collection_path)
