@@ -1,0 +1,2 @@
+modules:
+  python_requires: controller  # allow tests to pass when run against a Python version not supported by the controller
