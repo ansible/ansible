@@ -616,7 +616,8 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
             # git before 1.7.5 doesn't have separate-git-dir argument, do fallback
             needs_separate_git_dir_fallback = True
         else:
-            cmd.append('--separate-git-dir=%s' % separate_git_dir)    
+            cmd.append('--separate-git-dir=%s' % separate_git_dir)
+
     if git_filter:
         cmd.append('--filter=%s' % git_filter)
 
