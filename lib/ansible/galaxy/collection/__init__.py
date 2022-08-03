@@ -1054,30 +1054,39 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, m
 
 
 def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives, entry_template, manifest):
-    if not manifest_directives:
-        manifest_directives = [
-            'recursive-include tests **',
-            'recursive-include docs **',
-            'include meta/*.yml',
-            'include *.txt *.md *.rst COPYING LICENSE',
-            'recursive-include changelogs **.yml **.yaml',
-        ]
-        for plugin in ['action', 'become', 'cache', 'callback', 'cliconf', 'connection', 'doc_fragments',
-                       'filter', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', 'strategy',
-                       'terminal', 'test', 'vars']:
-            manifest_directives.append(
-                f'recursive-include plugins/{plugin} **.py **.yml **.yaml'
-            )
-        manifest_directives.append(
-            'recursive-include plugins/modules **.py **.ps1 **.yml **.yaml'
+    directives = [
+        'include meta/*.yml',
+        'include *.txt *.md *.rst COPYING LICENSE',
+        'recursive-include tests **',
+        'recursive-include docs **',
+        'recursive-include roles **',
+        'recursive-include playooks **',
+        'recursive-include changelogs **.yml **.yaml',
+    ]
+    for plugin in ['action', 'become', 'cache', 'callback', 'cliconf', 'connection', 'doc_fragments',
+                   'filter', 'httpapi', 'inventory', 'lookup', 'netconf', 'shell', 'strategy',
+                   'terminal', 'test', 'vars']:
+        directives.append(
+            f'recursive-include plugins/{plugin} **.py **.yml **.yaml'
         )
-        manifest_directives.extend([
-            'recursive-exclude tests/output **',
-        ])
+    directives.append(
+        'recursive-include plugins/modules **.py **.ps1 **.yml **.yaml'
+        'recursive-include plugins/modules_utils **.py **.ps1'
+    )
+
+    directives.extend(manifest_directives)
+
+    directives.extend([
+        'exclude galaxy.yml galaxy.yaml',
+        'recursive-exclude tests/output **',
+        'global-exclude /.*',
+    ])
+
+    display.display('\n'.join(directives))
 
     u_collection_path = to_text(b_collection_path, errors='surrogate_or_strict')
     m = Manifest(u_collection_path)
-    for directive in manifest_directives:
+    for directive in directives:
         try:
             m.process_directive(directive)
         except DistlibException as e:
