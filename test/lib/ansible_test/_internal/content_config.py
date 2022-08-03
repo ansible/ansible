@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import pickle
 import typing as t
 
 from .constants import (
@@ -21,6 +22,7 @@ from .compat.yaml import (
 )
 
 from .io import (
+    open_binary_file,
     read_text_file,
 )
 
@@ -28,54 +30,59 @@ from .util import (
     ApplicationError,
     display,
     str_to_version,
-    cache,
 )
 
 from .data import (
     data_context,
 )
 
+from .config import (
+    EnvironmentConfig,
+    ContentConfig,
+    ModulesConfig,
+)
 
 MISSING = object()
 
 
-class BaseConfig:
-    """Base class for content configuration."""
-    def __init__(self, data):  # type: (t.Any) -> None
-        if not isinstance(data, dict):
-            raise Exception('config must be type `dict` not `%s`' % type(data))
+def parse_modules_config(data: t.Any) -> ModulesConfig:
+    """Parse the given dictionary as module config and return it."""
+    if not isinstance(data, dict):
+        raise Exception('config must be type `dict` not `%s`' % type(data))
+
+    python_requires = data.get('python_requires', MISSING)
+
+    if python_requires == MISSING:
+        raise KeyError('python_requires is required')
+
+    return ModulesConfig(
+        python_requires=python_requires,
+        python_versions=parse_python_requires(python_requires),
+        controller_only=python_requires == 'controller',
+    )
 
 
-class ModulesConfig(BaseConfig):
-    """Configuration for modules."""
-    def __init__(self, data):  # type: (t.Any) -> None
-        super().__init__(data)
+def parse_content_config(data: t.Any) -> ContentConfig:
+    """Parse the given dictionary as content config and return it."""
+    if not isinstance(data, dict):
+        raise Exception('config must be type `dict` not `%s`' % type(data))
 
-        python_requires = data.get('python_requires', MISSING)
+    # Configuration specific to modules/module_utils.
+    modules = parse_modules_config(data.get('modules', {}))
 
-        if python_requires == MISSING:
-            raise KeyError('python_requires is required')
+    # Python versions supported by the controller, combined with Python versions supported by modules/module_utils.
+    # Mainly used for display purposes and to limit the Python versions used for sanity tests.
+    python_versions = tuple(version for version in SUPPORTED_PYTHON_VERSIONS
+                            if version in CONTROLLER_PYTHON_VERSIONS or version in modules.python_versions)
 
-        self.python_requires = python_requires
-        self.python_versions = parse_python_requires(python_requires)
-        self.controller_only = python_requires == 'controller'
+    # True if Python 2.x is supported.
+    py2_support = any(version for version in python_versions if str_to_version(version)[0] == 2)
 
-
-class ContentConfig(BaseConfig):
-    """Configuration for all content."""
-    def __init__(self, data):  # type: (t.Any) -> None
-        super().__init__(data)
-
-        # Configuration specific to modules/module_utils.
-        self.modules = ModulesConfig(data.get('modules', {}))
-
-        # Python versions supported by the controller, combined with Python versions supported by modules/module_utils.
-        # Mainly used for display purposes and to limit the Python versions used for sanity tests.
-        self.python_versions = [version for version in SUPPORTED_PYTHON_VERSIONS
-                                if version in CONTROLLER_PYTHON_VERSIONS or version in self.modules.python_versions]
-
-        # True if Python 2.x is supported.
-        self.py2_support = any(version for version in self.python_versions if str_to_version(version)[0] == 2)
+    return ContentConfig(
+        modules=modules,
+        python_versions=python_versions,
+        py2_support=py2_support,
+    )
 
 
 def load_config(path):  # type: (str) -> t.Optional[ContentConfig]
@@ -95,7 +102,7 @@ def load_config(path):  # type: (str) -> t.Optional[ContentConfig]
         return None
 
     try:
-        config = ContentConfig(yaml_value)
+        config = parse_content_config(yaml_value)
     except Exception as ex:  # pylint: disable=broad-except
         display.warning('Ignoring config "%s" due a config parsing error: %s' % (path, ex))
         return None
@@ -105,13 +112,18 @@ def load_config(path):  # type: (str) -> t.Optional[ContentConfig]
     return config
 
 
-@cache
-def get_content_config():  # type: () -> ContentConfig
+def get_content_config(args):  # type: (EnvironmentConfig) -> ContentConfig
     """
     Parse and return the content configuration (if any) for the current collection.
     For ansible-core, a default configuration is used.
     Results are cached.
     """
+    if args.host_path:
+        args.content_config = deserialize_content_config(os.path.join(args.host_path, 'config.dat'))
+
+    if args.content_config:
+        return args.content_config
+
     collection_config_path = 'tests/config.yml'
 
     config = None
@@ -120,7 +132,7 @@ def get_content_config():  # type: () -> ContentConfig
         config = load_config(collection_config_path)
 
     if not config:
-        config = ContentConfig(dict(
+        config = parse_content_config(dict(
             modules=dict(
                 python_requires='default',
             ),
@@ -132,20 +144,36 @@ def get_content_config():  # type: () -> ContentConfig
                                'This collection provides the Python requirement: %s' % (
                                    ', '.join(SUPPORTED_PYTHON_VERSIONS), config.modules.python_requires))
 
+    args.content_config = config
+
     return config
 
 
-def parse_python_requires(value):  # type: (t.Any) -> t.List[str]
+def parse_python_requires(value):  # type: (t.Any) -> tuple[str, ...]
     """Parse the given 'python_requires' version specifier and return the matching Python versions."""
     if not isinstance(value, str):
         raise ValueError('python_requires must must be of type `str` not type `%s`' % type(value))
 
+    versions: tuple[str, ...]
+
     if value == 'default':
-        versions = list(SUPPORTED_PYTHON_VERSIONS)
+        versions = SUPPORTED_PYTHON_VERSIONS
     elif value == 'controller':
-        versions = list(CONTROLLER_PYTHON_VERSIONS)
+        versions = CONTROLLER_PYTHON_VERSIONS
     else:
         specifier_set = SpecifierSet(value)
-        versions = [version for version in SUPPORTED_PYTHON_VERSIONS if specifier_set.contains(Version(version))]
+        versions = tuple(version for version in SUPPORTED_PYTHON_VERSIONS if specifier_set.contains(Version(version)))
 
     return versions
+
+
+def serialize_content_config(args: EnvironmentConfig, path: str) -> None:
+    """Serialize the content config to the given path. If the config has not been loaded, an empty config will be serialized."""
+    with open_binary_file(path, 'wb') as config_file:
+        pickle.dump(args.content_config, config_file)
+
+
+def deserialize_content_config(path: str) -> ContentConfig:
+    """Deserialize content config from the path."""
+    with open_binary_file(path) as config_file:
+        return pickle.load(config_file)
