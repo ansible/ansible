@@ -48,7 +48,7 @@ class WrappedThread(threading.Thread):
         return result
 
 
-def mutex(func):  # type: (TCallable) -> TCallable
+def mutex(func: TCallable) -> TCallable:
     """Enforce exclusive access on a decorated function."""
     lock = threading.Lock()
 

@@ -37,7 +37,7 @@ class CsCloudProvider(CloudProvider):
     """CloudStack cloud provider plugin. Sets up cloud resources before delegation."""
     DOCKER_SIMULATOR_NAME = 'cloudstack-sim'
 
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
+    def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
         self.image = os.environ.get('ANSIBLE_CLOUDSTACK_CONTAINER', 'quay.io/ansible/cloudstack-test-container:1.4.0')
@@ -47,7 +47,7 @@ class CsCloudProvider(CloudProvider):
         self.uses_docker = True
         self.uses_config = True
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super().setup()
 
@@ -56,7 +56,7 @@ class CsCloudProvider(CloudProvider):
         else:
             self._setup_dynamic()
 
-    def _setup_static(self):  # type: () -> None
+    def _setup_static(self) -> None:
         """Configure CloudStack tests for use with static configuration."""
         parser = configparser.ConfigParser()
         parser.read(self.config_static_path)
@@ -81,7 +81,7 @@ class CsCloudProvider(CloudProvider):
 
         display.info('Read cs host "%s" and port %d from config: %s' % (self.host, self.port, self.config_static_path), verbosity=1)
 
-    def _setup_dynamic(self):  # type: () -> None
+    def _setup_dynamic(self) -> None:
         """Create a CloudStack simulator using docker."""
         config = self._read_config_template()
 
@@ -129,7 +129,7 @@ class CsCloudProvider(CloudProvider):
 
         self._write_config(config)
 
-    def _get_credentials(self, container_name):  # type: (str) -> t.Dict[str, t.Any]
+    def _get_credentials(self, container_name: str) -> t.Dict[str, t.Any]:
         """Wait for the CloudStack simulator to return credentials."""
         def check(value):
             """Return True if the given configuration is valid JSON, otherwise return False."""
@@ -148,7 +148,7 @@ class CsCloudProvider(CloudProvider):
 
 class CsCloudEnvironment(CloudEnvironment):
     """CloudStack cloud environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         parser = configparser.ConfigParser()
         parser.read(self.config_path)

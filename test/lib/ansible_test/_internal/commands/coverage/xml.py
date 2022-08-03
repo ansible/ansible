@@ -48,7 +48,7 @@ from . import (
 )
 
 
-def command_coverage_xml(args):  # type: (CoverageXmlConfig) -> None
+def command_coverage_xml(args: CoverageXmlConfig) -> None:
     """Generate an XML coverage report."""
     host_state = prepare_profiles(args)  # coverage xml
     output_files = combine_coverage_files(args, host_state)
@@ -69,7 +69,7 @@ def command_coverage_xml(args):  # type: (CoverageXmlConfig) -> None
             run_coverage(args, host_state, output_file, 'xml', ['-i', '-o', xml_path])
 
 
-def _generate_powershell_xml(coverage_file):  # type: (str) -> Element
+def _generate_powershell_xml(coverage_file: str) -> Element:
     """Generate a PowerShell coverage report XML element from the specified coverage file and return it."""
     coverage_info = read_json_file(coverage_file)
 

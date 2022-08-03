@@ -20,7 +20,7 @@ from . import (
 )
 
 
-def command_coverage_erase(args):  # type: (CoverageEraseConfig) -> None
+def command_coverage_erase(args: CoverageEraseConfig) -> None:
     """Erase code coverage data files collected during test runs."""
     host_state = prepare_profiles(args)  # coverage erase
 

@@ -155,7 +155,7 @@ def cover_python(
     return intercept_python(args, python, cmd, env, capture, data, cwd)
 
 
-def get_coverage_platform(config):  # type: (HostConfig) -> str
+def get_coverage_platform(config: HostConfig) -> str:
     """Return the platform label for the given host config."""
     if isinstance(config, PosixRemoteConfig):
         platform = f'remote-{sanitize_host_name(config.name)}'
@@ -203,7 +203,7 @@ def get_coverage_environment(
     return env
 
 
-def get_coverage_config(args):  # type: (TestConfig) -> str
+def get_coverage_config(args: TestConfig) -> str:
     """Return the path to the coverage config, creating the config if it does not already exist."""
     try:
         return get_coverage_config.path  # type: ignore[attr-defined]
@@ -228,7 +228,7 @@ def get_coverage_config(args):  # type: (TestConfig) -> str
     return path
 
 
-def generate_coverage_config(args):  # type: (TestConfig) -> str
+def generate_coverage_config(args: TestConfig) -> str:
     """Generate code coverage configuration for tests."""
     if data_context().content.collection:
         coverage_config = generate_collection_coverage_config(args)
@@ -238,7 +238,7 @@ def generate_coverage_config(args):  # type: (TestConfig) -> str
     return coverage_config
 
 
-def generate_ansible_coverage_config():  # type: () -> str
+def generate_ansible_coverage_config() -> str:
     """Generate code coverage configuration for Ansible tests."""
     coverage_config = '''
 [run]
@@ -259,7 +259,7 @@ omit =
     return coverage_config
 
 
-def generate_collection_coverage_config(args):  # type: (TestConfig) -> str
+def generate_collection_coverage_config(args: TestConfig) -> str:
     """Generate code coverage configuration for Ansible Collection tests."""
     coverage_config = '''
 [run]

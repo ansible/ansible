@@ -39,7 +39,7 @@ from ...host_configs import (
 )
 
 
-def command_network_integration(args):  # type: (NetworkIntegrationConfig) -> None
+def command_network_integration(args: NetworkIntegrationConfig) -> None:
     """Entry point for the `network-integration` command."""
     handle_layout_messages(data_context().content.integration_messages)
 

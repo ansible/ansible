@@ -38,7 +38,7 @@ tarfile.pwd = None  # type: ignore[attr-defined]  # undocumented attribute
 tarfile.grp = None  # type: ignore[attr-defined]  # undocumented attribute
 
 
-def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
+def create_payload(args: CommonConfig, dst_path: str) -> None:
     """Create a payload for delegation."""
     if args.explain:
         return
@@ -46,7 +46,7 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
     files = list(data_context().ansible_source)
     filters = {}
 
-    def make_executable(tar_info):  # type: (tarfile.TarInfo) -> t.Optional[tarfile.TarInfo]
+    def make_executable(tar_info: tarfile.TarInfo) -> t.Optional[tarfile.TarInfo]:
         """Make the given file executable."""
         tar_info.mode |= stat.S_IXUSR | stat.S_IXOTH | stat.S_IXGRP
         return tar_info
@@ -117,7 +117,7 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
     display.info('Created a %d byte payload archive containing %d files in %d seconds.' % (payload_size_bytes, len(files), duration), verbosity=1)
 
 
-def create_temporary_bin_files(args):  # type: (CommonConfig) -> t.Tuple[t.Tuple[str, str], ...]
+def create_temporary_bin_files(args: CommonConfig) -> t.Tuple[t.Tuple[str, str], ...]:
     """Create a temporary ansible bin directory populated using the symlink map."""
     if args.explain:
         temp_path = '/tmp/ansible-tmp-bin'

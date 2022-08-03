@@ -120,7 +120,7 @@ class Inventory:
         """Return an inventory instance created from the given hostname and variables."""
         return Inventory(host_groups=dict(all={name: variables}))
 
-    def write(self, args, path):  # type: (CommonConfig, str) -> None
+    def write(self, args: CommonConfig, path: str) -> None:
         """Write the given inventory to the specified path on disk."""
 
         # NOTE: Switching the inventory generation to write JSON would be nice, but is currently not possible due to the use of hard-coded inventory filenames.
@@ -173,19 +173,19 @@ class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
         self.cache = {}  # type: t.Dict[str, t.Any]
         """Cache that must not be persisted across delegation."""
 
-    def provision(self):  # type: () -> None
+    def provision(self) -> None:
         """Provision the host before delegation."""
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Perform out-of-band setup before delegation."""
 
-    def deprovision(self):  # type: () -> None
+    def deprovision(self) -> None:
         """Deprovision the host after delegation has completed."""
 
-    def wait(self):  # type: () -> None
+    def wait(self) -> None:
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
 
-    def configure(self):  # type: () -> None
+    def configure(self) -> None:
         """Perform in-band configuration. Executed before delegation for the controller and after delegation for targets."""
 
     def __getstate__(self):
@@ -201,7 +201,7 @@ class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
 class PosixProfile(HostProfile[TPosixConfig], metaclass=abc.ABCMeta):
     """Base class for POSIX host profiles."""
     @property
-    def python(self):  # type: () -> PythonConfig
+    def python(self) -> PythonConfig:
         """
         The Python to use for this profile.
         If it is a virtual python, it will be created the first time it is requested.
@@ -222,25 +222,25 @@ class PosixProfile(HostProfile[TPosixConfig], metaclass=abc.ABCMeta):
 class ControllerHostProfile(PosixProfile[TControllerHostConfig], metaclass=abc.ABCMeta):
     """Base class for profiles usable as a controller."""
     @abc.abstractmethod
-    def get_origin_controller_connection(self):  # type: () -> Connection
+    def get_origin_controller_connection(self) -> Connection:
         """Return a connection for accessing the host as a controller from the origin."""
 
     @abc.abstractmethod
-    def get_working_directory(self):  # type: () -> str
+    def get_working_directory(self) -> str:
         """Return the working directory for the host."""
 
 
 class SshTargetHostProfile(HostProfile[THostConfig], metaclass=abc.ABCMeta):
     """Base class for profiles offering SSH connectivity."""
     @abc.abstractmethod
-    def get_controller_target_connections(self):  # type: () -> t.List[SshConnection]
+    def get_controller_target_connections(self) -> t.List[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
 
 
 class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
     """Base class for remote instance profiles."""
     @property
-    def core_ci_state(self):  # type: () -> t.Optional[t.Dict[str, str]]
+    def core_ci_state(self) -> t.Optional[t.Dict[str, str]]:
         """The saved Ansible Core CI state."""
         return self.state.get('core_ci')
 
@@ -249,29 +249,29 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
         """The saved Ansible Core CI state."""
         self.state['core_ci'] = value
 
-    def provision(self):  # type: () -> None
+    def provision(self) -> None:
         """Provision the host before delegation."""
         self.core_ci = self.create_core_ci(load=True)
         self.core_ci.start()
 
         self.core_ci_state = self.core_ci.save()
 
-    def deprovision(self):  # type: () -> None
+    def deprovision(self) -> None:
         """Deprovision the host after delegation has completed."""
         if self.args.remote_terminate == TerminateMode.ALWAYS or (self.args.remote_terminate == TerminateMode.SUCCESS and self.args.success):
             self.delete_instance()
 
     @property
-    def core_ci(self):  # type: () -> t.Optional[AnsibleCoreCI]
+    def core_ci(self) -> t.Optional[AnsibleCoreCI]:
         """Return the cached AnsibleCoreCI instance, if any, otherwise None."""
         return self.cache.get('core_ci')
 
     @core_ci.setter
-    def core_ci(self, value):  # type: (AnsibleCoreCI) -> None
+    def core_ci(self, value: AnsibleCoreCI) -> None:
         """Cache the given AnsibleCoreCI instance."""
         self.cache['core_ci'] = value
 
-    def get_instance(self):  # type: () -> t.Optional[AnsibleCoreCI]
+    def get_instance(self) -> t.Optional[AnsibleCoreCI]:
         """Return the current AnsibleCoreCI instance, loading it if not already loaded."""
         if not self.core_ci and self.core_ci_state:
             self.core_ci = self.create_core_ci(load=False)
@@ -288,14 +288,14 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
 
         core_ci.stop()
 
-    def wait_for_instance(self):  # type: () -> AnsibleCoreCI
+    def wait_for_instance(self) -> AnsibleCoreCI:
         """Wait for an AnsibleCoreCI VM instance to become ready."""
         core_ci = self.get_instance()
         core_ci.wait()
 
         return core_ci
 
-    def create_core_ci(self, load):  # type: (bool) -> AnsibleCoreCI
+    def create_core_ci(self, load: bool) -> AnsibleCoreCI:
         """Create and return an AnsibleCoreCI instance."""
         if not self.config.arch:
             raise InternalError(f'No arch specified for config: {self.config}')
@@ -315,7 +315,7 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
 
 class ControllerProfile(SshTargetHostProfile[ControllerConfig], PosixProfile[ControllerConfig]):
     """Host profile for the controller as a target."""
-    def get_controller_target_connections(self):  # type: () -> t.List[SshConnection]
+    def get_controller_target_connections(self) -> t.List[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
         settings = SshConnectionDetail(
             name='localhost',
@@ -332,16 +332,16 @@ class ControllerProfile(SshTargetHostProfile[ControllerConfig], PosixProfile[Con
 class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[DockerConfig]):
     """Host profile for a docker instance."""
     @property
-    def container_name(self):  # type: () -> t.Optional[str]
+    def container_name(self) -> t.Optional[str]:
         """Return the stored container name, if any, otherwise None."""
         return self.state.get('container_name')
 
     @container_name.setter
-    def container_name(self, value):  # type: (str) -> None
+    def container_name(self, value: str) -> None:
         """Store the given container name."""
         self.state['container_name'] = value
 
-    def provision(self):  # type: () -> None
+    def provision(self) -> None:
         """Provision the host before delegation."""
         container = run_support_container(
             args=self.args,
@@ -359,7 +359,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
         self.container_name = container.name
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Perform out-of-band setup before delegation."""
         bootstrapper = BootstrapDocker(
             controller=self.controller,
@@ -372,7 +372,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
         docker_exec(self.args, self.container_name, [shell], data=setup_sh, capture=False)
 
-    def deprovision(self):  # type: () -> None
+    def deprovision(self) -> None:
         """Deprovision the host after delegation has completed."""
         if not self.container_name:
             return  # provision was never called or did not succeed, so there is no container to remove
@@ -380,7 +380,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         if self.args.docker_terminate == TerminateMode.ALWAYS or (self.args.docker_terminate == TerminateMode.SUCCESS and self.args.success):
             docker_rm(self.args, self.container_name)
 
-    def wait(self):  # type: () -> None
+    def wait(self) -> None:
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
         if not self.controller:
             con = self.get_controller_target_connections()[0]
@@ -396,7 +396,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
                 else:
                     return
 
-    def get_controller_target_connections(self):  # type: () -> t.List[SshConnection]
+    def get_controller_target_connections(self) -> t.List[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
         containers = get_container_database(self.args)
         access = containers.data[HostType.control]['__test_hosts__'][self.container_name]
@@ -415,15 +415,15 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
 
         return [SshConnection(self.args, settings)]
 
-    def get_origin_controller_connection(self):  # type: () -> DockerConnection
+    def get_origin_controller_connection(self) -> DockerConnection:
         """Return a connection for accessing the host as a controller from the origin."""
         return DockerConnection(self.args, self.container_name)
 
-    def get_working_directory(self):  # type: () -> str
+    def get_working_directory(self) -> str:
         """Return the working directory for the host."""
         return '/root'
 
-    def get_docker_run_options(self):  # type: () -> t.List[str]
+    def get_docker_run_options(self) -> t.List[str]:
         """Return a list of options needed to run the container."""
         options = [
             '--volume', '/sys/fs/cgroup:/sys/fs/cgroup:ro',
@@ -453,11 +453,11 @@ class NetworkInventoryProfile(HostProfile[NetworkInventoryConfig]):
 
 class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
     """Host profile for a network remote instance."""
-    def wait(self):  # type: () -> None
+    def wait(self) -> None:
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
         self.wait_until_ready()
 
-    def get_inventory_variables(self):  # type: () -> t.Dict[str, t.Optional[t.Union[str, int]]]
+    def get_inventory_variables(self) -> t.Dict[str, t.Optional[t.Union[str, int]]]:
         """Return inventory variables for accessing this host."""
         core_ci = self.wait_for_instance()
         connection = core_ci.connection
@@ -474,7 +474,7 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
 
         return variables
 
-    def wait_until_ready(self):  # type: () -> None
+    def wait_until_ready(self) -> None:
         """Wait for the host to respond to an Ansible module request."""
         core_ci = self.wait_for_instance()
 
@@ -501,7 +501,7 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
 
             raise ApplicationError(f'Timeout waiting for {self.config.name} instance {core_ci.instance_id}.')
 
-    def get_controller_target_connections(self):  # type: () -> t.List[SshConnection]
+    def get_controller_target_connections(self) -> t.List[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
         core_ci = self.wait_for_instance()
 
@@ -518,22 +518,22 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
 
 class OriginProfile(ControllerHostProfile[OriginConfig]):
     """Host profile for origin."""
-    def get_origin_controller_connection(self):  # type: () -> LocalConnection
+    def get_origin_controller_connection(self) -> LocalConnection:
         """Return a connection for accessing the host as a controller from the origin."""
         return LocalConnection(self.args)
 
-    def get_working_directory(self):  # type: () -> str
+    def get_working_directory(self) -> str:
         """Return the working directory for the host."""
         return os.getcwd()
 
 
 class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile[PosixRemoteConfig]):
     """Host profile for a POSIX remote instance."""
-    def wait(self):  # type: () -> None
+    def wait(self) -> None:
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
         self.wait_until_ready()
 
-    def configure(self):  # type: () -> None
+    def configure(self) -> None:
         """Perform in-band configuration. Executed before delegation for the controller and after delegation for targets."""
         # a target uses a single python version, but a controller may include additional versions for targets running on the controller
         python_versions = [self.python.version] + [target.python.version for target in self.targets if isinstance(target, ControllerConfig)]
@@ -558,7 +558,7 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
         ssh = self.get_origin_controller_connection()
         ssh.run([shell], data=setup_sh, capture=False)
 
-    def get_ssh_connection(self):  # type: () -> SshConnection
+    def get_ssh_connection(self) -> SshConnection:
         """Return an SSH connection for accessing the host."""
         core_ci = self.wait_for_instance()
 
@@ -581,7 +581,7 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
 
         return SshConnection(self.args, settings, become)
 
-    def wait_until_ready(self):  # type: () -> str
+    def wait_until_ready(self) -> str:
         """Wait for instance to respond to SSH, returning the current working directory once connected."""
         core_ci = self.wait_for_instance()
 
@@ -596,15 +596,15 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
 
         raise ApplicationError(f'Timeout waiting for {self.config.name} instance {core_ci.instance_id}.')
 
-    def get_controller_target_connections(self):  # type: () -> t.List[SshConnection]
+    def get_controller_target_connections(self) -> t.List[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
         return [self.get_ssh_connection()]
 
-    def get_origin_controller_connection(self):  # type: () -> SshConnection
+    def get_origin_controller_connection(self) -> SshConnection:
         """Return a connection for accessing the host as a controller from the origin."""
         return self.get_ssh_connection()
 
-    def get_working_directory(self):  # type: () -> str
+    def get_working_directory(self) -> str:
         """Return the working directory for the host."""
         if not self.pwd:
             ssh = self.get_origin_controller_connection()
@@ -623,19 +623,19 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
         return self.pwd
 
     @property
-    def pwd(self):  # type: () -> t.Optional[str]
+    def pwd(self) -> t.Optional[str]:
         """Return the cached pwd, if any, otherwise None."""
         return self.cache.get('pwd')
 
     @pwd.setter
-    def pwd(self, value):  # type: (str) -> None
+    def pwd(self, value: str) -> None:
         """Cache the given pwd."""
         self.cache['pwd'] = value
 
 
 class PosixSshProfile(SshTargetHostProfile[PosixSshConfig], PosixProfile[PosixSshConfig]):
     """Host profile for a POSIX SSH instance."""
-    def get_controller_target_connections(self):  # type: () -> t.List[SshConnection]
+    def get_controller_target_connections(self) -> t.List[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
         settings = SshConnectionDetail(
             name='target',
@@ -651,7 +651,7 @@ class PosixSshProfile(SshTargetHostProfile[PosixSshConfig], PosixProfile[PosixSs
 
 class WindowsInventoryProfile(SshTargetHostProfile[WindowsInventoryConfig]):
     """Host profile for a Windows inventory."""
-    def get_controller_target_connections(self):  # type: () -> t.List[SshConnection]
+    def get_controller_target_connections(self) -> t.List[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
         inventory = parse_inventory(self.args, self.config.path)
         hosts = get_hosts(inventory, 'windows')
@@ -675,11 +675,11 @@ class WindowsInventoryProfile(SshTargetHostProfile[WindowsInventoryConfig]):
 
 class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
     """Host profile for a Windows remote instance."""
-    def wait(self):  # type: () -> None
+    def wait(self) -> None:
         """Wait for the instance to be ready. Executed before delegation for the controller and after delegation for targets."""
         self.wait_until_ready()
 
-    def get_inventory_variables(self):  # type: () -> t.Dict[str, t.Optional[t.Union[str, int]]]
+    def get_inventory_variables(self) -> t.Dict[str, t.Optional[t.Union[str, int]]]:
         """Return inventory variables for accessing this host."""
         core_ci = self.wait_for_instance()
         connection = core_ci.connection
@@ -705,7 +705,7 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
 
         return variables
 
-    def wait_until_ready(self):  # type: () -> None
+    def wait_until_ready(self) -> None:
         """Wait for the host to respond to an Ansible module request."""
         core_ci = self.wait_for_instance()
 
@@ -732,7 +732,7 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
 
         raise ApplicationError(f'Timeout waiting for {self.config.name} instance {core_ci.instance_id}.')
 
-    def get_controller_target_connections(self):  # type: () -> t.List[SshConnection]
+    def get_controller_target_connections(self) -> t.List[SshConnection]:
         """Return SSH connection(s) for accessing the host as a target from the controller."""
         core_ci = self.wait_for_instance()
 
@@ -749,7 +749,7 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
 
 
 @cache
-def get_config_profile_type_map():  # type: () -> t.Dict[t.Type[HostConfig], t.Type[HostProfile]]
+def get_config_profile_type_map() -> t.Dict[t.Type[HostConfig], t.Type[HostProfile]]:
     """Create and return a mapping of HostConfig types to HostProfile types."""
     return get_type_map(HostProfile, HostConfig)
 

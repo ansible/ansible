@@ -31,11 +31,11 @@ class Bootstrap:
     ssh_key: SshKey
 
     @property
-    def bootstrap_type(self):  # type: () -> str
+    def bootstrap_type(self) -> str:
         """The bootstrap type to pass to the bootstrapping script."""
         return self.__class__.__name__.replace('Bootstrap', '').lower()
 
-    def get_variables(self):  # type: () -> t.Dict[str, t.Union[str, t.List[str]]]
+    def get_variables(self) -> t.Dict[str, t.Union[str, t.List[str]]]:
         """The variables to template in the bootstrapping script."""
         return dict(
             bootstrap_type=self.bootstrap_type,
@@ -46,7 +46,7 @@ class Bootstrap:
             ssh_public_key=self.ssh_key.pub_contents,
         )
 
-    def get_script(self):  # type: () -> str
+    def get_script(self) -> str:
         """Return a shell script to bootstrap the specified host."""
         path = os.path.join(ANSIBLE_TEST_TARGET_ROOT, 'setup', 'bootstrap.sh')
 
@@ -65,7 +65,7 @@ class Bootstrap:
 @dataclasses.dataclass
 class BootstrapDocker(Bootstrap):
     """Bootstrap docker instances."""
-    def get_variables(self):  # type: () -> t.Dict[str, t.Union[str, t.List[str]]]
+    def get_variables(self) -> t.Dict[str, t.Union[str, t.List[str]]]:
         """The variables to template in the bootstrapping script."""
         variables = super().get_variables()
 
@@ -83,7 +83,7 @@ class BootstrapRemote(Bootstrap):
     platform: str
     platform_version: str
 
-    def get_variables(self):  # type: () -> t.Dict[str, t.Union[str, t.List[str]]]
+    def get_variables(self) -> t.Dict[str, t.Union[str, t.List[str]]]:
         """The variables to template in the bootstrapping script."""
         variables = super().get_variables()
 

@@ -172,7 +172,7 @@ def add_composite_environment_options(
 
     action_types = []  # type: t.List[t.Type[CompositeAction]]
 
-    def register_action_type(action_type):  # type: (t.Type[CompositeAction]) -> t.Type[CompositeAction]
+    def register_action_type(action_type: t.Type[CompositeAction]) -> t.Type[CompositeAction]:
         """Register the provided composite action type and return it."""
         action_types.append(action_type)
         return action_type
@@ -577,16 +577,16 @@ def complete_network_platform_connection(prefix: str, parsed_args: argparse.Name
     return [i + '=' for i in images if i.startswith(left) and (not parsed_args.platform_connection or i not in [x[0] for x in parsed_args.platform_connection])]
 
 
-def get_remote_platform_choices(controller=False):  # type: (bool) -> t.List[str]
+def get_remote_platform_choices(controller: bool = False) -> t.List[str]:
     """Return a list of supported remote platforms matching the given prefix."""
     return sorted(filter_completion(remote_completion(), controller_only=controller))
 
 
-def get_windows_platform_choices():  # type: () -> t.List[str]
+def get_windows_platform_choices() -> t.List[str]:
     """Return a list of supported Windows versions matching the given prefix."""
     return sorted(f'windows/{windows.version}' for windows in filter_completion(windows_completion()).values())
 
 
-def get_windows_version_choices():  # type: () -> t.List[str]
+def get_windows_version_choices() -> t.List[str]:
     """Return a list of supported Windows versions."""
     return sorted(windows.version for windows in filter_completion(windows_completion()).values())

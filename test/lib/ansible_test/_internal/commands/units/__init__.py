@@ -93,7 +93,7 @@ class TestContext:
     module_utils = 'module_utils'
 
 
-def command_units(args):  # type: (UnitsConfig) -> None
+def command_units(args: UnitsConfig) -> None:
     """Run unit tests."""
     handle_layout_messages(data_context().content.unit_messages)
 
@@ -297,7 +297,7 @@ def command_units(args):  # type: (UnitsConfig) -> None
                 raise
 
 
-def get_units_ansible_python_path(args, test_context):  # type: (UnitsConfig, str) -> str
+def get_units_ansible_python_path(args: UnitsConfig, test_context: str) -> str:
     """
     Return a directory usable for PYTHONPATH, containing only the modules and module_utils portion of the ansible package.
     The temporary directory created will be cached for the lifetime of the process and cleaned up at exit.

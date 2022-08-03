@@ -29,7 +29,7 @@ class VcenterProvider(CloudProvider):
     """VMware vcenter/esx plugin. Sets up cloud resources for tests."""
     DOCKER_SIMULATOR_NAME = 'vcenter-simulator'
 
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
+    def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
@@ -49,7 +49,7 @@ class VcenterProvider(CloudProvider):
             self.uses_docker = False
             self.uses_config = True
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super().setup()
 
@@ -64,7 +64,7 @@ class VcenterProvider(CloudProvider):
         else:
             raise ApplicationError('Unknown vmware_test_platform: %s' % self.vmware_test_platform)
 
-    def _setup_dynamic_simulator(self):  # type: () -> None
+    def _setup_dynamic_simulator(self) -> None:
         """Create a vcenter simulator using docker."""
         ports = [
             443,
@@ -85,14 +85,14 @@ class VcenterProvider(CloudProvider):
 
         self._set_cloud_config('vcenter_hostname', self.DOCKER_SIMULATOR_NAME)
 
-    def _setup_static(self):  # type: () -> None
+    def _setup_static(self) -> None:
         if not os.path.exists(self.config_static_path):
             raise ApplicationError('Configuration file does not exist: %s' % self.config_static_path)
 
 
 class VcenterEnvironment(CloudEnvironment):
     """VMware vcenter/esx environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         try:
             # We may be in a container, so we cannot just reach VMWARE_TEST_PLATFORM,

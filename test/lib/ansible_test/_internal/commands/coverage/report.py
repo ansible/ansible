@@ -30,7 +30,7 @@ from . import (
 )
 
 
-def command_coverage_report(args):  # type: (CoverageReportConfig) -> None
+def command_coverage_report(args: CoverageReportConfig) -> None:
     """Generate a console coverage report."""
     host_state = prepare_profiles(args)  # coverage report
     output_files = combine_coverage_files(args, host_state)
@@ -56,7 +56,7 @@ def command_coverage_report(args):  # type: (CoverageReportConfig) -> None
             run_coverage(args, host_state, output_file, 'report', options)
 
 
-def _generate_powershell_output_report(args, coverage_file):  # type: (CoverageReportConfig, str) -> str
+def _generate_powershell_output_report(args: CoverageReportConfig, coverage_file: str) -> str:
     """Generate and return a PowerShell coverage report for the given coverage file."""
     coverage_info = read_json_file(coverage_file)
 
@@ -144,7 +144,7 @@ def _generate_powershell_output_report(args, coverage_file):  # type: (CoverageR
 
 class CoverageReportConfig(CoverageCombineConfig):
     """Configuration for the coverage report command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
         self.show_missing = args.show_missing  # type: bool

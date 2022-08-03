@@ -23,7 +23,7 @@ class ACMEProvider(CloudProvider):
     """ACME plugin. Sets up cloud resources for tests."""
     DOCKER_SIMULATOR_NAME = 'acme-simulator'
 
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
+    def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
@@ -34,7 +34,7 @@ class ACMEProvider(CloudProvider):
 
         self.uses_docker = True
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super().setup()
 
@@ -43,7 +43,7 @@ class ACMEProvider(CloudProvider):
         else:
             self._setup_dynamic()
 
-    def _setup_dynamic(self):  # type: () -> None
+    def _setup_dynamic(self) -> None:
         """Create a ACME test container using docker."""
         ports = [
             5000,  # control port for flask app in container
@@ -62,13 +62,13 @@ class ACMEProvider(CloudProvider):
 
         self._set_cloud_config('acme_host', self.DOCKER_SIMULATOR_NAME)
 
-    def _setup_static(self):  # type: () -> None
+    def _setup_static(self) -> None:
         raise NotImplementedError()
 
 
 class ACMEEnvironment(CloudEnvironment):
     """ACME environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         ansible_vars = dict(
             acme_host=self._get_cloud_config('acme_host'),

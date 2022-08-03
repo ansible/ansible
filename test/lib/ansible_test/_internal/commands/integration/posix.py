@@ -32,7 +32,7 @@ from ...data import (
 )
 
 
-def command_posix_integration(args):  # type: (PosixIntegrationConfig) -> None
+def command_posix_integration(args: PosixIntegrationConfig) -> None:
     """Entry point for the `integration` command."""
     handle_layout_messages(data_context().content.integration_messages)
 

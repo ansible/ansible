@@ -85,7 +85,7 @@ class PythonParser(Parser):
         self.venv_choices = venv_choices
         self.venv_choices = venv_choices
 
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         boundary: ParserBoundary
 
@@ -116,7 +116,7 @@ class PythonParser(Parser):
 
         return python
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
 
         docs = '[venv/[system-site-packages/]]' if self.allow_venv else ''
@@ -133,10 +133,10 @@ class PythonParser(Parser):
 
 class PlatformParser(ChoicesParser):
     """Composite argument parser for "{platform}/{version}" formatted choices."""
-    def __init__(self, choices):  # type: (t.List[str]) -> None
+    def __init__(self, choices: t.List[str]) -> None:
         super().__init__(choices, conditions=MatchConditions.CHOICE | MatchConditions.ANY)
 
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         value = super().parse(state)
 
@@ -153,7 +153,7 @@ class SshConnectionParser(Parser):
     """
     EXPECTED_FORMAT = '{user}@{host}[:{port}]'
 
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         namespace = state.current_namespace
 
@@ -173,6 +173,6 @@ class SshConnectionParser(Parser):
 
         return namespace
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         return self.EXPECTED_FORMAT

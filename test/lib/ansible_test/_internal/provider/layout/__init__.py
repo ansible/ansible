@@ -28,14 +28,14 @@ class Layout:
         self.__paths_tree = paths_to_tree(self.__paths)
         self.__files_tree = paths_to_tree(self.__files)
 
-    def all_files(self, include_symlinked_directories=False):  # type: (bool) -> t.List[str]
+    def all_files(self, include_symlinked_directories: bool = False) -> t.List[str]:
         """Return a list of all file paths."""
         if include_symlinked_directories:
             return self.__paths
 
         return self.__files
 
-    def walk_files(self, directory, include_symlinked_directories=False):  # type: (str, bool) -> t.List[str]
+    def walk_files(self, directory: str, include_symlinked_directories: bool = False) -> t.List[str]:
         """Return a list of file paths found recursively under the given directory."""
         if include_symlinked_directories:
             tree = self.__paths_tree
@@ -59,13 +59,13 @@ class Layout:
 
         return files
 
-    def get_dirs(self, directory):  # type: (str) -> t.List[str]
+    def get_dirs(self, directory: str) -> t.List[str]:
         """Return a list directory paths found directly under the given directory."""
         parts = directory.rstrip(os.path.sep).split(os.path.sep)
         item = get_tree_item(self.__files_tree, parts)
         return [os.path.join(directory, key) for key in item[0].keys()] if item else []
 
-    def get_files(self, directory):  # type: (str) -> t.List[str]
+    def get_files(self, directory: str) -> t.List[str]:
         """Return a list of file paths found directly under the given directory."""
         parts = directory.rstrip(os.path.sep).split(os.path.sep)
         item = get_tree_item(self.__files_tree, parts)
@@ -114,7 +114,7 @@ class ContentLayout(Layout):
         self.is_ansible = root == ANSIBLE_SOURCE_ROOT
 
     @property
-    def prefix(self):  # type: () -> str
+    def prefix(self) -> str:
         """Return the collection prefix or an empty string if not a collection."""
         if self.collection:
             return self.collection.prefix
@@ -122,17 +122,17 @@ class ContentLayout(Layout):
         return ''
 
     @property
-    def module_path(self):  # type: () -> t.Optional[str]
+    def module_path(self) -> t.Optional[str]:
         """Return the path where modules are found, if any."""
         return self.plugin_paths.get('modules')
 
     @property
-    def module_utils_path(self):  # type: () -> t.Optional[str]
+    def module_utils_path(self) -> t.Optional[str]:
         """Return the path where module_utils are found, if any."""
         return self.plugin_paths.get('module_utils')
 
     @property
-    def module_utils_powershell_path(self):  # type: () -> t.Optional[str]
+    def module_utils_powershell_path(self) -> t.Optional[str]:
         """Return the path where powershell module_utils are found, if any."""
         if self.is_ansible:
             return os.path.join(self.plugin_paths['module_utils'], 'powershell')
@@ -140,7 +140,7 @@ class ContentLayout(Layout):
         return self.plugin_paths.get('module_utils')
 
     @property
-    def module_utils_csharp_path(self):  # type: () -> t.Optional[str]
+    def module_utils_csharp_path(self) -> t.Optional[str]:
         """Return the path where csharp module_utils are found, if any."""
         if self.is_ansible:
             return os.path.join(self.plugin_paths['module_utils'], 'csharp')
@@ -200,11 +200,11 @@ class LayoutProvider(PathProvider):
     )
 
     @abc.abstractmethod
-    def create(self, root, paths):  # type: (str, t.List[str]) -> ContentLayout
+    def create(self, root: str, paths: t.List[str]) -> ContentLayout:
         """Create a layout using the given root and paths."""
 
 
-def paths_to_tree(paths):  # type: (t.List[str]) -> t.Tuple[t.Dict[str, t.Any], t.List[str]]
+def paths_to_tree(paths: t.List[str]) -> t.Tuple[t.Dict[str, t.Any], t.List[str]]:
     """Return a filesystem tree from the given list of paths."""
     tree = {}, []  # type: t.Tuple[t.Dict[str, t.Any], t.List[str]]
 
