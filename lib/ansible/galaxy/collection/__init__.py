@@ -1069,10 +1069,10 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_d
         directives.append(
             f'recursive-include plugins/{plugin} **.py **.yml **.yaml'
         )
-    directives.append(
-        'recursive-include plugins/modules **.py **.ps1 **.yml **.yaml'
-        'recursive-include plugins/modules_utils **.py **.ps1'
-    )
+    directives.extend([
+        'recursive-include plugins/modules **.py **.ps1 **.yml **.yaml',
+        'recursive-include plugins/modules_utils **.py **.ps1',
+    ])
 
     directives.extend(manifest_directives)
 
