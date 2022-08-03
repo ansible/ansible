@@ -1,0 +1,3 @@
+bugfixes:
+  - ansible-connection - decrypt vaulted parameters before sending over the socket, as
+    vault secrets are not available on the other side.
