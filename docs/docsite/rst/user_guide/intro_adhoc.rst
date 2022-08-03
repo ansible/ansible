@@ -18,6 +18,7 @@ ad hoc commands are great for tasks you repeat rarely. For example, if you want 
 
     $ ansible [pattern] -m [module] -a "[module options]"
 
+The ``-a`` option accepts options either through the  ``key=value`` syntax or a JSON string starting with ``{`` and ending with ``}`` for more complex option structure.
 You can learn more about :ref:`patterns<intro_patterns>` and :ref:`modules<working_with_modules>` on other pages.
 
 Use cases for ad hoc tasks
