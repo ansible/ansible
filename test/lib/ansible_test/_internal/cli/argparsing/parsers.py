@@ -224,11 +224,11 @@ class DynamicChoicesParser(Parser, metaclass=abc.ABCMeta):
     def get_choices(self, value: str) -> t.List[str]:
         """Return a list of valid choices based on the given input value."""
 
-    def no_completion_match(self, value):  # type: (str) -> CompletionUnavailable  # pylint: disable=unused-argument
+    def no_completion_match(self, value: str) -> CompletionUnavailable:  # pylint: disable=unused-argument
         """Return an instance of CompletionUnavailable when no match was found for the given value."""
         return CompletionUnavailable()
 
-    def no_choices_available(self, value):  # type: (str) -> ParserError  # pylint: disable=unused-argument
+    def no_choices_available(self, value: str) -> ParserError:  # pylint: disable=unused-argument
         """Return an instance of ParserError when parsing fails and no choices are available."""
         return ParserError('No choices available.')
 
@@ -561,7 +561,7 @@ class PairParser(Parser, metaclass=abc.ABCMeta):
 
 class TypeParser(Parser, metaclass=abc.ABCMeta):
     """Base class for composite argument parsers which parse a type name, a colon and then parse results based on the type given by the type name."""
-    def get_parsers(self, state):  # type: (ParserState) -> t.Dict[str, Parser]  # pylint: disable=unused-argument
+    def get_parsers(self, state: ParserState) -> t.Dict[str, Parser]:  # pylint: disable=unused-argument
         """Return a dictionary of type names and type parsers."""
         return self.get_stateless_parsers()
 
