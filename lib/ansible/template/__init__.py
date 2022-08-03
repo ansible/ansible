@@ -29,7 +29,6 @@ import time
 
 from collections.abc import Iterator, Sequence, Mapping, MappingView, MutableMapping
 from contextlib import contextmanager
-from hashlib import sha1
 from numbers import Number
 from traceback import format_exc
 
@@ -686,7 +685,6 @@ class Templar:
         # directly. Keeping the arg for now in case 3rd party code "uses" it.
         self._loader = loader
         self._available_variables = {} if variables is None else variables
-        self._cached_result = {}
 
         self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
@@ -783,7 +781,6 @@ class Templar:
         if not isinstance(variables, Mapping):
             raise AnsibleAssertionError("the type of 'variables' should be a Mapping but was a %s" % (type(variables)))
         self._available_variables = variables
-        self._cached_result = {}
 
     @contextmanager
     def set_temporary_context(self, **kwargs):
@@ -816,13 +813,16 @@ class Templar:
             setattr(obj, key, original[key])
 
     def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None,
-                 convert_data=True, static_vars=None, cache=True, disable_lookups=False):
+                 convert_data=True, static_vars=None, cache=None, disable_lookups=False):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
         before being sent through the template engine.
         '''
         static_vars = [] if static_vars is None else static_vars
+
+        if cache is not None:
+            display.deprecated("The `cache` option to `Templar.template` is no longer functional, and will be removed in a future release.", version='2.18')
 
         # Don't template unsafe variables, just return them.
         if hasattr(variable, '__UNSAFE__'):
@@ -851,23 +851,6 @@ class Templar:
                     elif resolved_val is None:
                         return C.DEFAULT_NULL_REPRESENTATION
 
-            # Using a cache in order to prevent template calls with already templated variables
-            sha1_hash = None
-            if cache:
-                variable_hash = sha1(text_type(variable).encode('utf-8'))
-                options_hash = sha1(
-                    (
-                        text_type(preserve_trailing_newlines) +
-                        text_type(escape_backslashes) +
-                        text_type(fail_on_undefined) +
-                        text_type(overrides)
-                    ).encode('utf-8')
-                )
-                sha1_hash = variable_hash.hexdigest() + options_hash.hexdigest()
-
-                if sha1_hash in self._cached_result:
-                    return self._cached_result[sha1_hash]
-
             result = self.do_template(
                 variable,
                 preserve_trailing_newlines=preserve_trailing_newlines,
@@ -877,12 +860,6 @@ class Templar:
                 disable_lookups=disable_lookups,
                 convert_data=convert_data,
             )
-
-            # we only cache in the case where we have a single variable
-            # name, to make sure we're not putting things which may otherwise
-            # be dynamic in the cache (filters, lookups, etc.)
-            if cache and only_one:
-                self._cached_result[sha1_hash] = result
 
             return result
 
