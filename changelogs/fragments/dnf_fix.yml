@@ -1,0 +1,2 @@
+bugfixes:
+  - dnf module will not install 'installed' modules anymore, also will give specific message that it is already installed.

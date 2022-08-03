@@ -1073,13 +1073,15 @@ class DnfModule(YumDnf):
                 # Install modules
                 if module_specs and self.with_modules:
                     for module in module_specs:
-                        try:
-                            if not self._is_module_installed(module):
-                                response['results'].append("Module {0} installed.".format(module))
-                            self.module_base.install([module])
-                            self.module_base.enable([module])
-                        except dnf.exceptions.MarkingErrors as e:
-                            failure_response['failures'].append(' '.join((module, to_native(e))))
+                        if self._is_module_installed(module):
+                            response['results'].append("Module {0} already installed.".format(module))
+                        else:
+                            try:
+                                self.module_base.install([module])
+                                self.module_base.enable([module])
+                            except dnf.exceptions.MarkingErrors as e:
+                                failure_response['failures'].append(' '.join((module, to_native(e))))
+                            response['results'].append("Module {0} installed.".format(module))
 
                 # Install groups.
                 for group in groups:
