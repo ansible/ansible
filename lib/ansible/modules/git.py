@@ -616,8 +616,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
             # git before 1.7.5 doesn't have separate-git-dir argument, do fallback
             needs_separate_git_dir_fallback = True
         else:
-            cmd.append('--separate-git-dir=%s' % separate_git_dir)
-    
+            cmd.append('--separate-git-dir=%s' % separate_git_dir)    
     if git_filter:
         cmd.append('--filter=%s' % git_filter)
 
@@ -1200,7 +1199,7 @@ def main():
             archive=dict(type='path'),
             archive_prefix=dict(),
             separate_git_dir=dict(type='path'),
-            git_filter=dict(default=None, required = False),
+            git_filter=dict(default=None, required=False),
         ),
         mutually_exclusive=[('separate_git_dir', 'bare'), ('accept_hostkey', 'accept_newhostkey')],
         required_by={'archive_prefix': ['archive']},
