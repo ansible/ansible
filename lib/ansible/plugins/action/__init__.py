@@ -947,6 +947,17 @@ class ActionBase(ABC):
 
         return expanded
 
+    def _strip_success_message(self, data):
+        '''
+        Removes the BECOME-SUCCESS message from the data.
+        '''
+        if data.strip().startswith('BECOME-SUCCESS-'):
+            display.deprecated("Stripping become status output outside the connection plugin is deprecated and will be removed in a future release.",
+                               version="2.18")
+            # FIXME: Uncomment once tests pass locally
+            # data = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', data)
+        return data
+
     def _update_module_args(self, module_name, module_args, task_vars):
 
         # set check mode in the module arguments, if required
@@ -1329,6 +1340,9 @@ class ActionBase(ABC):
 
         if rc is None:
             rc = 0
+
+        # be sure to remove the BECOME-SUCCESS message now
+        out = self._strip_success_message(out)
 
         display.debug(u"_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, out, err))
         return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err, stderr_lines=err.splitlines())

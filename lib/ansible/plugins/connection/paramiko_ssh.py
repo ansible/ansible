@@ -164,7 +164,7 @@ from ansible.errors import (
     AnsibleFileNotFound,
 )
 from ansible.module_utils.compat.paramiko import PARAMIKO_IMPORT_ERR, paramiko
-from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.connection import ConnectionBase, sanitise_become_output
 from ansible.utils.display import Display
 from ansible.utils.path import makedirs_safe
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -445,13 +445,22 @@ class Connection(ConnectionBase):
 
                     # need to check every line because we might get lectured
                     # and we might get the middle of a line in a chunk
-                    for l in become_output.splitlines(True):
+                    sanitised_lines = become_output.split(b"\n")
+                    remove_line = None
+
+                    for idx, l in enumerate(sanitised_lines):
                         if self.become.check_success(l):
                             become_sucess = True
+                            remove_line = idx
                             break
                         elif self.become.check_password_prompt(l):
                             passprompt = True
+                            remove_line = idx
                             break
+
+                    if remove_line is not None:
+                        del sanitised_lines[remove_line]
+                        become_output = b"\n".join(sanitised_lines)
 
                 if passprompt:
                     if self.become:
@@ -467,6 +476,9 @@ class Connection(ConnectionBase):
 
         stdout = b''.join(chan.makefile('rb', bufsize))
         stderr = b''.join(chan.makefile_stderr('rb', bufsize))
+
+        if self.become:
+            stdout, stderr = sanitise_become_output(self.become, stdout, stderr)
 
         return (chan.recv_exit_status(), no_prompt_out + stdout, no_prompt_out + stderr)
 

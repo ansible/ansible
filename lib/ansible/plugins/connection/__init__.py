@@ -16,6 +16,7 @@ from functools import wraps
 from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins import AnsiblePlugin
+from ansible.plugins.become import BecomeBase
 from ansible.utils.display import Display
 from ansible.plugins.loader import connection_loader, get_shell_plugin
 from ansible.utils.path import unfrackpath
@@ -35,6 +36,27 @@ def ensure_connect(func):
             self._connect()
         return func(self, *args, **kwargs)
     return wrapped
+
+
+def sanitise_become_output(become: BecomeBase, stdout: bytes, stderr: bytes) -> t.Tuple[bytes, bytes]:
+    """Helper function to remove the become success banner from stdout or stderr."""
+    raw = {'stdout': stdout, 'stderr': stderr}
+
+    for stream_type in ['stdout', 'stderr']:
+        success_idx = None
+        lines = raw[stream_type].split(b"\n")
+
+        for idx, line in enumerate(lines):
+            if become.check_success(line):
+                success_idx = idx
+                break
+
+        if success_idx is not None:
+            del lines[success_idx]
+            raw[stream_type] = b"\n".join(lines)
+            break
+
+    return raw['stdout'], raw['stderr']
 
 
 class ConnectionBase(AnsiblePlugin):

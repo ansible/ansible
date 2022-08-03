@@ -1,2 +1,5 @@
-minor_changes:
-- Removed uneeded code that attempted to cleanup become message output
+deprecated_features:
+- >-
+  Deprecate action ``_low_level_execute_command`` stripping the output from a connection of any become status messages.
+  This should be handled in the connection plugin as it's dependent on the output and the become plugin used.
+  Failure to do so will result in extra output appearing when running low level commands.

@@ -30,7 +30,7 @@ from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.module_utils.compat import selectors
 from ansible.module_utils.six import text_type, binary_type
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.plugins.connection import ConnectionBase
+from ansible.plugins.connection import ConnectionBase, sanitise_become_output
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
 
@@ -150,6 +150,10 @@ class Connection(ConnectionBase):
 
         display.debug("getting output with communicate()")
         stdout, stderr = p.communicate(in_data)
+
+        if self.become and sudoable:
+            stdout, stderr = sanitise_become_output(self.become, stdout, stderr)
+
         display.debug("done communicating")
 
         # finally, close the other half of the pty, if it was created
