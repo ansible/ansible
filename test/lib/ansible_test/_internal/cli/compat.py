@@ -65,7 +65,7 @@ def controller_python(version):  # type: (t.Optional[str]) -> t.Optional[str]
     return filter_python(version, CONTROLLER_PYTHON_VERSIONS)
 
 
-def get_fallback_remote_controller():  # type: () -> str
+def get_fallback_remote_controller() -> str:
     """Return the remote fallback platform for the controller."""
     platform = 'freebsd'  # lower cost than RHEL and macOS
     candidates = [item for item in filter_completion(remote_completion()).values() if item.controller_supported and item.platform == platform]
@@ -151,7 +151,7 @@ class LegacyHostOptions:
 
         return filter_args(args, filters)
 
-    def get_options_used(self):  # type: () -> t.Tuple[str, ...]
+    def get_options_used(self) -> t.Tuple[str, ...]:
         """Return a tuple of the command line options used."""
         fields = dataclasses.fields(self)  # type: t.Tuple[dataclasses.Field, ...]
         options = tuple(sorted(get_option_name(field.name) for field in fields if getattr(self, field.name)))

@@ -42,12 +42,12 @@ class BinSymlinksTest(SanityVersionNeutral):
     ansible_only = True
 
     @property
-    def can_ignore(self):  # type: () -> bool
+    def can_ignore(self) -> bool:
         """True if the test supports ignore entries."""
         return False
 
     @property
-    def no_targets(self):  # type: () -> bool
+    def no_targets(self) -> bool:
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return True
 

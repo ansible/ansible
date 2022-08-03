@@ -247,7 +247,7 @@ class DockerConnection(Connection):
             output_stream=output_stream,
         )
 
-    def inspect(self):  # type: () -> DockerInspect
+    def inspect(self) -> DockerInspect:
         """Inspect the container and return a DockerInspect instance with the results."""
         return docker_inspect(self.args, self.container_id)
 

@@ -28,7 +28,7 @@ class Git:
         cmd = ['diff', '--name-only', '--no-renames', '-z'] + args
         return self.run_git_split(cmd, '\0')
 
-    def get_submodule_paths(self):  # type: () -> t.List[str]
+    def get_submodule_paths(self) -> t.List[str]:
         """Return a list of submodule paths recursively."""
         cmd = ['submodule', 'status', '--recursive']
         output = self.run_git_split(cmd, '\n')
@@ -50,12 +50,12 @@ class Git:
         cmd = ['ls-files', '-z'] + args
         return self.run_git_split(cmd, '\0')
 
-    def get_branches(self):  # type: () -> t.List[str]
+    def get_branches(self) -> t.List[str]:
         """Return the list of branches."""
         cmd = ['for-each-ref', 'refs/heads/', '--format', '%(refname:strip=2)']
         return self.run_git_split(cmd)
 
-    def get_branch(self):  # type: () -> str
+    def get_branch(self) -> str:
         """Return the current branch name."""
         cmd = ['symbolic-ref', '--short', 'HEAD']
         return self.run_git(cmd).strip()

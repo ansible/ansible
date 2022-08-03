@@ -42,7 +42,7 @@ class PosixCompletionConfig(CompletionConfig, metaclass=abc.ABCMeta):
     """Base class for completion configuration of POSIX environments."""
     @property
     @abc.abstractmethod
-    def supported_pythons(self):  # type: () -> t.List[str]
+    def supported_pythons(self) -> t.List[str]:
         """Return a list of the supported Python versions."""
 
     @abc.abstractmethod
@@ -56,7 +56,7 @@ class PosixCompletionConfig(CompletionConfig, metaclass=abc.ABCMeta):
         return version
 
     @property
-    def controller_supported(self):  # type: () -> bool
+    def controller_supported(self) -> bool:
         """True if at least one Python version is provided which supports the controller, otherwise False."""
         return any(version in CONTROLLER_PYTHON_VERSIONS for version in self.supported_pythons)
 
@@ -68,7 +68,7 @@ class PythonCompletionConfig(PosixCompletionConfig, metaclass=abc.ABCMeta):
     python_dir: str = '/usr/bin'
 
     @property
-    def supported_pythons(self):  # type: () -> t.List[str]
+    def supported_pythons(self) -> t.List[str]:
         """Return a list of the supported Python versions."""
         versions = self.python.split(',') if self.python else []
         versions = [version for version in versions if version in SUPPORTED_PYTHON_VERSIONS]
@@ -111,11 +111,11 @@ class RemoteCompletionConfig(CompletionConfig):
 @dataclasses.dataclass(frozen=True)
 class InventoryCompletionConfig(CompletionConfig):
     """Configuration for inventory files."""
-    def __init__(self):  # type: () -> None
+    def __init__(self) -> None:
         super().__init__(name='inventory')
 
     @property
-    def is_default(self):  # type: () -> bool
+    def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
         return False
 
@@ -130,7 +130,7 @@ class PosixSshCompletionConfig(PythonCompletionConfig):
         )
 
     @property
-    def is_default(self):  # type: () -> bool
+    def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
         return False
 
@@ -242,24 +242,24 @@ def filter_completion(
 
 
 @cache
-def docker_completion():  # type: () -> t.Dict[str, DockerCompletionConfig]
+def docker_completion() -> t.Dict[str, DockerCompletionConfig]:
     """Return docker completion entries."""
     return load_completion('docker', DockerCompletionConfig)
 
 
 @cache
-def remote_completion():  # type: () -> t.Dict[str, PosixRemoteCompletionConfig]
+def remote_completion() -> t.Dict[str, PosixRemoteCompletionConfig]:
     """Return remote completion entries."""
     return load_completion('remote', PosixRemoteCompletionConfig)
 
 
 @cache
-def windows_completion():  # type: () -> t.Dict[str, WindowsRemoteCompletionConfig]
+def windows_completion() -> t.Dict[str, WindowsRemoteCompletionConfig]:
     """Return windows completion entries."""
     return load_completion('windows', WindowsRemoteCompletionConfig)
 
 
 @cache
-def network_completion():  # type: () -> t.Dict[str, NetworkRemoteCompletionConfig]
+def network_completion() -> t.Dict[str, NetworkRemoteCompletionConfig]:
     """Return network completion entries."""
     return load_completion('network', NetworkRemoteCompletionConfig)

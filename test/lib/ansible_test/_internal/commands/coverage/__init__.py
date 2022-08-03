@@ -112,7 +112,7 @@ def run_coverage(args, host_state, output_file, command, cmd):  # type: (Coverag
         display.warning(stderr)
 
 
-def get_all_coverage_files():  # type: () -> t.List[str]
+def get_all_coverage_files() -> t.List[str]:
     """Return a list of all coverage file paths."""
     return get_python_coverage_files() + get_powershell_coverage_files()
 
@@ -143,7 +143,7 @@ def get_coverage_files(language, path=None):  # type: (str, t.Optional[str]) -> 
     return coverage_files
 
 
-def get_collection_path_regexes():  # type: () -> t.Tuple[t.Optional[t.Pattern], t.Optional[t.Pattern]]
+def get_collection_path_regexes() -> t.Tuple[t.Optional[t.Pattern], t.Optional[t.Pattern]]:
     """Return a pair of regexes used for identifying and manipulating collection paths."""
     if data_context().content.collection:
         collection_search_re = re.compile(r'/%s/' % data_context().content.collection.directory)
@@ -155,7 +155,7 @@ def get_collection_path_regexes():  # type: () -> t.Tuple[t.Optional[t.Pattern],
     return collection_search_re, collection_sub_re
 
 
-def get_python_modules():  # type: () -> t.Dict[str, str]
+def get_python_modules() -> t.Dict[str, str]:
     """Return a dictionary of Ansible module names and their paths."""
     return dict((target.module, target.path) for target in list(walk_module_targets()) if target.path.endswith('.py'))
 
@@ -367,7 +367,7 @@ class PathChecker:
 
         return False
 
-    def report(self):  # type: () -> None
+    def report(self) -> None:
         """Display a warning regarding invalid paths if any were found."""
         if self.invalid_paths:
             display.warning('Ignored %d characters from %d invalid coverage path(s).' % (self.invalid_path_chars, len(self.invalid_paths)))

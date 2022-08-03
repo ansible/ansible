@@ -62,7 +62,7 @@ class CompType(enum.Enum):
     """
 
     @property
-    def list_mode(self):  # type: () -> bool
+    def list_mode(self) -> bool:
         """True if completion is running in list mode, otherwise False."""
         return self in (CompType.LIST, CompType.LIST_AMBIGUOUS, CompType.LIST_UNMODIFIED)
 
@@ -73,7 +73,7 @@ def register_safe_action(action_type):  # type: (t.Type[argparse.Action]) -> Non
         argcomplete.safe_actions += (action_type,)
 
 
-def get_comp_type():  # type: () -> t.Optional[CompType]
+def get_comp_type() -> t.Optional[CompType]:
     """Parse the COMP_TYPE environment variable (if present) and return the associated CompType enum value."""
     value = os.environ.get('COMP_TYPE')
     comp_type = CompType(chr(int(value))) if value else None

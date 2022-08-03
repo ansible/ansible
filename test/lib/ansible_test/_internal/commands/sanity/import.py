@@ -99,7 +99,7 @@ class ImportTest(SanityMultipleVersion):
                 any(is_subdir(target.path, path) for path in paths)]
 
     @property
-    def needs_pypi(self):  # type: () -> bool
+    def needs_pypi(self) -> bool:
         """True if the test requires PyPI, otherwise False."""
         return True
 
@@ -208,7 +208,7 @@ class ImportTest(SanityMultipleVersion):
 
 
 @cache
-def get_ansible_test_python_path():  # type: () -> str
+def get_ansible_test_python_path() -> str:
     """
     Return a directory usable for PYTHONPATH, containing only the ansible-test collection loader.
     The temporary directory created will be cached for the lifetime of the process and cleaned up at exit.

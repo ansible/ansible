@@ -45,7 +45,7 @@ class Metadata:
             # failed tests involving deleted files should be using line 0 since there is no content remaining
             self.changes[path] = ((0, 0),)
 
-    def to_dict(self):  # type: () -> t.Dict[str, t.Any]
+    def to_dict(self) -> t.Dict[str, t.Any]:
         """Return a dictionary representation of the metadata."""
         return dict(
             changes=self.changes,
@@ -91,16 +91,16 @@ class ChangeDescription:
         self.no_integration_paths = []  # type: t.List[str]
 
     @property
-    def targets(self):  # type: () -> t.Optional[t.List[str]]
+    def targets(self) -> t.Optional[t.List[str]]:
         """Optional list of target names."""
         return self.regular_command_targets.get(self.command)
 
     @property
-    def focused_targets(self):  # type: () -> t.Optional[t.List[str]]
+    def focused_targets(self) -> t.Optional[t.List[str]]:
         """Optional list of focused target names."""
         return self.focused_command_targets.get(self.command)
 
-    def to_dict(self):  # type: () -> t.Dict[str, t.Any]
+    def to_dict(self) -> t.Dict[str, t.Any]:
         """Return a dictionary representation of the change description."""
         return dict(
             command=self.command,

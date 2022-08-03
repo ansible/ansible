@@ -50,7 +50,7 @@ class OriginCompletionConfig(PosixCompletionConfig):
         super().__init__(name='origin')
 
     @property
-    def supported_pythons(self):  # type: () -> t.List[str]
+    def supported_pythons(self) -> t.List[str]:
         """Return a list of the supported Python versions."""
         current_version = version_to_str(sys.version_info[:2])
         versions = [version for version in SUPPORTED_PYTHON_VERSIONS if version == current_version] + \
@@ -74,7 +74,7 @@ class HostContext:
     controller_config: t.Optional['PosixConfig']
 
     @property
-    def controller(self):  # type: () -> bool
+    def controller(self) -> bool:
         """True if the context is for the controller, otherwise False."""
         return not self.controller_config
 
@@ -91,7 +91,7 @@ class HostConfig(metaclass=abc.ABCMeta):
         """Apply default settings."""
 
     @property
-    def is_managed(self):  # type: () -> bool
+    def is_managed(self) -> bool:
         """
         True if the host is a managed instance, otherwise False.
         Managed instances are used exclusively by ansible-test and can safely have destructive operations performed without explicit permission from the user.
@@ -106,12 +106,12 @@ class PythonConfig(metaclass=abc.ABCMeta):
     path: t.Optional[str] = None
 
     @property
-    def tuple(self):  # type: () -> t.Tuple[int, ...]
+    def tuple(self) -> t.Tuple[int, ...]:
         """Return the Python version as a tuple."""
         return str_to_version(self.version)
 
     @property
-    def major_version(self):  # type: () -> int
+    def major_version(self) -> int:
         """Return the Python major version."""
         return self.tuple[0]
 
@@ -130,7 +130,7 @@ class PythonConfig(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def is_managed(self):  # type: () -> bool
+    def is_managed(self) -> bool:
         """
         True if this Python is a managed instance, otherwise False.
         Managed instances are used exclusively by ansible-test and can safely have requirements installed without explicit permission from the user.
@@ -141,7 +141,7 @@ class PythonConfig(metaclass=abc.ABCMeta):
 class NativePythonConfig(PythonConfig):
     """Configuration for native Python."""
     @property
-    def is_managed(self):  # type: () -> bool
+    def is_managed(self) -> bool:
         """
         True if this Python is a managed instance, otherwise False.
         Managed instances are used exclusively by ansible-test and can safely have requirements installed without explicit permission from the user.
@@ -162,7 +162,7 @@ class VirtualPythonConfig(PythonConfig):
             self.system_site_packages = False
 
     @property
-    def is_managed(self):  # type: () -> bool
+    def is_managed(self) -> bool:
         """
         True if this Python is a managed instance, otherwise False.
         Managed instances are used exclusively by ansible-test and can safely have requirements installed without explicit permission from the user.
@@ -177,7 +177,7 @@ class PosixConfig(HostConfig, metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def have_root(self):  # type: () -> bool
+    def have_root(self) -> bool:
         """True if root is available, otherwise False."""
 
     @abc.abstractmethod
@@ -210,12 +210,12 @@ class RemoteConfig(HostConfig, metaclass=abc.ABCMeta):
     arch: t.Optional[str] = None
 
     @property
-    def platform(self):  # type: () -> str
+    def platform(self) -> str:
         """The name of the platform."""
         return self.name.partition('/')[0]
 
     @property
-    def version(self):  # type: () -> str
+    def version(self) -> str:
         """The version of the platform."""
         return self.name.partition('/')[2]
 
@@ -232,7 +232,7 @@ class RemoteConfig(HostConfig, metaclass=abc.ABCMeta):
         self.arch = self.arch or defaults.arch or Architecture.X86_64
 
     @property
-    def is_managed(self):  # type: () -> bool
+    def is_managed(self) -> bool:
         """
         True if this host is a managed instance, otherwise False.
         Managed instances are used exclusively by ansible-test and can safely have destructive operations performed without explicit permission from the user.
@@ -255,7 +255,7 @@ class PosixSshConfig(PosixConfig):
         )
 
     @property
-    def have_root(self):  # type: () -> bool
+    def have_root(self) -> bool:
         """True if root is available, otherwise False."""
         return self.user == 'root'
 
@@ -317,7 +317,7 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
             self.privileged = False
 
     @property
-    def is_managed(self):  # type: () -> bool
+    def is_managed(self) -> bool:
         """
         True if this host is a managed instance, otherwise False.
         Managed instances are used exclusively by ansible-test and can safely have destructive operations performed without explicit permission from the user.
@@ -325,7 +325,7 @@ class DockerConfig(ControllerHostConfig, PosixConfig):
         return True
 
     @property
-    def have_root(self):  # type: () -> bool
+    def have_root(self) -> bool:
         """True if root is available, otherwise False."""
         return True
 
@@ -361,7 +361,7 @@ class PosixRemoteConfig(RemoteConfig, ControllerHostConfig, PosixConfig):
         self.become = self.become or defaults.become
 
     @property
-    def have_root(self):  # type: () -> bool
+    def have_root(self) -> bool:
         """True if root is available, otherwise False."""
         return True
 
@@ -429,7 +429,7 @@ class OriginConfig(ControllerHostConfig, PosixConfig):
         return [ControllerConfig(python=NativePythonConfig(version=version, path=path)) for version, path in get_available_python_versions().items()]
 
     @property
-    def have_root(self):  # type: () -> bool
+    def have_root(self) -> bool:
         """True if root is available, otherwise False."""
         return os.getuid() == 0
 
@@ -456,7 +456,7 @@ class ControllerConfig(PosixConfig):
         super().apply_defaults(context, defaults)
 
     @property
-    def is_managed(self):  # type: () -> bool
+    def is_managed(self) -> bool:
         """
         True if the host is a managed instance, otherwise False.
         Managed instances are used exclusively by ansible-test and can safely have destructive operations performed without explicit permission from the user.
@@ -464,7 +464,7 @@ class ControllerConfig(PosixConfig):
         return self.controller.is_managed
 
     @property
-    def have_root(self):  # type: () -> bool
+    def have_root(self) -> bool:
         """True if root is available, otherwise False."""
         return self.controller.have_root
 

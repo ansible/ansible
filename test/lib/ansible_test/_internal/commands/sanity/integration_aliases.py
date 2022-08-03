@@ -108,12 +108,12 @@ class IntegrationAliasesTest(SanitySingleVersion):
         self._ci_test_groups = {}  # type: t.Dict[str, t.List[int]]
 
     @property
-    def can_ignore(self):  # type: () -> bool
+    def can_ignore(self) -> bool:
         """True if the test supports ignore entries."""
         return False
 
     @property
-    def no_targets(self):  # type: () -> bool
+    def no_targets(self) -> bool:
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return True
 
@@ -125,7 +125,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
         return self._ci_config
 
     @property
-    def ci_test_groups(self):  # type: () -> t.Dict[str, t.List[int]]
+    def ci_test_groups(self) -> t.Dict[str, t.List[int]]:
         """Return a dictionary of CI test names and their group(s)."""
         if not self._ci_test_groups:
             test_groups = {}  # type: t.Dict[str, t.Set[int]]

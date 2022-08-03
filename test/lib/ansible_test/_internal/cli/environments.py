@@ -582,11 +582,11 @@ def get_remote_platform_choices(controller=False):  # type: (bool) -> t.List[str
     return sorted(filter_completion(remote_completion(), controller_only=controller))
 
 
-def get_windows_platform_choices():  # type: () -> t.List[str]
+def get_windows_platform_choices() -> t.List[str]:
     """Return a list of supported Windows versions matching the given prefix."""
     return sorted(f'windows/{windows.version}' for windows in filter_completion(windows_completion()).values())
 
 
-def get_windows_version_choices():  # type: () -> t.List[str]
+def get_windows_version_choices() -> t.List[str]:
     """Return a list of supported Windows versions."""
     return sorted(windows.version for windows in filter_completion(windows_completion()).values())

@@ -238,7 +238,7 @@ def generate_coverage_config(args):  # type: (TestConfig) -> str
     return coverage_config
 
 
-def generate_ansible_coverage_config():  # type: () -> str
+def generate_ansible_coverage_config() -> str:
     """Generate code coverage configuration for Ansible tests."""
     coverage_config = '''
 [run]

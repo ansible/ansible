@@ -29,7 +29,7 @@ class FileDiff:
         self.headers.append(line)
 
     @property
-    def is_complete(self):  # type: () -> bool
+    def is_complete(self) -> bool:
         """True if the diff is complete, otherwise False."""
         return self.old.is_complete and self.new.is_complete
 
@@ -93,7 +93,7 @@ class DiffSide:
         self._next_line_number += 1
 
     @property
-    def is_complete(self):  # type: () -> bool
+    def is_complete(self) -> bool:
         """True if the diff is complete, otherwise False."""
         return self._lines_remaining == 0
 
@@ -146,7 +146,7 @@ class DiffParser:
 
         self.complete_file()
 
-    def process_start(self):  # type: () -> None
+    def process_start(self) -> None:
         """Process a diff start line."""
         self.complete_file()
 
@@ -158,7 +158,7 @@ class DiffParser:
         self.file = FileDiff(match.group('old_path'), match.group('new_path'))
         self.action = self.process_continue
 
-    def process_range(self):  # type: () -> None
+    def process_range(self) -> None:
         """Process a diff range line."""
         match = re.search(r'^@@ -((?P<old_start>[0-9]+),)?(?P<old_count>[0-9]+) \+((?P<new_start>[0-9]+),)?(?P<new_count>[0-9]+) @@', self.line)
 
@@ -169,7 +169,7 @@ class DiffParser:
         self.file.new.set_start(int(match.group('new_start') or 1), int(match.group('new_count')))
         self.action = self.process_content
 
-    def process_continue(self):  # type: () -> None
+    def process_continue(self) -> None:
         """Process a diff start, range or header line."""
         if self.line.startswith('diff '):
             self.process_start()
@@ -178,7 +178,7 @@ class DiffParser:
         else:
             self.process_header()
 
-    def process_header(self):  # type: () -> None
+    def process_header(self) -> None:
         """Process a diff header line."""
         if self.line.startswith('Binary files '):
             self.file.binary = True
@@ -189,7 +189,7 @@ class DiffParser:
         else:
             self.file.append_header(self.line)
 
-    def process_content(self):  # type: () -> None
+    def process_content(self) -> None:
         """Process a diff content line."""
         if self.line == r'\ No newline at end of file':
             if self.previous_line.startswith(' '):
@@ -218,7 +218,7 @@ class DiffParser:
         else:
             raise Exception('Unexpected diff content line.')
 
-    def complete_file(self):  # type: () -> None
+    def complete_file(self) -> None:
         """Complete processing of the current file, if any."""
         if not self.file:
             return

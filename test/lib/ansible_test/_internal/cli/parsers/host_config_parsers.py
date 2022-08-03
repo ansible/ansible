@@ -102,7 +102,7 @@ class DockerParser(PairParser):
     def __init__(self, controller):  # type: (bool) -> None
         self.controller = controller
 
-    def create_namespace(self):  # type: () -> t.Any
+    def create_namespace(self) -> t.Any:
         """Create and return a namespace."""
         return DockerConfig()
 
@@ -145,7 +145,7 @@ class PosixRemoteParser(PairParser):
     def __init__(self, controller):  # type: (bool) -> None
         self.controller = controller
 
-    def create_namespace(self):  # type: () -> t.Any
+    def create_namespace(self) -> t.Any:
         """Create and return a namespace."""
         return PosixRemoteConfig()
 
@@ -184,7 +184,7 @@ class PosixRemoteParser(PairParser):
 
 class WindowsRemoteParser(PairParser):
     """Composite argument parser for a Windows remote host."""
-    def create_namespace(self):  # type: () -> t.Any
+    def create_namespace(self) -> t.Any:
         """Create and return a namespace."""
         return WindowsRemoteConfig()
 
@@ -217,7 +217,7 @@ class WindowsRemoteParser(PairParser):
 
 class NetworkRemoteParser(PairParser):
     """Composite argument parser for a network remote host."""
-    def create_namespace(self):  # type: () -> t.Any
+    def create_namespace(self) -> t.Any:
         """Create and return a namespace."""
         return NetworkRemoteConfig()
 
@@ -250,7 +250,7 @@ class NetworkRemoteParser(PairParser):
 
 class WindowsInventoryParser(PairParser):
     """Composite argument parser for a Windows inventory."""
-    def create_namespace(self):  # type: () -> t.Any
+    def create_namespace(self) -> t.Any:
         """Create and return a namespace."""
         return WindowsInventoryConfig()
 
@@ -269,7 +269,7 @@ class WindowsInventoryParser(PairParser):
 
 class NetworkInventoryParser(PairParser):
     """Composite argument parser for a network inventory."""
-    def create_namespace(self):  # type: () -> t.Any
+    def create_namespace(self) -> t.Any:
         """Create and return a namespace."""
         return NetworkInventoryConfig()
 
@@ -288,7 +288,7 @@ class NetworkInventoryParser(PairParser):
 
 class PosixSshParser(PairParser):
     """Composite argument parser for a POSIX SSH host."""
-    def create_namespace(self):  # type: () -> t.Any
+    def create_namespace(self) -> t.Any:
         """Create and return a namespace."""
         return PosixSshConfig()
 
@@ -301,7 +301,7 @@ class PosixSshParser(PairParser):
         return PosixSshKeyValueParser()
 
     @property
-    def required(self):  # type: () -> bool
+    def required(self) -> bool:
         """True if the delimiter (and thus right parser) is required, otherwise False."""
         return True
 

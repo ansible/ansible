@@ -51,7 +51,7 @@ class SshProcess:
 
         self.forwards = {}  # type: t.Dict[t.Tuple[str, int], int]
 
-    def terminate(self):  # type: () -> None
+    def terminate(self) -> None:
         """Terminate the SSH process."""
         if not self._process:
             return  # explain mode
@@ -62,7 +62,7 @@ class SshProcess:
         except Exception:  # pylint: disable=broad-except
             pass
 
-    def wait(self):  # type: () -> None
+    def wait(self) -> None:
         """Wait for the SSH process to terminate."""
         if not self._process:
             return  # explain mode

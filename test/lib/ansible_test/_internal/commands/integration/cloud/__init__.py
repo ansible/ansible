@@ -55,7 +55,7 @@ from ....docker_util import (
 
 
 @cache
-def get_cloud_plugins():  # type: () -> t.Tuple[t.Dict[str, t.Type[CloudProvider]], t.Dict[str, t.Type[CloudEnvironment]]]
+def get_cloud_plugins() -> t.Tuple[t.Dict[str, t.Type[CloudProvider]], t.Dict[str, t.Type[CloudEnvironment]]]:
     """Import cloud plugins and load them into the plugin dictionaries."""
     import_plugins('commands/integration/cloud')
 
@@ -69,13 +69,13 @@ def get_cloud_plugins():  # type: () -> t.Tuple[t.Dict[str, t.Type[CloudProvider
 
 
 @cache
-def get_provider_plugins():  # type: () -> t.Dict[str, t.Type[CloudProvider]]
+def get_provider_plugins() -> t.Dict[str, t.Type[CloudProvider]]:
     """Return a dictionary of the available cloud provider plugins."""
     return get_cloud_plugins()[0]
 
 
 @cache
-def get_environment_plugins():  # type: () -> t.Dict[str, t.Type[CloudEnvironment]]
+def get_environment_plugins() -> t.Dict[str, t.Type[CloudEnvironment]]:
     """Return a dictionary of the available cloud environment plugins."""
     return get_cloud_plugins()[1]
 
@@ -204,7 +204,7 @@ class CloudBase(metaclass=abc.ABCMeta):
         data_context().register_payload_callback(config_callback)
 
     @property
-    def setup_executed(self):  # type: () -> bool
+    def setup_executed(self) -> bool:
         """True if setup has been executed, otherwise False."""
         return t.cast(bool, self._get_cloud_config(self._SETUP_EXECUTED, False))
 
@@ -214,7 +214,7 @@ class CloudBase(metaclass=abc.ABCMeta):
         self._set_cloud_config(self._SETUP_EXECUTED, value)
 
     @property
-    def config_path(self):  # type: () -> str
+    def config_path(self) -> str:
         """Path to the configuration file."""
         return os.path.join(data_context().content.root, str(self._get_cloud_config(self._CONFIG_PATH)))
 
@@ -224,7 +224,7 @@ class CloudBase(metaclass=abc.ABCMeta):
         self._set_cloud_config(self._CONFIG_PATH, value)
 
     @property
-    def resource_prefix(self):  # type: () -> str
+    def resource_prefix(self) -> str:
         """Resource prefix."""
         return str(self._get_cloud_config(self._RESOURCE_PREFIX))
 
@@ -234,7 +234,7 @@ class CloudBase(metaclass=abc.ABCMeta):
         self._set_cloud_config(self._RESOURCE_PREFIX, value)
 
     @property
-    def managed(self):  # type: () -> bool
+    def managed(self) -> bool:
         """True if resources are managed by ansible-test, otherwise False."""
         return t.cast(bool, self._get_cloud_config(self._MANAGED))
 
@@ -297,19 +297,19 @@ class CloudProvider(CloudBase):
                 display.warning('Excluding tests marked "%s" which requires container support or config (see "%s"): %s'
                                 % (skip.rstrip('/'), self.config_template_path, ', '.join(skipped)))
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup the cloud resource before delegation and register a cleanup callback."""
         self.resource_prefix = self.ci_provider.generate_resource_prefix()
         self.resource_prefix = re.sub(r'[^a-zA-Z0-9]+', '-', self.resource_prefix)[:63].lower().rstrip('-')
 
         atexit.register(self.cleanup)
 
-    def cleanup(self):  # type: () -> None
+    def cleanup(self) -> None:
         """Clean up the cloud resource and any temporary configuration files after tests complete."""
         if self.remove_config:
             os.remove(self.config_path)
 
-    def _use_static_config(self):  # type: () -> bool
+    def _use_static_config(self) -> bool:
         """Use a static config file if available. Returns True if static config is used, otherwise returns False."""
         if os.path.isfile(self.config_static_path):
             display.info('Using existing %s cloud config: %s' % (self.platform, self.config_static_path), verbosity=1)
@@ -337,7 +337,7 @@ class CloudProvider(CloudBase):
             config_fd.write(to_bytes(content))
             config_fd.flush()
 
-    def _read_config_template(self):  # type: () -> str
+    def _read_config_template(self) -> str:
         """Read and return the configuration template."""
         lines = read_text_file(self.config_template_path).splitlines()
         lines = [line for line in lines if not line.startswith('#')]
@@ -356,7 +356,7 @@ class CloudProvider(CloudBase):
 
 class CloudEnvironment(CloudBase):
     """Base class for cloud environment plugins. Updates integration test environment after delegation."""
-    def setup_once(self):  # type: () -> None
+    def setup_once(self) -> None:
         """Run setup if it has not already been run."""
         if self.setup_executed:
             return
@@ -364,11 +364,11 @@ class CloudEnvironment(CloudBase):
         self.setup()
         self.setup_executed = True
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup which should be done once per environment instead of once per test target."""
 
     @abc.abstractmethod
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
 
     def on_failure(self, target, tries):  # type: (IntegrationTarget, int) -> None

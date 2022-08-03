@@ -62,7 +62,7 @@ def get_powershell_module_utils_name(path):  # type: (str) -> str
     return name
 
 
-def enumerate_module_utils():  # type: () -> t.Set[str]
+def enumerate_module_utils() -> t.Set[str]:
     """Return a set of available module_utils imports."""
     return set(get_powershell_module_utils_name(p)
                for p in data_context().content.walk_files(data_context().content.module_utils_powershell_path)

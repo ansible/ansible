@@ -119,7 +119,7 @@ class HttpResponse:
         self.status_code = status_code
         self.response = response
 
-    def json(self):  # type: () -> t.Any
+    def json(self) -> t.Any:
         """Return the response parsed as JSON, raising an exception if parsing fails."""
         try:
             return json.loads(self.response)

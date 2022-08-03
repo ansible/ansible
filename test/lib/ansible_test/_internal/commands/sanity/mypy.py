@@ -74,12 +74,12 @@ class MypyTest(SanityMultipleVersion):
                 or target.path.startswith('test/lib/ansible_test/_util/target/sanity/import/'))]
 
     @property
-    def error_code(self):  # type: () -> t.Optional[str]
+    def error_code(self) -> t.Optional[str]:
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'ansible-test'
 
     @property
-    def needs_pypi(self):  # type: () -> bool
+    def needs_pypi(self) -> bool:
         """True if the test requires PyPI, otherwise False."""
         return True
 

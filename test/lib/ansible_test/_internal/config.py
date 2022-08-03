@@ -133,12 +133,12 @@ class EnvironmentConfig(CommonConfig):
             display.warning('The --no-pip-check option is deprecated and has no effect. It will be removed in a future version of ansible-test.')
 
     @property
-    def controller(self):  # type: () -> ControllerHostConfig
+    def controller(self) -> ControllerHostConfig:
         """Host configuration for the controller."""
         return self.host_settings.controller
 
     @property
-    def targets(self):  # type: () -> t.List[HostConfig]
+    def targets(self) -> t.List[HostConfig]:
         """Host configuration for the targets."""
         return self.host_settings.targets
 
@@ -172,7 +172,7 @@ class EnvironmentConfig(CommonConfig):
         return t.cast(t.List[THostConfig], self.targets)
 
     @property
-    def target_type(self):  # type: () -> t.Type[HostConfig]
+    def target_type(self) -> t.Type[HostConfig]:
         """
         The true type of the target(s).
         If the target is the controller, the controller type is returned.
@@ -299,7 +299,7 @@ class IntegrationConfig(TestConfig):
             self.explain = True
             self.display_stderr = True
 
-    def get_ansible_config(self):  # type: () -> str
+    def get_ansible_config(self) -> str:
         """Return the path to the Ansible config for the given config."""
         ansible_config_relative_path = os.path.join(data_context().content.integration_path, '%s.cfg' % self.command)
         ansible_config_path = os.path.join(data_context().content.root, ansible_config_relative_path)

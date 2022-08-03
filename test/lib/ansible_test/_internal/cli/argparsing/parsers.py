@@ -47,7 +47,7 @@ class CompletionSuccess(Completion):
     matches: t.List[str] = dataclasses.field(default_factory=list)
 
     @property
-    def preserve(self):  # type: () -> bool
+    def preserve(self) -> bool:
         """
         True if argcomplete should not mangle completion values, otherwise False.
         Only used when more than one completion exists to avoid overwriting the word undergoing completion.
@@ -55,7 +55,7 @@ class CompletionSuccess(Completion):
         return len(self.matches) > 1 and self.list_mode
 
     @property
-    def completions(self):  # type: () -> t.List[str]
+    def completions(self) -> t.List[str]:
         """List of completion values to return to argcomplete."""
         completions = self.matches
         continuation = '' if self.list_mode else self.continuation
@@ -98,7 +98,7 @@ class ParserState:
     parts: t.List[str] = dataclasses.field(default_factory=list)
 
     @property
-    def incomplete(self):  # type: () -> bool
+    def incomplete(self) -> bool:
         """True if parsing is incomplete (unparsed input remains), otherwise False."""
         return self.remainder is not None
 
@@ -121,7 +121,7 @@ class ParserState:
 
         return False
 
-    def read(self):  # type: () -> str
+    def read(self) -> str:
         """Read and return the next input segment, taking into account parsing boundaries."""
         delimiters = "".join(boundary.delimiters for boundary in self.boundaries)
 
@@ -154,17 +154,17 @@ class ParserState:
         return value
 
     @property
-    def root_namespace(self):  # type: () -> t.Any
+    def root_namespace(self) -> t.Any:
         """THe root namespace."""
         return self.namespaces[0]
 
     @property
-    def current_namespace(self):  # type: () -> t.Any
+    def current_namespace(self) -> t.Any:
         """The current namespace."""
         return self.namespaces[-1]
 
     @property
-    def current_boundary(self):  # type: () -> t.Optional[ParserBoundary]
+    def current_boundary(self) -> t.Optional[ParserBoundary]:
         """The current parser boundary, if any, otherwise None."""
         return self.boundaries[-1] if self.boundaries else None
 
@@ -463,18 +463,18 @@ class NamespaceParser(Parser, metaclass=abc.ABCMeta):
         return super().parse(state)
 
     @property
-    def use_list(self):  # type: () -> bool
+    def use_list(self) -> bool:
         """True if the destination is a list, otherwise False."""
         return False
 
     @property
-    def limit_one(self):  # type: () -> bool
+    def limit_one(self) -> bool:
         """True if only one target is allowed, otherwise False."""
         return not self.use_list
 
     @property
     @abc.abstractmethod
-    def dest(self):  # type: () -> str
+    def dest(self) -> str:
         """The name of the attribute where the value should be stored."""
 
 
@@ -489,7 +489,7 @@ class NamespaceWrappedParser(NamespaceParser):
         return self.parser.parse(state)
 
     @property
-    def dest(self):  # type: () -> str
+    def dest(self) -> str:
         """The name of the attribute where the value should be stored."""
         return self._dest
 
@@ -537,17 +537,17 @@ class PairParser(Parser, metaclass=abc.ABCMeta):
         return namespace
 
     @property
-    def required(self):  # type: () -> bool
+    def required(self) -> bool:
         """True if the delimiter (and thus right parser) is required, otherwise False."""
         return False
 
     @property
-    def delimiter(self):  # type: () -> str
+    def delimiter(self) -> str:
         """The delimiter to use between the left and right parser."""
         return PAIR_DELIMITER
 
     @abc.abstractmethod
-    def create_namespace(self):  # type: () -> t.Any
+    def create_namespace(self) -> t.Any:
         """Create and return a namespace."""
 
     @abc.abstractmethod
@@ -566,7 +566,7 @@ class TypeParser(Parser, metaclass=abc.ABCMeta):
         return self.get_stateless_parsers()
 
     @abc.abstractmethod
-    def get_stateless_parsers(self):  # type: () -> t.Dict[str, Parser]
+    def get_stateless_parsers(self) -> t.Dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
 
     def parse(self, state):  # type: (ParserState) -> t.Any

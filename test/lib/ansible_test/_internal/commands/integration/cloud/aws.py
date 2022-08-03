@@ -51,7 +51,7 @@ class AwsCloudProvider(CloudProvider):
 
         super().filter(targets, exclude)
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super().setup()
 
@@ -63,7 +63,7 @@ class AwsCloudProvider(CloudProvider):
         if not self._use_static_config():
             self._setup_dynamic()
 
-    def _setup_dynamic(self):  # type: () -> None
+    def _setup_dynamic(self) -> None:
         """Request AWS credentials through the Ansible Core CI service."""
         display.info('Provisioning %s cloud environment.' % self.platform, verbosity=1)
 
@@ -90,14 +90,14 @@ class AwsCloudProvider(CloudProvider):
 
         self._write_config(config)
 
-    def _create_ansible_core_ci(self):  # type: () -> AnsibleCoreCI
+    def _create_ansible_core_ci(self) -> AnsibleCoreCI:
         """Return an AWS instance of AnsibleCoreCI."""
         return AnsibleCoreCI(self.args, CloudResource(platform='aws'))
 
 
 class AwsCloudEnvironment(CloudEnvironment):
     """AWS cloud environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         parser = configparser.ConfigParser()
         parser.read(self.config_path)

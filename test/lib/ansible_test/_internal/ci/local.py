@@ -39,21 +39,21 @@ class Local(CIProvider):
     priority = 1000
 
     @staticmethod
-    def is_supported():  # type: () -> bool
+    def is_supported() -> bool:
         """Return True if this provider is supported in the current running environment."""
         return True
 
     @property
-    def code(self):  # type: () -> str
+    def code(self) -> str:
         """Return a unique code representing this provider."""
         return CODE
 
     @property
-    def name(self):  # type: () -> str
+    def name(self) -> str:
         """Return descriptive name for this provider."""
         return 'Local'
 
-    def generate_resource_prefix(self):  # type: () -> str
+    def generate_resource_prefix(self) -> str:
         """Return a resource prefix specific to this CI provider."""
         prefix = 'ansible-test-%d-%s' % (
             random.randint(10000000, 99999999),
@@ -62,7 +62,7 @@ class Local(CIProvider):
 
         return prefix
 
-    def get_base_branch(self):  # type: () -> str
+    def get_base_branch(self) -> str:
         """Return the base branch or an empty string."""
         return ''
 
@@ -116,12 +116,12 @@ class Local(CIProvider):
 
         return sorted(names)
 
-    def supports_core_ci_auth(self):  # type: () -> bool
+    def supports_core_ci_auth(self) -> bool:
         """Return True if Ansible Core CI is supported."""
         path = self._get_aci_key_path()
         return os.path.exists(path)
 
-    def prepare_core_ci_auth(self):  # type: () -> t.Dict[str, t.Any]
+    def prepare_core_ci_auth(self) -> t.Dict[str, t.Any]:
         """Return authentication details for Ansible Core CI."""
         path = self._get_aci_key_path()
         auth_key = read_text_file(path).strip()
@@ -142,7 +142,7 @@ class Local(CIProvider):
         return None  # not yet implemented for local
 
     @staticmethod
-    def _get_aci_key_path():  # type: () -> str
+    def _get_aci_key_path() -> str:
         path = os.path.expanduser('~/.ansible-core-ci.key')
         return path
 

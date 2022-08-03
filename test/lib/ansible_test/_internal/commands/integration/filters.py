@@ -59,7 +59,7 @@ class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
         self.allow_destructive = args.allow_destructive
 
     @property
-    def config(self):  # type: () -> THostConfig
+    def config(self) -> THostConfig:
         """The configuration to filter. Only valid when there is a single config."""
         if len(self.configs) != 1:
             raise Exception()
@@ -235,7 +235,7 @@ class OriginTargetFilter(PosixTargetFilter[OriginConfig]):
 
 
 @cache
-def get_host_target_type_map():  # type: () -> t.Dict[t.Type[HostConfig], t.Type[TargetFilter]]
+def get_host_target_type_map() -> t.Dict[t.Type[HostConfig], t.Type[TargetFilter]]:
     """Create and return a mapping of HostConfig types to TargetFilter types."""
     return get_type_map(TargetFilter, HostConfig)
 

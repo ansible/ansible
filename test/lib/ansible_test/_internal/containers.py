@@ -260,7 +260,7 @@ class ContainerAccess:
         # port redirections to create through host_ip -- if not set, no port redirections will be used
         self.forwards = forwards
 
-    def port_map(self):  # type: () -> t.List[t.Tuple[int, int]]
+    def port_map(self) -> t.List[t.Tuple[int, int]]:
         """Return a port map for accessing this container."""
         if self.forwards:
             ports = list(self.forwards.items())
@@ -284,7 +284,7 @@ class ContainerAccess:
             forwards=forwards,
         )
 
-    def to_dict(self):  # type: () -> t.Dict[str, t.Any]
+    def to_dict(self) -> t.Dict[str, t.Any]:
         """Return a dict of the current instance."""
         value: t.Dict[str, t.Any] = dict(
             host_ip=self.host_ip,
@@ -315,7 +315,7 @@ class ContainerDatabase:
                                             for context_name, containers in contexts.items()))
                                       for access_name, contexts in data.items()))
 
-    def to_dict(self):  # type: () -> t.Dict[str, t.Any]
+    def to_dict(self) -> t.Dict[str, t.Any]:
         """Return a dict of the current instance."""
         return dict((access_name,
                      dict((context_name,
@@ -445,7 +445,7 @@ class SupportContainerContext:
         self.containers = containers
         self.process = process
 
-    def close(self):  # type: () -> None
+    def close(self) -> None:
         """Close the process maintaining the port forwards."""
         if not self.process:
             return  # forwarding not in use

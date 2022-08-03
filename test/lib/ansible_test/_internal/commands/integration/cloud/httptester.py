@@ -35,7 +35,7 @@ class HttptesterProvider(CloudProvider):
 
         self.uses_docker = True
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup resources before delegation."""
         super().setup()
 
@@ -82,7 +82,7 @@ class HttptesterProvider(CloudProvider):
 
 class HttptesterEnvironment(CloudEnvironment):
     """HTTP Tester environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         return CloudEnvironmentConfig(
             env_vars=dict(

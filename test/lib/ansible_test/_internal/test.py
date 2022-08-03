@@ -80,10 +80,10 @@ class TestResult:
         if args.junit:
             self.write_junit(args)
 
-    def write_console(self):  # type: () -> None
+    def write_console(self) -> None:
         """Write results to console."""
 
-    def write_lint(self):  # type: () -> None
+    def write_lint(self) -> None:
         """Write lint results to stdout."""
 
     def write_bot(self, args):  # type: (TestConfig) -> None
@@ -194,7 +194,7 @@ class TestSkipped(TestResult):
 
         self.reason = None  # type: t.Optional[str]
 
-    def write_console(self):  # type: () -> None
+    def write_console(self) -> None:
         """Write results to console."""
         if self.reason:
             display.warning(self.reason)
@@ -239,7 +239,7 @@ class TestFailure(TestResult):
 
         super().write(args)
 
-    def write_console(self):  # type: () -> None
+    def write_console(self) -> None:
         """Write results to console."""
         if self.summary:
             display.error(self.summary)
@@ -258,7 +258,7 @@ class TestFailure(TestResult):
             if doc_url:
                 display.info('See documentation for help: %s' % doc_url)
 
-    def write_lint(self):  # type: () -> None
+    def write_lint(self) -> None:
         """Write lint results to stdout."""
         if self.summary:
             command = self.format_command()
@@ -321,7 +321,7 @@ class TestFailure(TestResult):
             if message.confidence is None:
                 message.confidence = calculate_confidence(message.path, message.line, metadata)
 
-    def format_command(self):  # type: () -> str
+    def format_command(self) -> str:
         """Return a string representing the CLI command associated with the test failure."""
         command = 'ansible-test %s' % self.command
 
@@ -374,7 +374,7 @@ class TestFailure(TestResult):
 
         return title
 
-    def format_block(self):  # type: () -> str
+    def format_block(self) -> str:
         """Format the test summary or messages as a block of text and return the result."""
         if self.summary:
             block = self.summary
@@ -411,37 +411,37 @@ class TestMessage:
         self.confidence = confidence
 
     @property
-    def path(self):  # type: () -> str
+    def path(self) -> str:
         """Return the path."""
         return self.__path
 
     @property
-    def line(self):  # type: () -> int
+    def line(self) -> int:
         """Return the line number, or 0 if none is available."""
         return self.__line
 
     @property
-    def column(self):  # type: () -> int
+    def column(self) -> int:
         """Return the column number, or 0 if none is available."""
         return self.__column
 
     @property
-    def level(self):  # type: () -> str
+    def level(self) -> str:
         """Return the level."""
         return self.__level
 
     @property
-    def code(self):  # type: () -> t.Optional[str]
+    def code(self) -> t.Optional[str]:
         """Return the code, if any."""
         return self.__code
 
     @property
-    def message(self):  # type: () -> str
+    def message(self) -> str:
         """Return the message."""
         return self.__message
 
     @property
-    def tuple(self):  # type: () -> t.Tuple[str, int, int, str, t.Optional[str], str]
+    def tuple(self) -> t.Tuple[str, int, int, str, t.Optional[str], str]:
         """Return a tuple with all the immutable values of this test message."""
         return self.__path, self.__line, self.__column, self.__level, self.__code, self.__message
 

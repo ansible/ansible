@@ -326,7 +326,7 @@ def find_python(version, path=None, required=True):  # type: (str, t.Optional[st
 
 
 @cache
-def get_ansible_version():  # type: () -> str
+def get_ansible_version() -> str:
     """Return the Ansible version."""
     # ansible may not be in our sys.path
     # avoids a symlink to release.py since ansible placement relative to ansible-test may change during delegation
@@ -339,7 +339,7 @@ def get_ansible_version():  # type: () -> str
 
 
 @cache
-def get_available_python_versions():  # type: () -> t.Dict[str, str]
+def get_available_python_versions() -> t.Dict[str, str]:
     """Return a dictionary indicating which supported Python versions are available."""
     return dict((version, path) for version, path in ((version, find_python(version, required=False)) for version in SUPPORTED_PYTHON_VERSIONS) if path)
 
@@ -752,7 +752,7 @@ def generate_name(length=8):  # type: (int) -> str
     return ''.join(random.choice(string.ascii_letters + string.digits) for _idx in range(length))
 
 
-def generate_password():  # type: () -> str
+def generate_password() -> str:
     """Generate and return random password."""
     chars = [
         string.ascii_letters,
@@ -805,7 +805,7 @@ class Display:
         """Internal implementation for displaying a warning message."""
         self.print_message('WARNING: %s' % message, color=self.purple)
 
-    def review_warnings(self):  # type: () -> None
+    def review_warnings(self) -> None:
         """Review all warnings which previously occurred."""
         if not self.warnings:
             return

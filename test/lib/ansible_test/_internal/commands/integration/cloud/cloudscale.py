@@ -30,7 +30,7 @@ class CloudscaleCloudProvider(CloudProvider):
 
         self.uses_config = True
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super().setup()
 
@@ -39,7 +39,7 @@ class CloudscaleCloudProvider(CloudProvider):
 
 class CloudscaleCloudEnvironment(CloudEnvironment):
     """Cloudscale cloud environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         parser = configparser.ConfigParser()
         parser.read(self.config_path)

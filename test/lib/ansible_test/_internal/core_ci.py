@@ -378,7 +378,7 @@ class AnsibleCoreCI:
 
         return True
 
-    def _save(self):  # type: () -> None
+    def _save(self) -> None:
         """Save instance information."""
         if self.args.explain:
             return
@@ -387,7 +387,7 @@ class AnsibleCoreCI:
 
         write_json_file(self.path, config, create_directories=True)
 
-    def save(self):  # type: () -> t.Dict[str, str]
+    def save(self) -> t.Dict[str, str]:
         """Save instance details and return as a dictionary."""
         return dict(
             label=self.resource.get_label(),
@@ -466,7 +466,7 @@ class SshKey:
             self.key_contents = read_text_file(self.key).strip()
 
     @staticmethod
-    def get_relative_in_tree_private_key_path():  # type: () -> str
+    def get_relative_in_tree_private_key_path() -> str:
         """Return the ansible-test SSH private key path relative to the content tree."""
         temp_dir = ResultType.TMP.relative_path
 
@@ -474,7 +474,7 @@ class SshKey:
 
         return key
 
-    def get_in_tree_key_pair_paths(self):  # type: () -> t.Optional[t.Tuple[str, str]]
+    def get_in_tree_key_pair_paths(self) -> t.Optional[t.Tuple[str, str]]:
         """Return the ansible-test SSH key pair paths from the content tree."""
         temp_dir = ResultType.TMP.path
 
@@ -483,7 +483,7 @@ class SshKey:
 
         return key, pub
 
-    def get_source_key_pair_paths(self):  # type: () -> t.Optional[t.Tuple[str, str]]
+    def get_source_key_pair_paths(self) -> t.Optional[t.Tuple[str, str]]:
         """Return the ansible-test SSH key pair paths for the current user."""
         base_dir = os.path.expanduser('~/.ansible/test/')
 
@@ -492,7 +492,7 @@ class SshKey:
 
         return key, pub
 
-    def get_key_pair(self):  # type: () -> t.Optional[t.Tuple[str, str]]
+    def get_key_pair(self) -> t.Optional[t.Tuple[str, str]]:
         """Return the ansible-test SSH key pair paths if present, otherwise return None."""
         key, pub = self.get_in_tree_key_pair_paths()
 

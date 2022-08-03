@@ -48,12 +48,12 @@ from ...host_configs import (
 class YamllintTest(SanitySingleVersion):
     """Sanity test using yamllint."""
     @property
-    def error_code(self):  # type: () -> t.Optional[str]
+    def error_code(self) -> t.Optional[str]:
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'ansible-test'
 
     @property
-    def require_libyaml(self):  # type: () -> bool
+    def require_libyaml(self) -> bool:
         """True if the test requires PyYAML to have libyaml support."""
         return True
 

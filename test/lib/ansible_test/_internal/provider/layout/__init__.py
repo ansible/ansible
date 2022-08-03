@@ -114,7 +114,7 @@ class ContentLayout(Layout):
         self.is_ansible = root == ANSIBLE_SOURCE_ROOT
 
     @property
-    def prefix(self):  # type: () -> str
+    def prefix(self) -> str:
         """Return the collection prefix or an empty string if not a collection."""
         if self.collection:
             return self.collection.prefix
@@ -122,17 +122,17 @@ class ContentLayout(Layout):
         return ''
 
     @property
-    def module_path(self):  # type: () -> t.Optional[str]
+    def module_path(self) -> t.Optional[str]:
         """Return the path where modules are found, if any."""
         return self.plugin_paths.get('modules')
 
     @property
-    def module_utils_path(self):  # type: () -> t.Optional[str]
+    def module_utils_path(self) -> t.Optional[str]:
         """Return the path where module_utils are found, if any."""
         return self.plugin_paths.get('module_utils')
 
     @property
-    def module_utils_powershell_path(self):  # type: () -> t.Optional[str]
+    def module_utils_powershell_path(self) -> t.Optional[str]:
         """Return the path where powershell module_utils are found, if any."""
         if self.is_ansible:
             return os.path.join(self.plugin_paths['module_utils'], 'powershell')
@@ -140,7 +140,7 @@ class ContentLayout(Layout):
         return self.plugin_paths.get('module_utils')
 
     @property
-    def module_utils_csharp_path(self):  # type: () -> t.Optional[str]
+    def module_utils_csharp_path(self) -> t.Optional[str]:
         """Return the path where csharp module_utils are found, if any."""
         if self.is_ansible:
             return os.path.join(self.plugin_paths['module_utils'], 'csharp')

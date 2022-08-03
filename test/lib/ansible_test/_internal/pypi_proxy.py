@@ -141,7 +141,7 @@ index-url = {0}
 trusted-host = {1}
 '''.format(pypi_endpoint, pypi_hostname).strip()
 
-    def pip_conf_cleanup():  # type: () -> None
+    def pip_conf_cleanup() -> None:
         """Remove custom pip PyPI config."""
         display.info('Removing custom PyPI config: %s' % pip_conf_path, verbosity=1)
         os.remove(pip_conf_path)
@@ -168,7 +168,7 @@ index_url = {0}
     if os.path.exists(pydistutils_cfg_path) and not profile.config.is_managed:
         raise ApplicationError('Refusing to overwrite existing file: %s' % pydistutils_cfg_path)
 
-    def pydistutils_cfg_cleanup():  # type: () -> None
+    def pydistutils_cfg_cleanup() -> None:
         """Remove custom PyPI config."""
         display.info('Removing custom PyPI config: %s' % pydistutils_cfg_path, verbosity=1)
         os.remove(pydistutils_cfg_path)

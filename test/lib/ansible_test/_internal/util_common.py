@@ -106,16 +106,16 @@ class ResultType:
         self.name = name
 
     @property
-    def relative_path(self):  # type: () -> str
+    def relative_path(self) -> str:
         """The content relative path to the results."""
         return os.path.join(data_context().content.results_path, self.name)
 
     @property
-    def path(self):  # type: () -> str
+    def path(self) -> str:
         """The absolute path to the results."""
         return os.path.join(data_context().content.root, self.relative_path)
 
-    def __str__(self):  # type: () -> str
+    def __str__(self) -> str:
         return self.name
 
 
@@ -144,7 +144,7 @@ class CommonConfig:
 
         self.cache = {}  # type: t.Dict[str, t.Any]
 
-    def get_ansible_config(self):  # type: () -> str
+    def get_ansible_config(self) -> str:
         """Return the path to the Ansible config for the given config."""
         return os.path.join(ANSIBLE_TEST_DATA_ROOT, 'ansible.cfg')
 
@@ -227,7 +227,7 @@ def write_text_test_results(category, name, content):  # type: (ResultType, str,
 
 
 @cache
-def get_injector_path():  # type: () -> str
+def get_injector_path() -> str:
     """Return the path to a directory which contains a `python.py` executable and associated injector scripts."""
     injector_path = tempfile.mkdtemp(prefix='ansible-test-', suffix='-injector', dir='/tmp')
 

@@ -78,7 +78,7 @@ class PipUnavailableError(ApplicationError):
 class PipCommand:
     """Base class for pip commands."""""
 
-    def serialize(self):  # type: () -> t.Tuple[str, t.Dict[str, t.Any]]
+    def serialize(self) -> t.Tuple[str, t.Dict[str, t.Any]]:
         """Return a serialized representation of this command."""
         name = type(self).__name__[3:].lower()
         return name, self.__dict__
@@ -318,7 +318,7 @@ def collect_sanity_install(sanity):  # type: (str) -> t.List[PipInstall]
     return collect_install(requirements_paths, constraints_paths, constraints=False)
 
 
-def collect_units_install():  # type: () -> t.List[PipInstall]
+def collect_units_install() -> t.List[PipInstall]:
     """Return details necessary for the specified units pip install(s)."""
     requirements_paths = []  # type: t.List[t.Tuple[str, str]]
     constraints_paths = []  # type: t.List[t.Tuple[str, str]]

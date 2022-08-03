@@ -104,7 +104,7 @@ class CompositeAction(argparse.Action, metaclass=abc.ABCMeta):
         register_safe_action(type(self))
 
     @abc.abstractmethod
-    def create_parser(self):  # type: () -> NamespaceParser
+    def create_parser(self) -> NamespaceParser:
         """Return a namespace parser to parse the argument associated with this action."""
 
     def __call__(

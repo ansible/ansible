@@ -70,12 +70,12 @@ class PylintTest(SanitySingleVersion):
         ])
 
     @property
-    def supported_python_versions(self):  # type: () -> t.Optional[t.Tuple[str, ...]]
+    def supported_python_versions(self) -> t.Optional[t.Tuple[str, ...]]:
         """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
         return tuple(version for version in CONTROLLER_PYTHON_VERSIONS if str_to_version(version) < (3, 11))
 
     @property
-    def error_code(self):  # type: () -> t.Optional[str]
+    def error_code(self) -> t.Optional[str]:
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'ansible-test'
 

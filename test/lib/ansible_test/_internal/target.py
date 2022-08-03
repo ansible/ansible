@@ -150,7 +150,7 @@ def walk_module_targets():
         yield target
 
 
-def walk_units_targets():  # type: () -> t.Iterable[TestTarget]
+def walk_units_targets() -> t.Iterable[TestTarget]:
     """Return an iterable of units targets."""
     return walk_test_targets(path=data_context().content.unit_path, module_path=data_context().content.unit_module_path, extensions=('.py',), prefix='test_')
 
@@ -165,7 +165,7 @@ def walk_powershell_targets(include_symlinks=True):  # type: (bool) -> t.Iterabl
     return walk_test_targets(module_path=data_context().content.module_path, extensions=('.ps1', '.psm1'), include_symlinks=include_symlinks)
 
 
-def walk_sanity_targets():  # type: () -> t.Iterable[TestTarget]
+def walk_sanity_targets() -> t.Iterable[TestTarget]:
     """Return an iterable of sanity targets."""
     return walk_test_targets(module_path=data_context().content.module_path, include_symlinks=True, include_symlinked_directories=True)
 
@@ -191,7 +191,7 @@ def walk_windows_integration_targets(include_hidden=False):  # type: (bool) -> t
             yield target
 
 
-def walk_integration_targets():  # type: () -> t.Iterable[IntegrationTarget]
+def walk_integration_targets() -> t.Iterable[IntegrationTarget]:
     """Return an iterable of integration targets."""
     path = data_context().content.integration_targets_path
     modules = frozenset(target.module for target in walk_module_targets())

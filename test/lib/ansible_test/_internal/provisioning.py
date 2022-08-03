@@ -57,7 +57,7 @@ class HostState:
     target_profiles: t.List[HostProfile]
 
     @property
-    def profiles(self):  # type: () -> t.List[HostProfile]
+    def profiles(self) -> t.List[HostProfile]:
         """Return all the profiles as a list."""
         return [t.cast(HostProfile, self.controller_profile)] + self.target_profiles
 
@@ -79,7 +79,7 @@ class HostState:
 
         return host_state
 
-    def get_controller_target_connections(self):  # type: () -> t.List[SshConnection]
+    def get_controller_target_connections(self) -> t.List[SshConnection]:
         """Return SSH connection(s) for accessing all target hosts from the controller."""
         return list(itertools.chain.from_iterable([target.get_controller_target_connections() for
                                                    target in self.target_profiles if isinstance(target, SshTargetHostProfile)]))

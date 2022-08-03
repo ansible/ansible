@@ -44,21 +44,21 @@ class AzurePipelines(CIProvider):
         self.auth = AzurePipelinesAuthHelper()
 
     @staticmethod
-    def is_supported():  # type: () -> bool
+    def is_supported() -> bool:
         """Return True if this provider is supported in the current running environment."""
         return os.environ.get('SYSTEM_COLLECTIONURI', '').startswith('https://dev.azure.com/')
 
     @property
-    def code(self):  # type: () -> str
+    def code(self) -> str:
         """Return a unique code representing this provider."""
         return CODE
 
     @property
-    def name(self):  # type: () -> str
+    def name(self) -> str:
         """Return descriptive name for this provider."""
         return 'Azure Pipelines'
 
-    def generate_resource_prefix(self):  # type: () -> str
+    def generate_resource_prefix(self) -> str:
         """Return a resource prefix specific to this CI provider."""
         try:
             prefix = 'azp-%s-%s-%s' % (
@@ -71,7 +71,7 @@ class AzurePipelines(CIProvider):
 
         return prefix
 
-    def get_base_branch(self):  # type: () -> str
+    def get_base_branch(self) -> str:
         """Return the base branch or an empty string."""
         base_branch = os.environ.get('SYSTEM_PULLREQUEST_TARGETBRANCH') or os.environ.get('BUILD_SOURCEBRANCHNAME')
 
@@ -102,11 +102,11 @@ class AzurePipelines(CIProvider):
 
         return result.paths
 
-    def supports_core_ci_auth(self):  # type: () -> bool
+    def supports_core_ci_auth(self) -> bool:
         """Return True if Ansible Core CI is supported."""
         return True
 
-    def prepare_core_ci_auth(self):  # type: () -> t.Dict[str, t.Any]
+    def prepare_core_ci_auth(self) -> t.Dict[str, t.Any]:
         """Return authentication details for Ansible Core CI."""
         try:
             request = dict(
@@ -213,7 +213,7 @@ class AzurePipelinesChanges:
             self.paths = None  # act as though change detection not enabled, do not filter targets
             self.diff = []
 
-    def get_successful_merge_run_commits(self):  # type: () -> t.Set[str]
+    def get_successful_merge_run_commits(self) -> t.Set[str]:
         """Return a set of recent successsful merge commits from Azure Pipelines."""
         parameters = dict(
             maxBuildsPerDefinition=100,  # max 5000
