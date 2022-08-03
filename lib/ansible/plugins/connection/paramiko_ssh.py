@@ -1,7 +1,7 @@
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-from __future__ import (absolute_import, division, print_function)
+from __future__ import (annotations, absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
@@ -287,12 +287,14 @@ DOCUMENTATION = """
               option: '--private-key'
 """
 
+import io
 import os
 import socket
 import tempfile
 import traceback
 import fcntl
 import re
+import typing as t
 
 from ansible.module_utils.compat.version import LooseVersion
 from binascii import hexlify
@@ -322,7 +324,7 @@ Are you sure you want to continue connecting (yes/no)?
 SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
 
 
-class MyAddPolicy(object):
+class MyAddPolicy:
     """
     Based on AutoAddPolicy in paramiko so we can determine when keys are added
 
@@ -332,11 +334,11 @@ class MyAddPolicy(object):
     local L{HostKeys} object, and saving it.  This is used by L{SSHClient}.
     """
 
-    def __init__(self, connection):
+    def __init__(self, connection: Connection) -> None:
         self.connection = connection
         self._options = connection._options
 
-    def missing_host_key(self, client, hostname, key):
+    def missing_host_key(self, client, hostname, key) -> None:
 
         if all((self.connection.get_option('host_key_checking'), not self.connection.get_option('host_key_auto_add'))):
 
@@ -367,20 +369,20 @@ class MyAddPolicy(object):
 
 # keep connection objects on a per host basis to avoid repeated attempts to reconnect
 
-SSH_CONNECTION_CACHE = {}  # type: dict[str, paramiko.client.SSHClient]
-SFTP_CONNECTION_CACHE = {}  # type: dict[str, paramiko.sftp_client.SFTPClient]
+SSH_CONNECTION_CACHE: dict[str, paramiko.client.SSHClient] = {}
+SFTP_CONNECTION_CACHE: dict[str, paramiko.sftp_client.SFTPClient] = {}
 
 
 class Connection(ConnectionBase):
     ''' SSH based connections with Paramiko '''
 
     transport = 'paramiko'
-    _log_channel = None
+    _log_channel: t.Optional[str] = None
 
-    def _cache_key(self):
+    def _cache_key(self) -> str:
         return "%s__%s__" % (self.get_option('remote_addr'), self.get_option('remote_user'))
 
-    def _connect(self):
+    def _connect(self) -> Connection:
         cache_key = self._cache_key()
         if cache_key in SSH_CONNECTION_CACHE:
             self.ssh = SSH_CONNECTION_CACHE[cache_key]
@@ -390,11 +392,11 @@ class Connection(ConnectionBase):
         self._connected = True
         return self
 
-    def _set_log_channel(self, name):
+    def _set_log_channel(self, name: str) -> None:
         '''Mimic paramiko.SSHClient.set_log_channel'''
         self._log_channel = name
 
-    def _parse_proxy_command(self, port=22):
+    def _parse_proxy_command(self, port: int = 22) -> dict[str, t.Any]:
         proxy_command = None
         # Parse ansible_ssh_common_args, specifically looking for ProxyCommand
         ssh_args = [
@@ -439,7 +441,7 @@ class Connection(ConnectionBase):
 
         return sock_kwarg
 
-    def _connect_uncached(self):
+    def _connect_uncached(self) -> paramiko.SSHClient:
         ''' activates the connection object '''
 
         if paramiko is None:
@@ -453,10 +455,11 @@ class Connection(ConnectionBase):
 
         # Set pubkey and hostkey algorithms to disable, the only manipulation allowed currently
         # is keeping or omitting rsa-sha2 algorithms
+        # default_keys: t.Tuple[str] = ()
         paramiko_preferred_pubkeys = getattr(paramiko.Transport, '_preferred_pubkeys', ())
         paramiko_preferred_hostkeys = getattr(paramiko.Transport, '_preferred_keys', ())
         use_rsa_sha2_algorithms = self.get_option('use_rsa_sha2_algorithms')
-        disabled_algorithms = {}
+        disabled_algorithms: t.Dict[str, t.Iterable[str]] = {}
         if not use_rsa_sha2_algorithms:
             if paramiko_preferred_pubkeys:
                 disabled_algorithms['pubkeys'] = tuple(a for a in paramiko_preferred_pubkeys if 'rsa-sha2' in a)
@@ -481,7 +484,7 @@ class Connection(ConnectionBase):
 
         ssh_connect_kwargs = self._parse_proxy_command(port)
 
-        ssh.set_missing_host_key_policy(MyAddPolicy(self))
+        ssh.set_missing_host_key_policy(MyAddPolicy(self))  # type: ignore[arg-type] # Import shenanigans make this hard to do
 
         conn_password = self.get_option('password')
 
@@ -533,7 +536,7 @@ class Connection(ConnectionBase):
 
         return ssh
 
-    def exec_command(self, cmd, in_data=None, sudoable=True):
+    def exec_command(self, cmd: str, in_data: t.Optional[bytes] = None, sudoable: bool = True) -> tuple[int, bytes, bytes]:
         ''' run a command on the remote host '''
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
@@ -576,7 +579,7 @@ class Connection(ConnectionBase):
                     display.debug('Waiting for Privilege Escalation input')
 
                     chunk = chan.recv(bufsize)
-                    display.debug("chunk is: %s" % chunk)
+                    display.debug("chunk is: %r" % chunk)
                     if not chunk:
                         if b'unknown user' in become_output:
                             n_become_user = to_native(self.become.get_option('become_user'))
@@ -606,14 +609,14 @@ class Connection(ConnectionBase):
                     no_prompt_out += become_output
                     no_prompt_err += become_output
         except socket.timeout:
-            raise AnsibleError('ssh timed out waiting for privilege escalation.\n' + become_output)
+            raise AnsibleError('ssh timed out waiting for privilege escalation.\n' + to_native(become_output))
 
         stdout = b''.join(chan.makefile('rb', bufsize))
         stderr = b''.join(chan.makefile_stderr('rb', bufsize))
 
         return (chan.recv_exit_status(), no_prompt_out + stdout, no_prompt_out + stderr)
 
-    def put_file(self, in_path, out_path):
+    def put_file(self, in_path: str, out_path: str) -> None:
         ''' transfer a file from local to remote '''
 
         super(Connection, self).put_file(in_path, out_path)
@@ -633,7 +636,7 @@ class Connection(ConnectionBase):
         except IOError:
             raise AnsibleError("failed to transfer file to %s" % out_path)
 
-    def _connect_sftp(self):
+    def _connect_sftp(self) -> paramiko.sftp_client.SFTPClient:
 
         cache_key = "%s__%s__" % (self.get_option('remote_addr'), self.get_option('remote_user'))
         if cache_key in SFTP_CONNECTION_CACHE:
@@ -642,7 +645,7 @@ class Connection(ConnectionBase):
             result = SFTP_CONNECTION_CACHE[cache_key] = self._connect().ssh.open_sftp()
             return result
 
-    def fetch_file(self, in_path, out_path):
+    def fetch_file(self, in_path: str, out_path: str) -> None:
         ''' save a remote file to the specified path '''
 
         super(Connection, self).fetch_file(in_path, out_path)
@@ -659,7 +662,7 @@ class Connection(ConnectionBase):
         except IOError:
             raise AnsibleError("failed to transfer file from %s" % in_path)
 
-    def _any_keys_added(self):
+    def _any_keys_added(self) -> bool:
 
         for hostname, keys in self.ssh._host_keys.items():
             for keytype, key in keys.items():
@@ -668,14 +671,14 @@ class Connection(ConnectionBase):
                     return True
         return False
 
-    def _save_ssh_host_keys(self, filename):
+    def _save_ssh_host_keys(self, filename: str) -> None:
         '''
         not using the paramiko save_ssh_host_keys function as we want to add new SSH keys at the bottom so folks
         don't complain about it :)
         '''
 
         if not self._any_keys_added():
-            return False
+            return
 
         path = os.path.expanduser("~/.ssh")
         makedirs_safe(path)
@@ -698,13 +701,13 @@ class Connection(ConnectionBase):
                     if added_this_time:
                         f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
 
-    def reset(self):
+    def reset(self) -> None:
         if not self._connected:
             return
         self.close()
         self._connect()
 
-    def close(self):
+    def close(self) -> None:
         ''' terminate the connection '''
 
         cache_key = self._cache_key()
