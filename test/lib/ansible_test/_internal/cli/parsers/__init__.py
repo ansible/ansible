@@ -59,7 +59,7 @@ class OriginControllerParser(ControllerNamespaceParser, TypeParser):
             origin=OriginParser(),
         )
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         section = '--controller options:'
 
@@ -85,7 +85,7 @@ class DelegatedControllerParser(ControllerNamespaceParser, TypeParser):
 
         return parsers
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         section = '--controller options:'
 
@@ -115,7 +115,7 @@ class PosixTargetParser(TargetNamespaceParser, TypeParser):
 
         return parsers
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         section = f'{self.option_name} options (choose one):'
 
@@ -132,7 +132,7 @@ class WindowsTargetParser(TargetsNamespaceParser, TypeParser):
         """True if inventory is allowed, otherwise False."""
         return True
 
-    def get_parsers(self, state):  # type: (ParserState) -> t.Dict[str, Parser]
+    def get_parsers(self, state: ParserState) -> t.Dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         return self.get_internal_parsers(state.root_namespace.targets)
 
@@ -140,7 +140,7 @@ class WindowsTargetParser(TargetsNamespaceParser, TypeParser):
         """Return a dictionary of type names and type parsers."""
         return self.get_internal_parsers([])
 
-    def get_internal_parsers(self, targets):  # type: (t.List[WindowsConfig]) -> t.Dict[str, Parser]
+    def get_internal_parsers(self, targets: t.List[WindowsConfig]) -> t.Dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         parsers = {}  # type: t.Dict[str, Parser]
 
@@ -157,7 +157,7 @@ class WindowsTargetParser(TargetsNamespaceParser, TypeParser):
 
         return parsers
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         section = f'{self.option_name} options (choose one):'
 
@@ -174,7 +174,7 @@ class NetworkTargetParser(TargetsNamespaceParser, TypeParser):
         """True if inventory is allowed, otherwise False."""
         return True
 
-    def get_parsers(self, state):  # type: (ParserState) -> t.Dict[str, Parser]
+    def get_parsers(self, state: ParserState) -> t.Dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         return self.get_internal_parsers(state.root_namespace.targets)
 
@@ -182,7 +182,7 @@ class NetworkTargetParser(TargetsNamespaceParser, TypeParser):
         """Return a dictionary of type names and type parsers."""
         return self.get_internal_parsers([])
 
-    def get_internal_parsers(self, targets):  # type: (t.List[NetworkConfig]) -> t.Dict[str, Parser]
+    def get_internal_parsers(self, targets: t.List[NetworkConfig]) -> t.Dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         parsers = {}  # type: t.Dict[str, Parser]
 
@@ -199,7 +199,7 @@ class NetworkTargetParser(TargetsNamespaceParser, TypeParser):
 
         return parsers
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         section = f'{self.option_name} options (choose one):'
 
@@ -211,7 +211,7 @@ class NetworkTargetParser(TargetsNamespaceParser, TypeParser):
 
 class PythonTargetParser(TargetsNamespaceParser, Parser):
     """Composite argument parser for a Python target."""
-    def __init__(self, allow_venv):  # type: (bool) -> None
+    def __init__(self, allow_venv: bool) -> None:
         super().__init__()
 
         self.allow_venv = allow_venv
@@ -221,7 +221,7 @@ class PythonTargetParser(TargetsNamespaceParser, Parser):
         """The option name used for this parser."""
         return '--target-python'
 
-    def get_value(self, state):  # type: (ParserState) -> t.Any
+    def get_value(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result, without storing the result in the namespace."""
         versions = list(SUPPORTED_PYTHON_VERSIONS)
 
@@ -235,7 +235,7 @@ class PythonTargetParser(TargetsNamespaceParser, Parser):
 
         return value
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         section = f'{self.option_name} options (choose one):'
 

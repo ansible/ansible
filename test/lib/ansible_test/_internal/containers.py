@@ -220,7 +220,7 @@ def run_support_container(
     return descriptor
 
 
-def get_container_database(args):  # type: (EnvironmentConfig) -> ContainerDatabase
+def get_container_database(args: EnvironmentConfig) -> ContainerDatabase:
     """Return the current container database, creating it as needed, or returning the one provided on the command line through delegation."""
     try:
         return get_container_database.database  # type: ignore[attr-defined]
@@ -325,12 +325,12 @@ class ContainerDatabase:
                     for access_name, contexts in self.data.items())
 
 
-def local_ssh(args, python):  # type: (EnvironmentConfig, PythonConfig) -> SshConnectionDetail
+def local_ssh(args: EnvironmentConfig, python: PythonConfig) -> SshConnectionDetail:
     """Return SSH connection details for localhost, connecting as root to the default SSH port."""
     return SshConnectionDetail('localhost', 'localhost', None, 'root', SshKey(args).key, python.path)
 
 
-def root_ssh(ssh):  # type: (SshConnection) -> SshConnectionDetail
+def root_ssh(ssh: SshConnection) -> SshConnectionDetail:
     """Return the SSH connection details from the given SSH connection. If become was specified, the user will be changed to `root`."""
     settings = ssh.settings.__dict__.copy()
 
@@ -342,7 +342,7 @@ def root_ssh(ssh):  # type: (SshConnection) -> SshConnectionDetail
     return SshConnectionDetail(**settings)
 
 
-def create_container_database(args):  # type: (EnvironmentConfig) -> ContainerDatabase
+def create_container_database(args: EnvironmentConfig) -> ContainerDatabase:
     """Create and return a container database with information necessary for all test hosts to make use of relevant support containers."""
     origin = {}  # type: t.Dict[str, t.Dict[str, ContainerAccess]]
     control = {}  # type: t.Dict[str, t.Dict[str, ContainerAccess]]
@@ -441,7 +441,7 @@ def create_container_database(args):  # type: (EnvironmentConfig) -> ContainerDa
 
 class SupportContainerContext:
     """Context object for tracking information relating to access of support containers."""
-    def __init__(self, containers, process):  # type: (ContainerDatabase, t.Optional[SshProcess]) -> None
+    def __init__(self, containers: ContainerDatabase, process: t.Optional[SshProcess]) -> None:
         self.containers = containers
         self.process = process
 
@@ -569,13 +569,13 @@ class ContainerDescriptor:
         self.env = env
         self.details = None  # type: t.Optional[SupportContainer]
 
-    def start(self, args):  # type: (EnvironmentConfig) -> None
+    def start(self, args: EnvironmentConfig) -> None:
         """Start the container. Used for containers which are created, but not started."""
         docker_start(args, self.name)
 
         self.register(args)
 
-    def register(self, args):  # type: (EnvironmentConfig) -> SupportContainer
+    def register(self, args: EnvironmentConfig) -> SupportContainer:
         """Record the container's runtime details. Must be used after the container has been started."""
         if self.details:
             raise Exception('Container already registered: %s' % self.name)
@@ -657,7 +657,7 @@ def wait_for_file(args,  # type: EnvironmentConfig
     raise ApplicationError('Timeout waiting for container "%s" to provide file: %s' % (container_name, path))
 
 
-def cleanup_containers(args):  # type: (EnvironmentConfig) -> None
+def cleanup_containers(args: EnvironmentConfig) -> None:
     """Clean up containers."""
     for container in support_containers.values():
         if container.cleanup == CleanupMode.YES:

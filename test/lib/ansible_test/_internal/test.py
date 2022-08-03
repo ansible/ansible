@@ -38,7 +38,7 @@ def calculate_best_confidence(choices, metadata):  # type: (t.Tuple[t.Tuple[str,
     return best_confidence
 
 
-def calculate_confidence(path, line, metadata):  # type: (str, int, Metadata) -> int
+def calculate_confidence(path: str, line: int, metadata: Metadata) -> int:
     """Return the confidence level for a test result associated with the given file path and line number."""
     ranges = metadata.changes.get(path)
 
@@ -69,7 +69,7 @@ class TestResult:
         if self.python_version:
             self.name += '-python-%s' % self.python_version
 
-    def write(self, args):  # type: (TestConfig) -> None
+    def write(self, args: TestConfig) -> None:
         """Write the test results to various locations."""
         self.write_console()
         self.write_bot(args)
@@ -86,13 +86,13 @@ class TestResult:
     def write_lint(self) -> None:
         """Write lint results to stdout."""
 
-    def write_bot(self, args):  # type: (TestConfig) -> None
+    def write_bot(self, args: TestConfig) -> None:
         """Write results to a file for ansibullbot to consume."""
 
-    def write_junit(self, args):  # type: (TestConfig) -> None
+    def write_junit(self, args: TestConfig) -> None:
         """Write results to a junit XML file."""
 
-    def create_result_name(self, extension):  # type: (str) -> str
+    def create_result_name(self, extension: str) -> str:
         """Return the name of the result file using the given extension."""
         name = 'ansible-test-%s' % self.command
 
@@ -106,7 +106,7 @@ class TestResult:
 
         return name
 
-    def save_junit(self, args, test_case):  # type: (TestConfig, junit_xml.TestCase) -> None
+    def save_junit(self, args: TestConfig, test_case: junit_xml.TestCase) -> None:
         """Save the given test case results to disk as JUnit XML."""
         suites = junit_xml.TestSuites(
             suites=[
@@ -128,12 +128,12 @@ class TestResult:
 
 class TestTimeout(TestResult):
     """Test timeout."""
-    def __init__(self, timeout_duration):  # type: (int) -> None
+    def __init__(self, timeout_duration: int) -> None:
         super().__init__(command='timeout', test='')
 
         self.timeout_duration = timeout_duration
 
-    def write(self, args):  # type: (TestConfig) -> None
+    def write(self, args: TestConfig) -> None:
         """Write the test results to various locations."""
         message = 'Tests were aborted after exceeding the %d minute time limit.' % self.timeout_duration
 
@@ -180,7 +180,7 @@ One or more of the following situations may be responsible:
 
 class TestSuccess(TestResult):
     """Test success."""
-    def write_junit(self, args):  # type: (TestConfig) -> None
+    def write_junit(self, args: TestConfig) -> None:
         """Write results to a junit XML file."""
         test_case = junit_xml.TestCase(classname=self.command, name=self.name)
 
@@ -201,7 +201,7 @@ class TestSkipped(TestResult):
         else:
             display.info('No tests applicable.', verbosity=1)
 
-    def write_junit(self, args):  # type: (TestConfig) -> None
+    def write_junit(self, args: TestConfig) -> None:
         """Write results to a junit XML file."""
         test_case = junit_xml.TestCase(
             classname=self.command,
@@ -232,7 +232,7 @@ class TestFailure(TestResult):
         self.messages = messages
         self.summary = summary
 
-    def write(self, args):  # type: (TestConfig) -> None
+    def write(self, args: TestConfig) -> None:
         """Write the test results to various locations."""
         if args.metadata.changes:
             self.populate_confidence(args.metadata)
@@ -270,7 +270,7 @@ class TestFailure(TestResult):
             for message in self.messages:
                 print(message)  # display goes to stderr, this should be on stdout
 
-    def write_junit(self, args):  # type: (TestConfig) -> None
+    def write_junit(self, args: TestConfig) -> None:
         """Write results to a junit XML file."""
         title = self.format_title()
         output = self.format_block()
@@ -288,7 +288,7 @@ class TestFailure(TestResult):
 
         self.save_junit(args, test_case)
 
-    def write_bot(self, args):  # type: (TestConfig) -> None
+    def write_bot(self, args: TestConfig) -> None:
         """Write results to a file for ansibullbot to consume."""
         docs = self.find_docs()
         message = self.format_title(help_link=docs)
@@ -315,7 +315,7 @@ class TestFailure(TestResult):
 
         write_json_test_results(ResultType.BOT, self.create_result_name('.json'), bot_data)
 
-    def populate_confidence(self, metadata):  # type: (Metadata) -> None
+    def populate_confidence(self, metadata: Metadata) -> None:
         """Populate test result confidence using the provided metadata."""
         for message in self.messages:
             if message.confidence is None:

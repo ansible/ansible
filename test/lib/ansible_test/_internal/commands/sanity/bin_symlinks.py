@@ -51,7 +51,7 @@ class BinSymlinksTest(SanityVersionNeutral):
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return True
 
-    def test(self, args, targets):  # type: (SanityConfig, SanityTargets) -> TestResult
+    def test(self, args: SanityConfig, targets: SanityTargets) -> TestResult:
         bin_root = ANSIBLE_BIN_PATH
         bin_names = os.listdir(bin_root)
         bin_paths = sorted(os.path.join(bin_root, path) for path in bin_names)

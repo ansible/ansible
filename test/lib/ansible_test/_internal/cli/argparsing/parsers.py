@@ -102,7 +102,7 @@ class ParserState:
         """True if parsing is incomplete (unparsed input remains), otherwise False."""
         return self.remainder is not None
 
-    def match(self, value, choices):  # type: (str, t.List[str]) -> bool
+    def match(self, value: str, choices: t.List[str]) -> bool:
         """Return True if the given value matches the provided choices, taking into account parsing boundaries, otherwise return False."""
         if self.current_boundary:
             delimiters, delimiter = self.current_boundary.delimiters, self.current_boundary.match
@@ -168,7 +168,7 @@ class ParserState:
         """The current parser boundary, if any, otherwise None."""
         return self.boundaries[-1] if self.boundaries else None
 
-    def set_namespace(self, namespace):  # type: (t.Any) -> None
+    def set_namespace(self, namespace: t.Any) -> None:
         """Set the current namespace."""
         self.namespaces.append(namespace)
 
@@ -197,10 +197,10 @@ class DocumentationState:
 class Parser(metaclass=abc.ABCMeta):
     """Base class for all composite argument parsers."""
     @abc.abstractmethod
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         raise Exception(f'Undocumented parser: {type(self)}')
 
@@ -221,7 +221,7 @@ class DynamicChoicesParser(Parser, metaclass=abc.ABCMeta):
         self.conditions = conditions
 
     @abc.abstractmethod
-    def get_choices(self, value):  # type: (str) -> t.List[str]
+    def get_choices(self, value: str) -> t.List[str]:
         """Return a list of valid choices based on the given input value."""
 
     def no_completion_match(self, value):  # type: (str) -> CompletionUnavailable  # pylint: disable=unused-argument
@@ -232,7 +232,7 @@ class DynamicChoicesParser(Parser, metaclass=abc.ABCMeta):
         """Return an instance of ParserError when parsing fails and no choices are available."""
         return ParserError('No choices available.')
 
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         value = state.read()
         choices = self.get_choices(value)
@@ -277,11 +277,11 @@ class ChoicesParser(DynamicChoicesParser):
 
         super().__init__(conditions=conditions)
 
-    def get_choices(self, value):  # type: (str) -> t.List[str]
+    def get_choices(self, value: str) -> t.List[str]:
         """Return a list of valid choices based on the given input value."""
         return self.choices
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         return '|'.join(self.choices)
 
@@ -295,7 +295,7 @@ class IntegerParser(DynamicChoicesParser):
 
         super().__init__()
 
-    def get_choices(self, value):  # type: (str) -> t.List[str]
+    def get_choices(self, value: str) -> t.List[str]:
         """Return a list of valid choices based on the given input value."""
         if not value:
             numbers = list(range(1, 10))
@@ -313,12 +313,12 @@ class IntegerParser(DynamicChoicesParser):
 
         return [str(n) for n in numbers]
 
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         value = super().parse(state)
         return int(value)
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         return '{integer}'
 
@@ -328,7 +328,7 @@ class BooleanParser(ChoicesParser):
     def __init__(self):
         super().__init__(['yes', 'no'])
 
-    def parse(self, state):  # type: (ParserState) -> bool
+    def parse(self, state: ParserState) -> bool:
         """Parse the input from the given state and return the result."""
         value = super().parse(state)
         return value == 'yes'
@@ -346,14 +346,14 @@ class AnyParser(ChoicesParser):
 
         super().__init__([], conditions=conditions)
 
-    def no_completion_match(self, value):  # type: (str) -> CompletionUnavailable
+    def no_completion_match(self, value: str) -> CompletionUnavailable:
         """Return an instance of CompletionUnavailable when no match was found for the given value."""
         if self.no_match_message:
             return CompletionUnavailable(message=self.no_match_message)
 
         return super().no_completion_match(value)
 
-    def no_choices_available(self, value):  # type: (str) -> ParserError
+    def no_choices_available(self, value: str) -> ParserError:
         """Return an instance of ParserError when parsing fails and no choices are available."""
         if self.no_match_message:
             return ParserError(self.no_match_message)
@@ -365,12 +365,12 @@ class RelativePathNameParser(DynamicChoicesParser):
     """Composite argument parser for relative path names."""
     RELATIVE_NAMES = ['.', '..']
 
-    def __init__(self, choices):  # type: (t.List[str]) -> None
+    def __init__(self, choices: t.List[str]) -> None:
         self.choices = choices
 
         super().__init__()
 
-    def get_choices(self, value):  # type: (str) -> t.List[str]
+    def get_choices(self, value: str) -> t.List[str]:
         """Return a list of valid choices based on the given input value."""
         choices = list(self.choices)
 
@@ -384,7 +384,7 @@ class RelativePathNameParser(DynamicChoicesParser):
 
 class FileParser(Parser):
     """Composite argument parser for absolute or relative file paths."""
-    def parse(self, state):  # type: (ParserState) -> str
+    def parse(self, state: ParserState) -> str:
         """Parse the input from the given state and return the result."""
         if state.mode == ParserMode.PARSE:
             path = AnyParser().parse(state)
@@ -416,7 +416,7 @@ class FileParser(Parser):
 
 class AbsolutePathParser(Parser):
     """Composite argument parser for absolute file paths. Paths are only verified for proper syntax, not for existence."""
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         path = ''
 
@@ -434,7 +434,7 @@ class AbsolutePathParser(Parser):
 
 class NamespaceParser(Parser, metaclass=abc.ABCMeta):
     """Base class for composite argument parsers that store their results in a namespace."""
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         namespace = state.current_namespace
         current = getattr(namespace, self.dest)
@@ -458,7 +458,7 @@ class NamespaceParser(Parser, metaclass=abc.ABCMeta):
 
         return value
 
-    def get_value(self, state):  # type: (ParserState) -> t.Any
+    def get_value(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result, without storing the result in the namespace."""
         return super().parse(state)
 
@@ -480,11 +480,11 @@ class NamespaceParser(Parser, metaclass=abc.ABCMeta):
 
 class NamespaceWrappedParser(NamespaceParser):
     """Composite argument parser that wraps a non-namespace parser and stores the result in a namespace."""
-    def __init__(self, dest, parser):  # type: (str, Parser) -> None
+    def __init__(self, dest: str, parser: Parser) -> None:
         self._dest = dest
         self.parser = parser
 
-    def get_value(self, state):  # type: (ParserState) -> t.Any
+    def get_value(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result, without storing the result in the namespace."""
         return self.parser.parse(state)
 
@@ -497,10 +497,10 @@ class NamespaceWrappedParser(NamespaceParser):
 class KeyValueParser(Parser, metaclass=abc.ABCMeta):
     """Base class for key/value composite argument parsers."""
     @abc.abstractmethod
-    def get_parsers(self, state):  # type: (ParserState) -> t.Dict[str, Parser]
+    def get_parsers(self, state: ParserState) -> t.Dict[str, Parser]:
         """Return a dictionary of key names and value parsers."""
 
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         namespace = state.current_namespace
         parsers = self.get_parsers(state)
@@ -522,7 +522,7 @@ class KeyValueParser(Parser, metaclass=abc.ABCMeta):
 
 class PairParser(Parser, metaclass=abc.ABCMeta):
     """Base class for composite argument parsers consisting of a left and right argument parser, with input separated by a delimiter."""
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         namespace = self.create_namespace()
 
@@ -551,11 +551,11 @@ class PairParser(Parser, metaclass=abc.ABCMeta):
         """Create and return a namespace."""
 
     @abc.abstractmethod
-    def get_left_parser(self, state):  # type: (ParserState) -> Parser
+    def get_left_parser(self, state: ParserState) -> Parser:
         """Return the parser for the left side."""
 
     @abc.abstractmethod
-    def get_right_parser(self, choice):  # type: (t.Any) -> Parser
+    def get_right_parser(self, choice: t.Any) -> Parser:
         """Return the parser for the right side."""
 
 
@@ -569,7 +569,7 @@ class TypeParser(Parser, metaclass=abc.ABCMeta):
     def get_stateless_parsers(self) -> t.Dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
 
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         parsers = self.get_parsers(state)
 

@@ -59,13 +59,13 @@ class Layout:
 
         return files
 
-    def get_dirs(self, directory):  # type: (str) -> t.List[str]
+    def get_dirs(self, directory: str) -> t.List[str]:
         """Return a list directory paths found directly under the given directory."""
         parts = directory.rstrip(os.path.sep).split(os.path.sep)
         item = get_tree_item(self.__files_tree, parts)
         return [os.path.join(directory, key) for key in item[0].keys()] if item else []
 
-    def get_files(self, directory):  # type: (str) -> t.List[str]
+    def get_files(self, directory: str) -> t.List[str]:
         """Return a list of file paths found directly under the given directory."""
         parts = directory.rstrip(os.path.sep).split(os.path.sep)
         item = get_tree_item(self.__files_tree, parts)
@@ -200,11 +200,11 @@ class LayoutProvider(PathProvider):
     )
 
     @abc.abstractmethod
-    def create(self, root, paths):  # type: (str, t.List[str]) -> ContentLayout
+    def create(self, root: str, paths: t.List[str]) -> ContentLayout:
         """Create a layout using the given root and paths."""
 
 
-def paths_to_tree(paths):  # type: (t.List[str]) -> t.Tuple[t.Dict[str, t.Any], t.List[str]]
+def paths_to_tree(paths: t.List[str]) -> t.Tuple[t.Dict[str, t.Any], t.List[str]]:
     """Return a filesystem tree from the given list of paths."""
     tree = {}, []  # type: t.Tuple[t.Dict[str, t.Any], t.List[str]]
 

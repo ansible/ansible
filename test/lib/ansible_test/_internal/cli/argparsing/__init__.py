@@ -163,7 +163,7 @@ class CompositeActionCompletionFinder(RegisteredCompletionFinder):
         return completions
 
 
-def detect_file_listing(value, mode):  # type: (str, ParserMode) -> bool
+def detect_file_listing(value: str, mode: ParserMode) -> bool:
     """
     Return True if Bash will show a file listing and redraw the prompt, otherwise return False.
 
@@ -198,7 +198,7 @@ def detect_file_listing(value, mode):  # type: (str, ParserMode) -> bool
     return listing
 
 
-def detect_false_file_completion(value, mode):  # type: (str, ParserMode) -> bool
+def detect_false_file_completion(value: str, mode: ParserMode) -> bool:
     """
     Return True if Bash will provide an incorrect file completion, otherwise return False.
 

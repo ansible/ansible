@@ -81,7 +81,7 @@ THostConfig = t.TypeVar('THostConfig', bound=HostConfig)
 
 class CoverageHandler(t.Generic[THostConfig], metaclass=abc.ABCMeta):
     """Base class for configuring hosts for integration test code coverage."""
-    def __init__(self, args, host_state, inventory_path):  # type: (IntegrationConfig, HostState, str) -> None
+    def __init__(self, args: IntegrationConfig, host_state: HostState, inventory_path: str) -> None:
         self.args = args
         self.host_state = host_state
         self.inventory_path = inventory_path
@@ -123,7 +123,7 @@ class CoverageHandler(t.Generic[THostConfig], metaclass=abc.ABCMeta):
 
 class PosixCoverageHandler(CoverageHandler[PosixConfig]):
     """Configure integration test code coverage for POSIX hosts."""
-    def __init__(self, args, host_state, inventory_path):  # type: (IntegrationConfig, HostState, str) -> None
+    def __init__(self, args: IntegrationConfig, host_state: HostState, inventory_path: str) -> None:
         super().__init__(args, host_state, inventory_path)
 
         # Common temporary directory used on all POSIX hosts that will be created world writeable.
@@ -262,7 +262,7 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
 
 class WindowsCoverageHandler(CoverageHandler[WindowsConfig]):
     """Configure integration test code coverage for Windows hosts."""
-    def __init__(self, args, host_state, inventory_path):  # type: (IntegrationConfig, HostState, str) -> None
+    def __init__(self, args: IntegrationConfig, host_state: HostState, inventory_path: str) -> None:
         super().__init__(args, host_state, inventory_path)
 
         # Common temporary directory used on all Windows hosts that will be created writable by everyone.
@@ -333,7 +333,7 @@ class WindowsCoverageHandler(CoverageHandler[WindowsConfig]):
 
 class CoverageManager:
     """Manager for code coverage configuration and state."""
-    def __init__(self, args, host_state, inventory_path):  # type: (IntegrationConfig, HostState, str) -> None
+    def __init__(self, args: IntegrationConfig, host_state: HostState, inventory_path: str) -> None:
         self.args = args
         self.host_state = host_state
         self.inventory_path = inventory_path
@@ -383,7 +383,7 @@ def get_config_handler_type_map() -> t.Dict[t.Type[HostConfig], t.Type[CoverageH
     return get_type_map(CoverageHandler, HostConfig)
 
 
-def get_handler_type(config_type):  # type: (t.Type[HostConfig]) -> t.Optional[t.Type[CoverageHandler]]
+def get_handler_type(config_type: t.Type[HostConfig]) -> t.Optional[t.Type[CoverageHandler]]:
     """Return the coverage handler type associated with the given host config type if found, otherwise return None."""
     queue = [config_type]
     type_map = get_config_handler_type_map()
@@ -400,7 +400,7 @@ def get_handler_type(config_type):  # type: (t.Type[HostConfig]) -> t.Optional[t
     return None
 
 
-def update_coverage_filename(original_filename, platform):  # type: (str, str) -> str
+def update_coverage_filename(original_filename: str, platform: str) -> str:
     """Validate the given filename and insert the specified platform, then return the result."""
     parts = original_filename.split('=')
 

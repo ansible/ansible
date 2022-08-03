@@ -396,7 +396,7 @@ class AnsibleCoreCI:
         )
 
     @staticmethod
-    def _create_http_error(response):  # type: (HttpResponse) -> ApplicationError
+    def _create_http_error(response: HttpResponse) -> ApplicationError:
         """Return an exception created from the given HTTP response."""
         response_json = response.json()
         stack_trace = ''
@@ -423,7 +423,7 @@ class AnsibleCoreCI:
 
 class CoreHttpError(HttpError):
     """HTTP response as an error."""
-    def __init__(self, status, remote_message, remote_stack_trace):  # type: (int, str, str) -> None
+    def __init__(self, status: int, remote_message: str, remote_stack_trace: str) -> None:
         super().__init__(status, f'{remote_message}{remote_stack_trace}')
 
         self.remote_message = remote_message
@@ -437,7 +437,7 @@ class SshKey:
     PUB_NAME = f'{KEY_NAME}.pub'
 
     @mutex
-    def __init__(self, args):  # type: (EnvironmentConfig) -> None
+    def __init__(self, args: EnvironmentConfig) -> None:
         key_pair = self.get_key_pair()
 
         if not key_pair:
@@ -506,7 +506,7 @@ class SshKey:
 
         return None
 
-    def generate_key_pair(self, args):  # type: (EnvironmentConfig) -> t.Tuple[str, str]
+    def generate_key_pair(self, args: EnvironmentConfig) -> t.Tuple[str, str]:
         """Generate an SSH key pair for use by all ansible-test invocations for the current user."""
         key, pub = self.get_source_key_pair_paths()
 

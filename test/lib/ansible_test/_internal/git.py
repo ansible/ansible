@@ -23,7 +23,7 @@ class Git:
             git_options = ['-c', 'core.quotePath=']
         return self.run_git_split(git_options + cmd, '\n', str_errors='replace')
 
-    def get_diff_names(self, args):  # type: (t.List[str]) -> t.List[str]
+    def get_diff_names(self, args: t.List[str]) -> t.List[str]:
         """Return a list of file names from the `git diff` command."""
         cmd = ['diff', '--name-only', '--no-renames', '-z'] + args
         return self.run_git_split(cmd, '\0')
@@ -45,7 +45,7 @@ class Git:
 
         return submodule_paths
 
-    def get_file_names(self, args):  # type: (t.List[str]) -> t.List[str]
+    def get_file_names(self, args: t.List[str]) -> t.List[str]:
         """Return a list of file names from the `git ls-files` command."""
         cmd = ['ls-files', '-z'] + args
         return self.run_git_split(cmd, '\0')
@@ -74,12 +74,12 @@ class Git:
 
         return self.run_git_split(cmd)
 
-    def get_branch_fork_point(self, branch):  # type: (str) -> str
+    def get_branch_fork_point(self, branch: str) -> str:
         """Return a reference to the point at which the given branch was forked."""
         cmd = ['merge-base', '--fork-point', branch]
         return self.run_git(cmd).strip()
 
-    def is_valid_ref(self, ref):  # type: (str) -> bool
+    def is_valid_ref(self, ref: str) -> bool:
         """Return True if the given reference is valid, otherwise return False."""
         cmd = ['show', ref]
         try:

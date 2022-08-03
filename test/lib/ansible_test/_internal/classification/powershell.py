@@ -26,7 +26,7 @@ from ..target import (
 )
 
 
-def get_powershell_module_utils_imports(powershell_targets):  # type: (t.List[TestTarget]) -> t.Dict[str, t.Set[str]]
+def get_powershell_module_utils_imports(powershell_targets: t.List[TestTarget]) -> t.Dict[str, t.Set[str]]:
     """Return a dictionary of module_utils names mapped to sets of powershell file paths."""
     module_utils = enumerate_module_utils()
 
@@ -48,7 +48,7 @@ def get_powershell_module_utils_imports(powershell_targets):  # type: (t.List[Te
     return imports
 
 
-def get_powershell_module_utils_name(path):  # type: (str) -> str
+def get_powershell_module_utils_name(path: str) -> str:
     """Return a namespace and name from the given module_utils path."""
     base_path = data_context().content.module_utils_powershell_path
 
@@ -69,7 +69,7 @@ def enumerate_module_utils() -> t.Set[str]:
                if os.path.splitext(p)[1] == '.psm1')
 
 
-def extract_powershell_module_utils_imports(path, module_utils):  # type: (str, t.Set[str]) -> t.Set[str]
+def extract_powershell_module_utils_imports(path: str, module_utils: t.Set[str]) -> t.Set[str]:
     """Return a set of module_utils imports found in the specified source file."""
     imports = set()
 

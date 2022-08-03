@@ -57,7 +57,7 @@ class YamllintTest(SanitySingleVersion):
         """True if the test requires PyYAML to have libyaml support."""
         return True
 
-    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+    def filter_targets(self, targets: t.List[TestTarget]) -> t.List[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         yaml_targets = [target for target in targets if os.path.splitext(target.path)[1] in ('.yml', '.yaml')]
 
@@ -72,7 +72,7 @@ class YamllintTest(SanitySingleVersion):
 
         return yaml_targets
 
-    def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         settings = self.load_processor(args)
 
         paths = [target.path for target in targets.include]
@@ -86,7 +86,7 @@ class YamllintTest(SanitySingleVersion):
         return SanitySuccess(self.name)
 
     @staticmethod
-    def test_paths(args, paths, python):  # type: (SanityConfig, t.List[str], PythonConfig) -> t.List[SanityMessage]
+    def test_paths(args: SanityConfig, paths: t.List[str], python: PythonConfig) -> t.List[SanityMessage]:
         """Test the specified paths using the given Python and return the results."""
         cmd = [
             python.path,

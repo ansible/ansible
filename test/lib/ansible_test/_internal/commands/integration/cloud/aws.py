@@ -37,7 +37,7 @@ from . import (
 
 class AwsCloudProvider(CloudProvider):
     """AWS cloud provider plugin. Sets up cloud resources before delegation."""
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
+    def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
         self.uses_config = True
@@ -123,7 +123,7 @@ class AwsCloudEnvironment(CloudEnvironment):
             callback_plugins=['aws_resource_actions'],
         )
 
-    def on_failure(self, target, tries):  # type: (IntegrationTarget, int) -> None
+    def on_failure(self, target: IntegrationTarget, tries: int) -> None:
         """Callback to run when an integration target fails."""
         if not tries and self.managed:
             display.notice('If %s failed due to permissions, the IAM test policy may need to be updated. '

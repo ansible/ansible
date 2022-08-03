@@ -65,7 +65,7 @@ class CIProvider(metaclass=abc.ABCMeta):
         """Return the base branch or an empty string."""
 
     @abc.abstractmethod
-    def detect_changes(self, args):  # type: (TestConfig) -> t.Optional[t.List[str]]
+    def detect_changes(self, args: TestConfig) -> t.Optional[t.List[str]]:
         """Initialize change detection."""
 
     @abc.abstractmethod
@@ -77,7 +77,7 @@ class CIProvider(metaclass=abc.ABCMeta):
         """Return authentication details for Ansible Core CI."""
 
     @abc.abstractmethod
-    def get_git_details(self, args):  # type: (CommonConfig) -> t.Optional[t.Dict[str, t.Any]]
+    def get_git_details(self, args: CommonConfig) -> t.Optional[t.Dict[str, t.Any]]:
         """Return details about git in the current environment."""
 
 
@@ -127,11 +127,11 @@ class AuthHelper(metaclass=abc.ABCMeta):
         return private_key_pem
 
     @abc.abstractmethod
-    def sign_bytes(self, payload_bytes):  # type: (bytes) -> bytes
+    def sign_bytes(self, payload_bytes: bytes) -> bytes:
         """Sign the given payload and return the signature, initializing a new key pair if required."""
 
     @abc.abstractmethod
-    def publish_public_key(self, public_key_pem):  # type: (str) -> None
+    def publish_public_key(self, public_key_pem: str) -> None:
         """Publish the given public key."""
 
     @abc.abstractmethod
@@ -141,7 +141,7 @@ class AuthHelper(metaclass=abc.ABCMeta):
 
 class CryptographyAuthHelper(AuthHelper, metaclass=abc.ABCMeta):
     """Cryptography based public key based authentication helper for Ansible Core CI."""
-    def sign_bytes(self, payload_bytes):  # type: (bytes) -> bytes
+    def sign_bytes(self, payload_bytes: bytes) -> bytes:
         """Sign the given payload and return the signature, initializing a new key pair if required."""
         # import cryptography here to avoid overhead and failures in environments which do not use/provide it
         from cryptography.hazmat.backends import default_backend
@@ -184,7 +184,7 @@ class CryptographyAuthHelper(AuthHelper, metaclass=abc.ABCMeta):
 
 class OpenSSLAuthHelper(AuthHelper, metaclass=abc.ABCMeta):
     """OpenSSL based public key based authentication helper for Ansible Core CI."""
-    def sign_bytes(self, payload_bytes):  # type: (bytes) -> bytes
+    def sign_bytes(self, payload_bytes: bytes) -> bytes:
         """Sign the given payload and return the signature, initializing a new key pair if required."""
         private_key_pem = self.initialize_private_key()
 

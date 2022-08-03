@@ -26,7 +26,7 @@ class Metadata:
         self.change_description = None  # type: t.Optional[ChangeDescription]
         self.ci_provider = None  # type: t.Optional[str]
 
-    def populate_changes(self, diff):  # type: (t.Optional[t.List[str]]) -> None
+    def populate_changes(self, diff: t.Optional[t.List[str]]) -> None:
         """Populate the changeset using the given diff."""
         patches = parse_diff(diff)
         patches = sorted(patches, key=lambda k: k.new.path)  # type: t.List[FileDiff]
@@ -54,7 +54,7 @@ class Metadata:
             change_description=self.change_description.to_dict(),
         )
 
-    def to_file(self, path):  # type: (str) -> None
+    def to_file(self, path: str) -> None:
         """Write the metadata to the specified file."""
         data = self.to_dict()
 
@@ -63,7 +63,7 @@ class Metadata:
         write_json_file(path, data)
 
     @staticmethod
-    def from_file(path):  # type: (str) -> Metadata
+    def from_file(path: str) -> Metadata:
         """Return metadata loaded from the specified file."""
         data = read_json_file(path)
         return Metadata.from_dict(data)

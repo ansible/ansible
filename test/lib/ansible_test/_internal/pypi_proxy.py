@@ -50,7 +50,7 @@ from .inventory import (
 )
 
 
-def run_pypi_proxy(args, targets_use_pypi):  # type: (EnvironmentConfig, bool) -> None
+def run_pypi_proxy(args: EnvironmentConfig, targets_use_pypi: bool) -> None:
     """Run a PyPI proxy support container."""
     if args.pypi_endpoint:
         return  # user has overridden the proxy endpoint, there is nothing to provision
@@ -82,7 +82,7 @@ def run_pypi_proxy(args, targets_use_pypi):  # type: (EnvironmentConfig, bool) -
     )
 
 
-def configure_pypi_proxy(args, profile):  # type: (EnvironmentConfig, HostProfile) -> None
+def configure_pypi_proxy(args: EnvironmentConfig, profile: HostProfile) -> None:
     """Configure the environment to use a PyPI proxy, if present."""
     if args.pypi_endpoint:
         pypi_endpoint = args.pypi_endpoint
@@ -108,13 +108,13 @@ def configure_pypi_proxy(args, profile):  # type: (EnvironmentConfig, HostProfil
         configure_target_pypi_proxy(args, profile, pypi_endpoint, pypi_hostname)
 
 
-def configure_controller_pypi_proxy(args, profile, pypi_endpoint, pypi_hostname):  # type: (EnvironmentConfig, HostProfile, str, str) -> None
+def configure_controller_pypi_proxy(args: EnvironmentConfig, profile: HostProfile, pypi_endpoint: str, pypi_hostname: str) -> None:
     """Configure the controller environment to use a PyPI proxy."""
     configure_pypi_proxy_pip(args, profile, pypi_endpoint, pypi_hostname)
     configure_pypi_proxy_easy_install(args, profile, pypi_endpoint)
 
 
-def configure_target_pypi_proxy(args, profile, pypi_endpoint, pypi_hostname):  # type: (EnvironmentConfig, HostProfile, str, str) -> None
+def configure_target_pypi_proxy(args: EnvironmentConfig, profile: HostProfile, pypi_endpoint: str, pypi_hostname: str) -> None:
     """Configure the target environment to use a PyPI proxy."""
     inventory_path = process_scoped_temporary_file(args)
 
@@ -132,7 +132,7 @@ def configure_target_pypi_proxy(args, profile, pypi_endpoint, pypi_hostname):  #
     atexit.register(cleanup_pypi_proxy)
 
 
-def configure_pypi_proxy_pip(args, profile, pypi_endpoint, pypi_hostname):  # type: (EnvironmentConfig, HostProfile, str, str) -> None
+def configure_pypi_proxy_pip(args: EnvironmentConfig, profile: HostProfile, pypi_endpoint: str, pypi_hostname: str) -> None:
     """Configure a custom index for pip based installs."""
     pip_conf_path = os.path.expanduser('~/.pip/pip.conf')
     pip_conf = '''
@@ -157,7 +157,7 @@ trusted-host = {1}
         atexit.register(pip_conf_cleanup)
 
 
-def configure_pypi_proxy_easy_install(args, profile, pypi_endpoint):  # type: (EnvironmentConfig, HostProfile, str) -> None
+def configure_pypi_proxy_easy_install(args: EnvironmentConfig, profile: HostProfile, pypi_endpoint: str) -> None:
     """Configure a custom index for easy_install based installs."""
     pydistutils_cfg_path = os.path.expanduser('~/.pydistutils.cfg')
     pydistutils_cfg = '''

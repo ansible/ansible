@@ -63,7 +63,7 @@ CHECK_YAML_VERSIONS = {}  # type: t.Dict[str, t.Any]
 
 class ShellScriptTemplate:
     """A simple substitution template for shell scripts."""
-    def __init__(self, template):  # type: (str) -> None
+    def __init__(self, template: str) -> None:
         self.template = template
 
     def substitute(self, **kwargs: t.Union[str, t.List[str]]) -> str:
@@ -102,7 +102,7 @@ class ResultType:
         ResultType.REPORTS = ResultType('reports')
         ResultType.TMP = ResultType('.tmp')
 
-    def __init__(self, name):  # type: (str) -> None
+    def __init__(self, name: str) -> None:
         self.name = name
 
     @property
@@ -125,7 +125,7 @@ ResultType._populate()  # pylint: disable=protected-access
 
 class CommonConfig:
     """Configuration common to all commands."""
-    def __init__(self, args, command):  # type: (t.Any, str) -> None
+    def __init__(self, args: t.Any, command: str) -> None:
         self.command = command
         self.interactive = False
         self.check_layout = True
@@ -149,7 +149,7 @@ class CommonConfig:
         return os.path.join(ANSIBLE_TEST_DATA_ROOT, 'ansible.cfg')
 
 
-def create_result_directories(args):  # type: (CommonConfig) -> None
+def create_result_directories(args: CommonConfig) -> None:
     """Create result directories."""
     if args.explain:
         return
@@ -158,7 +158,7 @@ def create_result_directories(args):  # type: (CommonConfig) -> None
     make_dirs(ResultType.DATA.path)
 
 
-def handle_layout_messages(messages):  # type: (t.Optional[LayoutMessages]) -> None
+def handle_layout_messages(messages: t.Optional[LayoutMessages]) -> None:
     """Display the given layout messages."""
     if not messages:
         return
@@ -197,7 +197,7 @@ def process_scoped_temporary_directory(args, prefix='ansible-test-', suffix=None
 
 
 @contextlib.contextmanager
-def named_temporary_file(args, prefix, suffix, directory, content):  # type: (CommonConfig, str, str, t.Optional[str], str) -> t.Iterator[str]
+def named_temporary_file(args: CommonConfig, prefix: str, suffix: str, directory: t.Optional[str], content: str) -> t.Iterator[str]:
     """Context manager for a named temporary file."""
     if args.explain:
         yield os.path.join(directory or '/tmp', '%stemp%s' % (prefix, suffix))
@@ -220,7 +220,7 @@ def write_json_test_results(category,  # type: ResultType
     write_json_file(path, content, create_directories=True, formatted=formatted, encoder=encoder)
 
 
-def write_text_test_results(category, name, content):  # type: (ResultType, str, str) -> None
+def write_text_test_results(category: ResultType, name: str, content: str) -> None:
     """Write the given text content to the specified test results path, creating directories as needed."""
     path = os.path.join(category.path, name)
     write_text_file(path, content, create_directories=True)
@@ -269,7 +269,7 @@ def get_injector_path() -> str:
     return injector_path
 
 
-def set_shebang(script, executable):  # type: (str, str) -> str
+def set_shebang(script: str, executable: str) -> str:
     """Return the given script with the specified executable used for the shebang."""
     prefix = '#!'
     shebang = prefix + executable
@@ -292,7 +292,7 @@ def set_shebang(script, executable):  # type: (str, str) -> str
     return script
 
 
-def get_python_path(interpreter):  # type: (str) -> str
+def get_python_path(interpreter: str) -> str:
     """Return the path to a directory which contains a `python` executable that runs the specified interpreter."""
     python_path = PYTHON_PATHS.get(interpreter)
 
@@ -336,7 +336,7 @@ def create_temp_dir(prefix=None, suffix=None, base_dir=None):  # type: (t.Option
     return temp_path
 
 
-def create_interpreter_wrapper(interpreter, injected_interpreter):  # type: (str, str) -> None
+def create_interpreter_wrapper(interpreter: str, injected_interpreter: str) -> None:
     """Create a wrapper for the given Python interpreter at the specified path."""
     # sys.executable is used for the shebang to guarantee it is a binary instead of a script
     # injected_interpreter could be a script from the system or our own wrapper created for the --venv option

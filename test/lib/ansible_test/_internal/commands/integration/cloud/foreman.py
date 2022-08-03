@@ -32,7 +32,7 @@ class ForemanProvider(CloudProvider):
     # https://github.com/ansible/foreman-test-container
     DOCKER_IMAGE = 'quay.io/ansible/foreman-test-container:1.4.0'
 
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
+    def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
         self.__container_from_env = os.environ.get('ANSIBLE_FRMNSIM_CONTAINER')

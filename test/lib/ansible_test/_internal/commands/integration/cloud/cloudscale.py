@@ -25,7 +25,7 @@ from . import (
 
 class CloudscaleCloudProvider(CloudProvider):
     """Cloudscale cloud provider plugin. Sets up cloud resources before delegation."""
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
+    def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
         self.uses_config = True

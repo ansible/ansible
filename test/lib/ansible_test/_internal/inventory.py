@@ -26,7 +26,7 @@ from .host_profiles import (
 )
 
 
-def create_controller_inventory(args, path, controller_host):  # type: (EnvironmentConfig, str, ControllerHostProfile) -> None
+def create_controller_inventory(args: EnvironmentConfig, path: str, controller_host: ControllerHostProfile) -> None:
     """Create and return inventory for use in controller-only integration tests."""
     inventory = Inventory(
         host_groups=dict(
@@ -43,7 +43,7 @@ def create_controller_inventory(args, path, controller_host):  # type: (Environm
     inventory.write(args, path)
 
 
-def create_windows_inventory(args, path, target_hosts):  # type: (EnvironmentConfig, str, t.List[HostProfile]) -> None
+def create_windows_inventory(args: EnvironmentConfig, path: str, target_hosts: t.List[HostProfile]) -> None:
     """Create and return inventory for use in target Windows integration tests."""
     first = target_hosts[0]
 
@@ -78,7 +78,7 @@ def create_windows_inventory(args, path, target_hosts):  # type: (EnvironmentCon
     inventory.write(args, path)
 
 
-def create_network_inventory(args, path, target_hosts):  # type: (EnvironmentConfig, str, t.List[HostProfile]) -> None
+def create_network_inventory(args: EnvironmentConfig, path: str, target_hosts: t.List[HostProfile]) -> None:
     """Create and return inventory for use in target network integration tests."""
     first = target_hosts[0]
 

@@ -172,7 +172,7 @@ def add_composite_environment_options(
 
     action_types = []  # type: t.List[t.Type[CompositeAction]]
 
-    def register_action_type(action_type):  # type: (t.Type[CompositeAction]) -> t.Type[CompositeAction]
+    def register_action_type(action_type: t.Type[CompositeAction]) -> t.Type[CompositeAction]:
         """Register the provided composite action type and return it."""
         action_types.append(action_type)
         return action_type

@@ -23,7 +23,7 @@ class ACMEProvider(CloudProvider):
     """ACME plugin. Sets up cloud resources for tests."""
     DOCKER_SIMULATOR_NAME = 'acme-simulator'
 
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
+    def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
         # The simulator must be pinned to a specific version to guarantee CI passes with the version used.

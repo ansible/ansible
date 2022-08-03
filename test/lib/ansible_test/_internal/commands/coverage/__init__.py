@@ -68,11 +68,11 @@ COVERAGE_OUTPUT_FILE_NAME = 'coverage'
 
 class CoverageConfig(EnvironmentConfig):
     """Configuration for the coverage command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'coverage')
 
 
-def initialize_coverage(args, host_state):  # type: (CoverageConfig, HostState) -> coverage_module
+def initialize_coverage(args: CoverageConfig, host_state: HostState) -> coverage_module:
     """Delegate execution if requested, install requirements, then import and return the coverage module. Raises an exception if coverage is not available."""
     configure_pypi_proxy(args, host_state.controller_profile)  # coverage
     install_requirements(args, host_state.controller_profile.python, coverage=True)  # coverage
@@ -93,7 +93,7 @@ def initialize_coverage(args, host_state):  # type: (CoverageConfig, HostState) 
     return coverage
 
 
-def run_coverage(args, host_state, output_file, command, cmd):  # type: (CoverageConfig, HostState, str, str, t.List[str]) -> None
+def run_coverage(args: CoverageConfig, host_state: HostState, output_file: str, command: str, cmd: t.List[str]) -> None:
     """Run the coverage cli tool with the specified options."""
     env = common_environment()
     env.update(dict(COVERAGE_FILE=output_file))
@@ -349,7 +349,7 @@ class PathChecker:
         self.invalid_paths = []  # type: t.List[str]
         self.invalid_path_chars = 0
 
-    def check_path(self, path):  # type: (str) -> bool
+    def check_path(self, path: str) -> bool:
         """Return True if the given coverage path is valid, otherwise display a warning and return False."""
         if os.path.isfile(to_bytes(path)):
             return True

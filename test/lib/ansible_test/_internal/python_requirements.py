@@ -70,7 +70,7 @@ VIRTUALENV_VERSION = '16.7.12'
 
 class PipUnavailableError(ApplicationError):
     """Exception raised when pip is not available."""
-    def __init__(self, python):  # type: (PythonConfig) -> None
+    def __init__(self, python: PythonConfig) -> None:
         super().__init__(f'Python {python.version} at "{python.path}" does not have pip available.')
 
 
@@ -91,7 +91,7 @@ class PipInstall(PipCommand):
     constraints: t.List[t.Tuple[str, str]]
     packages: t.List[str]
 
-    def has_package(self, name):  # type: (str) -> bool
+    def has_package(self, name: str) -> bool:
         """Return True if the specified package will be installed, otherwise False."""
         name = name.lower()
 
@@ -182,7 +182,7 @@ def install_requirements(
         check_pyyaml(python)
 
 
-def collect_bootstrap(python):  # type: (PythonConfig) -> t.List[PipCommand]
+def collect_bootstrap(python: PythonConfig) -> t.List[PipCommand]:
     """Return the details necessary to bootstrap pip into an empty virtual environment."""
     infrastructure_packages = get_venv_packages(python)
     pip_version = infrastructure_packages['pip']
@@ -303,7 +303,7 @@ def collect_package_install(packages, constraints=True):  # type: (t.List[str], 
     return collect_install([], [], packages, constraints=constraints)
 
 
-def collect_sanity_install(sanity):  # type: (str) -> t.List[PipInstall]
+def collect_sanity_install(sanity: str) -> t.List[PipInstall]:
     """Return the details necessary for the specified sanity pip install(s)."""
     requirements_paths = []  # type: t.List[t.Tuple[str, str]]
     constraints_paths = []  # type: t.List[t.Tuple[str, str]]
@@ -332,7 +332,7 @@ def collect_units_install() -> t.List[PipInstall]:
     return collect_install(requirements_paths, constraints_paths)
 
 
-def collect_integration_install(command, controller):  # type: (str, bool) -> t.List[PipInstall]
+def collect_integration_install(command: str, controller: bool) -> t.List[PipInstall]:
     """Return details necessary for the specified integration pip install(s)."""
     requirements_paths = []  # type: t.List[t.Tuple[str, str]]
     constraints_paths = []  # type: t.List[t.Tuple[str, str]]
@@ -408,7 +408,7 @@ def collect_uninstall(packages, ignore_errors=False):  # type: (t.List[str], boo
 # Support
 
 
-def get_venv_packages(python):  # type: (PythonConfig) -> t.Dict[str, str]
+def get_venv_packages(python: PythonConfig) -> t.Dict[str, str]:
     """Return a dictionary of Python packages needed for a consistent virtual environment specific to the given Python version."""
 
     # NOTE: This same information is needed for building the base-test-container image.
@@ -443,7 +443,7 @@ def get_venv_packages(python):  # type: (PythonConfig) -> t.Dict[str, str]
     return packages
 
 
-def requirements_allowed(args, controller):  # type: (EnvironmentConfig, bool) -> bool
+def requirements_allowed(args: EnvironmentConfig, controller: bool) -> bool:
     """
     Return True if requirements can be installed, otherwise return False.
 
@@ -464,7 +464,7 @@ def requirements_allowed(args, controller):  # type: (EnvironmentConfig, bool) -
     return target.is_managed or target.python.is_managed
 
 
-def prepare_pip_script(commands):  # type: (t.List[PipCommand]) -> str
+def prepare_pip_script(commands: t.List[PipCommand]) -> str:
     """Generate a Python script to perform the requested pip commands."""
     data = [command.serialize() for command in commands]
 
@@ -486,7 +486,7 @@ def prepare_pip_script(commands):  # type: (t.List[PipCommand]) -> str
     return script
 
 
-def usable_pip_file(path):  # type: (t.Optional[str]) -> bool
+def usable_pip_file(path: t.Optional[str]) -> bool:
     """Return True if the specified pip file is usable, otherwise False."""
     return bool(path) and os.path.exists(path) and bool(os.path.getsize(path))
 
@@ -494,7 +494,7 @@ def usable_pip_file(path):  # type: (t.Optional[str]) -> bool
 # Cryptography
 
 
-def is_cryptography_available(python):  # type: (str) -> bool
+def is_cryptography_available(python: str) -> bool:
     """Return True if cryptography is available for the given python."""
     try:
         raw_command([python, '-c', 'import cryptography'], capture=True)
@@ -504,7 +504,7 @@ def is_cryptography_available(python):  # type: (str) -> bool
     return True
 
 
-def get_cryptography_requirements(python):  # type: (PythonConfig) -> t.List[str]
+def get_cryptography_requirements(python: PythonConfig) -> t.List[str]:
     """
     Return the correct cryptography and pyopenssl requirements for the given python version.
     The version of cryptography installed depends on the python version and openssl version.
@@ -534,7 +534,7 @@ def get_cryptography_requirements(python):  # type: (PythonConfig) -> t.List[str
     return requirements
 
 
-def get_openssl_version(python):  # type: (PythonConfig) -> t.Optional[t.Tuple[int, ...]]
+def get_openssl_version(python: PythonConfig) -> t.Optional[t.Tuple[int, ...]]:
     """Return the openssl version."""
     if not python.version.startswith('2.'):
         # OpenSSL version checking only works on Python 3.x.

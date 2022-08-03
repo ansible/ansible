@@ -66,7 +66,7 @@ class Local(CIProvider):
         """Return the base branch or an empty string."""
         return ''
 
-    def detect_changes(self, args):  # type: (TestConfig) -> t.Optional[t.List[str]]
+    def detect_changes(self, args: TestConfig) -> t.Optional[t.List[str]]:
         """Initialize change detection."""
         result = LocalChanges(args)
 
@@ -137,7 +137,7 @@ class Local(CIProvider):
 
         return auth
 
-    def get_git_details(self, args):  # type: (CommonConfig) -> t.Optional[t.Dict[str, t.Any]]
+    def get_git_details(self, args: CommonConfig) -> t.Optional[t.Dict[str, t.Any]]:
         """Return details about git in the current environment."""
         return None  # not yet implemented for local
 
@@ -149,7 +149,7 @@ class Local(CIProvider):
 
 class InvalidBranch(ApplicationError):
     """Exception for invalid branch specification."""
-    def __init__(self, branch, reason):  # type: (str, str) -> None
+    def __init__(self, branch: str, reason: str) -> None:
         message = 'Invalid branch: %s\n%s' % (branch, reason)
 
         super().__init__(message)
@@ -159,7 +159,7 @@ class InvalidBranch(ApplicationError):
 
 class LocalChanges:
     """Change information for local work."""
-    def __init__(self, args):  # type: (TestConfig) -> None
+    def __init__(self, args: TestConfig) -> None:
         self.args = args
         self.git = Git()
 
@@ -198,7 +198,7 @@ class LocalChanges:
         # diff of all tracked files from fork point to working copy
         self.diff = self.git.get_diff([self.fork_point])
 
-    def is_official_branch(self, name):  # type: (str) -> bool
+    def is_official_branch(self, name: str) -> bool:
         """Return True if the given branch name an official branch for development or releases."""
         if self.args.base_branch:
             return name == self.args.base_branch

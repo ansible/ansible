@@ -89,7 +89,7 @@ class Connection(metaclass=abc.ABCMeta):
 
 class LocalConnection(Connection):
     """Connect to localhost."""
-    def __init__(self, args):  # type: (EnvironmentConfig) -> None
+    def __init__(self, args: EnvironmentConfig) -> None:
         self.args = args
 
     def run(self,
@@ -163,7 +163,7 @@ class SshConnection(Connection):
             options.append(f'{self.settings.user}@{self.settings.host}')
             options.append(shlex.join(command))
 
-            def error_callback(ex):  # type: (SubprocessError) -> None
+            def error_callback(ex: SubprocessError) -> None:
                 """Error handler."""
                 self.capture_log_details(ssh_logfile.name, ex)
 
@@ -180,7 +180,7 @@ class SshConnection(Connection):
             )
 
     @staticmethod
-    def capture_log_details(path, ex):  # type: (str, SubprocessError) -> None
+    def capture_log_details(path: str, ex: SubprocessError) -> None:
         """Read the specified SSH debug log and add relevant details to the provided exception."""
         if ex.status != 255:
             return
@@ -251,6 +251,6 @@ class DockerConnection(Connection):
         """Inspect the container and return a DockerInspect instance with the results."""
         return docker_inspect(self.args, self.container_id)
 
-    def disconnect_network(self, network):  # type: (str) -> None
+    def disconnect_network(self, network: str) -> None:
         """Disconnect the container from the specified network."""
         docker_network_disconnect(self.args, self.container_id, network)

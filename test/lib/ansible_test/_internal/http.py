@@ -31,11 +31,11 @@ class HttpClient:
         self.username = None
         self.password = None
 
-    def get(self, url):  # type: (str) -> HttpResponse
+    def get(self, url: str) -> HttpResponse:
         """Perform an HTTP GET and return the response."""
         return self.request('GET', url)
 
-    def delete(self, url):  # type: (str) -> HttpResponse
+    def delete(self, url: str) -> HttpResponse:
         """Perform an HTTP DELETE and return the response."""
         return self.request('DELETE', url)
 
@@ -113,7 +113,7 @@ class HttpClient:
 
 class HttpResponse:
     """HTTP response from curl."""
-    def __init__(self, method, url, status_code, response):  # type: (str, str, int, str) -> None
+    def __init__(self, method: str, url: str, status_code: int, response: str) -> None:
         self.method = method
         self.url = url
         self.status_code = status_code
@@ -129,6 +129,6 @@ class HttpResponse:
 
 class HttpError(ApplicationError):
     """HTTP response as an error."""
-    def __init__(self, status, message):  # type: (int, str) -> None
+    def __init__(self, status: int, message: str) -> None:
         super().__init__('%s: %s' % (status, message))
         self.status = status

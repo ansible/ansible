@@ -28,14 +28,14 @@ from . import (
 
 class CoverageAnalyzeTargetsCombineConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets combine` command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
         self.input_files = args.input_file  # type: t.List[str]
         self.output_file = args.output_file  # type: str
 
 
-def command_coverage_analyze_targets_combine(args):  # type: (CoverageAnalyzeTargetsCombineConfig) -> None
+def command_coverage_analyze_targets_combine(args: CoverageAnalyzeTargetsCombineConfig) -> None:
     """Combine integration test target code coverage reports."""
     host_state = prepare_profiles(args)  # coverage analyze targets combine
 

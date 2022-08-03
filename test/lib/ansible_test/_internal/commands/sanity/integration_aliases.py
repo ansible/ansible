@@ -117,7 +117,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return True
 
-    def load_ci_config(self, python):  # type: (PythonConfig) -> t.Dict[str, t.Any]
+    def load_ci_config(self, python: PythonConfig) -> t.Dict[str, t.Any]:
         """Load and return the CI YAML configuration."""
         if not self._ci_config:
             self._ci_config = self.load_yaml(python, self.CI_YML)
@@ -195,12 +195,12 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         return alias
 
-    def load_yaml(self, python, path):  # type: (PythonConfig, str) -> t.Dict[str, t.Any]
+    def load_yaml(self, python: PythonConfig, path: str) -> t.Dict[str, t.Any]:
         """Load the specified YAML file and return the contents."""
         yaml_to_json_path = os.path.join(SANITY_ROOT, self.name, 'yaml_to_json.py')
         return json.loads(raw_command([python.path, yaml_to_json_path], data=read_text_file(path), capture=True)[0])
 
-    def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         if args.explain:
             return SanitySuccess(self.name)
 
@@ -230,7 +230,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         return SanitySuccess(self.name)
 
-    def check_posix_targets(self, args):  # type: (SanityConfig) -> t.List[SanityMessage]
+    def check_posix_targets(self, args: SanityConfig) -> t.List[SanityMessage]:
         """Check POSIX integration test targets and return messages with any issues found."""
         posix_targets = tuple(walk_posix_integration_targets())
 
@@ -325,7 +325,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         return messages
 
-    def check_changes(self, args, results):  # type: (SanityConfig, Results) -> None
+    def check_changes(self, args: SanityConfig, results: Results) -> None:
         """Check changes and store results in the provided result dictionary."""
         integration_targets = list(walk_integration_targets())
         module_targets = list(walk_module_targets())
@@ -373,7 +373,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
         results.comments += comments
         results.labels.update(labels)
 
-    def format_comment(self, template, targets):  # type: (str, t.List[str]) -> t.Optional[str]
+    def format_comment(self, template: str, targets: t.List[str]) -> t.Optional[str]:
         """Format and return a comment based on the given template and targets, or None if there are no targets."""
         if not targets:
             return None

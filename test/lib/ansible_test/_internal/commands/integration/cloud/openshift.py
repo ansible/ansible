@@ -32,7 +32,7 @@ class OpenShiftCloudProvider(CloudProvider):
     """OpenShift cloud provider plugin. Sets up cloud resources before delegation."""
     DOCKER_CONTAINER_NAME = 'openshift-origin'
 
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
+    def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args, config_extension='.kubeconfig')
 
         # The image must be pinned to a specific version to guarantee CI passes with the version used.
@@ -90,7 +90,7 @@ class OpenShiftCloudProvider(CloudProvider):
 
         self._write_config(config)
 
-    def _get_config(self, container_name, server):  # type: (str, str) -> str
+    def _get_config(self, container_name: str, server: str) -> str:
         """Get OpenShift config from container."""
         stdout = wait_for_file(self.args, container_name, '/var/lib/origin/openshift.local.config/master/admin.kubeconfig', sleep=10, tries=30)
 

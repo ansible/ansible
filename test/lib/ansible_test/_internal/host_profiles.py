@@ -120,7 +120,7 @@ class Inventory:
         """Return an inventory instance created from the given hostname and variables."""
         return Inventory(host_groups=dict(all={name: variables}))
 
-    def write(self, args, path):  # type: (CommonConfig, str) -> None
+    def write(self, args: CommonConfig, path: str) -> None:
         """Write the given inventory to the specified path on disk."""
 
         # NOTE: Switching the inventory generation to write JSON would be nice, but is currently not possible due to the use of hard-coded inventory filenames.
@@ -267,7 +267,7 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
         return self.cache.get('core_ci')
 
     @core_ci.setter
-    def core_ci(self, value):  # type: (AnsibleCoreCI) -> None
+    def core_ci(self, value: AnsibleCoreCI) -> None:
         """Cache the given AnsibleCoreCI instance."""
         self.cache['core_ci'] = value
 
@@ -295,7 +295,7 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
 
         return core_ci
 
-    def create_core_ci(self, load):  # type: (bool) -> AnsibleCoreCI
+    def create_core_ci(self, load: bool) -> AnsibleCoreCI:
         """Create and return an AnsibleCoreCI instance."""
         if not self.config.arch:
             raise InternalError(f'No arch specified for config: {self.config}')
@@ -337,7 +337,7 @@ class DockerProfile(ControllerHostProfile[DockerConfig], SshTargetHostProfile[Do
         return self.state.get('container_name')
 
     @container_name.setter
-    def container_name(self, value):  # type: (str) -> None
+    def container_name(self, value: str) -> None:
         """Store the given container name."""
         self.state['container_name'] = value
 
@@ -628,7 +628,7 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
         return self.cache.get('pwd')
 
     @pwd.setter
-    def pwd(self, value):  # type: (str) -> None
+    def pwd(self, value: str) -> None:
         """Cache the given pwd."""
         self.cache['pwd'] = value
 

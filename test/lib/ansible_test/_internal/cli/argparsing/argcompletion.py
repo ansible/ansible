@@ -67,7 +67,7 @@ class CompType(enum.Enum):
         return self in (CompType.LIST, CompType.LIST_AMBIGUOUS, CompType.LIST_UNMODIFIED)
 
 
-def register_safe_action(action_type):  # type: (t.Type[argparse.Action]) -> None
+def register_safe_action(action_type: t.Type[argparse.Action]) -> None:
     """Register the given action as a safe action for argcomplete to use during completion if it is not already registered."""
     if argcomplete and action_type not in argcomplete.safe_actions:
         argcomplete.safe_actions += (action_type,)

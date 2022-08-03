@@ -12,5 +12,5 @@ from .. import (
 class SourceProvider(PathProvider):
     """Base class for source providers."""
     @abc.abstractmethod
-    def get_paths(self, path):  # type: (str) -> t.List[str]
+    def get_paths(self, path: str) -> t.List[str]:
         """Return the list of available content paths under the given path."""

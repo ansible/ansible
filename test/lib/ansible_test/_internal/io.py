@@ -14,23 +14,23 @@ from .encoding import (
 )
 
 
-def read_json_file(path):  # type: (str) -> t.Any
+def read_json_file(path: str) -> t.Any:
     """Parse and return the json content from the specified path."""
     return json.loads(read_text_file(path))
 
 
-def read_text_file(path):  # type: (str) -> str
+def read_text_file(path: str) -> str:
     """Return the contents of the specified path as text."""
     return to_text(read_binary_file(path))
 
 
-def read_binary_file(path):  # type: (str) -> bytes
+def read_binary_file(path: str) -> bytes:
     """Return the contents of the specified path as bytes."""
     with open_binary_file(path) as file_obj:
         return file_obj.read()
 
 
-def make_dirs(path):  # type: (str) -> None
+def make_dirs(path: str) -> None:
     """Create a directory at path, including any necessary parent directories."""
     try:
         os.makedirs(to_bytes(path))

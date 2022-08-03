@@ -37,7 +37,7 @@ class CsCloudProvider(CloudProvider):
     """CloudStack cloud provider plugin. Sets up cloud resources before delegation."""
     DOCKER_SIMULATOR_NAME = 'cloudstack-sim'
 
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
+    def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
         self.image = os.environ.get('ANSIBLE_CLOUDSTACK_CONTAINER', 'quay.io/ansible/cloudstack-test-container:1.4.0')
@@ -129,7 +129,7 @@ class CsCloudProvider(CloudProvider):
 
         self._write_config(config)
 
-    def _get_credentials(self, container_name):  # type: (str) -> t.Dict[str, t.Any]
+    def _get_credentials(self, container_name: str) -> t.Dict[str, t.Any]:
         """Wait for the CloudStack simulator to return credentials."""
         def check(value):
             """Return True if the given configuration is valid JSON, otherwise return False."""

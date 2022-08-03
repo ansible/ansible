@@ -55,12 +55,12 @@ from ..data import (
 )
 
 
-def filter_python(version, versions):  # type: (t.Optional[str], t.Optional[t.Sequence[str]]) -> t.Optional[str]
+def filter_python(version: t.Optional[str], versions: t.Optional[t.Sequence[str]]) -> t.Optional[str]:
     """If a Python version is given and is in the given version list, return that Python version, otherwise return None."""
     return version if version in versions else None
 
 
-def controller_python(version):  # type: (t.Optional[str]) -> t.Optional[str]
+def controller_python(version: t.Optional[str]) -> t.Optional[str]:
     """If a Python version is given and is supported by the controller, return that Python version, otherwise return None."""
     return filter_python(version, CONTROLLER_PYTHON_VERSIONS)
 
@@ -73,7 +73,7 @@ def get_fallback_remote_controller() -> str:
     return fallback.name
 
 
-def get_option_name(name):  # type: (str) -> str
+def get_option_name(name: str) -> str:
     """Return a command-line option name from the given option name."""
     if name == 'targets':
         name = 'target'
@@ -144,7 +144,7 @@ class LegacyHostOptions:
                 delattr(namespace, field.name)
 
     @staticmethod
-    def purge_args(args):  # type: (t.List[str]) -> t.List[str]
+    def purge_args(args: t.List[str]) -> t.List[str]:
         """Purge legacy host options from the given command line arguments."""
         fields = dataclasses.fields(LegacyHostOptions)  # type: t.Tuple[dataclasses.Field, ...]
         filters = {get_option_name(field.name): 0 if field.type is t.Optional[bool] else 1 for field in fields}  # type: t.Dict[str, int]
@@ -278,7 +278,7 @@ def controller_targets(
     return targets
 
 
-def native_python(options):  # type: (LegacyHostOptions) -> t.Optional[NativePythonConfig]
+def native_python(options: LegacyHostOptions) -> t.Optional[NativePythonConfig]:
     """Return a NativePythonConfig for the given version if it is not None, otherwise return None."""
     if not options.python and not options.python_interpreter:
         return None

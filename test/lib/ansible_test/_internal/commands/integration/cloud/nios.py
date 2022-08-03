@@ -32,7 +32,7 @@ class NiosProvider(CloudProvider):
     # https://github.com/ansible/nios-test-container
     DOCKER_IMAGE = 'quay.io/ansible/nios-test-container:1.4.0'
 
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
+    def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
         self.__container_from_env = os.environ.get('ANSIBLE_NIOSSIM_CONTAINER')

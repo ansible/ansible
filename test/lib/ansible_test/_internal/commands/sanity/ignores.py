@@ -36,7 +36,7 @@ class IgnoresTest(SanityVersionNeutral):
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return True
 
-    def test(self, args, targets):  # type: (SanityConfig, SanityTargets) -> TestResult
+    def test(self, args: SanityConfig, targets: SanityTargets) -> TestResult:
         sanity_ignore = SanityIgnoreParser.load(args)
 
         messages = []  # type: t.List[SanityMessage]

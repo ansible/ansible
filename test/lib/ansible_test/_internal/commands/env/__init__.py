@@ -45,7 +45,7 @@ from ...ci import (
 
 class EnvConfig(CommonConfig):
     """Configuration for the `env` command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'env')
 
         self.show = args.show
@@ -58,14 +58,14 @@ class EnvConfig(CommonConfig):
             self.show = True
 
 
-def command_env(args):  # type: (EnvConfig) -> None
+def command_env(args: EnvConfig) -> None:
     """Entry point for the `env` command."""
     show_dump_env(args)
     list_files_env(args)
     set_timeout(args)
 
 
-def show_dump_env(args):  # type: (EnvConfig) -> None
+def show_dump_env(args: EnvConfig) -> None:
     """Show information about the current environment and/or write the information to disk."""
     if not args.show and not args.dump:
         return
@@ -107,7 +107,7 @@ def show_dump_env(args):  # type: (EnvConfig) -> None
         write_json_test_results(ResultType.BOT, 'data-environment.json', data)
 
 
-def list_files_env(args):  # type: (EnvConfig) -> None
+def list_files_env(args: EnvConfig) -> None:
     """List files on stdout."""
     if not args.list_files:
         return
@@ -116,7 +116,7 @@ def list_files_env(args):  # type: (EnvConfig) -> None
         display.info(path)
 
 
-def set_timeout(args):  # type: (EnvConfig) -> None
+def set_timeout(args: EnvConfig) -> None:
     """Set an execution timeout for subsequent ansible-test invocations."""
     if args.timeout is None:
         return
@@ -166,7 +166,7 @@ def show_dict(data, verbose, root_verbosity=0, path=None):  # type: (t.Dict[str,
             display.info(indent + '%s: %s' % (key, value), verbosity=verbosity)
 
 
-def get_docker_details(args):  # type: (EnvConfig) -> t.Dict[str, t.Any]
+def get_docker_details(args: EnvConfig) -> t.Dict[str, t.Any]:
     """Return details about docker."""
     docker = get_docker_command()
 

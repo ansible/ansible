@@ -96,7 +96,7 @@ def get_cloud_platforms(args, targets=None):  # type: (TestConfig, t.Optional[t.
     return sorted(cloud_platforms)
 
 
-def get_cloud_platform(target):  # type: (IntegrationTarget) -> t.Optional[str]
+def get_cloud_platform(target: IntegrationTarget) -> t.Optional[str]:
     """Return the name of the cloud platform used for the given target, or None if no cloud platform is used."""
     cloud_platforms = set(a.split('/')[1] for a in target.aliases if a.startswith('cloud/') and a.endswith('/') and a != 'cloud/')
 
@@ -119,7 +119,7 @@ def get_cloud_providers(args, targets=None):  # type: (IntegrationConfig, t.Opti
     return [get_provider_plugins()[p](args) for p in get_cloud_platforms(args, targets)]
 
 
-def get_cloud_environment(args, target):  # type: (IntegrationConfig, IntegrationTarget) -> t.Optional[CloudEnvironment]
+def get_cloud_environment(args: IntegrationConfig, target: IntegrationTarget) -> t.Optional[CloudEnvironment]:
     """Return the cloud environment for the given target, or None if no cloud environment is used for the target."""
     cloud_platform = get_cloud_platform(target)
 
@@ -185,7 +185,7 @@ class CloudBase(metaclass=abc.ABCMeta):
     _MANAGED = 'managed'
     _SETUP_EXECUTED = 'setup_executed'
 
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
+    def __init__(self, args: IntegrationConfig) -> None:
         self.args = args
         self.platform = self.__module__.rsplit('.', 1)[-1]
 
@@ -209,7 +209,7 @@ class CloudBase(metaclass=abc.ABCMeta):
         return t.cast(bool, self._get_cloud_config(self._SETUP_EXECUTED, False))
 
     @setup_executed.setter
-    def setup_executed(self, value):  # type: (bool) -> None
+    def setup_executed(self, value: bool) -> None:
         """True if setup has been executed, otherwise False."""
         self._set_cloud_config(self._SETUP_EXECUTED, value)
 
@@ -219,7 +219,7 @@ class CloudBase(metaclass=abc.ABCMeta):
         return os.path.join(data_context().content.root, str(self._get_cloud_config(self._CONFIG_PATH)))
 
     @config_path.setter
-    def config_path(self, value):  # type: (str) -> None
+    def config_path(self, value: str) -> None:
         """Path to the configuration file."""
         self._set_cloud_config(self._CONFIG_PATH, value)
 
@@ -229,7 +229,7 @@ class CloudBase(metaclass=abc.ABCMeta):
         return str(self._get_cloud_config(self._RESOURCE_PREFIX))
 
     @resource_prefix.setter
-    def resource_prefix(self, value):  # type: (str) -> None
+    def resource_prefix(self, value: str) -> None:
         """Resource prefix."""
         self._set_cloud_config(self._RESOURCE_PREFIX, value)
 
@@ -239,7 +239,7 @@ class CloudBase(metaclass=abc.ABCMeta):
         return t.cast(bool, self._get_cloud_config(self._MANAGED))
 
     @managed.setter
-    def managed(self, value):  # type: (bool) -> None
+    def managed(self, value: bool) -> None:
         """True if resources are managed by ansible-test, otherwise False."""
         self._set_cloud_config(self._MANAGED, value)
 
@@ -322,7 +322,7 @@ class CloudProvider(CloudBase):
 
         return static
 
-    def _write_config(self, content):  # type: (str) -> None
+    def _write_config(self, content: str) -> None:
         """Write the given content to the config file."""
         prefix = '%s-' % os.path.splitext(os.path.basename(self.config_static_path))[0]
 
@@ -371,7 +371,7 @@ class CloudEnvironment(CloudBase):
     def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
 
-    def on_failure(self, target, tries):  # type: (IntegrationTarget, int) -> None
+    def on_failure(self, target: IntegrationTarget, tries: int) -> None:
         """Callback to run when an integration target fails."""
 
 

@@ -11,20 +11,20 @@ from .util import (
 )
 
 
-def parse_diff(lines):  # type: (t.List[str]) -> t.List[FileDiff]
+def parse_diff(lines: t.List[str]) -> t.List[FileDiff]:
     """Parse the given diff lines and return a list of FileDiff objects representing the changes of each file."""
     return DiffParser(lines).files
 
 
 class FileDiff:
     """Parsed diff for a single file."""
-    def __init__(self, old_path, new_path):  # type: (str, str) -> None
+    def __init__(self, old_path: str, new_path: str) -> None:
         self.old = DiffSide(old_path, new=False)
         self.new = DiffSide(new_path, new=True)
         self.headers = []  # type: t.List[str]
         self.binary = False
 
-    def append_header(self, line):  # type: (str) -> None
+    def append_header(self, line: str) -> None:
         """Append the given line to the list of headers for this file."""
         self.headers.append(line)
 
@@ -36,7 +36,7 @@ class FileDiff:
 
 class DiffSide:
     """Parsed diff for a single 'side' of a single file."""
-    def __init__(self, path, new):  # type: (str, bool) -> None
+    def __init__(self, path: str, new: bool) -> None:
         self.path = path
         self.new = new
         self.prefix = '+' if self.new else '-'
@@ -51,13 +51,13 @@ class DiffSide:
         self._lines_remaining = 0
         self._range_start = 0
 
-    def set_start(self, line_start, line_count):  # type: (int, int) -> None
+    def set_start(self, line_start: int, line_count: int) -> None:
         """Set the starting line and line count."""
         self._next_line_number = line_start
         self._lines_remaining = line_count
         self._range_start = 0
 
-    def append(self, line):  # type: (str) -> None
+    def append(self, line: str) -> None:
         """Append the given line."""
         if self._lines_remaining <= 0:
             raise Exception('Diff range overflow.')
@@ -109,7 +109,7 @@ class DiffSide:
 
 class DiffParser:
     """Parse diff lines."""
-    def __init__(self, lines):  # type: (t.List[str]) -> None
+    def __init__(self, lines: t.List[str]) -> None:
         self.lines = lines
         self.files = []  # type: t.List[FileDiff]
 
