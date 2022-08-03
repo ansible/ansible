@@ -1079,9 +1079,9 @@ class DnfModule(YumDnf):
                             try:
                                 self.module_base.install([module])
                                 self.module_base.enable([module])
+                                response['results'].append("Module {0} installed.".format(module))
                             except dnf.exceptions.MarkingErrors as e:
                                 failure_response['failures'].append(' '.join((module, to_native(e))))
-                            response['results'].append("Module {0} installed.".format(module))
 
                 # Install groups.
                 for group in groups:
