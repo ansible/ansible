@@ -567,7 +567,7 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
 
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
-          reference, refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch):
+          reference, refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch, git_filter):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -617,6 +617,9 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
             needs_separate_git_dir_fallback = True
         else:
             cmd.append('--separate-git-dir=%s' % separate_git_dir)
+    
+    if git_filter:
+        cmd.append('--filter=%s' % git_filter)
 
     cmd.extend([repo, dest])
     module.run_command(cmd, check_rc=True, cwd=dest_dirname)
@@ -1197,6 +1200,7 @@ def main():
             archive=dict(type='path'),
             archive_prefix=dict(),
             separate_git_dir=dict(type='path'),
+            git_filter=dict(default=None, required = False),
         ),
         mutually_exclusive=[('separate_git_dir', 'bare'), ('accept_hostkey', 'accept_newhostkey')],
         required_by={'archive_prefix': ['archive']},
@@ -1224,6 +1228,7 @@ def main():
     archive = module.params['archive']
     archive_prefix = module.params['archive_prefix']
     separate_git_dir = module.params['separate_git_dir']
+    git_filter = module.params['git_filter']
 
     result = dict(changed=False, warnings=list())
 
