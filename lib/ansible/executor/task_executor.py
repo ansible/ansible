@@ -374,7 +374,7 @@ class TaskExecutor:
 
             # gets templated here unlike rest of loop_control fields, depends on loop_var above
             try:
-                res['_ansible_item_label'] = templar.template(label, cache=False)
+                res['_ansible_item_label'] = templar.template(label)
             except AnsibleUndefinedVariable as e:
                 res.update({
                     'failed': True,
