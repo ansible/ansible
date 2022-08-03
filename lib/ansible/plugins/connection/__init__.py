@@ -40,6 +40,9 @@ def ensure_connect(func):
 
 def sanitise_become_output(become: BecomeBase, stdout: bytes, stderr: bytes) -> t.Tuple[bytes, bytes]:
     """Helper function to remove the become success banner from stdout or stderr."""
+    if not become.success:
+        return stdout, stderr
+
     raw = {'stdout': stdout, 'stderr': stderr}
 
     for stream_type in ['stdout', 'stderr']:
