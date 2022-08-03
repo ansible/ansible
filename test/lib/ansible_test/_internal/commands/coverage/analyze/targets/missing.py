@@ -32,7 +32,7 @@ from . import (
 
 class CoverageAnalyzeTargetsMissingConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets missing` command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
         self.from_file = args.from_file  # type: str
@@ -43,7 +43,7 @@ class CoverageAnalyzeTargetsMissingConfig(CoverageAnalyzeTargetsConfig):
         self.only_exists = args.only_exists  # type: bool
 
 
-def command_coverage_analyze_targets_missing(args):  # type: (CoverageAnalyzeTargetsMissingConfig) -> None
+def command_coverage_analyze_targets_missing(args: CoverageAnalyzeTargetsMissingConfig) -> None:
     """Identify aggregated coverage in one file missing from another."""
     host_state = prepare_profiles(args)  # coverage analyze targets missing
 

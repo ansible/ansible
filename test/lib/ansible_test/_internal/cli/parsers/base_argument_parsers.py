@@ -14,11 +14,11 @@ from ..argparsing.parsers import (
 class ControllerNamespaceParser(NamespaceParser, metaclass=abc.ABCMeta):
     """Base class for controller namespace parsers."""
     @property
-    def dest(self):  # type: () -> str
+    def dest(self) -> str:
         """The name of the attribute where the value should be stored."""
         return 'controller'
 
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         if state.root_namespace.targets:
             raise ControllerRequiredFirstError()
@@ -29,22 +29,22 @@ class ControllerNamespaceParser(NamespaceParser, metaclass=abc.ABCMeta):
 class TargetNamespaceParser(NamespaceParser, metaclass=abc.ABCMeta):
     """Base class for target namespace parsers involving a single target."""
     @property
-    def option_name(self):  # type: () -> str
+    def option_name(self) -> str:
         """The option name used for this parser."""
         return '--target'
 
     @property
-    def dest(self):  # type: () -> str
+    def dest(self) -> str:
         """The name of the attribute where the value should be stored."""
         return 'targets'
 
     @property
-    def use_list(self):  # type: () -> bool
+    def use_list(self) -> bool:
         """True if the destination is a list, otherwise False."""
         return True
 
     @property
-    def limit_one(self):  # type: () -> bool
+    def limit_one(self) -> bool:
         """True if only one target is allowed, otherwise False."""
         return True
 
@@ -52,17 +52,17 @@ class TargetNamespaceParser(NamespaceParser, metaclass=abc.ABCMeta):
 class TargetsNamespaceParser(NamespaceParser, metaclass=abc.ABCMeta):
     """Base class for controller namespace parsers involving multiple targets."""
     @property
-    def option_name(self):  # type: () -> str
+    def option_name(self) -> str:
         """The option name used for this parser."""
         return '--target'
 
     @property
-    def dest(self):  # type: () -> str
+    def dest(self) -> str:
         """The name of the attribute where the value should be stored."""
         return 'targets'
 
     @property
-    def use_list(self):  # type: () -> bool
+    def use_list(self) -> bool:
         """True if the destination is a list, otherwise False."""
         return True
 

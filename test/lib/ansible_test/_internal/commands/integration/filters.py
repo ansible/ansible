@@ -47,7 +47,7 @@ THostProfile = t.TypeVar('THostProfile', bound=HostProfile)
 
 class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
     """Base class for target filters."""
-    def __init__(self, args, configs, controller):  # type: (IntegrationConfig, t.List[THostConfig], bool) -> None
+    def __init__(self, args: IntegrationConfig, configs: t.List[THostConfig], controller: bool) -> None:
         self.args = args
         self.configs = configs
         self.controller = controller
@@ -59,7 +59,7 @@ class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
         self.allow_destructive = args.allow_destructive
 
     @property
-    def config(self):  # type: () -> THostConfig
+    def config(self) -> THostConfig:
         """The configuration to filter. Only valid when there is a single config."""
         if len(self.configs) != 1:
             raise Exception()
@@ -82,7 +82,7 @@ class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
 
         self.apply_skip(f'"{skip}"', reason, skipped, exclude)
 
-    def apply_skip(self, marked, reason, skipped, exclude):  # type: (str, str, t.List[str], t.Set[str]) -> None
+    def apply_skip(self, marked: str, reason: str, skipped: t.List[str], exclude: t.Set[str]) -> None:
         """Apply the provided skips to the given exclude list."""
         if not skipped:
             return
@@ -90,12 +90,12 @@ class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
         exclude.update(skipped)
         display.warning(f'Excluding {self.host_type} tests marked {marked} {reason}: {", ".join(skipped)}')
 
-    def filter_profiles(self, profiles, target):  # type: (t.List[THostProfile], IntegrationTarget) -> t.List[THostProfile]
+    def filter_profiles(self, profiles: t.List[THostProfile], target: IntegrationTarget) -> t.List[THostProfile]:
         """Filter the list of profiles, returning only those which are not skipped for the given target."""
         del target
         return profiles
 
-    def filter_targets(self, targets, exclude):  # type: (t.List[IntegrationTarget], t.Set[str]) -> None
+    def filter_targets(self, targets: t.List[IntegrationTarget], exclude: t.Set[str]) -> None:
         """Filter the list of targets, adding any which this host profile cannot support to the provided exclude list."""
         if self.controller and self.args.host_settings.controller_fallback and targets:
             affected_targets = [target.name for target in targets]
@@ -138,7 +138,7 @@ class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
 
 class PosixTargetFilter(TargetFilter[TPosixConfig]):
     """Target filter for POSIX hosts."""
-    def filter_targets(self, targets, exclude):  # type: (t.List[IntegrationTarget], t.Set[str]) -> None
+    def filter_targets(self, targets: t.List[IntegrationTarget], exclude: t.Set[str]) -> None:
         """Filter the list of targets, adding any which this host profile cannot support to the provided exclude list."""
         super().filter_targets(targets, exclude)
 
@@ -151,7 +151,7 @@ class PosixTargetFilter(TargetFilter[TPosixConfig]):
 
 class DockerTargetFilter(PosixTargetFilter[DockerConfig]):
     """Target filter for docker hosts."""
-    def filter_targets(self, targets, exclude):  # type: (t.List[IntegrationTarget], t.Set[str]) -> None
+    def filter_targets(self, targets: t.List[IntegrationTarget], exclude: t.Set[str]) -> None:
         """Filter the list of targets, adding any which this host profile cannot support to the provided exclude list."""
         super().filter_targets(targets, exclude)
 
@@ -167,7 +167,7 @@ class PosixSshTargetFilter(PosixTargetFilter[PosixSshConfig]):
 
 class RemoteTargetFilter(TargetFilter[TRemoteConfig]):
     """Target filter for remote Ansible Core CI managed hosts."""
-    def filter_profiles(self, profiles, target):  # type: (t.List[THostProfile], IntegrationTarget) -> t.List[THostProfile]
+    def filter_profiles(self, profiles: t.List[THostProfile], target: IntegrationTarget) -> t.List[THostProfile]:
         """Filter the list of profiles, returning only those which are not skipped for the given target."""
         profiles = super().filter_profiles(profiles, target)
 
@@ -181,7 +181,7 @@ class RemoteTargetFilter(TargetFilter[TRemoteConfig]):
 
         return profiles
 
-    def filter_targets(self, targets, exclude):  # type: (t.List[IntegrationTarget], t.Set[str]) -> None
+    def filter_targets(self, targets: t.List[IntegrationTarget], exclude: t.Set[str]) -> None:
         """Filter the list of targets, adding any which this host profile cannot support to the provided exclude list."""
         super().filter_targets(targets, exclude)
 
@@ -224,7 +224,7 @@ class NetworkInventoryTargetFilter(TargetFilter[NetworkInventoryConfig]):
 
 class OriginTargetFilter(PosixTargetFilter[OriginConfig]):
     """Target filter for localhost."""
-    def filter_targets(self, targets, exclude):  # type: (t.List[IntegrationTarget], t.Set[str]) -> None
+    def filter_targets(self, targets: t.List[IntegrationTarget], exclude: t.Set[str]) -> None:
         """Filter the list of targets, adding any which this host profile cannot support to the provided exclude list."""
         super().filter_targets(targets, exclude)
 
@@ -235,12 +235,12 @@ class OriginTargetFilter(PosixTargetFilter[OriginConfig]):
 
 
 @cache
-def get_host_target_type_map():  # type: () -> t.Dict[t.Type[HostConfig], t.Type[TargetFilter]]
+def get_host_target_type_map() -> t.Dict[t.Type[HostConfig], t.Type[TargetFilter]]:
     """Create and return a mapping of HostConfig types to TargetFilter types."""
     return get_type_map(TargetFilter, HostConfig)
 
 
-def get_target_filter(args, configs, controller):  # type: (IntegrationConfig, t.List[HostConfig], bool) -> TargetFilter
+def get_target_filter(args: IntegrationConfig, configs: t.List[HostConfig], controller: bool) -> TargetFilter:
     """Return an integration test target filter instance for the provided host configurations."""
     target_type = type(configs[0])
 
@@ -254,12 +254,12 @@ def get_target_filter(args, configs, controller):  # type: (IntegrationConfig, t
     return filter_instance
 
 
-def get_remote_skip_aliases(config):  # type: (RemoteConfig) -> t.Dict[str, str]
+def get_remote_skip_aliases(config: RemoteConfig) -> t.Dict[str, str]:
     """Return a dictionary of skip aliases and the reason why they apply."""
     return get_platform_skip_aliases(config.platform, config.version, config.arch)
 
 
-def get_platform_skip_aliases(platform, version, arch):  # type: (str, str, t.Optional[str]) -> t.Dict[str, str]
+def get_platform_skip_aliases(platform: str, version: str, arch: t.Optional[str]) -> t.Dict[str, str]:
     """Return a dictionary of skip aliases and the reason why they apply."""
     skips = {
         f'skip/{platform}': platform,

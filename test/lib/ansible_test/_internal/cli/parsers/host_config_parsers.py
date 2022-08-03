@@ -63,7 +63,7 @@ from .helpers import (
 
 class OriginParser(Parser):
     """Composite argument parser for the origin."""
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         namespace = OriginConfig()
 
@@ -74,14 +74,14 @@ class OriginParser(Parser):
 
         return namespace
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         return OriginKeyValueParser().document(state)
 
 
 class ControllerParser(Parser):
     """Composite argument parser for the controller."""
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         namespace = ControllerConfig()
 
@@ -92,30 +92,30 @@ class ControllerParser(Parser):
 
         return namespace
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         return ControllerKeyValueParser().document(state)
 
 
 class DockerParser(PairParser):
     """Composite argument parser for a docker host."""
-    def __init__(self, controller):  # type: (bool) -> None
+    def __init__(self, controller: bool) -> None:
         self.controller = controller
 
-    def create_namespace(self):  # type: () -> t.Any
+    def create_namespace(self) -> t.Any:
         """Create and return a namespace."""
         return DockerConfig()
 
-    def get_left_parser(self, state):  # type: (ParserState) -> Parser
+    def get_left_parser(self, state: ParserState) -> Parser:
         """Return the parser for the left side."""
         return NamespaceWrappedParser('name', ChoicesParser(list(filter_completion(docker_completion(), controller_only=self.controller)),
                                                             conditions=MatchConditions.CHOICE | MatchConditions.ANY))
 
-    def get_right_parser(self, choice):  # type: (t.Any) -> Parser
+    def get_right_parser(self, choice: t.Any) -> Parser:
         """Return the parser for the right side."""
         return DockerKeyValueParser(choice, self.controller)
 
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         value = super().parse(state)  # type: DockerConfig
 
@@ -124,7 +124,7 @@ class DockerParser(PairParser):
 
         return value
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         default = 'default'
         content = '\n'.join([f'  {image} ({", ".join(get_docker_pythons(image, self.controller, False))})'
@@ -142,22 +142,22 @@ class DockerParser(PairParser):
 
 class PosixRemoteParser(PairParser):
     """Composite argument parser for a POSIX remote host."""
-    def __init__(self, controller):  # type: (bool) -> None
+    def __init__(self, controller: bool) -> None:
         self.controller = controller
 
-    def create_namespace(self):  # type: () -> t.Any
+    def create_namespace(self) -> t.Any:
         """Create and return a namespace."""
         return PosixRemoteConfig()
 
-    def get_left_parser(self, state):  # type: (ParserState) -> Parser
+    def get_left_parser(self, state: ParserState) -> Parser:
         """Return the parser for the left side."""
         return NamespaceWrappedParser('name', PlatformParser(list(filter_completion(remote_completion(), controller_only=self.controller))))
 
-    def get_right_parser(self, choice):  # type: (t.Any) -> Parser
+    def get_right_parser(self, choice: t.Any) -> Parser:
         """Return the parser for the right side."""
         return PosixRemoteKeyValueParser(choice, self.controller)
 
-    def parse(self, state):  # type: (ParserState) -> t.Any
+    def parse(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result."""
         value = super().parse(state)  # type: PosixRemoteConfig
 
@@ -166,7 +166,7 @@ class PosixRemoteParser(PairParser):
 
         return value
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         default = get_fallback_remote_controller()
         content = '\n'.join([f'  {name} ({", ".join(get_remote_pythons(name, self.controller, False))})'
@@ -184,11 +184,11 @@ class PosixRemoteParser(PairParser):
 
 class WindowsRemoteParser(PairParser):
     """Composite argument parser for a Windows remote host."""
-    def create_namespace(self):  # type: () -> t.Any
+    def create_namespace(self) -> t.Any:
         """Create and return a namespace."""
         return WindowsRemoteConfig()
 
-    def get_left_parser(self, state):  # type: (ParserState) -> Parser
+    def get_left_parser(self, state: ParserState) -> Parser:
         """Return the parser for the left side."""
         names = list(filter_completion(windows_completion()))
 
@@ -197,11 +197,11 @@ class WindowsRemoteParser(PairParser):
 
         return NamespaceWrappedParser('name', PlatformParser(names))
 
-    def get_right_parser(self, choice):  # type: (t.Any) -> Parser
+    def get_right_parser(self, choice: t.Any) -> Parser:
         """Return the parser for the right side."""
         return WindowsRemoteKeyValueParser()
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         content = '\n'.join([f'  {name}' for name, item in filter_completion(windows_completion()).items()])
 
@@ -217,11 +217,11 @@ class WindowsRemoteParser(PairParser):
 
 class NetworkRemoteParser(PairParser):
     """Composite argument parser for a network remote host."""
-    def create_namespace(self):  # type: () -> t.Any
+    def create_namespace(self) -> t.Any:
         """Create and return a namespace."""
         return NetworkRemoteConfig()
 
-    def get_left_parser(self, state):  # type: (ParserState) -> Parser
+    def get_left_parser(self, state: ParserState) -> Parser:
         """Return the parser for the left side."""
         names = list(filter_completion(network_completion()))
 
@@ -230,11 +230,11 @@ class NetworkRemoteParser(PairParser):
 
         return NamespaceWrappedParser('name', PlatformParser(names))
 
-    def get_right_parser(self, choice):  # type: (t.Any) -> Parser
+    def get_right_parser(self, choice: t.Any) -> Parser:
         """Return the parser for the right side."""
         return NetworkRemoteKeyValueParser()
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         content = '\n'.join([f'  {name}' for name, item in filter_completion(network_completion()).items()])
 
@@ -250,61 +250,61 @@ class NetworkRemoteParser(PairParser):
 
 class WindowsInventoryParser(PairParser):
     """Composite argument parser for a Windows inventory."""
-    def create_namespace(self):  # type: () -> t.Any
+    def create_namespace(self) -> t.Any:
         """Create and return a namespace."""
         return WindowsInventoryConfig()
 
-    def get_left_parser(self, state):  # type: (ParserState) -> Parser
+    def get_left_parser(self, state: ParserState) -> Parser:
         """Return the parser for the left side."""
         return NamespaceWrappedParser('path', FileParser())
 
-    def get_right_parser(self, choice):  # type: (t.Any) -> Parser
+    def get_right_parser(self, choice: t.Any) -> Parser:
         """Return the parser for the right side."""
         return EmptyKeyValueParser()
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         return '{path}  # INI format inventory file'
 
 
 class NetworkInventoryParser(PairParser):
     """Composite argument parser for a network inventory."""
-    def create_namespace(self):  # type: () -> t.Any
+    def create_namespace(self) -> t.Any:
         """Create and return a namespace."""
         return NetworkInventoryConfig()
 
-    def get_left_parser(self, state):  # type: (ParserState) -> Parser
+    def get_left_parser(self, state: ParserState) -> Parser:
         """Return the parser for the left side."""
         return NamespaceWrappedParser('path', FileParser())
 
-    def get_right_parser(self, choice):  # type: (t.Any) -> Parser
+    def get_right_parser(self, choice: t.Any) -> Parser:
         """Return the parser for the right side."""
         return EmptyKeyValueParser()
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         return '{path}  # INI format inventory file'
 
 
 class PosixSshParser(PairParser):
     """Composite argument parser for a POSIX SSH host."""
-    def create_namespace(self):  # type: () -> t.Any
+    def create_namespace(self) -> t.Any:
         """Create and return a namespace."""
         return PosixSshConfig()
 
-    def get_left_parser(self, state):  # type: (ParserState) -> Parser
+    def get_left_parser(self, state: ParserState) -> Parser:
         """Return the parser for the left side."""
         return SshConnectionParser()
 
-    def get_right_parser(self, choice):  # type: (t.Any) -> Parser
+    def get_right_parser(self, choice: t.Any) -> Parser:
         """Return the parser for the right side."""
         return PosixSshKeyValueParser()
 
     @property
-    def required(self):  # type: () -> bool
+    def required(self) -> bool:
         """True if the delimiter (and thus right parser) is required, otherwise False."""
         return True
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         return f'{SshConnectionParser().document(state)}[,{PosixSshKeyValueParser().document(state)}]'

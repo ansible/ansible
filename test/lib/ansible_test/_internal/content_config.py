@@ -85,7 +85,7 @@ def parse_content_config(data: t.Any) -> ContentConfig:
     )
 
 
-def load_config(path):  # type: (str) -> t.Optional[ContentConfig]
+def load_config(path: str) -> t.Optional[ContentConfig]:
     """Load and parse the specified config file and return the result or None if loading/parsing failed."""
     if YAML_IMPORT_ERROR:
         raise ApplicationError('The "PyYAML" module is required to parse config: %s' % YAML_IMPORT_ERROR)
@@ -112,7 +112,7 @@ def load_config(path):  # type: (str) -> t.Optional[ContentConfig]
     return config
 
 
-def get_content_config(args):  # type: (EnvironmentConfig) -> ContentConfig
+def get_content_config(args: EnvironmentConfig) -> ContentConfig:
     """
     Parse and return the content configuration (if any) for the current collection.
     For ansible-core, a default configuration is used.
@@ -149,7 +149,7 @@ def get_content_config(args):  # type: (EnvironmentConfig) -> ContentConfig
     return config
 
 
-def parse_python_requires(value):  # type: (t.Any) -> tuple[str, ...]
+def parse_python_requires(value: t.Any) -> tuple[str, ...]:
     """Parse the given 'python_requires' version specifier and return the matching Python versions."""
     if not isinstance(value, str):
         raise ValueError('python_requires must must be of type `str` not type `%s`' % type(value))

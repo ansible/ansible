@@ -12,7 +12,7 @@ TValue = t.TypeVar('TValue')
 
 class CommonCache:
     """Common cache."""
-    def __init__(self, args):  # type: (CommonConfig) -> None
+    def __init__(self, args: CommonConfig) -> None:
         self.args = args
 
     def get(self, key, factory):  # type: (str, t.Callable[[], TValue]) -> TValue

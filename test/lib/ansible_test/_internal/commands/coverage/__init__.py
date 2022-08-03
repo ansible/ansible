@@ -68,11 +68,11 @@ COVERAGE_OUTPUT_FILE_NAME = 'coverage'
 
 class CoverageConfig(EnvironmentConfig):
     """Configuration for the coverage command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'coverage')
 
 
-def initialize_coverage(args, host_state):  # type: (CoverageConfig, HostState) -> coverage_module
+def initialize_coverage(args: CoverageConfig, host_state: HostState) -> coverage_module:
     """Delegate execution if requested, install requirements, then import and return the coverage module. Raises an exception if coverage is not available."""
     configure_pypi_proxy(args, host_state.controller_profile)  # coverage
     install_requirements(args, host_state.controller_profile.python, coverage=True)  # coverage
@@ -93,7 +93,7 @@ def initialize_coverage(args, host_state):  # type: (CoverageConfig, HostState) 
     return coverage
 
 
-def run_coverage(args, host_state, output_file, command, cmd):  # type: (CoverageConfig, HostState, str, str, t.List[str]) -> None
+def run_coverage(args: CoverageConfig, host_state: HostState, output_file: str, command: str, cmd: t.List[str]) -> None:
     """Run the coverage cli tool with the specified options."""
     env = common_environment()
     env.update(dict(COVERAGE_FILE=output_file))
@@ -112,22 +112,22 @@ def run_coverage(args, host_state, output_file, command, cmd):  # type: (Coverag
         display.warning(stderr)
 
 
-def get_all_coverage_files():  # type: () -> t.List[str]
+def get_all_coverage_files() -> t.List[str]:
     """Return a list of all coverage file paths."""
     return get_python_coverage_files() + get_powershell_coverage_files()
 
 
-def get_python_coverage_files(path=None):  # type: (t.Optional[str]) -> t.List[str]
+def get_python_coverage_files(path: t.Optional[str] = None) -> t.List[str]:
     """Return the list of Python coverage file paths."""
     return get_coverage_files('python', path)
 
 
-def get_powershell_coverage_files(path=None):  # type: (t.Optional[str]) -> t.List[str]
+def get_powershell_coverage_files(path: t.Optional[str] = None) -> t.List[str]:
     """Return the list of PowerShell coverage file paths."""
     return get_coverage_files('powershell', path)
 
 
-def get_coverage_files(language, path=None):  # type: (str, t.Optional[str]) -> t.List[str]
+def get_coverage_files(language: str, path: t.Optional[str] = None) -> t.List[str]:
     """Return the list of coverage file paths for the given language."""
     coverage_dir = path or ResultType.COVERAGE.path
 
@@ -143,7 +143,7 @@ def get_coverage_files(language, path=None):  # type: (str, t.Optional[str]) -> 
     return coverage_files
 
 
-def get_collection_path_regexes():  # type: () -> t.Tuple[t.Optional[t.Pattern], t.Optional[t.Pattern]]
+def get_collection_path_regexes() -> t.Tuple[t.Optional[t.Pattern], t.Optional[t.Pattern]]:
     """Return a pair of regexes used for identifying and manipulating collection paths."""
     if data_context().content.collection:
         collection_search_re = re.compile(r'/%s/' % data_context().content.collection.directory)
@@ -155,7 +155,7 @@ def get_collection_path_regexes():  # type: () -> t.Tuple[t.Optional[t.Pattern],
     return collection_search_re, collection_sub_re
 
 
-def get_python_modules():  # type: () -> t.Dict[str, str]
+def get_python_modules() -> t.Dict[str, str]:
     """Return a dictionary of Ansible module names and their paths."""
     return dict((target.module, target.path) for target in list(walk_module_targets()) if target.path.endswith('.py'))
 
@@ -343,13 +343,13 @@ def sanitize_filename(
 
 class PathChecker:
     """Checks code coverage paths to verify they are valid and reports on the findings."""
-    def __init__(self, args, collection_search_re=None):  # type: (CoverageConfig, t.Optional[t.Pattern]) -> None
+    def __init__(self, args: CoverageConfig, collection_search_re: t.Optional[t.Pattern] = None) -> None:
         self.args = args
         self.collection_search_re = collection_search_re
         self.invalid_paths = []  # type: t.List[str]
         self.invalid_path_chars = 0
 
-    def check_path(self, path):  # type: (str) -> bool
+    def check_path(self, path: str) -> bool:
         """Return True if the given coverage path is valid, otherwise display a warning and return False."""
         if os.path.isfile(to_bytes(path)):
             return True
@@ -367,7 +367,7 @@ class PathChecker:
 
         return False
 
-    def report(self):  # type: () -> None
+    def report(self) -> None:
         """Display a warning regarding invalid paths if any were found."""
         if self.invalid_paths:
             display.warning('Ignored %d characters from %d invalid coverage path(s).' % (self.invalid_path_chars, len(self.invalid_paths)))

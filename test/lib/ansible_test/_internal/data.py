@@ -73,7 +73,7 @@ class DataContext:
 
         self.content = content  # type: ContentLayout
 
-    def create_collection_layouts(self):  # type: () -> t.List[ContentLayout]
+    def create_collection_layouts(self) -> t.List[ContentLayout]:
         """
         Return a list of collection layouts, one for each collection in the same collection root as the current collection layout.
         An empty list is returned if the current content layout is not a collection layout.
@@ -165,7 +165,7 @@ class DataContext:
         return tuple((os.path.join(source_provider.root, path), path) for path in source_provider.get_paths(source_provider.root))
 
     @property
-    def ansible_source(self):  # type: () -> t.Tuple[t.Tuple[str, str], ...]
+    def ansible_source(self) -> t.Tuple[t.Tuple[str, str], ...]:
         """Return a tuple of Ansible source files with both absolute and relative paths."""
         if not self.__ansible_source:
             self.__ansible_source = self.__create_ansible_source()
@@ -220,7 +220,7 @@ class DataContext:
 
 
 @cache
-def data_context():  # type: () -> DataContext
+def data_context() -> DataContext:
     """Initialize provider plugins."""
     provider_types = (
         'layout',

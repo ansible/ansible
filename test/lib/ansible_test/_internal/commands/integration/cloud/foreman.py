@@ -32,7 +32,7 @@ class ForemanProvider(CloudProvider):
     # https://github.com/ansible/foreman-test-container
     DOCKER_IMAGE = 'quay.io/ansible/foreman-test-container:1.4.0'
 
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
+    def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
         self.__container_from_env = os.environ.get('ANSIBLE_FRMNSIM_CONTAINER')
@@ -46,7 +46,7 @@ class ForemanProvider(CloudProvider):
 
         self.uses_docker = True
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup cloud resource before delegation and reg cleanup callback."""
         super().setup()
 
@@ -55,7 +55,7 @@ class ForemanProvider(CloudProvider):
         else:
             self._setup_dynamic()
 
-    def _setup_dynamic(self):  # type: () -> None
+    def _setup_dynamic(self) -> None:
         """Spawn a Foreman stub within docker container."""
         foreman_port = 8080
 
@@ -76,13 +76,13 @@ class ForemanProvider(CloudProvider):
         self._set_cloud_config('FOREMAN_HOST', self.DOCKER_SIMULATOR_NAME)
         self._set_cloud_config('FOREMAN_PORT', str(foreman_port))
 
-    def _setup_static(self):  # type: () -> None
+    def _setup_static(self) -> None:
         raise NotImplementedError()
 
 
 class ForemanEnvironment(CloudEnvironment):
     """Foreman environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         env_vars = dict(
             FOREMAN_HOST=str(self._get_cloud_config('FOREMAN_HOST')),

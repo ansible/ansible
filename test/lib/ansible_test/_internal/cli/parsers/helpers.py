@@ -21,7 +21,7 @@ from ...host_configs import (
 )
 
 
-def get_docker_pythons(name, controller, strict):  # type: (str, bool, bool) -> t.List[str]
+def get_docker_pythons(name: str, controller: bool, strict: bool) -> t.List[str]:
     """Return a list of docker instance Python versions supported by the specified host config."""
     image_config = filter_completion(docker_completion()).get(name)
     available_pythons = CONTROLLER_PYTHON_VERSIONS if controller else SUPPORTED_PYTHON_VERSIONS
@@ -34,7 +34,7 @@ def get_docker_pythons(name, controller, strict):  # type: (str, bool, bool) -> 
     return supported_pythons
 
 
-def get_remote_pythons(name, controller, strict):  # type: (str, bool, bool) -> t.List[str]
+def get_remote_pythons(name: str, controller: bool, strict: bool) -> t.List[str]:
     """Return a list of remote instance Python versions supported by the specified host config."""
     platform_config = filter_completion(remote_completion()).get(name)
     available_pythons = CONTROLLER_PYTHON_VERSIONS if controller else SUPPORTED_PYTHON_VERSIONS
@@ -47,7 +47,7 @@ def get_remote_pythons(name, controller, strict):  # type: (str, bool, bool) -> 
     return supported_pythons
 
 
-def get_controller_pythons(controller_config, strict):  # type: (HostConfig, bool) -> t.List[str]
+def get_controller_pythons(controller_config: HostConfig, strict: bool) -> t.List[str]:
     """Return a list of controller Python versions supported by the specified host config."""
     if isinstance(controller_config, DockerConfig):
         pythons = get_docker_pythons(controller_config.name, False, strict)

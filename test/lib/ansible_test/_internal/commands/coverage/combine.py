@@ -63,13 +63,13 @@ from . import (
 TValue = t.TypeVar('TValue')
 
 
-def command_coverage_combine(args):  # type: (CoverageCombineConfig) -> None
+def command_coverage_combine(args: CoverageCombineConfig) -> None:
     """Patch paths in coverage files and merge into a single file."""
     host_state = prepare_profiles(args)  # coverage combine
     combine_coverage_files(args, host_state)
 
 
-def combine_coverage_files(args, host_state):  # type: (CoverageCombineConfig, HostState) -> t.List[str]
+def combine_coverage_files(args: CoverageCombineConfig, host_state: HostState) -> t.List[str]:
     """Combine coverage and return a list of the resulting files."""
     if args.delegate:
         if isinstance(args.controller, (DockerConfig, RemoteConfig)):
@@ -107,7 +107,7 @@ class ExportedCoverageDataNotFound(ApplicationError):
             'The exported files must be in the directory: %s/' % ResultType.COVERAGE.relative_path)
 
 
-def _command_coverage_combine_python(args, host_state):  # type: (CoverageCombineConfig, HostState) -> t.List[str]
+def _command_coverage_combine_python(args: CoverageCombineConfig, host_state: HostState) -> t.List[str]:
     """Combine Python coverage files and return a list of the output files."""
     coverage = initialize_coverage(args, host_state)
 
@@ -188,7 +188,7 @@ def _command_coverage_combine_python(args, host_state):  # type: (CoverageCombin
     return sorted(output_files)
 
 
-def _command_coverage_combine_powershell(args):  # type: (CoverageCombineConfig) -> t.List[str]
+def _command_coverage_combine_powershell(args: CoverageCombineConfig) -> t.List[str]:
     """Combine PowerShell coverage files and return a list of the output files."""
     coverage_files = get_powershell_coverage_files()
 
@@ -262,7 +262,7 @@ def _command_coverage_combine_powershell(args):  # type: (CoverageCombineConfig)
     return sorted(output_files)
 
 
-def _get_coverage_targets(args, walk_func):  # type: (CoverageCombineConfig, t.Callable) -> t.List[t.Tuple[str, int]]
+def _get_coverage_targets(args: CoverageCombineConfig, walk_func: t.Callable) -> t.List[t.Tuple[str, int]]:
     """Return a list of files to cover and the number of lines in each file, using the given function as the source of the files."""
     sources = []
 
@@ -316,7 +316,7 @@ def _build_stub_groups(
     return groups
 
 
-def get_coverage_group(args, coverage_file):  # type: (CoverageCombineConfig, str) -> t.Optional[str]
+def get_coverage_group(args: CoverageCombineConfig, coverage_file: str) -> t.Optional[str]:
     """Return the name of the coverage group for the specified coverage file, or None if no group was found."""
     parts = os.path.basename(coverage_file).split('=', 4)
 
@@ -350,7 +350,7 @@ def get_coverage_group(args, coverage_file):  # type: (CoverageCombineConfig, st
 
 class CoverageCombineConfig(CoverageConfig):
     """Configuration for the coverage combine command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
         self.group_by = frozenset(args.group_by) if args.group_by else frozenset()  # type: t.FrozenSet[str]

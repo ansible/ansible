@@ -31,7 +31,7 @@ from . import (
 
 class AzureCloudProvider(CloudProvider):
     """Azure cloud provider plugin. Sets up cloud resources before delegation."""
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
+    def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
         self.aci = None  # type: t.Optional[AnsibleCoreCI]
@@ -47,7 +47,7 @@ class AzureCloudProvider(CloudProvider):
 
         super().filter(targets, exclude)
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super().setup()
 
@@ -56,14 +56,14 @@ class AzureCloudProvider(CloudProvider):
 
         get_config(self.config_path)  # check required variables
 
-    def cleanup(self):  # type: () -> None
+    def cleanup(self) -> None:
         """Clean up the cloud resource and any temporary configuration files after tests complete."""
         if self.aci:
             self.aci.stop()
 
         super().cleanup()
 
-    def _setup_dynamic(self):  # type: () -> None
+    def _setup_dynamic(self) -> None:
         """Request Azure credentials through ansible-core-ci."""
         display.info('Provisioning %s cloud environment.' % self.platform, verbosity=1)
 
@@ -96,14 +96,14 @@ class AzureCloudProvider(CloudProvider):
 
         self._write_config(config)
 
-    def _create_ansible_core_ci(self):  # type: () -> AnsibleCoreCI
+    def _create_ansible_core_ci(self) -> AnsibleCoreCI:
         """Return an Azure instance of AnsibleCoreCI."""
         return AnsibleCoreCI(self.args, CloudResource(platform='azure'))
 
 
 class AzureCloudEnvironment(CloudEnvironment):
     """Azure cloud environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         env_vars = get_config(self.config_path)
 
@@ -121,7 +121,7 @@ class AzureCloudEnvironment(CloudEnvironment):
             ansible_vars=ansible_vars,
         )
 
-    def on_failure(self, target, tries):  # type: (IntegrationTarget, int) -> None
+    def on_failure(self, target: IntegrationTarget, tries: int) -> None:
         """Callback to run when an integration target fails."""
         if not tries and self.managed:
             display.notice('If %s failed due to permissions, the test policy may need to be updated.' % target.name)

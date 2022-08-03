@@ -38,7 +38,7 @@ def calculate_best_confidence(choices, metadata):  # type: (t.Tuple[t.Tuple[str,
     return best_confidence
 
 
-def calculate_confidence(path, line, metadata):  # type: (str, int, Metadata) -> int
+def calculate_confidence(path: str, line: int, metadata: Metadata) -> int:
     """Return the confidence level for a test result associated with the given file path and line number."""
     ranges = metadata.changes.get(path)
 
@@ -60,7 +60,7 @@ def calculate_confidence(path, line, metadata):  # type: (str, int, Metadata) ->
 
 class TestResult:
     """Base class for test results."""
-    def __init__(self, command, test, python_version=None):  # type: (str, str, t.Optional[str]) -> None
+    def __init__(self, command: str, test: str, python_version: t.Optional[str] = None) -> None:
         self.command = command
         self.test = test
         self.python_version = python_version
@@ -69,7 +69,7 @@ class TestResult:
         if self.python_version:
             self.name += '-python-%s' % self.python_version
 
-    def write(self, args):  # type: (TestConfig) -> None
+    def write(self, args: TestConfig) -> None:
         """Write the test results to various locations."""
         self.write_console()
         self.write_bot(args)
@@ -80,19 +80,19 @@ class TestResult:
         if args.junit:
             self.write_junit(args)
 
-    def write_console(self):  # type: () -> None
+    def write_console(self) -> None:
         """Write results to console."""
 
-    def write_lint(self):  # type: () -> None
+    def write_lint(self) -> None:
         """Write lint results to stdout."""
 
-    def write_bot(self, args):  # type: (TestConfig) -> None
+    def write_bot(self, args: TestConfig) -> None:
         """Write results to a file for ansibullbot to consume."""
 
-    def write_junit(self, args):  # type: (TestConfig) -> None
+    def write_junit(self, args: TestConfig) -> None:
         """Write results to a junit XML file."""
 
-    def create_result_name(self, extension):  # type: (str) -> str
+    def create_result_name(self, extension: str) -> str:
         """Return the name of the result file using the given extension."""
         name = 'ansible-test-%s' % self.command
 
@@ -106,7 +106,7 @@ class TestResult:
 
         return name
 
-    def save_junit(self, args, test_case):  # type: (TestConfig, junit_xml.TestCase) -> None
+    def save_junit(self, args: TestConfig, test_case: junit_xml.TestCase) -> None:
         """Save the given test case results to disk as JUnit XML."""
         suites = junit_xml.TestSuites(
             suites=[
@@ -128,12 +128,12 @@ class TestResult:
 
 class TestTimeout(TestResult):
     """Test timeout."""
-    def __init__(self, timeout_duration):  # type: (int) -> None
+    def __init__(self, timeout_duration: int) -> None:
         super().__init__(command='timeout', test='')
 
         self.timeout_duration = timeout_duration
 
-    def write(self, args):  # type: (TestConfig) -> None
+    def write(self, args: TestConfig) -> None:
         """Write the test results to various locations."""
         message = 'Tests were aborted after exceeding the %d minute time limit.' % self.timeout_duration
 
@@ -180,7 +180,7 @@ One or more of the following situations may be responsible:
 
 class TestSuccess(TestResult):
     """Test success."""
-    def write_junit(self, args):  # type: (TestConfig) -> None
+    def write_junit(self, args: TestConfig) -> None:
         """Write results to a junit XML file."""
         test_case = junit_xml.TestCase(classname=self.command, name=self.name)
 
@@ -189,19 +189,19 @@ class TestSuccess(TestResult):
 
 class TestSkipped(TestResult):
     """Test skipped."""
-    def __init__(self, command, test, python_version=None):  # type: (str, str, t.Optional[str]) -> None
+    def __init__(self, command: str, test: str, python_version: t.Optional[str] = None) -> None:
         super().__init__(command, test, python_version)
 
         self.reason = None  # type: t.Optional[str]
 
-    def write_console(self):  # type: () -> None
+    def write_console(self) -> None:
         """Write results to console."""
         if self.reason:
             display.warning(self.reason)
         else:
             display.info('No tests applicable.', verbosity=1)
 
-    def write_junit(self, args):  # type: (TestConfig) -> None
+    def write_junit(self, args: TestConfig) -> None:
         """Write results to a junit XML file."""
         test_case = junit_xml.TestCase(
             classname=self.command,
@@ -232,14 +232,14 @@ class TestFailure(TestResult):
         self.messages = messages
         self.summary = summary
 
-    def write(self, args):  # type: (TestConfig) -> None
+    def write(self, args: TestConfig) -> None:
         """Write the test results to various locations."""
         if args.metadata.changes:
             self.populate_confidence(args.metadata)
 
         super().write(args)
 
-    def write_console(self):  # type: () -> None
+    def write_console(self) -> None:
         """Write results to console."""
         if self.summary:
             display.error(self.summary)
@@ -258,7 +258,7 @@ class TestFailure(TestResult):
             if doc_url:
                 display.info('See documentation for help: %s' % doc_url)
 
-    def write_lint(self):  # type: () -> None
+    def write_lint(self) -> None:
         """Write lint results to stdout."""
         if self.summary:
             command = self.format_command()
@@ -270,7 +270,7 @@ class TestFailure(TestResult):
             for message in self.messages:
                 print(message)  # display goes to stderr, this should be on stdout
 
-    def write_junit(self, args):  # type: (TestConfig) -> None
+    def write_junit(self, args: TestConfig) -> None:
         """Write results to a junit XML file."""
         title = self.format_title()
         output = self.format_block()
@@ -288,7 +288,7 @@ class TestFailure(TestResult):
 
         self.save_junit(args, test_case)
 
-    def write_bot(self, args):  # type: (TestConfig) -> None
+    def write_bot(self, args: TestConfig) -> None:
         """Write results to a file for ansibullbot to consume."""
         docs = self.find_docs()
         message = self.format_title(help_link=docs)
@@ -315,13 +315,13 @@ class TestFailure(TestResult):
 
         write_json_test_results(ResultType.BOT, self.create_result_name('.json'), bot_data)
 
-    def populate_confidence(self, metadata):  # type: (Metadata) -> None
+    def populate_confidence(self, metadata: Metadata) -> None:
         """Populate test result confidence using the provided metadata."""
         for message in self.messages:
             if message.confidence is None:
                 message.confidence = calculate_confidence(message.path, message.line, metadata)
 
-    def format_command(self):  # type: () -> str
+    def format_command(self) -> str:
         """Return a string representing the CLI command associated with the test failure."""
         command = 'ansible-test %s' % self.command
 
@@ -356,7 +356,7 @@ class TestFailure(TestResult):
 
         return url
 
-    def format_title(self, help_link=None):  # type: (t.Optional[str]) -> str
+    def format_title(self, help_link: t.Optional[str] = None) -> str:
         """Return a string containing a title/heading for this test failure, including an optional help link to explain the test."""
         command = self.format_command()
 
@@ -374,7 +374,7 @@ class TestFailure(TestResult):
 
         return title
 
-    def format_block(self):  # type: () -> str
+    def format_block(self) -> str:
         """Format the test summary or messages as a block of text and return the result."""
         if self.summary:
             block = self.summary
@@ -411,37 +411,37 @@ class TestMessage:
         self.confidence = confidence
 
     @property
-    def path(self):  # type: () -> str
+    def path(self) -> str:
         """Return the path."""
         return self.__path
 
     @property
-    def line(self):  # type: () -> int
+    def line(self) -> int:
         """Return the line number, or 0 if none is available."""
         return self.__line
 
     @property
-    def column(self):  # type: () -> int
+    def column(self) -> int:
         """Return the column number, or 0 if none is available."""
         return self.__column
 
     @property
-    def level(self):  # type: () -> str
+    def level(self) -> str:
         """Return the level."""
         return self.__level
 
     @property
-    def code(self):  # type: () -> t.Optional[str]
+    def code(self) -> t.Optional[str]:
         """Return the code, if any."""
         return self.__code
 
     @property
-    def message(self):  # type: () -> str
+    def message(self) -> str:
         """Return the message."""
         return self.__message
 
     @property
-    def tuple(self):  # type: () -> t.Tuple[str, int, int, str, t.Optional[str], str]
+    def tuple(self) -> t.Tuple[str, int, int, str, t.Optional[str], str]:
         """Return a tuple with all the immutable values of this test message."""
         return self.__path, self.__line, self.__column, self.__level, self.__code, self.__message
 
@@ -469,7 +469,7 @@ class TestMessage:
     def __str__(self):
         return self.format()
 
-    def format(self, show_confidence=False):  # type: (bool) -> str
+    def format(self, show_confidence: bool = False) -> str:
         """Return a string representation of this message, optionally including the confidence level."""
         if self.__code:
             msg = '%s: %s' % (self.__code, self.__message)

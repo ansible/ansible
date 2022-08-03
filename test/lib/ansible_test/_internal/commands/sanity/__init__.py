@@ -131,7 +131,7 @@ DOCUMENTABLE_PLUGINS = (
 created_venvs = []  # type: t.List[str]
 
 
-def command_sanity(args):  # type: (SanityConfig) -> None
+def command_sanity(args: SanityConfig) -> None:
     """Run sanity tests."""
     create_result_directories(args)
 
@@ -307,7 +307,7 @@ def command_sanity(args):  # type: (SanityConfig) -> None
 
 
 @cache
-def collect_code_smell_tests():  # type: () -> t.Tuple[SanityTest, ...]
+def collect_code_smell_tests() -> t.Tuple[SanityTest, ...]:
     """Return a tuple of available code smell sanity tests."""
     paths = glob.glob(os.path.join(SANITY_ROOT, 'code-smell', '*.py'))
 
@@ -326,7 +326,7 @@ class SanityIgnoreParser:
     """Parser for the consolidated sanity test ignore file."""
     NO_CODE = '_'
 
-    def __init__(self, args):  # type: (SanityConfig) -> None
+    def __init__(self, args: SanityConfig) -> None:
         if data_context().content.collection:
             ansible_version = '%s.%s' % tuple(get_ansible_version().split('.')[:2])
 
@@ -509,7 +509,7 @@ class SanityIgnoreParser:
             self.ignores[test_name][path][error_code] = line_no
 
     @staticmethod
-    def load(args):  # type: (SanityConfig) -> SanityIgnoreParser
+    def load(args: SanityConfig) -> SanityIgnoreParser:
         """Return the current SanityIgnore instance, initializing it if needed."""
         try:
             return SanityIgnoreParser.instance  # type: ignore[attr-defined]
@@ -546,11 +546,11 @@ class SanityIgnoreProcessor:
         self.skip_entries = self.parser.skips.get(full_name, {})
         self.used_line_numbers = set()  # type: t.Set[int]
 
-    def filter_skipped_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+    def filter_skipped_targets(self, targets: t.List[TestTarget]) -> t.List[TestTarget]:
         """Return the given targets, with any skipped paths filtered out."""
         return sorted(target for target in targets if target.path not in self.skip_entries)
 
-    def process_errors(self, errors, paths):  # type: (t.List[SanityMessage], t.List[str]) -> t.List[SanityMessage]
+    def process_errors(self, errors: t.List[SanityMessage], paths: t.List[str]) -> t.List[SanityMessage]:
         """Return the given errors filtered for ignores and with any settings related errors included."""
         errors = self.filter_messages(errors)
         errors.extend(self.get_errors(paths))
@@ -559,7 +559,7 @@ class SanityIgnoreProcessor:
 
         return errors
 
-    def filter_messages(self, messages):  # type: (t.List[SanityMessage]) -> t.List[SanityMessage]
+    def filter_messages(self, messages: t.List[SanityMessage]) -> t.List[SanityMessage]:
         """Return a filtered list of the given messages using the entries that have been loaded."""
         filtered = []
 
@@ -581,7 +581,7 @@ class SanityIgnoreProcessor:
 
         return filtered
 
-    def get_errors(self, paths):  # type: (t.List[str]) -> t.List[SanityMessage]
+    def get_errors(self, paths: t.List[str]) -> t.List[SanityMessage]:
         """Return error messages related to issues with the file."""
         messages = []  # type: t.List[SanityMessage]
 
@@ -617,13 +617,13 @@ class SanityIgnoreProcessor:
 
 class SanitySuccess(TestSuccess):
     """Sanity test success."""
-    def __init__(self, test, python_version=None):  # type: (str, t.Optional[str]) -> None
+    def __init__(self, test: str, python_version: t.Optional[str] = None) -> None:
         super().__init__(COMMAND, test, python_version)
 
 
 class SanitySkipped(TestSkipped):
     """Sanity test skipped."""
-    def __init__(self, test, python_version=None):  # type: (str, t.Optional[str]) -> None
+    def __init__(self, test: str, python_version: t.Optional[str] = None) -> None:
         super().__init__(COMMAND, test, python_version)
 
 
@@ -650,14 +650,14 @@ class SanityTargets:
         self.include = include
 
     @staticmethod
-    def create(include, exclude, require):  # type: (t.List[str], t.List[str], t.List[str]) -> SanityTargets
+    def create(include: t.List[str], exclude: t.List[str], require: t.List[str]) -> SanityTargets:
         """Create a SanityTargets instance from the given include, exclude and require lists."""
         _targets = SanityTargets.get_targets()
         _include = walk_internal_targets(_targets, include, exclude, require)
         return SanityTargets(_targets, _include)
 
     @staticmethod
-    def filter_and_inject_targets(test, targets):  # type: (SanityTest, t.Iterable[TestTarget]) -> t.List[TestTarget]
+    def filter_and_inject_targets(test: SanityTest, targets: t.Iterable[TestTarget]) -> t.List[TestTarget]:
         """Filter and inject targets based on test requirements and the given target list."""
         test_targets = list(targets)
 
@@ -680,7 +680,7 @@ class SanityTargets:
         return test_targets
 
     @staticmethod
-    def get_targets():  # type: () -> t.Tuple[TestTarget, ...]
+    def get_targets() -> t.Tuple[TestTarget, ...]:
         """Return a tuple of sanity test targets. Uses a cached version when available."""
         try:
             return SanityTargets.get_targets.targets  # type: ignore[attr-defined]
@@ -696,7 +696,7 @@ class SanityTest(metaclass=abc.ABCMeta):
     """Sanity test base class."""
     ansible_only = False
 
-    def __init__(self, name=None):  # type: (t.Optional[str]) -> None
+    def __init__(self, name: t.Optional[str] = None) -> None:
         if not name:
             name = self.__class__.__name__
             name = re.sub(r'Test$', '', name)  # drop Test suffix
@@ -712,58 +712,58 @@ class SanityTest(metaclass=abc.ABCMeta):
         self.optional_error_codes = set()  # type: t.Set[str]
 
     @property
-    def error_code(self):  # type: () -> t.Optional[str]
+    def error_code(self) -> t.Optional[str]:
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return None
 
     @property
-    def can_ignore(self):  # type: () -> bool
+    def can_ignore(self) -> bool:
         """True if the test supports ignore entries."""
         return True
 
     @property
-    def can_skip(self):  # type: () -> bool
+    def can_skip(self) -> bool:
         """True if the test supports skip entries."""
         return not self.all_targets and not self.no_targets
 
     @property
-    def all_targets(self):  # type: () -> bool
+    def all_targets(self) -> bool:
         """True if test targets will not be filtered using includes, excludes, requires or changes. Mutually exclusive with no_targets."""
         return False
 
     @property
-    def no_targets(self):  # type: () -> bool
+    def no_targets(self) -> bool:
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return False
 
     @property
-    def include_directories(self):  # type: () -> bool
+    def include_directories(self) -> bool:
         """True if the test targets should include directories."""
         return False
 
     @property
-    def include_symlinks(self):  # type: () -> bool
+    def include_symlinks(self) -> bool:
         """True if the test targets should include symlinks."""
         return False
 
     @property
-    def py2_compat(self):  # type: () -> bool
+    def py2_compat(self) -> bool:
         """True if the test only applies to code that runs on Python 2.x."""
         return False
 
     @property
-    def supported_python_versions(self):  # type: () -> t.Optional[t.Tuple[str, ...]]
+    def supported_python_versions(self) -> t.Optional[t.Tuple[str, ...]]:
         """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
         return CONTROLLER_PYTHON_VERSIONS
 
-    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]  # pylint: disable=unused-argument
+    def filter_targets(self, targets: t.List[TestTarget]) -> t.List[TestTarget]:  # pylint: disable=unused-argument
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         if self.no_targets:
             return []
 
         raise NotImplementedError('Sanity test "%s" must implement "filter_targets" or set "no_targets" to True.' % self.name)
 
-    def filter_targets_by_version(self, args, targets, python_version):  # type: (SanityConfig, t.List[TestTarget], str) -> t.List[TestTarget]
+    def filter_targets_by_version(self, args: SanityConfig, targets: t.List[TestTarget], python_version: str) -> t.List[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test, taking into account the Python version."""
         del python_version  # python_version is not used here, but derived classes may make use of it
 
@@ -785,7 +785,7 @@ class SanityTest(metaclass=abc.ABCMeta):
         return targets
 
     @staticmethod
-    def filter_remote_targets(targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+    def filter_remote_targets(targets: t.List[TestTarget]) -> t.List[TestTarget]:
         """Return a filtered list of the given targets, including only those that require support for remote-only Python versions."""
         targets = [target for target in targets if (
             is_subdir(target.path, data_context().content.module_path) or
@@ -811,15 +811,15 @@ class SanityTest(metaclass=abc.ABCMeta):
 class SanitySingleVersion(SanityTest, metaclass=abc.ABCMeta):
     """Base class for sanity test plugins which should run on a single python version."""
     @property
-    def require_libyaml(self):  # type: () -> bool
+    def require_libyaml(self) -> bool:
         """True if the test requires PyYAML to have libyaml support."""
         return False
 
     @abc.abstractmethod
-    def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         """Run the sanity test and return the result."""
 
-    def load_processor(self, args):  # type: (SanityConfig) -> SanityIgnoreProcessor
+    def load_processor(self, args: SanityConfig) -> SanityIgnoreProcessor:
         """Load the ignore processor for this sanity test."""
         return SanityIgnoreProcessor(args, self, None)
 
@@ -890,32 +890,32 @@ class SanityCodeSmellTest(SanitySingleVersion):
                 raise ApplicationError('Sanity test "%s" option "no_targets" is mutually exclusive with options: %s' % (self.name, ', '.join(problems)))
 
     @property
-    def all_targets(self):  # type: () -> bool
+    def all_targets(self) -> bool:
         """True if test targets will not be filtered using includes, excludes, requires or changes. Mutually exclusive with no_targets."""
         return self.__all_targets
 
     @property
-    def no_targets(self):  # type: () -> bool
+    def no_targets(self) -> bool:
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return self.__no_targets
 
     @property
-    def include_directories(self):  # type: () -> bool
+    def include_directories(self) -> bool:
         """True if the test targets should include directories."""
         return self.__include_directories
 
     @property
-    def include_symlinks(self):  # type: () -> bool
+    def include_symlinks(self) -> bool:
         """True if the test targets should include symlinks."""
         return self.__include_symlinks
 
     @property
-    def py2_compat(self):  # type: () -> bool
+    def py2_compat(self) -> bool:
         """True if the test only applies to code that runs on Python 2.x."""
         return self.__py2_compat
 
     @property
-    def supported_python_versions(self):  # type: () -> t.Optional[t.Tuple[str, ...]]
+    def supported_python_versions(self) -> t.Optional[t.Tuple[str, ...]]:
         """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
         versions = super().supported_python_versions
 
@@ -927,7 +927,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
 
         return versions
 
-    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+    def filter_targets(self, targets: t.List[TestTarget]) -> t.List[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         if self.no_targets:
             return []
@@ -954,7 +954,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
 
         return targets
 
-    def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         """Run the sanity test and return the result."""
         cmd = [python.path, self.path]
 
@@ -1022,7 +1022,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
 
         return SanitySuccess(self.name)
 
-    def load_processor(self, args):  # type: (SanityConfig) -> SanityIgnoreProcessor
+    def load_processor(self, args: SanityConfig) -> SanityIgnoreProcessor:
         """Load the ignore processor for this sanity test."""
         return SanityIgnoreProcessor(args, self, None)
 
@@ -1030,15 +1030,15 @@ class SanityCodeSmellTest(SanitySingleVersion):
 class SanityVersionNeutral(SanityTest, metaclass=abc.ABCMeta):
     """Base class for sanity test plugins which are idependent of the python version being used."""
     @abc.abstractmethod
-    def test(self, args, targets):  # type: (SanityConfig, SanityTargets) -> TestResult
+    def test(self, args: SanityConfig, targets: SanityTargets) -> TestResult:
         """Run the sanity test and return the result."""
 
-    def load_processor(self, args):  # type: (SanityConfig) -> SanityIgnoreProcessor
+    def load_processor(self, args: SanityConfig) -> SanityIgnoreProcessor:
         """Load the ignore processor for this sanity test."""
         return SanityIgnoreProcessor(args, self, None)
 
     @property
-    def supported_python_versions(self):  # type: () -> t.Optional[t.Tuple[str, ...]]
+    def supported_python_versions(self) -> t.Optional[t.Tuple[str, ...]]:
         """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
         return None
 
@@ -1046,24 +1046,24 @@ class SanityVersionNeutral(SanityTest, metaclass=abc.ABCMeta):
 class SanityMultipleVersion(SanityTest, metaclass=abc.ABCMeta):
     """Base class for sanity test plugins which should run on multiple python versions."""
     @abc.abstractmethod
-    def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         """Run the sanity test and return the result."""
 
-    def load_processor(self, args, python_version):  # type: (SanityConfig, str) -> SanityIgnoreProcessor
+    def load_processor(self, args: SanityConfig, python_version: str) -> SanityIgnoreProcessor:
         """Load the ignore processor for this sanity test."""
         return SanityIgnoreProcessor(args, self, python_version)
 
     @property
-    def needs_pypi(self):  # type: () -> bool
+    def needs_pypi(self) -> bool:
         """True if the test requires PyPI, otherwise False."""
         return False
 
     @property
-    def supported_python_versions(self):  # type: () -> t.Optional[t.Tuple[str, ...]]
+    def supported_python_versions(self) -> t.Optional[t.Tuple[str, ...]]:
         """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
         return SUPPORTED_PYTHON_VERSIONS
 
-    def filter_targets_by_version(self, args, targets, python_version):  # type: (SanityConfig, t.List[TestTarget], str) -> t.List[TestTarget]
+    def filter_targets_by_version(self, args: SanityConfig, targets: t.List[TestTarget], python_version: str) -> t.List[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test, taking into account the Python version."""
         if not python_version:
             raise Exception('python_version is required to filter multi-version tests')
@@ -1084,7 +1084,7 @@ class SanityMultipleVersion(SanityTest, metaclass=abc.ABCMeta):
 
 
 @cache
-def sanity_get_tests():  # type: () -> t.Tuple[SanityTest, ...]
+def sanity_get_tests() -> t.Tuple[SanityTest, ...]:
     """Return a tuple of the available sanity tests."""
     import_plugins('commands/sanity')
     sanity_plugins = {}  # type: t.Dict[str, t.Type[SanityTest]]
@@ -1163,7 +1163,7 @@ def create_sanity_virtualenv(
     return virtualenv_python
 
 
-def check_sanity_virtualenv_yaml(python):  # type: (VirtualPythonConfig) -> t.Optional[bool]
+def check_sanity_virtualenv_yaml(python: VirtualPythonConfig) -> t.Optional[bool]:
     """Return True if PyYAML has libyaml support for the given sanity virtual environment, False if it does not and None if it was not found."""
     virtualenv_path = os.path.dirname(os.path.dirname(python.path))
     meta_yaml = os.path.join(virtualenv_path, 'meta.yaml.json')

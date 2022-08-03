@@ -129,7 +129,7 @@ def create_virtual_environment(args,  # type: EnvironmentConfig
     return False
 
 
-def iterate_real_pythons(version):  # type: (str) -> t.Iterable[str]
+def iterate_real_pythons(version: str) -> t.Iterable[str]:
     """
     Iterate through available real python interpreters of the requested version.
     The current interpreter will be checked and then the path will be searched.
@@ -169,7 +169,7 @@ def iterate_real_pythons(version):  # type: (str) -> t.Iterable[str]
         yield found_python
 
 
-def get_python_real_prefix(python_path):  # type: (str) -> t.Optional[str]
+def get_python_real_prefix(python_path: str) -> t.Optional[str]:
     """
     Return the real prefix of the specified interpreter or None if the interpreter is not a virtual environment created by 'virtualenv'.
     """
@@ -245,7 +245,7 @@ def run_virtualenv(args,  # type: EnvironmentConfig
     return True
 
 
-def get_virtualenv_version(args, python):  # type: (EnvironmentConfig, str) -> t.Optional[t.Tuple[int, ...]]
+def get_virtualenv_version(args: EnvironmentConfig, python: str) -> t.Optional[t.Tuple[int, ...]]:
     """Get the virtualenv version for the given python interpreter, if available, otherwise return None."""
     try:
         cache = get_virtualenv_version.cache  # type: ignore[attr-defined]

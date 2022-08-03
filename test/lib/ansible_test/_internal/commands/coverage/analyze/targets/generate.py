@@ -52,14 +52,14 @@ from . import (
 
 class CoverageAnalyzeTargetsGenerateConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets generate` command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
         self.input_dir = args.input_dir or ResultType.COVERAGE.path  # type: str
         self.output_file = args.output_file  # type: str
 
 
-def command_coverage_analyze_targets_generate(args):  # type: (CoverageAnalyzeTargetsGenerateConfig) -> None
+def command_coverage_analyze_targets_generate(args: CoverageAnalyzeTargetsGenerateConfig) -> None:
     """Analyze code coverage data to determine which integration test targets provide coverage for each arc or line."""
     host_state = prepare_profiles(args)  # coverage analyze targets generate
 
@@ -148,11 +148,11 @@ def prune_invalid_filenames(
             del results[path]
 
 
-def get_target_name(path):  # type: (str) -> str
+def get_target_name(path: str) -> str:
     """Extract the test target name from the given coverage path."""
     return to_text(os.path.basename(path).split('=')[1])
 
 
-def is_integration_coverage_file(path):  # type: (str) -> bool
+def is_integration_coverage_file(path: str) -> bool:
     """Returns True if the coverage file came from integration tests, otherwise False."""
     return os.path.basename(path).split('=')[0] in ('integration', 'windows-integration', 'network-integration')

@@ -78,7 +78,7 @@ from .content_config import (
 
 
 @contextlib.contextmanager
-def delegation_context(args, host_state):  # type: (EnvironmentConfig, HostState) -> t.Iterator[None]
+def delegation_context(args: EnvironmentConfig, host_state: HostState) -> t.Iterator[None]:
     """Context manager for serialized host state during delegation."""
     make_dirs(ResultType.TMP.path)
 
@@ -99,7 +99,7 @@ def delegation_context(args, host_state):  # type: (EnvironmentConfig, HostState
             args.host_path = None
 
 
-def delegate(args, host_state, exclude, require):  # type: (CommonConfig, HostState, t.List[str], t.List[str]) -> None
+def delegate(args: CommonConfig, host_state: HostState, exclude: t.List[str], require: t.List[str]) -> None:
     """Delegate execution of ansible-test to another environment."""
     assert isinstance(args, EnvironmentConfig)
 
@@ -121,7 +121,7 @@ def delegate(args, host_state, exclude, require):  # type: (CommonConfig, HostSt
             delegate_command(args, host_state, exclude, require)
 
 
-def delegate_command(args, host_state, exclude, require):  # type: (EnvironmentConfig, HostState, t.List[str], t.List[str]) -> None
+def delegate_command(args: EnvironmentConfig, host_state: HostState, exclude: t.List[str], require: t.List[str]) -> None:
     """Delegate execution based on the provided host state."""
     con = host_state.controller_profile.get_origin_controller_connection()
     working_directory = host_state.controller_profile.get_working_directory()
@@ -227,7 +227,7 @@ def insert_options(command, options):
     return result
 
 
-def download_results(args, con, content_root, success):  # type: (EnvironmentConfig, Connection, str, bool) -> None
+def download_results(args: EnvironmentConfig, con: Connection, content_root: str, success: bool) -> None:
     """Download results from a delegated controller."""
     remote_results_root = os.path.join(content_root, data_context().content.results_path)
     local_test_root = os.path.dirname(os.path.join(data_context().content.root, data_context().content.results_path))

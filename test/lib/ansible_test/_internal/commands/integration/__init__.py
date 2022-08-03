@@ -130,7 +130,7 @@ from .coverage import (
 THostProfile = t.TypeVar('THostProfile', bound=HostProfile)
 
 
-def generate_dependency_map(integration_targets):  # type: (t.List[IntegrationTarget]) -> t.Dict[str, t.Set[IntegrationTarget]]
+def generate_dependency_map(integration_targets: t.List[IntegrationTarget]) -> t.Dict[str, t.Set[IntegrationTarget]]:
     """Analyze the given list of integration test targets and return a dictionary expressing target names and the targets on which they depend."""
     targets_dict = dict((target.name, target) for target in integration_targets)
     target_dependencies = analyze_integration_target_dependencies(integration_targets)
@@ -157,7 +157,7 @@ def generate_dependency_map(integration_targets):  # type: (t.List[IntegrationTa
     return dependency_map
 
 
-def get_files_needed(target_dependencies):  # type: (t.List[IntegrationTarget]) -> t.List[str]
+def get_files_needed(target_dependencies: t.List[IntegrationTarget]) -> t.List[str]:
     """Return a list of files needed by the given list of target dependencies."""
     files_needed = []  # type: t.List[str]
 
@@ -174,7 +174,7 @@ def get_files_needed(target_dependencies):  # type: (t.List[IntegrationTarget]) 
     return files_needed
 
 
-def check_inventory(args, inventory_path):  # type: (IntegrationConfig, str) -> None
+def check_inventory(args: IntegrationConfig, inventory_path: str) -> None:
     """Check the given inventory for issues."""
     if not isinstance(args.controller, OriginConfig):
         if os.path.exists(inventory_path):
@@ -196,7 +196,7 @@ def get_inventory_absolute_path(args: IntegrationConfig, target: InventoryConfig
     return path
 
 
-def get_inventory_relative_path(args):  # type: (IntegrationConfig) -> str
+def get_inventory_relative_path(args: IntegrationConfig) -> str:
     """Return the inventory path used for the given integration configuration relative to the content root."""
     inventory_names = {
         PosixIntegrationConfig: 'inventory',
@@ -207,7 +207,7 @@ def get_inventory_relative_path(args):  # type: (IntegrationConfig) -> str
     return os.path.join(data_context().content.integration_path, inventory_names[type(args)])
 
 
-def delegate_inventory(args, inventory_path_src):  # type: (IntegrationConfig, str) -> None
+def delegate_inventory(args: IntegrationConfig, inventory_path_src: str) -> None:
     """Make the given inventory available during delegation."""
     if isinstance(args, PosixIntegrationConfig):
         return
@@ -839,7 +839,7 @@ class IntegrationCache(CommonCache):
         return self.get('dependency_map', lambda: generate_dependency_map(self.integration_targets))
 
 
-def filter_profiles_for_target(args, profiles, target):  # type: (IntegrationConfig, t.List[THostProfile], IntegrationTarget) -> t.List[THostProfile]
+def filter_profiles_for_target(args: IntegrationConfig, profiles: t.List[THostProfile], target: IntegrationTarget) -> t.List[THostProfile]:
     """Return a list of profiles after applying target filters."""
     if target.target_type == IntegrationTargetType.CONTROLLER:
         profile_filter = get_target_filter(args, [args.controller], True)
@@ -853,7 +853,7 @@ def filter_profiles_for_target(args, profiles, target):  # type: (IntegrationCon
     return profiles
 
 
-def get_integration_filter(args, targets):  # type: (IntegrationConfig, t.List[IntegrationTarget]) -> t.Set[str]
+def get_integration_filter(args: IntegrationConfig, targets: t.List[IntegrationTarget]) -> t.Set[str]:
     """Return a list of test targets to skip based on the host(s) that will be used to run the specified test targets."""
     invalid_targets = sorted(target.name for target in targets if target.target_type not in (IntegrationTargetType.CONTROLLER, IntegrationTargetType.TARGET))
 
@@ -956,7 +956,7 @@ def command_integration_filter(args,  # type: TIntegrationConfig
     return host_state, internal_targets
 
 
-def requirements(args, host_state):  # type: (IntegrationConfig, HostState) -> None
+def requirements(args: IntegrationConfig, host_state: HostState) -> None:
     """Install requirements."""
     target_profile = host_state.target_profiles[0]
 

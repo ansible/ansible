@@ -45,13 +45,13 @@ MAX_NUM_OPEN_FILES = 10240
 
 class DockerCommand:
     """Details about the available docker command."""
-    def __init__(self, command, executable, version):  # type: (str, str, str) -> None
+    def __init__(self, command: str, executable: str, version: str) -> None:
         self.command = command
         self.executable = executable
         self.version = version
 
     @staticmethod
-    def detect():  # type: () -> t.Optional[DockerCommand]
+    def detect() -> t.Optional[DockerCommand]:
         """Detect and return the available docker command, or None."""
         if os.environ.get('ANSIBLE_TEST_PREFER_PODMAN'):
             commands = list(reversed(DOCKER_COMMANDS))
@@ -74,7 +74,7 @@ class DockerCommand:
         return None
 
 
-def require_docker():  # type: () -> DockerCommand
+def require_docker() -> DockerCommand:
     """Return the docker command to invoke. Raises an exception if docker is not available."""
     if command := get_docker_command():
         return command
@@ -83,18 +83,18 @@ def require_docker():  # type: () -> DockerCommand
 
 
 @cache
-def get_docker_command():  # type: () -> t.Optional[DockerCommand]
+def get_docker_command() -> t.Optional[DockerCommand]:
     """Return the docker command to invoke, or None if docker is not available."""
     return DockerCommand.detect()
 
 
-def docker_available():  # type: () -> bool
+def docker_available() -> bool:
     """Return True if docker is available, otherwise return False."""
     return bool(get_docker_command())
 
 
 @cache
-def get_docker_host_ip():  # type: () -> str
+def get_docker_host_ip() -> str:
     """Return the IP of the Docker host."""
     docker_host_ip = socket.gethostbyname(get_docker_hostname())
 
@@ -104,7 +104,7 @@ def get_docker_host_ip():  # type: () -> str
 
 
 @cache
-def get_docker_hostname():  # type: () -> str
+def get_docker_hostname() -> str:
     """Return the hostname of the Docker service."""
     docker_host = os.environ.get('DOCKER_HOST')
 
@@ -123,7 +123,7 @@ def get_docker_hostname():  # type: () -> str
 
 
 @cache
-def get_podman_host_ip():  # type: () -> str
+def get_podman_host_ip() -> str:
     """Return the IP of the Podman host."""
     podman_host_ip = socket.gethostbyname(get_podman_hostname())
 
@@ -133,7 +133,7 @@ def get_podman_host_ip():  # type: () -> str
 
 
 @cache
-def get_podman_default_hostname():  # type: () -> t.Optional[str]
+def get_podman_default_hostname() -> t.Optional[str]:
     """
     Return the default hostname of the Podman service.
 
@@ -160,7 +160,7 @@ def get_podman_default_hostname():  # type: () -> t.Optional[str]
 
 
 @cache
-def _get_podman_remote():  # type: () -> t.Optional[str]
+def _get_podman_remote() -> t.Optional[str]:
     # URL value resolution precedence:
     # - command line value
     # - environment variable CONTAINER_HOST
@@ -183,7 +183,7 @@ def _get_podman_remote():  # type: () -> t.Optional[str]
 
 
 @cache
-def get_podman_hostname():  # type: () -> str
+def get_podman_hostname() -> str:
     """Return the hostname of the Podman service."""
     hostname = _get_podman_remote()
 
@@ -195,7 +195,7 @@ def get_podman_hostname():  # type: () -> str
 
 
 @cache
-def get_docker_container_id():  # type: () -> t.Optional[str]
+def get_docker_container_id() -> t.Optional[str]:
     """Return the current container ID if running in a container, otherwise return None."""
     path = '/proc/self/cpuset'
     container_id = None
@@ -219,7 +219,7 @@ def get_docker_container_id():  # type: () -> t.Optional[str]
     return container_id
 
 
-def get_docker_preferred_network_name(args):  # type: (EnvironmentConfig) -> str
+def get_docker_preferred_network_name(args: EnvironmentConfig) -> str:
     """
     Return the preferred network name for use with Docker. The selection logic is:
     - the network selected by the user with `--docker-network`
@@ -249,12 +249,12 @@ def get_docker_preferred_network_name(args):  # type: (EnvironmentConfig) -> str
     return network
 
 
-def is_docker_user_defined_network(network):  # type: (str) -> bool
+def is_docker_user_defined_network(network: str) -> bool:
     """Return True if the network being used is a user-defined network."""
     return bool(network) and network != 'bridge'
 
 
-def docker_pull(args, image):  # type: (EnvironmentConfig, str) -> None
+def docker_pull(args: EnvironmentConfig, image: str) -> None:
     """
     Pull the specified image if it is not available.
     Images without a tag or digest will not be pulled.
@@ -279,7 +279,7 @@ def docker_pull(args, image):  # type: (EnvironmentConfig, str) -> None
     raise ApplicationError('Failed to pull docker image "%s".' % image)
 
 
-def docker_cp_to(args, container_id, src, dst):  # type: (EnvironmentConfig, str, str, str) -> None
+def docker_cp_to(args: EnvironmentConfig, container_id: str, src: str, dst: str) -> None:
     """Copy a file to the specified container."""
     docker_command(args, ['cp', src, '%s:%s' % (container_id, dst)], capture=True)
 
@@ -327,7 +327,7 @@ def docker_run(
     raise ApplicationError('Failed to run docker image "%s".' % image)
 
 
-def docker_start(args, container_id, options=None):  # type: (EnvironmentConfig, str, t.Optional[t.List[str]]) -> t.Tuple[t.Optional[str], t.Optional[str]]
+def docker_start(args: EnvironmentConfig, container_id: str, options: t.Optional[t.List[str]] = None) -> t.Tuple[t.Optional[str], t.Optional[str]]:
     """
     Start a docker container by name or ID
     """
@@ -345,7 +345,7 @@ def docker_start(args, container_id, options=None):  # type: (EnvironmentConfig,
     raise ApplicationError('Failed to run docker container "%s".' % container_id)
 
 
-def docker_rm(args, container_id):  # type: (EnvironmentConfig, str) -> None
+def docker_rm(args: EnvironmentConfig, container_id: str) -> None:
     """Remove the specified container."""
     try:
         docker_command(args, ['rm', '-f', container_id], capture=True)
@@ -377,70 +377,70 @@ class DockerInspect:
     # primary properties
 
     @property
-    def id(self):  # type: () -> str
+    def id(self) -> str:
         """Return the ID of the container."""
         return self.inspection['Id']
 
     @property
-    def network_settings(self):  # type: () -> t.Dict[str, t.Any]
+    def network_settings(self) -> t.Dict[str, t.Any]:
         """Return a dictionary of the container network settings."""
         return self.inspection['NetworkSettings']
 
     @property
-    def state(self):  # type: () -> t.Dict[str, t.Any]
+    def state(self) -> t.Dict[str, t.Any]:
         """Return a dictionary of the container state."""
         return self.inspection['State']
 
     @property
-    def config(self):  # type: () -> t.Dict[str, t.Any]
+    def config(self) -> t.Dict[str, t.Any]:
         """Return a dictionary of the container configuration."""
         return self.inspection['Config']
 
     # nested properties
 
     @property
-    def ports(self):  # type: () -> t.Dict[str, t.List[t.Dict[str, str]]]
+    def ports(self) -> t.Dict[str, t.List[t.Dict[str, str]]]:
         """Return a dictionary of ports the container has published."""
         return self.network_settings['Ports']
 
     @property
-    def networks(self):  # type: () -> t.Optional[t.Dict[str, t.Dict[str, t.Any]]]
+    def networks(self) -> t.Optional[t.Dict[str, t.Dict[str, t.Any]]]:
         """Return a dictionary of the networks the container is attached to, or None if running under podman, which does not support networks."""
         return self.network_settings.get('Networks')
 
     @property
-    def running(self):  # type: () -> bool
+    def running(self) -> bool:
         """Return True if the container is running, otherwise False."""
         return self.state['Running']
 
     @property
-    def env(self):  # type: () -> t.List[str]
+    def env(self) -> t.List[str]:
         """Return a list of the environment variables used to create the container."""
         return self.config['Env']
 
     @property
-    def image(self):  # type: () -> str
+    def image(self) -> str:
         """Return the image used to create the container."""
         return self.config['Image']
 
     # functions
 
-    def env_dict(self):  # type: () -> t.Dict[str, str]
+    def env_dict(self) -> t.Dict[str, str]:
         """Return a dictionary of the environment variables used to create the container."""
         return dict((item[0], item[1]) for item in [e.split('=', 1) for e in self.env])
 
-    def get_tcp_port(self, port):  # type: (int) -> t.Optional[t.List[t.Dict[str, str]]]
+    def get_tcp_port(self, port: int) -> t.Optional[t.List[t.Dict[str, str]]]:
         """Return a list of the endpoints published by the container for the specified TCP port, or None if it is not published."""
         return self.ports.get('%d/tcp' % port)
 
-    def get_network_names(self):  # type: () -> t.Optional[t.List[str]]
+    def get_network_names(self) -> t.Optional[t.List[str]]:
         """Return a list of the network names the container is attached to."""
         if self.networks is None:
             return None
 
         return sorted(self.networks)
 
-    def get_network_name(self):  # type: () -> str
+    def get_network_name(self) -> str:
         """Return the network name the container is attached to. Raises an exception if no network, or more than one, is attached."""
         networks = self.get_network_names()
 
@@ -452,7 +452,7 @@ class DockerInspect:
 
         return networks[0]
 
-    def get_ip_address(self):  # type: () -> t.Optional[str]
+    def get_ip_address(self) -> t.Optional[str]:
         """Return the IP address of the container for the preferred docker network."""
         if self.networks:
             network_name = get_docker_preferred_network_name(self.args)
@@ -472,7 +472,7 @@ class DockerInspect:
         return ipaddress
 
 
-def docker_inspect(args, identifier, always=False):  # type: (EnvironmentConfig, str, bool) -> DockerInspect
+def docker_inspect(args: EnvironmentConfig, identifier: str, always: bool = False) -> DockerInspect:
     """
     Return the results of `docker container inspect` for the specified container.
     Raises a ContainerNotFoundError if the container was not found.
@@ -493,12 +493,12 @@ def docker_inspect(args, identifier, always=False):  # type: (EnvironmentConfig,
     raise ContainerNotFoundError(identifier)
 
 
-def docker_network_disconnect(args, container_id, network):  # type: (EnvironmentConfig, str, str) -> None
+def docker_network_disconnect(args: EnvironmentConfig, container_id: str, network: str) -> None:
     """Disconnect the specified docker container from the given network."""
     docker_command(args, ['network', 'disconnect', network, container_id], capture=True)
 
 
-def docker_image_exists(args, image):  # type: (EnvironmentConfig, str) -> bool
+def docker_image_exists(args: EnvironmentConfig, image: str) -> bool:
     """Return True if the image exists, otherwise False."""
     try:
         docker_command(args, ['image', 'inspect', image], capture=True)
@@ -531,13 +531,13 @@ def docker_exec(
                           output_stream=output_stream, data=data)
 
 
-def docker_info(args):  # type: (CommonConfig) -> t.Dict[str, t.Any]
+def docker_info(args: CommonConfig) -> t.Dict[str, t.Any]:
     """Return a dictionary containing details from the `docker info` command."""
     stdout, _dummy = docker_command(args, ['info', '--format', '{{json .}}'], capture=True, always=True)
     return json.loads(stdout)
 
 
-def docker_version(args):  # type: (CommonConfig) -> t.Dict[str, t.Any]
+def docker_version(args: CommonConfig) -> t.Dict[str, t.Any]:
     """Return a dictionary containing details from the `docker version` command."""
     stdout, _dummy = docker_command(args, ['version', '--format', '{{json .}}'], capture=True, always=True)
     return json.loads(stdout)
@@ -565,7 +565,7 @@ def docker_command(
                        output_stream=output_stream, data=data)
 
 
-def docker_environment():  # type: () -> t.Dict[str, str]
+def docker_environment() -> t.Dict[str, str]:
     """Return a dictionary of docker related environment variables found in the current environment."""
     env = common_environment()
     env.update(dict((key, os.environ[key]) for key in os.environ if key.startswith('DOCKER_') or key.startswith('CONTAINER_')))

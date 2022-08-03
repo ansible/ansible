@@ -42,21 +42,21 @@ class PosixCompletionConfig(CompletionConfig, metaclass=abc.ABCMeta):
     """Base class for completion configuration of POSIX environments."""
     @property
     @abc.abstractmethod
-    def supported_pythons(self):  # type: () -> t.List[str]
+    def supported_pythons(self) -> t.List[str]:
         """Return a list of the supported Python versions."""
 
     @abc.abstractmethod
-    def get_python_path(self, version):  # type: (str) -> str
+    def get_python_path(self, version: str) -> str:
         """Return the path of the requested Python version."""
 
-    def get_default_python(self, controller):  # type: (bool) -> str
+    def get_default_python(self, controller: bool) -> str:
         """Return the default Python version for a controller or target as specified."""
         context_pythons = CONTROLLER_PYTHON_VERSIONS if controller else SUPPORTED_PYTHON_VERSIONS
         version = [python for python in self.supported_pythons if python in context_pythons][0]
         return version
 
     @property
-    def controller_supported(self):  # type: () -> bool
+    def controller_supported(self) -> bool:
         """True if at least one Python version is provided which supports the controller, otherwise False."""
         return any(version in CONTROLLER_PYTHON_VERSIONS for version in self.supported_pythons)
 
@@ -68,13 +68,13 @@ class PythonCompletionConfig(PosixCompletionConfig, metaclass=abc.ABCMeta):
     python_dir: str = '/usr/bin'
 
     @property
-    def supported_pythons(self):  # type: () -> t.List[str]
+    def supported_pythons(self) -> t.List[str]:
         """Return a list of the supported Python versions."""
         versions = self.python.split(',') if self.python else []
         versions = [version for version in versions if version in SUPPORTED_PYTHON_VERSIONS]
         return versions
 
-    def get_python_path(self, version):  # type: (str) -> str
+    def get_python_path(self, version: str) -> str:
         """Return the path of the requested Python version."""
         return os.path.join(self.python_dir, f'python{version}')
 
@@ -111,11 +111,11 @@ class RemoteCompletionConfig(CompletionConfig):
 @dataclasses.dataclass(frozen=True)
 class InventoryCompletionConfig(CompletionConfig):
     """Configuration for inventory files."""
-    def __init__(self):  # type: () -> None
+    def __init__(self) -> None:
         super().__init__(name='inventory')
 
     @property
-    def is_default(self):  # type: () -> bool
+    def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
         return False
 
@@ -123,14 +123,14 @@ class InventoryCompletionConfig(CompletionConfig):
 @dataclasses.dataclass(frozen=True)
 class PosixSshCompletionConfig(PythonCompletionConfig):
     """Configuration for a POSIX host reachable over SSH."""
-    def __init__(self, user, host):  # type: (str, str) -> None
+    def __init__(self, user: str, host: str) -> None:
         super().__init__(
             name=f'{user}@{host}',
             python=','.join(SUPPORTED_PYTHON_VERSIONS),
         )
 
     @property
-    def is_default(self):  # type: () -> bool
+    def is_default(self) -> bool:
         """True if the completion entry is only used for defaults, otherwise False."""
         return False
 
@@ -196,7 +196,7 @@ class WindowsRemoteCompletionConfig(RemoteCompletionConfig):
 TCompletionConfig = t.TypeVar('TCompletionConfig', bound=CompletionConfig)
 
 
-def load_completion(name, completion_type):  # type: (str, t.Type[TCompletionConfig]) -> t.Dict[str, TCompletionConfig]
+def load_completion(name: str, completion_type: t.Type[TCompletionConfig]) -> t.Dict[str, TCompletionConfig]:
     """Load the named completion entries, returning them in dictionary form using the specified completion type."""
     lines = read_lines_without_comments(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'completion', '%s.txt' % name), remove_blank_lines=True)
 
@@ -216,7 +216,7 @@ def load_completion(name, completion_type):  # type: (str, t.Type[TCompletionCon
     return completion
 
 
-def parse_completion_entry(value):  # type: (str) -> t.Tuple[str, t.Dict[str, str]]
+def parse_completion_entry(value: str) -> t.Tuple[str, t.Dict[str, str]]:
     """Parse the given completion entry, returning the entry name and a dictionary of key/value settings."""
     values = value.split()
 
@@ -242,24 +242,24 @@ def filter_completion(
 
 
 @cache
-def docker_completion():  # type: () -> t.Dict[str, DockerCompletionConfig]
+def docker_completion() -> t.Dict[str, DockerCompletionConfig]:
     """Return docker completion entries."""
     return load_completion('docker', DockerCompletionConfig)
 
 
 @cache
-def remote_completion():  # type: () -> t.Dict[str, PosixRemoteCompletionConfig]
+def remote_completion() -> t.Dict[str, PosixRemoteCompletionConfig]:
     """Return remote completion entries."""
     return load_completion('remote', PosixRemoteCompletionConfig)
 
 
 @cache
-def windows_completion():  # type: () -> t.Dict[str, WindowsRemoteCompletionConfig]
+def windows_completion() -> t.Dict[str, WindowsRemoteCompletionConfig]:
     """Return windows completion entries."""
     return load_completion('windows', WindowsRemoteCompletionConfig)
 
 
 @cache
-def network_completion():  # type: () -> t.Dict[str, NetworkRemoteCompletionConfig]
+def network_completion() -> t.Dict[str, NetworkRemoteCompletionConfig]:
     """Return network completion entries."""
     return load_completion('network', NetworkRemoteCompletionConfig)

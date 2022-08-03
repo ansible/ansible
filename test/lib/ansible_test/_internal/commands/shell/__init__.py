@@ -46,7 +46,7 @@ from ...inventory import (
 )
 
 
-def command_shell(args):  # type: (ShellConfig) -> None
+def command_shell(args: ShellConfig) -> None:
     """Entry point for the `shell` command."""
     if args.raw and isinstance(args.targets[0], ControllerConfig):
         raise ApplicationError('The --raw option has no effect on the controller.')

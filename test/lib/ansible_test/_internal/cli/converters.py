@@ -5,12 +5,12 @@ import argparse
 import typing as t
 
 
-def key_value_type(value):  # type: (str) -> t.Tuple[str, str]
+def key_value_type(value: str) -> t.Tuple[str, str]:
     """Wrapper around key_value."""
     return key_value(value)
 
 
-def key_value(value):  # type: (str) -> t.Tuple[str, str]
+def key_value(value: str) -> t.Tuple[str, str]:
     """Type parsing and validation for argparse key/value pairs separated by an '=' character."""
     parts = value.split('=')
 

@@ -13,11 +13,11 @@ from . import (
 class AnsibleLayout(LayoutProvider):
     """Layout provider for Ansible source."""
     @staticmethod
-    def is_content_root(path):  # type: (str) -> bool
+    def is_content_root(path: str) -> bool:
         """Return True if the given path is a content root for this provider."""
         return os.path.exists(os.path.join(path, 'setup.py')) and os.path.exists(os.path.join(path, 'bin/ansible-test'))
 
-    def create(self, root, paths):  # type: (str, t.List[str]) -> ContentLayout
+    def create(self, root: str, paths: t.List[str]) -> ContentLayout:
         """Create a Layout using the given root and paths."""
         plugin_paths = dict((p, os.path.join('lib/ansible/plugins', p)) for p in self.PLUGIN_TYPES)
 

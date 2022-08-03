@@ -14,11 +14,11 @@ class InstalledSource(SourceProvider):
     sequence = 0  # disable automatic detection
 
     @staticmethod
-    def is_content_root(path):  # type: (str) -> bool
+    def is_content_root(path: str) -> bool:
         """Return True if the given path is a content root for this provider."""
         return False
 
-    def get_paths(self, path):  # type: (str) -> t.List[str]
+    def get_paths(self, path: str) -> t.List[str]:
         """Return the list of available content paths under the given path."""
         paths = []
 

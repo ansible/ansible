@@ -206,7 +206,7 @@ class AnsibleCoreCI:
 
         raise self._create_http_error(response)
 
-    def get(self, tries=3, sleep=15, always_raise_on=None):  # type: (int, int, t.Optional[t.List[int]]) -> t.Optional[InstanceConnection]
+    def get(self, tries: int = 3, sleep: int = 15, always_raise_on: t.Optional[t.List[int]] = None) -> t.Optional[InstanceConnection]:
         """Get instance connection information."""
         if not self.started:
             display.info(f'Skipping invalid {self.label} instance.', verbosity=1)
@@ -270,7 +270,7 @@ class AnsibleCoreCI:
 
         return self.connection
 
-    def wait(self, iterations=90):  # type: (t.Optional[int]) -> None
+    def wait(self, iterations: t.Optional[int] = 90) -> None:
         """Wait for the instance to become ready."""
         for _iteration in range(1, iterations):
             if self.get().running:
@@ -378,7 +378,7 @@ class AnsibleCoreCI:
 
         return True
 
-    def _save(self):  # type: () -> None
+    def _save(self) -> None:
         """Save instance information."""
         if self.args.explain:
             return
@@ -387,7 +387,7 @@ class AnsibleCoreCI:
 
         write_json_file(self.path, config, create_directories=True)
 
-    def save(self):  # type: () -> t.Dict[str, str]
+    def save(self) -> t.Dict[str, str]:
         """Save instance details and return as a dictionary."""
         return dict(
             label=self.resource.get_label(),
@@ -396,7 +396,7 @@ class AnsibleCoreCI:
         )
 
     @staticmethod
-    def _create_http_error(response):  # type: (HttpResponse) -> ApplicationError
+    def _create_http_error(response: HttpResponse) -> ApplicationError:
         """Return an exception created from the given HTTP response."""
         response_json = response.json()
         stack_trace = ''
@@ -423,7 +423,7 @@ class AnsibleCoreCI:
 
 class CoreHttpError(HttpError):
     """HTTP response as an error."""
-    def __init__(self, status, remote_message, remote_stack_trace):  # type: (int, str, str) -> None
+    def __init__(self, status: int, remote_message: str, remote_stack_trace: str) -> None:
         super().__init__(status, f'{remote_message}{remote_stack_trace}')
 
         self.remote_message = remote_message
@@ -437,7 +437,7 @@ class SshKey:
     PUB_NAME = f'{KEY_NAME}.pub'
 
     @mutex
-    def __init__(self, args):  # type: (EnvironmentConfig) -> None
+    def __init__(self, args: EnvironmentConfig) -> None:
         key_pair = self.get_key_pair()
 
         if not key_pair:
@@ -466,7 +466,7 @@ class SshKey:
             self.key_contents = read_text_file(self.key).strip()
 
     @staticmethod
-    def get_relative_in_tree_private_key_path():  # type: () -> str
+    def get_relative_in_tree_private_key_path() -> str:
         """Return the ansible-test SSH private key path relative to the content tree."""
         temp_dir = ResultType.TMP.relative_path
 
@@ -474,7 +474,7 @@ class SshKey:
 
         return key
 
-    def get_in_tree_key_pair_paths(self):  # type: () -> t.Optional[t.Tuple[str, str]]
+    def get_in_tree_key_pair_paths(self) -> t.Optional[t.Tuple[str, str]]:
         """Return the ansible-test SSH key pair paths from the content tree."""
         temp_dir = ResultType.TMP.path
 
@@ -483,7 +483,7 @@ class SshKey:
 
         return key, pub
 
-    def get_source_key_pair_paths(self):  # type: () -> t.Optional[t.Tuple[str, str]]
+    def get_source_key_pair_paths(self) -> t.Optional[t.Tuple[str, str]]:
         """Return the ansible-test SSH key pair paths for the current user."""
         base_dir = os.path.expanduser('~/.ansible/test/')
 
@@ -492,7 +492,7 @@ class SshKey:
 
         return key, pub
 
-    def get_key_pair(self):  # type: () -> t.Optional[t.Tuple[str, str]]
+    def get_key_pair(self) -> t.Optional[t.Tuple[str, str]]:
         """Return the ansible-test SSH key pair paths if present, otherwise return None."""
         key, pub = self.get_in_tree_key_pair_paths()
 
@@ -506,7 +506,7 @@ class SshKey:
 
         return None
 
-    def generate_key_pair(self, args):  # type: (EnvironmentConfig) -> t.Tuple[str, str]
+    def generate_key_pair(self, args: EnvironmentConfig) -> t.Tuple[str, str]:
         """Generate an SSH key pair for use by all ansible-test invocations for the current user."""
         key, pub = self.get_source_key_pair_paths()
 

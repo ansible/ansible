@@ -32,7 +32,7 @@ class NiosProvider(CloudProvider):
     # https://github.com/ansible/nios-test-container
     DOCKER_IMAGE = 'quay.io/ansible/nios-test-container:1.4.0'
 
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
+    def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
         self.__container_from_env = os.environ.get('ANSIBLE_NIOSSIM_CONTAINER')
@@ -47,7 +47,7 @@ class NiosProvider(CloudProvider):
 
         self.uses_docker = True
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup cloud resource before delegation and reg cleanup callback."""
         super().setup()
 
@@ -56,7 +56,7 @@ class NiosProvider(CloudProvider):
         else:
             self._setup_dynamic()
 
-    def _setup_dynamic(self):  # type: () -> None
+    def _setup_dynamic(self) -> None:
         """Spawn a NIOS simulator within docker container."""
         nios_port = 443
 
@@ -76,13 +76,13 @@ class NiosProvider(CloudProvider):
 
         self._set_cloud_config('NIOS_HOST', self.DOCKER_SIMULATOR_NAME)
 
-    def _setup_static(self):  # type: () -> None
+    def _setup_static(self) -> None:
         raise NotImplementedError()
 
 
 class NiosEnvironment(CloudEnvironment):
     """NIOS environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         ansible_vars = dict(
             nios_provider=dict(

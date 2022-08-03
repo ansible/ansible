@@ -67,7 +67,7 @@ class ContentConfig:
 
 class EnvironmentConfig(CommonConfig):
     """Configuration common to all commands which execute in an environment."""
-    def __init__(self, args, command):  # type: (t.Any, str) -> None
+    def __init__(self, args: t.Any, command: str) -> None:
         super().__init__(args, command)
 
         self.host_settings = args.host_settings  # type: HostSettings
@@ -133,16 +133,16 @@ class EnvironmentConfig(CommonConfig):
             display.warning('The --no-pip-check option is deprecated and has no effect. It will be removed in a future version of ansible-test.')
 
     @property
-    def controller(self):  # type: () -> ControllerHostConfig
+    def controller(self) -> ControllerHostConfig:
         """Host configuration for the controller."""
         return self.host_settings.controller
 
     @property
-    def targets(self):  # type: () -> t.List[HostConfig]
+    def targets(self) -> t.List[HostConfig]:
         """Host configuration for the targets."""
         return self.host_settings.targets
 
-    def only_target(self, target_type):  # type: (t.Type[THostConfig]) -> THostConfig
+    def only_target(self, target_type: t.Type[THostConfig]) -> THostConfig:
         """
         Return the host configuration for the target.
         Requires that there is exactly one target of the specified type.
@@ -159,7 +159,7 @@ class EnvironmentConfig(CommonConfig):
 
         return target
 
-    def only_targets(self, target_type):  # type: (t.Type[THostConfig]) -> t.List[THostConfig]
+    def only_targets(self, target_type: t.Type[THostConfig]) -> t.List[THostConfig]:
         """
         Return a list of target host configurations.
         Requires that there are one or more targets, all the specified type.
@@ -172,7 +172,7 @@ class EnvironmentConfig(CommonConfig):
         return t.cast(t.List[THostConfig], self.targets)
 
     @property
-    def target_type(self):  # type: () -> t.Type[HostConfig]
+    def target_type(self) -> t.Type[HostConfig]:
         """
         The true type of the target(s).
         If the target is the controller, the controller type is returned.
@@ -193,7 +193,7 @@ class EnvironmentConfig(CommonConfig):
 
 class TestConfig(EnvironmentConfig):
     """Configuration common to all test commands."""
-    def __init__(self, args, command):  # type: (t.Any, str) -> None
+    def __init__(self, args: t.Any, command: str) -> None:
         super().__init__(args, command)
 
         self.coverage = args.coverage  # type: bool
@@ -234,7 +234,7 @@ class TestConfig(EnvironmentConfig):
 
 class ShellConfig(EnvironmentConfig):
     """Configuration for the shell command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'shell')
 
         self.cmd = args.cmd  # type: t.List[str]
@@ -247,7 +247,7 @@ class ShellConfig(EnvironmentConfig):
 
 class SanityConfig(TestConfig):
     """Configuration for the sanity command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'sanity')
 
         self.test = args.test  # type: t.List[str]
@@ -272,7 +272,7 @@ class SanityConfig(TestConfig):
 
 class IntegrationConfig(TestConfig):
     """Configuration for the integration command."""
-    def __init__(self, args, command):  # type: (t.Any, str) -> None
+    def __init__(self, args: t.Any, command: str) -> None:
         super().__init__(args, command)
 
         self.start_at = args.start_at  # type: str
@@ -299,7 +299,7 @@ class IntegrationConfig(TestConfig):
             self.explain = True
             self.display_stderr = True
 
-    def get_ansible_config(self):  # type: () -> str
+    def get_ansible_config(self) -> str:
         """Return the path to the Ansible config for the given config."""
         ansible_config_relative_path = os.path.join(data_context().content.integration_path, '%s.cfg' % self.command)
         ansible_config_path = os.path.join(data_context().content.root, ansible_config_relative_path)
@@ -316,19 +316,19 @@ TIntegrationConfig = t.TypeVar('TIntegrationConfig', bound=IntegrationConfig)
 
 class PosixIntegrationConfig(IntegrationConfig):
     """Configuration for the posix integration command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'integration')
 
 
 class WindowsIntegrationConfig(IntegrationConfig):
     """Configuration for the windows integration command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'windows-integration')
 
 
 class NetworkIntegrationConfig(IntegrationConfig):
     """Configuration for the network integration command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'network-integration')
 
         self.testcase = args.testcase  # type: str
@@ -336,7 +336,7 @@ class NetworkIntegrationConfig(IntegrationConfig):
 
 class UnitsConfig(TestConfig):
     """Configuration for the units command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args, 'units')
 
         self.collect_only = args.collect_only  # type: bool
