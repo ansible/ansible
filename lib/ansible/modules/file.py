@@ -25,7 +25,7 @@ options:
     description:
     - Path to the file being managed.
     type: path
-    required: yes
+    required: true
     aliases: [ dest, name ]
   state:
     description:
@@ -59,7 +59,7 @@ options:
     - Recursively set the specified file attributes on directory contents.
     - This applies only when C(state) is set to C(directory).
     type: bool
-    default: no
+    default: false
     version_added: '1.1'
   force:
     description:
@@ -68,13 +68,13 @@ options:
       not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
       C(path) file and create symlink to the C(src) file in place of it).
     type: bool
-    default: no
+    default: false
   follow:
     description:
     - This flag indicates that filesystem links, if they exist, should be followed.
     - Previous to Ansible 2.5, this was C(no) by default.
     type: bool
-    default: yes
+    default: true
     version_added: '1.8'
   modification_time:
     description:
@@ -198,7 +198,7 @@ EXAMPLES = r'''
   ansible.builtin.file:
     path: /etc/foo
     state: directory
-    recurse: yes
+    recurse: true
     owner: foo
     group: foo
 

@@ -17,7 +17,7 @@
     - name: create the user without home
       user:
         name: ansibulluser
-        create_home: no
+        create_home: false
 
     - name: create the user home dir
       user:
@@ -76,7 +76,7 @@
     - name: create system user on macOS to test the shell is set to /usr/bin/false
       user:
         name: macosuser
-        system: yes
+        system: true
       register: macosuser_output
 
     - name: validate the shell is set to /usr/bin/false

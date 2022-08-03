@@ -62,7 +62,7 @@ options:
     description:
       - Whether to append a newline to stdin data.
     type: bool
-    default: yes
+    default: true
     version_added: "2.8"
 extends_documentation_fragment:
     - action_common_attributes

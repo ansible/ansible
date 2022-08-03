@@ -69,7 +69,7 @@ options:
       - This allows users to specify a directory containing vars files that are intermingled with non-vars files extension types
         (e.g. a directory with a README in it and vars files).
     type: bool
-    default: no
+    default: false
     version_added: "2.7"
   hash_behaviour:
     description:

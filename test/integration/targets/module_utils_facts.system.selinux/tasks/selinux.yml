@@ -34,7 +34,7 @@
 
 - name: copy the file with explicit overrides on all context values
   copy:
-    remote_src: yes
+    remote_src: true
     src: '{{ tempdir.path }}/file_inherited_context'
     dest: '{{ tempdir.path }}/file_explicit_context'
     seuser: system_u
@@ -64,7 +64,7 @@
 
 - name: copy the explicit context file with default overrides on all context values
   copy:
-    remote_src: yes
+    remote_src: true
     src: '{{ tempdir.path }}/file_explicit_context'
     dest: '{{ tempdir.path }}/file_default_context'
     seuser: _default

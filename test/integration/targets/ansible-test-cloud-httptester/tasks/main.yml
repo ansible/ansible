@@ -6,7 +6,7 @@
 - name: Verify endpoints respond
   uri:
     url: "{{ item }}"
-    validate_certs: no
+    validate_certs: false
   with_items:
     - http://ansible.http.tests/
     - https://ansible.http.tests/

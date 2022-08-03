@@ -1,7 +1,7 @@
 - name: start the ansible test service
   service:
     name: ansible_test
-    enabled: yes
+    enabled: true
     state: started
   register: enable_result
 
@@ -15,7 +15,7 @@
   service:
     name: ansible_test
     state: stopped
-    enabled: no
+    enabled: false
   register: start_result
 
 - name: assert that the service was stopped

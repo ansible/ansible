@@ -5,7 +5,7 @@
     - name: Task 1
       assert:
         that: 'false'
-      run_once: yes
+      run_once: true
 
     - name: Task 2
       debug:

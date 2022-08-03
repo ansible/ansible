@@ -506,15 +506,15 @@
             hash_var_three: something:with:colons
             hash_var_four: something/with/slashes
             hash_var_five: something with spaces
-            hash_var_six: yes
-            hash_var_seven: no
+            hash_var_six: true
+            hash_var_seven: false
           toplevel_var_one: justastring
           toplevel_var_two: something.with.dots
           toplevel_var_three: something:with:colons
           toplevel_var_four: something/with/slashes
           toplevel_var_five: something with spaces
-          toplevel_var_six: yes
-          toplevel_var_seven: no
+          toplevel_var_six: true
+          toplevel_var_seven: false
       block:
 
       - name: var subkey simple string
@@ -528,7 +528,7 @@
           var: toplevel_var_one
         when: toplevel_var_one
         register: top
-        ignore_errors: yes
+        ignore_errors: true
 
       - name: ensure top and multi work same
         assert:
@@ -548,7 +548,7 @@
           var: toplevel_var_two
         when: toplevel_var_two
         register: top
-        ignore_errors: yes
+        ignore_errors: true
 
       - name: ensure top and multi work same
         assert:
@@ -568,7 +568,7 @@
           var: toplevel_var_three
         when: toplevel_var_three
         register: top
-        ignore_errors: yes
+        ignore_errors: true
 
       - name: ensure top and multi work same
         assert:
@@ -588,7 +588,7 @@
           var: toplevel_var_four
         when: toplevel_var_four
         register: top
-        ignore_errors: yes
+        ignore_errors: true
 
       - name: ensure top and multi work same
         assert:
@@ -608,7 +608,7 @@
           var: toplevel_var_five
         when: toplevel_var_five
         register: top
-        ignore_errors: yes
+        ignore_errors: true
 
       - name: ensure top and multi work same
         assert:

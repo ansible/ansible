@@ -1,6 +1,6 @@
 - name: Test many ansible.builtin.include_tasks
   hosts: testhost
-  gather_facts: no
+  gather_facts: false
 
   tasks:
     - ansible.builtin.include_tasks: "{{ playbook_dir }}/tasks/hello/tasks-file-001.yml"

@@ -305,7 +305,7 @@ Top-level connection arguments like ``username``, ``host``, and ``password`` are
         host: "{{ inventory_hostname }}"
         username: cisco
         password: cisco
-        authorize: yes
+        authorize: true
         auth_pass: cisco
 
 The deprecation warnings reflect this schedule. The task above, run in Ansible 2.5, will result in:

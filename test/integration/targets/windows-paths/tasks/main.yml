@@ -184,7 +184,7 @@
   win_stat:
     path: '{{ tab }}'
   register: tab_result
-  ignore_errors: yes
+  ignore_errors: true
 
 - assert:
     that:

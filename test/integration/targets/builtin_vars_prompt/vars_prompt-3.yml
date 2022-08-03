@@ -1,11 +1,11 @@
 - name: Test vars_prompt confirm
   hosts: testhost
-  become: no
-  gather_facts: no
+  become: false
+  gather_facts: false
 
   vars_prompt:
     - name: input
-      confirm: yes
+      confirm: true
 
   tasks:
     - name:

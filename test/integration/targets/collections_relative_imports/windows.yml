@@ -1,5 +1,5 @@
 - hosts: windows
-  gather_facts: no
+  gather_facts: false
   tasks:
   - name: test out relative imports on Windows modules
     my_ns.my_col.win_relative:

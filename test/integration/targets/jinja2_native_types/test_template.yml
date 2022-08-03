@@ -7,13 +7,13 @@
   - name: Dump template file
     stat:
       path: test_template_newlines.j2
-      get_checksum: yes
+      get_checksum: true
     register: template_stat
 
   - name: Dump result file
     stat:
       path: test_template_newlines.res
-      get_checksum: yes
+      get_checksum: true
     register: result_stat
 
   - name: Check that number of newlines from original template are preserved

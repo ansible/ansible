@@ -6,7 +6,7 @@
 - name: Verify endpoints respond
   ansible.windows.win_uri:
     url: "{{ item }}"
-    validate_certs: no
+    validate_certs: false
   with_items:
     - http://ansible.http.tests/
     - https://ansible.http.tests/

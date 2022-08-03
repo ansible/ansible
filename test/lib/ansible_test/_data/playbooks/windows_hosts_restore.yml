@@ -1,6 +1,6 @@
 - name: Restore Windows hosts file
   hosts: all
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: Remove container hostname(s) from hosts file
       script:

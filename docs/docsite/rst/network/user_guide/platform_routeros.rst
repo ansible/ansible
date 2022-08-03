@@ -51,7 +51,7 @@ Example CLI ``group_vars/routeros.yml``
    ansible_network_os: community.network.routeros
    ansible_user: myuser
    ansible_password: !vault...
-   ansible_become: yes
+   ansible_become: true
    ansible_become_method: enable
    ansible_become_password: !vault...
    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'

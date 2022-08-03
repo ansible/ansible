@@ -1,6 +1,6 @@
 ---
 - hosts: testhost
-  gather_facts: no
+  gather_facts: false
   tasks:
       - name: test success async output
         command: sleep 1
@@ -11,4 +11,4 @@
         command: sleep 10
         async: 1
         poll: 1
-        ignore_errors: yes
+        ignore_errors: true

@@ -6,16 +6,16 @@
     - name: name ensure make is available
       command: "which {{ make }}"
       register: has_make
-      ignore_errors: yes
+      ignore_errors: true
 
     - command: apk add --no-cache make
       when: "has_make is failed and ansible_distribution == 'Alpine'"
-      become: yes
+      become: true
 
     - package:
         name: "{{ make }}"
         state: present
-      become: yes
+      become: true
       when: "has_make is failed and ansible_distribution != 'Alpine'"
 
     - name: get the latest stable redis server release
@@ -37,7 +37,7 @@
         src: "redis-stable/src/{{ item }}"
         dest: /usr/local/bin/
         mode: 755
-      become: yes
+      become: true
       loop:
         - redis-server
         - redis-cli

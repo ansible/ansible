@@ -50,7 +50,7 @@ options:
     description:
       - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
     type: bool
-    default: yes
+    default: true
   public:
     description:
       - This option dictates whether the role's C(vars) and C(defaults) are exposed to the play. If set to C(yes)
@@ -58,7 +58,7 @@ options:
         standard variable exposure for roles listed under the C(roles) header or C(import_role) as they are exposed
         to the play at playbook parsing time, and available to earlier roles and tasks as well.
     type: bool
-    default: no
+    default: false
     version_added: '2.7'
   handlers_from:
     description:
@@ -70,7 +70,7 @@ options:
     description:
       - Perform role argument spec validation if an argument spec is defined.
     type: bool
-    default: yes
+    default: true
     version_added: '2.11'
 extends_documentation_fragment:
     - action_common_attributes

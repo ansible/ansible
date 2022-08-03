@@ -21,7 +21,7 @@
     state: present
     line: "New line at the beginning"
     insertbefore: "BOF"
-    backup: yes
+    backup: true
   register: result1
 
 - name: insert a line at the beginning of the file again
@@ -121,7 +121,7 @@
     search_string: "This is line 1"
     validate: "/bin/false %s"
   register: result
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: assert that the validate failed
   assert:

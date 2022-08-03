@@ -8,7 +8,7 @@
 - name: get result of create default skeleton
   find:
     path: '{{ galaxy_dir }}/scratch/ansible_test/my_collection'
-    recurse: yes
+    recurse: true
     file_type: directory
   register: init_relative_actual
 

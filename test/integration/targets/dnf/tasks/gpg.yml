@@ -60,7 +60,7 @@
         disablerepo: '*'
         enablerepo: unsigned
       register: res
-      ignore_errors: yes
+      ignore_errors: true
 
     - assert:
         that:

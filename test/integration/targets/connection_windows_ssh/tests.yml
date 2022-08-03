@@ -2,13 +2,13 @@
 - name: test out Windows SSH specific tests
   hosts: windows
   serial: 1
-  gather_facts: no
+  gather_facts: false
 
   tasks:
   - name: test out become with Windows SSH
     win_whoami:
     register: win_ssh_become
-    become: yes
+    become: true
     become_method: runas
     become_user: SYSTEM
 

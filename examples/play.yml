@@ -41,7 +41,7 @@
 - hosts: all
   ###########
   # Play keyword: hosts
-  # Required: yes
+  # Required: true
   # Description:
   #   The selection of hosts (or host) that the tasks in this play play should apply to.
   #
@@ -85,14 +85,14 @@
   ###########
   # Play keyword: name
   # Default: play###
-  # Required: no
+  # Required: false
   # Description: Just a description to document the play
 
-  gather_facts: yes
+  gather_facts: true
   ###########
   # Play keyword:  gather_facts
   # Default: None
-  # Required: no
+  # Required: false
   # Description:
   #   This controls if the play will trigger a 'fact gathering task' (aka 'gather_facts' or 'setup' action) to get information about the remote target.
   #   These facts normally provide useful variables on which to base decisions and task inputs. For example `ansible_os_distribution` can tell us if
@@ -103,7 +103,7 @@
   ###########
   # Play keyword:  user
   # Default: depends on connection plugin, for ssh it is 'current user executing Ansible'
-  # Required: no
+  # Required: false
   # Description:
   #   Remote user to login on remote targets and 'normally' execute the tasks as
 
@@ -111,7 +111,7 @@
   ###########
   # Play keyword: become
   # Default: False
-  # Required: no
+  # Required: false
   # Description:
   #   If True, always use privilege escalation to run tasks from this play, just like passing the
   #   --become flag to ansible or ansible-playbook.
@@ -121,7 +121,7 @@
   ###########
   # Play keyword: become_user
   # Default: None
-  # Required: no
+  # Required: false
   # Description:
   #   When using privilege escalation this is the user you 'become' after login with the remote_user
   #   for example you login to the remote as 'login_user' then you 'become' root to execute the tasks
@@ -130,7 +130,7 @@
   ###########
   # Play keyword: become_method
   # Default: sudo
-  # Required: no
+  # Required: false
   # Description:
   #   When using privilege escalation this chooses the become plugin to use for privilege escalation.
   #   use `ansible-doc -t become -l` to list all the options.
@@ -139,7 +139,7 @@
   ###########
   # Play keyword: connection
   # Default: ssh
-  # Required: no
+  # Required: false
   # Description:
   #   This sets which connection plugin Ansible will use to try to communicate with the target host.
   #   notable options are paramiko (python implementation of ssh, mostly useful in corner cases in which the ssh cli
@@ -151,7 +151,7 @@
   ###########
   # Play keyword: vars
   # Default: none
-  # Required: no
+  # Required: false
   # Description:
   #   Mapping of variables defined for this play, normally for use in templates or as variables for tasks.
 
@@ -185,7 +185,7 @@
   vars_files:
   ##########
   # Play keyword: vars_files
-  # Required: no
+  # Required: false
   # Description:
   #   Specifies a list of YAML files to load variables from.
   #
@@ -229,7 +229,7 @@
   vars_prompt:
   ##########
   # Play keyword: vars_prompt
-  # Required: no
+  # Required: false
   # Description:
   #   A list of variables that Ansible will prompt for manual input each time this playbook
   #   runs.  Used for sensitive data and also things like release numbers that
@@ -243,13 +243,13 @@
   #
     - name: passphrase
       prompt: "Please enter the passphrase for the SSL certificate"
-      private: yes
+      private: true
       #   The input won't be echoed back to the terminal when private (default yes)
 
     # Not sensitive, but something that should vary on each playbook run.
     - name: release_version
       prompt: "Please enter a release tag"
-      private: no
+      private: false
 
     # you can even have a default
     - name: package_version
@@ -261,14 +261,14 @@
   roles:
   ##########
   # Play keyword: roles
-  # Required: no
+  # Required: false
   # Description: A list of roles to import and execute in this play. Executes AFTER pre_tasks and play fact gathering, but before 'tasks'.
   # TODO url roles + url to 'play stages'
 
   tasks:
   ##########
   # Play keyword: tasks
-  # Required: no
+  # Required: false
   # Description: A list of tasks to perform in this play. Executes AFTER roles and before post_tasks
 
     # A simple task
@@ -468,7 +468,7 @@
   handlers:
   ##########
   # Play keyword: handlers
-  # Required: no
+  # Required: false
   # Description:
   #   Handlers are tasks that run when another task has changed something.
   #   See above for examples on how to trigger them.

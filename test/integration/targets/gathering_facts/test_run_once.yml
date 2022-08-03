@@ -1,6 +1,6 @@
 ---
 - hosts: facthost1
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: check that smart gathering is enabled
       fail:
@@ -13,8 +13,8 @@
         mode: 0755
 
 - hosts: facthost1,facthost2
-  gather_facts: yes
-  run_once: yes
+  gather_facts: true
+  run_once: true
   tasks:
     - block:
         - name: 'Check the same host is used'

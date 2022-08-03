@@ -1,5 +1,5 @@
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   collections:
   - testns.testcoll
   vars:
@@ -26,7 +26,7 @@
       that: ('data' | testns.testredirect.multi_redirect_filter) == 'data_via_testfilter_from_userdir'
   # invalid filter redirect
   - debug: msg="{{ 'data' | testns.testredirect.dead_end }}"
-    ignore_errors: yes
+    ignore_errors: true
     register: redirect_failure
   - assert:
       that:
@@ -34,7 +34,7 @@
         - '"No filter named ''testns.testredirect.dead_end''" in redirect_failure.msg'
   # recursive filter redirect
   - debug: msg="{{ 'data' | testns.testredirect.recursive_redirect }}"
-    ignore_errors: yes
+    ignore_errors: true
     register: redirect_failure
   - assert:
       that:

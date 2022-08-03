@@ -26,7 +26,7 @@ options:
       - The C(win_command) module takes a free form command to run.
       - There is no parameter actually named 'free form'. See the examples!
     type: str
-    required: yes
+    required: true
   creates:
     description:
       - A path or path filter pattern; when the referenced path exists on the target host, the task will be skipped.

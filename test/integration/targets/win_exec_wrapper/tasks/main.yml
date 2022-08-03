@@ -16,7 +16,7 @@
   test_fail:
     data: fail
   register: fail_module
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: assert test fail module execution
   assert:
@@ -29,7 +29,7 @@
   test_fail:
     data: throw
   register: throw_module
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: assert test module with exception thrown
   assert:
@@ -42,7 +42,7 @@
   test_fail:
     data: error
   register: error_module
-  ignore_errors: yes
+  ignore_errors: true
   vars:
     # Running with coverage means the module is run from a script and not as a psuedo script in a pipeline. This
     # results in a different error message being returned so we disable coverage collection for this task.
@@ -59,7 +59,7 @@
   test_fail:
     data: cmdlet_error
   register: cmdlet_error
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: assert test module with cmdlet error
   assert:
@@ -72,7 +72,7 @@
   test_fail:
     data: dotnet_exception
   register: dotnet_exception
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: assert test module with .NET exception
   assert:
@@ -85,7 +85,7 @@
   test_fail:
     data: function_throw
   register: function_exception
-  ignore_errors: yes
+  ignore_errors: true
   vars:
     _ansible_coverage_remote_output: ''
 
@@ -111,7 +111,7 @@
   test_fail:
     data: proc_exit_fail
   register: proc_exit_fail
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: assert test module with fail process but Fail-Json
   assert:
@@ -133,7 +133,7 @@
 - name: test out invalid os version
   test_min_os_version:
   register: invalid_os_version
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: assert test out invalid os version
   assert:
@@ -144,7 +144,7 @@
 - name: test out invalid powershell version
   test_min_ps_version:
   register: invalid_ps_version
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: assert test out invalid powershell version
   assert:
@@ -218,7 +218,7 @@
       ansible_become_user: "{{ become_test_username }}"
       ansible_become_password: "{{ gen_pw }}"
       ansible_become_method: runas
-      ansible_become: yes
+      ansible_become: true
     win_shell: $env:USERPROFILE
     register: profile_dir_out
 

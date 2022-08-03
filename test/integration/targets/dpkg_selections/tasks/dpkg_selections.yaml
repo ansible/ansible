@@ -21,7 +21,7 @@
   apt:
     name: hello
     state: latest
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: check hello version
   shell: dpkg -s hello | grep Version | awk '{print $2}'

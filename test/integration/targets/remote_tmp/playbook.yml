@@ -1,6 +1,6 @@
 - name: Test temp dir on de escalation
   hosts: testhost
-  become: yes
+  become: true
   tasks:
     - name: create test user
       user:
@@ -13,7 +13,7 @@
       block:
         - name: Test case from issue 41340
           blockinfile:
-              create: yes
+              create: true
               block: |
                 export foo=bar
               marker: "# {mark} Here there be a marker"
@@ -45,7 +45,7 @@
 
     - find:
         path: "~/.ansible/tmp"
-        use_regex: yes
+        use_regex: true
         patterns: 'AnsiballZ_.+\.py'
         recurse: true
       register: result

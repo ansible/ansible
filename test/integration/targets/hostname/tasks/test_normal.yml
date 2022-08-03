@@ -4,7 +4,7 @@
     - name: slurp /var/log/messages
       slurp:
         path: /var/log/messages
-      become: yes
+      become: true
       register: messages_before
 
     - assert:
@@ -28,7 +28,7 @@
     - name: slurp /var/log/messages
       slurp:
         path: /var/log/messages
-      become: yes
+      become: true
       register: messages_after
 
     - assert:

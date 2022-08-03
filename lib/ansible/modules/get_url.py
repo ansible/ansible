@@ -64,14 +64,14 @@ options:
         should be C(yes) only for small local files.
       - Prior to 0.6, this module behaved as if C(yes) was the default.
     type: bool
-    default: no
+    default: false
     version_added: '0.7'
   backup:
     description:
       - Create a backup file including the timestamp information so you can get
         the original file back if you somehow clobbered it incorrectly.
     type: bool
-    default: no
+    default: false
     version_added: '2.1'
   checksum:
     description:
@@ -96,13 +96,13 @@ options:
       - if C(no), it will not use a proxy, even if one is defined in
         an environment variable on the target hosts.
     type: bool
-    default: yes
+    default: true
   validate_certs:
     description:
       - If C(no), SSL certificates will not be validated.
       - This should only be used on personally controlled sites using self-signed certificates.
     type: bool
-    default: yes
+    default: true
   timeout:
     description:
       - Timeout in seconds for URL request.
@@ -140,7 +140,7 @@ options:
         responds to an initial request with a 401 status. Since some basic auth services do not properly
         send a 401, logins will fail.
     type: bool
-    default: no
+    default: false
     version_added: '2.0'
   client_cert:
     description:
@@ -177,7 +177,7 @@ options:
         C(KRB5CCNAME) that specified a custom Kerberos credential cache.
       - NTLM authentication is I(not) supported even if the GSSAPI mech for NTLM has been installed.
     type: bool
-    default: no
+    default: false
     version_added: '2.11'
 # informational: requirements for nodes
 extends_documentation_fragment:
@@ -211,7 +211,7 @@ EXAMPLES = r'''
   ansible.builtin.get_url:
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
-    force_basic_auth: yes
+    force_basic_auth: true
 
 - name: Download file with custom HTTP headers
   ansible.builtin.get_url:

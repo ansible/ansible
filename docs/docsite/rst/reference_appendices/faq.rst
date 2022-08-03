@@ -795,14 +795,14 @@ and backups, which most file based modules also support:
 
         - name: run validation, this will change a lot as needed. We assume it returns an error when not passing, use `failed_when` if otherwise.
           shell: run_validation_commmand
-          become: yes
+          become: true
           become_user: requiredbyapp
           environment:
             WEIRD_REQUIREMENT: 1
      rescue:
         - name: restore backup file to original, in the hope the previous configuration was working.
           copy:
-             remote_src: yes
+             remote_src: true
              dest: /x/y/z
              src: "{{ updated['backup_file'] }}"
      always:

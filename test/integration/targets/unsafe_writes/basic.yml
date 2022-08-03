@@ -26,7 +26,7 @@
         copy: content=ORIGINAL dest={{testufile}}
       - name: make target dir immutable (cannot write to file w/o unsafe_writes)
         file: path={{testudir}} state=directory attributes="+i"
-        become: yes
+        become: true
         ignore_errors: true
         register: madeimmutable
 
@@ -80,4 +80,4 @@
       - name: remove immutable flag from dir to prevent issues with cleanup
         file: path={{testudir}} state=directory attributes="-i"
         ignore_errors: true
-        become: yes
+        become: true

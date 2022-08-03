@@ -29,7 +29,7 @@ options:
     - 'Should be in one of the following registry hives: HKCC, HKCR, HKCU,
       HKLM, HKU.'
     type: str
-    required: yes
+    required: true
     aliases: [ key ]
   name:
     description:
@@ -73,7 +73,7 @@ options:
     - If C(no) then it will only clear out the '(Default)' property for
       that key.
     type: bool
-    default: yes
+    default: true
     version_added: '2.4'
   hive:
     description:
@@ -172,13 +172,13 @@ EXAMPLES = r'''
   win_regedit:
     path: HKCU:\Software\MyCompany
     state: absent
-    delete_key: yes
+    delete_key: true
 
 - name: Clear the existing (Default) entry at path MyCompany
   win_regedit:
     path: HKCU:\Software\MyCompany
     state: absent
-    delete_key: no
+    delete_key: false
 
 - name: Remove entry 'hello' from registry path MyCompany
   win_regedit:

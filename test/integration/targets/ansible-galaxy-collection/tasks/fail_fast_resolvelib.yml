@@ -30,7 +30,7 @@
       args:
         chdir: "{{ galaxy_dir }}/resolvelib"
       timeout: 30
-      ignore_errors: yes
+      ignore_errors: true
       register: incompatible
 
     - assert:

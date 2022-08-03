@@ -1,6 +1,6 @@
 ---
 - hosts: all
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: test magic vars for hosts without any failed/unreachable (no serial)
       assert:
@@ -16,7 +16,7 @@
     - meta: clear_host_errors
 
 - hosts: all
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: test host errors were cleared
       assert:
@@ -40,7 +40,7 @@
       run_once: True
 
 - hosts: all
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: test failed/unreachable persists between plays
       assert:

@@ -1,6 +1,6 @@
 - name: Teardown Windows code coverage configuration
   hosts: all
-  gather_facts: no
+  gather_facts: false
   tasks:
   - name: Zip up all coverage files
     ansible.windows.win_shell: |
@@ -62,7 +62,7 @@
     fetch:
       src: '{{ remote_temp_path }}\coverage.zip'
       dest: '{{ local_temp_path }}/{{ inventory_hostname }}.zip'
-      flat: yes
+      flat: true
 
   - name: Remove temporary coverage directory
     ansible.windows.win_file:

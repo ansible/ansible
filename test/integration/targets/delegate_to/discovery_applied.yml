@@ -1,5 +1,5 @@
 - hosts: testhost
-  gather_facts: no
+  gather_facts: false
   tasks:
   - command: ls
     delegate_to: "{{ item }}"

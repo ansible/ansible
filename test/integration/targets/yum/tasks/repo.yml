@@ -77,7 +77,7 @@
       yum:
         name: dinginessentail-1.0-1
         state: present
-        allow_downgrade: yes
+        allow_downgrade: true
       register: yum_result
 
     - name: Check dinginessentail with rpm
@@ -248,7 +248,7 @@
       yum:
         name: dinginessentail-1.0-1
         state: present
-        allow_downgrade: no
+        allow_downgrade: false
       register: yum_result
 
     - name: Check dinginessentail with rpm
@@ -272,7 +272,7 @@
       yum:
         name: dinginessentail
         state: latest
-        update_only: yes
+        update_only: true
       register: yum_result
 
     - name: Check dinginessentail with rpm
@@ -301,14 +301,14 @@
       yum:
         name: dinginessentail
         state: latest
-        update_only: yes
+        update_only: true
       register: yum_result
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Check dinginessentail with rpm
       shell: rpm -q dinginessentail
       register: rpm_result
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Verify installation
       assert:
@@ -330,12 +330,12 @@
         name: "{{ repodir_ppc64 }}/dinginessentail-1.0-1.ppc64.rpm"
         state: present
       register: yum_result
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Check dinginessentail with rpm
       shell: rpm -q dinginessentail
       register: rpm_result
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Verify installation
       assert:
@@ -361,8 +361,8 @@
       yum:
         name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
         state: present
-        allow_downgrade: yes
-        disable_gpg_check: yes
+        allow_downgrade: true
+        disable_gpg_check: true
       register: yum_result
 
     - name: Check dinginessentail with rpm
@@ -443,7 +443,7 @@
         yum:
           name: "{{ repodir }}/dinginessentail-1.1-1.x86_64.rpm,{{ repodir_i686 }}/dinginessentail-1.1-1.i686.rpm"
           state: present
-          disable_gpg_check: yes
+          disable_gpg_check: true
         register: yum_result
 
       - name: check dinginessentail with rpm

@@ -1,7 +1,7 @@
 - name: Verify endpoints respond
   uri:
     url: "{{ item }}"
-    validate_certs: no
+    validate_certs: false
   register: this
   failed_when: "this.status != 401"  # authentication is required, but not provided (requests must be signed)
   with_items:

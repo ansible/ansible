@@ -1,5 +1,5 @@
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   tasks:
     - set_fact:
         test: 123
@@ -22,7 +22,7 @@
 
 - name: test that we don't polute whole group with one value
   hosts: localhost
-  gather_facts: no
+  gather_facts: false
   vars:
     cluster_name: bleh
   tasks:

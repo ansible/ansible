@@ -26,14 +26,14 @@
   tempfile:
     path: "{{ remote_tmp_dir }}/does_not_exist"
   register: temp_file_non_existent_path
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Create a temporary directory in a non-existent directory
   tempfile:
     state: directory
     path: "{{ remote_tmp_dir }}/does_not_exist"
   register: temp_dir_non_existent_path
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Check results
   assert:

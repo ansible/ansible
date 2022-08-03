@@ -2,7 +2,7 @@
   shell: |
     command -v getenforce &&
     getenforce | grep -E 'Enforcing|Permissive'
-  ignore_errors: yes
+  ignore_errors: true
   register: selinux_state
 
 - name: explicitly collect selinux facts
@@ -18,7 +18,7 @@
 
 - name: check selinux policy type
   shell: grep '^SELINUXTYPE=' /etc/selinux/config | cut -d'=' -f2
-  ignore_errors: yes
+  ignore_errors: true
   register: r
 
 - set_fact:

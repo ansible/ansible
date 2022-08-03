@@ -118,7 +118,7 @@
   uri:
     url: "https://{{ badssl_host }}/"
     dest: "{{ remote_tmp_dir }}/kreitz.html"
-    validate_certs: no
+    validate_certs: false
   register: result
 
 - stat:
@@ -141,7 +141,7 @@
     url: "https://{{ self_signed_host }}:444/"
     dest: "{{ remote_tmp_dir }}/self-signed_using_ca_path.html"
     ca_path: "{{ remote_tmp_dir }}/ca2cert.pem"
-    validate_certs: yes
+    validate_certs: true
   register: result
 
 - stat:
@@ -158,7 +158,7 @@
   uri:
     url: "https://{{ self_signed_host }}:444/"
     dest: "{{ remote_tmp_dir }}/self-signed-without_using_ca_path.html"
-    validate_certs: yes
+    validate_certs: true
   register: result
   ignore_errors: true
 
@@ -319,7 +319,7 @@
     https_proxy: 'https://localhost:3456'
   uri:
     url: 'https://httpbin.org/get'
-    use_proxy: no
+    use_proxy: false
 
 # Ubuntu12.04 doesn't have python-urllib3, this makes handling required dependencies a pain across all variations
 # We'll use this to just skip 12.04 on those tests.  We should be sufficiently covered with other OSes and versions
@@ -357,7 +357,7 @@
 - name: check if urllib3 is installed as an OS package
   package:
     name: "{{ uri_os_packages[ansible_os_family].urllib3 }}"
-  check_mode: yes
+  check_mode: true
   when: not ansible_python.has_sslcontext and not is_ubuntu_precise|bool and uri_os_packages[ansible_os_family].urllib3|default
   register: urllib3
 
@@ -492,7 +492,7 @@
       password: bar!#@ |&82$M
       submit: Sign in
     body_format: form-urlencoded
-    return_content: yes
+    return_content: true
   register: result
 
 - name: Assert form-urlencoded dict input
@@ -511,7 +511,7 @@
       - [ password, bar!#@ |&82$M ]
       - [ submit, Sign in ]
     body_format: form-urlencoded
-    return_content: yes
+    return_content: true
   register: result
 
 - name: Assert form-urlencoded list input
@@ -529,9 +529,9 @@
     - foo
     - bar: baz
     body_format: form-urlencoded
-    return_content: yes
+    return_content: true
   register: result
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Assert invalid input fails
   assert:
@@ -581,7 +581,7 @@
     url: https://{{ httpbin_host }}/anything
     method: UNKNOWN
   register: result
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Assert invalid method fails
   assert:
@@ -615,7 +615,7 @@
     client_cert: "{{ remote_tmp_dir }}/client.pem"
     client_key: "{{ remote_tmp_dir }}/client.key"
     return_content: true
-    validate_certs: no
+    validate_certs: false
   register: result
   failed_when: result.content != "ansible.http.tests:SUCCESS"
   when: has_httptester
@@ -626,7 +626,7 @@
     client_cert: "{{ remote_tmp_dir }}/client.pem"
     client_key: "{{ remote_tmp_dir }}/client.key"
     return_content: true
-    validate_certs: yes
+    validate_certs: true
   register: result
   failed_when: result is not failed
   when: has_httptester
@@ -729,7 +729,7 @@
   uri:
     url: http://does/not/exist
     dest: "{{ remote_tmp_dir }}/output"
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Save testing file's output
   command: "cat {{ remote_tmp_dir }}/output"

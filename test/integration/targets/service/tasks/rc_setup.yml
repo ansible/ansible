@@ -18,4 +18,4 @@
     path: /etc/rc.d/ansible_test
     line: "command_interpreter={{ ansible_python_interpreter | realpath }}"
     insertafter: '^pidfile.*'
-    firstmatch: yes
+    firstmatch: true

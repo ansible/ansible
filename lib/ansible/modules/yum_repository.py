@@ -389,7 +389,7 @@ EXAMPLES = '''
     description: EPEL YUM repo
     file: external_repos
     baseurl: https://download.fedoraproject.org/pub/epel/$releasever/$basearch/
-    gpgcheck: no
+    gpgcheck: false
 
 - name: Add multiple repositories into the same file (2/2)
   ansible.builtin.yum_repository:
@@ -398,7 +398,7 @@ EXAMPLES = '''
     file: external_repos
     baseurl: http://apt.sw.be/redhat/el7/en/$basearch/rpmforge
     mirrorlist: http://mirrorlist.repoforge.org/el7/mirrors-rpmforge
-    enabled: no
+    enabled: false
 
 # Handler showing how to clean yum metadata cache
 - name: yum-clean-metadata

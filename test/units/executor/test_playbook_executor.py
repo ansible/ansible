@@ -44,34 +44,34 @@ class TestPlaybookExecutor(unittest.TestCase):
         fake_loader = DictDataLoader({
             'no_serial.yml': '''
             - hosts: all
-              gather_facts: no
+              gather_facts: false
               tasks:
               - debug: var=inventory_hostname
             ''',
             'serial_int.yml': '''
             - hosts: all
-              gather_facts: no
+              gather_facts: false
               serial: 2
               tasks:
               - debug: var=inventory_hostname
             ''',
             'serial_pct.yml': '''
             - hosts: all
-              gather_facts: no
+              gather_facts: false
               serial: 20%
               tasks:
               - debug: var=inventory_hostname
             ''',
             'serial_list.yml': '''
             - hosts: all
-              gather_facts: no
+              gather_facts: false
               serial: [1, 2, 3]
               tasks:
               - debug: var=inventory_hostname
             ''',
             'serial_list_mixed.yml': '''
             - hosts: all
-              gather_facts: no
+              gather_facts: false
               serial: [1, "20%", -1]
               tasks:
               - debug: var=inventory_hostname

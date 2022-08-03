@@ -22,7 +22,7 @@
         ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
         PATH: "{{ venv_dest }}/bin:{{ ansible_env.PATH }}"
       register: resolvelib_version_error
-      ignore_errors: yes
+      ignore_errors: true
 
     - assert:
         that:

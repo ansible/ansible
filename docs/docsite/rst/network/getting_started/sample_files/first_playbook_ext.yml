@@ -16,7 +16,7 @@
 
     - name: Update the hostname
       vyos.vyos.vyos_config:
-        backup: yes
+        backup: true
         lines:
           - set system host-name vyos-changed
 

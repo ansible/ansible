@@ -1,15 +1,15 @@
 - hosts:
     - A
     - B
-  gather_facts: no
-  any_errors_fatal: yes
+  gather_facts: false
+  any_errors_fatal: true
   vars:
     output_dir: /tmp
   tasks:
     - name: Task one
       debug:
         msg: 'task 1'
-      changed_when: yes
+      changed_when: true
       notify: EXPECTED FAILURE failed_handler
 
     - meta: flush_handlers

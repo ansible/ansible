@@ -160,7 +160,7 @@ EXAMPLES = """
 - name: configure device with config with defaults enabled
   cli_config:
     config: "{{ lookup('template', 'basic/config.j2') }}"
-    defaults: yes
+    defaults: true
 
 - name: Use diff_match
   cli_config:
@@ -183,7 +183,7 @@ EXAMPLES = """
 - name: configurable backup path
   cli_config:
     config: "{{ lookup('template', 'basic/config.j2') }}"
-    backup: yes
+    backup: true
     backup_options:
       filename: backup.cfg
       dir_path: /home/user

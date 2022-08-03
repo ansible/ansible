@@ -41,7 +41,7 @@
   block:
     - name: BSD | Get expiration date for ansibulluser
       shell: 'grep ansibulluser /etc/master.passwd | cut -d: -f 7'
-      changed_when: no
+      changed_when: false
       register: bsd_account_expiration
 
     - name: BSD | Ensure proper expiration date was set
@@ -136,7 +136,7 @@
   block:
     - name: BSD | Get expiration date for ansibulluser
       shell: 'grep ansibulluser /etc/master.passwd | cut -d: -f 7'
-      changed_when: no
+      changed_when: false
       register: bsd_account_expiration
 
     - name: BSD | Ensure proper expiration date was set

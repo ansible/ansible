@@ -157,7 +157,7 @@
 # check mode
 - name: Run script to create a file in check mode
   script: create_afile.sh {{ remote_tmp_dir_test | expanduser }}/afile2.txt
-  check_mode: yes
+  check_mode: true
   register: _check_mode_test
 
 - debug:
@@ -188,7 +188,7 @@
   args:
     creates: "{{ remote_tmp_dir_test | expanduser }}/afile2.txt"
   register: _check_mode_test2
-  check_mode: yes
+  check_mode: true
 
 - debug:
     var: _check_mode_test2
@@ -210,7 +210,7 @@
   args:
     removes: "{{ remote_tmp_dir_test | expanduser }}/afile2.txt"
   register: _check_mode_test3
-  check_mode: yes
+  check_mode: true
 
 - debug:
     var: _check_mode_test3

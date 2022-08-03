@@ -8,11 +8,11 @@
     - name: notify a role-based handler (include tasks from handler subdir)
       debug:
         msg: notifying role handler
-      changed_when: yes
+      changed_when: true
       notify: role-based handler from handler subdir
 
     - name: notify a role-based handler (include tasks from tasks subdir)
       debug:
         msg: notifying another role handler
-      changed_when: yes
+      changed_when: true
       notify: role-based handler from tasks subdir

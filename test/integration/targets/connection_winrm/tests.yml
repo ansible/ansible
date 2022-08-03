@@ -1,9 +1,9 @@
 ---
 - name: test out Windows WinRM specific tests
   hosts: windows
-  force_handlers: yes
+  force_handlers: true
   serial: 1
-  gather_facts: no
+  gather_facts: false
 
   tasks:
   - name: setup remote tmp dir

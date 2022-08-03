@@ -12,7 +12,7 @@
       unarchive:
         src: '{{remote_tmp_dir}}/test-unarchive.tar.zst'
         dest: '{{remote_tmp_dir}}/test-unarchive-tar-zst'
-        remote_src: yes
+        remote_src: true
       register: unarchive02
 
     - name: verify that the file was marked as changed

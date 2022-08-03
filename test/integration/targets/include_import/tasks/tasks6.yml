@@ -1,5 +1,5 @@
 - name: Set variable inside tasks6.yml
   set_fact:
-    set_in_tasks6: yes
+    set_in_tasks6: true
   tags:
     - tasks6

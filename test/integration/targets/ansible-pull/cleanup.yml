@@ -12,5 +12,5 @@
       package:
         name: git
         state: absent
-        autoremove: yes
+        autoremove: true
       when: git_install.changed and ansible_distribution == "FreeBSD"

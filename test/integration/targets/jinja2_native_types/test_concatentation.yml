@@ -45,7 +45,7 @@
 - name: add two dicts
   set_fact:
       dict_sum: "{{ dict_one + dict_two }}"
-  ignore_errors: yes
+  ignore_errors: true
 
 - assert:
     that:

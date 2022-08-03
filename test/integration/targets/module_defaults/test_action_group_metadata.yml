@@ -1,6 +1,6 @@
 ---
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   environment:
     ANSIBLE_NOCOLOR: True
     ANSIBLE_FORCE_COLOR: False

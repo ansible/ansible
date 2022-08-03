@@ -112,7 +112,7 @@
 - name: Test unsupported hash type
   debug:
     msg: "{{ 'hash' | hash('unsupported_hash_type') }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: unsupported_hash_type_res
 
 - assert:
@@ -221,7 +221,7 @@
 - name: Verify combine fails with extra kwargs
   set_fact:
     foo: "{{[1] | combine(foo='bar')}}"
-  ignore_errors: yes
+  ignore_errors: true
   register: combine_fail
 
 - name: Verify combine filter
@@ -241,7 +241,7 @@
 
 - set_fact:
     combine: "{{[x, [y]] | combine(z)}}"
-  ignore_errors: yes
+  ignore_errors: true
   register: result
 
 - name: Ensure combining objects which aren't dictionaries throws an error
@@ -257,7 +257,7 @@
 
     - set_fact:
         combined: "{{ foo | combine({'key2': undef_variable}) }}"
-      ignore_errors: yes
+      ignore_errors: true
       register: result
 
     - assert:
@@ -266,7 +266,7 @@
 
     - set_fact:
         combined: "{{ foo | combine({'key2': {'nested': [undef_variable]}})}}"
-      ignore_errors: yes
+      ignore_errors: true
       register: result
 
     - assert:
@@ -286,7 +286,7 @@
 - name: regex_search unknown argument (failure expected)
   set_fact:
     unknown_arg: "{{ 'hello' | regex_search('hello', 'unknown') }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: failure
 
 - name: regex_search check
@@ -318,7 +318,7 @@
 - name: strftime invalid argument (failure expected)
   set_fact:
     foo: "{{ '%Y' | strftime('foo') }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: strftime_fail
 
 - name: Verify strftime
@@ -353,13 +353,13 @@
 - name: Verify regex_escape raises on posix_extended (failure expected)
   set_fact:
     foo: '{{"]]^"|regex_escape(re_type="posix_extended")}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: regex_escape_fail_1
 
 - name: Verify regex_escape raises on other re_type (failure expected)
   set_fact:
     foo: '{{"]]^"|regex_escape(re_type="haha")}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: regex_escape_fail_2
 
 - name: Verify regex_escape with re_type other than 'python'
@@ -394,19 +394,19 @@
 - name: Verify random raises on non-iterable input (failure expected)
   set_fact:
     foo: '{{None|random}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: random_fail_1
 
 - name: Verify random raises on iterable input with start (failure expected)
   set_fact:
     foo: '{{[1,2,3]|random(start=2)}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: random_fail_2
 
 - name: Verify random raises on iterable input with step (failure expected)
   set_fact:
     foo: '{{[1,2,3]|random(step=2)}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: random_fail_3
 
 - name: Verify random
@@ -435,13 +435,13 @@
 - name: Verify password_hash throws on weird salt_size type
   set_fact:
     foo: '{{"hey"|password_hash(salt_size=[999])}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: password_hash_1
 
 - name: Verify password_hash throws on weird hashtype
   set_fact:
     foo: '{{"hey"|password_hash(hashtype="supersecurehashtype")}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: password_hash_2
 
 - name: Verify password_hash
@@ -457,7 +457,7 @@
 - name: Verify to_uuid throws on weird namespace
   set_fact:
     foo: '{{"hey"|to_uuid(namespace=22)}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: to_uuid_1
 
 - name: Verify to_uuid
@@ -470,13 +470,13 @@
 - name: Verify mandatory throws on undefined variable
   set_fact:
     foo: '{{hey|mandatory}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: mandatory_1
 
 - name: Verify mandatory throws on undefined variable with custom message
   set_fact:
     foo: '{{hey|mandatory("You did not give me a variable. I am a sad wolf.")}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: mandatory_2
 
 - name: Set a variable
@@ -497,7 +497,7 @@
     foo: '{{ fail_foo }}'
   vars:
     fail_foo: '{{ undef("Expected failure") }}'
-  ignore_errors: yes
+  ignore_errors: true
   register: fail_1
 
 - name: Setup fail_foo for overriding in test
@@ -537,13 +537,13 @@
 - name: Verify subelements throws on invalid obj
   set_fact:
     foo: '{{True|subelements("foo")}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: subelements_1
 
 - name: Verify subelements throws on invalid subelements arg
   set_fact:
     foo: '{{{}|subelements(17)}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: subelements_2
 
 - name: Set demo data for subelements
@@ -553,19 +553,19 @@
 - name: Verify subelements throws on bad key
   set_fact:
     foo: '{{subelements_demo | subelements("does not compute")}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: subelements_3
 
 - name: Verify subelements throws on key pointing to bad value
   set_fact:
     foo: '{{subelements_demo | subelements("name")}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: subelements_4
 
 - name: Verify subelements throws on list of keys ultimately pointing to bad value
   set_fact:
     foo: '{{subelements_demo | subelements(["groups", "authorized"])}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: subelements_5
 
 - name: Verify subelements
@@ -589,7 +589,7 @@
 - name: Verify dict2items throws on non-Mapping
   set_fact:
     foo: '{{True|dict2items}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: dict2items_fail
 
 - name: Verify dict2items
@@ -602,7 +602,7 @@
 - name: Verify items2dict throws on non-list
   set_fact:
     foo: '{{True|items2dict}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: items2dict_fail
 
 - name: Verify items2dict
@@ -615,7 +615,7 @@
 - name: Verify items2dict throws on list of non-Mapping
   set_fact:
     foo: '{{[True]|items2dict}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: items2dict_fail
 
 - name: Verify items2dict
@@ -629,7 +629,7 @@
     foo: '{{ list_of_dicts | items2dict}}'
   vars:
     list_of_dicts: [{"key": "foo", "value": "bar"}, {"notkey": "banana", "value": "fruit"}]
-  ignore_errors: yes
+  ignore_errors: true
   register: items2dict_fail
 
 - name: Verify items2dict
@@ -645,7 +645,7 @@
     foo: '{{ list_of_dicts | items2dict}}'
   vars:
     list_of_dicts: [{"key": "foo", "value": "bar"}, {"key": "banana", "notvalue": "fruit"}]
-  ignore_errors: yes
+  ignore_errors: true
   register: items2dict_fail
 
 - name: Verify items2dict
@@ -659,7 +659,7 @@
 - name: Verify path_join throws on non-string and non-sequence
   set_fact:
     foo: '{{True|path_join}}'
-  ignore_errors: yes
+  ignore_errors: true
   register: path_join_fail
 
 - name: Verify path_join

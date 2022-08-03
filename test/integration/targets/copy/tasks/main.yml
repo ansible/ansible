@@ -60,7 +60,7 @@
         dest: '{{ user.home }}/.ssh/authorized_keys'
         owner: '{{ remote_unprivileged_user }}'
         mode: 0600
-        remote_src: yes
+        remote_src: true
 
     - file:
         path: "{{ remote_dir }}"
@@ -88,7 +88,7 @@
       copy:
         content: 'Ansible managed\n'
         dest: "{{ local_temp_dir }}/file.txt"
-      diff: yes
+      diff: true
       register: diff_output
 
     - assert:
@@ -114,8 +114,8 @@
       user:
         name: '{{ remote_unprivileged_user }}'
         state: absent
-        remove: yes
-        force: yes
+        remove: true
+        force: true
 
     - name: Remove sudoers.d file
       file:

@@ -10,7 +10,7 @@
       register: brew_stat
 
     - command: brew install gnu-tar
-      become: yes
+      become: true
       become_user: "{{ brew_stat.stat.pw_name }}"
       environment:
         HOMEBREW_NO_AUTO_UPDATE: True

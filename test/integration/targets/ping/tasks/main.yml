@@ -43,7 +43,7 @@
   ping:
     data: crash
   register: result
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: assert the ping failed with data=boom
   assert:

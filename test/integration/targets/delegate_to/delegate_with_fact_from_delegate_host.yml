@@ -1,6 +1,6 @@
 - name: ensure we can use fact on delegated host for connection info
   hosts: localhost
-  gather_facts: no
+  gather_facts: false
   tasks:
     - add_host: name=f31 bogus_user=notme ansible_connection=ssh ansible_host=4.2.2.2
 

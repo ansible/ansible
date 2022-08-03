@@ -2,12 +2,12 @@
   command: whoami
   register: connection_user
   vars:
-    ansible_become: no
+    ansible_become: false
 
 - name: include become tests
   include_tasks: become.yml
   vars:
-    ansible_become: yes
+    ansible_become: true
     ansible_become_user: "{{ become_test_config.user }}"
     ansible_become_method: "{{ become_test_config.method }}"
     ansible_become_password: "{{ become_test_config.password | default(None) }}"

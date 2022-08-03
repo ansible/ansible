@@ -27,8 +27,8 @@
       set_stats:
           data:
               my_int: 42
-          per_host: yes
-          aggregate: no
+          per_host: true
+          aggregate: false
       register: result
 
     - name: assert per_host and aggregate changes

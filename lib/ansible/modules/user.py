@@ -39,7 +39,7 @@ options:
         description:
             - Optionally when used with the -u option, this option allows to change the user ID to a non-unique value.
         type: bool
-        default: no
+        default: false
         version_added: "1.1"
     seuser:
         description:
@@ -65,7 +65,7 @@ options:
             - If C(no), user will only be added to the groups specified in C(groups),
               removing them from all other groups.
         type: bool
-        default: no
+        default: false
     shell:
         description:
             - Optionally set the user's shell.
@@ -105,33 +105,33 @@ options:
               when the account is created or if the home directory does not exist.
             - Changed from C(createhome) to C(create_home) in Ansible 2.5.
         type: bool
-        default: yes
+        default: true
         aliases: [ createhome ]
     move_home:
         description:
             - "If set to C(yes) when used with C(home: ), attempt to move the user's old home
               directory to the specified directory if it isn't there already and the old home exists."
         type: bool
-        default: no
+        default: false
     system:
         description:
             - When creating an account C(state=present), setting this to C(yes) makes the user a system account.
             - This setting cannot be changed on existing users.
         type: bool
-        default: no
+        default: false
     force:
         description:
             - This only affects C(state=absent), it forces removal of the user and associated directories on supported platforms.
             - The behavior is the same as C(userdel --force), check the man page for C(userdel) on your system for details and support.
             - When used with C(generate_ssh_key=yes) this forces an existing key to be overwritten.
         type: bool
-        default: no
+        default: false
     remove:
         description:
             - This only affects C(state=absent), it attempts to remove directories associated with the user.
             - The behavior is the same as C(userdel --remove), check the man page for details and support.
         type: bool
-        default: no
+        default: false
     login_class:
         description:
             - Optionally sets the user's login class, a feature of most BSD OSs.
@@ -141,7 +141,7 @@ options:
             - Whether to generate a SSH key for the user in question.
             - This will B(not) overwrite an existing SSH key unless used with C(force=yes).
         type: bool
-        default: no
+        default: false
         version_added: "0.9"
     ssh_key_bits:
         description:
@@ -210,7 +210,7 @@ options:
               exists somewhere other than C(/etc/passwd), this setting will not work properly.
             - This requires that the above commands as well as C(/etc/passwd) must exist on the target host, otherwise it will be a fatal error.
         type: bool
-        default: no
+        default: false
         version_added: "2.4"
     profile:
         description:
@@ -301,18 +301,18 @@ EXAMPLES = r'''
     name: james
     shell: /bin/bash
     groups: admins,developers
-    append: yes
+    append: true
 
 - name: Remove the user 'johnd'
   ansible.builtin.user:
     name: johnd
     state: absent
-    remove: yes
+    remove: true
 
 - name: Create a 2048-bit SSH key for user jsmith in ~jsmith/.ssh/id_rsa
   ansible.builtin.user:
     name: jsmith
-    generate_ssh_key: yes
+    generate_ssh_key: true
     ssh_key_bits: 2048
     ssh_key_file: .ssh/id_rsa
 
@@ -1167,7 +1167,7 @@ class User(object):
                 # ssh-keygen doesn't support overwriting the key interactively, so send 'y' to confirm
                 overwrite = 'y'
             else:
-                return (None, 'Key already exists, use "force: yes" to overwrite', '')
+                return (None, 'Key already exists, use "force: true" to overwrite', '')
         cmd = [self.module.get_bin_path('ssh-keygen', True)]
         cmd.append('-t')
         cmd.append(self.ssh_type)

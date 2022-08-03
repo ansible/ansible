@@ -14,7 +14,7 @@ class ModuleDocFragment(object):
         name: Show skipped hosts
         description: "Toggle to control displaying skipped task/host results in a task"
         type: bool
-        default: yes
+        default: true
         env:
           - name: ANSIBLE_DISPLAY_SKIPPED_HOSTS
         ini:
@@ -24,7 +24,7 @@ class ModuleDocFragment(object):
         name: Show 'ok' hosts
         description: "Toggle to control displaying 'ok' task/host results in a task"
         type: bool
-        default: yes
+        default: true
         env:
           - name: ANSIBLE_DISPLAY_OK_HOSTS
         ini:
@@ -35,7 +35,7 @@ class ModuleDocFragment(object):
         name: Use STDERR for failed and unreachable tasks
         description: "Toggle to control whether failed and unreachable tasks are displayed to STDERR (vs. STDOUT)"
         type: bool
-        default: no
+        default: false
         env:
           - name: ANSIBLE_DISPLAY_FAILED_STDERR
         ini:
@@ -46,7 +46,7 @@ class ModuleDocFragment(object):
         name: Show custom stats
         description: 'This adds the custom stats set via the set_stats plugin to the play recap'
         type: bool
-        default: no
+        default: false
         env:
           - name: ANSIBLE_SHOW_CUSTOM_STATS
         ini:
@@ -56,7 +56,7 @@ class ModuleDocFragment(object):
         name: Show per host task start
         description: 'This adds output that shows when a task is started to execute for each host'
         type: bool
-        default: no
+        default: false
         env:
           - name: ANSIBLE_SHOW_PER_HOST_START
         ini:
@@ -70,7 +70,7 @@ class ModuleDocFragment(object):
         - "The markers are C(DRY RUN) at the beginning and ending of playbook execution (when calling C(ansible-playbook --check))
         and C(CHECK MODE) as a suffix at every play and task that is run in check mode."
         type: bool
-        default: no
+        default: false
         version_added: '2.9'
         env:
           - name: ANSIBLE_CHECK_MODE_MARKERS
@@ -83,7 +83,7 @@ class ModuleDocFragment(object):
           When a task fails, display the path to the file containing the failed task and the line number.
           This information is displayed automatically for every task when running with C(-vv) or greater verbosity.
         type: bool
-        default: no
+        default: false
         env:
           - name: ANSIBLE_SHOW_TASK_PATH_ON_FAILURE
         ini:

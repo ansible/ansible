@@ -3,7 +3,7 @@
     url: "{{ item }}"
     url_username: "{{ nios_provider.username }}"
     url_password: "{{ nios_provider.password }}"
-    validate_certs: no
+    validate_certs: false
   register: this
   failed_when: "this.status != 404"  # authentication succeeded, but the requested path was not found
   with_items:

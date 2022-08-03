@@ -2,13 +2,13 @@
 - hosts: localhosts
   gather_facts: false
   strategy: linear
-  run_once: yes
+  run_once: true
   tasks:
     - name: Clean base throttledir '{{ base_throttledir }}'
       file:
         state: absent
         path: '{{ base_throttledir }}'
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Create throttledir '{{ throttledir }}'
       file:

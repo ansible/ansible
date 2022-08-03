@@ -21,13 +21,13 @@
   set_fact:
     fail1: "{{ lookup('varnames', True, wantlist=True) }}"
   register: fail1res
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Make sure it fails successfully
   set_fact:
     fail2: "{{ lookup('varnames', '*', wantlist=True) }}"
   register: fail2res
-  ignore_errors: yes
+  ignore_errors: true
 
 - assert:
     that:

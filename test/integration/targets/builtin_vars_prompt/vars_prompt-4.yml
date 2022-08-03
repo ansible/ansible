@@ -1,11 +1,11 @@
 - name: Test vars_prompt not private
   hosts: testhost
-  become: no
-  gather_facts: no
+  become: false
+  gather_facts: false
 
   vars_prompt:
     - name: not_secret
-      private: no
+      private: false
 
   tasks:
     - assert:

@@ -23,7 +23,7 @@
 - name: get yum releasever
   command: "{{ ansible_python_interpreter }} -c 'import yum; yb = yum.YumBase(); print(yb.conf.yumvar[\"releasever\"])'"
   register: releasever
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Populate directory
   copy:
@@ -82,7 +82,7 @@
       command: yum-config-manager --enable rhel-7-server-rhui-extras-rpms
     - name: update cache to pull repodata
       yum:
-        update_cache: yes
+        update_cache: true
     - name: install required packages for buildah test
       yum:
         state: present
@@ -131,7 +131,7 @@
   always:
     - name: remove buildah container
       command: "buildah rm yum_installroot_releasever_test"
-      ignore_errors: yes
+      ignore_errors: true
     - name: remove buildah from CI system
       yum:
         state: absent

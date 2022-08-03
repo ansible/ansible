@@ -25,14 +25,14 @@ options:
     - The file on the remote system to fetch.
     - This I(must) be a file, not a directory.
     - Recursive fetching may be supported in a later release.
-    required: yes
+    required: true
   dest:
     description:
     - A directory to save the file into.
     - For example, if the I(dest) directory is C(/backup) a I(src) file named C(/etc/profile) on host
       C(host.example.com), would be saved into C(/backup/host.example.com/etc/profile).
       The host name is based on the inventory name.
-    required: yes
+    required: true
   fail_on_missing:
     version_added: '1.1'
     description:
@@ -40,13 +40,13 @@ options:
     - Prior to Ansible 2.5, setting this would only fail if the source file was missing.
     - The default was changed to C(yes) in Ansible 2.5.
     type: bool
-    default: yes
+    default: true
   validate_checksum:
     version_added: '1.4'
     description:
     - Verify that the source and destination checksums match after the files are fetched.
     type: bool
-    default: yes
+    default: true
   flat:
     version_added: '1.2'
     description:
@@ -55,7 +55,7 @@ options:
     - This can be useful if working with a single host, or if retrieving files that are uniquely named per host.
     - If using multiple hosts with the same filename, the file will be overwritten for each host.
     type: bool
-    default: no
+    default: false
 extends_documentation_fragment:
     - action_common_attributes
     - action_common_attributes.files
@@ -108,17 +108,17 @@ EXAMPLES = r'''
   ansible.builtin.fetch:
     src: /tmp/somefile
     dest: /tmp/prefix-{{ inventory_hostname }}
-    flat: yes
+    flat: true
 
 - name: Specifying a destination path
   ansible.builtin.fetch:
     src: /tmp/uniquefile
     dest: /tmp/special/
-    flat: yes
+    flat: true
 
 - name: Storing in a path relative to the playbook
   ansible.builtin.fetch:
     src: /tmp/uniquefile
     dest: special/prefix-{{ inventory_hostname }}
-    flat: yes
+    flat: true
 '''

@@ -219,7 +219,7 @@
   apt_repository:
     repo:
   register: result
-  ignore_errors: yes
+  ignore_errors: true
 
 - assert:
     that:
@@ -230,7 +230,7 @@
   apt_repository:
     repo: ""
   register: result
-  ignore_errors: yes
+  ignore_errors: true
 
 - assert:
     that:

@@ -5,6 +5,6 @@
     - name: Set fact in playbook 3
       set_fact:
         canary_var3: playbook3 imported
-        include_next_playbook: yes
+        include_next_playbook: true
       tags:
         - canary3

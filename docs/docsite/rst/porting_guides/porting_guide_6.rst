@@ -222,7 +222,7 @@ Ansible-core
 ansible.netcommon
 ~~~~~~~~~~~~~~~~~
 
-- eos - When using eos modules on Ansible 2.9, tasks will occasionally fail with ``import_modules`` enabled. This can be avoided by setting ``import_modules: no``
+- eos - When using eos modules on Ansible 2.9, tasks will occasionally fail with ``import_modules`` enabled. This can be avoided by setting ``import_modules: false``
 
 community.general
 ~~~~~~~~~~~~~~~~~

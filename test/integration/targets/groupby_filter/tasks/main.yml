@@ -3,11 +3,11 @@
   vars:
     fruits:
       - name: apple
-        enjoy: yes
+        enjoy: true
       - name: orange
-        enjoy: no
+        enjoy: false
       - name: strawberry
-        enjoy: yes
+        enjoy: true
 
 - assert:
     that:

@@ -251,14 +251,14 @@ EXAMPLES = '''
   ansible.builtin.git:
     repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
-    update: no
+    update: false
 
 - name: Just get information about the repository whether or not it has already been cloned locally
   ansible.builtin.git:
     repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
-    clone: no
-    update: no
+    clone: false
+    update: false
 
 - name: Checkout a github repo and use refspec to fetch all pull requests
   ansible.builtin.git:
@@ -282,7 +282,7 @@ EXAMPLES = '''
   ansible.builtin.git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
-    single_branch: yes
+    single_branch: true
     version: master
 
 - name: Avoid hanging when http(s) password is missing

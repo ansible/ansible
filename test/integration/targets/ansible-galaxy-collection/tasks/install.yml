@@ -254,7 +254,7 @@
 
     - name: install the artifact to verify the error is handled
       command: ansible-galaxy collection install '{{ galaxy_dir }}/tmp_parent-name-1.0.0.tar.gz'
-      ignore_errors: yes
+      ignore_errors: true
       register: result
 
     - debug: msg="Actual - {{ error }}"
@@ -359,7 +359,7 @@
   vars:
     req_file: '{{ galaxy_dir }}/ansible_collections/requirements-with-role.yml'
     keyring: "{{ gpg_homedir }}/pubring.kbx"
-  ignore_errors: yes
+  ignore_errors: true
   register: invalid_opt
 
 - assert:
@@ -474,7 +474,7 @@
 
 - name: installing roles and collections requires keyring if collections have signatures
   command: ansible-galaxy install -r {{ galaxy_dir }}/ansible_collections/requirements.yaml }}
-  ignore_errors: yes
+  ignore_errors: true
   register: collections_and_roles
 
 - assert:
@@ -488,7 +488,7 @@
     req_file: "{{ galaxy_dir }}/ansible_collections/requirements.yaml"
     # --signature is an ansible-galaxy collection install subcommand, but mutually exclusive with -r
     cli_signature: "--signature file://{{ gpg_homedir }}/namespace7-name-1.0.0-MANIFEST.json.asc"
-  ignore_errors: yes
+  ignore_errors: true
   register: mutually_exclusive_opts
 
 - assert:
@@ -506,7 +506,7 @@
   command: ansible-galaxy collection install namespace1.name1:1.0.0 {{ cli_signature }}
   vars:
     cli_signature: "--signature file://{{ gpg_homedir }}/namespace1-name1-1.0.0-MANIFEST.json.asc"
-  ignore_errors: yes
+  ignore_errors: true
   register: required_together
 
 - assert:
@@ -518,7 +518,7 @@
   # Note that --keyring is a valid option for 'ansible-galaxy install -r ...', not just 'ansible-galaxy collection ...'
   command: ansible-galaxy install -r {{ req_file }} -s {{ test_name }} --keyring {{ keyring }} {{ galaxy_verbosity }}
   register: install_req
-  ignore_errors: yes
+  ignore_errors: true
   vars:
     req_file: "{{ galaxy_dir }}/ansible_collections/requirements.yaml"
     keyring: "{{ gpg_homedir }}/pubring.kbx"
@@ -729,7 +729,7 @@
 
 - find:
     paths: '{{ galaxy_dir }}/ansible_collections/symlink/symlink'
-    recurse: yes
+    recurse: true
     file_type: any
 
 - name: get result of install collection with symlink - {{ test_id }}
@@ -815,7 +815,7 @@
   vars:
     signature_option: "--signature file://{{ gpg_homedir }}/namespace1-name1-1.0.9-MANIFEST.json.asc"
     keyring_option: '--keyring {{ gpg_homedir }}/i_do_not_exist.kbx'
-  ignore_errors: yes
+  ignore_errors: true
   register: keyring_error
 
 - assert:
@@ -852,7 +852,7 @@
 #    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
 #    ANSIBLE_NOCOLOR: True
 #    ANSIBLE_FORCE_COLOR: False
-#  ignore_errors: yes
+#  ignore_errors: true
 #  register: keyring_warning
 #
 #- name: assert a warning was given but signature verification did not occur without configuring the keyring
@@ -919,7 +919,7 @@
     signature_options: "--signature {{ signature }} --keyring {{ keyring }}"
     signature: "file://{{ gpg_homedir }}/namespace2-name-1.0.0-MANIFEST.json.asc"
     keyring: "{{ gpg_homedir }}/pubring.kbx"
-  ignore_errors: yes
+  ignore_errors: true
   register: invalid_signature
 
 - assert:
@@ -940,7 +940,7 @@
     path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1'
     state: absent
   register: collection_dir
-  check_mode: yes
+  check_mode: true
   failed_when: collection_dir is changed
 
 - name: disable signature verification and install simple collection with invalid detached signature
@@ -951,7 +951,7 @@
     signature_options: "--signature {{ signature }} --keyring {{ keyring }} --disable-gpg-verify"
     signature: "file://{{ gpg_homedir }}/namespace2-name-1.0.0-MANIFEST.json.asc"
     keyring: "{{ gpg_homedir }}/pubring.kbx"
-  ignore_errors: yes
+  ignore_errors: true
   register: ignore_invalid_signature
 
 - assert:
@@ -976,7 +976,7 @@
   command: ansible-galaxy collection install namespace1.name1:1.0.0 -vvvv --keyring {{ gpg_homedir }}/pubring.kbx --force
   environment:
     ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "+1"
-  ignore_errors: yes
+  ignore_errors: true
   register: missing_signature
 
 - assert:

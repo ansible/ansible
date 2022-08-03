@@ -1,7 +1,7 @@
 - name: Basic vars_prompt test
   hosts: testhost
-  become: no
-  gather_facts: no
+  become: false
+  gather_facts: false
 
   vars_prompt:
     - name: input

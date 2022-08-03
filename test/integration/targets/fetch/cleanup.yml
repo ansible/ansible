@@ -6,11 +6,11 @@
       user:
         name: fetcher
         state: absent
-        remove: yes
-        force: yes
+        remove: true
+        force: true
 
     - name: delete temporary directory
       file:
         path: "{{ remote_tmp_dir }}"
         state: absent
-      no_log: yes
+      no_log: true

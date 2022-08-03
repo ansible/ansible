@@ -25,13 +25,13 @@ options:
     description:
     - The full URL of a file to download.
     type: str
-    required: yes
+    required: true
   dest:
     description:
     - The location to save the file at the URL.
     - Be sure to include a filename and extension as appropriate.
     type: path
-    required: yes
+    required: true
   force:
     description:
     - If C(yes), will download the file every time and replace the file if the contents change. If C(no), will only
@@ -41,7 +41,7 @@ options:
       time of the requested resource, so for this to work, the remote web
       server must support HEAD requests.
     type: bool
-    default: yes
+    default: true
     version_added: "2.0"
   checksum:
     description:
@@ -137,7 +137,7 @@ EXAMPLES = r'''
   win_get_url:
     url: http://www.example.com/earthrise.jpg
     dest: C:\Users\RandomUser\earthrise.jpg
-    force: no
+    force: false
 
 - name: Download earthrise.jpg to specified path through a proxy server.
   win_get_url:

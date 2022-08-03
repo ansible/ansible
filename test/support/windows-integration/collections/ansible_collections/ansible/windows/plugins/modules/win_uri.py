@@ -18,7 +18,7 @@ options:
     description:
     - Supports FTP, HTTP or HTTPS URLs in the form of (ftp|http|https)://host.domain:port/path.
     type: str
-    required: yes
+    required: true
   content_type:
     description:
     - Sets the "Content-Type" header.
@@ -46,7 +46,7 @@ options:
       "application/json", then the JSON is additionally loaded into a key
       called C(json) in the dictionary results.
     type: bool
-    default: no
+    default: false
   status_code:
     description:
     - A valid, numeric, HTTP status code that signifies success of the request.

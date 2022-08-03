@@ -261,7 +261,7 @@
     async_status:
       jid: '{{ async_fandf_custom_dir.ansible_job_id }}'
     register: async_fandf_custom_dir_fail
-    ignore_errors: yes
+    ignore_errors: true
 
   - name: get async status with custom dir using newer format
     async_status:

@@ -195,7 +195,7 @@
   fetch:
     src: '{{ remote_tmp_dir }}\abc$not var''quote‘'
     dest: '{{ host_output_dir }}/'
-    flat: yes
+    flat: true
   register: fetch_special_file
 
 - name: get content of fetched file

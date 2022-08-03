@@ -1,6 +1,6 @@
 ---
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   tasks:
   - set_fact:
       hosts_a: "{{ lookup('inventory_hostnames', 'group01', wantlist=true) }}"

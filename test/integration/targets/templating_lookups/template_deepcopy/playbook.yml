@@ -1,5 +1,5 @@
 - hosts: h1
-  gather_facts: no
+  gather_facts: false
   tasks:
     - set_fact:
         templated_foo: "{{ lookup('template', 'template.in') }}"

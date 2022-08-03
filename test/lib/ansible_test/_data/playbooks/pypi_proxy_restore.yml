@@ -1,6 +1,6 @@
 - name: Restore PyPI proxy configuration
   hosts: all
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: Remove custom index for pip based installs
       file:

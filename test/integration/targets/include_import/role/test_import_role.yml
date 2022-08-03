@@ -2,8 +2,8 @@
   hosts: testhost
 
   vars:
-    run_role: yes
-    do_not_run_role: no
+    run_role: true
+    do_not_run_role: false
     role_name: role1
     test_var: templating test in playbook
     role_vars:
@@ -73,7 +73,7 @@
           - role3_default == 'defined in role3/defaults/main.yml'
           - role3_main == 'defined in role3/vars/main.yml'
           - role3_var == 'defined in role3/vars/role3vars.yml'
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Test using a play variable for role name
       import_role:

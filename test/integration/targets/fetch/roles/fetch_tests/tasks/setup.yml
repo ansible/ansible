@@ -17,12 +17,12 @@
 - name: Create test user
   user:
     name: fetcher
-    create_home: yes
+    create_home: true
     group: "{{ _fetch_group | default(omit) }}"
     groups: "{{ _fetch_additional_groups | default(omit) }}"
     append: "{{ True if _fetch_additional_groups else False }}"
     password: "{{ password | default(omit) }}"
-  become: yes
+  become: true
   notify:
     - remove test user
 
@@ -43,4 +43,4 @@
     state: directory
     mode: '0600'
     owner: root
-  become: yes
+  become: true

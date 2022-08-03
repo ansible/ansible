@@ -58,7 +58,7 @@
   find:
       paths: "{{ remote_tmp_dir_test }}"
       file_type: directory
-      recurse: yes
+      recurse: true
   register: find_test0
 - debug: var=find_test0
 - name: validate directory results
@@ -78,7 +78,7 @@
       paths: "{{ remote_tmp_dir_test }}"
       file_type: file
       patterns: "*.xml,*.img"
-      recurse: yes
+      recurse: true
   register: find_test1
 - debug: var=find_test1
 - name: validate directory results
@@ -91,7 +91,7 @@
   find:
       paths: "{{ remote_tmp_dir_test }}"
       patterns: "*.xml"
-      recurse: yes
+      recurse: true
   register: find_test2
 - debug: var=find_test2
 - name: validate gr_name and pw_name are defined
@@ -105,7 +105,7 @@
   find:
       paths: "{{ remote_tmp_dir_test }}"
       patterns: "*.xml"
-      recurse: yes
+      recurse: true
       excludes: []
   register: find_test3
 - debug: var=find_test3
@@ -215,7 +215,7 @@
     - name: Get all files/directories in the path
       find:
         paths: "{{ remote_tmp_dir_test }}"
-        recurse: yes
+        recurse: true
         file_type: any
       register: total_contents
 
@@ -227,7 +227,7 @@
     - name: Get files and directories with depth
       find:
         paths: "{{ remote_tmp_dir_test }}"
-        recurse: yes
+        recurse: true
         file_type: any
         depth: 2
       register: contents_with_depth
@@ -243,7 +243,7 @@
       find:
         paths: "{{ remote_tmp_dir_test }}"
         depth: 2
-        recurse: yes
+        recurse: true
       register: files_with_depth
 
     - assert:
@@ -256,7 +256,7 @@
 - name: exclude with regex
   find:
     paths: "{{ remote_tmp_dir_test }}"
-    recurse: yes
+    recurse: true
     use_regex: true
     exclude: .*\.ogg
   register: find_test3
@@ -272,7 +272,7 @@
 - name: patterns with regex
   find:
     paths: "{{ remote_tmp_dir_test }}"
-    recurse: yes
+    recurse: true
     use_regex: true
     patterns: .*\.ogg
   register: find_test4

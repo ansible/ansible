@@ -17,7 +17,7 @@
     repo: '{{ repo_format1 }}'
     dest: '{{ checkout_dir }}'
     separate_git_dir: '{{ separate_git_dir }}'
-  ignore_errors: yes
+  ignore_errors: true
   register: result
 
 - name: SEPARATE-GIT-DIR | the clone will fail due to pre-exist dir
@@ -96,7 +96,7 @@
   git:
     repo: "{{ repo_format1 }}"
     dest: "{{ checkout_dir }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: result
 
 - name: SEPARATE-GIT-DIR | check update has failed
@@ -113,7 +113,7 @@
   git:
     repo: "{{ repo_format1 }}"
     dest: "{{ checkout_dir }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: result
 
 - name: SEPARATE-GIT-DIR | check update has failed

@@ -31,7 +31,7 @@
   vars:
     bbbbad: "{{ lookup('dict', 1) }}"
   register: result
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Verify conversion failed
   assert:

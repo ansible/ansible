@@ -217,12 +217,12 @@
         name: "{{ repodir_ppc64 }}/dinginessentail-1.0-1.ppc64.rpm"
         state: present
       register: dnf_result
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Check dinginessentail with rpm
       shell: rpm -q dinginessentail
       register: rpm_result
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Verify installation
       assert:
@@ -272,7 +272,7 @@
     - name: Check if dinginessentail-weak-dep is installed
       shell: rpm -q dinginessentail-weak-dep
       register: rpm_weak_result
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Verify install without weak deps
       assert:

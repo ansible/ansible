@@ -1,8 +1,8 @@
 - name: Tests for chmod +a ACL functionality on macOS
   hosts: ssh
-  gather_facts: yes
+  gather_facts: true
   remote_user: unpriv1
-  become: yes
+  become: true
   become_user: unpriv2
 
   tasks:
@@ -10,7 +10,7 @@
       action: tmpdir
       register: tmpdir
       become_user: unpriv2
-      become: yes
+      become: true
 
     - name: run whoami
       command: whoami

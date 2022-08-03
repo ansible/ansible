@@ -4,8 +4,8 @@
         name: multiarch-test-repo
         description: ansible-test multiarch test repo
         baseurl: "{{ multiarch_repo_baseurl }}"
-        gpgcheck: no
-        repo_gpgcheck: no
+        gpgcheck: false
+        repo_gpgcheck: false
 
     - name: Install two out of date packages from the repo
       yum:

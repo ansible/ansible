@@ -24,7 +24,7 @@
     repo: '{{ repo_dir }}/localmods'
     dest: '{{ checkout_dir }}'
   register: git_fetch
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: LOCALMODS | check fetch with localmods failed
   assert:
@@ -37,7 +37,7 @@
     dest: '{{ checkout_dir }}'
     force: True
   register: git_fetch_force
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: LOCALMODS | get "a" file
   slurp:
@@ -81,7 +81,7 @@
     dest: '{{ checkout_dir }}'
     depth: 1
   register: git_fetch
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: LOCALMODS | check fetch with localmods failed
   assert:
@@ -95,7 +95,7 @@
     depth: 1
     force: True
   register: git_fetch_force
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: LOCALMODS | get "a" file
   slurp:

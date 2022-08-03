@@ -5,8 +5,8 @@
 
 - name: Detect journalctl
   shell: command -V journalctl
-  ignore_errors: yes
-  changed_when: no
+  ignore_errors: true
+  changed_when: false
   register: journalctl
 
 - block:
@@ -43,12 +43,12 @@
 - name: Run a module that logs with no_log
   module_that_logs:
     number: "{{ bad_number }}"
-  no_log: yes
+  no_log: true
 
 - name: Search for expected log messages
   # if this fails the tests are probably running on a system which stores logs elsewhere
   shell: "({{ grep_command }} /var/log/syslog) || (journalctl | {{ grep_command }})"
-  changed_when: no
+  changed_when: false
   register: grep
 
 - name: Verify the correct log messages were found

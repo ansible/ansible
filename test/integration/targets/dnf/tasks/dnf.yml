@@ -409,7 +409,7 @@
   dnf:
     name: "@Custom Group"
     state: present
-  check_mode: yes
+  check_mode: true
   register: dnf_result
 
 - name: verify nothing changed
@@ -470,7 +470,7 @@
     name: /tmp/non-existing-1.0.0.fc26.noarch.rpm
     state: present
   register: dnf_result
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: verify installation failed
   assert:
@@ -489,7 +489,7 @@
     name: https://ci-files.testing.ansible.com/test/integration/targets/dnf/non-existing-1.0.0.fc26.noarch.rpm
     state: present
   register: dnf_result
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: verify installation failed
   assert:
@@ -540,7 +540,7 @@
   dnf:
     name: non-existent-rpm
     state: latest
-  ignore_errors: yes
+  ignore_errors: true
   register: dnf_result
 
 - name: verify the result
@@ -571,7 +571,7 @@
   dnf:
     name: httpd
     state: latest
-    update_only: yes
+    update_only: true
   register: dnf_result
 
 - name: verify httpd not installed
@@ -665,7 +665,7 @@
     name: "/tmp/non_existent_pkg.rpm"
     state: present
   register: no_nevra_info_result
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Verify RPM failed to install
   assert:

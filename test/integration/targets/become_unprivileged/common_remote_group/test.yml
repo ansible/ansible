@@ -1,6 +1,6 @@
 - name: Tests for ANSIBLE_COMMON_REMOTE_GROUP functionality
   hosts: ssh
-  gather_facts: yes
+  gather_facts: true
   remote_user: unpriv1
 
   tasks:
@@ -8,13 +8,13 @@
       action: tmpdir
       register: tmpdir
       become_user: unpriv2
-      become: yes
+      become: true
 
     - name: run whoami with become
       command: whoami
       register: whoami
       become_user: unpriv2
-      become: yes
+      become: true
 
     - set_fact:
         stat_cmd: stat -c '%U %G' {{ tmpdir.tmpdir }}/*
@@ -28,7 +28,7 @@
       shell: "{{ stat_cmd }}"
       register: stat
       become_user: unpriv2
-      become: yes
+      become: true
 
     - assert:
         that:

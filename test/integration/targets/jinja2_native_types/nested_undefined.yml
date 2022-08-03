@@ -1,12 +1,12 @@
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   tasks:
     - block:
       - name: Test nested undefined var fails, single node
         debug:
           msg: "{{ [{ 'key': nested_and_undefined }] }}"
         register: result
-        ignore_errors: yes
+        ignore_errors: true
 
       - assert:
           that:
@@ -16,7 +16,7 @@
         debug:
           msg: "{{ [{ 'key': nested_and_undefined}] }} second_node"
         register: result
-        ignore_errors: yes
+        ignore_errors: true
 
       - assert:
           that:

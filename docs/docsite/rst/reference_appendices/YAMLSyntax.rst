@@ -74,8 +74,8 @@ These are called "Flow collections".
 
 Ansible doesn't really use these too much, but you can also specify a boolean value (true/false) in several forms::
 
-    create_key: yes
-    needs_agent: no
+    create_key: true
+    needs_agent: false
     knows_oop: True
     likes_emacs: TRUE
     uses_cvs: false

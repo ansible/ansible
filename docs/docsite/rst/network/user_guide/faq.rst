@@ -68,7 +68,7 @@ To avoid this problem, use long-form commands with the ``*_config`` modules:
 
    ---
    - hosts: all
-     gather_facts: no
+     gather_facts: false
      tasks:
        - cisco.ios.ios_config:
            lines:

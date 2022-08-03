@@ -29,13 +29,13 @@
       - "result.checksum == '5feac65e442c91f557fc90069ce6efc4d346ab51'"
       - "result.state == 'file'"
 
-- name: "create a file that does not yet exist with `create: yes` and produce diff"
+- name: "create a file that does not yet exist with `create: true` and produce diff"
   lineinfile:
     dest: "{{ remote_tmp_dir }}/a/a.txt"
     state: present
     line: "First line"
-    create: yes
-  diff: yes
+    create: true
+  diff: true
   register: result1
 
 - name: assert that a diff was returned
@@ -54,7 +54,7 @@
       - result.stat.exists
 
 - block:
-    - name: "EXPECTED FAILURE - test source file does not exist w/o `create: yes`"
+    - name: "EXPECTED FAILURE - test source file does not exist w/o `create: true`"
       lineinfile:
         path: "/some/where/that/doesnotexist.txt"
         state: present
@@ -88,7 +88,7 @@
     state: present
     line: "New line at the beginning"
     insertbefore: "BOF"
-    backup: yes
+    backup: true
   register: result1
 
 - name: insert a line at the beginning of the file again
@@ -204,7 +204,7 @@
     dest: "{{ remote_tmp_dir }}/test.txt"
     state: present
     line: "This is line 3"
-    backrefs: yes
+    backrefs: true
     regexp: "^(REF) .* \\1$"
   register: backrefs_result1
 
@@ -213,7 +213,7 @@
     dest: "{{ remote_tmp_dir }}/test.txt"
     state: present
     line: "This is line 3"
-    backrefs: yes
+    backrefs: true
     regexp: "^(REF) .* \\1$"
   register: backrefs_result2
 - command: cat {{ remote_tmp_dir }}/test.txt
@@ -289,7 +289,7 @@
     regexp: "^This is line 1$"
     validate: "/bin/false %s"
   register: result
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: assert that the validate failed
   assert:
@@ -311,7 +311,7 @@
 - name: use create=yes
   lineinfile:
     dest: "{{ remote_tmp_dir }}/new_test.txt"
-    create: yes
+    create: true
     insertbefore: BOF
     state: present
     line: "This is a new file"
@@ -327,7 +327,7 @@
   stat:
     path: "{{ remote_tmp_dir }}/new_test.txt"
   register: result
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: assert the newly created test checksum matches
   assert:
@@ -337,7 +337,7 @@
 - name: Create a file without a path
   lineinfile:
     dest: file.txt
-    create: yes
+    create: true
     line: Test line
   register: create_no_path_test
 
@@ -442,7 +442,7 @@
     dest: "{{ remote_tmp_dir }}/test.txt"
     state: present
     line: "New \\1 created with the backref"
-    backrefs: yes
+    backrefs: true
     regexp: "^This is (line 4)$"
   register: result
 
@@ -969,7 +969,7 @@
     path: "{{ remote_tmp_dir }}/firstmatch.txt"
     line: INSERT
     insertafter: line1
-    firstmatch: yes
+    firstmatch: true
   register: insertafter1
 
 - name: Insert a line before an existing line using firstmatch again
@@ -977,7 +977,7 @@
     path: "{{ remote_tmp_dir }}/firstmatch.txt"
     line: INSERT
     insertafter: line1
-    firstmatch: yes
+    firstmatch: true
   register: insertafter2
 
 - name: Stat the file
@@ -1345,7 +1345,7 @@
 - name: Create a file by inserting a line
   lineinfile:
     path: "{{ remote_tmp_dir }}/testend.txt"
-    create: yes
+    create: true
     line: testline
   register: testend1
 
@@ -1374,7 +1374,7 @@
 - name: Create a file by inserting a line
   lineinfile:
     path: "{{ remote_tmp_dir }}/testendliteral.txt"
-    create: yes
+    create: true
     line: testline
   register: testend1
 

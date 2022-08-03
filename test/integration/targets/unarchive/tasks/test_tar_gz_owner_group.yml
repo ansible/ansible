@@ -18,7 +18,7 @@
       unarchive:
         src: "{{remote_tmp_dir}}/test-unarchive.tar.gz"
         dest: "{{remote_tmp_dir}}/test-unarchive-tar-gz"
-        remote_src: yes
+        remote_src: true
         owner: testuser
         group: testgroup
       register: unarchive02e
@@ -41,8 +41,8 @@
       user:
         name: testuser
         state: absent
-        remove: yes
-        force: yes
+        remove: true
+        force: true
 
     - name: Remove testgroup
       group:

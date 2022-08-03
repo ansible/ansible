@@ -17,7 +17,7 @@
         content: !unsafe |
           ---
           - hosts: localhost
-            gather_facts: no
+            gather_facts: false
             tasks:
             - copy:
                 dest: "{{ dest }}"

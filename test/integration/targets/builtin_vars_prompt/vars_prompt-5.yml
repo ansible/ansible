@@ -1,11 +1,11 @@
 - name: Test vars_prompt hashing
   hosts: testhost
-  become: no
-  gather_facts: no
+  become: false
+  gather_facts: false
 
   vars_prompt:
     - name: password
-      confirm: yes
+      confirm: true
       encrypt: sha512_crypt
       salt: 'jESIyad4F08hP3Ta'
 

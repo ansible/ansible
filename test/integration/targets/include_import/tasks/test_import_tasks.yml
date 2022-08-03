@@ -12,7 +12,7 @@
 
     - name: Test conditional task import
       import_tasks: tasks2.yml
-      when: no
+      when: false
 
     - name: Assert that tasks were skipped
       assert:

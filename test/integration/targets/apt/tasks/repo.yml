@@ -2,7 +2,7 @@
   - name: Install foo package version 1.0.0
     apt:
       name: foo=1.0.0
-      allow_unauthenticated: yes
+      allow_unauthenticated: true
     register: apt_result
 
   - name: Check install with dpkg
@@ -20,7 +20,7 @@
     apt:
       name: foo
       state: latest
-      allow_unauthenticated: yes
+      allow_unauthenticated: true
     register: apt_result
 
   - name: Check install with dpkg
@@ -38,7 +38,7 @@
       apt:
         name: foo
         state: absent
-        allow_unauthenticated: yes
+        allow_unauthenticated: true
 
 
 # https://github.com/ansible/ansible/issues/30638
@@ -47,9 +47,9 @@
     apt:
       name: foo=1.0.1
       state: present
-      only_upgrade: yes
-      allow_unauthenticated: yes
-    ignore_errors: yes
+      only_upgrade: true
+      allow_unauthenticated: true
+    ignore_errors: true
     register: apt_result
 
   - name: Check that foo was not upgraded
@@ -59,14 +59,14 @@
 
   - apt:
       name: foo=1.0.0
-      allow_unauthenticated: yes
+      allow_unauthenticated: true
 
   - name: Upgrade foo to 1.0.1
     apt:
       name: foo=1.0.1
       state: present
-      only_upgrade: yes
-      allow_unauthenticated: yes
+      only_upgrade: true
+      allow_unauthenticated: true
     register: apt_result
 
   - name: Check install with dpkg
@@ -84,7 +84,7 @@
       apt:
         name: foo
         state: absent
-        allow_unauthenticated: yes
+        allow_unauthenticated: true
 
 - block:
   - name: Install foo=1.0.0
@@ -136,18 +136,18 @@
   - name: Install foobar, installs foo as a dependency
     apt:
       name: foobar=1.0.0
-      allow_unauthenticated: yes
+      allow_unauthenticated: true
 
   - name: Upgrade foobar to a version which does not depend on foo, autoremove should remove foo
     apt:
       upgrade: dist
-      autoremove: yes
-      allow_unauthenticated: yes
+      autoremove: true
+      allow_unauthenticated: true
 
   - name: Check foo with dpkg
     shell: dpkg-query -l foo
     register: dpkg_result
-    ignore_errors: yes
+    ignore_errors: true
 
   - name: Check that foo was removed by autoremove
     assert:
@@ -159,7 +159,7 @@
       apt:
         pkg: foo,foobar
         state: absent
-        autoclean: yes
+        autoclean: true
 
     - name: Restore ubuntu repos
       command: mv /etc/apt/sources.list.backup /etc/apt/sources.list
@@ -173,16 +173,16 @@
   - name: Install foobar, installs foo as a dependency
     apt:
       name: foobar=1.0.0
-      allow_unauthenticated: yes
+      allow_unauthenticated: true
 
   - name: Upgrade foobar to a version which does not depend on foo
     apt:
       upgrade: dist
-      force: yes  # workaround for --allow-unauthenticated used along with upgrade
+      force: true  # workaround for --allow-unauthenticated used along with upgrade
 
   - name: autoremove should remove foo
     apt:
-      autoremove: yes
+      autoremove: true
     register: autoremove_result
 
   - name: Check that autoremove correctly reports changed=True
@@ -193,7 +193,7 @@
   - name: Check foo with dpkg
     shell: dpkg-query -l foo
     register: dpkg_result
-    ignore_errors: yes
+    ignore_errors: true
 
   - name: Check that foo was removed by autoremove
     assert:
@@ -202,7 +202,7 @@
 
   - name: Nothing to autoremove
     apt:
-      autoremove: yes
+      autoremove: true
     register: autoremove_result
 
   - name: Check that autoremove correctly reports changed=False
@@ -217,7 +217,7 @@
 
   - name: autoclean fake .deb file
     apt:
-      autoclean: yes
+      autoclean: true
     register: autoclean_result
 
   - name: Check if the .deb file exists
@@ -233,7 +233,7 @@
 
   - name: Nothing to autoclean
     apt:
-      autoclean: yes
+      autoclean: true
     register: autoclean_result
 
   - name: Check that autoclean correctly reports changed=False
@@ -246,7 +246,7 @@
       apt:
         pkg: foo,foobar
         state: absent
-        autoclean: yes
+        autoclean: true
 
     - name: Restore ubuntu repos
       command: mv /etc/apt/sources.list.backup /etc/apt/sources.list
@@ -311,8 +311,8 @@
    - name: Install the foo package with diff=yes
      apt:
        name: foo
-       allow_unauthenticated: yes
-     diff: yes
+       allow_unauthenticated: true
+     diff: true
      register: apt_result
 
    - name: Check the content of diff.prepared
@@ -325,13 +325,13 @@
       apt:
         name: foo
         state: absent
-        allow_unauthenticated: yes
+        allow_unauthenticated: true
 
 - block:
   - name: Install foo package version 1.0.0 with force=yes, implies allow_unauthenticated=yes
     apt:
       name: foo=1.0.0
-      force: yes
+      force: true
     register: apt_result
 
   - name: Check install with dpkg
@@ -349,4 +349,4 @@
       apt:
         name: foo
         state: absent
-        allow_unauthenticated: yes
+        allow_unauthenticated: true

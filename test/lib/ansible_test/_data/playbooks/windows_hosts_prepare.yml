@@ -1,6 +1,6 @@
 - name: Prepare Windows hosts file
   hosts: all
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: Add container hostname(s) to hosts file
       script:

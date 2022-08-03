@@ -85,7 +85,7 @@ options:
         description:
             - If target is a directory, recursively descend into the directory looking for files.
         type: bool
-        default: no
+        default: false
     size:
         description:
             - Select files whose size is equal to or greater than the specified size.
@@ -104,23 +104,23 @@ options:
         description:
             - Set this to C(yes) to include hidden files, otherwise they will be ignored.
         type: bool
-        default: no
+        default: false
     follow:
         description:
             - Set this to C(yes) to follow symlinks in path for systems with python 2.6+.
         type: bool
-        default: no
+        default: false
     get_checksum:
         description:
             - Set this to C(yes) to retrieve a file's SHA1 checksum.
         type: bool
-        default: no
+        default: false
     use_regex:
         description:
             - If C(no), the patterns are file globs (shell).
             - If C(yes), they are python regexes.
         type: bool
-        default: no
+        default: false
     depth:
         description:
             - Set the maximum number of levels to descend into.
@@ -147,21 +147,21 @@ EXAMPLES = r'''
   ansible.builtin.find:
     paths: /tmp
     age: 2d
-    recurse: yes
+    recurse: true
 
 - name: Recursively find /tmp files older than 4 weeks and equal or greater than 1 megabyte
   ansible.builtin.find:
     paths: /tmp
     age: 4w
     size: 1m
-    recurse: yes
+    recurse: true
 
 - name: Recursively find /var/tmp files with last access time greater than 3600 seconds
   ansible.builtin.find:
     paths: /var/tmp
     age: 3600
     age_stamp: atime
-    recurse: yes
+    recurse: true
 
 - name: Find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz
   ansible.builtin.find:
@@ -175,12 +175,12 @@ EXAMPLES = r'''
     paths: /var/log
     patterns: "^.*?\\.(?:old|log\\.gz)$"
     size: 10m
-    use_regex: yes
+    use_regex: true
 
 - name: Find /var/log all directories, exclude nginx and mysql
   ansible.builtin.find:
     paths: /var/log
-    recurse: no
+    recurse: false
     file_type: directory
     excludes: 'nginx,mysql'
 
@@ -189,14 +189,14 @@ EXAMPLES = r'''
   ansible.builtin.find:
     paths: /var/log
     file_type: file
-    use_regex: yes
+    use_regex: true
     patterns: ['^_[0-9]{2,4}_.*.log$']
 
 - name: Use multiple patterns that contain a comma formatted as a YAML list
   ansible.builtin.find:
     paths: /var/log
     file_type: file
-    use_regex: yes
+    use_regex: true
     patterns:
       - '^_[0-9]{2,4}_.*.log$'
       - '^[a-z]{1,5}_.*log$'

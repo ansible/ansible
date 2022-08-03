@@ -43,7 +43,7 @@ options:
       - This option has been deprecated in favor of C(remote_src).
       - This option is mutually exclusive with C(remote_src).
     type: bool
-    default: yes
+    default: true
   creates:
     description:
       - If the specified absolute path (file or directory) already exists, this step will B(not) be run.
@@ -60,7 +60,7 @@ options:
     description:
       - If set to True, return the list of files that are contained in the tarball.
     type: bool
-    default: no
+    default: false
     version_added: "2.0"
   exclude:
     description:
@@ -83,7 +83,7 @@ options:
     description:
       - Do not replace existing files that are newer than files from the archive.
     type: bool
-    default: no
+    default: false
     version_added: "2.1"
   extra_opts:
     description:
@@ -99,7 +99,7 @@ options:
       - Set to C(yes) to indicate the archived file is already on the remote system and not local to the Ansible controller.
       - This option is mutually exclusive with C(copy).
     type: bool
-    default: no
+    default: false
     version_added: "2.2"
   validate_certs:
     description:
@@ -107,7 +107,7 @@ options:
       - This should only set to C(no) used on personally controlled sites using self-signed certificate.
       - Prior to 2.2 the code worked as if this was set to C(yes).
     type: bool
-    default: yes
+    default: true
     version_added: "2.2"
 extends_documentation_fragment:
 - action_common_attributes
@@ -162,13 +162,13 @@ EXAMPLES = r'''
   ansible.builtin.unarchive:
     src: /tmp/foo.zip
     dest: /usr/local/bin
-    remote_src: yes
+    remote_src: true
 
 - name: Unarchive a file that needs to be downloaded (added in 2.0)
   ansible.builtin.unarchive:
     src: https://example.com/example.zip
     dest: /usr/local/bin
-    remote_src: yes
+    remote_src: true
 
 - name: Unarchive a file with extra options
   ansible.builtin.unarchive:

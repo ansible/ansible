@@ -19,7 +19,7 @@ Here is a most basic example:
 
         - name: username
           prompt: What is your username?
-          private: no
+          private: false
 
         - name: password
           prompt: What is your password?
@@ -30,7 +30,7 @@ Here is a most basic example:
           ansible.builtin.debug:
             msg: 'Logging in as {{ username }}'
 
-The user input is hidden by default but it can be made visible by setting ``private: no``.
+The user input is hidden by default but it can be made visible by setting ``private: false``.
 
 .. note::
     Prompts for individual ``vars_prompt`` variables will be skipped for any variable that is already defined through the command line ``--extra-vars`` option, or when running from a non-interactive session (such as cron or Ansible AWX). See :ref:`passing_variables_on_the_command_line`.
@@ -56,9 +56,9 @@ You can hash the entered value so you can use it, for instance, with the user mo
 
      - name: my_password2
        prompt: Enter password2
-       private: yes
+       private: true
        encrypt: sha512_crypt
-       confirm: yes
+       confirm: true
        salt_size: 7
 
 If you have `Passlib <https://passlib.readthedocs.io/en/stable/>`_ installed, you can use any crypt scheme the library supports:
@@ -107,8 +107,8 @@ Some special characters, such as ``{`` and ``%`` can create templating errors. I
    vars_prompt:
      - name: my_password_with_weird_chars
        prompt: Enter password
-       unsafe: yes
-       private: yes
+       unsafe: true
+       private: true
 
 .. seealso::
 

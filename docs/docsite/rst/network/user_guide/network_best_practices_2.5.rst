@@ -126,7 +126,7 @@ The following variables are common for all platforms in the inventory, though th
 Privilege escalation
 --------------------
 
-Certain network platforms, such as Arista EOS and Cisco IOS, have the concept of different privilege modes. Certain network modules, such as those that modify system state including users, will only work in high privilege states. Ansible supports ``become`` when using ``connection: ansible.netcommon.network_cli``. This allows privileges to be raised for the specific tasks that need them. Adding ``become: yes`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task, as shown here:
+Certain network platforms, such as Arista EOS and Cisco IOS, have the concept of different privilege modes. Certain network modules, such as those that modify system state including users, will only work in high privilege states. Ansible supports ``become`` when using ``connection: ansible.netcommon.network_cli``. This allows privileges to be raised for the specific tasks that need them. Adding ``become: true`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task, as shown here:
 
 .. code-block:: ini
 
@@ -188,7 +188,7 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
 
    - name: "Demonstrate connecting to switches"
      hosts: switches
-     gather_facts: no
+     gather_facts: false
 
      tasks:
        ###
@@ -245,7 +245,7 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
                Serial: {{ hostvars[host].ansible_net_serialnum }}
                {% endfor %}
            dest: /tmp/switch-facts
-         run_once: yes
+         run_once: true
 
        ###
        # Get running configuration
@@ -253,13 +253,13 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
 
        - name: Backup switch (eos)
          arista.eos.eos_config:
-           backup: yes
+           backup: true
          register: backup_eos_location
          when: ansible_network_os == 'arista.eos.eos'
 
        - name: backup switch (vyos)
          vyos.vyos.vyos_config:
-           backup: yes
+           backup: true
          register: backup_vyos_location
          when: ansible_network_os == 'vyos.vyos.vyos'
 
@@ -267,7 +267,7 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
          file:
            path: "/tmp/backups/{{ inventory_hostname }}"
            state: directory
-           recurse: yes
+           recurse: true
 
        - name: Copy backup files into /tmp/backups/ (eos)
          copy:

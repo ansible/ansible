@@ -2,7 +2,7 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
-    return_content: yes
+    return_content: true
     method: HEAD
   register: http_301_head
 
@@ -18,7 +18,7 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
-    return_content: yes
+    return_content: true
     method: GET
   register: http_301_get
 
@@ -37,7 +37,7 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
-    return_content: yes
+    return_content: true
     method: POST
     body: '{ "foo": "bar" }'
     body_format: json
@@ -57,7 +57,7 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
-    return_content: yes
+    return_content: true
     method: HEAD
   register: http_302_head
 
@@ -73,7 +73,7 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
-    return_content: yes
+    return_content: true
     method: GET
   register: http_302_get
 
@@ -92,7 +92,7 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
-    return_content: yes
+    return_content: true
     method: POST
     body: '{ "foo": "bar" }'
     body_format: json
@@ -112,7 +112,7 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
-    return_content: yes
+    return_content: true
     method: HEAD
   register: http_303_head
 
@@ -128,7 +128,7 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
-    return_content: yes
+    return_content: true
     method: GET
   register: http_303_get
 
@@ -147,7 +147,7 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
-    return_content: yes
+    return_content: true
     method: POST
     body: '{ "foo": "bar" }'
     body_format: json
@@ -167,7 +167,7 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
-    return_content: yes
+    return_content: true
     method: HEAD
   register: http_307_head
 
@@ -183,7 +183,7 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
-    return_content: yes
+    return_content: true
     method: GET
   register: http_307_get
 
@@ -201,7 +201,7 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
-    return_content: yes
+    return_content: true
     method: POST
     body: '{ "foo": "bar" }'
     body_format: json
@@ -221,7 +221,7 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
-    return_content: yes
+    return_content: true
     method: HEAD
   register: http_308_head
 
@@ -237,7 +237,7 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
-    return_content: yes
+    return_content: true
     method: GET
   register: http_308_get
 
@@ -255,7 +255,7 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything
     follow_redirects: all
-    return_content: yes
+    return_content: true
     method: POST
     body: '{ "foo": "bar" }'
     body_format: json

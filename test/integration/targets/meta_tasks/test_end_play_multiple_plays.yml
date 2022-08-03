@@ -1,6 +1,6 @@
 - name: Testing end_play with multiple plays with strategy {{ test_strategy | default('linear') }}
   hosts: testhost
-  gather_facts: no
+  gather_facts: false
   strategy: "{{ test_strategy | default('linear') }}"
   tasks:
     - debug:
@@ -11,7 +11,7 @@
 
 - name: Testing end_play with multiple plays with strategy {{ test_strategy | default('linear') }}
   hosts: testhost
-  gather_facts: no
+  gather_facts: false
   strategy: "{{ test_strategy | default('linear') }}"
   tasks:
     - debug:

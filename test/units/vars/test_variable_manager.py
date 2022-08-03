@@ -264,7 +264,7 @@ class TestVariableManager(unittest.TestCase):
             '/etc/ansible/roles/common-role/tasks/main.yml': """
             - debug: msg="{{role_var}}"
             """,
-            # We do not need allow_duplicates: yes for this role
+            # We do not need allow_duplicates: true for this role
             # because eliminating duplicates is done by the execution
             # strategy, which we do not test here.
 

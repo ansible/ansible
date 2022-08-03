@@ -24,7 +24,7 @@ options:
       - The C(win_shell) module takes a free form command to run.
       - There is no parameter actually named 'free form'. See the examples!
     type: str
-    required: yes
+    required: true
   creates:
     description:
       - A path or path filter pattern; when the referenced path exists on the target host, the task will be skipped.
@@ -52,7 +52,7 @@ options:
     - Do not load the user profile before running a command. This is only valid
       when using PowerShell as the executable.
     type: bool
-    default: no
+    default: false
     version_added: '2.8'
   output_encoding_override:
     description:

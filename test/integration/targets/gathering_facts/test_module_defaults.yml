@@ -2,7 +2,7 @@
 - hosts: localhost
   # The gather_facts keyword has default values for its
   # options so module_defaults doesn't have much affect.
-  gather_facts: no
+  gather_facts: false
   tags:
     - default_fact_module
   tasks:
@@ -51,7 +51,7 @@
         that: "gather_subset == ['!all']"
 
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   tags:
     - custom_fact_module
   tasks:
@@ -79,7 +79,7 @@
           - "gather_subset == ['min']"
 
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   tags:
     - networking
   tasks:

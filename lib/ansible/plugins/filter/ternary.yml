@@ -35,7 +35,7 @@ EXAMPLES: |
   - name: service-foo, use systemd module unless upstart is present, then use old service module
     service:
       state: restarted
-      enabled: yes
+      enabled: true
       use: "{{ (ansible_service_mgr == 'upstart') | ternary('service', 'systemd') }}"
 
 RETURN:

@@ -1,30 +1,30 @@
 - name: Fetch with no parameters
   fetch:
   register: fetch_no_params
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Fetch with incorrect source type
   fetch:
     src: [1, 2]
     dest: "{{ output_dir }}/fetched"
   register: fetch_incorrect_src
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Try to fetch a file inside an inaccessible directory
   fetch:
     src: "{{ remote_tmp_dir }}/noaccess/file1"
     dest: "{{ output_dir }}"
   register: failed_fetch_no_access
-  become: yes
+  become: true
   become_user: fetcher
   become_method: su
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Dest is an existing directory name without trailing slash and flat=yes, should fail
   fetch:
     src: "{{ remote_tmp_dir }}/orig"
     dest: "{{ output_dir }}"
-    flat: yes
+    flat: true
   register: failed_fetch_dest_dir
   ignore_errors: true
 

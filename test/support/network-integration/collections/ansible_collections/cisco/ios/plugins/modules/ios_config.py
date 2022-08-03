@@ -275,13 +275,13 @@ EXAMPLES = """
 
 - name: render a Jinja2 template onto an IOS device
   ios_config:
-    backup: yes
+    backup: true
     src: ios_template.j2
 
 - name: configurable backup path
   ios_config:
     src: ios_template.j2
-    backup: yes
+    backup: true
     backup_options:
       filename: backup.cfg
       dir_path: /home/user

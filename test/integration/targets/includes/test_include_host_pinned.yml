@@ -1,5 +1,5 @@
 - hosts: testhost
-  gather_facts: no
+  gather_facts: false
   strategy: host_pinned
   roles:
     - test_includes_host_pinned

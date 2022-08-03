@@ -25,12 +25,12 @@ options:
     description:
       - Whether to follow symlinks.
     type: bool
-    default: no
+    default: false
   get_checksum:
     description:
       - Whether to return a checksum of the file.
     type: bool
-    default: yes
+    default: true
     version_added: "1.8"
   checksum_algorithm:
     description:
@@ -50,14 +50,14 @@ options:
       - This will add both C(mime_type) and C(charset) fields to the return, if possible.
       - In Ansible 2.3 this option changed from I(mime) to I(get_mime) and the default changed to C(yes).
     type: bool
-    default: yes
+    default: true
     aliases: [ mime, mime_type, mime-type ]
     version_added: "2.1"
   get_attributes:
     description:
       - Get file attributes using lsattr tool if present.
     type: bool
-    default: yes
+    default: true
     aliases: [ attr, attributes ]
     version_added: "2.3"
 extends_documentation_fragment:
@@ -132,7 +132,7 @@ EXAMPLES = r'''
 - name: Don not do checksum
   ansible.builtin.stat:
     path: /path/to/myhugefile
-    get_checksum: no
+    get_checksum: false
 
 - name: Use sha256 to calculate checksum
   ansible.builtin.stat:

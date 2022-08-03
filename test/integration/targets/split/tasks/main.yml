@@ -9,7 +9,7 @@
   stat:
     path: "{{ output_dir }}"
   register: split
-  ignore_errors: yes
+  ignore_errors: true
 - name: Build non-split status message
   set_fact:
     message: "

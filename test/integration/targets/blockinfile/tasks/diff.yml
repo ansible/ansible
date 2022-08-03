@@ -10,7 +10,7 @@
       line 1
       line 2
   register: difftest
-  diff: yes
+  diff: true
 
 - name: Ensure diff was shown
   assert:

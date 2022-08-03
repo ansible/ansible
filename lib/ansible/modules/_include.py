@@ -71,7 +71,7 @@ EXAMPLES = r'''
 
     - name: Include task list in play only if the condition is true
       ansible.builtin.include: "{{ hostvar }}.yaml"
-      static: no
+      static: false
       when: hostvar is defined
 '''
 

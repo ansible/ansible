@@ -418,10 +418,10 @@ An .ini file will contain the following:
     #locations=
 
     # Include powerstate. If you don't need powerstate information, turning it off improves runtime performance.
-    # Valid values: yes, no, true, false, True, False, 0, 1.
+    # Valid values: true, no, true, false, True, False, 0, 1.
     include_powerstate=yes
 
-    # Control grouping with the following boolean flags. Valid values: yes, no, true, false, True, False, 0, 1.
+    # Control grouping with the following boolean flags. Valid values: true, no, true, false, True, False, 0, 1.
     group_by_resource_group=yes
     group_by_location=yes
     group_by_security_group=yes
@@ -460,7 +460,7 @@ Here is a simple playbook to exercise the Azure inventory script:
     - name: Test the inventory script
       hosts: azure
       connection: local
-      gather_facts: no
+      gather_facts: false
       tasks:
         - debug:
             msg: "{{ inventory_hostname }} has powerstate {{ powerstate }}"

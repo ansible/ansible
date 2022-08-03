@@ -25,13 +25,13 @@ options:
             - The full path of the file/object to get the facts of; both forward and
               back slashes are accepted.
         type: path
-        required: yes
+        required: true
         aliases: [ dest, name ]
     get_checksum:
         description:
             - Whether to return a checksum of the file (default sha1)
         type: bool
-        default: yes
+        default: true
         version_added: "2.1"
     checksum_algorithm:
         description:
@@ -47,7 +47,7 @@ options:
             - In the case of C(path) pointing to another link, then that will
               be followed until no more links are found.
         type: bool
-        default: no
+        default: false
         version_added: "2.8"
 seealso:
 - module: stat
@@ -72,7 +72,7 @@ EXAMPLES = r'''
 - name: Get MD5 checksum of a file
   win_stat:
     path: C:\foo.ini
-    get_checksum: yes
+    get_checksum: true
     checksum_algorithm: md5
   register: md5_checksum
 
@@ -82,7 +82,7 @@ EXAMPLES = r'''
 - name: Get SHA1 checksum of file
   win_stat:
     path: C:\foo.ini
-    get_checksum: yes
+    get_checksum: true
   register: sha1_checksum
 
 - debug:
@@ -91,7 +91,7 @@ EXAMPLES = r'''
 - name: Get SHA256 checksum of file
   win_stat:
     path: C:\foo.ini
-    get_checksum: yes
+    get_checksum: true
     checksum_algorithm: sha256
   register: sha256_checksum
 

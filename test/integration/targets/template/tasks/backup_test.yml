@@ -12,7 +12,7 @@
   user:
     name: "{{ t_username }}"
     group: "{{ t_groupname }}"
-    createhome: no
+    createhome: false
 
 - name: set the dest file
   set_fact:

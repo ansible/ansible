@@ -709,7 +709,7 @@
 
 - debug:
     msg: "{{ 'x' in y }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: error
 
 - name: check that proper error message is emitted when in operator is used
@@ -779,7 +779,7 @@
   template:
     src: override_colon_value.j2
     dest: "{{ output_dir }}/override_colon_value.templated"
-  ignore_errors: yes
+  ignore_errors: true
   register: override_colon_value_task
 
 - copy:

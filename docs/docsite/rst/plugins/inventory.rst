@@ -134,7 +134,7 @@ Inventory plugins that support caching can use the general settings for the fact
 
     # demo.aws_ec2.yml
     plugin: amazon.aws.aws_ec2
-    cache: yes
+    cache: true
     cache_plugin: ansible.builtin.jsonfile
     cache_timeout: 7200
     cache_connection: /tmp/aws_inventory

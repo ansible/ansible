@@ -22,7 +22,7 @@
   yum:
     name: "@Custom Group"
     state: absent
-  check_mode: yes
+  check_mode: true
   register: yum_result
 
 - name: verify changed
@@ -77,7 +77,7 @@
   yum:
     name: "@Custom Group"
     state: absent
-  check_mode: yes
+  check_mode: true
   register: yum_result
 
 - name: verify changed
@@ -102,7 +102,7 @@
     name: "@Custom Group,sos"
     state: absent
   register: yum_result
-  check_mode: yes
+  check_mode: true
 
 - name: verify changed
   assert:
@@ -138,7 +138,7 @@
     name: "@Custom Group,sos"
     state: absent
   register: yum_result
-  check_mode: yes
+  check_mode: true
 
 - name: verify not changed
   assert:

@@ -54,7 +54,7 @@ attributes:
       support: full
 notes:
     - "If using raw from a playbook, you may need to disable fact gathering
-      using C(gather_facts: no) if you're using C(raw) to bootstrap python
+      using C(gather_facts: false) if you're using C(raw) to bootstrap python
       onto the machine."
     - If you want to execute a command securely and predictably, it may be
       better to use the M(ansible.builtin.command) or M(ansible.builtin.shell) modules instead.

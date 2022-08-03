@@ -2,4 +2,4 @@
   pkgng:
     name: git
     state: absent
-    autoremove: yes
+    autoremove: true

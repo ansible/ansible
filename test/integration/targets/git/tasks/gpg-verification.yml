@@ -74,7 +74,7 @@
   git:
     repo: "{{ git_gpg_source }}"
     dest: "{{ git_gpg_dest }}"
-    verify_commit: yes
+    verify_commit: true
   when:
     - git_version.stdout is version("2.1.0", '>=')
 
@@ -85,7 +85,7 @@
     repo: "{{ git_gpg_source }}"
     dest: "{{ git_gpg_dest }}"
     version: lightweight_tag/signed_commit
-    verify_commit: yes
+    verify_commit: true
   when:
     - git_version.stdout is version("2.1.0", '>=')
 
@@ -96,9 +96,9 @@
     repo: "{{ git_gpg_source }}"
     dest: "{{ git_gpg_dest }}"
     version: lightweight_tag/unsigned_commit
-    verify_commit: yes
+    verify_commit: true
   register: git_verify
-  ignore_errors: yes
+  ignore_errors: true
   when:
     - git_version.stdout is version("2.1.0", '>=')
 
@@ -117,7 +117,7 @@
     repo: "{{ git_gpg_source }}"
     dest: "{{ git_gpg_dest }}"
     version: "{{ git_gpg_signed_commit.stdout }}"
-    verify_commit: yes
+    verify_commit: true
   when:
     - git_version.stdout is version("2.1.0", '>=')
 
@@ -128,9 +128,9 @@
     repo: "{{ git_gpg_source }}"
     dest: "{{ git_gpg_dest }}"
     version: "{{ git_gpg_unsigned_commit.stdout }}"
-    verify_commit: yes
+    verify_commit: true
   register: git_verify
-  ignore_errors: yes
+  ignore_errors: true
   when:
     - git_version.stdout is version("2.1.0", '>=')
 
@@ -149,7 +149,7 @@
     repo: "{{ git_gpg_source }}"
     dest: "{{ git_gpg_dest }}"
     version: signed_annotated_tag
-    verify_commit: yes
+    verify_commit: true
 
 - name: GPG-VERIFICATION | Clone repo and verify an unsigned annotated tag (should fail)
   environment:
@@ -158,9 +158,9 @@
     repo: "{{ git_gpg_source }}"
     dest: "{{ git_gpg_dest }}"
     version: unsigned_annotated_tag
-    verify_commit: yes
+    verify_commit: true
   register: git_verify
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: GPG-VERIFICATION | Check that unsigned annotated tag verification failed
   assert:
@@ -175,7 +175,7 @@
     repo: "{{ git_gpg_source }}"
     dest: "{{ git_gpg_dest }}"
     version: some_branch/signed_tip
-    verify_commit: yes
+    verify_commit: true
   when:
     - git_version.stdout is version("2.1.0", '>=')
 
@@ -186,9 +186,9 @@
     repo: "{{ git_gpg_source }}"
     dest: "{{ git_gpg_dest }}"
     version: another_branch/unsigned_tip
-    verify_commit: yes
+    verify_commit: true
   register: git_verify
-  ignore_errors: yes
+  ignore_errors: true
   when:
     - git_version.stdout is version("2.1.0", '>=')
 
@@ -204,7 +204,7 @@
   command: gpgconf --kill gpg-agent
   environment:
     GNUPGHOME: "{{ git_gpg_gpghome }}"
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: GPG-VERIFICATION | Remove GnuPG verification workdir
   file:

@@ -1,5 +1,5 @@
 - hosts: testhost,testhost2
-  gather_facts: no
+  gather_facts: false
   tasks:
     - set_fact:
         module_to_run: 'debug'

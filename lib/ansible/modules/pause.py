@@ -80,7 +80,7 @@ EXAMPLES = '''
 - name: Pause to get some sensitive input
   ansible.builtin.pause:
     prompt: "Enter a secret"
-    echo: no
+    echo: false
 '''
 
 RETURN = '''

@@ -1,5 +1,5 @@
 - hosts: testhost
-  gather_facts: no
+  gather_facts: false
   any_errors_fatal: true
   tasks:
     - name: EXPECTED FAILURE shell exe of /bin/false for testhost

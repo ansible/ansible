@@ -39,7 +39,7 @@ options:
         description:
             - If I(yes), indicates that the group created is a system group.
         type: bool
-        default: no
+        default: false
     local:
         description:
             - Forces the use of "local" command alternatives on platforms that implement it.
@@ -47,14 +47,14 @@ options:
               (for example, it uses C(lgroupadd) instead of C(groupadd)).
             - This requires that these commands exist on the targeted host, otherwise it will be a fatal error.
         type: bool
-        default: no
+        default: false
         version_added: "2.6"
     non_unique:
         description:
             - This option allows to change the group ID to a non-unique value. Requires C(gid).
             - Not supported on macOS or BusyBox distributions.
         type: bool
-        default: no
+        default: false
         version_added: "2.8"
 extends_documentation_fragment: action_common_attributes
 attributes:

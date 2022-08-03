@@ -1,11 +1,11 @@
 - hosts: testhost
-  gather_facts: no
+  gather_facts: false
   tags:
     - always
   tasks:
   - name: ensure fail action produces a failing result
     fail:
-    ignore_errors: yes
+    ignore_errors: true
     register: fail_out
 
   - debug:
@@ -14,7 +14,7 @@
   - name: ensure assert produces a failing result
     assert:
       that: false
-    ignore_errors: yes
+    ignore_errors: true
     register: assert_out
 
   - debug:

@@ -1,7 +1,7 @@
 - block:
     - name: Add IP to interface
       command: ip address add 100.42.42.1/32 dev {{ ansible_facts.default_ipv4.interface }}
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Gather network facts
       setup:
@@ -15,7 +15,7 @@
   always:
     - name: Remove IP from interface
       command: ip address delete 100.42.42.1/32 dev {{ ansible_facts.default_ipv4.interface }}
-      ignore_errors: yes
+      ignore_errors: true
 
 - block:
     - name: Add bridge device
@@ -44,8 +44,8 @@
   always:
     - name: Remove virtual interface
       command: ip link delete veth1337 type veth
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Remove bridge device
       command: ip link delete br1337 type bridge
-      ignore_errors: yes
+      ignore_errors: true

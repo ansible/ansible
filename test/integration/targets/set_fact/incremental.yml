@@ -1,6 +1,6 @@
 - name: test set_fact incremental https://github.com/ansible/ansible/issues/38271
   hosts: testhost
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: Generate inline loop for set_fact
       set_fact:

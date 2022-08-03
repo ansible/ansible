@@ -6,7 +6,7 @@
     apt:
       name: foo
       state: latest
-      allow_unauthenticated: yes
+      allow_unauthenticated: true
 
   - name: check foo version
     shell: dpkg -s foo | grep Version | awk '{print $2}'
@@ -21,8 +21,8 @@
     apt:
       name: foo=1.0.0
       state: present
-      allow_unauthenticated: yes
-    ignore_errors: yes
+      allow_unauthenticated: true
+    ignore_errors: true
     register: apt_downgrade_foo_fail
 
   - name: verify failure of downgrading without allow downgrade flag
@@ -34,8 +34,8 @@
     apt:
       name: foo=1.0.0
       state: present
-      allow_downgrade: yes
-      allow_unauthenticated: yes
+      allow_downgrade: true
+      allow_unauthenticated: true
     register: apt_downgrade_foo_succeed
 
   - name: verify success of downgrading with allow downgrade flag
@@ -57,8 +57,8 @@
     apt:
       name: foo=1.0.0
       state: present
-      allow_downgrade: yes
-      allow_unauthenticated: yes
+      allow_downgrade: true
+      allow_unauthenticated: true
     register: apt_downgrade_second_downgrade
 
   - name: check that nothing has changed (idempotent)
@@ -71,7 +71,7 @@
       apt:
         pkg: foo,foobar
         state: absent
-        autoclean: yes
+        autoclean: true
 
     - name: Restore ubuntu repos
       command: mv /etc/apt/sources.list.backup /etc/apt/sources.list

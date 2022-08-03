@@ -11,7 +11,7 @@
       find:
         path: /etc
         patterns: 'shadow\..*~$'
-        use_regex: yes
+        use_regex: true
       register: shadow_backups
 
     - name: Assert that a backup file was created

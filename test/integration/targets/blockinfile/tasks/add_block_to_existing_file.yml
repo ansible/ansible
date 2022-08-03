@@ -9,7 +9,7 @@
     block: |
       Match User ansible-agent
       PasswordAuthentication no
-    backup: yes
+    backup: true
   register: blockinfile_test0
 
 - name: ensure we have a bcackup file

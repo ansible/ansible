@@ -189,7 +189,7 @@
   async_status:
     jid: '{{ async_custom_dir_poll.ansible_job_id }}'
   register: fail_async_custom_dir_poll
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: poll with different dir - success
   async_status:

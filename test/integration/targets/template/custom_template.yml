@@ -1,4 +1,4 @@
 - hosts: testhost
-  gather_facts: yes
+  gather_facts: true
   roles:
     - { role: custom_tasks }

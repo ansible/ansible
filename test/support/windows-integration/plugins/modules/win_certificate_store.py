@@ -91,7 +91,7 @@ options:
       the certificate and the private key cannot be exported.
     - Used when C(state=present) only.
     type: bool
-    default: yes
+    default: true
   key_storage:
     description:
     - Specifies where Windows will store the private key when it is imported.
@@ -143,14 +143,14 @@ EXAMPLES = r'''
     path: C:\Temp\cert.pfx
     state: present
     password: VeryStrongPasswordHere!
-  become: yes
+  become: true
   become_method: runas
 
 - name: Import pfx certificate without password and set private key as un-exportable
   win_certificate_store:
     path: C:\Temp\cert.pfx
     state: present
-    key_exportable: no
+    key_exportable: false
   # usually you don't set this here but it is for illustrative purposes
   vars:
     ansible_winrm_transport: credssp
@@ -184,7 +184,7 @@ EXAMPLES = r'''
     state: exported
     file_type: pkcs12
     password: AnotherStrongPass!
-  become: yes
+  become: true
   become_method: runas
   become_user: SYSTEM
 

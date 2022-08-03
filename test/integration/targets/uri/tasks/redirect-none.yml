@@ -2,9 +2,9 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything
     follow_redirects: none
-    return_content: yes
+    return_content: true
     method: HEAD
-  ignore_errors: yes
+  ignore_errors: true
   register: http_301_head
 
 - assert:
@@ -21,9 +21,9 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything
     follow_redirects: none
-    return_content: yes
+    return_content: true
     method: GET
-  ignore_errors: yes
+  ignore_errors: true
   register: http_301_get
 
 - assert:
@@ -40,11 +40,11 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=301&url=https://{{ httpbin_host }}/anything
     follow_redirects: none
-    return_content: yes
+    return_content: true
     method: POST
     body: '{ "foo": "bar" }'
     body_format: json
-  ignore_errors: yes
+  ignore_errors: true
   register: http_301_post
 
 - assert:
@@ -61,9 +61,9 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything
     follow_redirects: none
-    return_content: yes
+    return_content: true
     method: HEAD
-  ignore_errors: yes
+  ignore_errors: true
   register: http_302_head
 
 - assert:
@@ -80,9 +80,9 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything
     follow_redirects: none
-    return_content: yes
+    return_content: true
     method: GET
-  ignore_errors: yes
+  ignore_errors: true
   register: http_302_get
 
 - assert:
@@ -99,11 +99,11 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=302&url=https://{{ httpbin_host }}/anything
     follow_redirects: none
-    return_content: yes
+    return_content: true
     method: POST
     body: '{ "foo": "bar" }'
     body_format: json
-  ignore_errors: yes
+  ignore_errors: true
   register: http_302_post
 
 - assert:
@@ -120,9 +120,9 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything
     follow_redirects: none
-    return_content: yes
+    return_content: true
     method: HEAD
-  ignore_errors: yes
+  ignore_errors: true
   register: http_303_head
 
 - assert:
@@ -139,9 +139,9 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything
     follow_redirects: none
-    return_content: yes
+    return_content: true
     method: GET
-  ignore_errors: yes
+  ignore_errors: true
   register: http_303_get
 
 - assert:
@@ -158,11 +158,11 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=303&url=https://{{ httpbin_host }}/anything
     follow_redirects: none
-    return_content: yes
+    return_content: true
     method: POST
     body: '{ "foo": "bar" }'
     body_format: json
-  ignore_errors: yes
+  ignore_errors: true
   register: http_303_post
 
 - assert:
@@ -179,9 +179,9 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything
     follow_redirects: none
-    return_content: yes
+    return_content: true
     method: HEAD
-  ignore_errors: yes
+  ignore_errors: true
   register: http_307_head
 
 - assert:
@@ -198,9 +198,9 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything
     follow_redirects: none
-    return_content: yes
+    return_content: true
     method: GET
-  ignore_errors: yes
+  ignore_errors: true
   register: http_307_get
 
 - assert:
@@ -217,11 +217,11 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=307&url=https://{{ httpbin_host }}/anything
     follow_redirects: none
-    return_content: yes
+    return_content: true
     method: POST
     body: '{ "foo": "bar" }'
     body_format: json
-  ignore_errors: yes
+  ignore_errors: true
   register: http_307_post
 
 - assert:
@@ -239,9 +239,9 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything
     follow_redirects: none
-    return_content: yes
+    return_content: true
     method: GET
-  ignore_errors: yes
+  ignore_errors: true
   register: http_308_head
 
 - assert:
@@ -259,9 +259,9 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything
     follow_redirects: none
-    return_content: yes
+    return_content: true
     method: GET
-  ignore_errors: yes
+  ignore_errors: true
   register: http_308_get
 
 - assert:
@@ -278,11 +278,11 @@
   uri:
     url: https://{{ httpbin_host }}/redirect-to?status_code=308&url=https://{{ httpbin_host }}/anything
     follow_redirects: none
-    return_content: yes
+    return_content: true
     method: POST
     body: '{ "foo": "bar" }'
     body_format: json
-  ignore_errors: yes
+  ignore_errors: true
   register: http_308_post
 
 - assert:

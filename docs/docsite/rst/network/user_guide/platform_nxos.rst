@@ -29,7 +29,7 @@ Connections available
     Connection Settings   ``ansible_connection:``                     ``ansible_connection:``
                             ``ansible.netcommon.network_cli``             ``ansible.netcommon.httpapi``
 
-    |enable_mode|         supported: use ``ansible_become: yes``      not supported by NX-API
+    |enable_mode|         supported: use ``ansible_become: true``      not supported by NX-API
                           with ``ansible_become_method: enable``
                           and ``ansible_become_password:``
 
@@ -53,7 +53,7 @@ Example CLI ``group_vars/nxos.yml``
    ansible_network_os: cisco.nxos.nxos
    ansible_user: myuser
    ansible_password: !vault...
-   ansible_become: yes
+   ansible_become: true
    ansible_become_method: enable
    ansible_become_password: !vault...
    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'
@@ -70,7 +70,7 @@ Example CLI task
 
    - name: Backup current switch config (nxos)
      cisco.nxos.nxos_config:
-       backup: yes
+       backup: true
      register: backup_nxos_location
      when: ansible_network_os == 'cisco.nxos.nxos'
 
@@ -88,8 +88,8 @@ Before you can use NX-API to connect to a switch, you must enable NX-API. To ena
 
    - name: Enable NX-API
       cisco.nxos.nxos_nxapi:
-          enable_http: yes
-          enable_https: yes
+          enable_http: true
+          enable_https: true
       when: ansible_network_os == 'cisco.nxos.nxos'
 
 To find out more about the options for enabling HTTP/HTTPS and local http see the :ref:`nxos_nxapi <nxos_nxapi_module>` module documentation.
@@ -119,7 +119,7 @@ Example NX-API task
 
    - name: Backup current switch config (nxos)
      cisco.nxos.nxos_config:
-       backup: yes
+       backup: true
      register: backup_nxos_location
      environment: "{{ proxy_env }}"
      when: ansible_network_os == 'cisco.nxos.nxos'

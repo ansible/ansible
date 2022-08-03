@@ -2,4 +2,4 @@
   apt:
     name: python-paramiko
     state: absent
-    autoremove: yes
+    autoremove: true

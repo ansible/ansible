@@ -70,7 +70,7 @@
   get_url:
     url: "https://{{ httpbin_host }}/get"
     dest: "{{ remote_tmp_dir }}/get_url_check.txt"
-    force: yes
+    force: true
   check_mode: True
   register: result
 
@@ -84,7 +84,7 @@
   get_url:
     url: "https://{{ httpbin_host }}/DOESNOTEXIST"
     dest: "{{ remote_tmp_dir }}/shouldnotexist.html"
-    force: yes
+    force: true
   check_mode: True
   register: result
   ignore_errors: True
@@ -126,7 +126,7 @@
   get_url:
     url: "https://{{ badssl_host }}/"
     dest: "{{ remote_tmp_dir }}/get_url_no_validate.html"
-    validate_certs: no
+    validate_certs: false
   register: result
 
 - stat:
@@ -598,7 +598,7 @@
   get_url:
     url: https://{{ httpbin_host }}/gzip
     dest: "{{ remote_tmp_dir }}/gzip.json.gz"
-    decompress: no
+    decompress: false
 
 - name: Get gzip file contents
   command: 'gunzip -c {{ remote_tmp_dir }}/gzip.json.gz'

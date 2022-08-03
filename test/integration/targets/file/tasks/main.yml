@@ -75,7 +75,7 @@
 - name: Target a file that does not exist
   file:
     path: /tmp/ghost
-  ignore_errors: yes
+  ignore_errors: true
   register: ghost_file_result
 
 - name: Validate ghost file results
@@ -123,32 +123,32 @@
 - name: define file to verify chattr/lsattr with
   set_fact:
     attributes_file: "{{ remote_tmp_dir_test }}/attributes.txt"
-    attributes_supported: no
+    attributes_supported: false
 
 - name: create file to verify chattr/lsattr with
   command: touch "{{ attributes_file }}"
 
 - name: add "A" attribute to file
   command: chattr +A "{{ attributes_file }}"
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: get attributes from file
   command: lsattr -d "{{ attributes_file }}"
   register: attribute_A_set
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: remove "A" attribute from file
   command: chattr -A "{{ attributes_file }}"
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: get attributes from file
   command: lsattr -d "{{ attributes_file }}"
   register: attribute_A_unset
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: determine if chattr/lsattr is supported
   set_fact:
-    attributes_supported: yes
+    attributes_supported: true
   when:
     - attribute_A_set is success
     - "'A' in attribute_A_set.stdout_lines[0].split()[0]"
@@ -226,7 +226,7 @@
 
 - name: Ask to create a file without enough perms to change ownership
   file: path=/tmp/worldwritable/baz.txt state=touch owner=root
-  become: yes
+  become: true
   become_user: nobody
   register: chown_result
   ignore_errors: True
@@ -348,8 +348,8 @@
   file:
     path: "{{ item }}"
     state: absent
-  check_mode: yes
-  diff: yes
+  check_mode: true
+  diff: true
   with_items:
     - "{{ remote_tmp_dir_test }}"
     - "{{ remote_tmp_dir_test }}/foobar/fileA"
@@ -608,9 +608,9 @@
   file:
     path: '/tmp/nonexistent'
     owner: nonexistent
-  check_mode: yes
+  check_mode: true
   register: owner_no_exist
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: create owner
   user:
@@ -622,17 +622,17 @@
   file:
     path: '/tmp/nonexistent'
     owner: nonexistent
-  check_mode: yes
+  check_mode: true
   register: owner_exists
-  ignore_errors: yes
+  ignore_errors: true
 
 # I don't use state=touch here intentionally to fail and catch warnings
 - name: owner does not exist in check_mode, using uid
   file:
     path: '/tmp/nonexistent'
     owner: '111111'
-  check_mode: yes
-  ignore_errors: yes
+  check_mode: true
+  ignore_errors: true
   register: owner_uid_no_exist
 
 - name: create owner using uid
@@ -647,8 +647,8 @@
     path: '/tmp/nonexistent'
     owner: '111111'
     state: touch
-  check_mode: yes
-  ignore_errors: yes
+  check_mode: true
+  ignore_errors: true
   register: owner_uid_exists
 
 # I don't use state=touch here intentionally to fail and catch warnings
@@ -656,9 +656,9 @@
   file:
     path: '/tmp/nonexistent'
     group: nonexistent1
-  check_mode: yes
+  check_mode: true
   register: group_no_exist
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: create group
   group:
@@ -670,18 +670,18 @@
   file:
     path: '/tmp/nonexistent'
     group: nonexistent1
-  check_mode: yes
+  check_mode: true
   register: group_exists
-  ignore_errors: yes
+  ignore_errors: true
 
 # I don't use state=touch here intentionally to fail and catch warnings
 - name: group does not exist in check_mode, using gid
   file:
     path: '/tmp/nonexistent'
     group: '111112'
-  check_mode: yes
+  check_mode: true
   register: group_gid_no_exist
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: create group with gid
   group:
@@ -694,9 +694,9 @@
   file:
     path: '/tmp/nonexistent'
     group: '111112'
-  check_mode: yes
+  check_mode: true
   register: group_gid_exists
-  ignore_errors: yes
+  ignore_errors: true
 
 - assert:
     that:
@@ -818,7 +818,7 @@
   file:
     state: hard
   register: file_error1
-  ignore_errors: yes
+  ignore_errors: true
 
 - assert:
     that:
@@ -830,7 +830,7 @@
     dest: "{{ remote_tmp_dir_test }}/hard.txt"
     state: hard
   register: file_error2
-  ignore_errors: yes
+  ignore_errors: true
 
 - assert:
     that:
@@ -843,7 +843,7 @@
     dest: "{{ remote_tmp_dir_test }}/hard.txt"
     state: hard
   register: file_error3
-  ignore_errors: yes
+  ignore_errors: true
 
 - assert:
     that:

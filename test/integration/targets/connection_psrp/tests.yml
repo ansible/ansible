@@ -3,7 +3,7 @@
 - name: test out psrp specific tests
   hosts: windows
   serial: 1
-  gather_facts: no
+  gather_facts: false
 
   tasks:
   - name: test complex objects in raw output
@@ -39,7 +39,7 @@
     win_whoami:
     when: os_version|bool
     register: whoami_out
-    become: yes
+    become: true
     become_method: runas
     become_user: SYSTEM
 
@@ -93,7 +93,7 @@
   - name: get result of copy empty file
     win_stat:
       path: C:\Windows\TEMP\empty.txt
-      get_checksum: yes
+      get_checksum: true
     register: copy_empty_actual
 
   - name: assert copy empty file
@@ -108,13 +108,13 @@
       fetch:
         src: C:\Windows\TEMP\empty.txt
         dest: /tmp/empty.txt
-        flat: yes
+        flat: true
       register: fetch_empty
 
     - name: get result of fetch empty file
       stat:
         path: /tmp/empty.txt
-        get_checksum: yes
+        get_checksum: true
       register: fetch_empty_actual
       delegate_to: localhost
 

@@ -134,12 +134,12 @@
   subversion:
     repo: "{{ subversion_external_repo_url }}"
     dest: "{{ subversion_test_dir }}/svn-external1"
-    validate_certs: yes
+    validate_certs: true
 
 - name: clone a small external repo with validate_certs=false
   subversion:
     repo: "{{ subversion_external_repo_url }}"
     dest: "{{ subversion_test_dir }}/svn-external2"
-    validate_certs: no
+    validate_certs: false
 
 # TBA: test for additional options or URL variants welcome

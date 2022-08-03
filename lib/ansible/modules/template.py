@@ -22,7 +22,7 @@ options:
     - When set to C(no) symbolic links will not be followed.
     - Previous to Ansible 2.4, this was hardcoded as C(yes).
     type: bool
-    default: no
+    default: false
     version_added: '2.4'
 notes:
 - For Windows you can use M(ansible.windows.win_template) which uses '\\r\\n' as C(newline_sequence) by default.
@@ -107,5 +107,5 @@ EXAMPLES = r'''
     group: root
     mode: '0600'
     validate: /usr/sbin/sshd -t -f %s
-    backup: yes
+    backup: true
 '''

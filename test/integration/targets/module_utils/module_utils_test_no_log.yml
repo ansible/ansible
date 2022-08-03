@@ -1,6 +1,6 @@
 # This is called by module_utils_vvvvv.yml with a custom callback
 - hosts: testhost
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: Check no_log invocation results
       test_no_log:

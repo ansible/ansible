@@ -300,7 +300,7 @@
     signature: "file://{{ gpg_homedir }}/namespace1-name1-1.0.9-MANIFEST.json.asc"
     keyring: "{{ gpg_homedir }}/pubring.kbx"
   register: verify
-  ignore_errors: yes
+  ignore_errors: true
   environment:
     ANSIBLE_NOCOLOR: True
     ANSIBLE_FORCE_COLOR: False
@@ -326,7 +326,7 @@
     signature: "file://{{ gpg_homedir }}/namespace1-name1-1.0.9-MANIFEST.json.asc"
     keyring: "{{ gpg_homedir }}/pubring.kbx"
   register: verify
-  ignore_errors: yes
+  ignore_errors: true
   environment:
     ANSIBLE_NOCOLOR: True
     ANSIBLE_FORCE_COLOR: False
@@ -354,7 +354,7 @@
     signature: "file://{{ gpg_homedir }}/namespace1-name1-1.0.0-MANIFEST.json.asc"
     keyring: "{{ gpg_homedir }}/pubring.kbx"
   register: verify
-  ignore_errors: yes
+  ignore_errors: true
   environment:
     ANSIBLE_NOCOLOR: True
     ANSIBLE_FORCE_COLOR: False
@@ -380,7 +380,7 @@
     signature: "file://{{ gpg_homedir }}/namespace1-name1-1.0.0-MANIFEST.json.asc"
     keyring: "{{ gpg_homedir }}/pubring.kbx"
   register: verify
-  ignore_errors: yes
+  ignore_errors: true
   environment:
     ANSIBLE_GALAXY_IGNORE_SIGNATURE_STATUS_CODES: REVKEYSIG,KEYREVOKED
     ANSIBLE_NOCOLOR: True
@@ -407,7 +407,7 @@
     signature: "file://{{ gpg_homedir }}/namespace1-name1-1.0.0-MANIFEST.json.asc"
     keyring: "{{ gpg_homedir }}/pubring.kbx"
   register: verify
-  ignore_errors: yes
+  ignore_errors: true
   environment:
     ANSIBLE_GALAXY_IGNORE_SIGNATURE_STATUS_CODES: REVKEYSIG,KEYREVOKED
     ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: all
@@ -438,7 +438,7 @@
   environment:
     ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "1"
   register: verify
-  ignore_errors: yes
+  ignore_errors: true
 
 - assert:
     that:
@@ -458,7 +458,7 @@
   environment:
     ANSIBLE_GALAXY_REQUIRED_VALID_SIGNATURE_COUNT: "+1"
   register: verify
-  ignore_errors: yes
+  ignore_errors: true
 
 - assert:
     that:

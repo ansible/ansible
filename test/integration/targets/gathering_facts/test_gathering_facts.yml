@@ -3,7 +3,7 @@
   tags: [ 'fact_negation' ]
   connection: local
   gather_subset: "!hardware"
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: setup with not hardware
       setup:
@@ -16,7 +16,7 @@
   tags: [ 'fact_network' ]
   connection: local
   gather_subset: ["!all", "network"]
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: Test that retrieving network facts works and gets prereqs from platform and distribution
       assert:
@@ -38,7 +38,7 @@
   tags: [ 'fact_hardware' ]
   connection: local
   gather_subset: "hardware"
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: debug stuff
       debug:
@@ -70,7 +70,7 @@
   tags: [ 'fact_service_mgr' ]
   connection: local
   gather_subset: ["!all", "service_mgr"]
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: Test that retrieving service_mgr facts works and gets prereqs from platform and distribution
       assert:
@@ -92,7 +92,7 @@
   tags: [ 'fact_min' ]
   connection: local
   gather_subset: "all"
-  gather_facts: yes
+  gather_facts: true
   tasks:
     #- setup:
     #  register: facts
@@ -108,7 +108,7 @@
 - hosts: facthost19
   tags: [ 'fact_min' ]
   connection: local
-  gather_facts: no
+  gather_facts: false
   tasks:
     - setup:
         filter: "*env*"
@@ -125,7 +125,7 @@
 - hosts: facthost24
   tags: [ 'fact_min' ]
   connection: local
-  gather_facts: no
+  gather_facts: false
   tasks:
     - setup:
         filter:
@@ -142,7 +142,7 @@
 
 - hosts: facthost25
   tags: [ 'fact_min' ]
-  gather_facts: no
+  gather_facts: false
   tasks:
     - setup:
         filter:
@@ -156,7 +156,7 @@
 
 - hosts: facthost26
   tags: [ 'fact_min' ]
-  gather_facts: no
+  gather_facts: false
   tasks:
     - setup:
         filter:
@@ -171,7 +171,7 @@
 - hosts: facthost13
   tags: [ 'fact_min' ]
   connection: local
-  gather_facts: no
+  gather_facts: false
   tasks:
     - setup:
         filter: "ansible_user_id"
@@ -190,7 +190,7 @@
 - hosts: facthost11
   tags: [ 'fact_min' ]
   connection: local
-  gather_facts: no
+  gather_facts: false
   tasks:
     - setup:
         filter: "*"
@@ -207,7 +207,7 @@
 - hosts: facthost12
   tags: [ 'fact_min' ]
   connection: local
-  gather_facts: no
+  gather_facts: false
   tasks:
     - setup:
         filter: ""
@@ -225,7 +225,7 @@
   tags: [ 'fact_min' ]
   connection: local
   gather_subset: "!all"
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: Test that only retrieving minimal facts work
       assert:
@@ -242,7 +242,7 @@
   tags: [ 'fact_network' ]
   connection: local
   gather_subset: ["!all", "!min", "network"]
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: Test that retrieving network facts work
       assert:
@@ -256,7 +256,7 @@
   tags: [ 'fact_hardware' ]
   connection: local
   gather_subset: "hardware"
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: Test that retrieving hardware facts work
       assert:
@@ -270,7 +270,7 @@
   tags: [ 'fact_virtual' ]
   connection: local
   gather_subset: "virtual"
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: Test that retrieving virtualization facts work
       assert:
@@ -284,7 +284,7 @@
   tags: [ 'fact_comma_string' ]
   connection: local
   gather_subset: ["virtual", "network"]
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: Test that retrieving virtualization and network as a string works
       assert:
@@ -300,7 +300,7 @@
   gather_subset:
     - virtual
     - network
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: Test that retrieving virtualization and network as a string works
       assert:
@@ -315,7 +315,7 @@
   tags: [ 'fact_negation' ]
   connection: local
   gather_subset: "!hardware"
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: Test that negation of fact subsets work
       assert:
@@ -335,7 +335,7 @@
   tags: [ 'fact_mixed_negation_addition' ]
   connection: local
   gather_subset: ["!hardware", "network"]
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: Test that negation and additional subsets work together
       assert:
@@ -349,7 +349,7 @@
   tags: [ 'fact_mixed_negation_addition_min' ]
   connection: local
   gather_subset: ["!all", "!min", "network"]
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: Test that negation and additional subsets work together for min subset
       assert:
@@ -366,7 +366,7 @@
   tags: [ 'fact_negate_all_min_add_pkg_mgr' ]
   connection: local
   gather_subset: ["!all", "!min", "pkg_mgr"]
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: Test that negation and additional subsets work together for min subset
       assert:
@@ -388,7 +388,7 @@
 - hosts: facthost9
   tags: [ 'fact_local']
   connection: local
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: Create fact directories
       become: true
@@ -412,7 +412,7 @@
 - hosts: facthost9
   tags: [ 'fact_local']
   connection: local
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: Test reading facts from default fact_path
       assert:
@@ -422,7 +422,7 @@
 - hosts: facthost9
   tags: [ 'fact_local']
   connection: local
-  gather_facts: yes
+  gather_facts: true
   fact_path: /tmp/custom_facts.d
   tasks:
     - name: Test reading facts from custom fact_path
@@ -436,7 +436,7 @@
   gather_subset:
     - facter
     - ohai
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - name: Test that retrieving facter and ohai doesnt fail
       assert:

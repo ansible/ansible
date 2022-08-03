@@ -379,7 +379,7 @@
   pip:
     name: "{{ pip_test_package }}"
     version: "<100,!=1.0,>0.0.0"
-  check_mode: yes
+  check_mode: true
   register: version3
 
 - name: assert no changes
@@ -390,7 +390,7 @@
   pip:
     name: "{{ pip_test_package }}"
     version: ">100.0.0"
-  check_mode: yes
+  check_mode: true
   register: version4
 
 - name: assert changed
@@ -406,7 +406,7 @@
   pip:
     name: "{{ pip_test_pkg_ver }}"
     version: "1.11.1"
-  ignore_errors: yes
+  ignore_errors: true
   register: version5
 
 - name: assert the invalid combination should fail
@@ -417,7 +417,7 @@
   pip:
     name: "{{ pip_test_pkg_ver[0] }}"
     version: "<100.0.0"
-  ignore_errors: yes
+  ignore_errors: true
   register: version6
 
 - name: assert invalid combination should fail
@@ -427,7 +427,7 @@
 - name: try to install invalid package
   pip:
     name: "{{ pip_test_pkg_ver_unsatisfied }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: version7
 
 - name: assert install should fail
@@ -446,7 +446,7 @@
 - name: test install multi-packages with check_mode
   pip:
     name: "{{ pip_test_pkg_ver }}"
-  check_mode: yes
+  check_mode: true
   register: version9
 
 - name: assert no change
@@ -456,7 +456,7 @@
 - name: test install unsatisfied multi-packages with check_mode
   pip:
     name: "{{ pip_test_pkg_ver_unsatisfied }}"
-  check_mode: yes
+  check_mode: true
   register: version10
 
 - name: assert changes needed
@@ -480,7 +480,7 @@
 - name: test install multi package provided by one single string with check_mode
   pip:
     name: "{{pip_test_pkg_ver[0]}},{{pip_test_pkg_ver[1]}}"
-  check_mode: yes
+  check_mode: true
   register: version12
 
 - name: assert no changes needed
@@ -496,7 +496,7 @@
 - name: test the invalid package name
   pip:
     name: djan=+-~!@#$go>1.11.1,<1.11.3
-  ignore_errors: yes
+  ignore_errors: true
   register: version13
 
 - name: the invalid package should make module failed
@@ -536,7 +536,7 @@
       state: "absent"
       name: "distribute"
       virtualenv: "{{ remote_tmp_dir }}/pipenv"
-    ignore_errors: yes
+    ignore_errors: true
     register: remove_distribute
 
   - name: inspect the cmd

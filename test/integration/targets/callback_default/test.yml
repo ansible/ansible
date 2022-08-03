@@ -1,6 +1,6 @@
 ---
 - hosts: testhost
-  gather_facts: no
+  gather_facts: false
   vars:
     foo: foo bar
   tasks:
@@ -16,7 +16,7 @@
     - name: Failed task
       fail:
         msg: no reason
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Skipped task
       command: echo foo
@@ -41,7 +41,7 @@
       changed_when: item == 1
       failed_when: item == 2
       when: item != 4
-      ignore_errors: yes
+      ignore_errors: true
       loop:
         - 1
         - 2
@@ -112,7 +112,7 @@
 # An issue was found previously for tasks in a play using strategy 'free' after
 # a non-'free' play in the same playbook, so we protect against a regression.
 - hosts: testhost
-  gather_facts: no
+  gather_facts: false
   strategy: free
   tasks:
     - name: First free task

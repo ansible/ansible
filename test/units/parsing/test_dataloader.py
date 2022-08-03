@@ -93,11 +93,11 @@ class TestDataLoader(unittest.TestCase):
 
         testrole/tasks/main.yml:
         - include: "include1.yml"
-          static: no
+          static: false
 
         testrole/tasks/include1.yml:
         - include: include2.yml
-          static: no
+          static: false
 
         testrole/tasks/include2.yml:
         - debug: msg="blah"

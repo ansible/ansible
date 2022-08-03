@@ -28,7 +28,7 @@
         src: '{{remote_tmp_dir}}/{{archive}}'
         dest: '{{outdir}}'
         list_files: True
-        remote_src: yes
+        remote_src: true
         owner: testuser
 
     - name: stat an output file
@@ -62,7 +62,7 @@
         src: '{{remote_tmp_dir}}/{{archive}}'
         dest: '{{outdir}}'
         list_files: True
-        remote_src: yes
+        remote_src: true
         owner: '{{ testuser.uid }}'
 
     - name: stat an output file
@@ -96,7 +96,7 @@
         src: '{{remote_tmp_dir}}/{{archive}}'
         dest: '{{outdir}}'
         list_files: True
-        remote_src: yes
+        remote_src: true
         group: testgroup
 
     - name: stat an output file
@@ -130,7 +130,7 @@
         src: '{{remote_tmp_dir}}/{{archive}}'
         dest: '{{outdir}}'
         list_files: True
-        remote_src: yes
+        remote_src: true
         group: '{{ testgroup.gid }}'
 
     - name: stat an output file
@@ -155,8 +155,8 @@
       user:
         name: testuser
         state: absent
-        remove: yes
-        force: yes
+        remove: true
+        force: true
 
     - name: Remove testgroup
       group:

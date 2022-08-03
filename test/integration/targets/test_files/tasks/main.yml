@@ -3,8 +3,8 @@
     src: does_not_exist
     dest: link_to_nonexistent_file
     state: link
-    force: yes
-    follow: no
+    force: true
+    follow: false
 
 - name: Assert directory tests work
   assert:

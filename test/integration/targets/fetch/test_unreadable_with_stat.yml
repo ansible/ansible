@@ -3,7 +3,7 @@
 
 - name: Test unreadable file using stat
   hosts: testhost
-  gather_facts: no
+  gather_facts: false
 
   tasks:
     - name: Check connectivity
@@ -20,13 +20,13 @@
         src: "{{ remote_tmp_dir }}/noaccess/file1"
         dest: "{{ output_dir }}"
       register: failed_fetch_no_access
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Try to fetch a file inside an inaccessible directory without fail_on_missing
       fetch:
         src: "{{ remote_tmp_dir }}/noaccess/file1"
         dest: "{{ output_dir }}"
-        fail_on_missing: no
+        fail_on_missing: false
       register: failed_fetch_no_access_fail_on_missing
 
     - assert:

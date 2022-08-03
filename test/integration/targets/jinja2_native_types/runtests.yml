@@ -1,6 +1,6 @@
 - name: Test jinja2 native types
   hosts: localhost
-  gather_facts: no
+  gather_facts: false
   vars:
       i_one: 1
       i_two: 2

@@ -119,7 +119,7 @@ EXAMPLES = """
 - name: backup and load from file
   vyos_config:
     src: vyos.cfg
-    backup: yes
+    backup: true
 
 - name: render a Jinja2 template onto the VyOS router
   vyos_config:
@@ -133,7 +133,7 @@ EXAMPLES = """
 
 - name: configurable backup path
   vyos_config:
-    backup: yes
+    backup: true
     backup_options:
       filename: backup.cfg
       dir_path: /home/user

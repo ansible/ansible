@@ -31,7 +31,7 @@
   with_subelements:
     - "{{element_data_missing}}"
     - the.sub.key.list
-    - skip_missing: yes
+    - skip_missing: true
   register: _subelements_missing_subkeys
 
 - debug: var=_subelements_missing_subkeys

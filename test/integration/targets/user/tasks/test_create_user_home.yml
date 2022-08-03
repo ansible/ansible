@@ -74,7 +74,7 @@
     name: ansibulluser2
     home: "{{ user_home_prefix[ansible_facts.system] }}/in2deep/ansibulluser2"
     state: absent
-    remove: yes
+    remove: true
 
 - name: Remove testing dir
   file:
@@ -89,16 +89,16 @@
     name: ansibulluser3
     state: present
     home: "{{ user_home_prefix[ansible_facts.system] }}/nosuchdir"
-    createhome: no
+    createhome: false
 
 - name: Cleanup test account
   user:
     name: ansibulluser3
     state: absent
-    remove: yes
+    remove: true
 
 # https://github.com/ansible/ansible/issues/70589
-# Create user with create_home: no and parent directory does not exist.
+# Create user with create_home: false and parent directory does not exist.
 - name: "Check if parent dir for home dir for user exists (before)"
   stat:
     path: "{{ user_home_prefix[ansible_facts.system] }}/thereisnodir"
@@ -122,7 +122,7 @@
     path: "{{ user_home_prefix[ansible_facts.system] }}/thereisnodir/randomuser"
   register: create_user_no_create_home_with_no_parent_home_dir
 
-- name: "Ensure user with non-existing parent paths with create_home: no was created successfully"
+- name: "Ensure user with non-existing parent paths with create_home: false was created successfully"
   assert:
     that:
       - not create_user_no_create_home_with_no_parent_parent_dir_before.stat.exists
@@ -133,4 +133,4 @@
   user:
     name: randomuser
     state: absent
-    remove: yes
+    remove: true

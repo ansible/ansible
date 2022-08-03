@@ -1,7 +1,7 @@
 - name: test no log with suboptions
   hosts: testhost
-  gather_facts: no
-  ignore_errors: yes
+  gather_facts: false
+  ignore_errors: true
 
   tasks:
     - name: Task with suboptions and invalid parameter

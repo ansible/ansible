@@ -7,7 +7,7 @@
 
     - name: Install molly-guard
       apt:
-        update_cache: yes
+        update_cache: true
         name: molly-guard
         state: present
       notify: remove molly-guard

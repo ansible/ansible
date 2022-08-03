@@ -26,7 +26,7 @@
   shell: whoami
   vars:
     # ansible_become_method and ansible_become_flags are not set, allowing them to be provided by inventory
-    ansible_become: yes
+    ansible_become: true
     ansible_become_user: "{{ test_user_name }}"
     ansible_become_password: "{{ test_user_plaintext_password }}"
   register: whoami

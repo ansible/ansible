@@ -119,14 +119,14 @@ EXAMPLES = '''
   ansible.builtin.subversion:
     repo: svn+ssh://an.example.org/path/to/repo
     dest: /src/export
-    export: yes
+    export: true
 
 - name: Get information about the repository whether or not it has already been cloned locally
   ansible.builtin.subversion:
     repo: svn+ssh://an.example.org/path/to/repo
     dest: /src/checkout
-    checkout: no
-    update: no
+    checkout: false
+    update: false
 '''
 
 RETURN = r'''#'''

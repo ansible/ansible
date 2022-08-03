@@ -26,7 +26,7 @@ class TestStrategyLinear(unittest.TestCase):
         fake_loader = DictDataLoader({
             "test_play.yml": """
             - hosts: all
-              gather_facts: no
+              gather_facts: false
               tasks:
                 - block:
                    - block:

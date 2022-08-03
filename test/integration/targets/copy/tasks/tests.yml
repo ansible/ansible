@@ -96,7 +96,7 @@
   copy:
     src: foo.txt
     dest: "{{ remote_file }}"
-    decrypt: no
+    decrypt: false
   register: copy_result2
 
 - name: Assert that the file was not changed
@@ -121,7 +121,7 @@
   copy:
     content: "modified"
     dest: "{{ remote_file }}"
-    decrypt: no
+    decrypt: false
   register: copy_result3
 
 - name: Check the stat results of the file
@@ -146,7 +146,7 @@
     content: "modified"
     dest: "{{ remote_file }}"
     mode: 0700
-    decrypt: no
+    decrypt: false
   register: copy_result4
 
 - name: Check the stat results of the file
@@ -177,7 +177,7 @@
     content: 'modified'
     dest: '{{ remote_file }}'
     mode: 0700
-    decrypt: no
+    decrypt: false
   register: copy_results
 
 - name: Check the stat results of the file
@@ -202,7 +202,7 @@
     content: 'modified'
     dest: '{{ remote_file }}'
     mode: 0404
-    decrypt: no
+    decrypt: false
   register: copy_results
 
 - name: Check the stat results of the file
@@ -1198,7 +1198,7 @@
     copy:
       dest: /tmp/worldwritable/file.txt
       content: "baz"
-    become: yes
+    become: true
     become_user: nobody
     register: copy_result7
 
@@ -1238,7 +1238,7 @@
   copy:
     dest: "{{ remote_dir }}/follow_link"
     src: foo.txt
-    follow: yes
+    follow: true
   register: replace_follow_result
 
 - name: Stat the link path
@@ -1261,7 +1261,7 @@
   copy:
     dest: "{{ remote_dir }}/follow_link"
     src: foo.txt
-    follow: yes
+    follow: true
   register: replace_follow_result
 
 - name: Stat the link path
@@ -1347,7 +1347,7 @@
     src: '{{ role_path }}/files/subdir/'
     dest: '{{ local_temp_dir }}/preserve_symlink/'
     mode: preserve
-    local_follow: no
+    local_follow: false
 
 - name: check that we actually used and still have a symlink
   stat: path={{ local_temp_dir }}/preserve_symlink/subdir1/bar.txt
@@ -2106,7 +2106,7 @@
       user:
         name: '{{ ansible_copy_test_user_name }}'
         state: absent
-        remove: yes
+        remove: true
       become: true
 
     - name: execute - remove the group for test
@@ -2217,7 +2217,7 @@
      copy:
         src: "{{ local_temp_dir }}/test69783/src/"
         dest: "{{ local_temp_dir }}/test69783/dest/"
-        remote_src: yes
+        remote_src: true
         mode: preserve
 
    - name: Stat dest 'readwrite' file
@@ -2265,7 +2265,7 @@
     src: '{{role_path}}/files-different/vault/vault-file'
     dest: '{{remote_tmp_dir}}/copy/file'
   register: fail_copy_encrypted_file
-  ignore_errors: yes # weird failed_when doesn't work in this case
+  ignore_errors: true # weird failed_when doesn't work in this case
 
 - name: assert failure message when copying an encrypted file without the password set
   assert:
@@ -2278,7 +2278,7 @@
     src: '{{role_path}}/files-different/vault'
     dest: '{{remote_tmp_dir}}/copy'
   register: fail_copy_directory_with_enc_file
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: assert failure message when copying a directory that contains an encrypted file without the password set
   assert:

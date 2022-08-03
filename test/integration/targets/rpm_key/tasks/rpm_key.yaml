@@ -37,7 +37,7 @@
 - name: check GPG signature of sl. Should fail
   shell: "rpm --checksig /tmp/sl.rpm"
   register: sl_check
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: confirm that signature check failed
   assert:
@@ -86,7 +86,7 @@
 - name: Confirm key is missing
   shell: "rpm --checksig /tmp/sl.rpm"
   register: sl_check
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: confirm that signature check failed
   assert:

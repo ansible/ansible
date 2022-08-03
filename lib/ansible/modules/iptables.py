@@ -391,7 +391,7 @@ EXAMPLES = r'''
     chain: INPUT
     source: 8.8.8.8
     jump: DROP
-  become: yes
+  become: true
 
 - name: Forward port 80 to 8600
   ansible.builtin.iptables:
@@ -404,14 +404,14 @@ EXAMPLES = r'''
     jump: REDIRECT
     to_ports: 8600
     comment: Redirect web traffic to port 8600
-  become: yes
+  become: true
 
 - name: Allow related and established connections
   ansible.builtin.iptables:
     chain: INPUT
     ctstate: ESTABLISHED,RELATED
     jump: ACCEPT
-  become: yes
+  become: true
 
 - name: Allow new incoming SYN packets on TCP port 22 (SSH)
   ansible.builtin.iptables:
@@ -503,14 +503,14 @@ EXAMPLES = r'''
 - name: Iptables flush filter
   ansible.builtin.iptables:
     chain: "{{ item }}"
-    flush: yes
+    flush: true
   with_items:  [ 'INPUT', 'FORWARD', 'OUTPUT' ]
 
 - name: Iptables flush nat
   ansible.builtin.iptables:
     table: nat
     chain: '{{ item }}'
-    flush: yes
+    flush: true
   with_items: [ 'INPUT', 'OUTPUT', 'PREROUTING', 'POSTROUTING' ]
 
 - name: Log packets arriving into an user-defined chain

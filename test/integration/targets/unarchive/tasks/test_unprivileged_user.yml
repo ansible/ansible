@@ -1,6 +1,6 @@
 - name: Test unarchiving twice as unprivileged user
   vars:
-    ansible_become: yes
+    ansible_become: true
     ansible_become_user: "{{ test_user_name }}"
     ansible_become_password: "{{ test_user_plaintext_password }}"
   block:
@@ -25,7 +25,7 @@
       unarchive:
         src: "{{ test_user.home }}/unarchivetest1-unarchive.zip"
         dest: "{{ test_user.home }}/unarchivetest1-unarchive-zip"
-        remote_src: yes
+        remote_src: true
         list_files: True
       register: unarchive10
 
@@ -48,7 +48,7 @@
       unarchive:
         src: "{{ test_user.home }}/unarchivetest1-unarchive.zip"
         dest: "{{ test_user.home }}/unarchivetest1-unarchive-zip"
-        remote_src: yes
+        remote_src: true
         list_files: True
       register: unarchive10b
 
@@ -60,4 +60,4 @@
       assert:
         that:
           - unarchive10b is not changed
-      ignore_errors: yes
+      ignore_errors: true

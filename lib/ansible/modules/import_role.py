@@ -43,7 +43,7 @@ options:
     description:
       - Overrides the role's metadata setting to allow using a role more than once with the same parameters.
     type: bool
-    default: yes
+    default: true
   handlers_from:
     description:
       - File to load from a role's C(handlers/) directory.
@@ -54,7 +54,7 @@ options:
     description:
       - Perform role argument spec validation if an argument spec is defined.
     type: bool
-    default: yes
+    default: true
     version_added: '2.11'
 extends_documentation_fragment:
     - action_common_attributes

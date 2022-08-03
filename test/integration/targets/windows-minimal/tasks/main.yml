@@ -56,7 +56,7 @@
   win_ping:
     data: crash
   register: win_ping_crash_result
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: check win_ping_crash result
   assert:

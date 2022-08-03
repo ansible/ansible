@@ -1,6 +1,6 @@
 - name: Clean up host and remove unprivileged users
   hosts: ssh
-  gather_facts: yes
+  gather_facts: true
   remote_user: root
   tasks:
     # Do this first so we can use tilde notation while the user still exists
@@ -16,7 +16,7 @@
       user:
         name: "{{ item }}"
         state: absent
-        force: yes  # I think this is needed in case pipelining is used and the session remains open
+        force: true  # I think this is needed in case pipelining is used and the session remains open
       with_items:
         - unpriv1
         - unpriv2
@@ -45,7 +45,7 @@
         path: "{{ sudoers_etc }}/sudoers"
         regexp: '^### Defaults targetpw'
         line: 'Defaults targetpw'
-        backrefs: yes
+        backrefs: true
 
     - name: Nuke custom sudoers file
       file:

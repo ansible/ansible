@@ -2,7 +2,7 @@
   get_url:
     url: http://{{ httpbin_host }}/gssapi
     dest: '{{ remote_tmp_dir }}/gssapi_explicit.txt'
-    use_gssapi: yes
+    use_gssapi: true
     url_username: '{{ krb5_username }}'
     url_password: '{{ krb5_password }}'
   register: http_explicit
@@ -30,7 +30,7 @@
     get_url:
       url: https://{{ httpbin_host }}/gssapi
       dest: '{{ remote_tmp_dir }}/gssapi_implicit.txt'
-      use_gssapi: yes
+      use_gssapi: true
     register: https_implicit
 
   - name: get result of test Negotiate auth over HTTPS with implicit credentials

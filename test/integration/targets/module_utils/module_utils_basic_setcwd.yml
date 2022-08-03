@@ -1,5 +1,5 @@
 - hosts: testhost
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: make sure the test user is available
       include_role:
@@ -13,7 +13,7 @@
       stat:
         path: "~"
       vars:
-        ansible_become: no
+        ansible_become: false
       register: connection_user_home
 
     - name: limit access to the connection user's home directory
@@ -22,14 +22,14 @@
         path: "{{ connection_user_home.stat.path }}"
         mode: "0700"
       vars:
-        ansible_become: no
+        ansible_become: false
 
     - block:
         - name: verify AnsibleModule works when cwd is unreadable
           test_cwd_unreadable:
           register: unreadable
           vars: &test_user_become
-            ansible_become: yes
+            ansible_become: true
             ansible_become_user: "{{ test_user_name }}"  # root can read cwd regardless of permissions, so a non-root user is required here
             ansible_become_password: "{{ test_user_plaintext_password }}"
       always:
@@ -39,7 +39,7 @@
             path: "{{ connection_user_home.stat.path }}"
             mode: "{{ connection_user_home.stat.mode }}"
           vars:
-            ansible_become: no
+            ansible_become: false
 
     - name: get real path of home directory of the unprivileged user
       raw: "{{ ansible_python_interpreter }} -c 'import os.path; print(os.path.realpath(os.path.expanduser(\"~\")))'"

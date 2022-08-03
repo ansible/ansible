@@ -40,7 +40,7 @@ options:
       you can get the original file back if you somehow clobbered it
       incorrectly.
     type: bool
-    default: no
+    default: false
   delimiter:
     description:
     - A delimiter to separate the file contents.
@@ -51,7 +51,7 @@ options:
     - If C(no), it will search for src at originating/master machine.
     - If C(yes), it will go to the remote/target machine for the src.
     type: bool
-    default: yes
+    default: true
     version_added: '1.4'
   regexp:
     description:
@@ -64,7 +64,7 @@ options:
     description:
     - A boolean that controls if files that start with a '.' will be included or not.
     type: bool
-    default: no
+    default: false
     version_added: '2.0'
   validate:
     description:

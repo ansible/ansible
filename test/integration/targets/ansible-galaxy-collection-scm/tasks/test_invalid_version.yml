@@ -1,7 +1,7 @@
 - block:
   - name: test installing a collection with an invalid float version value
     command: 'ansible-galaxy collection install git+file://{{ test_error_repo_path }}/.git#float_version_collection -vvvvvv'
-    ignore_errors: yes
+    ignore_errors: true
     register: invalid_version_result
 
   - assert:
@@ -15,7 +15,7 @@
 
   - name: test installing a collection with an invalid non-SemVer string version value
     command: 'ansible-galaxy collection install git+file://{{ test_error_repo_path }}/.git#not_semantic_version_collection -vvvvvv'
-    ignore_errors: yes
+    ignore_errors: true
     register: invalid_version_result
 
   - assert:
@@ -29,7 +29,7 @@
 
   - name: test installing a collection with an invalid list version value
     command: 'ansible-galaxy collection install git+file://{{ test_error_repo_path }}/.git#list_version_collection -vvvvvv'
-    ignore_errors: yes
+    ignore_errors: true
     register: invalid_version_result
 
   - assert:
@@ -42,7 +42,7 @@
 
   - name: test installing a collection with an invalid dict version value
     command: 'ansible-galaxy collection install git+file://{{ test_error_repo_path }}/.git#dict_version_collection -vvvvvv'
-    ignore_errors: yes
+    ignore_errors: true
     register: invalid_version_result
 
   - assert:

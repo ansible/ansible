@@ -2,7 +2,7 @@
 - hosts: localhost
   gather_facts: False
   vars:
-    item_A: yes
+    item_A: true
   tasks:
   - assert:
       that: "{{ item }} is defined"

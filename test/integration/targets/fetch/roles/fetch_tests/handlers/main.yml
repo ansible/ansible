@@ -2,7 +2,7 @@
   user:
     name: fetcher
     state: absent
-    remove: yes
-    force: yes
-  become: yes
+    remove: true
+    force: true
+  become: true
   when: not skip_cleanup | bool

@@ -33,7 +33,7 @@
       args:
         name: "{{ yum_repository_test_package }}"
         state: present
-      ignore_errors: yes
+      ignore_errors: true
       register: test_package_result
 
     - name: check that install failed
@@ -51,7 +51,7 @@
         name: "{{ yum_repository_test_repo.name }}"
         description: "{{ yum_repository_test_repo.description }}"
         baseurl: "{{ yum_repository_test_repo.baseurl }}"
-        gpgcheck: no
+        gpgcheck: false
         state: present
       register: test_repo_add
 
@@ -96,12 +96,12 @@
         name: "{{ yum_repository_test_repo.name }}"
         baseurl: "{{ yum_repository_test_repo.baseurl }}"
         description: New description
-        async: no
-        enablegroups: no
+        async: false
+        enablegroups: false
         file: "{{ yum_repository_test_repo.name ~ 2 }}"
         ip_resolve: 4
-        keepalive: no
-        module_hotfixes: no
+        keepalive: false
+        module_hotfixes: false
       register: test_repo_add1
 
     - name: Get repo file contents
@@ -126,12 +126,12 @@
         name: "{{ yum_repository_test_repo.name }}"
         baseurl: "{{ yum_repository_test_repo.baseurl }}"
         description: New description
-        async: no
-        enablegroups: no
+        async: false
+        enablegroups: false
         file: "{{ yum_repository_test_repo.name ~ 2 }}"
         ip_resolve: 4
-        keepalive: no
-        module_hotfixes: no
+        keepalive: false
+        module_hotfixes: false
       register: test_repo_add2
 
     - name: check Idempotant

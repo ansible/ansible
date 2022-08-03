@@ -1,24 +1,24 @@
 - name: using deprecated syntax but missing keyword
   set_fact:
     this_will_error: "{{ lookup('csvfile', 'file=people.csv, delimiter=, col=1') }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: no_keyword
 
 - name: extra arg in k=v syntax (deprecated)
   set_fact:
     this_will_error: "{{ lookup('csvfile', 'foo file=people.csv delimiter=, col=1 thisarg=doesnotexist') }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: invalid_arg
 
 - name: extra arg in config syntax
   set_fact:
     this_will_error: "{{ lookup('csvfile', 'foo', file='people.csv', delimiter=',' col=1, thisarg='doesnotexist') }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: invalid_arg2
 
 - set_fact:
     this_will_error: "{{ lookup('csvfile', 'foo',  file='doesnotexist', delimiter=',', col=1) }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: missing_file
 
 - name: Make sure we failed above

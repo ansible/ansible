@@ -9,7 +9,7 @@
     path: /usr/sbin/ansible_test_service
     line: "#!{{ ansible_python_interpreter | realpath }}"
     insertbefore: BOF
-    firstmatch: yes
+    firstmatch: true
 
 - name: install the systemd unit file
   copy:

@@ -1,7 +1,7 @@
 - name: Test pause
   hosts: localhost
-  gather_facts: no
-  become: no
+  gather_facts: false
+  become: false
 
   tasks:
     - pause:

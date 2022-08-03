@@ -1,6 +1,6 @@
 ---
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   module_defaults:
     testns.testcoll.plugin_lookup:
       type: module

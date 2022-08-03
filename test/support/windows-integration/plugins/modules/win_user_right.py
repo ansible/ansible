@@ -26,7 +26,7 @@ options:
       U(https://technet.microsoft.com/en-us/library/dd349804.aspx).
     - The module will return an error if the right is invalid.
     type: str
-    required: yes
+    required: true
   users:
     description:
     - A list of users or groups to add/remove on the User Right.
@@ -38,7 +38,7 @@ options:
     - Can be set to an empty list with I(action=set) to remove all accounts
       from the right.
     type: list
-    required: yes
+    required: true
   action:
     description:
     - C(add) will add the users/groups to the existing right.

@@ -12,35 +12,35 @@
   - This can be a company/brand/organization or product namespace under which all content lives.
   - May only contain alphanumeric lowercase characters and underscores. Namespaces cannot start with underscores or
     numbers and cannot contain consecutive underscores.
-  required: yes
+  required: true
   type: str
 
 - key: name
   description:
   - The name of the collection.
   - Has the same character restrictions as C(namespace).
-  required: yes
+  required: true
   type: str
 
 - key: version
   description:
   - The version of the collection.
   - Must be compatible with semantic versioning.
-  required: yes
+  required: true
   type: str
 
 - key: readme
   description:
   - The path to the Markdown (.md) readme file.
   - This path is relative to the root of the collection.
-  required: yes
+  required: true
   type: str
 
 - key: authors
   description:
   - A list of the collection's content authors.
   - Can be just the name or in the format 'Full Name <email> (url) @nicks:irc/im.site#channel'.
-  required: yes
+  required: true
   type: list
 
 - key: description

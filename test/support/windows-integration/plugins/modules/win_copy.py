@@ -30,7 +30,7 @@ options:
     description:
     - This option controls the autodecryption of source files using vault.
     type: bool
-    default: yes
+    default: true
     version_added: '2.5'
   dest:
     description:
@@ -44,7 +44,7 @@ options:
     - If C(src) and C(dest) are files and if the parent directory of C(dest)
       doesn't exist, then the task will fail.
     type: path
-    required: yes
+    required: true
   backup:
     description:
     - Determine whether a backup should be created.
@@ -53,7 +53,7 @@ options:
     - No backup is taken when C(remote_src=False) and multiple files are being
       copied.
     type: bool
-    default: no
+    default: false
     version_added: '2.8'
   force:
     description:
@@ -64,21 +64,21 @@ options:
     - If set to C(no), no checksuming of the content is performed which can
       help improve performance on larger files.
     type: bool
-    default: yes
+    default: true
     version_added: '2.3'
   local_follow:
     description:
     - This flag indicates that filesystem links in the source tree, if they
       exist, should be followed.
     type: bool
-    default: yes
+    default: true
     version_added: '2.4'
   remote_src:
     description:
     - If C(no), it will search for src at originating/master machine.
     - If C(yes), it will go to the remote/target machine for the src.
     type: bool
-    default: no
+    default: false
     version_added: '2.3'
   src:
     description:
@@ -121,7 +121,7 @@ EXAMPLES = r'''
   win_copy:
     src: /srv/myfiles/foo.conf
     dest: C:\Temp\renamed-foo.conf
-    backup: yes
+    backup: true
 
 - name: Copy a single file keeping the filename
   win_copy:
@@ -142,13 +142,13 @@ EXAMPLES = r'''
   win_copy:
     src: C:\Temp\foo.txt
     dest: C:\ansible\foo.txt
-    remote_src: yes
+    remote_src: true
 
 - name: Copy a folder recursively where the source is on the remote host
   win_copy:
     src: C:\Temp
     dest: C:\ansible
-    remote_src: yes
+    remote_src: true
 
 - name: Set the contents of a file
   win_copy:

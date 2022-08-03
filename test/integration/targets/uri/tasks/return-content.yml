@@ -1,7 +1,7 @@
 - name: Test when return_content is yes
   uri:
     url: https://{{ httpbin_host }}/get
-    return_content: yes
+    return_content: true
   register: result
 
 - name: Assert content exists when return_content is yes and request succeeds
@@ -13,7 +13,7 @@
 - name: Test when return_content is yes
   uri:
     url: http://does/not/exist
-    return_content: yes
+    return_content: true
   register: result
   ignore_errors: true
 
@@ -26,7 +26,7 @@
 - name: Test when return_content is no
   uri:
     url: https://{{ httpbin_host }}/get
-    return_content: no
+    return_content: false
   register: result
 
 - name: Assert content does not exist when return_content is no and request succeeds
@@ -38,7 +38,7 @@
 - name: Test when return_content is no
   uri:
     url: http://does/not/exist
-    return_content: no
+    return_content: false
   register: result
   ignore_errors: true
 

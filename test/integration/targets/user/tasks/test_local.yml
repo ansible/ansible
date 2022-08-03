@@ -34,7 +34,7 @@
 - name: Create local account that already exists to check for warning
   user:
     name: root
-    local: yes
+    local: true
   register: local_existing
   tags:
     - user_test_local_mode
@@ -43,7 +43,7 @@
   user:
     name: local_ansibulluser
     state: present
-    local: yes
+    local: true
   register: local_user_test_1
   tags:
     - user_test_local_mode
@@ -52,7 +52,7 @@
   user:
     name: local_ansibulluser
     state: present
-    local: yes
+    local: true
   register: local_user_test_2
   tags:
     - user_test_local_mode
@@ -61,8 +61,8 @@
   user:
     name: local_ansibulluser
     state: absent
-    remove: yes
-    local: yes
+    remove: true
+    local: true
   register: local_user_test_remove_1
   tags:
     - user_test_local_mode
@@ -71,8 +71,8 @@
   user:
     name: local_ansibulluser
     state: absent
-    remove: yes
-    local: yes
+    remove: true
+    local: true
   register: local_user_test_remove_2
   tags:
     - user_test_local_mode
@@ -94,10 +94,10 @@
   user:
     name: local_ansibulluser
     state: present
-    local: yes
+    local: true
     groups: ['testgroup1', 'testgroup2']
   register: local_user_test_3
-  ignore_errors: yes
+  ignore_errors: true
   tags:
     - user_test_local_mode
 
@@ -105,11 +105,11 @@
   user:
     name: local_ansibulluser
     state: present
-    local: yes
+    local: true
     groups: ['testgroup3', 'testgroup4']
-    append: yes
+    append: true
   register: local_user_test_4
-  ignore_errors: yes
+  ignore_errors: true
   tags:
     - user_test_local_mode
 
@@ -117,9 +117,9 @@
   user:
     name: local_ansibulluser
     state: present
-    append: yes
+    append: true
   register: local_user_test_5
-  ignore_errors: yes
+  ignore_errors: true
   tags:
     - user_test_local_mode
 
@@ -127,7 +127,7 @@
   user:
     name: local_ansibulluser
     state: present
-    local: yes
+    local: true
     group: testgroup5
   register: local_user_test_6
   tags:
@@ -139,9 +139,9 @@
   user:
     name: local_ansibulluser
     state: present
-    local: yes
+    local: true
     group: local_ansibulluser
-  ignore_errors: yes
+  ignore_errors: true
   tags:
     - user_test_local_mode
 
@@ -149,8 +149,8 @@
   user:
     name: local_ansibulluser
     state: absent
-    remove: yes
-    local: yes
+    remove: true
+    local: true
   tags:
     - user_test_local_mode
 

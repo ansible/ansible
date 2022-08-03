@@ -80,7 +80,7 @@ options:
       - Independently of this option, if the reported Content-type is "application/json", then the JSON is
         always loaded into a key called C(json) in the dictionary results.
     type: bool
-    default: no
+    default: false
   force_basic_auth:
     description:
       - Force the sending of the Basic authentication header upon initial request.
@@ -88,7 +88,7 @@ options:
         responds to an initial request with a 401 status. Since some basic auth services do not properly
         send a 401, logins will fail.
     type: bool
-    default: no
+    default: false
   follow_redirects:
     description:
       - Whether or not the URI module should follow redirects. C(all) will follow all redirects.
@@ -132,7 +132,7 @@ options:
       - This should only set to C(no) used on personally controlled sites using self-signed certificates.
       - Prior to 1.9.2 the code defaulted to C(no).
     type: bool
-    default: yes
+    default: true
     version_added: '1.9.2'
   client_cert:
     description:
@@ -163,18 +163,18 @@ options:
       - If C(no), the module will search for the C(src) on the controller node.
       - If C(yes), the module will search for the C(src) on the managed (remote) node.
     type: bool
-    default: no
+    default: false
     version_added: '2.7'
   force:
     description:
       - If C(yes) do not get a cached copy.
     type: bool
-    default: no
+    default: false
   use_proxy:
     description:
       - If C(no), it will not use a proxy, even if one is defined in an environment variable on the target hosts.
     type: bool
-    default: yes
+    default: true
   unix_socket:
     description:
     - Path to Unix domain socket to use for connection
@@ -203,7 +203,7 @@ options:
         C(KRB5CCNAME) that specified a custom Kerberos credential cache.
       - NTLM authentication is C(not) supported even if the GSSAPI mech for NTLM has been installed.
     type: bool
-    default: no
+    default: false
     version_added: '2.11'
 extends_documentation_fragment:
   - action_common_attributes
@@ -234,7 +234,7 @@ EXAMPLES = r'''
 - name: Check that a page returns a status 200 and fail if the word AWESOME is not in the page contents
   ansible.builtin.uri:
     url: http://www.example.com
-    return_content: yes
+    return_content: true
   register: this
   failed_when: "'AWESOME' not in this.content"
 
@@ -245,7 +245,7 @@ EXAMPLES = r'''
     password: your_pass
     method: POST
     body: "{{ lookup('ansible.builtin.file','issue.json') }}"
-    force_basic_auth: yes
+    force_basic_auth: true
     status_code: 201
     body_format: json
 
@@ -292,7 +292,7 @@ EXAMPLES = r'''
   ansible.builtin.uri:
     url: https://your.form.based.auth.example.com/dashboard.php
     method: GET
-    return_content: yes
+    return_content: true
     headers:
       Cookie: "{{ login.cookies_string }}"
 
@@ -302,7 +302,7 @@ EXAMPLES = r'''
     user: "{{ jenkins.user }}"
     password: "{{ jenkins.password }}"
     method: GET
-    force_basic_auth: yes
+    force_basic_auth: true
     status_code: 201
 
 - name: POST from contents of local file
@@ -316,7 +316,7 @@ EXAMPLES = r'''
     url: https://httpbin.org/post
     method: POST
     src: /path/to/my/file.json
-    remote_src: yes
+    remote_src: true
 
 - name: Create workspaces in Log analytics Azure
   ansible.builtin.uri:

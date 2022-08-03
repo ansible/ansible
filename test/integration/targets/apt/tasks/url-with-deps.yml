@@ -7,7 +7,7 @@
       apt:
         name: echo-hello
         state: absent
-        purge: yes
+        purge: true
 
     # Note that this .deb is just a stupidly tiny one that has a dependency
     # on vim-tiny. Really any .deb will work here so long as it has
@@ -53,4 +53,4 @@
       apt:
         pkg: echo-hello
         state: absent
-        purge: yes
+        purge: true

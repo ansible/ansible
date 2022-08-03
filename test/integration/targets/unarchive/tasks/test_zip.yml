@@ -8,7 +8,7 @@
     src: '{{remote_tmp_dir}}/test-unarchive.zip'
     dest: '{{remote_tmp_dir}}/test-unarchive-zip'
     list_files: True
-    remote_src: yes
+    remote_src: true
   register: unarchive03
 
 - name: verify that the file was marked as changed

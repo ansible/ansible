@@ -3,13 +3,13 @@
   tasks:
     - name: try to set 'diff' a boolean
       debug: msg="not important"
-      diff: yes
+      diff: true
       ignore_errors: True
       register: good_diff
 
     - name: try to set 'diff' a boolean to a string (. would make it non boolean)
       debug: msg="not important"
-      diff: yes.
+      diff: true.
       ignore_errors: True
       register: bad_diff
 

@@ -16,35 +16,35 @@ options:
   pulp_api:
     description:
     - The Pulp API endpoint.
-    required: yes
+    required: true
     type: str
   galaxy_ng_server:
     description:
     - The Galaxy NG API endpoint.
-    required: yes
+    required: true
     type: str
   url_username:
     description:
     - The username to use when authenticating against Pulp.
-    required: yes
+    required: true
     type: str
   url_password:
     description:
     - The password to use when authenticating against Pulp.
-    required: yes
+    required: true
     type: str
   repositories:
     description:
     - A list of pulp repositories to create.
     - Galaxy NG expects a repository that matches C(GALAXY_API_DEFAULT_DISTRIBUTION_BASE_PATH) in
       C(/etc/pulp/settings.py) or the default of C(published).
-    required: yes
+    required: true
     type: list
     elements: str
   namespaces:
     description:
     - A list of namespaces to create for Galaxy NG.
-    required: yes
+    required: true
     type: list
     elements: str
 author:

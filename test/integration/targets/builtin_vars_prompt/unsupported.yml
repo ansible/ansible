@@ -1,7 +1,7 @@
 - name: Test vars_prompt unsupported key
   hosts: testhost
-  become: no
-  gather_facts: no
+  become: false
+  gather_facts: false
   vars_prompt:
     - name: input
       prompt: prompting for variable

@@ -10,7 +10,7 @@
     src: "{{ remote_tmp_dir }}/test-unarchive-dir.tar.gz"
     dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
     mode: "0700"
-    remote_src: yes
+    remote_src: true
   register: unarchive10
 
 - name: Test that unarchive succeeded
@@ -33,7 +33,7 @@
     src: "{{ remote_tmp_dir }}/test-unarchive-dir.tar.gz"
     dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
     mode: "0700"
-    remote_src: yes
+    remote_src: true
   register: unarchive10_1
 
 - name: Test that unarchive succeeded

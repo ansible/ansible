@@ -22,29 +22,29 @@ options:
   server:
     description:
     - The Galaxy server to upload the collections to.
-    required: yes
+    required: true
     type: str
   token:
     description:
     - The token used to authenticate with the Galaxy server.
-    required: yes
+    required: true
     type: str
   collections:
     description:
     - A list of collection details to use for the build.
-    required: yes
+    required: true
     type: list
     elements: dict
     options:
       namespace:
         description:
         - The namespace of the collection.
-        required: yes
+        required: true
         type: str
       name:
         description:
         - The name of the collection.
-        required: yes
+        required: true
         type: str
       version:
         description:

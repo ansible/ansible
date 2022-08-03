@@ -9,34 +9,34 @@
 
 - name: Reload systemd
   systemd:
-    daemon_reload: yes
+    daemon_reload: true
 
 - name: Start and enable service using unit template
   systemd:
     name: sleeper@100.service
     state: started
-    enabled: yes
+    enabled: true
   register: template_test_1
 
 - name: Start and enable service using unit template again
   systemd:
     name: sleeper@100.service
     state: started
-    enabled: yes
+    enabled: true
   register: template_test_2
 
 - name: Stop and disable service using unit template
   systemd:
     name: sleeper@100.service
     state: stopped
-    enabled: no
+    enabled: false
   register: template_test_3
 
 - name: Stop and disable service using unit template again
   systemd:
     name: sleeper@100.service
     state: stopped
-    enabled: no
+    enabled: false
   register: template_test_4
 
 - name:

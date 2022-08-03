@@ -1,5 +1,5 @@
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   vars:
     foo: []
     bar: "{{ foo[0] }}"
@@ -7,7 +7,7 @@
     - debug:
         msg: "{{ bar }}"
       register: result
-      ignore_errors: yes
+      ignore_errors: true
 
     - assert:
         that:

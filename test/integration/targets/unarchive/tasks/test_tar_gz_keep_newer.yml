@@ -13,7 +13,7 @@
   unarchive:
     src: "{{remote_tmp_dir}}/test-unarchive.tar.gz"
     dest: "{{remote_tmp_dir}}/test-unarchive-tar-gz"
-    remote_src: yes
+    remote_src: true
     keep_newer: true
   register: unarchive02f
 
@@ -35,7 +35,7 @@
   unarchive:
     src: "{{remote_tmp_dir}}/test-unarchive.tar.gz"
     dest: "{{remote_tmp_dir}}/test-unarchive-tar-gz"
-    remote_src: yes
+    remote_src: true
     keep_newer: false
   register: unarchive02g
 

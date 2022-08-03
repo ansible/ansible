@@ -1,7 +1,7 @@
 - name: Test pause module in default state
   hosts: localhost
-  become: no
-  gather_facts: no
+  become: false
+  gather_facts: false
 
   tasks:
     - name: EXPECTED FAILURE

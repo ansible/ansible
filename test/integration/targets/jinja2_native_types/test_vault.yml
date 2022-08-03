@@ -1,5 +1,5 @@
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   vars:
     # ansible-vault encrypt_string root
     # vault_password_file = test_vault_pass

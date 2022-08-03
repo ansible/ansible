@@ -1,6 +1,6 @@
 - name: Test set_fact for empty string as a key
   hosts: testhost
-  gather_facts: no
+  gather_facts: false
   vars:
     value: 1
   tasks:

@@ -79,7 +79,7 @@ options:
     version_added: "2.4"
   stdin_add_newline:
     type: bool
-    default: yes
+    default: true
     description:
       - If set to C(yes), append a newline to stdin data.
     version_added: "2.8"
@@ -88,7 +88,7 @@ options:
       - Strip empty lines from the end of stdout/stderr in result.
     version_added: "2.8"
     type: bool
-    default: yes
+    default: true
 notes:
     -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), and so on),
        you actually want the M(ansible.builtin.shell) module instead.
@@ -135,7 +135,7 @@ EXAMPLES = r'''
 
 - name: Change the working directory to somedir/ and run the command as db_owner if /path/to/database does not exist
   ansible.builtin.command: /usr/bin/make_database.sh db_user db_name
-  become: yes
+  become: true
   become_user: db_owner
   args:
     chdir: somedir/

@@ -32,7 +32,7 @@
 
 - name: Actually create the file, disable check mode
   template: src=foo.j2 dest={{output_dir}}/checkmode_foo.templated2 mode=0644
-  check_mode: no
+  check_mode: false
   register: checkmode_disabled
 
 - name: fill in template with new content
@@ -41,7 +41,7 @@
 
 - name: remove templated file
   file: path={{output_dir}}/checkmode_foo.templated2 state=absent
-  check_mode: no
+  check_mode: false
 
 - name: verify that the file was not changed
   assert: 

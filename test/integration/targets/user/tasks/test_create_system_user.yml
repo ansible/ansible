@@ -9,4 +9,4 @@
   user:
     name: ansibulluser
     state: present
-    system: yes
+    system: true

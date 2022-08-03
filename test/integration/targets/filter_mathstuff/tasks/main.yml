@@ -221,7 +221,7 @@
 - name: Verify human_to_bytes (bad string)
   set_fact:
     bad_string: "{{ '10.00 foo' | human_to_bytes }}"
-  ignore_errors: yes
+  ignore_errors: true
   tags: human_to_bytes
   register: _human_bytes_test
 

@@ -1,6 +1,6 @@
 ---
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   vars:
     host_hash_merged: {'host_var1': 'inventory 2', 'host_var2': 'inventory 1'}
     host_hash_replaced: {'host_var1': 'inventory 2'}

@@ -1,7 +1,7 @@
 - name: Use invalid parameter
   reboot:
     foo: bar
-  ignore_errors: yes
+  ignore_errors: true
   register: invalid_parameter
 
 - name: Ensure task fails with error

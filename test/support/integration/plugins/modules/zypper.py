@@ -140,7 +140,7 @@ EXAMPLES = '''
 - zypper:
     name: apache2
     state: present
-    disable_recommends: no
+    disable_recommends: false
 
 # Apply a given patch
 - zypper:
@@ -184,7 +184,7 @@ EXAMPLES = '''
 - zypper:
     name: openssl
     state: present
-    update_cache: yes
+    update_cache: true
 
 # Install specific version (possible comparisons: <, >, <=, >=, =)
 - zypper:

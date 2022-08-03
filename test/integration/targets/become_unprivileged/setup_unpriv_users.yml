@@ -4,7 +4,7 @@
 ####################################################################
 - name: Set up host and create unprivileged users
   hosts: ssh
-  gather_facts: yes
+  gather_facts: true
   remote_user: root
   tasks:
     - name: Create groups for unprivileged users
@@ -43,7 +43,7 @@
       user:
         name: unpriv1
         groups: com.apple.access_ssh
-        append: yes
+        append: true
       when: ansible_distribution == 'MacOSX'
 
     - name: Create .ssh for unpriv1
@@ -58,7 +58,7 @@
       copy:
         src: ~root/.ssh/authorized_keys
         dest: ~unpriv1/.ssh/authorized_keys
-        remote_src: yes
+        remote_src: true
         owner: unpriv1
         group: unpriv1
         mode: 0600
@@ -106,4 +106,4 @@
         dest: "{{ sudoers_etc }}/sudoers"
         regexp: '^Defaults targetpw'
         line: '### Defaults targetpw'
-        backrefs: yes
+        backrefs: true

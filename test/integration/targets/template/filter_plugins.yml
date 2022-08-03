@@ -1,5 +1,5 @@
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   tasks:
     - debug:
         msg: "force templating in delegate_to before we hit the second one with a filter"

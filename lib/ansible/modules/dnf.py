@@ -334,13 +334,13 @@ EXAMPLES = '''
 
 - name: Autoremove unneeded packages installed as dependencies
   ansible.builtin.dnf:
-    autoremove: yes
+    autoremove: true
 
 - name: Uninstall httpd but keep its dependencies
   ansible.builtin.dnf:
     name: httpd
     state: absent
-    autoremove: no
+    autoremove: false
 
 - name: Install a modularity appstream with defined stream and profile
   ansible.builtin.dnf:

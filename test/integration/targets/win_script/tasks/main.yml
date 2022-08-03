@@ -265,7 +265,7 @@
   script: test_script_creates_file.ps1 {{ test_win_script_filename }}
   args:
     creates: "{{ test_win_script_filename }}"
-  check_mode: yes
+  check_mode: true
   register: test_script_creates_file_check_mode
 
 - name: Get state of file created by script
@@ -288,7 +288,7 @@
   script: test_script_removes_file.ps1 {{ test_win_script_filename }}
   args:
     removes: "{{ test_win_script_filename }}"
-  check_mode: yes
+  check_mode: true
   register: test_script_removes_file_check_mode
 
 - name: Get state of file removed by script
@@ -305,7 +305,7 @@
 - name: run test script with become that outputs 2 lines
   script: test_script_whoami.ps1
   register: test_script_result_become
-  become: yes
+  become: true
   become_user: SYSTEM
   become_method: runas
 

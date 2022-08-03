@@ -1,7 +1,7 @@
 - name: test dynamic no log
   hosts: testhost
-  gather_facts: no
-  ignore_errors: yes
+  gather_facts: false
+  ignore_errors: true
   tasks:
     - name: no loop, task fails, dynamic no_log
       debug:

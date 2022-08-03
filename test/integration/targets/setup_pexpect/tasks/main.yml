@@ -8,7 +8,7 @@
     name: pexpect
     extra_args: '--user --constraint "{{ remote_tmp_dir }}/pexpect-constraints.txt"'
     state: present
-  ignore_errors: yes  # fails when inside a virtual environment
+  ignore_errors: true  # fails when inside a virtual environment
   register: pip_user
 
 - name: Install pexpect

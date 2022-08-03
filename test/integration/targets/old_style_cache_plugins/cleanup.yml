@@ -1,7 +1,7 @@
 ---
 - hosts: localhost
-  gather_facts: no
-  ignore_errors: yes
+  gather_facts: false
+  ignore_errors: true
   tasks:
     - command: redis-cli keys
 
@@ -26,8 +26,8 @@
       file:
         state: absent
         path: "/usr/local/bin/{{ item }}"
-        follow: no
-      become: yes
+        follow: false
+      become: true
       loop:
         - redis-server
         - redis-cli

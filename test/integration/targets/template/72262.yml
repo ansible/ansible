@@ -1,5 +1,5 @@
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: Should not fail on undefined variable
       set_fact:

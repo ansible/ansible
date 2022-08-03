@@ -7,10 +7,10 @@
   unarchive:
     src: '{{remote_tmp_dir}}/test-unarchive.tar'
     dest: '{{remote_tmp_dir}}/test-unarchive-tar'
-    remote_src: yes
+    remote_src: true
     extra_opts:
       - "--invalid-éxtra-optら"
-  ignore_errors: yes
+  ignore_errors: true
   register: unarchive
 
 - name: verify that the invalid option is in the error message

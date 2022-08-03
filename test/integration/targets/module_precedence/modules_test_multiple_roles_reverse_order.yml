@@ -1,5 +1,5 @@
 - hosts: testhost
-  gather_facts: no
+  gather_facts: false
   vars:
     expected_location: "role: bar"
   roles:

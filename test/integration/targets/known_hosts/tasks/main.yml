@@ -24,7 +24,7 @@
 # test addition
 
 - name: add a new host in check mode
-  check_mode: yes
+  check_mode: true
   known_hosts:
     name: example.org
     key: "{{ example_org_rsa_key }}"
@@ -63,7 +63,7 @@
 # test idempotence of addition
 
 - name: add the same host in check mode
-  check_mode: yes
+  check_mode: true
   known_hosts:
     name: example.org
     key: "{{ example_org_rsa_key }}"
@@ -99,7 +99,7 @@
 # test removal
 
 - name: remove the host in check mode
-  check_mode: yes
+  check_mode: true
   known_hosts:
     name: example.org
     key: "{{ example_org_rsa_key }}"
@@ -137,7 +137,7 @@
 # test idempotence of removal
 
 - name: remove the same host in check mode
-  check_mode: yes
+  check_mode: true
   known_hosts:
     name: example.org
     key: "{{ example_org_rsa_key }}"
@@ -178,7 +178,7 @@
     key: "{{ example_org_rsa_key }}"
     state: present
     path: "{{remote_tmp_dir}}/known_hosts"
-    hash_host: yes
+    hash_host: true
   register: result
 
 - name: get the file content
@@ -202,7 +202,7 @@
     key: "{{ example_org_rsa_key }}"
     state: present
     path: "{{remote_tmp_dir}}/known_hosts"
-    hash_host: yes
+    hash_host: true
   register: result
 
 - name: get the file content
@@ -353,7 +353,7 @@
     name: example.org,acme.com
     key: "{{ example_org_rsa_key }}"
     path: "{{remote_tmp_dir}}/known_hosts"
-  ignore_errors: yes
+  ignore_errors: true
   register: result
 
 - name: Assert that error message was displayed
@@ -367,7 +367,7 @@
     name: example.com
     key: "{{ example_org_rsa_key }}"
     path: "{{remote_tmp_dir}}/known_hosts"
-  ignore_errors: yes
+  ignore_errors: true
   register: result
 
 - name: Assert that name checking failed with error message

@@ -171,7 +171,7 @@
       foo:
       - bar
   register: list_result
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: assert no remaining responses
   assert:
@@ -185,7 +185,7 @@
     responses:
       foo: bar
   register: no_command_result
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: assert no command
   assert:
@@ -200,7 +200,7 @@
     responses:
       foo: bar
   register: non_zero_result
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: assert non-zero return code
   assert:

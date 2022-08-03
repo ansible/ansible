@@ -1,5 +1,5 @@
 - hosts: nonexistent
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: Test task for unreachable host
       command: echo foo

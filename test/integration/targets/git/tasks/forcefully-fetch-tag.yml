@@ -34,5 +34,5 @@
   git:
     repo: "{{ repo_dir }}/tag_force_push"
     dest: "{{ repo_dir }}/tag_force_push_clone2"
-    force: yes
+    force: true
   register: git_res

@@ -24,7 +24,7 @@
     repo: "{{ repo_submodules }}"
     version: 45c6c07ef10fd9e453d90207e63da1ce5bd3ae1e
     dest: "{{ checkout_dir }}"
-    recursive: no
+    recursive: false
 
 - name: SUBMODULES | List submodule1
   command: 'ls -1a {{ checkout_dir }}/submodule1'
@@ -45,7 +45,7 @@
     repo: "{{ repo_submodules }}"
     dest: "{{ checkout_dir }}"
     version: 45c6c07ef10fd9e453d90207e63da1ce5bd3ae1e
-    recursive: yes
+    recursive: true
 
 - name: SUBMODULES | List submodule1
   command: 'ls -1a {{ checkout_dir }}/submodule1'
@@ -64,9 +64,9 @@
     repo: "{{ repo_submodules }}"
     version: d2974e4bbccdb59368f1d5eff2205f0fa863297e
     dest: "{{ checkout_dir }}"
-    recursive: no
-    update: yes
-    track_submodules: yes
+    recursive: false
+    update: true
+    track_submodules: true
 
 - name: SUBMODULES | List submodule1
   command: 'ls -1a {{ checkout_dir }}/submodule1'
@@ -102,9 +102,9 @@
     repo: "{{ repo_submodules }}"
     version: d2974e4bbccdb59368f1d5eff2205f0fa863297e
     dest: "{{ checkout_dir }}"
-    update: yes
-    recursive: yes
-    track_submodules: yes
+    update: true
+    recursive: true
+    track_submodules: true
 
 - name: SUBMODULES | List submodule 1
   command: 'ls -1a {{ checkout_dir }}/submodule1'
@@ -134,7 +134,7 @@
     repo: "{{ repo_submodules }}"
     dest: "{{ checkout_dir }}/test.gitdir"
     version: 45c6c07ef10fd9e453d90207e63da1ce5bd3ae1e
-    recursive: yes
+    recursive: true
 
 - name: SUBMODULES | Test that cloning submodule with .git in directory name works
   git:

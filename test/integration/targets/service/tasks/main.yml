@@ -13,7 +13,7 @@
     path: /usr/sbin/ansible_test_service
     line: "#!{{ ansible_python_interpreter | realpath }}"
     insertbefore: BOF
-    firstmatch: yes
+    firstmatch: true
 
 - block:
     # determine init system is in use

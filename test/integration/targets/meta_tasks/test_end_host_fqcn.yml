@@ -2,7 +2,7 @@
   hosts:
     - testhost
     - testhost2
-  gather_facts: no
+  gather_facts: false
   strategy: "{{ test_strategy | default('linear') }}"
   tasks:
     - debug:

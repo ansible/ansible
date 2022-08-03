@@ -70,7 +70,7 @@ The ``ssh_pub_key`` parameter contains your ssh public key as a string. Here is 
 
     - name: Test SSH key lifecycle on a Scaleway account
       hosts: localhost
-      gather_facts: no
+      gather_facts: false
       environment:
         SCW_API_KEY: ""
 
@@ -120,7 +120,7 @@ Take a look at this short playbook to see a working example using ``scaleway_com
 
     - name: Test compute instance lifecycle on a Scaleway account
       hosts: localhost
-      gather_facts: no
+      gather_facts: false
       environment:
         SCW_API_KEY: ""
 

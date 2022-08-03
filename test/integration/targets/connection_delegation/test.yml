@@ -1,6 +1,6 @@
 ---
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   tasks:
   - name: test connection receives -k from play_context when delegating
     delegation_action:

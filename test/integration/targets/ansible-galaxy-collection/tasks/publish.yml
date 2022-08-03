@@ -8,7 +8,7 @@
 - name: get result of publish collection - {{ test_name }}
   uri:
     url: '{{ test_server }}{{ vX }}collections/ansible_test/my_collection/versions/1.0.0/'
-    return_content: yes
+    return_content: true
     user: '{{ pulp_user }}'
     password: '{{ pulp_password }}'
     force_basic_auth: true

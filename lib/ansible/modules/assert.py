@@ -38,7 +38,7 @@ options:
     description:
       - Set this to C(yes) to avoid verbose output.
     type: bool
-    default: no
+    default: false
     version_added: "2.8"
 extends_documentation_fragment:
   - action_common_attributes

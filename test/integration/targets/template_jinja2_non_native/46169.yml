@@ -1,5 +1,5 @@
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   tasks:
     - set_fact:
         output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"

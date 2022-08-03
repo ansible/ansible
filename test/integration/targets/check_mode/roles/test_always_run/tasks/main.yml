@@ -1,4 +1,4 @@
-# test code for the check_mode: no option
+# test code for the check_mode: false option
 # (c) 2014, James Cammarata <jcammarata@ansible.com>
 
 # This file is part of Ansible
@@ -18,7 +18,7 @@
 
 - name: run a command while in check mode
   shell: echo "running"
-  check_mode: no
+  check_mode: false
   register: result
 
 - name: assert that the command was run

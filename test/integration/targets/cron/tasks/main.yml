@@ -21,7 +21,7 @@
   cron:
     name: test cron task
     job: 'date > {{ remote_dir }}/cron_canary1'
-  check_mode: yes
+  check_mode: true
   register: check_mode_enabled_state_present
 
 - assert:
@@ -40,7 +40,7 @@
   cron:
     name: test cron task
     job: 'date > {{ remote_dir }}/cron_canary1'
-  check_mode: yes
+  check_mode: true
   register: check_mode_enabled_state_present_cron_task_already_exists
 
 - assert:
@@ -74,7 +74,7 @@
     name: test cron task
     job: 'date > {{ remote_dir }}/cron_canary1'
     state: absent
-  check_mode: yes
+  check_mode: true
   register: check_check_mode
 
 - assert:
@@ -133,7 +133,7 @@
   - name: Add var to the cron file
     cron:
       cron_file: cron_filename
-      env: yes
+      env: true
       name: FOO
       value: bar
       user: root
@@ -224,7 +224,7 @@
       user: root
       name: "integration test cron"
       job: 'ls'
-    ignore_errors: yes
+    ignore_errors: true
     register: result
 
   - assert:

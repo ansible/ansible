@@ -1,7 +1,7 @@
 - name: Add block without trailing line separator
   blockinfile:
     path: "{{ remote_tmp_dir_test }}/chomped_block_test.txt"
-    create: yes
+    create: true
     content: |-
       one
       two

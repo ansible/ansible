@@ -114,7 +114,7 @@ While all items listed here will show a deprecation warning message, they still 
 * Using dictionary variables to set all task parameters is unsafe and will be removed in a future version. For example::
 
     - hosts: localhost
-      gather_facts: no
+      gather_facts: false
       vars:
         debug_params:
           msg: "hello there"
@@ -179,7 +179,7 @@ Here are some corner cases encountered when updating. These are mostly caused by
 * Misspelled directives::
 
     - task: dostuf
-      becom: yes
+      becom: true
 
   The task always ran without using privilege escalation (for that you need `become`) but was also silently ignored so the play 'ran' even though it should not, now this is a parsing error.
 

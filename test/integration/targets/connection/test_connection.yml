@@ -1,5 +1,5 @@
 - hosts: "{{ target_hosts }}"
-  gather_facts: no
+  gather_facts: false
   serial: 1
   tasks:
 

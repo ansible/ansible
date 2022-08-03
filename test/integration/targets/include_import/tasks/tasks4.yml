@@ -1,5 +1,5 @@
 - name: Set variable inside tasks4.yml
   set_fact:
-    set_in_tasks4: yes
+    set_in_tasks4: true
   tags:
     - tasks4

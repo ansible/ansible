@@ -1,6 +1,6 @@
 ---
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   vars:
     json_cache: "{{ cache.stdout | from_json }}"
   tasks:

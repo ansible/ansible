@@ -1,6 +1,6 @@
 - name: Cleanup (as root)
   hosts: ssh
-  gather_facts: yes
+  gather_facts: true
   remote_user: root
   tasks:
     - name: Remove group for unprivileged users

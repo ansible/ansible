@@ -1,7 +1,7 @@
 ---
 - hosts: localhost
   connection: local
-  gather_facts: no
+  gather_facts: false
   tasks:
   - add_host:
       name: host1
@@ -9,7 +9,7 @@
       ansible_host: 127.0.0.1
 
 - hosts: all
-  gather_facts: no
+  gather_facts: false
   tasks:
     - debug:
         msg: "{{ hostvars['host1']['x'] }}"

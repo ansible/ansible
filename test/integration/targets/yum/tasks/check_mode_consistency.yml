@@ -2,7 +2,7 @@
   yum:
     name: htop
     state: present
-  check_mode: yes
+  check_mode: true
   register: yum_changes_check_mode_result
 
 - name: install verify changes dict returned in check mode
@@ -33,7 +33,7 @@
   yum:
     name: htop
     state: absent
-  check_mode: yes
+  check_mode: true
   register: yum_changes_check_mode_result
 
 - name: remove verify changes dict returned in check mode

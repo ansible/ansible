@@ -2,5 +2,5 @@
   user:
     name: "{{ test_user_name }}"
     state: absent
-    remove: yes
-    force: yes
+    remove: true
+    force: true

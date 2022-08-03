@@ -22,7 +22,7 @@ options:
       - Note that the Windows path delimiter C(\) must be escaped as C(\\) when the line is double quoted.
       - Before Ansible 2.3 this option was only usable as I(dest), I(destfile) and I(name).
     type: path
-    required: yes
+    required: true
     aliases: [ dest, destfile, name ]
   backup:
     description:
@@ -30,7 +30,7 @@ options:
       - When set to C(yes), create a backup file including the timestamp information
         so you can get the original file back if you somehow clobbered it incorrectly.
     type: bool
-    default: no
+    default: false
   regex:
     description:
       - The regular expression to look for in every line of the file. For C(state=present), the pattern to replace if found; only the last line found
@@ -57,7 +57,7 @@ options:
         doesn't match anywhere in the file, the file will be left unchanged.
       - If the C(regexp) does match, the last matching line will be replaced by the expanded line parameter.
     type: bool
-    default: no
+    default: false
   insertafter:
     description:
       - Used with C(state=present). If specified, the line will be inserted after the last match of specified regular expression. A special value is
@@ -77,7 +77,7 @@ options:
     description:
       - Used with C(state=present). If specified, the file will be created if it does not already exist. By default it will fail if the file is missing.
     type: bool
-    default: no
+    default: false
   validate:
     description:
       - Validation to run before copying into place. Use %s in the command to indicate the current file to validate.
@@ -146,7 +146,7 @@ EXAMPLES = r'''
 - name: Create file if it doesn't exist with a specific encoding
   win_lineinfile:
     path: C:\Temp\utf16.txt
-    create: yes
+    create: true
     encoding: utf-16
     line: This is a utf-16 encoded file
 
@@ -159,7 +159,7 @@ EXAMPLES = r'''
 - name: Update a line using backrefs
   win_lineinfile:
     path: C:\Temp\example.conf
-    backrefs: yes
+    backrefs: true
     regex: '(^name=)'
     line: '$1JohnDoe'
 '''

@@ -1,6 +1,6 @@
 - hosts: testhost,testhost2
-  gather_facts: no
-  any_errors_fatal: yes
+  gather_facts: false
+  any_errors_fatal: true
   tasks:
     - name: EXPECTED FAILURE include_role that doesn't exist
       include_role:

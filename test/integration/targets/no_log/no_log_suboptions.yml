@@ -1,6 +1,6 @@
 - name: test no log with suboptions
   hosts: testhost
-  gather_facts: no
+  gather_facts: false
 
   tasks:
     - name: Task with suboptions

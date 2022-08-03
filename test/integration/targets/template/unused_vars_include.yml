@@ -1,5 +1,5 @@
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   vars:
     test_var: foo
     unused_var: "{{ undefined_var }}"

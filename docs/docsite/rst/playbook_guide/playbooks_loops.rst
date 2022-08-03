@@ -239,7 +239,7 @@ You can use Jinja2 expressions to iterate over complex lists. For example, a loo
       community.mysql.mysql_user:
         name: "{{ item[0] }}"
         priv: "{{ item[1] }}.*:ALL"
-        append_privs: yes
+        append_privs: true
         password: "foo"
       loop: "{{ ['alice', 'bob'] | product(['clientdb', 'employeedb', 'providerdb']) | list }}"
 
@@ -354,7 +354,7 @@ When looping over complex data structures, the console output of your task can b
 
 The output of this task will display just the ``name`` field for each ``item`` instead of the entire contents of the multi-line ``{{ item }}`` variable.
 
-.. note:: This is for making console output more readable, not protecting sensitive data. If there is sensitive data in ``loop``, set ``no_log: yes`` on the task to prevent disclosure.
+.. note:: This is for making console output more readable, not protecting sensitive data. If there is sensitive data in ``loop``, set ``no_log: true`` on the task to prevent disclosure.
 
 Pausing within a loop
 ---------------------
@@ -448,19 +448,19 @@ Variable                    Description
 ::
 
       loop_control:
-        extended: yes
+        extended: true
 
 .. note:: When using ``loop_control.extended`` more memory will be utilized on the control node. This is a result of ``ansible_loop.allitems`` containing a reference to the full loop data for every loop. When serializing the results for display in callback plugins within the main ansible process, these references may be dereferenced causing memory usage to increase.
 
 .. versionadded:: 2.14
 
-To disable the ``ansible_loop.allitems`` item, to reduce memory consumption, set ``loop_control.extended_allitems: no``.
+To disable the ``ansible_loop.allitems`` item, to reduce memory consumption, set ``loop_control.extended_allitems: false``.
 
 ::
 
       loop_control:
-        extended: yes
-        extended_allitems: no
+        extended: true
+        extended_allitems: false
 
 Accessing the name of your loop_var
 -----------------------------------

@@ -4,7 +4,7 @@
 - name: (check mode run) enable the ansible test service
   service: name=ansible_test enabled=yes
   register: enable_in_check_mode_result
-  check_mode: yes
+  check_mode: true
 
 - name: assert that changes reported for check mode run
   assert:
@@ -14,11 +14,11 @@
 - name: (check mode run) test that service defaults are used
   service:
   register: enable_in_check_mode_result
-  check_mode: yes
+  check_mode: true
   module_defaults:
     service:
       name: ansible_test
-      enabled: yes
+      enabled: true
 
 - name: assert that changes reported for check mode run
   assert:
@@ -28,15 +28,15 @@
 - name: (check mode run) test that specific module defaults are used
   service:
   register: enable_in_check_mode_result
-  check_mode: yes
+  check_mode: true
   when: "ansible_service_mgr in ['sysvinit', 'systemd']"
   module_defaults:
     sysvinit:
       name: ansible_test
-      enabled: yes
+      enabled: true
     systemd:
       name: ansible_test
-      enabled: yes
+      enabled: true
 
 - name: assert that changes reported for check mode run
   assert:
@@ -233,7 +233,7 @@
     name: 'nonexisting'
     state: stopped
   register: result
-  ignore_errors: yes
+  ignore_errors: true
   when: ansible_distribution != 'FreeBSD'
 
 - assert:
@@ -247,8 +247,8 @@
     name: 'nonexisting'
     state: stopped
   register: result
-  check_mode: yes
-  ignore_errors: yes
+  check_mode: true
+  ignore_errors: true
   when: ansible_distribution != 'FreeBSD'
 
 - assert:

@@ -148,7 +148,7 @@ collection_list:
   # Symlink tests
   - namespace: symlink
     name: symlink
-    use_symlink: yes
+    use_symlink: true
 
   # Caching update tests
   - namespace: cache

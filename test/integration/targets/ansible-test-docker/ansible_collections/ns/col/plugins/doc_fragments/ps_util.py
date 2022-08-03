@@ -14,7 +14,7 @@ options:
   option1:
     description:
     - Test description
-    required: yes
+    required: true
     aliases:
     - alias1
     type: str

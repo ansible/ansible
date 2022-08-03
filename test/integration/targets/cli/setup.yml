@@ -1,5 +1,5 @@
 - hosts: localhost
-  gather_facts: yes
+  gather_facts: true
   roles:
     - setup_pexpect
 
@@ -11,7 +11,7 @@
             name: cliuser1
             shell: /bin/bash
             groups: wheel
-            append: yes
+            append: true
             password: "{{ 'secretpassword' | password_hash('sha512', 'mysecretsalt') }}"
         - name: Create user to become
           user:

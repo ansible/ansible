@@ -1,6 +1,6 @@
 - name: test a collection-hosted connection plugin against hosts from collection-hosted inventory plugins
   hosts: dynamic_host_a, dynamic_host_redirected
-  gather_facts: no
+  gather_facts: false
   vars:
     ansible_connection: testns.testcoll.localconn
     ansible_localconn_connectionvar: from_play
@@ -16,7 +16,7 @@
 
 
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   tasks:
   - assert:
       that:

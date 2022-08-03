@@ -20,7 +20,7 @@
 - name: Use invalid parameter
   wait_for_connection:
     foo: bar
-  ignore_errors: yes
+  ignore_errors: true
   register: invalid_parameter
 
 - name: Ensure task fails with error

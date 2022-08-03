@@ -18,7 +18,7 @@
         src: "test-unarchive-nonascii-くらとみ.tar.gz"
         dest: "{{ remote_tmp_dir }}/test-unarchive-nonascii-くらとみ-tar-gz"
         mode: "u+rwX,go+rX"
-        remote_src: no
+        remote_src: false
       register: nonascii_result0
 
     - name: Check that file is really there

@@ -222,11 +222,11 @@
     group:
       name: "{{ item }}"
       gid: 1337
-      local: yes
+      local: true
     loop:
       - group1_local_test
       - group2_local_test
-    ignore_errors: yes
+    ignore_errors: true
     register: local_duplicate_gid_result
 
   - assert:
@@ -247,7 +247,7 @@
     group:
       name: group1_local_test
       gid: 1337
-      local: yes
+      local: true
       state: present
     register: create_local_group_gid
 
@@ -288,7 +288,7 @@
     group:
       name: group1_test
       gid: 1337
-      local: no
+      local: false
       state: present
     register: create_group_gid
 
@@ -307,7 +307,7 @@
     group:
       name: group1_test
       gid: 1337
-      local: yes
+      local: true
       state: present
     register: create_local_group_gid
 
@@ -319,12 +319,12 @@
     - name: Cleanup create group with a gid
       group:
         name: group1_test
-        local: no
+        local: false
         state: absent
     - name: Cleanup create local group with the same gid
       group:
         name: group1_test
-        local: yes
+        local: true
         state: absent
   # only applicable to Linux, limit further to CentOS where 'lgroupadd' is installed
   when: ansible_distribution == 'CentOS'
@@ -340,4 +340,4 @@
   group:
     name: ansibullgroup
     state: present
-    system: yes
+    system: true

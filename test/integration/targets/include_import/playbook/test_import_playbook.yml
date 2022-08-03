@@ -4,7 +4,7 @@
 
 # Test and validate conditional import
 - import_playbook: playbook2.yml
-  when: no
+  when: false
 
 - import_playbook: validate2.yml
 

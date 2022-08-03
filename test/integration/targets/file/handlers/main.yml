@@ -2,8 +2,8 @@
   user:
     name: "{{ item }}"
     state: absent
-    remove: yes
-    force: yes
+    remove: true
+    force: true
   loop:
     - test1
     - test_uid

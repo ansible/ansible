@@ -48,7 +48,7 @@
 
 - name: Install invalid role
   command: ansible-galaxy install -r invalid-requirements.yml
-  ignore_errors: yes
+  ignore_errors: true
   register: invalid
 
 - assert:

@@ -188,7 +188,7 @@
     dest: "{{ checkout_dir }}.copy"
     version: test/branch
     depth: 1
-    force: yes
+    force: true
 
 - name: SPECIFIC-REVISION | create new commit in original
   shell: git init; echo "2" > b; git add b; git commit -m "2"
@@ -223,7 +223,7 @@
     dest: "{{ checkout_dir }}.copy"
     version: test/branch
     depth: 1
-    force: yes
+    force: true
 
 - name: SPECIFIC-REVISION | get commit for HEAD on new branch
   command: git rev-parse HEAD

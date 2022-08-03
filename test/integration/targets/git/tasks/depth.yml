@@ -159,7 +159,7 @@
     dest: '{{ checkout_dir }}'
     depth: 1
   register: git_fetch
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: DEPTH | get "a" file
   slurp:

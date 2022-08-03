@@ -5,7 +5,7 @@
       Hey
       there
     state: present
-    create: yes
+    create: true
   register: empty_test_1
 
 - name: Run a task that results in an empty file
@@ -15,7 +15,7 @@
       Hey
       there
     state: absent
-    create: yes
+    create: true
   register: empty_test_2
 
 - stat:

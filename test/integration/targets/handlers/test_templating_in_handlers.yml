@@ -1,6 +1,6 @@
 - name: test templated values in handlers
   hosts: localhost
-  gather_facts: no
+  gather_facts: false
   vars:
     handler1: name1
     handler2: name2

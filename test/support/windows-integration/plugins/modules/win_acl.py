@@ -23,13 +23,13 @@ options:
     description:
     - The path to the file or directory.
     type: str
-    required: yes
+    required: true
   user:
     description:
     - User or Group to add specified rights to act on src file/folder or
       registry key.
     type: str
-    required: yes
+    required: true
   state:
     description:
     - Specify whether to add C(present) or remove C(absent) the specified access rule.
@@ -40,7 +40,7 @@ options:
     description:
     - Specify whether to allow or deny the rights specified.
     type: str
-    required: yes
+    required: true
     choices: [ allow, deny ]
   rights:
     description:
@@ -51,7 +51,7 @@ options:
     - If C(path) is a registry key, rights can be any right under MSDN
       RegistryRights U(https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.registryrights.aspx).
     type: str
-    required: yes
+    required: true
   inherit:
     description:
     - Inherit flags on the ACL rules.

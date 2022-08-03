@@ -1,6 +1,6 @@
 - name: Setup POSIX code coverage configuration
   hosts: all
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: Create coverage temporary directory
       file:

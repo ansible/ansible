@@ -136,7 +136,7 @@
   command: echo
   args:
     chdir: "{{ remote_tmp_dir }}/nope"
-  ignore_errors: yes
+  ignore_errors: true
   register: chdir_invalid
 
 - name: assert that the script executed correctly with chdir
@@ -160,7 +160,7 @@
   args:
     creates: "{{ remote_tmp_dir_test }}/afile.txt"
   register: check_mode_result
-  check_mode: yes
+  check_mode: true
 
 - assert:
     that:
@@ -188,7 +188,7 @@
   args:
     creates: "{{ remote_tmp_dir_test }}/afile.*"
   register: check_mode_result
-  check_mode: yes
+  check_mode: true
 
 - assert:
     that:
@@ -213,7 +213,7 @@
   args:
     removes: "{{ remote_tmp_dir_test }}/afile.txt"
   register: check_mode_result
-  check_mode: yes
+  check_mode: true
 
 - assert:
     that:
@@ -239,7 +239,7 @@
   args:
     removes: "{{ remote_tmp_dir_test }}/afile.*"
   register: check_mode_result
-  check_mode: yes
+  check_mode: true
 
 - assert:
     that:
@@ -414,7 +414,7 @@
   shell: cat > {{remote_tmp_dir_test }}/afile.txt
   args:
     stdin: test
-    stdin_add_newline: no
+    stdin_add_newline: false
 
 - name: make sure content matches expected
   copy:
@@ -429,7 +429,7 @@
   shell: cat > {{remote_tmp_dir_test }}/afile.txt
   args:
     stdin: test
-    stdin_add_newline: yes
+    stdin_add_newline: true
 
 - name: make sure content matches expected
   copy:
@@ -464,7 +464,7 @@
 - name: test check mode skip message
   command:
     cmd: "true"
-  check_mode: yes
+  check_mode: true
   register: result
 
 - name: assert check message exists
@@ -477,8 +477,8 @@
 - name: test check mode creates/removes message
   command:
     cmd: "true"
-    creates: yes
-  check_mode: yes
+    creates: true
+  check_mode: true
   register: result
 
 - name: assert check message exists
@@ -536,7 +536,7 @@
 - name: run command without strip
   command: '{{ ansible_python_interpreter }} -c "import sys; msg=''hello \n \r''; print(msg); {{ print_error_command }}"'
   args:
-    strip_empty_ends: no
+    strip_empty_ends: false
   register: command_no_strip
 
 - name: Verify strip behavior worked as expected

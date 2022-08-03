@@ -1,5 +1,5 @@
 - hosts: A,B
-  gather_facts: no
+  gather_facts: false
   tasks:
     - debug:
       changed_when: true

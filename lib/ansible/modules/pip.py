@@ -187,7 +187,7 @@ EXAMPLES = '''
   ansible.builtin.pip:
     name: bottle
     virtualenv: /my_app/venv
-    virtualenv_site_packages: yes
+    virtualenv_site_packages: true
 
 - name: Install bottle into the specified (virtualenv), using Python 2.7
   ansible.builtin.pip:

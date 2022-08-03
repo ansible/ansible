@@ -21,5 +21,5 @@
     repo: "{{ repo_dir }}/origin"
     dest: "{{ checkout_dir }}"
     remote: origin
-    update: no
+    update: false
   register: status

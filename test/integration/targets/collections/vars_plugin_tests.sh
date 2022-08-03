@@ -70,7 +70,7 @@ cat << EOF > "test_task_vars.yml"
 ---
 - hosts: localhost
   connection: local
-  gather_facts: no
+  gather_facts: false
   tasks:
   - debug: msg="{{ name }}"
   - debug: msg="{{ collection }}"

@@ -53,7 +53,7 @@
   debug: msg="{{output_dir|badfiltername}}"
   tags: scenario5
   register: filter_fail
-  ignore_errors: yes
+  ignore_errors: true
 
 - assert:
     that:

@@ -1,6 +1,6 @@
 - name: Prep (as root)
   hosts: ssh
-  gather_facts: yes
+  gather_facts: true
   remote_user: root
   tasks:
     - name: Create group for unprivileged users
@@ -11,7 +11,7 @@
       user:
         name: "{{ item }}"
         groups: commongroup
-        append: yes
+        append: true
       with_items:
         - unpriv1
         - unpriv2

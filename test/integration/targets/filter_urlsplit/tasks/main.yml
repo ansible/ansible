@@ -21,7 +21,7 @@
   debug:
     var: "'http://www.acme.com:9000/dir/index.html' | urlsplit('bad_filter')"
   register: _bad_urlsplit_filter
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Verify urlsplit filter showed an error message
   assert:

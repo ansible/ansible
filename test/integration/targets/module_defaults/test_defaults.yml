@@ -1,5 +1,5 @@
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   collections:
   - testns.testcoll
   - testns.othercoll
@@ -113,7 +113,7 @@
 
 - name: test preferring module name defaults for platform-specific actions
   hosts: localhost
-  gather_facts: no
+  gather_facts: false
   tasks:
   - name: ensure eosfacts does not use action plugin default
     testns.testcoll.eosfacts:

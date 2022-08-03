@@ -34,7 +34,7 @@ options:
       - Description of a crontab entry or, if env is set, the name of environment variable.
       - This parameter is always required as of ansible-core 2.12.
     type: str
-    required: yes
+    required: true
   user:
     description:
       - The specific user whose crontab should be modified.
@@ -69,7 +69,7 @@ options:
       - If set, create a backup of the crontab before it is modified.
         The location of the backup is returned in the C(backup_file) variable by this module.
     type: bool
-    default: no
+    default: false
   minute:
     description:
       - Minute when the job should run (C(0-59), C(*), C(*/2), and so on).
@@ -108,7 +108,7 @@ options:
       - If the job should be disabled (commented out) in the crontab.
       - Only has effect if I(state=present).
     type: bool
-    default: no
+    default: false
     version_added: "2.0"
   env:
     description:
@@ -172,13 +172,13 @@ EXAMPLES = r'''
 - name: Creates an entry like "PATH=/opt/bin" on top of crontab
   ansible.builtin.cron:
     name: PATH
-    env: yes
+    env: true
     job: /opt/bin
 
 - name: Creates an entry like "APP_HOME=/srv/app" and insert it after PATH declaration
   ansible.builtin.cron:
     name: APP_HOME
-    env: yes
+    env: true
     job: /srv/app
     insertafter: PATH
 
@@ -201,7 +201,7 @@ EXAMPLES = r'''
 - name: Removes "APP_HOME" environment variable from crontab
   ansible.builtin.cron:
     name: APP_HOME
-    env: yes
+    env: true
     state: absent
 '''
 
@@ -552,7 +552,7 @@ def main():
     # - name: do the job
     #   cron: name="do the job" hour="5,2" job="/some/dir/job.sh"
     #
-    # - name: no job
+    # - name: false job
     #   cron: name="an old job" state=absent
     #
     # - name: sets env

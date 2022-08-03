@@ -2,6 +2,6 @@
 - name: create nobody user
   user:
     name: nobody
-    create_home: no
+    create_home: false
     state: present
   notify: remove nobody user

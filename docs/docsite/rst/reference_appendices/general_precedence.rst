@@ -101,7 +101,7 @@ When set in a playbook, variables follow the same inheritance rules as playbook 
 
    - hosts: cloud
      gather_facts: false
-     become: yes
+     become: true
      vars:
        ansible_become_user: admin
      tasks:

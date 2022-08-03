@@ -61,7 +61,7 @@
       name: '{{ fake_service }}'
       state: stopped
   register: result
-  ignore_errors: yes
+  ignore_errors: true
 
 - assert:
       that:
@@ -73,8 +73,8 @@
       name: '{{ fake_service }}'
       state: stopped
   register: result
-  check_mode: yes
-  ignore_errors: yes
+  check_mode: true
+  ignore_errors: true
 
 - assert:
       that:

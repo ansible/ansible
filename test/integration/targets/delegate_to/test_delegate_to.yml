@@ -60,7 +60,7 @@
 
 - name: verify delegation with per host vars
   hosts: testhost6
-  gather_facts: yes
+  gather_facts: true
   tasks:
     - debug: msg={{ansible_facts['env']}}
 

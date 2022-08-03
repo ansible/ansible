@@ -19,7 +19,7 @@ options:
   my_opt:
     description:
     - Test description
-    required: yes
+    required: true
     type: str
 extends_documentation_fragment:
 - ns.col.ps_util

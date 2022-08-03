@@ -10,8 +10,8 @@
   unarchive:
     src: "{{ remote_tmp_dir }}/unarchive-00.{{item}}"
     dest: "{{ remote_tmp_dir }}/exclude-{{item}}"
-    remote_src: yes
-    list_files: yes
+    remote_src: true
+    list_files: true
     exclude:
       - "exclude/exclude-*.txt"
       - "other/exclude-1.ext"

@@ -31,8 +31,8 @@
         name: skip-broken
         description: ansible-test skip-broken test repo
         baseurl: "{{ skip_broken_repo_baseurl }}"
-        gpgcheck: no
-        repo_gpgcheck: no
+        gpgcheck: false
+        repo_gpgcheck: false
 
     - name: Install two packages
       dnf:

@@ -22,7 +22,7 @@
       unarchive:
         src: '{{remote_tmp_dir}}/test-unarchive.tar'
         dest: '{{remote_tmp_dir}}/test-unarchive-tar'
-        remote_src: yes
+        remote_src: true
       register: tar
 
     - name: unarchive a zip file
@@ -30,9 +30,9 @@
         src: '{{remote_tmp_dir}}/test-unarchive.zip'
         dest: '{{remote_tmp_dir}}/test-unarchive-zip'
         list_files: True
-        remote_src: yes
+        remote_src: true
       register: zip_fail
-      ignore_errors: yes
+      ignore_errors: true
       # FreeBSD does not have zipinfo, but does have a bootstrapped unzip in /usr/bin
       # which alone is sufficient to run unarchive.
       # Exclude /usr/bin from the PATH to test having no binary available.
@@ -54,7 +54,7 @@
         src: '{{remote_tmp_dir}}/test-unarchive.zip'
         dest: '{{remote_tmp_dir}}/test-unarchive-zip'
         list_files: True
-        remote_src: yes
+        remote_src: true
       register: zip_success
       # FreeBSD does not have zipinfo, but does have a bootstrapped unzip in /usr/bin
       # which alone is sufficient to run unarchive.

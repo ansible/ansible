@@ -1,6 +1,6 @@
 # https://github.com/ansible/ansible/issues/34209
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   vars:
       hello_world: Hello World
   tasks:

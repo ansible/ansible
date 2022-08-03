@@ -4,9 +4,9 @@
 ---
 - name: further fetch tests with metachar characters in filename
   hosts: windows
-  force_handlers: yes
+  force_handlers: true
   serial: 1
-  gather_facts: no
+  gather_facts: false
 
   tasks:
   - name: setup remote tmp dir
@@ -24,7 +24,7 @@
       fetch:
         src: '{{ remote_tmp_dir }}\file ^with &whoami'
         dest: ansible-test.txt
-        flat: yes
+        flat: true
       register: fetch_res
 
     - name: assert fetch file with metachar in name

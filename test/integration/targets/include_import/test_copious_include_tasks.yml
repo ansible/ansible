@@ -1,6 +1,6 @@
 - name: Test many include_tasks
   hosts: testhost
-  gather_facts: no
+  gather_facts: false
 
   tasks:
     - include_tasks: "{{ playbook_dir }}/tasks/hello/tasks-file-001.yml"

@@ -14,7 +14,7 @@
     - shell: getfacl ~/test.txt
       register: acls
 
-    become: yes
+    become: true
     become_user: "{{ remote_unprivileged_user }}"
 
   - name: Check that there are no ACLs leftovers
@@ -34,5 +34,5 @@
       file:
         path: "~/test.txt"
         state: absent
-      become: yes
+      become: true
       become_user: "{{ remote_unprivileged_user }}"

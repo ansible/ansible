@@ -9,14 +9,14 @@
   git:
     repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
     dest: '{{ checkout_dir }}'
-    single_branch: yes
+    single_branch: true
   register: single_branch_1
 
 - name: SINGLE_BRANCH | Clone example git repo using single_branch again
   git:
     repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
     dest: '{{ checkout_dir }}'
-    single_branch: yes
+    single_branch: true
   register: single_branch_2
 
 - name: SINGLE_BRANCH | List revisions
@@ -51,7 +51,7 @@
   git:
     repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
     dest: '{{ checkout_dir }}'
-    single_branch: yes
+    single_branch: true
     version: master
   register: single_branch_3
 
@@ -59,7 +59,7 @@
   git:
     repo: 'file://{{ repo_dir|expanduser }}/shallow_branches'
     dest: '{{ checkout_dir }}'
-    single_branch: yes
+    single_branch: true
     version: master
   register: single_branch_4
 

@@ -3,9 +3,9 @@
 - name: NO-DESTINATION | get info on a repo without updating and with no destination specified
   git:
     repo: '{{ repo_dir }}/minimal'
-    update: no
-    clone: no
-    accept_hostkey: yes
+    update: false
+    clone: false
+    accept_hostkey: true
   register: git_result
 
 - assert:

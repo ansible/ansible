@@ -160,7 +160,7 @@
         state: present
         use_backend: yum
         use: yum
-      ignore_errors: yes
+      ignore_errors: true
       register: result
 
     - name: verify error

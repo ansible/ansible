@@ -15,7 +15,7 @@
   apt:
     pkg: [python-apt, python3-apt]
     state: absent
-    purge: yes
+    purge: true
   register: apt_result
 
 # In check mode, auto-install of `python-apt` must fail
@@ -23,10 +23,10 @@
   apt:
     pkg: hello
     state: absent
-    purge: yes
+    purge: true
   register: apt_result
-  check_mode: yes
-  ignore_errors: yes
+  check_mode: true
+  ignore_errors: true
 
 - name: verify fail uninstall hello without required apt deps in check mode
   assert:
@@ -46,8 +46,8 @@
   apt:
     pkg: hello
     state: absent
-    purge: yes
-    update_cache: no
+    purge: true
+    update_cache: false
   register: apt_result
 
 - name: check hello with dpkg
@@ -105,7 +105,7 @@
   apt:
     pkg: [python-apt, python3-apt]
     state: absent
-    purge: yes
+    purge: true
 
 # UNINSTALL 'hello'
 #   With 'python-apt' uninstalled, the first call to 'apt' should install
@@ -208,7 +208,7 @@
   apt:
     pkg: hello
     state: present
-    update_cache: no
+    update_cache: false
 
 - name: check hello
   shell: dpkg-query -l hello
@@ -224,8 +224,8 @@
   apt:
     pkg: hello-traditional
     state: present
-    fail_on_autoremove: yes
-  ignore_errors: yes
+    fail_on_autoremove: true
+  ignore_errors: true
   register: apt_result
 
 - name: verify failure of installing hello-traditional, because it is required to remove hello to install.
@@ -238,8 +238,8 @@
   apt:
     pkg: hello
     state: absent
-    purge: yes
-    update_cache: no
+    purge: true
+    update_cache: false
 
 - name: install deb file
   apt: deb="/var/cache/apt/archives/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
@@ -305,9 +305,9 @@
 
 - name: test for sane error message
   apt:
-    update_cache: yes
+    update_cache: true
   register: apt_result
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: verify sane error message
   assert:
@@ -330,7 +330,7 @@
     name: libslang2-dev
 
 - shell: apt-mark showmanual | grep libcaca-dev
-  ignore_errors: yes
+  ignore_errors: true
   register: parent_output
 
 - name: Check that parent package is marked as installed manually
@@ -339,7 +339,7 @@
       - "'libcaca-dev' in parent_output.stdout"
 
 - shell: apt-mark showmanual | grep libslang2-dev
-  ignore_errors: yes
+  ignore_errors: true
   register: child_output
 
 - name: Check that child package is marked as installed manually
@@ -478,7 +478,7 @@
   apt:
     name: hello
     state: latest
-    allow_change_held_packages: yes
+    allow_change_held_packages: true
   register: allow_change_held_packages_successful_update
 
 - name: Get the version of the package
@@ -495,7 +495,7 @@
   apt:
     name: hello
     state: latest
-    allow_change_held_packages: yes
+    allow_change_held_packages: true
   register: allow_change_held_packages_no_update
 
 - name: Get the version of the package
@@ -528,4 +528,4 @@
       - emacs-nox
       - elpa-yaml-mode
     state: absent
-    purge: yes
+    purge: true

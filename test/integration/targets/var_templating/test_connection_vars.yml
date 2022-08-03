@@ -1,6 +1,6 @@
 ---
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   vars:
     my_var:
       become_method: sudo
@@ -11,7 +11,7 @@
   - include_vars: "./vars/connection.yml"
 
   - command: whoami
-    ignore_errors: yes
+    ignore_errors: true
     register: result
     failed_when: result is not success and (result.module_stderr is defined or result.module_stderr is defined)
 

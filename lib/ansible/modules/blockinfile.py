@@ -23,7 +23,7 @@ options:
     - The file to modify.
     - Before Ansible 2.3 this option was only usable as I(dest), I(destfile) and I(name).
     type: path
-    required: yes
+    required: true
     aliases: [ dest, destfile, name ]
   state:
     description:
@@ -68,13 +68,13 @@ options:
     description:
     - Create a new file if it does not exist.
     type: bool
-    default: no
+    default: false
   backup:
     description:
     - Create a backup file including the timestamp information so you can
       get the original file back if you somehow clobbered it incorrectly.
     type: bool
-    default: no
+    default: false
   marker_begin:
     description:
     - This will be inserted at C({mark}) in the opening ansible block marker.
@@ -134,7 +134,7 @@ EXAMPLES = r'''
   ansible.builtin.blockinfile:
     block: "{{ lookup('ansible.builtin.file', './local/sshd_config') }}"
     path: /etc/ssh/sshd_config
-    backup: yes
+    backup: true
     validate: /usr/sbin/sshd -T -f %s
 
 - name: Insert/Update HTML surrounded by custom markers after <body> line

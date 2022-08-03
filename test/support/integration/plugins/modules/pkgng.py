@@ -42,7 +42,7 @@ options:
             - Use local package base instead of fetching an updated one.
         type: bool
         required: false
-        default: no
+        default: false
     annotation:
         description:
             - A comma-separated list of keyvalue-pairs of the form
@@ -83,7 +83,7 @@ options:
             - Remove automatically installed packages which are no longer needed.
         required: false
         type: bool
-        default: no
+        default: false
 author: "bleader (@bleader)"
 notes:
   - When using pkgsite, be careful that already in cache packages won't be downloaded again.

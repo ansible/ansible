@@ -1,7 +1,7 @@
 ---
 - name: A common play
   hosts: testhost
-  gather_facts: no
+  gather_facts: false
   tasks:
   - debug:
       msg: 'ansible_check_mode: {{ansible_check_mode}}'
@@ -20,7 +20,7 @@
 
 - name: "Play with check_mode: true (runs always in check_mode)"
   hosts: testhost
-  gather_facts: no
+  gather_facts: false
   check_mode: true
   tasks:
   - debug:
@@ -40,7 +40,7 @@
 
 - name: "Play with check_mode: false (runs always in wet mode)"
   hosts: testhost
-  gather_facts: no
+  gather_facts: false
   check_mode: false
   tasks:
   - debug:
@@ -60,7 +60,7 @@
 
 - name: "Play with a block with check_mode: true"
   hosts: testhost
-  gather_facts: no
+  gather_facts: false
   tasks:
   - block:
     - name: Command
@@ -77,7 +77,7 @@
 
 - name: "Play with a block with check_mode: false"
   hosts: testhost
-  gather_facts: no
+  gather_facts: false
   tasks:
   - block:
     - name: Command

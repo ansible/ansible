@@ -36,7 +36,7 @@ options:
         a lower 'ansible_fact' one that is available for persistance via the facts cache plugin.
         This creates a possibly confusing interaction with C(meta: clear_facts) as it will remove the 'ansible_fact' but not the host variable."
     type: bool
-    default: no
+    default: false
     version_added: "2.4"
 extends_documentation_fragment:
     - action_common_attributes
@@ -94,7 +94,7 @@ EXAMPLES = r'''
   ansible.builtin.set_fact:
     one_fact: something
     other_fact: "{{ local_var * 2 }}"
-    cacheable: yes
+    cacheable: true
 
 - name: Creating list and dictionary variables
   ansible.builtin.set_fact:
@@ -110,8 +110,8 @@ EXAMPLES = r'''
 # recommended that booleans be set using the complex argument style:
 - name: Setting booleans using complex argument style
   ansible.builtin.set_fact:
-    one_fact: yes
-    other_fact: no
+    one_fact: true
+    other_fact: false
 
 - name: Creating list and dictionary variables using 'shorthand' YAML
   ansible.builtin.set_fact:

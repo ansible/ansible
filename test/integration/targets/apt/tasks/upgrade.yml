@@ -6,7 +6,7 @@
     apt:
       name: foo=1.0.0
       state: present
-      allow_unauthenticated: yes
+      allow_unauthenticated: true
 
   - name: check foo version
     shell: dpkg -s foo | grep Version | awk '{print $2}'
@@ -21,7 +21,7 @@
     apt:
       upgrade: "{{ upgrade_type }}"
       force_apt_get: "{{ force_apt_get }}"
-      force: yes
+      force: true
     register: upgrade_result
 
   - name: check foo version
@@ -45,7 +45,7 @@
     apt:
       upgrade: "{{ upgrade_type }}"
       force_apt_get: "{{ force_apt_get }}"
-      force: yes
+      force: true
     register: second_upgrade_result
 
   - name: check that nothing has changed (Idempotant)
@@ -58,7 +58,7 @@
       apt:
         pkg: foo,foobar
         state: absent
-        autoclean: yes
+        autoclean: true
 
     - name: Restore ubuntu repos
       command: mv /etc/apt/sources.list.backup /etc/apt/sources.list

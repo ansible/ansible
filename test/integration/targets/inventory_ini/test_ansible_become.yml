@@ -1,5 +1,5 @@
 - hosts: testhost
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: Test proper bool evaluation of ansible_become (issue #70476)
       shell: whoami

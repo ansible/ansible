@@ -64,7 +64,7 @@ options:
               commonly manifests as the task hanging as it is still holding the
               tty or the service dying when the task is over as the connection
               closes the session.
-        default: no
+        default: false
 extends_documentation_fragment: action_common_attributes
 attributes:
     check_mode:
@@ -85,13 +85,13 @@ EXAMPLES = '''
   ansible.builtin.sysvinit:
       name: apache2
       state: started
-      enabled: yes
+      enabled: true
 
 - name: Make sure apache2 is started on runlevels 3 and 5
   ansible.builtin.sysvinit:
       name: apache2
       state: started
-      enabled: yes
+      enabled: true
       runlevels:
         - 3
         - 5

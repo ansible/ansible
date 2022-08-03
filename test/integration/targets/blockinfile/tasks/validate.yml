@@ -4,9 +4,9 @@
     block: |
       line1
       line2
-    create: yes
+    create: true
     validate: grep
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: EXPECTED FAILURE test failure to validate
   blockinfile:
@@ -14,9 +14,9 @@
     block: |
       line1
       line2
-    create: yes
+    create: true
     validate: grep line47 %s
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Test proper validate
   blockinfile:
@@ -24,5 +24,5 @@
     block: |
       line1
       line2
-    create: yes
+    create: true
     validate: grep line1 %s

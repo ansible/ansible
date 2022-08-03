@@ -1,14 +1,14 @@
 - hosts: all
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: intentionally fail module execution
       ping:
         data: crash
-      ignore_errors: yes
+      ignore_errors: true
       register: ping
 
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: verify exceptions were properly captured
       assert:

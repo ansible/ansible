@@ -75,7 +75,7 @@ EXAMPLES = r'''
 
 # Wake desktops, wait for them to become ready and continue playbook
 - hosts: all
-  gather_facts: no
+  gather_facts: false
   tasks:
   - name: Send magic Wake-On-Lan packet to turn on individual systems
     community.general.wakeonlan:
@@ -91,7 +91,7 @@ EXAMPLES = r'''
 
 # Build a new VM, wait for it to become ready and continue playbook
 - hosts: all
-  gather_facts: no
+  gather_facts: false
   tasks:
   - name: Clone new VM, if missing
     community.vmware.vmware_guest:

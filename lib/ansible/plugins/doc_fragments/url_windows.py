@@ -64,7 +64,7 @@ options:
     - If C(no), SSL certificates will not be validated.
     - This should only be used on personally controlled sites using self-signed
       certificates.
-    default: yes
+    default: true
     type: bool
   client_cert:
     description:
@@ -88,7 +88,7 @@ options:
       services do not properly send a 401, logins will fail.
     - This option forces the sending of the Basic authentication header upon
       the original request.
-    default: no
+    default: false
     type: bool
   url_username:
     description:
@@ -110,12 +110,12 @@ options:
     - If not using C(become) or a different auth method to the ones stated
       above, there will be no default credentials available and no
       authentication will occur.
-    default: no
+    default: false
     type: bool
   use_proxy:
     description:
     - If C(no), it will not use the proxy defined in IE for the current user.
-    default: yes
+    default: true
     type: bool
   proxy_url:
     description:
@@ -143,7 +143,7 @@ options:
     - If not using C(become) or a different auth method to the ones stated
       above, there will be no default credentials available and no proxy
       authentication will occur.
-    default: no
+    default: false
     type: bool
 seealso:
 - module: community.windows.win_inet_proxy

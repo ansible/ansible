@@ -1,7 +1,7 @@
 - name: Test pause module with pause and custom prompt
   hosts: localhost
-  become: no
-  gather_facts: no
+  become: false
+  gather_facts: false
 
   tasks:
     - name: EXPECTED FAILURE

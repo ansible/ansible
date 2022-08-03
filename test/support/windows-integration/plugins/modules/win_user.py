@@ -24,7 +24,7 @@ options:
     description:
       - Name of the user to create, remove or modify.
     type: str
-    required: yes
+    required: true
   fullname:
     description:
       - Full name of the user.

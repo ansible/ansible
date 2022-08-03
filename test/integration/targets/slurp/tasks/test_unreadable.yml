@@ -2,7 +2,7 @@
   slurp:
     src: '{{ remote_tmp_dir }}/i_do_not_exist'
   register: slurp_missing
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Create a directory to test with
   file:
@@ -13,7 +13,7 @@
   slurp:
     src: '{{ remote_tmp_dir }}/baz'
   register: slurp_dir
-  ignore_errors: yes
+  ignore_errors: true
 
 # Ensure unreadable file and directory handling and error messages
 # https://github.com/ansible/ansible/issues/67340
@@ -30,10 +30,10 @@
     src: "{{ remote_tmp_dir }}/qux.txt"
   register: slurp_unreadable_file
   vars: &test_user_become
-    ansible_become: yes
+    ansible_become: true
     ansible_become_user: "{{ test_user_name }}"
     ansible_become_password: "{{ test_user_plaintext_password }}"
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: create unreadable directory
   file:
@@ -47,12 +47,12 @@
     src: "{{ remote_tmp_dir }}/test_data"
   register: slurp_unreadable_dir
   vars: *test_user_become
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Try to access file as directory
   slurp:
     src: "{{ remote_tmp_dir }}/qux.txt/somefile"
-  ignore_errors: yes
+  ignore_errors: true
   register: slurp_path_file_as_dir
 
 - name: check slurp failures

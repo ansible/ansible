@@ -8,7 +8,7 @@
 
 - name: test templating import_tasks
   hosts: localhost
-  gather_facts: no
+  gather_facts: false
   vars:
     play_var: validate_templated_tasks.yml
   tasks:
@@ -25,7 +25,7 @@
 
 - name: test templating import_role from_files
   hosts: localhost
-  gather_facts: no
+  gather_facts: false
   vars:
     play_var: templated.yml
   tasks:

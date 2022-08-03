@@ -38,7 +38,7 @@
   user:
     name: "{{ user_names.stdout_lines | random }}"
     state: present
-    create_home: no
+    create_home: false
   loop: "{{ range(1, 5+1) | list }}"
   register: user_test1
 

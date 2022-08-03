@@ -22,7 +22,7 @@ options:
   path:
     description:
       - Path to the file being managed.
-    required: yes
+    required: true
     type: path
     aliases: [ dest, name ]
   state:

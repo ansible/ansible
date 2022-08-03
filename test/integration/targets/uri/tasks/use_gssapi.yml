@@ -8,19 +8,19 @@
 - name: test Negotiate auth over HTTP with explicit credentials
   uri:
     url: http://{{ httpbin_host }}/gssapi
-    use_gssapi: yes
+    use_gssapi: true
     url_username: '{{ krb5_username }}'
     url_password: '{{ krb5_password }}'
-    return_content: yes
+    return_content: true
   register: http_explicit
 
 - name: test Negotiate auth over HTTPS with explicit credentials
   uri:
     url: https://{{ httpbin_host }}/gssapi
-    use_gssapi: yes
+    use_gssapi: true
     url_username: '{{ krb5_username }}'
     url_password: '{{ krb5_password }}'
-    return_content: yes
+    return_content: true
   register: https_explicit
 
 - name: assert test Negotiate auth with implicit credentials
@@ -42,15 +42,15 @@
   - name: test Negotiate auth over HTTP with implicit credentials
     uri:
       url: http://{{ httpbin_host }}/gssapi
-      use_gssapi: yes
-      return_content: yes
+      use_gssapi: true
+      return_content: true
     register: http_implicit
 
   - name: test Negotiate auth over HTTPS with implicit credentials
     uri:
       url: https://{{ httpbin_host }}/gssapi
-      use_gssapi: yes
-      return_content: yes
+      use_gssapi: true
+      return_content: true
     register: https_implicit
 
   - name: assert test Negotiate auth with implicit credentials

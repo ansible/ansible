@@ -22,7 +22,7 @@ EXAMPLES = """
   community.mysql.mysql_user:
     name: "{{ item[0] }}"
     priv: "{{ item[1] }}.*:ALL"
-    append_privs: yes
+    append_privs: true
     password: "foo"
   with_nested:
     - [ 'alice', 'bob' ]
@@ -33,7 +33,7 @@ EXAMPLES = """
   community.mysql.mysql_user:
     name: "{{ item[0] }}"
     priv: "{{ item[1] }}.*:ALL"
-    append_privs: yes
+    append_privs: true
     password: "foo"
   with_nested:
     - "{{ users }}"

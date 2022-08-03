@@ -1,5 +1,5 @@
 - hosts: testhost
-  gather_facts: no
+  gather_facts: false
   tasks:
   - name: Use a specially crafted module to see if things were imported correctly
     test:
@@ -72,8 +72,8 @@
         lineinfile:
           path: "{{ remote_tmp_dir }}/nulltest"
           line: "{{ string_with_null.stdout }}"
-          create: yes
-        ignore_errors: yes
+          create: true
+        ignore_errors: true
         register: nulltest
 
       - name: See if the file exists

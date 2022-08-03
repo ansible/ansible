@@ -9,7 +9,7 @@
         name: test-repo-with-updateinfo
         description: test-repo-with-updateinfo
         baseurl: "{{ updateinfo_repo }}"
-        gpgcheck: no
+        gpgcheck: false
 
     - name: Install old versions of toaster and oven
       dnf:

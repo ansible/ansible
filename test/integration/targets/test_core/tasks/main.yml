@@ -2,7 +2,7 @@
   set_fact:
     hello: world
   failed_when: true
-  ignore_errors: yes
+  ignore_errors: true
   register: intentional_failure
 
 - name: Success
@@ -13,7 +13,7 @@
 - name: Try failure test on non-dictionary
   set_fact:
     hello: "{{ 'nope' is failure }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: misuse_of_failure
 
 - name: Assert failure tests work
@@ -39,14 +39,14 @@
 - name: Try unreachable host
   command: id
   delegate_to: unreachable
-  ignore_unreachable: yes
-  ignore_errors: yes
+  ignore_unreachable: true
+  ignore_errors: true
   register: unreachable_host
 
 - name: Try reachable test on non-dictionary
   set_fact:
     hello: "{{ 'nope' is reachable }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: misuse_of_reachable
 
 - name: Assert reachable tests work
@@ -59,7 +59,7 @@
 - name: Try unreachable test on non-dictionary
   set_fact:
     hello: "{{ 'nope' is unreachable }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: misuse_of_unreachable
 
 - name: Assert unreachable tests work
@@ -84,7 +84,7 @@
 - name: Try changed test on non-dictionary
   set_fact:
     hello: "{{ 'nope' is changed }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: misuse_of_changed
 
 # providing artificial task results since there are no modules in ansible-core that provide a 'results' list instead of 'changed'
@@ -129,7 +129,7 @@
 - name: Try skipped test on non-dictionary
   set_fact:
     hello: "{{ 'nope' is skipped }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: misuse_of_skipped
 
 - name: Assert skipped tests work
@@ -159,7 +159,7 @@
 - name: Try finished test on non-dictionary
   set_fact:
     hello: "{{ 'nope' is finished }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: misuse_of_finished
 
 - name: Assert finished tests work (warning expected)
@@ -173,7 +173,7 @@
 - name: Try started test on non-dictionary
   set_fact:
     hello: "{{ 'nope' is started }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: misuse_of_started
 
 - name: Assert started tests work (warning expected)
@@ -208,49 +208,49 @@
 - name: Try version tests with bad operator
   set_fact:
     result: "{{ '1.0' is version('1.0', 'equals') }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: version_bad_operator
 
 - name: Try version tests with bad value
   set_fact:
     result: "{{ '1.0' is version('nope', '==', true) }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: version_bad_value
 
 - name: Try version with both strict and version_type
   debug:
     msg: "{{ '1.0' is version('1.0', strict=False, version_type='loose') }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: version_strict_version_type
 
 - name: Try version with bad version_type
   debug:
     msg: "{{ '1.0' is version('1.0', version_type='boom') }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: version_bad_version_type
 
 - name: Try version with bad semver
   debug:
     msg: "{{ 'nope' is version('nopenope', version_type='semver') }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: version_bad_semver
 
 - name: Try version with empty input value
   debug:
     msg: "{{ '' is version('1.0', '>') }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: version_empty_input
 
 - name: Try version with empty comparison value
   debug:
     msg: "{{ '1.0' is version('', '>') }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: version_empty_comparison
 
 - name: Try version with empty input and comparison values
   debug:
     msg: "{{ '' is version('', '>') }}"
-  ignore_errors: yes
+  ignore_errors: true
   register: version_empty_both
 
 - name: Assert version tests work

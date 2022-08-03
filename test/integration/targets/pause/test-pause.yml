@@ -1,14 +1,14 @@
 - name: Test pause
   hosts: localhost
-  gather_facts: no
-  become: no
+  gather_facts: false
+  become: false
 
   tasks:
     - name: non-integer for duraction (EXPECTED FAILURE)
       pause:
         seconds: hello
       register: result
-      ignore_errors: yes
+      ignore_errors: true
 
     - assert:
         that:
@@ -19,7 +19,7 @@
       pause:
         echo: hello
       register: result
-      ignore_errors: yes
+      ignore_errors: true
 
     - assert:
         that:
@@ -58,13 +58,13 @@
         minutes: 1
         seconds: 1
       register: exclusive
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: invalid arg
       pause:
         foo: bar
       register: invalid
-      ignore_errors: yes
+      ignore_errors: true
 
     - assert:
         that:

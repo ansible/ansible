@@ -80,7 +80,7 @@ options:
         the expanded line parameter.
       - Mutually exclusive with C(search_string).
     type: bool
-    default: no
+    default: false
     version_added: "1.1"
   insertafter:
     description:
@@ -113,19 +113,19 @@ options:
       - If specified, the file will be created if it does not already exist.
       - By default it will fail if the file is missing.
     type: bool
-    default: no
+    default: false
   backup:
     description:
       - Create a backup file including the timestamp information so you can
         get the original file back if you somehow clobbered it incorrectly.
     type: bool
-    default: no
+    default: false
   firstmatch:
     description:
       - Used with C(insertafter) or C(insertbefore).
       - If set, C(insertafter) and C(insertbefore) will work with the first line that matches the given regular expression.
     type: bool
-    default: no
+    default: false
     version_added: "2.5"
   others:
     description:
@@ -219,7 +219,7 @@ EXAMPLES = r'''
   ansible.builtin.lineinfile:
     path: /tmp/testfile
     line: 192.168.1.99 foo.lab.net foo
-    create: yes
+    create: true
 
 # NOTE: Yaml requires escaping backslashes in double quotes but not in single quotes
 - name: Ensure the JBoss memory settings are exactly as needed
@@ -227,7 +227,7 @@ EXAMPLES = r'''
     path: /opt/jboss-as/bin/standalone.conf
     regexp: '^(.*)Xms(\d+)m(.*)$'
     line: '\1Xms${xms}m\3'
-    backrefs: yes
+    backrefs: true
 
 # NOTE: Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
 - name: Validate the sudoers file before saving
@@ -244,7 +244,7 @@ EXAMPLES = r'''
     path: /tmp/config
     regexp: ^(host=).*
     line: \g<1>{{ hostname }}
-    backrefs: yes
+    backrefs: true
 '''
 
 RETURN = r'''#'''

@@ -1,11 +1,11 @@
 - name: Test pause module echo output
   hosts: localhost
-  become: no
-  gather_facts: no
+  become: false
+  gather_facts: false
 
   tasks:
     - pause:
-        echo: yes
+        echo: true
         prompt: Enter some text
       register: results
 
@@ -15,7 +15,7 @@
           - results.user_input == 'hello there'
 
     - pause:
-        echo: yes
+        echo: true
         prompt: Enter some text to edit
       register: result
 
@@ -25,7 +25,7 @@
           - result.user_input == 'hello tommy boy'
 
     - pause:
-        echo: no
+        echo: false
         prompt: Enter some text
       register: result
 

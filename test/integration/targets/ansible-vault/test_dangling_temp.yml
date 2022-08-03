@@ -12,7 +12,7 @@
       assemble:
         src: files/test_assemble
         dest: "{{od}}/dest_file"
-        remote_src: no
+        remote_src: false
         mode: 0600
 
     - name: remove assembled file with secret (so nothing should have unencrypted secret)
@@ -22,7 +22,7 @@
       find:
         paths: '{{temp_paths}}'
         contains: 'VAULT TEST IN WHICH BAD THING HAPPENED'
-        recurse: yes
+        recurse: true
       register: badthings
       vars:
         temp_paths: "{{[lookup('env', 'TMP'), lookup('env', 'TEMP'), hardcoded]|flatten(1)|unique|list}}"

@@ -8,7 +8,7 @@
     - name: notify a handler
       debug:
         msg: notifying handler
-      changed_when: yes
+      changed_when: true
       notify: include a task from the handlers section
 
   handlers:

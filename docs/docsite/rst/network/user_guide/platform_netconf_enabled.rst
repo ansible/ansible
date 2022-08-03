@@ -76,7 +76,7 @@ Example NETCONF task
 
    - name: Backup current switch config
      junipernetworks.junos.netconf_config:
-       backup: yes
+       backup: true
      register: backup_junos_location
 
 Example NETCONF task with configurable variables
@@ -86,7 +86,7 @@ Example NETCONF task with configurable variables
 
    - name: configure interface while providing different private key file path
      junipernetworks.junos.netconf_config:
-       backup: yes
+       backup: true
      register: backup_junos_location
      vars:
        ansible_private_key_file: /home/admin/.ssh/newprivatekeyfile

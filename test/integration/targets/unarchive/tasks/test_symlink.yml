@@ -14,7 +14,7 @@
     src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
     dest: "{{ remote_tmp_dir }}/link-to-unarchive-dir"
     mode: "u+rwX,go+rX"
-    remote_src: yes
+    remote_src: true
   register: unarchive_11
 
 - name: Check that file is really there
@@ -49,7 +49,7 @@
     src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
     dest: "{{ remote_tmp_dir }}/link-to-unarchive-file"
     mode: "u+rwX,go+rX"
-    remote_src: yes
+    remote_src: true
   ignore_errors: True
   register: unarchive_12
 

@@ -7,7 +7,7 @@
   unarchive:
     src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
     dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
-    remote_src: yes
+    remote_src: true
     mode: "u+rwX,g-rwx,o-rwx"
     list_files: True
   register: unarchive06
@@ -41,7 +41,7 @@
   unarchive:
     src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
     dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
-    remote_src: yes
+    remote_src: true
     mode: "u+rwX,g-wx,o-wx,g+r,o+r"
   register: unarchive06_2
 
@@ -63,7 +63,7 @@
   unarchive:
     src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
     dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
-    remote_src: yes
+    remote_src: true
     mode: "u+rwX-x,g-wx,o-wx,g+r,o+r"
     list_files: True
   register: unarchive07
@@ -91,7 +91,7 @@
   unarchive:
     src: "{{ remote_tmp_dir }}/test-unarchive.zip"
     dest: "{{ remote_tmp_dir }}/test-unarchive-zip"
-    remote_src: yes
+    remote_src: true
     mode: "u+rwX-x,g-rwx,o=x"
     list_files: True
   register: unarchive08
@@ -117,7 +117,7 @@
   unarchive:
     src: "{{ remote_tmp_dir }}/test-unarchive.zip"
     dest: "{{ remote_tmp_dir }}/test-unarchive-zip"
-    remote_src: yes
+    remote_src: true
     mode: "u+rwX-x,g-rwx,o=x"
     list_files: True
   register: unarchive08

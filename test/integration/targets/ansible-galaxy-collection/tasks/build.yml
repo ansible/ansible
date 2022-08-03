@@ -37,7 +37,7 @@
   command: ansible-galaxy collection build scratch/ansible_test/my_collection {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}'
-  ignore_errors: yes
+  ignore_errors: true
   register: build_existing_no_force
 
 - name: build existing collection with force

@@ -1,6 +1,6 @@
 - name: Test unarchiving as root and apply different ownership to top folder
   vars:
-    ansible_become: yes
+    ansible_become: true
     ansible_become_user: root
     ansible_become_password: null
   block:
@@ -33,7 +33,7 @@
       unarchive:
         src: "{{ test_user.home }}/test-tarball.tar.gz"
         dest: "{{ test_user.home }}/unarchivetest3-unarchive"
-        remote_src: yes
+        remote_src: true
         list_files: True
         owner: "{{ test_user.name }}"
         group: "{{ test_user.group }}"

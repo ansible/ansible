@@ -8,8 +8,8 @@
   user:
     name: ansibulluser
     state: present
-    generate_ssh_key: yes
-    force: yes
+    generate_ssh_key: true
+    force: true
     ssh_key_file: .ssh/test_id_rsa
     ssh_key_passphrase: secret_passphrase
   register: ansibulluser_create_with_ssh_key

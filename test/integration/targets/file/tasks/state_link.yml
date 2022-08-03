@@ -173,7 +173,7 @@
         mode: 0640
         state: 'link'
         owner: '{{ remote_unprivileged_user }}'
-        force: yes
+        force: true
         follow: false
       register: missing_dst_no_follow_enable_force_use_mode3
   always:
@@ -181,8 +181,8 @@
       user:
         name: '{{ remote_unprivileged_user }}'
         state: absent
-        force: yes
-        remove: yes
+        force: true
+        remove: true
 
     - name: Delete unprivileged user home and tempdir
       file:
@@ -355,7 +355,7 @@
   file:
     path: '{{remote_tmp_dir_test}}/test_follow_link'
     mode: 0644
-    follow: yes
+    follow: true
   register: file9_result
 
 - name: stat the link target
@@ -436,7 +436,7 @@
   file:
     src: "{{ output_file }}"
     dest: "{{ remote_tmp_dir_test }}/link.txt"
-  ignore_errors: yes
+  ignore_errors: true
   register: src_state
 
 - name: Ensure src without state failed
