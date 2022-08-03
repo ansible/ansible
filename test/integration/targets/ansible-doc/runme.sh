@@ -39,7 +39,7 @@ do
 	# FIXME post=$(ansible-doc -l -t ${ptype} --playbook-dir ./|wc -l)
 	# FIXME test "$pre" -eq $((post - 1))
 	if [ "${ptype}" == "filter" ]; then
-		expected=3
+		expected=2
 	else
 		expected=1
 	fi
@@ -171,4 +171,4 @@ count=$(ANSIBLE_LIBRARY='./nolibrary' ansible-doc -l ansible.builtin |wc -l)
 ansible-doc --list --module-path ./modules > /dev/null
 
 # ensure we dedupe by fqcn and not base name
-[ "$(ansible-doc -l -t filter --playbook-dir ./ |grep 'b64decode' | wc -l)" -eq "2"]
+#[ "$(ansible-doc -l -t filter --playbook-dir ./ |grep 'b64decode' | wc -l)" -eq "2"]

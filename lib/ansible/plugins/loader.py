@@ -1057,11 +1057,47 @@ class Jinja2Loader(PluginLoader):
     def method_map_name(self):
         return get_plugin_class(self.class_name) + 's'
 
+    def get_contained_plugins(self, collection, plugin_path, name):
+
+        plugins = []
+
+        full_name = '.'.join(['ansible_collections', collection, 'plugins', self.type, name])
+        try:
+            # use 'parent' loader class to find files, but cannot return this as it can contain multiple plugins per file
+            if plugin_path not in self._module_cache:
+                self._module_cache[plugin_path] = self._load_module_source(full_name, plugin_path)
+            module = self._module_cache[plugin_path]
+            obj = getattr(module, self.class_name)
+        except Exception as e:
+            raise KeyError('Failed to load %s for %s: %s' % (plugin_path, collection, to_native(e)))
+
+        plugin_impl = obj()
+        if plugin_impl is None:
+            raise KeyError('Could not find %s.%s' % (collection, name))
+
+        try:
+            method_map = getattr(plugin_impl, self.method_map_name)
+            plugin_map = method_map().items()
+        except Exception as e:
+            display.warning("Ignoring %s plugins in '%s' as it seems to be invalid: %r" % (self.type, to_text(plugin_path), e))
+            return plugins
+
+        for func_name, func in plugin_map:
+            fq_name = '.'.join((collection, func_name))
+            pclass = self._load_jinja2_class()
+            plugin = pclass(func)
+            if plugin in plugins:
+                continue
+            self._update_object(plugin, fq_name, plugin_path)
+            plugins.append(plugin)
+
+        return plugins
+
     def get_with_context(self, name, *args, **kwargs):
 
-        found_in_cache = True
+        # found_in_cache = True
+        class_only = kwargs.pop('class_only', False)  # just pop it, dont want to pass through
         collection_list = kwargs.pop('collection_list', None)
-        class_only = kwargs.pop('class_only', False)
 
         context = PluginLoadContext()
 

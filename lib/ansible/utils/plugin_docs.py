@@ -296,15 +296,19 @@ def find_plugin_docfile(plugin, plugin_type, loader):
     '''  if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding 'sidecar' file for docs '''
 
     context = loader.find_plugin_with_context(plugin, ignore_deprecated=False, check_aliases=True)
-    if not context or not context.resolved:
+    plugin_obj = None
+    if (not context or not context.resolved) and plugin_type in ('filter', 'test'):
         # should only happen for filters/test
-        dummy, context = loader.get_with_context(plugin)
+        plugin_obj, context = loader.get_with_context(plugin)
 
     if not context or not context.resolved:
         raise AnsiblePluginNotFound('%s was not found' % (plugin), plugin_load_context=context)
 
     docfile = Path(context.plugin_resolved_path)
-    if docfile.suffix not in C.DOC_EXTENSIONS or (docfile.name != plugin and not docfile.name.startswith('_')):
+    possible_names = [plugin,   getattr(plugin_obj, '_load_name', None), docfile.name.removeprefix('_')]
+    if context:
+        possible_names.extend([context.redirect_list[-1], context.plugin_resolved_name])
+    if docfile.suffix not in C.DOC_EXTENSIONS or docfile.name not in possible_names:
         # only look for adjacent if plugin file does not support documents or
         # name does not match file basname (except deprecated)
         filename = _find_adjacent(docfile, plugin, C.DOC_EXTENSIONS)
@@ -319,30 +323,16 @@ def find_plugin_docfile(plugin, plugin_type, loader):
 
 def get_plugin_docs(plugin, plugin_type, loader, fragment_loader, verbose):
 
-    errors = None
     docs = []
 
     # find plugin doc file, if it doesn't exist this will throw error, we let it through
     # can raise exception and short circuit when 'not found'
     filename, collection_name = find_plugin_docfile(plugin, plugin_type, loader)
 
-    # if plugin is not supported extension (non python module)
     try:
         docs.extend(get_docstring(filename, fragment_loader, verbose=verbose, collection_name=collection_name, plugin_type=plugin_type))
     except Exception as e:
-        errors = e
-
-    # if not already a sidecar, try sidecar (file adjacent to plugin that has docs instead of plugin itself)
-    if not docs or not docs[0]:
-        docfile = Path(filename)
-        if docfile.suffix not in C.YAML_DOC_EXTENSIONS:
-            candidate = _find_adjacent(docfile, plugin, C.YAML_DOC_EXTENSIONS)
-            if candidate is not None:
-                docs.extend(get_docstring(to_native(candidate), fragment_loader, verbose=verbose, collection_name=collection_name, plugin_type=plugin_type))
-
-        if not docs or not docs[0]:
-            # still no docs? error!
-            raise AnsibleParserError('%s did not contain a DOCUMENTATION attribute (%s)' % (plugin, filename), orig_exc=errors)
+        raise AnsibleParserError('%s did not contain a DOCUMENTATION attribute (%s)' % (plugin, filename), orig_exc=e)
 
     # add extra data to docs[0] (aka 'DOCUMENTATION')
     docs[0]['filename'] = filename

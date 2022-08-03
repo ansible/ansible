@@ -14,8 +14,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_native, to_bytes
 from ansible.plugins import loader
 from ansible.utils.display import Display
-from ansible.utils.path import is_subpath
-from ansible.utils.collection_loader._collection_finder import _get_collection_path
+from ansible.utils.collection_loader._collection_finder import _get_collection_path, AnsibleCollectionRef
 
 display = Display()
 
@@ -76,42 +75,41 @@ def _list_plugins_from_paths(ptype, dirs, collection, depth=0):
                         if any([
                                 plugin in C.IGNORE_FILES,                # general files to ignore
                                 ext in C.REJECT_EXTS,                    # general extensions to ignore
+                                ext in (b'.yml', b'.yaml', b'.json'),    # ignore docs files TODO: constant!
                                 plugin in IGNORE.get(bkey, ()),          # plugin in reject list
+                                os.path.islink(full_path),               # skip aliases, author should document in 'aliaes' field
                         ]):
                             continue
 
                         if ptype in ('test', 'filter'):
-                            ploader = getattr(loader, '{0}_loader'.format(ptype))
                             try:
-                                if path not in ploader._extra_dirs:
-                                    ploader.add_directory(path)
-                                    added = True
-                                for plugin in ploader.all():
-                                    plugin_path = plugin._original_path
-                                    if not is_subpath(plugin_path, path, real=True):
-                                        # loader will not restrict to collection so we need to do it here
-                                        # requires both to be 'real' since loader solves symlinks
-                                        continue
+                                file_plugins = _list_j2_plugins_from_file(collection, full_path, ptype, plugin)
+                            except KeyError as e:
+                                display.warning('Skipping file %s: %s' % (full_path, to_native(e)))
+                                continue
 
-                                    plugin_name = get_composite_name(collection, plugin._load_name, path, depth)
-                                    plugins[plugin_name] = plugin_path
-                            finally:
-                                if added:
-                                    ploader._extra_dirs.remove(os.path.realpath(path))
-                                    ploader._clear_caches()
+                            for plugin in file_plugins:
+                                plugin_name = get_composite_name(collection, plugin._load_name, full_path, depth)
+                                plugins[plugin_name] = full_path
                         else:
-
                             plugin = get_composite_name(collection, plugin, path, depth)
-
-                            if not os.path.islink(full_path):
-                                # skip aliases, author should document in 'aliaes' field
-                                plugins[plugin] = full_path
+                            plugins[plugin] = full_path
             else:
                 display.debug("Skip listing plugins in '{0}' as it is not a directory".format(path))
         else:
             display.debug("Skip listing plugins in '{0}' as it does not exist".format(path))
 
     return plugins
+
+
+def _list_j2_plugins_from_file(collection, plugin_path, ptype, plugin_name):
+
+    ploader = getattr(loader, '{0}_loader'.format(ptype))
+    if collection in ('ansible.builtin', 'ansible.legacy'):
+        file_plugins = ploader.all()
+    else:
+        file_plugins = ploader.get_contained_plugins(collection, plugin_path, plugin_name)
+    return file_plugins
 
 
 def list_collection_plugins(ptype, collections, search_paths=None):
@@ -135,9 +133,15 @@ def list_collection_plugins(ptype, collections, search_paths=None):
             if context.CLIARGS.get('module_path', None):
                 dirs.extend(context.CLIARGS['module_path'])
         else:
-            # search path in this case is for locating collection itself
+            # search path in this case is for locating collection itselfA
             b_ptype = to_bytes(C.COLLECTION_PTYPE_COMPAT.get(ptype, ptype))
             dirs = [to_native(os.path.join(collections[collection], b'plugins', b_ptype))]
+            # acr = AnsibleCollectionRef.try_parse_fqcr(collection, ptype)
+            # if acr:
+            #     dirs = acr.subdirs
+            # else:
+
+            #     raise Exception('bad acr for %s, %s' % (collection, ptype))
 
         plugins.update(_list_plugins_from_paths(ptype, dirs, collection))
 
