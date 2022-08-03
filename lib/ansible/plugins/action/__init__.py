@@ -954,8 +954,7 @@ class ActionBase(ABC):
         if data.strip().startswith('BECOME-SUCCESS-'):
             display.deprecated("Stripping become status output outside the connection plugin is deprecated and will be removed in a future release.",
                                version="2.18")
-            # FIXME: Uncomment once tests pass locally
-            # data = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', data)
+            data = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', data)
         return data
 
     def _update_module_args(self, module_name, module_args, task_vars):
