@@ -28,14 +28,14 @@ class Layout:
         self.__paths_tree = paths_to_tree(self.__paths)
         self.__files_tree = paths_to_tree(self.__files)
 
-    def all_files(self, include_symlinked_directories=False):  # type: (bool) -> t.List[str]
+    def all_files(self, include_symlinked_directories: bool = False) -> t.List[str]:
         """Return a list of all file paths."""
         if include_symlinked_directories:
             return self.__paths
 
         return self.__files
 
-    def walk_files(self, directory, include_symlinked_directories=False):  # type: (str, bool) -> t.List[str]
+    def walk_files(self, directory: str, include_symlinked_directories: bool = False) -> t.List[str]:
         """Return a list of file paths found recursively under the given directory."""
         if include_symlinked_directories:
             tree = self.__paths_tree

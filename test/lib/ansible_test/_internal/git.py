@@ -12,11 +12,11 @@ from .util import (
 
 class Git:
     """Wrapper around git command-line tools."""
-    def __init__(self, root=None):  # type: (t.Optional[str]) -> None
+    def __init__(self, root: t.Optional[str] = None) -> None:
         self.git = 'git'
         self.root = root
 
-    def get_diff(self, args, git_options=None):  # type: (t.List[str], t.Optional[t.List[str]]) -> t.List[str]
+    def get_diff(self, args: t.List[str], git_options: t.Optional[t.List[str]] = None) -> t.List[str]:
         """Run `git diff` and return the result as a list."""
         cmd = ['diff'] + args
         if git_options is None:
@@ -60,7 +60,7 @@ class Git:
         cmd = ['symbolic-ref', '--short', 'HEAD']
         return self.run_git(cmd).strip()
 
-    def get_rev_list(self, commits=None, max_count=None):  # type: (t.Optional[t.List[str]], t.Optional[int]) -> t.List[str]
+    def get_rev_list(self, commits: t.Optional[t.List[str]] = None, max_count: t.Optional[int] = None) -> t.List[str]:
         """Return the list of results from the `git rev-list` command."""
         cmd = ['rev-list']
 
@@ -88,7 +88,7 @@ class Git:
         except SubprocessError:
             return False
 
-    def run_git_split(self, cmd, separator=None, str_errors='strict'):  # type: (t.List[str], t.Optional[str], str) -> t.List[str]
+    def run_git_split(self, cmd: t.List[str], separator: t.Optional[str] = None, str_errors: str = 'strict') -> t.List[str]:
         """Run the given `git` command and return the results as a list."""
         output = self.run_git(cmd, str_errors=str_errors).strip(separator)
 
@@ -97,6 +97,6 @@ class Git:
 
         return output.split(separator)
 
-    def run_git(self, cmd, str_errors='strict'):  # type: (t.List[str], str) -> str
+    def run_git(self, cmd: t.List[str], str_errors: str = 'strict') -> str:
         """Run the given `git` command and return the results as a string."""
         return raw_command([self.git] + cmd, cwd=self.root, capture=True, str_errors=str_errors)[0]

@@ -112,7 +112,7 @@ def create_network_inventory(args: EnvironmentConfig, path: str, target_hosts: t
     inventory.write(args, path)
 
 
-def create_posix_inventory(args, path, target_hosts, needs_ssh=False):  # type: (EnvironmentConfig, str, t.List[HostProfile], bool) -> None
+def create_posix_inventory(args: EnvironmentConfig, path: str, target_hosts: t.List[HostProfile], needs_ssh: bool = False) -> None:
     """Create and return inventory for use in POSIX integration tests."""
     target_hosts = t.cast(t.List[SshTargetHostProfile], target_hosts)
 

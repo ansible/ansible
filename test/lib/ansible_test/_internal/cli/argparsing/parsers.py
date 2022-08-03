@@ -173,7 +173,7 @@ class ParserState:
         self.namespaces.append(namespace)
 
     @contextlib.contextmanager
-    def delimit(self, delimiters, required=True):  # type: (str, bool) -> t.Iterator[ParserBoundary]
+    def delimit(self, delimiters: str, required: bool = True) -> t.Iterator[ParserBoundary]:
         """Context manager for delimiting parsing of input."""
         boundary = ParserBoundary(delimiters=delimiters, required=required)
 
@@ -217,7 +217,7 @@ class MatchConditions(enum.Flag):
 
 class DynamicChoicesParser(Parser, metaclass=abc.ABCMeta):
     """Base class for composite argument parsers which use a list of choices that can be generated during completion."""
-    def __init__(self, conditions=MatchConditions.CHOICE):  # type: (MatchConditions) -> None
+    def __init__(self, conditions: MatchConditions = MatchConditions.CHOICE) -> None:
         self.conditions = conditions
 
     @abc.abstractmethod
@@ -272,7 +272,7 @@ class DynamicChoicesParser(Parser, metaclass=abc.ABCMeta):
 
 class ChoicesParser(DynamicChoicesParser):
     """Composite argument parser which relies on a static list of choices."""
-    def __init__(self, choices, conditions=MatchConditions.CHOICE):  # type: (t.List[str], MatchConditions) -> None
+    def __init__(self, choices: t.List[str], conditions: MatchConditions = MatchConditions.CHOICE) -> None:
         self.choices = choices
 
         super().__init__(conditions=conditions)
@@ -290,7 +290,7 @@ class IntegerParser(DynamicChoicesParser):
     """Composite argument parser for integers."""
     PATTERN = re.compile('^[1-9][0-9]*$')
 
-    def __init__(self, maximum=None):  # type: (t.Optional[int]) -> None
+    def __init__(self, maximum: t.Optional[int] = None) -> None:
         self.maximum = maximum
 
         super().__init__()
@@ -336,7 +336,7 @@ class BooleanParser(ChoicesParser):
 
 class AnyParser(ChoicesParser):
     """Composite argument parser which accepts any input value."""
-    def __init__(self, nothing=False, no_match_message=None):  # type: (bool, t.Optional[str]) -> None
+    def __init__(self, nothing: bool = False, no_match_message: t.Optional[str] = None) -> None:
         self.no_match_message = no_match_message
 
         conditions = MatchConditions.ANY

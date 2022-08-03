@@ -617,13 +617,13 @@ class SanityIgnoreProcessor:
 
 class SanitySuccess(TestSuccess):
     """Sanity test success."""
-    def __init__(self, test, python_version=None):  # type: (str, t.Optional[str]) -> None
+    def __init__(self, test: str, python_version: t.Optional[str] = None) -> None:
         super().__init__(COMMAND, test, python_version)
 
 
 class SanitySkipped(TestSkipped):
     """Sanity test skipped."""
-    def __init__(self, test, python_version=None):  # type: (str, t.Optional[str]) -> None
+    def __init__(self, test: str, python_version: t.Optional[str] = None) -> None:
         super().__init__(COMMAND, test, python_version)
 
 
@@ -696,7 +696,7 @@ class SanityTest(metaclass=abc.ABCMeta):
     """Sanity test base class."""
     ansible_only = False
 
-    def __init__(self, name=None):  # type: (t.Optional[str]) -> None
+    def __init__(self, name: t.Optional[str] = None) -> None:
         if not name:
             name = self.__class__.__name__
             name = re.sub(r'Test$', '', name)  # drop Test suffix

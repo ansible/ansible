@@ -97,7 +97,7 @@ class DiffSide:
         """True if the diff is complete, otherwise False."""
         return self._lines_remaining == 0
 
-    def format_lines(self, context=True):  # type: (bool) -> t.List[str]
+    def format_lines(self, context: bool = True) -> t.List[str]:
         """Format the diff and return a list of lines, optionally including context."""
         if context:
             lines = self.lines_and_context

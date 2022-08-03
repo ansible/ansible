@@ -93,7 +93,7 @@ class NoTestsForChanges(ApplicationWarning):
 
 class Delegate(Exception):
     """Trigger command delegation."""
-    def __init__(self, host_state, exclude=None, require=None):  # type: (HostState, t.List[str], t.List[str]) -> None
+    def __init__(self, host_state: HostState, exclude: t.List[str] = None, require: t.List[str] = None) -> None:
         super().__init__()
 
         self.host_state = host_state

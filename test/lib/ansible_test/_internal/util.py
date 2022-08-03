@@ -235,7 +235,7 @@ def filter_args(args, filters):  # type: (t.List[str], t.Dict[str, int]) -> t.Li
     return result
 
 
-def read_lines_without_comments(path, remove_blank_lines=False, optional=False):  # type: (str, bool, bool) -> t.List[str]
+def read_lines_without_comments(path: str, remove_blank_lines: bool = False, optional: bool = False) -> t.List[str]:
     """
     Returns lines from the specified text file with comments removed.
     Comments are any content from a hash symbol to the end of a line.
@@ -309,7 +309,7 @@ def find_executable(executable, cwd=None, path=None, required=True):  # type: (s
     return match
 
 
-def find_python(version, path=None, required=True):  # type: (str, t.Optional[str], bool) -> t.Optional[str]
+def find_python(version: str, path: t.Optional[str] = None, required: bool = True) -> t.Optional[str]:
     """
     Find and return the full path to the specified Python version.
     If required, an exception will be raised not found.
@@ -747,7 +747,7 @@ def is_binary_file(path: str) -> bool:
         return b'\0' in path_fd.read(4096)
 
 
-def generate_name(length=8):  # type: (int) -> str
+def generate_name(length: int = 8) -> str:
     """Generate and return a random name."""
     return ''.join(random.choice(string.ascii_letters + string.digits) for _idx in range(length))
 
@@ -815,7 +815,7 @@ class Display:
         for warning in self.warnings:
             self.__warning(warning)
 
-    def warning(self, message, unique=False, verbosity=0):  # type: (str, bool, int) -> None
+    def warning(self, message: str, unique: bool = False, verbosity: int = 0) -> None:
         """Display a warning level message."""
         if verbosity > self.verbosity:
             return
@@ -841,7 +841,7 @@ class Display:
         """Display a fatal level message."""
         self.print_message('FATAL: %s' % message, color=self.red, stderr=True)
 
-    def info(self, message, verbosity=0, truncate=False):  # type: (str, int, bool) -> None
+    def info(self, message: str, verbosity: int = 0, truncate: bool = False) -> None:
         """Display an info level message."""
         if self.verbosity >= verbosity:
             color = self.verbosity_colors.get(verbosity, self.yellow)
@@ -1027,7 +1027,7 @@ def sorted_versions(versions: t.List[str]) -> t.List[str]:
     return [version_to_str(version) for version in sorted(str_to_version(version) for version in versions)]
 
 
-def import_plugins(directory, root=None):  # type: (str, t.Optional[str]) -> None
+def import_plugins(directory: str, root: t.Optional[str] = None) -> None:
     """
     Import plugins from the given directory relative to the given root.
     If the root is not provided, the 'lib' directory for the test runner will be used.

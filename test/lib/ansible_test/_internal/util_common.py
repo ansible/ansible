@@ -173,7 +173,7 @@ def handle_layout_messages(messages: t.Optional[LayoutMessages]) -> None:
         raise ApplicationError('\n'.join(messages.error))
 
 
-def process_scoped_temporary_file(args, prefix='ansible-test-', suffix=None):  # type: (CommonConfig, t.Optional[str], t.Optional[str]) -> str
+def process_scoped_temporary_file(args: CommonConfig, prefix: t.Optional[str] = 'ansible-test-', suffix: t.Optional[str] = None) -> str:
     """Return the path to a temporary file that will be automatically removed when the process exits."""
     if args.explain:
         path = os.path.join(tempfile.gettempdir(), f'{prefix or tempfile.gettempprefix()}{generate_name()}{suffix or ""}')
@@ -185,7 +185,7 @@ def process_scoped_temporary_file(args, prefix='ansible-test-', suffix=None):  #
     return path
 
 
-def process_scoped_temporary_directory(args, prefix='ansible-test-', suffix=None):  # type: (CommonConfig, t.Optional[str], t.Optional[str]) -> str
+def process_scoped_temporary_directory(args: CommonConfig, prefix: t.Optional[str] = 'ansible-test-', suffix: t.Optional[str] = None) -> str:
     """Return the path to a temporary directory that will be automatically removed when the process exits."""
     if args.explain:
         path = os.path.join(tempfile.gettempdir(), f'{prefix or tempfile.gettempprefix()}{generate_name()}{suffix or ""}')
@@ -329,7 +329,7 @@ def get_python_path(interpreter: str) -> str:
     return python_path
 
 
-def create_temp_dir(prefix=None, suffix=None, base_dir=None):  # type: (t.Optional[str], t.Optional[str], t.Optional[str]) -> str
+def create_temp_dir(prefix: t.Optional[str] = None, suffix: t.Optional[str] = None, base_dir: t.Optional[str] = None) -> str:
     """Create a temporary directory that persists until the current process exits."""
     temp_path = tempfile.mkdtemp(prefix=prefix or 'tmp', suffix=suffix or '', dir=base_dir)
     atexit.register(remove_tree, temp_path)
@@ -431,7 +431,7 @@ def yamlcheck(python):
     return result['cloader']
 
 
-def check_pyyaml(python, required=True, quiet=False):  # type: (PythonConfig, bool, bool) -> t.Optional[bool]
+def check_pyyaml(python: PythonConfig, required: bool = True, quiet: bool = False) -> t.Optional[bool]:
     """
     Return True if PyYAML has libyaml support, False if it does not and None if it was not found.
     The result is cached if True or required.

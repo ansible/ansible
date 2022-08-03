@@ -298,7 +298,7 @@ def collect_general_install(
     return collect_install(requirements_paths, constraints_paths)
 
 
-def collect_package_install(packages, constraints=True):  # type: (t.List[str], bool) -> t.List[PipInstall]
+def collect_package_install(packages: t.List[str], constraints: bool = True) -> t.List[PipInstall]:
     """Return the details necessary to install the specified packages."""
     return collect_install([], [], packages, constraints=constraints)
 
@@ -395,7 +395,7 @@ def collect_install(
     return installs
 
 
-def collect_uninstall(packages, ignore_errors=False):  # type: (t.List[str], bool) -> t.List[PipUninstall]
+def collect_uninstall(packages: t.List[str], ignore_errors: bool = False) -> t.List[PipUninstall]:
     """Return the details necessary for the specified pip uninstall."""
     uninstall = PipUninstall(
         packages=packages,

@@ -60,7 +60,7 @@ def calculate_confidence(path: str, line: int, metadata: Metadata) -> int:
 
 class TestResult:
     """Base class for test results."""
-    def __init__(self, command, test, python_version=None):  # type: (str, str, t.Optional[str]) -> None
+    def __init__(self, command: str, test: str, python_version: t.Optional[str] = None) -> None:
         self.command = command
         self.test = test
         self.python_version = python_version
@@ -189,7 +189,7 @@ class TestSuccess(TestResult):
 
 class TestSkipped(TestResult):
     """Test skipped."""
-    def __init__(self, command, test, python_version=None):  # type: (str, str, t.Optional[str]) -> None
+    def __init__(self, command: str, test: str, python_version: t.Optional[str] = None) -> None:
         super().__init__(command, test, python_version)
 
         self.reason = None  # type: t.Optional[str]
@@ -356,7 +356,7 @@ class TestFailure(TestResult):
 
         return url
 
-    def format_title(self, help_link=None):  # type: (t.Optional[str]) -> str
+    def format_title(self, help_link: t.Optional[str] = None) -> str:
         """Return a string containing a title/heading for this test failure, including an optional help link to explain the test."""
         command = self.format_command()
 
@@ -469,7 +469,7 @@ class TestMessage:
     def __str__(self):
         return self.format()
 
-    def format(self, show_confidence=False):  # type: (bool) -> str
+    def format(self, show_confidence: bool = False) -> str:
         """Return a string representation of this message, optionally including the confidence level."""
         if self.__code:
             msg = '%s: %s' % (self.__code, self.__message)

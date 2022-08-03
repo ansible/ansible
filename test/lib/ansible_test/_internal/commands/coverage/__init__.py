@@ -117,17 +117,17 @@ def get_all_coverage_files() -> t.List[str]:
     return get_python_coverage_files() + get_powershell_coverage_files()
 
 
-def get_python_coverage_files(path=None):  # type: (t.Optional[str]) -> t.List[str]
+def get_python_coverage_files(path: t.Optional[str] = None) -> t.List[str]:
     """Return the list of Python coverage file paths."""
     return get_coverage_files('python', path)
 
 
-def get_powershell_coverage_files(path=None):  # type: (t.Optional[str]) -> t.List[str]
+def get_powershell_coverage_files(path: t.Optional[str] = None) -> t.List[str]:
     """Return the list of PowerShell coverage file paths."""
     return get_coverage_files('powershell', path)
 
 
-def get_coverage_files(language, path=None):  # type: (str, t.Optional[str]) -> t.List[str]
+def get_coverage_files(language: str, path: t.Optional[str] = None) -> t.List[str]:
     """Return the list of coverage file paths for the given language."""
     coverage_dir = path or ResultType.COVERAGE.path
 
@@ -343,7 +343,7 @@ def sanitize_filename(
 
 class PathChecker:
     """Checks code coverage paths to verify they are valid and reports on the findings."""
-    def __init__(self, args, collection_search_re=None):  # type: (CoverageConfig, t.Optional[t.Pattern]) -> None
+    def __init__(self, args: CoverageConfig, collection_search_re: t.Optional[t.Pattern] = None) -> None:
         self.args = args
         self.collection_search_re = collection_search_re
         self.invalid_paths = []  # type: t.List[str]

@@ -116,7 +116,7 @@ class LocalConnection(Connection):
 
 class SshConnection(Connection):
     """Connect to a host using SSH."""
-    def __init__(self, args, settings, become=None):  # type: (EnvironmentConfig, SshConnectionDetail, t.Optional[Become]) -> None
+    def __init__(self, args: EnvironmentConfig, settings: SshConnectionDetail, become: t.Optional[Become] = None) -> None:
         self.args = args
         self.settings = settings
         self.become = become
@@ -211,7 +211,7 @@ class SshConnection(Connection):
 
 class DockerConnection(Connection):
     """Connect to a host using Docker."""
-    def __init__(self, args, container_id, user=None):  # type: (EnvironmentConfig, str, t.Optional[str]) -> None
+    def __init__(self, args: EnvironmentConfig, container_id: str, user: t.Optional[str] = None) -> None:
         self.args = args
         self.container_id = container_id
         self.user = user  # type: t.Optional[str]

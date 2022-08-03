@@ -43,7 +43,7 @@ def find_target_completion(target_func, prefix, short):  # type: (t.Callable[[],
         return ['%s' % ex]
 
 
-def walk_completion_targets(targets, prefix, short=False):  # type: (t.Iterable[CompletionTarget], str, bool) -> t.Tuple[str, ...]
+def walk_completion_targets(targets: t.Iterable[CompletionTarget], prefix: str, short: bool = False) -> t.Tuple[str, ...]:
     """Return a tuple of targets from the given target iterable which match the given prefix."""
     aliases = set(alias for target in targets for alias in target.aliases)
 
@@ -155,12 +155,12 @@ def walk_units_targets() -> t.Iterable[TestTarget]:
     return walk_test_targets(path=data_context().content.unit_path, module_path=data_context().content.unit_module_path, extensions=('.py',), prefix='test_')
 
 
-def walk_compile_targets(include_symlinks=True):  # type: (bool) -> t.Iterable[TestTarget]
+def walk_compile_targets(include_symlinks: bool = True) -> t.Iterable[TestTarget]:
     """Return an iterable of compile targets."""
     return walk_test_targets(module_path=data_context().content.module_path, extensions=('.py',), extra_dirs=('bin',), include_symlinks=include_symlinks)
 
 
-def walk_powershell_targets(include_symlinks=True):  # type: (bool) -> t.Iterable[TestTarget]
+def walk_powershell_targets(include_symlinks: bool = True) -> t.Iterable[TestTarget]:
     """Return an iterable of PowerShell targets."""
     return walk_test_targets(module_path=data_context().content.module_path, extensions=('.ps1', '.psm1'), include_symlinks=include_symlinks)
 
@@ -170,21 +170,21 @@ def walk_sanity_targets() -> t.Iterable[TestTarget]:
     return walk_test_targets(module_path=data_context().content.module_path, include_symlinks=True, include_symlinked_directories=True)
 
 
-def walk_posix_integration_targets(include_hidden=False):  # type: (bool) -> t.Iterable[IntegrationTarget]
+def walk_posix_integration_targets(include_hidden: bool = False) -> t.Iterable[IntegrationTarget]:
     """Return an iterable of POSIX integration targets."""
     for target in walk_integration_targets():
         if 'posix/' in target.aliases or (include_hidden and 'hidden/posix/' in target.aliases):
             yield target
 
 
-def walk_network_integration_targets(include_hidden=False):  # type: (bool) -> t.Iterable[IntegrationTarget]
+def walk_network_integration_targets(include_hidden: bool = False) -> t.Iterable[IntegrationTarget]:
     """Return an iterable of network integration targets."""
     for target in walk_integration_targets():
         if 'network/' in target.aliases or (include_hidden and 'hidden/network/' in target.aliases):
             yield target
 
 
-def walk_windows_integration_targets(include_hidden=False):  # type: (bool) -> t.Iterable[IntegrationTarget]
+def walk_windows_integration_targets(include_hidden: bool = False) -> t.Iterable[IntegrationTarget]:
     """Return an iterable of windows integration targets."""
     for target in walk_integration_targets():
         if 'windows/' in target.aliases or (include_hidden and 'hidden/windows/' in target.aliases):

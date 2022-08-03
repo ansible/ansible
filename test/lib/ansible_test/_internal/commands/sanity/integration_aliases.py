@@ -171,7 +171,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
         return self._ci_test_groups
 
-    def format_test_group_alias(self, name, fallback=''):  # type: (str, str) -> str
+    def format_test_group_alias(self, name: str, fallback: str = '') -> str:
         """Return a test group alias using the given name and fallback."""
         group_numbers = self.ci_test_groups.get(name, None)
 

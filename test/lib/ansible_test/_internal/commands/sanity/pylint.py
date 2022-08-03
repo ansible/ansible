@@ -113,7 +113,7 @@ class PylintTest(SanitySingleVersion):
             contexts.append((context_name, sorted(filtered_paths)))
             available_paths -= filtered_paths
 
-        def filter_path(path_filter=None):  # type: (str) -> t.Callable[[str], bool]
+        def filter_path(path_filter: str = None) -> t.Callable[[str], bool]:
             """Return a function that filters out paths which are not a subdirectory of the given path."""
             def context_filter(path_to_filter: str) -> bool:
                 """Return true if the given path matches, otherwise return False."""

@@ -54,7 +54,7 @@ from ..data import (
 FOCUSED_TARGET = '__focused__'
 
 
-def categorize_changes(args, paths, verbose_command=None):  # type: (TestConfig, t.List[str], t.Optional[str]) -> ChangeDescription
+def categorize_changes(args: TestConfig, paths: t.List[str], verbose_command: t.Optional[str] = None) -> ChangeDescription:
     """Categorize the given list of changed paths and return a description of the changes."""
     mapper = PathMapper(args)
 
@@ -876,7 +876,7 @@ class PathMapper:
         )
 
 
-def all_tests(args, force=False):  # type: (TestConfig, bool) -> t.Dict[str, str]
+def all_tests(args: TestConfig, force: bool = False) -> t.Dict[str, str]:
     """Return the targets for each test command when all tests should be run."""
     if force:
         integration_all_target = 'all'

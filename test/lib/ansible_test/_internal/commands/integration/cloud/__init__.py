@@ -257,7 +257,7 @@ class CloudBase(metaclass=abc.ABCMeta):
 
 class CloudProvider(CloudBase):
     """Base class for cloud provider plugins. Sets up cloud resources before delegation."""
-    def __init__(self, args, config_extension='.ini'):  # type: (IntegrationConfig, str) -> None
+    def __init__(self, args: IntegrationConfig, config_extension: str = '.ini') -> None:
         super().__init__(args)
 
         self.ci_provider = get_ci_provider()

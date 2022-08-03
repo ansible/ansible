@@ -206,7 +206,7 @@ class AnsibleCoreCI:
 
         raise self._create_http_error(response)
 
-    def get(self, tries=3, sleep=15, always_raise_on=None):  # type: (int, int, t.Optional[t.List[int]]) -> t.Optional[InstanceConnection]
+    def get(self, tries: int = 3, sleep: int = 15, always_raise_on: t.Optional[t.List[int]] = None) -> t.Optional[InstanceConnection]:
         """Get instance connection information."""
         if not self.started:
             display.info(f'Skipping invalid {self.label} instance.', verbosity=1)
@@ -270,7 +270,7 @@ class AnsibleCoreCI:
 
         return self.connection
 
-    def wait(self, iterations=90):  # type: (t.Optional[int]) -> None
+    def wait(self, iterations: t.Optional[int] = 90) -> None:
         """Wait for the instance to become ready."""
         for _iteration in range(1, iterations):
             if self.get().running:

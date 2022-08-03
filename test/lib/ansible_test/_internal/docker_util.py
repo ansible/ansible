@@ -327,7 +327,7 @@ def docker_run(
     raise ApplicationError('Failed to run docker image "%s".' % image)
 
 
-def docker_start(args, container_id, options=None):  # type: (EnvironmentConfig, str, t.Optional[t.List[str]]) -> t.Tuple[t.Optional[str], t.Optional[str]]
+def docker_start(args: EnvironmentConfig, container_id: str, options: t.Optional[t.List[str]] = None) -> t.Tuple[t.Optional[str], t.Optional[str]]:
     """
     Start a docker container by name or ID
     """
@@ -472,7 +472,7 @@ class DockerInspect:
         return ipaddress
 
 
-def docker_inspect(args, identifier, always=False):  # type: (EnvironmentConfig, str, bool) -> DockerInspect
+def docker_inspect(args: EnvironmentConfig, identifier: str, always: bool = False) -> DockerInspect:
     """
     Return the results of `docker container inspect` for the specified container.
     Raises a ContainerNotFoundError if the container was not found.

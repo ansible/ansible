@@ -577,7 +577,7 @@ def complete_network_platform_connection(prefix: str, parsed_args: argparse.Name
     return [i + '=' for i in images if i.startswith(left) and (not parsed_args.platform_connection or i not in [x[0] for x in parsed_args.platform_connection])]
 
 
-def get_remote_platform_choices(controller=False):  # type: (bool) -> t.List[str]
+def get_remote_platform_choices(controller: bool = False) -> t.List[str]:
     """Return a list of supported remote platforms matching the given prefix."""
     return sorted(filter_completion(remote_completion(), controller_only=controller))
 

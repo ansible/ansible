@@ -22,7 +22,7 @@ from .util_common import (
 
 class HttpClient:
     """Make HTTP requests via curl."""
-    def __init__(self, args, always=False, insecure=False, proxy=None):  # type: (CommonConfig, bool, bool, t.Optional[str]) -> None
+    def __init__(self, args: CommonConfig, always: bool = False, insecure: bool = False, proxy: t.Optional[str] = None) -> None:
         self.args = args
         self.always = always
         self.insecure = insecure

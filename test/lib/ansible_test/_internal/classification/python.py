@@ -41,7 +41,7 @@ def get_python_module_utils_imports(compile_targets: t.List[TestTarget]) -> t.Di
     for target in compile_targets:
         imports_by_target_path[target.path] = extract_python_module_utils_imports(target.path, module_utils)
 
-    def recurse_import(import_name, depth=0, seen=None):  # type: (str, int, t.Optional[t.Set[str]]) -> t.Set[str]
+    def recurse_import(import_name: str, depth: int = 0, seen: t.Optional[t.Set[str]] = None) -> t.Set[str]:
         """Recursively expand module_utils imports from module_utils files."""
         display.info('module_utils import: %s%s' % ('  ' * depth, import_name), verbosity=4)
 
@@ -183,7 +183,7 @@ def extract_python_module_utils_imports(path: str, module_utils: t.Set[str]) -> 
     return finder.imports
 
 
-def get_import_path(name, package=False):  # type: (str, bool) -> str
+def get_import_path(name: str, package: bool = False) -> str:
     """Return a path from an import name."""
     if package:
         filename = os.path.join(name.replace('.', '/'), '__init__.py')
