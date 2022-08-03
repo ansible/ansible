@@ -1,0 +1,2 @@
+minor_changes:
+- Add support for parsing ``-a`` module options as JSON and not just key=value arguments - https://github.com/ansible/ansible/issues/78112
