@@ -12,10 +12,11 @@ from ansible.cli import CLI
 from ansible import constants as C
 from ansible import context
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_text
 from ansible.parsing.splitter import parse_kv
+from ansible.parsing.utils.yaml import from_yaml
 from ansible.playbook import Playbook
 from ansible.playbook.play import Play
 from ansible.utils.display import Display
@@ -51,7 +52,8 @@ class AdHocCLI(CLI):
 
         # options unique to ansible ad-hoc
         self.parser.add_argument('-a', '--args', dest='module_args',
-                                 help="The action's options in space separated k=v format: -a 'opt1=val1 opt2=val2'",
+                                 help="The action's options in space separated k=v format: -a 'opt1=val1 opt2=val2' "
+                                      "or a json string: -a '{\"opt1\": \"val1\", \"opt2\": \"val2\"}'",
                                  default=C.DEFAULT_MODULE_ARGS)
         self.parser.add_argument('-m', '--module-name', dest='module_name',
                                  help="Name of the action to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
@@ -71,7 +73,18 @@ class AdHocCLI(CLI):
     def _play_ds(self, pattern, async_val, poll):
         check_raw = context.CLIARGS['module_name'] in C.MODULE_REQUIRE_ARGS
 
-        mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': parse_kv(context.CLIARGS['module_args'], check_raw=check_raw)},
+        module_args_raw = context.CLIARGS['module_args']
+        module_args = None
+        if module_args_raw and module_args_raw.startswith('{') and module_args_raw.endswith('}'):
+            try:
+                module_args = from_yaml(module_args_raw.strip(), json_only=True)
+            except AnsibleParserError:
+                pass
+
+        if not module_args:
+            module_args = parse_kv(module_args_raw, check_raw=check_raw)
+
+        mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': module_args},
                   'timeout': context.CLIARGS['task_timeout']}
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
