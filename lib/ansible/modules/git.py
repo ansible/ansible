@@ -207,6 +207,11 @@ options:
         type: path
         version_added: "2.7"
 
+    git_filter:
+        description:
+            - Can be used for partial clone of a git repo
+        type: str
+
     gpg_whitelist:
         description:
            - A list of trusted GPG fingerprints to compare to the fingerprint of the
