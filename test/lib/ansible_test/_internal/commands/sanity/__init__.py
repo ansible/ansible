@@ -157,6 +157,8 @@ def command_sanity(args):  # type: (SanityConfig) -> None
     targets_use_pypi = any(isinstance(test, SanityMultipleVersion) and test.needs_pypi for test in tests) and not args.list_tests
     host_state = prepare_profiles(args, targets_use_pypi=targets_use_pypi)  # sanity
 
+    get_content_config(args)  # make sure content config has been parsed prior to delegation
+
     if args.delegate:
         raise Delegate(host_state=host_state, require=changes, exclude=args.exclude)
 
@@ -215,7 +217,7 @@ def command_sanity(args):  # type: (SanityConfig) -> None
                 all_targets = SanityTargets.filter_and_inject_targets(test, all_targets)
                 usable_targets = SanityTargets.filter_and_inject_targets(test, usable_targets)
 
-                usable_targets = sorted(test.filter_targets_by_version(list(usable_targets), version))
+                usable_targets = sorted(test.filter_targets_by_version(args, list(usable_targets), version))
                 usable_targets = settings.filter_skipped_targets(usable_targets)
                 sanity_targets = SanityTargets(tuple(all_targets), tuple(usable_targets))
 
@@ -357,12 +359,12 @@ class SanityIgnoreParser:
                 for python_version in test.supported_python_versions:
                     test_name = '%s-%s' % (test.name, python_version)
 
-                    paths_by_test[test_name] = set(target.path for target in test.filter_targets_by_version(test_targets, python_version))
+                    paths_by_test[test_name] = set(target.path for target in test.filter_targets_by_version(args, test_targets, python_version))
                     tests_by_name[test_name] = test
             else:
                 unversioned_test_names.update(dict(('%s-%s' % (test.name, python_version), test.name) for python_version in SUPPORTED_PYTHON_VERSIONS))
 
-                paths_by_test[test.name] = set(target.path for target in test.filter_targets_by_version(test_targets, ''))
+                paths_by_test[test.name] = set(target.path for target in test.filter_targets_by_version(args, test_targets, ''))
                 tests_by_name[test.name] = test
 
         for line_no, line in enumerate(lines, start=1):
@@ -756,7 +758,7 @@ class SanityTest(metaclass=abc.ABCMeta):
 
         raise NotImplementedError('Sanity test "%s" must implement "filter_targets" or set "no_targets" to True.' % self.name)
 
-    def filter_targets_by_version(self, targets, python_version):  # type: (t.List[TestTarget], str) -> t.List[TestTarget]
+    def filter_targets_by_version(self, args, targets, python_version):  # type: (SanityConfig, t.List[TestTarget], str) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test, taking into account the Python version."""
         del python_version  # python_version is not used here, but derived classes may make use of it
 
@@ -764,7 +766,7 @@ class SanityTest(metaclass=abc.ABCMeta):
 
         if self.py2_compat:
             # This sanity test is a Python 2.x compatibility test.
-            content_config = get_content_config()
+            content_config = get_content_config(args)
 
             if content_config.py2_support:
                 # This collection supports Python 2.x.
@@ -1049,15 +1051,15 @@ class SanityMultipleVersion(SanityTest, metaclass=abc.ABCMeta):
         """A tuple of supported Python versions or None if the test does not depend on specific Python versions."""
         return SUPPORTED_PYTHON_VERSIONS
 
-    def filter_targets_by_version(self, targets, python_version):  # type: (t.List[TestTarget], str) -> t.List[TestTarget]
+    def filter_targets_by_version(self, args, targets, python_version):  # type: (SanityConfig, t.List[TestTarget], str) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test, taking into account the Python version."""
         if not python_version:
             raise Exception('python_version is required to filter multi-version tests')
 
-        targets = super().filter_targets_by_version(targets, python_version)
+        targets = super().filter_targets_by_version(args, targets, python_version)
 
         if python_version in REMOTE_ONLY_PYTHON_VERSIONS:
-            content_config = get_content_config()
+            content_config = get_content_config(args)
 
             if python_version not in content_config.modules.python_versions:
                 # when a remote-only python version is not supported there are no paths to test

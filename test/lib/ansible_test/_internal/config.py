@@ -1,6 +1,7 @@
 """Configuration classes."""
 from __future__ import annotations
 
+import dataclasses
 import enum
 import os
 import sys
@@ -48,6 +49,22 @@ class TerminateMode(enum.Enum):
         return self.name.lower()
 
 
+@dataclasses.dataclass(frozen=True)
+class ModulesConfig:
+    """Configuration for modules."""
+    python_requires: str
+    python_versions: tuple[str, ...]
+    controller_only: bool
+
+
+@dataclasses.dataclass(frozen=True)
+class ContentConfig:
+    """Configuration for all content."""
+    modules: ModulesConfig
+    python_versions: tuple[str, ...]
+    py2_support: bool
+
+
 class EnvironmentConfig(CommonConfig):
     """Configuration common to all commands which execute in an environment."""
     def __init__(self, args, command):  # type: (t.Any, str) -> None
@@ -58,6 +75,10 @@ class EnvironmentConfig(CommonConfig):
         self.containers = args.containers  # type: t.Optional[str]
         self.pypi_proxy = args.pypi_proxy  # type: bool
         self.pypi_endpoint = args.pypi_endpoint  # type: t.Optional[str]
+
+        # Populated by content_config.get_content_config on the origin.
+        # Serialized and passed to delegated instances to avoid parsing a second time.
+        self.content_config = None  # type: t.Optional[ContentConfig]
 
         # Set by check_controller_python once HostState has been created by prepare_profiles.
         # This is here for convenience, to avoid needing to pass HostState to some functions which already have access to EnvironmentConfig.
@@ -97,9 +118,11 @@ class EnvironmentConfig(CommonConfig):
             if config.host_path:
                 settings_path = os.path.join(config.host_path, 'settings.dat')
                 state_path = os.path.join(config.host_path, 'state.dat')
+                config_path = os.path.join(config.host_path, 'config.dat')
 
                 files.append((os.path.abspath(settings_path), settings_path))
                 files.append((os.path.abspath(state_path), state_path))
+                files.append((os.path.abspath(config_path), config_path))
 
         data_context().register_payload_callback(host_callback)
 

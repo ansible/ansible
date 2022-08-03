@@ -68,6 +68,10 @@ from .provisioning import (
     HostState,
 )
 
+from .content_config import (
+    serialize_content_config,
+)
+
 
 @contextlib.contextmanager
 def delegation_context(args, host_state):  # type: (EnvironmentConfig, HostState) -> t.Iterator[None]
@@ -81,6 +85,7 @@ def delegation_context(args, host_state):  # type: (EnvironmentConfig, HostState
     with tempfile.TemporaryDirectory(prefix='host-', dir=ResultType.TMP.path) as host_dir:
         args.host_settings.serialize(os.path.join(host_dir, 'settings.dat'))
         host_state.serialize(os.path.join(host_dir, 'state.dat'))
+        serialize_content_config(args, os.path.join(host_dir, 'config.dat'))
 
         args.host_path = os.path.join(ResultType.TMP.relative_path, os.path.basename(host_dir))
 
