@@ -1331,7 +1331,7 @@ def main():
             module.exit_json(**result)
         # there's no git config, so clone
         clone(git_path, module, repo, dest, remote, depth, version, bare, reference,
-              refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch)
+              refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch, git_filter=git_filter)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo
