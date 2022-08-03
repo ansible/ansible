@@ -1060,7 +1060,7 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_d
         'recursive-include tests **',
         'recursive-include docs **',
         'recursive-include roles **',
-        'recursive-include playooks **',
+        'recursive-include playbooks **',
         'recursive-include changelogs **.yml **.yaml',
     ]
     for plugin in ['action', 'become', 'cache', 'callback', 'cliconf', 'connection', 'doc_fragments',
