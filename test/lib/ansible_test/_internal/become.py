@@ -19,22 +19,22 @@ class Become(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def method(self):  # type: () -> str
+    def method(self) -> str:
         """The name of the Ansible become plugin that is equivalent to this."""
 
     @abc.abstractmethod
-    def prepare_command(self, command):  # type: (t.List[str]) -> t.List[str]
+    def prepare_command(self, command: t.List[str]) -> t.List[str]:
         """Return the given command, if any, with privilege escalation."""
 
 
 class Doas(Become):
     """Become using 'doas'."""
     @property
-    def method(self):  # type: () -> str
+    def method(self) -> str:
         """The name of the Ansible become plugin that is equivalent to this."""
         raise NotImplementedError('Ansible has no built-in doas become plugin.')
 
-    def prepare_command(self, command):  # type: (t.List[str]) -> t.List[str]
+    def prepare_command(self, command: t.List[str]) -> t.List[str]:
         """Return the given command, if any, with privilege escalation."""
         become = ['doas', '-n']
 
@@ -54,7 +54,7 @@ class DoasSudo(Doas):
         return 'doas_sudo'
 
     @property
-    def method(self):  # type: () -> str
+    def method(self) -> str:
         """The name of the Ansible become plugin that is equivalent to this."""
         return 'sudo'
 
@@ -62,11 +62,11 @@ class DoasSudo(Doas):
 class Su(Become):
     """Become using 'su'."""
     @property
-    def method(self):  # type: () -> str
+    def method(self) -> str:
         """The name of the Ansible become plugin that is equivalent to this."""
         return 'su'
 
-    def prepare_command(self, command):  # type: (t.List[str]) -> t.List[str]
+    def prepare_command(self, command: t.List[str]) -> t.List[str]:
         """Return the given command, if any, with privilege escalation."""
         become = ['su', '-l', 'root']
 
@@ -84,7 +84,7 @@ class SuSudo(Su):
         return 'su_sudo'
 
     @property
-    def method(self):  # type: () -> str
+    def method(self) -> str:
         """The name of the Ansible become plugin that is equivalent to this."""
         return 'sudo'
 
@@ -92,11 +92,11 @@ class SuSudo(Su):
 class Sudo(Become):
     """Become using 'sudo'."""
     @property
-    def method(self):  # type: () -> str
+    def method(self) -> str:
         """The name of the Ansible become plugin that is equivalent to this."""
         return 'sudo'
 
-    def prepare_command(self, command):  # type: (t.List[str]) -> t.List[str]
+    def prepare_command(self, command: t.List[str]) -> t.List[str]:
         """Return the given command, if any, with privilege escalation."""
         become = ['sudo', '-in']
 

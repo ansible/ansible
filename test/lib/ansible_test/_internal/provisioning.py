@@ -57,17 +57,17 @@ class HostState:
     target_profiles: t.List[HostProfile]
 
     @property
-    def profiles(self):  # type: () -> t.List[HostProfile]
+    def profiles(self) -> t.List[HostProfile]:
         """Return all the profiles as a list."""
         return [t.cast(HostProfile, self.controller_profile)] + self.target_profiles
 
-    def serialize(self, path):  # type: (str) -> None
+    def serialize(self, path: str) -> None:
         """Serialize the host state to the given path."""
         with open_binary_file(path, 'wb') as state_file:
             pickle.dump(self, state_file)
 
     @staticmethod
-    def deserialize(args, path):  # type: (EnvironmentConfig, str) -> HostState
+    def deserialize(args: EnvironmentConfig, path: str) -> HostState:
         """Deserialize host state from the given args and path."""
         with open_binary_file(path) as state_file:
             host_state = pickle.load(state_file)  # type: HostState
@@ -79,12 +79,12 @@ class HostState:
 
         return host_state
 
-    def get_controller_target_connections(self):  # type: () -> t.List[SshConnection]
+    def get_controller_target_connections(self) -> t.List[SshConnection]:
         """Return SSH connection(s) for accessing all target hosts from the controller."""
         return list(itertools.chain.from_iterable([target.get_controller_target_connections() for
                                                    target in self.target_profiles if isinstance(target, SshTargetHostProfile)]))
 
-    def targets(self, profile_type):  # type: (t.Type[THostProfile]) -> t.List[THostProfile]
+    def targets(self, profile_type: t.Type[THostProfile]) -> t.List[THostProfile]:
         """The list of target(s), verified to be of the specified type."""
         if not self.target_profiles:
             raise Exception('No target profiles found.')
@@ -123,7 +123,7 @@ def prepare_profiles(
 
         atexit.register(functools.partial(cleanup_profiles, host_state))
 
-        def provision(profile):  # type: (HostProfile) -> None
+        def provision(profile: HostProfile) -> None:
             """Provision the given profile."""
             profile.provision()
 
@@ -140,7 +140,7 @@ def prepare_profiles(
         if requirements:
             requirements(args, host_state)
 
-        def configure(profile):  # type: (HostProfile) -> None
+        def configure(profile: HostProfile) -> None:
             """Configure the given profile."""
             profile.wait()
 
@@ -152,7 +152,7 @@ def prepare_profiles(
     return host_state
 
 
-def check_controller_python(args, host_state):  # type: (EnvironmentConfig, HostState) -> None
+def check_controller_python(args: EnvironmentConfig, host_state: HostState) -> None:
     """Check the running environment to make sure it is what we expected."""
     sys_version = version_to_str(sys.version_info[:2])
     controller_python = host_state.controller_profile.python
@@ -168,7 +168,7 @@ def check_controller_python(args, host_state):  # type: (EnvironmentConfig, Host
     args.controller_python = controller_python
 
 
-def cleanup_profiles(host_state):  # type: (HostState) -> None
+def cleanup_profiles(host_state: HostState) -> None:
     """Cleanup provisioned hosts when exiting."""
     for profile in host_state.profiles:
         profile.deprovision()

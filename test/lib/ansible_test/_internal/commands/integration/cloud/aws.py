@@ -37,7 +37,7 @@ from . import (
 
 class AwsCloudProvider(CloudProvider):
     """AWS cloud provider plugin. Sets up cloud resources before delegation."""
-    def __init__(self, args):  # type: (IntegrationConfig) -> None
+    def __init__(self, args: IntegrationConfig) -> None:
         super().__init__(args)
 
         self.uses_config = True
@@ -51,7 +51,7 @@ class AwsCloudProvider(CloudProvider):
 
         super().filter(targets, exclude)
 
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super().setup()
 
@@ -63,7 +63,7 @@ class AwsCloudProvider(CloudProvider):
         if not self._use_static_config():
             self._setup_dynamic()
 
-    def _setup_dynamic(self):  # type: () -> None
+    def _setup_dynamic(self) -> None:
         """Request AWS credentials through the Ansible Core CI service."""
         display.info('Provisioning %s cloud environment.' % self.platform, verbosity=1)
 
@@ -90,14 +90,14 @@ class AwsCloudProvider(CloudProvider):
 
         self._write_config(config)
 
-    def _create_ansible_core_ci(self):  # type: () -> AnsibleCoreCI
+    def _create_ansible_core_ci(self) -> AnsibleCoreCI:
         """Return an AWS instance of AnsibleCoreCI."""
         return AnsibleCoreCI(self.args, CloudResource(platform='aws'))
 
 
 class AwsCloudEnvironment(CloudEnvironment):
     """AWS cloud environment plugin. Updates integration test environment after delegation."""
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         parser = configparser.ConfigParser()
         parser.read(self.config_path)
@@ -123,7 +123,7 @@ class AwsCloudEnvironment(CloudEnvironment):
             callback_plugins=['aws_resource_actions'],
         )
 
-    def on_failure(self, target, tries):  # type: (IntegrationTarget, int) -> None
+    def on_failure(self, target: IntegrationTarget, tries: int) -> None:
         """Callback to run when an integration target fails."""
         if not tries and self.managed:
             display.notice('If %s failed due to permissions, the IAM test policy may need to be updated. '

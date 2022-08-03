@@ -104,7 +104,7 @@ class CompositeAction(argparse.Action, metaclass=abc.ABCMeta):
         register_safe_action(type(self))
 
     @abc.abstractmethod
-    def create_parser(self):  # type: () -> NamespaceParser
+    def create_parser(self) -> NamespaceParser:
         """Return a namespace parser to parse the argument associated with this action."""
 
     def __call__(
@@ -163,7 +163,7 @@ class CompositeActionCompletionFinder(RegisteredCompletionFinder):
         return completions
 
 
-def detect_file_listing(value, mode):  # type: (str, ParserMode) -> bool
+def detect_file_listing(value: str, mode: ParserMode) -> bool:
     """
     Return True if Bash will show a file listing and redraw the prompt, otherwise return False.
 
@@ -198,7 +198,7 @@ def detect_file_listing(value, mode):  # type: (str, ParserMode) -> bool
     return listing
 
 
-def detect_false_file_completion(value, mode):  # type: (str, ParserMode) -> bool
+def detect_false_file_completion(value: str, mode: ParserMode) -> bool:
     """
     Return True if Bash will provide an incorrect file completion, otherwise return False.
 

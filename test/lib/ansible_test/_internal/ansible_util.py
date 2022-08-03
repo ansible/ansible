@@ -52,7 +52,7 @@ from .host_configs import (
 )
 
 
-def parse_inventory(args, inventory_path):  # type: (EnvironmentConfig, str) -> t.Dict[str, t.Any]
+def parse_inventory(args: EnvironmentConfig, inventory_path: str) -> t.Dict[str, t.Any]:
     """Return a dict parsed from the given inventory file."""
     cmd = ['ansible-inventory', '-i', inventory_path, '--list']
     env = ansible_environment(args)
@@ -69,7 +69,7 @@ def get_hosts(inventory, group_name):  # type: (t.Dict[str, t.Any], str) -> t.Di
     return hosts
 
 
-def ansible_environment(args, color=True, ansible_config=None):  # type: (CommonConfig, bool, t.Optional[str]) -> t.Dict[str, str]
+def ansible_environment(args: CommonConfig, color: bool = True, ansible_config: t.Optional[str] = None) -> t.Dict[str, str]:
     """Return a dictionary of environment variables to use when running Ansible commands."""
     env = common_environment()
     path = env['PATH']
@@ -138,7 +138,7 @@ def ansible_environment(args, color=True, ansible_config=None):  # type: (Common
     return env
 
 
-def configure_plugin_paths(args):  # type: (CommonConfig) -> t.Dict[str, str]
+def configure_plugin_paths(args: CommonConfig) -> t.Dict[str, str]:
     """Return environment variables with paths to plugins relevant for the current command."""
     if not isinstance(args, IntegrationConfig):
         return {}
@@ -192,7 +192,7 @@ def configure_plugin_paths(args):  # type: (CommonConfig) -> t.Dict[str, str]
     return env
 
 
-def get_ansible_python_path(args):  # type: (CommonConfig) -> str
+def get_ansible_python_path(args: CommonConfig) -> str:
     """
     Return a directory usable for PYTHONPATH, containing only the ansible package.
     If a temporary directory is required, it will be cached for the lifetime of the process and cleaned up at exit.
@@ -221,7 +221,7 @@ def get_ansible_python_path(args):  # type: (CommonConfig) -> str
     return python_path
 
 
-def generate_egg_info(path):  # type: (str) -> None
+def generate_egg_info(path: str) -> None:
     """Generate an egg-info in the specified base directory."""
     # minimal PKG-INFO stub following the format defined in PEP 241
     # required for older setuptools versions to avoid a traceback when importing pkg_resources from packages like cryptography
@@ -247,18 +247,18 @@ License: GPLv3+
 
 class CollectionDetail:
     """Collection detail."""
-    def __init__(self):  # type: () -> None
+    def __init__(self) -> None:
         self.version = None  # type: t.Optional[str]
 
 
 class CollectionDetailError(ApplicationError):
     """An error occurred retrieving collection detail."""
-    def __init__(self, reason):  # type: (str) -> None
+    def __init__(self, reason: str) -> None:
         super().__init__('Error collecting collection detail: %s' % reason)
         self.reason = reason
 
 
-def get_collection_detail(python):  # type: (PythonConfig) -> CollectionDetail
+def get_collection_detail(python: PythonConfig) -> CollectionDetail:
     """Return collection detail."""
     collection = data_context().content.collection
     directory = os.path.join(collection.root, collection.directory)

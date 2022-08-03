@@ -26,14 +26,14 @@ from . import (
 
 class CoverageAnalyzeTargetsExpandConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets expand` command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
         self.input_file = args.input_file  # type: str
         self.output_file = args.output_file  # type: str
 
 
-def command_coverage_analyze_targets_expand(args):  # type: (CoverageAnalyzeTargetsExpandConfig) -> None
+def command_coverage_analyze_targets_expand(args: CoverageAnalyzeTargetsExpandConfig) -> None:
     """Expand target names in an aggregated coverage file."""
     host_state = prepare_profiles(args)  # coverage analyze targets expand
 

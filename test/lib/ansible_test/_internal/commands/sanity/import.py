@@ -73,7 +73,7 @@ from ...venv import (
 )
 
 
-def _get_module_test(module_restrictions):  # type: (bool) -> t.Callable[[str], bool]
+def _get_module_test(module_restrictions: bool) -> t.Callable[[str], bool]:
     """Create a predicate which tests whether a path can be used by modules or not."""
     module_path = data_context().content.module_path
     module_utils_path = data_context().content.module_utils_path
@@ -84,7 +84,7 @@ def _get_module_test(module_restrictions):  # type: (bool) -> t.Callable[[str], 
 
 class ImportTest(SanityMultipleVersion):
     """Sanity test for proper import exception handling."""
-    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+    def filter_targets(self, targets: t.List[TestTarget]) -> t.List[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         if data_context().content.is_ansible:
             # all of ansible-core must pass the import test, not just plugins/modules
@@ -99,11 +99,11 @@ class ImportTest(SanityMultipleVersion):
                 any(is_subdir(target.path, path) for path in paths)]
 
     @property
-    def needs_pypi(self):  # type: () -> bool
+    def needs_pypi(self) -> bool:
         """True if the test requires PyPI, otherwise False."""
         return True
 
-    def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         settings = self.load_processor(args, python.version)
 
         paths = [target.path for target in targets.include]
@@ -208,7 +208,7 @@ class ImportTest(SanityMultipleVersion):
 
 
 @cache
-def get_ansible_test_python_path():  # type: () -> str
+def get_ansible_test_python_path() -> str:
     """
     Return a directory usable for PYTHONPATH, containing only the ansible-test collection loader.
     The temporary directory created will be cached for the lifetime of the process and cleaned up at exit.

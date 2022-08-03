@@ -16,7 +16,7 @@ from . import (
 
 class OpenNebulaCloudProvider(CloudProvider):
     """Checks if a configuration file has been passed or fixtures are going to be used for testing"""
-    def setup(self):  # type: () -> None
+    def setup(self) -> None:
         """Setup the cloud resource before delegation and register a cleanup callback."""
         super().setup()
 
@@ -25,7 +25,7 @@ class OpenNebulaCloudProvider(CloudProvider):
 
         self.uses_config = True
 
-    def _setup_dynamic(self):  # type: () -> None
+    def _setup_dynamic(self) -> None:
         display.info('No config file provided, will run test from fixtures')
 
         config = self._read_config_template()
@@ -42,7 +42,7 @@ class OpenNebulaCloudProvider(CloudProvider):
 
 class OpenNebulaCloudEnvironment(CloudEnvironment):
     """Updates integration test environment after delegation. Will setup the config file as parameter."""
-    def get_environment_config(self):  # type: () -> CloudEnvironmentConfig
+    def get_environment_config(self) -> CloudEnvironmentConfig:
         """Return environment configuration for use in the test environment after delegation."""
         parser = configparser.ConfigParser()
         parser.read(self.config_path)

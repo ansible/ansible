@@ -29,7 +29,7 @@ VIRTUAL_PACKAGES = {
 }
 
 
-def get_python_module_utils_imports(compile_targets):  # type: (t.List[TestTarget]) -> t.Dict[str, t.Set[str]]
+def get_python_module_utils_imports(compile_targets: t.List[TestTarget]) -> t.Dict[str, t.Set[str]]:
     """Return a dictionary of module_utils names mapped to sets of python file paths."""
     module_utils = enumerate_module_utils()
 
@@ -41,7 +41,7 @@ def get_python_module_utils_imports(compile_targets):  # type: (t.List[TestTarge
     for target in compile_targets:
         imports_by_target_path[target.path] = extract_python_module_utils_imports(target.path, module_utils)
 
-    def recurse_import(import_name, depth=0, seen=None):  # type: (str, int, t.Optional[t.Set[str]]) -> t.Set[str]
+    def recurse_import(import_name: str, depth: int = 0, seen: t.Optional[t.Set[str]] = None) -> t.Set[str]:
         """Recursively expand module_utils imports from module_utils files."""
         display.info('module_utils import: %s%s' % ('  ' * depth, import_name), verbosity=4)
 
@@ -126,7 +126,7 @@ def get_python_module_utils_imports(compile_targets):  # type: (t.List[TestTarge
     return imports
 
 
-def get_python_module_utils_name(path):  # type: (str) -> str
+def get_python_module_utils_name(path: str) -> str:
     """Return a namespace and name from the given module_utils path."""
     base_path = data_context().content.module_utils_path
 
@@ -163,7 +163,7 @@ def enumerate_module_utils():
     return set(module_utils)
 
 
-def extract_python_module_utils_imports(path, module_utils):  # type: (str, t.Set[str]) -> t.Set[str]
+def extract_python_module_utils_imports(path: str, module_utils: t.Set[str]) -> t.Set[str]:
     """Return a list of module_utils imports found in the specified source file."""
     # Python code must be read as bytes to avoid a SyntaxError when the source uses comments to declare the file encoding.
     # See: https://www.python.org/dev/peps/pep-0263
@@ -183,7 +183,7 @@ def extract_python_module_utils_imports(path, module_utils):  # type: (str, t.Se
     return finder.imports
 
 
-def get_import_path(name, package=False):  # type: (str, bool) -> str
+def get_import_path(name: str, package: bool = False) -> str:
     """Return a path from an import name."""
     if package:
         filename = os.path.join(name.replace('.', '/'), '__init__.py')
@@ -202,7 +202,7 @@ def get_import_path(name, package=False):  # type: (str, bool) -> str
     return path
 
 
-def path_to_module(path):  # type: (str) -> str
+def path_to_module(path: str) -> str:
     """Convert the given path to a module name."""
     module = os.path.splitext(path)[0].replace(os.path.sep, '.')
 
@@ -212,7 +212,7 @@ def path_to_module(path):  # type: (str) -> str
     return module
 
 
-def relative_to_absolute(name, level, module, path, lineno):  # type: (str, int, str, str, int) -> str
+def relative_to_absolute(name: str, level: int, module: str, path: str, lineno: int) -> str:
     """Convert a relative import to an absolute import."""
     if level <= 0:
         absolute_name = name
@@ -233,7 +233,7 @@ def relative_to_absolute(name, level, module, path, lineno):  # type: (str, int,
 
 class ModuleUtilFinder(ast.NodeVisitor):
     """AST visitor to find valid module_utils imports."""
-    def __init__(self, path, module_utils):  # type: (str, t.Set[str]) -> None
+    def __init__(self, path: str, module_utils: t.Set[str]) -> None:
         self.path = path
         self.module_utils = module_utils
         self.imports = set()  # type: t.Set[str]
@@ -277,7 +277,7 @@ class ModuleUtilFinder(ast.NodeVisitor):
             self.module = path_to_module(os.path.join(data_context().content.collection.directory, self.path))
 
     # pylint: disable=locally-disabled, invalid-name
-    def visit_Import(self, node):  # type: (ast.Import) -> None
+    def visit_Import(self, node: ast.Import) -> None:
         """Visit an import node."""
         self.generic_visit(node)
 
@@ -286,7 +286,7 @@ class ModuleUtilFinder(ast.NodeVisitor):
         self.add_imports([alias.name for alias in node.names], node.lineno)
 
     # pylint: disable=locally-disabled, invalid-name
-    def visit_ImportFrom(self, node):  # type: (ast.ImportFrom) -> None
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
         """Visit an import from node."""
         self.generic_visit(node)
 
@@ -304,7 +304,7 @@ class ModuleUtilFinder(ast.NodeVisitor):
         # from ansible_collections.{ns}.{col}.plugins.module_utils.MODULE[.MODULE] import MODULE[, MODULE]
         self.add_imports(['%s.%s' % (module, alias.name) for alias in node.names], node.lineno)
 
-    def add_import(self, name, line_number):  # type: (str, int) -> None
+    def add_import(self, name: str, line_number: int) -> None:
         """Record the specified import."""
         import_name = name
 
@@ -325,14 +325,14 @@ class ModuleUtilFinder(ast.NodeVisitor):
         # This error should be detected by unit or integration tests.
         display.warning('%s:%d Invalid module_utils import: %s' % (self.path, line_number, import_name))
 
-    def add_imports(self, names, line_no):  # type: (t.List[str], int) -> None
+    def add_imports(self, names: t.List[str], line_no: int) -> None:
         """Add the given import names if they are module_utils imports."""
         for name in names:
             if self.is_module_util_name(name):
                 self.add_import(name, line_no)
 
     @staticmethod
-    def is_module_util_name(name):  # type: (str) -> bool
+    def is_module_util_name(name: str) -> bool:
         """Return True if the given name is a module_util name for the content under test. External module_utils are ignored."""
         if data_context().content.is_ansible and name.startswith('ansible.module_utils.'):
             return True

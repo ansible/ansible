@@ -42,16 +42,16 @@ class BinSymlinksTest(SanityVersionNeutral):
     ansible_only = True
 
     @property
-    def can_ignore(self):  # type: () -> bool
+    def can_ignore(self) -> bool:
         """True if the test supports ignore entries."""
         return False
 
     @property
-    def no_targets(self):  # type: () -> bool
+    def no_targets(self) -> bool:
         """True if the test does not use test targets. Mutually exclusive with all_targets."""
         return True
 
-    def test(self, args, targets):  # type: (SanityConfig, SanityTargets) -> TestResult
+    def test(self, args: SanityConfig, targets: SanityTargets) -> TestResult:
         bin_root = ANSIBLE_BIN_PATH
         bin_names = os.listdir(bin_root)
         bin_paths = sorted(os.path.join(bin_root, path) for path in bin_names)

@@ -45,13 +45,13 @@ class SshConnectionDetail:
 
 class SshProcess:
     """Wrapper around an SSH process."""
-    def __init__(self, process):  # type: (t.Optional[subprocess.Popen]) -> None
+    def __init__(self, process: t.Optional[subprocess.Popen]) -> None:
         self._process = process
         self.pending_forwards = None  # type: t.Optional[t.List[t.Tuple[str, int]]]
 
         self.forwards = {}  # type: t.Dict[t.Tuple[str, int], int]
 
-    def terminate(self):  # type: () -> None
+    def terminate(self) -> None:
         """Terminate the SSH process."""
         if not self._process:
             return  # explain mode
@@ -62,7 +62,7 @@ class SshProcess:
         except Exception:  # pylint: disable=broad-except
             pass
 
-    def wait(self):  # type: () -> None
+    def wait(self) -> None:
         """Wait for the SSH process to terminate."""
         if not self._process:
             return  # explain mode
@@ -232,7 +232,7 @@ def create_ssh_port_redirects(
     return process
 
 
-def generate_ssh_inventory(ssh_connections):  # type: (t.List[SshConnectionDetail]) -> str
+def generate_ssh_inventory(ssh_connections: t.List[SshConnectionDetail]) -> str:
     """Return an inventory file in JSON format, created from the provided SSH connection details."""
     inventory = dict(
         all=dict(

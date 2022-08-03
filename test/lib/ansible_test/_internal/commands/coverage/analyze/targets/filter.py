@@ -29,7 +29,7 @@ from . import (
 
 class CoverageAnalyzeTargetsFilterConfig(CoverageAnalyzeTargetsConfig):
     """Configuration for the `coverage analyze targets filter` command."""
-    def __init__(self, args):  # type: (t.Any) -> None
+    def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
         self.input_file = args.input_file  # type: str
@@ -40,7 +40,7 @@ class CoverageAnalyzeTargetsFilterConfig(CoverageAnalyzeTargetsConfig):
         self.exclude_path = args.exclude_path  # type: t.Optional[str]
 
 
-def command_coverage_analyze_targets_filter(args):  # type: (CoverageAnalyzeTargetsFilterConfig) -> None
+def command_coverage_analyze_targets_filter(args: CoverageAnalyzeTargetsFilterConfig) -> None:
     """Filter target names in an aggregated coverage file."""
     host_state = prepare_profiles(args)  # coverage analyze targets filter
 

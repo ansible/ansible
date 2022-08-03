@@ -31,7 +31,7 @@ class CoverageAnalyzeTargetsConfig(CoverageAnalyzeConfig):
     """Configuration for the `coverage analyze targets` command."""
 
 
-def make_report(target_indexes, arcs, lines):  # type: (TargetIndexes, Arcs, Lines) -> t.Dict[str, t.Any]
+def make_report(target_indexes: TargetIndexes, arcs: Arcs, lines: Lines) -> t.Dict[str, t.Any]:
     """Condense target indexes, arcs and lines into a compact report."""
     set_indexes = {}  # type: TargetSetIndexes
     arc_refs = dict((path, dict((format_arc(arc), get_target_set_index(indexes, set_indexes)) for arc, indexes in data.items())) for path, data in arcs.items())
@@ -65,7 +65,7 @@ def load_report(report):  # type: (t.Dict[str, t.Any]) -> t.Tuple[t.List[str], A
     return target_indexes, arcs, lines
 
 
-def read_report(path):  # type: (str) -> t.Tuple[t.List[str], Arcs, Lines]
+def read_report(path: str) -> t.Tuple[t.List[str], Arcs, Lines]:
     """Read a JSON report from disk."""
     try:
         report = read_json_file(path)
@@ -90,7 +90,7 @@ def write_report(args, report, path):  # type: (CoverageAnalyzeTargetsConfig, t.
     ), verbosity=1)
 
 
-def format_line(value):  # type: (int) -> str
+def format_line(value: int) -> str:
     """Format line as a string."""
     return str(value)  # putting this in a function keeps both pylint and mypy happy
 
@@ -100,18 +100,18 @@ def format_arc(value):  # type: (t.Tuple[int, int]) -> str
     return '%d:%d' % value
 
 
-def parse_arc(value):  # type: (str) -> t.Tuple[int, int]
+def parse_arc(value: str) -> t.Tuple[int, int]:
     """Parse an arc string into a tuple."""
     first, last = tuple(map(int, value.split(':')))
     return first, last
 
 
-def get_target_set_index(data, target_set_indexes):  # type: (t.Set[int], TargetSetIndexes) -> int
+def get_target_set_index(data: t.Set[int], target_set_indexes: TargetSetIndexes) -> int:
     """Find or add the target set in the result set and return the target set index."""
     return target_set_indexes.setdefault(frozenset(data), len(target_set_indexes))
 
 
-def get_target_index(name, target_indexes):  # type: (str, TargetIndexes) -> int
+def get_target_index(name: str, target_indexes: TargetIndexes) -> int:
     """Find or add the target in the result set and return the target index."""
     return target_indexes.setdefault(name, len(target_indexes))
 
@@ -136,7 +136,7 @@ def expand_indexes(
     return combined_data
 
 
-def generate_indexes(target_indexes, data):  # type: (TargetIndexes, NamedPoints) -> IndexedPoints
+def generate_indexes(target_indexes: TargetIndexes, data: NamedPoints) -> IndexedPoints:
     """Return an indexed version of the given data (arcs or points)."""
     results = {}  # type: IndexedPoints
 

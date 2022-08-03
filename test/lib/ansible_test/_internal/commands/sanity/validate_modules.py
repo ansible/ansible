@@ -78,11 +78,11 @@ class ValidateModulesTest(SanitySingleVersion):
             self._exclusions.add('lib/ansible/plugins/cache/base.py')
 
     @property
-    def error_code(self):  # type: () -> t.Optional[str]
+    def error_code(self) -> t.Optional[str]:
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'A100'
 
-    def get_plugin_type(self, target):  # type: (TestTarget) -> t.Optional[str]
+    def get_plugin_type(self, target: TestTarget) -> t.Optional[str]:
         """Return the plugin type of the given target, or None if it is not a plugin or module."""
         if target.path.endswith('/__init__.py'):
             return None
@@ -96,11 +96,11 @@ class ValidateModulesTest(SanitySingleVersion):
 
         return None
 
-    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+    def filter_targets(self, targets: t.List[TestTarget]) -> t.List[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if self.get_plugin_type(target) is not None]
 
-    def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         env = ansible_environment(args, color=False)
 
         settings = self.load_processor(args)

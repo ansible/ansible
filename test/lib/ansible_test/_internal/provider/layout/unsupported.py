@@ -14,11 +14,11 @@ class UnsupportedLayout(LayoutProvider):
     sequence = 0  # disable automatic detection
 
     @staticmethod
-    def is_content_root(path):  # type: (str) -> bool
+    def is_content_root(path: str) -> bool:
         """Return True if the given path is a content root for this provider."""
         return False
 
-    def create(self, root, paths):  # type: (str, t.List[str]) -> ContentLayout
+    def create(self, root: str, paths: t.List[str]) -> ContentLayout:
         """Create a Layout using the given root and paths."""
         plugin_paths = dict((p, p) for p in self.PLUGIN_TYPES)
 

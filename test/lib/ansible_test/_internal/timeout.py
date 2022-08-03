@@ -35,7 +35,7 @@ from .test import (
 )
 
 
-def get_timeout():  # type: () -> t.Optional[t.Dict[str, t.Any]]
+def get_timeout() -> t.Optional[t.Dict[str, t.Any]]:
     """Return details about the currently set timeout, if any, otherwise return None."""
     if not os.path.exists(TIMEOUT_PATH):
         return None
@@ -46,13 +46,13 @@ def get_timeout():  # type: () -> t.Optional[t.Dict[str, t.Any]]
     return data
 
 
-def configure_timeout(args):  # type: (CommonConfig) -> None
+def configure_timeout(args: CommonConfig) -> None:
     """Configure the timeout."""
     if isinstance(args, TestConfig):
         configure_test_timeout(args)  # only tests are subject to the timeout
 
 
-def configure_test_timeout(args):  # type: (TestConfig) -> None
+def configure_test_timeout(args: TestConfig) -> None:
     """Configure the test timeout."""
     timeout = get_timeout()
 
@@ -81,7 +81,7 @@ def configure_test_timeout(args):  # type: (TestConfig) -> None
 
         raise ApplicationError('Tests aborted after exceeding the %d minute time limit.' % timeout_duration)
 
-    def timeout_waiter(timeout_seconds):  # type: (int) -> None
+    def timeout_waiter(timeout_seconds: int) -> None:
         """Background thread which will kill the current process if the timeout elapses."""
         time.sleep(timeout_seconds)
         os.kill(os.getpid(), signal.SIGUSR1)

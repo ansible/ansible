@@ -26,7 +26,7 @@ class Metadata:
         self.change_description = None  # type: t.Optional[ChangeDescription]
         self.ci_provider = None  # type: t.Optional[str]
 
-    def populate_changes(self, diff):  # type: (t.Optional[t.List[str]]) -> None
+    def populate_changes(self, diff: t.Optional[t.List[str]]) -> None:
         """Populate the changeset using the given diff."""
         patches = parse_diff(diff)
         patches = sorted(patches, key=lambda k: k.new.path)  # type: t.List[FileDiff]
@@ -45,7 +45,7 @@ class Metadata:
             # failed tests involving deleted files should be using line 0 since there is no content remaining
             self.changes[path] = ((0, 0),)
 
-    def to_dict(self):  # type: () -> t.Dict[str, t.Any]
+    def to_dict(self) -> t.Dict[str, t.Any]:
         """Return a dictionary representation of the metadata."""
         return dict(
             changes=self.changes,
@@ -54,7 +54,7 @@ class Metadata:
             change_description=self.change_description.to_dict(),
         )
 
-    def to_file(self, path):  # type: (str) -> None
+    def to_file(self, path: str) -> None:
         """Write the metadata to the specified file."""
         data = self.to_dict()
 
@@ -63,7 +63,7 @@ class Metadata:
         write_json_file(path, data)
 
     @staticmethod
-    def from_file(path):  # type: (str) -> Metadata
+    def from_file(path: str) -> Metadata:
         """Return metadata loaded from the specified file."""
         data = read_json_file(path)
         return Metadata.from_dict(data)
@@ -91,16 +91,16 @@ class ChangeDescription:
         self.no_integration_paths = []  # type: t.List[str]
 
     @property
-    def targets(self):  # type: () -> t.Optional[t.List[str]]
+    def targets(self) -> t.Optional[t.List[str]]:
         """Optional list of target names."""
         return self.regular_command_targets.get(self.command)
 
     @property
-    def focused_targets(self):  # type: () -> t.Optional[t.List[str]]
+    def focused_targets(self) -> t.Optional[t.List[str]]:
         """Optional list of focused target names."""
         return self.focused_command_targets.get(self.command)
 
-    def to_dict(self):  # type: () -> t.Dict[str, t.Any]
+    def to_dict(self) -> t.Dict[str, t.Any]:
         """Return a dictionary representation of the change description."""
         return dict(
             command=self.command,

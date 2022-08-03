@@ -53,13 +53,13 @@ from .base_argument_parsers import (
 
 class OriginControllerParser(ControllerNamespaceParser, TypeParser):
     """Composite argument parser for the controller when delegation is not supported."""
-    def get_stateless_parsers(self):  # type: () -> t.Dict[str, Parser]
+    def get_stateless_parsers(self) -> t.Dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         return dict(
             origin=OriginParser(),
         )
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         section = '--controller options:'
 
@@ -71,7 +71,7 @@ class OriginControllerParser(ControllerNamespaceParser, TypeParser):
 
 class DelegatedControllerParser(ControllerNamespaceParser, TypeParser):
     """Composite argument parser for the controller when delegation is supported."""
-    def get_stateless_parsers(self):  # type: () -> t.Dict[str, Parser]
+    def get_stateless_parsers(self) -> t.Dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         parsers: t.Dict[str, Parser] = dict(
             origin=OriginParser(),
@@ -85,7 +85,7 @@ class DelegatedControllerParser(ControllerNamespaceParser, TypeParser):
 
         return parsers
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         section = '--controller options:'
 
@@ -97,7 +97,7 @@ class DelegatedControllerParser(ControllerNamespaceParser, TypeParser):
 
 class PosixTargetParser(TargetNamespaceParser, TypeParser):
     """Composite argument parser for a POSIX target."""
-    def get_stateless_parsers(self):  # type: () -> t.Dict[str, Parser]
+    def get_stateless_parsers(self) -> t.Dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         parsers: t.Dict[str, Parser] = dict(
             controller=ControllerParser(),
@@ -115,7 +115,7 @@ class PosixTargetParser(TargetNamespaceParser, TypeParser):
 
         return parsers
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         section = f'{self.option_name} options (choose one):'
 
@@ -128,19 +128,19 @@ class PosixTargetParser(TargetNamespaceParser, TypeParser):
 class WindowsTargetParser(TargetsNamespaceParser, TypeParser):
     """Composite argument parser for a Windows target."""
     @property
-    def allow_inventory(self):  # type: () -> bool
+    def allow_inventory(self) -> bool:
         """True if inventory is allowed, otherwise False."""
         return True
 
-    def get_parsers(self, state):  # type: (ParserState) -> t.Dict[str, Parser]
+    def get_parsers(self, state: ParserState) -> t.Dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         return self.get_internal_parsers(state.root_namespace.targets)
 
-    def get_stateless_parsers(self):  # type: () -> t.Dict[str, Parser]
+    def get_stateless_parsers(self) -> t.Dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         return self.get_internal_parsers([])
 
-    def get_internal_parsers(self, targets):  # type: (t.List[WindowsConfig]) -> t.Dict[str, Parser]
+    def get_internal_parsers(self, targets: t.List[WindowsConfig]) -> t.Dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         parsers = {}  # type: t.Dict[str, Parser]
 
@@ -157,7 +157,7 @@ class WindowsTargetParser(TargetsNamespaceParser, TypeParser):
 
         return parsers
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         section = f'{self.option_name} options (choose one):'
 
@@ -170,19 +170,19 @@ class WindowsTargetParser(TargetsNamespaceParser, TypeParser):
 class NetworkTargetParser(TargetsNamespaceParser, TypeParser):
     """Composite argument parser for a network target."""
     @property
-    def allow_inventory(self):  # type: () -> bool
+    def allow_inventory(self) -> bool:
         """True if inventory is allowed, otherwise False."""
         return True
 
-    def get_parsers(self, state):  # type: (ParserState) -> t.Dict[str, Parser]
+    def get_parsers(self, state: ParserState) -> t.Dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         return self.get_internal_parsers(state.root_namespace.targets)
 
-    def get_stateless_parsers(self):  # type: () -> t.Dict[str, Parser]
+    def get_stateless_parsers(self) -> t.Dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         return self.get_internal_parsers([])
 
-    def get_internal_parsers(self, targets):  # type: (t.List[NetworkConfig]) -> t.Dict[str, Parser]
+    def get_internal_parsers(self, targets: t.List[NetworkConfig]) -> t.Dict[str, Parser]:
         """Return a dictionary of type names and type parsers."""
         parsers = {}  # type: t.Dict[str, Parser]
 
@@ -199,7 +199,7 @@ class NetworkTargetParser(TargetsNamespaceParser, TypeParser):
 
         return parsers
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         section = f'{self.option_name} options (choose one):'
 
@@ -211,17 +211,17 @@ class NetworkTargetParser(TargetsNamespaceParser, TypeParser):
 
 class PythonTargetParser(TargetsNamespaceParser, Parser):
     """Composite argument parser for a Python target."""
-    def __init__(self, allow_venv):  # type: (bool) -> None
+    def __init__(self, allow_venv: bool) -> None:
         super().__init__()
 
         self.allow_venv = allow_venv
 
     @property
-    def option_name(self):  # type: () -> str
+    def option_name(self) -> str:
         """The option name used for this parser."""
         return '--target-python'
 
-    def get_value(self, state):  # type: (ParserState) -> t.Any
+    def get_value(self, state: ParserState) -> t.Any:
         """Parse the input from the given state and return the result, without storing the result in the namespace."""
         versions = list(SUPPORTED_PYTHON_VERSIONS)
 
@@ -235,7 +235,7 @@ class PythonTargetParser(TargetsNamespaceParser, Parser):
 
         return value
 
-    def document(self, state):  # type: (DocumentationState) -> t.Optional[str]
+    def document(self, state: DocumentationState) -> t.Optional[str]:
         """Generate and return documentation for this parser."""
         section = f'{self.option_name} options (choose one):'
 
@@ -249,20 +249,20 @@ class PythonTargetParser(TargetsNamespaceParser, Parser):
 
 class SanityPythonTargetParser(PythonTargetParser):
     """Composite argument parser for a sanity Python target."""
-    def __init__(self):  # type: () -> None
+    def __init__(self) -> None:
         super().__init__(allow_venv=False)
 
 
 class UnitsPythonTargetParser(PythonTargetParser):
     """Composite argument parser for a units Python target."""
-    def __init__(self):  # type: () -> None
+    def __init__(self) -> None:
         super().__init__(allow_venv=True)
 
 
 class PosixSshTargetParser(PosixTargetParser):
     """Composite argument parser for a POSIX SSH target."""
     @property
-    def option_name(self):  # type: () -> str
+    def option_name(self) -> str:
         """The option name used for this parser."""
         return '--target-posix'
 
@@ -270,17 +270,17 @@ class PosixSshTargetParser(PosixTargetParser):
 class WindowsSshTargetParser(WindowsTargetParser):
     """Composite argument parser for a Windows SSH target."""
     @property
-    def option_name(self):  # type: () -> str
+    def option_name(self) -> str:
         """The option name used for this parser."""
         return '--target-windows'
 
     @property
-    def allow_inventory(self):  # type: () -> bool
+    def allow_inventory(self) -> bool:
         """True if inventory is allowed, otherwise False."""
         return False
 
     @property
-    def limit_one(self):  # type: () -> bool
+    def limit_one(self) -> bool:
         """True if only one target is allowed, otherwise False."""
         return True
 
@@ -288,16 +288,16 @@ class WindowsSshTargetParser(WindowsTargetParser):
 class NetworkSshTargetParser(NetworkTargetParser):
     """Composite argument parser for a network SSH target."""
     @property
-    def option_name(self):  # type: () -> str
+    def option_name(self) -> str:
         """The option name used for this parser."""
         return '--target-network'
 
     @property
-    def allow_inventory(self):  # type: () -> bool
+    def allow_inventory(self) -> bool:
         """True if inventory is allowed, otherwise False."""
         return False
 
     @property
-    def limit_one(self):  # type: () -> bool
+    def limit_one(self) -> bool:
         """True if only one target is allowed, otherwise False."""
         return True

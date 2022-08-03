@@ -67,23 +67,23 @@ class MypyTest(SanityMultipleVersion):
         'lib/ansible/module_utils/compat/_selectors2.py',
     )
 
-    def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
+    def filter_targets(self, targets: t.List[TestTarget]) -> t.List[TestTarget]:
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         return [target for target in targets if os.path.splitext(target.path)[1] == '.py' and target.path not in self.vendored_paths and (
                 target.path.startswith('lib/ansible/') or target.path.startswith('test/lib/ansible_test/_internal/')
                 or target.path.startswith('test/lib/ansible_test/_util/target/sanity/import/'))]
 
     @property
-    def error_code(self):  # type: () -> t.Optional[str]
+    def error_code(self) -> t.Optional[str]:
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
         return 'ansible-test'
 
     @property
-    def needs_pypi(self):  # type: () -> bool
+    def needs_pypi(self) -> bool:
         """True if the test requires PyPI, otherwise False."""
         return True
 
-    def test(self, args, targets, python):  # type: (SanityConfig, SanityTargets, PythonConfig) -> TestResult
+    def test(self, args: SanityConfig, targets: SanityTargets, python: PythonConfig) -> TestResult:
         if sys.version_info >= (3, 11):
             display.warning(f'Skipping sanity test "{self.name}" which can test Python {args.controller_python.version}, but cannot run under that version.')
             return SanitySkipped(self.name, python.version)

@@ -235,7 +235,7 @@ def filter_args(args, filters):  # type: (t.List[str], t.Dict[str, int]) -> t.Li
     return result
 
 
-def read_lines_without_comments(path, remove_blank_lines=False, optional=False):  # type: (str, bool, bool) -> t.List[str]
+def read_lines_without_comments(path: str, remove_blank_lines: bool = False, optional: bool = False) -> t.List[str]:
     """
     Returns lines from the specified text file with comments removed.
     Comments are any content from a hash symbol to the end of a line.
@@ -309,7 +309,7 @@ def find_executable(executable, cwd=None, path=None, required=True):  # type: (s
     return match
 
 
-def find_python(version, path=None, required=True):  # type: (str, t.Optional[str], bool) -> t.Optional[str]
+def find_python(version: str, path: t.Optional[str] = None, required: bool = True) -> t.Optional[str]:
     """
     Find and return the full path to the specified Python version.
     If required, an exception will be raised not found.
@@ -326,7 +326,7 @@ def find_python(version, path=None, required=True):  # type: (str, t.Optional[st
 
 
 @cache
-def get_ansible_version():  # type: () -> str
+def get_ansible_version() -> str:
     """Return the Ansible version."""
     # ansible may not be in our sys.path
     # avoids a symlink to release.py since ansible placement relative to ansible-test may change during delegation
@@ -339,7 +339,7 @@ def get_ansible_version():  # type: () -> str
 
 
 @cache
-def get_available_python_versions():  # type: () -> t.Dict[str, str]
+def get_available_python_versions() -> t.Dict[str, str]:
     """Return a dictionary indicating which supported Python versions are available."""
     return dict((version, path) for version, path in ((version, find_python(version, required=False)) for version in SUPPORTED_PYTHON_VERSIONS) if path)
 
@@ -665,7 +665,7 @@ def report_locale() -> None:
         display.warning(LOCALE_WARNING)
 
 
-def pass_vars(required, optional):  # type: (t.Collection[str], t.Collection[str]) -> t.Dict[str, str]
+def pass_vars(required: t.Collection[str], optional: t.Collection[str]) -> t.Dict[str, str]:
     """Return a filtered dictionary of environment variables based on the current environment."""
     env = {}
 
@@ -682,7 +682,7 @@ def pass_vars(required, optional):  # type: (t.Collection[str], t.Collection[str
     return env
 
 
-def remove_tree(path):  # type: (str) -> None
+def remove_tree(path: str) -> None:
     """Remove the specified directory, siliently continuing if the directory does not exist."""
     try:
         shutil.rmtree(to_bytes(path))
@@ -691,7 +691,7 @@ def remove_tree(path):  # type: (str) -> None
             raise
 
 
-def is_binary_file(path):  # type: (str) -> bool
+def is_binary_file(path: str) -> bool:
     """Return True if the specified file is a binary file, otherwise return False."""
     assume_text = {
         '.cfg',
@@ -747,12 +747,12 @@ def is_binary_file(path):  # type: (str) -> bool
         return b'\0' in path_fd.read(4096)
 
 
-def generate_name(length=8):  # type: (int) -> str
+def generate_name(length: int = 8) -> str:
     """Generate and return a random name."""
     return ''.join(random.choice(string.ascii_letters + string.digits) for _idx in range(length))
 
 
-def generate_password():  # type: () -> str
+def generate_password() -> str:
     """Generate and return random password."""
     chars = [
         string.ascii_letters,
@@ -801,11 +801,11 @@ class Display:
         if os.isatty(0):
             self.rows, self.columns = unpack('HHHH', fcntl.ioctl(0, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[:2]
 
-    def __warning(self, message):  # type: (str) -> None
+    def __warning(self, message: str) -> None:
         """Internal implementation for displaying a warning message."""
         self.print_message('WARNING: %s' % message, color=self.purple)
 
-    def review_warnings(self):  # type: () -> None
+    def review_warnings(self) -> None:
         """Review all warnings which previously occurred."""
         if not self.warnings:
             return
@@ -815,7 +815,7 @@ class Display:
         for warning in self.warnings:
             self.__warning(warning)
 
-    def warning(self, message, unique=False, verbosity=0):  # type: (str, bool, int) -> None
+    def warning(self, message: str, unique: bool = False, verbosity: int = 0) -> None:
         """Display a warning level message."""
         if verbosity > self.verbosity:
             return
@@ -829,19 +829,19 @@ class Display:
         self.__warning(message)
         self.warnings.append(message)
 
-    def notice(self, message):  # type: (str) -> None
+    def notice(self, message: str) -> None:
         """Display a notice level message."""
         self.print_message('NOTICE: %s' % message, color=self.purple)
 
-    def error(self, message):  # type: (str) -> None
+    def error(self, message: str) -> None:
         """Display an error level message."""
         self.print_message('ERROR: %s' % message, color=self.red)
 
-    def fatal(self, message):  # type: (str) -> None
+    def fatal(self, message: str) -> None:
         """Display a fatal level message."""
         self.print_message('FATAL: %s' % message, color=self.red, stderr=True)
 
-    def info(self, message, verbosity=0, truncate=False):  # type: (str, int, bool) -> None
+    def info(self, message: str, verbosity: int = 0, truncate: bool = False) -> None:
         """Display an info level message."""
         if self.verbosity >= verbosity:
             color = self.verbosity_colors.get(verbosity, self.yellow)
@@ -929,7 +929,7 @@ class SubprocessError(ApplicationError):
 
 class MissingEnvironmentVariable(ApplicationError):
     """Error caused by missing environment variable."""
-    def __init__(self, name):  # type: (str) -> None
+    def __init__(self, name: str) -> None:
         super().__init__('Missing environment variable: %s' % name)
 
         self.name = name
@@ -949,7 +949,7 @@ def retry(func, ex_type=SubprocessError, sleep=10, attempts=10, warn=True):
     return func()
 
 
-def parse_to_list_of_dict(pattern, value):  # type: (str, str) -> t.List[t.Dict[str, str]]
+def parse_to_list_of_dict(pattern: str, value: str) -> t.List[t.Dict[str, str]]:
     """Parse lines from the given value using the specified pattern and return the extracted list of key/value pair dictionaries."""
     matched = []
     unmatched = []
@@ -968,7 +968,7 @@ def parse_to_list_of_dict(pattern, value):  # type: (str, str) -> t.List[t.Dict[
     return matched
 
 
-def get_subclasses(class_type):  # type: (t.Type[C]) -> t.List[t.Type[C]]
+def get_subclasses(class_type: t.Type[C]) -> t.List[t.Type[C]]:
     """Returns a list of types that are concrete subclasses of the given type."""
     subclasses = set()  # type: t.Set[t.Type[C]]
     queue = [class_type]  # type: t.List[t.Type[C]]
@@ -985,7 +985,7 @@ def get_subclasses(class_type):  # type: (t.Type[C]) -> t.List[t.Type[C]]
     return sorted(subclasses, key=lambda sc: sc.__name__)
 
 
-def is_subdir(candidate_path, path):  # type: (str, str) -> bool
+def is_subdir(candidate_path: str, path: str) -> bool:
     """Returns true if candidate_path is path or a subdirectory of path."""
     if not path.endswith(os.path.sep):
         path += os.path.sep
@@ -996,7 +996,7 @@ def is_subdir(candidate_path, path):  # type: (str, str) -> bool
     return candidate_path.startswith(path)
 
 
-def paths_to_dirs(paths):  # type: (t.List[str]) -> t.List[str]
+def paths_to_dirs(paths: t.List[str]) -> t.List[str]:
     """Returns a list of directories extracted from the given list of paths."""
     dir_names = set()
 
@@ -1012,7 +1012,7 @@ def paths_to_dirs(paths):  # type: (t.List[str]) -> t.List[str]
     return sorted(dir_names)
 
 
-def str_to_version(version):  # type: (str) -> t.Tuple[int, ...]
+def str_to_version(version: str) -> t.Tuple[int, ...]:
     """Return a version tuple from a version string."""
     return tuple(int(n) for n in version.split('.'))
 
@@ -1022,12 +1022,12 @@ def version_to_str(version):  # type: (t.Tuple[int, ...]) -> str
     return '.'.join(str(n) for n in version)
 
 
-def sorted_versions(versions):  # type: (t.List[str]) -> t.List[str]
+def sorted_versions(versions: t.List[str]) -> t.List[str]:
     """Return a sorted copy of the given list of versions."""
     return [version_to_str(version) for version in sorted(str_to_version(version) for version in versions)]
 
 
-def import_plugins(directory, root=None):  # type: (str, t.Optional[str]) -> None
+def import_plugins(directory: str, root: t.Optional[str] = None) -> None:
     """
     Import plugins from the given directory relative to the given root.
     If the root is not provided, the 'lib' directory for the test runner will be used.
@@ -1055,7 +1055,7 @@ def load_plugins(base_type, database):  # type: (t.Type[C], t.Dict[str, t.Type[C
         database[plugin] = plugins[plugin]
 
 
-def load_module(path, name):  # type: (str, str) -> None
+def load_module(path: str, name: str) -> None:
     """Load a Python module using the given name and path."""
     if name in sys.modules:
         return
@@ -1071,24 +1071,24 @@ def sanitize_host_name(name):
     return re.sub('[^A-Za-z0-9]+', '-', name)[:63].strip('-')
 
 
-def get_generic_type(base_type, generic_base_type):  # type: (t.Type, t.Type[TValue]) -> t.Optional[t.Type[TValue]]
+def get_generic_type(base_type: t.Type, generic_base_type: t.Type[TValue]) -> t.Optional[t.Type[TValue]]:
     """Return the generic type arg derived from the generic_base_type type that is associated with the base_type type, if any, otherwise return None."""
     # noinspection PyUnresolvedReferences
     type_arg = t.get_args(base_type.__orig_bases__[0])[0]
     return None if isinstance(type_arg, generic_base_type) else type_arg
 
 
-def get_type_associations(base_type, generic_base_type):  # type: (t.Type[TBase], t.Type[TValue]) -> t.List[t.Tuple[t.Type[TValue], t.Type[TBase]]]
+def get_type_associations(base_type: t.Type[TBase], generic_base_type: t.Type[TValue]) -> t.List[t.Tuple[t.Type[TValue], t.Type[TBase]]]:
     """Create and return a list of tuples associating generic_base_type derived types with a corresponding base_type derived type."""
     return [item for item in [(get_generic_type(sc_type, generic_base_type), sc_type) for sc_type in get_subclasses(base_type)] if item[1]]
 
 
-def get_type_map(base_type, generic_base_type):  # type: (t.Type[TBase], t.Type[TValue]) -> t.Dict[t.Type[TValue], t.Type[TBase]]
+def get_type_map(base_type: t.Type[TBase], generic_base_type: t.Type[TValue]) -> t.Dict[t.Type[TValue], t.Type[TBase]]:
     """Create and return a mapping of generic_base_type derived types to base_type derived types."""
     return {item[0]: item[1] for item in get_type_associations(base_type, generic_base_type)}
 
 
-def verify_sys_executable(path):  # type: (str) -> t.Optional[str]
+def verify_sys_executable(path: str) -> t.Optional[str]:
     """Verify that the given path references the current Python interpreter. If not, return the expected path, otherwise return None."""
     if path == sys.executable:
         return None
