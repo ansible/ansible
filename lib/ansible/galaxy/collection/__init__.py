@@ -1016,24 +1016,8 @@ def _verify_file_hash(b_path, filename, expected_hash, error_queue):
         error_queue.append(ModifiedContent(filename=filename, expected=expected_hash, installed=actual_hash))
 
 
-def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, manifest_directives):
-    # type: (bytes, str, str, list[str], list[str]) -> FilesManifestType
-    # We always ignore .pyc and .retry files as well as some well known version control directories. The ignore
-    # patterns can be extended by the build_ignore key in galaxy.yml
-    if ignore_patterns and manifest_directives:
-        raise AnsibleError('"build_ignore" and "manifest_directives" are mutually exclusive')
-
-    if manifest_directives and not HAS_DISTLIB:
-        raise AnsibleError('Use of "manifest_directives" requires the python "distlib" library')
-
-    entry_template = {
-        'name': None,
-        'ftype': None,
-        'chksum_type': None,
-        'chksum_sha256': None,
-        'format': MANIFEST_FORMAT
-    }
-    manifest = {
+def _make_manifest():
+    return {
         'files': [
             {
                 'name': '.',
@@ -1044,16 +1028,37 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, m
             },
         ],
         'format': MANIFEST_FORMAT,
-    }  # type: FilesManifestType
+    }
+
+
+def _make_entry(name, ftype, chksum_type=None, chksum=None):
+    return {
+        'name': name,
+        'ftype': ftype,
+        'chksum_type': chksum_type,
+        f'chksum_{chksum_type}': chksum,
+        'format': MANIFEST_FORMAT
+    }
+
+
+def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, manifest_directives):
+    # type: (bytes, str, str, list[str], list[str]) -> FilesManifestType
+    # We always ignore .pyc and .retry files as well as some well known version control directories. The ignore
+    # patterns can be extended by the build_ignore key in galaxy.yml
+    if ignore_patterns and manifest_directives:
+        raise AnsibleError('"build_ignore" and "manifest_directives" are mutually exclusive')
+
+    if manifest_directives and not HAS_DISTLIB:
+        raise AnsibleError('Use of "manifest_directives" requires the python "distlib" library')
 
     # TODO: This should be swapped, left for initial testing
     if ignore_patterns:
-        return _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns, entry_template, manifest)
+        return _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns)
 
-    return _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives, entry_template, manifest)
+    return _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives)
 
 
-def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives, entry_template, manifest):
+def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_directives):
     directives = [
         'include meta/*.yml',
         'include *.txt *.md *.rst COPYING LICENSE',
@@ -1095,25 +1100,26 @@ def _build_files_manifest_distlib(b_collection_path, namespace, name, manifest_d
         except Exception as e:
             raise AnsibleError(f'Unknown error processing manifest directive: {e}')
 
+    manifest = _make_manifest()
+
     for abs_path in m.sorted(wantdirs=True):
         rel_path = os.path.relpath(abs_path, u_collection_path)
         if os.path.isdir(abs_path):
-            manifest_entry = entry_template.copy()
-            manifest_entry['name'] = rel_path
-            manifest_entry['ftype'] = 'dir'
+            manifest_entry = _make_entry(rel_path, 'dir')
         else:
-            manifest_entry = entry_template.copy()
-            manifest_entry['name'] = rel_path
-            manifest_entry['ftype'] = 'file'
-            manifest_entry['chksum_type'] = 'sha256'
-            manifest_entry['chksum_sha256'] = secure_hash(abs_path, hash_func=sha256)
+            manifest_entry = _make_entry(
+                rel_path,
+                'file',
+                chksum_type='sha256',
+                chksum=secure_hash(abs_path, hash_func=sha256)
+            )
 
         manifest['files'].append(manifest_entry)
 
     return manifest
 
 
-def _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns, entry_template, manifest):
+def _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patterns):
     b_ignore_patterns = [
         b'MANIFEST.json',
         b'FILES.json',
@@ -1127,6 +1133,8 @@ def _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patter
     ]
     b_ignore_patterns += [to_bytes(p) for p in ignore_patterns]
     b_ignore_dirs = frozenset([b'CVS', b'.bzr', b'.hg', b'.git', b'.svn', b'__pycache__', b'.tox'])
+
+    manifest = _make_manifest()
 
     def _walk(b_path, b_top_level_dir):
         for b_item in os.listdir(b_path):
@@ -1149,11 +1157,7 @@ def _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patter
                                         % to_text(b_abs_path))
                         continue
 
-                manifest_entry = entry_template.copy()
-                manifest_entry['name'] = rel_path
-                manifest_entry['ftype'] = 'dir'
-
-                manifest['files'].append(manifest_entry)
+                manifest['files'].append(_make_entry(rel_path, 'dir'))
 
                 if not os.path.islink(b_abs_path):
                     _walk(b_abs_path, b_top_level_dir)
@@ -1164,13 +1168,14 @@ def _build_files_manifest_walk(b_collection_path, namespace, name, ignore_patter
 
                 # Handling of file symlinks occur in _build_collection_tar, the manifest for a symlink is the same for
                 # a normal file.
-                manifest_entry = entry_template.copy()
-                manifest_entry['name'] = rel_path
-                manifest_entry['ftype'] = 'file'
-                manifest_entry['chksum_type'] = 'sha256'
-                manifest_entry['chksum_sha256'] = secure_hash(b_abs_path, hash_func=sha256)
-
-                manifest['files'].append(manifest_entry)
+                manifest['files'].append(
+                    _make_entry(
+                        rel_path,
+                        'file',
+                        chksum_type='sha256',
+                        chksum=secure_hash(b_abs_path, hash_func=sha256)
+                    )
+                )
 
     _walk(b_collection_path, b_collection_path)
 
