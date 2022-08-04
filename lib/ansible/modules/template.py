@@ -25,7 +25,7 @@ options:
     default: no
     version_added: '2.4'
 notes:
-- For Windows you can use M(ansible.windows.win_template) which uses '\\r\\n' as C(newline_sequence) by default.
+- For Windows you can use M(ansible.windows.win_template) which uses C(\r\n) as C(newline_sequence) by default.
 - The C(jinja2_native) setting has no effect. Native types are never used in the C(template) module which is by design used for generating text files.
   For working with templates and utilizing Jinja2 native types see the C(jinja2_native) parameter of the C(template lookup).
 seealso:

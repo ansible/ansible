@@ -4,7 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-DOCUMENTATION = """
+DOCUMENTATION = r"""
     name: csvfile
     author: Jan-Piet Mens (@jpmens) <jpmens(at)gmail.com>
     version_added: "1.5"
@@ -20,7 +20,7 @@ DOCUMENTATION = """
       default:
         description: what to return if the value is not found in the file.
       delimiter:
-        description: field separator in the file, for a tab you can specify C(TAB) or C(\\t).
+        description: field separator in the file, for a tab you can specify C(TAB) or C(\t).
         default: TAB
       file:
         description: name of the CSV/TSV file to open.
