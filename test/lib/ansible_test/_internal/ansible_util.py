@@ -248,7 +248,7 @@ License: GPLv3+
 class CollectionDetail:
     """Collection detail."""
     def __init__(self) -> None:
-        self.version = None  # type: t.Optional[str]
+        self.version: t.Optional[str] = None
 
 
 class CollectionDetailError(ApplicationError):
@@ -279,12 +279,12 @@ def get_collection_detail(python: PythonConfig) -> CollectionDetail:
 
 
 def run_playbook(
-        args,  # type: EnvironmentConfig
-        inventory_path,  # type: str
+        args: EnvironmentConfig,
+        inventory_path: str,
         playbook,   # type: str
-        capture,  # type: bool
-        variables=None,  # type: t.Optional[t.Dict[str, t.Any]]
-):  # type: (...) -> None
+        capture: bool,
+        variables: t.Optional[t.Dict[str, t.Any]] = None,
+) -> None:
     """Run the specified playbook using the given inventory file and playbook variables."""
     playbook_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'playbooks', playbook)
     cmd = ['ansible-playbook', '-i', inventory_path, playbook_path]

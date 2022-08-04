@@ -70,7 +70,7 @@ class HostState:
     def deserialize(args: EnvironmentConfig, path: str) -> HostState:
         """Deserialize host state from the given args and path."""
         with open_binary_file(path) as state_file:
-            host_state = pickle.load(state_file)  # type: HostState
+            host_state: HostState = pickle.load(state_file)
 
         host_state.controller_profile.args = args
 
@@ -95,11 +95,11 @@ class HostState:
 
 
 def prepare_profiles(
-        args,  # type: TEnvironmentConfig
-        targets_use_pypi=False,  # type: bool
-        skip_setup=False,  # type: bool
-        requirements=None,  # type: t.Optional[t.Callable[[TEnvironmentConfig, HostState], None]]
-):  # type: (...) -> HostState
+        args: TEnvironmentConfig,
+        targets_use_pypi: bool = False,
+        skip_setup: bool = False,
+        requirements: t.Optional[t.Callable[[TEnvironmentConfig, HostState], None]] = None,
+) -> HostState:
     """
     Create new profiles, or load existing ones, and return them.
     If a requirements callback was provided, it will be used before configuring hosts if delegation has already been performed.

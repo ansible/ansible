@@ -85,7 +85,7 @@ class ShellcheckTest(SanityVersionNeutral):
             return SanitySuccess(self.name)
 
         # json output is missing file paths in older versions of shellcheck, so we'll use xml instead
-        root = fromstring(stdout)  # type: Element
+        root: Element = fromstring(stdout)
 
         results = []
 

@@ -40,11 +40,11 @@ def make_dirs(path: str) -> None:
 
 
 def write_json_file(path,  # type: str
-                    content,  # type: t.Any
-                    create_directories=False,  # type: bool
-                    formatted=True,  # type: bool
-                    encoder=None,  # type: t.Optional[t.Type[json.JSONEncoder]]
-                    ):  # type: (...) -> str
+                    content: t.Any,
+                    create_directories: bool = False,
+                    formatted: bool = True,
+                    encoder: t.Optional[t.Type[json.JSONEncoder]] = None,
+                    ) -> str:
     """Write the given json content to the specified path, optionally creating missing directories."""
     text_content = json.dumps(content,
                               sort_keys=formatted,

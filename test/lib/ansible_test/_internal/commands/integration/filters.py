@@ -68,12 +68,12 @@ class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
 
     def skip(
             self,
-            skip,  # type: str
-            reason,  # type: str
-            targets,  # type: t.List[IntegrationTarget]
-            exclude,  # type: t.Set[str]
-            override=None,  # type: t.Optional[t.List[str]]
-    ):  # type: (...) -> None
+            skip: str,
+            reason: str,
+            targets: t.List[IntegrationTarget],
+            exclude: t.Set[str],
+            override: t.Optional[t.List[str]] = None,
+    ) -> None:
         """Apply the specified skip rule to the given targets by updating the provided exclude list."""
         if skip.startswith('skip/'):
             skipped = [target.name for target in targets if skip in target.skips and (not override or target.name not in override)]
@@ -174,7 +174,7 @@ class RemoteTargetFilter(TargetFilter[TRemoteConfig]):
         skipped_profiles = [profile for profile in profiles if any(skip in target.skips for skip in get_remote_skip_aliases(profile.config))]
 
         if skipped_profiles:
-            configs = [profile.config for profile in skipped_profiles]  # type: t.List[TRemoteConfig]
+            configs: t.List[TRemoteConfig] = [profile.config for profile in skipped_profiles]
             display.warning(f'Excluding skipped hosts from inventory: {", ".join(config.name for config in configs)}')
 
         profiles = [profile for profile in profiles if profile not in skipped_profiles]

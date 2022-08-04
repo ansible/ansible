@@ -35,9 +35,9 @@ from ...completers import (
 
 def do_network_integration(
         subparsers,
-        parent,  # type: argparse.ArgumentParser
-        add_integration_common,  # type: t.Callable[[argparse.ArgumentParser], None]
-        completer,  # type: CompositeActionCompletionFinder
+        parent: argparse.ArgumentParser,
+        add_integration_common: t.Callable[[argparse.ArgumentParser], None],
+        completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `network-integration` command."""
     parser = subparsers.add_parser(
