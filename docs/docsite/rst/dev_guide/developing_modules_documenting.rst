@@ -447,4 +447,4 @@ The use of "wildcard" imports such as ``from module_utils.basic import *`` is no
 Testing module documentation
 ============================
 
-To test Ansible documentation locally please :ref:`follow instruction<testing_module_documentation>`.
+To test Ansible documentation locally please :ref:`follow instruction<testing_module_documentation>`. To test documentation in collections, please see :ref:`build_collection_docsite`.
