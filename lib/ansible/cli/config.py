@@ -263,7 +263,7 @@ class ConfigCLI(CLI):
 
         for setting in settings:
 
-            if not settings[setting].get('description') or setting.startswith('_'):
+            if not settings[setting].get('description'):
                 continue
 
             default = settings[setting].get('default', '')
