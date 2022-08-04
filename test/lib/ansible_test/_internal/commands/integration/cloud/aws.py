@@ -102,10 +102,10 @@ class AwsCloudEnvironment(CloudEnvironment):
         parser = configparser.ConfigParser()
         parser.read(self.config_path)
 
-        ansible_vars = dict(
+        ansible_vars: t.Dict[str, t.Any] = dict(
             resource_prefix=self.resource_prefix,
             tiny_prefix=uuid.uuid4().hex[0:12]
-        )  # type: t.Dict[str, t.Any]
+        )
 
         ansible_vars.update(dict(parser.items('default')))
 

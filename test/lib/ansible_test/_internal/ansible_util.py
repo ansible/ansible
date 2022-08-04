@@ -281,7 +281,7 @@ def get_collection_detail(python: PythonConfig) -> CollectionDetail:
 def run_playbook(
         args: EnvironmentConfig,
         inventory_path: str,
-        playbook,   # type: str
+        playbook: str,
         capture: bool,
         variables: t.Optional[t.Dict[str, t.Any]] = None,
 ) -> None:

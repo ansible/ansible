@@ -462,7 +462,7 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
         core_ci = self.wait_for_instance()
         connection = core_ci.connection
 
-        variables = dict(
+        variables: t.Dict[str, t.Optional[t.Union[str, int]]] = dict(
             ansible_connection=self.config.connection,
             ansible_pipelining='yes',
             ansible_host=connection.hostname,
@@ -470,7 +470,7 @@ class NetworkRemoteProfile(RemoteProfile[NetworkRemoteConfig]):
             ansible_user=connection.username,
             ansible_ssh_private_key_file=core_ci.ssh_key.key,
             ansible_network_os=f'{self.config.collection}.{self.config.platform}' if self.config.collection else self.config.platform,
-        )  # type: t.Dict[str, t.Optional[t.Union[str, int]]]
+        )
 
         return variables
 
@@ -684,7 +684,7 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
         core_ci = self.wait_for_instance()
         connection = core_ci.connection
 
-        variables = dict(
+        variables: t.Dict[str, t.Optional[t.Union[str, int]]] = dict(
             ansible_connection='winrm',
             ansible_pipelining='yes',
             ansible_winrm_server_cert_validation='ignore',
@@ -693,7 +693,7 @@ class WindowsRemoteProfile(RemoteProfile[WindowsRemoteConfig]):
             ansible_user=connection.username,
             ansible_password=connection.password,
             ansible_ssh_private_key_file=core_ci.ssh_key.key,
-        )  # type: t.Dict[str, t.Optional[t.Union[str, int]]]
+        )
 
         # HACK: force 2016 to use NTLM + HTTP message encryption
         if self.config.version == '2016':

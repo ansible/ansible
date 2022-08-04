@@ -69,7 +69,7 @@ class SshProcess:
 
         self._process.wait()
 
-    def collect_port_forwards(self):  # type: (SshProcess) -> t.Dict[t.Tuple[str, int], int]
+    def collect_port_forwards(self) -> t.Dict[t.Tuple[str, int], int]:
         """Collect port assignments for dynamic SSH port forwards."""
         errors: t.List[str] = []
 
@@ -200,9 +200,9 @@ def create_ssh_port_forwards(
     Create SSH port forwards using the provided list of tuples (target_host, target_port).
     Port bindings will be automatically assigned by SSH and must be collected with a subsequent call to collect_port_forwards.
     """
-    options = dict(
+    options: t.Dict[str, t.Union[str, int]] = dict(
         LogLevel='INFO',  # info level required to get messages on stderr indicating the ports assigned to each forward
-    )  # type: t.Dict[str, t.Union[str, int]]
+    )
 
     cli_args = []
 

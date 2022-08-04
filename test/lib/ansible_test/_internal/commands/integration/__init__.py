@@ -198,11 +198,11 @@ def get_inventory_absolute_path(args: IntegrationConfig, target: InventoryConfig
 
 def get_inventory_relative_path(args: IntegrationConfig) -> str:
     """Return the inventory path used for the given integration configuration relative to the content root."""
-    inventory_names = {
+    inventory_names: t.Dict[t.Type[IntegrationConfig], str] = {
         PosixIntegrationConfig: 'inventory',
         WindowsIntegrationConfig: 'inventory.winrm',
         NetworkIntegrationConfig: 'inventory.networking',
-    }  # type: t.Dict[t.Type[IntegrationConfig], str]
+    }
 
     return os.path.join(data_context().content.integration_path, inventory_names[type(args)])
 
