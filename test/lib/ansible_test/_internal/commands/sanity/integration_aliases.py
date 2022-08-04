@@ -5,6 +5,7 @@ import dataclasses
 import json
 import textwrap
 import os
+import re
 import typing as t
 
 from . import (
@@ -31,6 +32,7 @@ from ...target import (
     walk_integration_targets,
     walk_module_targets,
     CompletionTarget,
+    IntegrationTargetType,
 )
 
 from ..integration.cloud import (
@@ -274,6 +276,30 @@ class IntegrationAliasesTest(SanitySingleVersion):
                 find=find,
                 find_incidental=find_incidental,
             )
+
+        target_type_groups = {
+            IntegrationTargetType.TARGET: (1, 2),
+            IntegrationTargetType.CONTROLLER: (3, 4, 5),
+            IntegrationTargetType.CONFLICT: (),
+            IntegrationTargetType.UNKNOWN: (),
+        }
+
+        for target in posix_targets:
+            if f'{self.TEST_ALIAS_PREFIX}/posix/' not in target.aliases:
+                continue
+
+            found_groups = [alias for alias in target.aliases if re.search(f'^{self.TEST_ALIAS_PREFIX}/posix/group[0-9]+/$', alias)]
+            expected_groups = [f'{self.TEST_ALIAS_PREFIX}/posix/group{group}/' for group in target_type_groups[target.target_type]]
+            valid_groups = [group for group in found_groups if group in expected_groups]
+            invalid_groups = [group for group in found_groups if not any(group.startswith(expected_group) for expected_group in expected_groups)]
+
+            if not valid_groups:
+                messages.append(SanityMessage(f'Target of type {target.target_type.name} must be in at least one of these groups: {", ".join(expected_groups)}',
+                                              f'{target.path}/aliases'))
+
+            if invalid_groups:
+                messages.append(SanityMessage(f'Target of type {target.target_type.name} cannot be in these groups: {", ".join(invalid_groups)}',
+                                              f'{target.path}/aliases'))
 
         return messages
 

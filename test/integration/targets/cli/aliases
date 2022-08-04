@@ -2,5 +2,5 @@ destructive
 needs/root
 needs/ssh
 needs/target/setup_pexpect
-shippable/posix/group3
+shippable/posix/group5
 context/controller
