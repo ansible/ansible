@@ -346,7 +346,7 @@ class PathChecker:
     def __init__(self, args: CoverageConfig, collection_search_re: t.Optional[t.Pattern] = None) -> None:
         self.args = args
         self.collection_search_re = collection_search_re
-        self.invalid_paths = []  # type: t.List[str]
+        self.invalid_paths: t.List[str] = []
         self.invalid_path_chars = 0
 
     def check_path(self, path: str) -> bool:

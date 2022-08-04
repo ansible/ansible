@@ -162,7 +162,7 @@ class AnsibleCoreCI:
             self._clear()
 
         if self.instance_id:
-            self.started = True  # type: bool
+            self.started: bool = True
         else:
             self.started = False
             self.instance_id = str(uuid.uuid4())

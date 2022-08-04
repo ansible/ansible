@@ -174,7 +174,7 @@ class RemoteTargetFilter(TargetFilter[TRemoteConfig]):
         skipped_profiles = [profile for profile in profiles if any(skip in target.skips for skip in get_remote_skip_aliases(profile.config))]
 
         if skipped_profiles:
-            configs = [profile.config for profile in skipped_profiles]  # type: t.List[TRemoteConfig]
+            configs: t.List[TRemoteConfig] = [profile.config for profile in skipped_profiles]
             display.warning(f'Excluding skipped hosts from inventory: {", ".join(config.name for config in configs)}')
 
         profiles = [profile for profile in profiles if profile not in skipped_profiles]

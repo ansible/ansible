@@ -214,7 +214,7 @@ class DockerConnection(Connection):
     def __init__(self, args: EnvironmentConfig, container_id: str, user: t.Optional[str] = None) -> None:
         self.args = args
         self.container_id = container_id
-        self.user = user  # type: t.Optional[str]
+        self.user: t.Optional[str] = user
 
     def run(self,
             command: t.List[str],

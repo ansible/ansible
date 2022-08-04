@@ -62,7 +62,7 @@ TBase = t.TypeVar('TBase')
 TKey = t.TypeVar('TKey')
 TValue = t.TypeVar('TValue')
 
-PYTHON_PATHS = {}  # type: t.Dict[str, str]
+PYTHON_PATHS: t.Dict[str, str] = {}
 
 COVERAGE_CONFIG_NAME = 'coveragerc'
 
@@ -143,7 +143,7 @@ def is_valid_identifier(value: str) -> bool:
 
 def cache(func):  # type: (t.Callable[[], TValue]) -> t.Callable[[], TValue]
     """Enforce exclusive access on a decorated function and cache the result."""
-    storage = {}  # type: t.Dict[None, TValue]
+    storage: t.Dict[None, TValue] = {}
     sentinel = object()
 
     @functools.wraps(func)
@@ -577,7 +577,7 @@ class ReaderThread(WrappedThread, metaclass=abc.ABCMeta):
 
         self.handle = handle
         self.buffer = buffer
-        self.lines = []  # type: t.List[bytes]
+        self.lines: t.List[bytes] = []
 
     @abc.abstractmethod
     def _run(self) -> None:
@@ -970,8 +970,8 @@ def parse_to_list_of_dict(pattern: str, value: str) -> t.List[t.Dict[str, str]]:
 
 def get_subclasses(class_type: t.Type[C]) -> t.List[t.Type[C]]:
     """Returns a list of types that are concrete subclasses of the given type."""
-    subclasses = set()  # type: t.Set[t.Type[C]]
-    queue = [class_type]  # type: t.List[t.Type[C]]
+    subclasses: t.Set[t.Type[C]] = set()
+    queue: t.List[t.Type[C]] = [class_type]
 
     while queue:
         parent = queue.pop()
@@ -1049,7 +1049,7 @@ def load_plugins(base_type, database):  # type: (t.Type[C], t.Dict[str, t.Type[C
     Load plugins of the specified type and track them in the specified database.
     Only plugins which have already been imported will be loaded.
     """
-    plugins = dict((sc.__module__.rsplit('.', 1)[1], sc) for sc in get_subclasses(base_type))  # type: t.Dict[str, t.Type[C]]
+    plugins: t.Dict[str, t.Type[C]] = dict((sc.__module__.rsplit('.', 1)[1], sc) for sc in get_subclasses(base_type))
 
     for plugin in plugins:
         database[plugin] = plugins[plugin]

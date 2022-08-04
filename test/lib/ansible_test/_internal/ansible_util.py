@@ -248,7 +248,7 @@ License: GPLv3+
 class CollectionDetail:
     """Collection detail."""
     def __init__(self) -> None:
-        self.version = None  # type: t.Optional[str]
+        self.version: t.Optional[str] = None
 
 
 class CollectionDetailError(ApplicationError):

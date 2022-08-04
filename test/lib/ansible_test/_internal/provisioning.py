@@ -70,7 +70,7 @@ class HostState:
     def deserialize(args: EnvironmentConfig, path: str) -> HostState:
         """Deserialize host state from the given args and path."""
         with open_binary_file(path) as state_file:
-            host_state = pickle.load(state_file)  # type: HostState
+            host_state: HostState = pickle.load(state_file)
 
         host_state.controller_profile.args = args
 

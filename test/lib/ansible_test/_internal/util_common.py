@@ -58,7 +58,7 @@ from .host_configs import (
     VirtualPythonConfig,
 )
 
-CHECK_YAML_VERSIONS = {}  # type: t.Dict[str, t.Any]
+CHECK_YAML_VERSIONS: t.Dict[str, t.Any] = {}
 
 
 class ShellScriptTemplate:
@@ -84,13 +84,13 @@ class ShellScriptTemplate:
 
 class ResultType:
     """Test result type."""
-    BOT = None  # type: ResultType
-    COVERAGE = None  # type: ResultType
-    DATA = None  # type: ResultType
-    JUNIT = None  # type: ResultType
-    LOGS = None  # type: ResultType
-    REPORTS = None  # type: ResultType
-    TMP = None   # type: ResultType
+    BOT: ResultType = None
+    COVERAGE: ResultType = None
+    DATA: ResultType = None
+    JUNIT: ResultType = None
+    LOGS: ResultType = None
+    REPORTS: ResultType = None
+    TMP: ResultType = None
 
     @staticmethod
     def _populate():
@@ -129,20 +129,20 @@ class CommonConfig:
         self.command = command
         self.interactive = False
         self.check_layout = True
-        self.success = None  # type: t.Optional[bool]
+        self.success: t.Optional[bool] = None
 
-        self.color = args.color  # type: bool
-        self.explain = args.explain  # type: bool
-        self.verbosity = args.verbosity  # type: int
-        self.debug = args.debug  # type: bool
-        self.truncate = args.truncate  # type: int
-        self.redact = args.redact  # type: bool
+        self.color: bool = args.color
+        self.explain: bool = args.explain
+        self.verbosity: int = args.verbosity
+        self.debug: bool = args.debug
+        self.truncate: int = args.truncate
+        self.redact: bool = args.redact
 
-        self.display_stderr = False  # type: bool
+        self.display_stderr: bool = False
 
         self.session_name = generate_name()
 
-        self.cache = {}  # type: t.Dict[str, t.Any]
+        self.cache: t.Dict[str, t.Any] = {}
 
     def get_ansible_config(self) -> str:
         """Return the path to the Ansible config for the given config."""

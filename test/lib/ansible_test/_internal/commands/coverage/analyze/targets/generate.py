@@ -55,8 +55,8 @@ class CoverageAnalyzeTargetsGenerateConfig(CoverageAnalyzeTargetsConfig):
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
-        self.input_dir = args.input_dir or ResultType.COVERAGE.path  # type: str
-        self.output_file = args.output_file  # type: str
+        self.input_dir: str = args.input_dir or ResultType.COVERAGE.path
+        self.output_file: str = args.output_file
 
 
 def command_coverage_analyze_targets_generate(args: CoverageAnalyzeTargetsGenerateConfig) -> None:
@@ -67,7 +67,7 @@ def command_coverage_analyze_targets_generate(args: CoverageAnalyzeTargetsGenera
         raise Delegate(host_state)
 
     root = data_context().content.root
-    target_indexes = {}  # type: TargetIndexes
+    target_indexes: TargetIndexes = {}
     arcs = dict((os.path.relpath(path, root), data) for path, data in analyze_python_coverage(args, host_state, args.input_dir, target_indexes).items())
     lines = dict((os.path.relpath(path, root), data) for path, data in analyze_powershell_coverage(args, args.input_dir, target_indexes).items())
     report = make_report(target_indexes, arcs, lines)
@@ -81,7 +81,7 @@ def analyze_python_coverage(
         target_indexes: TargetIndexes,
 ) -> Arcs:
     """Analyze Python code coverage."""
-    results = {}  # type: Arcs
+    results: Arcs = {}
     collection_search_re, collection_sub_re = get_collection_path_regexes()
     modules = get_python_modules()
     python_files = get_python_coverage_files(path)
@@ -112,7 +112,7 @@ def analyze_powershell_coverage(
         target_indexes: TargetIndexes,
 ) -> Lines:
     """Analyze PowerShell code coverage"""
-    results = {}  # type: Lines
+    results: Lines = {}
     collection_search_re, collection_sub_re = get_collection_path_regexes()
     powershell_files = get_powershell_coverage_files(path)
 

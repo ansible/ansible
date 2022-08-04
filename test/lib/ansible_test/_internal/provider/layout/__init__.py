@@ -151,9 +151,9 @@ class ContentLayout(Layout):
 class LayoutMessages:
     """Messages generated during layout creation that should be deferred for later display."""
     def __init__(self):
-        self.info = []  # type: t.List[str]
-        self.warning = []  # type: t.List[str]
-        self.error = []  # type: t.List[str]
+        self.info: t.List[str] = []
+        self.warning: t.List[str] = []
+        self.error: t.List[str] = []
 
 
 class CollectionDetail:
@@ -206,7 +206,7 @@ class LayoutProvider(PathProvider):
 
 def paths_to_tree(paths: t.List[str]) -> t.Tuple[t.Dict[str, t.Any], t.List[str]]:
     """Return a filesystem tree from the given list of paths."""
-    tree = {}, []  # type: t.Tuple[t.Dict[str, t.Any], t.List[str]]
+    tree: t.Tuple[t.Dict[str, t.Any], t.List[str]] = {}, []
 
     for path in paths:
         parts = path.split(os.path.sep)

@@ -146,14 +146,14 @@ class LegacyHostOptions:
     @staticmethod
     def purge_args(args: t.List[str]) -> t.List[str]:
         """Purge legacy host options from the given command line arguments."""
-        fields = dataclasses.fields(LegacyHostOptions)  # type: t.Tuple[dataclasses.Field, ...]
-        filters = {get_option_name(field.name): 0 if field.type is t.Optional[bool] else 1 for field in fields}  # type: t.Dict[str, int]
+        fields: t.Tuple[dataclasses.Field, ...] = dataclasses.fields(LegacyHostOptions)
+        filters: t.Dict[str, int] = {get_option_name(field.name): 0 if field.type is t.Optional[bool] else 1 for field in fields}
 
         return filter_args(args, filters)
 
     def get_options_used(self) -> t.Tuple[str, ...]:
         """Return a tuple of the command line options used."""
-        fields = dataclasses.fields(self)  # type: t.Tuple[dataclasses.Field, ...]
+        fields: t.Tuple[dataclasses.Field, ...] = dataclasses.fields(self)
         options = tuple(sorted(get_option_name(field.name) for field in fields if getattr(self, field.name)))
         return options
 
@@ -300,7 +300,7 @@ def get_legacy_host_config(
     docker_fallback = 'default'
     remote_fallback = get_fallback_remote_controller()
 
-    controller_fallback = None  # type: t.Optional[t.Tuple[str, str, FallbackReason]]
+    controller_fallback: t.Optional[t.Tuple[str, str, FallbackReason]] = None
 
     controller: t.Optional[ControllerHostConfig]
     targets: t.List[HostConfig]

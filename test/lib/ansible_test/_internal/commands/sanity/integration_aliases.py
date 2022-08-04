@@ -106,8 +106,8 @@ class IntegrationAliasesTest(SanitySingleVersion):
     def __init__(self):
         super().__init__()
 
-        self._ci_config = {}  # type: t.Dict[str, t.Any]
-        self._ci_test_groups = {}  # type: t.Dict[str, t.List[int]]
+        self._ci_config: t.Dict[str, t.Any] = {}
+        self._ci_test_groups: t.Dict[str, t.List[int]] = {}
 
     @property
     def can_ignore(self) -> bool:
@@ -130,7 +130,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
     def ci_test_groups(self) -> t.Dict[str, t.List[int]]:
         """Return a dictionary of CI test names and their group(s)."""
         if not self._ci_test_groups:
-            test_groups = {}  # type: t.Dict[str, t.Set[int]]
+            test_groups: t.Dict[str, t.Set[int]] = {}
 
             for stage in self._ci_config['stages']:
                 for job in stage['jobs']:

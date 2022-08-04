@@ -37,7 +37,7 @@ class RegisteredCompletionFinder(OptionCompletionFinder):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.registered_completions = None  # type: t.Optional[t.List[str]]
+        self.registered_completions: t.Optional[t.List[str]] = None
 
     def completer(
             self,
@@ -86,7 +86,7 @@ class RegisteredCompletionFinder(OptionCompletionFinder):
 
 class CompositeAction(argparse.Action, metaclass=abc.ABCMeta):
     """Base class for actions that parse composite arguments."""
-    documentation_state = {}  # type: t.Dict[t.Type[CompositeAction], DocumentationState]
+    documentation_state: t.Dict[t.Type[CompositeAction], DocumentationState] = {}
 
     def __init__(
             self,

@@ -31,8 +31,8 @@ class CoverageAnalyzeTargetsCombineConfig(CoverageAnalyzeTargetsConfig):
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
-        self.input_files = args.input_file  # type: t.List[str]
-        self.output_file = args.output_file  # type: str
+        self.input_files: t.List[str] = args.input_file
+        self.output_file: str = args.output_file
 
 
 def command_coverage_analyze_targets_combine(args: CoverageAnalyzeTargetsCombineConfig) -> None:
@@ -42,9 +42,9 @@ def command_coverage_analyze_targets_combine(args: CoverageAnalyzeTargetsCombine
     if args.delegate:
         raise Delegate(host_state=host_state)
 
-    combined_target_indexes = {}  # type: TargetIndexes
-    combined_path_arcs = {}  # type: Arcs
-    combined_path_lines = {}  # type: Lines
+    combined_target_indexes: TargetIndexes = {}
+    combined_path_arcs: Arcs = {}
+    combined_path_lines: Lines = {}
 
     for report_path in args.input_files:
         covered_targets, covered_path_arcs, covered_path_lines = read_report(report_path)

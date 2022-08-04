@@ -81,7 +81,7 @@ from .connections import (
 )
 
 # information about support containers provisioned by the current ansible-test instance
-support_containers = {}  # type: t.Dict[str, ContainerDescriptor]
+support_containers: t.Dict[str, ContainerDescriptor] = {}
 support_containers_mutex = threading.Lock()
 
 
@@ -344,9 +344,9 @@ def root_ssh(ssh: SshConnection) -> SshConnectionDetail:
 
 def create_container_database(args: EnvironmentConfig) -> ContainerDatabase:
     """Create and return a container database with information necessary for all test hosts to make use of relevant support containers."""
-    origin = {}  # type: t.Dict[str, t.Dict[str, ContainerAccess]]
-    control = {}  # type: t.Dict[str, t.Dict[str, ContainerAccess]]
-    managed = {}  # type: t.Dict[str, t.Dict[str, ContainerAccess]]
+    origin: t.Dict[str, t.Dict[str, ContainerAccess]] = {}
+    control: t.Dict[str, t.Dict[str, ContainerAccess]] = {}
+    managed: t.Dict[str, t.Dict[str, ContainerAccess]] = {}
 
     for name, container in support_containers.items():
         if container.details.published_ports:
@@ -492,7 +492,7 @@ def create_support_container_context(
     revised = ContainerDatabase(containers.data.copy())
     source = revised.data.pop(HostType.origin, None)
 
-    container_map = {}  # type: t.Dict[t.Tuple[str, int], t.Tuple[str, str, int]]
+    container_map: t.Dict[t.Tuple[str, int], t.Tuple[str, str, int]] = {}
 
     if host_type not in revised.data:
         if not source:
@@ -518,7 +518,7 @@ def create_support_container_context(
 
     try:
         port_forwards = process.collect_port_forwards()
-        contexts = {}  # type: t.Dict[str, t.Dict[str, ContainerAccess]]
+        contexts: t.Dict[str, t.Dict[str, ContainerAccess]] = {}
 
         for forward, forwarded_port in port_forwards.items():
             access_host, access_port = forward
@@ -567,7 +567,7 @@ class ContainerDescriptor:
         self.existing = existing
         self.cleanup = cleanup
         self.env = env
-        self.details = None  # type: t.Optional[SupportContainer]
+        self.details: t.Optional[SupportContainer] = None
 
     def start(self, args: EnvironmentConfig) -> None:
         """Start the container. Used for containers which are created, but not started."""
@@ -706,8 +706,8 @@ def create_container_hooks(
         else:
             managed_type = 'posix'
 
-        control_state = {}  # type: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]]
-        managed_state = {}  # type: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]]
+        control_state: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]] = {}
+        managed_state: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]] = {}
 
         def pre_target(target):
             """Configure hosts for SSH port forwarding required by the specified target."""
@@ -726,7 +726,7 @@ def create_container_hooks(
 
 def create_managed_contexts(control_contexts):  # type: (t.Dict[str, t.Dict[str, ContainerAccess]]) -> t.Dict[str, t.Dict[str, ContainerAccess]]
     """Create managed contexts from the given control contexts."""
-    managed_contexts = {}  # type: t.Dict[str, t.Dict[str, ContainerAccess]]
+    managed_contexts: t.Dict[str, t.Dict[str, ContainerAccess]] = {}
 
     for context_name, control_context in control_contexts.items():
         managed_context = managed_contexts[context_name] = {}
@@ -768,7 +768,7 @@ def forward_ssh_ports(
 
         raise Exception('The %s host was not pre-configured for container access and SSH forwarding is not available.' % host_type)
 
-    redirects = []  # type: t.List[t.Tuple[int, str, int]]
+    redirects: t.List[t.Tuple[int, str, int]] = []
     messages = []
 
     for container_name, container in test_context.items():
@@ -796,7 +796,7 @@ def forward_ssh_ports(
     with named_temporary_file(args, 'ssh-inventory-', '.json', None, inventory) as inventory_path:  # type: str
         run_playbook(args, inventory_path, playbook, capture=False, variables=dict(hosts_entries=hosts_entries))
 
-    ssh_processes = []  # type: t.List[SshProcess]
+    ssh_processes: t.List[SshProcess] = []
 
     if redirects:
         for ssh in ssh_connections:

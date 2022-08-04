@@ -68,10 +68,10 @@ def categorize_changes(args: TestConfig, paths: t.List[str], verbose_command: t.
 
     focused_commands = collections.defaultdict(set)
 
-    deleted_paths = set()  # type: t.Set[str]
-    original_paths = set()  # type: t.Set[str]
-    additional_paths = set()  # type: t.Set[str]
-    no_integration_paths = set()  # type: t.Set[str]
+    deleted_paths: t.Set[str] = set()
+    original_paths: t.Set[str] = set()
+    additional_paths: t.Set[str] = set()
+    no_integration_paths: t.Set[str] = set()
 
     for path in paths:
         if not os.path.exists(path):
@@ -210,7 +210,7 @@ class PathMapper:
         self.powershell_module_utils_imports = {}  # type: t.Dict[str, t.Set[str]]  # populated on first use to reduce overhead when not needed
         self.csharp_module_utils_imports = {}  # type: t.Dict[str, t.Set[str]]  # populated on first use to reduce overhead when not needed
 
-        self.paths_to_dependent_targets = {}  # type: t.Dict[str, t.Set[IntegrationTarget]]
+        self.paths_to_dependent_targets: t.Dict[str, t.Set[IntegrationTarget]] = {}
 
         for target in self.integration_targets:
             for path in target.needs_file:
@@ -342,7 +342,7 @@ class PathMapper:
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
 
-        minimal = {}  # type: t.Dict[str, str]
+        minimal: t.Dict[str, str] = {}
 
         if os.path.sep not in path:
             if filename in (
@@ -631,7 +631,7 @@ class PathMapper:
         filename = os.path.basename(path)
         dummy, ext = os.path.splitext(filename)
 
-        minimal = {}  # type: t.Dict[str, str]
+        minimal: t.Dict[str, str] = {}
 
         if path.startswith('changelogs/'):
             return minimal
@@ -675,7 +675,7 @@ class PathMapper:
         filename = os.path.basename(path)
         name, ext = os.path.splitext(filename)
 
-        minimal = {}  # type: t.Dict[str, str]
+        minimal: t.Dict[str, str] = {}
 
         if path.startswith('bin/'):
             return all_tests(self.args)  # broad impact, run all tests

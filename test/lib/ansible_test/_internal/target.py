@@ -502,7 +502,7 @@ class IntegrationTargetType(enum.Enum):
 def extract_plugin_references(name: str, aliases: t.List[str]) -> t.List[t.Tuple[str, str]]:
     """Return a list of plugin references found in the given integration test target name and aliases."""
     plugins = content_plugins()
-    found = []  # type: t.List[t.Tuple[str, str]]
+    found: t.List[t.Tuple[str, str]] = []
 
     for alias in [name] + aliases:
         plugin_type = 'modules'

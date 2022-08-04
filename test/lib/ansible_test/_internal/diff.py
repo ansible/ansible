@@ -21,7 +21,7 @@ class FileDiff:
     def __init__(self, old_path: str, new_path: str) -> None:
         self.old = DiffSide(old_path, new=False)
         self.new = DiffSide(new_path, new=True)
-        self.headers = []  # type: t.List[str]
+        self.headers: t.List[str] = []
         self.binary = False
 
     def append_header(self, line: str) -> None:
@@ -43,9 +43,9 @@ class DiffSide:
         self.eof_newline = True
         self.exists = True
 
-        self.lines = []  # type: t.List[t.Tuple[int, str]]
-        self.lines_and_context = []  # type: t.List[t.Tuple[int, str]]
-        self.ranges = []  # type: t.List[t.Tuple[int, int]]
+        self.lines: t.List[t.Tuple[int, str]] = []
+        self.lines_and_context: t.List[t.Tuple[int, str]] = []
+        self.ranges: t.List[t.Tuple[int, int]] = []
 
         self._next_line_number = 0
         self._lines_remaining = 0
@@ -111,13 +111,13 @@ class DiffParser:
     """Parse diff lines."""
     def __init__(self, lines: t.List[str]) -> None:
         self.lines = lines
-        self.files = []  # type: t.List[FileDiff]
+        self.files: t.List[FileDiff] = []
 
         self.action = self.process_start
         self.line_number = 0
-        self.previous_line = None  # type: t.Optional[str]
-        self.line = None  # type: t.Optional[str]
-        self.file = None  # type: t.Optional[FileDiff]
+        self.previous_line: t.Optional[str] = None
+        self.line: t.Optional[str] = None
+        self.file: t.Optional[FileDiff] = None
 
         for self.line in self.lines:
             self.line_number += 1

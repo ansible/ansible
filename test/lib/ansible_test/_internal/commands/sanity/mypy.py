@@ -111,7 +111,7 @@ class MypyTest(SanityMultipleVersion):
             MyPyContext('modules', ['lib/ansible/modules/', 'lib/ansible/module_utils/'], remote_only_python_versions),
         )
 
-        unfiltered_messages = []  # type: t.List[SanityMessage]
+        unfiltered_messages: t.List[SanityMessage] = []
 
         for context in contexts:
             if python.version not in context.python_versions:

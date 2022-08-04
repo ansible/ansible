@@ -192,7 +192,7 @@ class TestSkipped(TestResult):
     def __init__(self, command: str, test: str, python_version: t.Optional[str] = None) -> None:
         super().__init__(command, test, python_version)
 
-        self.reason = None  # type: t.Optional[str]
+        self.reason: t.Optional[str] = None
 
     def write_console(self) -> None:
         """Write results to console."""

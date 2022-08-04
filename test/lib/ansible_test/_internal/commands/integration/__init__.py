@@ -134,7 +134,7 @@ def generate_dependency_map(integration_targets: t.List[IntegrationTarget]) -> t
     """Analyze the given list of integration test targets and return a dictionary expressing target names and the targets on which they depend."""
     targets_dict = dict((target.name, target) for target in integration_targets)
     target_dependencies = analyze_integration_target_dependencies(integration_targets)
-    dependency_map = {}  # type: t.Dict[str, t.Set[IntegrationTarget]]
+    dependency_map: t.Dict[str, t.Set[IntegrationTarget]] = {}
 
     invalid_targets = set()
 
@@ -159,7 +159,7 @@ def generate_dependency_map(integration_targets: t.List[IntegrationTarget]) -> t
 
 def get_files_needed(target_dependencies: t.List[IntegrationTarget]) -> t.List[str]:
     """Return a list of files needed by the given list of target dependencies."""
-    files_needed = []  # type: t.List[str]
+    files_needed: t.List[str] = []
 
     for target_dependency in target_dependencies:
         files_needed += target_dependency.needs_file
@@ -413,7 +413,7 @@ def command_integration_filtered(
     all_targets_dict = dict((target.name, target) for target in all_targets)
 
     setup_errors = []
-    setup_targets_executed = set()  # type: t.Set[str]
+    setup_targets_executed: t.Set[str] = set()
 
     for target in all_targets:
         for setup_target in target.setup_once + target.setup_always:
@@ -881,7 +881,7 @@ If necessary, context can be controlled by adding entries to the "aliases" file 
         else:
             display.warning(f'Unable to determine context for the following test targets, they will be run on the target host: {", ".join(invalid_targets)}')
 
-    exclude = set()  # type: t.Set[str]
+    exclude: t.Set[str] = set()
 
     controller_targets = [target for target in targets if target.target_type == IntegrationTargetType.CONTROLLER]
     target_targets = [target for target in targets if target.target_type == IntegrationTargetType.TARGET]

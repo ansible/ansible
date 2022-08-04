@@ -168,9 +168,9 @@ class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
         self.controller = bool(targets)
         self.targets = targets or []
 
-        self.state = {}  # type: t.Dict[str, t.Any]
+        self.state: t.Dict[str, t.Any] = {}
         """State that must be persisted across delegation."""
-        self.cache = {}  # type: t.Dict[str, t.Any]
+        self.cache: t.Dict[str, t.Any] = {}
         """Cache that must not be persisted across delegation."""
 
     def provision(self) -> None:
@@ -572,7 +572,7 @@ class PosixRemoteProfile(ControllerHostProfile[PosixRemoteConfig], RemoteProfile
         )
 
         if settings.user == 'root':
-            become = None  # type: t.Optional[Become]
+            become: t.Optional[Become] = None
         elif self.config.become:
             become = SUPPORTED_BECOME_METHODS[self.config.become]()
         else:

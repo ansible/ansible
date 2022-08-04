@@ -208,7 +208,7 @@ def collect_requirements(
         sanity: t.Optional[str],
 ) -> t.List[PipCommand]:
     """Collect requirements for the given Python using the specified arguments."""
-    commands = []  # type: t.List[PipCommand]
+    commands: t.List[PipCommand] = []
 
     if virtualenv:
         # sanity tests on Python 2.x install virtualenv when it is too old or is not already installed and the `--requirements` option is given
@@ -284,8 +284,8 @@ def collect_general_install(
     ansible: bool = False,
 ) -> t.List[PipInstall]:
     """Return details necessary for the specified general-purpose pip install(s)."""
-    requirements_paths = []  # type: t.List[t.Tuple[str, str]]
-    constraints_paths = []  # type: t.List[t.Tuple[str, str]]
+    requirements_paths: t.List[t.Tuple[str, str]] = []
+    constraints_paths: t.List[t.Tuple[str, str]] = []
 
     if ansible:
         path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'ansible.txt')
@@ -305,8 +305,8 @@ def collect_package_install(packages: t.List[str], constraints: bool = True) -> 
 
 def collect_sanity_install(sanity: str) -> t.List[PipInstall]:
     """Return the details necessary for the specified sanity pip install(s)."""
-    requirements_paths = []  # type: t.List[t.Tuple[str, str]]
-    constraints_paths = []  # type: t.List[t.Tuple[str, str]]
+    requirements_paths: t.List[t.Tuple[str, str]] = []
+    constraints_paths: t.List[t.Tuple[str, str]] = []
 
     path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', f'sanity.{sanity}.txt')
     requirements_paths.append((ANSIBLE_TEST_DATA_ROOT, path))
@@ -320,8 +320,8 @@ def collect_sanity_install(sanity: str) -> t.List[PipInstall]:
 
 def collect_units_install() -> t.List[PipInstall]:
     """Return details necessary for the specified units pip install(s)."""
-    requirements_paths = []  # type: t.List[t.Tuple[str, str]]
-    constraints_paths = []  # type: t.List[t.Tuple[str, str]]
+    requirements_paths: t.List[t.Tuple[str, str]] = []
+    constraints_paths: t.List[t.Tuple[str, str]] = []
 
     path = os.path.join(data_context().content.unit_path, 'requirements.txt')
     requirements_paths.append((data_context().content.root, path))
@@ -334,8 +334,8 @@ def collect_units_install() -> t.List[PipInstall]:
 
 def collect_integration_install(command: str, controller: bool) -> t.List[PipInstall]:
     """Return details necessary for the specified integration pip install(s)."""
-    requirements_paths = []  # type: t.List[t.Tuple[str, str]]
-    constraints_paths = []  # type: t.List[t.Tuple[str, str]]
+    requirements_paths: t.List[t.Tuple[str, str]] = []
+    constraints_paths: t.List[t.Tuple[str, str]] = []
 
     # Support for prefixed files was added to ansible-test in ansible-core 2.12 when split controller/target testing was implemented.
     # Previous versions of ansible-test only recognize non-prefixed files.
