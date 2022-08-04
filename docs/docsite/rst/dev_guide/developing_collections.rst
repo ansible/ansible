@@ -16,6 +16,7 @@ You can create a collection and publish it to `Ansible Galaxy <https://galaxy.an
    developing_collections_shared
    developing_collections_testing
    developing_collections_distributing
+   developing_collections_documenting
 
 .. toctree::
    :maxdepth: 2
