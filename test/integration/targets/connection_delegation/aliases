@@ -1,4 +1,4 @@
-shippable/posix/group1
+shippable/posix/group3
 context/controller
 skip/freebsd  # No sshpass
 skip/osx  # No sshpass

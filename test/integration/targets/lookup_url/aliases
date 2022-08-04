@@ -1,4 +1,4 @@
 destructive
-shippable/posix/group1
+shippable/posix/group3
 needs/httptester
 skip/macos/12.0  # This test crashes Python due to https://wefearchange.org/2018/11/forkmacos.rst.html

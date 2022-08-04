@@ -1,4 +1,4 @@
-shippable/posix/group3
+shippable/posix/group2
 needs/root
 needs/target/setup_test_user
 needs/target/setup_remote_tmp_dir
