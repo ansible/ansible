@@ -24,11 +24,11 @@ def do_html(
         completer: CompositeActionCompletionFinder,
 ) -> None:
     """Command line parsing for the `coverage html` command."""
-    parser = subparsers.add_parser(
+    parser: argparse.ArgumentParser = subparsers.add_parser(
         'html',
         parents=[parent],
         help='generate html coverage report',
-    )  # type: argparse.ArgumentParser
+    )
 
     parser.set_defaults(
         func=command_coverage_html,

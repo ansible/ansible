@@ -69,7 +69,7 @@ class Metadata:
         return Metadata.from_dict(data)
 
     @staticmethod
-    def from_dict(data):  # type: (t.Dict[str, t.Any]) -> Metadata
+    def from_dict(data: t.Dict[str, t.Any]) -> Metadata:
         """Return metadata loaded from the specified dictionary."""
         metadata = Metadata()
         metadata.changes = data['changes']
@@ -112,7 +112,7 @@ class ChangeDescription:
         )
 
     @staticmethod
-    def from_dict(data):  # type: (t.Dict[str, t.Any]) -> ChangeDescription
+    def from_dict(data: t.Dict[str, t.Any]) -> ChangeDescription:
         """Return a change description loaded from the given dictionary."""
         changes = ChangeDescription()
         changes.command = data['command']

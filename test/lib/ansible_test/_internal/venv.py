@@ -77,7 +77,7 @@ def get_virtual_python(
     return virtual_environment_python
 
 
-def create_virtual_environment(args,  # type: EnvironmentConfig
+def create_virtual_environment(args: EnvironmentConfig,
                                python: PythonConfig,
                                path: str,
                                system_site_packages: bool = False,
@@ -179,7 +179,7 @@ def get_python_real_prefix(python_path: str) -> t.Optional[str]:
     return real_prefix
 
 
-def run_venv(args,  # type: EnvironmentConfig
+def run_venv(args: EnvironmentConfig,
              run_python: str,
              system_site_packages: bool,
              pip: bool,
@@ -209,7 +209,7 @@ def run_venv(args,  # type: EnvironmentConfig
     return True
 
 
-def run_virtualenv(args,  # type: EnvironmentConfig
+def run_virtualenv(args: EnvironmentConfig,
                    run_python: str,
                    env_python: str,
                    system_site_packages: bool,

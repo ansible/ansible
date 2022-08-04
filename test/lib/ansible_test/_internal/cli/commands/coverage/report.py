@@ -24,11 +24,11 @@ def do_report(
         completer: CompositeActionCompletionFinder,
 ) -> None:
     """Command line parsing for the `coverage report` command."""
-    parser = subparsers.add_parser(
+    parser: argparse.ArgumentParser = subparsers.add_parser(
         'report',
         parents=[parent],
         help='generate console coverage report',
-    )  # type: argparse.ArgumentParser
+    )
 
     parser.set_defaults(
         func=command_coverage_report,

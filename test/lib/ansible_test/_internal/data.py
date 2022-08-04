@@ -112,7 +112,7 @@ class DataContext:
         return collections
 
     @staticmethod
-    def __create_content_layout(layout_providers,  # type: t.List[t.Type[LayoutProvider]]
+    def __create_content_layout(layout_providers: t.List[t.Type[LayoutProvider]],
                                 source_providers: t.List[t.Type[SourceProvider]],
                                 root: str,
                                 walk: bool,
@@ -172,7 +172,7 @@ class DataContext:
 
         return self.__ansible_source
 
-    def register_payload_callback(self, callback):  # type: (t.Callable[[t.List[t.Tuple[str, str]]], None]) -> None
+    def register_payload_callback(self, callback: t.Callable[[t.List[t.Tuple[str, str]]], None]) -> None:
         """Register the given payload callback."""
         self.payload_callbacks.append(callback)
 

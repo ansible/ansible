@@ -80,7 +80,7 @@ def get_environment_plugins() -> t.Dict[str, t.Type[CloudEnvironment]]:
     return get_cloud_plugins()[1]
 
 
-def get_cloud_platforms(args, targets=None):  # type: (TestConfig, t.Optional[t.Tuple[IntegrationTarget, ...]]) -> t.List[str]
+def get_cloud_platforms(args: TestConfig, targets: t.Optional[t.Tuple[IntegrationTarget, ...]] = None) -> t.List[str]:
     """Return cloud platform names for the specified targets."""
     if isinstance(args, IntegrationConfig):
         if args.list_targets:
@@ -114,7 +114,7 @@ def get_cloud_platform(target: IntegrationTarget) -> t.Optional[str]:
     raise ApplicationError('Target %s aliases contains multiple cloud platforms: %s' % (target.name, ', '.join(sorted(cloud_platforms))))
 
 
-def get_cloud_providers(args, targets=None):  # type: (IntegrationConfig, t.Optional[t.Tuple[IntegrationTarget, ...]]) -> t.List[CloudProvider]
+def get_cloud_providers(args: IntegrationConfig, targets: t.Optional[t.Tuple[IntegrationTarget, ...]] = None) -> t.List[CloudProvider]:
     """Return a list of cloud providers for the given targets."""
     return [get_provider_plugins()[p](args) for p in get_cloud_platforms(args, targets)]
 
@@ -129,7 +129,7 @@ def get_cloud_environment(args: IntegrationConfig, target: IntegrationTarget) ->
     return get_environment_plugins()[cloud_platform](args)
 
 
-def cloud_filter(args, targets):  # type: (IntegrationConfig, t.Tuple[IntegrationTarget, ...]) -> t.List[str]
+def cloud_filter(args: IntegrationConfig, targets: t.Tuple[IntegrationTarget, ...]) -> t.List[str]:
     """Return a list of target names to exclude based on the given targets."""
     if args.metadata.cloud_config is not None:
         return []  # cloud filter already performed prior to delegation
@@ -142,7 +142,7 @@ def cloud_filter(args, targets):  # type: (IntegrationConfig, t.Tuple[Integratio
     return exclude
 
 
-def cloud_init(args, targets):  # type: (IntegrationConfig, t.Tuple[IntegrationTarget, ...]) -> None
+def cloud_init(args: IntegrationConfig, targets: t.Tuple[IntegrationTarget, ...]) -> None:
     """Initialize cloud plugins for the given targets."""
     if args.metadata.cloud_config is not None:
         return  # cloud configuration already established prior to delegation
@@ -151,7 +151,7 @@ def cloud_init(args, targets):  # type: (IntegrationConfig, t.Tuple[IntegrationT
 
     results = {}
 
-    for provider in get_cloud_providers(args, targets):  # type: CloudProvider
+    for provider in get_cloud_providers(args, targets):
         if args.prime_containers and not provider.uses_docker:
             continue
 
@@ -189,7 +189,7 @@ class CloudBase(metaclass=abc.ABCMeta):
         self.args = args
         self.platform = self.__module__.rsplit('.', 1)[-1]
 
-        def config_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+        def config_callback(files: t.List[t.Tuple[str, str]]) -> None:
             """Add the config file to the payload file list."""
             if self.platform not in self.args.metadata.cloud_config:
                 return  # platform was initialized, but not used -- such as being skipped due to all tests being disabled
@@ -243,14 +243,14 @@ class CloudBase(metaclass=abc.ABCMeta):
         """True if resources are managed by ansible-test, otherwise False."""
         self._set_cloud_config(self._MANAGED, value)
 
-    def _get_cloud_config(self, key, default=None):  # type: (str, t.Optional[t.Union[str, int, bool]]) -> t.Union[str, int, bool]
+    def _get_cloud_config(self, key: str, default: t.Optional[t.Union[str, int, bool]] = None) -> t.Union[str, int, bool]:
         """Return the specified value from the internal configuration."""
         if default is not None:
             return self.args.metadata.cloud_config[self.platform].get(key, default)
 
         return self.args.metadata.cloud_config[self.platform][key]
 
-    def _set_cloud_config(self, key, value):  # type: (str, t.Union[str, int, bool]) -> None
+    def _set_cloud_config(self, key: str, value: t.Union[str, int, bool]) -> None:
         """Set the specified key and value in the internal configuration."""
         self.args.metadata.cloud_config[self.platform][key] = value
 
@@ -270,7 +270,7 @@ class CloudProvider(CloudBase):
         self.uses_config = False
         self.uses_docker = False
 
-    def filter(self, targets, exclude):  # type: (t.Tuple[IntegrationTarget, ...], t.List[str]) -> None
+    def filter(self, targets: t.Tuple[IntegrationTarget, ...], exclude: t.List[str]) -> None:
         """Filter out the cloud tests when the necessary config and resources are not available."""
         if not self.uses_docker and not self.uses_config:
             return
@@ -345,7 +345,7 @@ class CloudProvider(CloudBase):
         return config
 
     @staticmethod
-    def _populate_config_template(template, values):  # type: (str, t.Dict[str, str]) -> str
+    def _populate_config_template(template: str, values: t.Dict[str, str]) -> str:
         """Populate and return the given template with the provided values."""
         for key in sorted(values):
             value = values[key]

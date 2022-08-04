@@ -22,11 +22,11 @@ def do_erase(
         completer: CompositeActionCompletionFinder,
 ) -> None:
     """Command line parsing for the `coverage erase` command."""
-    parser = subparsers.add_parser(
+    parser: argparse.ArgumentParser = subparsers.add_parser(
         'erase',
         parents=[parent],
         help='erase coverage data files',
-    )  # type: argparse.ArgumentParser
+    )
 
     parser.set_defaults(
         func=command_coverage_erase,

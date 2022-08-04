@@ -58,13 +58,13 @@ def categorize_changes(args: TestConfig, paths: t.List[str], verbose_command: t.
     """Categorize the given list of changed paths and return a description of the changes."""
     mapper = PathMapper(args)
 
-    commands = {
+    commands: t.Dict[str, t.Set[str]] = {
         'sanity': set(),
         'units': set(),
         'integration': set(),
         'windows-integration': set(),
         'network-integration': set(),
-    }  # type: t.Dict[str, t.Set[str]]
+    }
 
     focused_commands = collections.defaultdict(set)
 
@@ -206,9 +206,9 @@ class PathMapper:
         self.prefixes = load_integration_prefixes()
         self.integration_dependencies = analyze_integration_target_dependencies(self.integration_targets)
 
-        self.python_module_utils_imports = {}  # type: t.Dict[str, t.Set[str]]  # populated on first use to reduce overhead when not needed
-        self.powershell_module_utils_imports = {}  # type: t.Dict[str, t.Set[str]]  # populated on first use to reduce overhead when not needed
-        self.csharp_module_utils_imports = {}  # type: t.Dict[str, t.Set[str]]  # populated on first use to reduce overhead when not needed
+        self.python_module_utils_imports: t.Dict[str, t.Set[str]] = {}  # populated on first use to reduce overhead when not needed
+        self.powershell_module_utils_imports: t.Dict[str, t.Set[str]] = {}  # populated on first use to reduce overhead when not needed
+        self.csharp_module_utils_imports: t.Dict[str, t.Set[str]] = {}  # populated on first use to reduce overhead when not needed
 
         self.paths_to_dependent_targets: t.Dict[str, t.Set[IntegrationTarget]] = {}
 

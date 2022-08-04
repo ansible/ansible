@@ -31,11 +31,11 @@ def do_posix_integration(
         completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `integration` command."""
-    parser = subparsers.add_parser(
+    parser: argparse.ArgumentParser = subparsers.add_parser(
         'integration',
         parents=[parent],
         help='posix integration tests',
-    )  # type: argparse.ArgumentParser
+    )
 
     parser.set_defaults(
         func=command_posix_integration,
