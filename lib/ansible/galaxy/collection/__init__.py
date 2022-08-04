@@ -41,8 +41,8 @@ else:
     HAS_PACKAGING = True
 
 try:
-    from distlib.manifest import Manifest
-    from distlib import DistlibException
+    from distlib.manifest import Manifest  # type: ignore[import]
+    from distlib import DistlibException  # type: ignore[import]
 except ImportError:
     HAS_DISTLIB = False
 else:
@@ -1017,7 +1017,7 @@ def _verify_file_hash(b_path, filename, expected_hash, error_queue):
 
 
 def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns, manifest_directives):
-    # type: (bytes, str, str, list[str]) -> FilesManifestType
+    # type: (bytes, str, str, list[str], list[str]) -> FilesManifestType
     # We always ignore .pyc and .retry files as well as some well known version control directories. The ignore
     # patterns can be extended by the build_ignore key in galaxy.yml
     if ignore_patterns and manifest_directives:
