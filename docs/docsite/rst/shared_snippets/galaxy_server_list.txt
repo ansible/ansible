@@ -75,5 +75,4 @@ For operations that use only one Galaxy server (for example, the ``publish``, ``
 ``server_list``, unless you pass in an explicit server with the ``--server`` argument.
 
 .. note::
-    Once a collection is found, any of its requirements are only searched within the same Galaxy instance as the parent
-    collection. The install process will not search for a collection requirement in a different Galaxy instance.
+    ``ansible-galaxy`` can seek out dependencies on other configured Galaxy instances to support the use case where a collection can depend on a collection from another Galaxy instance.
