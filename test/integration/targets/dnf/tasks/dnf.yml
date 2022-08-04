@@ -832,3 +832,31 @@
     - dnf:
         name: langpacks-ja
         state: absent
+
+- name: ensure present/install does not upgrade a package
+  block:
+    - name: start clean
+      dnf:
+        name: dinginessentail
+        state: absent
+
+    - name: install
+      dnf:
+        name: dinginessentail-1.0
+        state: present
+
+    - name: actually test
+      dnf:
+        name: dinginessentail
+        state: present
+        register: didiupdate
+
+    - name: actually verify
+      assert:
+        that:
+          - didiupdate is not changed
+  always:
+    - name: cleanup
+      dnf:
+        name: dinginessentail
+        state: absent
