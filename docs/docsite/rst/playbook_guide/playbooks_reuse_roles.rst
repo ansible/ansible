@@ -246,6 +246,8 @@ You can pass other keywords, including variables and tags, when importing roles:
 
 When you add a tag to an ``import_role`` statement, Ansible applies the tag to `all` tasks within the role. See :ref:`tag_inheritance` for details.
 
+.. _role_argument_spec:
+
 Role argument validation
 ========================
 
