@@ -30,7 +30,7 @@
     - name: verify update
       assert:
         that:
-          - didiupdate isnot changed
+          - didiupdate is not changed
   always:
     - name: cleanup
       dnf:
