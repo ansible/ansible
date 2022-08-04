@@ -147,6 +147,6 @@ class CoverageReportConfig(CoverageCombineConfig):
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
-        self.show_missing = args.show_missing  # type: bool
-        self.include = args.include  # type: str
-        self.omit = args.omit  # type: str
+        self.show_missing: bool = args.show_missing
+        self.include: str = args.include
+        self.omit: str = args.omit

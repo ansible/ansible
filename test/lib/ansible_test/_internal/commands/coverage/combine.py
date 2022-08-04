@@ -353,9 +353,9 @@ class CoverageCombineConfig(CoverageConfig):
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
-        self.group_by = frozenset(args.group_by) if args.group_by else frozenset()  # type: t.FrozenSet[str]
-        self.all = args.all  # type: bool
-        self.stub = args.stub  # type: bool
+        self.group_by: t.FrozenSet[str] = frozenset(args.group_by) if args.group_by else frozenset()
+        self.all: bool = args.all
+        self.stub: bool = args.stub
 
         # only available to coverage combine
-        self.export = args.export if 'export' in args else False  # type: str
+        self.export: str = args.export if 'export' in args else False

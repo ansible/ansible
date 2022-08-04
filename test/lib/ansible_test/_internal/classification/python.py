@@ -102,7 +102,7 @@ def get_python_module_utils_imports(compile_targets: t.List[TestTarget]) -> t.Di
                         display.info('%s inherits import %s via %s' % (target_path, module_util_import, module_util), verbosity=6)
                         modules.add(module_util_import)
 
-    imports = {module_util: set() for module_util in module_utils | virtual_utils}  # type: t.Dict[str, t.Set[str]]
+    imports: t.Dict[str, t.Set[str]] = {module_util: set() for module_util in module_utils | virtual_utils}
 
     for target_path, modules in imports_by_target_path.items():
         for module_util in modules:
@@ -236,7 +236,7 @@ class ModuleUtilFinder(ast.NodeVisitor):
     def __init__(self, path: str, module_utils: t.Set[str]) -> None:
         self.path = path
         self.module_utils = module_utils
-        self.imports = set()  # type: t.Set[str]
+        self.imports: t.Set[str] = set()
 
         # implicitly import parent package
 

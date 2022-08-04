@@ -33,7 +33,7 @@ class CoverageAnalyzeTargetsConfig(CoverageAnalyzeConfig):
 
 def make_report(target_indexes: TargetIndexes, arcs: Arcs, lines: Lines) -> t.Dict[str, t.Any]:
     """Condense target indexes, arcs and lines into a compact report."""
-    set_indexes = {}  # type: TargetSetIndexes
+    set_indexes: TargetSetIndexes = {}
     arc_refs = dict((path, dict((format_arc(arc), get_target_set_index(indexes, set_indexes)) for arc, indexes in data.items())) for path, data in arcs.items())
     line_refs = dict((path, dict((line, get_target_set_index(indexes, set_indexes)) for line, indexes in data.items())) for path, data in lines.items())
 
@@ -50,10 +50,10 @@ def make_report(target_indexes: TargetIndexes, arcs: Arcs, lines: Lines) -> t.Di
 def load_report(report):  # type: (t.Dict[str, t.Any]) -> t.Tuple[t.List[str], Arcs, Lines]
     """Extract target indexes, arcs and lines from an existing report."""
     try:
-        target_indexes = report['targets']  # type: t.List[str]
-        target_sets = report['target_sets']  # type: t.List[t.List[int]]
-        arc_data = report['arcs']  # type: t.Dict[str, t.Dict[str, int]]
-        line_data = report['lines']  # type: t.Dict[str, t.Dict[int, int]]
+        target_indexes: t.List[str] = report['targets']
+        target_sets: t.List[t.List[int]] = report['target_sets']
+        arc_data: t.Dict[str, t.Dict[str, int]] = report['arcs']
+        line_data: t.Dict[str, t.Dict[int, int]] = report['lines']
     except KeyError as ex:
         raise ApplicationError('Document is missing key "%s".' % ex.args)
     except TypeError:
@@ -117,12 +117,12 @@ def get_target_index(name: str, target_indexes: TargetIndexes) -> int:
 
 
 def expand_indexes(
-        source_data,  # type: IndexedPoints
-        source_index,  # type: t.List[str]
-        format_func,  # type: t.Callable[[TargetKey], str]
-):  # type: (...) -> NamedPoints
+        source_data: IndexedPoints,
+        source_index: t.List[str],
+        format_func: t.Callable[[TargetKey], str],
+) -> NamedPoints:
     """Expand indexes from the source into target names for easier processing of the data (arcs or lines)."""
-    combined_data = {}  # type: t.Dict[str, t.Dict[t.Any, t.Set[str]]]
+    combined_data: t.Dict[str, t.Dict[t.Any, t.Set[str]]] = {}
 
     for covered_path, covered_points in source_data.items():
         combined_points = combined_data.setdefault(covered_path, {})
@@ -138,7 +138,7 @@ def expand_indexes(
 
 def generate_indexes(target_indexes: TargetIndexes, data: NamedPoints) -> IndexedPoints:
     """Return an indexed version of the given data (arcs or points)."""
-    results = {}  # type: IndexedPoints
+    results: IndexedPoints = {}
 
     for path, points in data.items():
         result_points = results[path] = {}

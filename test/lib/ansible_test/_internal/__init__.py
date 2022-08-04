@@ -53,7 +53,7 @@ def main(cli_args: t.Optional[t.List[str]] = None) -> None:
     try:
         os.chdir(data_context().content.root)
         args = parse_args(cli_args)
-        config = args.config(args)  # type: CommonConfig
+        config: CommonConfig = args.config(args)
         display.verbosity = config.verbosity
         display.truncate = config.truncate
         display.redact = config.redact

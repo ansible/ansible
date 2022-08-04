@@ -32,12 +32,12 @@ class CoverageAnalyzeTargetsFilterConfig(CoverageAnalyzeTargetsConfig):
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
-        self.input_file = args.input_file  # type: str
-        self.output_file = args.output_file  # type: str
-        self.include_targets = args.include_targets  # type: t.List[str]
-        self.exclude_targets = args.exclude_targets  # type: t.List[str]
-        self.include_path = args.include_path  # type: t.Optional[str]
-        self.exclude_path = args.exclude_path  # type: t.Optional[str]
+        self.input_file: str = args.input_file
+        self.output_file: str = args.output_file
+        self.include_targets: t.List[str] = args.include_targets
+        self.exclude_targets: t.List[str] = args.exclude_targets
+        self.include_path: t.Optional[str] = args.include_path
+        self.exclude_path: t.Optional[str] = args.exclude_path
 
 
 def command_coverage_analyze_targets_filter(args: CoverageAnalyzeTargetsFilterConfig) -> None:
@@ -81,7 +81,7 @@ def command_coverage_analyze_targets_filter(args: CoverageAnalyzeTargetsFilterCo
     filtered_path_arcs = filter_data(filtered_path_arcs, path_filter_func, target_filter_func)
     filtered_path_lines = filter_data(filtered_path_lines, path_filter_func, target_filter_func)
 
-    target_indexes = {}  # type: TargetIndexes
+    target_indexes: TargetIndexes = {}
     indexed_path_arcs = generate_indexes(target_indexes, filtered_path_arcs)
     indexed_path_lines = generate_indexes(target_indexes, filtered_path_lines)
 
@@ -91,12 +91,12 @@ def command_coverage_analyze_targets_filter(args: CoverageAnalyzeTargetsFilterCo
 
 
 def filter_data(
-        data,  # type: NamedPoints
-        path_filter_func,  # type: t.Callable[[str], bool]
-        target_filter_func,  # type: t.Callable[[t.Set[str]], t.Set[str]]
-):  # type: (...) -> NamedPoints
+        data: NamedPoints,
+        path_filter_func: t.Callable[[str], bool],
+        target_filter_func: t.Callable[[t.Set[str]], t.Set[str]],
+) -> NamedPoints:
     """Filter the data set using the specified filter function."""
-    result = {}  # type: NamedPoints
+    result: NamedPoints = {}
 
     for src_path, src_points in data.items():
         if not path_filter_func(src_path):

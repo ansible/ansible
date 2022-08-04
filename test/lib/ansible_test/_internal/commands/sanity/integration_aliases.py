@@ -106,8 +106,8 @@ class IntegrationAliasesTest(SanitySingleVersion):
     def __init__(self):
         super().__init__()
 
-        self._ci_config = {}  # type: t.Dict[str, t.Any]
-        self._ci_test_groups = {}  # type: t.Dict[str, t.List[int]]
+        self._ci_config: t.Dict[str, t.Any] = {}
+        self._ci_test_groups: t.Dict[str, t.List[int]] = {}
 
     @property
     def can_ignore(self) -> bool:
@@ -130,7 +130,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
     def ci_test_groups(self) -> t.Dict[str, t.List[int]]:
         """Return a dictionary of CI test names and their group(s)."""
         if not self._ci_test_groups:
-            test_groups = {}  # type: t.Dict[str, t.Set[int]]
+            test_groups: t.Dict[str, t.Set[int]] = {}
 
             for stage in self._ci_config['stages']:
                 for job in stage['jobs']:
@@ -321,10 +321,10 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
     def check_ci_group(
             self,
-            targets,  # type: t.Tuple[CompletionTarget, ...]
-            find,  # type: str
-            find_incidental=None,  # type: t.Optional[t.List[str]]
-    ):  # type: (...) -> t.List[SanityMessage]
+            targets: t.Tuple[CompletionTarget, ...],
+            find: str,
+            find_incidental: t.Optional[t.List[str]] = None,
+    ) -> t.List[SanityMessage]:
         """Check the CI groups set in the provided targets and return a list of messages with any issues found."""
         all_paths = set(target.path for target in targets)
         supported_paths = set(target.path for target in filter_targets(targets, [find], directories=False, errors=False))

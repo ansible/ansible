@@ -14,9 +14,9 @@ from ....environments import (
 
 def do_analyze(
         subparsers,
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
-):  # type: (...) -> None
+        parent: argparse.ArgumentParser,
+        completer: CompositeActionCompletionFinder,
+) -> None:
     """Command line parsing for all `coverage analyze` commands."""
     parser = subparsers.add_parser(
         'analyze',

@@ -27,8 +27,8 @@ from .windows import (
 
 def do_integration(
         subparsers,
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
+        parent: argparse.ArgumentParser,
+        completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for all integration commands."""
     parser = argparse.ArgumentParser(
@@ -42,7 +42,7 @@ def do_integration(
 
 
 def add_integration_common(
-        parser,  # type: argparse.ArgumentParser
+        parser: argparse.ArgumentParser,
 ):
     """Add common integration arguments."""
     register_completer(parser.add_argument(

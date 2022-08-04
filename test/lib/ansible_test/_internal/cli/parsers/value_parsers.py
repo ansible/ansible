@@ -60,10 +60,10 @@ class PythonParser(Parser):
     The origin host and unknown environments assume all relevant Python versions are available.
     """
     def __init__(self,
-                 versions,  # type: t.Sequence[str]
+                 versions: t.Sequence[str],
                  *,
-                 allow_default,  # type: bool
-                 allow_venv,  # type: bool
+                 allow_default: bool,
+                 allow_venv: bool,
                  ):
         version_choices = list(versions)
 

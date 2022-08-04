@@ -66,7 +66,7 @@ def command_shell(args: ShellConfig) -> None:
 
     if isinstance(target_profile, ControllerProfile):
         # run the shell locally unless a target was requested
-        con = LocalConnection(args)  # type: Connection
+        con: Connection = LocalConnection(args)
 
         if args.export:
             display.info('Configuring controller inventory.', verbosity=1)
@@ -90,7 +90,7 @@ def command_shell(args: ShellConfig) -> None:
         return
 
     if isinstance(con, SshConnection) and args.raw:
-        cmd = []  # type: t.List[str]
+        cmd: t.List[str] = []
     elif isinstance(target_profile, PosixProfile):
         cmd = []
 

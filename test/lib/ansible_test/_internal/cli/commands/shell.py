@@ -21,8 +21,8 @@ from ..environments import (
 
 def do_shell(
         subparsers,
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
+        parent: argparse.ArgumentParser,
+        completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `shell` command."""
     parser = subparsers.add_parser(

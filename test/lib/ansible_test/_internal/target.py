@@ -64,11 +64,11 @@ def walk_completion_targets(targets: t.Iterable[CompletionTarget], prefix: str, 
 
 
 def walk_internal_targets(
-        targets,  # type: t.Iterable[TCompletionTarget]
-        includes=None,  # type: t.Optional[t.List[str]]
-        excludes=None,  # type: t.Optional[t.List[str]]
-        requires=None,  # type: t.Optional[t.List[str]]
-):  # type: (...) -> t.Tuple[TCompletionTarget, ...]
+        targets: t.Iterable[TCompletionTarget],
+        includes: t.Optional[t.List[str]] = None,
+        excludes: t.Optional[t.List[str]] = None,
+        requires: t.Optional[t.List[str]] = None,
+) -> t.Tuple[TCompletionTarget, ...]:
     """Return a tuple of matching completion targets."""
     targets = tuple(targets)
 
@@ -86,11 +86,11 @@ def walk_internal_targets(
 
 
 def filter_targets(targets,  # type: t.Iterable[TCompletionTarget]
-                   patterns,  # type: t.List[str]
-                   include=True,  # type: bool
-                   directories=True,  # type: bool
-                   errors=True,  # type: bool
-                   ):  # type: (...) -> t.Iterable[TCompletionTarget]
+                   patterns: t.List[str],
+                   include: bool = True,
+                   directories: bool = True,
+                   errors: bool = True,
+                   ) -> t.Iterable[TCompletionTarget]:
     """Iterate over the given targets and filter them based on the supplied arguments."""
     unmatched = set(patterns or ())
     compiled_patterns = dict((p, re.compile('^%s$' % p)) for p in patterns) if patterns else None
@@ -263,14 +263,14 @@ def load_integration_prefixes():
 
 
 def walk_test_targets(
-        path=None,  # type: t.Optional[str]
-        module_path=None,  # type: t.Optional[str]
-        extensions=None,  # type: t.Optional[t.Tuple[str, ...]]
-        prefix=None,  # type: t.Optional[str]
-        extra_dirs=None,  # type: t.Optional[t.Tuple[str, ...]]
-        include_symlinks=False,  # type: bool
-        include_symlinked_directories=False,  # type: bool
-):  # type: (...) -> t.Iterable[TestTarget]
+        path: t.Optional[str] = None,
+        module_path: t.Optional[str] = None,
+        extensions: t.Optional[t.Tuple[str, ...]] = None,
+        prefix: t.Optional[str] = None,
+        extra_dirs: t.Optional[t.Tuple[str, ...]] = None,
+        include_symlinks: bool = False,
+        include_symlinked_directories: bool = False,
+) -> t.Iterable[TestTarget]:
     """Iterate over available test targets."""
     if path:
         file_paths = data_context().content.walk_files(path, include_symlinked_directories=include_symlinked_directories)
@@ -454,11 +454,11 @@ class TestTarget(CompletionTarget):
     """Generic test target."""
     def __init__(
             self,
-            path,  # type: str
-            module_path,  # type: t.Optional[str]
-            module_prefix,  # type: t.Optional[str]
-            base_path,  # type: str
-            symlink=None,  # type: t.Optional[bool]
+            path: str,
+            module_path: t.Optional[str],
+            module_prefix: t.Optional[str],
+            base_path: str,
+            symlink: t.Optional[bool] = None,
     ):
         super().__init__()
 
@@ -502,7 +502,7 @@ class IntegrationTargetType(enum.Enum):
 def extract_plugin_references(name: str, aliases: t.List[str]) -> t.List[t.Tuple[str, str]]:
     """Return a list of plugin references found in the given integration test target name and aliases."""
     plugins = content_plugins()
-    found = []  # type: t.List[t.Tuple[str, str]]
+    found: t.List[t.Tuple[str, str]] = []
 
     for alias in [name] + aliases:
         plugin_type = 'modules'

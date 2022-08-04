@@ -60,9 +60,9 @@ class DataContext:
 
         self.__layout_providers = layout_providers
         self.__source_providers = source_providers
-        self.__ansible_source = None  # type: t.Optional[t.Tuple[t.Tuple[str, str], ...]]
+        self.__ansible_source: t.Optional[t.Tuple[t.Tuple[str, str], ...]] = None
 
-        self.payload_callbacks = []  # type: t.List[t.Callable[[t.List[t.Tuple[str, str]]], None]]
+        self.payload_callbacks: t.List[t.Callable[[t.List[t.Tuple[str, str]]], None]] = []
 
         if content_path:
             content = self.__create_content_layout(layout_providers, source_providers, content_path, False)
@@ -71,7 +71,7 @@ class DataContext:
         else:
             content = self.__create_content_layout(layout_providers, source_providers, current_path, True)
 
-        self.content = content  # type: ContentLayout
+        self.content: ContentLayout = content
 
     def create_collection_layouts(self) -> t.List[ContentLayout]:
         """
@@ -113,10 +113,10 @@ class DataContext:
 
     @staticmethod
     def __create_content_layout(layout_providers,  # type: t.List[t.Type[LayoutProvider]]
-                                source_providers,  # type: t.List[t.Type[SourceProvider]]
-                                root,  # type: str
-                                walk,  # type: bool
-                                ):  # type: (...) -> ContentLayout
+                                source_providers: t.List[t.Type[SourceProvider]],
+                                root: str,
+                                walk: bool,
+                                ) -> ContentLayout:
         """Create a content layout using the given providers and root path."""
         try:
             layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk)
@@ -129,7 +129,7 @@ class DataContext:
             # Doing so allows support for older git versions for which it is difficult to distinguish between a super project and a sub project.
             # It also provides a better user experience, since the solution for the user would effectively be the same -- to remove the nested version control.
             if isinstance(layout_provider, UnsupportedLayout):
-                source_provider = UnsupportedSource(layout_provider.root)  # type: SourceProvider
+                source_provider: SourceProvider = UnsupportedSource(layout_provider.root)
             else:
                 source_provider = find_path_provider(SourceProvider, source_providers, layout_provider.root, walk)
         except ProviderNotFoundForPath:
@@ -249,7 +249,7 @@ def content_plugins():
     Analyze content.
     The primary purpose of this analysis is to facilitate mapping of integration tests to the plugin(s) they are intended to test.
     """
-    plugins = {}  # type: t.Dict[str, t.Dict[str, PluginInfo]]
+    plugins: t.Dict[str, t.Dict[str, PluginInfo]] = {}
 
     for plugin_type, plugin_directory in data_context().content.plugin_paths.items():
         plugin_paths = sorted(data_context().content.walk_files(plugin_directory))

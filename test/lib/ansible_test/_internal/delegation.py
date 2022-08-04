@@ -254,13 +254,13 @@ def download_results(args: EnvironmentConfig, con: Connection, content_root: str
 
 
 def generate_command(
-        args,  # type: EnvironmentConfig
-        python,  # type: PythonConfig
-        ansible_bin_path,  # type: str
-        content_root,  # type: str
-        exclude,  # type: t.List[str]
-        require,  # type: t.List[str]
-):  # type: (...) -> t.List[str]
+        args: EnvironmentConfig,
+        python: PythonConfig,
+        ansible_bin_path: str,
+        content_root: str,
+        exclude: t.List[str],
+        require: t.List[str],
+) -> t.List[str]:
     """Generate the command necessary to delegate ansible-test."""
     cmd = [os.path.join(ansible_bin_path, 'ansible-test')]
     cmd = [python.path] + cmd
@@ -306,11 +306,11 @@ def generate_command(
 
 
 def filter_options(
-        args,  # type: EnvironmentConfig
-        argv,  # type: t.List[str]
-        exclude,  # type: t.List[str]
-        require,  # type: t.List[str]
-):  # type: (...) -> t.Iterable[str]
+        args: EnvironmentConfig,
+        argv: t.List[str],
+        exclude: t.List[str],
+        require: t.List[str],
+) -> t.Iterable[str]:
     """Return an iterable that filters out unwanted CLI options and injects new ones as requested."""
     replace: list[tuple[str, int, t.Optional[t.Union[bool, str, list[str]]]]] = [
         ('--docker-no-pull', 0, False),

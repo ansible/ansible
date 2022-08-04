@@ -37,15 +37,15 @@ class RegisteredCompletionFinder(OptionCompletionFinder):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.registered_completions = None  # type: t.Optional[t.List[str]]
+        self.registered_completions: t.Optional[t.List[str]] = None
 
     def completer(
             self,
-            prefix,  # type: str
-            action,  # type: argparse.Action
-            parsed_args,  # type: argparse.Namespace
+            prefix: str,
+            action: argparse.Action,
+            parsed_args: argparse.Namespace,
             **kwargs,
-    ):  # type: (...) -> t.List[str]
+    ) -> t.List[str]:
         """
         Return a list of completions for the specified prefix and action.
         Use this as the completer function for argcomplete.
@@ -64,10 +64,10 @@ class RegisteredCompletionFinder(OptionCompletionFinder):
     @abc.abstractmethod
     def get_completions(
             self,
-            prefix,  # type: str
-            action,  # type: argparse.Action
-            parsed_args,  # type: argparse.Namespace
-    ):  # type: (...) -> t.List[str]
+            prefix: str,
+            action: argparse.Action,
+            parsed_args: argparse.Namespace,
+    ) -> t.List[str]:
         """
         Return a list of completions for the specified prefix and action.
         Called by the complete function.
@@ -86,7 +86,7 @@ class RegisteredCompletionFinder(OptionCompletionFinder):
 
 class CompositeAction(argparse.Action, metaclass=abc.ABCMeta):
     """Base class for actions that parse composite arguments."""
-    documentation_state = {}  # type: t.Dict[t.Type[CompositeAction], DocumentationState]
+    documentation_state: t.Dict[t.Type[CompositeAction], DocumentationState] = {}
 
     def __init__(
             self,
@@ -136,10 +136,10 @@ class CompositeActionCompletionFinder(RegisteredCompletionFinder):
     """Completion finder with support for composite argument parsing."""
     def get_completions(
             self,
-            prefix,  # type: str
-            action,  # type: argparse.Action
-            parsed_args,  # type: argparse.Namespace
-    ):  # type: (...) -> t.List[str]
+            prefix: str,
+            action: argparse.Action,
+            parsed_args: argparse.Namespace,
+    ) -> t.List[str]:
         """Return a list of completions appropriate for the given prefix and action, taking into account the arguments that have already been parsed."""
         assert isinstance(action, CompositeAction)
 
@@ -232,9 +232,9 @@ def detect_false_file_completion(value: str, mode: ParserMode) -> bool:
 
 
 def complete(
-        completer,  # type: Parser
-        state,  # type: ParserState
-):  # type: (...) -> Completion
+        completer: Parser,
+        state: ParserState,
+) -> Completion:
     """Perform argument completion using the given completer and return the completion result."""
     value = state.remainder
 

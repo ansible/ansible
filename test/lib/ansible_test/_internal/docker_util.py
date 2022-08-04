@@ -285,12 +285,12 @@ def docker_cp_to(args: EnvironmentConfig, container_id: str, src: str, dst: str)
 
 
 def docker_run(
-        args,  # type: EnvironmentConfig
-        image,  # type: str
-        options,  # type: t.Optional[t.List[str]]
-        cmd=None,  # type: t.Optional[t.List[str]]
-        create_only=False,  # type: bool
-):  # type: (...) -> str
+        args: EnvironmentConfig,
+        image: str,
+        options: t.Optional[t.List[str]],
+        cmd: t.Optional[t.List[str]] = None,
+        create_only: bool = False,
+) -> str:
     """Run a container using the given docker image."""
     if not options:
         options = []
@@ -509,17 +509,17 @@ def docker_image_exists(args: EnvironmentConfig, image: str) -> bool:
 
 
 def docker_exec(
-        args,  # type: EnvironmentConfig
-        container_id,  # type: str
-        cmd,  # type: t.List[str]
-        capture,  # type: bool
-        options=None,  # type: t.Optional[t.List[str]]
-        stdin=None,  # type: t.Optional[t.IO[bytes]]
-        stdout=None,  # type: t.Optional[t.IO[bytes]]
-        interactive=False,  # type: bool
-        output_stream=None,  # type: t.Optional[OutputStream]
-        data=None,  # type: t.Optional[str]
-):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+        args: EnvironmentConfig,
+        container_id: str,
+        cmd: t.List[str],
+        capture: bool,
+        options: t.Optional[t.List[str]] = None,
+        stdin: t.Optional[t.IO[bytes]] = None,
+        stdout: t.Optional[t.IO[bytes]] = None,
+        interactive: bool = False,
+        output_stream: t.Optional[OutputStream] = None,
+        data: t.Optional[str] = None,
+) -> t.Tuple[t.Optional[str], t.Optional[str]]:
     """Execute the given command in the specified container."""
     if not options:
         options = []
@@ -544,16 +544,16 @@ def docker_version(args: CommonConfig) -> t.Dict[str, t.Any]:
 
 
 def docker_command(
-        args,  # type: CommonConfig
-        cmd,  # type: t.List[str]
-        capture,  # type: bool
-        stdin=None,  # type: t.Optional[t.IO[bytes]]
-        stdout=None,  # type: t.Optional[t.IO[bytes]]
-        interactive=False,  # type: bool
-        output_stream=None,  # type: t.Optional[OutputStream]
-        always=False,  # type: bool
-        data=None,  # type: t.Optional[str]
-):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+        args: CommonConfig,
+        cmd: t.List[str],
+        capture: bool,
+        stdin: t.Optional[t.IO[bytes]] = None,
+        stdout: t.Optional[t.IO[bytes]] = None,
+        interactive: bool = False,
+        output_stream: t.Optional[OutputStream] = None,
+        always: bool = False,
+        data: t.Optional[str] = None,
+) -> t.Tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified docker command."""
     env = docker_environment()
     command = [require_docker().command]

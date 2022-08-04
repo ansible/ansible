@@ -62,7 +62,7 @@ TBase = t.TypeVar('TBase')
 TKey = t.TypeVar('TKey')
 TValue = t.TypeVar('TValue')
 
-PYTHON_PATHS = {}  # type: t.Dict[str, str]
+PYTHON_PATHS: t.Dict[str, str] = {}
 
 COVERAGE_CONFIG_NAME = 'coveragerc'
 
@@ -143,7 +143,7 @@ def is_valid_identifier(value: str) -> bool:
 
 def cache(func):  # type: (t.Callable[[], TValue]) -> t.Callable[[], TValue]
     """Enforce exclusive access on a decorated function and cache the result."""
-    storage = {}  # type: t.Dict[None, TValue]
+    storage: t.Dict[None, TValue] = {}
     sentinel = object()
 
     @functools.wraps(func)
@@ -345,20 +345,20 @@ def get_available_python_versions() -> t.Dict[str, str]:
 
 
 def raw_command(
-        cmd,  # type: t.Iterable[str]
-        capture,  # type: bool
-        env=None,  # type: t.Optional[t.Dict[str, str]]
-        data=None,  # type: t.Optional[str]
-        cwd=None,  # type: t.Optional[str]
-        explain=False,  # type: bool
-        stdin=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
-        stdout=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
-        interactive=False,  # type: bool
-        output_stream=None,  # type: t.Optional[OutputStream]
-        cmd_verbosity=1,  # type: int
-        str_errors='strict',  # type: str
-        error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
-):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+        cmd: t.Iterable[str],
+        capture: bool,
+        env: t.Optional[t.Dict[str, str]] = None,
+        data: t.Optional[str] = None,
+        cwd: t.Optional[str] = None,
+        explain: bool = False,
+        stdin: t.Optional[t.Union[t.IO[bytes], int]] = None,
+        stdout: t.Optional[t.Union[t.IO[bytes], int]] = None,
+        interactive: bool = False,
+        output_stream: t.Optional[OutputStream] = None,
+        cmd_verbosity: int = 1,
+        str_errors: str = 'strict',
+        error_callback: t.Optional[t.Callable[[SubprocessError], None]] = None,
+) -> t.Tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command and return stdout and stderr as a tuple."""
     output_stream = output_stream or OutputStream.AUTO
 
@@ -577,7 +577,7 @@ class ReaderThread(WrappedThread, metaclass=abc.ABCMeta):
 
         self.handle = handle
         self.buffer = buffer
-        self.lines = []  # type: t.List[bytes]
+        self.lines: t.List[bytes] = []
 
     @abc.abstractmethod
     def _run(self) -> None:
@@ -849,11 +849,11 @@ class Display:
 
     def print_message(  # pylint: disable=locally-disabled, invalid-name
             self,
-            message,  # type: str
-            color=None,  # type: t.Optional[str]
-            stderr=False,  # type: bool
-            truncate=False,  # type: bool
-    ):  # type: (...) -> None
+            message: str,
+            color: t.Optional[str] = None,
+            stderr: bool = False,
+            truncate: bool = False,
+    ) -> None:
         """Display a message."""
         if self.redact and self.sensitive:
             for item in self.sensitive:
@@ -895,13 +895,13 @@ class SubprocessError(ApplicationError):
     """Error resulting from failed subprocess execution."""
     def __init__(
             self,
-            cmd,  # type: t.List[str]
-            status=0,  # type: int
-            stdout=None,  # type: t.Optional[str]
-            stderr=None,  # type: t.Optional[str]
-            runtime=None,  # type: t.Optional[float]
-            error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
-    ):  # type: (...) -> None
+            cmd: t.List[str],
+            status: int = 0,
+            stdout: t.Optional[str] = None,
+            stderr: t.Optional[str] = None,
+            runtime: t.Optional[float] = None,
+            error_callback: t.Optional[t.Callable[[SubprocessError], None]] = None,
+    ) -> None:
         message = 'Command "%s" returned exit status %s.\n' % (shlex.join(cmd), status)
 
         if stderr:
@@ -970,8 +970,8 @@ def parse_to_list_of_dict(pattern: str, value: str) -> t.List[t.Dict[str, str]]:
 
 def get_subclasses(class_type: t.Type[C]) -> t.List[t.Type[C]]:
     """Returns a list of types that are concrete subclasses of the given type."""
-    subclasses = set()  # type: t.Set[t.Type[C]]
-    queue = [class_type]  # type: t.List[t.Type[C]]
+    subclasses: t.Set[t.Type[C]] = set()
+    queue: t.List[t.Type[C]] = [class_type]
 
     while queue:
         parent = queue.pop()
@@ -1049,7 +1049,7 @@ def load_plugins(base_type, database):  # type: (t.Type[C], t.Dict[str, t.Type[C
     Load plugins of the specified type and track them in the specified database.
     Only plugins which have already been imported will be loaded.
     """
-    plugins = dict((sc.__module__.rsplit('.', 1)[1], sc) for sc in get_subclasses(base_type))  # type: t.Dict[str, t.Type[C]]
+    plugins: t.Dict[str, t.Type[C]] = dict((sc.__module__.rsplit('.', 1)[1], sc) for sc in get_subclasses(base_type))
 
     for plugin in plugins:
         database[plugin] = plugins[plugin]

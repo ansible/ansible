@@ -29,8 +29,8 @@ class CoverageAnalyzeTargetsExpandConfig(CoverageAnalyzeTargetsConfig):
     def __init__(self, args: t.Any) -> None:
         super().__init__(args)
 
-        self.input_file = args.input_file  # type: str
-        self.output_file = args.output_file  # type: str
+        self.input_file: str = args.input_file
+        self.output_file: str = args.output_file
 
 
 def command_coverage_analyze_targets_expand(args: CoverageAnalyzeTargetsExpandConfig) -> None:

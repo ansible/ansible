@@ -115,10 +115,10 @@ class AnsibleCoreCI:
 
     def __init__(
             self,
-            args,  # type: EnvironmentConfig
-            resource,  # type: Resource
-            load=True,  # type: bool
-    ):  # type: (...) -> None
+            args: EnvironmentConfig,
+            resource: Resource,
+            load: bool = True,
+    ) -> None:
         self.args = args
         self.resource = resource
         self.platform, self.version, self.arch, self.provider = self.resource.as_tuple()
@@ -162,7 +162,7 @@ class AnsibleCoreCI:
             self._clear()
 
         if self.instance_id:
-            self.started = True  # type: bool
+            self.started: bool = True
         else:
             self.started = False
             self.instance_id = str(uuid.uuid4())
@@ -531,13 +531,13 @@ class SshKey:
 class InstanceConnection:
     """Container for remote instance status and connection details."""
     def __init__(self,
-                 running,  # type: bool
-                 hostname=None,  # type: t.Optional[str]
-                 port=None,  # type: t.Optional[int]
-                 username=None,  # type: t.Optional[str]
-                 password=None,  # type: t.Optional[str]
-                 response_json=None,  # type: t.Optional[t.Dict[str, t.Any]]
-                 ):  # type: (...) -> None
+                 running: bool,
+                 hostname: t.Optional[str] = None,
+                 port: t.Optional[int] = None,
+                 username: t.Optional[str] = None,
+                 password: t.Optional[str] = None,
+                 response_json: t.Optional[t.Dict[str, t.Any]] = None,
+                 ) -> None:
         self.running = running
         self.hostname = hostname
         self.port = port

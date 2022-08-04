@@ -58,7 +58,7 @@ from .host_configs import (
     VirtualPythonConfig,
 )
 
-CHECK_YAML_VERSIONS = {}  # type: t.Dict[str, t.Any]
+CHECK_YAML_VERSIONS: t.Dict[str, t.Any] = {}
 
 
 class ShellScriptTemplate:
@@ -84,13 +84,13 @@ class ShellScriptTemplate:
 
 class ResultType:
     """Test result type."""
-    BOT = None  # type: ResultType
-    COVERAGE = None  # type: ResultType
-    DATA = None  # type: ResultType
-    JUNIT = None  # type: ResultType
-    LOGS = None  # type: ResultType
-    REPORTS = None  # type: ResultType
-    TMP = None   # type: ResultType
+    BOT: ResultType = None
+    COVERAGE: ResultType = None
+    DATA: ResultType = None
+    JUNIT: ResultType = None
+    LOGS: ResultType = None
+    REPORTS: ResultType = None
+    TMP: ResultType = None
 
     @staticmethod
     def _populate():
@@ -129,20 +129,20 @@ class CommonConfig:
         self.command = command
         self.interactive = False
         self.check_layout = True
-        self.success = None  # type: t.Optional[bool]
+        self.success: t.Optional[bool] = None
 
-        self.color = args.color  # type: bool
-        self.explain = args.explain  # type: bool
-        self.verbosity = args.verbosity  # type: int
-        self.debug = args.debug  # type: bool
-        self.truncate = args.truncate  # type: int
-        self.redact = args.redact  # type: bool
+        self.color: bool = args.color
+        self.explain: bool = args.explain
+        self.verbosity: int = args.verbosity
+        self.debug: bool = args.debug
+        self.truncate: int = args.truncate
+        self.redact: bool = args.redact
 
-        self.display_stderr = False  # type: bool
+        self.display_stderr: bool = False
 
         self.session_name = generate_name()
 
-        self.cache = {}  # type: t.Dict[str, t.Any]
+        self.cache: t.Dict[str, t.Any] = {}
 
     def get_ansible_config(self) -> str:
         """Return the path to the Ansible config for the given config."""
@@ -210,11 +210,11 @@ def named_temporary_file(args: CommonConfig, prefix: str, suffix: str, directory
 
 
 def write_json_test_results(category,  # type: ResultType
-                            name,  # type: str
-                            content,  # type: t.Union[t.List[t.Any], t.Dict[str, t.Any]]
-                            formatted=True,  # type: bool
-                            encoder=None,  # type: t.Optional[t.Type[json.JSONEncoder]]
-                            ):  # type: (...) -> None
+                            name: str,
+                            content: t.Union[t.List[t.Any], t.Dict[str, t.Any]],
+                            formatted: bool = True,
+                            encoder: t.Optional[t.Type[json.JSONEncoder]] = None,
+                            ) -> None:
     """Write the given json content to the specified test results path, creating directories as needed."""
     path = os.path.join(category.path, name)
     write_json_file(path, content, create_directories=True, formatted=formatted, encoder=encoder)
@@ -368,15 +368,15 @@ def cleanup_python_paths():
 
 
 def intercept_python(
-        args,  # type: CommonConfig
-        python,  # type: PythonConfig
-        cmd,  # type: t.List[str]
-        env,  # type: t.Dict[str, str]
-        capture,  # type: bool
-        data=None,  # type: t.Optional[str]
-        cwd=None,  # type: t.Optional[str]
-        always=False,  # type: bool
-):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+        args: CommonConfig,
+        python: PythonConfig,
+        cmd: t.List[str],
+        env: t.Dict[str, str],
+        capture: bool,
+        data: t.Optional[str] = None,
+        cwd: t.Optional[str] = None,
+        always: bool = False,
+) -> t.Tuple[t.Optional[str], t.Optional[str]]:
     """
     Run a command while intercepting invocations of Python to control the version used.
     If the specified Python is an ansible-test managed virtual environment, it will be added to PATH to activate it.
@@ -400,21 +400,21 @@ def intercept_python(
 
 
 def run_command(
-        args,  # type: CommonConfig
-        cmd,  # type: t.Iterable[str]
-        capture,  # type: bool
-        env=None,  # type: t.Optional[t.Dict[str, str]]
-        data=None,  # type: t.Optional[str]
-        cwd=None,  # type: t.Optional[str]
-        always=False,  # type: bool
-        stdin=None,  # type: t.Optional[t.IO[bytes]]
-        stdout=None,  # type: t.Optional[t.IO[bytes]]
-        interactive=False,  # type: bool
-        output_stream=None,  # type: t.Optional[OutputStream]
-        cmd_verbosity=1,  # type: int
-        str_errors='strict',  # type: str
-        error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
-):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+        args: CommonConfig,
+        cmd: t.Iterable[str],
+        capture: bool,
+        env: t.Optional[t.Dict[str, str]] = None,
+        data: t.Optional[str] = None,
+        cwd: t.Optional[str] = None,
+        always: bool = False,
+        stdin: t.Optional[t.IO[bytes]] = None,
+        stdout: t.Optional[t.IO[bytes]] = None,
+        interactive: bool = False,
+        output_stream: t.Optional[OutputStream] = None,
+        cmd_verbosity: int = 1,
+        str_errors: str = 'strict',
+        error_callback: t.Optional[t.Callable[[SubprocessError], None]] = None,
+) -> t.Tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command and return stdout and stderr as a tuple."""
     explain = args.explain and not always
     return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout, interactive=interactive,

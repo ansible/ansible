@@ -192,7 +192,7 @@ class TestSkipped(TestResult):
     def __init__(self, command: str, test: str, python_version: t.Optional[str] = None) -> None:
         super().__init__(command, test, python_version)
 
-        self.reason = None  # type: t.Optional[str]
+        self.reason: t.Optional[str] = None
 
     def write_console(self) -> None:
         """Write results to console."""
@@ -216,11 +216,11 @@ class TestFailure(TestResult):
     """Test failure."""
     def __init__(
             self,
-            command,  # type: str
-            test,  # type: str
-            python_version=None,  # type: t.Optional[str]
-            messages=None,  # type: t.Optional[t.Sequence[TestMessage]]
-            summary=None,  # type: t.Optional[str]
+            command: str,
+            test: str,
+            python_version: t.Optional[str] = None,
+            messages: t.Optional[t.Sequence[TestMessage]] = None,
+            summary: t.Optional[str] = None,
     ):
         super().__init__(command, test, python_version)
 
@@ -393,13 +393,13 @@ class TestMessage:
     """Single test message for one file."""
     def __init__(
             self,
-            message,  # type: str
-            path,  # type: str
-            line=0,  # type: int
-            column=0,  # type: int
-            level='error',  # type: str
-            code=None,  # type: t.Optional[str]
-            confidence=None,  # type: t.Optional[int]
+            message: str,
+            path: str,
+            line: int = 0,
+            column: int = 0,
+            level: str = 'error',
+            code: t.Optional[str] = None,
+            confidence: t.Optional[int] = None,
     ):
         self.__path = path
         self.__line = line

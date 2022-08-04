@@ -111,7 +111,7 @@ class MypyTest(SanityMultipleVersion):
             MyPyContext('modules', ['lib/ansible/modules/', 'lib/ansible/module_utils/'], remote_only_python_versions),
         )
 
-        unfiltered_messages = []  # type: t.List[SanityMessage]
+        unfiltered_messages: t.List[SanityMessage] = []
 
         for context in contexts:
             if python.version not in context.python_versions:
@@ -170,12 +170,12 @@ class MypyTest(SanityMultipleVersion):
 
     @staticmethod
     def test_context(
-            args,  # type: SanityConfig
-            virtualenv_python,  # type: VirtualPythonConfig
-            python,  # type: PythonConfig
-            context,  # type: MyPyContext
-            paths,  # type: t.List[str]
-    ):  # type: (...) -> t.List[SanityMessage]
+            args: SanityConfig,
+            virtualenv_python: VirtualPythonConfig,
+            python: PythonConfig,
+            context: MyPyContext,
+            paths: t.List[str],
+    ) -> t.List[SanityMessage]:
         """Run mypy tests for the specified context."""
         context_paths = [path for path in paths if any(is_subdir(path, match_path) for match_path in context.paths)]
 
