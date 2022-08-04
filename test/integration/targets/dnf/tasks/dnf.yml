@@ -849,7 +849,7 @@
       dnf:
         name: dinginessentail
         state: present
-        register: didiupdate
+      register: didiupdate
 
     - name: actually verify
       assert:
