@@ -80,8 +80,8 @@ def get_virtual_python(
 def create_virtual_environment(args,  # type: EnvironmentConfig
                                python: PythonConfig,
                                path: str,
-                               system_site_packages=False,  # type: bool
-                               pip=False,  # type: bool
+                               system_site_packages: bool = False,
+                               pip: bool = False,
                                ):  # type: (...) -> bool
     """Create a virtual environment using venv or virtualenv for the requested Python version."""
     if not os.path.exists(python.path):

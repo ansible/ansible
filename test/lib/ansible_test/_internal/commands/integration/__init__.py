@@ -401,8 +401,8 @@ def command_integration_filtered(
         targets: t.Tuple[IntegrationTarget, ...],
         all_targets: t.Tuple[IntegrationTarget, ...],
         inventory_path: str,
-        pre_target=None,  # type: t.Optional[t.Callable[[IntegrationTarget], None]]
-        post_target=None,  # type: t.Optional[t.Callable[[IntegrationTarget], None]]
+        pre_target: t.Optional[t.Callable[[IntegrationTarget], None]] = None,
+        post_target: t.Optional[t.Callable[[IntegrationTarget], None]] = None,
 ):
     """Run integration tests for the specified targets."""
     found = False

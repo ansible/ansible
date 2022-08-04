@@ -347,17 +347,17 @@ def get_available_python_versions() -> t.Dict[str, str]:
 def raw_command(
         cmd: t.Iterable[str],
         capture: bool,
-        env=None,  # type: t.Optional[t.Dict[str, str]]
-        data=None,  # type: t.Optional[str]
-        cwd=None,  # type: t.Optional[str]
-        explain=False,  # type: bool
-        stdin=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
-        stdout=None,  # type: t.Optional[t.Union[t.IO[bytes], int]]
-        interactive=False,  # type: bool
-        output_stream=None,  # type: t.Optional[OutputStream]
-        cmd_verbosity=1,  # type: int
-        str_errors='strict',  # type: str
-        error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
+        env: t.Optional[t.Dict[str, str]] = None,
+        data: t.Optional[str] = None,
+        cwd: t.Optional[str] = None,
+        explain: bool = False,
+        stdin: t.Optional[t.Union[t.IO[bytes], int]] = None,
+        stdout: t.Optional[t.Union[t.IO[bytes], int]] = None,
+        interactive: bool = False,
+        output_stream: t.Optional[OutputStream] = None,
+        cmd_verbosity: int = 1,
+        str_errors: str = 'strict',
+        error_callback: t.Optional[t.Callable[[SubprocessError], None]] = None,
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Run the specified command and return stdout and stderr as a tuple."""
     output_stream = output_stream or OutputStream.AUTO
@@ -850,9 +850,9 @@ class Display:
     def print_message(  # pylint: disable=locally-disabled, invalid-name
             self,
             message: str,
-            color=None,  # type: t.Optional[str]
-            stderr=False,  # type: bool
-            truncate=False,  # type: bool
+            color: t.Optional[str] = None,
+            stderr: bool = False,
+            truncate: bool = False,
     ):  # type: (...) -> None
         """Display a message."""
         if self.redact and self.sensitive:
@@ -896,11 +896,11 @@ class SubprocessError(ApplicationError):
     def __init__(
             self,
             cmd: t.List[str],
-            status=0,  # type: int
-            stdout=None,  # type: t.Optional[str]
-            stderr=None,  # type: t.Optional[str]
-            runtime=None,  # type: t.Optional[float]
-            error_callback=None,  # type: t.Optional[t.Callable[[SubprocessError], None]]
+            status: int = 0,
+            stdout: t.Optional[str] = None,
+            stderr: t.Optional[str] = None,
+            runtime: t.Optional[float] = None,
+            error_callback: t.Optional[t.Callable[[SubprocessError], None]] = None,
     ):  # type: (...) -> None
         message = 'Command "%s" returned exit status %s.\n' % (shlex.join(cmd), status)
 

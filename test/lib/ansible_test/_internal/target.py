@@ -65,9 +65,9 @@ def walk_completion_targets(targets: t.Iterable[CompletionTarget], prefix: str, 
 
 def walk_internal_targets(
         targets: t.Iterable[TCompletionTarget],
-        includes=None,  # type: t.Optional[t.List[str]]
-        excludes=None,  # type: t.Optional[t.List[str]]
-        requires=None,  # type: t.Optional[t.List[str]]
+        includes: t.Optional[t.List[str]] = None,
+        excludes: t.Optional[t.List[str]] = None,
+        requires: t.Optional[t.List[str]] = None,
 ):  # type: (...) -> t.Tuple[TCompletionTarget, ...]
     """Return a tuple of matching completion targets."""
     targets = tuple(targets)
@@ -87,9 +87,9 @@ def walk_internal_targets(
 
 def filter_targets(targets,  # type: t.Iterable[TCompletionTarget]
                    patterns: t.List[str],
-                   include=True,  # type: bool
-                   directories=True,  # type: bool
-                   errors=True,  # type: bool
+                   include: bool = True,
+                   directories: bool = True,
+                   errors: bool = True,
                    ):  # type: (...) -> t.Iterable[TCompletionTarget]
     """Iterate over the given targets and filter them based on the supplied arguments."""
     unmatched = set(patterns or ())
@@ -263,13 +263,13 @@ def load_integration_prefixes():
 
 
 def walk_test_targets(
-        path=None,  # type: t.Optional[str]
-        module_path=None,  # type: t.Optional[str]
-        extensions=None,  # type: t.Optional[t.Tuple[str, ...]]
-        prefix=None,  # type: t.Optional[str]
-        extra_dirs=None,  # type: t.Optional[t.Tuple[str, ...]]
-        include_symlinks=False,  # type: bool
-        include_symlinked_directories=False,  # type: bool
+        path: t.Optional[str] = None,
+        module_path: t.Optional[str] = None,
+        extensions: t.Optional[t.Tuple[str, ...]] = None,
+        prefix: t.Optional[str] = None,
+        extra_dirs: t.Optional[t.Tuple[str, ...]] = None,
+        include_symlinks: bool = False,
+        include_symlinked_directories: bool = False,
 ):  # type: (...) -> t.Iterable[TestTarget]
     """Iterate over available test targets."""
     if path:
@@ -458,7 +458,7 @@ class TestTarget(CompletionTarget):
             module_path: t.Optional[str],
             module_prefix: t.Optional[str],
             base_path: str,
-            symlink=None,  # type: t.Optional[bool]
+            symlink: t.Optional[bool] = None,
     ):
         super().__init__()
 

@@ -632,9 +632,9 @@ class SanityFailure(TestFailure):
     def __init__(
             self,
             test: str,
-            python_version=None,  # type: t.Optional[str]
-            messages=None,  # type: t.Optional[t.Sequence[SanityMessage]]
-            summary=None,  # type: t.Optional[str]
+            python_version: t.Optional[str] = None,
+            messages: t.Optional[t.Sequence[SanityMessage]] = None,
+            summary: t.Optional[str] = None,
     ):  # type: (...) -> None
         super().__init__(COMMAND, test, python_version, messages, summary)
 
@@ -1099,8 +1099,8 @@ def create_sanity_virtualenv(
         args: SanityConfig,
         python: PythonConfig,
         name: str,
-        coverage=False,  # type: bool
-        minimize=False,  # type: bool
+        coverage: bool = False,
+        minimize: bool = False,
 ):  # type: (...) -> t.Optional[VirtualPythonConfig]
     """Return an existing sanity virtual environment matching the requested parameters or create a new one."""
     commands = collect_requirements(  # create_sanity_virtualenv()

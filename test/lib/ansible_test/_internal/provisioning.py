@@ -96,9 +96,9 @@ class HostState:
 
 def prepare_profiles(
         args: TEnvironmentConfig,
-        targets_use_pypi=False,  # type: bool
-        skip_setup=False,  # type: bool
-        requirements=None,  # type: t.Optional[t.Callable[[TEnvironmentConfig, HostState], None]]
+        targets_use_pypi: bool = False,
+        skip_setup: bool = False,
+        requirements: t.Optional[t.Callable[[TEnvironmentConfig, HostState], None]] = None,
 ):  # type: (...) -> HostState
     """
     Create new profiles, or load existing ones, and return them.

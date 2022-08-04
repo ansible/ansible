@@ -218,9 +218,9 @@ class TestFailure(TestResult):
             self,
             command: str,
             test: str,
-            python_version=None,  # type: t.Optional[str]
-            messages=None,  # type: t.Optional[t.Sequence[TestMessage]]
-            summary=None,  # type: t.Optional[str]
+            python_version: t.Optional[str] = None,
+            messages: t.Optional[t.Sequence[TestMessage]] = None,
+            summary: t.Optional[str] = None,
     ):
         super().__init__(command, test, python_version)
 
@@ -395,11 +395,11 @@ class TestMessage:
             self,
             message: str,
             path: str,
-            line=0,  # type: int
-            column=0,  # type: int
-            level='error',  # type: str
-            code=None,  # type: t.Optional[str]
-            confidence=None,  # type: t.Optional[int]
+            line: int = 0,
+            column: int = 0,
+            level: str = 'error',
+            code: t.Optional[str] = None,
+            confidence: t.Optional[int] = None,
     ):
         self.__path = path
         self.__line = line

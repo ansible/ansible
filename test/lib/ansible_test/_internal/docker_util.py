@@ -288,8 +288,8 @@ def docker_run(
         args: EnvironmentConfig,
         image: str,
         options: t.Optional[t.List[str]],
-        cmd=None,  # type: t.Optional[t.List[str]]
-        create_only=False,  # type: bool
+        cmd: t.Optional[t.List[str]] = None,
+        create_only: bool = False,
 ):  # type: (...) -> str
     """Run a container using the given docker image."""
     if not options:
@@ -513,12 +513,12 @@ def docker_exec(
         container_id: str,
         cmd: t.List[str],
         capture: bool,
-        options=None,  # type: t.Optional[t.List[str]]
-        stdin=None,  # type: t.Optional[t.IO[bytes]]
-        stdout=None,  # type: t.Optional[t.IO[bytes]]
-        interactive=False,  # type: bool
-        output_stream=None,  # type: t.Optional[OutputStream]
-        data=None,  # type: t.Optional[str]
+        options: t.Optional[t.List[str]] = None,
+        stdin: t.Optional[t.IO[bytes]] = None,
+        stdout: t.Optional[t.IO[bytes]] = None,
+        interactive: bool = False,
+        output_stream: t.Optional[OutputStream] = None,
+        data: t.Optional[str] = None,
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Execute the given command in the specified container."""
     if not options:
@@ -547,12 +547,12 @@ def docker_command(
         args: CommonConfig,
         cmd: t.List[str],
         capture: bool,
-        stdin=None,  # type: t.Optional[t.IO[bytes]]
-        stdout=None,  # type: t.Optional[t.IO[bytes]]
-        interactive=False,  # type: bool
-        output_stream=None,  # type: t.Optional[OutputStream]
-        always=False,  # type: bool
-        data=None,  # type: t.Optional[str]
+        stdin: t.Optional[t.IO[bytes]] = None,
+        stdout: t.Optional[t.IO[bytes]] = None,
+        interactive: bool = False,
+        output_stream: t.Optional[OutputStream] = None,
+        always: bool = False,
+        data: t.Optional[str] = None,
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Run the specified docker command."""
     env = docker_environment()

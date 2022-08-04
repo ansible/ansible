@@ -278,9 +278,9 @@ def enumerate_powershell_lines(
 
 def sanitize_filename(
         filename: str,
-        modules=None,  # type: t.Optional[t.Dict[str, str]]
-        collection_search_re=None,  # type: t.Optional[t.Pattern]
-        collection_sub_re=None,  # type: t.Optional[t.Pattern]
+        modules: t.Optional[t.Dict[str, str]] = None,
+        collection_search_re: t.Optional[t.Pattern] = None,
+        collection_sub_re: t.Optional[t.Pattern] = None,
 ):  # type: (...) -> t.Optional[str]
     """Convert the given code coverage path to a local absolute path and return its, or None if the path is not valid."""
     ansible_path = os.path.abspath('lib/ansible/') + '/'

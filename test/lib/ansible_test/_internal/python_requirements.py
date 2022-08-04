@@ -124,12 +124,12 @@ class PipBootstrap(PipCommand):
 def install_requirements(
         args: EnvironmentConfig,
         python: PythonConfig,
-        ansible=False,  # type: bool
-        command=False,  # type: bool
-        coverage=False,  # type: bool
-        virtualenv=False,  # type: bool
-        controller=True,  # type: bool
-        connection=None,  # type: t.Optional[Connection]
+        ansible: bool = False,
+        command: bool = False,
+        coverage: bool = False,
+        virtualenv: bool = False,
+        controller: bool = True,
+        connection: t.Optional[Connection] = None,
 ):  # type: (...) -> None
     """Install requirements for the given Python using the specified arguments."""
     create_result_directories(args)
@@ -280,8 +280,8 @@ def run_pip(
 
 
 def collect_general_install(
-    command=None,  # type: t.Optional[str]
-    ansible=False,  # type: bool
+    command: t.Optional[str] = None,
+    ansible: bool = False,
 ):  # type: (...) -> t.List[PipInstall]
     """Return details necessary for the specified general-purpose pip install(s)."""
     requirements_paths = []  # type: t.List[t.Tuple[str, str]]
@@ -369,8 +369,8 @@ def collect_integration_install(command: str, controller: bool) -> t.List[PipIns
 def collect_install(
         requirements_paths: t.List[t.Tuple[str, str]],
         constraints_paths: t.List[t.Tuple[str, str]],
-        packages=None,  # type: t.Optional[t.List[str]]
-        constraints=True,  # type: bool
+        packages: t.Optional[t.List[str]] = None,
+        constraints: bool = True,
 ) -> t.List[PipInstall]:
     """Build a pip install list from the given requirements, constraints and packages."""
     # listing content constraints first gives them priority over constraints provided by ansible-test

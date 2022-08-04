@@ -378,10 +378,10 @@ class CloudEnvironment(CloudBase):
 class CloudEnvironmentConfig:
     """Configuration for the environment."""
     def __init__(self,
-                 env_vars=None,  # type: t.Optional[t.Dict[str, str]]
-                 ansible_vars=None,  # type: t.Optional[t.Dict[str, t.Any]]
-                 module_defaults=None,  # type: t.Optional[t.Dict[str, t.Dict[str, t.Any]]]
-                 callback_plugins=None,  # type: t.Optional[t.List[str]]
+                 env_vars: t.Optional[t.Dict[str, str]] = None,
+                 ansible_vars: t.Optional[t.Dict[str, t.Any]] = None,
+                 module_defaults: t.Optional[t.Dict[str, t.Dict[str, t.Any]]] = None,
+                 callback_plugins: t.Optional[t.List[str]] = None,
                  ):
         self.env_vars = env_vars
         self.ansible_vars = ansible_vars

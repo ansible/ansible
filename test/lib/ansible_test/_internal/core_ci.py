@@ -117,7 +117,7 @@ class AnsibleCoreCI:
             self,
             args: EnvironmentConfig,
             resource: Resource,
-            load=True,  # type: bool
+            load: bool = True,
     ):  # type: (...) -> None
         self.args = args
         self.resource = resource
@@ -532,11 +532,11 @@ class InstanceConnection:
     """Container for remote instance status and connection details."""
     def __init__(self,
                  running: bool,
-                 hostname=None,  # type: t.Optional[str]
-                 port=None,  # type: t.Optional[int]
-                 username=None,  # type: t.Optional[str]
-                 password=None,  # type: t.Optional[str]
-                 response_json=None,  # type: t.Optional[t.Dict[str, t.Any]]
+                 hostname: t.Optional[str] = None,
+                 port: t.Optional[int] = None,
+                 username: t.Optional[str] = None,
+                 password: t.Optional[str] = None,
+                 response_json: t.Optional[t.Dict[str, t.Any]] = None,
                  ):  # type: (...) -> None
         self.running = running
         self.hostname = hostname

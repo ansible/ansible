@@ -145,8 +145,8 @@ def cover_python(
         target_name: str,
         env: t.Dict[str, str],
         capture: bool,
-        data=None,  # type: t.Optional[str]
-        cwd=None,  # type: t.Optional[str]
+        data: t.Optional[str] = None,
+        cwd: t.Optional[str] = None,
 ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
     """Run a command while collecting Python code coverage."""
     if args.coverage:

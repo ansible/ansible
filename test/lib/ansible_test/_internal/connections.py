@@ -47,11 +47,11 @@ class Connection(metaclass=abc.ABCMeta):
     def run(self,
             command: t.List[str],
             capture: bool,
-            interactive=False,  # type: bool
-            data=None,  # type: t.Optional[str]
-            stdin=None,  # type: t.Optional[t.IO[bytes]]
-            stdout=None,  # type: t.Optional[t.IO[bytes]]
-            output_stream=None,  # type: t.Optional[OutputStream]
+            interactive: bool = False,
+            data: t.Optional[str] = None,
+            stdin: t.Optional[t.IO[bytes]] = None,
+            stdout: t.Optional[t.IO[bytes]] = None,
+            output_stream: t.Optional[OutputStream] = None,
             ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
         """Run the specified command and return the result."""
 
@@ -68,7 +68,7 @@ class Connection(metaclass=abc.ABCMeta):
                        chdir: str,
                        name: str,
                        dst: t.IO[bytes],
-                       exclude=None,  # type: t.Optional[str]
+                       exclude: t.Optional[str] = None,
                        ):
         """Create the specified archive file stream from the specified directory, including the given name and optionally excluding the given name."""
         tar_cmd = ['tar', 'cf', '-', '-C', chdir]
@@ -95,11 +95,11 @@ class LocalConnection(Connection):
     def run(self,
             command: t.List[str],
             capture: bool,
-            interactive=False,  # type: bool
-            data=None,  # type: t.Optional[str]
-            stdin=None,  # type: t.Optional[t.IO[bytes]]
-            stdout=None,  # type: t.Optional[t.IO[bytes]]
-            output_stream=None,  # type: t.Optional[OutputStream]
+            interactive: bool = False,
+            data: t.Optional[str] = None,
+            stdin: t.Optional[t.IO[bytes]] = None,
+            stdout: t.Optional[t.IO[bytes]] = None,
+            output_stream: t.Optional[OutputStream] = None,
             ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
         """Run the specified command and return the result."""
         return run_command(
@@ -137,11 +137,11 @@ class SshConnection(Connection):
     def run(self,
             command: t.List[str],
             capture: bool,
-            interactive=False,  # type: bool
-            data=None,  # type: t.Optional[str]
-            stdin=None,  # type: t.Optional[t.IO[bytes]]
-            stdout=None,  # type: t.Optional[t.IO[bytes]]
-            output_stream=None,  # type: t.Optional[OutputStream]
+            interactive: bool = False,
+            data: t.Optional[str] = None,
+            stdin: t.Optional[t.IO[bytes]] = None,
+            stdout: t.Optional[t.IO[bytes]] = None,
+            output_stream: t.Optional[OutputStream] = None,
             ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
         """Run the specified command and return the result."""
         options = list(self.options)
@@ -219,11 +219,11 @@ class DockerConnection(Connection):
     def run(self,
             command: t.List[str],
             capture: bool,
-            interactive=False,  # type: bool
-            data=None,  # type: t.Optional[str]
-            stdin=None,  # type: t.Optional[t.IO[bytes]]
-            stdout=None,  # type: t.Optional[t.IO[bytes]]
-            output_stream=None,  # type: t.Optional[OutputStream]
+            interactive: bool = False,
+            data: t.Optional[str] = None,
+            stdin: t.Optional[t.IO[bytes]] = None,
+            stdout: t.Optional[t.IO[bytes]] = None,
+            output_stream: t.Optional[OutputStream] = None,
             ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
         """Run the specified command and return the result."""
         options = []

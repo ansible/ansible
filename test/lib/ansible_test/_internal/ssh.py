@@ -121,9 +121,9 @@ class SshProcess:
 
 def create_ssh_command(
         ssh: SshConnectionDetail,
-        options=None,  # type: t.Optional[t.Dict[str, t.Union[str, int]]]
-        cli_args=None,  # type: t.List[str]
-        command=None,  # type: t.Optional[str]
+        options: t.Optional[t.Dict[str, t.Union[str, int]]] = None,
+        cli_args: t.List[str] = None,
+        command: t.Optional[str] = None,
 ):  # type: (...) -> t.List[str]
     """Create an SSH command using the specified options."""
     cmd = [
@@ -168,9 +168,9 @@ def create_ssh_command(
 def run_ssh_command(
         args: EnvironmentConfig,
         ssh: SshConnectionDetail,
-        options=None,  # type: t.Optional[t.Dict[str, t.Union[str, int]]]
-        cli_args=None,  # type: t.List[str]
-        command=None,  # type: t.Optional[str]
+        options: t.Optional[t.Dict[str, t.Union[str, int]]] = None,
+        cli_args: t.List[str] = None,
+        command: t.Optional[str] = None,
 ):  # type: (...) -> SshProcess
     """Run the specified SSH command, returning the created SshProcess instance created."""
     cmd = create_ssh_command(ssh, options, cli_args, command)

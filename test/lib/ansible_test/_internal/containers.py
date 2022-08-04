@@ -105,14 +105,14 @@ def run_support_container(
         image: str,
         name: str,
         ports: t.List[int],
-        aliases=None,  # type: t.Optional[t.List[str]]
-        start=True,  # type: bool
-        allow_existing=False,  # type: bool
-        cleanup=None,  # type: t.Optional[CleanupMode]
-        cmd=None,  # type: t.Optional[t.List[str]]
-        env=None,  # type: t.Optional[t.Dict[str, str]]
-        options=None,  # type: t.Optional[t.List[str]]
-        publish_ports=True,  # type: bool
+        aliases: t.Optional[t.List[str]] = None,
+        start: bool = True,
+        allow_existing: bool = False,
+        cleanup: t.Optional[CleanupMode] = None,
+        cmd: t.Optional[t.List[str]] = None,
+        env: t.Optional[t.Dict[str, str]] = None,
+        options: t.Optional[t.List[str]] = None,
+        publish_ports: bool = True,
 ):  # type: (...) -> t.Optional[ContainerDescriptor]
     """
     Start a container used to support tests, but not run them.
@@ -637,7 +637,7 @@ def wait_for_file(args,  # type: EnvironmentConfig
                   path: str,
                   sleep: int,
                   tries: int,
-                  check=None,  # type: t.Optional[t.Callable[[str], bool]]
+                  check: t.Optional[t.Callable[[str], bool]] = None,
                   ):  # type: (...) -> str
     """Wait for the specified file to become available in the requested container and return its contents."""
     display.info('Waiting for container "%s" to provide file: %s' % (container_name, path))

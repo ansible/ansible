@@ -138,7 +138,7 @@ def analyze_powershell_coverage(
 def prune_invalid_filenames(
         args: CoverageAnalyzeTargetsGenerateConfig,
         results: t.Dict[str, t.Any],
-        collection_search_re=None,  # type: t.Optional[t.Pattern]
+        collection_search_re: t.Optional[t.Pattern] = None,
 ):  # type: (...) -> None
     """Remove invalid filenames from the given result set."""
     path_checker = PathChecker(args, collection_search_re)

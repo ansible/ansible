@@ -283,7 +283,7 @@ def run_playbook(
         inventory_path: str,
         playbook,   # type: str
         capture: bool,
-        variables=None,  # type: t.Optional[t.Dict[str, t.Any]]
+        variables: t.Optional[t.Dict[str, t.Any]] = None,
 ):  # type: (...) -> None
     """Run the specified playbook using the given inventory file and playbook variables."""
     playbook_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'playbooks', playbook)
