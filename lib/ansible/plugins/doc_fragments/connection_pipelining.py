@@ -10,7 +10,7 @@ class ModuleDocFragment(object):
     DOCUMENTATION = """
 options:
     pipelining:
-          default: ANSIBLE_PIPELINING
+          default: false
           description:
             - Pipelining reduces the number of connection operations required to execute a module on the remote server,
               by executing many Ansible modules without actual file transfers.
