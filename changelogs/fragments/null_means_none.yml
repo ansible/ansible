@@ -1,0 +1,2 @@
+bugfixes:
+  - null_representation config entry changed to 'raw' as it must allow 'none/null' and empty string.
