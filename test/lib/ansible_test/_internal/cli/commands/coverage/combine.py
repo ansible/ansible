@@ -24,11 +24,11 @@ def do_combine(
         completer: CompositeActionCompletionFinder,
 ) -> None:
     """Command line parsing for the `coverage combine` command."""
-    parser = subparsers.add_parser(
+    parser: argparse.ArgumentParser = subparsers.add_parser(
         'combine',
         parents=[parent],
         help='combine coverage data and rewrite remote paths',
-    )  # type: argparse.ArgumentParser
+    )
 
     parser.set_defaults(
         func=command_coverage_combine,

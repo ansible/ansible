@@ -40,11 +40,11 @@ def do_network_integration(
         completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `network-integration` command."""
-    parser = subparsers.add_parser(
+    parser: argparse.ArgumentParser = subparsers.add_parser(
         'network-integration',
         parents=[parent],
         help='network integration tests',
-    )  # type: argparse.ArgumentParser
+    )
 
     parser.set_defaults(
         func=command_network_integration,
