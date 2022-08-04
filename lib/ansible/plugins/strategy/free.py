@@ -250,6 +250,7 @@ class StrategyModule(StrategyBase):
                         else:
                             is_handler = isinstance(included_file._task, Handler)
                             new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=is_handler)
+                        iterator.handlers = [h for b in iterator._play.handlers for h in b.block]
                     except AnsibleParserError:
                         raise
                     except AnsibleError as e:
@@ -263,6 +264,8 @@ class StrategyModule(StrategyBase):
 
                     for new_block in new_blocks:
                         if is_handler:
+                            for task in new_block.block:
+                                task.notified_hosts = included_file._hosts[:]
                             # TODO filter tags to allow tags on handlers from include_tasks: merge with the else block
                             #      also where handlers are inserted from roles/include_role/import_role and regular handlers
                             final_block = new_block

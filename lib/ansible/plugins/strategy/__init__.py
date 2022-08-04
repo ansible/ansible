@@ -45,6 +45,7 @@ from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
 from ansible.playbook.conditional import Conditional
+from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
@@ -628,7 +629,7 @@ class StrategyBase:
                                 target_handler = search_handler_blocks_by_name(handler_name, iterator._play.handlers)
                                 if target_handler is not None:
                                     found = True
-                                    if iterator.notify_handler(original_host, target_handler):
+                                    if target_handler.notify_host(original_host):
                                         self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
 
                                 for listening_handler_block in iterator._play.handlers:
@@ -645,7 +646,7 @@ class StrategyBase:
                                         else:
                                             found = True
 
-                                        if iterator.notify_handler(original_host, listening_handler):
+                                        if listening_handler.notify_host(original_host):
                                             self._tqm.send_callback('v2_playbook_on_notify', listening_handler, original_host)
 
                                 # and if none were found, then we raise an error
@@ -774,6 +775,11 @@ class StrategyBase:
                         role_obj._had_task_run[original_host.name] = True
 
             ret_results.append(task_result)
+
+            # remove host from handler's notification list
+            if isinstance(original_task, Handler):
+                for handler in filter(lambda x: x._uuid == original_task._uuid, (h for b in iterator._play.handlers for h in b.block)):
+                    handler.notified_hosts = [h for h in handler.notified_hosts if h != original_host]
 
             if one_pass or max_passes is not None and (cur_pass + 1) >= max_passes:
                 break

@@ -196,9 +196,9 @@ class StrategyModule(StrategyBase):
 
         if num_handlers:
             display.debug("advancing hosts in HANDLERS")
-            lowest_lockstep_id = min((
-                t.lockstep_id for h, (s, t) in host_tasks_to_run
-                if s.run_state != IteratingStates.COMPLETE and isinstance(t, Handler)
+            lowest_handler = min((
+                s.cur_handlers_task for h, (s, t) in host_tasks_to_run
+                if s.run_state == IteratingStates.HANDLERS
             ))
             rvals = []
             for host in hosts:
@@ -208,7 +208,7 @@ class StrategyModule(StrategyBase):
                 (state, task) = host_state_task
                 if task is None:
                     continue
-                if getattr(task, 'lockstep_id', -1) == lowest_lockstep_id and state.run_state == IteratingStates.HANDLERS:
+                if state.cur_handlers_task == lowest_handler and state.run_state == IteratingStates.HANDLERS:
                     iterator.set_state_for_host(host.name, state)
                     rvals.append((host, task))
                 else:
@@ -387,9 +387,13 @@ class StrategyModule(StrategyBase):
                                 is_handler = isinstance(included_file._task, Handler)
                                 new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=is_handler)
 
+                            iterator.handlers = [h for b in iterator._play.handlers for h in b.block]
+
                             display.debug("iterating over new_blocks loaded from include file")
                             for new_block in new_blocks:
                                 if is_handler:
+                                    for task in new_block.block:
+                                        task.notified_hosts = included_file._hosts[:]
                                     # TODO filter tags to allow tags on handlers from include_tasks: merge with the else block
                                     #      also where handlers are inserted from roles/include_role/import_role and regular handlers
                                     final_block = new_block
