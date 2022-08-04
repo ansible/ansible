@@ -332,7 +332,12 @@ stdout:
     description: output from apt
     returned: success, when needed
     type: str
-    sample: "Reading package lists...\nBuilding dependency tree...\nReading state information...\nThe following extra packages will be installed:\n  apache2-bin ..."
+    sample: |-
+        Reading package lists...
+        Building dependency tree...
+        Reading state information...
+        The following extra packages will be installed:
+          apache2-bin ...
 stderr:
     description: error output from apt
     returned: success, when needed
