@@ -104,6 +104,18 @@ stages:
           groups:
             - 1
             - 2
+      - template: templates/matrix.yml
+        parameters:
+          targets:
+            - name: macOS 12.0
+              test: macos/12.0
+            - name: RHEL 8.6
+              test: rhel/8.6
+            - name: RHEL 9.0
+              test: rhel/9.0
+            - name: FreeBSD 13.1
+              test: freebsd/13.1
+          groups:
             - 3
             - 4
             - 5
@@ -131,6 +143,19 @@ stages:
           groups:
             - 1
             - 2
+      - template: templates/matrix.yml
+        parameters:
+          testFormat: linux/{0}
+          targets:
+            - name: Alpine 3
+              test: alpine3
+            - name: Fedora 35
+              test: fedora35
+            - name: Fedora 36
+              test: fedora36
+            - name: Ubuntu 22.04
+              test: ubuntu2204
+          groups:
             - 3
             - 4
             - 5
