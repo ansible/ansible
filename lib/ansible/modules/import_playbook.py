@@ -58,6 +58,9 @@ EXAMPLES = r'''
   ansible.builtin.import_playbook: otherplays.yml
   vars:
     service: httpd
+    
+- name: Include a playbook from a collection
+  ansible.builtin.import_playbook: my_namespace.my_collection.my_playbook
 
 - name: This DOES NOT WORK
   hosts: all
