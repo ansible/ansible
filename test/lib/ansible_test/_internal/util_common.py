@@ -74,7 +74,7 @@ class ShellScriptTemplate:
         return value
 
     @staticmethod
-    def quote(value):  # type: (t.Union[str, t.List[str]]) -> str
+    def quote(value: t.Union[str, t.List[str]]) -> str:
         """Return a shell quoted version of the given value."""
         if isinstance(value, list):
             return shlex.quote(' '.join(value))

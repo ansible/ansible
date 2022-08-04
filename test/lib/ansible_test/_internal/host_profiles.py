@@ -116,7 +116,7 @@ class Inventory:
     extra_groups: t.Optional[t.Dict[str, t.List[str]]] = None
 
     @staticmethod
-    def create_single_host(name, variables):  # type: (str, t.Dict[str, t.Union[str, int]]) -> Inventory
+    def create_single_host(name: str, variables: t.Dict[str, t.Union[str, int]]) -> Inventory:
         """Return an inventory instance created from the given hostname and variables."""
         return Inventory(host_groups=dict(all={name: variables}))
 
@@ -245,7 +245,7 @@ class RemoteProfile(SshTargetHostProfile[TRemoteConfig], metaclass=abc.ABCMeta):
         return self.state.get('core_ci')
 
     @core_ci_state.setter
-    def core_ci_state(self, value):  # type: (t.Dict[str, str]) -> None
+    def core_ci_state(self, value: t.Dict[str, str]) -> None:
         """The saved Ansible Core CI state."""
         self.state['core_ci'] = value
 

@@ -112,10 +112,10 @@ class CoverageHandler(t.Generic[THostConfig], metaclass=abc.ABCMeta):
         """Create inventory, if needed."""
 
     @abc.abstractmethod
-    def get_environment(self, target_name, aliases):  # type: (str, t.Tuple[str, ...]) -> t.Dict[str, str]
+    def get_environment(self, target_name: str, aliases: t.Tuple[str, ...]) -> t.Dict[str, str]:
         """Return a dictionary of environment variables for running tests with code coverage."""
 
-    def run_playbook(self, playbook, variables):  # type: (str, t.Dict[str, str]) -> None
+    def run_playbook(self, playbook: str, variables: t.Dict[str, str]) -> None:
         """Run the specified playbook using the current inventory."""
         self.create_inventory()
         run_playbook(self.args, self.inventory_path, playbook, capture=False, variables=variables)
@@ -221,7 +221,7 @@ class PosixCoverageHandler(CoverageHandler[PosixConfig]):
 
         self.run_playbook('posix_coverage_teardown.yml', self.get_playbook_variables())
 
-    def get_environment(self, target_name, aliases):  # type: (str, t.Tuple[str, ...]) -> t.Dict[str, str]
+    def get_environment(self, target_name: str, aliases: t.Tuple[str, ...]) -> t.Dict[str, str]:
         """Return a dictionary of environment variables for running tests with code coverage."""
 
         # Enable code coverage collection on Ansible modules (both local and remote).
@@ -306,7 +306,7 @@ class WindowsCoverageHandler(CoverageHandler[WindowsConfig]):
 
                         coverage_zip.extract(item, ResultType.COVERAGE.path)
 
-    def get_environment(self, target_name, aliases):  # type: (str, t.Tuple[str, ...]) -> t.Dict[str, str]
+    def get_environment(self, target_name: str, aliases: t.Tuple[str, ...]) -> t.Dict[str, str]:
         """Return a dictionary of environment variables for running tests with code coverage."""
 
         # Include the command, target and platform marker so the remote host can create a filename with that info.
@@ -364,7 +364,7 @@ class CoverageManager:
         for handler in self.handlers:
             handler.teardown()
 
-    def get_environment(self, target_name, aliases):  # type: (str, t.Tuple[str, ...]) -> t.Dict[str, str]
+    def get_environment(self, target_name: str, aliases: t.Tuple[str, ...]) -> t.Dict[str, str]:
         """Return a dictionary of environment variables for running tests with code coverage."""
         if not self.args.coverage or 'non_local/' in aliases:
             return {}

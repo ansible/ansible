@@ -212,7 +212,7 @@ def delegate_inventory(args: IntegrationConfig, inventory_path_src: str) -> None
     if isinstance(args, PosixIntegrationConfig):
         return
 
-    def inventory_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+    def inventory_callback(files: t.List[t.Tuple[str, str]]) -> None:
         """
         Add the inventory file to the payload file list.
         This will preserve the file during delegation even if it is ignored or is outside the content and install roots.
@@ -935,7 +935,7 @@ def command_integration_filter(args: TIntegrationConfig,
     vars_file_src = os.path.join(data_context().content.root, data_context().content.integration_vars_path)
 
     if os.path.exists(vars_file_src):
-        def integration_config_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+        def integration_config_callback(files: t.List[t.Tuple[str, str]]) -> None:
             """
             Add the integration config vars file to the payload file list.
             This will preserve the file during delegation even if the file is ignored by source control.

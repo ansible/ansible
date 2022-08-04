@@ -645,7 +645,7 @@ class SanityMessage(TestMessage):
 
 class SanityTargets:
     """Sanity test target information."""
-    def __init__(self, targets, include):  # type: (t.Tuple[TestTarget, ...], t.Tuple[TestTarget, ...]) -> None
+    def __init__(self, targets: t.Tuple[TestTarget, ...], include: t.Tuple[TestTarget, ...]) -> None:
         self.targets = targets
         self.include = include
 

@@ -172,7 +172,7 @@ class DataContext:
 
         return self.__ansible_source
 
-    def register_payload_callback(self, callback):  # type: (t.Callable[[t.List[t.Tuple[str, str]]], None]) -> None
+    def register_payload_callback(self, callback: t.Callable[[t.List[t.Tuple[str, str]]], None]) -> None:
         """Register the given payload callback."""
         self.payload_callbacks.append(callback)
 

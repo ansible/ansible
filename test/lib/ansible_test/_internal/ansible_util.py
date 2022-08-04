@@ -60,7 +60,7 @@ def parse_inventory(args: EnvironmentConfig, inventory_path: str) -> t.Dict[str,
     return inventory
 
 
-def get_hosts(inventory, group_name):  # type: (t.Dict[str, t.Any], str) -> t.Dict[str, t.Dict[str, t.Any]]
+def get_hosts(inventory: t.Dict[str, t.Any], group_name: str) -> t.Dict[str, t.Dict[str, t.Any]]:
     """Return a dict of hosts from the specified group in the given inventory."""
     hostvars = inventory.get('_meta', {}).get('hostvars', {})
     group = inventory.get(group_name, {})
