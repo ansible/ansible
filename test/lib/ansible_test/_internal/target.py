@@ -85,7 +85,7 @@ def walk_internal_targets(
     return tuple(sorted(internal_targets, key=lambda sort_target: sort_target.name))
 
 
-def filter_targets(targets,  # type: t.Iterable[TCompletionTarget]
+def filter_targets(targets: t.Iterable[TCompletionTarget],
                    patterns: t.List[str],
                    include: bool = True,
                    directories: bool = True,

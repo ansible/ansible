@@ -895,7 +895,7 @@ If necessary, context can be controlled by adding entries to the "aliases" file 
     return exclude
 
 
-def command_integration_filter(args,  # type: TIntegrationConfig
+def command_integration_filter(args: TIntegrationConfig,
                                targets: t.Iterable[TIntegrationTarget],
                                ) -> t.Tuple[HostState, t.Tuple[TIntegrationTarget, ...]]:
     """Filter the given integration test targets."""

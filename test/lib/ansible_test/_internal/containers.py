@@ -632,7 +632,7 @@ class SupportContainer:
         self.published_ports = published_ports
 
 
-def wait_for_file(args,  # type: EnvironmentConfig
+def wait_for_file(args: EnvironmentConfig,
                   container_name: str,
                   path: str,
                   sleep: int,

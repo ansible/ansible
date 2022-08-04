@@ -112,7 +112,7 @@ class DataContext:
         return collections
 
     @staticmethod
-    def __create_content_layout(layout_providers,  # type: t.List[t.Type[LayoutProvider]]
+    def __create_content_layout(layout_providers: t.List[t.Type[LayoutProvider]],
                                 source_providers: t.List[t.Type[SourceProvider]],
                                 root: str,
                                 walk: bool,
