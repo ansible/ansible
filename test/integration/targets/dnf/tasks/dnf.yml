@@ -20,6 +20,17 @@
       assert:
         that:
           - didiupdate is not changed
+
+    - name: test upgrading
+      dnf:
+        name: dinginessentail
+        state: latest
+      register: didiupdate
+
+    - name: verify update
+      assert:
+        that:
+          - didiupdate isnot changed
   always:
     - name: cleanup
       dnf:
