@@ -8,6 +8,7 @@ __metaclass__ = type
 
 import ast
 from itertools import islice, chain
+from numbers import Number
 from types import GeneratorType
 
 from ansible.module_utils._text import to_text
@@ -50,6 +51,9 @@ def ansible_eval_concat(nodes):
         out = head[0]
 
         if isinstance(out, NativeJinjaText):
+            return out
+
+        if isinstance(out, Number):
             return out
 
         out = to_text(out)

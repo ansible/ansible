@@ -29,7 +29,6 @@ import time
 
 from collections.abc import Iterator, Sequence, Mapping, MappingView, MutableMapping
 from contextlib import contextmanager
-from numbers import Number
 from traceback import format_exc
 
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
@@ -47,7 +46,7 @@ from ansible.errors import (
     AnsiblePluginRemovedError,
     AnsibleUndefinedVariable,
 )
-from ansible.module_utils.six import string_types, text_type
+from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.compat.importlib import import_module
@@ -60,15 +59,13 @@ from ansible.utils.display import Display
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.native_jinja import NativeJinjaText
+from ansible.utils.sentinel import Sentinel
 from ansible.utils.unsafe_proxy import wrap_var
 
 display = Display()
 
 
 __all__ = ['Templar', 'generate_ansible_template_vars']
-
-# Primitive Types which we don't want Jinja to convert to strings.
-NON_TEMPLATED_TYPES = (bool, Number)
 
 JINJA2_OVERRIDE = '#jinja2:'
 
@@ -838,20 +835,11 @@ class Templar:
             if not self.is_possibly_template(variable):
                 return variable
 
-            # Check to see if the string we are trying to render is just referencing a single
-            # var.  In this case we don't want to accidentally change the type of the variable
-            # to a string by using the jinja template renderer. We just want to pass it.
-            only_one = self.SINGLE_VAR.match(variable)
-            if only_one:
-                var_name = only_one.group(1)
-                if var_name in self._available_variables:
-                    resolved_val = self._available_variables[var_name]
-                    if isinstance(resolved_val, NON_TEMPLATED_TYPES):
-                        return resolved_val
-                    elif resolved_val is None:
-                        return C.DEFAULT_NULL_REPRESENTATION
+            if only_one := self.SINGLE_VAR.match(variable):
+                if self._available_variables.get(only_one.group(1), Sentinel) is None:
+                    return C.DEFAULT_NULL_REPRESENTATION
 
-            result = self.do_template(
+            return self.do_template(
                 variable,
                 preserve_trailing_newlines=preserve_trailing_newlines,
                 escape_backslashes=escape_backslashes,
@@ -860,9 +848,6 @@ class Templar:
                 disable_lookups=disable_lookups,
                 convert_data=convert_data,
             )
-
-            return result
-
         elif is_sequence(variable):
             return [self.template(
                 v,
