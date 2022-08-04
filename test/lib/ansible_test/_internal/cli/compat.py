@@ -139,7 +139,7 @@ class LegacyHostOptions:
     @staticmethod
     def purge_namespace(namespace: t.Union[argparse.Namespace, types.SimpleNamespace]) -> None:
         """Purge legacy host options fields from the given namespace."""
-        for field in dataclasses.fields(LegacyHostOptions):   # type: dataclasses.Field
+        for field in dataclasses.fields(LegacyHostOptions):
             if hasattr(namespace, field.name):
                 delattr(namespace, field.name)
 

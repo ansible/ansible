@@ -151,7 +151,7 @@ def cloud_init(args: IntegrationConfig, targets: t.Tuple[IntegrationTarget, ...]
 
     results = {}
 
-    for provider in get_cloud_providers(args, targets):  # type: CloudProvider
+    for provider in get_cloud_providers(args, targets):
         if args.prime_containers and not provider.uses_docker:
             continue
 
