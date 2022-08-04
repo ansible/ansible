@@ -27,7 +27,7 @@ from .config import (
 from . import junit_xml
 
 
-def calculate_best_confidence(choices, metadata):  # type: (t.Tuple[t.Tuple[str, int], ...], Metadata) -> int
+def calculate_best_confidence(choices: t.Tuple[t.Tuple[str, int], ...], metadata: Metadata) -> int:
     """Return the best confidence value available from the given choices and metadata."""
     best_confidence = 0
 

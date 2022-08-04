@@ -47,7 +47,7 @@ def make_report(target_indexes: TargetIndexes, arcs: Arcs, lines: Lines) -> t.Di
     return report
 
 
-def load_report(report):  # type: (t.Dict[str, t.Any]) -> t.Tuple[t.List[str], Arcs, Lines]
+def load_report(report: t.Dict[str, t.Any]) -> t.Tuple[t.List[str], Arcs, Lines]:
     """Extract target indexes, arcs and lines from an existing report."""
     try:
         target_indexes: t.List[str] = report['targets']
@@ -78,7 +78,7 @@ def read_report(path: str) -> t.Tuple[t.List[str], Arcs, Lines]:
         raise ApplicationError('File "%s" is not an aggregated coverage data file. %s' % (path, ex))
 
 
-def write_report(args, report, path):  # type: (CoverageAnalyzeTargetsConfig, t.Dict[str, t.Any], str) -> None
+def write_report(args: CoverageAnalyzeTargetsConfig, report: t.Dict[str, t.Any], path: str) -> None:
     """Write a JSON report to disk."""
     if args.explain:
         return
@@ -95,7 +95,7 @@ def format_line(value: int) -> str:
     return str(value)  # putting this in a function keeps both pylint and mypy happy
 
 
-def format_arc(value):  # type: (t.Tuple[int, int]) -> str
+def format_arc(value: t.Tuple[int, int]) -> str:
     """Format an arc tuple as a string."""
     return '%d:%d' % value
 

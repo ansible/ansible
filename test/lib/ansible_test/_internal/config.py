@@ -111,7 +111,7 @@ class EnvironmentConfig(CommonConfig):
 
         self.delegate_args: t.List[str] = []
 
-        def host_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+        def host_callback(files: t.List[t.Tuple[str, str]]) -> None:
             """Add the host files to the payload file list."""
             config = self
 
@@ -222,7 +222,7 @@ class TestConfig(EnvironmentConfig):
         if self.coverage_check:
             self.coverage = True
 
-        def metadata_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+        def metadata_callback(files: t.List[t.Tuple[str, str]]) -> None:
             """Add the metadata file to the payload file list."""
             config = self
 
@@ -261,7 +261,7 @@ class SanityConfig(TestConfig):
         self.display_stderr = self.lint or self.list_tests
 
         if self.keep_git:
-            def git_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+            def git_callback(files: t.List[t.Tuple[str, str]]) -> None:
                 """Add files from the content root .git directory to the payload file list."""
                 for dirpath, _dirnames, filenames in os.walk(os.path.join(data_context().content.root, '.git')):
                     paths = [os.path.join(dirpath, filename) for filename in filenames]

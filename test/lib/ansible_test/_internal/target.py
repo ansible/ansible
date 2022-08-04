@@ -33,7 +33,7 @@ from .data import (
 MODULE_EXTENSIONS = '.py', '.ps1'
 
 
-def find_target_completion(target_func, prefix, short):  # type: (t.Callable[[], t.Iterable[CompletionTarget]], str, bool) -> t.List[str]
+def find_target_completion(target_func: t.Callable[[], t.Iterable[CompletionTarget]], prefix: str, short: bool) -> t.List[str]:
     """Return a list of targets from the given target function which match the given prefix."""
     try:
         targets = target_func()
@@ -85,7 +85,7 @@ def walk_internal_targets(
     return tuple(sorted(internal_targets, key=lambda sort_target: sort_target.name))
 
 
-def filter_targets(targets,  # type: t.Iterable[TCompletionTarget]
+def filter_targets(targets: t.Iterable[TCompletionTarget],
                    patterns: t.List[str],
                    include: bool = True,
                    directories: bool = True,
@@ -442,7 +442,7 @@ class CompletionTarget(metaclass=abc.ABCMeta):
 
 class DirectoryTarget(CompletionTarget):
     """Directory target."""
-    def __init__(self, path, modules):  # type: (str, t.Tuple[str, ...]) -> None
+    def __init__(self, path: str, modules: t.Tuple[str, ...]) -> None:
         super().__init__()
 
         self.name = path
@@ -566,7 +566,7 @@ class IntegrationTarget(CompletionTarget):
         'skip',
     )))
 
-    def __init__(self, path, modules, prefixes):  # type: (str, t.FrozenSet[str], t.Dict[str, str]) -> None
+    def __init__(self, path: str, modules: t.FrozenSet[str], prefixes: t.Dict[str, str]) -> None:
         super().__init__()
 
         self.relative_path = os.path.relpath(path, data_context().content.integration_targets_path)

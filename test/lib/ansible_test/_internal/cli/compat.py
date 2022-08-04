@@ -127,7 +127,7 @@ class LegacyHostOptions:
     inventory: t.Optional[str] = None
 
     @staticmethod
-    def create(namespace):  # type: (t.Union[argparse.Namespace, types.SimpleNamespace]) -> LegacyHostOptions
+    def create(namespace: t.Union[argparse.Namespace, types.SimpleNamespace]) -> LegacyHostOptions:
         """Create legacy host options from the given namespace."""
         kwargs = {field.name: getattr(namespace, field.name, None) for field in dataclasses.fields(LegacyHostOptions)}
 
@@ -137,9 +137,9 @@ class LegacyHostOptions:
         return LegacyHostOptions(**kwargs)
 
     @staticmethod
-    def purge_namespace(namespace):  # type: (t.Union[argparse.Namespace, types.SimpleNamespace]) -> None
+    def purge_namespace(namespace: t.Union[argparse.Namespace, types.SimpleNamespace]) -> None:
         """Purge legacy host options fields from the given namespace."""
-        for field in dataclasses.fields(LegacyHostOptions):   # type: dataclasses.Field
+        for field in dataclasses.fields(LegacyHostOptions):
             if hasattr(namespace, field.name):
                 delattr(namespace, field.name)
 

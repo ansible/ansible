@@ -645,7 +645,7 @@ class SanityMessage(TestMessage):
 
 class SanityTargets:
     """Sanity test target information."""
-    def __init__(self, targets, include):  # type: (t.Tuple[TestTarget, ...], t.Tuple[TestTarget, ...]) -> None
+    def __init__(self, targets: t.Tuple[TestTarget, ...], include: t.Tuple[TestTarget, ...]) -> None:
         self.targets = targets
         self.include = include
 
@@ -855,7 +855,7 @@ class SanityCodeSmellTest(SanitySingleVersion):
             self.__no_targets: bool = self.config.get('no_targets')
             self.__include_directories: bool = self.config.get('include_directories')
             self.__include_symlinks: bool = self.config.get('include_symlinks')
-            self.__py2_compat = self.config.get('py2_compat', False)  # type: bool
+            self.__py2_compat: bool = self.config.get('py2_compat', False)
         else:
             self.output = None
             self.extensions = []

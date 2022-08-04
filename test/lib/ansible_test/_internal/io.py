@@ -39,7 +39,7 @@ def make_dirs(path: str) -> None:
             raise
 
 
-def write_json_file(path,  # type: str
+def write_json_file(path: str,
                     content: t.Any,
                     create_directories: bool = False,
                     formatted: bool = True,

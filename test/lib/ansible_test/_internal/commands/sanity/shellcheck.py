@@ -89,8 +89,8 @@ class ShellcheckTest(SanityVersionNeutral):
 
         results = []
 
-        for item in root:  # type: Element
-            for entry in item:  # type: Element
+        for item in root:
+            for entry in item:
                 results.append(SanityMessage(
                     message=entry.attrib['message'],
                     path=item.attrib['name'],

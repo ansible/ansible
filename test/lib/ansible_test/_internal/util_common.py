@@ -74,7 +74,7 @@ class ShellScriptTemplate:
         return value
 
     @staticmethod
-    def quote(value):  # type: (t.Union[str, t.List[str]]) -> str
+    def quote(value: t.Union[str, t.List[str]]) -> str:
         """Return a shell quoted version of the given value."""
         if isinstance(value, list):
             return shlex.quote(' '.join(value))
@@ -209,7 +209,7 @@ def named_temporary_file(args: CommonConfig, prefix: str, suffix: str, directory
             yield tempfile_fd.name
 
 
-def write_json_test_results(category,  # type: ResultType
+def write_json_test_results(category: ResultType,
                             name: str,
                             content: t.Union[t.List[t.Any], t.Dict[str, t.Any]],
                             formatted: bool = True,

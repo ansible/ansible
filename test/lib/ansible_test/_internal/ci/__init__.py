@@ -103,7 +103,7 @@ def get_ci_provider() -> CIProvider:
 
 class AuthHelper(metaclass=abc.ABCMeta):
     """Public key based authentication helper for Ansible Core CI."""
-    def sign_request(self, request):  # type: (t.Dict[str, t.Any]) -> None
+    def sign_request(self, request: t.Dict[str, t.Any]) -> None:
         """Sign the given auth request and make the public key available."""
         payload_bytes = to_bytes(json.dumps(request, sort_keys=True))
         signature_raw_bytes = self.sign_bytes(payload_bytes)

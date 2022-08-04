@@ -320,7 +320,7 @@ class AnsibleCoreCI:
 
         return response.json()
 
-    def _start_endpoint(self, data, headers):  # type: (t.Dict[str, t.Any], t.Dict[str, str]) -> HttpResponse
+    def _start_endpoint(self, data: t.Dict[str, t.Any], headers: t.Dict[str, str]) -> HttpResponse:
         tries = self.retries
         sleep = 15
 
@@ -368,7 +368,7 @@ class AnsibleCoreCI:
 
         return self.load(config)
 
-    def load(self, config):  # type: (t.Dict[str, str]) -> bool
+    def load(self, config: t.Dict[str, str]) -> bool:
         """Load the instance from the provided dictionary."""
         self.instance_id = str(config['instance_id'])
         self.endpoint = config['endpoint']
@@ -446,7 +446,7 @@ class SshKey:
         key, pub = key_pair
         key_dst, pub_dst = self.get_in_tree_key_pair_paths()
 
-        def ssh_key_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
+        def ssh_key_callback(files: t.List[t.Tuple[str, str]]) -> None:
             """
             Add the SSH keys to the payload file list.
             They are either outside the source tree or in the cache dir which is ignored by default.
