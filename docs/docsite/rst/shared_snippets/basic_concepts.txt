@@ -20,7 +20,7 @@ To learn more about inventory, see :ref:`the Working with Inventory<intro_invent
 
 Playbooks
 =========
-They contain Plays (which are the basic unit of Ansible execution). this is both an 'execution concept' and how we describe the files on which ``ansible-playbook`` operates on.
+They contain Plays (which are the basic unit of Ansible execution). This is both an 'execution concept' and how we describe the files on which ``ansible-playbook`` operates.
 Playbooks are written in YAML and are easy to read, write, share and understand. To learn more about playbooks, see :ref:`about_playbooks`.
 
 Plays
@@ -31,22 +31,22 @@ It basically consists of an implicit loop over the mapped hosts and tasks and de
 
 Roles
 .....
-A limited distribution of reusable ansible content (tasks, handlers, variables, plugins, templates and files) for use inside of a Play.
+A limited distribution of reusable Ansible content (tasks, handlers, variables, plugins, templates and files) for use inside of a Play.
 To use any Role resource, the Role itself must be imported into the Play.
 
 Tasks
 .....
 The definition of an 'action' to be applied to the managed host. Tasks must always be contained in a Play, directly or indirectly (Role, or imported/included task list file).
-You can execute a single task once with an ad hoc command ``ansible`` or ``ansible-console`` (both create a virtual Play).
+You can execute a single task once with an ad hoc command using ``ansible`` or ``ansible-console`` (both create a virtual Play).
 
 Handlers
 ........
-Special form of a Task, that only execute when notified by a previous task which resulted in a 'changed' status.
+A special form of a Task, that only executes when notified by a previous task which resulted in a 'changed' status.
 
 
 Modules
 =======
-The code or binaries that Ansible copies and executes on each managed node (when needed) to accomplish the action defined in each Task.
+The code or binaries that Ansible copies to and executes on each managed node (when needed) to accomplish the action defined in each Task.
 Each module has a particular use, from administering users on a specific type of database to managing VLAN interfaces on a specific type of network device.
 You can invoke a single module with a task, or invoke several different modules in a playbook.
 Ansible modules are grouped in collections. For an idea of how many collections Ansible includes, see the :ref:`list_of_collections`.
@@ -61,7 +61,7 @@ See :ref:`working_with_plugins` for details.
 
 Collections
 ===========
-Collections are a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. You can install and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_. To learn more about collections, see :ref:`collections`. Collection resources can be used independently and discretely from each other.
+A format in which Ansible content is distributed that can contain playbooks, roles, modules, and plugins. You can install and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_. To learn more about collections, see :ref:`collections`. Collection resources can be used independently and discretely from each other.
 
 
 AAP
