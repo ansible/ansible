@@ -162,7 +162,7 @@ class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
                  args: EnvironmentConfig,
                  config: THostConfig,
                  targets: t.Optional[t.List[HostConfig]],
-                 ):  # type: (...) -> None
+                 ) -> None:
         self.args = args
         self.config = config
         self.controller = bool(targets)
@@ -758,7 +758,7 @@ def create_host_profile(
         args: EnvironmentConfig,
         config: HostConfig,
         controller: bool,
-):  # type: (...) -> HostProfile
+) -> HostProfile:
     """Create and return a host profile from the given host configuration."""
     profile_type = get_config_profile_type_map()[type(config)]
     profile = profile_type(args=args, config=config, targets=args.targets if controller else None)

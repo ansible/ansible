@@ -120,7 +120,7 @@ def expand_indexes(
         source_data: IndexedPoints,
         source_index: t.List[str],
         format_func: t.Callable[[TargetKey], str],
-):  # type: (...) -> NamedPoints
+) -> NamedPoints:
     """Expand indexes from the source into target names for easier processing of the data (arcs or lines)."""
     combined_data = {}  # type: t.Dict[str, t.Dict[t.Any, t.Set[str]]]
 

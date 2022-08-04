@@ -284,7 +284,7 @@ def run_playbook(
         playbook,   # type: str
         capture: bool,
         variables: t.Optional[t.Dict[str, t.Any]] = None,
-):  # type: (...) -> None
+) -> None:
     """Run the specified playbook using the given inventory file and playbook variables."""
     playbook_path = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'playbooks', playbook)
     cmd = ['ansible-playbook', '-i', inventory_path, playbook_path]

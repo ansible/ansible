@@ -193,7 +193,7 @@ def convert_legacy_args(
         argv: t.List[str],
         args: t.Union[argparse.Namespace, types.SimpleNamespace],
         mode: TargetMode,
-):  # type: (...) -> HostSettings
+) -> HostSettings:
     """Convert pre-split host arguments in the given namespace to their split counterparts."""
     old_options = LegacyHostOptions.create(args)
     old_options.purge_namespace(args)
@@ -264,7 +264,7 @@ def controller_targets(
         mode: TargetMode,
         options: LegacyHostOptions,
         controller: ControllerHostConfig,
-):  # type: (...) -> t.List[HostConfig]
+) -> t.List[HostConfig]:
     """Return the configuration for controller targets."""
     python = native_python(options)
 
@@ -289,7 +289,7 @@ def native_python(options: LegacyHostOptions) -> t.Optional[NativePythonConfig]:
 def get_legacy_host_config(
         mode: TargetMode,
         options: LegacyHostOptions,
-):  # type: (...) -> t.Tuple[ControllerHostConfig, t.List[HostConfig], t.Optional[FallbackDetail]]
+) -> t.Tuple[ControllerHostConfig, t.List[HostConfig], t.Optional[FallbackDetail]]:
     """
     Returns controller and target host configs derived from the provided legacy host options.
     The goal is to match the original behavior, by using non-split testing whenever possible.
@@ -456,7 +456,7 @@ def handle_non_posix_targets(
     mode: TargetMode,
     options: LegacyHostOptions,
     targets: t.List[HostConfig],
-):  # type: (...) -> t.List[HostConfig]
+) -> t.List[HostConfig]:
     """Return a list of non-POSIX targets if the target mode is non-POSIX."""
     if mode == TargetMode.WINDOWS_INTEGRATION:
         if options.windows:
@@ -488,7 +488,7 @@ def handle_non_posix_targets(
 def default_targets(
     mode: TargetMode,
     controller: ControllerHostConfig,
-):  # type: (...) -> t.List[HostConfig]
+) -> t.List[HostConfig]:
     """Return a list of default targets for the given target mode."""
     targets: t.List[HostConfig]
 

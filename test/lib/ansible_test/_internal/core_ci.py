@@ -118,7 +118,7 @@ class AnsibleCoreCI:
             args: EnvironmentConfig,
             resource: Resource,
             load: bool = True,
-    ):  # type: (...) -> None
+    ) -> None:
         self.args = args
         self.resource = resource
         self.platform, self.version, self.arch, self.provider = self.resource.as_tuple()
@@ -537,7 +537,7 @@ class InstanceConnection:
                  username: t.Optional[str] = None,
                  password: t.Optional[str] = None,
                  response_json: t.Optional[t.Dict[str, t.Any]] = None,
-                 ):  # type: (...) -> None
+                 ) -> None:
         self.running = running
         self.hostname = hostname
         self.port = port

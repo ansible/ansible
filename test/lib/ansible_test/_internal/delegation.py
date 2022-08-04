@@ -260,7 +260,7 @@ def generate_command(
         content_root: str,
         exclude: t.List[str],
         require: t.List[str],
-):  # type: (...) -> t.List[str]
+) -> t.List[str]:
     """Generate the command necessary to delegate ansible-test."""
     cmd = [os.path.join(ansible_bin_path, 'ansible-test')]
     cmd = [python.path] + cmd
@@ -310,7 +310,7 @@ def filter_options(
         argv: t.List[str],
         exclude: t.List[str],
         require: t.List[str],
-):  # type: (...) -> t.Iterable[str]
+) -> t.Iterable[str]:
     """Return an iterable that filters out unwanted CLI options and injects new ones as requested."""
     replace: list[tuple[str, int, t.Optional[t.Union[bool, str, list[str]]]]] = [
         ('--docker-no-pull', 0, False),

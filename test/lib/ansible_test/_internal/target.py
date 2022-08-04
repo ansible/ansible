@@ -68,7 +68,7 @@ def walk_internal_targets(
         includes: t.Optional[t.List[str]] = None,
         excludes: t.Optional[t.List[str]] = None,
         requires: t.Optional[t.List[str]] = None,
-):  # type: (...) -> t.Tuple[TCompletionTarget, ...]
+) -> t.Tuple[TCompletionTarget, ...]:
     """Return a tuple of matching completion targets."""
     targets = tuple(targets)
 
@@ -90,7 +90,7 @@ def filter_targets(targets,  # type: t.Iterable[TCompletionTarget]
                    include: bool = True,
                    directories: bool = True,
                    errors: bool = True,
-                   ):  # type: (...) -> t.Iterable[TCompletionTarget]
+                   ) -> t.Iterable[TCompletionTarget]:
     """Iterate over the given targets and filter them based on the supplied arguments."""
     unmatched = set(patterns or ())
     compiled_patterns = dict((p, re.compile('^%s$' % p)) for p in patterns) if patterns else None
@@ -270,7 +270,7 @@ def walk_test_targets(
         extra_dirs: t.Optional[t.Tuple[str, ...]] = None,
         include_symlinks: bool = False,
         include_symlinked_directories: bool = False,
-):  # type: (...) -> t.Iterable[TestTarget]
+) -> t.Iterable[TestTarget]:
     """Iterate over available test targets."""
     if path:
         file_paths = data_context().content.walk_files(path, include_symlinked_directories=include_symlinked_directories)

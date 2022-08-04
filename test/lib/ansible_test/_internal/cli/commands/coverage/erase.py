@@ -20,7 +20,7 @@ def do_erase(
         subparsers,
         parent: argparse.ArgumentParser,
         completer: CompositeActionCompletionFinder,
-):  # type: (...) -> None
+) -> None:
     """Command line parsing for the `coverage erase` command."""
     parser = subparsers.add_parser(
         'erase',

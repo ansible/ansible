@@ -20,7 +20,7 @@ class Layout:
     def __init__(self,
                  root: str,
                  paths: t.List[str],
-                 ):  # type: (...) -> None
+                 ) -> None:
         self.root = root
 
         self.__paths = paths  # contains both file paths and symlinked directory paths (ending with os.path.sep)
@@ -92,7 +92,7 @@ class ContentLayout(Layout):
                  unit_module_utils_path: str,
                  unit_messages: t.Optional[LayoutMessages],
                  unsupported: bool = False,
-                 ):  # type: (...) -> None
+                 ) -> None:
         super().__init__(root, paths)
 
         self.plugin_paths = plugin_paths
@@ -162,7 +162,7 @@ class CollectionDetail:
                  name: str,
                  namespace: str,
                  root: str,
-                 ):  # type: (...) -> None
+                 ) -> None:
         self.name = name
         self.namespace = namespace
         self.root = root

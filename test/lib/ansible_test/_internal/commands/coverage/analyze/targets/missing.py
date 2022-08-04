@@ -71,7 +71,7 @@ def find_gaps(
         to_data: IndexedPoints,
         target_indexes: TargetIndexes,
         only_exists: bool,
-):  # type: (...) -> IndexedPoints
+) -> IndexedPoints:
     """Find gaps in coverage between the from and to data sets."""
     target_data = {}  # type: IndexedPoints
 
@@ -97,7 +97,7 @@ def find_missing(
         to_index: t.List[str],
         target_indexes: TargetIndexes,
         only_exists: bool,
-):  # type: (...) -> IndexedPoints
+) -> IndexedPoints:
     """Find coverage in from_data not present in to_data (arcs or lines)."""
     target_data = {}  # type: IndexedPoints
 

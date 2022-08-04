@@ -40,7 +40,7 @@ def do_coverage(
         subparsers,
         parent: argparse.ArgumentParser,
         completer: CompositeActionCompletionFinder,
-):  # type: (...) -> None
+) -> None:
     """Command line parsing for all `coverage` commands."""
     coverage_common = argparse.ArgumentParser(add_help=False, parents=[parent])
 

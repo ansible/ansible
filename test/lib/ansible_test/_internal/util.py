@@ -358,7 +358,7 @@ def raw_command(
         cmd_verbosity: int = 1,
         str_errors: str = 'strict',
         error_callback: t.Optional[t.Callable[[SubprocessError], None]] = None,
-):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+) -> t.Tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command and return stdout and stderr as a tuple."""
     output_stream = output_stream or OutputStream.AUTO
 
@@ -853,7 +853,7 @@ class Display:
             color: t.Optional[str] = None,
             stderr: bool = False,
             truncate: bool = False,
-    ):  # type: (...) -> None
+    ) -> None:
         """Display a message."""
         if self.redact and self.sensitive:
             for item in self.sensitive:
@@ -901,7 +901,7 @@ class SubprocessError(ApplicationError):
             stderr: t.Optional[str] = None,
             runtime: t.Optional[float] = None,
             error_callback: t.Optional[t.Callable[[SubprocessError], None]] = None,
-    ):  # type: (...) -> None
+    ) -> None:
         message = 'Command "%s" returned exit status %s.\n' % (shlex.join(cmd), status)
 
         if stderr:

@@ -116,7 +116,7 @@ class DataContext:
                                 source_providers: t.List[t.Type[SourceProvider]],
                                 root: str,
                                 walk: bool,
-                                ):  # type: (...) -> ContentLayout
+                                ) -> ContentLayout:
         """Create a content layout using the given providers and root path."""
         try:
             layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk)

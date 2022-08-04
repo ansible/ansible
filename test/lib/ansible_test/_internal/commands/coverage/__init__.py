@@ -166,7 +166,7 @@ def enumerate_python_arcs(
         modules: t.Dict[str, str],
         collection_search_re: t.Optional[t.Pattern],
         collection_sub_re: t.Optional[t.Pattern],
-):  # type: (...) -> t.Generator[t.Tuple[str, t.Set[t.Tuple[int, int]]], None, None]
+) -> t.Generator[t.Tuple[str, t.Set[t.Tuple[int, int]]], None, None]:
     """Enumerate Python code coverage arcs in the given file."""
     if os.path.getsize(path) == 0:
         display.warning('Empty coverage file: %s' % path, verbosity=2)
@@ -241,7 +241,7 @@ def enumerate_powershell_lines(
         path: str,
         collection_search_re: t.Optional[t.Pattern],
         collection_sub_re: t.Optional[t.Pattern],
-):  # type: (...) -> t.Generator[t.Tuple[str, t.Dict[int, int]], None, None]
+) -> t.Generator[t.Tuple[str, t.Dict[int, int]], None, None]:
     """Enumerate PowerShell code coverage lines in the given file."""
     if os.path.getsize(path) == 0:
         display.warning('Empty coverage file: %s' % path, verbosity=2)
@@ -281,7 +281,7 @@ def sanitize_filename(
         modules: t.Optional[t.Dict[str, str]] = None,
         collection_search_re: t.Optional[t.Pattern] = None,
         collection_sub_re: t.Optional[t.Pattern] = None,
-):  # type: (...) -> t.Optional[str]
+) -> t.Optional[str]:
     """Convert the given code coverage path to a local absolute path and return its, or None if the path is not valid."""
     ansible_path = os.path.abspath('lib/ansible/') + '/'
     root_path = data_context().content.root + '/'

@@ -205,7 +205,7 @@ class PylintTest(SanitySingleVersion):
             plugin_names: t.List[str],
             python: PythonConfig,
             collection_detail: CollectionDetail,
-    ):  # type: (...) -> t.List[t.Dict[str, str]]
+    ) -> t.List[t.Dict[str, str]]:
         """Run pylint using the config specified by the context on the specified paths."""
         rcfile = os.path.join(SANITY_ROOT, 'pylint', 'config', context.split('/')[0] + '.cfg')
 

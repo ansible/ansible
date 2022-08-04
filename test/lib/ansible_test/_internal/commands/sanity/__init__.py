@@ -529,7 +529,7 @@ class SanityIgnoreProcessor:
                  args: SanityConfig,
                  test: SanityTest,
                  python_version: t.Optional[str],
-                 ):  # type: (...) -> None
+                 ) -> None:
         name = test.name
         code = test.error_code
 
@@ -635,7 +635,7 @@ class SanityFailure(TestFailure):
             python_version: t.Optional[str] = None,
             messages: t.Optional[t.Sequence[SanityMessage]] = None,
             summary: t.Optional[str] = None,
-    ):  # type: (...) -> None
+    ) -> None:
         super().__init__(COMMAND, test, python_version, messages, summary)
 
 
@@ -1101,7 +1101,7 @@ def create_sanity_virtualenv(
         name: str,
         coverage: bool = False,
         minimize: bool = False,
-):  # type: (...) -> t.Optional[VirtualPythonConfig]
+) -> t.Optional[VirtualPythonConfig]:
     """Return an existing sanity virtual environment matching the requested parameters or create a new one."""
     commands = collect_requirements(  # create_sanity_virtualenv()
         python=python,

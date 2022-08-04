@@ -42,7 +42,7 @@ from .python_requirements import (
 def get_virtual_python(
         args: EnvironmentConfig,
         python: VirtualPythonConfig,
-):  # type: (...) -> VirtualPythonConfig
+) -> VirtualPythonConfig:
     """Create a virtual environment for the given Python and return the path to its root."""
     if python.system_site_packages:
         suffix = '-ssp'
@@ -82,7 +82,7 @@ def create_virtual_environment(args,  # type: EnvironmentConfig
                                path: str,
                                system_site_packages: bool = False,
                                pip: bool = False,
-                               ):  # type: (...) -> bool
+                               ) -> bool:
     """Create a virtual environment using venv or virtualenv for the requested Python version."""
     if not os.path.exists(python.path):
         # the requested python version could not be found
@@ -184,7 +184,7 @@ def run_venv(args,  # type: EnvironmentConfig
              system_site_packages: bool,
              pip: bool,
              path: str,
-             ):  # type: (...) -> bool
+             ) -> bool:
     """Create a virtual environment using the 'venv' module. Not available on Python 2.x."""
     cmd = [run_python, '-m', 'venv']
 
@@ -215,7 +215,7 @@ def run_virtualenv(args,  # type: EnvironmentConfig
                    system_site_packages: bool,
                    pip: bool,
                    path: str,
-                   ):  # type: (...) -> bool
+                   ) -> bool:
     """Create a virtual environment using the 'virtualenv' module."""
     # always specify which interpreter to use to guarantee the desired interpreter is provided
     # otherwise virtualenv may select a different interpreter than the one running virtualenv

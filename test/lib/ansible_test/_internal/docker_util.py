@@ -290,7 +290,7 @@ def docker_run(
         options: t.Optional[t.List[str]],
         cmd: t.Optional[t.List[str]] = None,
         create_only: bool = False,
-):  # type: (...) -> str
+) -> str:
     """Run a container using the given docker image."""
     if not options:
         options = []
@@ -519,7 +519,7 @@ def docker_exec(
         interactive: bool = False,
         output_stream: t.Optional[OutputStream] = None,
         data: t.Optional[str] = None,
-):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+) -> t.Tuple[t.Optional[str], t.Optional[str]]:
     """Execute the given command in the specified container."""
     if not options:
         options = []
@@ -553,7 +553,7 @@ def docker_command(
         output_stream: t.Optional[OutputStream] = None,
         always: bool = False,
         data: t.Optional[str] = None,
-):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+) -> t.Tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified docker command."""
     env = docker_environment()
     command = [require_docker().command]

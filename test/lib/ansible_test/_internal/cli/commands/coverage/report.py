@@ -22,7 +22,7 @@ def do_report(
         parent: argparse.ArgumentParser,
         add_coverage_common: t.Callable[[argparse.ArgumentParser], None],
         completer: CompositeActionCompletionFinder,
-):  # type: (...) -> None
+) -> None:
     """Command line parsing for the `coverage report` command."""
     parser = subparsers.add_parser(
         'report',

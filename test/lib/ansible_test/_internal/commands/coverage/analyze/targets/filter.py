@@ -94,7 +94,7 @@ def filter_data(
         data: NamedPoints,
         path_filter_func: t.Callable[[str], bool],
         target_filter_func: t.Callable[[t.Set[str]], t.Set[str]],
-):  # type: (...) -> NamedPoints
+) -> NamedPoints:
     """Filter the data set using the specified filter function."""
     result = {}  # type: NamedPoints
 

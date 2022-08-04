@@ -62,7 +62,7 @@ def merge_indexes(
         source_index: t.List[str],
         combined_data: IndexedPoints,
         combined_index: TargetIndexes,
-):  # type: (...) -> None
+) -> None:
     """Merge indexes from the source into the combined data set (arcs or lines)."""
     for covered_path, covered_points in source_data.items():
         combined_points = combined_data.setdefault(covered_path, {})

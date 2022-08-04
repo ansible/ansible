@@ -175,7 +175,7 @@ class MypyTest(SanityMultipleVersion):
             python: PythonConfig,
             context: MyPyContext,
             paths: t.List[str],
-    ):  # type: (...) -> t.List[SanityMessage]
+    ) -> t.List[SanityMessage]:
         """Run mypy tests for the specified context."""
         context_paths = [path for path in paths if any(is_subdir(path, match_path) for match_path in context.paths)]
 

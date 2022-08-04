@@ -324,7 +324,7 @@ class IntegrationAliasesTest(SanitySingleVersion):
             targets: t.Tuple[CompletionTarget, ...],
             find: str,
             find_incidental: t.Optional[t.List[str]] = None,
-    ):  # type: (...) -> t.List[SanityMessage]
+    ) -> t.List[SanityMessage]:
         """Check the CI groups set in the provided targets and return a list of messages with any issues found."""
         all_paths = set(target.path for target in targets)
         supported_paths = set(target.path for target in filter_targets(targets, [find], directories=False, errors=False))

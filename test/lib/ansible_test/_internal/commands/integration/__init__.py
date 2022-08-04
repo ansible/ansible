@@ -241,7 +241,7 @@ def integration_test_environment(
         args: IntegrationConfig,
         target: IntegrationTarget,
         inventory_path_src: str,
-):  # type: (...) -> t.Iterator[IntegrationEnvironment]
+) -> t.Iterator[IntegrationEnvironment]:
     """Context manager that prepares the integration test environment and cleans it up."""
     ansible_config_src = args.get_ansible_config()
     ansible_config_relative = os.path.join(data_context().content.integration_path, '%s.cfg' % args.command)
@@ -344,7 +344,7 @@ def integration_test_config_file(
         args: IntegrationConfig,
         env_config: CloudEnvironmentConfig,
         integration_dir: str,
-):  # type: (...) -> t.Iterator[t.Optional[str]]
+) -> t.Iterator[t.Optional[str]]:
     """Context manager that provides a config file for integration tests, if needed."""
     if not env_config:
         yield None
@@ -374,7 +374,7 @@ def create_inventory(
         host_state: HostState,
         inventory_path: str,
         target: IntegrationTarget,
-):  # type: (...) -> None
+) -> None:
     """Create inventory."""
     if isinstance(args, PosixIntegrationConfig):
         if target.target_type == IntegrationTargetType.CONTROLLER:
@@ -780,7 +780,7 @@ def integration_environment(
         ansible_config: t.Optional[str],
         env_config: t.Optional[CloudEnvironmentConfig],
         test_env: IntegrationEnvironment,
-):  # type: (...) -> t.Dict[str, str]
+) -> t.Dict[str, str]:
     """Return a dictionary of environment variables to use when running the given integration test target."""
     env = ansible_environment(args, ansible_config=ansible_config)
 
@@ -897,7 +897,7 @@ If necessary, context can be controlled by adding entries to the "aliases" file 
 
 def command_integration_filter(args,  # type: TIntegrationConfig
                                targets: t.Iterable[TIntegrationTarget],
-                               ):  # type: (...) -> t.Tuple[HostState, t.Tuple[TIntegrationTarget, ...]]
+                               ) -> t.Tuple[HostState, t.Tuple[TIntegrationTarget, ...]]:
     """Filter the given integration test targets."""
     targets = tuple(target for target in targets if 'hidden/' not in target.aliases)
     changes = get_changes_filter(args)

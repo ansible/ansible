@@ -130,7 +130,7 @@ def install_requirements(
         virtualenv: bool = False,
         controller: bool = True,
         connection: t.Optional[Connection] = None,
-):  # type: (...) -> None
+) -> None:
     """Install requirements for the given Python using the specified arguments."""
     create_result_directories(args)
 
@@ -206,7 +206,7 @@ def collect_requirements(
         minimize: bool,
         command: t.Optional[str],
         sanity: t.Optional[str],
-):  # type: (...) -> t.List[PipCommand]
+) -> t.List[PipCommand]:
     """Collect requirements for the given Python using the specified arguments."""
     commands = []  # type: t.List[PipCommand]
 
@@ -256,7 +256,7 @@ def run_pip(
         python: PythonConfig,
         commands: t.List[PipCommand],
         connection: t.Optional[Connection],
-):  # type: (...) -> None
+) -> None:
     """Run the specified pip commands for the given Python, and optionally the specified host."""
     connection = connection or LocalConnection(args)
     script = prepare_pip_script(commands)
@@ -282,7 +282,7 @@ def run_pip(
 def collect_general_install(
     command: t.Optional[str] = None,
     ansible: bool = False,
-):  # type: (...) -> t.List[PipInstall]
+) -> t.List[PipInstall]:
     """Return details necessary for the specified general-purpose pip install(s)."""
     requirements_paths = []  # type: t.List[t.Tuple[str, str]]
     constraints_paths = []  # type: t.List[t.Tuple[str, str]]

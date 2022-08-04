@@ -79,7 +79,7 @@ def analyze_python_coverage(
         host_state: HostState,
         path: str,
         target_indexes: TargetIndexes,
-):  # type: (...) -> Arcs
+) -> Arcs:
     """Analyze Python code coverage."""
     results = {}  # type: Arcs
     collection_search_re, collection_sub_re = get_collection_path_regexes()
@@ -110,7 +110,7 @@ def analyze_powershell_coverage(
         args: CoverageAnalyzeTargetsGenerateConfig,
         path: str,
         target_indexes: TargetIndexes,
-):  # type: (...) -> Lines
+) -> Lines:
     """Analyze PowerShell code coverage"""
     results = {}  # type: Lines
     collection_search_re, collection_sub_re = get_collection_path_regexes()
@@ -139,7 +139,7 @@ def prune_invalid_filenames(
         args: CoverageAnalyzeTargetsGenerateConfig,
         results: t.Dict[str, t.Any],
         collection_search_re: t.Optional[t.Pattern] = None,
-):  # type: (...) -> None
+) -> None:
     """Remove invalid filenames from the given result set."""
     path_checker = PathChecker(args, collection_search_re)
 

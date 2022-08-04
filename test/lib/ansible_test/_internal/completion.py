@@ -230,7 +230,7 @@ def filter_completion(
         completion: t.Dict[str, TCompletionConfig],
         controller_only: bool = False,
         include_defaults: bool = False,
-):  # type: (...) -> t.Dict[str, TCompletionConfig]
+) -> t.Dict[str, TCompletionConfig]:
     """Return the given completion dictionary, filtering out configs which do not support the controller if controller_only is specified."""
     if controller_only:
         completion = {name: config for name, config in completion.items() if isinstance(config, PosixCompletionConfig) and config.controller_supported}

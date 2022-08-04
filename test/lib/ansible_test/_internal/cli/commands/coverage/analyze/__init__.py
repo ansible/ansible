@@ -16,7 +16,7 @@ def do_analyze(
         subparsers,
         parent: argparse.ArgumentParser,
         completer: CompositeActionCompletionFinder,
-):  # type: (...) -> None
+) -> None:
     """Command line parsing for all `coverage analyze` commands."""
     parser = subparsers.add_parser(
         'analyze',

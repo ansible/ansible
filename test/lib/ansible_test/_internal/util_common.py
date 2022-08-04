@@ -214,7 +214,7 @@ def write_json_test_results(category,  # type: ResultType
                             content: t.Union[t.List[t.Any], t.Dict[str, t.Any]],
                             formatted: bool = True,
                             encoder: t.Optional[t.Type[json.JSONEncoder]] = None,
-                            ):  # type: (...) -> None
+                            ) -> None:
     """Write the given json content to the specified test results path, creating directories as needed."""
     path = os.path.join(category.path, name)
     write_json_file(path, content, create_directories=True, formatted=formatted, encoder=encoder)
@@ -376,7 +376,7 @@ def intercept_python(
         data: t.Optional[str] = None,
         cwd: t.Optional[str] = None,
         always: bool = False,
-):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+) -> t.Tuple[t.Optional[str], t.Optional[str]]:
     """
     Run a command while intercepting invocations of Python to control the version used.
     If the specified Python is an ansible-test managed virtual environment, it will be added to PATH to activate it.
@@ -414,7 +414,7 @@ def run_command(
         cmd_verbosity: int = 1,
         str_errors: str = 'strict',
         error_callback: t.Optional[t.Callable[[SubprocessError], None]] = None,
-):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+) -> t.Tuple[t.Optional[str], t.Optional[str]]:
     """Run the specified command and return stdout and stderr as a tuple."""
     explain = args.explain and not always
     return raw_command(cmd, capture=capture, env=env, data=data, cwd=cwd, explain=explain, stdin=stdin, stdout=stdout, interactive=interactive,

@@ -124,7 +124,7 @@ def create_ssh_command(
         options: t.Optional[t.Dict[str, t.Union[str, int]]] = None,
         cli_args: t.List[str] = None,
         command: t.Optional[str] = None,
-):  # type: (...) -> t.List[str]
+) -> t.List[str]:
     """Create an SSH command using the specified options."""
     cmd = [
         'ssh',
@@ -171,7 +171,7 @@ def run_ssh_command(
         options: t.Optional[t.Dict[str, t.Union[str, int]]] = None,
         cli_args: t.List[str] = None,
         command: t.Optional[str] = None,
-):  # type: (...) -> SshProcess
+) -> SshProcess:
     """Run the specified SSH command, returning the created SshProcess instance created."""
     cmd = create_ssh_command(ssh, options, cli_args, command)
     env = common_environment()
@@ -195,7 +195,7 @@ def create_ssh_port_forwards(
         args: EnvironmentConfig,
         ssh: SshConnectionDetail,
         forwards: t.List[t.Tuple[str, int]],
-):  # type: (...) -> SshProcess
+) -> SshProcess:
     """
     Create SSH port forwards using the provided list of tuples (target_host, target_port).
     Port bindings will be automatically assigned by SSH and must be collected with a subsequent call to collect_port_forwards.
@@ -219,7 +219,7 @@ def create_ssh_port_redirects(
         args: EnvironmentConfig,
         ssh: SshConnectionDetail,
         redirects: t.List[t.Tuple[int, str, int]],
-):  # type: (...) -> SshProcess
+) -> SshProcess:
     """Create SSH port redirections using the provided list of tuples (bind_port, target_host, target_port)."""
     options = {}  # type: t.Dict[str, t.Union[str, int]]
     cli_args = []

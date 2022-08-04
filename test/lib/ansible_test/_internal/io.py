@@ -44,7 +44,7 @@ def write_json_file(path,  # type: str
                     create_directories: bool = False,
                     formatted: bool = True,
                     encoder: t.Optional[t.Type[json.JSONEncoder]] = None,
-                    ):  # type: (...) -> str
+                    ) -> str:
     """Write the given json content to the specified path, optionally creating missing directories."""
     text_content = json.dumps(content,
                               sort_keys=formatted,

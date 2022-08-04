@@ -99,7 +99,7 @@ def prepare_profiles(
         targets_use_pypi: bool = False,
         skip_setup: bool = False,
         requirements: t.Optional[t.Callable[[TEnvironmentConfig, HostState], None]] = None,
-):  # type: (...) -> HostState
+) -> HostState:
     """
     Create new profiles, or load existing ones, and return them.
     If a requirements callback was provided, it will be used before configuring hosts if delegation has already been performed.

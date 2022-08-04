@@ -32,7 +32,7 @@ def do_targets(
         subparsers,
         parent: argparse.ArgumentParser,
         completer: CompositeActionCompletionFinder,
-):  # type: (...) -> None
+) -> None:
     """Command line parsing for all `coverage analyze targets` commands."""
     targets = subparsers.add_parser(
         'targets',

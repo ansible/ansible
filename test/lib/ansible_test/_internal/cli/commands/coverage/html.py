@@ -22,7 +22,7 @@ def do_html(
         parent: argparse.ArgumentParser,
         add_coverage_common: t.Callable[[argparse.ArgumentParser], None],
         completer: CompositeActionCompletionFinder,
-):  # type: (...) -> None
+) -> None:
     """Command line parsing for the `coverage html` command."""
     parser = subparsers.add_parser(
         'html',

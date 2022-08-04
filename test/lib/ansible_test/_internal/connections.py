@@ -52,7 +52,7 @@ class Connection(metaclass=abc.ABCMeta):
             stdin: t.Optional[t.IO[bytes]] = None,
             stdout: t.Optional[t.IO[bytes]] = None,
             output_stream: t.Optional[OutputStream] = None,
-            ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+            ) -> t.Tuple[t.Optional[str], t.Optional[str]]:
         """Run the specified command and return the result."""
 
     def extract_archive(self,
@@ -100,7 +100,7 @@ class LocalConnection(Connection):
             stdin: t.Optional[t.IO[bytes]] = None,
             stdout: t.Optional[t.IO[bytes]] = None,
             output_stream: t.Optional[OutputStream] = None,
-            ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+            ) -> t.Tuple[t.Optional[str], t.Optional[str]]:
         """Run the specified command and return the result."""
         return run_command(
             args=self.args,
@@ -142,7 +142,7 @@ class SshConnection(Connection):
             stdin: t.Optional[t.IO[bytes]] = None,
             stdout: t.Optional[t.IO[bytes]] = None,
             output_stream: t.Optional[OutputStream] = None,
-            ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+            ) -> t.Tuple[t.Optional[str], t.Optional[str]]:
         """Run the specified command and return the result."""
         options = list(self.options)
 
@@ -224,7 +224,7 @@ class DockerConnection(Connection):
             stdin: t.Optional[t.IO[bytes]] = None,
             stdout: t.Optional[t.IO[bytes]] = None,
             output_stream: t.Optional[OutputStream] = None,
-            ):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+            ) -> t.Tuple[t.Optional[str], t.Optional[str]]:
         """Run the specified command and return the result."""
         options = []
 

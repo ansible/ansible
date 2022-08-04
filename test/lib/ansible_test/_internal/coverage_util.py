@@ -147,7 +147,7 @@ def cover_python(
         capture: bool,
         data: t.Optional[str] = None,
         cwd: t.Optional[str] = None,
-):  # type: (...) -> t.Tuple[t.Optional[str], t.Optional[str]]
+) -> t.Tuple[t.Optional[str], t.Optional[str]]:
     """Run a command while collecting Python code coverage."""
     if args.coverage:
         env.update(get_coverage_environment(args, target_name, python.version))
@@ -175,7 +175,7 @@ def get_coverage_environment(
         args: TestConfig,
         target_name: str,
         version: str,
-):  # type: (...) -> t.Dict[str, str]
+) -> t.Dict[str, str]:
     """Return environment variables needed to collect code coverage."""
     # unit tests, sanity tests and other special cases (localhost only)
     # config is in a temporary directory
