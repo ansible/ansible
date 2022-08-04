@@ -227,7 +227,7 @@ def parse_completion_entry(value: str) -> t.Tuple[str, t.Dict[str, str]]:
 
 
 def filter_completion(
-        completion,  # type: t.Dict[str, TCompletionConfig]
+        completion: t.Dict[str, TCompletionConfig],
         controller_only=False,  # type: bool
         include_defaults=False,  # type: bool
 ):  # type: (...) -> t.Dict[str, TCompletionConfig]

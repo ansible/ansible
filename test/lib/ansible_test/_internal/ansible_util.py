@@ -279,10 +279,10 @@ def get_collection_detail(python: PythonConfig) -> CollectionDetail:
 
 
 def run_playbook(
-        args,  # type: EnvironmentConfig
-        inventory_path,  # type: str
+        args: EnvironmentConfig,
+        inventory_path: str,
         playbook,   # type: str
-        capture,  # type: bool
+        capture: bool,
         variables=None,  # type: t.Optional[t.Dict[str, t.Any]]
 ):  # type: (...) -> None
     """Run the specified playbook using the given inventory file and playbook variables."""

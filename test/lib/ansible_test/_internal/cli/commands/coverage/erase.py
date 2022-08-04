@@ -18,8 +18,8 @@ from ...environments import (
 
 def do_erase(
         subparsers,
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
+        parent: argparse.ArgumentParser,
+        completer: CompositeActionCompletionFinder,
 ):  # type: (...) -> None
     """Command line parsing for the `coverage erase` command."""
     parser = subparsers.add_parser(

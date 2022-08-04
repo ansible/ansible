@@ -40,8 +40,8 @@ from .python_requirements import (
 
 
 def get_virtual_python(
-        args,  # type: EnvironmentConfig
-        python,  # type: VirtualPythonConfig
+        args: EnvironmentConfig,
+        python: VirtualPythonConfig,
 ):  # type: (...) -> VirtualPythonConfig
     """Create a virtual environment for the given Python and return the path to its root."""
     if python.system_site_packages:
@@ -78,8 +78,8 @@ def get_virtual_python(
 
 
 def create_virtual_environment(args,  # type: EnvironmentConfig
-                               python,  # type: PythonConfig
-                               path,  # type: str
+                               python: PythonConfig,
+                               path: str,
                                system_site_packages=False,  # type: bool
                                pip=False,  # type: bool
                                ):  # type: (...) -> bool
@@ -180,10 +180,10 @@ def get_python_real_prefix(python_path: str) -> t.Optional[str]:
 
 
 def run_venv(args,  # type: EnvironmentConfig
-             run_python,  # type: str
-             system_site_packages,  # type: bool
-             pip,  # type: bool
-             path,  # type: str
+             run_python: str,
+             system_site_packages: bool,
+             pip: bool,
+             path: str,
              ):  # type: (...) -> bool
     """Create a virtual environment using the 'venv' module. Not available on Python 2.x."""
     cmd = [run_python, '-m', 'venv']
@@ -210,11 +210,11 @@ def run_venv(args,  # type: EnvironmentConfig
 
 
 def run_virtualenv(args,  # type: EnvironmentConfig
-                   run_python,  # type: str
-                   env_python,  # type: str
-                   system_site_packages,  # type: bool
-                   pip,  # type: bool
-                   path,  # type: str
+                   run_python: str,
+                   env_python: str,
+                   system_site_packages: bool,
+                   pip: bool,
+                   path: str,
                    ):  # type: (...) -> bool
     """Create a virtual environment using the 'virtualenv' module."""
     # always specify which interpreter to use to guarantee the desired interpreter is provided

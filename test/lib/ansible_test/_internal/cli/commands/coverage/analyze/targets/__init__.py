@@ -30,8 +30,8 @@ from .missing import (
 
 def do_targets(
         subparsers,
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
+        parent: argparse.ArgumentParser,
+        completer: CompositeActionCompletionFinder,
 ):  # type: (...) -> None
     """Command line parsing for all `coverage analyze targets` commands."""
     targets = subparsers.add_parser(

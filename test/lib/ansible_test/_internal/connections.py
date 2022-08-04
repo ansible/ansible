@@ -45,8 +45,8 @@ class Connection(metaclass=abc.ABCMeta):
     """Base class for connecting to a host."""
     @abc.abstractmethod
     def run(self,
-            command,  # type: t.List[str]
-            capture,  # type: bool
+            command: t.List[str],
+            capture: bool,
             interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
@@ -56,8 +56,8 @@ class Connection(metaclass=abc.ABCMeta):
         """Run the specified command and return the result."""
 
     def extract_archive(self,
-                        chdir,  # type: str
-                        src,  # type: t.IO[bytes]
+                        chdir: str,
+                        src: t.IO[bytes],
                         ):
         """Extract the given archive file stream in the specified directory."""
         tar_cmd = ['tar', 'oxzf', '-', '-C', chdir]
@@ -65,9 +65,9 @@ class Connection(metaclass=abc.ABCMeta):
         retry(lambda: self.run(tar_cmd, stdin=src, capture=True))
 
     def create_archive(self,
-                       chdir,  # type: str
-                       name,  # type: str
-                       dst,  # type: t.IO[bytes]
+                       chdir: str,
+                       name: str,
+                       dst: t.IO[bytes],
                        exclude=None,  # type: t.Optional[str]
                        ):
         """Create the specified archive file stream from the specified directory, including the given name and optionally excluding the given name."""
@@ -93,8 +93,8 @@ class LocalConnection(Connection):
         self.args = args
 
     def run(self,
-            command,  # type: t.List[str]
-            capture,  # type: bool
+            command: t.List[str],
+            capture: bool,
             interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
@@ -135,8 +135,8 @@ class SshConnection(Connection):
             self.options.extend(['-o', f'{ssh_option}={ssh_options[ssh_option]}'])
 
     def run(self,
-            command,  # type: t.List[str]
-            capture,  # type: bool
+            command: t.List[str],
+            capture: bool,
             interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]
@@ -217,8 +217,8 @@ class DockerConnection(Connection):
         self.user = user  # type: t.Optional[str]
 
     def run(self,
-            command,  # type: t.List[str]
-            capture,  # type: bool
+            command: t.List[str],
+            capture: bool,
             interactive=False,  # type: bool
             data=None,  # type: t.Optional[str]
             stdin=None,  # type: t.Optional[t.IO[bytes]]

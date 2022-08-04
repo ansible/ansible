@@ -122,8 +122,8 @@ class PipBootstrap(PipCommand):
 
 
 def install_requirements(
-        args,  # type: EnvironmentConfig
-        python,  # type: PythonConfig
+        args: EnvironmentConfig,
+        python: PythonConfig,
         ansible=False,  # type: bool
         command=False,  # type: bool
         coverage=False,  # type: bool
@@ -197,15 +197,15 @@ def collect_bootstrap(python: PythonConfig) -> t.List[PipCommand]:
 
 
 def collect_requirements(
-        python,  # type: PythonConfig
-        controller,  # type: bool
-        ansible,  # type: bool
-        cryptography,  # type: bool
-        coverage,  # type: bool
-        virtualenv,  # type: bool
-        minimize,  # type: bool
-        command,  # type: t.Optional[str]
-        sanity,  # type: t.Optional[str]
+        python: PythonConfig,
+        controller: bool,
+        ansible: bool,
+        cryptography: bool,
+        coverage: bool,
+        virtualenv: bool,
+        minimize: bool,
+        command: t.Optional[str],
+        sanity: t.Optional[str],
 ):  # type: (...) -> t.List[PipCommand]
     """Collect requirements for the given Python using the specified arguments."""
     commands = []  # type: t.List[PipCommand]
@@ -252,10 +252,10 @@ def collect_requirements(
 
 
 def run_pip(
-        args,  # type: EnvironmentConfig
-        python,  # type: PythonConfig
-        commands,  # type: t.List[PipCommand]
-        connection,  # type: t.Optional[Connection]
+        args: EnvironmentConfig,
+        python: PythonConfig,
+        commands: t.List[PipCommand],
+        connection: t.Optional[Connection],
 ):  # type: (...) -> None
     """Run the specified pip commands for the given Python, and optionally the specified host."""
     connection = connection or LocalConnection(args)
@@ -367,8 +367,8 @@ def collect_integration_install(command: str, controller: bool) -> t.List[PipIns
 
 
 def collect_install(
-        requirements_paths,  # type: t.List[t.Tuple[str, str]]
-        constraints_paths,  # type: t.List[t.Tuple[str, str]]
+        requirements_paths: t.List[t.Tuple[str, str]],
+        constraints_paths: t.List[t.Tuple[str, str]],
         packages=None,  # type: t.Optional[t.List[str]]
         constraints=True,  # type: bool
 ) -> t.List[PipInstall]:

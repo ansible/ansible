@@ -113,9 +113,9 @@ class DataContext:
 
     @staticmethod
     def __create_content_layout(layout_providers,  # type: t.List[t.Type[LayoutProvider]]
-                                source_providers,  # type: t.List[t.Type[SourceProvider]]
-                                root,  # type: str
-                                walk,  # type: bool
+                                source_providers: t.List[t.Type[SourceProvider]],
+                                root: str,
+                                walk: bool,
                                 ):  # type: (...) -> ContentLayout
         """Create a content layout using the given providers and root path."""
         try:

@@ -100,11 +100,11 @@ class CleanupMode(enum.Enum):
 
 
 def run_support_container(
-        args,  # type: EnvironmentConfig
-        context,  # type: str
-        image,  # type: str
-        name,  # type: str
-        ports,  # type: t.List[int]
+        args: EnvironmentConfig,
+        context: str,
+        image: str,
+        name: str,
+        ports: t.List[int],
         aliases=None,  # type: t.Optional[t.List[str]]
         start=True,  # type: bool
         allow_existing=False,  # type: bool
@@ -459,8 +459,8 @@ class SupportContainerContext:
 
 @contextlib.contextmanager
 def support_container_context(
-        args,  # type: EnvironmentConfig
-        ssh,  # type: t.Optional[SshConnectionDetail]
+        args: EnvironmentConfig,
+        ssh: t.Optional[SshConnectionDetail],
 ):  # type: (...) -> t.Iterator[t.Optional[ContainerDatabase]]
     """Create a context manager for integration tests that use support containers."""
     if not isinstance(args, (IntegrationConfig, UnitsConfig, SanityConfig, ShellConfig)):
@@ -482,9 +482,9 @@ def support_container_context(
 
 
 def create_support_container_context(
-        args,  # type: EnvironmentConfig
-        ssh,  # type: t.Optional[SshConnectionDetail]
-        containers,  # type: ContainerDatabase
+        args: EnvironmentConfig,
+        ssh: t.Optional[SshConnectionDetail],
+        containers: ContainerDatabase,
 ):  # type: (...) -> SupportContainerContext
     """Context manager that provides SSH port forwards. Returns updated container metadata."""
     host_type = HostType.control
@@ -544,17 +544,17 @@ def create_support_container_context(
 class ContainerDescriptor:
     """Information about a support container."""
     def __init__(self,
-                 image,  # type: str
-                 context,  # type: str
-                 name,  # type: str
-                 container_id,  # type: str
-                 ports,  # type: t.List[int]
-                 aliases,  # type: t.List[str]
-                 publish_ports,  # type: bool
-                 running,  # type: bool
-                 existing,  # type: bool
-                 cleanup,  # type: CleanupMode
-                 env,  # type: t.Optional[t.Dict[str, str]]
+                 image: str,
+                 context: str,
+                 name: str,
+                 container_id: str,
+                 ports: t.List[int],
+                 aliases: t.List[str],
+                 publish_ports: bool,
+                 running: bool,
+                 existing: bool,
+                 cleanup: CleanupMode,
+                 env: t.Optional[t.Dict[str, str]],
                  ):  # type: (...) -> None
         self.image = image
         self.context = context
@@ -623,9 +623,9 @@ class ContainerDescriptor:
 class SupportContainer:
     """Information about a running support container available for use by tests."""
     def __init__(self,
-                 container,  # type: DockerInspect
-                 container_ip,  # type: str
-                 published_ports,  # type: t.Dict[int, int]
+                 container: DockerInspect,
+                 container_ip: str,
+                 published_ports: t.Dict[int, int],
                  ):  # type: (...) -> None
         self.container = container
         self.container_ip = container_ip
@@ -633,10 +633,10 @@ class SupportContainer:
 
 
 def wait_for_file(args,  # type: EnvironmentConfig
-                  container_name,  # type: str
-                  path,  # type: str
-                  sleep,  # type: int
-                  tries,  # type: int
+                  container_name: str,
+                  path: str,
+                  sleep: int,
+                  tries: int,
                   check=None,  # type: t.Optional[t.Callable[[str], bool]]
                   ):  # type: (...) -> str
     """Wait for the specified file to become available in the requested container and return its contents."""
@@ -684,9 +684,9 @@ def create_hosts_entries(context):  # type: (t.Dict[str, ContainerAccess]) -> t.
 
 
 def create_container_hooks(
-        args,  # type: IntegrationConfig
-        control_connections,  # type: t.List[SshConnectionDetail]
-        managed_connections,  # type: t.Optional[t.List[SshConnectionDetail]]
+        args: IntegrationConfig,
+        control_connections: t.List[SshConnectionDetail],
+        managed_connections: t.Optional[t.List[SshConnectionDetail]],
 ):  # type: (...) -> t.Tuple[t.Optional[t.Callable[[IntegrationTarget], None]], t.Optional[t.Callable[[IntegrationTarget], None]]]
     """Return pre and post target callbacks for enabling and disabling container access for each test target."""
     containers = get_container_database(args)
@@ -738,13 +738,13 @@ def create_managed_contexts(control_contexts):  # type: (t.Dict[str, t.Dict[str,
 
 
 def forward_ssh_ports(
-        args,  # type: IntegrationConfig
-        ssh_connections,  # type: t.Optional[t.List[SshConnectionDetail]]
-        playbook,  # type: str
-        target_state,  # type: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]]
-        target,  # type: IntegrationTarget
-        host_type,  # type: str
-        contexts,  # type: t.Dict[str, t.Dict[str, ContainerAccess]]
+        args: IntegrationConfig,
+        ssh_connections: t.Optional[t.List[SshConnectionDetail]],
+        playbook: str,
+        target_state: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]],
+        target: IntegrationTarget,
+        host_type: str,
+        contexts: t.Dict[str, t.Dict[str, ContainerAccess]],
 ):  # type: (...) -> None
     """Configure port forwarding using SSH and write hosts file entries."""
     if ssh_connections is None:
@@ -809,12 +809,12 @@ def forward_ssh_ports(
 
 
 def cleanup_ssh_ports(
-        args,  # type: IntegrationConfig
-        ssh_connections,  # type: t.List[SshConnectionDetail]
-        playbook,  # type: str
-        target_state,  # type: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]]
-        target,  # type: IntegrationTarget
-        host_type,  # type: str
+        args: IntegrationConfig,
+        ssh_connections: t.List[SshConnectionDetail],
+        playbook: str,
+        target_state: t.Dict[str, t.Tuple[t.List[str], t.List[SshProcess]]],
+        target: IntegrationTarget,
+        host_type: str,
 ):  # type: (...) -> None
     """Stop previously configured SSH port forwarding and remove previously written hosts file entries."""
     state = target_state.pop(target.name, None)

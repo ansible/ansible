@@ -159,9 +159,9 @@ class HostProfile(t.Generic[THostConfig], metaclass=abc.ABCMeta):
     """Base class for host profiles."""
     def __init__(self,
                  *,
-                 args,  # type: EnvironmentConfig
-                 config,  # type: THostConfig
-                 targets,  # type: t.Optional[t.List[HostConfig]]
+                 args: EnvironmentConfig,
+                 config: THostConfig,
+                 targets: t.Optional[t.List[HostConfig]],
                  ):  # type: (...) -> None
         self.args = args
         self.config = config
@@ -755,9 +755,9 @@ def get_config_profile_type_map() -> t.Dict[t.Type[HostConfig], t.Type[HostProfi
 
 
 def create_host_profile(
-        args,  # type: EnvironmentConfig
-        config,  # type: HostConfig
-        controller,  # type: bool
+        args: EnvironmentConfig,
+        config: HostConfig,
+        controller: bool,
 ):  # type: (...) -> HostProfile
     """Create and return a host profile from the given host configuration."""
     profile_type = get_config_profile_type_map()[type(config)]

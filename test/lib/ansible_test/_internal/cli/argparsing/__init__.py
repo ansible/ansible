@@ -41,9 +41,9 @@ class RegisteredCompletionFinder(OptionCompletionFinder):
 
     def completer(
             self,
-            prefix,  # type: str
-            action,  # type: argparse.Action
-            parsed_args,  # type: argparse.Namespace
+            prefix: str,
+            action: argparse.Action,
+            parsed_args: argparse.Namespace,
             **kwargs,
     ):  # type: (...) -> t.List[str]
         """
@@ -64,9 +64,9 @@ class RegisteredCompletionFinder(OptionCompletionFinder):
     @abc.abstractmethod
     def get_completions(
             self,
-            prefix,  # type: str
-            action,  # type: argparse.Action
-            parsed_args,  # type: argparse.Namespace
+            prefix: str,
+            action: argparse.Action,
+            parsed_args: argparse.Namespace,
     ):  # type: (...) -> t.List[str]
         """
         Return a list of completions for the specified prefix and action.
@@ -136,9 +136,9 @@ class CompositeActionCompletionFinder(RegisteredCompletionFinder):
     """Completion finder with support for composite argument parsing."""
     def get_completions(
             self,
-            prefix,  # type: str
-            action,  # type: argparse.Action
-            parsed_args,  # type: argparse.Namespace
+            prefix: str,
+            action: argparse.Action,
+            parsed_args: argparse.Namespace,
     ):  # type: (...) -> t.List[str]
         """Return a list of completions appropriate for the given prefix and action, taking into account the arguments that have already been parsed."""
         assert isinstance(action, CompositeAction)
@@ -232,8 +232,8 @@ def detect_false_file_completion(value: str, mode: ParserMode) -> bool:
 
 
 def complete(
-        completer,  # type: Parser
-        state,  # type: ParserState
+        completer: Parser,
+        state: ParserState,
 ):  # type: (...) -> Completion
     """Perform argument completion using the given completer and return the completion result."""
     value = state.remainder

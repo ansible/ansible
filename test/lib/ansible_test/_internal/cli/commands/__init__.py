@@ -44,8 +44,8 @@ from .units import (
 
 
 def do_commands(
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
+        parent: argparse.ArgumentParser,
+        completer: CompositeActionCompletionFinder,
 ):  # type: (...) -> None
     """Command line parsing for all commands."""
     common = argparse.ArgumentParser(add_help=False)

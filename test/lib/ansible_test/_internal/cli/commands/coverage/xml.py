@@ -19,9 +19,9 @@ from ...environments import (
 
 def do_xml(
         subparsers,
-        parent,  # type: argparse.ArgumentParser
-        add_coverage_common,  # type: t.Callable[[argparse.ArgumentParser], None]
-        completer,  # type: CompositeActionCompletionFinder
+        parent: argparse.ArgumentParser,
+        add_coverage_common: t.Callable[[argparse.ArgumentParser], None],
+        completer: CompositeActionCompletionFinder,
 ):  # type: (...) -> None
     """Command line parsing for the `coverage xml` command."""
     parser = subparsers.add_parser(

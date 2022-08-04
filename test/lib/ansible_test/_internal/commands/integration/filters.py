@@ -68,10 +68,10 @@ class TargetFilter(t.Generic[THostConfig], metaclass=abc.ABCMeta):
 
     def skip(
             self,
-            skip,  # type: str
-            reason,  # type: str
-            targets,  # type: t.List[IntegrationTarget]
-            exclude,  # type: t.Set[str]
+            skip: str,
+            reason: str,
+            targets: t.List[IntegrationTarget],
+            exclude: t.Set[str],
             override=None,  # type: t.Optional[t.List[str]]
     ):  # type: (...) -> None
         """Apply the specified skip rule to the given targets by updating the provided exclude list."""

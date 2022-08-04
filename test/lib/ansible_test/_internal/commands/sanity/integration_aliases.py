@@ -321,8 +321,8 @@ class IntegrationAliasesTest(SanitySingleVersion):
 
     def check_ci_group(
             self,
-            targets,  # type: t.Tuple[CompletionTarget, ...]
-            find,  # type: str
+            targets: t.Tuple[CompletionTarget, ...],
+            find: str,
             find_incidental=None,  # type: t.Optional[t.List[str]]
     ):  # type: (...) -> t.List[SanityMessage]
         """Check the CI groups set in the provided targets and return a list of messages with any issues found."""

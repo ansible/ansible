@@ -66,11 +66,11 @@ def command_coverage_analyze_targets_missing(args: CoverageAnalyzeTargetsMissing
 
 
 def find_gaps(
-        from_data,  # type: IndexedPoints
-        from_index,  # type: t.List[str]
-        to_data,  # type: IndexedPoints
-        target_indexes,  # type: TargetIndexes
-        only_exists,  # type: bool
+        from_data: IndexedPoints,
+        from_index: t.List[str],
+        to_data: IndexedPoints,
+        target_indexes: TargetIndexes,
+        only_exists: bool,
 ):  # type: (...) -> IndexedPoints
     """Find gaps in coverage between the from and to data sets."""
     target_data = {}  # type: IndexedPoints
@@ -91,12 +91,12 @@ def find_gaps(
 
 
 def find_missing(
-        from_data,  # type: IndexedPoints
-        from_index,  # type: t.List[str]
-        to_data,  # type: IndexedPoints
-        to_index,  # type: t.List[str]
-        target_indexes,  # type: TargetIndexes
-        only_exists,  # type: bool
+        from_data: IndexedPoints,
+        from_index: t.List[str],
+        to_data: IndexedPoints,
+        to_index: t.List[str],
+        target_indexes: TargetIndexes,
+        only_exists: bool,
 ):  # type: (...) -> IndexedPoints
     """Find coverage in from_data not present in to_data (arcs or lines)."""
     target_data = {}  # type: IndexedPoints

@@ -216,8 +216,8 @@ class TestFailure(TestResult):
     """Test failure."""
     def __init__(
             self,
-            command,  # type: str
-            test,  # type: str
+            command: str,
+            test: str,
             python_version=None,  # type: t.Optional[str]
             messages=None,  # type: t.Optional[t.Sequence[TestMessage]]
             summary=None,  # type: t.Optional[str]
@@ -393,8 +393,8 @@ class TestMessage:
     """Single test message for one file."""
     def __init__(
             self,
-            message,  # type: str
-            path,  # type: str
+            message: str,
+            path: str,
             line=0,  # type: int
             column=0,  # type: int
             level='error',  # type: str

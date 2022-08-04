@@ -210,8 +210,8 @@ def named_temporary_file(args: CommonConfig, prefix: str, suffix: str, directory
 
 
 def write_json_test_results(category,  # type: ResultType
-                            name,  # type: str
-                            content,  # type: t.Union[t.List[t.Any], t.Dict[str, t.Any]]
+                            name: str,
+                            content: t.Union[t.List[t.Any], t.Dict[str, t.Any]],
                             formatted=True,  # type: bool
                             encoder=None,  # type: t.Optional[t.Type[json.JSONEncoder]]
                             ):  # type: (...) -> None
@@ -368,11 +368,11 @@ def cleanup_python_paths():
 
 
 def intercept_python(
-        args,  # type: CommonConfig
-        python,  # type: PythonConfig
-        cmd,  # type: t.List[str]
-        env,  # type: t.Dict[str, str]
-        capture,  # type: bool
+        args: CommonConfig,
+        python: PythonConfig,
+        cmd: t.List[str],
+        env: t.Dict[str, str],
+        capture: bool,
         data=None,  # type: t.Optional[str]
         cwd=None,  # type: t.Optional[str]
         always=False,  # type: bool
@@ -400,9 +400,9 @@ def intercept_python(
 
 
 def run_command(
-        args,  # type: CommonConfig
-        cmd,  # type: t.Iterable[str]
-        capture,  # type: bool
+        args: CommonConfig,
+        cmd: t.Iterable[str],
+        capture: bool,
         env=None,  # type: t.Optional[t.Dict[str, str]]
         data=None,  # type: t.Optional[str]
         cwd=None,  # type: t.Optional[str]

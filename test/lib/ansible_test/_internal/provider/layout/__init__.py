@@ -18,8 +18,8 @@ from .. import (
 class Layout:
     """Description of content locations and helper methods to access content."""
     def __init__(self,
-                 root,  # type: str
-                 paths,  # type: t.List[str]
+                 root: str,
+                 paths: t.List[str],
                  ):  # type: (...) -> None
         self.root = root
 
@@ -75,22 +75,22 @@ class Layout:
 class ContentLayout(Layout):
     """Information about the current Ansible content being tested."""
     def __init__(self,
-                 root,  # type: str
-                 paths,  # type: t.List[str]
-                 plugin_paths,  # type: t.Dict[str, str]
-                 collection,  # type: t.Optional[CollectionDetail]
-                 test_path,  # type: str
-                 results_path,  # type: str
-                 sanity_path,  # type: str
-                 sanity_messages,  # type: t.Optional[LayoutMessages]
-                 integration_path,  # type: str
-                 integration_targets_path,  # type: str
-                 integration_vars_path,  # type: str
-                 integration_messages,  # type: t.Optional[LayoutMessages]
-                 unit_path,  # type: str
-                 unit_module_path,  # type: str
-                 unit_module_utils_path,  # type: str
-                 unit_messages,  # type: t.Optional[LayoutMessages]
+                 root: str,
+                 paths: t.List[str],
+                 plugin_paths: t.Dict[str, str],
+                 collection: t.Optional[CollectionDetail],
+                 test_path: str,
+                 results_path: str,
+                 sanity_path: str,
+                 sanity_messages: t.Optional[LayoutMessages],
+                 integration_path: str,
+                 integration_targets_path: str,
+                 integration_vars_path: str,
+                 integration_messages: t.Optional[LayoutMessages],
+                 unit_path: str,
+                 unit_module_path: str,
+                 unit_module_utils_path: str,
+                 unit_messages: t.Optional[LayoutMessages],
                  unsupported=False,  # type: bool
                  ):  # type: (...) -> None
         super().__init__(root, paths)
@@ -159,9 +159,9 @@ class LayoutMessages:
 class CollectionDetail:
     """Details about the layout of the current collection."""
     def __init__(self,
-                 name,  # type: str
-                 namespace,  # type: str
-                 root,  # type: str
+                 name: str,
+                 namespace: str,
+                 root: str,
                  ):  # type: (...) -> None
         self.name = name
         self.namespace = namespace

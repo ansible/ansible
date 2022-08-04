@@ -190,9 +190,9 @@ class TargetMode(enum.Enum):
 
 
 def convert_legacy_args(
-        argv,  # type: t.List[str]
-        args,  # type: t.Union[argparse.Namespace, types.SimpleNamespace]
-        mode,  # type: TargetMode
+        argv: t.List[str],
+        args: t.Union[argparse.Namespace, types.SimpleNamespace],
+        mode: TargetMode,
 ):  # type: (...) -> HostSettings
     """Convert pre-split host arguments in the given namespace to their split counterparts."""
     old_options = LegacyHostOptions.create(args)
@@ -261,9 +261,9 @@ def convert_legacy_args(
 
 
 def controller_targets(
-        mode,  # type: TargetMode
-        options,  # type: LegacyHostOptions
-        controller,  # type: ControllerHostConfig
+        mode: TargetMode,
+        options: LegacyHostOptions,
+        controller: ControllerHostConfig,
 ):  # type: (...) -> t.List[HostConfig]
     """Return the configuration for controller targets."""
     python = native_python(options)
@@ -287,8 +287,8 @@ def native_python(options: LegacyHostOptions) -> t.Optional[NativePythonConfig]:
 
 
 def get_legacy_host_config(
-        mode,  # type: TargetMode
-        options,  # type: LegacyHostOptions
+        mode: TargetMode,
+        options: LegacyHostOptions,
 ):  # type: (...) -> t.Tuple[ControllerHostConfig, t.List[HostConfig], t.Optional[FallbackDetail]]
     """
     Returns controller and target host configs derived from the provided legacy host options.
@@ -453,9 +453,9 @@ def get_legacy_host_config(
 
 
 def handle_non_posix_targets(
-    mode,  # type: TargetMode
-    options,  # type: LegacyHostOptions
-    targets,  # type: t.List[HostConfig]
+    mode: TargetMode,
+    options: LegacyHostOptions,
+    targets: t.List[HostConfig],
 ):  # type: (...) -> t.List[HostConfig]
     """Return a list of non-POSIX targets if the target mode is non-POSIX."""
     if mode == TargetMode.WINDOWS_INTEGRATION:
@@ -486,8 +486,8 @@ def handle_non_posix_targets(
 
 
 def default_targets(
-    mode,  # type: TargetMode
-    controller,  # type: ControllerHostConfig
+    mode: TargetMode,
+    controller: ControllerHostConfig,
 ):  # type: (...) -> t.List[HostConfig]
     """Return a list of default targets for the given target mode."""
     targets: t.List[HostConfig]

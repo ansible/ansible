@@ -170,11 +170,11 @@ class MypyTest(SanityMultipleVersion):
 
     @staticmethod
     def test_context(
-            args,  # type: SanityConfig
-            virtualenv_python,  # type: VirtualPythonConfig
-            python,  # type: PythonConfig
-            context,  # type: MyPyContext
-            paths,  # type: t.List[str]
+            args: SanityConfig,
+            virtualenv_python: VirtualPythonConfig,
+            python: PythonConfig,
+            context: MyPyContext,
+            paths: t.List[str],
     ):  # type: (...) -> t.List[SanityMessage]
         """Run mypy tests for the specified context."""
         context_paths = [path for path in paths if any(is_subdir(path, match_path) for match_path in context.paths)]

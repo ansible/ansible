@@ -64,7 +64,7 @@ def walk_completion_targets(targets: t.Iterable[CompletionTarget], prefix: str, 
 
 
 def walk_internal_targets(
-        targets,  # type: t.Iterable[TCompletionTarget]
+        targets: t.Iterable[TCompletionTarget],
         includes=None,  # type: t.Optional[t.List[str]]
         excludes=None,  # type: t.Optional[t.List[str]]
         requires=None,  # type: t.Optional[t.List[str]]
@@ -86,7 +86,7 @@ def walk_internal_targets(
 
 
 def filter_targets(targets,  # type: t.Iterable[TCompletionTarget]
-                   patterns,  # type: t.List[str]
+                   patterns: t.List[str],
                    include=True,  # type: bool
                    directories=True,  # type: bool
                    errors=True,  # type: bool
@@ -454,10 +454,10 @@ class TestTarget(CompletionTarget):
     """Generic test target."""
     def __init__(
             self,
-            path,  # type: str
-            module_path,  # type: t.Optional[str]
-            module_prefix,  # type: t.Optional[str]
-            base_path,  # type: str
+            path: str,
+            module_path: t.Optional[str],
+            module_prefix: t.Optional[str],
+            base_path: str,
             symlink=None,  # type: t.Optional[bool]
     ):
         super().__init__()

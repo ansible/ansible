@@ -75,10 +75,10 @@ def command_coverage_analyze_targets_generate(args: CoverageAnalyzeTargetsGenera
 
 
 def analyze_python_coverage(
-        args,  # type: CoverageAnalyzeTargetsGenerateConfig
-        host_state,  # type: HostState
-        path,  # type: str
-        target_indexes,  # type: TargetIndexes
+        args: CoverageAnalyzeTargetsGenerateConfig,
+        host_state: HostState,
+        path: str,
+        target_indexes: TargetIndexes,
 ):  # type: (...) -> Arcs
     """Analyze Python code coverage."""
     results = {}  # type: Arcs
@@ -107,9 +107,9 @@ def analyze_python_coverage(
 
 
 def analyze_powershell_coverage(
-        args,  # type: CoverageAnalyzeTargetsGenerateConfig
-        path,  # type: str
-        target_indexes,  # type: TargetIndexes
+        args: CoverageAnalyzeTargetsGenerateConfig,
+        path: str,
+        target_indexes: TargetIndexes,
 ):  # type: (...) -> Lines
     """Analyze PowerShell code coverage"""
     results = {}  # type: Lines
@@ -136,8 +136,8 @@ def analyze_powershell_coverage(
 
 
 def prune_invalid_filenames(
-        args,  # type: CoverageAnalyzeTargetsGenerateConfig
-        results,  # type: t.Dict[str, t.Any]
+        args: CoverageAnalyzeTargetsGenerateConfig,
+        results: t.Dict[str, t.Any],
         collection_search_re=None,  # type: t.Optional[t.Pattern]
 ):  # type: (...) -> None
     """Remove invalid filenames from the given result set."""

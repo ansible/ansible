@@ -345,8 +345,8 @@ def get_available_python_versions() -> t.Dict[str, str]:
 
 
 def raw_command(
-        cmd,  # type: t.Iterable[str]
-        capture,  # type: bool
+        cmd: t.Iterable[str],
+        capture: bool,
         env=None,  # type: t.Optional[t.Dict[str, str]]
         data=None,  # type: t.Optional[str]
         cwd=None,  # type: t.Optional[str]
@@ -849,7 +849,7 @@ class Display:
 
     def print_message(  # pylint: disable=locally-disabled, invalid-name
             self,
-            message,  # type: str
+            message: str,
             color=None,  # type: t.Optional[str]
             stderr=False,  # type: bool
             truncate=False,  # type: bool
@@ -895,7 +895,7 @@ class SubprocessError(ApplicationError):
     """Error resulting from failed subprocess execution."""
     def __init__(
             self,
-            cmd,  # type: t.List[str]
+            cmd: t.List[str],
             status=0,  # type: int
             stdout=None,  # type: t.Optional[str]
             stderr=None,  # type: t.Optional[str]

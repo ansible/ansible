@@ -40,7 +40,7 @@ def make_dirs(path: str) -> None:
 
 
 def write_json_file(path,  # type: str
-                    content,  # type: t.Any
+                    content: t.Any,
                     create_directories=False,  # type: bool
                     formatted=True,  # type: bool
                     encoder=None,  # type: t.Optional[t.Type[json.JSONEncoder]]

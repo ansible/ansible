@@ -115,8 +115,8 @@ class AnsibleCoreCI:
 
     def __init__(
             self,
-            args,  # type: EnvironmentConfig
-            resource,  # type: Resource
+            args: EnvironmentConfig,
+            resource: Resource,
             load=True,  # type: bool
     ):  # type: (...) -> None
         self.args = args
@@ -531,7 +531,7 @@ class SshKey:
 class InstanceConnection:
     """Container for remote instance status and connection details."""
     def __init__(self,
-                 running,  # type: bool
+                 running: bool,
                  hostname=None,  # type: t.Optional[str]
                  port=None,  # type: t.Optional[int]
                  username=None,  # type: t.Optional[str]

@@ -285,9 +285,9 @@ def docker_cp_to(args: EnvironmentConfig, container_id: str, src: str, dst: str)
 
 
 def docker_run(
-        args,  # type: EnvironmentConfig
-        image,  # type: str
-        options,  # type: t.Optional[t.List[str]]
+        args: EnvironmentConfig,
+        image: str,
+        options: t.Optional[t.List[str]],
         cmd=None,  # type: t.Optional[t.List[str]]
         create_only=False,  # type: bool
 ):  # type: (...) -> str
@@ -509,10 +509,10 @@ def docker_image_exists(args: EnvironmentConfig, image: str) -> bool:
 
 
 def docker_exec(
-        args,  # type: EnvironmentConfig
-        container_id,  # type: str
-        cmd,  # type: t.List[str]
-        capture,  # type: bool
+        args: EnvironmentConfig,
+        container_id: str,
+        cmd: t.List[str],
+        capture: bool,
         options=None,  # type: t.Optional[t.List[str]]
         stdin=None,  # type: t.Optional[t.IO[bytes]]
         stdout=None,  # type: t.Optional[t.IO[bytes]]
@@ -544,9 +544,9 @@ def docker_version(args: CommonConfig) -> t.Dict[str, t.Any]:
 
 
 def docker_command(
-        args,  # type: CommonConfig
-        cmd,  # type: t.List[str]
-        capture,  # type: bool
+        args: CommonConfig,
+        cmd: t.List[str],
+        capture: bool,
         stdin=None,  # type: t.Optional[t.IO[bytes]]
         stdout=None,  # type: t.Optional[t.IO[bytes]]
         interactive=False,  # type: bool

@@ -18,8 +18,8 @@ from .....environments import (
 
 def do_combine(
         subparsers,
-        parent,  # type: argparse.ArgumentParser
-        completer,  # type: CompositeActionCompletionFinder
+        parent: argparse.ArgumentParser,
+        completer: CompositeActionCompletionFinder,
 ):
     """Command line parsing for the `coverage analyze targets combine` command."""
     parser = subparsers.add_parser(

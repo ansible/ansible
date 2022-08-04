@@ -120,7 +120,7 @@ class SshProcess:
 
 
 def create_ssh_command(
-        ssh,  # type: SshConnectionDetail
+        ssh: SshConnectionDetail,
         options=None,  # type: t.Optional[t.Dict[str, t.Union[str, int]]]
         cli_args=None,  # type: t.List[str]
         command=None,  # type: t.Optional[str]
@@ -166,8 +166,8 @@ def create_ssh_command(
 
 
 def run_ssh_command(
-        args,  # type: EnvironmentConfig
-        ssh,  # type: SshConnectionDetail
+        args: EnvironmentConfig,
+        ssh: SshConnectionDetail,
         options=None,  # type: t.Optional[t.Dict[str, t.Union[str, int]]]
         cli_args=None,  # type: t.List[str]
         command=None,  # type: t.Optional[str]
@@ -192,9 +192,9 @@ def run_ssh_command(
 
 
 def create_ssh_port_forwards(
-        args,  # type: EnvironmentConfig
-        ssh,  # type: SshConnectionDetail
-        forwards,  # type: t.List[t.Tuple[str, int]]
+        args: EnvironmentConfig,
+        ssh: SshConnectionDetail,
+        forwards: t.List[t.Tuple[str, int]],
 ):  # type: (...) -> SshProcess
     """
     Create SSH port forwards using the provided list of tuples (target_host, target_port).
@@ -216,9 +216,9 @@ def create_ssh_port_forwards(
 
 
 def create_ssh_port_redirects(
-        args,  # type: EnvironmentConfig
-        ssh,  # type: SshConnectionDetail
-        redirects,  # type: t.List[t.Tuple[int, str, int]]
+        args: EnvironmentConfig,
+        ssh: SshConnectionDetail,
+        redirects: t.List[t.Tuple[int, str, int]],
 ):  # type: (...) -> SshProcess
     """Create SSH port redirections using the provided list of tuples (bind_port, target_host, target_port)."""
     options = {}  # type: t.Dict[str, t.Union[str, int]]

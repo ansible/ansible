@@ -526,9 +526,9 @@ class SanityIgnoreParser:
 class SanityIgnoreProcessor:
     """Processor for sanity test ignores for a single run of one sanity test."""
     def __init__(self,
-                 args,  # type: SanityConfig
-                 test,  # type: SanityTest
-                 python_version,  # type: t.Optional[str]
+                 args: SanityConfig,
+                 test: SanityTest,
+                 python_version: t.Optional[str],
                  ):  # type: (...) -> None
         name = test.name
         code = test.error_code
@@ -631,7 +631,7 @@ class SanityFailure(TestFailure):
     """Sanity test failure."""
     def __init__(
             self,
-            test,  # type: str
+            test: str,
             python_version=None,  # type: t.Optional[str]
             messages=None,  # type: t.Optional[t.Sequence[SanityMessage]]
             summary=None,  # type: t.Optional[str]
@@ -1096,9 +1096,9 @@ def sanity_get_tests() -> t.Tuple[SanityTest, ...]:
 
 
 def create_sanity_virtualenv(
-        args,  # type: SanityConfig
-        python,  # type: PythonConfig
-        name,  # type: str
+        args: SanityConfig,
+        python: PythonConfig,
+        name: str,
         coverage=False,  # type: bool
         minimize=False,  # type: bool
 ):  # type: (...) -> t.Optional[VirtualPythonConfig]

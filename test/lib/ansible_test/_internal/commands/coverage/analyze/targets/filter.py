@@ -91,9 +91,9 @@ def command_coverage_analyze_targets_filter(args: CoverageAnalyzeTargetsFilterCo
 
 
 def filter_data(
-        data,  # type: NamedPoints
-        path_filter_func,  # type: t.Callable[[str], bool]
-        target_filter_func,  # type: t.Callable[[t.Set[str]], t.Set[str]]
+        data: NamedPoints,
+        path_filter_func: t.Callable[[str], bool],
+        target_filter_func: t.Callable[[t.Set[str]], t.Set[str]],
 ):  # type: (...) -> NamedPoints
     """Filter the data set using the specified filter function."""
     result = {}  # type: NamedPoints
