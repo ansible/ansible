@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: getent
 short_description: A wrapper to the unix getent utility
@@ -36,7 +36,8 @@ options:
         version_added: "2.9"
     split:
         description:
-            - "Character used to split the database values into lists/arrays such as ':' or '\t', otherwise  it will try to pick one depending on the database."
+            - Character used to split the database values into lists/arrays such as C(:) or C(\t),
+              otherwise it will try to pick one depending on the database.
         type: str
     fail_key:
         description:

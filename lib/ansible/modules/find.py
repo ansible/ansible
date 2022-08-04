@@ -35,19 +35,19 @@ options:
               least one of the patterns specified. Multiple patterns can be specified using a list.
             - The pattern is matched against the file base name, excluding the directory.
             - When using regexen, the pattern MUST match the ENTIRE file name, not just parts of it. So
-              if you are looking to match all files ending in .default, you'd need to use '.*\.default'
-              as a regexp and not just '\.default'.
+              if you are looking to match all files ending in .default, you'd need to use C(.*\.default)
+              as a regexp and not just C(\.default).
             - This parameter expects a list, which can be either comma separated or YAML. If any of the
               patterns contain a comma, make sure to put them in a list to avoid splitting the patterns
               in undesirable ways.
-            - Defaults to '*' when C(use_regex=False), or '.*' when C(use_regex=True).
+            - Defaults to C(*) when I(use_regex=False), or C(.*) when I(use_regex=True).
         type: list
         aliases: [ pattern ]
         elements: str
     excludes:
         description:
-            - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
-            - Items whose basenames match an C(excludes) pattern are culled from C(patterns) matches.
+            - One or more (shell or regex) patterns, which type is controlled by I(use_regex) option.
+            - Items whose basenames match an I(excludes) pattern are culled from I(patterns) matches.
               Multiple patterns can be specified using a list.
         type: list
         aliases: [ exclude ]
